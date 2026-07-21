@@ -40,7 +40,7 @@ jobs:
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Persist the Next.js compile cache and yarn cache across runs (BuildKit
       # cache mounts are not exported by type=gha). Separate key prefix and gha

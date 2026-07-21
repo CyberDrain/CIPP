@@ -89,7 +89,7 @@ jobs:
           skip-extraction: ${{ steps.build-cache.outputs.cache-hit }}
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: build/Dockerfile

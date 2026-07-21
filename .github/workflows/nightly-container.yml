@@ -94,7 +94,7 @@ jobs:
 
       - name: Build and push
         if: steps.check.outputs.has_commits == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: build/Dockerfile

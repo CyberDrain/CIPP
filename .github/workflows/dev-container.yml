@@ -68,7 +68,7 @@ jobs:
       # key prefix with the nightly workflow (identical Dockerfile/base image).
       - name: Restore frontend build caches
         id: build-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             yarn-cache

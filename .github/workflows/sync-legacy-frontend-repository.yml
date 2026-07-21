@@ -26,12 +26,12 @@ jobs:
 
     steps:
       - name: Checkout source (CyberDrain/CIPP)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Checkout target (KelvinTegelaar/CIPP)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{ vars.CIPP_REPO || 'KelvinTegelaar/CIPP' }}
           ref: ${{ github.ref_name }}

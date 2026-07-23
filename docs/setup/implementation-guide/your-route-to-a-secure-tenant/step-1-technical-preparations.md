@@ -1,6 +1,6 @@
 # Step 1: Technical Preparations
 
-Before we get started with implementing the standards and analyzing the information, we have to make a choice on how we'll approach these changes, as some of them might have slight user experience effects.
+Before we get started with implementing the standards and analysing the information, we have to make a choice on how we'll approach these changes, as some of them might have slight user experience effects.
 
 CyberDrain recommends implementing standards in a phased manner, with every tenant receiving the same standard over time, however, we also believe in accounting for licensing differences between clients. So to start, we'll implement CIPP's Dynamic Tenant Groups.
 
@@ -12,18 +12,18 @@ At this point, we won't be making any customer affecting changes. Everything we 
 
 To set up Dynamic Tenant groups go to **Tenant Administration** -> **Tenants** -> **Groups.**
 
-Click the toolbar button "Import Tenant Groups" to Import the CyberDrain recommended tenant groups. These tenant groups are based on license capabilities. For our standardization process we'll use three of these dynamic groups
+Click the toolbar button "Import Tenant Groups" to Import the CyberDrain recommended tenant groups. These tenant groups are based on licence capabilities. For our standardisation process we'll use three of these dynamic groups
 
 ### Dynamic Groups used
 
 | Group name                                | Used for                                                                                                                  |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Not Intune and Entra Premium Capable      | Tenants that do not have a high enough license level to apply Drift Templates but need to receive a baseline of security. |
-| Entra Premium Capable, Not Intune Capable | Tenants that have Entra ID P1, but do not have Intune licenses available, thus we do not apply workstation settings.      |
+| Not Intune and Entra Premium Capable      | Tenants that do not have a high enough licence level to apply Drift Templates but need to receive a baseline of security. |
+| Entra Premium Capable, Not Intune Capable | Tenants that have Entra ID P1, but do not have Intune licences available, thus we do not apply workstation settings.      |
 | Intune and Entra Premium Capable          | Tenants with all capabilities needed for the settings in our default baselines.                                           |
 
 {% hint style="warning" %}
-Because we are using these Dynamic Groups, new tenants with the correct license state will automatically be onboarded into our new standard, if you do not want new tenants onboarded, change this in CIPP -> Application Settings -> Partner Webhooks and select the checkbox "Exclude onboarded tenants from top-level standards.
+Because we are using these Dynamic Groups, new tenants with the correct licence state will automatically be onboarded into our new standard, if you do not want new tenants onboarded, change this in CIPP -> Application Settings -> Partner Webhooks and select the checkbox "Exclude onboarded tenants from top-level standards.
 {% endhint %}
 
 ## Setting up the CIPP Secure Tenant Baseline

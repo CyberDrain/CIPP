@@ -32,9 +32,9 @@ This will allow you to create a predefined set of tenant groups provided by CIPP
 
 | Name                                      | Description                                                                             |
 | ----------------------------------------- | --------------------------------------------------------------------------------------- |
-| Not Intune and Entra Premium Capable      | This group does not have a license for intune, nor a license for Entra ID Premium       |
-| Business Premium License available        | This group has at least one Business Premium License available                          |
-| Entra Premium Capable, Not Intune Capable | This group does have a license for Entra Premium but does not have a license for Intune |
+| Not Intune and Entra Premium Capable      | This group does not have a licence for intune, nor a licence for Entra ID Premium       |
+| Business Premium License available        | This group has at least one Business Premium Licence available                          |
+| Entra Premium Capable, Not Intune Capable | This group does have a licence for Entra Premium but does not have a licence for Intune |
 | Entra ID Premium and Intune Capable       | This group has Intune and Entra ID Premium available                                    |
 
 

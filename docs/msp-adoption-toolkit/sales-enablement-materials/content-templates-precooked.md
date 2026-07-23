@@ -13,7 +13,7 @@ To use the LinkedIn Slideshow posts we recommend changing the colours and logo, 
 * Select your company logo and place it in one of the "Logo Spaces". These use safe margins to make sure your logo is in the correct place.
 * Resize as needed. This ensures the logo appears on every slide automatically.
 * Still in **Slide Master**, select **Colors → Customize Colors** (found under the **Slide Master → Edit Theme** group).
-* Replace the default accent colors with your MSP’s brand palette (primary, secondary, neutral tones).
+* Replace the default accent colours with your MSP’s brand palette (primary, secondary, neutral tones).
 * Save this template, when you paste the content from our precooked templates it will automatically follow your own branding.
 
 ## M365 Features

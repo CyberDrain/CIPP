@@ -32,7 +32,7 @@ Enter as many email addresses as you need, separated by a comma.
 Email will be sent from the service account used for the Setup Wizard.&#x20;
 
 {% hint style="warning" %}
-The service account must have a mailbox available. This can be accomplished by either assigning a license with Exchange to the service account permanently or temporarily and converting the service account's mailbox to a shared mailbox. If you do not have a mailbox available on the account, the log will state we could not send out the notifications.
+The service account must have a mailbox available. This can be accomplished by either assigning a licence with Exchange to the service account permanently or temporarily and converting the service account's mailbox to a shared mailbox. If you do not have a mailbox available on the account, the log will state we could not send out the notifications.
 
 If you have already completed the Setup Wizard prior to converting the service account to a shared mailbox you will want to rerun the Setup Wizard using the option "Refresh Tokens for existing application registration".
 {% endhint %}
@@ -128,14 +128,14 @@ Previously saved credential values are retained in the form even when the auth t
 ```
 
 {% hint style="danger" %}
-Those who are utilizing the Rewst crate to handle CIPP notifications should not enable the Standardized Alert Schema as it has not been updated to handle this new format.
+Those who are utilising the Rewst crate to handle CIPP notifications should not enable the Standardized Alert Schema as it has not been updated to handle this new format.
 {% endhint %}
 
 ## Send Test Alert
 
 You are able to select to send a test alert. Select which options you want to include in your test before clicking `Confirm`.
 
-## Alert Flow Visualized
+## Alert Flow Visualised
 
 <figure><img src="../../../.gitbook/assets/paths_overview.png" alt=""><figcaption></figcaption></figure>
 

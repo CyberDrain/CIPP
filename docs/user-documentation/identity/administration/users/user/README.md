@@ -30,7 +30,7 @@ The actions dropdown carries forward the same [#table-actions](../#table-actions
 
 | Field          | Description                                    |
 | -------------- | ---------------------------------------------- |
-| Licenses       | List of currently assigned M365/Azure licenses |
+| Licenses       | List of currently assigned M365/Azure licences |
 | Email Address  | Primary and alternative email addresses        |
 | Business Phone | Primary business contact number                |
 | Mobile Phone   | User's mobile contact number                   |
@@ -40,7 +40,7 @@ The actions dropdown carries forward the same [#table-actions](../#table-actions
 | Field           | Description                  |
 | --------------- | ---------------------------- |
 | Job Title       | User's current position/role |
-| Department      | Organizational department    |
+| Department      | Organisational department    |
 | Office Location | Physical office location     |
 
 ### Address Information

@@ -12,7 +12,7 @@ This page gives you the ability to view all configured templates, in addition to
 
 <summary>Browse Policy Catalog</summary>
 
-This flyout wizard will allow you to browse the policy catalog. Select one of your configured [community-repos](../../../tools/community-repos/ "mention") and then import the desired templates.
+This flyout wizard will allow you to browse the policy catalogue. Select one of your configured [community-repos](../../../tools/community-repos/ "mention") and then import the desired templates.
 
 </details>
 
@@ -26,7 +26,7 @@ This flyout wizard will allow you to browse the policy catalog. Select one of yo
 | Is Synced    | If the template is synced to GitHub.                                                                                |
 | Package      | Information on if the policy template has been added to a package.                                                  |
 | Description  | The description for the template.                                                                                   |
-| Type         | The template type, for example Catalog or Device.                                                                   |
+| Type         | The template type, for example Catalog or Device.                                                                     |
 | Usage        | Includes information on if the template is used by direct addition or package tag in a standards or drift template. |
 
 ## Table Actions <a href="#listmempolicytemplates-actions" id="listmempolicytemplates-actions"></a>

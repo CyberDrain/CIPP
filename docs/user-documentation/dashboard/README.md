@@ -54,8 +54,8 @@ This dropdown controls the test suite used in displaying the test information on
 **Available Built-In Test Suites:**
 
 * CISA ScubaGear Tests for Exchange Online: Security configuration assessment tests based on CISA's Secure Cloud Business Applications (SCubaGear) project for Microsoft Exchange Online. These tests validate compliance with federal security baselines.
-* Microsoft 365 Copilot Readiness Tests: Assess tenant readiness for Microsoft 365 Copilot deployment. Tests cover prerequisite licensing, Copilot license assignment, and active M365 app usage that determines which users would benefit most from Copilot.
-* Entra ID Security Configuration Analyzer (EIDSCA) Tests: Comprehensive security assessment for Microsoft Entra ID (formerly Azure AD) covering authorization policies, authentication methods, consent policies, password policies, and group settings. Based on Microsoft's EIDSCA framework for identity security best practices.
+* Microsoft 365 Copilot Readiness Tests: Assess tenant readiness for Microsoft 365 Copilot deployment. Tests cover prerequisite licensing, Copilot licence assignment, and active M365 app usage that determines which users would benefit most from Copilot.
+* Entra ID Security Configuration Analyzer (EIDSCA) Tests: Comprehensive security assessment for Microsoft Entra ID (formerly Azure AD) covering authorisation policies, authentication methods, consent policies, password policies, and group settings. Based on Microsoft's EIDSCA framework for identity security best practices.
 * Generic Tenant Tests: Executive-level informational reports covering licensing, MFA posture, secure score trends, and tenant capabilities. These tests provide a clear snapshot of your tenant's current state without pass/fail criteria.
 * ORCA (Office 365 Recommended Configuration Analyzer) Tests: Comprehensive security assessment for Microsoft Exchange Online and Office 365 security configurations. Tests cover anti-spam, anti-phish, anti-malware, safe links, safe attachments, DKIM, transport rules, and other Exchange Online security settings.
 * Zero Trust Network Access Tests: Microsoft's Comprehensive security assessment covering identity and device compliance, conditional access policies, authentication methods, and endpoint protection aligned with Zero Trust principles.
@@ -74,7 +74,7 @@ Pulls in a fresh version of the latest cached data for the referenced test suite
 
 <summary>Create Suite</summary>
 
-This will allow you to utilize existing tests to create your own custom test suite. Set a name, description, and select from the available Identity, Device, and Custom Tests.
+This will allow you to utilise existing tests to create your own custom test suite. Set a name, description, and select from the available Identity, Device, and Custom Tests.
 
 </details>
 
@@ -158,7 +158,7 @@ This will provide you with an easy-to-read chart of user authentication and MFA/
 
 <summary>Authentication Methods</summary>
 
-This card will display the types of authentication methods users in the tenant are utilizing. Clicking on any category in this chart will jump to the MFA report with some filtering enabled so you can review the users associated with the method. This is especially helpful to know which users you need to work with to strengthen their authentication.
+This card will display the types of authentication methods users in the tenant are utilising. Clicking on any category in this chart will jump to the MFA report with some filtering enabled so you can review the users associated with the method. This is especially helpful to know which users you need to work with to strengthen their authentication.
 
 </details>
 
@@ -166,10 +166,10 @@ This card will display the types of authentication methods users in the tenant a
 
 <summary>License Overview</summary>
 
-This card will display the licenses present on the tenant.
+This card will display the licences present on the tenant.
 
 {% hint style="info" %}
-To exclude a license from this and all other reports in CIPP, add the license in [licenses.md](../cipp/settings/licenses.md "mention").
+To exclude a licence from this and all other reports in CIPP, add the licence in [licenses.md](../cipp/settings/licenses.md "mention").
 {% endhint %}
 
 </details>

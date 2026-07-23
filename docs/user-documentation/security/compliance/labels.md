@@ -1,6 +1,6 @@
 # Sensitivity Labels
 
-Sensitivity labels are the classification and protection mechanism in Microsoft Purview Information Protection. Once applied to a file, email, container (Teams/Groups/SharePoint sites), or meeting, a label travels with the content and enforces the actions configured on it: encryption and rights management, content marking (headers, footers, watermarks), and container privacy and sharing controls. Label policies then publish labels to specific users and groups and control default labels, mandatory labeling, and downgrade justification. This page lets you view and manage sensitivity labels and label policies in the selected tenant.
+Sensitivity labels are the classification and protection mechanism in Microsoft Purview Information Protection. Once applied to a file, email, container (Teams/Groups/SharePoint sites), or meeting, a label travels with the content and enforces the actions configured on it: encryption and rights management, content marking (headers, footers, watermarks), and container privacy and sharing controls. Label policies then publish labels to specific users and groups and control default labels, mandatory labelling, and downgrade justification. This page lets you view and manage sensitivity labels and label policies in the selected tenant.
 
 ## Page Actions
 

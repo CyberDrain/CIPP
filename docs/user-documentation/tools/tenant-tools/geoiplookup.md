@@ -1,6 +1,6 @@
 # IP Database
 
-IP addresses stored in the CIPP IP Database are whitelisted from all audit logs and alerts. This includes any tenant alert that utilizes CIPPBadRepIP.&#x20;
+IP addresses stored in the CIPP IP Database are whitelisted from all audit logs and alerts. This includes any tenant alert that utilises CIPPBadRepIP.&#x20;
 
 ## Geo IP Check
 

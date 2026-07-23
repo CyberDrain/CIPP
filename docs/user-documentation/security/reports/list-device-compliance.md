@@ -1,6 +1,6 @@
 # Device Compliance
 
-The Device Compliance page provides a comprehensive overview of device compliance status within your organization.&#x20;
+The Device Compliance page provides a comprehensive overview of device compliance status within your organisation.&#x20;
 
 ## Table Details
 

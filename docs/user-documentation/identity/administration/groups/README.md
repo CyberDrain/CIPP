@@ -4,7 +4,7 @@ description: Interact with Microsoft 365 groups.
 
 # Groups
 
-The Groups page is equivalent to [Microsoft 365 admin center > Active teams and groups](https://admin.microsoft.com/#/groups). It offers an overview of all groups within the organization and allows users to manage group details and memberships.
+The Groups page is equivalent to [Microsoft 365 admin center > Active teams and groups](https://admin.microsoft.com/#/groups). It offers an overview of all groups within the organisation and allows users to manage group details and memberships.
 
 ## Action Buttons
 
@@ -32,7 +32,7 @@ The properties returned are for the Graph resource type `group`. For more inform
 
 These actions and information are available in the flyout menu when you click the ellipsis button in the "Actions" column:
 
-<table><thead><tr><th width="294">Action/Information</th><th>Description</th><th data-type="checkbox"></th></tr></thead><tbody><tr><td>Edit Group</td><td>Allows navigation to the <a data-mention href="edit.md">edit.md</a> page.</td><td>false</td></tr><tr><td>Set Global Address List Visibility</td><td>Controls the visibility of the group in the Global Address List.</td><td>true</td></tr><tr><td>Only allow messages from people inside the organization</td><td>Restricts the group to only receive messages from people inside the organization.</td><td>true</td></tr><tr><td>Allow messages from people inside and outside the organization</td><td>Allows the group to receive messages from both inside and outside the organization.</td><td>true</td></tr><tr><td>Create template based on group</td><td>Will create a group template from this group's settings</td><td>true</td></tr><tr><td>Delete Group</td><td>Deletes the group using the <code>ExecGroupsDelete</code> endpoint listed below.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th width="294">Action/Information</th><th>Description</th><th data-type="checkbox"></th></tr></thead><tbody><tr><td>Edit Group</td><td>Allows navigation to the <a data-mention href="edit.md">edit.md</a> page.</td><td>false</td></tr><tr><td>Set Global Address List Visibility</td><td>Controls the visibility of the group in the Global Address List.</td><td>true</td></tr><tr><td>Only allow messages from people inside the organization</td><td>Restricts the group to only receive messages from people inside the organisation.</td><td>true</td></tr><tr><td>Allow messages from people inside and outside the organization</td><td>Allows the group to receive messages from both inside and outside the organisation.</td><td>true</td></tr><tr><td>Create template based on group</td><td>Will create a group template from this group's settings</td><td>true</td></tr><tr><td>Delete Group</td><td>Deletes the group using the <code>ExecGroupsDelete</code> endpoint listed below.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout</td><td>false</td></tr></tbody></table>
 
 ***
 

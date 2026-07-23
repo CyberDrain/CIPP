@@ -1,10 +1,10 @@
 ---
-description: Centralized Tenant Management and Oversight
+description: Centralised Tenant Management and Oversight
 ---
 
 # Tenants
 
-The Tenants page is a centralized platform for administrators to oversee and manage all tenants within CIPP. This page provides detailed information about each tenant and facilitates actions related to their exclusion status and permissions.
+The Tenants page is a centralised platform for administrators to oversee and manage all tenants within CIPP. This page provides detailed information about each tenant and facilitates actions related to their exclusion status and permissions.
 
 This page also shows tenants that have been excluded or removed due to the number of errors received.
 

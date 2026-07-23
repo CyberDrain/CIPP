@@ -1,6 +1,6 @@
 # Sensitive Information Types
 
-Sensitive Information Types (SITs) are the pattern-matching primitives used across Microsoft Purview to identify sensitive content like credit card numbers, government IDs, health records, or custom organizational data. Each SIT combines regular expressions, keyword lists, checksums, and proximity rules with a confidence level to detect matches in files, emails, and other content. DLP policies, auto-labeling rules, and sensitivity labels all reference SITs as conditions for classification and protection. This page lets you view the sensitive information types available in the selected tenant, including both Microsoft's built-in types and any custom SITs published by the organization.
+Sensitive Information Types (SITs) are the pattern-matching primitives used across Microsoft Purview to identify sensitive content like credit card numbers, government IDs, health records, or custom organisational data. Each SIT combines regular expressions, keyword lists, checksums, and proximity rules with a confidence level to detect matches in files, emails, and other content. DLP policies, auto-labelling rules, and sensitivity labels all reference SITs as conditions for classification and protection. This page lets you view the sensitive information types available in the selected tenant, including both Microsoft's built-in types and any custom SITs published by the organisation.
 
 ## Page Actions
 

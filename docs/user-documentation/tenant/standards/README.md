@@ -12,7 +12,7 @@ This page serves as an overview of CIPP Standards. For the technical components 
 
 ## **Standards Overview**
 
-Standards in CIPP ensure consistent configurations across your Microsoft 365 tenants by reapplying baseline settings **every twelve hours** or evaluating drift **every twelve hours**. This automatic enforcement and drift detection prevents unauthorized changes and helps maintain security. There are two kinds of standards:
+Standards in CIPP ensure consistent configurations across your Microsoft 365 tenants by reapplying baseline settings **every twelve hours** or evaluating drift **every twelve hours**. This automatic enforcement and drift detection prevents unauthorised changes and helps maintain security. There are two kinds of standards:
 
 * Standards: These are the traditional standards that you've known and loved in CIPP for quite a while now. These standards are automatically enforced every twelve hours. Options for these standards are Report, Alert, and Remediate from [#actions](./#actions "mention").
 * Drift Management: New in v 8.3, Drift Management allows for you to manage client environments with a much finer touch. These templates evaluate every twelve hours and allow for granular handling of anything that is out of alignment with the template. As such, Drift Management settings are automatically set to Report and Alert from the [#actions](./#actions "mention") below. To learn more about what you can do with Drift Management, see [drift.md](../manage/drift.md "mention").
@@ -73,7 +73,7 @@ For ease of reference, standards are grouped within the following categories. Th
 
 | Category             | Description                                                                       |
 | -------------------- | --------------------------------------------------------------------------------- |
-| Global Standards     | Applied across all tenants to manage organization-wide configurations.            |
+| Global Standards     | Applied across all tenants to manage organisation-wide configurations.            |
 | Exchange Standards   | Email-related settings such as spam protection and message handling.              |
 | Defender Standards   | Security measures to protect against phishing, malware, and other threats.        |
 | Intune Standards     | Device and application management policies for a secure Intune environment.       |
@@ -82,7 +82,7 @@ For ease of reference, standards are grouped within the following categories. Th
 
 ### **Impact Levels**
 
-Each standard is labeled based on the level of change it introduces and its impact on users:
+Each standard is labelled based on the level of change it introduces and its impact on users:
 
 | Impact | Description                                                                                     |
 | ------ | ----------------------------------------------------------------------------------------------- |
@@ -97,11 +97,11 @@ Each standard is labeled based on the level of change it introduces and its impa
 * **Deselecting Standards:** Deselecting a standard prevents it from being enforced in future cycles, but it does not undo its current configuration.
   * **Example:** If you deselect `"Enable FIDO2 capabilities`," the standard will stop enforcing this policy. However, if FIDO2 was already enabled, it will remain enabled.
 * **Application Cadence:** Standards reapply **every twelve hours** by default. If a setting changes outside of the standard, it will be overridden by the value specified in the standard during the next reapplication cycle. Drift Management are evaluated **every twelve hours**.
-* **License-Aware Skipping:** If a tenant is not licensed for a setting included in a template (e.g., a Conditional Access standard applied to a tenant with no Entra P1), that standard is skipped for that tenant — not failed. This is reflected in the **License Missing Percentage** and **Combined Alignment Score** columns on the [Standards & Drift Alignment](alignment/) page. This means it is safe to apply a mixed-license template across tenants; un-licensed settings will not be attempted.
+* **Licence-Aware Skipping:** If a tenant is not licensed for a setting included in a template (e.g., a Conditional Access standard applied to a tenant with no Entra P1), that standard is skipped for that tenant — not failed. This is reflected in the **License Missing Percentage** and **Combined Alignment Score** columns on the [Standards & Drift Alignment](alignment/) page. This means it is safe to apply a mixed-licence template across tenants; un-licensed settings will not be attempted.
 {% endhint %}
 
 {% hint style="info" %}
-Plans exist to implement more standardized options and settings. If there's a standard that you want, see the "Feature Requests / Ideas" section below.
+Plans exist to implement more standardised options and settings. If there's a standard that you want, see the "Feature Requests / Ideas" section below.
 {% endhint %}
 
 ***

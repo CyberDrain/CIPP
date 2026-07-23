@@ -84,7 +84,7 @@ To make the most of your session, have the following ready:
 
 #### **4. Notifications and Mailbox Setup**
 
-* Have a **mailbox license** ready for the CIPP Service Account.
+* Have a **mailbox licence** ready for the CIPP Service Account.
   * This will be converted into a **shared mailbox** during onboarding.
 
 ***
@@ -125,7 +125,7 @@ To build on your onboarding success:
 
 1. **Refine Your Standards**:
    * Adjust your **“AllTenants” Standard** to align with business needs.
-2. **Finalize Notifications**:
+2. **Finalise Notifications**:
    * Test and confirm email notifications for critical alerts.
 3. **Expand GDAP**:
    * Use the **GDAP Invite Wizard** to onboard additional customers efficiently.

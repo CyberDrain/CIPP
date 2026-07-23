@@ -25,7 +25,7 @@ Click `Check For Updates` to check and see if there is a newer version of CIPP a
 
 <summary>Cache</summary>
 
-You can clear the cached information used by the tenant selector, best practices analyzer, and domain analyzer features.
+You can clear the cached information used by the tenant selector, best practices analyser, and domain analyser features.
 
 {% hint style="warning" %}
 Clearing this cache can severely impact performance of your CIPP instance and will also remove any personal settings such as the selected theme.
@@ -67,12 +67,12 @@ Click `Manage Backups` to launch the [backup.md](backup.md "mention") settings p
 
 <summary>Branding Settings</summary>
 
-Customize your organization's branding for reports and documents. Changes will be applied to all generated reports.
+Customise your organisation's branding for reports and documents. Changes will be applied to all generated reports.
 
 Set your preferred:
 
 * **Logo:** Recommended format is PNG. Max file size is 2MB. Optimal size is 200x100px.
-* **Brand Color:** This color will be used for accents and highlights in reports
+* **Brand Color:** This colour will be used for accents and highlights in reports
 
 </details>
 
@@ -80,7 +80,7 @@ Set your preferred:
 
 <summary>DNS Resolver</summary>
 
-You can switch providers to either Google or Cloudflare for your domain analyzer results.
+You can switch providers to either Google or Cloudflare for your domain analyser results.
 
 </details>
 

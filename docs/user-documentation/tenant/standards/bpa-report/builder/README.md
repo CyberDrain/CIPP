@@ -1,6 +1,6 @@
 # Custom Reports
 
-CIPP's custom reporting functionality empowers advanced users to create tailored reports for any best practice scenarios you can imagine. While CIPP includes multiple default reports that are rapidly expanding, custom reports let you take control of exactly what data is presented. By defining your own templates, you can specify APIs, commands, and display styles to meet unique organizational needs.
+CIPP's custom reporting functionality empowers advanced users to create tailored reports for any best practice scenarios you can imagine. While CIPP includes multiple default reports that are rapidly expanding, custom reports let you take control of exactly what data is presented. By defining your own templates, you can specify APIs, commands, and display styles to meet unique organisational needs.
 
 ***
 

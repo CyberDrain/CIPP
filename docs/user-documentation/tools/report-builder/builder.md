@@ -28,11 +28,11 @@ For Test Result and Database Data blocks, you will have to select the source inf
 {% step %}
 ### Click Add Block
 
-Repeat as necessary before proceeding to reviewing the blocks and further organization.
+Repeat as necessary before proceeding to reviewing the blocks and further organisation.
 {% endstep %}
 {% endstepper %}
 
-## Report Organization
+## Report Organisation
 
 ### Block Header Info
 
@@ -47,7 +47,7 @@ The block header includes some basic information about the block.
 
 ### Block Actions
 
-Each card has actions that can help you with organizing the report layout:
+Each card has actions that can help you with organising the report layout:
 
 * Edit: Available on cards that draw from test data, this action will convert the card to static information and allow you to edit the presented text.
 * Revert to Live Data: Available on cards that draw from test data that have been edited. This will revert the card to its default state.

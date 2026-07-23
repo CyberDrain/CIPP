@@ -16,7 +16,7 @@ Compliance reporting for standards is limited to only those standards included i
 
 #### What Does Drift Management Do?
 
-Drift Management is a more managed approach to tenant monitoring. Ideally, you create fewer templates as each tenant can only have one template applied. Drift Management is evaluated every twelve hours. You can optionally select to have certain settings in the template set to automatically remediate if they are found to be out of alignment with the settings in the template. This behavior is similar to Standards for those settings that you identify must be applied across all tenants assigned to the template.
+Drift Management is a more managed approach to tenant monitoring. Ideally, you create fewer templates as each tenant can only have one template applied. Drift Management is evaluated every twelve hours. You can optionally select to have certain settings in the template set to automatically remediate if they are found to be out of alignment with the settings in the template. This behaviour is similar to Standards for those settings that you identify must be applied across all tenants assigned to the template.
 
 #### What Visibility Does Drift Management Provide?
 
@@ -38,21 +38,21 @@ You only need a separate Classic template alongside Drift when you want to overr
 
 ### Mixing All-Tenants, Groups, and Tenant Overrides
 
-A common pattern that works well for MSPs with a mixed-license customer base:
+A common pattern that works well for MSPs with a mixed-licence customer base:
 
-1. **One Classic standard, assigned to All Tenants**, containing the settings you want enforced everywhere regardless of license — enable audit log, anonymous reporting, helpdesk email as a security contact, etc.
-2.  **One Drift template per license tier or customer segment**, assigned via tenant groups. For example:
+1. **One Classic standard, assigned to All Tenants**, containing the settings you want enforced everywhere regardless of licence — enable audit log, anonymous reporting, helpdesk email as a security contact, etc.
+2.  **One Drift template per licence tier or customer segment**, assigned via tenant groups. For example:
 
     * An _Education_ tenant group → Drift template with Entra P1-dependent settings (Conditional Access, App Protection policies).
     * A _Business Standard_ tenant group → Drift template with the Security Defaults standard and other settings appropriate for tenants without Entra P1.
 
-    Tenant groups can be **static** (you add tenants manually) or **dynamic** (membership based on a license SKU or a tenant custom variable), letting group membership follow tenant state automatically. See [Tenant Groups](../../user-documentation/tenant/administration/tenants/groups/) for setup.
+    Tenant groups can be **static** (you add tenants manually) or **dynamic** (membership based on a licence SKU or a tenant custom variable), letting group membership follow tenant state automatically. See [Tenant Groups](../../user-documentation/tenant/administration/tenants/groups/) for setup.
 3. **Tenant-specific Classic templates for one-off variances.** If one client needs `Set SharePoint File Version Limits` set to 200 but your group-level drift template has 100, create a Classic template containing **only** that one standard set to 200 and assign it directly to that tenant. Per the [precedence rules](../../user-documentation/tenant/standards/#precedence-of-standards), the tenant-specific Classic will win for that setting.
 
 This pattern keeps your group-level templates clean and your exceptions visible and named, without duplicating the rest of the configuration.
 
 {% hint style="info" %}
-Because license-incompatible settings are automatically skipped, you _can_ lump everything into one big template — but the group-based pattern above gives you cleaner alignment reporting and makes "why is this tenant non-compliant?" easier to answer.
+Because licence-incompatible settings are automatically skipped, you _can_ lump everything into one big template — but the group-based pattern above gives you cleaner alignment reporting and makes "why is this tenant non-compliant?" easier to answer.
 {% endhint %}
 
 ***

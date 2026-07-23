@@ -8,7 +8,7 @@ description: Streamline group creation across multiple tenants in Microsoft 365
 
 The Deploy Group Templates page provides an interface for creating and deploying group templates in Microsoft 365. This feature offers an easy and efficient way to manage group creation, allowing users to select from a list of pre-defined templates and apply them across chosen tenants.
 
-This document provides a step-by-step guide on how to navigate and utilize the Deploy Group Templates page.
+This document provides a step-by-step guide on how to navigate and utilise the Deploy Group Templates page.
 
 {% stepper %}
 {% step %}
@@ -28,7 +28,7 @@ However, you have the flexibility to adjust the options as needed:
 * **Group Display Name**: Enter the name that will be displayed for the group.
 * **Group Description**: Provide a brief description of the group. This field is optional.
 * **Group Username**: Specify the username for the group.
-* **Let people outside the organization email the group**: Check this box if you want the group to be able to receive emails from outside the organization. This option is available only for Distribution Groups.
+* **Let people outside the organization email the group**: Check this box if you want the group to be able to receive emails from outside the organisation. This option is available only for Distribution Groups.
 * **Membership Rule**: If you chose Dynamic Group as the group type, you can specify the rule for membership here.
 
 Remember, the options presented depend on the Group Type selected. For instance, the "Membership Rule" field only appears if you select "Dynamic Group" as the Group Type.

@@ -1,5 +1,5 @@
 ---
-description: Components of a Best Practice Analyzer Report Template
+description: Components of a Best Practice Analyser Report Template
 hidden: true
 ---
 
@@ -10,7 +10,7 @@ hidden: true
 **a. `name`**
 
 * **Description**: The title or identifier of the report.
-* **Purpose**: Helps users recognize the purpose of the report.
+* **Purpose**: Helps users recognise the purpose of the report.
 *   **Example**:
 
     ```json
@@ -36,7 +36,7 @@ hidden: true
 **a. `name`**
 
 * **Description**: Identifies each category or set of data within the report.
-* **Purpose**: Organizes the data into logical sections.
+* **Purpose**: Organises the data into logical sections.
 *   **Example**:
 
     ```json
@@ -176,7 +176,7 @@ Here’s a complete example combining all components:
 }
 ```
 
-This structure ensures clear, actionable insights while offering flexibility for customization. Let me know if you'd like further explanation or a specific example tailored to your needs!
+This structure ensures clear, actionable insights while offering flexibility for customisation. Let me know if you'd like further explanation or a specific example tailored to your needs!
 
 ***
 

@@ -6,7 +6,7 @@ If you have Hudu behind Cloudflare Zero Trust Tunnel, please also set up the [cl
 
 The Hudu integration provides several different options to give you control over what is synchronised from CIPP to Hudu.
 
-Data is synchronized automatically once every 24 hours from Microsoft 365 / CIPP to Hudu. This is scheduled once you save the extension and map your tenants.
+Data is synchronised automatically once every 24 hours from Microsoft 365 / CIPP to Hudu. This is scheduled once you save the extension and map your tenants.
 
 {% hint style="info" %}
 For User and Device information a Rich Text field called "Microsoft 365" is used. This field is created after the first sync once you've set your Field Mappings to the appropriate asset layout.
@@ -37,7 +37,7 @@ You should now be ready to configure settings inside CIPP
 3. Please enter the FQDN you use to connect to Hudu:
    * https://yoursubdomain.huducloud.com or a self hosted address
 4. Enter the API Key you created in Hudu.
-5. Set the configuration to enabled to enable automatic synchronization once every 24 hours. You can optionally reschedule next sync date if you want to ensure the sync only runs outside of business hours.
+5. Set the configuration to enabled to enable automatic synchronisation once every 24 hours. You can optionally reschedule next sync date if you want to ensure the sync only runs outside of business hours.
 6. Choose which assets you want to sync, including device serials you want to exclude from sync.
 7. Click the Submit button.
 8. Once the settings are saved click the '**Test Extension**' you should see a message at the top of the page saying '**Successfully Connected to Hudu Version: current version**', if you do not see this please check your API Key and FQDN.
@@ -49,7 +49,7 @@ After the API settings are set you can now map Hudu Assets to Microsoft 365 / CI
 #### **Organization Mapping**
 
 1. Go to the **Tenant Mapping Table.**
-2. You have two options for mapping organizations
+2. You have two options for mapping organisations
    * Manually pick the Hudu Company from the dropdown lists and match them to the Microsoft 365 tenants. Then click the Set Mappings button.
    * Select the **Automap Hudu Organizations** button.
      * This will try to match Microsoft 365 tenants where the name exactly matches in both.

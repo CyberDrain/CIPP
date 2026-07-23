@@ -24,7 +24,7 @@
 
 {% @storylane/embed subdomain="app" linkValue="3flrrb5hvfn6" url="https://app.storylane.io/share/3flrrb5hvfn6" %}
 
-### Setting up location-based alerting, without a P1 license
+### Setting up location-based alerting, without a P1 licence
 
 {% @storylane/embed subdomain="app" linkValue="t5z84gfmzoec" url="https://app.storylane.io/share/t5z84gfmzoec" %}
 

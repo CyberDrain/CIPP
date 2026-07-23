@@ -47,7 +47,7 @@ Additional columns exist for informational purposes. Information from those colu
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Add/Modify DKIM Selectors</td><td>This will allow you to update the DKIM Selectors for the selected domain(s)</td><td>true</td></tr><tr><td>Delete from analyser</td><td>Deletes the selected domain(s) from the analyser</td><td>true</td></tr><tr><td>More Info</td><td>This opens an enhanced Extended Info flyout. Here you can view further detail on each test performed. Success/failure is easy to identify through the use of standard red/green colored icons next to each test. Additional features can help you review the results and dig deeper:</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Add/Modify DKIM Selectors</td><td>This will allow you to update the DKIM Selectors for the selected domain(s)</td><td>true</td></tr><tr><td>Delete from analyser</td><td>Deletes the selected domain(s) from the analyser</td><td>true</td></tr><tr><td>More Info</td><td>This opens an enhanced Extended Info flyout. Here you can view further detail on each test performed. Success/failure is easy to identify through the use of standard red/green coloured icons next to each test. Additional features can help you review the results and dig deeper:</td><td>false</td></tr></tbody></table>
 
 ### Reviewing the Extended Information Panel
 

@@ -64,7 +64,7 @@ For full authentication examples, usage patterns, and endpoint information, see 
 
 ## CIPP MCP
 
-The CIPP MCP allows you to add CIPP to any AI you use and immediately talk to it in natural language. For example, you can ask "List all tenants with unassigned licenses" or "list all users for tenant MySpecialTenant.com". To set up the MCP, follow these instructions:
+The CIPP MCP allows you to add CIPP to any AI you use and immediately talk to it in natural language. For example, you can ask "List all tenants with unassigned licences" or "list all users for tenant MySpecialTenant.com". To set up the MCP, follow these instructions:
 
 {% stepper %}
 {% step %}

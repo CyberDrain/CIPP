@@ -4,7 +4,7 @@ description: Deploy applications using the Microsoft Store.
 
 # Add Store App
 
-You can add an application deployment utilizing the Microsoft Store by executing this wizard.
+You can add an application deployment utilising the Microsoft Store by executing this wizard.
 
 {% stepper %}
 {% step %}

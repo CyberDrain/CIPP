@@ -75,7 +75,7 @@ Select "Add Direct Tenant" and click "Next Step"
 Click the "Connect to Tenant" button. Use a service account with equivalent permissions as the partner tenant. More information on these roles can be found under [recommended-roles.md](../maintaining-cipp/recommended-roles.md "mention").
 
 {% hint style="info" %}
-Be sure to Consent on behalf of the organization to prevent any prompting for future users that may log into CIPP, such as a comanaged client technician.
+Be sure to Consent on behalf of the organisation to prevent any prompting for future users that may log into CIPP, such as a comanaged client technician.
 {% endhint %}
 {% endstep %}
 
@@ -94,7 +94,7 @@ Do not attempt to add your partner tenant as a direct tenant. This will result i
 
 There are limitations to what CIPP can do with directly added tenants due to some features relying on Lighthouse, Partner Center APIs or authentication via GDAP;
 
-* Admin Portal Links - These utilize the GDAP relationship to log in as your CSP user. You will have to log in to the portal with an account native to the tenant
+* Admin Portal Links - These utilise the GDAP relationship to log in as your CSP user. You will have to log in to the portal with an account native to the tenant
 * Alerts - There are certain alerts that will only work with GDAP/Lighthouse
   * Alert if Defender is not running
   * Alert if Defender Malware found

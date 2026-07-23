@@ -1,6 +1,6 @@
 # Mappings
 
-Custom data mappings are used to synchronize custom data to directory objects.
+Custom data mappings are used to synchronise custom data to directory objects.
 
 ## Action Buttons
 

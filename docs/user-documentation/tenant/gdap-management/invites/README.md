@@ -1,5 +1,5 @@
 ---
-description: Easily find all the valid unused GDAP invites in your partner organization.
+description: Easily find all the valid unused GDAP invites in your partner organisation.
 ---
 
 # Invites

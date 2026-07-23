@@ -8,7 +8,7 @@ Explain functionality.
 
 ### Settings
 
-customize settings for best experience.
+customise settings for best experience.
 
 ## Managing Users
 

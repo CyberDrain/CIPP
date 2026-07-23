@@ -1,6 +1,6 @@
 # Message Viewer
 
-The Message Viewer is a tool that allows users to view and analyze EML (Electronic Mail) files. EML files are commonly used to store email messages and can be opened and viewed with various email clients. There are two ways to review files:
+The Message Viewer is a tool that allows users to view and analyse EML (Electronic Mail) files. EML files are commonly used to store email messages and can be opened and viewed with various email clients. There are two ways to review files:
 
 ## File Upload
 

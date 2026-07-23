@@ -39,8 +39,8 @@ The available settings will change depending on the type of group you are editin
   * Send Copies of team emails and events to team members inboxes - If selected, it enables sending copies of team emails and events to the inboxes of team members.
 * Hide group mailbox from Outlook - If selected, it will hide the mailbox from the Global Address List
 * Security Enabled - Allows you to change the security enabled attribute of a Microsoft 365 group.
-* Add Licenses - Select licenses from the tenant that will be added to those assigned to members of the group.
-* Remove Licenses - Remove licenses from group assignment. Note that this will also remove the license from any user that is a member of the group that does not have a direct assignment of that license.
+* Add Licenses - Select licences from the tenant that will be added to those assigned to members of the group.
+* Remove Licenses - Remove licences from group assignment. Note that this will also remove the licence from any user that is a member of the group that does not have a direct assignment of that licence.
 
 ***
 

@@ -60,7 +60,7 @@ Some values have special display settings for ease of reading.
 
 | Value Type | Description                                                                                                                                                                                                                             |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Boolean    | Columns that display information in a Boolean will utilize a graphical representation instead of `true` and `false`. The value for `true` will display as a check mark. The value for `false` will display as a circle with an X in it. |
+| Boolean    | Columns that display information in a Boolean will utilise a graphical representation instead of `true` and `false`. The value for `true` will display as a check mark. The value for `false` will display as a circle with an X in it. |
 | Table      | Columns that return data in a complex list will an orange button with the number of items in the list. Clicking the button will open a modal that will display a second table with the contents of that list.                           |
 
 ## Column Resizing

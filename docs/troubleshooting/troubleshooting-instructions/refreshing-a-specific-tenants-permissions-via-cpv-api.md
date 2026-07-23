@@ -37,7 +37,7 @@ Sometimes, a manual CPV refresh might be needed in the following scenarios:
 **Important Considerations**
 
 * **Automatic vs. Manual Refresh:** While permissions are automatically refreshed nightly, a manual refresh ensures immediate application of changes, such as new tenants or updated permissions.
-* **Permission Notifications:** Pay close attention to the permissions that the system indicates have been applied. This is especially crucial if the tenant does not have a specific license available.
+* **Permission Notifications:** Pay close attention to the permissions that the system indicates have been applied. This is especially crucial if the tenant does not have a specific licence available.
 {% endhint %}
 
 ## What Happens During the Refresh / Reset?

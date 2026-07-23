@@ -2,7 +2,7 @@
 description: >-
   This guide will walk you through the process of setting up standards in CIPP.
   Follow these instructions to configure and run standards for your
-  organization.
+  organisation.
 ---
 
 # Standards Setup
@@ -17,7 +17,7 @@ For more information on Standards, what they are, and where to find the availabl
 
 ## **Purpose**
 
-This guide walks you through setting up **Standards** in CIPP for the first time. It focuses on applying and managing standards to maintain security and compliance across your organization.
+This guide walks you through setting up **Standards** in CIPP for the first time. It focuses on applying and managing standards to maintain security and compliance across your organisation.
 
 ## **Accessing Standards**
 
@@ -43,12 +43,12 @@ Turning off **Remediate** prevents future fixes but doesn’t undo changes alrea
   * An **impact label** (Low, Medium, High) to indicate user impact.
 * Review these details to ensure changes align with your needs.
 
-## Customizing Standards
+## Customising Standards
 
 ### Input Fields
 
 * Some standards require settings, like custom text fields or dropdown selections.
-* Enter the required values to customize the standard.
+* Enter the required values to customise the standard.
 
 ### Categories
 
@@ -83,6 +83,6 @@ Turning off **Remediate** prevents future fixes but doesn’t undo changes alrea
 
 * Standards automatically reapply settings every **12 hours** for consistency.
 * Categories and templates simplify management across multiple tenants.
-* Customization and manual runs give you flexibility to meet tenant-specific needs.
+* Customisation and manual runs give you flexibility to meet tenant-specific needs.
 
 By following these steps, you’ll ensure your M365 tenants remain secure, consistent, and compliant with minimal manual effort.

@@ -15,7 +15,7 @@ These page actions are nearly identical to the [#table-actions](../../../identit
 
 ## Device Details
 
-This card will output some basic information about the device and the information you can gather from Intune. This includes hardware details like manufacturer, model, serial number, etc. in addition to Intune compliance status, enrollment date, etc.
+This card will output some basic information about the device and the information you can gather from Intune. This includes hardware details like manufacturer, model, serial number, etc. in addition to Intune compliance status, enrolment date, etc.
 
 ## Compliance Policies
 

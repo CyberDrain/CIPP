@@ -38,9 +38,9 @@ Generating an installer token: See this [community script](https://forums.mspgee
 | ------------------------------- | -------------------------------------------------- |
 | Intune Application Display Name | Name the application will appear as in MEM         |
 | Account Key                     | Your MSP account key                               |
-| Organization Key                | Identifier for the client organization in Huntress |
+| Organization Key                | Identifier for the client organisation in Huntress |
 
-Huntress documentation on specifics of how to name organization keys can be found [here](https://support.huntress.io/hc/en-us/articles/4404012734227-Using-Account-Keys-Organization-Keys-and-Agent-Tags).
+Huntress documentation on specifics of how to name organisation keys can be found [here](https://support.huntress.io/hc/en-us/articles/4404012734227-Using-Account-Keys-Organization-Keys-and-Agent-Tags).
 
 ### ImmyBot
 

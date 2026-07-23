@@ -16,7 +16,7 @@ Opens the [create-ca-template.md](create-ca-template.md "mention") page.
 
 <summary>Browse Catalog</summary>
 
-This flyout will allow you to browse various catalog sources, i.e. Open Intune Baseline, to import any additional policy templates you would like. Select the source, review the available templates, and click the `Import` button on any templates you would like to add.
+This flyout will allow you to browse various catalogue sources, i.e. Open Intune Baseline, to import any additional policy templates you would like. Select the source, review the available templates, and click the `Import` button on any templates you would like to add.
 
 </details>
 

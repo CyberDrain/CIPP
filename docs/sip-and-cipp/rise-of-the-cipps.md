@@ -16,7 +16,7 @@ This session provided an overview of key functionality within CIPP. Topics inclu
 ### Learning Objectives
 
 1. **User Management:** Learn to manage user information efficiently, including editing user details and understanding various quick action features within the Off Canvas flyout.
-2. **Effective Use of Templates:** Understand the role of templates in streamlining data collection and management, emphasizing the benefits of template-based data organization over manual.
+2. **Effective Use of Templates:** Understand the role of templates in streamlining data collection and management, emphasising the benefits of template-based data organisation over manual.
 3. **Task Automation with Scheduler:** Gain insights into automating repetitive tasks using the scheduler and the importance of immediate task execution post-scheduling.
 4. **Understanding the New Scheduling Engine:** Explore the enhanced functionalities of the new scheduling engine, focusing on its advanced task planning and execution capabilities.
 
@@ -27,16 +27,16 @@ This session provided an overview of key functionality within CIPP. Topics inclu
 1. **User Management via Off Canvas Flyout:**
    * Discussed the Off Canvas flyout's capabilities for managing user attributes, including editing details, adding aliases, and changing domain names.
    * Highlighted quick actions within the flyout, such as `Research Compromised Account` (formerly known as BEC) and `Create Temporary Access Password`.
-   * Emphasized the convenience and efficiency of this feature for user management tasks.
-2. **Utilizing Templates for Data Management:**
-   * Focused on the use of templates as an efficient method for gathering and organizing information.
+   * Emphasised the convenience and efficiency of this feature for user management tasks.
+2. **Utilising Templates for Data Management:**
+   * Focused on the use of templates as an efficient method for gathering and organising information.
    * Advised against manual data manipulation, recommending the use of the templating engine for optimal efficiency.
    * Stressed the importance of templates for streamlined data management processes.
 3. **Automation with Scheduler Tasks:**
    * Explored the functionality of adding tasks to a schedule and the immediate execution of these tasks upon the next scheduler trigger.
    * Discussed the benefits of automating repetitive tasks using the scheduler, enhancing overall workflow efficiency.
 4. **Capabilities of the New Scheduling Engine:**
-   * Showcased the functionalities of the new scheduling engine, emphasizing its advanced task planning and execution capabilities.
+   * Showcased the functionalities of the new scheduling engine, emphasising its advanced task planning and execution capabilities.
    * Discussed the different options available in the scheduling engine and their practical applications.
 5. **Handling Compromised Accounts with Research Compromised Account Feature:**
    * Addressed the process of handling compromised user accounts using the `Research Compromised Account` feature.
@@ -203,15 +203,15 @@ This session provided an overview of key functionality within CIPP. Topics inclu
 
 1. **Using CIPP for Development Tenants:**
    * Resource: [CIPP Setup and Installation for Own Tenant](https://docs.cipp.app/setup/installation/owntenant)
-   * Context: Guidance for setting up CIPP in a development environment, particularly for non-Partner tenants. This resource is useful for those looking to demonstrate CIPP's capabilities within their own organization.
+   * Context: Guidance for setting up CIPP in a development environment, particularly for non-Partner tenants. This resource is useful for those looking to demonstrate CIPP's capabilities within their own organisation.
 2. **Improving CIPP Performance:**
    * Resource: [CIPP Setup - Run from Package Mode](https://docs.cipp.app/setup/installation/runfrompackage)
-   * Context: Instructions on how to enable 'Run from Package' mode in CIPP to enhance application performance. This is particularly relevant for users seeking to optimize CIPP's operational speed.
+   * Context: Instructions on how to enable 'Run from Package' mode in CIPP to enhance application performance. This is particularly relevant for users seeking to optimise CIPP's operational speed.
 3. **Creating Demo Tenants with Microsoft CDX:**
    * Resource: [Microsoft Demos](https://demos.microsoft.com/)
    * Context: These resources provide steps for creating demo tenants using Microsoft's CDX platform. They include prerequisites, the process of tenant creation, and recommended settings for billing information. This is especially helpful for users needing to test or demo in controlled environments.
 4. **Custom Roles in CIPP:**
    * Resource: [CIPP Setup and Installation - Custom Roles](https://docs.cipp.app/setup/installation/roles#custom-roles)
-   * Context: This document provides information on setting up custom roles within CIPP, addressing the need for granular permissions. It's a valuable resource for organizations seeking to tailor access controls based on specific administrative needs.
+   * Context: This document provides information on setting up custom roles within CIPP, addressing the need for granular permissions. It's a valuable resource for organisations seeking to tailor access controls based on specific administrative needs.
 
 </details>

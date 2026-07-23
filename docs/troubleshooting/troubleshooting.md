@@ -10,11 +10,11 @@ Below are error codes that can occur in CIPP. Use this page to troubleshoot your
 
 ### Request not applicable to target tenant.
 
-The required license for this feature is not available for this tenant. Check the tenant's license information to ensure that it has the necessary license for the requested operation. Most seen around security tasks that require additional licensing like Entra ID P1 or Entra ID P2, for example.
+The required licence for this feature is not available for this tenant. Check the tenant's licence information to ensure that it has the necessary licence for the requested operation. Most seen around security tasks that require additional licensing like Entra ID P1 or Entra ID P2, for example.
 
-### Neither tenant is B2C or tenant doesn't have premium license
+### Neither tenant is B2C or tenant doesn't have premium licence
 
-This feature requires a P1 license or higher. Check the license information of your client's tenant to ensure that they have the necessary licenses.
+This feature requires a P1 licence or higher. Check the licence information of your client's tenant to ensure that they have the necessary licences.
 
 ### Response status code does not indicate success: 400 (Bad Request).
 
@@ -36,16 +36,16 @@ The relationship between this tenant and the partner has been dissolved from the
 
 Multiple Potential Causes:
 
-1. The user has not authorized the CIPP-SAM Application. Use the Settings -> Tenants -> Refresh button to refresh the permissions.
-2. The user that was used for the CIPP authorization is a guest in this tenant
+1. The user has not authorised the CIPP-SAM Application. Use the Settings -> Tenants -> Refresh button to refresh the permissions.
+2. The user that was used for the CIPP authorisation is a guest in this tenant
 3. You have not added the user to the correct group(s) for CIPP to function. See [recommended-roles.md](../setup/maintaining-cipp/recommended-roles.md "mention") for more information.
 
 ### AADSTS50020 or AADSTS50177
 
 Multiple Potential Causes:
 
-* The user has not authorized the CIPP-SAM Application. Use the Settings -> Tenants -> Refresh button to refresh the permissions.
-* The user that was used for the CIPP authorization is a guest in this tenant
+* The user has not authorised the CIPP-SAM Application. Use the Settings -> Tenants -> Refresh button to refresh the permissions.
+* The user that was used for the CIPP authorisation is a guest in this tenant
 * A Conditional Access policy may be blocking your access. Add your CSP tenant as a serviceProvider exception.
 * You have not added the user to the correct group(s) for CIPP to function. See [recommended-roles.md](../setup/maintaining-cipp/recommended-roles.md "mention") for more information.
 
@@ -72,21 +72,21 @@ The user does not have sufficient access rights to perform the operation or is m
 
 ### Device object was not found in the tenant 'xxxxxxxxxx' or 'UserPrincipal doesn't have the key ID configured'
 
-When executing the first authorization for CIPP, a trusted device was used. This device has been deleted from the Intune portal. Reauthorization is required by using the Setup Wizard "First Setup" option.
+When executing the first authorisation for CIPP, a trusted device was used. This device has been deleted from the Intune portal. Reauthorisation is required by using the Setup Wizard "First Setup" option.
 
 ### The provided grant has expired due to it being revoked, a fresh auth token is needed. The user might have changed or reset their password
 
-The user that authorized the CSP or Graph API connection has had their password changed, sessions revoked, or account disabled. Reauthorization is required by using the Setup Wizard "Refresh Tokens for existing application registration" option.
+The user that authorised the CSP or Graph API connection has had their password changed, sessions revoked, or account disabled. Reauthorisation is required by using the Setup Wizard "Refresh Tokens for existing application registration" option.
 
 ### We could not connect to the API to retrieve the permissions. There might be a problem with the secure application model configuration. The returned error is: Could not get token: invalid\_grant:AADSTS700003: Device object was not found in the tenant 'xxxxxxxxxx' directory.
 
-The device used during the SAM authorization is no longer registered or has been removed from Entra ID in the partner tenant. Reauthorization using the CIPP Service Account is required by using the Setup Wizard option "Refresh Tokens for existing application registration", on a compliant device if required.
+The device used during the SAM authorisation is no longer registered or has been removed from Entra ID in the partner tenant. Reauthorisation using the CIPP Service Account is required by using the Setup Wizard option "Refresh Tokens for existing application registration", on a compliant device if required.
 
 ### AADSTS50076: Due to a configuration change made by your administrator, or because you moved to a new location, you must use multi-factor authentication to access
 
 This error can have three causes.
 
-1. The user has not had MFA set up when performing authorization.
+1. The user has not had MFA set up when performing authorisation.
 2. The client has Conditional Access policies blocking CIPP's access. See the chapter about [conditionalaccess.md](../setup/installation/conditionalaccess.md "mention") to resolve.
 3. The CIPP-SAM application in the customer tenant is disabled for login. This can be remediated by doing the following:
    1. Navigate to the customer tenant and log in either via the partner relationship or a customer admin account.
@@ -100,7 +100,7 @@ This error occurs when a Conditional Access Policy has set the maximum lifetime.
 
 ### The token has expired
 
-The refresh token could not be retrieved and stored. The user must reauthorize.
+The refresh token could not be retrieved and stored. The user must reauthorise.
 
 ### The property 'LastGraphError' cannot be found on this object
 

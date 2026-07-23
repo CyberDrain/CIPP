@@ -8,7 +8,7 @@ description: View and manage your Microsoft 365 CSP tenants.
 When you select one of the portal links, the permissions of the currently logged in user are the ones that matter. The user's GDAP permissions will apply, not the CIPP service account.
 {% endhint %}
 
-The Tenant page provides the ability for you to jump to the specific tenant administration centers for that client using your individual partner tenant user credentials. Allowing you to administer that specific tenant.
+The Tenant page provides the ability for you to jump to the specific tenant administration centres for that client using your individual partner tenant user credentials. Allowing you to administer that specific tenant.
 
 Tenants are cached for 24 hours. By using the Clear Tenant Cache button in [settings](../../../cipp/settings/ "mention"), you are able to reload the tenants from the partner center immediately. Remember to also clear your browser cache.
 
@@ -19,7 +19,7 @@ Tenants are cached for 24 hours. By using the Clear Tenant Cache button in [sett
 | Name           | The tenant name.             |
 | Default Domain | The tenant's default domain. |
 
-The page also features several columns which contain links to the different Microsoft 365 administration centers for the tenant.
+The page also features several columns which contain links to the different Microsoft 365 administration centres for the tenant.
 
 ## Table Actions
 

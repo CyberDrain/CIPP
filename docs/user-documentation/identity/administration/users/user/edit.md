@@ -1,6 +1,6 @@
 # Edit User
 
-This page displays options for editing the user's properties, license assignment, password reset, and group memberships.
+This page displays options for editing the user's properties, licence assignment, password reset, and group memberships.
 
 ## Page Layout
 
@@ -26,13 +26,13 @@ This page displays options for editing the user's properties, license assignment
 
 ## License Management
 
-* **Current Licenses**
-  * Shows currently assigned licenses
-  * Drop down box allows you to multi-select the licenses you want the user to have after editing
-  * Option to remove all licenses (toggle) - When removing the final license on a user, this must be checked.
+* **Current Licences**
+  * Shows currently assigned licences
+  * Drop down box allows you to multi-select the licences you want the user to have after editing
+  * Option to remove all licences (toggle) - When removing the final licence on a user, this must be checked.
 * **Sherweb Integration** (if enabled)
-  * Auto-purchase option appears when licenses unavailable
-  * Select license SKU for purchase
+  * Auto-purchase option appears when licences unavailable
+  * Select licence SKU for purchase
   * System handles purchase and assignment
 
 ## Group Management
@@ -59,7 +59,7 @@ This page displays options for editing the user's properties, license assignment
 ## Notes
 
 * Changes take effect immediately upon saving
-* License changes require valid usage location
+* Licence changes require valid usage location
 * Password resets follow complexity requirements
 * Group membership changes are processed in order (removals then additions)
 * On-premises synced accounts show warning about limited editability

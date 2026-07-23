@@ -42,7 +42,7 @@ The output of these checks includes information that may be possible for you to 
 {% endhint %}
 
 {% hint style="warning" %}
-**Privacy Note**: Anonymize any sensitive data in your screenshots before sharing them on our Discord community if you are planning to do so.
+**Privacy Note**: Anonymise any sensitive data in your screenshots before sharing them on our Discord community if you are planning to do so.
 {% endhint %}
 
 ***
@@ -52,7 +52,7 @@ The output of these checks includes information that may be possible for you to 
 * **Good Troubleshooting Message**:
   * _Example:_ "I've been getting the error "User not found" on all pages related to exchange. I have executed all checks and the screenshots are included. I can see the GDAP checks are failing but I'm not sure on my next steps. How do I continue?"
   * _Includes_: All three check screenshots, detailed issue description, and additional error screenshots or text if applicable.
-  * _Screenshots_: Clearly labeled and anonymized.
+  * _Screenshots_: Clearly labelled and anonymised.
 * **Ineffective Troubleshooting Message**:
   * _Example:_ "I am getting an error popup 500 on some pages"
   * _Lacks_: One or more required screenshots, detailed error description.

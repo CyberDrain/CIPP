@@ -6,7 +6,7 @@ description: API Authentication
 
 ## Setup
 
-Before being able to utilize the CIPP API, you need to first configure an API client via [cipp-api.md](../user-documentation/cipp/integrations/cipp-api.md "mention"). Once that is completed, come back to this page. You'll need the integration page still open to reference the necessary fields below for authentication.
+Before being able to utilise the CIPP API, you need to first configure an API client via [cipp-api.md](../user-documentation/cipp/integrations/cipp-api.md "mention"). Once that is completed, come back to this page. You'll need the integration page still open to reference the necessary fields below for authentication.
 
 {% hint style="warning" %}
 #### Self-Hosted Clients
@@ -82,7 +82,7 @@ This module is created and maintained by a community member. With CIPP's rapid d
 1. If you are calling CIPP from an external automation platform (e.g., n8n, Rewst, Power Automate), make sure your base URL includes the `/api` path (e.g., `https://your-cipp-domain.com/api`). Direct API calls need to target the Azure Functions backend, not the static frontend — without `/api`, your requests will hit the web interface and return HTML instead of the expected JSON responses
 2.  If you receive 400 (Bad Request) errors when first authenticating or testing your CIPP API connection (e.g. `Invoke-CIPPRestMethod: Response status code does not indicate success: 400 (Bad Request)`) your CIPP API app registration may be missing an Application ID URI.
 
-    To fix this, go to **Microsoft Entra ID → App registrations** in your tenant and open the app registration for your CIPP API (not a separate client registration, unless your setup uses one). Navigate to **Expose an API**. If the **Application ID URI** field at the top is empty, click **Add**. Azure will auto-suggest a URI in the format `api://{application-id}`. The default is fine, no need to customize it. Click **Save**.
+    To fix this, go to **Microsoft Entra ID → App registrations** in your tenant and open the app registration for your CIPP API (not a separate client registration, unless your setup uses one). Navigate to **Expose an API**. If the **Application ID URI** field at the top is empty, click **Add**. Azure will auto-suggest a URI in the format `api://{application-id}`. The default is fine, no need to customise it. Click **Save**.
 
     If your setup requires a custom scope (e.g., `access_as_user`), you may also need to add one under **Expose an API → Add a scope** and then grant that scope as an API permission on the client side.
 

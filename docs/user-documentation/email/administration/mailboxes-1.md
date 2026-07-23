@@ -1,6 +1,6 @@
 # HVE Accounts
 
-High Volume Email (HVE) accounts are purpose-built Exchange Online accounts for sending bulk internal mail from apps and devices, such as invoices, alerts, and LOB notifications, without consuming a user license or hitting standard mailbox throttling limits. Use this page to create an HVE account in the selected tenant and grab the SMTP settings needed to wire it into your application.
+High Volume Email (HVE) accounts are purpose-built Exchange Online accounts for sending bulk internal mail from apps and devices, such as invoices, alerts, and LOB notifications, without consuming a user licence or hitting standard mailbox throttling limits. Use this page to create an HVE account in the selected tenant and grab the SMTP settings needed to wire it into your application.
 
 ## Action Buttons
 

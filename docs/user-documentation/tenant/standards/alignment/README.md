@@ -20,7 +20,7 @@ This view shows you a high level overview of your tenant compliance with your st
 | Standard Name              | The name of the standard template the tenant is being aligned to                                                                                                                                                                  |
 | Standards Type             | `Classic Standard` or `Drift Standard`                                                                                                                                                                                            |
 | Alignment Score            | This shows the percentage of standards this tenant is in alignment with for the selected standards template                                                                                                                       |
-| License Missing Percentage | This shows the percentage of standards in the standard template that the tenant is not licensed for. 0% indicates that the tenant carries licenses necessary for all standards in the template.                                   |
+| License Missing Percentage | This shows the percentage of standards in the standard template that the tenant is not licensed for. 0% indicates that the tenant carries licences necessary for all standards in the template.                                   |
 | Combined Alignment Score   | This reweights alignment to account for the number of standards in the template that the tenant is not licensed for. If the tenant is not licensed for any of the features, they will not count against alignment in this column. |
 | Latest Data Collection     | Relative time since the last standards run to gather information needed to calculate the alignment report.                                                                                                                        |
 
@@ -39,7 +39,7 @@ This view breaks out the compliance review to a per standard basis to get an ove
 
 ### By Standard View
 
-Each standard row shows the total tenants it applies to, counts and percentages for each compliance status (compliant, non-compliant, accepted deviation, customer specific, license missing, reporting disabled), an alignment score, and the standard type(s) in use across tenants.
+Each standard row shows the total tenants it applies to, counts and percentages for each compliance status (compliant, non-compliant, accepted deviation, customer specific, licence missing, reporting disabled), an alignment score, and the standard type(s) in use across tenants.
 
 | Column                     | Description                                                                                                                                                                                     |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -49,7 +49,7 @@ Each standard row shows the total tenants it applies to, counts and percentages 
 | Total Tenants              | The number of tenants this standard applies to                                                                                                                                                  |
 | Tenants                    | A list of the tenants this standard applies to                                                                                                                                                  |
 | Compliance Percentage      | This shows the percentage of tenants who are in compliance with the standard                                                                                                                    |
-| License Missing Percentage | This shows the percentage of standards in the standard template that the tenant is not licensed for. 0% indicates that the tenant carries licenses necessary for all standards in the template. |
+| License Missing Percentage | This shows the percentage of standards in the standard template that the tenant is not licensed for. 0% indicates that the tenant carries licences necessary for all standards in the template. |
 | Aligned Count              | The total of tenants who are Compliant, Accepted Deviation, or Customer Specific                                                                                                                |
 | Compliant Count            | The count of tenants that are compliant                                                                                                                                                         |
 | Non Compliant Count        | The count of tenants that are non compliant                                                                                                                                                     |

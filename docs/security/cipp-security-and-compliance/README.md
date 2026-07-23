@@ -30,10 +30,10 @@ Data is hosted in the CyberDrain B.V. (Chamber of Commerce number 86594893) Azur
 
 ### **CyberDrain's Commitment to** Global Security Standards
 
-At CyberDrain, security is our top priority. To strengthen this commitment, we’re actively working toward ISO/IEC 27001 certification—a globally recognized standard for managing information security. Here’s why ISO/IEC 27001 is a great fit for us and our clients:
+At CyberDrain, security is our top priority. To strengthen this commitment, we’re actively working towards ISO/IEC 27001 certification—a globally recognised standard for managing information security. Here’s why ISO/IEC 27001 is a great fit for us and our clients:
 
 * **International Standard**: ISO/IEC 27001 is a widely respected benchmark for information security, underscoring our dedication to rigorous data protection.
 * **Holistic Security**: Covering people, processes, and technology, ISO/IEC 27001 enables us to manage sensitive information and mitigate risks across all areas of our operations.
-* **Client-Centered Focus**: With a strong emphasis on risk management and data protection, ISO/IEC 27001 aligns closely with our commitment to safeguarding client information.
+* **Client-Centred Focus**: With a strong emphasis on risk management and data protection, ISO/IEC 27001 aligns closely with our commitment to safeguarding client information.
 
 For the latest on our ISO/IEC 27001 certification please see the [CyberDrain Trust Center](https://trust.cyberdrain.com/) where you can subscribe to updates.

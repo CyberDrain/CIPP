@@ -1,6 +1,6 @@
 # Android Enterprise
 
-This page will display Android Enterprise enrollment profiles.
+This page will display Android Enterprise enrolment profiles.
 
 ## Table Details
 

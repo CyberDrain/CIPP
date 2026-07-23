@@ -1,9 +1,9 @@
 # Graph Explorer
 
-The Graph Explorer allows you to generate ad hoc reports using the Microsoft Graph API. Instead of a JSON representation the Graph object, Graph Explorer returns a table with exporting options. You can run any of the preset reports or enter your own settings to generate a report. This allows you to customize the data to your liking.
+The Graph Explorer allows you to generate ad hoc reports using the Microsoft Graph API. Instead of a JSON representation the Graph object, Graph Explorer returns a table with exporting options. You can run any of the preset reports or enter your own settings to generate a report. This allows you to customise the data to your liking.
 
 {% hint style="warning" %}
-Graph Explorer is a moderately advanced tool. Understanding the Microsoft Graph API and all of the various ways to interact and influence the output can be difficult to understand. If you get stuck trying to craft a query, please don't hesitate to ask questions in the CyberDrain Discord server or contact support if you are a sponsoring user/organization.
+Graph Explorer is a moderately advanced tool. Understanding the Microsoft Graph API and all of the various ways to interact and influence the output can be difficult to understand. If you get stuck trying to craft a query, please don't hesitate to ask questions in the CyberDrain Discord server or contact support if you are a sponsoring user/organisation.
 {% endhint %}
 
 ## Microsoft Graph
@@ -24,7 +24,7 @@ From "Select a query" dropdown at the top of the page, select the preset report 
 
 ### Running a Custom Query
 
-If what you are looking for is not one of the preset queries, click the "Edit Query" button to the right. This will open a flyout that will allow you to customize the Graph API request you'd like to make. You can optionally select a preset query to use as a starting point which will prepopulate the query settings from the preset.
+If what you are looking for is not one of the preset queries, click the "Edit Query" button to the right. This will open a flyout that will allow you to customise the Graph API request you'd like to make. You can optionally select a preset query to use as a starting point which will prepopulate the query settings from the preset.
 
 {% stepper %}
 {% step %}

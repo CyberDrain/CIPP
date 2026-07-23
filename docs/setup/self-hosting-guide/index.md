@@ -23,7 +23,7 @@ To get started you must follow or have the following ready. Click on the links f
 {% step %}
 #### GitHub Forks
 
-Fork each repository into your own GitHub organization so you can push updates, track changes, and deploy under your namespace.
+Fork each repository into your own GitHub organisation so you can push updates, track changes, and deploy under your namespace.
 
 * **CIPP Frontend Fork**: [GitHub Repo](https://github.com/KelvinTegelaar/CIPP)
 * **CIPP API Fork**: [GitHub Repo](https://github.com/KelvinTegelaar/CIPP-API)
@@ -42,10 +42,10 @@ CIPP uses Azure Static Web Apps (SWA) to deploy from GitHub. You’ll need a cla
 {% endstep %}
 
 {% step %}
-#### (Optional) Microsoft 365 Lighthouse License
+#### (Optional) Microsoft 365 Lighthouse Licence
 
-* **Recommended for MSP Usage**: A [Microsoft 365 Lighthouse license](https://learn.microsoft.com/en-us/microsoft-365/lighthouse/m365-lighthouse-sign-up?view=o365-worldwide#steps-to-sign-up-for-microsoft-365-lighthouse) is needed to access various API endpoints used in CIPP, but CIPP will function without it.
-* If you buy a Lighthouse license purely for CIPP, **remember to accept the EULA** in the [Lighthouse portal](https://lighthouse.microsoft.com/) to activate it.
+* **Recommended for MSP Usage**: A [Microsoft 365 Lighthouse licence](https://learn.microsoft.com/en-us/microsoft-365/lighthouse/m365-lighthouse-sign-up?view=o365-worldwide#steps-to-sign-up-for-microsoft-365-lighthouse) is needed to access various API endpoints used in CIPP, but CIPP will function without it.
+* If you buy a Lighthouse licence purely for CIPP, **remember to accept the EULA** in the [Lighthouse portal](https://lighthouse.microsoft.com/) to activate it.
 {% endstep %}
 
 {% step %}

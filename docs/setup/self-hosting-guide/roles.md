@@ -37,7 +37,7 @@ Given the extreme delays in permissions syncing if using the management portal (
 
 ### Built-In Roles
 
-CIPP features a role management system which utilizes the [Roles feature of Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/authentication-authorization?tabs=invitations#roles). The roles available in CIPP are as follows:
+CIPP features a role management system which utilises the [Roles feature of Azure Static Web Apps](https://learn.microsoft.com/en-us/azure/static-web-apps/authentication-authorization?tabs=invitations#roles). The roles available in CIPP are as follows:
 
 | Role Name  | Description                                                                                                                                                                           |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -89,5 +89,5 @@ If you are continuing to statically assign roles, the custom roles created in CI
 {% hint style="warning" %}
 Users previously directly added to the SWA or via the Management App will retain their settings from there. Adding those users via Entra group to a role with different permissions can cause errors in determining the user's access. It is recommended not to duplicate how you provide the user with permissions.
 
-If you continue to utilize SWA/Management App for role assignment, note that the roles do not sync so you will need to carefully type the role exactly as it appears in CIPP Roles for the role to properly apply.
+If you continue to utilise SWA/Management App for role assignment, note that the roles do not sync so you will need to carefully type the role exactly as it appears in CIPP Roles for the role to properly apply.
 {% endhint %}

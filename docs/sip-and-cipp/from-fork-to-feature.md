@@ -26,7 +26,7 @@ Our 4th Sip & CIPP session offered an immersive journey into the world of Open S
 <summary>Detailed Topic Coverage</summary>
 
 1. **Local Development Setup**:
-   * Kelvin emphasized the importance of mirroring the production environment in the local setup to avoid deployment issues.
+   * Kelvin emphasised the importance of mirroring the production environment in the local setup to avoid deployment issues.
    * He provided a step-by-step guide on setting up a local development environment, including navigating GitHub, managing branches, and finding specific files like standards.
 2. **Forking and Contribution**:
    * Participants were guided on creating forks of the CIPP repositories and the necessity of including a development branch in these forks.
@@ -39,7 +39,7 @@ Our 4th Sip & CIPP session offered an immersive journey into the world of Open S
    * The process of creating new standards, adding them to the front end, and the modularity of CIPP's architecture were highlighted.
 5. **Future Developments**:
    * Upcoming features and improvements, such as the rewrite of the events engine and new alerting rules, were discussed.
-   * Kelvin introduced the concept of if-else-then logic for alerts received through webhooks for more dynamic and customizable responses.
+   * Kelvin introduced the concept of if-else-then logic for alerts received through webhooks for more dynamic and customisable responses.
 
 </details>
 
@@ -57,7 +57,7 @@ Our 4th Sip & CIPP session offered an immersive journey into the world of Open S
 **A:** This can be achieved using new event-based remediations with a custom if-else-then script.
 
 **Q: How are the conversations going with direct CSP providers for integrations?**\
-**A:** Conversations with one tier-one CSP provider are progressing well, focusing on creating APIs for license purchases.
+**A:** Conversations with one tier-one CSP provider are progressing well, focusing on creating APIs for licence purchases.
 
 **Q: For the updated events engine, would it be possible to alert on a specific application taking action on a user?**\
 **A:** Yes, as long as the application's action is logged, the updated events engine can be configured to alert based on these logs.
@@ -75,7 +75,7 @@ Our 4th Sip & CIPP session offered an immersive journey into the world of Open S
   A detailed guide for setting up a local development environment for the CIPP React frontend. It includes recommendations for necessary tools and programs, such as Visual Studio Code, PowerShell, Git, Node.js, and .NET SDKs. The guide also covers the process of forking CIPP repositories and setting up the development environment.
 * [**Leveraging your CIPP-SAM app Blog Post (vdwegen.app):**](https://blog.vdwegen.app/posts/leveraging-cippsam-app/) This blog post discusses the core aspects of CIPP, focusing on the CIPP-SAM app. It explains that the app is created in the user's tenant during the first run of the Setup Wizard. The Setup Wizard stores several details of the app in a Keyvault resource in Azure, which are used for authentication​​.
 * [**CDX Tenants for Testing**](https://cdx.transform.microsoft.com/): CDX tenants are recommended for testing in the context of CIPP development, offering a controlled environment for practical experimentation.
-* [**MSPGeek Discord Community:**](https://discord.gg/mspgeek) It was mentioned that Microsoft is working on multi-factor authentication for third parties, with Duo already having an alpha version. Interested parties are suggested to inquire in the MSPGeek `#v-duo` channel for registration.
+* [**MSPGeek Discord Community:**](https://discord.gg/mspgeek) It was mentioned that Microsoft is working on multi-factor authentication for third parties, with Duo already having an alpha version. Interested parties are suggested to enquire in the MSPGeek `#v-duo` channel for registration.
 * [**Git MERGE vs REBASE: The Definitive Guide**](https://youtu.be/zOnwgxiC0OA?si=v5xMKkR9Ya4iXkpU)**:** A Git Tutorial for Beginners.
 
 </details>

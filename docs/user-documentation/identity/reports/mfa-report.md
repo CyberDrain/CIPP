@@ -3,7 +3,7 @@
 This report provides an overview of the Multi-Factor Authentication (MFA) status for all users within the tenant. It's a combination of the built in Entra MFA report and getting the Per User MFA state and combining them for a complete picture.
 
 {% hint style="info" %}
-**Note**: To utilize the Entra MFA report part of this report, the tenant must be licensed for Entra P1 or higher. Per-User MFA status will still function even if the tenant isn't licensed.
+**Note**: To utilise the Entra MFA report part of this report, the tenant must be licensed for Entra P1 or higher. Per-User MFA status will still function even if the tenant isn't licensed.
 {% endhint %}
 
 ## MFA Protection Criteria

@@ -16,7 +16,7 @@ Ensure temporary admin accounts aren't left active. CIPP lets you create account
 | Member Of - Id           | GUID of the admin role(s) the user is a part of         |
 
 {% hint style="warning" %}
-This table doesn't utilize a per-row Actions column like many of the other tables introduced with CIPP v7.
+This table doesn't utilise a per-row Actions column like many of the other tables introduced with CIPP v7.
 {% endhint %}
 
 ***

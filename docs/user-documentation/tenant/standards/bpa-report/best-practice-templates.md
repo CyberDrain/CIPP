@@ -31,10 +31,10 @@ _This setting is checking whether the tenant has set passwords to expire or not.
 
 ### **OAuth App Consent**
 
-* **What It Checks**: Ensures OAuth app consent policies are configured to restrict unauthorized data access.
+* **What It Checks**: Ensures OAuth app consent policies are configured to restrict unauthorised data access.
 * **Expected Setting**: Yes.
 
-_Allowing users to consent to applications can pose a security risk that needs mitigation. This best practice advises against permitting users to grant consent to apps using OpenID Connect or OAuth for sign-in and data access without administrative review. These applications may be created within your organization, by another Office 365 organization, or by third-party vendors. To enhance security, ensure that only administrators can approve app consents_
+_Allowing users to consent to applications can pose a security risk that needs mitigation. This best practice advises against permitting users to grant consent to apps using OpenID Connect or OAuth for sign-in and data access without administrative review. These applications may be created within your organisation, by another Office 365 organisation, or by third-party vendors. To enhance security, ensure that only administrators can approve app consents_
 
 ***
 
@@ -52,7 +52,7 @@ _The **Unified Audit Log** is the primary logging mechanism in Microsoft 365, co
 * **What It Checks**: Assesses if MFA registration nudges are enabled to encourage multi-factor authentication adoption.
 * **Expected Setting**: Yes.
 
-_Multi-Factor Authentication (MFA) is one of the most effective security measures to protect accounts from unauthorized access. Enabling the MFA registration campaign ensures users are encouraged to adopt MFA consistently._
+_Multi-Factor Authentication (MFA) is one of the most effective security measures to protect accounts from unauthorised access. Enabling the MFA registration campaign ensures users are encouraged to adopt MFA consistently._
 
 ***
 
@@ -67,10 +67,10 @@ _Modern authentication is a crucial security feature in Microsoft 365. It suppor
 
 ### **Anonymous Privacy Reports**
 
-* **What It Checks**: Verifies if user privacy settings enable anonymized data reporting, potentially limiting detailed insights.
+* **What It Checks**: Verifies if user privacy settings enable anonymised data reporting, potentially limiting detailed insights.
 * **Expected Setting**: Disabled.
 
-_Enabling privacy in reports is a subjective decision that often results in an orange warning status due to potential reporting challenges. For detailed and accurate reporting, disabling this feature is recommended as it enhances security benefits. However,_ [_Microsoft has been pseudonymizing user-level information by default_](https://techcommunity.microsoft.com/t5/microsoft-365-blog/privacy-changes-to-microsoft-365-usage-analytics/ba-p/2694137) _in many Microsoft 365 reports and APIs to protect user privacy and ensure compliance with local privacy laws._&#x20;
+_Enabling privacy in reports is a subjective decision that often results in an orange warning status due to potential reporting challenges. For detailed and accurate reporting, disabling this feature is recommended as it enhances security benefits. However,_ [_Microsoft has been pseudonymising user-level information by default_](https://techcommunity.microsoft.com/t5/microsoft-365-blog/privacy-changes-to-microsoft-365-usage-analytics/ba-p/2694137) _in many Microsoft 365 reports and APIs to protect user privacy and ensure compliance with local privacy laws._&#x20;
 
 ***
 
@@ -89,15 +89,15 @@ _To ensure sent items are saved in both the assistant's and manager's mailboxes,
 
 * **What It Checks**: Flags shared mailboxes with active user accounts attached, which could pose security risks.
 
-_Having shared mailboxes still linked to active user accounts can create a security risk. This situation arises when shared mailboxes, which should not have an enabled login, are associated with accounts that can still access the system. Commonly, this occurs after an employee leaves an organization, and their account is converted to a shared mailbox with the user license removed to cut costs. However, even after changing the password, the active account remains linked, posing a potential security threat._
+_Having shared mailboxes still linked to active user accounts can create a security risk. This situation arises when shared mailboxes, which should not have an enabled login, are associated with accounts that can still access the system. Commonly, this occurs after an employee leaves an organisation, and their account is converted to a shared mailbox with the user licence removed to cut costs. However, even after changing the password, the active account remains linked, posing a potential security threat._
 
 ***
 
 ### **Unused Licenses**
 
-* **What It Checks**: Reports on licenses purchased but not assigned, highlighting opportunities for cost optimization.
+* **What It Checks**: Reports on licences purchased but not assigned, highlighting opportunities for cost optimisation.
 
-_Unused licenses trigger an orange warning status. You can click the badge in this column to view these licenses. This feature checks all licenses in every tenant by comparing the purchased number to the consumed one. A discrepancy indicates you may be paying for licenses that are not in use. Free licenses and trials are excluded from this check. If you have additional licenses or SKUs you believe should be excluded, please raise a_ [_feature request_](https://github.com/KelvinTegelaar/CIPP/issues/new?assignees=\&labels=\&template=feature_request.md\&title=FEATURE+REQUEST%3A+) _in GitHub._&#x20;
+_Unused licences trigger an orange warning status. You can click the badge in this column to view these licences. This feature checks all licences in every tenant by comparing the purchased number to the consumed one. A discrepancy indicates you may be paying for licences that are not in use. Free licences and trials are excluded from this check. If you have additional licences or SKUs you believe should be excluded, please raise a_ [_feature request_](https://github.com/KelvinTegelaar/CIPP/issues/new?assignees=\&labels=\&template=feature_request.md\&title=FEATURE+REQUEST%3A+) _in GitHub._&#x20;
 
 ***
 
@@ -140,8 +140,8 @@ _Unused licenses trigger an orange warning status. You can click the badge in th
   * **Purpose:** Verifies Exchange Online properties like `UnifiedAuditLogIngestionEnabled`.
   * **Benefit:** Ensures compliance with audit logging requirements.
 * **Custom CIPP Functions:**
-  * **Purpose:** Extracts metrics like license usage and Secure Scores using tailored commands (e.g., `Get-CIPPLicenseOverview`).
-  * **Benefit:** Provides actionable insights for tenant optimization.
+  * **Purpose:** Extracts metrics like licence usage and Secure Scores using tailored commands (e.g., `Get-CIPPLicenseOverview`).
+  * **Benefit:** Provides actionable insights for tenant optimisation.
 
 ***
 

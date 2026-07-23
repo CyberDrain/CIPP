@@ -26,7 +26,7 @@ The Group Templates page allows administrators to define templates for creating 
 
 For some types of groups, additional fields become available when that type is selected:
 
-* **Allow External:** For Distribution Lists, a checkbox labeled "Let people outside the organization email the group" becomes available.
+* **Allow External:** For Distribution Lists, a checkbox labelled "Let people outside the organization email the group" becomes available.
 * **Dynamic Group Parameters:** For Dynamic Groups, a text box for entering the dynamic group parameters syntax becomes available e.g.: `(user.userPrincipalName -notContains "#EXT#@") -and (user.userType -ne "Guest")`.
 
 ## Table Actions

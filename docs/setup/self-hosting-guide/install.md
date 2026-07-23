@@ -50,7 +50,7 @@ You **must replace** the preset "GitHub Repository" fields with the URL of **you
 {% step %}
 #### Alternative (Central US) Deployment
 
-Azure Static Web Apps (SWA) is global by default (it picks the data center closest to you) however some regions don't support deployment. To work around this, use the alternative installation button below.
+Azure Static Web Apps (SWA) is global by default (it picks the data centre closest to you) however some regions don't support deployment. To work around this, use the alternative installation button below.
 
 **When to use**:
 
@@ -86,7 +86,7 @@ The key difference:
    * **GitHub Token**: Paste your **Personal Access Token**. (Make sure it has permissions to access and deploy from your forked repo.)
 3. **Select a Region**
    * Choose the region for your Key Vault, Function App, and Storage.
-   * **Note**: If you’re using the Alternative (Central US) template, SWA will still deploy in `centralus` automatically, but the rest of your resources honor this selected region.
+   * **Note**: If you’re using the Alternative (Central US) template, SWA will still deploy in `centralus` automatically, but the rest of your resources honour this selected region.
 4. **Review + Create**
    * Check your settings, especially the repository URLs.
    * Click **Review + create**, wait for validation, then **Create**.

@@ -73,7 +73,7 @@ Once all other steps are completed and all tenants show configured, click the "S
 
 ### About Drift Management Templates
 
-Drift Management templates provide continuous monitoring of tenant configurations to detect unauthorized changes. Each tenant can only have one drift template applied at a time. A drift template with auto-remediate enabled per-setting functions as a superset of a Classic Remediate standard for those settings, so you typically do not need to maintain parallel Classic + Drift templates with the same payloads.
+Drift Management templates provide continuous monitoring of tenant configurations to detect unauthorised changes. Each tenant can only have one drift template applied at a time. A drift template with auto-remediate enabled per-setting functions as a superset of a Classic Remediate standard for those settings, so you typically do not need to maintain parallel Classic + Drift templates with the same payloads.
 
 {% hint style="warning" %}
 Drift Management Timing & Alerts
@@ -89,7 +89,7 @@ Report & Alert
 For Drift Management templates, report and alert are automatically enabled from the available Standards [#actions](./#actions "mention").
 {% endhint %}
 
-* **Automatic Remediation:** Immediately reverts unauthorized changes back to the template configuration
+* **Automatic Remediation:** Immediately reverts unauthorised changes back to the template configuration
 * **Manual Remediation:** Sends email notifications for review, allowing you to accept or deny detected changes
 
 ### Key Features
@@ -182,7 +182,7 @@ On both the add and edit standards template page, you will see options for how t
 | Order           | This will alter the direction the selected "Sort By" is displayed. Options are "Ascending" and "Descending"                               |
 | Categories      | This will allow you to pick from the CIPP Standards categories to display only those you wish to review.                                  |
 | Impact          | This will allow you to pick from the CIPP defined standards Impact to display only those you wish to review.                              |
-| Recommended By  | This will allow you to pick from the different organizations that recommend tenant settings to display only those you wish to review.     |
+| Recommended By  | This will allow you to pick from the different organisations that recommend tenant settings to display only those you wish to review.     |
 | Compliance Tags | This will allow you to pick from the different compliance frameworks to display only those you wish to review.                            |
 | New (30 days)   | This toggle will allow you to display only those standards that have been recently added to CIPP for easy adoption of the latest updates. |
 

@@ -39,7 +39,7 @@ To get started, head to the Microsoft Entra Portal's user overview at [entra.mic
 
 ![preview](https://storage.app.guidde.com/v0/b/guidde-production.appspot.com/o/quickguiddeScreenshots%2FIEPB08VSavefFaCa9OSp3Y87aGu1%2Fi9fztXsCUWjY3cr8mySvCX%2Fv5BfyGiEY4FqmbqxRCymsD_doc.png?alt=media\&token=ad9a3831-cec6-4244-b5f4-f90d08ae87ea\&time=Fri%20Jul%2026%202024%2021:57:39%20GMT-0400%20\(Eastern%20Daylight%20Time\))
 
-2. Create a new internal user in your organization
+2. Create a new internal user in your organisation
 
 ![preview](https://storage.app.guidde.com/v0/b/guidde-production.appspot.com/o/quickguiddeScreenshots%2FIEPB08VSavefFaCa9OSp3Y87aGu1%2Fi9fztXsCUWjY3cr8mySvCX%2FsTTkLSePkCmuzgTg9nFYvJ_doc.png?alt=media\&token=2017aff5-ecc2-4030-ba90-9b955a14ec97\&time=Fri%20Jul%2026%202024%2021:57:44%20GMT-0400%20\(Eastern%20Daylight%20Time\))
 

@@ -1,6 +1,6 @@
 # Purview Retention Policies
 
-This table will display the tenant's Purview retention policies. Microsoft Purview retention policies control how long content is kept and what happens when that period ends (either retaining it, deleting it, or both) across Microsoft 365 workloads like Exchange mailboxes, SharePoint sites, OneDrive, Teams chats and channel messages, and Microsoft 365 Groups. Each policy defines a scope (which locations/users it applies to) and pairs with retention rules that specify the duration, trigger (creation date, last modified, labeled date), and end-of-life action. They're the tenant-wide mechanism for meeting regulatory, legal, or business retention requirements without relying on end users to manage it themselves.
+This table will display the tenant's Purview retention policies. Microsoft Purview retention policies control how long content is kept and what happens when that period ends (either retaining it, deleting it, or both) across Microsoft 365 workloads like Exchange mailboxes, SharePoint sites, OneDrive, Teams chats and channel messages, and Microsoft 365 Groups. Each policy defines a scope (which locations/users it applies to) and pairs with retention rules that specify the duration, trigger (creation date, last modified, labelled date), and end-of-life action. They're the tenant-wide mechanism for meeting regulatory, legal, or business retention requirements without relying on end users to manage it themselves.
 
 ## Page Actions
 

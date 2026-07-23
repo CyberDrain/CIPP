@@ -58,7 +58,7 @@ Regards,
 Hi,
 
 I hope you're doing well! I'm reaching out to you today as I'm a user of a tool called [CIPP](https://cipp.app). It has greatly enhanced my Microsoft 365 experience and is now our core tool when it comes to performing M365 management.
-We understand you might be having discussions with their team already, but we just want to amplify that our preference is to use CIPP to transact licenses.
+We understand you might be having discussions with their team already, but we just want to amplify that our preference is to use CIPP to transact licences.
 
 Regards,
 ```
@@ -83,9 +83,9 @@ Performance issues in CIPP are not expected. If your performance appears impacte
 
 <summary>CIPP runs slow when I first open it. How can I speed that up?</summary>
 
-If users in your organization have not accessed CIPP in a while, the Static Web App will put itself into a sleep state to save on resource usage. It's normal to see an initial 15-20 second delay on the first results being called from the CIPP-API backend. This is sometimes known as a cold start.
+If users in your organisation have not accessed CIPP in a while, the Static Web App will put itself into a sleep state to save on resource usage. It's normal to see an initial 15-20 second delay on the first results being called from the CIPP-API backend. This is sometimes known as a cold start.
 
-If you want to avoid cold starts, it's possible to utilize the [cipp-api.md](../../user-documentation/cipp/integrations/cipp-api.md "mention") and an RPA such as CIPP sponsor Rewst to make a basic call to keep activity on the function app. A basic call to `https://<cippurl>/api/PublicPing` every 3-4 minutes will complete quickly and ensure that your function app stays in a warm state. It is recommended that you limit your RPA cron to only during expected business hours to limit the number of additional function app calls you are making. The `/PublicPing` endpoint does not require the full authentication setup for the API.
+If you want to avoid cold starts, it's possible to utilise the [cipp-api.md](../../user-documentation/cipp/integrations/cipp-api.md "mention") and an RPA such as CIPP sponsor Rewst to make a basic call to keep activity on the function app. A basic call to `https://<cippurl>/api/PublicPing` every 3-4 minutes will complete quickly and ensure that your function app stays in a warm state. It is recommended that you limit your RPA cron to only during expected business hours to limit the number of additional function app calls you are making. The `/PublicPing` endpoint does not require the full authentication setup for the API.
 
 Self-hosted clients should see minimal impact to their overall costs.
 
@@ -122,7 +122,7 @@ To have the new tenant's name show up in CIPP, you have two options
 2. Terminate the old GDAP relationship. This can be accomplished by locating the old relationship on the GDAP [relationships](../../user-documentation/tenant/gdap-management/relationships/ "mention") page and selecting terminate relationship from the per-row actions or Bulk Actions with the row selected.
 3. Clear your tenant cache from [settings](../../user-documentation/cipp/settings/ "mention").
 
-#### Utilize the Tenant Alias Functionality
+#### Utilise the Tenant Alias Functionality
 
 CIPP can also set an alias via the [#properties](../../user-documentation/tenant/manage/edit.md#properties "mention") section of [edit.md](../../user-documentation/tenant/manage/edit.md "mention").
 
@@ -186,7 +186,7 @@ To ensure full functionality of CIPP, follow these steps to add the necessary AP
 
 <summary>How can I resolve expired / revoked auth token errors or ensure the correct service account is used by CIPP?</summary>
 
-This error occurs because the user who authorized the CSP or Graph API connection has had their password changed, sessions revoked, or account disabled. Reauthorization is required.
+This error occurs because the user who authorised the CSP or Graph API connection has had their password changed, sessions revoked, or account disabled. Reauthorisation is required.
 
 **To resolve this, execute the Setup Wizard with Option 4:**
 
@@ -253,9 +253,9 @@ See the instructions to switch the tenant mode [here](../../setup/installation/o
 
 <details>
 
-<summary>Does CIPP require a specific license?</summary>
+<summary>Does CIPP require a specific licence?</summary>
 
-No, CIPP can work with any M365 license in your partner tenant. For specific features CIPP will of course only function if the tenant is licensed correctly, e.g. to manage Intune, the tenant must have Intune Licensing.
+No, CIPP can work with any M365 licence in your partner tenant. For specific features CIPP will of course only function if the tenant is licensed correctly, e.g. to manage Intune, the tenant must have Intune Licensing.
 
 </details>
 
@@ -376,7 +376,7 @@ So if CIPP works but a technician can't use the portal links, refreshing CPV, re
 | Symptom                                                                                              | What's happening                                                                                                          |
 | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | "No SharePoint admin access"                                                                         | The technician's account isn't in the GDAP group mapped to the SharePoint Administrator role.                             |
-| M365 portal is blank / Entra portal never finishes loading (or loads the center but no left sidebar) | The portal opened under the technician's account, which has no delegated role in that tenant, so it can't render.         |
+| M365 portal is blank / Entra portal never finishes loading (or loads the centre but no left sidebar) | The portal opened under the technician's account, which has no delegated role in that tenant, so it can't render.         |
 | Prompted to authenticate every time a portal is opened, even with other portal tabs already open     | The technician's account has no standing delegated access to the tenant, so each portal forces a fresh delegated sign-in. |
 
 **The fix:** add the technician's account to the **M365 GDAP** security groups that CIPP generated in your partner tenant. Membership in these groups is what grants a user delegated access through your GDAP relationships.

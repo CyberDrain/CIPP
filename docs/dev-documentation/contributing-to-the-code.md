@@ -34,7 +34,7 @@ We follow a naming standard, as based on the name a user might get access to an 
 
 * Make a clone of your forked repository.
 * Optional: mark this repository as private.
-* Add the following GitHub action, this synchronizes the repositories every hour:
+* Add the following GitHub action, this synchronises the repositories every hour:
 
 ```yaml
 name: Pull from master schedule

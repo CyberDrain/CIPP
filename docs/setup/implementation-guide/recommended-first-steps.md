@@ -18,7 +18,7 @@ Select [sam-setup-wizard.md](../../user-documentation/cipp/sam-setup-wizard.md "
 
 Using the [tenant-select.md](../../user-documentation/shared-features/menu-bar/tenant-select.md "mention") at the top you can switch tenants at any time. This allows you to dynamically choose what you're working on. You can also use the Tenant Selector to select "All Tenants" which allows you to see all your tenants in one swoop.
 
-## Personalization
+## Personalisation
 
 Let's set up some personal things first. The [user-settings.md](../../user-documentation/shared-features/menu-bar/user-settings.md "mention") section has your personal preferences and profile information. Let's start by setting up CIPP the way you like it.
 
@@ -32,7 +32,7 @@ Let's go check out some of the [settings](../../user-documentation/cipp/settings
 
 ### Password Styles
 
-We have two style of passwords we can generate when creating a new user, or resetting a password, the classic password with capitalization, numbers, and symbols. You can also choose the modern passphrase style password. This is a more readable and often stronger password than randomly generated characters
+We have two style of passwords we can generate when creating a new user, or resetting a password, the classic password with capitalisation, numbers, and symbols. You can also choose the modern passphrase style password. This is a more readable and often stronger password than randomly generated characters
 
 Let's select the "Correct-Battery-Horse" option, which are passphrases.
 
@@ -96,7 +96,7 @@ Standards allow you to create a baseline for a tenant. This means you can easily
 
 Let's go check out some reporting. Click on Tools > [report-builder](../../user-documentation/tools/report-builder/ "mention") next.
 
-The Report Builder gives you the ability to zoom in on your tenants and their current state. You can use custom built reports or import catalog examples to tell your clients what actions they need to take to become more secure.
+The Report Builder gives you the ability to zoom in on your tenants and their current state. You can use custom built reports or import catalogue examples to tell your clients what actions they need to take to become more secure.
 
 ## Alerts
 

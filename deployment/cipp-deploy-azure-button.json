@@ -1,0 +1,281 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.42.1.51946",
+      "templateHash": "1908610760822795061"
+    }
+  },
+  "parameters": {
+    "baseName": {
+      "type": "string",
+      "defaultValue": "CIPP",
+      "metadata": {
+        "description": "Name used as base-template to name the resources deployed in Azure."
+      }
+    },
+    "containerImage": {
+      "type": "string",
+      "defaultValue": "DOCKER|ghcr.io/cyberdrain/cipp:latest",
+      "metadata": {
+        "description": "Container image for the cipp web app."
+      }
+    }
+  },
+  "variables": {
+    "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)), 0, 5)]",
+    "webAppName": "[toLower(format('{0}{1}', parameters('baseName'), variables('suffix')))]",
+    "funcStorageName": "[toLower(format('{0}stg{1}', substring(parameters('baseName'), 0, min(length(parameters('baseName')), 16)), variables('suffix')))]",
+    "serverFarmName": "[format('{0}-plan', variables('webAppName'))]",
+    "uniqueResourceNameBase": "[toLower(format('{0}{1}', parameters('baseName'), variables('suffix')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('funcStorageName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false,
+        "allowSharedKeyAccess": true,
+        "allowCrossTenantReplication": false,
+        "defaultToOAuthAuthentication": true,
+        "publicNetworkAccess": "Enabled",
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow"
+        },
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "requireInfrastructureEncryption": true,
+          "services": {
+            "blob": {
+              "enabled": true,
+              "keyType": "Account"
+            },
+            "file": {
+              "enabled": true,
+              "keyType": "Account"
+            },
+            "queue": {
+              "enabled": true,
+              "keyType": "Account"
+            },
+            "table": {
+              "enabled": true,
+              "keyType": "Account"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', variables('funcStorageName'), 'default')]",
+      "properties": {
+        "protocolSettings": {
+          "smb": {
+            "versions": "SMB3.1.1",
+            "authenticationMethods": "Kerberos",
+            "kerberosTicketEncryption": "AES-256",
+            "channelEncryption": "AES-256-GCM"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('serverFarmName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "B2",
+        "tier": "Basic",
+        "size": "B2",
+        "family": "B",
+        "capacity": 1
+      },
+      "kind": "linux",
+      "properties": {
+        "perSiteScaling": false,
+        "maximumElasticWorkerCount": 1,
+        "isSpot": false,
+        "reserved": true,
+        "isXenon": false,
+        "hyperV": false,
+        "targetWorkerCount": 1,
+        "targetWorkerSizeId": 0
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2024-11-01",
+      "name": "[variables('webAppName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "app,linux,container",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
+        "httpsOnly": true,
+        "reserved": true,
+        "siteConfig": {
+          "linuxFxVersion": "[parameters('containerImage')]",
+          "acrUseManagedIdentityCreds": false,
+          "alwaysOn": true,
+          "http20Enabled": true,
+          "use32BitWorkerProcess": false,
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', variables('funcStorageName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName')), '2024-01-01').keys[0].value, environment().suffixes.storage)]"
+            },
+            {
+              "name": "WEBSITE_AUTH_AAD_ALLOWED_TENANTS",
+              "value": "*"
+            },
+            {
+              "name": "WEBSITE_RESOURCE_GROUP",
+              "value": "[resourceGroup().name]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('uniqueResourceNameBase')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('webAppName')), '2024-11-01', 'full').identity.principalId]",
+            "permissions": {
+              "keys": [],
+              "secrets": [
+                "all"
+              ],
+              "certificates": []
+            }
+          }
+        ],
+        "enabledForDeployment": true,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', variables('uniqueResourceNameBase'), 'applicationid')]",
+      "properties": {
+        "contentType": "text/plain",
+        "value": "LongApplicationId"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('uniqueResourceNameBase'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', variables('uniqueResourceNameBase'), 'applicationsecret')]",
+      "properties": {
+        "contentType": "text/plain",
+        "value": "AppSecret"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('uniqueResourceNameBase'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', variables('uniqueResourceNameBase'), 'refreshtoken')]",
+      "properties": {
+        "contentType": "text/plain",
+        "value": "RefreshToken"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('uniqueResourceNameBase'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', variables('uniqueResourceNameBase'), 'tenantid')]",
+      "properties": {
+        "contentType": "text/plain",
+        "value": "tenantId"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('uniqueResourceNameBase'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.Web/sites', variables('webAppName'))]",
+      "name": "[guid(resourceGroup().id, variables('webAppName'), 'Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('webAppName')), '2024-11-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/tags",
+      "apiVersion": "2022-09-01",
+      "name": "default",
+      "properties": {
+        "tags": {
+          "Linux": "true"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "hostname": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', variables('webAppName')), '2024-11-01').defaultHostName]"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "value": "[variables('uniqueResourceNameBase')]"
+    },
+    "webAppName": {
+      "type": "string",
+      "value": "[variables('webAppName')]"
+    }
+  }
+}

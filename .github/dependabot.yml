@@ -6,12 +6,18 @@
 version: 2
 updates:
   - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
+    directory: "/frontend" # Location of package manifests
     schedule:
       interval: "weekly"
     target-branch: "dev"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     target-branch: "dev"
+    commit-message:
+      prefix: "chore"
+      include: "scope"

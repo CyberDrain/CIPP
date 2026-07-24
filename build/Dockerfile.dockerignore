@@ -22,3 +22,10 @@ frontend/out/
 *.md
 .env
 build/.env.example
+
+# Knowledge graphs (local dev tooling)
+graphify/
+graphify-out/
+
+# Azure deployment templates and migration tooling (not runtime code)
+deployment/

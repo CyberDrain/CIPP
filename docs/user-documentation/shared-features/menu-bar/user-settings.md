@@ -1,0 +1,47 @@
+# User Preferences
+
+The User Preferences page provides a tailored interface for users to manage and configure their individual settings related to general preferences, appearance, and offboarding defaults. This document outlines the functionalities available on the User Settings page.
+
+## General Settings
+
+In this section, users can manage general settings related to their account and workspace:
+
+* **Default new user usage location**: This setting allows users to specify the default user location when creating or editing a user.
+* **Default Page Size**: Set the default page size for tables across CIPP.
+* **Added Attributes when creating a new user:** Users can select additional user object attributes that are available when creating a new user.
+
+## Navigation Settings
+
+This section will allow you to alter the display format for bookmarks.
+
+* **Show Sidebar Bookmarks:** This will enable bookmarks in the sidebar
+* **Show Popover Bookmarks:** This will enable bookmarks in the menu bar
+* **Bookmark Reorder Mode:** "Arrow Buttons" will make it so you click arrows to sort bookmarks while "Drag and Drop" is as labeled.
+* **Compact Navigation:** This will change the left-hand menu into a denser display.&#x20;
+
+## Offboarding Defaults
+
+This section provides you the ability to set offboarding defaults, this allows you to easily preselect your predefined offboarding preferences.
+
+## CIPP Roles
+
+This will display the active roles for the logged in user.
+
+## Actions
+
+* **Save Settings**: Save the modified settings for the individual user.
+* **Save for All Users**: If the user has admin privileges, they have the option to save the modified settings for all users within the tenant, this will overwrite all personal settings and be force on each full refresh of a page.
+
+## Developer Options
+
+* Enable TanStack Query Tools
+
+## Portal Links Configuration
+
+This will allow you to toggle on and off the various portal links displayed in the [tenant-select.md](tenant-select.md "mention") or on the Portals dropdown on the [dashboard](../../dashboard/ "mention").
+
+***
+
+### Feature Requests / Ideas
+
+We value your feedback and ideas. Please raise any [feature requests](https://github.com/KelvinTegelaar/CIPP/issues/new?assignees=\&labels=enhancement%2Cno-priority\&projects=\&template=feature.yml\&title=%5BFeature+Request%5D%3A+) on GitHub.

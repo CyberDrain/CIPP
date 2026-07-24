@@ -110,7 +110,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:nightly
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.description=CIPP-NG - Nightly Build
+            org.opencontainers.image.description=CIPP - Nightly Build
             org.opencontainers.image.revision=${{ steps.version.outputs.full_sha }}
             org.opencontainers.image.version=${{ steps.version.outputs.app_version }}
             org.opencontainers.image.created=${{ steps.version.outputs.build_date }}

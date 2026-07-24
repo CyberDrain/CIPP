@@ -16,7 +16,7 @@
 param(
     [string]   $SourceModules = "$PSScriptRoot\..\..\backend\Modules",
     [string]   $OutputModules = "$PSScriptRoot\..\.devmodules",
-    [string[]] $Modules       = @('CIPPCore','CIPPHTTP','CIPPStandards','CIPPDB','CIPPAlerts','CIPPActivityTriggers','CippExtensions')
+    [string[]] $Modules       = @('CIPPCore','CIPPHTTP','CIPPStandards','CIPPDB','CIPPAlerts','CIPPActivityTriggers','CippExtensions', 'CIPPTests')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -44,6 +44,8 @@ Write-Host "  Output: $outputModulesPath"
 
 # Push/Pop so this script never leaks the caller's working directory — callers
 # (e.g. the docker tab) run `docker compose -f <relative>` right after us.
+# build the tests module but keep the source files as well as the as cipp-api relies on the source files for traversal currently.
+# So build tests but keep the source files as well as the compiled module in the dev environment.
 Push-Location $sourceModulesPath
 try {
 foreach ($mod in $Modules) {
@@ -58,7 +60,13 @@ foreach ($mod in $Modules) {
     $tmpOut = Join-Path ([System.IO.Path]::GetTempPath()) "cipp-devbuild-$mod"
     Remove-Item $tmpOut -Recurse -Force -ErrorAction SilentlyContinue
     try {
-        Build-Module -SourcePath $buildManifest -OutputDirectory $tmpOut -ErrorAction Stop | Out-Null
+        if ($mod -eq 'CIPPTests') {
+            # Build the tests module but keep the source files as well as the compiled module in the dev environment.
+            Build-Module -SourcePath $buildManifest -OutputDirectory $tmpOut -ErrorAction Stop | Out-Null
+            Copy-Item (Join-Path $sourceModulesPath $mod) (Join-Path $outputModulesPath $mod) -Recurse -Force
+        } else {
+            Build-Module -SourcePath $buildManifest -OutputDirectory $tmpOut -ErrorAction Stop | Out-Null
+        }
     } catch {
         Write-Host " FAILED: $_" -ForegroundColor Red
         continue

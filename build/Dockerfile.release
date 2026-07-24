@@ -72,7 +72,7 @@ RUN dotnet build CIPPSharp.csproj -c Release --no-restore -o /out && \
 # ── Frontend build ──
 FROM node:22-slim AS frontend-deps
 WORKDIR /build
-COPY frontend/package.json frontend/yarn.lock ./
+COPY frontend/package.json frontend/yarn.lock frontend/.npmrc frontend/.yarnrc ./
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
     yarn install --frozen-lockfile --network-timeout 100000
 

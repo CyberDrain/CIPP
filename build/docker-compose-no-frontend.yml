@@ -62,17 +62,6 @@ services:
       # Workstation GC + 2 GiB absolute heap cap.
       - DOTNET_gcServer=0
       - DOTNET_GCHeapHardLimit=0x80000000
-      # DEV ONLY: a module whose manifest declares FunctionsToExport = '*' can't be
-      # auto-loaded by command name, so background dispatchers that probe with Get-Command
-      # fail with "function not found" on workers that didn't eagerly import it. This flag
-      # makes Craft expand each wildcard manifest to its explicit Public/*.ps1 list at startup
-      # (idempotent — matches what the ModuleBuilder build bakes in).
-      #
-      # The CIPP* modules below are now overlaid with ModuleBuilder-compiled output (see the
-      # ./.devmodules overlays in volumes:), which already carries explicit exports, so only
-      # CIPPTests — still mounted as raw '*'-export source — needs expansion.
-      - App__Worker__DevExpandModuleExports=true
-      - App__Worker__DevExpandModules__0=CIPPTests
       # The Next.js dev server runs on the HOST when using for windows dev as bind mounts are too slow for node_modules
       - CRAFT_DEV_FRONTEND_URL=http://host.docker.internal:3000
     volumes:
@@ -94,6 +83,7 @@ services:
       - ./.devmodules/CIPPAlerts:/app/API/Modules/CIPPAlerts:ro
       - ./.devmodules/CIPPActivityTriggers:/app/API/Modules/CIPPActivityTriggers:ro
       - ./.devmodules/CippExtensions:/app/API/Modules/CippExtensions:ro
+      - ./.devmodules/CIPPTests:/app/API/Modules/CIPPTests:rw
     develop:
       watch:
         # The compiled CIPP* modules are owned by Watch-Cipp-Dev-Modules.ps1, which
@@ -109,6 +99,7 @@ services:
             - CIPPStandards/
             - CIPPDB/
             - CIPPAlerts/
+            - CIPPTests/
             - CIPPActivityTriggers/
             - CippExtensions/
         - action: restart

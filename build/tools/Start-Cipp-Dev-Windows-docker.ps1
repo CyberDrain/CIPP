@@ -7,19 +7,53 @@
 #
 # Prerequisites:
 #   - Docker Desktop running
+#   - Ports 3000, 5196, 10000-10002 free
 #
 # Access everything via http://localhost:5196
 
+$ErrorActionPreference = 'Stop'
+
 Write-Host "`n=== CIPP Dev Environment ===" -ForegroundColor Cyan
+
 # Verify Windows Terminal is available
 Get-Command wt -ErrorAction Stop | Out-Null
-# Stop any existing node processes
+
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    throw 'Docker CLI not found. Install Docker Desktop and ensure `docker` is on PATH.'
+}
+
+Write-Host 'Checking Docker daemon....' -ForegroundColor DarkGray
+docker info --format '{{.ServerVersion}}' 1>$null 2>$null
+if ($LASTEXITCODE -ne 0) {
+    throw 'Docker daemon is not running. Start Docker Desktop, wait until it is ready, then re-run this script.'
+}
+Write-Host '  Docker is running.' -ForegroundColor Green
+
+# Free host frontend port by stopping leftover Next.js/node processes from prior runs
 Get-Process node -ErrorAction SilentlyContinue | Stop-Process -ErrorAction SilentlyContinue
 
-$ErrorActionPreference = 'Stop'
+# 3000 = Next.js on host, 5196 = Craft API, 10000-10002 = Azurite
+Write-Host 'Checking required ports...' -ForegroundColor DarkGray
+$requiredPorts = @(3000, 5196, 10000, 10001, 10002)
+$blocked = @()
+foreach ($port in $requiredPorts) {
+    $listeners = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+    if (-not $listeners) { continue }
+
+    $owners = foreach ($conn in $listeners) {
+        $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
+        if ($proc) { '{0} (PID {1})' -f $proc.ProcessName, $proc.Id } else { 'PID {0}' -f $conn.OwningProcess }
+    }
+    $blocked += "  - ${port}: $(($owners | Select-Object -Unique) -join ', ')"
+}
+if ($blocked.Count -gt 0) {
+    throw "Required port(s) are already in use:`n$($blocked -join "`n")`n`nStop the conflicting process/container, then re-run this script."
+}
+Write-Host ("  Ports free: {0}" -f ($requiredPorts -join ', ')) -ForegroundColor Green
+
 $RepoRoot = (Get-Item $PSScriptRoot).Parent.Parent.FullName
-$frontendPath = Join-Path -Path $repoRoot -ChildPath 'frontend'
-$dockerpath = Join-Path -Path $repoRoot -ChildPath 'build'
+$frontendPath = Join-Path -Path $RepoRoot -ChildPath 'frontend'
+$dockerpath = Join-Path -Path $RepoRoot -ChildPath 'build'
 $frontendCommand = 'try { yarn install --network-timeout 500000; yarn run dev } catch { Write-Error $_.Exception.Message } finally { Read-Host "Press Enter to exit" }'
 $frontendEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($frontendCommand))
 $dockerCommand = 'try { ./tools/build-dev-modules.ps1; docker compose -f docker-compose-no-frontend.yml up --pull always --watch } catch { Write-Error $_.Exception.Message } finally { Read-Host "Press Enter to exit" }'

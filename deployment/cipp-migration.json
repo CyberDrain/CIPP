@@ -1,0 +1,172 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.42.1.51946",
+      "templateHash": "10011865180776502969"
+    }
+  },
+  "parameters": {
+    "containerImage": {
+      "type": "string",
+      "defaultValue": "DOCKER|ghcr.io/cyberdrain/cipp:latest",
+      "metadata": {
+        "description": "Container image for the cipp web app."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for new resources."
+      }
+    },
+    "existingStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing storage account to connect the web app to."
+      }
+    },
+    "existingKeyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing Key Vault to grant the web app access to."
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "defaultValue": "[parameters('existingKeyVaultName')]",
+      "metadata": {
+        "description": "Name for the new web app and the basis for the plan name. Defaults to the existing Key Vault name."
+      }
+    }
+  },
+  "variables": {
+    "serverFarmName": "[format('{0}-plan', parameters('webAppName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('serverFarmName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "B2",
+        "tier": "Basic",
+        "size": "B2",
+        "family": "B",
+        "capacity": 1
+      },
+      "kind": "linux",
+      "properties": {
+        "reserved": true,
+        "perSiteScaling": false,
+        "maximumElasticWorkerCount": 1,
+        "isSpot": false,
+        "isXenon": false,
+        "hyperV": false,
+        "targetWorkerCount": 1,
+        "targetWorkerSizeId": 0
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2024-11-01",
+      "name": "[parameters('webAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "app,linux,container",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
+        "httpsOnly": true,
+        "reserved": true,
+        "siteConfig": {
+          "linuxFxVersion": "[parameters('containerImage')]",
+          "acrUseManagedIdentityCreds": false,
+          "alwaysOn": true,
+          "http20Enabled": true,
+          "use32BitWorkerProcess": false,
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', parameters('existingStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('existingStorageAccountName')), '2024-01-01').keys[0].value, environment().suffixes.storage)]"
+            },
+            {
+              "name": "WEBSITE_RESOURCE_GROUP",
+              "value": "[resourceGroup().name]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/accessPolicies",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', parameters('existingKeyVaultName'), 'add')]",
+      "properties": {
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2024-11-01', 'full').identity.principalId]",
+            "permissions": {
+              "keys": [],
+              "secrets": [
+                "all"
+              ],
+              "certificates": []
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]",
+      "name": "[guid(resourceGroup().id, parameters('webAppName'), 'Contributor')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2024-11-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/tags",
+      "apiVersion": "2022-09-01",
+      "name": "default",
+      "properties": {
+        "tags": {
+          "Linux": "true",
+          "NG": "true"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "hostname": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2024-11-01').defaultHostName]"
+    },
+    "webAppName": {
+      "type": "string",
+      "value": "[parameters('webAppName')]"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "value": "[parameters('existingKeyVaultName')]"
+    }
+  }
+}

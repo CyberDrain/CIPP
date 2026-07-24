@@ -86,7 +86,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ steps.version.outputs.app_version }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.description=CIPP-NG - CIPP Next Generation
+            org.opencontainers.image.description=CIPP - CIPP Next Generation
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=${{ steps.version.outputs.app_version }}
             org.opencontainers.image.created=${{ steps.version.outputs.build_date }}

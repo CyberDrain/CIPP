@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security Reports
-    url: https://github.com/KelvinTegelaar/CIPP/security/advisories
+    url: https://github.com/CyberDrain/CIPP/security/advisories
     about: Please report security vulnerabilities here.
   - name: Community Discord
     url: https://discord.gg/cyberdrain

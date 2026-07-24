@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-The current [release](https://github.com/KelvinTegelaar/CIPP/releases) is the only "supported version" and should not have any security bugs. However if you find a security issue in an older release feel free to also report this in case of regression, We'd rather know we made a mistake at one point in time and avoid that in the future.
+The current [release](https://github.com/CyberDrain/CIPP/releases) is the only "supported version" and should not have any security bugs. However if you find a security issue in an older release feel free to also report this in case of regression, We'd rather know we made a mistake at one point in time and avoid that in the future.
 
 ## Reporting a Vulnerability
 

@@ -23,6 +23,8 @@ jobs:
   sync:
     if: github.repository == 'CyberDrain/CIPP'
     runs-on: ubuntu-latest
+    env:
+      TARGET_REF: ${{ github.ref_name == 'main' && 'master' || github.ref_name }}
 
     steps:
       - name: Checkout source (CyberDrain/CIPP)
@@ -34,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ vars.CIPP_API_REPO || 'KelvinTegelaar/CIPP-API' }}
-          ref: ${{ github.ref_name }}
+          ref: ${{ env.TARGET_REF }}
           path: _target
           token: ${{ secrets.CIPP_SYNC_TOKEN }}
 

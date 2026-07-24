@@ -32,28 +32,23 @@ function Invoke-ExecSharePointTemplate {
                     break
                 }
 
-                $GUID = $Request.Body.TemplateId ?? (New-Guid).GUID
-
-                # Keep only the template payload; strip transport/metadata fields.
-                $TemplateObject = $Request.Body | Select-Object -Property * -ExcludeProperty Action, TemplateId
-
-                # Stamp audit metadata. CreatedBy/On only on first save (or preserved from existing
-                # JSON on edit — the form does not round-trip those fields). UpdatedBy/On every save.
-                if ($Request.Body.TemplateId) {
+                # Frontend sends TemplateId only when editing (add.js). Create/copy omit it.
+                $GUID = $Request.Body.TemplateId
+                if ([string]::IsNullOrWhiteSpace([string]$GUID)) {
+                    $GUID = (New-Guid).GUID
+                    $Existing = $null
+                } else {
+                    $GUID = [string]$GUID
                     $Existing = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'SharePointTemplate' and RowKey eq '$GUID'"
-                    if ($Existing?.JSON) {
-                        $ExistingData = $Existing.JSON | ConvertFrom-Json
-                        if ($ExistingData.CreatedBy) {
-                            $TemplateObject | Add-Member -NotePropertyName 'CreatedBy' -NotePropertyValue $ExistingData.CreatedBy -Force
-                            $TemplateObject | Add-Member -NotePropertyName 'CreatedOn' -NotePropertyValue $ExistingData.CreatedOn -Force
-                        } else {
-                            $TemplateObject | Add-Member -NotePropertyName 'CreatedBy' -NotePropertyValue ($User.userDetails ?? 'CIPP-API') -Force
-                            $TemplateObject | Add-Member -NotePropertyName 'CreatedOn' -NotePropertyValue (Get-Date).ToString('o') -Force
-                        }
-                    } else {
-                        $TemplateObject | Add-Member -NotePropertyName 'CreatedBy' -NotePropertyValue ($User.userDetails ?? 'CIPP-API') -Force
-                        $TemplateObject | Add-Member -NotePropertyName 'CreatedOn' -NotePropertyValue (Get-Date).ToString('o') -Force
-                    }
+                }
+
+                # Never trust client-supplied audit fields.
+                $TemplateObject = $Request.Body | Select-Object -Property * -ExcludeProperty Action, TemplateId, GUID, CreatedBy, CreatedOn, UpdatedBy, UpdatedOn
+
+                if ($Existing) {
+                    $ExistingData = $Existing.JSON | ConvertFrom-Json
+                    $TemplateObject | Add-Member -NotePropertyName 'CreatedBy' -NotePropertyValue ($ExistingData.CreatedBy ?? $User.userDetails ?? 'CIPP-API') -Force
+                    $TemplateObject | Add-Member -NotePropertyName 'CreatedOn' -NotePropertyValue ($ExistingData.CreatedOn ?? (Get-Date).ToString('o')) -Force
                 } else {
                     $TemplateObject | Add-Member -NotePropertyName 'CreatedBy' -NotePropertyValue ($User.userDetails ?? 'CIPP-API') -Force
                     $TemplateObject | Add-Member -NotePropertyName 'CreatedOn' -NotePropertyValue (Get-Date).ToString('o') -Force

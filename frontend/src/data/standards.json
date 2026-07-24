@@ -318,9 +318,10 @@
   },
   {
     "name": "standards.PhishProtection",
+    "deprecated": true,
     "cat": "Global Standards",
     "tag": [],
-    "helpText": "Adds branding to the logon page that only appears if the url is not login.microsoftonline.com. This potentially prevents AITM attacks via EvilNginx. This will also automatically generate alerts if a clone of your login page has been found when set to Remediate.",
+    "helpText": "This standard is deprecated. Microsoft is ending support for custom login-page CSS; use CyberDrain's [Check](https://github.com/CyberDrain/Check) browser extension for phishing protection instead ([docs](https://docs.check.tech/)). Adds branding to the logon page that only appears if the url is not login.microsoftonline.com. This potentially prevents AITM attacks via EvilNginx. This will also automatically generate alerts if a clone of your login page has been found when set to Remediate.",
     "executiveText": "Implements advanced phishing protection by adding visual indicators to login pages that help users identify legitimate Microsoft login pages versus fraudulent copies. This security measure protects against sophisticated phishing attacks that attempt to steal employee credentials.",
     "addedComponent": [],
     "label": "Enable Phishing Protection system via branding CSS",

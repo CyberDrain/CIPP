@@ -6,6 +6,7 @@ import { CippQueryRefreshButton } from '../../../components/CippComponents/CippQ
 import { SharingReportButton } from '../../../components/CippPdf/SharingReportButton'
 import { CippChartCard } from '../../../components/CippCards/CippChartCard'
 import { CippImageCard } from '../../../components/CippCards/CippImageCard'
+import { CippPropertyListCard } from '../../../components/CippCards/CippPropertyListCard'
 import { CippDataTable } from '../../../components/CippTable/CippDataTable'
 import { CippApiDialog } from '../../../components/CippComponents/CippApiDialog'
 import { useDialog } from '../../../hooks/use-dialog'
@@ -24,20 +25,13 @@ import {
 } from '@mui/material'
 import { Grid } from '@mui/system'
 import {
-  BuildingOfficeIcon,
-  ChatBubbleLeftRightIcon,
-  ClockIcon,
   CloudArrowDownIcon,
-  CloudIcon,
   DocumentTextIcon,
-  FolderOpenIcon,
   GlobeAltIcon,
   LinkIcon,
   LinkSlashIcon,
-  PencilSquareIcon,
   ShieldCheckIcon,
   UserPlusIcon,
-  UsersIcon,
 } from '@heroicons/react/24/outline'
 
 const classificationChipColor = (classification) => {
@@ -351,61 +345,32 @@ const Page = () => {
                 ]}
               />
             </Grid>
-            <Grid size={{ md: 12, xs: 12 }}>
-              <CippInfoBar
+            <Grid size={{ md: 6, xs: 12 }}>
+              <CippPropertyListCard
+                title="Sharing Risk Highlights"
                 isFetching={sharing.isFetching}
-                data={[
+                showDivider={false}
+                propertyItems={[
+                  { label: 'Anonymous & Editable', value: `${summary.anonymousEditLinks ?? 0}` },
                   {
-                    icon: <PencilSquareIcon />,
-                    name: 'Anonymous & Editable',
-                    data: `${summary.anonymousEditLinks ?? 0}`,
-                    color: 'error',
+                    label: 'Anonymous, No Expiry',
+                    value: `${summary.neverExpiringAnonymous ?? 0}`,
                   },
-                  {
-                    icon: <ClockIcon />,
-                    name: 'Anonymous, No Expiry',
-                    data: `${summary.neverExpiringAnonymous ?? 0}`,
-                    color: 'error',
-                  },
-                  {
-                    icon: <FolderOpenIcon />,
-                    name: 'Shared Folders',
-                    data: `${summary.folderShares ?? 0}`,
-                    color: 'warning',
-                  },
-                  {
-                    icon: <UsersIcon />,
-                    name: 'External Recipients',
-                    data: `${summary.externalRecipients ?? 0}`,
-                    color: 'warning',
-                  },
+                  { label: 'Shared Folders', value: `${summary.folderShares ?? 0}` },
+                  { label: 'External Recipients', value: `${summary.externalRecipients ?? 0}` },
                 ]}
               />
             </Grid>
-            <Grid size={{ md: 12, xs: 12 }}>
-              <CippInfoBar
+            <Grid size={{ md: 6, xs: 12 }}>
+              <CippPropertyListCard
+                title="Environment"
                 isFetching={sharing.isFetching}
-                data={[
-                  {
-                    icon: <BuildingOfficeIcon />,
-                    name: 'SharePoint Sites',
-                    data: `${summary.sharePointSites ?? 0}`,
-                  },
-                  {
-                    icon: <ChatBubbleLeftRightIcon />,
-                    name: 'Teams-Connected Sites',
-                    data: `${summary.teamsSites ?? 0}`,
-                  },
-                  {
-                    icon: <CloudIcon />,
-                    name: 'OneDrive Accounts',
-                    data: `${summary.oneDriveAccounts ?? 0}`,
-                  },
-                  {
-                    icon: <DocumentTextIcon />,
-                    name: 'Shared Items',
-                    data: `${summary.itemsShared ?? 0}`,
-                  },
+                showDivider={false}
+                propertyItems={[
+                  { label: 'SharePoint Sites', value: `${summary.sharePointSites ?? 0}` },
+                  { label: 'Teams-Connected Sites', value: `${summary.teamsSites ?? 0}` },
+                  { label: 'OneDrive Accounts', value: `${summary.oneDriveAccounts ?? 0}` },
+                  { label: 'Shared Items', value: `${summary.itemsShared ?? 0}` },
                 ]}
               />
             </Grid>

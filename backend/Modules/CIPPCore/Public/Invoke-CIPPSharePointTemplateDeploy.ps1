@@ -116,10 +116,17 @@ function Invoke-CIPPSharePointTemplateDeploy {
                     SiteName        = $SiteTemplate.displayName
                     SiteDescription = ($SiteTemplate.description ?? $SiteTemplate.displayName)
                     SiteOwner       = $SiteOwner
-                    TemplateName    = 'Team'
                     TenantFilter    = $TenantFilter
                     Headers         = $Headers
                     APIName         = $APIName
+                }
+                # Team site vs Communication — select may persist {label,value}; default Team for
+                # older templates that omit sharePointTemplate.
+                $RawSharePointTemplate = [string]($SiteTemplate.sharePointTemplate.value ?? $SiteTemplate.sharePointTemplate)
+                $SiteParams.TemplateName = if ($RawSharePointTemplate -in @('Team', 'Communication')) {
+                    $RawSharePointTemplate
+                } else {
+                    'Team'
                 }
                 # language "default" (or missing) → Lcid 0 so New-CIPPSharepointSite uses tenant default.
                 # A specific language → pass that LCID. Always pass Lcid so we don't fall back to the

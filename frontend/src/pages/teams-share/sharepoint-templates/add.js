@@ -32,8 +32,12 @@ const emptyTemplate = {
 const Page = () => {
   const router = useRouter();
   const { template, copy } = router.query;
-  const isEdit = !!template && !copy;
-  const pageTitle = copy
+  // Next may give query values as string | string[]. Treat only explicit copy=true as copy mode
+  // so title and save (TemplateId) cannot disagree.
+  const templateId = Array.isArray(template) ? template[0] : template;
+  const isCopy = copy === true || copy === "true";
+  const isEdit = !!templateId && !isCopy;
+  const pageTitle = isCopy
     ? "Copy SharePoint Template"
     : isEdit
     ? "Edit SharePoint Template"
@@ -42,16 +46,17 @@ const Page = () => {
   const formControl = useForm({ mode: "onChange", defaultValues: emptyTemplate });
 
   const templateQuery = ApiGetCall({
-    url: template ? `/api/ExecSharePointTemplate?Action=Get&TemplateId=${template}` : null,
-    queryKey: template ? `ExecSharePointTemplate-${template}` : null,
-    waiting: !!template,
-    // Always reload the current template when opening the editor so a save made moments ago
-    // isn't masked by a stale cache.
+    url: templateId ? `/api/ExecSharePointTemplate?Action=Get&TemplateId=${templateId}` : null,
+    queryKey: templateId ? `ExecSharePointTemplate-${templateId}` : null,
+    waiting: !!templateId,
+    // Edit/copy must never paint a stale cached template — always refetch on open.
     staleTime: 0,
+    refetchOnMount: "always",
   });
   const templateData = templateQuery.data;
-  // Show a skeleton on the first load of an existing template (no cached data yet).
-  const isLoadingTemplate = !!template && templateQuery.isLoading;
+  // Treat in-flight refetch like loading so a previous cache cannot flash into the form.
+  const isLoadingTemplate =
+    !!templateId && (templateQuery.isLoading || templateQuery.isFetching);
 
   // Site-template fields that block Save (name, root perms, library names). Cards outline offenders in red.
   const siteTemplatesValue = useWatch({ control: formControl.control, name: "siteTemplates" });
@@ -59,19 +64,20 @@ const Page = () => {
   const siteTemplateSaveIssues = getSiteTemplateSaveIssues(siteTemplatesValue || []);
 
   const saveTemplate = ApiPostCall({
-    relatedQueryKeys: ["ListSharePointTemplates", "ExecSharePointTemplate"],
+    // Wildcard: Get uses ExecSharePointTemplate-{id}, not the bare ExecSharePointTemplate key.
+    relatedQueryKeys: ["ListSharePointTemplates", "ExecSharePointTemplate-*"],
   });
 
-  // Hydrate the form when editing or copying an existing template. The Get action returns an
-  // array of matching templates, so take the first entry. reset() alone doesn't re-run
-  // validation, so trigger it afterwards to enable the Save button on a freshly-loaded edit.
+  // Hydrate only after a fresh fetch finishes. Skip while isFetching so we never reset() from
+  // a stale cache entry that React Query still exposes during refetch.
   useEffect(() => {
+    if (!templateId || templateQuery.isFetching) return;
     const result = Array.isArray(templateData) ? templateData[0] : templateData?.Results;
     if (!result) return;
     const normalizeSiteType = (value) =>
       value === "teams" || value?.value === "teams" ? "teams" : "sharePoint";
     formControl.reset({
-      templateName: copy ? `${result.templateName || ""} (Copy)` : result.templateName || "",
+      templateName: isCopy ? `${result.templateName || ""} (Copy)` : result.templateName || "",
       siteType: normalizeSiteType(result.siteType),
       overrideSiteType: !!result.overrideSiteType,
       createMissingGroups: !!result.createMissingGroups,
@@ -84,10 +90,12 @@ const Page = () => {
     });
     formControl.trigger();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateData, copy]);
+  }, [templateId, templateData, isCopy, templateQuery.isFetching, templateQuery.dataUpdatedAt]);
 
   const handleSubmit = (payload) => {
-    if (isEdit) payload.TemplateId = template;
+    if (isEdit) {
+      payload.TemplateId = templateId;
+    }
     saveTemplate.mutate(
       {
         url: "/api/ExecSharePointTemplate?Action=Save",

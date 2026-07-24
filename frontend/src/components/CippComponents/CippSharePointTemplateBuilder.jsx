@@ -31,6 +31,7 @@ import {
   Translate,
   VpnKey,
   ViewColumn,
+  Web,
 } from "@mui/icons-material";
 import CippFormComponent from "./CippFormComponent";
 import { CippSharePointPermissionEditor } from "./CippSharePointPermissionEditor";
@@ -40,6 +41,14 @@ import TeamsIcon from "../../icons/iconly/bulk/teams";
 export const SITE_TYPE_OPTIONS = [
   { label: "SharePoint site", value: "sharePoint" },
   { label: "Microsoft Teams", value: "teams" },
+];
+
+// SharePoint SPO site template (Team site vs Communication). Only used when siteType is sharePoint.
+// Values match New-CIPPSharepointSite -TemplateName.
+export const SHAREPOINT_TEMPLATE_DEFAULT = "Team";
+export const SHAREPOINT_TEMPLATE_OPTIONS = [
+  { label: "Team site", value: "Team" },
+  { label: "Communication site", value: "Communication" },
 ];
 
 // SharePoint Online site-creation language LCIDs (UI language picker), plus tenant default.
@@ -119,12 +128,20 @@ export const getSiteLanguageOption = (value) => {
 
 export { resolveSiteLanguage };
 
+const resolveSharePointTemplate = (value) => {
+  const raw = value?.value ?? value;
+  return raw === "Communication" ? "Communication" : SHAREPOINT_TEMPLATE_DEFAULT;
+};
+
+export { resolveSharePointTemplate };
+
 const newLibrary = () => ({ name: "", description: "", permissions: [] });
 const newSiteTemplate = (siteType = "sharePoint") => ({
   displayName: "",
   alias: "",
   siteType: resolveSiteType(siteType),
   language: getSiteLanguageOption(SITE_LANGUAGE_DEFAULT),
+  sharePointTemplate: SHAREPOINT_TEMPLATE_DEFAULT,
   permissions: [],
   libraries: [],
 });
@@ -338,12 +355,52 @@ const SiteLanguageDialog = ({ formControl, name, onClose }) => {
   );
 };
 
+// Team site vs Communication site — SharePoint path only; ignored for Teams.
+const SharePointTemplateDialog = ({ formControl, name, onClose }) => {
+  useEffect(() => {
+    if (!name) return;
+    const fieldName = `${name}.sharePointTemplate`;
+    formControl.setValue(fieldName, resolveSharePointTemplate(formControl.getValues(fieldName)), {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+  }, [name, formControl]);
+
+  return (
+    <Dialog open={Boolean(name)} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>SharePoint template</DialogTitle>
+      <DialogContent dividers>
+        {name && (
+          <Stack spacing={1}>
+            <CippFormComponent
+              type="select"
+              label="SharePoint template"
+              name={`${name}.sharePointTemplate`}
+              formControl={formControl}
+              options={SHAREPOINT_TEMPLATE_OPTIONS}
+            />
+            <Typography variant="body2" color="text.secondary">
+              Team site is a collaboration workspace. Communication site is for publishing
+              (intranet, news). Only applies when this card deploys as a SharePoint site.
+            </Typography>
+          </Stack>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Done</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 // A single site template card: coloured header, libraries, and "..." menu for permissions,
 // site type, and remove. Header icon + watermark reflect the effective site type.
 const SiteTemplateCard = ({ formControl, name, index, onRemove, onConfigurePermissions }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [siteTypeOpen, setSiteTypeOpen] = useState(false);
   const [siteLanguageOpen, setSiteLanguageOpen] = useState(false);
+  const [sharePointTemplateOpen, setSharePointTemplateOpen] = useState(false);
   const permissions = useWatch({ control: formControl.control, name: `${name}.permissions` });
   const displayName = useWatch({ control: formControl.control, name: `${name}.displayName` });
   const libraries = useWatch({ control: formControl.control, name: `${name}.libraries` });
@@ -494,6 +551,19 @@ const SiteTemplateCard = ({ formControl, name, index, onRemove, onConfigurePermi
               <ListItemText primary="Site Language" />
             </MenuItem>
           )}
+          {effectiveSiteType === "sharePoint" && (
+            <MenuItem
+              onClick={() => {
+                setAnchorEl(null);
+                setSharePointTemplateOpen(true);
+              }}
+            >
+              <ListItemIcon>
+                <Web fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="SharePoint Template" />
+            </MenuItem>
+          )}
           <Divider />
           <MenuItem
             onClick={() => {
@@ -587,6 +657,11 @@ const SiteTemplateCard = ({ formControl, name, index, onRemove, onConfigurePermi
         formControl={formControl}
         name={siteLanguageOpen ? name : null}
         onClose={() => setSiteLanguageOpen(false)}
+      />
+      <SharePointTemplateDialog
+        formControl={formControl}
+        name={sharePointTemplateOpen ? name : null}
+        onClose={() => setSharePointTemplateOpen(false)}
       />
     </Card>
   );

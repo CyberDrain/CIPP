@@ -56,6 +56,8 @@ function Invoke-ExecSharePointTemplate {
                 $TemplateObject | Add-Member -NotePropertyName 'UpdatedBy' -NotePropertyValue ($User.userDetails ?? 'CIPP-API') -Force
                 $TemplateObject | Add-Member -NotePropertyName 'UpdatedOn' -NotePropertyValue (Get-Date).ToString('o') -Force
                 $TemplateObject | Add-Member -NotePropertyName 'GUID' -NotePropertyValue $GUID -Force
+                # Always stamp the engine version this API understands; clients cannot omit or override.
+                $TemplateObject | Add-Member -NotePropertyName 'templateEngineVersion' -NotePropertyValue 1 -Force
 
                 $TemplateJson = $TemplateObject | ConvertTo-Json -Depth 10 -Compress
 

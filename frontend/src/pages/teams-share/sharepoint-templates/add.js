@@ -18,10 +18,12 @@ import {
   getSiteTemplateSaveIssues,
   getSiteLanguageOption,
   siteTemplateBlocksSave,
+  SHAREPOINT_TEMPLATE_ENGINE_VERSION,
 } from "../../../components/CippComponents/CippSharePointTemplateBuilder";
 
 const emptyTemplate = {
   templateName: "",
+  templateEngineVersion: SHAREPOINT_TEMPLATE_ENGINE_VERSION,
   siteType: "sharePoint",
   overrideSiteType: false,
   createMissingGroups: false,
@@ -78,6 +80,7 @@ const Page = () => {
       value === "teams" || value?.value === "teams" ? "teams" : "sharePoint";
     formControl.reset({
       templateName: isCopy ? `${result.templateName || ""} (Copy)` : result.templateName || "",
+      templateEngineVersion: SHAREPOINT_TEMPLATE_ENGINE_VERSION,
       siteType: normalizeSiteType(result.siteType),
       overrideSiteType: !!result.overrideSiteType,
       createMissingGroups: !!result.createMissingGroups,
@@ -93,6 +96,7 @@ const Page = () => {
   }, [templateId, templateData, isCopy, templateQuery.isFetching, templateQuery.dataUpdatedAt]);
 
   const handleSubmit = (payload) => {
+    payload.templateEngineVersion = SHAREPOINT_TEMPLATE_ENGINE_VERSION;
     if (isEdit) {
       payload.TemplateId = templateId;
     }

@@ -43,6 +43,10 @@ export const SITE_TYPE_OPTIONS = [
   { label: "Microsoft Teams", value: "teams" },
 ];
 
+// Current provisioning engine version stamped on save. Schemas live in
+// frontend/src/data/sharePointTemplateSchemas.json (array keyed by templateEngineVersion).
+export const SHAREPOINT_TEMPLATE_ENGINE_VERSION = 1;
+
 // Team site vs Communication when deploying as SharePoint (not a Microsoft Team).
 // Values match New-CIPPSharepointSite -TemplateName.
 export const CREATE_AS_DEFAULT = "Team";

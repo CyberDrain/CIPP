@@ -120,11 +120,10 @@ function Invoke-CIPPSharePointTemplateDeploy {
                     Headers         = $Headers
                     APIName         = $APIName
                 }
-                # Team site vs Communication — select may persist {label,value}; default Team for
-                # older templates that omit sharePointTemplate.
-                $RawSharePointTemplate = [string]($SiteTemplate.sharePointTemplate.value ?? $SiteTemplate.sharePointTemplate)
-                $SiteParams.TemplateName = if ($RawSharePointTemplate -in @('Team', 'Communication')) {
-                    $RawSharePointTemplate
+                # Team site vs Communication — createAs may persist {label,value}; default Team.
+                $RawCreateAs = [string]($SiteTemplate.createAs.value ?? $SiteTemplate.createAs)
+                $SiteParams.TemplateName = if ($RawCreateAs -in @('Team', 'Communication')) {
+                    $RawCreateAs
                 } else {
                     'Team'
                 }

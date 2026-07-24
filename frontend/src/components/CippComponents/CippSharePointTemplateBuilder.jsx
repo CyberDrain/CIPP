@@ -43,10 +43,10 @@ export const SITE_TYPE_OPTIONS = [
   { label: "Microsoft Teams", value: "teams" },
 ];
 
-// SharePoint SPO site template (Team site vs Communication). Only used when siteType is sharePoint.
+// Team site vs Communication when deploying as SharePoint (not a Microsoft Team).
 // Values match New-CIPPSharepointSite -TemplateName.
-export const SHAREPOINT_TEMPLATE_DEFAULT = "Team";
-export const SHAREPOINT_TEMPLATE_OPTIONS = [
+export const CREATE_AS_DEFAULT = "Team";
+export const CREATE_AS_OPTIONS = [
   { label: "Team site", value: "Team" },
   { label: "Communication site", value: "Communication" },
 ];
@@ -128,12 +128,12 @@ export const getSiteLanguageOption = (value) => {
 
 export { resolveSiteLanguage };
 
-const resolveSharePointTemplate = (value) => {
+const resolveCreateAs = (value) => {
   const raw = value?.value ?? value;
-  return raw === "Communication" ? "Communication" : SHAREPOINT_TEMPLATE_DEFAULT;
+  return raw === "Communication" ? "Communication" : CREATE_AS_DEFAULT;
 };
 
-export { resolveSharePointTemplate };
+export { resolveCreateAs };
 
 const newLibrary = () => ({ name: "", description: "", permissions: [] });
 const newSiteTemplate = (siteType = "sharePoint") => ({
@@ -141,7 +141,7 @@ const newSiteTemplate = (siteType = "sharePoint") => ({
   alias: "",
   siteType: resolveSiteType(siteType),
   language: getSiteLanguageOption(SITE_LANGUAGE_DEFAULT),
-  sharePointTemplate: SHAREPOINT_TEMPLATE_DEFAULT,
+  createAs: CREATE_AS_DEFAULT,
   permissions: [],
   libraries: [],
 });
@@ -356,11 +356,11 @@ const SiteLanguageDialog = ({ formControl, name, onClose }) => {
 };
 
 // Team site vs Communication site — SharePoint path only; ignored for Teams.
-const SharePointTemplateDialog = ({ formControl, name, onClose }) => {
+const CreateAsDialog = ({ formControl, name, onClose }) => {
   useEffect(() => {
     if (!name) return;
-    const fieldName = `${name}.sharePointTemplate`;
-    formControl.setValue(fieldName, resolveSharePointTemplate(formControl.getValues(fieldName)), {
+    const fieldName = `${name}.createAs`;
+    formControl.setValue(fieldName, resolveCreateAs(formControl.getValues(fieldName)), {
       shouldDirty: false,
       shouldTouch: false,
       shouldValidate: false,
@@ -369,16 +369,16 @@ const SharePointTemplateDialog = ({ formControl, name, onClose }) => {
 
   return (
     <Dialog open={Boolean(name)} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>SharePoint template</DialogTitle>
+      <DialogTitle>Create as</DialogTitle>
       <DialogContent dividers>
         {name && (
           <Stack spacing={1}>
             <CippFormComponent
               type="select"
-              label="SharePoint template"
-              name={`${name}.sharePointTemplate`}
+              label="Create as"
+              name={`${name}.createAs`}
               formControl={formControl}
-              options={SHAREPOINT_TEMPLATE_OPTIONS}
+              options={CREATE_AS_OPTIONS}
             />
             <Typography variant="body2" color="text.secondary">
               Team site is a collaboration workspace. Communication site is for publishing
@@ -400,11 +400,12 @@ const SiteTemplateCard = ({ formControl, name, index, onRemove, onConfigurePermi
   const [anchorEl, setAnchorEl] = useState(null);
   const [siteTypeOpen, setSiteTypeOpen] = useState(false);
   const [siteLanguageOpen, setSiteLanguageOpen] = useState(false);
-  const [sharePointTemplateOpen, setSharePointTemplateOpen] = useState(false);
+  const [createAsOpen, setCreateAsOpen] = useState(false);
   const permissions = useWatch({ control: formControl.control, name: `${name}.permissions` });
   const displayName = useWatch({ control: formControl.control, name: `${name}.displayName` });
   const libraries = useWatch({ control: formControl.control, name: `${name}.libraries` });
   const cardSiteType = useWatch({ control: formControl.control, name: `${name}.siteType` });
+  const createAs = useWatch({ control: formControl.control, name: `${name}.createAs` });
   const overrideSiteType = useWatch({ control: formControl.control, name: "overrideSiteType" });
   const templateSiteType = useWatch({ control: formControl.control, name: "siteType" });
   const permCount = Array.isArray(permissions) ? permissions.length : 0;
@@ -412,6 +413,12 @@ const SiteTemplateCard = ({ formControl, name, index, onRemove, onConfigurePermi
   const overrideActive = !!overrideSiteType;
   const effectiveSiteType = resolveSiteType(overrideActive ? templateSiteType : cardSiteType);
   const TypeIcon = siteTypeIcon(effectiveSiteType);
+  const createAsLabel =
+    effectiveSiteType === "teams"
+      ? "Microsoft Team"
+      : resolveCreateAs(createAs) === "Communication"
+        ? "Communication site"
+        : "Team site";
 
   const { fields, append, remove } = useFieldArray({
     control: formControl.control,
@@ -435,81 +442,131 @@ const SiteTemplateCard = ({ formControl, name, index, onRemove, onConfigurePermi
         borderColor: cardBlocksSave ? "error.main" : "transparent",
       }}
     >
-      {/* Brand header — CyberDrain navy; icon tracks effective site type */}
-      <Box
-        sx={{
-          bgcolor: "#003049",
-          color: "#fff",
-          px: 1.5,
-          py: 1.25,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
-        <Tooltip
-          title={
-            effectiveSiteType === "teams" ? "Microsoft Teams" : "SharePoint site"
-          }
+      {/* Brand header + subheader — clearly divided bars */}
+      <Box>
+        <Box
+          sx={{
+            bgcolor: "#003049",
+            color: "#fff",
+            px: 1.5,
+            py: 1.25,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
         >
-          <Box
-            component="span"
-            role="img"
-            aria-label={
-              effectiveSiteType === "teams" ? "Microsoft Teams" : "SharePoint site"
+          <Tooltip
+            title={
+              overrideActive
+                ? "Clear the site type override first"
+                : effectiveSiteType === "teams"
+                  ? "Microsoft Teams — click to change site type"
+                  : "SharePoint site — click to change site type"
             }
-            sx={{ display: "inline-flex", lineHeight: 0 }}
           >
-            <TypeIcon fontSize="small" aria-hidden />
-          </Box>
-        </Tooltip>
-        <Controller
-          name={`${name}.displayName`}
-          control={formControl.control}
-          rules={{ required: true }}
-          render={({ field }) => (
-            <InputBase
-              value={field.value || ""}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              placeholder={`Site Template ${index + 1}`}
-              sx={{
-                flexGrow: 1,
-                color: "#fff",
-                fontWeight: 600,
-                "& input::placeholder": { color: "rgba(255,255,255,0.7)", opacity: 1 },
+            <Box
+              component="button"
+              type="button"
+              disabled={overrideActive}
+              onClick={() => {
+                if (overrideActive) return;
+                setSiteTypeOpen(true);
               }}
-            />
-          )}
-        />
-        <Tooltip
-          title={
-            permCount > 0
-              ? `${permCount} site-level permission${permCount > 1 ? "s" : ""} — click to edit`
-              : "Root permissions required — click to add"
-          }
-        >
-          <IconButton
-            size="small"
-            aria-label={
-              permCount > 0 ? "Edit site permissions" : "Add site permissions"
-            }
-            onClick={() => onConfigurePermissions()}
-            sx={{ color: permCount > 0 ? "#fff" : "error.main" }}
+              aria-label={
+                overrideActive
+                  ? effectiveSiteType === "teams"
+                    ? "Microsoft Teams"
+                    : "SharePoint site"
+                  : "Change site type"
+              }
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: 0,
+                p: 0.25,
+                m: 0,
+                border: "none",
+                borderRadius: 1,
+                background: "none",
+                color: "inherit",
+                cursor: overrideActive ? "default" : "pointer",
+                opacity: overrideActive ? 0.7 : 1,
+                "&:hover": overrideActive
+                  ? undefined
+                  : { bgcolor: "rgba(255,255,255,0.12)" },
+              }}
             >
-            <Lock fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Site actions">
-          <IconButton
-            size="small"
-            aria-label="Site actions"
-            onClick={(e) => setAnchorEl(e.currentTarget)}
-            sx={{ color: "#fff" }}
+              <TypeIcon fontSize="small" aria-hidden />
+            </Box>
+          </Tooltip>
+          <Controller
+            name={`${name}.displayName`}
+            control={formControl.control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <InputBase
+                value={field.value || ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder={`Site Template ${index + 1}`}
+                sx={{
+                  flexGrow: 1,
+                  color: "#fff",
+                  fontWeight: 600,
+                  "& input::placeholder": { color: "rgba(255,255,255,0.7)", opacity: 1 },
+                }}
+              />
+            )}
+          />
+          <Tooltip
+            title={
+              permCount > 0
+                ? `${permCount} site-level permission${permCount > 1 ? "s" : ""} — click to edit`
+                : "Root permissions required — click to add"
+            }
           >
-            <MoreVert fontSize="small" />
-          </IconButton>
-        </Tooltip>
+            <IconButton
+              size="small"
+              aria-label={
+                permCount > 0 ? "Edit site permissions" : "Add site permissions"
+              }
+              onClick={() => onConfigurePermissions()}
+              sx={{ color: permCount > 0 ? "#fff" : "error.main" }}
+            >
+              <Lock fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Site actions">
+            <IconButton
+              size="small"
+              aria-label="Site actions"
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              sx={{ color: "#fff" }}
+            >
+              <MoreVert fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+        <Box
+          sx={{
+            bgcolor: "#0a4059",
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+            px: 1.5,
+            py: 0.75,
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              display: "block",
+              color: "rgba(255,255,255,0.75)",
+              lineHeight: 1.3,
+            }}
+          >
+            {createAsLabel}
+          </Typography>
+        </Box>
         <Menu anchorEl={anchorEl} open={openMenu} onClose={() => setAnchorEl(null)}>
           <MenuItem
             onClick={() => {
@@ -555,13 +612,13 @@ const SiteTemplateCard = ({ formControl, name, index, onRemove, onConfigurePermi
             <MenuItem
               onClick={() => {
                 setAnchorEl(null);
-                setSharePointTemplateOpen(true);
+                setCreateAsOpen(true);
               }}
             >
               <ListItemIcon>
                 <Web fontSize="small" />
               </ListItemIcon>
-              <ListItemText primary="SharePoint Template" />
+              <ListItemText primary="Create as" />
             </MenuItem>
           )}
           <Divider />
@@ -658,10 +715,10 @@ const SiteTemplateCard = ({ formControl, name, index, onRemove, onConfigurePermi
         name={siteLanguageOpen ? name : null}
         onClose={() => setSiteLanguageOpen(false)}
       />
-      <SharePointTemplateDialog
+      <CreateAsDialog
         formControl={formControl}
-        name={sharePointTemplateOpen ? name : null}
-        onClose={() => setSharePointTemplateOpen(false)}
+        name={createAsOpen ? name : null}
+        onClose={() => setCreateAsOpen(false)}
       />
     </Card>
   );

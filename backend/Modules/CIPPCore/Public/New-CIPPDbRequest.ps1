@@ -76,17 +76,28 @@ function New-CIPPDbRequest {
 
         $Table = Get-CippTable -tablename 'CippReportingDB'
 
-        if (-not $script:CIPPDbRequestTenantCache) {
+        $IsAllTenants = $TenantFilter -eq 'AllTenants'
+
+        if ($IsAllTenants) {
+            $Tenant = 'AllTenants'
+            $ValidTenants = [System.Collections.Generic.HashSet[string]]::new(
+                [string[]]@((Get-Tenants -IncludeErrors).defaultDomainName),
+                [System.StringComparer]::OrdinalIgnoreCase
+            )
+        } elseif (-not $script:CIPPDbRequestTenantCache) {
             $script:CIPPDbRequestTenantCache = @{}
         }
-        $CacheNow = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-        $CachedTenant = $script:CIPPDbRequestTenantCache[$TenantFilter]
-        if ($CachedTenant -and ($CacheNow - $CachedTenant.Timestamp) -lt 300) {
-            $Tenant = $CachedTenant.DefaultDomain
-        } else {
-            $Tenant = (Get-Tenants -TenantFilter $TenantFilter).defaultDomainName
-            if ($Tenant) {
-                $script:CIPPDbRequestTenantCache[$TenantFilter] = @{ DefaultDomain = $Tenant; Timestamp = $CacheNow }
+
+        if (-not $IsAllTenants) {
+            $CacheNow = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+            $CachedTenant = $script:CIPPDbRequestTenantCache[$TenantFilter]
+            if ($CachedTenant -and ($CacheNow - $CachedTenant.Timestamp) -lt 300) {
+                $Tenant = $CachedTenant.DefaultDomain
+            } else {
+                $Tenant = (Get-Tenants -TenantFilter $TenantFilter).defaultDomainName
+                if ($Tenant) {
+                    $script:CIPPDbRequestTenantCache[$TenantFilter] = @{ DefaultDomain = $Tenant; Timestamp = $CacheNow }
+                }
             }
         }
         if (-not $Tenant) {
@@ -95,26 +106,38 @@ function New-CIPPDbRequest {
             }
             throw "Tenant '$TenantFilter' not found"
         }
-        $SafeTenantFilter = ConvertTo-CIPPODataFilterValue -Value $Tenant -Type String
         $SafeTypeFilter = if ($Type) { ConvertTo-CIPPODataFilterValue -Value $Type -Type String } else { $null }
 
-        if ($Type) {
+        if ($IsAllTenants -and $Type) {
+            $Filter = "RowKey ge '{0}-' and RowKey lt '{0}.'" -f $SafeTypeFilter
+        } elseif ($IsAllTenants) {
+            $Filter = $null
+        } elseif ($Type) {
+            $SafeTenantFilter = ConvertTo-CIPPODataFilterValue -Value $Tenant -Type String
             $Filter = "PartitionKey eq '{0}' and RowKey ge '{1}-' and RowKey lt '{1}.'" -f $SafeTenantFilter, $SafeTypeFilter
         } else {
+            $SafeTenantFilter = ConvertTo-CIPPODataFilterValue -Value $Tenant -Type String
             $Filter = "PartitionKey eq '{0}'" -f $SafeTenantFilter
         }
 
-        $Results = Get-CIPPAzDataTableEntity @Table -Filter $Filter
+        $Results = if ($Filter) { Get-CIPPAzDataTableEntity @Table -Filter $Filter } else { Get-CIPPAzDataTableEntity @Table }
 
         # CippJson replaces `$Results.Data | ConvertFrom-Json`. A row whose Data is a JSON array
         # returns object[], which PowerShell unrolls into the output stream — the same shape the
         # pipeline produced before. Bad rows are skipped rather than thrown, matching the
         # -ErrorAction SilentlyContinue this replaced.
         $Projection = if ($Fields) { [string[]]$Fields } else { $null }
-        $Output = foreach ($Row in $Results.Data) {
-            if ([string]::IsNullOrWhiteSpace($Row)) { continue }
+        $Output = foreach ($Row in $Results) {
+            if ($IsAllTenants -and -not $ValidTenants.Contains($Row.PartitionKey)) { continue }
+            if ([string]::IsNullOrWhiteSpace($Row.Data)) { continue }
             try {
-                [CIPP.CippJson]::ConvertFromJson($Row, $Projection)
+                $ParsedItems = @([CIPP.CippJson]::ConvertFromJson($Row.Data, $Projection))
+                foreach ($ParsedItem in $ParsedItems) {
+                    if ($IsAllTenants -and $null -ne $ParsedItem) {
+                        $ParsedItem | Add-Member -NotePropertyName Tenant -NotePropertyValue $Row.PartitionKey -Force
+                    }
+                    $ParsedItem
+                }
             } catch {
                 Write-Information "Skipping unparseable CippReportingDB row for '$Tenant'/'$Type': $($_.Exception.Message)"
             }

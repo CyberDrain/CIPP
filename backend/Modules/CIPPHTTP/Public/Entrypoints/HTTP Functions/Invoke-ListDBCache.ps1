@@ -30,6 +30,10 @@ function Invoke-ListDBCache {
 
         Common cache types include: Users, Groups, Mailboxes, Devices, ConditionalAccess, Applications,
         IntunePolicy, CompliancePolicy, and many more. The exact set depends on what has been configured.
+
+        Set includeCoverage=true to add a Coverage object that compares the returned records with the
+        per-tenant count manifest. For AllTenants requests this identifies missing tenants, valid zero-row
+        tenants, stale timestamps, and count mismatches caused by unreadable rows.
     #>
     [CmdletBinding()]
     param (
@@ -39,6 +43,7 @@ function Invoke-ListDBCache {
 
     $TenantFilter = $Request.Query.tenantFilter
     $Type = $Request.Query.type
+    $IncludeCoverage = $Request.Query.includeCoverage -eq 'true'
 
     $Tenant = if ($TenantFilter -ne 'AllTenants') { (Get-Tenants -TenantFilter $TenantFilter).defaultDomainName } else { $TenantFilter }
 
@@ -75,8 +80,13 @@ function Invoke-ListDBCache {
         $Results = New-CIPPDbRequest -TenantFilter $Tenant -Type $Type
     }
 
+    $Body = @{ Results = $Results }
+    if ($IncludeCoverage) {
+        $Body.Coverage = Get-CIPPDbCoverage -TenantFilter $Tenant -Type $Type -Results @($Results)
+    }
+
     return ([HttpResponseContext]@{
             StatusCode = [HttpStatusCode]::OK
-            Body       = @{ Results = $Results }
+            Body       = $Body
         })
 }

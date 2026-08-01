@@ -29686,7 +29686,7 @@
             "description": "Internal server error"
           }
         },
-        "description": "Retrieves cached tenant data from the CIPP reporting database (CippReportingDB). This is the fastest\n        and most efficient way to query tenant data across single or multiple tenants. The database is populated\n        nightly by background cache jobs, so data is typically at most 24 hours old.\n\n        Required query parameters:\n          - tenantFilter: The tenant domain or 'AllTenants' to query all managed tenants.\n          - type: The cache collection to retrieve (e.g. Users, Groups, Mailboxes, Devices, etc.).\n\n        Use type=_availableTypes to discover which cache collections exist for a given tenant. Omitting the\n        type parameter also returns the available types.\n\n        PERFORMANCE GUIDANCE: For AllTenants queries or any bulk/cross-tenant data retrieval, prefer\n        ListDBCache over calling individual endpoints (e.g. ListUsers, ListGroups, ListMailboxes) directly.\n        Individual endpoints make live API calls per tenant which is significantly slower and may hit\n        throttling limits. ListDBCache reads pre-cached data from Azure Table Storage and returns results\n        in seconds regardless of tenant count.\n\n        Recommended workflow for MCP tool selection:\n          1. Call ListDBCache with type=_availableTypes to discover available cache collections.\n          2. If the data you need exists as a cache type, use ListDBCache with that type.\n          3. Only fall back to individual List* endpoints when you need real-time data for a single tenant\n             or when the data is not available in the cache.\n\n        Common cache types include: Users, Groups, Mailboxes, Devices, ConditionalAccess, Applications,\n        IntunePolicy, CompliancePolicy, and many more. The exact set depends on what has been configured.",
+        "description": "Retrieves cached tenant data from the CIPP reporting database (CippReportingDB). This is the fastest\n        and most efficient way to query tenant data across single or multiple tenants. The database is populated\n        nightly by background cache jobs, so data is typically at most 24 hours old.\n\n        Required query parameters:\n          - tenantFilter: The tenant domain or 'AllTenants' to query all managed tenants.\n          - type: The cache collection to retrieve (e.g. Users, Groups, Mailboxes, Devices, etc.).\n\n        Use type=_availableTypes to discover which cache collections exist for a given tenant. Omitting the\n        type parameter also returns the available types.\n\n        PERFORMANCE GUIDANCE: For AllTenants queries or any bulk/cross-tenant data retrieval, prefer\n        ListDBCache over calling individual endpoints (e.g. ListUsers, ListGroups, ListMailboxes) directly.\n        Individual endpoints make live API calls per tenant which is significantly slower and may hit\n        throttling limits. ListDBCache reads pre-cached data from Azure Table Storage and returns results\n        in seconds regardless of tenant count.\n\n        Recommended workflow for MCP tool selection:\n          1. Call ListDBCache with type=_availableTypes to discover available cache collections.\n          2. If the data you need exists as a cache type, use ListDBCache with that type.\n          3. Only fall back to individual List* endpoints when you need real-time data for a single tenant\n             or when the data is not available in the cache.\n\n        Common cache types include: Users, Groups, Mailboxes, Devices, ConditionalAccess, Applications,\n        IntunePolicy, CompliancePolicy, and many more. The exact set depends on what has been configured.\n\n        Set includeCoverage=true to include per-tenant cache counts, timestamps, missing tenants, count\n        mismatches, and an aggregate completeness flag alongside Results.",
         "x-cipp-role": "CIPP.Core.Read",
         "parameters": [
           {
@@ -29698,6 +29698,16 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "includeCoverage",
+            "in": "query",
+            "description": "Include per-tenant ReportDB coverage and completeness metadata.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ]

@@ -22,6 +22,8 @@ Under the "Choose which logs you would like to receive alerts from" you will be 
 * New Standards added via CIPP
 * Removed Standards via CIPP
 * Token Refresh Events
+* Scheduled task failures
+* Tasks pending with issues
 
 ## Sending Methods
 

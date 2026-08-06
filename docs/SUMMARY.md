@@ -394,6 +394,8 @@
   * [Community Repositories](user-documentation/tools/community-repos/README.md)
     * [View Repository Templates](user-documentation/tools/community-repos/repo.md)
   * [Scheduler](user-documentation/tools/scheduler/README.md)
+    * [Failed Queue](user-documentation/tools/scheduler/failed-queue.md)
+    * [Pending with Issues](user-documentation/tools/scheduler/pending-with-issues.md)
     * [Add Task](user-documentation/tools/scheduler/job.md)
     * [View Scheduled Task Details](user-documentation/tools/scheduler/task.md)
 * [CIPP](user-documentation/cipp/README.md)

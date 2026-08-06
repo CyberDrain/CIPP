@@ -1,0 +1,17 @@
+[
+  {
+    "label": "All Tasks",
+    "path": "/cipp/scheduler",
+    "icon": "AccessTime"
+  },
+  {
+    "label": "Failed Queue",
+    "path": "/cipp/scheduler/failed",
+    "icon": "Warning"
+  },
+  {
+    "label": "Pending with Issues",
+    "path": "/cipp/scheduler/at-risk",
+    "icon": "FactCheck"
+  }
+]

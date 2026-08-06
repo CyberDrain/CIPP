@@ -81,6 +81,12 @@ function Write-LogMessage {
     }
     if ($script:CippScheduledTaskIdStorage.Value) {
         $TableRow.ScheduledTaskId = [string]$script:CippScheduledTaskIdStorage.Value
+
+        # Track failures inside the running scheduled task so the scheduler can flag a task that finished
+        # but had a step fail along the way. Capped to keep a pathological task from growing unbounded.
+        if ($sev -in 'Error', 'Critical' -and $null -ne $script:CippScheduledTaskErrorStorage.Value -and $script:CippScheduledTaskErrorStorage.Value.Count -lt 25) {
+            $script:CippScheduledTaskErrorStorage.Value.Add([string]$message)
+        }
     }
     if ($script:CippBaselineRunIdStorage.Value) {
         $TableRow.BaselineRunId = [string]$script:CippBaselineRunIdStorage.Value

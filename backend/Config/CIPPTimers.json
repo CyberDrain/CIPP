@@ -284,5 +284,13 @@
     "RunOnProcessor": true,
     "TZOffset": true,
     "PreferredProcessor": "standards"
+  },
+  {
+    "Id": "0b31a4b7-4104-479e-a358-a57675f80bd5",
+    "Command": "Start-CIPPTaskPreflightCheck",
+    "Description": "Flag planned scheduled tasks whose prerequisites are no longer available",
+    "Cron": "0 7 */6 * * *",
+    "Priority": 25,
+    "RunOnProcessor": true
   }
 ]

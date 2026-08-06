@@ -1,5 +1,5 @@
 import { EyeIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { CopyAll, Edit, PlayArrow } from "@mui/icons-material";
+import { CopyAll, Edit, PlayArrow, TaskAlt } from "@mui/icons-material";
 import { usePermissions } from "../../hooks/use-permissions";
 
 export const CippScheduledTaskActions = (drawerHandlers = {}, { hideActions = [] } = {}) => {
@@ -23,6 +23,22 @@ export const CippScheduledTaskActions = (drawerHandlers = {}, { hideActions = []
       confirmText: "Are you sure you want to run [Name]?",
       allowResubmit: true,
       condition: () => canWriteScheduler,
+    },
+    {
+      label: "Acknowledge Errors",
+      type: "POST",
+      url: "/api/ExecAckScheduledItem",
+      data: { RowKey: "RowKey" },
+      icon: <TaskAlt />,
+      confirmText:
+        "Acknowledge the errors on [Name]? The failure stays on record but the task will no longer appear as needing attention unless it fails again.",
+      multiPost: false,
+      condition: (row) =>
+        canWriteScheduler &&
+        row.Acknowledged !== true &&
+        (row.HasErrors === true ||
+          row.TaskState === "Failed" ||
+          row.TaskState === "Failed - Planned"),
     },
     {
       label: "Edit Job",

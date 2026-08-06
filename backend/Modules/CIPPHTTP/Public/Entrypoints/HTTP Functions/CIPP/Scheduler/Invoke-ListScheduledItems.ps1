@@ -26,6 +26,10 @@ function Invoke-ListScheduledItems {
         $Name = $Request.Query.Name ?? $Request.Body.Name
         $Type = $Request.Query.Type ?? $Request.Body.Type
         $SearchTitle = $Request.query.SearchTitle ?? $Request.body.SearchTitle
+        $State = $Request.Query.State ?? $Request.Body.State
+        $HasErrors = ($Request.Query.HasErrors -eq $true) -or ($Request.Body.HasErrors -eq $true)
+        $AtRisk = ($Request.Query.AtRisk -eq $true) -or ($Request.Body.AtRisk -eq $true)
+        $NeedsAttention = ($Request.Query.NeedsAttention -eq $true) -or ($Request.Body.NeedsAttention -eq $true)
 
         if ($ShowHidden) {
             $ScheduledItemFilter.Add("(Hidden eq true or Hidden eq 'True')")
@@ -41,6 +45,33 @@ function Invoke-ListScheduledItems {
         if ($Type) {
             $SafeType = ConvertTo-CIPPODataFilterValue -Value $Type -Type String
             $ScheduledItemFilter.Add("Command eq '$SafeType'")
+        }
+
+        # Status filters backing the failed and at-risk task views. All optional, so omitting them
+        # returns exactly what this endpoint returned before. An unrecognised state simply matches
+        # nothing once escaped, which is the sensible answer for a filter nobody can satisfy.
+        if ($State) {
+            $StateClauses = foreach ($SingleState in ($State -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })) {
+                "TaskState eq '{0}'" -f (ConvertTo-CIPPODataFilterValue -Value $SingleState -Type String)
+            }
+            if ($StateClauses) {
+                $ScheduledItemFilter.Add('({0})' -f ($StateClauses -join ' or '))
+            }
+        }
+
+        if ($HasErrors) {
+            $ScheduledItemFilter.Add("(HasErrors eq true or HasErrors eq 'True')")
+        }
+
+        if ($AtRisk) {
+            $ScheduledItemFilter.Add("(AtRisk eq true or AtRisk eq 'True')")
+        }
+
+        # Everything that needs a human to look at it: tasks that failed outright, and tasks that
+        # reported success while a step inside them failed. This is a union rather than an
+        # intersection, so it cannot be expressed by combining the filters above.
+        if ($NeedsAttention) {
+            $ScheduledItemFilter.Add("(TaskState eq 'Failed' or TaskState eq 'Failed - Planned' or HasErrors eq true or HasErrors eq 'True')")
         }
     }
 
@@ -71,6 +102,13 @@ function Invoke-ListScheduledItems {
     # both leading and trailing wildcards (e.g. '*Vacation*').
     if ($SearchTitle) {
         $Tasks = $Tasks | Where-Object { $_.Name -like $SearchTitle }
+    }
+
+    # Also client-side, deliberately: an OData clause like "Acknowledged ne true" excludes every row
+    # that does not carry the property at all, which is every task written before acknowledgement
+    # existed - the filter would silently empty the view instead of narrowing it.
+    if ($NeedsAttention) {
+        $Tasks = $Tasks | Where-Object { $_.Acknowledged -ne $true }
     }
 
     $AllowedTenants = Test-CIPPAccess -Request $Request -TenantList
@@ -114,6 +152,24 @@ function Invoke-ListScheduledItems {
             $Task | Add-Member -NotePropertyName Recurrence -NotePropertyValue 'Once' -Force
         } elseif ($Task.Recurrence -eq 0 -or [string]::IsNullOrEmpty($Task.Recurrence)) {
             $Task.Recurrence = 'Once'
+        }
+
+        # Tasks written before these fields existed carry no value at all, which renders as a blank
+        # cell rather than a readable status. Default them so every row reports one.
+        if ($null -eq $Task.HasErrors) {
+            $Task | Add-Member -NotePropertyName HasErrors -NotePropertyValue $false -Force
+        }
+        if ($null -eq $Task.AtRisk) {
+            $Task | Add-Member -NotePropertyName AtRisk -NotePropertyValue $false -Force
+        }
+        if ($null -eq $Task.ErrorSummary) {
+            $Task | Add-Member -NotePropertyName ErrorSummary -NotePropertyValue '' -Force
+        }
+        if ($null -eq $Task.AtRiskReason) {
+            $Task | Add-Member -NotePropertyName AtRiskReason -NotePropertyValue '' -Force
+        }
+        if ($null -eq $Task.Acknowledged) {
+            $Task | Add-Member -NotePropertyName Acknowledged -NotePropertyValue $false -Force
         }
         try {
             $Task.ExecutedTime = [DateTimeOffset]::FromUnixTimeSeconds($Task.ExecutedTime).UtcDateTime

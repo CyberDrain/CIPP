@@ -65,6 +65,14 @@ function Push-ScheduledTaskPostExecution {
     # Prepare aggregated results message
     $AggregatedMessage = "Multi-tenant task completed: $SuccessCount successful, $FailureCount failed (Total: $TotalTenants tenants)"
 
+    # The task state below only goes to Failed when *every* tenant failed, so a partial failure - 3 of
+    # 50 tenants - otherwise reports as a clean Completed and is invisible. Flag any failure so those
+    # tasks still surface for review.
+    $HasFailures = $FailureCount -gt 0
+    $FailureSummary = if ($HasFailures) {
+        "$FailureCount of $TotalTenants tenant(s) failed. Per-tenant detail is available in the More Info pane."
+    } else { '' }
+
     # Calculate next run time for recurring tasks
     if ($IsRecurring -and !$IsTriggerOnce) {
         # Convert recurrence to seconds
@@ -95,6 +103,9 @@ function Push-ScheduledTaskPostExecution {
                 Results       = $AggregatedMessage
                 TaskState     = if ($FailureCount -gt 0 -and $FailureCount -eq $TotalTenants) { 'Failed - Planned' } else { 'Planned' }
                 ScheduledTime = "$nextRunUnixTime"
+                HasErrors     = $HasFailures
+                ErrorSummary  = $FailureSummary
+                Acknowledged  = $false
             }
         } else {
             # Invalid recurrence, mark as completed
@@ -104,6 +115,9 @@ function Push-ScheduledTaskPostExecution {
                 RowKey       = $ParentTask.RowKey
                 Results      = "$AggregatedMessage - Warning: Invalid recurrence, task will not repeat"
                 TaskState    = 'Completed'
+                HasErrors    = $HasFailures
+                ErrorSummary = $FailureSummary
+                Acknowledged = $false
             }
         }
     } else {
@@ -114,6 +128,9 @@ function Push-ScheduledTaskPostExecution {
             RowKey       = $ParentTask.RowKey
             Results      = $AggregatedMessage
             TaskState    = if ($FailureCount -gt 0 -and $FailureCount -eq $TotalTenants) { 'Failed' } else { 'Completed' }
+            HasErrors    = $HasFailures
+            ErrorSummary = $FailureSummary
+            Acknowledged = $false
         }
     }
 

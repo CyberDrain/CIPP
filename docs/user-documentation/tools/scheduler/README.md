@@ -4,6 +4,8 @@ The task scheduler allows you to schedule CIPP functionality to be executed at a
 
 The scheduler allows you to schedule components to run once, every day, every 7 days, every 30 days, or every year.
 
+The scheduler has three tabs. All Tasks is the full list described on this page. [failed-queue.md](failed-queue.md "mention") shows tasks that failed or completed with errors and need attention. [pending-with-issues.md](pending-with-issues.md "mention") shows planned tasks that are expected to fail, such as a user creation whose licence is no longer available, so they can be fixed before they run.
+
 {% hint style="warning" %}
 Scheduling a task for the past will make it run on the next interval the scheduler runs.
 {% endhint %}
@@ -35,7 +37,9 @@ Opens the [job.md](job.md "mention") page
 | Column         | Description                                                                     |
 | -------------- | ------------------------------------------------------------------------------- |
 | Executed Time  | The relative time since the task was last run                                   |
-| Task State     | Displays information on if the task is "Planned", "Completed", or "Failed".     |
+| Task State     | "Planned", "Running", "Completed", "Failed", or "Failed - Planned"              |
+| Has Errors     | Whether the last run recorded any errors, even if the task completed            |
+| At Risk        | Whether the task is expected to fail when it runs                               |
 | Tenant         | The tenant selected for the job                                                 |
 | Name           | The job's name                                                                  |
 | Scheduled Time | The relative time since the task ran or until the task is scheduled to run next |
@@ -46,7 +50,7 @@ Opens the [job.md](job.md "mention") page
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>View Task Details</td><td>Will open a view only page with the full details of the job</td><td>false</td></tr><tr><td>Run Now</td><td>Will run the task at the next quarter hour</td><td>true</td></tr><tr><td>Edit Job</td><td>Will display the job in a state where you can edit the details</td><td>false</td></tr><tr><td>Clone and Edit Job</td><td>Creates a copy of the selected job and opens the edit window to make any necessary changes</td><td>false</td></tr><tr><td>Delete Job</td><td>Deletes the job from the schedule</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>View Task Details</td><td>Will open a view only page with the full details of the job</td><td>false</td></tr><tr><td>Run Now</td><td>Will run the task at the next quarter hour</td><td>true</td></tr><tr><td>Acknowledge Errors</td><td>Shown on tasks that failed or completed with errors. Marks the failure as dealt with and removes the task from the Failed Queue while keeping its error details. See <a href="failed-queue.md">failed-queue.md</a></td><td>false</td></tr><tr><td>Edit Job</td><td>Will display the job in a state where you can edit the details</td><td>false</td></tr><tr><td>Clone and Edit Job</td><td>Creates a copy of the selected job and opens the edit window to make any necessary changes</td><td>false</td></tr><tr><td>Delete Job</td><td>Deletes the job from the schedule</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 ## Task Details
 

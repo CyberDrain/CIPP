@@ -31,6 +31,18 @@ function Import-CommunityTemplate {
             # Check for existing object
             $Existing = Get-CIPPAzDataTableEntity @Table -Filter "RowKey eq '$($Template.RowKey)' and PartitionKey eq '$($Template.PartitionKey)'" -ErrorAction SilentlyContinue
 
+            # Nothing to import when the repo file has not moved since it was last read. The write
+            # below is a full replace keyed on RowKey, so going ahead anyway cannot add anything -
+            # it can only overwrite edits made in CIPP since then with the older repo copy. The
+            # template sync reaches this path automatically for any file it fails to match by name,
+            # so without this guard a stale file silently reverts a live template on a schedule.
+            # Matches the behaviour the community template path below already has.
+            if ($Existing -and $SHA -and $Existing.SHA -eq $SHA -and -not $Force) {
+                $StatusMessage = "Template '$($Template.RowKey)' from source '$Source' is already up to date. Skipping import."
+                Write-Information $StatusMessage
+                return $StatusMessage
+            }
+
             if ($Existing) {
                 if ($Existing.PartitionKey -eq 'StandardsTemplateV2') {
                     # Convert existing JSON to object for updates
@@ -67,6 +79,17 @@ function Import-CommunityTemplate {
             $Template.JSON = $NewJSON
             $Template | Add-Member -MemberType NoteProperty -Name SHA -Value $SHA -Force
             $Template | Add-Member -MemberType NoteProperty -Name Source -Value $Source -Force
+
+            # This is a replace, not a merge, so any column the repo file does not carry is lost.
+            # Package membership is assigned locally and is usually set after a template was last
+            # uploaded, so importing would quietly drop the template out of its package - the
+            # standards engine resolves packages by filtering on this column, and the template
+            # would simply stop being evaluated. Keep what is already stored unless the incoming
+            # file sets it explicitly.
+            if ($Existing.Package -and [string]::IsNullOrWhiteSpace($Template.Package)) {
+                $Template | Add-Member -MemberType NoteProperty -Name Package -Value $Existing.Package -Force
+            }
+
             Add-CIPPAzDataTableEntity @Table -Entity $Template -Force
 
             if ($Existing -and $Existing.SHA -ne $SHA) {
@@ -222,15 +245,11 @@ function Import-CommunityTemplate {
                         '*deviceAppManagement*' { 'AppProtection' }
                     }
 
-                    # Fallback: infer type from template content when @odata.id is missing or unrecognized
+                    # Fallback: infer type from template content when @odata.id is missing or
+                    # unrecognized. The same inference the read paths use, rather than a second copy
+                    # of the rules that drifts from it.
                     if (-not $URLName) {
-                        $odataType = $Template.'@odata.type'
-                        $URLName = if ($null -ne $Template.settings -and $null -ne $Template.technologies) { 'Catalog' }
-                            elseif ($null -ne $Template.scheduledActionsForRule -or $odataType -match 'CompliancePolicy') { 'DeviceCompliancePolicies' }
-                            elseif ($odataType -match 'windowsDriverUpdateProfile') { 'windowsDriverUpdateProfiles' }
-                            elseif ($odataType -match 'ManagedApp|managedAppProtection') { 'AppProtection' }
-                            elseif ($odataType -match 'deviceConfiguration|#microsoft\.graph\.\w+Configuration$') { 'Device' }
-                            else { $null }
+                        $URLName = Get-CIPPIntuneTemplateType -RawJson $Template
                         if ($URLName) {
                             Write-Information "Inferred Intune template type '$URLName' from content structure for '$($Template.displayName ?? $Template.Name)'"
                         }
@@ -242,6 +261,21 @@ function Import-CommunityTemplate {
 
                     #create a new template
                     $DisplayName = $Template.displayName ?? $template.Name
+
+                    # Refuse a template that cannot deploy rather than storing it. An unmappable
+                    # policy used to import cleanly with no type at all, list like any other, and
+                    # then deploy to nothing while reporting success - so the repo looked synced and
+                    # the tenant was never configured. Failing the file here names the problem while
+                    # there is still something to fix it against.
+                    $Validation = Test-CIPPIntuneTemplate -RawJSON $RawJson -TemplateType $URLName -DisplayName $DisplayName
+                    if (-not $Validation.IsValid) {
+                        $StatusMessage = "Intune template '$DisplayName' from source '$Source' was not imported: $($Validation.Errors -join ' ')"
+                        Write-Warning $StatusMessage
+                        return $StatusMessage
+                    }
+                    foreach ($Warning in $Validation.Warnings) {
+                        Write-Information "Intune template '$DisplayName': $Warning"
+                    }
 
                     # Check for duplicate template
                     $DuplicateFilter = "PartitionKey eq 'IntuneTemplate'"

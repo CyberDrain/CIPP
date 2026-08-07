@@ -15,7 +15,13 @@ function Invoke-AddIntuneTemplate {
     try {
         if ($Request.Body.RawJSON) {
             if (!$Request.Body.displayName) { throw 'You must enter a displayName' }
-            if ($null -eq ($Request.Body.RawJSON | ConvertFrom-Json)) { throw 'the JSON is invalid' }
+
+            # Nothing has been stored yet, so refusing costs the caller nothing and keeps a template
+            # that cannot deploy out of the list entirely.
+            $Validation = Test-CIPPIntuneTemplate -RawJSON $Request.Body.RawJSON -TemplateType $Request.Body.TemplateType -DisplayName $Request.Body.displayName
+            if (-not $Validation.IsValid) {
+                throw "The template was not saved because it would not deploy: $($Validation.Errors -join ' ')"
+            }
 
             $reusableTemplateRefs = @()
             $object = [PSCustomObject]@{
@@ -51,6 +57,14 @@ function Invoke-AddIntuneTemplate {
             # Intune templates store payload in RAWJson; only the content is rewritten to use reusable template GUID placeholders.
             $templateJson = if ($reusableResult.RawJSON) { $reusableResult.RawJSON } else { $Template.TemplateJson }
 
+            # A capture reads a policy Intune is already running, so this should always pass. When it
+            # does not, the capture dropped something the policy needs and storing it would produce a
+            # template that silently fails to deploy later.
+            $Validation = Test-CIPPIntuneTemplate -RawJSON $templateJson -TemplateType $Template.Type -DisplayName $Template.DisplayName
+            if (-not $Validation.IsValid) {
+                throw "The captured policy did not produce a deployable template: $($Validation.Errors -join ' ')"
+            }
+
             $object = [PSCustomObject]@{
                 Displayname      = $Template.DisplayName
                 Description      = $Template.Description
@@ -74,13 +88,19 @@ function Invoke-AddIntuneTemplate {
     } catch {
         $StatusCode = [HttpStatusCode]::InternalServerError
         $ErrorMessage = Get-CippException -Exception $_
-        $Result = "Intune Template Deployment failed: $($ErrorMessage.NormalizedMessage)"
+        $Result = "Intune Template Deployment failed: $($ErrorMessage.NormalizedError)"
         Write-LogMessage -headers $Headers -API $APIName -message $Result -Sev 'Error' -LogData $ErrorMessage
     }
 
 
+    # The GUID rides along so the caller can go straight to the template it just made. Creating one
+    # from scratch stores a name and a set of settings but no values yet, so the next thing anyone
+    # does is open it - and without this there is nothing to open it by.
+    $Body = @{ 'Results' = $Result }
+    if ($StatusCode -eq [HttpStatusCode]::OK) { $Body.GUID = $GUID }
+
     return ([HttpResponseContext]@{
             StatusCode = $StatusCode
-            Body       = @{'Results' = $Result }
+            Body       = $Body
         })
 }

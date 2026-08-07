@@ -301,6 +301,14 @@ function Set-CIPPIntunePolicy {
                     Write-LogMessage -headers $Headers -API $APIName -tenant $($TenantFilter) -message "Added policy $($DisplayName) via template" -Sev Info
                 }
             }
+            default {
+                # Without this, a type no branch above names falls straight through: no request is
+                # built, $PostType stays empty, and the return below reports a successful deployment
+                # for a policy that was never sent. Templates reach this state for real - an import
+                # that cannot map a policy to a type stores it with none - so the failure has to be
+                # loud or it is invisible until someone checks the tenant.
+                throw "Intune template type '$TemplateType' cannot be deployed. Deployment supports: $((Get-CIPPIntuneDeployableType) -join ', '). Re-import or recapture the template to give it a supported type."
+            }
         }
         Write-LogMessage -headers $Headers -API $APIName -tenant $($TenantFilter) -message "$($PostType) policy $($DisplayName)" -Sev Info
         if ($AssignTo) {

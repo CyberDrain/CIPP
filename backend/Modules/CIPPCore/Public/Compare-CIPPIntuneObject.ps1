@@ -335,6 +335,15 @@ function Compare-CIPPIntuneObject {
             $DifferenceObject
         }
 
+        # Conditional Access pairs describe the same intent in two shapes (template vs Graph
+        # read-back) and need normalizing before they can be compared at all - see
+        # ConvertTo-CIPPCAComparable for what diverges and why. Callers opt in with -CompareType 'ca'.
+        if ($CompareType -contains 'ca' -and $obj1 -and $obj2) {
+            $Normalized = ConvertTo-CIPPCAComparable -ReferenceObject $obj1 -DifferenceObject $obj2
+            $obj1 = $Normalized.ReferenceObject
+            $obj2 = $Normalized.DifferenceObject
+        }
+
         if ($obj1 -and $obj2) {
             Compare-ObjectsRecursively -Object1 $obj1 -Object2 $obj2
         }
@@ -343,12 +352,11 @@ function Compare-CIPPIntuneObject {
             return $null
         }
     } else {
-        $intuneCollection = Get-Content "$env:CIPPRootPath\Config\intuneCollection.json" | ConvertFrom-Json -ErrorAction SilentlyContinue
-        # Build a hashtable index for O(1) lookups instead of O(n) Where-Object scans
-        $intuneCollectionIndex = @{}
-        foreach ($item in $intuneCollection) {
-            if ($item.id) { $intuneCollectionIndex[$item.id] = $item }
-        }
+        # Indexed by id for O(1) lookups instead of O(n) Where-Object scans, and cached for the life
+        # of the worker - a drift run compares many policies against the same 19MB catalog and used
+        # to re-read and re-parse it for every one of them. Empty when the catalog is unavailable,
+        # which leaves the lookups below returning nothing rather than failing the comparison.
+        $intuneCollectionIndex = (Get-CIPPIntuneCatalogIndex) ?? @{}
 
         # Settings Intune generates per tenant. The Defender onboarding blob embeds the tenant's own
         # workspace identity, so a template captured in one tenant can never match another - it

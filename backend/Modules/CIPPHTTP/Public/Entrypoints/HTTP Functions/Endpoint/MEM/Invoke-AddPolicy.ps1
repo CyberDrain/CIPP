@@ -68,9 +68,22 @@ function Invoke-AddPolicy {
         }
 
         try {
+            # Checked per tenant because the payload is not the same for each: the replacemap above
+            # rewrites it, so a template can be sound for one tenant and not another. Static checks
+            # only - Set-CIPPIntunePolicy does its own tenant-specific setting filtering, and
+            # repeating that here would double the Graph calls for every deployment.
+            $Validation = Test-CIPPIntuneTemplate -RawJSON $RawJSON -TemplateType $Request.Body.TemplateType -DisplayName $DisplayName
+            if (-not $Validation.IsValid) {
+                throw "Not deployed to $Tenant : $($Validation.Errors -join ' ')"
+            }
+
             Write-Host 'Calling Adding policy'
             $params = @{
-                TemplateType     = $Request.Body.TemplateType
+                # The type validation resolved, not the one that arrived. They differ for a template
+                # stored before its type was recorded: the payload still identifies it perfectly
+                # well, and passing the empty original through would refuse a policy that deploys
+                # correctly. An unrecognisable type never gets this far - the check above stops it.
+                TemplateType     = $Validation.Type
                 Description      = $description
                 DisplayName      = $DisplayName
                 RawJSON          = $RawJSON

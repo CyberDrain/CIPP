@@ -13,9 +13,12 @@
                                                what the UI fetches (see
                                                Split-IntuneCollection.ps1 for why)
       frontend\public\intuneCategories.json    the category records, whole
-      frontend\public\intuneCollection.json    the whole catalog again. Nothing reads it
-                                               since the UI moved to the per-definition
-                                               files; kept in step rather than stale.
+      frontend\public\intuneCollection.json    the whole catalog again, kept in step
+
+    Each definition carries both what it is called and what it takes to build one: the
+    definition's own @odata.type, its valueDefinition, defaultOptionId, applicability and
+    dependency links. Naming a setting needs none of that; creating one from nothing needs
+    all of it.
 
     The definitions translate raw settingDefinitionIds into human-readable display
     names. Each carries categoryName for grouping, plus categoryId to join against
@@ -120,10 +123,19 @@ $collection = $allSettings | Sort-Object -Property id | ForEach-Object {
     $options = if ($rawOptions -and $rawOptions.Count -gt 0) {
         $rawOptions | ForEach-Object {
             [PSCustomObject]@{
-                id          = $_.PSObject.Properties['itemId']?.Value
-                displayName = $_.PSObject.Properties['displayName']?.Value
-                description = $_.PSObject.Properties['description']?.Value
-                helpText    = $_.PSObject.Properties['helpText']?.Value
+                id           = $_.PSObject.Properties['itemId']?.Value
+                displayName  = $_.PSObject.Properties['displayName']?.Value
+                description  = $_.PSObject.Properties['description']?.Value
+                helpText     = $_.PSObject.Properties['helpText']?.Value
+                # The typed value behind the option, with its own @odata.type. Reading a policy only
+                # ever needs the option's id; building one needs to know what value to write and what
+                # to declare it as.
+                optionValue  = $_.PSObject.Properties['optionValue']?.Value
+                # Which other settings this option brings into play. Choosing a parent option in the
+                # Intune console reveals its children, and a builder that ignores this produces a
+                # policy with a choice selected and none of the settings that choice requires.
+                dependentOn  = $_.PSObject.Properties['dependentOn']?.Value
+                dependedOnBy = $_.PSObject.Properties['dependedOnBy']?.Value
             }
         }
     } else {
@@ -145,6 +157,43 @@ $collection = $allSettings | Sort-Object -Property id | ForEach-Object {
         categoryId   = $CategoryId
         categoryName = $CategoryName
         options      = $options
+
+        # Everything below exists so a setting can be *constructed*, not just named. Reading a
+        # policy back only needs a display name, which is all this file used to carry; creating a
+        # setting from nothing needs to know what kind of instance to emit, what value shape it
+        # takes, and whether the setting even applies to the policy being built.
+        #
+        # deviceManagementConfiguration{Choice,Simple,SettingGroup,...}SettingDefinition - decides
+        # which settingInstance @odata.type to write.
+        '@odata.type'     = $_.PSObject.Properties['@odata.type']?.Value
+        # For simple settings: the value type, and its format/min/max. Without it there is no way to
+        # tell a string setting from an integer or a secret.
+        valueDefinition   = $_.PSObject.Properties['valueDefinition']?.Value
+        # The option a new choice setting should start on.
+        defaultOptionId   = $_.PSObject.Properties['defaultOptionId']?.Value
+        # platform, technologies and deviceMode live under here, not at the top level. A picker uses
+        # them to avoid offering a macOS setting for a Windows policy.
+        applicability     = $_.PSObject.Properties['applicability']?.Value
+        # 'add,delete,get,replace' or similar. A setting without add/replace cannot be configured.
+        accessTypes       = $_.PSObject.Properties['accessTypes']?.Value
+        # 'configuration' vs 'compliance' - the two are not interchangeable between policy types.
+        settingUsage      = $_.PSObject.Properties['settingUsage']?.Value
+        # Whether Intune surfaces it in the settings catalog, in templates, or neither.
+        visibility        = $_.PSObject.Properties['visibility']?.Value
+        rootDefinitionId  = $_.PSObject.Properties['rootDefinitionId']?.Value
+        # The settings a group contains, stated directly. dependedOnBy carries the same links the
+        # long way round, but only childIds says "these belong to me".
+        childIds          = $_.PSObject.Properties['childIds']?.Value
+        # How many entries a collection may hold. Intune enforces these and rejects the whole policy
+        # when they are exceeded - the ASR rules group allows exactly one - so an editor that offers
+        # to add a row without them produces a template that validates locally and fails on deploy.
+        minimumCount      = $_.PSObject.Properties['minimumCount']?.Value
+        maximumCount      = $_.PSObject.Properties['maximumCount']?.Value
+        # Synonyms Intune's own search matches on, so a picker can find a setting by the name people
+        # actually use for it rather than only by its display name.
+        keywords          = $_.PSObject.Properties['keywords']?.Value
+        dependentOn       = $_.PSObject.Properties['dependentOn']?.Value
+        dependedOnBy      = $_.PSObject.Properties['dependedOnBy']?.Value
     }
 }
 
@@ -154,16 +203,21 @@ Write-Host "Settings with a category name: $Categorised of $($collection.Count)"
 # ---------------------------------------------------------------------------
 # Write output files
 # ---------------------------------------------------------------------------
-$json = $collection | ConvertTo-Json -Depth 5 -Compress
+# Depth 5 was enough when a record was a name and a flat option list. The construction metadata
+# nests further - options carry an optionValue which carries its own template reference - and
+# ConvertTo-Json truncates silently past its depth rather than failing, so this is set well clear
+# of what the deepest record actually needs.
+$json = $collection | ConvertTo-Json -Depth 15 -Compress
 
 # Backend Config (used by Compare-CIPPIntuneObject.ps1 at runtime)
 $apiPath = Join-Path $PSScriptRoot '..\..\backend\Config\intuneCollection.json'
 $json | Set-Content -Path $apiPath -Encoding utf8NoBOM
 Write-Host "Written: $(Resolve-Path $apiPath)" -ForegroundColor Green
 
-# The whole catalog in public/ as well. Nothing reads it - the UI fetches the per-definition files
-# written below - but it is kept in step rather than left to go stale, so anything still reaching
-# for it gets current data.
+# The whole catalog in public/ as well. The UI reads the per-definition files and the search index
+# rather than this, so nothing fetches it today - it is kept deliberately, as the complete catalog in
+# a form anything in the browser can reach without going through either of those. Kept in step rather
+# than left to go stale, so whatever does reach for it gets current data.
 $frontendPath = Join-Path $PSScriptRoot '..\..\frontend\public\intuneCollection.json'
 if (Test-Path (Split-Path $frontendPath)) {
     $json | Set-Content -Path $frontendPath -Encoding utf8NoBOM

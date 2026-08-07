@@ -1,6 +1,11 @@
 import { Layout as DashboardLayout } from '../../../../layouts/index.js'
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import {
+  PencilIcon,
+  PlusIcon,
+  ShieldCheckIcon as ShieldCheck,
+  TrashIcon,
+} from '@heroicons/react/24/outline'
 import { Edit, GitHub, LocalOffer, LocalOfferOutlined, CopyAll } from '@mui/icons-material'
 import CippJsonView from '../../../../components/CippFormPages/CippJSONView'
 import { ApiGetCall } from '../../../../api/ApiCall'
@@ -38,6 +43,33 @@ const Page = () => {
       icon: <Edit />,
       color: 'info',
       condition: (row) => row.isSynced === false,
+    },
+    {
+      label: 'Validate Template',
+      type: 'POST',
+      url: '/api/ExecValidateIntuneTemplate',
+      data: { ID: 'GUID' },
+      fields: [
+        {
+          type: 'autoComplete',
+          name: 'tenantFilter',
+          label: 'Check against a tenant (optional)',
+          multiple: false,
+          creatable: false,
+          api: {
+            url: '/api/ListTenants?AllTenantSelector=false',
+            labelField: (option) => `${option.displayName} (${option.defaultDomainName})`,
+            valueField: 'defaultDomainName',
+            queryKey: 'ListTenants-ValidateIntuneTemplate',
+            excludeTenantFilter: true,
+          },
+        },
+      ],
+      confirmText:
+        'Check [displayName] for problems that would stop it deploying. Nothing is written and no policy is deployed. Pick a tenant to also check that its replacement variables resolve and that the tenant offers its settings.',
+      multiPost: false,
+      icon: <ShieldCheck />,
+      color: 'info',
     },
     {
       label: 'Edit Template Name and Description',
@@ -259,12 +291,22 @@ const Page = () => {
         filters={filterList}
         queryKey="ListIntuneTemplates-table"
         cardButton={
-          <CippPolicyImportDrawer
-            buttonText="Browse Catalog"
-            requiredPermissions={cardButtonPermissions}
-            PermissionButton={PermissionButton}
-            mode="Intune"
-          />
+          <>
+            <PermissionButton
+              requiredPermissions={cardButtonPermissions}
+              component={NextLink}
+              href="/endpoint/MEM/list-templates/add"
+              startIcon={<PlusIcon style={{ width: 16, height: 16 }} />}
+            >
+              New Template
+            </PermissionButton>
+            <CippPolicyImportDrawer
+              buttonText="Browse Catalog"
+              requiredPermissions={cardButtonPermissions}
+              PermissionButton={PermissionButton}
+              mode="Intune"
+            />
+          </>
         }
       />
     </>

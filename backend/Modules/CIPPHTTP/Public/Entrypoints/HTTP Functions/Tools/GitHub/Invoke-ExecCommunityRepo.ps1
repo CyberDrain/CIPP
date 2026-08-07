@@ -138,7 +138,7 @@ function Invoke-ExecCommunityRepo {
         'UploadTemplate' {
             $GUID = $Request.Body.GUID
             $TemplateTable = Get-CIPPTable -TableName templates
-            $TemplateEntity = Get-CIPPAzDataTableEntity @TemplateTable -Filter "RowKey eq '$($GUID)' or OriginalEntityId eq '$($GUID)'" | Select-Object -ExcludeProperty ETag, Timestamp
+            $TemplateEntity = Get-CIPPAzDataTableEntity @TemplateTable -Filter "RowKey eq '$($GUID)' or OriginalEntityId eq '$($GUID)'" | Select-Object -ExcludeProperty ETag, Timestamp | Select-Object -First 1
             $Branch = $RepoEntity.UploadBranch ?? $RepoEntity.DefaultBranch
             if ($TemplateEntity) {
                 $Template = $TemplateEntity.JSON | ConvertFrom-Json -Depth 100 -ErrorAction Stop
@@ -151,12 +151,31 @@ function Invoke-ExecCommunityRepo {
                 }
                 $TemplateEntity.JSON = $Template | ConvertTo-Json -Compress -Depth 100
 
+                # This expression is duplicated as Get-SanitizedFilename in New-CIPPTemplateRun,
+                # which the template sync uses to resolve a repo file back to the template it
+                # belongs to - and the sync imports any file it cannot match, overwriting the live
+                # row from the repo. The two must stay identical, so this cannot be changed on its
+                # own even though deleting unsafe characters means names differing only in
+                # punctuation share a file ('Android/iOS' and 'Android-iOS' both give 'AndroidiOS').
                 $Basename = $DisplayName -replace '\s', '_' -replace '[^\w\d_]', ''
                 $Path = '{0}/{1}.json' -f $TemplateEntity.PartitionKey, $Basename
-                $Results = Push-GitHubContent -FullName $Request.Body.FullName -Path $Path -Content ($TemplateEntity | ConvertTo-Json -Compress) -Message $Request.Body.Message -Branch $Branch
+                $PushResult = Push-GitHubContent -FullName $Request.Body.FullName -Path $Path -Content ($TemplateEntity | ConvertTo-Json -Compress) -Message $Request.Body.Message -Branch $Branch
+
+                # Record the blob that was just written. A template uploaded but never imported has
+                # no SHA, so the next sync sees its own file as unseen content and imports it back
+                # over the live row - reverting anything edited in CIPP since the upload, with no
+                # user action involved. Storing the SHA makes the sync recognise the file as current.
+                if ($PushResult.content.sha) {
+                    $null = Add-CIPPAzDataTableEntity @TemplateTable -Entity @{
+                        PartitionKey = "$($TemplateEntity.PartitionKey)"
+                        RowKey       = "$($TemplateEntity.RowKey)"
+                        SHA          = "$($PushResult.content.sha)"
+                        Source       = "$($Request.Body.FullName)"
+                    } -OperationType UpsertMerge
+                }
 
                 $Results = @{
-                    resultText = "Template '$($DisplayName)' uploaded"
+                    resultText = "Template '$($DisplayName)' uploaded to $Path"
                     state      = 'success'
                 }
             } else {

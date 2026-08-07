@@ -68,6 +68,12 @@ const fetchDefinition = (id) => {
   return request
 }
 
+// Fetches one definition directly, for callers that resolve a single id in an event handler rather
+// than rendering a set of them. Shares the cache and the in-flight map with the hook below, so a
+// definition already on screen costs nothing to fetch again. Resolves to null for an id the catalog
+// has no file for.
+export const fetchIntuneDefinition = (id) => (id ? fetchDefinition(id) : Promise.resolve(null))
+
 // Resolves the ids a few at a time rather than all at once, so a policy with several hundred
 // settings does not open several hundred simultaneous requests.
 const resolveDefinitions = async (ids) => {
@@ -151,6 +157,109 @@ export const useIntuneCategories = ({ enabled = true } = {}) => {
   }, [enabled])
 
   return categories
+}
+
+// The search index: one file per platform, listing every setting the settings catalog surfaces for
+// it. The per-definition files above cannot answer "what settings are there" - a hash-addressed
+// directory cannot be listed - so adding a setting to a policy needs this.
+//
+// It lives here rather than behind an API call because it is static, ships with the release, and
+// changes only when the catalog is regenerated. Searching it server-side would occupy one of Craft's
+// PowerShell workers per keystroke to scan data the browser can hold: the Windows index is 366KB
+// over the wire, fetched once when the picker first opens and kept for the life of the tab.
+
+const INDEX_ROOT = '/intune-definitions/_index'
+
+// platform -> rows, shared across every picker in the tab.
+const indexCache = new Map()
+const indexInFlight = new Map()
+
+const loadPlatformIndex = (platform) => {
+  const key = platform.toLowerCase()
+  if (indexCache.has(key)) return Promise.resolve(indexCache.get(key))
+
+  let request = indexInFlight.get(key)
+  if (!request) {
+    request = fetch(`${INDEX_ROOT}/${key}.json`)
+      .then((response) => {
+        // A platform with no index is a platform with no settings to offer, not a failure.
+        if (response.status === 404) return []
+        if (!response.ok) throw new Error(`${INDEX_ROOT} HTTP ${response.status}`)
+        return response.json()
+      })
+      .then((rows) => {
+        const list = Array.isArray(rows) ? rows : []
+        indexCache.set(key, list)
+        indexInFlight.delete(key)
+        return list
+      })
+      .catch((error) => {
+        indexInFlight.delete(key)
+        throw error
+      })
+    indexInFlight.set(key, request)
+  }
+  return request
+}
+
+const EMPTY_ROWS = []
+
+// Loads the setting index for a policy's platforms. `platforms` is the policy's own value, which
+// may name several ('macOS,windows10'); each is loaded and the results merged, deduplicated by id,
+// because a setting that applies to both would otherwise appear twice.
+export const useIntuneSettingIndex = (platforms, { enabled = true } = {}) => {
+  // One piece of state carrying which platforms it belongs to, so load state is derived rather than
+  // set alongside the data. Setting a loading flag in the effect body would cascade a render before
+  // the fetch had even started.
+  const [loaded, setLoaded] = useState({ key: null, rows: EMPTY_ROWS, isError: false })
+
+  const key = useMemo(() => {
+    if (!platforms) return ''
+    return String(platforms)
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .join(',')
+  }, [platforms])
+
+  const active = enabled && key.length > 0
+  const isCurrent = loaded.key === key
+  const isLoading = active && !isCurrent && !loaded.isError
+
+  useEffect(() => {
+    if (!active || isCurrent) return undefined
+
+    let alive = true
+
+    Promise.all(key.split(',').map(loadPlatformIndex))
+      .then((lists) => {
+        if (!alive) return
+        // A setting that applies to several platforms is indexed under each, so merging two shards
+        // would otherwise offer it twice.
+        const seen = new Set()
+        const merged = []
+        lists.flat().forEach((row) => {
+          if (!row?.id || seen.has(row.id)) return
+          seen.add(row.id)
+          merged.push(row)
+        })
+        setLoaded({ key, rows: merged, isError: false })
+      })
+      .catch(() => {
+        if (!alive) return
+        setLoaded({ key, rows: EMPTY_ROWS, isError: true })
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [active, isCurrent, key])
+
+  return {
+    rows: isCurrent ? loaded.rows : EMPTY_ROWS,
+    isLoading,
+    isError: isCurrent && loaded.isError,
+  }
 }
 
 const EMPTY_IDS = []

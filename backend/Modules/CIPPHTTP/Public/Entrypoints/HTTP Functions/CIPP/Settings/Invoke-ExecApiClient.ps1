@@ -221,13 +221,23 @@ function Invoke-ExecApiClient {
                 Set-CippApiAuth -RGName $RGName -FunctionAppName $FunctionAppName -TenantId $TenantId -ClientIds $ClientIds -McpClientIds $McpClientIds
 
                 if ($McpClientIds.Count -gt 0 -and $env:WEBSITE_HOSTNAME) {
+                    # Advertise the MCP resource scope for every hostname bound to this instance,
+                    # not just WEBSITE_HOSTNAME. WEBSITE_HOSTNAME is the platform default and does
+                    # not account for custom domains; a client reaching CIPP on a custom domain
+                    # derives its OAuth resource from that host, so advertising only the default
+                    # host's scope makes Entra reject with AADSTS9010010 on custom domains.
+                    # WEBSITE_AUTH_PRM_DEFAULT_WITH_SCOPES accepts a comma-separated scope list
+                    # (per Microsoft's App Service MCP-auth docs), so list every bound hostname.
+                    $McpHostnames = @(Get-CIPPSiteHostname)
+                    if ($McpHostnames.Count -eq 0) { $McpHostnames = @($env:WEBSITE_HOSTNAME) }
+                    $McpScopes = @($McpHostnames | ForEach-Object { "https://$_/user_impersonation" })
+                    $McpScopeSetting = $McpScopes -join ','
                     if ($env:CIPPNG) {
                         $TenantedLogin = "https://login.microsoftonline.com/$($env:TenantID)"
-                        $McpScope = "https://$($env:WEBSITE_HOSTNAME)/user_impersonation"
                         $PrmDocument = [ordered]@{
                             resource                 = '{origin}/api/ExecMcp'
                             authorization_servers    = @('{origin}')
-                            scopes_supported         = @($McpScope)
+                            scopes_supported         = $McpScopes
                             bearer_methods_supported = @('header')
                         } | ConvertTo-Json -Compress
                         $AsDocument = [ordered]@{
@@ -241,11 +251,11 @@ function Invoke-ExecApiClient {
                             grant_types_supported                 = @('authorization_code', 'refresh_token')
                             code_challenge_methods_supported      = @('S256')
                             token_endpoint_auth_methods_supported = @('none', 'client_secret_post', 'client_secret_basic')
-                            scopes_supported                      = @('openid', 'profile', 'offline_access', $McpScope)
+                            scopes_supported                      = @('openid', 'profile', 'offline_access') + $McpScopes
                         } | ConvertTo-Json -Compress
-                        $null = Update-CIPPAzFunctionAppSetting -Name $FunctionAppName -ResourceGroupName $RGName -AppSetting @{ 'CRAFT_PRM' = "$PrmDocument"; 'CRAFT_PRM_AS' = "$AsDocument"; 'WEBSITE_AUTH_PRM_DEFAULT_WITH_SCOPES' = $McpScope }
+                        $null = Update-CIPPAzFunctionAppSetting -Name $FunctionAppName -ResourceGroupName $RGName -AppSetting @{ 'CRAFT_PRM' = "$PrmDocument"; 'CRAFT_PRM_AS' = "$AsDocument"; 'WEBSITE_AUTH_PRM_DEFAULT_WITH_SCOPES' = $McpScopeSetting }
                     } else {
-                        $null = Update-CIPPAzFunctionAppSetting -Name $FunctionAppName -ResourceGroupName $RGName -AppSetting @{ 'WEBSITE_AUTH_PRM_DEFAULT_WITH_SCOPES' = "https://$($env:WEBSITE_HOSTNAME)/user_impersonation" }
+                        $null = Update-CIPPAzFunctionAppSetting -Name $FunctionAppName -ResourceGroupName $RGName -AppSetting @{ 'WEBSITE_AUTH_PRM_DEFAULT_WITH_SCOPES' = $McpScopeSetting }
                     }
                 } else {
                     $null = Update-CIPPAzFunctionAppSetting -Name $FunctionAppName -ResourceGroupName $RGName -AppSetting @{} -RemoveKeys @('WEBSITE_AUTH_PRM_DEFAULT_WITH_SCOPES', 'CRAFT_PRM', 'CRAFT_PRM_AS')

@@ -20,12 +20,26 @@ function Set-CIPPMCPClientApp {
         $Headers
     )
 
-    $Hostname = $env:WEBSITE_HOSTNAME
-    if ([string]::IsNullOrWhiteSpace($Hostname)) {
-        throw 'WEBSITE_HOSTNAME is not set; cannot determine the MCP resource URL.'
+    # Register the MCP resource for every hostname bound to this instance, not just
+    # WEBSITE_HOSTNAME. WEBSITE_HOSTNAME is the platform default and, per Microsoft's docs,
+    # 'doesn't account for custom host names' - a client reaching CIPP on a custom domain derives
+    # its OAuth resource from that host, so the resource must be registered for it too or Entra
+    # rejects the token with AADSTS9010010. Get-CIPPSiteHostname is the sanctioned source (ARM
+    # properties.hostNames: the default *.azurewebsites.net name plus every bound custom domain).
+    $Hostnames = @(Get-CIPPSiteHostname)
+    if ($Hostnames.Count -eq 0) {
+        # ARM was unreachable with no usable fallback (e.g. local dev). Preserve the previous
+        # behaviour: the platform hostname, or a hard failure if even that is unavailable.
+        if ([string]::IsNullOrWhiteSpace($env:WEBSITE_HOSTNAME)) {
+            throw 'Could not resolve any hostname for this instance (WEBSITE_HOSTNAME is unset and ARM discovery returned nothing); cannot determine the MCP resource URL.'
+        }
+        $Hostnames = @($env:WEBSITE_HOSTNAME)
     }
 
-    $McpUris = @("https://$Hostname", "https://$Hostname/api/ExecMcp")
+    $McpUris = foreach ($Hostname in $Hostnames) {
+        "https://$Hostname"
+        "https://$Hostname/api/ExecMcp"
+    }
 
     $App = New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/applications(appId='$AppId')" -NoAuthCheck $true -AsApp $true
     if (-not $App) {

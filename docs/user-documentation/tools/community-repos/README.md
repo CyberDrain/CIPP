@@ -24,8 +24,8 @@ Opens the **Create New Repository** dialog, which creates a new repository on Gi
 
 | Field           | Description                                                                  |
 | --------------- | ---------------------------------------------------------------------------- |
-| User / Org      | Whether the repository is created under your own account or an organisation. |
-| Organization    | The organisation to create it under. Only shown when Org is selected.        |
+| User / Org      | Whether the repository is created under your own account or an organization. |
+| Organization    | The organization to create it under. Only shown when Org is selected.        |
 | Repository Name | The name of the new repository.                                              |
 | Description     | The repository description.                                                  |
 | Private         | Creates the repository as private rather than public.                        |
@@ -58,7 +58,7 @@ Chips below the description show the template types the source provides, capped 
 | Built-in     | A source CIPP ships with. These cannot be removed or retyped.         |
 | Write Access | CIPP can push to this repository, so templates can be uploaded to it. |
 
-At the foot of each card, a coloured dot and a count show how many templates the source currently provides, green where templates were found and amber where none were. Where the source reports one, the most recent commit message is shown beneath, which is the quickest way to see whether a source is still being maintained.
+At the foot of each card, a colored dot and a count show how many templates the source currently provides, green where templates were found and amber where none were. Where the source reports one, the most recent commit message is shown beneath, which is the quickest way to see whether a source is still being maintained.
 
 ## Source Actions
 

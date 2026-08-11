@@ -90,14 +90,14 @@ Turn on **Show Defender Setup Options** to configure how Defender connects to In
 {% step %}
 ### Defender Defaults Policy Options
 
-Turn on **Show Defender Defaults Policy Options** to build an antivirus policy covering scanning behaviour, cloud protection, update handling and what Defender does when it finds something.
+Turn on **Show Defender Defaults Policy Options** to build an antivirus policy covering scanning behavior, cloud protection, update handling and what Defender does when it finds something.
 
 #### Defender Defaults Policy
 
 | Setting                             | Description                                                                                                                                             |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Allow Archive Scanning              | Enables scanning inside archive files such as zip and cab.                                                                                              |
-| Allow behavior monitoring           | Enables monitoring of application behaviour for suspicious activity.                                                                                    |
+| Allow behavior monitoring           | Enables monitoring of application behavior for suspicious activity.                                                                                    |
 | Allow Cloud Protection              | Enables cloud based protection for faster threat intelligence.                                                                                          |
 | Allow e-mail scanning               | Enables scanning of email content and attachments.                                                                                                      |
 | Allow Full Scan on Network Drives   | Enables full scans on mapped network drives.                                                                                                            |
@@ -189,7 +189,7 @@ The mode applies to the whole policy rather than to individual rules. Deploying 
 | Block Office communication application from creating child processes                              | Prevents Outlook, Teams and other Office communication apps from spawning child processes. Targets phishing based attacks that exploit these applications.                                                                 |
 | Block all Office applications from creating child processes                                       | Blanket block on child process creation from any Office application. Broader than the communication app rule, covering Word, Excel, PowerPoint and others.                                                                 |
 | Block untrusted and unsigned processes that run from USB                                          | Prevents execution of untrusted or unsigned binaries from USB and removable devices. Helps mitigate attacks delivered via physical media.                                                                                  |
-| Use advanced protection against ransomware                                                        | Enables heuristic ransomware detection in addition to signature based protection. Analyses file behaviour patterns associated with ransomware activity.                                                                    |
+| Use advanced protection against ransomware                                                        | Enables heuristic ransomware detection in addition to signature based protection. Analyzes file behavior patterns associated with ransomware activity.                                                                    |
 | Block executable content from email client and webmail                                            | Prevents executable files and scripts from being launched directly from email clients and webmail. Targets phishing attachments.                                                                                           |
 | Block abuse of exploited vulnerable signed drivers (Device)                                       | Prevents malware from using legitimately signed but vulnerable drivers, sometimes described as bring your own vulnerable driver, to gain kernel level access and disable security software.                                 |
 | Assign to Group                                                                                   | Who the ASR policy is assigned to: Do not assign, Assign to all users, Assign to all devices, or Assign to all users and devices.                                                                                          |

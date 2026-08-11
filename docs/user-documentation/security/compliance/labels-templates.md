@@ -13,8 +13,8 @@ Opens a drawer that creates a sensitivity label in one or more tenants from a te
 | Field | Description |
 | ----- | ----------- |
 | Select Tenants | The tenants to create the label in. At least one is required, and you can pick several to deploy the same label across a group of customers in one go. |
-| Select a template (optional) | Picks a saved sensitivity label template. Choosing one fills **Parameters (JSON)** with that template's stored settings, and also loads the template's colour into **Label Color**. |
-| Label Color (optional) | A colour picker for the label. It accepts any hex colour, where the Purview portal offers only its preset palette. A colour picked here overrides any colour set in the JSON below. Leave it empty to keep whatever the JSON specifies. |
+| Select a template (optional) | Picks a saved sensitivity label template. Choosing one fills **Parameters (JSON)** with that template's stored settings, and also loads the template's color into **Label Color**. |
+| Label Color (optional) | A color picker for the label. It accepts any hex color, where the Purview portal offers only its preset palette. A color picked here overrides any color set in the JSON below. Leave it empty to keep whatever the JSON specifies. |
 | Parameters (JSON) | The label settings as JSON. Required. A worked example is shown in the field until you type into it, covering the display name, tooltip, content types, encryption settings, content marking and a nested `PolicyParams` block for the label policy that publishes it. |
 
 </details>

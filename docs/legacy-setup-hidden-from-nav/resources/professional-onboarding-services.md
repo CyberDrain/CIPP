@@ -84,7 +84,7 @@ To make the most of your session, have the following ready:
 
 #### **4. Notifications and Mailbox Setup**
 
-* Have a **mailbox licence** ready for the CIPP Service Account.
+* Have a **mailbox license** ready for the CIPP Service Account.
   * This will be converted into a **shared mailbox** during onboarding.
 
 ***

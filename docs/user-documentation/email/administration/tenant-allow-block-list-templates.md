@@ -24,7 +24,7 @@ Opens the **Save Tenant Allow/Block List Template** drawer.
 
 The form adjusts itself as you choose a list type and method, since Exchange does not accept every combination:
 
-| Rule                                                 | Behaviour                                                                                                   |
+| Rule                                                 | Behavior                                                                                                   |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | FileHash entries can only be blocked                 | Choosing **FileHash** forces the method to **Block** and locks the selector.                                |
 | No Expiration is not available for every allow entry | It can be set on any block entry, and on allow entries only when the list type is **Url/IPv4** or **IPv6**. |

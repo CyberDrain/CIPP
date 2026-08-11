@@ -3,7 +3,7 @@
 The Business Voice page gives an overview of all the phone numbers in the selected tenant, showing who each number is assigned to, its emergency location, its activation state, when it was acquired, and what it can be assigned to. From here you can assign a number to a user or resource account, remove an assignment, and set the emergency location a number is registered against.
 
 {% hint style="info" %}
-A user needs a Teams Phone licence before a number can be assigned to them. Phone numbers themselves are not included with Teams Phone licensing: they come from whichever provider gives the tenant its PSTN connectivity.
+A user needs a Teams Phone license before a number can be assigned to them. Phone numbers themselves are not included with Teams Phone licensing: they come from whichever provider gives the tenant its PSTN connectivity.
 {% endhint %}
 
 ## Filters

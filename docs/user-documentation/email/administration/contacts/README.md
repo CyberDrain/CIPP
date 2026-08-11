@@ -4,7 +4,7 @@ description: View & Edit Contacts in your M365 tenants
 
 # Contacts
 
-This page lists the Exchange Online mail contacts in the selected tenant. Mail contacts are external recipients that appear in the Global Address List but have no mailbox in the tenant, so they are the usual way of publishing a supplier, a helpdesk address, or a shared inbox belonging to another organisation. Contacts can be created one at a time or pushed out in bulk from a saved template.
+This page lists the Exchange Online mail contacts in the selected tenant. Mail contacts are external recipients that appear in the Global Address List but have no mailbox in the tenant, so they are the usual way of publishing a supplier, a helpdesk address, or a shared inbox belonging to another organization. Contacts can be created one at a time or pushed out in bulk from a saved template.
 
 ## Action Buttons
 

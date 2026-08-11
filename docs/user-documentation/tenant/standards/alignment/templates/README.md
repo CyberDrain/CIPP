@@ -18,7 +18,7 @@ For a list of the standards you can configure inside a template, see [available-
 
 <summary>Browse Catalog</summary>
 
-Opens the policy catalogue, where you can import a prebuilt standards template rather than assembling one yourself.
+Opens the policy catalog, where you can import a prebuilt standards template rather than assembling one yourself.
 
 </details>
 

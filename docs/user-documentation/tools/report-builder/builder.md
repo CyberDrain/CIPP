@@ -116,6 +116,6 @@ The chip beside the title switches the display between **Table (Text)**, **CSV**
 
 ### Structured Block Editing
 
-Chart, Score Cards and Progress Bars blocks are edited as small tables of values. Add a row for each data point, giving it a label and a value, with an optional colour on chart data points. Charts also take a caption, and a donut chart takes a centre label and an optional maximum.
+Chart, Score Cards and Progress Bars blocks are edited as small tables of values. Add a row for each data point, giving it a label and a value, with an optional color on chart data points. Charts also take a caption, and a donut chart takes a center label and an optional maximum.
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

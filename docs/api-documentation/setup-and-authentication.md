@@ -6,7 +6,7 @@ description: API Authentication
 
 ## Setup
 
-Before being able to utilise the CIPP API, you need to first configure an API client via [cipp-api.md](../user-documentation/cipp/integrations/cipp-api.md "mention"). Once that is completed, come back to this page. You'll need the integration page still open to reference the necessary fields below for authentication.
+Before being able to utilize the CIPP API, you need to first configure an API client via [cipp-api.md](../user-documentation/cipp/integrations/cipp-api.md "mention"). Once that is completed, come back to this page. You'll need the integration page still open to reference the necessary fields below for authentication.
 
 {% hint style="warning" %}
 #### Self-Hosted Clients
@@ -55,7 +55,7 @@ The rate limit behaves like this:
 * **The window is fixed, not rolling.** Your allowance resets every 10 seconds rather than trickling back as individual requests age out, so the longest you ever wait after being throttled is the remainder of the current window.
 * **Each API client gets its own budget.** A busy integration won't eat into the allowance of your other clients, or of the people working in the portal. Anything that runs hot is worth giving its own API client rather than sharing one across every automation.
 * **Everything counts** — reads and writes, on every endpoint.
-* **Requests over the limit are refused, not queued.** You get `HTTP 429 Too Many Requests` back immediately, with a `Retry-After` header telling you how many seconds to wait. Honour it and you'll land in a fresh window on the next attempt — most HTTP clients and SDKs can be configured to do this for you.
+* **Requests over the limit are refused, not queued.** You get `HTTP 429 Too Many Requests` back immediately, with a `Retry-After` header telling you how many seconds to wait. Honor it and you'll land in a fresh window on the next attempt — most HTTP clients and SDKs can be configured to do this for you.
 
 100 requests per 10 seconds works out to 10 per second sustained, which most integrations never approach. If yours does, it's nearly always a sign the same work can be done in far fewer calls. The three techniques below are how.
 
@@ -164,7 +164,7 @@ This module is created and maintained by a community member. With CIPP's rapid d
 1. If you are calling CIPP from an external automation platform (e.g., n8n, Rewst, Power Automate), make sure your base URL includes the `/api` path (e.g., `https://your-cipp-domain.com/api`). Direct API calls need to target the Azure Functions backend, not the static frontend — without `/api`, your requests will hit the web interface and return HTML instead of the expected JSON responses
 2.  If you receive 400 (Bad Request) errors when first authenticating or testing your CIPP API connection (e.g. `Invoke-CIPPRestMethod: Response status code does not indicate success: 400 (Bad Request)`) your CIPP API app registration may be missing an Application ID URI.
 
-    To fix this, go to **Microsoft Entra ID → App registrations** in your tenant and open the app registration for your CIPP API (not a separate client registration, unless your setup uses one). Navigate to **Expose an API**. If the **Application ID URI** field at the top is empty, click **Add**. Azure will auto-suggest a URI in the format `api://{application-id}`. The default is fine, no need to customise it. Click **Save**.
+    To fix this, go to **Microsoft Entra ID → App registrations** in your tenant and open the app registration for your CIPP API (not a separate client registration, unless your setup uses one). Navigate to **Expose an API**. If the **Application ID URI** field at the top is empty, click **Add**. Azure will auto-suggest a URI in the format `api://{application-id}`. The default is fine, no need to customize it. Click **Save**.
 
     If your setup requires a custom scope (e.g., `access_as_user`), you may also need to add one under **Expose an API → Add a scope** and then grant that scope as an API permission on the client side.
 

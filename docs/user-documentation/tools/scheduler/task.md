@@ -26,7 +26,7 @@ Unlike the list, **Edit Job** and **Clone Job** here navigate to the job page ra
 
 ## Details
 
-The top card summarises the task. Only the values that are set appear, so a task with no post-execution actions simply omits that row.
+The top card summarizes the task. Only the values that are set appear, so a task with no post-execution actions simply omits that row.
 
 | Field          | Description                                                |
 | -------------- | ---------------------------------------------------------- |

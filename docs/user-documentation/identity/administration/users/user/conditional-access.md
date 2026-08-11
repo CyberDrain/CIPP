@@ -18,7 +18,7 @@ The application the simulated sign-in is directed at, chosen from the service pr
 {% step %}
 ### Set any optional conditions
 
-Anything left blank is simply not included in the evaluation, so start with the application alone and add conditions as you narrow down the behaviour you are chasing. The options are described below.
+Anything left blank is simply not included in the evaluation, so start with the application alone and add conditions as you narrow down the behavior you are chasing. The options are described below.
 {% endstep %}
 
 {% step %}

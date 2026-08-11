@@ -29,7 +29,7 @@ A filter menu restricts which standards are listed. Each option shows a count.
 
 ## Standards
 
-Standards are grouped under their category headings, each shown as a card pairing the **Expected Configuration** from the template with the value found in the tenant. Where a configuration has several properties, they are broken out one by one so it is clear which part differs. Each standard is marked Compliant or Non-Compliant, and where the tenant is not licensed for a standard, a notice explains that the required licences are missing rather than reporting a failure.
+Standards are grouped under their category headings, each shown as a card pairing the **Expected Configuration** from the template with the value found in the tenant. Where a configuration has several properties, they are broken out one by one so it is clear which part differs. Each standard is marked Compliant or Non-Compliant, and where the tenant is not licensed for a standard, a notice explains that the required licenses are missing rather than reporting a failure.
 
 Labels on each card identify what is being shown and how the standard runs:
 

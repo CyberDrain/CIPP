@@ -131,7 +131,7 @@ To have the new tenant's name show up in CIPP, you have two options
 2. Terminate the old GDAP relationship. This can be accomplished by locating the old relationship on the GDAP [relationships](../../user-documentation/tenant/gdap-management/relationships/ "mention") page and selecting terminate relationship from the per-row actions or Bulk Actions with the row selected.
 3. Clear your tenant cache from [settings](../../user-documentation/cipp/settings/ "mention").
 
-#### Utilise the Tenant Alias Functionality
+#### Utilize the Tenant Alias Functionality
 
 CIPP can also set an alias via the [#properties](../../user-documentation/tenant/manage/edit.md#properties "mention") section of [edit.md](../../user-documentation/tenant/manage/edit.md "mention").
 
@@ -195,7 +195,7 @@ To ensure full functionality of CIPP, follow these steps to add the necessary AP
 
 <summary>How can I resolve expired / revoked auth token errors or ensure the correct service account is used by CIPP?</summary>
 
-This error occurs because the user who authorised the CSP or Graph API connection has had their password changed, sessions revoked, or account disabled. Reauthorisation is required.
+This error occurs because the user who authorized the CSP or Graph API connection has had their password changed, sessions revoked, or account disabled. Reauthorization is required.
 
 **To resolve this, execute the Setup Wizard with Option 4:**
 
@@ -262,9 +262,9 @@ See the instructions to switch the tenant mode [here](../../setup/installation/o
 
 <details>
 
-<summary>Does CIPP require a specific licence?</summary>
+<summary>Does CIPP require a specific license?</summary>
 
-No, CIPP can work with any M365 licence in your partner tenant. For specific features CIPP will of course only function if the tenant is licensed correctly, e.g. to manage Intune, the tenant must have Intune Licensing.
+No, CIPP can work with any M365 license in your partner tenant. For specific features CIPP will of course only function if the tenant is licensed correctly, e.g. to manage Intune, the tenant must have Intune Licensing.
 
 </details>
 
@@ -377,7 +377,7 @@ So if CIPP works but a technician can't use the portal links, refreshing CPV, re
 | Symptom                                                                                              | What's happening                                                                                                          |
 | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | "No SharePoint admin access"                                                                         | The technician's account isn't in the GDAP group mapped to the SharePoint Administrator role.                             |
-| M365 portal is blank / Entra portal never finishes loading (or loads the centre but no left sidebar) | The portal opened under the technician's account, which has no delegated role in that tenant, so it can't render.         |
+| M365 portal is blank / Entra portal never finishes loading (or loads the center but no left sidebar) | The portal opened under the technician's account, which has no delegated role in that tenant, so it can't render.         |
 | Prompted to authenticate every time a portal is opened, even with other portal tabs already open     | The technician's account has no standing delegated access to the tenant, so each portal forces a fresh delegated sign-in. |
 
 **The fix:** add the technician's account to the **M365 GDAP** security groups that CIPP generated in your partner tenant. Membership in these groups is what grants a user delegated access through your GDAP relationships.

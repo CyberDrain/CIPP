@@ -24,7 +24,7 @@ Choose the tenants the group should be created in. Several can be selected, and 
 | Group Display Name                                 | The name the group is created with. Required.                                                                                                                                                                             |
 | Group Description                                  | A description for the group.                                                                                                                                                                                              |
 | Group Username                                     | The mail nickname the group's email address is built from.                                                                                                                                                                |
-| Allow external emails to the group                 | Allows senders outside the organisation to email the group. Shown for a Distribution Group.                                                                                                                               |
+| Allow external emails to the group                 | Allows senders outside the organization to email the group. Shown for a Distribution Group.                                                                                                                               |
 | Membership Rules                                   | The rule that decides membership. Shown for a Dynamic Group or Dynamic Distribution Group, and required for both.                                                                                                         |
 | Email Aliases                                      | Additional email addresses, one per line. Shown for a Distribution Group or Mail Enabled Security Group.                                                                                                                  |
 | Hide this group from the Global Address List (GAL) | Hides the group from address lists. Shown for a Distribution Group or Mail Enabled Security Group.                                                                                                                        |
@@ -42,7 +42,7 @@ Review the values and submit. The group is created in every tenant selected in t
 {% endhint %}
 
 {% hint style="info" %}
-Licences held on a template are carried into the deployment even though this wizard does not display them, so a Security Group template with group-based licensing attached still assigns those licences. To see or change which licences a template holds, edit the template itself.
+Licenses held on a template are carried into the deployment even though this wizard does not display them, so a Security Group template with group-based licensing attached still assigns those licenses. To see or change which licenses a template holds, edit the template itself.
 {% endhint %}
 
 {% hint style="warning" %}

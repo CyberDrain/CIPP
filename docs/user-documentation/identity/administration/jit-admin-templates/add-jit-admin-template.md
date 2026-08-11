@@ -44,7 +44,7 @@ The expiration action offers **Delete User** and **Disable User** whatever the s
 | Default User                          | The account the elevation is granted to. Shown when the template targets an existing user, and not available on an All Tenants template. |
 
 {% hint style="warning" %}
-An All Tenants template can only create a new user. The Existing User option is not offered, because a specific account exists in one tenant and means nothing in the others. Domain and group selection are withdrawn for the same reason, so an All Tenants template covers the roles, timing and expiry behaviour while the tenant-specific details are supplied when the grant is made.
+An All Tenants template can only create a new user. The Existing User option is not offered, because a specific account exists in one tenant and means nothing in the others. Domain and group selection are withdrawn for the same reason, so an All Tenants template covers the roles, timing and expiry behavior while the tenant-specific details are supplied when the grant is made.
 {% endhint %}
 
 {% include "../../../../../.gitbook/includes/feature-request.md" %}

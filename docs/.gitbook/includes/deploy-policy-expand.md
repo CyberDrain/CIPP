@@ -27,7 +27,7 @@ Where the template contains variables written as `%name%`, the drawer asks for a
 {% hint style="warning" %}
 Deploying a template does not always create a new policy. CIPP first looks for a policy in the target tenant whose name exactly matches the template's, and where one is found it overwrites that policy in place. A new policy is only created where no match exists.
 
-Because the match is on the name alone, a policy created by hand under the same name will be overwritten, and a deployed policy that has since been renamed in Intune will not be recognised, so the next deployment creates a duplicate alongside it. Where two policies share a name, the more recently modified one is the one overwritten.
+Because the match is on the name alone, a policy created by hand under the same name will be overwritten, and a deployed policy that has since been renamed in Intune will not be recognized, so the next deployment creates a duplicate alongside it. Where two policies share a name, the more recently modified one is the one overwritten.
 
 The assignment chosen here is added to the policy's existing assignments rather than replacing them.
 {% endhint %}

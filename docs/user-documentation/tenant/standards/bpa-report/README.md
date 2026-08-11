@@ -5,13 +5,13 @@ description: >-
   and operational best practices.
 ---
 
-# Best Practice Analyser
+# Best Practice Analyzer
 
 {% hint style="warning" %}
 BPA is currently on a deprecation path. While there is no current date for deprecation, the functionality will not be expanded. The testing engine in [dashboard](../../../dashboard/ "mention") v2 will replace the BPA.
 {% endhint %}
 
-The **Best Practice Analyser (BPA)** is a tool within CIPP designed to help audit and improve Microsoft 365 environments. It provides a detailed framework for ensuring your setup is secure and compliant with industry and organisational standards.
+The **Best Practice Analyzer (BPA)** is a tool within CIPP designed to help audit and improve Microsoft 365 environments. It provides a detailed framework for ensuring your setup is secure and compliant with industry and organizational standards.
 
 ***
 
@@ -28,7 +28,7 @@ At its core, the BPA is built to:
 
 ## **Viewing Your BPA Reports**
 
-* **Navigate to:** `Tenant Administration > Standards > Best Practice Analyser`.
+* **Navigate to:** `Tenant Administration > Standards > Best Practice Analyzer`.
 * **Run Initial Data Refresh:** Select **“Force Refresh All Data”** if this is your first time displaying it.
 
 {% hint style="info" %}

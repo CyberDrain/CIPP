@@ -1,9 +1,9 @@
 # Sensitive Information Types
 
-Sensitive Information Types are the pattern matchers Purview uses to recognise sensitive content such as card numbers, national identifiers or your own organisational reference formats. DLP policies, auto labelling rules and sensitivity labels all point at them as detection conditions. This page lists the custom Sensitive Information Types published in the selected tenant, lets you inspect what each one actually detects, and lets you delete them or capture them as reusable templates.
+Sensitive Information Types are the pattern matchers Purview uses to recognize sensitive content such as card numbers, national identifiers or your own organizational reference formats. DLP policies, auto labeling rules and sensitivity labels all point at them as detection conditions. This page lists the custom Sensitive Information Types published in the selected tenant, lets you inspect what each one actually detects, and lets you delete them or capture them as reusable templates.
 
 {% hint style="info" %}
-Microsoft's built-in Sensitive Information Types are filtered out of this list. Only types published by your organisation, or by a third party other than Microsoft, are shown.
+Microsoft's built-in Sensitive Information Types are filtered out of this list. Only types published by your organization, or by a third party other than Microsoft, are shown.
 {% endhint %}
 
 ## Action Buttons

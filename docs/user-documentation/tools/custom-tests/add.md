@@ -18,7 +18,7 @@ Reference material for writing the script, worth reading before your first test.
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Pass            | Return `$null`, `$false`, an empty string, or `@()`.                                                                                                                                                                                  |
 | Fail            | Return any non-empty value. Whatever is returned becomes the test output.                                                                                                                                                             |
-| Explicit status | Return a hashtable containing `CIPPStatus` (`Passed`, `Failed`, `Info` or `Investigate`), `CIPPResults`, and optionally `CIPPResultMarkdown` to control both the status and how it renders. Only honoured when Result Mode is `Auto`. |
+| Explicit status | Return a hashtable containing `CIPPStatus` (`Passed`, `Failed`, `Info` or `Investigate`), `CIPPResults`, and optionally `CIPPResultMarkdown` to control both the status and how it renders. Only honored when Result Mode is `Auto`. |
 
 ### Scripting Constraints
 

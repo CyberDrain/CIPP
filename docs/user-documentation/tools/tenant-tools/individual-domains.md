@@ -1,5 +1,5 @@
 ---
-description: Analyse external domain's mail-related DNS entries
+description: Analyze external domain's mail-related DNS entries
 ---
 
 # Individual Domain Check
@@ -24,7 +24,7 @@ The settings icon on the card reveals the optional inputs below. Adjusting an op
 | HTTPS Subdomains   | The subdomains to test alongside the domain itself, as a comma separated list. Only shown when the HTTPS check is enabled. Leaving it empty tests `www`.                                                                      |
 
 {% hint style="info" %}
-Where no custom selectors are supplied, CIPP falls back to the standard Microsoft selectors. If you have the admin or editor role, any custom selectors you enter are saved against that domain and reused automatically the next time it is checked, including by the Domain Analyser. Users without those roles get a one-off check that is not saved.
+Where no custom selectors are supplied, CIPP falls back to the standard Microsoft selectors. If you have the admin or editor role, any custom selectors you enter are saved against that domain and reused automatically the next time it is checked, including by the Domain Analyzer. Users without those roles get a one-off check that is not saved.
 {% endhint %}
 
 ## Result Cards
@@ -44,7 +44,7 @@ Where no custom selectors are supplied, CIPP falls back to the standard Microsof
 
 ## Reading the Results
 
-Each card shows an icon in its header summarising the outcome: a green tick where everything passed, an orange warning where there are non-fatal issues, and a red error where a check failed. The body of the card lists the individual findings with the same colour coding, so you can see exactly which test produced the warning.
+Each card shows an icon in its header summarizing the outcome: a green tick where everything passed, an orange warning where there are non-fatal issues, and a red error where a check failed. The body of the card lists the individual findings with the same color coding, so you can see exactly which test produced the warning.
 
 Two actions sit at the bottom of each card:
 

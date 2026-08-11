@@ -1,6 +1,6 @@
 # Edit User
 
-This page changes an existing user's properties, licences and group memberships in one submission. The header carries the same details as the [.](./ "mention") tab: display name, user principal name, object ID, creation date and a **View in Entra** button. **Submit** applies every change on the page at once.
+This page changes an existing user's properties, licenses and group memberships in one submission. The header carries the same details as the [.](./ "mention") tab: display name, user principal name, object ID, creation date and a **View in Entra** button. **Submit** applies every change on the page at once.
 
 {% hint style="danger" %}
 An account synchronised from on-premises Active Directory shows a warning at the top of the page. Graph accepts some of these edits, but the next directory synchronisation overwrites them, so changes to a synced account belong in the on-premises environment.
@@ -31,23 +31,23 @@ Aliases entered here are added to the account. This form does not remove aliases
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Create password manually              | Reveals a **Password** field. The password is only changed when one is entered here, so an edit that leaves this off makes no change to the existing password.            |
 | Require password change at next logon | Forces the user to set a new password the next time they sign in.                                                                                                         |
-| Usage Location                        | The country the account is licensed in. Required before licences can be assigned, and falls back to the usage location set in your preferences when the account has none. |
-| Licenses                              | The licences the account should hold after the edit. Anything selected is added and anything currently assigned but not selected is removed.                              |
-| Remove all licenses                   | Strips every licence from the account and ignores whatever is selected in the licence box.                                                                                |
+| Usage Location                        | The country the account is licensed in. Required before licenses can be assigned, and falls back to the usage location set in your preferences when the account has none. |
+| Licenses                              | The licenses the account should hold after the edit. Anything selected is added and anything currently assigned but not selected is removed.                              |
+| Remove all licenses                   | Strips every license from the account and ignores whatever is selected in the license box.                                                                                |
 
 {% hint style="info" %}
-Emptying the **Licenses** box on its own does nothing, because an edit with no licences selected and this switch off is treated as no licence change at all. Use **Remove all licenses** to take the last licence off an account.
+Emptying the **Licenses** box on its own does nothing, because an edit with no licenses selected and this switch off is treated as no license change at all. Use **Remove all licenses** to take the last license off an account.
 {% endhint %}
 
 {% hint style="info" %}
-When the [sherweb.md](../../../../cipp/integrations/sherweb.md "mention")d integration is enabled and a selected licence shows `(0 available)`, a **Purchase new licence?** switch and a **Sherweb License** selector appear. The purchase is placed immediately and the assignment is queued as a scheduled task, so the licence lands on the account shortly afterwards rather than as part of this submission.
+When the [sherweb.md](../../../../cipp/integrations/sherweb.md "mention")d integration is enabled and a selected license shows `(0 available)`, a **Purchase new license?** switch and a **Sherweb License** selector appear. The purchase is placed immediately and the assignment is queued as a scheduled task, so the license lands on the account shortly afterwards rather than as part of this submission.
 {% endhint %}
 
-## Contact and organisation
+## Contact and organization
 
 | Field                                              | Description                                                                                                                      |
 | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Job Title, Department, Company Name                | Organisational details written to the directory and shown in the address list.                                                   |
+| Job Title, Department, Company Name                | Organizational details written to the directory and shown in the address list.                                                   |
 | Street, City, State/Province, Postal Code, Country | The user's postal address.                                                                                                       |
 | Mobile #, Business #                               | Contact numbers.                                                                                                                 |
 | Alternate Email Addresses                          | Secondary addresses, separated by commas.                                                                                        |
@@ -81,6 +81,6 @@ Any directory attributes added under [user-settings.md](../../../../shared-featu
 | Schedule this user edit                | Defers the edit to a chosen date instead of applying it immediately, which suits changes tied to a start date or a departure. |
 | Scheduled edit date                    | The date the edit should run.                                                                                                 |
 | Send results to Webhook / E-mail / PSA | Delivers the outcome of the scheduled edit to the notification channels configured for the tenant.                            |
-| Reference                              | Free text added to the notification title so the task can be recognised later.                                                |
+| Reference                              | Free text added to the notification title so the task can be recognized later.                                                |
 
 {% include "../../../../../../.gitbook/includes/feature-request.md" %}

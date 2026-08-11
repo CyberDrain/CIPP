@@ -1,6 +1,6 @@
 # Directory Audits
 
-Directory audits are Entra ID's own record of administrative activity in the tenant: role assignments, application consent, user and group changes, policy edits and so on. This page reads that log live from Microsoft rather than from anything CIPP has stored, so it reflects the tenant's current retention period rather than CIPP's history. Entries are listed newest first, and the table honours the tenant selector at the top of CIPP.
+Directory audits are Entra ID's own record of administrative activity in the tenant: role assignments, application consent, user and group changes, policy edits and so on. This page reads that log live from Microsoft rather than from anything CIPP has stored, so it reflects the tenant's current retention period rather than CIPP's history. Entries are listed newest first, and the table honors the tenant selector at the top of CIPP.
 
 {% hint style="info" %}
 This is a live Graph query, so no data appears until a tenant is selected, and the retention available depends on the tenant's Entra ID licensing rather than on CIPP.

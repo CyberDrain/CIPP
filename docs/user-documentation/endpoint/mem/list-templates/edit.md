@@ -17,7 +17,7 @@ The template's type is shown alongside the card heading.
 
 ## Policy settings
 
-Lists the template's settings as editable fields, grouped into the sections Intune itself organises them under. Each setting is rendered according to what it accepts: a true or false switch, a list of the options the setting allows, a list of values, or a free text or numeric field.
+Lists the template's settings as editable fields, grouped into the sections Intune itself organizes them under. Each setting is rendered according to what it accepts: a true or false switch, a list of the options the setting allows, a list of values, or a free text or numeric field.
 
 Under each setting, **Raw values** expands to show the setting's definition identifier, the exact values it accepts, and the value currently stored. This is the value written into the policy, which is not always the same as the friendly label shown in the field.
 

@@ -30,6 +30,8 @@ This project is generally open source, but we also provide **custom licensing op
 
 ## How to Contribute
 
+Use American English in documentation updates and new documentation content.
+
 As this project is ever evolving, we recommend checking out the contributions docs on our doc page here: 
 
 - https://docs.cipp.app/dev-documentation/contributing-to-the-code

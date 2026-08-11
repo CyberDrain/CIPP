@@ -17,7 +17,7 @@ The two template actions are mutually exclusive: which one a row offers depends 
 {% endhint %}
 
 {% hint style="warning" %}
-Where the tenant enforces an application secret lifetime policy, the expiry you choose for a new client secret is shortened to fit and you are told so in the result. The secret value cannot be retrieved after the dialogue closes, so copy it before dismissing it. **Add Client Secret** is available in bulk, but a bulk run creates a separate secret on every selected application, so use it one application at a time when you need to keep the values.
+Where the tenant enforces an application secret lifetime policy, the expiry you choose for a new client secret is shortened to fit and you are told so in the result. The secret value cannot be retrieved after the dialog closes, so copy it before dismissing it. **Add Client Secret** is available in bulk, but a bulk run creates a separate secret on every selected application, so use it one application at a time when you need to keep the values.
 {% endhint %}
 
 ## Extended Info Flyout

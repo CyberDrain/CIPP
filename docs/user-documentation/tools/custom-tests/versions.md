@@ -31,7 +31,7 @@ Restoring is destructive and cannot be undone. Every version newer than the one 
 
 The **Compare Test Versions** dialog shows what changed between the version you selected and the current one, with both named by their version number and the user who saved them.
 
-**Test Content Diff** compares the script itself. Added lines, removed lines and the unchanged remainder are each summarised as a count above the comparison, then shown line by line. Where the two versions are the same, the dialog says so rather than showing an empty comparison.
+**Test Content Diff** compares the script itself. Added lines, removed lines and the unchanged remainder are each summarized as a count above the comparison, then shown line by line. Where the two versions are the same, the dialog says so rather than showing an empty comparison.
 
 **Markdown Result Template Diff** appears below it whenever either version carries a markdown template, and compares those in the same way. A test using the default output has no template and no second comparison.
 

@@ -8,7 +8,7 @@ Backups do not include authentication material. The SAM application credentials 
 
 ## Information Bar
 
-The bar across the top summarises the current backup position.
+The bar across the top summarizes the current backup position.
 
 | Item              | Description                                                                       |
 | ----------------- | --------------------------------------------------------------------------------- |
@@ -87,7 +87,7 @@ The following configuration is captured.
 | Tenants                 | Tenant properties, tenant groups and their members, and the exclusion state of any excluded tenants                                      |
 | Standards and templates | Standards, and all template types including Conditional Access, Intune, group, contact, Exchange connector and the rest                  |
 | Automation              | Scheduled tasks, scheduler configuration, webhook rules, custom PowerShell and test scripts                                              |
-| Reference data          | Domains, excluded licences, Graph Explorer presets, GDAP roles and role templates, community repositories, custom data, custom variables |
+| Reference data          | Domains, excluded licenses, Graph Explorer presets, GDAP roles and role templates, community repositories, custom data, custom variables |
 | Configuration           | The CIPP configuration table, including extension settings                                                                               |
 
 {% hint style="warning" %}

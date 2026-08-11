@@ -57,19 +57,19 @@ These settings apply to mail-enabled groups, and which of them appear depends on
 | Setting                                                       | Description                                                                                                                 | Shown for                        |
 | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | Group visibility                                              | Whether the group is Public, so anyone can see its content and join, or Private, so membership is controlled by the owners. | Microsoft 365                    |
-| Let people outside the organization email the group           | Allows senders from outside your organisation to email the group.                                                           | Microsoft 365, Distribution List |
+| Let people outside the organization email the group           | Allows senders from outside your organization to email the group.                                                           | Microsoft 365, Distribution List |
 | Send Copies of team emails and events to team members inboxes | Delivers a copy of the group's messages and calendar events to each member's own mailbox.                                   | Microsoft 365                    |
 | Hide group mailbox from Outlook                               | Hides the group's mailbox from Outlook clients.                                                                             | Microsoft 365                    |
 | Security Enabled                                              | Marks the group as security enabled, so it can be used to grant access to resources as well as for mail.                    | Microsoft 365                    |
 
 ## Licenses
 
-Licences assigned to a group are applied automatically to everyone in it, which is how group-based licensing is managed. Changes can take a few minutes to take effect. This section is shown for Security groups that are not synchronised from on-premises Active Directory, and the licences the group currently holds are listed above the fields.
+Licenses assigned to a group are applied automatically to everyone in it, which is how group-based licensing is managed. Changes can take a few minutes to take effect. This section is shown for Security groups that are not synchronised from on-premises Active Directory, and the licenses the group currently holds are listed above the fields.
 
 | Setting         | Description                                                                                                                     |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Add Licenses    | Assigns one or more licences to the group, which are then applied to all of its members.                                        |
-| Remove Licenses | Removes one or more of the licences currently assigned to the group. The list contains only the licences the group already has. |
+| Add Licenses    | Assigns one or more licenses to the group, which are then applied to all of its members.                                        |
+| Remove Licenses | Removes one or more of the licenses currently assigned to the group. The list contains only the licenses the group already has. |
 
 ## Saving
 

@@ -3,7 +3,7 @@
 The Message Viewer opens a raw email so you can inspect what an email client would otherwise hide: the routing chain, the authentication results, the anti-spam verdict, and the attachments. Load a saved `.eml` file, or paste the headers or full source copied out of a mail client.
 
 {% hint style="info" %}
-Everything on this page happens in your browser. The message is never uploaded to CIPP or sent to Microsoft, no tenant is involved, and nothing is written to the logs. That makes it safe for handling a reported phishing sample, and it means the tool works just as well on a message from an organisation you do not manage.
+Everything on this page happens in your browser. The message is never uploaded to CIPP or sent to Microsoft, no tenant is involved, and nothing is written to the logs. That makes it safe for handling a reported phishing sample, and it means the tool works just as well on a message from an organization you do not manage.
 {% endhint %}
 
 ## Loading a Message
@@ -28,7 +28,7 @@ If the content cannot be parsed as an email, an error card is shown with the raw
 
 The first card reconstructs the journey the message took from its `Received` headers, which is the quickest way to spot where a delayed message actually sat.
 
-A chip shows the total delivery time, and further chips show the SPF, DKIM, DMARC, CompAuth and ARC results taken from the `Authentication-Results` and `ARC-Authentication-Results` headers. The chips are colour coded by result, and only appear for checks the message actually carries.
+A chip shows the total delivery time, and further chips show the SPF, DKIM, DMARC, CompAuth and ARC results taken from the `Authentication-Results` and `ARC-Authentication-Results` headers. The chips are color coded by result, and only appear for checks the message actually carries.
 
 | Column | Description                                                                                                                                                                   |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -43,14 +43,14 @@ A chip shows the total delivery time, and further chips show the SPF, DKIM, DMAR
 
 The second card renders the message itself.
 
-The sender's display name and address appear at the top with a shield icon beside them. Its colour summarises the DMARC, DKIM, SPF and ARC results from the message's own `Authentication-Results` header, and hovering over it gives the individual verdicts. A message carrying no authentication results at all is flagged rather than treated as a pass.
+The sender's display name and address appear at the top with a shield icon beside them. Its color summarizes the DMARC, DKIM, SPF and ARC results from the message's own `Authentication-Results` header, and hovering over it gives the individual verdicts. A message carrying no authentication results at all is flagged rather than treated as a pass.
 
 Recipients, any CC addresses, and the message date with a relative age are shown below the sender. The body renders as sanitised HTML where the message has an HTML part, falling back to the plain text part. Inline images referenced by content ID are re-embedded so the message looks as it did to the recipient. A sun and moon icon above the body switches the preview between light and dark backgrounds independently of your CIPP theme, which is useful for messages that assume one or the other.
 
 Attachments appear as buttons named after the file, each with an icon reflecting its type. Clicking one offers:
 
 * **Download** saves the attachment to your machine.
-* **View** opens it in a dialog without saving. Available for text, PDF, image and email attachments. An attached `.eml` opens in a nested message viewer, so a forwarded phishing sample can be analysed without extracting it first.
+* **View** opens it in a dialog without saving. Available for text, PDF, image and email attachments. An attached `.eml` opens in a nested message viewer, so a forwarded phishing sample can be analyzed without extracting it first.
 
 {% hint style="danger" %}
 Downloading an attachment from a suspicious message puts the file on your own machine. Prefer **View** where the type allows it, and treat anything you do download with the same caution you would apply to a sample from any other untrusted source.

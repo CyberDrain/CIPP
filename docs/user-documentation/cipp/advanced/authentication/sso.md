@@ -20,7 +20,7 @@ When you run the setup, CIPP creates the following in your partner tenant. All o
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | App registration `CIPP-SSO`       | Single-tenant by default (`AzureADMyOrg`). ID token issuance enabled. Redirect URI `https://<your-cipp-hostname>/.auth/login/aad/callback` for every hostname bound to the instance. |
 | Service principal (enterprise app) | The enterprise app entry for `CIPP-SSO`, so the app can be assigned Conditional Access policies and appear in sign-in logs.                                                  |
-| Client secret                     | A single secret named `CIPP-SSO-Secret`, stored in your instance's Key Vault. Its lifetime honours a tenant `passwordLifetime` restriction if you enforce one.                |
+| Client secret                     | A single secret named `CIPP-SSO-Secret`, stored in your instance's Key Vault. Its lifetime honors a tenant `passwordLifetime` restriction if you enforce one.                |
 | Tenant-wide consent grant         | An `AllPrincipals` OAuth2 permission grant for the three delegated scopes below, so your users are not each prompted to consent at first sign-in. Best-effort — see [#troubleshooting](sso.md#troubleshooting "mention"). |
 | App management policy exemption   | Only created if your tenant's default app management policy blocks adding client secrets. Named `CIPP Exemption Policy` and scoped to the CIPP-SAM app.                       |
 

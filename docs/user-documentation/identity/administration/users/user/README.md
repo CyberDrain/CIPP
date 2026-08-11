@@ -34,7 +34,7 @@ The card on the left holds the account's directory properties. The work, contact
 | Display Name                                                | The name shown throughout Microsoft 365.                                    |
 | Email Address                                               | The addresses on the account, taken from its proxy addresses.               |
 | User Principal Name                                         | The sign-in name for the account.                                           |
-| Licenses                                                    | The licences currently assigned. A note is shown when the account has none. |
+| Licenses                                                    | The licenses currently assigned. A note is shown when the account has none. |
 | Job Title, Company Name, Department, Manager                | The account's work information.                                             |
 | Mobile Phone, Business Phones                               | The contact numbers on the account.                                         |
 | Street Address, City, Postal Code, Country, Office Location | The account's address information.                                          |
@@ -82,7 +82,7 @@ Every authentication method registered against the account, other than the passw
 | QR code                                | Nothing further, as Graph returns only the identifier and last used date.                                                               |
 | External provider                      | The name of the registration.                                                                                                           |
 
-A method type CIPP does not yet recognise still appears, labelled with the type name Graph returned.
+A method type CIPP does not yet recognize still appears, labelled with the type name Graph returned.
 
 Two markers can appear on a method:
 

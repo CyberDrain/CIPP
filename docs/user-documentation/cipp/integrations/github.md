@@ -64,7 +64,7 @@ Select **Test**. A successful result names the GitHub account CIPP authenticated
 | Importing templates and scripts from a public repository | None, though your own token gives you a higher rate limit.                                                                   |
 | Adding a private or internal repository to the catalog   | Full `repo` scope.                                                                                                           |
 | Publishing templates and scripts to a repository         | Full `repo` scope.                                                                                                           |
-| Creating a new repository from CIPP                      | Full `repo` scope, on a token belonging to an account with rights to create repositories in the target user or organisation. |
+| Creating a new repository from CIPP                      | Full `repo` scope, on a token belonging to an account with rights to create repositories in the target user or organization. |
 
 Repositories and their templates are managed on the [community-repos](../../tools/community-repos/ "mention") page rather than here. This page only holds the credentials.
 

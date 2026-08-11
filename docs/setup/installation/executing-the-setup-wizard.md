@@ -47,7 +47,7 @@ Once the partner tenant is connected, you can also use **"Connect to Separate Te
 
 Choose from a list of available configuration baselines. These presets help you quickly apply best practices and policies.
 
-* We recommend selecting the **CyberDrain Templates** for the most optimised standard configurations and receiving templates and examples on how to utilise standards.
+* We recommend selecting the **CyberDrain Templates** for the most optimized standard configurations and receiving templates and examples on how to utilize standards.
 {% endstep %}
 
 {% step %}

@@ -1,6 +1,6 @@
 # Connectors
 
-This page lists the inbound and outbound mail flow connectors configured in the selected tenant's Exchange Online organisation. From here you can enable, disable, or delete a connector, capture one as a reusable template, and deploy connectors out to other tenants. Viewing the list requires the `Exchange.Connector.Read` permission, and every action on the page requires `Exchange.Connector.ReadWrite`.
+This page lists the inbound and outbound mail flow connectors configured in the selected tenant's Exchange Online organization. From here you can enable, disable, or delete a connector, capture one as a reusable template, and deploy connectors out to other tenants. Viewing the list requires the `Exchange.Connector.Read` permission, and every action on the page requires `Exchange.Connector.ReadWrite`.
 
 ## Action Buttons
 
@@ -23,7 +23,7 @@ Preset filters are available from the **Filters** button for **Inbound Connector
 | Name                        | The connector's name in Exchange Online.                                                                                                                                                      |
 | Enabled                     | Whether the connector is currently active. A disabled connector keeps its configuration but carries no mail.                                                                                  |
 | Comment                     | The free-text note stored with the connector, often used to record why it exists.                                                                                                             |
-| Cippconnectortype           | Whether the connector handles mail arriving at the organisation (`Inbound`) or leaving it (`Outbound`). Both directions are listed together on this page, so this is how you tell them apart. |
+| Cippconnectortype           | Whether the connector handles mail arriving at the organization (`Inbound`) or leaving it (`Outbound`). Both directions are listed together on this page, so this is how you tell them apart. |
 | Tls Sender Certificate Name | The certificate name a sending server must present before mail is accepted over an inbound connector.                                                                                         |
 | Sender IP Addresses         | The addresses and ranges mail must arrive from for an inbound connector to apply.                                                                                                             |
 | Is Transport Rule Scoped    | Whether the connector is used only when a transport rule routes mail to it, rather than for all mail that matches its settings.                                                               |

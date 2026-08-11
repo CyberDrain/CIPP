@@ -2,7 +2,7 @@
 
 The Template Catalog browses every template published across your registered sources in one place, so you can search the whole collection rather than working through repositories one at a time. Templates are previewed here and imported into your own instance.
 
-Arriving from a source card filters the catalogue to that source. The selected sources are held in the page address, so a filtered view can be bookmarked or shared with a colleague.
+Arriving from a source card filters the catalog to that source. The selected sources are held in the page address, so a filtered view can be bookmarked or shared with a colleague.
 
 **Back to Sources** returns to the list of registered repositories.
 
@@ -35,7 +35,7 @@ Each template shows its name, its type, its category and the repository it comes
 | Imported         | This template is already in your instance and matches the published version.  |
 | Update Available | You have imported this template, and the source has since published a change. |
 
-A template with neither badge has not been imported. Cards are also outlined in the matching colour, so the state is visible at a glance when scanning a long list.
+A template with neither badge has not been imported. Cards are also outlined in the matching color, so the state is visible at a glance when scanning a long list.
 
 ## Importing
 
@@ -50,7 +50,7 @@ To import in bulk, tick the templates you want, or use the select-all checkbox t
 {% endhint %}
 
 {% hint style="warning" %}
-Where CIPP could not read one of your sources, a warning is shown above the results. The catalogue still lists everything it could reach, so a shorter than expected list is worth checking against those warnings before concluding a template is missing.
+Where CIPP could not read one of your sources, a warning is shown above the results. The catalog still lists everything it could reach, so a shorter than expected list is worth checking against those warnings before concluding a template is missing.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

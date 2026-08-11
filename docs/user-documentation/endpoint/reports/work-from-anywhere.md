@@ -7,7 +7,7 @@ Reports each Intune-managed device's readiness to upgrade to the latest version 
 The properties returned are for the Graph resource type `userExperienceAnalyticsWorkFromAnywhereDevice`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/intune-devices-userexperienceanalyticsworkfromanywheredevice?view=graph-rest-beta#properties).
 
 {% hint style="info" %}
-Upgrade Eligibility summarises the outcome as Capable, Not Capable, Upgraded or Unknown. The columns ending in Check Failed break that down: each is true where the device failed that particular requirement, so a device showing Not Capable can be traced to the RAM, storage, processor, TPM, Secure Boot or operating system check that caused it.
+Upgrade Eligibility summarizes the outcome as Capable, Not Capable, Upgraded or Unknown. The columns ending in Check Failed break that down: each is true where the device failed that particular requirement, so a device showing Not Capable can be traced to the RAM, storage, processor, TPM, Secure Boot or operating system check that caused it.
 {% endhint %}
 
 ## Table Actions

@@ -23,7 +23,7 @@ The frontend and backend are versioned and deployed separately, so it is normal 
 
 ## Password Style
 
-Shows the password generation settings currently in effect, displayed as a chip summarising the type and length.
+Shows the password generation settings currently in effect, displayed as a chip summarizing the type and length.
 
 | Type       | Description                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -41,12 +41,12 @@ If the card shows an error instead of the current setting, CIPP could not read t
 Selects which public resolver CIPP uses, with Google and Cloudflare available. The active choice is shown as the filled button.
 
 {% hint style="info" %}
-This resolver is used by the [domains-analyser](../../tenant/standards/domains-analyser/ "mention") and the [individual-domains.md](../../tools/tenant-tools/individual-domains.md "mention") only. It has no effect on any other DNS resolution CIPP performs, so changing it will not alter behaviour elsewhere in the application.
+This resolver is used by the [domains-analyzer](../../tenant/standards/domains-analyzer/ "mention") and the [individual-domains.md](../../tools/tenant-tools/individual-domains.md "mention") only. It has no effect on any other DNS resolution CIPP performs, so changing it will not alter behavior elsewhere in the application.
 {% endhint %}
 
 ## Cache
 
-Clears the cached data CIPP holds, including the tenant list and analyser results.
+Clears the cached data CIPP holds, including the tenant list and analyzer results.
 
 Selecting **Clear Cache** opens a confirmation dialog with one option.
 
@@ -106,13 +106,13 @@ The remaining application settings are grouped on their own tabs.
 
 | Tab                                                  | Description                                                                      |
 | ---------------------------------------------------- | -------------------------------------------------------------------------------- |
-| [branding.md](branding.md "mention")                 | Customises the logo and brand colour applied to generated reports and documents. |
+| [branding.md](branding.md "mention")                 | Customizes the logo and brand color applied to generated reports and documents. |
 | [permissions.md](permissions.md "mention")           | Reviews and repairs the permissions held by the CIPP service principal.          |
 | [tenants.md](tenants.md "mention")                   | Manages which tenants CIPP sees, including exclusions and refresh.               |
 | [backend.md](backend.md "mention")                   | Provides direct links into the underlying Azure resources for your instance.     |
 | [notifications.md](notifications.md "mention")       | Configures where CIPP sends alerts, including email and webhook destinations.    |
 | [partner-webhooks.md](partner-webhooks.md "mention") | Sets up partner webhooks so new tenants are onboarded automatically.             |
-| [licenses.md](licenses.md "mention")                 | Manages licence exclusions used across reporting and alerting.                   |
+| [licenses.md](licenses.md "mention")                 | Manages license exclusions used across reporting and alerting.                   |
 | [features.md](features.md "mention")                 | Enables and disables optional CIPP features.                                     |
 | [siem.md](siem.md "mention")                         | Configures log forwarding to an external SIEM.                                   |
 

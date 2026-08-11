@@ -23,7 +23,7 @@ Preset filters are available from the **Filters** button for each status and eac
 | Passed      | Checks the tenant satisfied.                                                                           |
 | Failed      | Checks the tenant did not satisfy.                                                                     |
 | Investigate | Checks that could not be resolved to a pass or fail and need a human decision.                         |
-| Skipped     | Checks that did not run, usually because the tenant lacks the licence or feature the check applies to. |
+| Skipped     | Checks that did not run, usually because the tenant lacks the license or feature the check applies to. |
 | High Risk   | Checks carrying a high risk rating, whatever their status.                                             |
 | Medium Risk | Checks carrying a medium risk rating.                                                                  |
 | Low Risk    | Checks carrying a low risk rating.                                                                     |
@@ -59,7 +59,7 @@ The category the check belongs to, followed by a description of what the check l
 
 ## All Tenants View
 
-With the tenant selector on **All Tenants**, this tab shows identity results across every tenant instead. Four tiles summarise the estate.
+With the tenant selector on **All Tenants**, this tab shows identity results across every tenant instead. Four tiles summarize the estate.
 
 | Tile                    | Description                                                                                        |
 | ----------------------- | -------------------------------------------------------------------------------------------------- |

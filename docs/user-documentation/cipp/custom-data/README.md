@@ -64,7 +64,7 @@ CIPP ships with a schema extension called `cippUser`, described as CIPP User Sch
 Do not deprecate or attempt to remove the `cippUser` schema. CIPP recreates it automatically, and features that depend on it will behave unpredictably while it is missing.
 {% endhint %}
 
-You can add your own properties to it but consider creating a separate schema for organisation-specific attributes so that yours stay clearly distinguishable from CIPP's.
+You can add your own properties to it but consider creating a separate schema for organization-specific attributes so that yours stay clearly distinguishable from CIPP's.
 
 ## Putting It to Work
 
@@ -72,7 +72,7 @@ Custom Data is most valuable when the attribute feeds something downstream rathe
 
 | Goal                                          | Approach                                                                                                                                                                                                                      |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Drive Entra dynamic groups from business data | Create a Manual Entry mapping for something like Department Code or Cost Centre, then write an Entra dynamic membership rule against the extension property. Licensing and Conditional Access follow the group automatically. |
+| Drive Entra dynamic groups from business data | Create a Manual Entry mapping for something like Department Code or Cost Center, then write an Entra dynamic membership rule against the extension property. Licensing and Conditional Access follow the group automatically. |
 | Surface mailbox facts on the user object      | Map properties from the Mailboxes or CAS Mailbox dataset so mailbox type, quotas, forwarding, or protocol settings are readable directly from the user in Graph, without an Exchange Online session.                          |
 | Report on storage without a second query      | Map the Mailbox Usage or One Drive Usage datasets to capture size and activity figures on the user.                                                                                                                           |
 | Keep an audit trail of mailbox delegation     | Map the Mailbox Permissions dataset to a multi-valued directory extension. Each permission entry is stored as a JSON string.                                                                                                  |

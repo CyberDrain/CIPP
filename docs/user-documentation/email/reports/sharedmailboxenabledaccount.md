@@ -15,7 +15,7 @@ The report pairs each of the tenant's shared mailboxes with its user account and
 | User Principal Name      | The sign-in address of the account behind the shared mailbox.                                     |
 | Display Name             | The friendly name of the shared mailbox.                                                          |
 | Account Enabled          | Whether the account can sign in. Always `Yes` in this report.                                     |
-| Assigned Licenses        | Any licences assigned to the account. A shared mailbox under 50GB should not need one.            |
+| Assigned Licenses        | Any licenses assigned to the account. A shared mailbox under 50GB should not need one.            |
 | On Premises Sync Enabled | Whether the account is synchronised from on-premises Active Directory.                            |
 
 ## Table Actions

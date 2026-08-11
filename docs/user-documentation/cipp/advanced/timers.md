@@ -32,10 +32,10 @@ This page lists every timer CIPP defines, including those tied to features that 
 
 ## Reset to Default
 
-**Reset to Default** discards any customised schedules and restores the timings CIPP ships with. You are asked to confirm before it applies.
+**Reset to Default** discards any customized schedules and restores the timings CIPP ships with. You are asked to confirm before it applies.
 
 {% hint style="warning" %}
-This applies to every timer at once. There is no way to reset an individual schedule, and no record is kept of what the customised values were, so note anything you want to reinstate before resetting.
+This applies to every timer at once. There is no way to reset an individual schedule, and no record is kept of what the customized values were, so note anything you want to reinstate before resetting.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

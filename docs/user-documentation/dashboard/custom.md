@@ -68,7 +68,7 @@ The category assigned to the check, followed by the description recorded against
 
 ## All Tenants View
 
-With the tenant selector on **All Tenants**, this tab shows custom test results across every tenant instead. Four tiles summarise the estate.
+With the tenant selector on **All Tenants**, this tab shows custom test results across every tenant instead. Four tiles summarize the estate.
 
 | Tile                    | Description                                                                                        |
 | ----------------------- | -------------------------------------------------------------------------------------------------- |

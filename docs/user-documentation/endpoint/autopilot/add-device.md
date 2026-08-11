@@ -37,7 +37,7 @@ Build the list of devices to register. Three buttons sit above the list:
 | hardwareHash        | Hardware hash, Hardware Hash       |
 | groupTag            | Group Tag                          |
 
-**Manual Import** opens a dialogue for typing devices in one row at a time. Pressing Enter in the Product ID field adds another row. Rows are validated as they are entered, and the Add button stays disabled until every problem is resolved.
+**Manual Import** opens a dialog for typing devices in one row at a time. Pressing Enter in the Product ID field adds another row. Rows are validated as they are entered, and the Add button stays disabled until every problem is resolved.
 
 Each row must satisfy the following:
 

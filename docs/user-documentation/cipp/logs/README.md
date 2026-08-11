@@ -29,7 +29,7 @@ Expanding the **Logbook Filters** section at the top of the page reveals the opt
 | Clear Filters | Resets every field and returns the table to the current day.             |
 
 {% hint style="info" %}
-Log entries are partitioned by date, and the day boundary follows your CIPP instance rather than your own location. The filter panel shows how far your local time is offset, which is worth checking when an entry you expect near midnight appears on the neighbouring day.
+Log entries are partitioned by date, and the day boundary follows your CIPP instance rather than your own location. The filter panel shows how far your local time is offset, which is worth checking when an entry you expect near midnight appears on the neighboring day.
 {% endhint %}
 
 {% hint style="warning" %}

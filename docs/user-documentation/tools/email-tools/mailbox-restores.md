@@ -1,6 +1,6 @@
 # Mailbox Restores
 
-Mailbox Restores lists the restore requests in the selected tenant and lets you create new ones. A restore copies the contents of a soft-deleted mailbox into a mailbox that still exists, which is how you recover the mail of a departed user whose licence has been removed, or repopulate a mailbox that was deleted in error.
+Mailbox Restores lists the restore requests in the selected tenant and lets you create new ones. A restore copies the contents of a soft-deleted mailbox into a mailbox that still exists, which is how you recover the mail of a departed user whose license has been removed, or repopulate a mailbox that was deleted in error.
 
 {% hint style="info" %}
 A restore copies content into an existing target mailbox, it does not bring the deleted mailbox back. The source mailbox must still be within Exchange Online's retention window for soft-deleted mailboxes, otherwise it will not appear in the source list.
@@ -12,7 +12,7 @@ A restore copies content into an existing target mailbox, it does not bring the 
 
 <summary>New Restore Job</summary>
 
-Opens the **New Mailbox Restore** drawer. **Source Mailbox** lists the tenant's soft-deleted mailboxes and **Restore Target** lists its live mailboxes. Selecting either shows chips summarising the mailbox type and whether it has an active archive, and the target also shows its current size, so you can judge whether it has room for the incoming content. **Restore Request Name** is filled in automatically once both mailboxes are chosen, and can be overwritten.
+Opens the **New Mailbox Restore** drawer. **Source Mailbox** lists the tenant's soft-deleted mailboxes and **Restore Target** lists its live mailboxes. Selecting either shows chips summarizing the mailbox type and whether it has an active archive, and the target also shows its current size, so you can judge whether it has room for the incoming content. **Restore Request Name** is filled in automatically once both mailboxes are chosen, and can be overwritten.
 
 Everything under **Optional Settings** may be left alone for a straightforward restore.
 

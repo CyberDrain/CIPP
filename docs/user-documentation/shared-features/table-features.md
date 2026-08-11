@@ -1,6 +1,6 @@
 # Table Features
 
-Most list pages in CIPP share the same table component, so the toolbar, filtering, sorting and export behaviour described here applies across the application. Individual pages may hide features that do not apply to them, but where a feature is present it works the same way everywhere.
+Most list pages in CIPP share the same table component, so the toolbar, filtering, sorting and export behavior described here applies across the application. Individual pages may hide features that do not apply to them, but where a feature is present it works the same way everywhere.
 
 ## Live and Cached Data
 

@@ -18,7 +18,7 @@ A user is protected when at least one of the following applies. Reading the thre
 
 | Filter                              | Shows                                                                              |
 | ----------------------------------- | ---------------------------------------------------------------------------------- |
-| Enabled, licensed users             | Active accounts holding a licence, which is usually the population that matters.   |
+| Enabled, licensed users             | Active accounts holding a license, which is usually the population that matters.   |
 | Enabled, licensed users missing MFA | The same population with no MFA methods registered. This is the list to work from. |
 | No MFA methods registered           | Every account with nothing registered, including disabled and unlicensed ones.     |
 | MFA methods registered              | Accounts with at least one method registered.                                      |
@@ -31,7 +31,7 @@ A user is protected when at least one of the following applies. Reading the thre
 | Tenant           | The tenant the user belongs to. Shown when All Tenants is selected.                                                                                   |
 | UPN              | The user's sign-in name.                                                                                                                              |
 | Account Enabled  | Whether the account can sign in.                                                                                                                      |
-| Is Licensed      | Whether the account holds a licence.                                                                                                                  |
+| Is Licensed      | Whether the account holds a license.                                                                                                                  |
 | MFA Registration | Whether Entra reports the user as having registered for MFA.                                                                                          |
 | Per User         | The legacy per-user MFA state on the account: enforced, enabled or disabled.                                                                          |
 | Covered By SD    | Whether Security Defaults are protecting the user.                                                                                                    |

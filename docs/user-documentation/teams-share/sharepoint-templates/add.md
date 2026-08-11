@@ -65,7 +65,7 @@ The available permission levels are SharePoint's built-in levels:
 | Read             | View pages and items, and download documents.          |
 | Contribute       | View, add, update, and delete items.                   |
 | Edit             | Contribute access plus the ability to manage lists.    |
-| Design           | Edit access plus the ability to approve and customise. |
+| Design           | Edit access plus the ability to approve and customize. |
 | Full Control     | Full administrative control.                           |
 
 ## Quick Stats

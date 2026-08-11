@@ -20,7 +20,7 @@ Enter the domain name in the **Add Domain** drawer and add it. It appears in the
 {% step %}
 #### Collect the verification record
 
-Open the row's **More Info** flyout and look at **Verification Records**, or start **Verify Domain**, which shows the same records in its confirmation dialogue. Microsoft usually asks for a TXT record whose value begins `MS=ms`, and sometimes offers an MX record as an alternative. Where more than one record is offered, any one of them is enough. Each value has a copy button next to it.
+Open the row's **More Info** flyout and look at **Verification Records**, or start **Verify Domain**, which shows the same records in its confirmation dialog. Microsoft usually asks for a TXT record whose value begins `MS=ms`, and sometimes offers an MX record as an alternative. Where more than one record is offered, any one of them is enough. Each value has a copy button next to it.
 {% endstep %}
 
 {% step %}
@@ -48,7 +48,7 @@ The domain name itself appears in the Id column, since that is the identifier Mi
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Verify Domain</td><td>Asks Microsoft to check for the ownership record and marks the domain verified once it is found. The confirmation shows the records that satisfy verification, so they can be copied without leaving the dialogue. Only offered for domains that are not yet verified.</td><td>true</td></tr><tr><td>Set as Default</td><td>Makes the selected domain the tenant's default, which is the domain used when no other is specified for new mailboxes and accounts. Only offered for verified domains that are not already the default.</td><td>false</td></tr><tr><td>Delete Domain</td><td>Removes the domain from the tenant. Only offered for domains that are neither the default nor the tenant's initial <code>onmicrosoft.com</code> domain, neither of which can be removed.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Verify Domain</td><td>Asks Microsoft to check for the ownership record and marks the domain verified once it is found. The confirmation shows the records that satisfy verification, so they can be copied without leaving the dialog. Only offered for domains that are not yet verified.</td><td>true</td></tr><tr><td>Set as Default</td><td>Makes the selected domain the tenant's default, which is the domain used when no other is specified for new mailboxes and accounts. Only offered for verified domains that are not already the default.</td><td>false</td></tr><tr><td>Delete Domain</td><td>Removes the domain from the tenant. Only offered for domains that are neither the default nor the tenant's initial <code>onmicrosoft.com</code> domain, neither of which can be removed.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% hint style="warning" %}
 Verification only succeeds once the record has been published and has propagated. Running **Verify Domain** before then returns an error rather than queuing a retry, so publish the record first and verify afterwards.

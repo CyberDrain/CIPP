@@ -39,7 +39,7 @@ The table's own filter menu additionally offers Pending requests, Expired reques
 <table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Review in Entra</td><td>Opens the admin consent requests view in the Microsoft Entra admin center, in a new tab. This opens the list of requests rather than the selected one.</td><td>false</td></tr><tr><td>Approve in Entra</td><td>Opens the Microsoft consent prompt for the selected application, in a new tab, built from the permissions the request is waiting on.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% hint style="warning" %}
-The permissions being requested are not shown in the table or the flyout, and completing the prompt that **Approve in Entra** opens grants those permissions on behalf of the entire organisation, not only the user who asked. Review the request in Entra, or the application itself, before approving.
+The permissions being requested are not shown in the table or the flyout, and completing the prompt that **Approve in Entra** opens grants those permissions on behalf of the entire organization, not only the user who asked. Review the request in Entra, or the application itself, before approving.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

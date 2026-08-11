@@ -79,16 +79,16 @@ Removing every MFA method leaves the account with no second factor registered. O
 {% endhint %}
 
 {% hint style="info" %}
-**Remediate User** does not touch the user's devices. If Check 9 has turned up an enrolment you do not recognise, retiring or wiping it is a separate decision and a separate action.
+**Remediate User** does not touch the user's devices. If Check 9 has turned up an enrolment you do not recognize, retiring or wiping it is a separate decision and a separate action.
 {% endhint %}
 
 {% hint style="info" %}
-The JSON export carries three data sets that no card displays: the last fifty sign-ins for the tenant, the user's most recent sign-in, and the mobile devices attached to the mailbox. If the investigation turns on sign-in origin or an unrecognised device, that is where to look. The Intune device list in the export also holds the manufacturer, model, owner type, and assigned user, none of which the card shows.
+The JSON export carries three data sets that no card displays: the last fifty sign-ins for the tenant, the user's most recent sign-in, and the mobile devices attached to the mailbox. If the investigation turns on sign-in origin or an unrecognized device, that is where to look. The Intune device list in the export also holds the manufacturer, model, owner type, and assigned user, none of which the card shows.
 {% endhint %}
 
 ## PDF Report
 
-The report is built from the analysis already on screen, so it never starts a fresh run and always reflects the same cached result the cards are showing. Its cover names the user rather than the tenant, and the logo, cover image, colours, footer and watermark come from your instance branding, described in [branding.md](../../../../cipp/settings/branding.md "mention").
+The report is built from the analysis already on screen, so it never starts a fresh run and always reflects the same cached result the cards are showing. Its cover names the user rather than the tenant, and the logo, cover image, colors, footer and watermark come from your instance branding, described in [branding.md](../../../../cipp/settings/branding.md "mention").
 
 | Page                                    | What it contains                                                                                                                                                                                                                        |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

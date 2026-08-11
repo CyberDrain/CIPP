@@ -27,7 +27,7 @@ A summary panel counts the deviations by how they have been handled.
 | Accepted             | Deviations that have been accepted and left in place.                                 |
 | Customer Specific    | Deviations accepted as specific to this customer.                                     |
 | Denied               | Deviations that have been denied, whether by deletion or remediation.                 |
-| Skipped (No License) | Standards that could not be evaluated because the tenant lacks the required licences. |
+| Skipped (No License) | Standards that could not be evaluated because the tenant lacks the required licenses. |
 | Total                | The total number of standards evaluated.                                              |
 
 ## Filters
@@ -50,7 +50,7 @@ Results are presented as cards grouped into sections, each showing what the temp
 | Accepted Deviations - Customer Specific | Differences accepted as specific to this customer.                                    |
 | Denied Deviations                       | Differences that have been denied and either removed or remediated.                   |
 | Compliant Standards                     | Standards where the tenant already matches the template.                              |
-| Skipped - No License Available          | Standards that could not be evaluated because the tenant lacks the required licences. |
+| Skipped - No License Available          | Standards that could not be evaluated because the tenant lacks the required licenses. |
 
 ### Actions on a Deviation
 

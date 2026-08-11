@@ -18,22 +18,22 @@ The selected tenant is reflected in the page address as a `tenantFilter` paramet
 Your selected tenant is remembered between sessions. If you open CIPP at a page with no tenant in its address, the tenant you last used is applied automatically.
 {% endhint %}
 
-## Favourites and Recent Tenants
+## Favorites and Recent Tenants
 
 The list is grouped, so the tenants you work with most sit at the top rather than buried in an alphabetical list of everything you manage.
 
 | Group           | Description                                                                                                                        |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | **Favorites**   | Tenants you have starred, in the order you starred them.                                                                           |
-| **Recent**      | The tenants you have selected most recently, newest first, up to eight. A tenant that is already a favourite is not repeated here. |
+| **Recent**      | The tenants you have selected most recently, newest first, up to eight. A tenant that is already a favorite is not repeated here. |
 | **All tenants** | Everything else, sorted alphabetically.                                                                                            |
 
-Each row carries a star on the right. Select it to add that tenant to **Favorites**, or select it again to remove it. Selecting the star does not change tenant, so you can reorganise the list without leaving the page you are on.
+Each row carries a star on the right. Select it to add that tenant to **Favorites**, or select it again to remove it. Selecting the star does not change tenant, so you can reorganize the list without leaving the page you are on.
 
 Recent tenants are tracked for you: choosing a tenant from the dropdown adds it to the top of the group. **\*All Tenants** is excluded from both groups and cannot be starred, since it is already pinned above them.
 
 {% hint style="info" %}
-Favourites and recent tenants are stored in your browser rather than in your CIPP user settings. They are specific to the browser and device you set them on, they do not follow you to another machine, and clearing your browser's site data removes them. Both lists update immediately in any other CIPP tab you have open.
+Favorites and recent tenants are stored in your browser rather than in your CIPP user settings. They are specific to the browser and device you set them on, they do not follow you to another machine, and clearing your browser's site data removes them. Both lists update immediately in any other CIPP tab you have open.
 {% endhint %}
 
 ## Tenant Information

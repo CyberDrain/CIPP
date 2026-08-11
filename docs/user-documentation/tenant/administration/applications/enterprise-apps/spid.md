@@ -32,7 +32,7 @@ An app registration only exists in the tenant that owns the application. For Mic
 
 ### Credentials
 
-Two collapsible entries summarise the credentials held by the service principal, one for client secrets and one for certificates. Each shows how many credentials are configured and the next expiry date, taken from the earliest expiry across all credentials of that type.
+Two collapsible entries summarize the credentials held by the service principal, one for client secrets and one for certificates. Each shows how many credentials are configured and the next expiry date, taken from the earliest expiry across all credentials of that type.
 
 Expanding an entry lists each credential individually by name and expiry date, along with its key ID. Where the credential list is empty, the entry is marked in amber to draw the eye; that is a prompt to check rather than a fault, since most applications legitimately hold no credentials in the tenants they are consented to.
 
@@ -44,7 +44,7 @@ Each credential carries its own menu:
 | Remove | Deletes the selected credential immediately, after a confirmation prompt.                                                                                                                      |
 
 {% hint style="warning" %}
-Rotation deletes the original secret as soon as the replacement is created, so anything still using the old value stops working until it is updated. Copy the new secret before closing the dialogue, as it cannot be retrieved afterwards. Where the tenant enforces an application secret lifetime policy, the twelve month lifetime is shortened to fit and you are told so in the result.
+Rotation deletes the original secret as soon as the replacement is created, so anything still using the old value stops working until it is updated. Copy the new secret before closing the dialog, as it cannot be retrieved afterwards. Where the tenant enforces an application secret lifetime policy, the twelve month lifetime is shortened to fit and you are told so in the result.
 {% endhint %}
 
 {% hint style="info" %}
@@ -71,7 +71,7 @@ OAuth2 permission grants where this application is the client, grouped by resour
 
 ### Risk indicators
 
-Permissions that appear in CIPP's curated set of risky permissions are marked with a coloured bar and a chip reading Critical, High, Medium or Low. Hovering the chip gives the reason the permission is considered risky. Each API group carries a chip of its own showing the highest risk found within it and how many of its permissions are flagged.
+Permissions that appear in CIPP's curated set of risky permissions are marked with a colored bar and a chip reading Critical, High, Medium or Low. Hovering the chip gives the reason the permission is considered risky. Each API group carries a chip of its own showing the highest risk found within it and how many of its permissions are flagged.
 
 {% hint style="info" %}
 The risky-permissions set is a deliberately short list of the permissions most useful to an attacker, and it concentrates on application permissions, so delegated scopes are rarely flagged. A permission without a chip has not been assessed rather than judged safe.

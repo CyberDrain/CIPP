@@ -33,7 +33,7 @@ The properties and the values you set are listed together, followed by the users
 | Business Phone          | `businessPhones`        | Holds a list in Graph, but the wizard writes the single value entered, replacing any numbers already on the account.                                                |
 | City                    | `city`                  |                                                                                                                                                                     |
 | Company Name            | `companyName`           |                                                                                                                                                                     |
-| Country                 | `country`               | The country name held on the profile. This is not what licences are assigned against, which is Usage Location below.                                                |
+| Country                 | `country`               | The country name held on the profile. This is not what licenses are assigned against, which is Usage Location below.                                                |
 | Department              | `department`            |                                                                                                                                                                     |
 | Employee Type           | `employeeType`          | Free text, commonly used for values such as Employee, Contractor or Vendor.                                                                                         |
 | Fax Number              | `faxNumber`             |                                                                                                                                                                     |
@@ -48,7 +48,7 @@ The properties and the values you set are listed together, followed by the users
 | Sponsor                 | `sponsor`               | A directory relationship, handled the same way as Manager.                                                                                                          |
 | State/Province          | `state`                 |                                                                                                                                                                     |
 | Street Address          | `streetAddress`         |                                                                                                                                                                     |
-| Usage Location          | `usageLocation`         | A two-letter country code such as `GB` or `US`. This is the field licence assignment depends on, so a wrong value blocks licensing rather than just looking untidy. |
+| Usage Location          | `usageLocation`         | A two-letter country code such as `GB` or `US`. This is the field license assignment depends on, so a wrong value blocks licensing rather than just looking untidy. |
 | UPN Domain Suffix       | `userPrincipalName`     | Changes the part of the sign-in name after the @ symbol, keeping each user's existing prefix. Only offered when every selected user belongs to the same tenant.     |
 
 Custom data attributes mapped for manual entry against users also appear in the list, labelled **(Custom)**, and write to the attribute they are mapped to. Attributes that hold more than one value are left out, as the wizard writes a single value to every selected user.

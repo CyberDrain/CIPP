@@ -7,7 +7,7 @@ Reports Endpoint Analytics scores for each device in the selected tenant. Endpoi
 The properties returned are for the Graph resource type `userExperienceAnalyticsDeviceScores`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/intune-devices-userexperienceanalyticsdevicescores?view=graph-rest-beta#properties).
 
 {% hint style="info" %}
-Every score runs from 0 to 100, where a higher score is healthier. A score of -1 means that measure is not available for the device, usually because it has not reported enough data yet. Health Status summarises the same picture as Meeting Goals, Needs Attention, Insufficient Data or Unknown.
+Every score runs from 0 to 100, where a higher score is healthier. A score of -1 means that measure is not available for the device, usually because it has not reported enough data yet. Health Status summarizes the same picture as Meeting Goals, Needs Attention, Insufficient Data or Unknown.
 {% endhint %}
 
 ## Table Actions

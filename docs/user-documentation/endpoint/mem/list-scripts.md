@@ -31,7 +31,7 @@ Where a script type cannot be retrieved from the tenant, a single row appears fo
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Assign to All Users</td><td>Assigns the script to all licensed users.</td><td>true</td></tr><tr><td>Assign to All Devices</td><td>Assigns the script to all devices.</td><td>true</td></tr><tr><td>Assign Globally (All Users / All Devices)</td><td>Assigns the script to both all licensed users and all devices.</td><td>true</td></tr><tr><td>Assign to Custom Group</td><td>Assigns the script to specific groups, or excludes specific groups from it. Selecting Exclude together with Replace and no groups clears all existing exclusions while leaving the included assignments in place.</td><td>true</td></tr><tr><td>Edit Script</td><td>Opens the script's contents in an editor. Save with the icon in the top right of the dialogue, or close with the cross. Closing with unsaved changes asks for confirmation first.</td><td>true</td></tr><tr><td>Delete Script</td><td>Deletes the script from the tenant.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Assign to All Users</td><td>Assigns the script to all licensed users.</td><td>true</td></tr><tr><td>Assign to All Devices</td><td>Assigns the script to all devices.</td><td>true</td></tr><tr><td>Assign Globally (All Users / All Devices)</td><td>Assigns the script to both all licensed users and all devices.</td><td>true</td></tr><tr><td>Assign to Custom Group</td><td>Assigns the script to specific groups, or excludes specific groups from it. Selecting Exclude together with Replace and no groups clears all existing exclusions while leaving the included assignments in place.</td><td>true</td></tr><tr><td>Edit Script</td><td>Opens the script's contents in an editor. Save with the icon in the top right of the dialog, or close with the cross. Closing with unsaved changes asks for confirmation first.</td><td>true</td></tr><tr><td>Delete Script</td><td>Deletes the script from the tenant.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% hint style="info" %}
 Every assignment action offers an assignment mode. **Append** keeps the existing assignments and adds the new ones. **Replace** overwrites existing assignments, and for Assign to Custom Group it replaces only the direction you chose, include or exclude, leaving the other direction and any All Users or All Devices targets intact.
@@ -41,14 +41,14 @@ Every assignment action offers an assignment mode. **Append** keeps the existing
 
 Selecting **Edit Script** fetches the script's contents and opens them in a syntax-highlighted editor. Windows and remediation scripts are shown as PowerShell; macOS and Linux scripts as shell.
 
-Remediation scripts carry two payloads, so the dialogue shows Detection Script and Remediation Script on separate tabs, each edited and saved independently of the other.
+Remediation scripts carry two payloads, so the dialog shows Detection Script and Remediation Script on separate tabs, each edited and saved independently of the other.
 
 {% hint style="warning" %}
 Built-in Microsoft remediation scripts are read-only. The editor opens and the script can be read, but the save control is not offered, because Intune rejects changes to them.
 {% endhint %}
 
 {% hint style="info" %}
-Some script types hold no editable content, in which case the dialogue says so rather than opening an editor.
+Some script types hold no editable content, in which case the dialog says so rather than opening an editor.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

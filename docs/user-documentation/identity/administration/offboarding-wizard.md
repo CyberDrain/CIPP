@@ -42,15 +42,15 @@ The options are pre-filled from your saved offboarding defaults each time the te
 
 | Setting                            | Description                                                                                                     |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Convert to Shared Mailbox          | Converts the user's mailbox to a shared mailbox, so it can be kept without a licence.                           |
+| Convert to Shared Mailbox          | Converts the user's mailbox to a shared mailbox, so it can be kept without a license.                           |
 | Hide from Global Address List      | Hides the user from address lists.                                                                              |
-| Cancel all calendar invites        | Cancels upcoming meetings the user organised.                                                                   |
+| Cancel all calendar invites        | Cancels upcoming meetings the user organized.                                                                   |
 | Remove user's mailbox permissions  | Removes the user's access to every other mailbox.                                                               |
 | Remove user's calendar permissions | Removes the user's access to every other calendar.                                                              |
 | Remove all Rules                   | Deletes the inbox rules on the user's mailbox.                                                                  |
 | Remove all Mobile Devices          | Removes the mobile devices registered against the mailbox.                                                      |
 | Remove from all groups             | Removes the user from every group they belong to.                                                               |
-| Remove Licenses                    | Strips every licence from the account.                                                                          |
+| Remove Licenses                    | Strips every license from the account.                                                                          |
 | Revoke all sessions                | Invalidates the account's tokens so every device has to sign in again.                                          |
 | Disable Sign in                    | Blocks the account from signing in.                                                                             |
 | Clear Immutable ID                 | Clears the on-premises anchor. Only effective once the account is no longer synchronised from Active Directory. |
@@ -65,7 +65,7 @@ Deleting the user removes the mailbox with it, so it cannot be combined with con
 {% endhint %}
 
 {% hint style="warning" %}
-Converting a mailbox that is at or near 50 GB may fail, and a converted mailbox over that size stops receiving mail once its licence is removed unless an Exchange Online Plan 2 licence is assigned. The wizard checks the size of the selected mailboxes and warns before you submit.
+Converting a mailbox that is at or near 50 GB may fail, and a converted mailbox over that size stops receiving mail once its license is removed unless an Exchange Online Plan 2 license is assigned. The wizard checks the size of the selected mailboxes and warns before you submit.
 {% endhint %}
 
 ## Permissions and forwarding
@@ -91,7 +91,7 @@ When the account is being deleted, its OneDrive is retained for 30 days by defau
 | Schedule this offboarding  | Defers the job to a chosen date instead of running it immediately, and reveals the settings below.                        |
 | Scheduled Offboarding Date | When the job should run.                                                                                                  |
 | Webhook, E-mail, PSA       | Which channels are notified when the job completes. Each has to be configured in CIPP's notification settings to deliver. |
-| Reference                  | Free text added to the notification so the job can be recognised later.                                                   |
+| Reference                  | Free text added to the notification so the job can be recognized later.                                                   |
 
 {% hint style="info" %}
 Selecting three or more users turns scheduling on by itself, since a large offboarding is better queued than run against every account at once. The date can still be set to whatever suits.

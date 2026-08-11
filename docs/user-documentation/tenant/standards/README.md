@@ -83,7 +83,7 @@ Standards are grouped into the following categories, which match the Category la
 
 | Category                    | Description                                                                                          |
 | --------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Global Standards            | Organisation-wide configuration applied across the tenant.                                           |
+| Global Standards            | Organization-wide configuration applied across the tenant.                                           |
 | Entra (AAD) Standards       | Identity configuration, including authentication methods and Conditional Access.                     |
 | Exchange Standards          | Email settings such as spam protection, mailbox configuration, and message handling.                 |
 | Defender Standards          | Protection against phishing, malware, and other threats.                                             |
@@ -111,11 +111,11 @@ Each standard is labelled with the level of change it introduces and its effect 
 * **Companion policies.** Some standards rely on additional policies in tools such as Microsoft Intune to be fully effective. Ensure any required companion policies are in place.
 * **Deselecting a standard does not undo it.** Removing a standard stops it being enforced in future cycles, but leaves the current configuration alone. Deselecting `Enable FIDO2 capabilities` stops CIPP enforcing it, but FIDO2 stays enabled where it was already turned on.
 * **Application cadence.** Standards reapply every twelve hours. A setting changed outside the standard will be overridden at the next cycle. Drift templates are evaluated on the same twelve hour cadence, shortly after the standards run.
-* **Licence-aware skipping.** If a tenant is not licensed for a setting in a template, for example a Conditional Access standard applied to a tenant without Entra P1, that standard is skipped rather than failed. This is reflected in the **License Missing Percentage** and **Combined Alignment Score** columns on the Standards & Drift Alignment page, and means it is safe to apply a mixed-licence template across tenants.
+* **License-aware skipping.** If a tenant is not licensed for a setting in a template, for example a Conditional Access standard applied to a tenant without Entra P1, that standard is skipped rather than failed. This is reflected in the **License Missing Percentage** and **Combined Alignment Score** columns on the Standards & Drift Alignment page, and means it is safe to apply a mixed-license template across tenants.
 {% endhint %}
 
 {% hint style="info" %}
-Plans exist to implement more standardised options and settings. If there is a standard you want, see the Feature Requests section below.
+Plans exist to implement more standardized options and settings. If there is a standard you want, see the Feature Requests section below.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

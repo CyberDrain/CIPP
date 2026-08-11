@@ -18,7 +18,7 @@ The second Sip & CIPP event provided an in-depth exploration of Microsoft Autopi
 
 1. Understand the integration and balance between CIPP and Microsoft 365 functionalities.
 2. Learn the methods and challenges of adding devices to Microsoft Autopilot.
-3. Gain insights into Autopilot profile management and user experience optimisation.
+3. Gain insights into Autopilot profile management and user experience optimization.
 4. Explore practical solutions to common challenges in device setup and management.
 
 <details>
@@ -67,7 +67,7 @@ A: Yes, a temporary access pass is advised for installing specific apps on indiv
 
 **Q: Does the Temporary Access Pass work with hybrid AD join?**&#x20;
 
-A: Temporary Access Pass works with hybrid AD join, but its use is generally discouraged in favour of AD sync and Intune. Hybrid Azure AD join is not recommended by Microsoft except for specific cutover situations.&#x20;
+A: Temporary Access Pass works with hybrid AD join, but its use is generally discouraged in favor of AD sync and Intune. Hybrid Azure AD join is not recommended by Microsoft except for specific cutover situations.&#x20;
 
 **Q: What are the alternatives if I don't want on-prem devices registered in Entra?**
 

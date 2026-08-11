@@ -19,13 +19,13 @@ If the value does not resolve to a Microsoft 365 tenant, no tenant information i
 | Tenant Name         | The domain name or tenant ID you searched for, repeated back for reference.                                                                                                                              |
 | Default Domain Name | The tenant's default domain, normally its `onmicrosoft.com` address. This identifies the tenant even where the domain you searched for is one of several attached to it.                                 |
 | Tenant ID           | The tenant's directory (tenant) ID.                                                                                                                                                                      |
-| Tenant Region       | The region scope Microsoft reports for the tenant, shown as a colour-coded chip. This indicates the broad geography the tenant is homed in rather than the precise data residency of any given workload. |
+| Tenant Region       | The region scope Microsoft reports for the tenant, shown as a color-coded chip. This indicates the broad geography the tenant is homed in rather than the precise data residency of any given workload. |
 
 Each of the first three values has a copy button next to it for pasting into a ticket or another tool. Any value the lookup could not resolve is shown as **Not Available**.
 
 ## Tenant Branding
 
-Where the tenant has customised its sign-in experience, that branding is reproduced around the results:
+Where the tenant has customized its sign-in experience, that branding is reproduced around the results:
 
 * The sign-in page illustration is used as the background behind the results. If the tenant has not set one, a repeating **NotFound** watermark is shown in its place. This refers only to the missing illustration and does not mean the tenant itself was not found.
 * The tenant's tile logo is shown in a **Tenant Logo** panel beside the tenant details. CIPP picks the light or dark variant to match your current display mode and falls back to whichever one the tenant has published. The panel is only rendered when the tenant has a logo, and shows a placeholder while the image loads.

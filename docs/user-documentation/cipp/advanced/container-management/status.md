@@ -2,11 +2,11 @@
 
 The Status & Updates page lets you view and manage the CIPP application container on a self-hosted instance. From here you can see which image and version are running, control the release channel, configure automatic update checks, and restart the container.
 
-The page is laid out top to bottom: a status strip summarising the running container, any notices that need action, a row of action buttons, and two settings cards.
+The page is laid out top to bottom: a status strip summarizing the running container, any notices that need action, a row of action buttons, and two settings cards.
 
 ## Status Strip
 
-The strip across the top of the page summarises the state of the running container in four tiles.
+The strip across the top of the page summarizes the state of the running container in four tiles.
 
 | Tile            | Description                                                                                                                                                      |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |

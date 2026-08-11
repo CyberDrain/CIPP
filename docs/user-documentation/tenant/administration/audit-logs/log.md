@@ -21,7 +21,7 @@ Some entries also carry a button in the top right of this card, which jumps stra
 
 Shown when an IP address could be determined for the event, either from the audit record or from location data captured at the time. The card is headed with the IP address being looked up.
 
-A map pins the approximate location, and the panel beside it lists the organisation, city, region, country and postcode returned by the lookup. Selecting the map marker reveals further detail, including the time zone, the autonomous system, and whether the address is known to be a proxy, a hosting provider or a mobile network.
+A map pins the approximate location, and the panel beside it lists the organization, city, region, country and postcode returned by the lookup. Selecting the map marker reveals further detail, including the time zone, the autonomous system, and whether the address is known to be a proxy, a hosting provider or a mobile network.
 
 {% hint style="info" %}
 Geolocation is an estimate based on IP registration data. Treat it as a signal rather than proof of where someone was, particularly for mobile and hosting addresses.

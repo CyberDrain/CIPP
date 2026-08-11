@@ -17,7 +17,7 @@ Opens a drawer that creates a connector in one or more tenants. Select the targe
 | Column            | Description                                                                                                            |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Name              | The template name, which is also the name given to the connector it creates.                                           |
-| Cippconnectortype | Whether the template creates a connector for mail arriving at the organisation (`Inbound`) or leaving it (`Outbound`). |
+| Cippconnectortype | Whether the template creates a connector for mail arriving at the organization (`Inbound`) or leaving it (`Outbound`). |
 | GUID              | The template's unique identifier, useful for telling apart two templates that share a name.                            |
 
 The Extended Info flyout on this page is a **Connector Template Details** card showing every setting the template holds, rather than only the three columns above. Which settings appear depends on the direction: outbound templates cover options such as smart hosts, TLS settings, and recipient domains, while inbound templates cover options such as sender domains, sender IP addresses, and the required sender certificate name.

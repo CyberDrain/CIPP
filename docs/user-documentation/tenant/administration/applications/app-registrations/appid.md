@@ -38,7 +38,7 @@ This card identifies the registration. The top of the card shows the display nam
 
 ### Credentials
 
-Two collapsible entries summarise the credentials on the registration, one for client secrets and one for certificates. Each shows how many credentials are configured and the next expiry date, taken from the earliest expiry across all credentials of that type. Expanding an entry lists each credential by name and expiry date along with its key ID.
+Two collapsible entries summarize the credentials on the registration, one for client secrets and one for certificates. Each shows how many credentials are configured and the next expiry date, taken from the earliest expiry across all credentials of that type. Expanding an entry lists each credential by name and expiry date along with its key ID.
 
 **Add secret** creates a new client secret directly from the secrets entry, taking a description and an expiry of 3, 6, 12 or 24 months or a custom date. Each credential also carries its own menu:
 
@@ -61,7 +61,7 @@ Lists the owners of the app registration, with their display name, user principa
 
 ### Enterprise App
 
-Lists the service principals in the current tenant that share this application's client ID, with their display name, object ID, owning organisation ID and service principal type.
+Lists the service principals in the current tenant that share this application's client ID, with their display name, object ID, owning organization ID and service principal type.
 
 A registration with no service principal has not been consented to or provisioned in the tenant yet, which is normal for an application that has only just been created. Where more than one is returned, the section lists them all.
 
@@ -83,7 +83,7 @@ Permissions exercised on behalf of a signed-in user, requiring user or admin con
 
 ### Risk indicators
 
-Permissions that appear in CIPP's curated set of risky permissions are marked with a coloured bar and a chip reading Critical, High, Medium or Low, with the reason shown on hover. Each API group carries a chip showing the highest risk found within it and how many of its permissions are flagged.
+Permissions that appear in CIPP's curated set of risky permissions are marked with a colored bar and a chip reading Critical, High, Medium or Low, with the reason shown on hover. Each API group carries a chip showing the highest risk found within it and how many of its permissions are flagged.
 
 {% hint style="info" %}
 Permission names and descriptions are resolved by looking up each resource API's service principal in the current tenant. Where an API has no service principal present, the group shows a warning and its permissions are listed as raw GUIDs until the API is provisioned in the tenant.

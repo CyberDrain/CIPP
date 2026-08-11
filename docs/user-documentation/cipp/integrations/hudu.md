@@ -91,7 +91,7 @@ Work through the **Tenant Mapping** and **Field Mapping** tabs described below. 
 {% endstep %}
 {% endstepper %}
 
-## Organisation Mapping
+## Organization Mapping
 
 The **Tenant Mapping** tab pairs each CIPP tenant with a Hudu company. Only mapped tenants are synchronised, and mapping a tenant is what causes CIPP to schedule its daily synchronisation.
 
@@ -143,7 +143,7 @@ The Integration Sync page shows per-tenant synchronisation status and is the fir
 
 ## Custom CSS
 
-The Microsoft 365 rich text field can render with cut-off tables or cramped formatting depending on your Hudu theme. Adding the following custom CSS in your Hudu settings improves the layout of the tables, licence tiles and link buttons CIPP generates.
+The Microsoft 365 rich text field can render with cut-off tables or cramped formatting depending on your Hudu theme. Adding the following custom CSS in your Hudu settings improves the layout of the tables, license tiles and link buttons CIPP generates.
 
 ```css
 .card__item table {

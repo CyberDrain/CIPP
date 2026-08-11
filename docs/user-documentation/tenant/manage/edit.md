@@ -27,7 +27,7 @@ Changes made here are saved with **Save Changes** and apply immediately across C
 
 | Field        | Description                                                                                                                                                            |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tenant Alias | A custom name shown in place of the tenant's display name throughout CIPP. Useful where the registered organisation name differs from the name you know the client by. |
+| Tenant Alias | A custom name shown in place of the tenant's display name throughout CIPP. Useful where the registered organization name differs from the name you know the client by. |
 | Add Group    | Adds the tenant to a static tenant group. Groups the tenant already belongs to, and dynamic groups, are not offered.                                                   |
 
 The group list below shows each group's Name, Description and Group Type. Use the Remove action to take the tenant out of a group. Dynamic groups cannot be removed here because membership is determined by the group's own rules.
@@ -41,8 +41,8 @@ These settings pre-select the offboarding options used when a user in this tenan
 | Convert to Shared Mailbox                     | Converts the leaver's mailbox to a shared mailbox so colleagues can be granted access to it.                             |
 | Remove from all groups                        | Removes the user from every group they are a member of.                                                                  |
 | Hide from Global Address List                 | Hides the mailbox so it no longer appears in address lists.                                                              |
-| Remove Licenses                               | Removes all licences assigned to the user.                                                                               |
-| Cancel all calendar invites                   | Cancels meetings the user organised so attendees are not left with orphaned invitations.                                 |
+| Remove Licenses                               | Removes all licenses assigned to the user.                                                                               |
+| Cancel all calendar invites                   | Cancels meetings the user organized so attendees are not left with orphaned invitations.                                 |
 | Revoke all sessions                           | Invalidates existing sign-in sessions and refresh tokens, signing the user out everywhere.                               |
 | Remove users mailbox permissions              | Removes the permissions the user held over other mailboxes.                                                              |
 | Remove users calendar permissions             | Removes the permissions the user held over other calendars.                                                              |
@@ -78,7 +78,7 @@ Use **Add Variable** to create one. The name picker offers variables already def
 | Row Key       | The variable name, used in templates as `%variablename%`.                                                                                                                                                             |
 | Value         | The value substituted into templates for this tenant.                                                                                                                                                                 |
 | Scope         | Where the value comes from. Tenant is a variable defined only on this tenant, Global is inherited from the global list, and Overridden is a tenant value replacing a global one of the same name.                     |
-| Variable Type | How the value is written into a template. String is the default and reproduces the original behaviour. Integer, Boolean and JSON are written as raw JSON values, so a numeric setting receives 300 rather than "300". |
+| Variable Type | How the value is written into a template. String is the default and reproduces the original behavior. Integer, Boolean and JSON are written as raw JSON values, so a numeric setting receives 300 rather than "300". |
 | Description   | The optional note recorded against the variable.                                                                                                                                                                      |
 
 ### Table Actions

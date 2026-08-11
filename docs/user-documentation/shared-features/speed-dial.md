@@ -11,7 +11,7 @@ The CIPP speed dial gives you quick access to help, feedback, and troubleshootin
 | Join the Discord!       | Opens a new tab to join the [CyberDrain Discord server](https://discord.gg/cyberdrain).                                                                          |
 | Request Feature         | Opens a new tab to the GitHub feature request form.                                                                                                              |
 | Report Bug              | Opens a new tab to the GitHub bug report form.                                                                                                                   |
-| License                 | Opens CIPP's own licence page, showing the GNU Affero General Public License terms.                                                                              |
+| License                 | Opens CIPP's own license page, showing the GNU Affero General Public License terms.                                                                              |
 | Clear Cache and Reload  | Clears CIPP's cached data from your browser and reloads the page. This is especially helpful if you recently updated CIPP and are still seeing an older version. |
 
 {% hint style="info" %}

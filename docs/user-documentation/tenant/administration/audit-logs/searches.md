@@ -18,7 +18,7 @@ Select **Apply Filters** to reload the ledger for the chosen range.
 
 ## Search Health
 
-Beneath the Search Options panel, a row of chips summarises the windows currently in view:
+Beneath the Search Options panel, a row of chips summarizes the windows currently in view:
 
 * **All log searches healthy** - No window in the range has failed permanently. Replaced by a count of windows that failed permanently when any have.
 * **Currently searching** - How many windows are still in progress, meaning they are planned or created but not yet downloaded.
@@ -43,7 +43,7 @@ Skipped windows mean no audit data was collected for that period, and it cannot 
 | Last Error    | The most recent error recorded for the window. Blank when healthy.                                                                                                                          |
 
 {% hint style="info" %}
-The ledger honours the tenant selector at the top of CIPP. Choose All Tenants to review coverage across your whole estate at once.
+The ledger honors the tenant selector at the top of CIPP. Choose All Tenants to review coverage across your whole estate at once.
 {% endhint %}
 
 To queue a search of your own rather than wait for the scheduled windows, use the Manual Searches tab.

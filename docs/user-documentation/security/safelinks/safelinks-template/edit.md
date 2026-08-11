@@ -24,10 +24,10 @@ Editing a template changes only what future deployments will create. Policies al
 | Enable Safe Links For Office | Protects links in Office applications. |
 | Track Clicks | Records when users click a protected link. |
 | Scan URLs | Scans links in real time when they are clicked. |
-| Enable For Internal Senders | Applies the policy to mail sent inside the organisation as well as mail from outside. |
+| Enable For Internal Senders | Applies the policy to mail sent inside the organization as well as mail from outside. |
 | Allow Click Through | Lets users continue past the warning page to a link flagged as malicious. Leaving this off is the stricter setting. |
 | Disable URL Rewrite | Turns off link rewriting, leaving the click time check in place without changing how the link looks. |
-| Enable Organization Branding | Puts the organisation's branding on warning pages. |
+| Enable Organization Branding | Puts the organization's branding on warning pages. |
 | Deliver Message After Scan | Holds a message until its links have been scanned. |
 | Custom Notification Text | The wording shown to users about the scan. Greyed out until **Deliver Message After Scan** is on. |
 | Do Not Rewrite URLs | URLs, domains or wildcard patterns the policy leaves untouched, for example `*.example.com` or `https://example.com`. Entries are validated as you add them and an entry that is not a valid URL, domain or pattern is rejected. |

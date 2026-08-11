@@ -8,7 +8,7 @@ Each row on this page is one authentication method configuration in the tenant, 
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Id              | The method's identifier in Microsoft Graph, such as `MicrosoftAuthenticator`, `Fido2` or `TemporaryAccessPass`.                                                                            |
 | State           | Whether the method is enabled or disabled for the tenant.                                                                                                                                  |
-| Include Targets | Who the method applies to. The cell is a button showing how many targets are set; selecting it opens them in a dialogue. A method scoped to everyone shows a single target of `all_users`. |
+| Include Targets | Who the method applies to. The cell is a button showing how many targets are set; selecting it opens them in a dialog. A method scoped to everyone shows a single target of `all_users`. |
 | Exclude Targets | Any groups excluded from the method, shown the same way.                                                                                                                                   |
 
 Each row is one of the derived types of the Graph resource `authenticationMethodConfiguration`, so the properties available beyond those four differ by method. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/authenticationmethodconfiguration?view=graph-rest-1.0#properties).

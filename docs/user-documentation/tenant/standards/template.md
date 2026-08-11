@@ -1,6 +1,6 @@
 # Add Standards Template
 
-When creating a template, it is worth thinking about how you want your standards organised first. CyberDrain recommends splitting templates per category or service level. This stops a template growing so large it becomes impossible to manage. Splitting by area such as Intune Templates, Entra Settings, or Managed Devices works well.
+When creating a template, it is worth thinking about how you want your standards organized first. CyberDrain recommends splitting templates per category or service level. This stops a template growing so large it becomes impossible to manage. Splitting by area such as Intune Templates, Entra Settings, or Managed Devices works well.
 
 The same page builds both Standards templates and Drift templates. Which one you get depends on how you arrived: **Add Template** opens it in standards mode, **Create Drift Template** opens it in drift mode. The layout is shared, but a few options differ, and those differences are called out below.
 
@@ -76,7 +76,7 @@ Each tenant can have only a single drift template applied. Adding a tenant that 
 
 Drift standards are set to **Report** by default. Enabling automatic remediation on a standard changes it to **Report and Remediate**.
 
-| Option                | Behaviour                                                                        |
+| Option                | Behavior                                                                        |
 | --------------------- | -------------------------------------------------------------------------------- |
 | Automatic Remediation | Reverts the change back to the template configuration as soon as it is detected. |
 | Manual Remediation    | Raises the deviation for review, so you can accept or deny it yourself.          |
@@ -159,7 +159,7 @@ The Add Standard to Template dialog can list a lot of standards, so it offers a 
 | Order                    | Ascending or Descending, applied to the Sort By selection.                                   |
 | Categories               | Restricts the list to the chosen standards categories.                                       |
 | Impact                   | Restricts the list to the chosen impact levels.                                              |
-| Recommended By           | Restricts the list to standards recommended by the chosen organisations.                     |
+| Recommended By           | Restricts the list to standards recommended by the chosen organizations.                     |
 | Compliance Tags          | Restricts the list to standards mapped to the chosen compliance frameworks.                  |
 | New (30 days)            | Shows only standards added to CIPP in the last thirty days, for picking up recent additions. |
 | All / Enabled / Disabled | Shows all standards, only those already added to this template, or only those not yet added. |

@@ -1,13 +1,13 @@
 # NinjaOne
 
-The NinjaOne integration pushes Microsoft 365 tenant, user, licence and device information from CIPP into NinjaOne, and can monitor Intune device compliance as a NinjaOne custom field. Tenant and device data is written to NinjaOne custom fields, while detailed user and licence records use NinjaOne Documentation. You control which of these are populated, so it is entirely reasonable to sync only the parts you need.
+The NinjaOne integration pushes Microsoft 365 tenant, user, license and device information from CIPP into NinjaOne, and can monitor Intune device compliance as a NinjaOne custom field. Tenant and device data is written to NinjaOne custom fields, while detailed user and license records use NinjaOne Documentation. You control which of these are populated, so it is entirely reasonable to sync only the parts you need.
 
 {% hint style="warning" %}
 The NinjaOne CIPP integration requires NinjaOne version 5.6 or above.
 {% endhint %}
 
 {% hint style="info" %}
-Tenant and device information uses custom fields, which you create yourself in NinjaOne. Detailed user and licence information uses NinjaOne Documentation, and the document templates are created for you. If you do not have NinjaOne Documentation, speak to your account manager — the rest of the integration still works without it.
+Tenant and device information uses custom fields, which you create yourself in NinjaOne. Detailed user and license information uses NinjaOne Documentation, and the document templates are created for you. If you do not have NinjaOne Documentation, speak to your account manager — the rest of the integration still works without it.
 {% endhint %}
 
 ## Settings
@@ -18,9 +18,9 @@ Tenant and device information uses custom fields, which you create yourself in N
 | Please enter your NinjaOne Instance hostname               | The hostname of your NinjaOne instance, such as `app.ninjarmm.com`, `eu.ninjarmm.com`, `oc.ninjarmm.com`, `ca.ninjarmm.com` or `us2.ninjarmm.com`. Enter the hostname only, without a scheme or trailing path. |
 | NinjaOne API Client ID                                     | The Client ID of the API application created in NinjaOne.                                                                                                                                                      |
 | NinjaOne API Client Secret                                 | The client secret of that application. Stored securely and masked once saved.                                                                                                                                  |
-| Sync Licenses (Requires NinjaOne Documentation)            | Creates a document per licence in each tenant, using a CIPP-managed document template.                                                                                                                         |
+| Sync Licenses (Requires NinjaOne Documentation)            | Creates a document per license in each tenant, using a CIPP-managed document template.                                                                                                                         |
 | Sync Users (Requires NinjaOne Documentation)               | Creates a document per user in each tenant, using a CIPP-managed document template.                                                                                                                            |
-| Only Sync Licensed Users (Requires NinjaOne Documentation) | Restricts user synchronisation to users holding a licence. This applies to both the user documents and the tenant-level user summary field.                                                                    |
+| Only Sync Licensed Users (Requires NinjaOne Documentation) | Restricts user synchronisation to users holding a license. This applies to both the user documents and the tenant-level user summary field.                                                                    |
 | Enable Automated CVE Sync                                  | Uploads Defender vulnerability data to NinjaOne scan groups as part of each tenant synchronisation.                                                                                                            |
 | CVE Sync Scan Group Prefix                                 | The prefix used to identify the scan groups CIPP maintains. Scan groups are named `[Prefix][tenant-domain]`, for example `CIPP-contoso.com`. Appears once automated CVE sync is enabled.                       |
 
@@ -95,21 +95,21 @@ Select **Submit**, then select **Test**. A message confirming a successful conne
 {% endstep %}
 
 {% step %}
-### Map organisations and fields
+### Map organizations and fields
 
-Work through the **Tenant Mapping** and **Field Mapping** tabs described below. Nothing synchronises until at least the organisation mapping is in place.
+Work through the **Tenant Mapping** and **Field Mapping** tabs described below. Nothing synchronises until at least the organization mapping is in place.
 {% endstep %}
 {% endstepper %}
 
-## Organisation Mapping
+## Organization Mapping
 
-The **Tenant Mapping** tab pairs each CIPP tenant with a NinjaOne organisation. Only mapped tenants are synchronised, so this is what determines the scope of the integration.
+The **Tenant Mapping** tab pairs each CIPP tenant with a NinjaOne organization. Only mapped tenants are synchronised, so this is what determines the scope of the integration.
 
-To map manually, choose a tenant, choose the NinjaOne organisation under **Select NinjaOne Company**, and select the add button. **Automap Companies** matches automatically. Mappings are only written when you select **Submit**.
+To map manually, choose a tenant, choose the NinjaOne organization under **Select NinjaOne Company**, and select the add button. **Automap Companies** matches automatically. Mappings are only written when you select **Submit**.
 
 | Column          | Description                                                    |
 | --------------- | -------------------------------------------------------------- |
-| IntegrationName | The name of the NinjaOne organisation the tenant is mapped to. |
+| IntegrationName | The name of the NinjaOne organization the tenant is mapped to. |
 | Tenant          | The display name of the mapped Microsoft 365 tenant.           |
 | TenantDomain    | The default domain name of the mapped tenant.                  |
 | TenantId        | The tenant's Microsoft customer ID.                            |
@@ -117,7 +117,7 @@ To map manually, choose a tenant, choose the NinjaOne organisation under **Selec
 Individual mappings can be removed with the **Delete Mapping** row action.
 
 {% hint style="info" %}
-Automapping works in two passes. It first matches tenants whose display name is identical to a NinjaOne organisation name. Any tenant left over is then matched on hardware: CIPP compares Intune devices against NinjaOne devices by serial number and then by device name, and maps the tenant to whichever organisation owns the matching devices. Devices with duplicate or placeholder serial numbers are ignored.
+Automapping works in two passes. It first matches tenants whose display name is identical to a NinjaOne organization name. Any tenant left over is then matched on hardware: CIPP compares Intune devices against NinjaOne devices by serial number and then by device name, and maps the tenant to whichever organization owns the matching devices. Devices with duplicate or placeholder serial numbers are ignored.
 
 The second pass runs in the background and can take some time on a large estate. Refresh the page to pick up new matches, and check the CIPP logbook to see when it finishes. Tenants that are already mapped are never re-matched.
 {% endhint %}
@@ -140,7 +140,7 @@ Synchronisation can also be triggered on demand. **Force Sync** on this page que
 
 Intune device compliance is handled separately. CIPP subscribes to Graph change notifications for device compliance, so the Intune Device Compliance Status field updates within minutes of a change in Microsoft 365 rather than waiting for the daily run. This requires the compliance field to be mapped.
 
-Where **Sync Users** or **Sync Licenses** is enabled, CIPP creates and maintains the document templates it needs in NinjaOne Documentation — `CIPP - Microsoft 365 Users` and `CIPP - Microsoft 365 Licenses` — and writes a document per user or licence beneath them. You do not need to create these templates yourself.
+Where **Sync Users** or **Sync Licenses** is enabled, CIPP creates and maintains the document templates it needs in NinjaOne Documentation — `CIPP - Microsoft 365 Users` and `CIPP - Microsoft 365 Licenses` — and writes a document per user or license beneath them. You do not need to create these templates yourself.
 
 ## CVE Synchronisation
 

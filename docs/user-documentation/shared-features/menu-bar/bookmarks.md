@@ -9,7 +9,7 @@ There are two ways to bookmark a page.
 * Hover over the page's entry in the left-hand menu. A bookmark icon appears at the end of the row, and clicking it adds the page.
 * Open the page and click the bookmark button at the end of the breadcrumb trail. See breadcrumb-navigation.md.
 
-In both places an outlined bookmark means the page is not saved and a solid, coloured bookmark means it is. Clicking again removes it.
+In both places an outlined bookmark means the page is not saved and a solid, colored bookmark means it is. Clicking again removes it.
 
 The bookmark takes its name from the page's menu entry, and is filed under the top-level menu heading it belongs to, which is shown above the name in the list.
 

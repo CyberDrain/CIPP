@@ -2,9 +2,9 @@
 description: Check your managed domains against security and configuration best practices.
 ---
 
-# Domains Analyser
+# Domains Analyzer
 
-The Domains Analyser runs a series of best practice checks against every mail-enabled domain across your delegated Microsoft 365 tenants. It inspects the public DNS records for each domain and scores them, so you can see at a glance which clients have gaps in their mail authentication.
+The Domains Analyzer runs a series of best practice checks against every mail-enabled domain across your delegated Microsoft 365 tenants. It inspects the public DNS records for each domain and scores them, so you can see at a glance which clients have gaps in their mail authentication.
 
 It assesses the following areas:
 
@@ -41,7 +41,7 @@ The table shows results for all domains in the tenant or tenants selected in the
 
 | Column                  | Description                                                                                                                                               |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Domain                  | The domain name being analysed.                                                                                                                           |
+| Domain                  | The domain name being analyzed.                                                                                                                           |
 | Score Percentage        | The domain's score as a percentage of the maximum of 160. See below.                                                                                      |
 | Mail Provider           | The detected mail provider, for example Microsoft, Google, or Unknown, derived from the MX lookup.                                                        |
 | SPF Pass All            | Whether the SPF record passes all validation checks with no failures.                                                                                     |
@@ -66,7 +66,7 @@ Both CNAME checks report one of the following. Neither contributes to the score,
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Correct               | Enrolment points at `enterpriseenrollment-s.manage.microsoft.com`, registration at `enterpriseregistration.windows.net`. |
 | Legacy                | Enrolment only. Points at the older `enterpriseenrollment.manage.microsoft.com` endpoint.                                |
-| Unexpected: `<value>` | The CNAME resolves to something CIPP does not recognise.                                                                 |
+| Unexpected: `<value>` | The CNAME resolves to something CIPP does not recognize.                                                                 |
 | No CNAME              | The record is missing.                                                                                                   |
 
 ## Scoring
@@ -96,7 +96,7 @@ DMARC reporting is scored but is not one of the default columns. To see it, open
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Add/Modify DKIM Selectors</td><td>Sets the DKIM selectors used when checking the selected domain or domains. Accepts a comma-separated list.</td><td>true</td></tr><tr><td>Delete from analyser</td><td>Removes the selected domain or domains from the analyser.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Add/Modify DKIM Selectors</td><td>Sets the DKIM selectors used when checking the selected domain or domains. Accepts a comma-separated list.</td><td>true</td></tr><tr><td>Delete from analyzer</td><td>Removes the selected domain or domains from the analyzer.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 ## Reviewing the Extended Info Flyout
 

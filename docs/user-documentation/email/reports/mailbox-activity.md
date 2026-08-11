@@ -1,6 +1,6 @@
 # Mailbox Activity
 
-This report shows how much each mailbox in the selected tenant has actually been used over a chosen period, with one row per user. It counts messages sent, received, and read, along with meeting activity, which makes it useful for spotting dormant mailboxes before a licence review.
+This report shows how much each mailbox in the selected tenant has actually been used over a chosen period, with one row per user. It counts messages sent, received, and read, along with meeting activity, which makes it useful for spotting dormant mailboxes before a license review.
 
 ## Filters
 

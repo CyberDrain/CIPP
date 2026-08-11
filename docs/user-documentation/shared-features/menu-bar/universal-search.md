@@ -19,11 +19,11 @@ Two icons in the menu bar open the search dialog, each starting on a different s
 | Users        | User principal name or display name.                                                    | Opens that user in the tenant they belong to.                  |
 | Groups       | Display name, with the group's mail address and description shown alongside each match. | Opens that group in the tenant it belongs to.                  |
 | Applications | App registrations and enterprise applications, by name, application ID, or publisher.   | Opens the matching app registration or enterprise application. |
-| Licences     | SKU ID, part number, licence name, or service plan.                                     | Opens a flyout with the full licence details.                  |
+| Licenses     | SKU ID, part number, license name, or service plan.                                     | Opens a flyout with the full license details.                  |
 | BitLocker    | Recovery key ID or device ID, chosen from a second dropdown that appears for this type. | Opens a flyout with the recovery key details.                  |
 | Pages        | Page names, tab names, paths, and whether a page is tenant-scoped or global.            | Navigates to that page.                                        |
 
-The licence search returns a description, its service plans, and the tenants holding it, which is useful for identifying a licence when you only have a partial reference such as a SKU part number from elsewhere.
+The license search returns a description, its service plans, and the tenants holding it, which is useful for identifying a license when you only have a partial reference such as a SKU part number from elsewhere.
 
 {% hint style="info" %}
 The **Pages** search only returns pages your CIPP permissions allow you to open, so the results differ between users.
@@ -31,14 +31,14 @@ The **Pages** search only returns pages your CIPP permissions allow you to open,
 
 ## Running a Search
 
-For **Pages** and **Licences**, matches appear as you type, because both are matched against data already held in the browser.
+For **Pages** and **Licenses**, matches appear as you type, because both are matched against data already held in the browser.
 
 For **Users**, **Groups**, **Applications** and **BitLocker**, type your terms and then press Enter or click **Search**. These types query across every tenant, so they run only when you ask rather than on each keystroke.
 
 In the results list, matching text is shown in bold, and each result is labelled with the tenant it was found in. Use the up and down arrow keys to move through the list and Enter to open the highlighted result, or click it. Where nothing matches, the list reads **No results found**.
 
 {% hint style="info" %}
-Results for users, groups, applications and licences come from the CIPP reporting database, so they are only as current as the last cache run. A record created moments ago will not appear until the cache next refreshes. Licence searches are matched first against the Microsoft SKU catalogue built into CIPP, and fall back to cached data only when the catalogue has no match.
+Results for users, groups, applications and licenses come from the CIPP reporting database, so they are only as current as the last cache run. A record created moments ago will not appear until the cache next refreshes. License searches are matched first against the Microsoft SKU catalog built into CIPP, and fall back to cached data only when the catalog has no match.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

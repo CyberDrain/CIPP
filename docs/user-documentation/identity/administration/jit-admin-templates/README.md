@@ -1,6 +1,6 @@
 # JIT Admin Templates
 
-JIT Admin templates hold the settings for a just-in-time admin grant so the same elevation can be requested repeatedly without rebuilding it each time. A template records the roles, duration, expiry behaviour and notification choices, and is then selected on the add.md page.
+JIT Admin templates hold the settings for a just-in-time admin grant so the same elevation can be requested repeatedly without rebuilding it each time. A template records the roles, duration, expiry behavior and notification choices, and is then selected on the add.md page.
 
 ## Action Buttons
 

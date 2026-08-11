@@ -36,7 +36,7 @@ The **Load Preset** dropdown loads a built-in example query into the editor as a
 | Startup Logs                      | Entries recording service startup, with heartbeat noise removed.             |
 | Graph API Errors                  | Error and critical entries mentioning Graph, from the last 24 hours.         |
 | Token / Auth Issues               | Entries mentioning token or authentication problems, from the last 24 hours. |
-| Timeout Errors                    | Entries mentioning timeouts or cancelled tasks, from the last 24 hours.      |
+| Timeout Errors                    | Entries mentioning timeouts or canceled tasks, from the last 24 hours.      |
 | All Errors (Search All Files)     | Error and critical entries across all log files, including rotated ones.     |
 | Standards Processing              | Entries relating to Standards processing, from the last 24 hours.            |
 | Full Log (Last 1h, no heartbeats) | All entries from the last hour with heartbeat noise removed.                 |

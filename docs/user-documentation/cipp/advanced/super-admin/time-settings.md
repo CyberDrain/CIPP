@@ -15,7 +15,7 @@ A time zone you select here always takes precedence and is never replaced by tha
 {% endhint %}
 
 {% hint style="warning" %}
-This affects CIPP's own background jobs that run at a fixed time of day — Standards, Drift detection, the Domain Analyser, tenant refresh, and the nightly cleanup and reporting jobs. Changing the time zone moves them: a job that ran at 03:00 UTC will run at 03:00 in the new time zone instead.
+This affects CIPP's own background jobs that run at a fixed time of day — Standards, Drift detection, the Domain Analyzer, tenant refresh, and the nightly cleanup and reporting jobs. Changing the time zone moves them: a job that ran at 03:00 UTC will run at 03:00 in the new time zone instead.
 
 It does **not** change Scheduled Tasks that you create yourself. Those run at the absolute time you picked when you created them. Background jobs that run on a short interval, such as every 15 minutes, are also unaffected.
 {% endhint %}

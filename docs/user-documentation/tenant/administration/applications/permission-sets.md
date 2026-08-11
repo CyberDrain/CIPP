@@ -13,7 +13,7 @@ Sets are created by hand from this page, and also automatically by the **Create 
 | Column        | Description                                                                                                                                             |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Template Name | The name given to the permission set, used when selecting it during application deployment.                                                             |
-| Permissions   | The permissions held in the set. The cell is a button showing how many entries are stored; selecting it opens the stored permission data in a dialogue. |
+| Permissions   | The permissions held in the set. The cell is a button showing how many entries are stored; selecting it opens the stored permission data in a dialog. |
 | Updated By    | The CIPP user who last saved the set. Sets written by CIPP itself rather than by a person show as `CIPP-API`.                                           |
 | Timestamp     | When the set was last saved.                                                                                                                            |
 

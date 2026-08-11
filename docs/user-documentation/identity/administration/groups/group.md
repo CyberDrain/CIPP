@@ -14,8 +14,8 @@ The **Actions** menu acts on this group. Entries are greyed out rather than hidd
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Edit Group                                                     | Opens the [edit.md](edit.md "mention") page, where properties, membership and group settings can be changed.                                                                                                      |
 | Set Global Address List Visibility                             | Hides the group from the Global Address List, or shows it again. Has no effect on a group synchronised from on-premises Active Directory.                                                                         |
-| Only allow messages from people inside the organisation        | Requires sender authentication, so the group only accepts mail from within the tenant.                                                                                                                            |
-| Allow messages from people inside and outside the organisation | Drops the sender authentication requirement, so the group accepts mail from external senders as well.                                                                                                             |
+| Only allow messages from people inside the organization        | Requires sender authentication, so the group only accepts mail from within the tenant.                                                                                                                            |
+| Allow messages from people inside and outside the organization | Drops the sender authentication requirement, so the group accepts mail from external senders as well.                                                                                                             |
 | Set Source of Authority                                        | Switches the group between Cloud Managed and On-Premises Managed. Greyed out for cloud-native groups that have never been synchronised, and a move back to on-premises takes until the next sync cycle to appear. |
 | Create template based on group                                 | Creates a reusable group template from this group, copying its name, description, type, membership rule, alias and external sender setting.                                                                       |
 | Create Team from Group                                         | Turns the group into a Microsoft Teams team, with the member, messaging and fun settings set in the dialog. Greyed out for anything other than a Microsoft 365 group.                                             |
@@ -27,7 +27,7 @@ A group has to be at least fifteen minutes old before **Create Team from Group**
 
 ## Group Details
 
-The card on the left summarises the group, opening with its display name and type.
+The card on the left summarizes the group, opening with its display name and type.
 
 | Field            | Description                                                                                                                           |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |

@@ -1,6 +1,6 @@
 # Mailbox Forwarding
 
-This report lists the mailboxes in the selected tenant that have forwarding configured, whether that forwarding points inside the organisation or out to an external address. Mailboxes with no forwarding are left out entirely, so anything appearing here is worth a look, and unexpected external forwarding is one of the clearest signs of a compromised account.
+This report lists the mailboxes in the selected tenant that have forwarding configured, whether that forwarding points inside the organization or out to an external address. Mailboxes with no forwarding are left out entirely, so anything appearing here is worth a look, and unexpected external forwarding is one of the clearest signs of a compromised account.
 
 ## Filters
 
@@ -8,8 +8,8 @@ Preset filters are available from the **Filters** button:
 
 | Filter               | Shows                                                                       |
 | -------------------- | ----------------------------------------------------------------------------- |
-| External Forwarding  | Mailboxes forwarding to an address outside the organisation.                |
-| Internal Forwarding  | Mailboxes forwarding to another recipient inside the organisation.          |
+| External Forwarding  | Mailboxes forwarding to an address outside the organization.                |
+| Internal Forwarding  | Mailboxes forwarding to another recipient inside the organization.          |
 
 ## Table Details
 

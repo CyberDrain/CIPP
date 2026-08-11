@@ -24,7 +24,7 @@ The tenant will not be fully offboarded unless all the relationships and contrac
 | Vendor Applications to Remove                                                                                    | The third-party vendor applications to remove from the tenant.                    |
 | Remove all guest users originating from the CSP tenant.                                                          | Removes guest accounts in the customer tenant that came from your partner tenant. |
 | Remove all notification contacts originating from the CSP tenant (technical, security, marketing notifications). | Clears your partner tenant's addresses from the customer's notification contacts. |
-| Remove all Domain Analyser results for this tenant.                                                              | Deletes the tenant's stored Domain Analyser data from CIPP.                       |
+| Remove all Domain Analyzer results for this tenant.                                                              | Deletes the tenant's stored Domain Analyzer data from CIPP.                       |
 
 {% hint style="danger" %}
 The following actions will terminate all delegated access to the customer tenant!

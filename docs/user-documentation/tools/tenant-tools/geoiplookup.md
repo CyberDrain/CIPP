@@ -14,7 +14,7 @@ The results card appears once a check has run. Alongside the details below, a ma
 
 | Field   | Description                                    |
 | ------- | ---------------------------------------------- |
-| Org     | The organisation the address is registered to. |
+| Org     | The organization the address is registered to. |
 | City    | The city the address resolves to.              |
 | Region  | The state or region the address resolves to.   |
 | Country | The country the address resolves to.           |

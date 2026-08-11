@@ -40,8 +40,8 @@ These settings appear only for the group types listed against them.
 | Setting                                                         | Group Types                                                          | Description                                                                                                                                                            |
 | --------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Disable group nesting (prevent other groups from being members) | Azure Role Group, Security Group, Microsoft 365 Group, Dynamic Group | Prevents other groups from being added as members, so the group can only contain users.                                                                                |
-| Licenses (optional)                                             | Security Group                                                       | Assigns one or more licences to the group, so members inherit them through group-based licensing. Each licence is listed with the number of units currently available. |
-| Let people outside the organization email the group             | Distribution List, Dynamic Distribution Group                        | Allows senders outside the organisation to email the group. When left off, only authenticated internal senders can deliver to it.                                      |
+| Licenses (optional)                                             | Security Group                                                       | Assigns one or more licenses to the group, so members inherit them through group-based licensing. Each license is listed with the number of units currently available. |
+| Let people outside the organization email the group             | Distribution List, Dynamic Distribution Group                        | Allows senders outside the organization to email the group. When left off, only authenticated internal senders can deliver to it.                                      |
 | Email Aliases                                                   | Distribution List, Mail Enabled Security Group                       | Additional email addresses for the group, entered one per line as full SMTP addresses. These are added as secondary addresses alongside the primary address.           |
 | Hide this group from the Global Address List (GAL)              | Distribution List, Mail Enabled Security Group                       | Hides the group from address lists, so it does not appear when users browse or search for recipients.                                                                  |
 | Subscribe members to receive group emails                       | Microsoft 365 Group                                                  | Automatically subscribes new members to the group's conversations, so group mail is delivered to their own inbox as well as the group mailbox.                         |
@@ -60,7 +60,7 @@ A **Dynamic Distribution Group** goes further and ignores owners, members and th
 {% endhint %}
 
 {% hint style="warning" %}
-Group-based licensing requires the tenant to be licensed for Entra ID P1 or higher. Assigning licences through a group without the appropriate licensing is not compliant with Microsoft's licensing terms.
+Group-based licensing requires the tenant to be licensed for Entra ID P1 or higher. Assigning licenses through a group without the appropriate licensing is not compliant with Microsoft's licensing terms.
 {% endhint %}
 
 {% include "../../../../../.gitbook/includes/feature-request.md" %}

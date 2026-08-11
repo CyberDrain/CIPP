@@ -1,9 +1,9 @@
 # Graph Explorer
 
-The Graph Explorer builds ad hoc reports directly from the Microsoft Graph API. Rather than returning a raw JSON representation of the Graph object, it renders the response as a table with the usual sorting, filtering and export options. Run one of the built-in queries, load a preset you or a colleague has saved, or craft your own request to customise the data to your liking. Results are always scoped to the tenant chosen in the tenant-select.md.
+The Graph Explorer builds ad hoc reports directly from the Microsoft Graph API. Rather than returning a raw JSON representation of the Graph object, it renders the response as a table with the usual sorting, filtering and export options. Run one of the built-in queries, load a preset you or a colleague has saved, or craft your own request to customize the data to your liking. Results are always scoped to the tenant chosen in the tenant-select.md.
 
 {% hint style="warning" %}
-Graph Explorer is a moderately advanced tool. Understanding the Microsoft Graph API and the various ways to influence its output can be difficult. If you get stuck crafting a query, please don't hesitate to ask questions in the CyberDrain Discord server, or contact support if you are a sponsoring user or organisation.
+Graph Explorer is a moderately advanced tool. Understanding the Microsoft Graph API and the various ways to influence its output can be difficult. If you get stuck crafting a query, please don't hesitate to ask questions in the CyberDrain Discord server, or contact support if you are a sponsoring user or organization.
 {% endhint %}
 
 ## Microsoft Graph

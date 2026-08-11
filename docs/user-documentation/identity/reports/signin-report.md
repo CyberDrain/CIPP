@@ -36,7 +36,7 @@ The properties returned are for the Graph resource type `signIn`. For more infor
 <table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% hint style="info" %}
-The flyout on this page shows the complete sign-in record as raw JSON rather than a summarised list of fields. That is where the detail an investigation needs sits, including the Conditional Access policies evaluated and their individual results, the device and client details, and the full authentication method breakdown.
+The flyout on this page shows the complete sign-in record as raw JSON rather than a summarized list of fields. That is where the detail an investigation needs sits, including the Conditional Access policies evaluated and their individual results, the device and client details, and the full authentication method breakdown.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

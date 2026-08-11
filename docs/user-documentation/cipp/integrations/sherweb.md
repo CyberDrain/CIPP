@@ -1,6 +1,6 @@
 # Sherweb
 
-The Sherweb integration connects CIPP to your Sherweb CSP account so that Microsoft 365 licences and subscriptions can be managed from within CIPP. Once configured and mapped, you can purchase licences while creating users, adjust subscription quantities from the CSP Licenses report, schedule decreases to land at renewal, and optionally automate migrations from a legacy CSP.
+The Sherweb integration connects CIPP to your Sherweb CSP account so that Microsoft 365 licenses and subscriptions can be managed from within CIPP. Once configured and mapped, you can purchase licenses while creating users, adjust subscription quantities from the CSP Licenses report, schedule decreases to land at renewal, and optionally automate migrations from a legacy CSP.
 
 {% hint style="info" %}
 Not a Sherweb partner yet? See [Sherweb Cloud Services for MSPs](https://www.sherweb.com/partners/).
@@ -77,8 +77,8 @@ Move to the **Tenant Mapping** tab and pair each CIPP tenant with its Sherweb cu
 | Select CIPP roles that are allowed to purchase licenses  | Restricts subscription changes to CIPP users holding one of the selected custom roles. Leave empty to allow anyone with the relevant CIPP permission.            |
 | Enable automated migration to Sherweb                    | Reveals the automated migration options described below.                                                                                                         |
 | Select how you'd like automated migrations to be handled | The migration strategy: notify only, buy and notify, or buy and cancel.                                                                                          |
-| Select the vendor to automatically migrate from          | The legacy CSP whose subscriptions should be cancelled. Only appears for the buy and cancel strategy, and currently only supports Pax8.                          |
-| Select the type of license to automatically migrate to   | The commitment term for licences purchased at Sherweb: `Yearly` (Y1Y), `Annual paid monthly` (M1Y), or `Monthly` (M2M). Appears for any strategy that purchases. |
+| Select the vendor to automatically migrate from          | The legacy CSP whose subscriptions should be canceled. Only appears for the buy and cancel strategy, and currently only supports Pax8.                          |
+| Select the type of license to automatically migrate to   | The commitment term for licenses purchased at Sherweb: `Yearly` (Y1Y), `Annual paid monthly` (M1Y), or `Monthly` (M2M). Appears for any strategy that purchases. |
 | Pax8 Client ID                                           | The Client ID of your Pax8 API application. Only appears when migrating from Pax8.                                                                               |
 | Pax8 Client Secret                                       | The client secret of your Pax8 API application. Only appears when migrating from Pax8.                                                                           |
 
@@ -88,7 +88,7 @@ The role restriction applies to subscription changes made through CIPP by a sign
 
 ## Tenant Mapping
 
-The **Tenant Mapping** tab pairs each CIPP tenant with a Sherweb customer, so CIPP knows which Sherweb account to place orders against. Licence purchasing and automated migrations both depend on this, and an unmapped tenant is simply skipped.
+The **Tenant Mapping** tab pairs each CIPP tenant with a Sherweb customer, so CIPP knows which Sherweb account to place orders against. License purchasing and automated migrations both depend on this, and an unmapped tenant is simply skipped.
 
 To map manually, choose a tenant, choose the matching entry under **Select Sherweb Company**, and select the add button. **Automap Companies** fills in matches automatically, and the refresh button reloads the customer list from Sherweb. Mappings are only written when you select **Submit**.
 
@@ -105,11 +105,11 @@ Individual mappings can be removed with the **Delete Mapping** row action.
 Automapping compares the tenant's display name with the Sherweb customer name, ignoring case, punctuation and trailing legal suffixes such as Ltd, Limited, LLC, Inc, GmbH or BV. Where more than one Sherweb customer normalises to the same name the match is ambiguous, so it is left for you to map manually. Always review the proposed matches before saving.
 {% endhint %}
 
-## Purchasing and Managing Licences
+## Purchasing and Managing Licenses
 
-With the integration enabled and the tenant mapped, licence actions become available in several places.
+With the integration enabled and the tenant mapped, license actions become available in several places.
 
-When adding or editing a user, selecting a licence with no available seats reveals **0 Licences available. Purchase new licence?**. Enabling it lets you pick a **Sherweb License** to buy, and CIPP assigns the licence to the user once it becomes available.
+When adding or editing a user, selecting a license with no available seats reveals **0 Licenses available. Purchase new license?**. Enabling it lets you pick a **Sherweb License** to buy, and CIPP assigns the license to the user once it becomes available.
 
 The Add Subscription page purchases a new subscription outright, and requires you to confirm that the purchase is made under your terms with Sherweb.
 
@@ -117,10 +117,10 @@ The CSP Licenses report carries row actions for existing subscriptions.
 
 | Action                                 | Description                                                                                                                    |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Increase licence count by 1            | Adds a single seat to the subscription immediately.                                                                            |
-| Decrease licence count by 1            | Removes a single seat from the subscription immediately.                                                                       |
-| Increase licence count                 | Adds a chosen number of seats to the subscription immediately.                                                                 |
-| Decrease licence count                 | Removes a chosen number of seats from the subscription immediately.                                                            |
+| Increase license count by 1            | Adds a single seat to the subscription immediately.                                                                            |
+| Decrease license count by 1            | Removes a single seat from the subscription immediately.                                                                       |
+| Increase license count                 | Adds a chosen number of seats to the subscription immediately.                                                                 |
+| Decrease license count                 | Removes a chosen number of seats from the subscription immediately.                                                            |
 | Schedule decrease of 1 at next renewal | Creates a scheduled task to remove a seat shortly before the subscription's renewal date, defaulting to three days beforehand. |
 | Cancel Subscription                    | Cancels the subscription entirely.                                                                                             |
 
@@ -130,7 +130,7 @@ A scheduled decrease checks the tenant's actual assignment state before it runs,
 
 ## Automated Migrations
 
-Automated migrations identify licences at a non-Sherweb CSP that are approaching their transfer window, and — depending on the strategy chosen — notify you, purchase the equivalent licence at Sherweb, or additionally cancel the legacy subscription.
+Automated migrations identify licenses at a non-Sherweb CSP that are approaching their transfer window, and — depending on the strategy chosen — notify you, purchase the equivalent license at Sherweb, or additionally cancel the legacy subscription.
 
 Once the integration is enabled, CIPP registers a daily background check for each mapped tenant. Each run looks for subscriptions renewing within the next seven days, compares them against the subscriptions already held at Sherweb, and treats anything without an equivalent as a candidate for migration.
 
@@ -152,9 +152,9 @@ Under **Select how you'd like automated migrations to be handled**, choose one:
 
 **Notify only** raises an alert when a subscription enters its cancellation window, and takes no other action.
 
-**Buy and notify** purchases the matching Sherweb licence and alerts you.
+**Buy and notify** purchases the matching Sherweb license and alerts you.
 
-**Buy and cancel** purchases the matching Sherweb licence and cancels the legacy subscription at the previous CSP.
+**Buy and cancel** purchases the matching Sherweb license and cancels the legacy subscription at the previous CSP.
 {% endstep %}
 
 {% step %}
@@ -182,10 +182,10 @@ Select **Submit** to store the configuration.
 {% endstep %}
 {% endstepper %}
 
-Alerts are delivered by email, to your PSA, and by webhook, following your alert configuration. Purchases are matched to the Sherweb catalogue on the Microsoft SKU ID together with the commitment term you selected; if no catalogue entry matches, the purchase is not attempted and you receive a failure alert instead. Cancellation failures at Pax8 are alerted the same way, so a purchase that succeeds while the cancellation fails will not go unnoticed.
+Alerts are delivered by email, to your PSA, and by webhook, following your alert configuration. Purchases are matched to the Sherweb catalog on the Microsoft SKU ID together with the commitment term you selected; if no catalog entry matches, the purchase is not attempted and you receive a failure alert instead. Cancellation failures at Pax8 are alerted the same way, so a purchase that succeeds while the cancellation fails will not go unnoticed.
 
 {% hint style="warning" %}
-Matching relies on subscription and SKU IDs, and will improve as Sherweb exposes more SKU detail. Review the notifications from a notify-only period before trusting automated purchasing on your own catalogue.
+Matching relies on subscription and SKU IDs, and will improve as Sherweb exposes more SKU detail. Review the notifications from a notify-only period before trusting automated purchasing on your own catalog.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

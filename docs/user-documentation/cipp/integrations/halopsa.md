@@ -58,7 +58,7 @@ Turn on **Enable Integration**. The remaining fields stay disabled until it is o
 {% step %}
 #### Enter the URLs
 
-Enter your Halo URL with `/api` appended in **HaloPSA Resource Server URL**, for example `https://yourcompany.halopsa.com/api`, and with `/auth` appended in **HaloPSA Authorisation Endpoint URL**, for example `https://yourcompany.halopsa.com/auth`.
+Enter your Halo URL with `/api` appended in **HaloPSA Resource Server URL**, for example `https://yourcompany.halopsa.com/api`, and with `/auth` appended in **HaloPSA Authorization Endpoint URL**, for example `https://yourcompany.halopsa.com/auth`.
 {% endstep %}
 
 {% step %}
@@ -98,7 +98,7 @@ Move to the **Tenant Mapping** tab and map each CIPP tenant to its Halo client, 
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Enable Integration                 | Turns the integration on. Every other setting, the **Test** and **Create Test Ticket** buttons, and the **Tenant Mapping** tab remain unavailable until this is enabled and saved.                                                                                                                           |
 | HaloPSA Resource Server URL        | The API endpoint for your Halo instance, ending in `/api`.                                                                                                                                                                                                                                                   |
-| HaloPSA Authorisation Endpoint URL | The authentication endpoint for your Halo instance, ending in `/auth`.                                                                                                                                                                                                                                       |
+| HaloPSA Authorization Endpoint URL | The authentication endpoint for your Halo instance, ending in `/auth`.                                                                                                                                                                                                                                       |
 | HaloPSA Tenant                     | The tenant identifier for hosted Halo instances. Leave blank when self-hosting.                                                                                                                                                                                                                              |
 | HaloPSA Client ID                  | The Client ID of the API application created in Halo.                                                                                                                                                                                                                                                        |
 | HaloPSA Client Secret              | The Client Secret of the API application. Stored securely and masked once saved; leave blank on subsequent saves to keep the existing value.                                                                                                                                                                 |

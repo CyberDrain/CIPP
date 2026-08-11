@@ -26,7 +26,7 @@ One row per tenant and template pairing, showing how closely that tenant matches
 | Standard Name              | The name of the template the tenant is being aligned to.                                                                                                       |
 | Standard Type              | Whether the template is a Classic Standard or a Drift Standard.                                                                                                |
 | Alignment Score            | The percentage of standards in the template that the tenant is aligned with.                                                                                   |
-| License Missing Percentage | The percentage of standards in the template that the tenant is not licensed for. 0% means the tenant holds the licences needed for everything in the template. |
+| License Missing Percentage | The percentage of standards in the template that the tenant is not licensed for. 0% means the tenant holds the licenses needed for everything in the template. |
 | Combined Alignment Score   | Alignment reweighted to discount standards the tenant is not licensed for, so unlicensed settings do not count against the tenant.                             |
 | Pending Deviations Count   | For drift templates, the number of detected deviations awaiting a decision.                                                                                    |
 | Denied Deviations Count    | For drift templates, the number of deviations that have been denied.                                                                                           |

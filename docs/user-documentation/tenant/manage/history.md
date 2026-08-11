@@ -11,7 +11,7 @@ Each entry on the timeline carries the following.
 | Element       | Description                                                                                                                         |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Date and time | When the action was recorded, shown to the left of the timeline in 24-hour time.                                                    |
-| Severity      | A coloured marker and chip naming the severity of the entry.                                                                        |
+| Severity      | A colored marker and chip naming the severity of the entry.                                                                        |
 | API           | The CIPP function that recorded the entry, which is usually the quickest way to identify what was running.                          |
 | IP            | The source address the action came from, where one was recorded.                                                                    |
 | Message       | What happened. Messages longer than 256 characters are shortened, with **Show more** and **Show less** to expand and collapse them. |
@@ -19,7 +19,7 @@ Each entry on the timeline carries the following.
 
 ## Severity Levels
 
-Entries are returned for the severities below. Info, Warning and Error are colour-coded on the timeline. Critical and Alert are shown with a neutral marker, with the severity itself named on the chip.
+Entries are returned for the severities below. Info, Warning and Error are color-coded on the timeline. Critical and Alert are shown with a neutral marker, with the severity itself named on the chip.
 
 | Severity       | Description                                                          |
 | -------------- | -------------------------------------------------------------------- |

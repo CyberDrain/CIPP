@@ -19,7 +19,7 @@ Much of the dashboard is built from data cached in CIPP's reporting database, re
 
 ## All Tenants View
 
-Under All Tenants the dashboard is built entirely from cached data, with no live Graph calls, and is organised into three bands. Almost every figure links through to the page where you can investigate it.
+Under All Tenants the dashboard is built entirely from cached data, with no live Graph calls, and is organized into three bands. Almost every figure links through to the page where you can investigate it.
 
 ### Portfolio
 
@@ -49,7 +49,7 @@ How many of your tenants are failing at least one identity check, followed by th
 
 <summary>Mail hygiene</summary>
 
-SPF, DKIM, DMARC, and DNSSEC coverage across the domains that have been analysed, shown as coverage meters with the domain count. **View** opens the [domains-analyser](../tenant/standards/domains-analyser/ "mention").
+SPF, DKIM, DMARC, and DNSSEC coverage across the domains that have been analyzed, shown as coverage meters with the domain count. **View** opens the [domains-analyzer](../tenant/standards/domains-analyzer/ "mention").
 
 </details>
 
@@ -194,12 +194,12 @@ Deletes the selected custom test suite. Built-in suites cannot be deleted, and t
 
 ### Available Built-In Test Suites
 
-* **ACSC Essential Eight**: Australian Cyber Security Centre (ACSC) Essential Eight Maturity Model, eight mitigation strategies for adversary defence covering MFA, restricting administrative privileges, application control, patching applications and operating systems, Microsoft Office macro settings, user application hardening, and regular backups. CIPP tests cover what the Microsoft 365, Entra, Intune, and Defender APIs expose; lower-level enforcement controls that cannot be validated from cloud telemetry are flagged as manual.
-* **CIS Microsoft 365 Foundations Benchmark v7.0.0**: Center for Internet Security (CIS) Microsoft 365 Foundations Benchmark v7.0.0, a prescriptive technical baseline for securely configuring a Microsoft 365 tenant across the M365 admin centre, Defender, Purview, Intune, Entra, Exchange Online, SharePoint, and Teams.
+* **ACSC Essential Eight**: Australian Cyber Security Center (ACSC) Essential Eight Maturity Model, eight mitigation strategies for adversary defense covering MFA, restricting administrative privileges, application control, patching applications and operating systems, Microsoft Office macro settings, user application hardening, and regular backups. CIPP tests cover what the Microsoft 365, Entra, Intune, and Defender APIs expose; lower-level enforcement controls that cannot be validated from cloud telemetry are flagged as manual.
+* **CIS Microsoft 365 Foundations Benchmark v7.0.0**: Center for Internet Security (CIS) Microsoft 365 Foundations Benchmark v7.0.0, a prescriptive technical baseline for securely configuring a Microsoft 365 tenant across the M365 admin center, Defender, Purview, Intune, Entra, Exchange Online, SharePoint, and Teams.
 * **CISA ScubaGear Tests for Exchange Online**: Security configuration assessment tests based on CISA's Secure Cloud Business Applications (ScubaGear) project for Microsoft Exchange Online. These tests validate compliance with federal security baselines.
-* **EIDSCA (Entra ID Security Configuration Analyzer) Tests**: Comprehensive security assessment for Microsoft Entra ID covering authorisation policies, authentication methods, consent policies, password policies, and group settings. Based on Microsoft's EIDSCA framework for identity security best practices.
+* **EIDSCA (Entra ID Security Configuration Analyzer) Tests**: Comprehensive security assessment for Microsoft Entra ID covering authorization policies, authentication methods, consent policies, password policies, and group settings. Based on Microsoft's EIDSCA framework for identity security best practices.
 * **Generic Tenant Tests**: Executive-level informational reports covering licensing, MFA posture, secure score trends, and tenant capabilities. These tests provide a clear snapshot of your tenant's current state without pass/fail criteria.
-* **Microsoft 365 Copilot Readiness Tests**: Assess tenant readiness for Microsoft 365 Copilot deployment. Tests cover prerequisite licensing, Copilot licence assignment, and active M365 app usage that determines which users would benefit most from Copilot.
+* **Microsoft 365 Copilot Readiness Tests**: Assess tenant readiness for Microsoft 365 Copilot deployment. Tests cover prerequisite licensing, Copilot license assignment, and active M365 app usage that determines which users would benefit most from Copilot.
 * **ORCA (Office 365 Recommended Configuration Analyzer) Tests**: Comprehensive security assessment for Microsoft Exchange Online and Office 365 security configurations. Tests cover anti-spam, anti-phish, anti-malware, safe links, safe attachments, DKIM, transport rules, and other Exchange Online security settings.
 * **SMB1001:2026 Cybersecurity Standard**: Dynamic Standards International (DSI) SMB1001:2026, a multi-tiered cybersecurity certification for small and medium-sized businesses, prescribing a five-level pathway across Technology Management, Access Management, Backup and Recovery, Policies/Processes/Plans, and Education and Training. CIPP tests cover the technical controls implementable against a Microsoft 365 tenant (Identity) and via Intune-managed workstations (Devices).
 * **Zero Trust Network Access Tests**: Microsoft's comprehensive security assessment covering identity and device compliance, conditional access policies, authentication methods, and endpoint protection aligned with Zero Trust principles.
@@ -270,10 +270,10 @@ The authentication methods in use across the tenant's users. Clicking a category
 
 <summary>License Overview</summary>
 
-The licences present on the tenant, with assigned and available counts.
+The licenses present on the tenant, with assigned and available counts.
 
 {% hint style="info" %}
-To exclude a licence from this and all other reports in CIPP, add the licence in licenses.md.
+To exclude a license from this and all other reports in CIPP, add the license in licenses.md.
 {% endhint %}
 
 </details>

@@ -38,8 +38,8 @@ A label on the card indicates which defaults are currently in effect: **Using Te
 | Convert to Shared Mailbox                     | Converts the user's mailbox to a shared mailbox.                       |
 | Remove from all groups                        | Removes the user from every group they belong to.                      |
 | Hide from Global Address List                 | Hides the user's mailbox from the address list.                        |
-| Remove Licenses                               | Removes all licences assigned to the user.                             |
-| Cancel all calendar invites                   | Cancels the meetings the user has organised.                           |
+| Remove Licenses                               | Removes all licenses assigned to the user.                             |
+| Cancel all calendar invites                   | Cancels the meetings the user has organized.                           |
 | Revoke all sessions                           | Signs the user out of all active sessions.                             |
 | Remove users mailbox permissions              | Removes the permissions the user holds on other mailboxes.             |
 | Remove users calendar permissions             | Removes the permissions the user holds on other calendars.             |

@@ -65,7 +65,7 @@ Three charts sit below the tenant bar.
 
 <summary>User Statistics</summary>
 
-A pie chart breaking the tenant's users into Licensed Users, Unlicensed Users, Guests, and Global Admins, with the total user count in the centre.
+A pie chart breaking the tenant's users into Licensed Users, Unlicensed Users, Guests, and Global Admins, with the total user count in the center.
 
 {% hint style="info" %}
 The chart labels are clickable and filter the chart, so you can isolate a segment to read it more easily.

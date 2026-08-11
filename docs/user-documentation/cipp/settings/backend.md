@@ -20,7 +20,7 @@ Every card carries a **Launch** button that opens the corresponding Azure portal
 | Key Vault                        | The secrets store holding saved authentication details, including the SAM application credentials and integration API keys. Access is not granted by default. |
 | Static Web App (Role Management) | Where users are invited to CIPP and their roles assigned.                                                                                                     |
 | Function App (Deployment Center) | Deployment history and the GitHub connection used for continuous deployment, which is where the API is updated to a newer version.                            |
-| Function App (Configuration)     | The application settings for the API, including the environment variables that control instance behaviour.                                                    |
+| Function App (Configuration)     | The application settings for the API, including the environment variables that control instance behavior.                                                    |
 | Function App (Overview)          | Performance and usage information for the API, and the controls to stop and start it.                                                                         |
 | Cloud Shell                      | Opens an Azure Cloud Shell session in a new window, preset to PowerShell.                                                                                     |
 

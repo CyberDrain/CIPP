@@ -15,7 +15,7 @@ A toolbar at the top of the page controls refreshing and lets you capture or rev
 
 ## Status Overview
 
-At the top of the page, a bar of key indicators gives an at-a-glance view of the container's health. Each indicator is colour-coded, turning amber or red as it approaches or exceeds its threshold.
+At the top of the page, a bar of key indicators gives an at-a-glance view of the container's health. Each indicator is color-coded, turning amber or red as it approaches or exceeds its threshold.
 
 | Indicator    | Shows                                                                                                   |
 | ------------ | ------------------------------------------------------------------------------------------------------- |
@@ -47,7 +47,7 @@ Two tables list every worker in the container: one for the HTTP pool, which hand
 
 ## Job Queue
 
-The Job Queue lists the background jobs known to the worker system, newest first. Two toggles above the table control what is loaded: a status toggle (All, Queued, Running, Completed, Failed, or Cancelled) and a load limit (500, 2k, 5k, or 10k).
+The Job Queue lists the background jobs known to the worker system, newest first. Two toggles above the table control what is loaded: a status toggle (All, Queued, Running, Completed, Failed, or Canceled) and a load limit (500, 2k, 5k, or 10k).
 
 The status toggle filters on the server, before the load limit is applied, so the limit applies to the selected status rather than to all jobs. This matters on a busy instance: with a large backlog of completed jobs, loading All would fill the entire limit with completed work and show no queued jobs at all. Select Queued to see the jobs still waiting to run, regardless of how much history sits behind them.
 
@@ -103,7 +103,7 @@ When present, a breakdown table lists each cached data type with the number of t
 
 ## Startup Timing
 
-At the bottom of the page, a stacked bar shows how long each phase of the container's most recent startup took. The header summarises the run: the readiness and warmup modes, the CPU count, the HTTP and background pool sizes, and the total startup time. Hovering a segment shows that phase's duration and the number of functions loaded, and the legend reports the shared, HTTP-only, and background-only module counts.
+At the bottom of the page, a stacked bar shows how long each phase of the container's most recent startup took. The header summarizes the run: the readiness and warmup modes, the CPU count, the HTTP and background pool sizes, and the total startup time. Hovering a segment shows that phase's duration and the number of functions loaded, and the legend reports the shared, HTTP-only, and background-only module counts.
 
 | Phase          | Description                                                |
 | -------------- | ---------------------------------------------------------- |

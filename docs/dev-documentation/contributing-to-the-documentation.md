@@ -20,6 +20,10 @@ A few consequences worth knowing before you start:
 `docs/SUMMARY.md` is the table of contents. A page that is not listed in it is orphaned, so it will not appear in the navigation even though the file exists.
 {% endhint %}
 
+## Documentation Style
+
+Use American English for all documentation updates and new content. This includes spelling, grammar, and terminology across user, setup, API, and developer docs.
+
 ## How to Contribute a Change
 
 Contributions come in through GitHub, whether you are fixing a typo or writing a page from scratch. The **Edit on GitHub** option on every published page takes you straight to that page's source file in the repository, which is the fastest way to start. Editing in GitBook itself is reserved for maintainers and for collaborators who have been invited to the space.
@@ -63,7 +67,7 @@ The documentation is split into a small number of top-level sections:
 | Section               | What belongs there                                                                        |
 | --------------------- | ----------------------------------------------------------------------------------------- |
 | `setup/`              | Installing, configuring, maintaining and implementing CIPP.                               |
-| `user-documentation/` | One page per screen in the CIPP interface, plus shared behaviour under `shared-features/`. |
+| `user-documentation/` | One page per screen in the CIPP interface, plus shared behavior under `shared-features/`. |
 | `api-documentation/`  | Working with the CIPP API.                                                                |
 | `troubleshooting/`    | Diagnosing and fixing problems.                                                           |
 | `dev-documentation/`  | Developing CIPP itself, including this page.                                              |
@@ -103,7 +107,7 @@ If you move or rename a file, check all of these before opening the pull request
 Documentation that guesses is worse than no documentation. Before describing a screen, read the code behind it:
 
 * The screen itself is at `frontend/src/pages/<route>/index.js`. It is often only wiring, so follow the components it imports for the real logic.
-* On a list page, searching that file for `simpleColumns`, `label:`, `link:`, `hideBulk`, `offCanvas`, `cardButton`, `filterName` and `condition` surfaces the columns, actions, bulk behaviour and drawers in a single pass.
+* On a list page, searching that file for `simpleColumns`, `label:`, `link:`, `hideBulk`, `offCanvas`, `cardButton`, `filterName` and `condition` surfaces the columns, actions, bulk behavior and drawers in a single pass.
 * For what an action does once it is clicked, read the matching `Invoke-<Name>.ps1` in the API.
 
 Never guess what a field means. If you cannot ground a statement in the code or in vendor documentation, leave it out and flag it in the pull request instead.
@@ -147,7 +151,7 @@ Use `{% stepper %}` and `{% step %}` GitBook blocks rather than a numbered list.
 
 **Be direct.** Present tense, third person, and "you" when the reader is doing something. No hedging, no filler, and do not open a section by restating its heading.
 
-**Use British English in prose:** licence as a noun and license as a verb, organisation, authorise, behaviour, customise, catalogue, analyse, synchronise. Vendor product names and on-screen labels are reproduced **verbatim**, including American spelling, so it is "Microsoft 365 admin center" and "Partner Center". Mirror the interface, do not tidy it up.
+**Use American English in prose:** license as a noun and license as a verb, organization, authorize, behavior, customize, catalog, analyze, synchronize. Vendor product names and on-screen labels are reproduced **verbatim**, including American spelling, so it is "Microsoft 365 admin center" and "Partner Center". Mirror the interface, do not tidy it up.
 
 **Other conventions:**
 
@@ -162,12 +166,12 @@ The following are covered centrally in [table-features.md](../user-documentation
 
 * Per-page All Tenants notes, unless the page genuinely behaves differently, such as queueing a background job.
 * Explanations of Live and Cached data.
-* General filtering, searching, exporting and column-picker behaviour. Filter _presets_ defined by a page are documented, the mechanism is not.
+* General filtering, searching, exporting and column-picker behavior. Filter _presets_ defined by a page are documented, the mechanism is not.
 * Sentences describing where the page sits in the navigation.
 
 ### Bugs do not go on pages
 
-If you find a defect, a dead route or behaviour that looks wrong, raise a [bug report](https://github.com/CyberDrain/CIPP/issues/new?template=bug.yml) rather than documenting the fault on the page. Mention the issue number in your pull request so a maintainer can decide whether the page should describe the current behaviour or the intended behaviour.
+If you find a defect, a dead route or behavior that looks wrong, raise a [bug report](https://github.com/CyberDrain/CIPP/issues/new?template=bug.yml) rather than documenting the fault on the page. Mention the issue number in your pull request so a maintainer can decide whether the page should describe the current behavior or the intended behavior.
 
 ## Tables
 
@@ -232,14 +236,14 @@ Shared snippets live in `.gitbook/includes/` at the root of the repository. Only
 * Never reword the text of an include on a consuming page.
 * Never put a `***` divider before an include that already carries one.
 * Never start a reusable content file with an H1. GitBook's importer treats a leading H1 as the snippet's title and strips it from the body. Lead with a `***` divider if the snippet needs a heading.
-* `live-cached-page-action.md` is retired in favour of `table-features.md`. Do not add it to new pages.
+* `live-cached-page-action.md` is retired in favor of `table-features.md`. Do not add it to new pages.
 
 ## Before You Submit
 
 * The page is listed in `docs/SUMMARY.md`.
 * For user documentation, the file path matches the UI route exactly.
 * Every claim is grounded in the code or in vendor documentation.
-* Prose is British English, product names and UI labels are verbatim, and there are no em dashes.
+* Prose is American English, product names and UI labels are verbatim, and there are no em dashes.
 * Relative links and the `{% include %}` path resolve from the file's actual location.
 * The page ends with the feature request include, with no divider before it.
 * The pull request targets `dev` and has a Conventional Commits title.

@@ -1,6 +1,6 @@
 # Applications
 
-Applications lists the applications available for deployment through Intune for the selected tenant, along with how each one is currently assigned and excluded. From here you can deploy new applications, change assignments, save an application as a reusable template, or remove an application from the tenant. The list covers line-of-business and managed applications, plus any other application that already has an assignment, so it will not show every item in the Intune catalogue.
+Applications lists the applications available for deployment through Intune for the selected tenant, along with how each one is currently assigned and excluded. From here you can deploy new applications, change assignments, save an application as a reusable template, or remove an application from the tenant. The list covers line-of-business and managed applications, plus any other application that already has an assignment, so it will not show every item in the Intune catalog.
 
 ## Action Buttons
 
@@ -39,9 +39,9 @@ Site-level fields repeat once for every tenant you selected, labelled with that 
 | Field            | Description                                                                 |
 | ---------------- | --------------------------------------------------------------------------- |
 | Account Key      | Your Huntress MSP account key, shared across all tenants in the deployment. |
-| Organization Key | Per tenant. The organisation identifier for that customer.                  |
+| Organization Key | Per tenant. The organization identifier for that customer.                  |
 
-Huntress guidance on choosing organisation keys is in their article on [account keys, organization keys and agent tags](https://support.huntress.io/hc/en-us/articles/4404012734227-Using-Account-Keys-Organization-Keys-and-Agent-Tags).
+Huntress guidance on choosing organization keys is in their article on [account keys, organization keys and agent tags](https://support.huntress.io/hc/en-us/articles/4404012734227-Using-Account-Keys-Organization-Keys-and-Agent-Tags).
 
 **CW Automate**
 
@@ -75,7 +75,7 @@ Deploys an application from the Microsoft Store using its WinGet package identif
 
 | Field                     | Description                                                                                                    |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Search Packages           | A term to search the Store catalogue with.                                                                     |
+| Search Packages           | A term to search the Store catalog with.                                                                     |
 | Select Package            | The matching package to use, which populates the three fields below.                                           |
 | WinGet Package Identifier | The package identifier to install, for example `Mozilla.Firefox`.                                              |
 | Application Name          | The name the application will appear under in Intune.                                                          |
@@ -113,10 +113,10 @@ Deploys Microsoft 365 Apps using Intune's built-in Office suite deployment.
 | Excluded Apps                   | The applications to leave out of the installation. Access, Excel, OneNote, Outlook, PowerPoint, Publisher, Teams, Word, Skype For Business and Bing can each be excluded.                                                   |
 | Update Channel                  | The servicing channel the installation is tied to: Current Channel, Current (Preview), Monthly Enterprise, Semi-Annual Enterprise or Semi-Annual Enterprise (Preview).                                                      |
 | Languages                       | The language packs to install alongside the applications. At least one is required.                                                                                                                                         |
-| Use Shared Computer Activation  | Licences the installation per session rather than per device, for multi-user machines such as session hosts.                                                                                                                |
+| Use Shared Computer Activation  | Licenses the installation per session rather than per device, for multi-user machines such as session hosts.                                                                                                                |
 | 64 Bit (Recommended)            | Installs the 64-bit build. Enabled by default.                                                                                                                                                                              |
 | Remove other versions           | Uninstalls existing Office installations as part of the deployment. Enabled by default.                                                                                                                                     |
-| Accept License                  | Accepts the licence terms on the user's behalf so the installation runs without prompting. Enabled by default.                                                                                                              |
+| Accept License                  | Accepts the license terms on the user's behalf so the installation runs without prompting. Enabled by default.                                                                                                              |
 | Use Custom XML Configuration    | Replaces the options above with a configuration XML of your own.                                                                                                                                                            |
 | Custom Office Configuration XML | The configuration to apply when the switch above is enabled. Every other Office option on this form is ignored when custom XML is supplied. Use the [Office Customization Tool](https://config.office.com/) to generate it. |
 
@@ -164,7 +164,7 @@ Group names here are matched by display name across every selected tenant, so a 
 
 <summary>Sync VPP</summary>
 
-Triggers a sync of all Apple Volume Purchase Program (VPP) tokens for the selected tenant, so that recently purchased licences and applications are pulled into Intune.
+Triggers a sync of all Apple Volume Purchase Program (VPP) tokens for the selected tenant, so that recently purchased licenses and applications are pulled into Intune.
 
 </details>
 

@@ -1,6 +1,6 @@
 # Edit Equipment Mailbox
 
-This page changes the details and booking behaviour of an equipment mailbox. It is reached from the **Edit Equipment** action on [README.md](README.md "mention"), and opens with the mailbox's current settings filled in.
+This page changes the details and booking behavior of an equipment mailbox. It is reached from the **Edit Equipment** action on [README.md](README.md "mention"), and opens with the mailbox's current settings filled in.
 
 **Basic Information**
 
@@ -18,7 +18,7 @@ This page changes the details and booking behaviour of an equipment mailbox. It 
 | Booking Process                   | How requests are handled: **None** leaves them for a delegate to answer, **AutoUpdate** accepts or declines without deleting, and **AutoAccept** accepts and deletes the request. |
 | Allow Recurring Meetings          | Whether the equipment can be booked on a repeating basis.                                                                                                         |
 | Allow Double-Booking              | Whether two bookings may overlap. Off means a clashing request is declined.                                                                                       |
-| Process External Meetings         | Whether requests from outside the organisation are handled automatically rather than declined.                                                                    |
+| Process External Meetings         | Whether requests from outside the organization are handled automatically rather than declined.                                                                    |
 | Forward to Delegates              | Whether requests are passed on to the mailbox's delegates.                                                                                                        |
 
 **Working Hours**

@@ -1,6 +1,6 @@
 # Message Trace
 
-Message Trace searches how messages travelled through a tenant's Exchange Online organisation, filtered by sender, recipient, status, IP address, or a specific message ID. Each result can be expanded to show the individual routing events for that message, and handed off to Defender for deeper analysis.
+Message Trace searches how messages travelled through a tenant's Exchange Online organization, filtered by sender, recipient, status, IP address, or a specific message ID. Each result can be expanded to show the individual routing events for that message, and handed off to Defender for deeper analysis.
 
 {% hint style="info" %}
 Exchange Online holds <mark style="color:blue;">90 days</mark> of message trace data, but a single query can only span <mark style="color:blue;">10 days</mark>. To look further back, use **Start / End** and move a window of ten days or less across the period you care about. A search also returns at most 1000 results, so narrow the date range or add a sender or recipient rather than expecting a broad search to be complete.

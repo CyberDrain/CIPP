@@ -24,7 +24,7 @@ Both modes ignore the tenant selection when building the trail, so switching ten
 
 ## Bookmark Button
 
-The bookmark button sits at the end of the breadcrumb trail and adds or removes the current page from your bookmarks. An outlined bookmark means the page is not yet saved, and a solid, coloured bookmark means it is.
+The bookmark button sits at the end of the breadcrumb trail and adds or removes the current page from your bookmarks. An outlined bookmark means the page is not yet saved, and a solid, colored bookmark means it is.
 
 The bookmark takes its name from the last entry in the breadcrumb trail and is filed under the top-level menu heading that page belongs to, so renaming or restructuring the menu is reflected in new bookmarks automatically.
 

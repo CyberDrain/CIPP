@@ -57,7 +57,7 @@ Our 4th Sip & CIPP session offered an immersive journey into the world of Open S
 **A:** This can be achieved using new event-based remediations with a custom if-else-then script.
 
 **Q: How are the conversations going with direct CSP providers for integrations?**\
-**A:** Conversations with one tier-one CSP provider are progressing well, focusing on creating APIs for licence purchases.
+**A:** Conversations with one tier-one CSP provider are progressing well, focusing on creating APIs for license purchases.
 
 **Q: For the updated events engine, would it be possible to alert on a specific application taking action on a user?**\
 **A:** Yes, as long as the application's action is logged, the updated events engine can be configured to alert based on these logs.

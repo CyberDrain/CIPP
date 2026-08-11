@@ -4,12 +4,12 @@ This page lists the quarantine policies in the selected tenant and shows the ten
 
 ## Global Quarantine Settings
 
-The card above the table shows the settings that govern the quarantine notification message itself. These apply to the whole organisation rather than to any one policy. The refresh icon on the card reloads them without reloading the table.
+The card above the table shows the settings that govern the quarantine notification message itself. These apply to the whole organization rather than to any one policy. The refresh icon on the card reloads them without reloading the table.
 
 | Item                   | Description                                                                                                                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Notification Frequency | How often end users are sent quarantine notifications, shown as 4 hours, Daily, or Weekly.                                                                                                             |
-| Branding               | Whether the organisation's branding is applied to those notifications.                                                                                                                                 |
+| Branding               | Whether the organization's branding is applied to those notifications.                                                                                                                                 |
 | Custom Sender Address  | The address notifications are sent from, or `None` where the Microsoft default is used.                                                                                                                |
 | Custom Language        | The languages configured for custom notification text. Select it to open the Custom Language Settings flyout, which lists the sender display name, subject, and disclaimer held against each language. |
 
@@ -31,7 +31,7 @@ Opens the **Edit - Global Quarantine Settings** dialog, which changes the notifi
 | -------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Notification Frequency           | How often end users are sent quarantine notifications: **4 hours**, **Daily**, or **Weekly**. Required. |
 | Custom Sender Address (Optional) | The address notifications are sent from. Leave it empty to use the Microsoft default.                   |
-| Organization Branding            | Applies the organisation's branding to the notification messages.                                       |
+| Organization Branding            | Applies the organization's branding to the notification messages.                                       |
 
 </details>
 

@@ -22,8 +22,8 @@ A row of headline counts sits above two cards that break the environment down fu
 | ----------------------- | ---------------------------------------------------------- |
 | Sharing Links           | The total number of sharing links found.                   |
 | Anonymous Links         | Links that anyone can use without signing in.              |
-| External Links & Shares | Links and shares given to people outside the organisation. |
-| Internal Links          | Links usable only by people inside the organisation.       |
+| External Links & Shares | Links and shares given to people outside the organization. |
+| Internal Links          | Links usable only by people inside the organization.       |
 
 ### Sharing Risk Highlights
 

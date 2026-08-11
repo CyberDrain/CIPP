@@ -18,7 +18,7 @@ Choose the tenants to approve the application for. The selector accepts multiple
 
 Choose an **Application Configuration Mode**, either **Use App Approval Template** (the default) or **Manual Configuration**.
 
-**Use App Approval Template** deploys one of your saved app approval templates. Pick one from **Select App Template**, which is required to continue. Once selected, a **Template Details** card summarises what will be deployed:
+**Use App Approval Template** deploys one of your saved app approval templates. Pick one from **Select App Template**, which is required to continue. Once selected, a **Template Details** card summarizes what will be deployed:
 
 | Field          | Description                                                                                                                                                                                  |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

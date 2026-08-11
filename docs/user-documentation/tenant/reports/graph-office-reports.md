@@ -1,6 +1,6 @@
 # Graph / Office Reports
 
-This page gives you direct access to the usage and activity reports Microsoft publishes for a tenant, covering areas such as mailbox usage, OneDrive storage, Teams activity, and licence assignment. Rather than curating a fixed set, CIPP asks the tenant which reports it offers and lists whatever comes back, so the selection reflects that tenant's own licensing and enabled services.
+This page gives you direct access to the usage and activity reports Microsoft publishes for a tenant, covering areas such as mailbox usage, OneDrive storage, Teams activity, and license assignment. Rather than curating a fixed set, CIPP asks the tenant which reports it offers and lists whatever comes back, so the selection reflects that tenant's own licensing and enabled services.
 
 {% hint style="danger" %}
 Not every report in this list will function for every tenant. The list of available reports is extensive and includes those that may not match tenant licensing, feature enablement, etc. Reports that are not available for a tenant will return a status code of 500.

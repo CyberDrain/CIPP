@@ -16,7 +16,7 @@ The last scan time is shown as "Last data refresh." If any sites could not be re
 
 ## Summary
 
-Two rows of indicators summarise the tenant. The first row focuses on grants worth reviewing, and the second on the scan's coverage.
+Two rows of indicators summarize the tenant. The first row focuses on grants worth reviewing, and the second on the scan's coverage.
 
 | Indicator              | Description                                                                                                                                          |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |

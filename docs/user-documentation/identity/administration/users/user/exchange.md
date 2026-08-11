@@ -35,11 +35,11 @@ The **Actions** menu acts on this mailbox. Some entries are greyed out rather th
 | Set Send Quota                              | Sets the size at which the mailbox is stopped from sending.                                                                                                                                                                                                                                                               |
 | Set Send and Receive Quota                  | Sets the size at which the mailbox is stopped from sending and receiving.                                                                                                                                                                                                                                                 |
 | Set Quota Warning Level                     | Sets the size at which the user is warned that the mailbox is filling up.                                                                                                                                                                                                                                                 |
-| Set Calendar Processing                     | Configures how the resource handles booking requests, covering automatic processing and acceptance, conflict handling, meeting duration and booking window limits, what is stripped from the meeting item, and the response text sent back to organisers. Greyed out for anything other than a room or equipment mailbox. |
+| Set Calendar Processing                     | Configures how the resource handles booking requests, covering automatic processing and acceptance, conflict handling, meeting duration and booking window limits, what is stripped from the meeting item, and the response text sent back to organizers. Greyed out for anything other than a room or equipment mailbox. |
 
 ## Exchange Information
 
-The card on the left summarises the mailbox. Its header carries a refresh button, and a warning appears above the details when Microsoft has blocked the mailbox for spam.
+The card on the left summarizes the mailbox. Its header carries a refresh button, and a warning appears above the details when Microsoft has blocked the mailbox for spam.
 
 | Field                    | Description                                                                                                                                                                                                          |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -52,14 +52,14 @@ The card on the left summarises the mailbox. Its header carries a refresh button
 | Keep Copy in Mailbox     | Whether forwarded mail is also delivered to this mailbox. Shown only when forwarding is configured.                                                                                                                  |
 | Forwarding Address       | The address mail is forwarded to. Shown only when forwarding is configured.                                                                                                                                          |
 | Archive Mailbox Enabled  | Whether the archive mailbox exists.                                                                                                                                                                                  |
-| Auto Expanding Archive   | Whether the archive can grow past its initial quota. The label reads **Auto Expanding Archive: (org)** when the setting comes from the organisation rather than the mailbox. Shown only when the archive is enabled. |
+| Auto Expanding Archive   | Whether the archive can grow past its initial quota. The label reads **Auto Expanding Archive: (org)** when the setting comes from the organization rather than the mailbox. Shown only when the archive is enabled. |
 | Total Archive Item Size  | The size of the archive in GB. Shown only when the archive is enabled.                                                                                                                                               |
 | Total Archive Item Count | The number of items in the archive. Shown only when the archive is enabled.                                                                                                                                          |
-| Mailbox Holds            | Which holds apply to the mailbox: compliance tag, retention, litigation, in-place, eDiscovery and Purview retention holds, and whether the mailbox is excluded from an organisation-wide hold.                       |
+| Mailbox Holds            | Which holds apply to the mailbox: compliance tag, retention, litigation, in-place, eDiscovery and Purview retention holds, and whether the mailbox is excluded from an organization-wide hold.                       |
 | Mailbox Protocols        | Which access protocols are enabled: EWS, MAPI, OWA, IMAP, POP, ActiveSync and SMTP client authentication.                                                                                                            |
 
 {% hint style="info" %}
-The SMTP entry spells out its state rather than relying on the chip colour, because the underlying property records whether SMTP client authentication is _disabled_. A green **SMTP Disabled** chip is the secure outcome, **SMTP Enabled** is the one worth acting on, and **SMTP Unknown** means Exchange did not report the setting.
+The SMTP entry spells out its state rather than relying on the chip color, because the underlying property records whether SMTP client authentication is _disabled_. A green **SMTP Disabled** chip is the secure outcome, **SMTP Enabled** is the one worth acting on, and **SMTP Unknown** means Exchange did not report the setting.
 {% endhint %}
 
 ## Proxy Addresses
@@ -121,11 +121,11 @@ Sets the mailbox's automatic replies.
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Auto Reply State                                         | Enabled, Disabled, or Scheduled for a fixed period.                                                                                |
 | Start Date/Time, End Date/Time                           | The period replies are sent for. Only used when the state is Scheduled.                                                            |
-| Internal Message                                         | The reply sent to people inside the organisation.                                                                                  |
-| External Message                                         | The reply sent to people outside the organisation.                                                                                 |
+| Internal Message                                         | The reply sent to people inside the organization.                                                                                  |
+| External Message                                         | The reply sent to people outside the organization.                                                                                 |
 | Block my calendar for this period                        | Creates a calendar event covering the absence, with a subject of your choosing. Only offered for a scheduled reply.                |
 | Automatically decline new invitations during this period | Declines invitations that arrive for the absence. Only offered for a scheduled reply.                                              |
-| Decline and cancel my meetings during this period        | Declines and cancels meetings already in the calendar, with an optional message to organisers. Only offered for a scheduled reply. |
+| Decline and cancel my meetings during this period        | Declines and cancels meetings already in the calendar, with an optional message to organizers. Only offered for a scheduled reply. |
 
 ## Recipient Limits
 

@@ -1,6 +1,6 @@
 # Sensitivity Labels
 
-Sensitivity labels classify content and carry protection with it. Once a label is applied to a file, an email or a container, it enforces whatever is configured on it: encryption, content marking such as headers, footers and watermarks, and site and group protection. Label policies then publish labels to users. This page lists the sensitivity labels in the selected tenant, shows which policies publish each one, and lets you recolour, delete or capture them as reusable templates.
+Sensitivity labels classify content and carry protection with it. Once a label is applied to a file, an email or a container, it enforces whatever is configured on it: encryption, content marking such as headers, footers and watermarks, and site and group protection. Label policies then publish labels to users. This page lists the sensitivity labels in the selected tenant, shows which policies publish each one, and lets you recolor, delete or capture them as reusable templates.
 
 ## Action Buttons
 
@@ -13,8 +13,8 @@ Opens a drawer that creates a sensitivity label in one or more tenants from a te
 | Field | Description |
 | ----- | ----------- |
 | Select Tenants | The tenants to create the label in. At least one is required, and you can pick several to deploy the same label across a group of customers in one go. |
-| Select a template (optional) | Picks a saved sensitivity label template. Choosing one fills **Parameters (JSON)** with that template's stored settings, and also loads the template's colour into **Label Color**. |
-| Label Color (optional) | A colour picker for the label. It accepts any hex colour, where the Purview portal offers only its preset palette. A colour picked here overrides any colour set in the JSON below. Leave it empty to keep whatever the JSON specifies. |
+| Select a template (optional) | Picks a saved sensitivity label template. Choosing one fills **Parameters (JSON)** with that template's stored settings, and also loads the template's color into **Label Color**. |
+| Label Color (optional) | A color picker for the label. It accepts any hex color, where the Purview portal offers only its preset palette. A color picked here overrides any color set in the JSON below. Leave it empty to keep whatever the JSON specifies. |
 | Parameters (JSON) | The label settings as JSON. Required. A worked example is shown in the field until you type into it, covering the display name, tooltip, content types, encryption settings, content marking and a nested `PolicyParams` block for the label policy that publishes it. |
 
 </details>
@@ -25,7 +25,7 @@ Opens a drawer that creates a sensitivity label in one or more tenants from a te
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | Display Name                    | The label name as users see it in Office apps.                                                                 |
 | Name                            | The label's internal name in Purview.                                                                          |
-| Color                           | The label's custom colour, read by CIPP from the label's `color` advanced setting. Empty when none is set.      |
+| Color                           | The label's custom color, read by CIPP from the label's `color` advanced setting. Empty when none is set.      |
 | Content Type                    | What the label can be applied to, such as files and emails.                                                    |
 | Encryption Enabled              | Whether the label applies encryption to content it is put on.                                                  |
 | Content Marking Header Enabled  | Whether the label stamps a header onto content.                                                                |
@@ -38,6 +38,6 @@ The Extended Info flyout adds the label's comment, tooltip, parent label, footer
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Create template based on label</td><td>Saves the selected label as a sensitivity label template so it can be redeployed to other tenants.</td><td>false</td></tr><tr><td>Set Label Color</td><td>Opens a colour picker and applies the chosen colour to the selected label. Any hex colour is accepted, beyond the preset palette the Purview portal offers. Submitting an empty value clears a colour that was set previously.</td><td>false</td></tr><tr><td>Delete Label</td><td>Permanently removes the selected label. A label that is published to users is also removed from the policies publishing it.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Create template based on label</td><td>Saves the selected label as a sensitivity label template so it can be redeployed to other tenants.</td><td>false</td></tr><tr><td>Set Label Color</td><td>Opens a color picker and applies the chosen color to the selected label. Any hex color is accepted, beyond the preset palette the Purview portal offers. Submitting an empty value clears a color that was set previously.</td><td>false</td></tr><tr><td>Delete Label</td><td>Permanently removes the selected label. A label that is published to users is also removed from the policies publishing it.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

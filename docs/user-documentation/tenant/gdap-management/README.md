@@ -1,6 +1,6 @@
 # GDAP Management
 
-The GDAP Management overview is the starting point for managing Granular Delegated Admin Privileges between your partner tenant and your customer tenants. It summarises the current state of your GDAP configuration and guides you through the steps needed to get set up correctly.
+The GDAP Management overview is the starting point for managing Granular Delegated Admin Privileges between your partner tenant and your customer tenants. It summarizes the current state of your GDAP configuration and guides you through the steps needed to get set up correctly.
 
 ## Overview
 

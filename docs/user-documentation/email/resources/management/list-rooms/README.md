@@ -17,7 +17,7 @@ Creates a new room mailbox in the selected tenant.
 | Primary Domain name          | The domain used after the @ symbol, chosen from the tenant's verified domains. Required. |
 | Resource Capacity (Optional) | The number of people the room seats. Left unset when the box is empty.                   |
 
-**Create Room Mailbox** submits the form. Sign-in for the new mailbox is blocked as part of creating it, so nobody can sign in as the room. Once a mailbox has been created the button changes to **Create Another**, so the drawer can be reused without closing it. Everything else about the room, including its location, facilities, and booking behaviour, is set afterwards on the [edit.md](edit.md "mention") page.
+**Create Room Mailbox** submits the form. Sign-in for the new mailbox is blocked as part of creating it, so nobody can sign in as the room. Once a mailbox has been created the button changes to **Create Another**, so the drawer can be reused without closing it. Everything else about the room, including its location, facilities, and booking behavior, is set afterwards on the [edit.md](edit.md "mention") page.
 
 </details>
 

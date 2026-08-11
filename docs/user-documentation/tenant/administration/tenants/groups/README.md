@@ -29,7 +29,7 @@ Creates a predefined set of dynamic tenant groups provided by CIPP, intended as 
 | Name                                      | What it matches                                                                                                                 |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | Not Intune and Entra Premium Capable      | Tenants with neither a Microsoft Intune service plan nor a Microsoft Entra ID P1 service plan available.                        |
-| Business Premium License available        | Tenants with at least one Microsoft 365 Business Premium licence available, including the no Teams, EEA, and donation variants. |
+| Business Premium License available        | Tenants with at least one Microsoft 365 Business Premium license available, including the no Teams, EEA, and donation variants. |
 | Entra Premium Capable, Not Intune Capable | Tenants with a Microsoft Entra ID P1 service plan available but no Microsoft Intune service plan.                               |
 | Entra ID Premium and Intune Capable       | Tenants with both Microsoft Intune and Microsoft Entra ID P1 service plans available.                                           |
 | All Tenants (Excluding Partner)           | Every tenant managed through a GDAP or direct relationship, with the partner tenant itself excluded.                            |

@@ -10,13 +10,13 @@ We strongly believe in raising the bar across the entire IT and MSP community. T
 
 ## How to Use These Materials
 
-Each resource is built as a **template** that you can adapt to your own organisation. We’ve included examples and suggested language to help you get started, but you’re encouraged to adjust the tone, style, and messaging so it fits your brand and customer voice. The templates are completely adaptable to your brand, so feel free to make them your own.
+Each resource is built as a **template** that you can adapt to your own organization. We’ve included examples and suggested language to help you get started, but you’re encouraged to adjust the tone, style, and messaging so it fits your brand and customer voice. The templates are completely adaptable to your brand, so feel free to make them your own.
 
 Think of the templates as jumping off points. Use them to:
 
 * Train your sales team with ready-made collateral.
 * Adapt content for customer-facing proposals, presentations, and onboarding.
-* Save time by customising proven structures rather than starting from scratch.
+* Save time by customizing proven structures rather than starting from scratch.
 
 The guide includes several implementation strategies, including guidance to help you upsell clients to M365 Business Premium. Handling client objections can be difficult for MSPs, and the guide provides approaches you can use.
 

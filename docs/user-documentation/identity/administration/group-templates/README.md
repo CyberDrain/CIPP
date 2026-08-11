@@ -21,7 +21,7 @@ Group templates hold the settings for a group so the same group can be created r
 | Group Type   | The kind of group the template creates, shown as its stored value: `m365`, `generic` for a security group, `security` for a mail-enabled security group, `distribution`, `dynamic`, `dynamicDistribution` or `azureRole`. |
 | GUID         | The template's unique identifier in CIPP, used when the template is referenced elsewhere.                                                                                                                                 |
 
-Everything else the template holds is shown in the Extended Info flyout, including the membership rule, the mail nickname, any licences and aliases, whether external senders are allowed, whether the group is hidden from the Global Address List, and where the template came from.
+Everything else the template holds is shown in the Extended Info flyout, including the membership rule, the mail nickname, any licenses and aliases, whether external senders are allowed, whether the group is hidden from the Global Address List, and where the template came from.
 
 {% hint style="info" %}
 The Group Type column shows the stored value rather than the friendly name used on the Add Group Template page, so a plain security group reads as `generic` while a mail-enabled security group reads as `security`. Templates saved by older CIPP versions are normalised to these values when the list is built, so an older template still reports a recognisable type.

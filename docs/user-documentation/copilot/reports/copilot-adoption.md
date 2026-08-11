@@ -2,7 +2,7 @@
 
 The Copilot Adoption by Product report shows how Copilot adoption breaks down across the different Microsoft 365 apps in the selected tenant. For each product, it compares how many people are set up to use Copilot against how many are actually using it, making it easy to spot apps where Copilot is licensed but underused.
 
-The figures come from the Microsoft 365 Copilot usage reports in Microsoft Graph and cover the last 30 days. One row is shown per product (Microsoft Teams, Word, Excel, PowerPoint, Outlook, OneNote, Loop, and Copilot Chat), plus an **Any App** row that summarises adoption across all of them.
+The figures come from the Microsoft 365 Copilot usage reports in Microsoft Graph and cover the last 30 days. One row is shown per product (Microsoft Teams, Word, Excel, PowerPoint, Outlook, OneNote, Loop, and Copilot Chat), plus an **Any App** row that summarizes adoption across all of them.
 
 ## Table Details
 

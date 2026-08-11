@@ -2,10 +2,10 @@
 
 This page lists the Microsoft Agent 365 agent packages registered in the selected tenant.
 
-The list is read live from the tenant's package catalogue. Because the default catalogue listing omits agents, CIPP combines it with a second query for agent packages and merges the results into a single deduplicated view, so both agents and Microsoft 365 apps appear together.
+The list is read live from the tenant's package catalog. Because the default catalog listing omits agents, CIPP combines it with a second query for agent packages and merges the results into a single deduplicated view, so both agents and Microsoft 365 apps appear together.
 
 {% hint style="info" %}
-The Package Management API this page relies on requires a Microsoft Agent 365 licence on the tenant. Without one, the list will not populate.
+The Package Management API this page relies on requires a Microsoft Agent 365 license on the tenant. Without one, the list will not populate.
 {% endhint %}
 
 ## Table Details

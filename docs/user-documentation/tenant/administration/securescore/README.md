@@ -15,7 +15,7 @@ Selecting All Tenants replaces the cards with a portfolio view, built from CIPP'
 
 **Portfolio trend** charts the daily average across the retained history. Each day is averaged only over the tenants that reported a score that day, so a tenant that started reporting part way through the window does not drag the earlier points down.
 
-**Top 5** and **Bottom 5** rank the estate by score, with a coloured bar per tenant: green at 75% or above, amber from 50%, red below that. Selecting a tenant opens its own Secure Score page and switches the tenant selector to it. Ranks are estate-wide, so #1 is the best scoring tenant in the estate rather than the best of five. The two boards never overlap: Bottom 5 takes the lowest five and Top 5 takes whatever remains, so an estate with fewer than ten scored tenants shows a shorter Top 5.
+**Top 5** and **Bottom 5** rank the estate by score, with a colored bar per tenant: green at 75% or above, amber from 50%, red below that. Selecting a tenant opens its own Secure Score page and switches the tenant selector to it. Ranks are estate-wide, so #1 is the best scoring tenant in the estate rather than the best of five. The two boards never overlap: Bottom 5 takes the lowest five and Top 5 takes whatever remains, so an estate with fewer than ten scored tenants shows a shorter Top 5.
 
 {% hint style="info" %}
 Scores appear only after the nightly cache job has run, so a newly added tenant shows nothing until the next refresh. Tenants with no maximum score recorded are left out of the average and the leaderboards entirely.
@@ -51,7 +51,7 @@ The filter button above the cards limits which recommendations are shown. The cu
 
 Each card covers one recommendation and carries the following, where Microsoft supplies it:
 
-* A chip showing how complete the recommendation is, coloured green at 100%, amber above 50%, and red at 50% or below. A recommendation marked as handled elsewhere also reads "Resolved by Third Party".
+* A chip showing how complete the recommendation is, colored green at 100%, amber above 50%, and red at 50% or below. A recommendation marked as handled elsewhere also reads "Resolved by Third Party".
 * **Description**, explaining what the recommendation covers.
 * **Remediation Recommendation**, explaining how to satisfy it. Where a CIPP standard covers the recommendation, this points to that standard instead of Microsoft's own instructions. It is hidden once the recommendation reaches 100%.
 * **Threats**, the threat categories the recommendation mitigates.

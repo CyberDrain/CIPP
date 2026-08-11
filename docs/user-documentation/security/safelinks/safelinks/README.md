@@ -37,11 +37,11 @@ Safe Links rewrites and checks links in mail, Teams and Office documents at the 
 | Enable Safe Links For Office  | Whether links in Office applications are protected.                                                       |
 | Track Clicks                  | Whether user clicks on protected links are recorded.                                                      |
 | Scan Urls                     | Whether links are scanned in real time when clicked.                                                      |
-| Enable For Internal Senders   | Whether the policy also applies to mail sent inside the organisation.                                      |
+| Enable For Internal Senders   | Whether the policy also applies to mail sent inside the organization.                                      |
 | Deliver Message After Scan    | Whether a message is held until its links have been scanned.                                              |
 | Allow Click Through           | Whether users can continue past a warning page to a link flagged as malicious.                            |
 | Disable Url Rewrite           | Whether link rewriting is turned off, leaving the click time check in place without changing the link text. |
-| Enable Organization Branding  | Whether warning pages carry the organisation's branding.                                                  |
+| Enable Organization Branding  | Whether warning pages carry the organization's branding.                                                  |
 | When Created                  | When the policy was created.                                                                              |
 | When Changed                  | When the policy was last modified.                                                                        |
 

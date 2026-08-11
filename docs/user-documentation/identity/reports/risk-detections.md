@@ -7,7 +7,7 @@ This report lists the risk detections Microsoft Entra ID Protection has raised, 
 The properties returned are for the Graph resource type `riskDetection`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/riskdetection?view=graph-rest-beta#properties).
 
 {% hint style="info" %}
-The **Location** column is a button rather than plain text. Selecting it opens a Location Details dialog plotting the detection on a map, with the city, state and country listed alongside, which is usually the quickest way to judge whether a detection is a genuine anomaly or the user travelling.
+The **Location** column is a button rather than plain text. Selecting it opens a Location Details dialog plotting the detection on a map, with the city, state and country listed alongside, which is usually the quickest way to judge whether a detection is a genuine anomaly or the user traveling.
 {% endhint %}
 
 ## Filters

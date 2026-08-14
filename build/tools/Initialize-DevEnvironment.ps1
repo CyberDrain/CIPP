@@ -1,7 +1,7 @@
 Write-Host 'Initializing development environment...' -ForegroundColor Green
 # Backend root - the old CIPP-API repo now lives under backend\ in the monorepo
 $CippRoot = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.FullName 'backend'
-write-host "CIPP backend root: $CippRoot" -ForegroundColor Green
+Write-Host "CIPP backend root: $CippRoot" -ForegroundColor Green
 $env:CIPPRootPath = $CippRoot
 
 $SettingsPath = Join-Path $PSScriptRoot 'local.settings.json'
@@ -89,7 +89,7 @@ Import-Module ( Join-Path $CippRoot 'Modules\AzBobbyTables' )
 Import-Module ( Join-Path $CippRoot 'Modules\DNSHealth' )
 Import-Module ( Join-Path $CippRoot 'Modules\CIPPCore' )
 Import-Module ( Join-Path $CippRoot 'Modules\CippExtensions' )
-
+# This is a comment
 $Auth = Get-CIPPAuthentication
 if ($Auth) {
     Write-Host 'Development environment initialized successfully!' -ForegroundColor Green

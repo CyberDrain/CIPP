@@ -375,6 +375,7 @@ const AlertWizard = () => {
           tenantFilter: alert.RawAlert.Tenants,
           excludedTenants: alert.excludedTenants?.filter((t) => t !== null) || [],
           Actions: alert.RawAlert.Actions,
+          BecActions: alert.RawAlert.BecActions || [],
           logbook: foundLogbook,
           AlertComment: alert.RawAlert.AlertComment || '',
           CustomSubject: alert.RawAlert.CustomSubject || '',
@@ -992,6 +993,31 @@ const AlertWizard = () => {
                                 </Grid>
                               </CippFormCondition>
                             )}
+                            <CippFormCondition
+                              formControl={formControl}
+                              field="Actions"
+                              compareType="valueContains"
+                              compareValue="becremediate"
+                            >
+                              <Grid size={12}>
+                                <CippFormComponent
+                                  type="autoComplete"
+                                  name="BecActions"
+                                  label="BEC containment actions to run"
+                                  formControl={formControl}
+                                  multiple={true}
+                                  creatable={false}
+                                  helperText="Leave empty for the default set: reset password, block sign-in, revoke sessions, remove MFA methods, disable inbox rules, disable OneDrive sharing. Critical actions run without a typed confirmation when triggered by an alert."
+                                  api={{
+                                    url: '/api/ListBECRemediationActions',
+                                    queryKey: 'ListBECRemediationActions',
+                                    dataKey: 'Actions',
+                                    labelField: (option) => `${option.Label} (${option.Impact})`,
+                                    valueField: 'Id',
+                                  }}
+                                />
+                              </Grid>
+                            </CippFormCondition>
                             <Grid size={12}>
                               <CippFormComponent
                                 type="textField"

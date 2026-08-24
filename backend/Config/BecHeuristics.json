@@ -1,0 +1,188 @@
+{
+  "metadata": {
+    "name": "CIPP BEC Heuristics",
+    "description": "Detection heuristics, thresholds, collector caps and threat-score weights used by the Business Email Compromise check (Push-BECRun) and its server-side score (Get-CIPPBecScore). Everything here operates on metadata only - audit records, sign-ins, trace headers, permissions, grants, rules and devices - never on message bodies, attachments or file contents.",
+    "sections": {
+      "window": "Analysis window in days. Every 'in window' check and the recency flags use it.",
+      "caps": "Paging and storage caps per collector. When a cap is hit the collector reports Complete=false and the cap value so the report can say the data is partial.",
+      "score": "Additive threat-score weights and the High/Medium thresholds. The first fifteen weights are the ones the PDF report used before the score moved server-side and must stay aligned with it.",
+      "inboxRules": "Regexes that mark an inbox rule as suspicious.",
+      "highRiskAuditOperations": "Unified audit log operations that are treated as high risk when attributed to the investigated user.",
+      "phishingSubjectPatterns": "Named regexes applied to received-mail subjects from message-trace metadata.",
+      "typosquat": "Levenshtein distance band that flags a sender domain as a look-alike of one of the tenant's accepted domains.",
+      "riskyScopes": "Delegated OAuth scopes that make a user grant risky; the RiskyPermissions.json catalog is merged in at load time.",
+      "transportRules": "Transport-rule actions that indicate mail diversion or suppression, matched on parameter names and on the rule description.",
+      "directoryAudit": "Entra directory-audit activity names that matter during a compromise investigation.",
+      "mailActivity": "Unified audit log operations counted (never stored row by row) for the mailbox-activity check.",
+      "sentMail": "Mass-mail thresholds for the sent message trace analysis."
+    }
+  },
+  "window": {
+    "days": 7
+  },
+  "caps": {
+    "auditLogPageSize": 5000,
+    "auditLogPages": 10,
+    "mailActivityPages": 10,
+    "messageTracePageSize": 5000,
+    "messageTracePages": 5,
+    "storedSentMessages": 1000,
+    "storedReceivedMessages": 500,
+    "storedMailActivityGroups": 500,
+    "signIns": 50,
+    "nonInteractiveSignIns": 50,
+    "directoryAudits": 500,
+    "transportRuleChanges": 200,
+    "riskDetections": 50,
+    "defenderMessages": 1000
+  },
+  "score": {
+    "thresholds": {
+      "high": 7,
+      "medium": 4
+    },
+    "newUsersThreshold": 5,
+    "weights": {
+      "NewRules": 3,
+      "InboxRuleChanges": 3,
+      "PermissionChangesTargetingUser": 2,
+      "PermissionChanges": 1,
+      "NewApps": 1,
+      "NewUsers": 1,
+      "SafelistChanges": 2,
+      "SuspiciousRules": 5,
+      "MaliciousApps": 5,
+      "ForeignSuccessfulSignIns": 3,
+      "ForeignActivity": 3,
+      "AnonymousLinks": 3,
+      "MassMail": 3,
+      "RecentMfaMethods": 2,
+      "RecentIntuneDevices": 2,
+      "FlaggedDelegations": 2,
+      "RiskyUserGrants": 3,
+      "CatalogUserGrants": 5,
+      "RiskyTransportRuleChanges": 4,
+      "FlaggedMailboxAddIns": 1,
+      "TyposquatSenders": 3,
+      "DefenderDetections": 3,
+      "FlaggedDirectoryAudits": 2,
+      "RecentRegisteredDevices": 2,
+      "ForeignNonInteractiveSignIns": 3,
+      "SuspiciousMailActivity": 2,
+      "RiskyUserHigh": 4,
+      "RiskyUserMedium": 2,
+      "RiskyUserLow": 1,
+      "ConfirmedCompromised": 5
+    }
+  },
+  "inboxRules": {
+    "suspiciousFolderPattern": "RSS",
+    "lowVisibilityFolderRegex": "(?i)(rss|archive|deleted|junk|conversation history|notes|sync issues)",
+    "sensitiveNameRegex": "(?i)(invoice|payment|security|alert|verify|microsoft|admin)",
+    "sensitiveKeywordRegex": "(?i)(invoice|payment|wire|remittance|bank|swift|iban|ach|routing|account number|beneficiary|payroll|password|credential|verif|urgent|confidential)"
+  },
+  "highRiskAuditOperations": [
+    "Add-MailboxPermission",
+    "Add-RecipientPermission",
+    "Add-RoleGroupMember",
+    "New-InboxRule",
+    "Set-InboxRule",
+    "UpdateInboxRules",
+    "Set-AdminAuditLogConfig",
+    "Set-OrganizationConfig",
+    "HardDelete",
+    "Purge-ComplianceSearchAction",
+    "New-TransportRule",
+    "Set-TransportRule",
+    "Set-Mailbox"
+  ],
+  "phishingSubjectPatterns": {
+    "Urgent action language": "(?i)urgent.{0,25}(action|response).{0,25}required",
+    "Account verification language": "(?i)(verify|validate).{0,25}(account|identity|password)",
+    "Account suspension language": "(?i)(suspend|disable|expire).{0,25}(account|mailbox|access)",
+    "Prize or lottery language": "(?i)\\b(winner|lottery|prize|gift card)\\b",
+    "Invoice or payment language": "(?i)\\b(invoice|payment|wire|remittance)\\b"
+  },
+  "phishingKeywordPattern": "(?i)\\b(urgent|verify|suspend(?:ed)?|password|credential|invoice|payment|wire|gift card|confidential)\\b",
+  "typosquat": {
+    "minDistance": 1,
+    "maxDistance": 2
+  },
+  "riskyScopes": {
+    "regex": "(?i)(\\.ReadWrite(\\.All)?$|\\.All$|Mail\\.|Files\\.|Directory\\.|RoleManagement\\.|offline_access)",
+    "includeRiskyPermissionsCatalog": true
+  },
+  "transportRules": {
+    "operations": [
+      "New-TransportRule",
+      "Set-TransportRule",
+      "Enable-TransportRule",
+      "Disable-TransportRule",
+      "Remove-TransportRule"
+    ],
+    "riskyParameterRegex": "(?i)^(BlindCopyTo|RedirectMessageTo|CopyTo|AddToRecipients|AddManagerAsRecipientType|RouteMessageOutboundConnector|ModerateMessageByUser|ModerateMessageByManager)$",
+    "recentParameterRegex": "(?i)^(DeleteMessage|Quarantine|SetSCL|RemoveHeader|SetHeaderName)$",
+    "descriptionRegex": "(?i)(redirect|blind copy|bcc|delete|quarantine|set the spam confidence)"
+  },
+  "directoryAudit": {
+    "flaggedActivities": [
+      "User registered security info",
+      "User registered all required security info",
+      "User started security info registration",
+      "User changed default security info",
+      "User deleted security info",
+      "Admin registered security info",
+      "Update user",
+      "Reset password (by admin)",
+      "Change user password",
+      "Reset user password",
+      "Update StsRefreshTokenValidFrom Timestamp",
+      "Consent to application",
+      "Add OAuth2PermissionGrant",
+      "Add app role assignment to service principal",
+      "Add app role assignment grant to user",
+      "Add service principal",
+      "Add service principal credentials",
+      "Add delegated permission grant",
+      "Register device",
+      "Add device",
+      "Add registered owner to device",
+      "Add registered users to device",
+      "Add member to role",
+      "Add eligible member to role",
+      "Disable Strong Authentication",
+      "Update user attributes (StrongAuthentication)"
+    ]
+  },
+  "mailActivity": {
+    "userOperations": [
+      "MailItemsAccessed",
+      "HardDelete",
+      "SoftDelete",
+      "MoveToDeletedItems",
+      "Send"
+    ],
+    "mailboxOwnerOperations": [
+      "SendAs",
+      "SendOnBehalf"
+    ],
+    "hardDeleteThreshold": 20
+  },
+  "sentMail": {
+    "repeatSubjectMessages": 5,
+    "repeatSubjectRecipients": 20,
+    "minRepeatedSubjectMessages": 3,
+    "burstMessages": 10,
+    "burstRecipients": 30,
+    "burstWindowMinutes": 10
+  },
+  "mailboxAddIns": {
+    "trustedProviderRegex": "(?i)^microsoft"
+  },
+  "delegations": {
+    "folderScopes": [
+      "Calendar",
+      "Inbox"
+    ]
+  }
+}

@@ -12,9 +12,15 @@ Nothing on this page is proof of a compromise. The checks surface the informatio
 
 ## Running the Analysis
 
-The analysis runs as a background job. The first visit queues it and the page polls until it finishes, which can take up to ten minutes on a tenant with a lot of log data. The result is then cached against the user, so returning to the page shows the earlier run rather than starting a new one.
+Nothing runs when the page opens: it loads the user's run history and shows the latest run, or an empty status card with the start button when there is none. Starting a run queues a background job. The status card then shows whether the job is still **queued** (no worker has picked it up yet) or **running**, which phase it is in, and each phase's outcome as it completes - the same live progress the SharePoint template deployment uses. A run usually takes a few minutes; a tenant with a lot of log data can take up to ten. A run that makes no progress for twenty minutes - typically because the background worker restarted - is marked failed the next time the page polls it, with the reason shown; start a new run. Every run is kept as a **case** with its own id (`BEC-<timestamp>-<suffix>`), so returning to the page shows the user's latest run rather than starting a new one, and the **Run history** card lists every earlier run with its scope, threat level and score. Select a past run to view it exactly as it was collected; delete a run to remove it and its evidence permanently. The same history for every user, and every tenant, is on the [BEC Reports](../../../reports/bec-reports.md) page.
 
-The **Log information** card at the top of the checks reports whether the audit log extraction succeeded and when the data was pulled. It is the first thing to read, because the outcome shapes everything below it.
+Every run is the full investigation: checks 1 to 21 below - the classic signals plus the mailbox delegation inventory and forwarding, auto-reply and protocol state, the user's own application consents, transport rules, mailbox add-ins, phishing-shaped received mail and Defender verdicts, the Entra directory audit, registered devices, non-interactive sign-ins, mailbox activity counts and Identity Protection state. Runs made before the investigation became full-only are labelled **Quick check (older run)** and hold checks 1 to 11 only.
+
+Runs can also be queued for many users at once. Select the users on the [Users](../README.md) page and choose **Run BEC check**, pick the scope, and one run per user (at most fifty per request) is queued as a single job that the Queue page tracks. Each run is a separate case and shows up on the [BEC Reports](../../../reports/bec-reports.md) page and in the user's own run history as it completes.
+
+Everything collected is metadata: audit records, sign-ins, directory audits, message-trace headers, permissions, consents, rules and devices. No message body, attachment or file content is ever read or stored, which keeps the investigation inside what a partner relationship permits.
+
+The **Log information** card at the top of the checks reports whether the audit log extraction succeeded, when the data was pulled, and which case and scope the page is showing. It is the first thing to read, because the outcome shapes everything below it. Each check card also carries a **Partial** or **Failed** chip when its collector hit a paging cap or could not read its source; hover it for the reason. A partial or failed check is reported as such rather than shown as clean.
 
 {% hint style="danger" %}
 Most checks depend on the unified audit log. When it is disabled for the tenant, the Log information card says so and the checks that read from it come back empty rather than clean. An empty result in that state means nothing was available to search, not that nothing happened.
@@ -37,6 +43,21 @@ Every check covers the seven days before the analysis ran, apart from the MFA de
 | Check 9: Intune Devices             | Every Intune-managed device enrolled under the account, newest enrolment first. The card's count is the number enrolled in the last seven days rather than the total, so a zero here still leaves a device list worth reading. A device standing up during the window can mean an intruder enrolling a virtual machine or personal endpoint under the identity, which is also a route to registering Windows Hello for Business as a persistence mechanism.                        |
 | Check 10: Sign-in Locations         | The user's last fifty sign-ins with the application, result, IP address, country, and city, compared against the account's assigned usage location. The card's count is the number of foreign data points found across sign-ins, rule changes, safelist changes, sharing changes, and sent mail. See [#location-analysis](bec.md#location-analysis "mention") below.                                                                                                               |
 | Check 11: Sharing Links             | Every OneDrive and SharePoint sharing link the account created or changed during the window, with the file, who it was shared with, and the IP address it was done from. Anonymous links are called out separately, because anyone holding the URL can open them and they give an intruder a data feed that survives a password reset.                                                                                                                                             |
+
+The full analysis adds the following checks.
+
+| Check                                  | What it looks for                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Check 12: Mailbox state & delegations  | The mailbox's forwarding address, automatic-reply state (state, schedule and audience only; the reply text is never read), enabled protocols and auditing, plus every delegation on it: FullAccess, SendAs, SendOnBehalf, Calendar and Inbox folder permissions, and resource delegates. A trustee that is a guest, an address outside the tenant's accepted domains, or the Default/Anonymous principal with more than availability rights is flagged, as is any delegation whose grant appears in the window's audit log (check 4), whatever the trustee. |
+| Check 13: Application consents         | The applications this user has consented to and the enterprise-app roles assigned to them, with the client application's publisher and verification state. A consent is flagged when the application matches the CIPP known-malicious catalog or the Huntress rogue-apps feed, or carries a high-risk delegated scope (mail, files, directory, `offline_access`...) from an unverified, non-Microsoft publisher. Consent survives a password reset. |
+| Check 14: Transport rules              | Tenant-wide transport rules created, changed, enabled, disabled or removed during the window, attributed to the administrator and IP that made the change, flagged when the change set a diversion or suppression action (BCC, redirect, delete, quarantine, spam score). The current rules are listed too: any rule with a diversion action (BCC, copy, redirect, added recipients, moderation, outbound connector) whatever its age, and rules with a suppression action (delete, quarantine, spam score, header changes) only when they changed in the window - a description alone never flags a rule - with the tenant's total rule count.       |
+| Check 15: Mailbox add-ins              | The add-ins available to the mailbox. Enabled, user-installed add-ins from a non-Microsoft provider are flagged; an add-in can read and send mail on the user's behalf.                                                                                                                                                                                                                              |
+| Check 16: Received mail                | Mail delivered to the user during the window, from message-trace metadata only: sender, subject, status, size and originating IP. Subjects are matched against five phishing patterns (urgency, account verification, suspension, prizes, invoices), and sender domains within one or two character edits of one of the tenant's own domains are flagged as look-alikes. Where Defender for Office 365 Plan 2 is licensed, its analysed-email verdicts for the recipient are added, with the messages that reached the mailbox called out. |
+| Check 17: Entra directory audit        | Directory audit events that targeted, or were initiated by, the user during the window, with who did it and from where. Security-info registration, application consent, service-principal creation, device registration, password and token events and role changes are flagged.                                                                                                                 |
+| Check 18: Registered devices           | Entra devices registered to the user, with those registered during the window flagged. A device registered during the window can be an intruder's virtual machine or phone, and a route to Windows Hello for Business persistence.                                                                                                                                                                |
+| Check 19: Non-interactive sign-ins     | The user's most recent non-interactive sign-ins (token refreshes and background token use), compared against the usage location like Check 10. Stolen tokens and adversary-in-the-middle sessions show up here rather than in the interactive log.                                                                                                                                                  |
+| Check 20: Mailbox activity             | Counts of the user's mailbox operations from the unified audit log, bucketed by operation, client IP and application: item accesses, hard and soft deletes, sends, and messages sent as or on behalf of the user by someone else. Only counts are kept; no item, subject or folder is read. Hard deletes above the configured threshold are flagged. Item-access records need Purview Audit (Premium). |
+| Check 21: Identity Protection          | Whether Entra ID Protection lists the user as risky, at what level and in what state, with the risk detections raised during the window. Needs Entra ID P2; when it cannot be read the card says so rather than reporting the user as not risky.                                                                                                                                                    |
 
 {% hint style="info" %}
 Checks 2, 4, and 7 are tenant-wide rather than scoped to this user, and Check 3 sweeps the whole tenant for catalog matches. That is deliberate: an intruder who has taken one mailbox often leaves traces elsewhere, so a new account or an unfamiliar application appearing in the same window is worth knowing about even though it has nothing to do with the mailbox in front of you.
@@ -86,22 +107,79 @@ If CIPP cannot read the tenant's Intune devices, the card says so in red and sho
 
 | Action              | Description                                                                                                                                                                                                                                                                                                       |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Refresh Data        | Discards the cached result and runs the analysis again. Use it when the cached data predates something you need to see, such as a rule created in the last few minutes or a device you have just retired. The page returns to its waiting state while the new run completes.                                      |
-| Remediate User      | Runs the containment steps listed on the overview card in one go: blocks sign-in, resets the password, disconnects all current sessions, removes every MFA method, disables all inbox rules, and disables OneDrive sharing. A confirmation dialog appears first.                                                  |
+| Run investigation   | Starts a new run of all 21 checks. The earlier run stays in the history. Use it when the data on screen predates something you need to see, such as a rule created in the last few minutes or a device you have just retired. The page returns to its waiting state while the new run completes.                            |
+| Contain user        | Opens the containment drawer described under [#containment](bec.md#containment "mention"): pick the actions and their targets, type the UPN for critical ones, run.                                                                                                                                  |
 | Generate PDF Report | Opens a preview of a formatted report covering the findings, written to be readable by managers and end users as well as technicians, and suitable for attaching to a compliance record. **Download PDF** saves it. What the report contains is covered under [#pdf-report](bec.md#pdf-report "mention") below. |
 | Download JSON       | Saves the complete analysis as a JSON file, including data the cards do not display.                                                                                                                                                                                                                              |
+| Export evidence     | Builds the evidence package for the run on screen and downloads it: a ZIP holding the PDF report, the results JSON, a CSV per finding set, the containment history, every logbook entry for the case and a manifest with the SHA-256 of each file. See [#evidence-export](bec.md#evidence-export "mention").                                                          |
 
 {% hint style="warning" %}
-Removing every MFA method leaves the account with no second factor registered. Once sign-in is unblocked and the password reset, the user has to register a method again, so plan how they will do that before running the remediation on someone who is not sitting next to you.
+Removing every MFA method leaves the account with no second factor registered. Once sign-in is unblocked and the password reset, the user has to register a method again, so plan how they will do that before running the containment on someone who is not sitting next to you.
 {% endhint %}
 
+## Containment
+
+**Contain user** replaces the fixed six-step remediation with a drawer of selectable actions. The classic six are preselected; the rest are off until you switch them on. Actions that act on specific things - consents, delegations, rules, add-ins, devices - get a picker filled from the run's findings, with the flagged items preselected, so what you saw in the checks is what gets contained.
+
+| Action                               | Impact   | What it does                                                                                                                                                            |
+| ------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reset password                       | Critical | New random password (shown once, or as a PwPush link), change required at next sign-in.                                                                                 |
+| Block sign-in                        | Critical | Disables the account. A directory-synced account must also be disabled on-premises or the next sync re-enables it; the result says so.                                  |
+| Revoke sessions                      | High     | Invalidates every refresh token.                                                                                                                                         |
+| Remove MFA methods                   | High     | Every method, or only the ones picked.                                                                                                                                   |
+| Revoke application consents          | Critical | Deletes the picked consent grants and app-role assignments (flagged ones by default).                                                                                    |
+| Disable rogue applications tenant-wide | Critical | Disables the service principal of every application that matched the rogue-app catalogs, for all users. Reversible from the enterprise applications page.            |
+| Disable inbox rules                  | High     | All rules except the junk and out-of-office system rules, or only the ones picked.                                                                                      |
+| Clear mailbox forwarding             | High     | Removes the forwarding address and SMTP forwarding address.                                                                                                             |
+| Turn off automatic replies           | Medium   | Disables the out-of-office reply.                                                                                                                                       |
+| Remove mailbox delegations           | Critical | Removes the picked FullAccess, SendAs, SendOnBehalf, folder and resource-delegate permissions (flagged ones by default).                                                |
+| Disable transport rules              | Critical | Disables the picked tenant-wide rules (by default the flagged rules changed in the window). Affects every mailbox.                                                      |
+| Disable mailbox add-ins              | Medium   | Disables the picked add-ins for this mailbox.                                                                                                                            |
+| Block legacy mailbox protocols       | High     | Turns off EWS, IMAP, POP and ActiveSync by default; OWA, MAPI, ECP and SMTP AUTH can be added.                                                                          |
+| Block / remove mobile device partnerships | High | Blocks the picked ActiveSync devices, or deletes the partnerships so they must pair again.                                                                            |
+| Disable / delete registered devices  | High / Critical | Disables or deletes the picked Entra devices (those registered in the window by default).                                                                        |
+| Targeted Conditional Access policy   | High     | A policy for this user only requiring MFA (optionally plus a compliant device) for every app, enabled or report-only, removed automatically after the chosen hours.     |
+| Disable OneDrive sharing             | Medium   | Sets the user's OneDrive sharing to disabled. Existing links are not removed.                                                                                           |
+
+The flow is deliberate:
+
+1. Each selected action shows the targets it will act on, defaulting to the run's flagged findings; adjust them in the pickers before running.
+2. When any **Critical** action is selected, the drawer asks you to type the user's UPN. Nothing runs until it matches.
+3. **Run containment** executes the actions in a fixed order (password, sign-in, sessions, MFA, consents, applications, rules, forwarding, auto-reply, delegations, transport rules, add-ins, protocols, devices, Conditional Access, OneDrive), each on its own, so one failure never stops the rest. Every action is logged with the case id, and the outcome is recorded on the run so the history and the evidence package carry it.
+
 {% hint style="info" %}
-**Remediate User** does not touch the user's devices or remove applications, and while it disables OneDrive sharing it does not review links that were already created. If Check 9 has turned up an enrolment you do not recognise, Check 3 a malicious application, or Check 11 a sharing link you cannot explain, dealing with those is a separate decision and a separate action.
+The same containment runs from the audit-log alert action **Execute a BEC Remediate**. The alert rule can now choose which containment actions it runs; with none chosen it runs the classic six. Alerts confirm critical actions by design - there is no human to type the UPN - so be deliberate about which rules get it. The **NewRiskyUsers** scheduled alert has an opt-in switch that runs the classic six for users that newly appear at high risk.
+{% endhint %}
+
+### Purview content search and purge
+
+The **Purview content search and purge** card is the GDAP-compatible answer to "get that phishing message out of everyone's mailbox". Enter the sender, a subject fragment and the dates, choose every mailbox or a list, and CIPP creates and starts a Purview content search. **Refresh status** shows the state and the item count per mailbox - counts only; CIPP never retrieves the messages. The **Who else received mail from this sender?** row action on the received-mail findings (and **Trace a sender's spread**) lists the recipients of a sender from message-trace metadata, split into internal and external, to decide which mailboxes the search should cover. The row actions also add the sender or its whole domain to the Tenant Allow/Block List.
+
+Purging soft-deletes the found items through Purview. It is irreversible from CIPP and is gated two ways: only a CIPP **super admin** sees the control, and the **search name must be typed** to confirm; the status above the control shows the counts that will be purged. Purview removes at most 10 items per mailbox per purge, so repeat the search and purge until the count reaches zero.
+
+{% hint style="warning" %}
+Content search needs the CIPP-SAM service principal in a Purview role group that includes **Compliance Search** (eDiscovery Manager); purging additionally needs **Search And Purge**. Neither is granted by the CIPP-SAM setup. When the role is missing the result says exactly that rather than failing silently.
 {% endhint %}
 
 {% hint style="info" %}
 The JSON export carries three data sets that no card displays: the last fifty sign-ins for the tenant as a whole (`TenantLastSignIns`), the user's single most recent sign-in, and the mobile devices attached to the mailbox. If the investigation turns on tenant-wide sign-in activity or an unrecognised mobile device, that is where to look. The Intune device list in the export also holds the manufacturer, model, owner type, and assigned user, none of which the card shows.
 {% endhint %}
+
+## Evidence export
+
+**Export evidence (ZIP)** on the Report card packages everything CIPP holds about the case so it can be handed to an insurer, a client, a forensic partner or a compliance file, and be verified later. The package is built on the server from the stored run and contains:
+
+| File                   | Contents                                                                                                                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `report.pdf`           | The PDF report, rendered in the browser at export time with your instance branding.                                                                        |
+| `results.json`         | The complete results of the run, exactly as the page and the report use them.                                                                             |
+| `findings/*.csv`       | One CSV per finding set (inbox rules, delegations, consents, transport rules, received-mail findings, sign-ins, devices and so on). Empty sets are skipped. |
+| `score.json`           | The threat score with every signal that contributed to it.                                                                                                |
+| `containment.json`     | Every containment run recorded on the case, with passwords redacted.                                                                                      |
+| `logbook.json`         | Every CIPP logbook entry stamped with the case id, from the moment the run was queued to the export itself.                                               |
+| `manifest.sha256.json` | The case, tenant, user, who exported it and when, and the SHA-256 of every file above.                                                                    |
+
+The package is built fresh for every export and streamed to your browser - nothing is stored. Each export's SHA-256, time and size are recorded on the run (the last twenty) and shown next to the button and on the [BEC Reports](../../../reports/bec-reports.md) page, so a copy received later can be checked against the export it came from. Downloads from the reports page are built the same way but without the PDF, which only the browser can render. Like the run itself, the package holds metadata only.
 
 ## PDF Report
 
@@ -117,10 +195,25 @@ The report is built from the analysis already on screen, so it never starts a fr
 
 ### Threat Assessment
 
-The **Threat Assessment** banner on the executive summary is a total of fixed points, one contribution per finding, regardless of how many results that finding returned.
+The **Threat Assessment** banner on the executive summary is a total of fixed points, one contribution per finding, regardless of how many results that finding returned. The score is computed by the backend when the run completes and stored with it, so the page's **Threat assessment** card, the report and the API all show the same number and the same list of signals that fired. The weights live in `Config/BecHeuristics.json`.
 
 | Finding                                                          | Points |
 | ---------------------------------------------------------------- | ------ |
+| Identity Protection lists the user as confirmed compromised      | 5      |
+| A consent to an application in the rogue-app catalogs            | 5      |
+| Identity Protection lists the user at high risk                  | 4      |
+| A transport rule with a diversion or suppression action changed  | 4      |
+| A consent with a high-risk scope from an unverified publisher    | 3      |
+| Mail received from a look-alike of one of the tenant's domains   | 3      |
+| A Defender-classified threat delivered to the mailbox            | 3      |
+| A successful non-interactive sign-in from outside the usage location | 3  |
+| A flagged mailbox delegation (external, guest or catch-all)      | 2      |
+| A flagged directory-audit event                                  | 2      |
+| An Entra device registered in the window                         | 2      |
+| Hard deletes above the threshold, or mailbox access from a foreign IP | 2 |
+| Identity Protection lists the user at medium risk                | 2      |
+| A user-installed non-Microsoft add-in                            | 1      |
+| Identity Protection lists the user at low risk                   | 1      |
 | A rule that moves mail to an RSS folder                          | 5      |
 | An application matching the known-malicious catalog              | 5      |
 | One or more inbox rules on the mailbox                           | 3      |

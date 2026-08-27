@@ -132,8 +132,20 @@ export const selectGdapDefaultOptions = (options = [], defaults = []) =>
     .filter(Boolean);
 
 /** Payload for POST /api/ExecGDAPRoleTemplate?Action=Save. */
+// Group mappings belong to one partner tenant; rows without a partner predate multi-partner
+// and belong to the primary, so they are only excluded when a specific partner is chosen.
+export const filterGdapMappingsByPartner = (mappings = [], partnerTenantId) =>
+  partnerTenantId
+    ? mappings.filter((mapping) => !mapping?.partnerTenantId || mapping.partnerTenantId === partnerTenantId)
+    : mappings;
+
 export const buildGdapTemplatePayload = (values, mappings = [], originalTemplateId) => {
-  const resolved = resolveGdapSelections(values?.roleMappings, mappings, values?.customSuffix);
+  const partnerTenantId = values?.partnerTenant?.value;
+  const resolved = resolveGdapSelections(
+    values?.roleMappings,
+    filterGdapMappingsByPartner(mappings, partnerTenantId),
+    values?.customSuffix
+  );
   const payload = {
     TemplateId: values?.templateId,
     RoleMappings: resolved.filter((item) => item.mapping).map((item) => item.mapping),
@@ -141,6 +153,7 @@ export const buildGdapTemplatePayload = (values, mappings = [], originalTemplate
       .filter((item) => !item.mapping)
       .map((item) => ({ label: item.option.label, value: gdapSelectionRoleId(item.option) })),
     CustomSuffix: values?.customSuffix,
+    ...(partnerTenantId ? { partnerTenantId } : {}),
   };
   if (originalTemplateId) {
     payload.OriginalTemplateId = originalTemplateId;

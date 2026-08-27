@@ -121,6 +121,8 @@ const Page = () => {
               status: relationship?.status,
               autoExtendDuration: relationship?.autoExtendDuration,
               lastModifiedDateTime: relationship?.lastModifiedDateTime,
+              partnerTenantId: relationship?.partnerTenantId,
+              partnerIsPrimary: relationship?.partnerIsPrimary,
             },
           };
           formControl.setValue("id", formValue);
@@ -239,6 +241,7 @@ const Page = () => {
     }
     var data = {
       id: currentRelationship?.value,
+      partnerTenantId: currentRelationship?.addedFields?.partnerTenantId,
     };
     if (!currentInvite) {
       data.autoMapRoles = true;
@@ -269,6 +272,7 @@ const Page = () => {
     var data = {
       id: currentRelationship?.value,
       retry: true,
+      partnerTenantId: currentRelationship?.addedFields?.partnerTenantId,
     };
     if (!currentInvite) {
       data.autoMapRoles = true;
@@ -319,6 +323,10 @@ const Page = () => {
                     excludeTenantFilter: true,
                     queryKey: "GDAPRelationships",
                     dataKey: "Results",
+                    addedField: {
+                      partnerTenantId: "partnerTenantId",
+                      partnerIsPrimary: "partnerIsPrimary",
+                    },
                     labelField: (option) =>
                       (option?.customer?.displayName ?? "Pending Invite") +
                       " - (" +
@@ -372,10 +380,26 @@ const Page = () => {
                       type="autoComplete"
                       api={{
                         url: "/api/ExecGDAPRoleTemplate",
-                        queryKey: "GDAPTemplates",
+                        queryKey: `GDAPTemplates-${currentRelationship?.addedFields?.partnerTenantId ?? ""}`,
                         dataKey: "Results",
                         labelField: (option) => option?.TemplateId,
                         valueField: "RoleMappings",
+                        // Only templates whose groups live in the relationship's partner
+                        dataFilter: (options) =>
+                          options.filter((option) => {
+                            const template = option.rawData ?? {};
+                            const relationshipPartner =
+                              currentRelationship?.addedFields?.partnerTenantId;
+                            if (!relationshipPartner) return true;
+                            const templatePartners = String(template.partnerTenantId || "")
+                              .split(",")
+                              .filter(Boolean);
+                            if (templatePartners.length === 0) {
+                              // Legacy templates belong to the primary
+                              return currentRelationship?.addedFields?.partnerIsPrimary !== false;
+                            }
+                            return templatePartners.includes(relationshipPartner);
+                          }),
                       }}
                       required={true}
                       validators={{

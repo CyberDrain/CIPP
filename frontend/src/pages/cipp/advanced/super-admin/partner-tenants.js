@@ -105,15 +105,22 @@ const Page = () => {
     actions: actions,
   };
 
-  const modeAlert =
-    execPartnerMode.isSuccess && !partnerModeAvailable ? (
-      <Alert severity="info">
-        Partner tenants only appear in the tenant list when the{" "}
-        <Link href="/cipp/advanced/super-admin/tenant-mode">Tenant Mode</Link>{" "}
-        is set to &quot;Multi Tenant - Add Partner Tenant&quot;. Set that mode first to manage
-        partner tenants as tenants.
+  const pageAlerts = (
+    <>
+      <Alert severity="warning" sx={{ mb: 1 }}>
+        <strong>Beta feature.</strong> Multiple partner tenant support is under active development
+        and not yet officially supported — enable and use it at your own risk.
       </Alert>
-    ) : null;
+      {execPartnerMode.isSuccess && !partnerModeAvailable ? (
+        <Alert severity="info">
+          Partner tenants only appear in the tenant list when the{" "}
+          <Link href="/cipp/advanced/super-admin/tenant-mode">Tenant Mode</Link>{" "}
+          is set to &quot;Multi Tenant - Add Partner Tenant&quot;. Set that mode first to manage
+          partner tenants as tenants.
+        </Alert>
+      ) : null}
+    </>
+  );
 
   return (
     <>
@@ -122,7 +129,7 @@ const Page = () => {
         queryKey="partnerTenants"
         apiUrl="/api/ListPartnerTenants"
         apiDataKey="Results"
-        tableFilter={modeAlert}
+        tableFilter={pageAlerts}
         actions={actions}
         offCanvas={offCanvas}
         simpleColumns={["displayName", "defaultDomainName", "IsPrimary", "Managed", "tenantCount", "lastTokenRefresh"]}
@@ -149,6 +156,9 @@ const Page = () => {
       >
         <DialogTitle>Add Partner Tenant</DialogTitle>
         <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Additional partner tenants are a beta feature and not yet officially supported.
+          </Alert>
           <Typography variant="body2" sx={{ mb: 2 }}>
             Sign in with the CIPP service account of the partner tenant you want to add. Its
             customer tenants will appear after the next tenant refresh.

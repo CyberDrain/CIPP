@@ -387,7 +387,11 @@ export const CippTenantModeDeploy = (props) => {
               </Box>
             ))}
 
-          <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 2, mb: 2 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
+            Beta: additional partner tenants are under active development and not yet officially
+            supported.
+          </Typography>
+          <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 1, mb: 2 }}>
             <Box sx={{ position: "relative" }}>
               {!partnerTenantInfo?.data?.orgName && (
                 <Box

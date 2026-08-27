@@ -22,10 +22,13 @@ function Invoke-ExecCPVPermissions {
             $CPVConsentParams.ResetSP = $true
         }
 
+        # Any configured partner tenant gets partner treatment, not just the primary
+        $IsPartnerTenant = $TenantFilter -in @('PartnerTenant', $env:TenantID) -or $Tenant.isPartnerTenantRow -eq $true
+
         $GraphRequest = try {
-            if ($TenantFilter -notin @('PartnerTenant', $env:TenantID)) {
+            if (-not $IsPartnerTenant) {
                 Set-CIPPCPVConsent @CPVConsentParams
-            } else {
+            } elseif ($TenantFilter -eq 'PartnerTenant') {
                 $TenantFilter = $env:TenantID
                 $Tenant = [PSCustomObject]@{
                     displayName       = '*Partner Tenant'
@@ -34,7 +37,7 @@ function Invoke-ExecCPVPermissions {
             }
             Add-CIPPApplicationPermission -RequiredResourceAccess 'CIPPDefaults' -ApplicationId $env:ApplicationID -tenantfilter $TenantFilter
             Add-CIPPDelegatedPermission -RequiredResourceAccess 'CIPPDefaults' -ApplicationId $env:ApplicationID -tenantfilter $TenantFilter
-            if ($TenantFilter -notin @('PartnerTenant', $env:TenantID)) {
+            if (-not $IsPartnerTenant) {
                 Set-CIPPSAMAdminRoles -TenantFilter $TenantFilter
             }
             $Success = $true

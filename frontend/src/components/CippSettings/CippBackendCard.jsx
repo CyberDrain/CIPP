@@ -1,12 +1,12 @@
-import { OpenInNew } from "@mui/icons-material";
-import CippButtonCard from "../CippCards/CippButtonCard";
-import { Button, Stack, SvgIcon, Typography } from "@mui/material";
-import { CippOffCanvas } from "../CippComponents/CippOffCanvas";
-import { useState } from "react";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
+import { OpenInNew } from '@mui/icons-material'
+import CippButtonCard from '../CippCards/CippButtonCard'
+import { Button, Stack, SvgIcon, Typography } from '@mui/material'
+import { CippOffCanvas } from '../CippComponents/CippOffCanvas'
+import { useState } from 'react'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
 
 export const CippBackendCard = ({ backendComponents, item, hosted }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   const BackendButton = () => {
     return (
@@ -17,7 +17,7 @@ export const CippBackendCard = ({ backendComponents, item, hosted }) => {
           disabled={backendComponents.isFetching}
           target="_blank"
           rel="noreferrer"
-          href={backendComponents?.data?.Results?.[item.id] ?? "#"}
+          href={backendComponents?.data?.Results?.[item.id] ?? '#'}
           {...item?.linkProps}
         >
           <SvgIcon fontSize="small" style={{ marginRight: 4 }}>
@@ -32,21 +32,25 @@ export const CippBackendCard = ({ backendComponents, item, hosted }) => {
             onClick={() => setOpen(true)}
             disabled={backendComponents.isFetching || hosted}
             startIcon={
-              item.offcanvasIcon ? <SvgIcon fontSize="small">{item.offcanvasIcon}</SvgIcon> : ""
+              item.offcanvasIcon ? (
+                <SvgIcon fontSize="small">{item.offcanvasIcon}</SvgIcon>
+              ) : (
+                ''
+              )
             }
           >
             {item.offcanvasTitle}
           </Button>
         )}
       </Stack>
-    );
-  };
+    )
+  }
 
   return (
     <>
       <CippButtonCard
         title={item.name}
-        cardSx={{ display: "flex", flexDirection: "column", height: "100%" }}
+        cardSx={{ display: 'flex', flexDirection: 'column', height: '100%' }}
         CardButton={<BackendButton />}
       >
         <Typography variant="body2">{item.description}</Typography>
@@ -75,5 +79,5 @@ export const CippBackendCard = ({ backendComponents, item, hosted }) => {
         </CippOffCanvas>
       )}
     </>
-  );
-};
+  )
+}

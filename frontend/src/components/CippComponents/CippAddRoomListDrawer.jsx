@@ -1,81 +1,81 @@
-﻿import React, { useState, useEffect } from "react";
-import { Button, InputAdornment, Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useFormState } from "react-hook-form";
-import { ListAlt } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormDomainSelector } from "./CippFormDomainSelector";
-import { CippApiResults } from "./CippApiResults";
-import { useSettings } from "../../hooks/use-settings";
-import { ApiPostCall } from "../../api/ApiCall";
+﻿import React, { useState, useEffect } from 'react'
+import { Button, InputAdornment, Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useFormState } from 'react-hook-form'
+import { ListAlt } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippFormDomainSelector } from './CippFormDomainSelector'
+import { CippApiResults } from './CippApiResults'
+import { useSettings } from '../../hooks/use-settings'
+import { ApiPostCall } from '../../api/ApiCall'
 
 export const CippAddRoomListDrawer = ({
-  buttonText = "Add Room List",
+  buttonText = 'Add Room List',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const userSettingsDefaults = useSettings();
-  const tenantDomain = userSettingsDefaults.currentTenant;
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const userSettingsDefaults = useSettings()
+  const tenantDomain = userSettingsDefaults.currentTenant
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      displayName: "",
-      username: "",
+      displayName: '',
+      username: '',
       primDomain: null,
     },
-  });
+  })
 
-  const { isValid } = useFormState({ control: formControl.control });
+  const { isValid } = useFormState({ control: formControl.control })
 
   const addRoomList = ApiPostCall({
     urlFromData: true,
     relatedQueryKeys: [`RoomLists-${tenantDomain}`],
-  });
+  })
 
   // Reset form fields on successful creation
   useEffect(() => {
     if (addRoomList.isSuccess) {
       formControl.reset({
-        displayName: "",
-        username: "",
+        displayName: '',
+        username: '',
         primDomain: null,
-      });
+      })
     }
-  }, [addRoomList.isSuccess, formControl]);
+  }, [addRoomList.isSuccess, formControl])
 
   const handleSubmit = () => {
-    formControl.trigger();
+    formControl.trigger()
     // Check if the form is valid before proceeding
     if (!isValid) {
-      return;
+      return
     }
 
-    const formData = formControl.getValues();
+    const formData = formControl.getValues()
     const shippedValues = {
       tenantFilter: tenantDomain,
       displayName: formData.displayName?.trim(),
       username: formData.username?.trim(),
       primDomain: formData.primDomain,
-    };
+    }
 
     addRoomList.mutate({
-      url: "/api/AddRoomList",
+      url: '/api/AddRoomList',
       data: shippedValues,
       relatedQueryKeys: [`RoomLists-${tenantDomain}`],
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
-      displayName: "",
-      username: "",
+      displayName: '',
+      username: '',
       primDomain: null,
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -92,7 +92,13 @@ export const CippAddRoomListDrawer = ({
         onClose={handleCloseDrawer}
         size="md"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -100,10 +106,10 @@ export const CippAddRoomListDrawer = ({
               disabled={addRoomList.isLoading || !isValid}
             >
               {addRoomList.isLoading
-                ? "Creating..."
+                ? 'Creating...'
                 : addRoomList.isSuccess
-                ? "Create Another"
-                : "Create Room List"}
+                  ? 'Create Another'
+                  : 'Create Room List'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -118,7 +124,7 @@ export const CippAddRoomListDrawer = ({
               formControl={formControl}
               name="displayName"
               label="Display Name"
-              validators={{ required: "Display Name is required" }}
+              validators={{ required: 'Display Name is required' }}
             />
           </Grid>
 
@@ -129,11 +135,11 @@ export const CippAddRoomListDrawer = ({
               name="username"
               label="Username"
               validators={{
-                required: "Username is required",
+                required: 'Username is required',
                 pattern: {
                   value: /^[a-zA-Z0-9\-_\.]+$/,
                   message:
-                    "Username can only contain letters, numbers, hyphens, underscores, and periods",
+                    'Username can only contain letters, numbers, hyphens, underscores, and periods',
                 },
               }}
               InputProps={{
@@ -147,7 +153,7 @@ export const CippAddRoomListDrawer = ({
               formControl={formControl}
               name="primDomain"
               label="Primary Domain"
-              validators={{ required: "Domain is required" }}
+              validators={{ required: 'Domain is required' }}
             />
           </Grid>
 
@@ -155,5 +161,5 @@ export const CippAddRoomListDrawer = ({
         </Grid>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

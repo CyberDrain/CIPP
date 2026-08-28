@@ -1,4 +1,4 @@
-import { getCippLicenseTranslation } from "./get-cipp-license-translation";
+import { getCippLicenseTranslation } from './get-cipp-license-translation'
 
 /**
  * Extracts unique licenses from assignedLicenses data
@@ -7,10 +7,10 @@ import { getCippLicenseTranslation } from "./get-cipp-license-translation";
  */
 export const getCippUniqueLicenses = (dataArray) => {
   if (!Array.isArray(dataArray) || dataArray.length === 0) {
-    return [];
+    return []
   }
 
-  const uniqueLicensesMap = new Map();
+  const uniqueLicensesMap = new Map()
 
   // Iterate through all users and their assigned licenses
   dataArray.forEach((user) => {
@@ -20,28 +20,30 @@ export const getCippUniqueLicenses = (dataArray) => {
           // Use skuId as the unique key
           if (!uniqueLicensesMap.has(license.skuId)) {
             // Get the translated name for this license
-            const translatedName = getCippLicenseTranslation([license]);
-            const displayName = Array.isArray(translatedName) ? translatedName[0] : translatedName;
+            const translatedName = getCippLicenseTranslation([license])
+            const displayName = Array.isArray(translatedName)
+              ? translatedName[0]
+              : translatedName
 
             uniqueLicensesMap.set(license.skuId, {
               skuId: license.skuId,
               displayName: displayName,
               // Store the original license object for reference
               originalLicense: license,
-            });
+            })
           }
         }
-      });
+      })
     }
-  });
+  })
 
   // Convert map to array and sort by display name
   return Array.from(uniqueLicensesMap.values()).sort((a, b) => {
-    const nameA = a?.displayName || '';
-    const nameB = b?.displayName || '';
-    return nameA.localeCompare(nameB);
-  });
-};
+    const nameA = a?.displayName || ''
+    const nameB = b?.displayName || ''
+    return nameA.localeCompare(nameB)
+  })
+}
 
 /**
  * Checks if a user has all the specified licenses
@@ -51,18 +53,22 @@ export const getCippUniqueLicenses = (dataArray) => {
  */
 export const userHasAllLicenses = (userLicenses, requiredLicenseSkuIds) => {
   if (!Array.isArray(userLicenses) || !Array.isArray(requiredLicenseSkuIds)) {
-    return false;
+    return false
   }
 
   if (requiredLicenseSkuIds.length === 0) {
-    return true; // No licenses required
+    return true // No licenses required
   }
 
-  const userSkuIds = userLicenses.map((license) => license.skuId).filter(Boolean);
+  const userSkuIds = userLicenses
+    .map((license) => license.skuId)
+    .filter(Boolean)
 
   // Check if user has all required licenses
-  return requiredLicenseSkuIds.every((requiredSkuId) => userSkuIds.includes(requiredSkuId));
-};
+  return requiredLicenseSkuIds.every((requiredSkuId) =>
+    userSkuIds.includes(requiredSkuId)
+  )
+}
 
 /**
  * Checks if a user has any of the specified licenses
@@ -72,15 +78,17 @@ export const userHasAllLicenses = (userLicenses, requiredLicenseSkuIds) => {
  */
 export const userHasAnyLicense = (userLicenses, licenseSkuIds) => {
   if (!Array.isArray(userLicenses) || !Array.isArray(licenseSkuIds)) {
-    return false;
+    return false
   }
 
   if (licenseSkuIds.length === 0) {
-    return true; // No licenses specified
+    return true // No licenses specified
   }
 
-  const userSkuIds = userLicenses.map((license) => license.skuId).filter(Boolean);
+  const userSkuIds = userLicenses
+    .map((license) => license.skuId)
+    .filter(Boolean)
 
   // Check if user has any of the specified licenses
-  return licenseSkuIds.some((licenseSkuId) => userSkuIds.includes(licenseSkuId));
-};
+  return licenseSkuIds.some((licenseSkuId) => userSkuIds.includes(licenseSkuId))
+}

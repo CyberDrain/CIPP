@@ -10,19 +10,34 @@ import { CippFormCondition } from '../CippComponents/CippFormCondition'
 import { useSettings } from '../../hooks/use-settings'
 
 const assignmentFilterTypeOptions = [
-  { label: 'Include - Apply policy to devices matching filter', value: 'include' },
-  { label: 'Exclude - Apply policy to devices NOT matching filter', value: 'exclude' },
+  {
+    label: 'Include - Apply policy to devices matching filter',
+    value: 'include',
+  },
+  {
+    label: 'Exclude - Apply policy to devices NOT matching filter',
+    value: 'exclude',
+  },
 ]
 
 export const CippIntunePolicy = (props) => {
   const { formControl, onPreviousStep, onNextStep, currentStep } = props
   const values = formControl.getValues()
   const tenantFilter = useSettings()?.currentTenant
-  const CATemplates = ApiGetCall({ url: '/api/ListIntuneTemplates', queryKey: 'IntuneTemplates' })
+  const CATemplates = ApiGetCall({
+    url: '/api/ListIntuneTemplates',
+    queryKey: 'IntuneTemplates',
+  })
   const [JSONData, setJSONData] = useState()
-  const watcher = useWatch({ control: formControl.control, name: 'TemplateList' })
+  const watcher = useWatch({
+    control: formControl.control,
+    name: 'TemplateList',
+  })
   const jsonWatch = useWatch({ control: formControl.control, name: 'RAWJson' })
-  const selectedTenants = useWatch({ control: formControl.control, name: 'tenantFilter' })
+  const selectedTenants = useWatch({
+    control: formControl.control,
+    name: 'tenantFilter',
+  })
 
   // do not provide inputs for reserved placeholders
   const reservedPlaceholders = [
@@ -47,9 +62,13 @@ export const CippIntunePolicy = (props) => {
 
   useEffect(() => {
     if (CATemplates.isSuccess && watcher?.value) {
-      const template = CATemplates.data.find((template) => template.GUID === watcher.value)
+      const template = CATemplates.data.find(
+        (template) => template.GUID === watcher.value
+      )
       if (template) {
-        const jsonTemplate = template.RAWJson ? JSON.parse(template.RAWJson) : null
+        const jsonTemplate = template.RAWJson
+          ? JSON.parse(template.RAWJson)
+          : null
         setJSONData(jsonTemplate)
         formControl.setValue('RAWJson', template.RAWJson)
         formControl.setValue('displayName', template.Displayname)
@@ -96,7 +115,10 @@ export const CippIntunePolicy = (props) => {
               { label: 'Do not assign', value: 'On' },
               { label: 'Assign to all users', value: 'allLicensedUsers' },
               { label: 'Assign to all devices', value: 'AllDevices' },
-              { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+              {
+                label: 'Assign to all users and devices',
+                value: 'AllDevicesAndUsers',
+              },
               { label: 'Assign to Custom Group', value: 'customGroup' },
             ]}
             formControl={formControl}
@@ -137,7 +159,12 @@ export const CippIntunePolicy = (props) => {
           formControl={formControl}
           field="AssignTo"
           compareType="isOneOf"
-          compareValue={['allLicensedUsers', 'AllDevices', 'AllDevicesAndUsers', 'customGroup']}
+          compareValue={[
+            'allLicensedUsers',
+            'AllDevices',
+            'AllDevicesAndUsers',
+            'customGroup',
+          ]}
         >
           <Grid size={{ xs: 12 }}>
             <CippFormComponent
@@ -175,13 +202,19 @@ export const CippIntunePolicy = (props) => {
         >
           {(() => {
             const rawJson = jsonWatch ? jsonWatch : ''
-            const placeholderMatches = [...rawJson.matchAll(/%(\w+)%/g)].map((m) => m[1])
+            const placeholderMatches = [...rawJson.matchAll(/%(\w+)%/g)].map(
+              (m) => m[1]
+            )
             const uniquePlaceholders = Array.from(new Set(placeholderMatches))
             // Filter out reserved placeholders
             const filteredPlaceholders = uniquePlaceholders.filter(
-              (placeholder) => !reservedPlaceholders.includes(`%${placeholder.toLowerCase()}%`)
+              (placeholder) =>
+                !reservedPlaceholders.includes(`%${placeholder.toLowerCase()}%`)
             )
-            if (filteredPlaceholders.length === 0 || selectedTenants.length === 0) {
+            if (
+              filteredPlaceholders.length === 0 ||
+              selectedTenants.length === 0
+            ) {
               return null
             }
             return filteredPlaceholders.map((placeholder) => (
@@ -201,7 +234,9 @@ export const CippIntunePolicy = (props) => {
                     name={`replacemap.${tenant.value}.%${placeholder}%`}
                     label={`Value for '${placeholder}' in Tenant '${tenant.addedFields.defaultDomainName}'`}
                     formControl={formControl}
-                    validators={{ required: `Please provide a value for ${placeholder}` }}
+                    validators={{
+                      required: `Please provide a value for ${placeholder}`,
+                    }}
                   />
                 ))}
               </Grid>

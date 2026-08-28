@@ -21,7 +21,8 @@ const Page = () => {
       dataFunction: (data) => {
         return { ...data }
       },
-      confirmText: 'Are you sure you want to create a template based on this sensitivity label?',
+      confirmText:
+        'Are you sure you want to create a template based on this sensitivity label?',
       hideBulk: true,
     },
     {
@@ -114,5 +115,7 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+)
 export default Page

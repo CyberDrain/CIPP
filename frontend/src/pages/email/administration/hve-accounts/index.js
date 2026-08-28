@@ -122,14 +122,16 @@ const Page = () => {
             queryKey: 'ListHVEBillingPolicies',
             labelField: (option) =>
               `${option.Name || option.BillingPolicyName || option.BillingPolicyId} (${option.BillingPolicyId || option.Guid || option.Identity})`,
-            valueField: (option) => option.BillingPolicyId || option.Guid || option.Identity,
+            valueField: (option) =>
+              option.BillingPolicyId || option.Guid || option.Identity,
             data: {
               ListBillingPolicies: true,
             },
           },
         },
       ],
-      confirmText: 'Assign billing policy to [primarySmtpAddress]. Current policy: [BillingPolicyName]',
+      confirmText:
+        'Assign billing policy to [primarySmtpAddress]. Current policy: [BillingPolicyName]',
       hideBulk: true,
     },
     {
@@ -140,7 +142,8 @@ const Page = () => {
       data: { Identity: 'primarySmtpAddress', Action: 'RemoveBillingPolicy' },
       confirmText:
         'Remove billing policy [BillingPolicyName] from [primarySmtpAddress]?',
-      condition: (row) => row.BillingPolicyName && row.BillingPolicyName !== 'None',
+      condition: (row) =>
+        row.BillingPolicyName && row.BillingPolicyName !== 'None',
       hideBulk: true,
     },
     {
@@ -149,7 +152,8 @@ const Page = () => {
       icon: <TrashIcon />,
       url: '/api/ExecHVEUser',
       data: { Identity: 'primarySmtpAddress', Action: 'Remove' },
-      confirmText: 'Are you sure you want to delete HVE account [primarySmtpAddress]?',
+      confirmText:
+        'Are you sure you want to delete HVE account [primarySmtpAddress]?',
       multiPost: false,
     },
   ]

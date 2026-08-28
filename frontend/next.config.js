@@ -1,4 +1,5 @@
-const disableOptimizePackageImports = process.env.NEXT_DISABLE_OPTIMIZE_PACKAGE_IMPORTS === '1'
+const disableOptimizePackageImports =
+  process.env.NEXT_DISABLE_OPTIMIZE_PACKAGE_IMPORTS === '1'
 
 /** @type {import('next').NextConfig} */
 const config = {

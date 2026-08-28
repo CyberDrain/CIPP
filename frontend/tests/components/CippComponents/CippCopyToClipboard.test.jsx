@@ -13,7 +13,12 @@ describe('CippCopyToClipboard', () => {
 
     const onClick = vi.fn()
     renderWithTheme(
-      <CippCopyToClipBoard text="Copy me!" type="button" visible={true} onClick={onClick} />
+      <CippCopyToClipBoard
+        text="Copy me!"
+        type="button"
+        visible={true}
+        onClick={onClick}
+      />
     )
 
     const button = screen.getByRole('button')
@@ -42,13 +47,19 @@ describe('CippCopyToClipboard', () => {
     )
 
     // clickable Chip renders with role="button", Tooltip title is its aria-label
-    await userEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Copy to clipboard' })
+    )
     expect(writeText).toHaveBeenCalledWith('cipp-secret-key')
   })
 
   it('renders masked password and toggles visibility', async () => {
     renderWithTheme(
-      <CippCopyToClipBoard text="S3cr3tP@ssw0rd" type="password" visible={true} />
+      <CippCopyToClipBoard
+        text="S3cr3tP@ssw0rd"
+        type="password"
+        visible={true}
+      />
     )
     expect(screen.getByText('********')).toBeInTheDocument()
 

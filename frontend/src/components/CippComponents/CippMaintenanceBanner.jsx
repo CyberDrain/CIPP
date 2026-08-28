@@ -1,8 +1,29 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import NextLink from 'next/link'
-import { Box, Button, Chip, IconButton, Link, Stack, Typography, useMediaQuery } from '@mui/material'
+import {
+  Box,
+  Button,
+  Chip,
+  IconButton,
+  Link,
+  Stack,
+  Typography,
+  useMediaQuery,
+} from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Close, ErrorOutline, InfoOutlined, WarningAmber } from '@mui/icons-material'
+import {
+  Close,
+  ErrorOutline,
+  InfoOutlined,
+  WarningAmber,
+} from '@mui/icons-material'
 import { formatDistanceStrict } from 'date-fns'
 
 // Dismissal is keyed on the notice id so that re-issuing an edited notice brings the banner back
@@ -43,7 +64,8 @@ const subscribeToDismissals = (listener) => {
   dismissalListeners.add(listener)
   return () => dismissalListeners.delete(listener)
 }
-const notifyDismissalChanged = () => dismissalListeners.forEach((listener) => listener())
+const notifyDismissalChanged = () =>
+  dismissalListeners.forEach((listener) => listener())
 
 const toDate = (value) => {
   if (!value) return null
@@ -70,7 +92,8 @@ const buildWindowText = (start, end, active, now) => {
   if (start && end) {
     return `${formatMoment(start)} → ${formatMoment(end)} · starts in ${formatDistanceStrict(start, now)}`
   }
-  if (start) return `Starts ${formatMoment(start)} · in ${formatDistanceStrict(start, now)}`
+  if (start)
+    return `Starts ${formatMoment(start)} · in ${formatDistanceStrict(start, now)}`
   if (end) return `Until ${formatMoment(end)}`
   return ''
 }
@@ -129,7 +152,11 @@ export const CippMaintenanceBanner = ({ alert }) => {
     () => (dismissKey ? readDismissedAt(dismissKey) : 0),
     [dismissKey]
   )
-  const dismissedAt = useSyncExternalStore(subscribeToDismissals, getDismissedAt, () => 0)
+  const dismissedAt = useSyncExternalStore(
+    subscribeToDismissals,
+    getDismissedAt,
+    () => 0
+  )
 
   const severity = SEVERITIES.includes(alert?.type) ? alert.type : 'info'
 
@@ -149,7 +176,13 @@ export const CippMaintenanceBanner = ({ alert }) => {
         Boolean(dismissedAt) &&
         now.getTime() - dismissedAt < DISMISS_DURATION_MS,
     }
-  }, [alert?.startTime, alert?.endTime, alert?.active, dismissedAt, dismissible])
+  }, [
+    alert?.startTime,
+    alert?.endTime,
+    alert?.active,
+    dismissedAt,
+    dismissible,
+  ])
 
   const visible = Boolean(alert) && !dismissed
 
@@ -165,7 +198,8 @@ export const CippMaintenanceBanner = ({ alert }) => {
     }
 
     const element = rootRef.current
-    const publish = () => root.style.setProperty('--cipp-banner-h', `${element.offsetHeight}px`)
+    const publish = () =>
+      root.style.setProperty('--cipp-banner-h', `${element.offsetHeight}px`)
     publish()
 
     // Not available under jsdom - the one-shot measurement above still gives a correct layout,
@@ -193,7 +227,9 @@ export const CippMaintenanceBanner = ({ alert }) => {
   const palette = theme.palette[severity]
   const isDark = theme.palette.mode === 'dark'
   const tint = alpha(palette.main, isDark ? 0.16 : 0.12)
-  const foreground = solid ? palette.contrastText : palette[isDark ? 'light' : 'dark']
+  const foreground = solid
+    ? palette.contrastText
+    : palette[isDark ? 'light' : 'dark']
 
   const Icon = ICONS[severity]
   const link = alert.link
@@ -229,9 +265,13 @@ export const CippMaintenanceBanner = ({ alert }) => {
     >
       {/* Top-aligned so the icon and actions sit level with the title when the message wraps. */}
       <Stack direction="row" spacing={1.5} alignItems="flex-start">
-        <Icon fontSize="small" sx={{ color: solid ? 'inherit' : palette.main, mt: 0.25 }} />
+        <Icon
+          fontSize="small"
+          sx={{ color: solid ? 'inherit' : palette.main, mt: 0.25 }}
+        />
 
-        <Stack useFlexGap
+        <Stack
+          useFlexGap
           direction={{ xs: 'column', md: 'row' }}
           spacing={{ xs: 0.25, md: 1.5 }}
           alignItems={{ xs: 'flex-start', md: 'baseline' }}
@@ -250,7 +290,9 @@ export const CippMaintenanceBanner = ({ alert }) => {
                   fontSize: 10,
                   fontWeight: 700,
                   letterSpacing: '0.07em',
-                  backgroundColor: solid ? alpha('#FFFFFF', 0.24) : palette.main,
+                  backgroundColor: solid
+                    ? alpha('#FFFFFF', 0.24)
+                    : palette.main,
                   color: solid ? 'inherit' : palette.contrastText,
                 }}
               />
@@ -279,7 +321,11 @@ export const CippMaintenanceBanner = ({ alert }) => {
               type="button"
               variant="body2"
               onClick={() => setMessageExpanded((prev) => !prev)}
-              sx={{ color: 'inherit', fontWeight: 600, textDecorationColor: 'currentColor' }}
+              sx={{
+                color: 'inherit',
+                fontWeight: 600,
+                textDecorationColor: 'currentColor',
+              }}
             >
               {messageExpanded ? 'Show less' : 'Read more'}
             </Link>
@@ -300,7 +346,12 @@ export const CippMaintenanceBanner = ({ alert }) => {
           )}
         </Stack>
 
-        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
+        <Stack
+          direction="row"
+          spacing={0.5}
+          alignItems="center"
+          sx={{ flexShrink: 0 }}
+        >
           {link && (
             <Button
               size="small"
@@ -313,7 +364,10 @@ export const CippMaintenanceBanner = ({ alert }) => {
                 borderColor: solid ? alpha('#FFFFFF', 0.42) : undefined,
                 whiteSpace: 'nowrap',
                 '&:hover': {
-                  backgroundColor: alpha(solid ? '#FFFFFF' : palette.main, 0.16),
+                  backgroundColor: alpha(
+                    solid ? '#FFFFFF' : palette.main,
+                    0.16
+                  ),
                   borderColor: solid ? alpha('#FFFFFF', 0.6) : undefined,
                 },
               }}
@@ -328,7 +382,12 @@ export const CippMaintenanceBanner = ({ alert }) => {
               aria-label="Dismiss maintenance notice for 24 hours"
               sx={{
                 color: 'inherit',
-                '&:hover': { backgroundColor: alpha(solid ? '#FFFFFF' : palette.main, 0.16) },
+                '&:hover': {
+                  backgroundColor: alpha(
+                    solid ? '#FFFFFF' : palette.main,
+                    0.16
+                  ),
+                },
               }}
             >
               <Close fontSize="inherit" />

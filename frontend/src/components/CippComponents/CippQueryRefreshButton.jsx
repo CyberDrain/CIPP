@@ -26,7 +26,11 @@ export const CippQueryRefreshButton = ({
   return (
     <Tooltip title={tooltip}>
       <span>
-        <IconButton size="small" onClick={handleRefresh} disabled={isFetching || !queryKeys.length}>
+        <IconButton
+          size="small"
+          onClick={handleRefresh}
+          disabled={isFetching || !queryKeys.length}
+        >
           <SvgIcon
             fontSize="small"
             sx={{

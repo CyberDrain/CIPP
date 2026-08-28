@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { Button, Box, Typography, Alert, AlertTitle, Divider, Chip, Stack } from '@mui/material'
+import {
+  Button,
+  Box,
+  Typography,
+  Alert,
+  AlertTitle,
+  Divider,
+  Chip,
+  Stack,
+} from '@mui/material'
 import { Grid } from '@mui/system'
 import { useForm, useFormState } from 'react-hook-form'
 import { SettingsBackupRestore } from '@mui/icons-material'
@@ -170,7 +179,13 @@ export const CippRestoreBackupDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -191,8 +206,8 @@ export const CippRestoreBackupDrawer = ({
       >
         <Box sx={{ my: 2 }}>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Use this form to restore a backup for a tenant. Please select the backup and restore
-            options.
+            Use this form to restore a backup for a tenant. Please select the
+            backup and restore options.
           </Typography>
 
           <Grid container spacing={2}>
@@ -207,12 +222,16 @@ export const CippRestoreBackupDrawer = ({
                   url: '/api/ExecListBackup',
                   queryKey: `BackupList-${tenantFilter}-autocomplete`,
                   labelField: (option) => {
-                    const match = option.BackupName.match(/.*_(\d{4}-\d{2}-\d{2})-(\d{2})(\d{2})/)
+                    const match = option.BackupName.match(
+                      /.*_(\d{4}-\d{2}-\d{2})-(\d{2})(\d{2})/
+                    )
                     const dateTime = match
                       ? `${match[1]} @ ${match[2]}:${match[3]}`
                       : option.BackupName
                     const tenantDisplay =
-                      tenantFilter === 'AllTenants' ? ` (${option.TenantFilter})` : ''
+                      tenantFilter === 'AllTenants'
+                        ? ` (${option.TenantFilter})`
+                        : ''
                     return `${dateTime}${tenantDisplay}`
                   },
                   valueField: 'BackupName',
@@ -342,11 +361,12 @@ export const CippRestoreBackupDrawer = ({
               >
                 <Grid size={{ xs: 12 }}>
                   <Alert severity="warning">
-                    <strong>Warning:</strong> Overwriting existing entries will remove the current
-                    settings and replace them with the backup settings. If you have selected to
-                    restore users, all properties will be overwritten with the backup settings. To
-                    prevent and skip already existing entries, deselect the setting from the list
-                    above, or disable overwrite.
+                    <strong>Warning:</strong> Overwriting existing entries will
+                    remove the current settings and replace them with the backup
+                    settings. If you have selected to restore users, all
+                    properties will be overwritten with the backup settings. To
+                    prevent and skip already existing entries, deselect the
+                    setting from the list above, or disable overwrite.
                   </Alert>
                 </Grid>
               </CippFormCondition>
@@ -354,7 +374,9 @@ export const CippRestoreBackupDrawer = ({
 
             {/* Send Results To */}
             <Grid size={{ xs: 12 }}>
-              <Typography variant="subtitle1">Send Restore results to:</Typography>
+              <Typography variant="subtitle1">
+                Send Restore results to:
+              </Typography>
             </Grid>
             <Grid size={{ md: 4, xs: 12 }}>
               <CippFormComponent
@@ -373,7 +395,12 @@ export const CippRestoreBackupDrawer = ({
               />
             </Grid>
             <Grid size={{ md: 4, xs: 12 }}>
-              <CippFormComponent type="switch" label="PSA" name="psa" formControl={formControl} />
+              <CippFormComponent
+                type="switch"
+                label="PSA"
+                name="psa"
+                formControl={formControl}
+              />
             </Grid>
           </Grid>
         </Box>

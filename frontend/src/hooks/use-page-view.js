@@ -1,1 +1,1 @@
-export const usePageView = () => {};
+export const usePageView = () => {}

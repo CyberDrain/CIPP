@@ -17,11 +17,16 @@ const fields = [
 
 const handlers = [
   http.get('*/api/ListGraphRequest', () => HttpResponse.json({ Results: [] })),
-  http.get('*/api/ListGraphExplorerPresets', () => HttpResponse.json({ Results: [] })),
+  http.get('*/api/ListGraphExplorerPresets', () =>
+    HttpResponse.json({ Results: [] })
+  ),
 ]
 
 const Harness = () => {
-  const formControl = useForm({ mode: 'onChange', defaultValues: { autopilotData: [] } })
+  const formControl = useForm({
+    mode: 'onChange',
+    defaultValues: { autopilotData: [] },
+  })
   return (
     <CippWizardAutopilotImport
       formControl={formControl}
@@ -53,9 +58,13 @@ export const PhoneWidth = {
     // At phone width the table is a card list, so the import buttons are behind the FAB
     // rather than in a card header — the same route a user takes.
     if (onAPhone) {
-      await userEvent.click(await body.findByRole('button', { name: 'Page actions' }))
+      await userEvent.click(
+        await body.findByRole('button', { name: 'Page actions' })
+      )
     }
-    await userEvent.click(await body.findByRole('button', { name: /manual import/i }))
+    await userEvent.click(
+      await body.findByRole('button', { name: /manual import/i })
+    )
     const dialog = await body.findByRole('dialog')
     if (!onAPhone) return
 

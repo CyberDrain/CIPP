@@ -1,7 +1,7 @@
-import { Box } from "@mui/material";
+import { Box } from '@mui/material'
 
 export const CippCardTabPanel = (props) => {
-  const { children, value, index, ...other } = props;
+  const { children, value, index, ...other } = props
 
   return (
     <div
@@ -13,5 +13,5 @@ export const CippCardTabPanel = (props) => {
     >
       {value === index && <Box>{children}</Box>}
     </div>
-  );
-};
+  )
+}

@@ -1,4 +1,4 @@
-import { CippEntitySwitcher } from "./CippEntitySwitcher";
+import { CippEntitySwitcher } from './CippEntitySwitcher'
 
 /**
  * The View User pages' title-as-switcher: CippEntitySwitcher preset over the tenant's
@@ -11,17 +11,17 @@ export const CippUserSwitcher = ({ title, currentUserId, tenantFilter }) => (
     queryParamKey="userId"
     entityName="user"
     api={{
-      url: "/api/ListGraphRequest",
+      url: '/api/ListGraphRequest',
       data: {
-        Endpoint: "users",
+        Endpoint: 'users',
         tenantFilter: tenantFilter,
-        $select: "id,displayName,userPrincipalName",
+        $select: 'id,displayName,userPrincipalName',
         $count: true,
-        $orderby: "displayName",
+        $orderby: 'displayName',
         $top: 999,
       },
       queryKey: `UserSwitcher-${tenantFilter}`,
     }}
     getSecondary={(user) => user.userPrincipalName}
   />
-);
+)

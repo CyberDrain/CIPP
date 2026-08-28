@@ -24,8 +24,17 @@ const flattenObject = (obj, parentKey = '') => {
     } else if (Array.isArray(obj[key]) && typeof obj[key][0] === 'string') {
       flattened[fullKey] = obj[key]
     } else if (Array.isArray(obj[key])) {
-      let testFormatting = getCippFormatting(obj[key], key, 'text', false, false)
-      if (typeof testFormatting === 'string' && !testFormatting.includes('[object Object]')) {
+      let testFormatting = getCippFormatting(
+        obj[key],
+        key,
+        'text',
+        false,
+        false
+      )
+      if (
+        typeof testFormatting === 'string' &&
+        !testFormatting.includes('[object Object]')
+      ) {
         flattened[fullKey] = testFormatting
       } else {
         flattened[fullKey] = obj[key]
@@ -62,7 +71,9 @@ export const exportRowsToCsv = ({
   }
 
   const rowData = rows.map((row) => flattenObject(row.original ?? row))
-  const columnKeys = columns.filter((c) => columnVisibility[c.id]).map((c) => c.id)
+  const columnKeys = columns
+    .filter((c) => columnVisibility[c.id])
+    .map((c) => c.id)
 
   const filterRowData = (row, allowedKeys) => {
     const filteredRow = {}
@@ -95,14 +106,22 @@ export const exportRowsToCsv = ({
 }
 
 export const CSVExportButton = (props) => {
-  const { rows = [], columns = [], reportName, columnVisibility = {}, ...other } = props
+  const {
+    rows = [],
+    columns = [],
+    reportName,
+    columnVisibility = {},
+    ...other
+  } = props
 
   return (
     <Tooltip title="Export to CSV">
       <span>
         <IconButton
           disabled={rows.length === 0}
-          onClick={() => exportRowsToCsv({ rows, columns, reportName, columnVisibility })}
+          onClick={() =>
+            exportRowsToCsv({ rows, columns, reportName, columnVisibility })
+          }
           {...other}
         >
           <BackupTableTwoTone />

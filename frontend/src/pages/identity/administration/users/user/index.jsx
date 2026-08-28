@@ -701,7 +701,9 @@ const Page = () => {
   const systemPreferredTypes =
     (signInPrefs.isSystemPreferredAuthenticationMethodEnabled &&
       SYSTEM_PREF_METHOD_TYPES[
-        String(signInPrefs.systemPreferredAuthenticationMethod ?? '').toLowerCase()
+        String(
+          signInPrefs.systemPreferredAuthenticationMethod ?? ''
+        ).toLowerCase()
       ]) ||
     []
   const availablePrefValues = [
@@ -1011,7 +1013,9 @@ const Page = () => {
         <CippUserSwitcher
           title={title}
           currentUserId={userId}
-          tenantFilter={router.query.tenantFilter ?? userSettingsDefaults.currentTenant}
+          tenantFilter={
+            router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+          }
         />
       }
       actions={userActions}
@@ -1030,14 +1034,17 @@ const Page = () => {
             </Grid>
             <Grid size={{ xs: 12, lg: 8 }}>
               <Stack spacing={3}>
-                {['Latest Logon', 'Applied Conditional Access Policies', 'Multi-Factor Authentication Devices', 'Memberships'].map(
-                  (section) => (
-                    <Fragment key={section}>
-                      <Typography variant="h6">{section}</Typography>
-                      <CippBannerListCard isFetching items={[]} />
-                    </Fragment>
-                  )
-                )}
+                {[
+                  'Latest Logon',
+                  'Applied Conditional Access Policies',
+                  'Multi-Factor Authentication Devices',
+                  'Memberships',
+                ].map((section) => (
+                  <Fragment key={section}>
+                    <Typography variant="h6">{section}</Typography>
+                    <CippBannerListCard isFetching items={[]} />
+                  </Fragment>
+                ))}
               </Stack>
             </Grid>
           </Grid>

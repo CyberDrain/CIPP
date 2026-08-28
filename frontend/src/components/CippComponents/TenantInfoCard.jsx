@@ -1,13 +1,20 @@
-import { Box, Card, CardHeader, CardContent, Typography, Skeleton } from "@mui/material";
-import { Business as BuildingIcon } from "@mui/icons-material";
-import { CippCopyToClipBoard } from "./CippCopyToClipboard";
+import {
+  Box,
+  Card,
+  CardHeader,
+  CardContent,
+  Typography,
+  Skeleton,
+} from '@mui/material'
+import { Business as BuildingIcon } from '@mui/icons-material'
+import { CippCopyToClipBoard } from './CippCopyToClipboard'
 
 export const TenantInfoCard = ({ data, isLoading }) => {
   return (
-    <Card sx={{ height: "100%" }}>
+    <Card sx={{ height: '100%' }}>
       <CardHeader
         title={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <BuildingIcon sx={{ fontSize: 20 }} />
             <Typography variant="subtitle1">Tenant</Typography>
           </Box>
@@ -15,7 +22,7 @@ export const TenantInfoCard = ({ data, isLoading }) => {
         sx={{ pb: 1.5 }}
       />
       <CardContent>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box>
             <Typography variant="caption" color="text.secondary">
               Name
@@ -24,7 +31,7 @@ export const TenantInfoCard = ({ data, isLoading }) => {
               <Skeleton width={150} height={24} />
             ) : (
               <Typography variant="body1" fontWeight={500}>
-                {data?.displayName || "Not Available"}
+                {data?.displayName || 'Not Available'}
               </Typography>
             )}
           </Box>
@@ -66,5 +73,5 @@ export const TenantInfoCard = ({ data, isLoading }) => {
         </Box>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

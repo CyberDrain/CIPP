@@ -16,21 +16,23 @@ const FIRST_CODE = 32
 const LAST_CODE = 126
 
 const HELVETICA = [
-  278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278,
-  556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556,
-  1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778,
-  667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556,
-  333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556,
-  556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584,
+  278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278,
+  278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584,
+  584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556,
+  833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278,
+  278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222,
+  500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500,
+  500, 334, 260, 334, 584,
 ]
 
 const HELVETICA_BOLD = [
-  278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278,
-  556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611,
-  975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778,
-  667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556,
-  333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611,
-  611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584,
+  278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278,
+  278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584,
+  584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611,
+  833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333,
+  278, 333, 584, 556, 333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278,
+  556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556,
+  500, 389, 280, 389, 584,
 ]
 
 // Anything outside ASCII — an em dash, an accented name, a bullet — is assumed as wide as the
@@ -47,7 +49,8 @@ const advanceOf = (character, bold) => {
 /** Width of `text` in points at `fontSize`. */
 export const measureText = (text, fontSize, bold = false) => {
   let units = 0
-  for (const character of String(text ?? '')) units += advanceOf(character, bold)
+  for (const character of String(text ?? ''))
+    units += advanceOf(character, bold)
   return (units * fontSize) / 1000
 }
 
@@ -72,7 +75,8 @@ export const wrapLongTokens = (text, maxWidth, fontSize, bold = false) => {
   return value
     .split(/(\s+)/)
     .map((token) => {
-      if (!token.trim() || measureText(token, fontSize, bold) <= maxWidth) return token
+      if (!token.trim() || measureText(token, fontSize, bold) <= maxWidth)
+        return token
 
       const pieces = []
       let current = ''
@@ -84,7 +88,10 @@ export const wrapLongTokens = (text, maxWidth, fontSize, bold = false) => {
 
         if (currentWidth + width > maxWidth && current) {
           // Prefer the last seam, as long as it does not leave a uselessly short piece.
-          const cut = lastSeam > 0 && lastSeam >= current.length / 2 ? lastSeam + 1 : current.length
+          const cut =
+            lastSeam > 0 && lastSeam >= current.length / 2
+              ? lastSeam + 1
+              : current.length
           pieces.push(current.slice(0, cut))
           current = current.slice(cut)
           currentWidth = measureText(current, fontSize, bold)

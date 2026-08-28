@@ -30,6 +30,10 @@ if (globalThis.crypto && !globalThis.crypto.subtle) {
 // Suppress jsdom "Not implemented" warnings for getComputedStyle with pseudo-elements
 const originalConsoleError = console.error
 console.error = (...args) => {
-  if (typeof args[0] === 'string' && args[0].includes('Not implemented: Window')) return
+  if (
+    typeof args[0] === 'string' &&
+    args[0].includes('Not implemented: Window')
+  )
+    return
   originalConsoleError(...args)
 }

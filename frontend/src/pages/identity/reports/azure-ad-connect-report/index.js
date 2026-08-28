@@ -1,14 +1,14 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 
 const simpleColumns = [
-  "displayName",
-  "ObjectType",
-  "createdDateTime",
-  "onPremisesProvisioningErrors",
-];
+  'displayName',
+  'ObjectType',
+  'createdDateTime',
+  'onPremisesProvisioningErrors',
+]
 
-const apiUrl = "/api/ListAzureADConnectStatus";
+const apiUrl = '/api/ListAzureADConnectStatus'
 
 const Page = () => {
   return (
@@ -16,13 +16,15 @@ const Page = () => {
       title="Microsoft Entra Connect Report"
       apiUrl={apiUrl}
       apiData={{
-        DataToReturn: "AzureADObjectsInError",
+        DataToReturn: 'AzureADObjectsInError',
       }}
       simpleColumns={simpleColumns}
     />
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>;
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+)
 
-export default Page;
+export default Page

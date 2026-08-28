@@ -1,6 +1,15 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
-import { Breadcrumbs, Divider, Link, Typography, Box, IconButton, Tooltip, useMediaQuery } from '@mui/material'
+import {
+  Breadcrumbs,
+  Divider,
+  Link,
+  Typography,
+  Box,
+  IconButton,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material'
 import { History, AccountTree } from '@mui/icons-material'
 import { nativeMenuItems } from '../../layouts/config'
 import { useSettings } from '../../hooks/use-settings'
@@ -55,7 +64,10 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
   const getCleanQueryParams = (query) => {
     const cleaned = { ...query }
     // Remove tenantFilter if it's "AllTenants" or not explicitly needed
-    if (cleaned.tenantFilter === 'AllTenants' || cleaned.tenantFilter === undefined) {
+    if (
+      cleaned.tenantFilter === 'AllTenants' ||
+      cleaned.tenantFilter === undefined
+    ) {
       delete cleaned.tenantFilter
     }
     return cleaned
@@ -149,7 +161,8 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
         const lastEntry = prevHistory[prevHistory.length - 1]
         if (lastEntry) {
           const sameTitle = lastEntry.title.trim() === currentPage.title.trim()
-          const samePath = normalizeUrl(lastEntry.fullUrl) === normalizedCurrentUrl
+          const samePath =
+            normalizeUrl(lastEntry.fullUrl) === normalizedCurrentUrl
 
           if (sameTitle && samePath) {
             // Exact duplicate - don't add, just stop checking
@@ -276,7 +289,11 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
         // Clean AllTenants from title
         const finalTitle = cleanPageTitle(cleanTitle)
 
-        if (finalTitle && finalTitle !== 'CIPP' && !finalTitle.toLowerCase().includes('loading')) {
+        if (
+          finalTitle &&
+          finalTitle !== 'CIPP' &&
+          !finalTitle.toLowerCase().includes('loading')
+        ) {
           setCurrentPageTitle(finalTitle)
           // Stop checking once we have a valid title
           if (hierarchicalTitleCheckRef.current) {
@@ -290,7 +307,10 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
       updateTitle()
 
       // Only start interval if we don't have a valid title yet
-      if (!currentPageTitle || currentPageTitle.toLowerCase().includes('loading')) {
+      if (
+        !currentPageTitle ||
+        currentPageTitle.toLowerCase().includes('loading')
+      ) {
         hierarchicalTitleCheckRef.current = setInterval(updateTitle, 500)
       }
 
@@ -378,7 +398,11 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
 
         if (lastItemPath === normalizedCurrentPath) {
           // The menu points straight at this page - keep the crumb, prefer the tab's label
-          result[result.length - 1] = { ...lastItem, title: matchingTab.title, type: 'tab' }
+          result[result.length - 1] = {
+            ...lastItem,
+            title: matchingTab.title,
+            type: 'tab',
+          }
         } else {
           // The menu only goes as far as the parent (most tabs aren't menu entries), so the tab is
           // a crumb of its own. Overwriting the parent's title instead would be undone at render:
@@ -464,9 +488,14 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
     // Check if we're on a nested page under a menu item (e.g., edit page)
     if (result.length > 0) {
       const lastItem = result[result.length - 1]
-      if (lastItem.path && lastItem.path !== currentPath && currentPath.startsWith(lastItem.path)) {
+      if (
+        lastItem.path &&
+        lastItem.path !== currentPath &&
+        currentPath.startsWith(lastItem.path)
+      ) {
         // Use the tracked page title if available, otherwise fall back to document.title
-        let tabTitle = currentPageTitle || document.title.replace(' - CIPP', '').trim()
+        let tabTitle =
+          currentPageTitle || document.title.replace(' - CIPP', '').trim()
 
         // Clean AllTenants from title
         tabTitle = cleanPageTitle(tabTitle)
@@ -522,7 +551,9 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
     }
 
     // Check if path exists in tab options
-    const matchingTab = tabOptions.find((tab) => tab.path.replace(/\/$/, '') === normalizedPath)
+    const matchingTab = tabOptions.find(
+      (tab) => tab.path.replace(/\/$/, '') === normalizedPath
+    )
     if (matchingTab) {
       return { isValid: true, title: matchingTab.title }
     }
@@ -582,7 +613,10 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
         title,
         path,
         type: 'fallback',
-        query: index === pathSegments.length - 1 ? getCleanQueryParams(router.query) : {},
+        query:
+          index === pathSegments.length - 1
+            ? getCleanQueryParams(router.query)
+            : {},
       }
     })
 
@@ -603,12 +637,16 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
   // Resolve exactly the way the crumbs below render, so the bookmark is named what the user sees.
   // A crumb's stored title can be a stale document.title scrape - that polling lags a route change
   // and leaves the previous page's name behind - whereas nav and tab config are authoritative.
-  const crumbTitle = (crumb) => (crumb ? getPathInfo(crumb.path).title || crumb.title : null)
+  const crumbTitle = (crumb) =>
+    crumb ? getPathInfo(crumb.path).title || crumb.title : null
 
-  const bookmarkLabel = trail.length > 0 ? crumbTitle(trail[trail.length - 1]) : null
+  const bookmarkLabel =
+    trail.length > 0 ? crumbTitle(trail[trail.length - 1]) : null
   // The sidebar groups bookmarks by the top-level nav header, so mirror what SideNavItem stores.
   const bookmarkCategory = trail.length > 1 ? crumbTitle(trail[0]) : ''
-  const bookmarkStar = <CippBookmarkStar label={bookmarkLabel} category={bookmarkCategory} />
+  const bookmarkStar = (
+    <CippBookmarkStar label={bookmarkLabel} category={bookmarkCategory} />
+  )
 
   // The layout's rail chrome (gutter box + divider) travels with the nav so that when the
   // nav renders nothing — error routes, or a single crumb on a phone — no stray hairline is
@@ -616,7 +654,9 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
   const rail = (node) =>
     withRail ? (
       <>
-        <Box sx={{ mx: { xs: 2, md: 3 }, mt: { xs: 0.75, md: 1.25 } }}>{node}</Box>
+        <Box sx={{ mx: { xs: 2, md: 3 }, mt: { xs: 0.75, md: 1.25 } }}>
+          {node}
+        </Box>
         <Divider sx={{ mb: { xs: 1, md: 1.5 } }} />
       </>
     ) : (
@@ -646,7 +686,13 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
     return rail(
       <Box
         data-tutorial="breadcrumb-nav"
-        sx={{ mb: 1, width: '100%', display: 'flex', alignItems: 'center', gap: 1 }}
+        sx={{
+          mb: 1,
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
       >
         <Tooltip title="Switch to history mode">
           <IconButton size="small" onClick={toggleMode} sx={{ p: 0.5 }}>
@@ -708,7 +754,9 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
                   role="button"
                   tabIndex={0}
                   variant="subtitle2"
-                  onClick={() => handleHierarchicalClick(crumb.path, crumb.query)}
+                  onClick={() =>
+                    handleHierarchicalClick(crumb.path, crumb.query)
+                  }
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
@@ -747,7 +795,9 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
         </Breadcrumbs>
         {/* Mobile: star pinned to the right edge — a stable tap target instead of trailing
             the crumb text. Desktop keeps it directly after the last crumb. */}
-        <Box sx={{ ml: { xs: "auto", md: 0 }, display: "inline-flex" }}>{bookmarkStar}</Box>
+        <Box sx={{ ml: { xs: 'auto', md: 0 }, display: 'inline-flex' }}>
+          {bookmarkStar}
+        </Box>
       </Box>
     )
   }
@@ -764,7 +814,13 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
   return rail(
     <Box
       data-tutorial="breadcrumb-nav"
-      sx={{ mb: 1, width: '100%', display: 'flex', alignItems: 'center', gap: 1 }}
+      sx={{
+        mb: 1,
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+      }}
     >
       <Tooltip title="Switch to hierarchy mode">
         <IconButton size="small" onClick={toggleMode} sx={{ p: 0.5 }}>
@@ -836,7 +892,9 @@ export const CippBreadcrumbNav = ({ withRail = false } = {}) => {
           )
         })}
       </Breadcrumbs>
-      <Box sx={{ ml: { xs: "auto", md: 0 }, display: "inline-flex" }}>{bookmarkStar}</Box>
+      <Box sx={{ ml: { xs: 'auto', md: 0 }, display: 'inline-flex' }}>
+        {bookmarkStar}
+      </Box>
     </Box>
   )
 }

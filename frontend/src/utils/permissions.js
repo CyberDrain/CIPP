@@ -95,7 +95,10 @@ export const hasAccess = ({
 
   // Check permissions (if any are required)
   if (requiredPermissions.length > 0) {
-    const hasRequiredPermission = hasPermission(userPermissions, requiredPermissions)
+    const hasRequiredPermission = hasPermission(
+      userPermissions,
+      requiredPermissions
+    )
     if (!hasRequiredPermission) {
       return false
     }

@@ -25,7 +25,8 @@ const SITE_ROOT_OPTION = { label: 'Site root (whole site)', value: SITE_ROOT }
 // Stable empty fallback: CippDataTable syncs its `data` prop by reference.
 const NO_PATHS = []
 
-const optionValue = (x) => (x && typeof x === 'object' && 'value' in x ? x.value : x)
+const optionValue = (x) =>
+  x && typeof x === 'object' && 'value' in x ? x.value : x
 
 // Explains how one user ends up with access to a site or library, rather than listing who holds
 // permissions. Answers the question the permission lists cannot: a group holding Edit says
@@ -42,7 +43,9 @@ export const CippCheckUserAccessDialog = ({
   const tenant = siteRow?.Tenant ?? tenantFilter
   const isOpen = !!drawerVisible
 
-  const formControl = useForm({ defaultValues: { user: null, scope: SITE_ROOT_OPTION } })
+  const formControl = useForm({
+    defaultValues: { user: null, scope: SITE_ROOT_OPTION },
+  })
   const selectedUser = formControl.watch('user')
   const selectedScope = formControl.watch('scope')
 
@@ -57,7 +60,9 @@ export const CippCheckUserAccessDialog = ({
   })
 
   const scopeOptions = useMemo(() => {
-    const libs = Array.isArray(libraries.data?.Results) ? libraries.data.Results : []
+    const libs = Array.isArray(libraries.data?.Results)
+      ? libraries.data.Results
+      : []
     return [
       SITE_ROOT_OPTION,
       ...libs.map((library) => ({ label: library.Title, value: library.Id })),
@@ -91,16 +96,23 @@ export const CippCheckUserAccessDialog = ({
   const limitedOnly = paths.length > 0 && realPaths.length === 0
 
   return (
-    <Dialog fullWidth maxWidth="md" open={isOpen} onClose={() => setDrawerVisible(false)}>
+    <Dialog
+      fullWidth
+      maxWidth="md"
+      open={isOpen}
+      onClose={() => setDrawerVisible(false)}
+    >
       <DialogTitle>
-        Check User Access{siteRow?.displayName ? ` — ${siteRow.displayName}` : ''}
+        Check User Access
+        {siteRow?.displayName ? ` — ${siteRow.displayName}` : ''}
       </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
           <Typography variant="body2" color="text.secondary">
-            Shows every route by which a user can reach this site or one of its libraries, and what
-            each route grants. Group memberships are resolved, including nested groups, so this
-            answers whether someone actually has access rather than who holds the permissions.
+            Shows every route by which a user can reach this site or one of its
+            libraries, and what each route grants. Group memberships are
+            resolved, including nested groups, so this answers whether someone
+            actually has access rather than who holds the permissions.
           </Typography>
 
           <CippFormComponent
@@ -120,7 +132,8 @@ export const CippCheckUserAccessDialog = ({
               },
               queryKey: 'ListUsersAutoComplete',
               dataKey: 'Results',
-              labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+              labelField: (user) =>
+                `${user.displayName} (${user.userPrincipalName})`,
               valueField: 'userPrincipalName',
               showRefresh: true,
             }}
@@ -162,8 +175,8 @@ export const CippCheckUserAccessDialog = ({
                     {data.DisplayName} has access via {data.AccessPathCount}{' '}
                     {data.AccessPathCount === 1 ? 'route' : 'routes'}
                   </AlertTitle>
-                  Removing one route does not remove the others — every route below has to go for
-                  access to stop.
+                  Removing one route does not remove the others — every route
+                  below has to go for access to stop.
                 </Alert>
               ) : (
                 <Alert severity="success">
@@ -176,15 +189,24 @@ export const CippCheckUserAccessDialog = ({
 
               {data.LibraryInherits && (
                 <Alert severity="info">
-                  This library inherits its permissions from the site, so the site&apos;s
-                  permissions were evaluated.
+                  This library inherits its permissions from the site, so the
+                  site&apos;s permissions were evaluated.
                 </Alert>
               )}
 
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                <Chip size="small" variant="outlined" label={`Scope: ${data.TargetLabel}`} />
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={`Scope: ${data.TargetLabel}`}
+                />
                 {data.IsGuest && (
-                  <Chip size="small" variant="outlined" color="warning" label="Guest account" />
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    color="warning"
+                    label="Guest account"
+                  />
                 )}
                 {!data.SharingLinksChecked && (
                   <Chip
@@ -202,7 +224,13 @@ export const CippCheckUserAccessDialog = ({
                 title="Access Routes"
                 queryKey={`SiteUserAccessPaths-${query?.UserPrincipalName}-${query?.ListId || 'root'}`}
                 data={paths}
-                simpleColumns={['Route', 'Via', 'PermissionLevel', 'AppliesTo', 'IsSystemManaged']}
+                simpleColumns={[
+                  'Route',
+                  'Via',
+                  'PermissionLevel',
+                  'AppliesTo',
+                  'IsSystemManaged',
+                ]}
               />
             </>
           )}

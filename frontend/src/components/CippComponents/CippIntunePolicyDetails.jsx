@@ -3,12 +3,20 @@ import { ApiGetCall } from '../../api/ApiCall'
 import CippJsonView from '../CippFormPages/CippJSONView'
 
 export const CippIntunePolicyDetails = ({ row, tenant }) => {
-  const isConfigurationPolicy = row?.URLName?.toLowerCase() === 'configurationpolicies'
-  const isAdministrativeTemplate = row?.URLName?.toLowerCase() === 'grouppolicyconfigurations'
-  const isSupportedPolicyType = isConfigurationPolicy || isAdministrativeTemplate
-  const urlName = isAdministrativeTemplate ? 'groupPolicyConfigurations' : 'configurationPolicies'
-  const policyTypeLabel = isAdministrativeTemplate ? 'Administrative Template' : 'Settings Catalog'
-  const tenantFilter = tenant === 'AllTenants' && row?.Tenant ? row.Tenant : tenant
+  const isConfigurationPolicy =
+    row?.URLName?.toLowerCase() === 'configurationpolicies'
+  const isAdministrativeTemplate =
+    row?.URLName?.toLowerCase() === 'grouppolicyconfigurations'
+  const isSupportedPolicyType =
+    isConfigurationPolicy || isAdministrativeTemplate
+  const urlName = isAdministrativeTemplate
+    ? 'groupPolicyConfigurations'
+    : 'configurationPolicies'
+  const policyTypeLabel = isAdministrativeTemplate
+    ? 'Administrative Template'
+    : 'Settings Catalog'
+  const tenantFilter =
+    tenant === 'AllTenants' && row?.Tenant ? row.Tenant : tenant
 
   const policyDetails = ApiGetCall({
     url: '/api/ListIntunePolicy',
@@ -29,9 +37,12 @@ export const CippIntunePolicyDetails = ({ row, tenant }) => {
     return null
   }
 
-  const details = Array.isArray(policyDetails.data) ? policyDetails.data[0] : policyDetails.data
+  const details = Array.isArray(policyDetails.data)
+    ? policyDetails.data[0]
+    : policyDetails.data
   const fallbackDetails = row?.settings || row?.definitionValues ? row : null
-  const settingsObject = details?.settings || details?.definitionValues ? details : fallbackDetails
+  const settingsObject =
+    details?.settings || details?.definitionValues ? details : fallbackDetails
 
   if (policyDetails.isLoading || policyDetails.isFetching) {
     return (
@@ -60,5 +71,13 @@ export const CippIntunePolicyDetails = ({ row, tenant }) => {
     )
   }
 
-  return <CippJsonView object={settingsObject} type="intune" defaultOpen title="Policy Settings" tenant={tenantFilter} />
+  return (
+    <CippJsonView
+      object={settingsObject}
+      type="intune"
+      defaultOpen
+      title="Policy Settings"
+      tenant={tenantFilter}
+    />
+  )
 }

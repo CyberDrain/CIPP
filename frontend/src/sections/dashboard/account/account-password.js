@@ -1,6 +1,6 @@
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import toast from "react-hot-toast";
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import toast from 'react-hot-toast'
 import {
   Box,
   Button,
@@ -10,19 +10,22 @@ import {
   Stack,
   TextField,
   Typography,
-} from "@mui/material";
+} from '@mui/material'
 
-import { Grid } from "@mui/system";
+import { Grid } from '@mui/system'
 const initialValues = {
-  newPassword: "",
-  password: "",
+  newPassword: '',
+  password: '',
   submit: null,
-};
+}
 
 const validationSchema = Yup.object({
-  newPassword: Yup.string().min(7).max(255).required("New password is required"),
-  password: Yup.string().min(7).max(255).required("Old password is required"),
-});
+  newPassword: Yup.string()
+    .min(7)
+    .max(255)
+    .required('New password is required'),
+  password: Yup.string().min(7).max(255).required('Old password is required'),
+})
 
 export const AccountPassword = (props) => {
   const formik = useFormik({
@@ -30,18 +33,18 @@ export const AccountPassword = (props) => {
     validationSchema,
     onSubmit: async (values, helpers) => {
       try {
-        toast.success("Password changed");
-        helpers.resetForm();
-        helpers.setStatus({ success: true });
-        helpers.setSubmitting(false);
+        toast.success('Password changed')
+        helpers.resetForm()
+        helpers.setStatus({ success: true })
+        helpers.setSubmitting(false)
       } catch (err) {
-        console.error(err);
-        helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
-        helpers.setSubmitting(false);
+        console.error(err)
+        helpers.setStatus({ success: false })
+        helpers.setErrors({ submit: err.message })
+        helpers.setSubmitting(false)
       }
     },
-  });
+  })
 
   return (
     <Card>
@@ -65,9 +68,13 @@ export const AccountPassword = (props) => {
                   value={formik.values.password}
                 />
                 <TextField
-                  error={!!(formik.touched.newPassword && formik.errors.newPassword)}
+                  error={
+                    !!(formik.touched.newPassword && formik.errors.newPassword)
+                  }
                   fullWidth
-                  helperText={formik.touched.newPassword && formik.errors.newPassword}
+                  helperText={
+                    formik.touched.newPassword && formik.errors.newPassword
+                  }
                   label="New password"
                   name="newPassword"
                   onBlur={formik.handleBlur}
@@ -91,5 +98,5 @@ export const AccountPassword = (props) => {
         </Grid>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

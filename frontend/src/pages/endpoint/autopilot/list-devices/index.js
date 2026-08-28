@@ -39,7 +39,8 @@ const Page = () => {
               $orderby: 'displayName',
               $top: 999,
             },
-            labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+            labelField: (user) =>
+              `${user.displayName} (${user.userPrincipalName})`,
             valueField: 'userPrincipalName',
             addedField: {
               userPrincipalName: 'userPrincipalName',
@@ -160,7 +161,11 @@ const Page = () => {
         simpleColumns={simpleColumns}
         cardButton={
           <>
-            <Button component={Link} href="/endpoint/autopilot/add-device" startIcon={<Add />}>
+            <Button
+              component={Link}
+              href="/endpoint/autopilot/add-device"
+              startIcon={<Add />}
+            >
               Add Autopilot Devices
             </Button>
             <Button onClick={createDialog.handleOpen} startIcon={<Sync />}>

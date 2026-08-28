@@ -36,7 +36,9 @@ describe('CippListItemCard', () => {
         seeAllText="See All Notifications"
       />
     )
-    expect(screen.getByText("No messages found. You're good to go!")).toBeInTheDocument()
+    expect(
+      screen.getByText("No messages found. You're good to go!")
+    ).toBeInTheDocument()
     expect(screen.queryByText('See All Notifications')).not.toBeInTheDocument()
   })
 })

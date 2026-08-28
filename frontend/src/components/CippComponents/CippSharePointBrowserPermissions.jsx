@@ -60,11 +60,7 @@ TabPanel.propTypes = {
   children: PropTypes.node,
 }
 
-const SectionToolbar = ({
-  title,
-  count,
-  actions = EMPTY,
-}) => (
+const SectionToolbar = ({ title, count, actions = EMPTY }) => (
   <Stack
     direction="row"
     spacing={1}
@@ -74,14 +70,20 @@ const SectionToolbar = ({
   >
     <Stack direction="row" spacing={1} alignItems="center">
       <Typography variant="subtitle2">{title}</Typography>
-      {typeof count === 'number' ? <Chip size="small" label={count} sx={{ height: 22 }} /> : null}
+      {typeof count === 'number' ? (
+        <Chip size="small" label={count} sx={{ height: 22 }} />
+      ) : null}
     </Stack>
     {actions.length ? (
       <Stack direction="row" spacing={1} alignItems="center">
         {actions.map((action) => (
           <Tooltip
             key={action.label}
-            title={action.disabled ? action.disabledTitle || 'Coming soon' : action.label}
+            title={
+              action.disabled
+                ? action.disabledTitle || 'Coming soon'
+                : action.label
+            }
           >
             <span>
               <Button
@@ -115,12 +117,22 @@ SectionToolbar.propTypes = {
   ),
 }
 
-const RowActions = ({ onEdit, onRemove, disableActions = true, disabledTitle = 'Coming soon' }) => (
+const RowActions = ({
+  onEdit,
+  onRemove,
+  disableActions = true,
+  disabledTitle = 'Coming soon',
+}) => (
   <Stack direction="row" spacing={0.25} justifyContent="flex-end">
     {onEdit ? (
       <Tooltip title={disableActions ? disabledTitle : 'Modify'}>
         <span>
-          <IconButton size="small" onClick={onEdit} disabled={disableActions} aria-label="Modify">
+          <IconButton
+            size="small"
+            onClick={onEdit}
+            disabled={disableActions}
+            aria-label="Modify"
+          >
             <EditOutlined fontSize="small" />
           </IconButton>
         </span>
@@ -129,7 +141,12 @@ const RowActions = ({ onEdit, onRemove, disableActions = true, disabledTitle = '
     {onRemove ? (
       <Tooltip title={disableActions ? disabledTitle : 'Remove'}>
         <span>
-          <IconButton size="small" onClick={onRemove} disabled={disableActions} aria-label="Remove">
+          <IconButton
+            size="small"
+            onClick={onRemove}
+            disabled={disableActions}
+            aria-label="Remove"
+          >
             <DeleteOutline fontSize="small" />
           </IconButton>
         </span>
@@ -149,8 +166,12 @@ const PrincipalChips = ({ row }) => (
   <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
     {row.isGuest ? <Chip size="small" color="warning" label="Guest" /> : null}
     {row.isSiteAdmin ? <Chip size="small" label="Admin" /> : null}
-    {row.isSystemGroup ? <Chip size="small" color="info" label="Associated" /> : null}
-    {row.isSystemManaged ? <Chip size="small" variant="outlined" label="System" /> : null}
+    {row.isSystemGroup ? (
+      <Chip size="small" color="info" label="Associated" />
+    ) : null}
+    {row.isSystemManaged ? (
+      <Chip size="small" variant="outlined" label="System" />
+    ) : null}
   </Stack>
 )
 
@@ -168,7 +189,13 @@ EmptyState.propTypes = {
   message: PropTypes.string,
 }
 
-const AccessTable = ({ rows = EMPTY, canWrite = false, systemGroupIds = EMPTY, onEdit, onRemove }) => {
+const AccessTable = ({
+  rows = EMPTY,
+  canWrite = false,
+  systemGroupIds = EMPTY,
+  onEdit,
+  onRemove,
+}) => {
   const systemIds = useMemo(() => {
     const set = new Set()
     ;(Array.isArray(systemGroupIds) ? systemGroupIds : []).forEach((id) => {
@@ -180,7 +207,14 @@ const AccessTable = ({ rows = EMPTY, canWrite = false, systemGroupIds = EMPTY, o
   if (!rows.length) return <EmptyState message="No role assignments." />
 
   return (
-    <TableContainer sx={{ maxHeight: 420, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+    <TableContainer
+      sx={{
+        maxHeight: 420,
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+      }}
+    >
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
@@ -207,11 +241,14 @@ const AccessTable = ({ rows = EMPTY, canWrite = false, systemGroupIds = EMPTY, o
                       },
                     ]
                   : []
-            const onlySystem = levels.length > 0 && levels.every((level) => level.isSystemManaged)
+            const onlySystem =
+              levels.length > 0 &&
+              levels.every((level) => level.isSystemManaged)
             const isSystemGroup =
               Boolean(row.isSystemGroup) ||
               (row.principalId != null && systemIds.has(`${row.principalId}`))
-            const canAct = canWrite && !onlySystem && !isSystemGroup && !!row.principalId
+            const canAct =
+              canWrite && !onlySystem && !isSystemGroup && !!row.principalId
 
             return (
               <TableRow
@@ -228,17 +265,30 @@ const AccessTable = ({ rows = EMPTY, canWrite = false, systemGroupIds = EMPTY, o
                   </Stack>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2">{row.principalType || '—'}</Typography>
+                  <Typography variant="body2">
+                    {row.principalType || '—'}
+                  </Typography>
                 </TableCell>
                 <TableCell>
-                  <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    useFlexGap
+                    flexWrap="wrap"
+                  >
                     {levels.length
                       ? levels.map((level) => (
                           <Chip
                             key={level.roleDefinitionId || level.name}
                             size="small"
-                            icon={level.isSystemManaged ? undefined : <Security fontSize="small" />}
-                            variant={level.isSystemManaged ? 'outlined' : 'filled'}
+                            icon={
+                              level.isSystemManaged ? undefined : (
+                                <Security fontSize="small" />
+                              )
+                            }
+                            variant={
+                              level.isSystemManaged ? 'outlined' : 'filled'
+                            }
                             label={level.name || '—'}
                             title={
                               level.isSystemManaged
@@ -274,7 +324,9 @@ const AccessTable = ({ rows = EMPTY, canWrite = false, systemGroupIds = EMPTY, o
                             : 'Unavailable'
                     }
                     onEdit={canAct && onEdit ? () => onEdit(row) : undefined}
-                    onRemove={canAct && onRemove ? () => onRemove(row) : undefined}
+                    onRemove={
+                      canAct && onRemove ? () => onRemove(row) : undefined
+                    }
                   />
                 </TableCell>
               </TableRow>
@@ -304,7 +356,14 @@ const MembersTable = ({
   if (!rows.length) return <EmptyState message="No members in this group." />
 
   return (
-    <TableContainer sx={{ maxHeight: 380, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+    <TableContainer
+      sx={{
+        maxHeight: 380,
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+      }}
+    >
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
@@ -335,7 +394,9 @@ const MembersTable = ({
                   </Stack>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2">{row.principalType || '—'}</Typography>
+                  <Typography variant="body2">
+                    {row.principalType || '—'}
+                  </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography
@@ -359,7 +420,9 @@ const MembersTable = ({
                           : 'Unavailable'
                     }
                     onRemove={
-                      canWrite && typeof onRemoveMember === 'function' && row.principalId
+                      canWrite &&
+                      typeof onRemoveMember === 'function' &&
+                      row.principalId
                         ? () => onRemoveMember(row)
                         : undefined
                     }
@@ -382,13 +445,26 @@ MembersTable.propTypes = {
   disableRemoveTitle: PropTypes.string,
 }
 
-const GraphSitePermissionsTable = ({ rows = EMPTY, canWrite = false, onRemove }) => {
+const GraphSitePermissionsTable = ({
+  rows = EMPTY,
+  canWrite = false,
+  onRemove,
+}) => {
   if (!rows.length) {
-    return <EmptyState message="No Graph site permissions (app grants) on this site." />
+    return (
+      <EmptyState message="No Graph site permissions (app grants) on this site." />
+    )
   }
 
   return (
-    <TableContainer sx={{ maxHeight: 420, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+    <TableContainer
+      sx={{
+        maxHeight: 420,
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+      }}
+    >
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
@@ -403,7 +479,8 @@ const GraphSitePermissionsTable = ({ rows = EMPTY, canWrite = false, onRemove })
         </TableHead>
         <TableBody>
           {rows.map((row, index) => {
-            const canRemove = canWrite && !!row.permissionId && typeof onRemove === 'function'
+            const canRemove =
+              canWrite && !!row.permissionId && typeof onRemove === 'function'
             return (
               <TableRow key={`${row.permissionId}-${index}`} hover>
                 <TableCell>
@@ -412,15 +489,28 @@ const GraphSitePermissionsTable = ({ rows = EMPTY, canWrite = false, onRemove })
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ textTransform: 'capitalize' }}
+                  >
                     {row.identityType || '—'}
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    useFlexGap
+                    flexWrap="wrap"
+                  >
                     {(row.roles ?? []).length
                       ? row.roles.map((role) => (
-                          <Chip key={role} size="small" icon={<Security fontSize="small" />} label={role} />
+                          <Chip
+                            key={role}
+                            size="small"
+                            icon={<Security fontSize="small" />}
+                            label={role}
+                          />
                         ))
                       : '—'}
                   </Stack>
@@ -431,7 +521,11 @@ const GraphSitePermissionsTable = ({ rows = EMPTY, canWrite = false, onRemove })
                     color="text.secondary"
                     noWrap
                     title={row.identityId}
-                    sx={{ maxWidth: 260, fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    sx={{
+                      maxWidth: 260,
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                    }}
                   >
                     {row.identityId || '—'}
                   </Typography>
@@ -440,7 +534,9 @@ const GraphSitePermissionsTable = ({ rows = EMPTY, canWrite = false, onRemove })
                   <RowActions
                     disableActions={!canRemove}
                     disabledTitle={
-                      !canWrite ? 'Requires SharePoint write permission' : 'Unavailable'
+                      !canWrite
+                        ? 'Requires SharePoint write permission'
+                        : 'Unavailable'
                     }
                     onRemove={canRemove ? () => onRemove(row) : undefined}
                   />
@@ -509,7 +605,9 @@ const CheckAccessPanel = ({
   })
 
   const scopeOptions = useMemo(() => {
-    const libs = Array.isArray(libraries.data?.Results) ? libraries.data.Results : []
+    const libs = Array.isArray(libraries.data?.Results)
+      ? libraries.data.Results
+      : []
     const fromApi = libs.map((library) => ({
       label: library.Title,
       value: library.Id,
@@ -556,9 +654,10 @@ const CheckAccessPanel = ({
   return (
     <Stack spacing={2}>
       <Typography variant="body2" color="text.secondary">
-        Pick a user to see every route that grants them access here — direct grants, SharePoint
-        groups, nested Entra groups, tenant-wide claims, and (when cached) sharing links. This is
-        the inverse of the Access tab: who can reach this place, and how.
+        Pick a user to see every route that grants them access here — direct
+        grants, SharePoint groups, nested Entra groups, tenant-wide claims, and
+        (when cached) sharing links. This is the inverse of the Access tab: who
+        can reach this place, and how.
       </Typography>
 
       <Stack
@@ -584,7 +683,8 @@ const CheckAccessPanel = ({
               },
               queryKey: 'ListUsersAutoComplete',
               dataKey: 'Results',
-              labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+              labelField: (user) =>
+                `${user.displayName} (${user.userPrincipalName})`,
               valueField: 'userPrincipalName',
               showRefresh: true,
             }}
@@ -626,8 +726,8 @@ const CheckAccessPanel = ({
                 {data.DisplayName} has access via {data.AccessPathCount}{' '}
                 {data.AccessPathCount === 1 ? 'route' : 'routes'}
               </AlertTitle>
-              Removing one route does not remove the others — every route below has to go for
-              access to stop.
+              Removing one route does not remove the others — every route below
+              has to go for access to stop.
             </Alert>
           ) : (
             <Alert severity="success">
@@ -640,15 +740,24 @@ const CheckAccessPanel = ({
 
           {data.LibraryInherits ? (
             <Alert severity="info">
-              This library inherits permissions from the site, so the site&apos;s permissions were
-              evaluated.
+              This library inherits permissions from the site, so the
+              site&apos;s permissions were evaluated.
             </Alert>
           ) : null}
 
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <Chip size="small" variant="outlined" label={`Scope: ${data.TargetLabel}`} />
+            <Chip
+              size="small"
+              variant="outlined"
+              label={`Scope: ${data.TargetLabel}`}
+            />
             {data.IsGuest ? (
-              <Chip size="small" variant="outlined" color="warning" label="Guest account" />
+              <Chip
+                size="small"
+                variant="outlined"
+                color="warning"
+                label="Guest account"
+              />
             ) : null}
             {!data.SharingLinksChecked ? (
               <Chip
@@ -663,7 +772,14 @@ const CheckAccessPanel = ({
           {!paths.length ? (
             <EmptyState message="No access routes returned." />
           ) : (
-            <TableContainer sx={{ maxHeight: 360, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+            <TableContainer
+              sx={{
+                maxHeight: 360,
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+              }}
+            >
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
@@ -682,9 +798,18 @@ const CheckAccessPanel = ({
                       <TableCell>{path.PermissionLevel || '—'}</TableCell>
                       <TableCell>{path.AppliesTo || '—'}</TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          flexWrap="wrap"
+                          useFlexGap
+                        >
                           {path.IsSystemManaged ? (
-                            <Chip size="small" label="System" sx={{ height: 22 }} />
+                            <Chip
+                              size="small"
+                              label="System"
+                              sx={{ height: 22 }}
+                            />
                           ) : null}
                           {path.GrantsRealAccess === false ? (
                             <Chip
@@ -785,7 +910,8 @@ export const CippSharePointBrowserPermissions = ({
         : null
   const data = typeof result === 'object' && result !== null ? result : null
 
-  const titleName = data?.target?.title || item?.displayName || item?.name || 'Permissions'
+  const titleName =
+    data?.target?.title || item?.displayName || item?.name || 'Permissions'
   const targetType = data?.target?.type || (isLibrary ? 'library' : 'site')
   const inherits = Boolean(data?.target?.inheritsFromSite)
   const hasUnique = Boolean(data?.target?.hasUniqueRoleAssignments)
@@ -801,7 +927,9 @@ export const CippSharePointBrowserPermissions = ({
       ? roleDefinitions.data.Results
       : []
     return definitions.map((definition) => ({
-      label: definition.IsCustom ? `${definition.Name} (custom)` : definition.Name,
+      label: definition.IsCustom
+        ? `${definition.Name} (custom)`
+        : definition.Name,
       value: definition.Id,
     }))
   }, [roleDefinitions.data])
@@ -840,7 +968,9 @@ export const CippSharePointBrowserPermissions = ({
       groupId: group.groupId,
       isSystemGroup: true,
     }))
-    const associatedIds = new Set(associated.map((g) => g.groupId).filter(Boolean))
+    const associatedIds = new Set(
+      associated.map((g) => g.groupId).filter(Boolean)
+    )
     const custom = (data.sharePointGroups ?? [])
       .filter((group) => !associatedIds.has(group.groupId))
       .map((group) => ({
@@ -857,7 +987,9 @@ export const CippSharePointBrowserPermissions = ({
   }, [data])
 
   const activeGroup =
-    groupList.find((group) => group.key === selectedGroupKey) || groupList[0] || null
+    groupList.find((group) => group.key === selectedGroupKey) ||
+    groupList[0] ||
+    null
   const canNestIntoActiveGroup = canWrite && !!activeGroup?.groupId
 
   const handleClose = () => {
@@ -881,9 +1013,20 @@ export const CippSharePointBrowserPermissions = ({
           <Typography variant="h6" component="span">
             Permissions — {titleName}
           </Typography>
-          <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" alignItems="center">
-            <Chip size="small" label={targetType === 'library' ? 'Library' : 'Site'} />
-            {inherits ? <Chip size="small" color="info" label="Inherits from site" /> : null}
+          <Stack
+            direction="row"
+            spacing={0.75}
+            useFlexGap
+            flexWrap="wrap"
+            alignItems="center"
+          >
+            <Chip
+              size="small"
+              label={targetType === 'library' ? 'Library' : 'Site'}
+            />
+            {inherits ? (
+              <Chip size="small" color="info" label="Inherits from site" />
+            ) : null}
             {hasUnique && targetType === 'library' ? (
               <Chip size="small" color="warning" label="Unique permissions" />
             ) : null}
@@ -894,7 +1037,11 @@ export const CippSharePointBrowserPermissions = ({
             ) : null}
           </Stack>
         </Stack>
-        <Stack direction="row" spacing={0.5} sx={{ position: 'absolute', right: 8, top: 8 }}>
+        <Stack
+          direction="row"
+          spacing={0.5}
+          sx={{ position: 'absolute', right: 8, top: 8 }}
+        >
           <Tooltip title="Refresh">
             <span>
               <IconButton
@@ -913,7 +1060,9 @@ export const CippSharePointBrowserPermissions = ({
       </DialogTitle>
       <DialogContent dividers sx={{ minHeight: { xs: 360, md: 520 } }}>
         {!effectiveSiteUrl ? (
-          <Alert severity="warning">No site URL available for this selection.</Alert>
+          <Alert severity="warning">
+            No site URL available for this selection.
+          </Alert>
         ) : api.isFetching && !data ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress size={32} />
@@ -924,7 +1073,8 @@ export const CippSharePointBrowserPermissions = ({
           <Stack spacing={1.5} sx={{ height: '100%' }}>
             {data.errors?.length ? (
               <Alert severity="warning">
-                Some sections failed to load ({data.errors.length}). Showing what was collected.
+                Some sections failed to load ({data.errors.length}). Showing
+                what was collected.
               </Alert>
             ) : null}
 
@@ -943,8 +1093,9 @@ export const CippSharePointBrowserPermissions = ({
                   </Button>
                 }
               >
-                This library inherits permissions from the site. Showing site role assignments;
-                stop inheriting to manage library-specific access.
+                This library inherits permissions from the site. Showing site
+                role assignments; stop inheriting to manage library-specific
+                access.
               </Alert>
             ) : null}
 
@@ -963,8 +1114,8 @@ export const CippSharePointBrowserPermissions = ({
                   </Button>
                 }
               >
-                This library has unique permissions. Restoring inheritance discards them and
-                follows the site again.
+                This library has unique permissions. Restoring inheritance
+                discards them and follows the site again.
               </Alert>
             ) : null}
 
@@ -1036,10 +1187,21 @@ export const CippSharePointBrowserPermissions = ({
                       flexDirection: 'column',
                     }}
                   >
-                    <Box sx={{ px: 1.5, py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                    <Box
+                      sx={{
+                        px: 1.5,
+                        py: 1,
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                      }}
+                    >
                       <Typography variant="subtitle2">Groups</Typography>
                     </Box>
-                    <List dense disablePadding sx={{ overflow: 'auto', flex: 1 }}>
+                    <List
+                      dense
+                      disablePadding
+                      sx={{ overflow: 'auto', flex: 1 }}
+                    >
                       {groupList.map((group) => (
                         <ListItemButton
                           key={group.key}
@@ -1051,7 +1213,10 @@ export const CippSharePointBrowserPermissions = ({
                             secondary={`${group.memberCount} member${group.memberCount === 1 ? '' : 's'}${
                               group.subtitle ? ` · ${group.subtitle}` : ''
                             }`}
-                            primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
+                            primaryTypographyProps={{
+                              variant: 'body2',
+                              fontWeight: 500,
+                            }}
                             secondaryTypographyProps={{ variant: 'caption' }}
                           />
                         </ListItemButton>
@@ -1093,13 +1258,17 @@ export const CippSharePointBrowserPermissions = ({
                         sx={{ display: 'block', mb: 1 }}
                       >
                         {activeGroup.subtitle}
-                        {activeGroup.kind === 'associated' ? ' · Associated group' : ''}
+                        {activeGroup.kind === 'associated'
+                          ? ' · Associated group'
+                          : ''}
                       </Typography>
                     ) : null}
                     <MembersTable
                       rows={activeGroup?.members ?? []}
                       canWrite={canNestIntoActiveGroup}
-                      onRemoveMember={(row) => removeMemberDialog.handleOpen(row)}
+                      onRemoveMember={(row) =>
+                        removeMemberDialog.handleOpen(row)
+                      }
                     />
                   </Box>
                 </Box>
@@ -1126,8 +1295,13 @@ export const CippSharePointBrowserPermissions = ({
                 disableRemoveTitle="Cannot remove the last site collection admin"
                 onRemoveMember={(row) => removeAdminDialog.handleOpen(row)}
               />
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                Site collection admins are separate from Owners group membership.
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mt: 1 }}
+              >
+                Site collection admins are separate from Owners group
+                membership.
               </Typography>
             </TabPanel>
 
@@ -1141,9 +1315,13 @@ export const CippSharePointBrowserPermissions = ({
                 canWrite={canWrite}
                 onRemove={(row) => removeGraphPermissionDialog.handleOpen(row)}
               />
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                Site-scoped Graph grants (typically Sites.Selected app access). Separate from
-                SharePoint role assignments and sharing links.
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mt: 1 }}
+              >
+                Site-scoped Graph grants (typically Sites.Selected app access).
+                Separate from SharePoint role assignments and sharing links.
               </Typography>
             </TabPanel>
 
@@ -1200,7 +1378,8 @@ export const CippSharePointBrowserPermissions = ({
                 },
                 queryKey: 'ListUsersAutoComplete',
                 dataKey: 'Results',
-                labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+                labelField: (user) =>
+                  `${user.displayName} (${user.userPrincipalName})`,
                 valueField: 'userPrincipalName',
                 addedField: { id: 'id' },
                 showRefresh: true,
@@ -1261,7 +1440,9 @@ export const CippSharePointBrowserPermissions = ({
                 queryKey: 'ListGroupsAutoComplete',
                 dataKey: 'Results',
                 labelField: (group) =>
-                  group.mail ? `${group.displayName} (${group.mail})` : group.displayName,
+                  group.mail
+                    ? `${group.displayName} (${group.mail})`
+                    : group.displayName,
                 valueField: 'id',
                 addedField: {
                   securityEnabled: 'securityEnabled',
@@ -1348,7 +1529,9 @@ export const CippSharePointBrowserPermissions = ({
           type: 'POST',
           url: '/api/ExecSiteBrowserPermissions',
           confirmText: `Add the selected user(s) to ${
-            activeGroup?.subtitle || activeGroup?.label || 'this SharePoint group'
+            activeGroup?.subtitle ||
+            activeGroup?.label ||
+            'this SharePoint group'
           }.`,
           customDataformatter: (actionRow, action, formData) => ({
             tenantFilter,
@@ -1381,7 +1564,8 @@ export const CippSharePointBrowserPermissions = ({
               },
               queryKey: 'ListUsersAutoComplete',
               dataKey: 'Results',
-              labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+              labelField: (user) =>
+                `${user.displayName} (${user.userPrincipalName})`,
               valueField: 'userPrincipalName',
               addedField: { id: 'id' },
               showRefresh: true,
@@ -1399,7 +1583,9 @@ export const CippSharePointBrowserPermissions = ({
           type: 'POST',
           url: '/api/ExecSiteBrowserPermissions',
           confirmText: `Nest the selected group(s) inside ${
-            activeGroup?.subtitle || activeGroup?.label || 'this SharePoint group'
+            activeGroup?.subtitle ||
+            activeGroup?.label ||
+            'this SharePoint group'
           }.`,
           customDataformatter: (actionRow, action, formData) => ({
             tenantFilter,
@@ -1433,7 +1619,9 @@ export const CippSharePointBrowserPermissions = ({
               queryKey: 'ListGroupsAutoComplete',
               dataKey: 'Results',
               labelField: (group) =>
-                group.mail ? `${group.displayName} (${group.mail})` : group.displayName,
+                group.mail
+                  ? `${group.displayName} (${group.mail})`
+                  : group.displayName,
               valueField: 'id',
               addedField: {
                 securityEnabled: 'securityEnabled',
@@ -1453,7 +1641,9 @@ export const CippSharePointBrowserPermissions = ({
           type: 'POST',
           url: '/api/ExecSiteBrowserPermissions',
           confirmText: `Remove ${removeMember?.title || 'this member'} from ${
-            activeGroup?.subtitle || activeGroup?.label || 'the SharePoint group'
+            activeGroup?.subtitle ||
+            activeGroup?.label ||
+            'the SharePoint group'
           }?`,
           customDataformatter: () => ({
             tenantFilter,
@@ -1507,7 +1697,8 @@ export const CippSharePointBrowserPermissions = ({
               },
               queryKey: 'ListUsersAutoComplete',
               dataKey: 'Results',
-              labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+              labelField: (user) =>
+                `${user.displayName} (${user.userPrincipalName})`,
               valueField: 'userPrincipalName',
               addedField: { id: 'id' },
               showRefresh: true,
@@ -1530,7 +1721,10 @@ export const CippSharePointBrowserPermissions = ({
             Action: 'RemoveSiteAdmin',
             Users: [
               {
-                value: adminRow?.userPrincipalName || adminRow?.email || adminRow?.title,
+                value:
+                  adminRow?.userPrincipalName ||
+                  adminRow?.email ||
+                  adminRow?.title,
                 label: adminRow?.title,
               },
             ],
@@ -1571,8 +1765,9 @@ export const CippSharePointBrowserPermissions = ({
               formControl={formHook}
             />
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Turn this off to start from an empty permission set. Only site collection admins can
-              reach the library until permissions are granted.
+              Turn this off to start from an empty permission set. Only site
+              collection admins can reach the library until permissions are
+              granted.
             </Typography>
             <CippFormComponent
               type="switch"
@@ -1609,7 +1804,9 @@ export const CippSharePointBrowserPermissions = ({
           type: 'POST',
           url: '/api/ExecSiteBrowserPermissions',
           confirmText: `Remove Graph site permission for ${
-            graphPermissionRow?.title || graphPermissionRow?.identityId || 'this principal'
+            graphPermissionRow?.title ||
+            graphPermissionRow?.identityId ||
+            'this principal'
           }?`,
           customDataformatter: () => ({
             tenantFilter,
@@ -1617,7 +1814,8 @@ export const CippSharePointBrowserPermissions = ({
             SiteId: data?.target?.siteId || effectiveSiteId,
             Action: 'RemoveGraphSitePermission',
             PermissionId: graphPermissionRow?.permissionId,
-            PrincipalName: graphPermissionRow?.title || graphPermissionRow?.identityId,
+            PrincipalName:
+              graphPermissionRow?.title || graphPermissionRow?.identityId,
           }),
           multiPost: false,
         }}

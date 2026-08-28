@@ -31,7 +31,12 @@ const Page = () => {
   ]
 
   const offCanvas = {
-    extendedInfoFields: ['TemplateName', 'TenantFilter', 'GeneratedAt', 'Status'],
+    extendedInfoFields: [
+      'TemplateName',
+      'TenantFilter',
+      'GeneratedAt',
+      'Status',
+    ],
     actions,
   }
 
@@ -41,7 +46,13 @@ const Page = () => {
       tenantInTitle={false}
       apiUrl="/api/ListGeneratedReports"
       queryKey={`${currentTenant}-ListGeneratedReports`}
-      simpleColumns={['TemplateName', 'TenantFilter', 'GeneratedAt', 'Status', 'Sections']}
+      simpleColumns={[
+        'TemplateName',
+        'TenantFilter',
+        'GeneratedAt',
+        'Status',
+        'Sections',
+      ]}
       actions={actions}
       offCanvas={offCanvas}
       rowOpen={{

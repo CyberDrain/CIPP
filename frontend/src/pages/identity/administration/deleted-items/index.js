@@ -1,58 +1,66 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
-import { RestoreFromTrash, Warning } from "@mui/icons-material";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
+import { RestoreFromTrash, Warning } from '@mui/icons-material'
 
 const Page = () => {
-  const pageTitle = "Deleted Items";
+  const pageTitle = 'Deleted Items'
 
   const actions = [
     {
-      label: "Restore Object",
-      type: "POST",
+      label: 'Restore Object',
+      type: 'POST',
       icon: <RestoreFromTrash />,
-      url: "/api/ExecRestoreDeleted",
-      data: { ID: "id", userPrincipalName: "userPrincipalName", displayName: "displayName" },
-      confirmText: "Are you sure you want to restore this object?",
+      url: '/api/ExecRestoreDeleted',
+      data: {
+        ID: 'id',
+        userPrincipalName: 'userPrincipalName',
+        displayName: 'displayName',
+      },
+      confirmText: 'Are you sure you want to restore this object?',
       multiPost: false,
     },
     {
-      label: "Permanently Delete Object",
-      type: "POST",
+      label: 'Permanently Delete Object',
+      type: 'POST',
       icon: <Warning />,
-      url: "/api/RemoveDeletedObject",
-      data: { ID: "id", userPrincipalName: "userPrincipalName", displayName: "displayName" },
+      url: '/api/RemoveDeletedObject',
+      data: {
+        ID: 'id',
+        userPrincipalName: 'userPrincipalName',
+        displayName: 'displayName',
+      },
       confirmText:
-        "Are you sure you want to permanently delete this object? This action cannot be undone.",
+        'Are you sure you want to permanently delete this object? This action cannot be undone.',
       multiPost: false,
     },
-  ];
+  ]
 
   const offCanvas = {
     extendedInfoFields: [
-      "createdDateTime", // Created on
-      "userPrincipalName", // UPN
-      "givenName", // Given Name
-      "surname", // Surname
-      "jobTitle", // Job Title
-      "LicJoined", // Licenses
-      "businessPhones", // Business Phone
-      "mobilePhone", // Mobile Phone
-      "mail", // Mail
-      "city", // City
-      "department", // Department
-      "onPremisesLastSyncDateTime", // OnPrem Last Sync
-      "id", // Unique ID
+      'createdDateTime', // Created on
+      'userPrincipalName', // UPN
+      'givenName', // Given Name
+      'surname', // Surname
+      'jobTitle', // Job Title
+      'LicJoined', // Licenses
+      'businessPhones', // Business Phone
+      'mobilePhone', // Mobile Phone
+      'mail', // Mail
+      'city', // City
+      'department', // Department
+      'onPremisesLastSyncDateTime', // OnPrem Last Sync
+      'id', // Unique ID
     ],
     actions: actions,
-  };
+  }
 
   const columns = [
-    "displayName", // Display Name
-    "TargetType", // Type
-    "userPrincipalName", // User Principal Name
-    "deletedDateTime", // Deleted on
-    "onPremisesSyncEnabled", // AD Synced
-  ];
+    'displayName', // Display Name
+    'TargetType', // Type
+    'userPrincipalName', // User Principal Name
+    'deletedDateTime', // Deleted on
+    'onPremisesSyncEnabled', // AD Synced
+  ]
 
   return (
     <CippTablePage
@@ -62,9 +70,9 @@ const Page = () => {
       offCanvas={offCanvas}
       simpleColumns={columns}
     />
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

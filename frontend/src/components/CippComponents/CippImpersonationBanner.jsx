@@ -23,7 +23,11 @@ export const CippImpersonationBanner = () => {
   const rootRef = useRef(null)
   const queryClient = useQueryClient()
 
-  const role = useSyncExternalStore(subscribeImpersonation, getImpersonatedRole, () => null)
+  const role = useSyncExternalStore(
+    subscribeImpersonation,
+    getImpersonatedRole,
+    () => null
+  )
   const visible = Boolean(role)
 
   useEffect(() => {
@@ -36,7 +40,8 @@ export const CippImpersonationBanner = () => {
     }
 
     const element = rootRef.current
-    const publish = () => root.style.setProperty('--cipp-banner-h', `${element.offsetHeight}px`)
+    const publish = () =>
+      root.style.setProperty('--cipp-banner-h', `${element.offsetHeight}px`)
     publish()
 
     if (typeof ResizeObserver === 'undefined') return clear
@@ -85,8 +90,8 @@ export const CippImpersonationBanner = () => {
       <Stack direction="row" spacing={1.5} alignItems="center">
         <TheaterComedy fontSize="small" sx={{ color: palette.main }} />
         <Typography variant="body2" sx={{ flexGrow: 1, minWidth: 0 }}>
-          Impersonating <strong>{role}</strong> — you are seeing CIPP as this role sees it. API
-          access is enforced under this role until you exit.
+          Impersonating <strong>{role}</strong> — you are seeing CIPP as this
+          role sees it. API access is enforced under this role until you exit.
         </Typography>
         <Button
           size="small"

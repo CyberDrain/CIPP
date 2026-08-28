@@ -1,21 +1,24 @@
-import { useState } from "react";
-import dynamic from "next/dynamic";
-import { CippCopyToClipBoard } from "./CippCopyToClipboard";
-import { styled } from "@mui/system"; // Correct import from @mui/system
-import { useSettings } from "../../hooks/use-settings";
+import { useState } from 'react'
+import dynamic from 'next/dynamic'
+import { CippCopyToClipBoard } from './CippCopyToClipboard'
+import { styled } from '@mui/system' // Correct import from @mui/system
+import { useSettings } from '../../hooks/use-settings'
 
 // Heavy, client-only editors loaded on demand so monaco-editor (~5MB) and react-syntax-highlighter
 // stay out of the common bundle — they only download when a code block actually renders.
-const Editor = dynamic(() => import("@monaco-editor/react").then((m) => m.Editor), {
+const Editor = dynamic(
+  () => import('@monaco-editor/react').then((m) => m.Editor),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+)
+const CippPrismHighlighter = dynamic(() => import('./CippPrismHighlighter'), {
   ssr: false,
   loading: () => null,
-});
-const CippPrismHighlighter = dynamic(() => import("./CippPrismHighlighter"), {
-  ssr: false,
-  loading: () => null,
-});
+})
 
-const CodeContainer = styled("div")`
+const CodeContainer = styled('div')`
   position: relative;
   display: block;
   max-width: 100%; /* Ensure it fits within the card */
@@ -29,41 +32,41 @@ const CodeContainer = styled("div")`
     top: 0.5rem;
     z-index: 1; /* Ensure the button is above the code block */
   }
-`;
+`
 
 export const CippCodeBlock = (props) => {
   const {
     code,
-    language = "json",
+    language = 'json',
     showLineNumbers = false,
     startingLineNumber = 1,
     wrapLongLines = true,
-    type = "syntax",
-    editorHeight = "500px",
+    type = 'syntax',
+    editorHeight = '500px',
     readOnly = false,
     ...other
-  } = props;
-  const [codeCopied, setCodeCopied] = useState(false);
+  } = props
+  const [codeCopied, setCodeCopied] = useState(false)
 
   const onCodeCopied = () => {
-    setCodeCopied(true);
-    setTimeout(() => setCodeCopied(false), 2000);
-  };
-  const currentTheme = useSettings()?.currentTheme?.value;
+    setCodeCopied(true)
+    setTimeout(() => setCodeCopied(false), 2000)
+  }
+  const currentTheme = useSettings()?.currentTheme?.value
   return (
     <CodeContainer>
       <div className="cipp-code-copy-button">
         <CippCopyToClipBoard text={code} type="button" onClick={onCodeCopied} />
       </div>
-      {type === "editor" && (
+      {type === 'editor' && (
         <Editor
           language={language}
           value={code}
-          theme={currentTheme === "dark" ? "vs-dark" : "vs-light"}
+          theme={currentTheme === 'dark' ? 'vs-dark' : 'vs-light'}
           height={editorHeight}
           options={{
             wordWrap: true,
-            lineNumbers: showLineNumbers ? "on" : "off",
+            lineNumbers: showLineNumbers ? 'on' : 'off',
             minimap: { enabled: showLineNumbers },
             readOnly: readOnly,
             quickSuggestions: {
@@ -76,9 +79,11 @@ export const CippCodeBlock = (props) => {
           {...other}
         />
       )}
-      {type === "syntax" && (
+      {type === 'syntax' && (
         <CippPrismHighlighter
-          lineProps={{ style: { wordBreak: "break-all", whiteSpace: "pre-wrap" } }}
+          lineProps={{
+            style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' },
+          }}
           language={language}
           showLineNumbers={showLineNumbers}
           startingLineNumber={startingLineNumber}
@@ -87,5 +92,5 @@ export const CippCodeBlock = (props) => {
         />
       )}
     </CodeContainer>
-  );
-};
+  )
+}

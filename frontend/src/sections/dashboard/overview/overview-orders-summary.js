@@ -1,16 +1,24 @@
-import { useState } from "react";
-import PropTypes from "prop-types";
-import { Box, Card, CardContent, CardHeader, Divider, Stack, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { ActionsMenu } from "../../../components/actions-menu";
-import { Chart } from "../../../components/chart";
+import { useState } from 'react'
+import PropTypes from 'prop-types'
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Stack,
+  Typography,
+} from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import { ActionsMenu } from '../../../components/actions-menu'
+import { Chart } from '../../../components/chart'
 
 const useChartOptions = (labels) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return {
     chart: {
-      background: "transparent",
+      background: 'transparent',
     },
     colors: [
       theme.palette.primary.main,
@@ -33,12 +41,12 @@ const useChartOptions = (labels) => {
     states: {
       active: {
         filter: {
-          type: "none",
+          type: 'none',
         },
       },
       hover: {
         filter: {
-          type: "none",
+          type: 'none',
         },
       },
     },
@@ -51,15 +59,15 @@ const useChartOptions = (labels) => {
     tooltip: {
       fillSeriesColor: false,
     },
-  };
-};
+  }
+}
 
 export const OverviewOrdersSummary = (props) => {
-  const { chartSeries = [], labels = [] } = props;
-  const [range, setRange] = useState("Last 7 days");
-  const chartOptions = useChartOptions(labels);
+  const { chartSeries = [], labels = [] } = props
+  const [range, setRange] = useState('Last 7 days')
+  const chartOptions = useChartOptions(labels)
 
-  const total = chartSeries.reduce((acc, value) => acc + value, 0);
+  const total = chartSeries.reduce((acc, value) => acc + value, 0)
 
   return (
     <Card>
@@ -69,21 +77,21 @@ export const OverviewOrdersSummary = (props) => {
             color="inherit"
             actions={[
               {
-                label: "Last 7 days",
+                label: 'Last 7 days',
                 handler: () => {
-                  setRange("Last 7 days");
+                  setRange('Last 7 days')
                 },
               },
               {
-                label: "Last Month",
+                label: 'Last Month',
                 handler: () => {
-                  setRange("Last Month");
+                  setRange('Last Month')
                 },
               },
               {
-                label: "Last Year",
+                label: 'Last Year',
                 handler: () => {
-                  setRange("Last Year");
+                  setRange('Last Year')
                 },
               },
             ]}
@@ -96,7 +104,12 @@ export const OverviewOrdersSummary = (props) => {
       />
       <Divider />
       <CardContent>
-        <Chart height={200} options={chartOptions} series={chartSeries} chartType="donut" />
+        <Chart
+          height={200}
+          options={chartOptions}
+          series={chartSeries}
+          chartType="donut"
+        />
         <Stack
           alignItems="center"
           direction="row"
@@ -117,11 +130,16 @@ export const OverviewOrdersSummary = (props) => {
               spacing={1}
               sx={{ py: 1 }}
             >
-              <Stack alignItems="center" direction="row" spacing={1} sx={{ flexGrow: 1 }}>
+              <Stack
+                alignItems="center"
+                direction="row"
+                spacing={1}
+                sx={{ flexGrow: 1 }}
+              >
                 <Box
                   sx={{
                     backgroundColor: chartOptions.colors[index],
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     height: 8,
                     width: 8,
                   }}
@@ -138,10 +156,10 @@ export const OverviewOrdersSummary = (props) => {
         </Stack>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
 OverviewOrdersSummary.propTypes = {
   chartSeries: PropTypes.array,
   labels: PropTypes.array,
-};
+}

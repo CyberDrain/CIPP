@@ -6,11 +6,20 @@ import { orderColumnsBySelection } from '../../../src/components/CippTable/CippD
 // in column order, so the field the user just selected was the one overflowing into
 // "+N more". Selection order has to win.
 describe('orderColumnsBySelection', () => {
-  const all = ['displayName', 'userPrincipalName', 'mail', 'signInActivity.lastSuccessfulSignInDateTime', 'proxyAddresses']
+  const all = [
+    'displayName',
+    'userPrincipalName',
+    'mail',
+    'signInActivity.lastSuccessfulSignInDateTime',
+    'proxyAddresses',
+  ]
 
   it('puts the selection first, in selection order', () => {
     expect(
-      orderColumnsBySelection(all, ['signInActivity.lastSuccessfulSignInDateTime', 'displayName'])
+      orderColumnsBySelection(all, [
+        'signInActivity.lastSuccessfulSignInDateTime',
+        'displayName',
+      ])
     ).toEqual([
       'signInActivity.lastSuccessfulSignInDateTime',
       'displayName',

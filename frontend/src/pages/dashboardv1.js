@@ -1,78 +1,78 @@
-import Head from "next/head";
-import { useEffect, useState } from "react";
-import { Box, Container, Button, Card, CardContent } from "@mui/material";
-import { Grid } from "@mui/system";
-import { CippInfoBar } from "../components/CippCards/CippInfoBar";
-import { CippChartCard } from "../components/CippCards/CippChartCard";
-import { CippPropertyListCard } from "../components/CippCards/CippPropertyListCard";
-import { Layout as DashboardLayout } from "../layouts/index.js";
-import { useSettings } from "../hooks/use-settings";
-import { getCippFormatting } from "../utils/get-cipp-formatting.js";
-import Portals from "../data/portals";
-import { BulkActionsMenu } from "../components/bulk-actions-menu.js";
-import { CippUniversalSearch } from "../components/CippCards/CippUniversalSearch.jsx";
-import { ApiGetCall } from "../api/ApiCall.jsx";
-import { CippCopyToClipBoard } from "../components/CippComponents/CippCopyToClipboard.jsx";
-import { ExecutiveReportButton } from "../components/ExecutiveReportButton.js";
+import Head from 'next/head'
+import { useEffect, useState } from 'react'
+import { Box, Container, Button, Card, CardContent } from '@mui/material'
+import { Grid } from '@mui/system'
+import { CippInfoBar } from '../components/CippCards/CippInfoBar'
+import { CippChartCard } from '../components/CippCards/CippChartCard'
+import { CippPropertyListCard } from '../components/CippCards/CippPropertyListCard'
+import { Layout as DashboardLayout } from '../layouts/index.js'
+import { useSettings } from '../hooks/use-settings'
+import { getCippFormatting } from '../utils/get-cipp-formatting.js'
+import Portals from '../data/portals'
+import { BulkActionsMenu } from '../components/bulk-actions-menu.js'
+import { CippUniversalSearch } from '../components/CippCards/CippUniversalSearch.jsx'
+import { ApiGetCall } from '../api/ApiCall.jsx'
+import { CippCopyToClipBoard } from '../components/CippComponents/CippCopyToClipboard.jsx'
+import { ExecutiveReportButton } from '../components/ExecutiveReportButton.js'
 
 const Page = () => {
-  const settings = useSettings();
-  const { currentTenant } = settings;
-  const [domainVisible, setDomainVisible] = useState(false);
+  const settings = useSettings()
+  const { currentTenant } = settings
+  const [domainVisible, setDomainVisible] = useState(false)
 
   const organization = ApiGetCall({
-    url: "/api/ListGraphRequest",
+    url: '/api/ListGraphRequest',
     queryKey: `${currentTenant}-ListGraphRequest-organization`,
-    data: { tenantFilter: currentTenant, Endpoint: "organization" },
-  });
+    data: { tenantFilter: currentTenant, Endpoint: 'organization' },
+  })
 
-  const organizationRecord = organization.data?.Results?.[0];
+  const organizationRecord = organization.data?.Results?.[0]
 
   const dashboard = ApiGetCall({
-    url: "/api/ListuserCounts",
+    url: '/api/ListuserCounts',
     data: { tenantFilter: currentTenant },
     queryKey: `${currentTenant}-ListuserCounts`,
-  });
+  })
 
   const sharepoint = ApiGetCall({
-    url: "/api/ListSharepointQuota",
+    url: '/api/ListSharepointQuota',
     queryKey: `${currentTenant}-ListSharepointQuota`,
     data: { tenantFilter: currentTenant },
-  });
+  })
 
   const standards = ApiGetCall({
-    url: "/api/ListStandardTemplates",
+    url: '/api/ListStandardTemplates',
     queryKey: `${currentTenant}-ListStandardTemplates`,
-  });
+  })
 
   const driftApi = ApiGetCall({
-    url: "/api/listTenantDrift",
+    url: '/api/listTenantDrift',
     data: {
       TenantFilter: currentTenant,
     },
     queryKey: `TenantDrift-${currentTenant}`,
-  });
+  })
 
   const partners = ApiGetCall({
-    url: "/api/ListGraphRequest",
+    url: '/api/ListGraphRequest',
     queryKey: `${currentTenant}-ListPartners`,
     data: {
-      Endpoint: "policies/crossTenantAccessPolicy/partners",
+      Endpoint: 'policies/crossTenantAccessPolicy/partners',
       tenantFilter: currentTenant,
       ReverseTenantLookup: true,
     },
-  });
+  })
 
   const currentTenantInfo = ApiGetCall({
-    url: "/api/ListTenants",
+    url: '/api/ListTenants',
     queryKey: `ListTenants`,
-  });
+  })
 
   // Top bar data
   const tenantInfo = [
-    { name: "Tenant Name", data: organizationRecord?.displayName },
+    { name: 'Tenant Name', data: organizationRecord?.displayName },
     {
-      name: "Tenant ID",
+      name: 'Tenant ID',
       data: (
         <>
           <CippCopyToClipBoard text={organizationRecord?.id} type="chip" />
@@ -80,12 +80,14 @@ const Page = () => {
       ),
     },
     {
-      name: "Default Domain",
+      name: 'Default Domain',
       data: (
         <>
           <CippCopyToClipBoard
             text={
-              organizationRecord?.verifiedDomains?.find((domain) => domain.isDefault === true)?.name
+              organizationRecord?.verifiedDomains?.find(
+                (domain) => domain.isDefault === true
+              )?.name
             }
             type="chip"
           />
@@ -93,10 +95,13 @@ const Page = () => {
       ),
     },
     {
-      name: "AD Sync Enabled",
-      data: getCippFormatting(organizationRecord?.onPremisesSyncEnabled, "dirsync"),
+      name: 'AD Sync Enabled',
+      data: getCippFormatting(
+        organizationRecord?.onPremisesSyncEnabled,
+        'dirsync'
+      ),
     },
-  ];
+  ]
 
   // Process drift data for chart - filter by current tenant and aggregate
   const processDriftDataForTenant = (driftData, currentTenant) => {
@@ -107,24 +112,25 @@ const Page = () => {
         currentDeviationsCount: 0,
         customerSpecificDeviations: 0,
         hasData: false,
-      };
+      }
     }
 
-    const rawDriftData = driftData || [];
+    const rawDriftData = driftData || []
     const tenantDriftData = Array.isArray(rawDriftData)
       ? rawDriftData.filter((item) => item.tenantFilter === currentTenant)
-      : [];
+      : []
 
-    const hasData = tenantDriftData.length > 0;
+    const hasData = tenantDriftData.length > 0
 
     // Aggregate data across all standards for this tenant
     const aggregatedData = tenantDriftData.reduce(
       (acc, item) => {
-        acc.acceptedDeviationsCount += item.acceptedDeviationsCount || 0;
-        acc.currentDeviationsCount += item.currentDeviationsCount || 0;
-        acc.alignedCount += item.alignedCount || 0;
-        acc.customerSpecificDeviations += item.customerSpecificDeviationsCount || 0;
-        return acc;
+        acc.acceptedDeviationsCount += item.acceptedDeviationsCount || 0
+        acc.currentDeviationsCount += item.currentDeviationsCount || 0
+        acc.alignedCount += item.alignedCount || 0
+        acc.customerSpecificDeviations +=
+          item.customerSpecificDeviationsCount || 0
+        return acc
       },
       {
         acceptedDeviationsCount: 0,
@@ -132,10 +138,10 @@ const Page = () => {
         alignedCount: 0,
         customerSpecificDeviations: 0,
       }
-    );
+    )
 
-    return { ...aggregatedData, hasData };
-  };
+    return { ...aggregatedData, hasData }
+  }
 
   function getActionCountsForTenant(standardsData, currentTenant) {
     if (!standardsData) {
@@ -144,75 +150,78 @@ const Page = () => {
         alertCount: 0,
         reportCount: 0,
         total: 0,
-      };
+      }
     }
 
     const applicableTemplates = standardsData.filter((template) => {
-      const tenantFilterArr = Array.isArray(template?.tenantFilter) ? template.tenantFilter : [];
+      const tenantFilterArr = Array.isArray(template?.tenantFilter)
+        ? template.tenantFilter
+        : []
       const excludedTenantsArr = Array.isArray(template?.excludedTenants)
         ? template.excludedTenants
-        : [];
+        : []
 
       const tenantInFilter =
-        tenantFilterArr.length > 0 && tenantFilterArr.some((tf) => tf.value === currentTenant);
+        tenantFilterArr.length > 0 &&
+        tenantFilterArr.some((tf) => tf.value === currentTenant)
 
       const allTenantsTemplate =
-        tenantFilterArr.some((tf) => tf.value === "AllTenants") &&
+        tenantFilterArr.some((tf) => tf.value === 'AllTenants') &&
         (excludedTenantsArr.length === 0 ||
-          !excludedTenantsArr.some((et) => et.value === currentTenant));
+          !excludedTenantsArr.some((et) => et.value === currentTenant))
 
-      return tenantInFilter || allTenantsTemplate;
-    });
+      return tenantInFilter || allTenantsTemplate
+    })
 
     // Combine standards from all applicable templates:
-    let combinedStandards = {};
+    let combinedStandards = {}
     for (const template of applicableTemplates) {
-      for (const [standardKey, standardValue] of Object.entries(template.standards)) {
-        combinedStandards[standardKey] = standardValue;
+      for (const [standardKey, standardValue] of Object.entries(
+        template.standards
+      )) {
+        combinedStandards[standardKey] = standardValue
       }
     }
 
     // Count each action type:
-    let remediateCount = 0;
-    let alertCount = 0;
-    let reportCount = 0;
+    let remediateCount = 0
+    let alertCount = 0
+    let reportCount = 0
 
     for (const [, standard] of Object.entries(combinedStandards)) {
-      let actions = standard.action || [];
+      let actions = standard.action || []
       if (!Array.isArray(actions)) {
-        actions = [actions];
+        actions = [actions]
       }
       actions.forEach((actionObj) => {
-        if (actionObj?.value === "Remediate") {
-          remediateCount++;
-        } else if (actionObj?.value === "Alert") {
-          alertCount++;
-        } else if (actionObj?.value === "Report") {
-          reportCount++;
+        if (actionObj?.value === 'Remediate') {
+          remediateCount++
+        } else if (actionObj?.value === 'Alert') {
+          alertCount++
+        } else if (actionObj?.value === 'Report') {
+          reportCount++
         }
-      });
+      })
     }
 
-    const total = Object.keys(combinedStandards).length;
+    const total = Object.keys(combinedStandards).length
 
-    return { remediateCount, alertCount, reportCount, total };
+    return { remediateCount, alertCount, reportCount, total }
   }
 
-  const driftData = processDriftDataForTenant(driftApi.data, currentTenant);
-  const { remediateCount, alertCount, reportCount, total } = getActionCountsForTenant(
-    standards.data,
-    currentTenant
-  );
+  const driftData = processDriftDataForTenant(driftApi.data, currentTenant)
+  const { remediateCount, alertCount, reportCount, total } =
+    getActionCountsForTenant(standards.data, currentTenant)
 
-  const [PortalMenuItems, setPortalMenuItems] = useState([]);
-  const [partnersVisible, setPartnersVisible] = useState(false);
+  const [PortalMenuItems, setPortalMenuItems] = useState([])
+  const [partnersVisible, setPartnersVisible] = useState(false)
 
   const formatStorageSize = (sizeInMB) => {
     if (sizeInMB >= 1024) {
-      return `${(sizeInMB / 1024).toFixed(2)}GB`;
+      return `${(sizeInMB / 1024).toFixed(2)}GB`
     }
-    return `${sizeInMB}MB`;
-  };
+    return `${sizeInMB}MB`
+  }
 
   // Function to filter portals based on user preferences
   const getFilteredPortals = () => {
@@ -228,52 +237,58 @@ const Page = () => {
       Compliance_Portal: true,
       Power_Platform_Portal: true,
       Power_BI_Portal: true,
-    };
+    }
 
-    let portalLinks;
+    let portalLinks
     if (settings.UserSpecificSettings?.portalLinks) {
-      portalLinks = { ...defaultLinks, ...settings.UserSpecificSettings.portalLinks };
+      portalLinks = {
+        ...defaultLinks,
+        ...settings.UserSpecificSettings.portalLinks,
+      }
     } else if (settings.portalLinks) {
-      portalLinks = { ...defaultLinks, ...settings.portalLinks };
+      portalLinks = { ...defaultLinks, ...settings.portalLinks }
     } else {
-      portalLinks = defaultLinks;
+      portalLinks = defaultLinks
     }
 
     // Filter the portals based on user settings
     return Portals.filter((portal) => {
-      const settingKey = portal.name;
-      return settingKey ? portalLinks[settingKey] === true : true;
-    });
-  };
+      const settingKey = portal.name
+      return settingKey ? portalLinks[settingKey] === true : true
+    })
+  }
 
   useEffect(() => {
     if (currentTenantInfo.isSuccess) {
       const tenantLookup = currentTenantInfo.data?.find(
         (tenant) => tenant.defaultDomainName === currentTenant
-      );
+      )
 
       // Get filtered portals based on user preferences
-      const filteredPortals = getFilteredPortals();
+      const filteredPortals = getFilteredPortals()
 
       const menuItems = filteredPortals.map((portal) => ({
         label: portal.label,
-        target: "_blank",
+        target: '_blank',
         // A portal with a `field` has a URL the backend resolved for us (SharePoint's host cannot be
         // derived from the tenant). Use it when it's there, otherwise fall back to the templated URL.
         link:
           portal.field && tenantLookup?.[portal.field]
             ? tenantLookup[portal.field]
-            : portal.url.replace(portal.variable, tenantLookup?.[portal.variable]),
+            : portal.url.replace(
+                portal.variable,
+                tenantLookup?.[portal.variable]
+              ),
         icon: portal.icon,
-      }));
-      setPortalMenuItems(menuItems);
+      }))
+      setPortalMenuItems(menuItems)
     }
   }, [
     currentTenantInfo.isSuccess,
     currentTenant,
     settings.portalLinks,
     settings.UserSpecificSettings,
-  ]);
+  ])
 
   return (
     <>
@@ -285,11 +300,16 @@ const Page = () => {
           <Grid container spacing={3}>
             <Grid size={{ md: 12, xs: 12 }}>
               <Card>
-                <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, p: 2 }}>
+                <CardContent
+                  sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2 }}
+                >
                   <BulkActionsMenu
                     buttonName="Portals"
                     actions={PortalMenuItems}
-                    disabled={!currentTenantInfo.isSuccess || PortalMenuItems.length === 0}
+                    disabled={
+                      !currentTenantInfo.isSuccess ||
+                      PortalMenuItems.length === 0
+                    }
                   />
                   <ExecutiveReportButton
                     disabled={organization.isFetching || dashboard.isFetching}
@@ -302,7 +322,10 @@ const Page = () => {
               </Card>
             </Grid>
             <Grid size={{ md: 12, xs: 12 }}>
-              <CippInfoBar data={tenantInfo} isFetching={organization.isFetching} />
+              <CippInfoBar
+                data={tenantInfo}
+                isFetching={organization.isFetching}
+              />
             </Grid>
             <Grid size={{ md: 4, xs: 12 }}>
               <CippChartCard
@@ -319,15 +342,20 @@ const Page = () => {
                   Number(dashboard.data?.Guests || 0),
                   Number(dashboard.data?.Gas || 0),
                 ]}
-                labels={["Licensed Users", "Unlicensed Users", "Guests", "Global Admins"]}
+                labels={[
+                  'Licensed Users',
+                  'Unlicensed Users',
+                  'Guests',
+                  'Global Admins',
+                ]}
               />
             </Grid>
 
             <Grid size={{ md: 4, xs: 12 }}>
               <CippChartCard
-                title={driftData.hasData ? "Drift Monitoring" : "Standards Set"}
+                title={driftData.hasData ? 'Drift Monitoring' : 'Standards Set'}
                 isFetching={driftApi.isFetching || standards.isFetching}
-                chartType={driftData.hasData ? "donut" : "bar"}
+                chartType={driftData.hasData ? 'donut' : 'bar'}
                 chartSeries={
                   driftData.hasData
                     ? [
@@ -341,12 +369,12 @@ const Page = () => {
                 labels={
                   driftData.hasData
                     ? [
-                        "Aligned Policies",
-                        "Accepted Deviations",
-                        "Current Deviations",
-                        "Customer Specific Deviations",
+                        'Aligned Policies',
+                        'Accepted Deviations',
+                        'Current Deviations',
+                        'Customer Specific Deviations',
                       ]
-                    : ["Remediation", "Alert", "Report"]
+                    : ['Remediation', 'Alert', 'Report']
                 }
               />
             </Grid>
@@ -357,12 +385,16 @@ const Page = () => {
                 isFetching={sharepoint.isFetching}
                 chartType="donut"
                 chartSeries={[
-                  Number(sharepoint.data?.TenantStorageMB - sharepoint.data?.GeoUsedStorageMB) || 0,
+                  Number(
+                    sharepoint.data?.TenantStorageMB -
+                      sharepoint.data?.GeoUsedStorageMB
+                  ) || 0,
                   Number(sharepoint.data?.GeoUsedStorageMB) || 0,
                 ]}
                 labels={[
                   `Free (${formatStorageSize(
-                    sharepoint.data?.TenantStorageMB - sharepoint.data?.GeoUsedStorageMB
+                    sharepoint.data?.TenantStorageMB -
+                      sharepoint.data?.GeoUsedStorageMB
                   )})`,
                   `Used (${formatStorageSize(sharepoint.data?.GeoUsedStorageMB)})`,
                 ]}
@@ -379,13 +411,13 @@ const Page = () => {
                 propertyItems={organizationRecord?.verifiedDomains
                   ?.slice(0, domainVisible ? undefined : 3)
                   .map((domain, idx) => ({
-                    label: "",
+                    label: '',
                     value: domain.name,
                   }))}
                 actionButton={
                   organizationRecord?.verifiedDomains?.length > 3 && (
                     <Button onClick={() => setDomainVisible(!domainVisible)}>
-                      {domainVisible ? "See less" : "See more..."}
+                      {domainVisible ? 'See less' : 'See more...'}
                     </Button>
                   )
                 }
@@ -407,8 +439,10 @@ const Page = () => {
                 }))}
                 actionButton={
                   partners.data?.Results?.length > 3 && (
-                    <Button onClick={() => setPartnersVisible(!partnersVisible)}>
-                      {partnersVisible ? "See less" : "See more..."}
+                    <Button
+                      onClick={() => setPartnersVisible(!partnersVisible)}
+                    >
+                      {partnersVisible ? 'See less' : 'See more...'}
                     </Button>
                   )
                 }
@@ -423,31 +457,33 @@ const Page = () => {
                 isFetching={organization.isFetching}
                 propertyItems={[
                   {
-                    label: "Services",
+                    label: 'Services',
                     value: organizationRecord?.assignedPlans
                       ?.filter(
                         (plan) =>
-                          plan.capabilityStatus === "Enabled" &&
-                          ["exchange", "AADPremiumService", "WindowsDefenderATP"].includes(
-                            plan.service
-                          )
+                          plan.capabilityStatus === 'Enabled' &&
+                          [
+                            'exchange',
+                            'AADPremiumService',
+                            'WindowsDefenderATP',
+                          ].includes(plan.service)
                       )
                       .reduce((uniqueServices, curr) => {
                         const serviceLabel =
-                          curr.service === "exchange"
-                            ? "Exchange"
-                            : curr.service === "AADPremiumService"
-                            ? "AAD Premium"
-                            : curr.service === "Windows Defender"
-                            ? "Windows Defender"
-                            : curr.service;
+                          curr.service === 'exchange'
+                            ? 'Exchange'
+                            : curr.service === 'AADPremiumService'
+                              ? 'AAD Premium'
+                              : curr.service === 'Windows Defender'
+                                ? 'Windows Defender'
+                                : curr.service
 
                         if (!uniqueServices.includes(serviceLabel)) {
-                          uniqueServices.push(serviceLabel);
+                          uniqueServices.push(serviceLabel)
                         }
-                        return uniqueServices;
+                        return uniqueServices
                       }, [])
-                      .join(", "),
+                      .join(', '),
                   },
                 ]}
               />
@@ -456,9 +492,11 @@ const Page = () => {
         </Container>
       </Box>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>;
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+)
 
-export default Page;
+export default Page

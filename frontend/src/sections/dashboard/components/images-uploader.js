@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
+import { useCallback, useState } from 'react'
+import TrashIcon from '@heroicons/react/24/outline/TrashIcon'
 import {
   Box,
   Button,
@@ -8,48 +8,43 @@ import {
   IconButton,
   Stack,
   SvgIcon,
-  Typography
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import { ImagesDialog } from '../../../components/images-dialog';
-import { useDialog } from '../../../hooks/use-dialog';
+  Typography,
+} from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import { ImagesDialog } from '../../../components/images-dialog'
+import { useDialog } from '../../../hooks/use-dialog'
 
 export const ImagesUploader = () => {
-  const dialog = useDialog();
+  const dialog = useDialog()
   const [images, setImages] = useState([
     '/assets/products/product-1.png',
     '/assets/products/product-5.png',
-    '/assets/products/product-7.png'
-  ]);
+    '/assets/products/product-7.png',
+  ])
 
-  const handleSelectMany = useCallback((images) => {
-    dialog.handleClose();
-    setImages((prevState) => ([
-      ...prevState,
-      ...images
-    ]));
-  }, [dialog]);
+  const handleSelectMany = useCallback(
+    (images) => {
+      dialog.handleClose()
+      setImages((prevState) => [...prevState, ...images])
+    },
+    [dialog]
+  )
 
   const handleDeleteOne = useCallback((image) => {
     setImages((prevState) => {
-      return prevState.filter((_image) => _image !== image);
-    });
-  }, []);
+      return prevState.filter((_image) => _image !== image)
+    })
+  }, [])
 
   return (
     <>
       <Card>
         <CardContent>
           <Stack spacing={2}>
-            <Typography variant="subtitle2">
-              Images
-            </Typography>
+            <Typography variant="subtitle2">Images</Typography>
             <Stack spacing={1}>
               <div>
-                <Button
-                  onClick={dialog.handleOpen}
-                  variant="contained"
-                >
+                <Button onClick={dialog.handleOpen} variant="contained">
                   Browse
                 </Button>
               </div>
@@ -75,15 +70,16 @@ export const ImagesUploader = () => {
                       width: 126,
                       '&:hover': {
                         '& > div': {
-                          opacity: 1
-                        }
-                      }
+                          opacity: 1,
+                        },
+                      },
                     }}
                   >
                     <Box
                       sx={{
                         alignItems: 'center',
-                        backgroundColor: (theme) => alpha(theme.palette.neutral[900], 0.8),
+                        backgroundColor: (theme) =>
+                          alpha(theme.palette.neutral[900], 0.8),
                         display: 'flex',
                         height: '100%',
                         justifyContent: 'center',
@@ -91,7 +87,7 @@ export const ImagesUploader = () => {
                         opacity: 0,
                         position: 'absolute',
                         top: 0,
-                        width: '100%'
+                        width: '100%',
                       }}
                     >
                       <IconButton
@@ -116,5 +112,5 @@ export const ImagesUploader = () => {
         open={dialog.open}
       />
     </>
-  );
-};
+  )
+}

@@ -32,7 +32,8 @@ import {
   extractBindGuid,
 } from '../../utils/intune-bind-helpers'
 
-const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>)]+)/g
+const linkPattern =
+  /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>)]+)/g
 
 // One shared reference for the nothing-to-resolve case, so useIntuneDefinitions is not handed a
 // fresh array on every render.
@@ -63,7 +64,11 @@ const renderTextWithLinks = (text) => {
         target="_blank"
         rel="noopener noreferrer"
         onClick={(event) => event.stopPropagation()}
-        sx={{ color: 'inherit', fontWeight: 600, textDecorationColor: 'currentColor' }}
+        sx={{
+          color: 'inherit',
+          fontWeight: 600,
+          textDecorationColor: 'currentColor',
+        }}
       >
         {label}
       </Link>
@@ -88,7 +93,11 @@ const cleanObject = (obj) => {
     const cleanedObj = {}
     Object.entries(obj).forEach(([key, value]) => {
       const cleanedValue = cleanObject(value)
-      if (cleanedValue !== null && cleanedValue !== undefined && cleanedValue !== '') {
+      if (
+        cleanedValue !== null &&
+        cleanedValue !== undefined &&
+        cleanedValue !== ''
+      ) {
         cleanedObj[key] = cleanedValue
       }
     })
@@ -98,7 +107,13 @@ const cleanObject = (obj) => {
   }
 }
 
-const renderListItems = (data, onItemClick, guidMapping = {}, isLoadingGuids = false, isGuid) => {
+const renderListItems = (
+  data,
+  onItemClick,
+  guidMapping = {},
+  isLoadingGuids = false,
+  isGuid
+) => {
   // Check if this data object is from a diff
   const isDiffData = data?.__isDiffData === true
 
@@ -115,7 +130,10 @@ const renderListItems = (data, onItemClick, guidMapping = {}, isLoadingGuids = f
   // Helper to get deep object differences
   const getObjectDiff = (oldObj, newObj, path = '') => {
     const changes = []
-    const allKeys = new Set([...Object.keys(oldObj || {}), ...Object.keys(newObj || {})])
+    const allKeys = new Set([
+      ...Object.keys(oldObj || {}),
+      ...Object.keys(newObj || {}),
+    ])
 
     allKeys.forEach((key) => {
       const currentPath = path ? `${path}.${key}` : key
@@ -127,10 +145,20 @@ const renderListItems = (data, onItemClick, guidMapping = {}, isLoadingGuids = f
       } else if (oldVal !== undefined && newVal === undefined) {
         changes.push({ path: currentPath, type: 'removed', oldValue: oldVal })
       } else if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-        if (typeof oldVal === 'object' && typeof newVal === 'object' && oldVal && newVal) {
+        if (
+          typeof oldVal === 'object' &&
+          typeof newVal === 'object' &&
+          oldVal &&
+          newVal
+        ) {
           changes.push(...getObjectDiff(oldVal, newVal, currentPath))
         } else {
-          changes.push({ path: currentPath, type: 'modified', oldValue: oldVal, newValue: newVal })
+          changes.push({
+            path: currentPath,
+            type: 'modified',
+            oldValue: oldVal,
+            newValue: newVal,
+          })
         }
       }
     })
@@ -158,7 +186,10 @@ const renderListItems = (data, onItemClick, guidMapping = {}, isLoadingGuids = f
               key={key}
               label="Changes"
               value={
-                <Button variant="text" onClick={() => onItemClick({ changes: diff })}>
+                <Button
+                  variant="text"
+                  onClick={() => onItemClick({ changes: diff })}
+                >
                   View {diff.length} change{diff.length > 1 ? 's' : ''}
                 </Button>
               }
@@ -210,7 +241,11 @@ const renderListItems = (data, onItemClick, guidMapping = {}, isLoadingGuids = f
           }
         />
       )
-    } else if (typeof value === 'string' && isGuid(value) && guidMapping[value]) {
+    } else if (
+      typeof value === 'string' &&
+      isGuid(value) &&
+      guidMapping[value]
+    ) {
       return (
         <PropertyListItem
           key={key}
@@ -239,7 +274,13 @@ const renderListItems = (data, onItemClick, guidMapping = {}, isLoadingGuids = f
       // If this is diff data, show the value directly without formatting
       const displayValue = isDiffData ? value : getCippFormatting(value, key)
 
-      return <PropertyListItem key={key} label={getCippTranslation(key)} value={displayValue} />
+      return (
+        <PropertyListItem
+          key={key}
+          label={getCippTranslation(key)}
+          value={displayValue}
+        />
+      )
     }
   })
 }
@@ -256,13 +297,22 @@ function CippJsonView({
   const [drilldownData, setDrilldownData] = useState([]) // Array of { data, title }
 
   const objectTenant =
-    tenant || object?.Tenant || object?.tenant || object?.TenantFilter || object?.tenantFilter || null
+    tenant ||
+    object?.Tenant ||
+    object?.tenant ||
+    object?.TenantFilter ||
+    object?.tenantFilter ||
+    null
 
   // Use the GUID resolver hook
-  const { guidMapping, isLoadingGuids, resolveGuids, isGuid } = useGuidResolver(objectTenant)
+  const { guidMapping, isLoadingGuids, resolveGuids, isGuid } =
+    useGuidResolver(objectTenant)
   const resolvedType =
     type ||
-    (object?.omaSettings || object?.settings || object?.definitionValues || object?.added
+    (object?.omaSettings ||
+    object?.settings ||
+    object?.definitionValues ||
+    object?.added
       ? 'intune'
       : undefined)
   const {
@@ -278,12 +328,18 @@ function CippJsonView({
   // Only the setting definition ids this object references are requested, rather than the whole
   // catalog. Drilldown levels are subtrees of `object`, so one walk covers every level.
   const intuneDefinitionIds = useMemo(
-    () => (resolvedType === 'intune' ? Array.from(collectSettingDefinitionIds(object)) : EMPTY_IDS),
+    () =>
+      resolvedType === 'intune'
+        ? Array.from(collectSettingDefinitionIds(object))
+        : EMPTY_IDS,
     [object, resolvedType]
   )
-  const { getDefinition: getIntuneDefinition } = useIntuneDefinitions(intuneDefinitionIds, {
-    enabled: resolvedType === 'intune',
-  })
+  const { getDefinition: getIntuneDefinition } = useIntuneDefinitions(
+    intuneDefinitionIds,
+    {
+      enabled: resolvedType === 'intune',
+    }
+  )
 
   const renderIntuneItems = (data) => {
     const items = []
@@ -302,7 +358,9 @@ function CippJsonView({
     const getSettingDefinition = (settingDefinitionId, setting) => {
       const settingDefinitions = setting?.settingDefinitions || []
       return (
-        settingDefinitions.find((definition) => definition?.id === settingDefinitionId) ||
+        settingDefinitions.find(
+          (definition) => definition?.id === settingDefinitionId
+        ) ||
         liveDefinitions.get(settingDefinitionId) ||
         getIntuneDefinition(settingDefinitionId)
       )
@@ -320,14 +378,22 @@ function CippJsonView({
       }
 
       return (
-        definition.options.find((option) => option.id === value || option.itemId === value) || null
+        definition.options.find(
+          (option) => option.id === value || option.itemId === value
+        ) || null
       )
     }
 
     const renderDefinitionTooltip = (definition, optionDefinition) => {
-      const description = definition?.helpText || definition?.description || definition?.explainText
-      const optionDescription = optionDefinition?.helpText || optionDefinition?.description
-      const infoUrls = Array.isArray(definition?.infoUrls) ? definition.infoUrls : []
+      const description =
+        definition?.helpText ||
+        definition?.description ||
+        definition?.explainText
+      const optionDescription =
+        optionDefinition?.helpText || optionDefinition?.description
+      const infoUrls = Array.isArray(definition?.infoUrls)
+        ? definition.infoUrls
+        : []
 
       if (!description && !optionDescription && infoUrls.length === 0) {
         return null
@@ -341,12 +407,18 @@ function CippJsonView({
             </Typography>
           )}
           {optionDescription && (
-            <Typography variant="body2" sx={{ mt: description ? 1 : 0, whiteSpace: 'pre-line' }}>
+            <Typography
+              variant="body2"
+              sx={{ mt: description ? 1 : 0, whiteSpace: 'pre-line' }}
+            >
               Selected value: {renderTextWithLinks(optionDescription)}
             </Typography>
           )}
           {infoUrls.length > 0 && (
-            <Typography variant="caption" sx={{ display: 'block', mt: 1, opacity: 0.8 }}>
+            <Typography
+              variant="caption"
+              sx={{ display: 'block', mt: 1, opacity: 0.8 }}
+            >
               More info:{' '}
               {infoUrls.map((url, index) => (
                 <React.Fragment key={url}>
@@ -356,7 +428,11 @@ function CippJsonView({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(event) => event.stopPropagation()}
-                    sx={{ color: 'inherit', fontWeight: 600, textDecorationColor: 'currentColor' }}
+                    sx={{
+                      color: 'inherit',
+                      fontWeight: 600,
+                      textDecorationColor: 'currentColor',
+                    }}
                   >
                     {url}
                   </Link>
@@ -376,7 +452,10 @@ function CippJsonView({
       }
 
       return (
-        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+        <Box
+          component="span"
+          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+        >
           <Box component="span">{label}</Box>
           <Tooltip
             title={tooltip}
@@ -475,7 +554,11 @@ function CippJsonView({
                 entry.PresentationDefinitionLabel ||
                 ''
               const entryValue = getDisplayValue(
-                entry.value ?? entry.text ?? entry.Value ?? entry.StringValue ?? entry
+                entry.value ??
+                  entry.text ??
+                  entry.Value ??
+                  entry.StringValue ??
+                  entry
               )
 
               if (entryLabel && entryValue !== '') {
@@ -487,7 +570,9 @@ function CippJsonView({
 
             return getDisplayValue(entry)
           })
-          .filter((entry) => entry !== null && entry !== undefined && entry !== '')
+          .filter(
+            (entry) => entry !== null && entry !== undefined && entry !== ''
+          )
 
         if (values.length > 0) {
           return values.join(', ')
@@ -498,12 +583,23 @@ function CippJsonView({
     }
 
     const getStatusText = (enabled) =>
-      enabled === true ? 'Enabled' : enabled === false ? 'Disabled' : 'Configured'
+      enabled === true
+        ? 'Enabled'
+        : enabled === false
+          ? 'Disabled'
+          : 'Configured'
 
     const addAdministrativeTemplateValue = (
       value,
       index,
-      { definition, definitionId, label, keyPrefix, presentationKeyInfix, resolvePresentationLabel }
+      {
+        definition,
+        definitionId,
+        label,
+        keyPrefix,
+        presentationKeyInfix,
+        resolvePresentationLabel,
+      }
     ) => {
       if (!value || typeof value !== 'object') {
         return
@@ -534,28 +630,31 @@ function CippJsonView({
                   Definition ID: {definitionId}
                 </Typography>
               )}
-              {presentationValues.map((presentationValue, presentationIndex) => {
-                const presentationLabel = resolvePresentationLabel(
-                  definition,
-                  presentationValue,
-                  presentationIndex
-                )
-                const presentationDisplayValue = getAdministrativeTemplatePresentationValue(
-                  presentationValue
-                )
+              {presentationValues.map(
+                (presentationValue, presentationIndex) => {
+                  const presentationLabel = resolvePresentationLabel(
+                    definition,
+                    presentationValue,
+                    presentationIndex
+                  )
+                  const presentationDisplayValue =
+                    getAdministrativeTemplatePresentationValue(
+                      presentationValue
+                    )
 
-                return (
-                  <Box
-                    key={`${itemKey}-${presentationKeyInfix}-${presentationValue?.id || presentationIndex}`}
-                    sx={{ fontSize: '0.875rem' }}
-                  >
-                    <Box component="span" sx={{ fontWeight: 600 }}>
-                      {presentationLabel}:
-                    </Box>{' '}
-                    {renderSettingValue(presentationDisplayValue)}
-                  </Box>
-                )
-              })}
+                  return (
+                    <Box
+                      key={`${itemKey}-${presentationKeyInfix}-${presentationValue?.id || presentationIndex}`}
+                      sx={{ fontSize: '0.875rem' }}
+                    >
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        {presentationLabel}:
+                      </Box>{' '}
+                      {renderSettingValue(presentationDisplayValue)}
+                    </Box>
+                  )
+                }
+              )}
             </Stack>
           }
         />
@@ -588,7 +687,8 @@ function CippJsonView({
 
       if (presentationId && Array.isArray(definition?.presentations)) {
         const resolvedPresentation = definition.presentations.find(
-          (presentation) => String(presentation?.id || '').toLowerCase() === presentationId
+          (presentation) =>
+            String(presentation?.id || '').toLowerCase() === presentationId
         )
 
         if (resolvedPresentation) {
@@ -604,7 +704,11 @@ function CippJsonView({
       return getPresentationTypeLabel(presentationValue?.['@odata.type'])
     }
 
-    const resolveLivePresentationLabel = (_definition, presentationValue, presentationIndex) =>
+    const resolveLivePresentationLabel = (
+      _definition,
+      presentationValue,
+      presentationIndex
+    ) =>
       presentationValue?.presentation?.label ||
       presentationValue?.presentation?.displayName ||
       presentationValue?.presentation?.id ||
@@ -615,16 +719,28 @@ function CippJsonView({
         return
       }
 
-      const definition = getSettingDefinition(settingInstance.settingDefinitionId, setting)
-      const label = definition?.displayName || settingInstance.settingDefinitionId || 'Setting'
+      const definition = getSettingDefinition(
+        settingInstance.settingDefinitionId,
+        setting
+      )
+      const label =
+        definition?.displayName ||
+        settingInstance.settingDefinitionId ||
+        'Setting'
       const key = `${keyPrefix}-${items.length}`
 
       if (Array.isArray(settingInstance.groupSettingCollectionValue)) {
-        settingInstance.groupSettingCollectionValue.forEach((groupValue, groupIndex) => {
-          ;(groupValue?.children || []).forEach((child, childIndex) =>
-            addSettingInstance(child, setting, `${key}-group-${groupIndex}-child-${childIndex}`)
-          )
-        })
+        settingInstance.groupSettingCollectionValue.forEach(
+          (groupValue, groupIndex) => {
+            ;(groupValue?.children || []).forEach((child, childIndex) =>
+              addSettingInstance(
+                child,
+                setting,
+                `${key}-group-${groupIndex}-child-${childIndex}`
+              )
+            )
+          }
+        )
         return
       }
 
@@ -640,24 +756,37 @@ function CippJsonView({
       }
 
       if (hasSettingValue(settingInstance.choiceSettingValue)) {
-        const choiceValue = getChoiceValue(definition, settingInstance.choiceSettingValue.value)
+        const choiceValue = getChoiceValue(
+          definition,
+          settingInstance.choiceSettingValue.value
+        )
         items.push(
           <PropertyListItem
             key={key}
-            label={renderSettingLabel(label, definition, choiceValue.optionDefinition)}
+            label={renderSettingLabel(
+              label,
+              definition,
+              choiceValue.optionDefinition
+            )}
             value={renderSettingValue(choiceValue.value)}
           />
         )
 
-        ;(settingInstance.choiceSettingValue.children || []).forEach((child, childIndex) =>
-          addSettingInstance(child, setting, `${key}-choice-child-${childIndex}`)
+        ;(settingInstance.choiceSettingValue.children || []).forEach(
+          (child, childIndex) =>
+            addSettingInstance(
+              child,
+              setting,
+              `${key}-choice-child-${childIndex}`
+            )
         )
         return
       }
 
       if (Array.isArray(settingInstance.choiceSettingCollectionValue)) {
         const values = settingInstance.choiceSettingCollectionValue.map(
-          (choiceSetting) => getChoiceValue(definition, choiceSetting.value).value
+          (choiceSetting) =>
+            getChoiceValue(definition, choiceSetting.value).value
         )
         items.push(
           <PropertyListItem
@@ -692,10 +821,16 @@ function CippJsonView({
       )
     }
 
-    const policyNameKey = ['Name', 'DisplayName', 'displayName', 'name'].find((key) => key in data)
+    const policyNameKey = ['Name', 'DisplayName', 'displayName', 'name'].find(
+      (key) => key in data
+    )
     if (policyNameKey) {
       items.push(
-        <PropertyListItem key="policyName" label="Policy Name" value={data[policyNameKey]} />
+        <PropertyListItem
+          key="policyName"
+          label="Policy Name"
+          value={data[policyNameKey]}
+        />
       )
     }
 
@@ -729,7 +864,11 @@ function CippJsonView({
         addAdministrativeTemplateValue(definitionValue, index, {
           definition,
           definitionId: null,
-          label: definition?.displayName || definition?.id || definitionValue?.id || 'Setting',
+          label:
+            definition?.displayName ||
+            definition?.id ||
+            definitionValue?.id ||
+            'Setting',
           keyPrefix: 'definitionValue',
           presentationKeyInfix: 'presentation',
           resolvePresentationLabel: resolveLivePresentationLabel,
@@ -746,7 +885,9 @@ function CippJsonView({
             value={
               <Stack direction="row" spacing={1} alignItems="center">
                 <CircularProgress size={16} />
-                <Typography variant="body2">Resolving administrative template settings...</Typography>
+                <Typography variant="body2">
+                  Resolving administrative template settings...
+                </Typography>
               </Stack>
             }
           />
@@ -779,11 +920,14 @@ function CippJsonView({
           addedValue?.['definition@odata.bind'],
           definitionBindPattern
         )
-        const definition = definitionId ? addedDefinitionsMap[definitionId] : null
+        const definition = definitionId
+          ? addedDefinitionsMap[definitionId]
+          : null
         addAdministrativeTemplateValue(addedValue, index, {
           definition,
           definitionId,
-          label: definition?.displayName || definitionId || `Setting ${index + 1}`,
+          label:
+            definition?.displayName || definitionId || `Setting ${index + 1}`,
           keyPrefix: 'addedDefinition',
           presentationKeyInfix: 'added-presentation',
           resolvePresentationLabel: getAddedPresentationLabel,
@@ -803,7 +947,11 @@ function CippJsonView({
                     {guidMapping[value]}
                     <Typography
                       variant="caption"
-                      sx={{ fontStyle: 'italic', ml: 1, color: 'text.secondary' }}
+                      sx={{
+                        fontStyle: 'italic',
+                        ml: 1,
+                        color: 'text.secondary',
+                      }}
                     >
                       (GUID)
                     </Typography>
@@ -812,7 +960,11 @@ function CippJsonView({
               }
             />
           )
-        } else if (typeof value === 'string' && isGuid(value) && isLoadingGuids) {
+        } else if (
+          typeof value === 'string' &&
+          isGuid(value) &&
+          isLoadingGuids
+        ) {
           items.push(
             <PropertyListItem
               key={key}
@@ -870,9 +1022,12 @@ function CippJsonView({
     const isArrayOfKeyValuePairs = (arr) => {
       if (!Array.isArray(arr) || arr.length === 0) return false
       return arr.every((item) => {
-        if (typeof item !== 'object' || item === null || Array.isArray(item)) return false
+        if (typeof item !== 'object' || item === null || Array.isArray(item))
+          return false
         // Check if all values are primitives (not nested objects/arrays)
-        return Object.values(item).every((val) => typeof val !== 'object' || val === null)
+        return Object.values(item).every(
+          (val) => typeof val !== 'object' || val === null
+        )
       })
     }
 
@@ -900,20 +1055,32 @@ function CippJsonView({
         let displayValue = ''
 
         if (change.type === 'added') {
-          if (change.newValue !== null && change.newValue !== undefined && change.newValue !== '') {
+          if (
+            change.newValue !== null &&
+            change.newValue !== undefined &&
+            change.newValue !== ''
+          ) {
             displayValue = `[ADDED] ${JSON.stringify(change.newValue)}`
             hasValue = true
           }
         } else if (change.type === 'removed') {
-          if (change.oldValue !== null && change.oldValue !== undefined && change.oldValue !== '') {
+          if (
+            change.oldValue !== null &&
+            change.oldValue !== undefined &&
+            change.oldValue !== ''
+          ) {
             displayValue = `[REMOVED] ${JSON.stringify(change.oldValue)}`
             hasValue = true
           }
         } else if (change.type === 'modified') {
           const oldHasValue =
-            change.oldValue !== null && change.oldValue !== undefined && change.oldValue !== ''
+            change.oldValue !== null &&
+            change.oldValue !== undefined &&
+            change.oldValue !== ''
           const newHasValue =
-            change.newValue !== null && change.newValue !== undefined && change.newValue !== ''
+            change.newValue !== null &&
+            change.newValue !== undefined &&
+            change.newValue !== ''
 
           // Only show if at least one side has a meaningful value (not both empty)
           if (oldHasValue || newHasValue) {
@@ -948,7 +1115,9 @@ function CippJsonView({
     // Check if this is an array of items with oldValue/newValue (modifiedProperties pattern)
     const hasOldNewValues = (arr) => {
       if (!Array.isArray(arr) || arr.length === 0) return false
-      return arr.some((item) => item?.oldValue !== undefined || item?.newValue !== undefined)
+      return arr.some(
+        (item) => item?.oldValue !== undefined || item?.newValue !== undefined
+      )
     }
 
     // If the data is an array of key/value pairs, convert to a flat object
@@ -1016,13 +1185,22 @@ function CippJsonView({
         expandIcon={<ExpandMoreIcon />}
         sx={{ display: 'flex', alignItems: 'center' }}
       >
-        <Stack direction="row" spacing={1} alignItems="space-between" sx={{ width: '100%' }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="space-between"
+          sx={{ width: '100%' }}
+        >
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             {title}
           </Typography>
           {isLoadingGuids && (
-            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center' }}>
-              <CircularProgress size={16} sx={{ mr: 1 }} /> Resolving object identifiers...
+            <Typography
+              variant="caption"
+              sx={{ display: 'flex', alignItems: 'center' }}
+            >
+              <CircularProgress size={16} sx={{ mr: 1 }} /> Resolving object
+              identifiers...
             </Typography>
           )}
         </Stack>
@@ -1032,7 +1210,10 @@ function CippJsonView({
           {viewJson ? <VisibilityOffIcon /> : <VisibilityIcon />}
         </IconButton>
         {viewJson ? (
-          <CippCodeBlock type="editor" code={JSON.stringify(cleanObject(object), null, 2)} />
+          <CippCodeBlock
+            type="editor"
+            code={JSON.stringify(cleanObject(object), null, 2)}
+          />
         ) : (
           <Grid container spacing={2}>
             {drilldownData
@@ -1045,15 +1226,23 @@ function CippJsonView({
                     //give a top border if the item is > 4, and add spacing between the top and bottom items
                     paddingTop: index === 0 ? 0 : 2,
                     borderTop:
-                      index >= 4 && resolvedType !== 'intune' ? '1px solid lightgrey' : 'none',
-                    borderRight: index < drilldownData.length - 1 ? '1px solid lightgrey' : 'none',
+                      index >= 4 && resolvedType !== 'intune'
+                        ? '1px solid lightgrey'
+                        : 'none',
+                    borderRight:
+                      index < drilldownData.length - 1
+                        ? '1px solid lightgrey'
+                        : 'none',
                     overflowWrap: 'anywhere',
                     whiteSpace: 'pre-line',
                     paddingRight: 2,
                   }}
                 >
                   {item.title && (
-                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ mb: 1, fontWeight: 'bold' }}
+                    >
                       {getCippTranslation(item.title)}
                     </Typography>
                   )}

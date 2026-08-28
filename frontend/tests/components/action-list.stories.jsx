@@ -17,20 +17,32 @@ export const WithActions = {
     children: [
       <ActionListItem
         key="mark-as-paid"
-        icon={<SvgIcon fontSize="small"><CheckCircleIcon /></SvgIcon>}
+        icon={
+          <SvgIcon fontSize="small">
+            <CheckCircleIcon />
+          </SvgIcon>
+        }
         label="Mark as Paid"
         onClick={fn()}
       />,
       <ActionListItem
         key="duplicate-order"
         disabled
-        icon={<SvgIcon fontSize="small"><DocumentDuplicateIcon /></SvgIcon>}
+        icon={
+          <SvgIcon fontSize="small">
+            <DocumentDuplicateIcon />
+          </SvgIcon>
+        }
         label="Duplicate Order"
         onClick={fn()}
       />,
       <ActionListItem
         key="request-refund"
-        icon={<SvgIcon fontSize="small"><ReceiptRefundIcon /></SvgIcon>}
+        icon={
+          <SvgIcon fontSize="small">
+            <ReceiptRefundIcon />
+          </SvgIcon>
+        }
         label="Request a Refund"
         onClick={fn()}
       />,
@@ -46,15 +58,24 @@ export const WithActions = {
       await expect(canvas.getAllByRole('button')).toHaveLength(3)
     })
 
-    await step('disabled item exposes aria-disabled, enabled item does not', async () => {
-      const disabledButton = canvas.getByText('Duplicate Order').closest('[role="button"]')
-      await expect(disabledButton).toHaveAttribute('aria-disabled', 'true')
-      const enabledButton = canvas.getByText('Mark as Paid').closest('[role="button"]')
-      await expect(enabledButton).not.toHaveAttribute('aria-disabled', 'true')
-    })
+    await step(
+      'disabled item exposes aria-disabled, enabled item does not',
+      async () => {
+        const disabledButton = canvas
+          .getByText('Duplicate Order')
+          .closest('[role="button"]')
+        await expect(disabledButton).toHaveAttribute('aria-disabled', 'true')
+        const enabledButton = canvas
+          .getByText('Mark as Paid')
+          .closest('[role="button"]')
+        await expect(enabledButton).not.toHaveAttribute('aria-disabled', 'true')
+      }
+    )
 
     await step('enabled action accepts a click', async () => {
-      await userEvent.click(canvas.getByText('Mark as Paid').closest('[role="button"]'))
+      await userEvent.click(
+        canvas.getByText('Mark as Paid').closest('[role="button"]')
+      )
     })
   },
 }

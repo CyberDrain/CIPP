@@ -1,4 +1,12 @@
-import { Box, Chip, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import {
+  Box,
+  Chip,
+  IconButton,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import {
   Add,
   ArrowDownward,
@@ -38,7 +46,8 @@ const BLOCK_META = {
   pagebreak: { label: 'Page Break', Icon: HorizontalRule, colour: 'default' },
 }
 
-export const isStructuredBlock = (type) => Object.prototype.hasOwnProperty.call(BLOCK_META, type)
+export const isStructuredBlock = (type) =>
+  Object.prototype.hasOwnProperty.call(BLOCK_META, type)
 
 // The stock covers, in the {label, value} shape CippAutoComplete works in.
 const HERO_BACKGROUND_OPTIONS = COVER_STOCK_OPTIONS.map((option) => ({
@@ -96,7 +105,16 @@ export const createStructuredBlock = (type, id) => {
 
 /* ── Shared shell ────────────────────────────────────────── */
 
-const BlockShell = ({ block, index, totalBlocks, onRemove, onMoveUp, onMoveDown, chips, children }) => {
+const BlockShell = ({
+  block,
+  index,
+  totalBlocks,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+  chips,
+  children,
+}) => {
   const meta = BLOCK_META[block.type] || {}
   const Icon = meta.Icon
 
@@ -104,7 +122,12 @@ const BlockShell = ({ block, index, totalBlocks, onRemove, onMoveUp, onMoveDown,
     <CippButtonCard
       title={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {Icon ? <Icon fontSize="small" color={meta.colour === 'default' ? 'disabled' : meta.colour} /> : null}
+          {Icon ? (
+            <Icon
+              fontSize="small"
+              color={meta.colour === 'default' ? 'disabled' : meta.colour}
+            />
+          ) : null}
           <Typography variant="subtitle2" fontWeight={600}>
             {block.title || meta.label}
           </Typography>
@@ -171,14 +194,25 @@ const BlockShell = ({ block, index, totalBlocks, onRemove, onMoveUp, onMoveDown,
  * these arrays are variable length and live inside a reorderable list, and field-array bookkeeping
  * would have to be rebuilt every time a block moves.
  */
-const RowsEditor = ({ rows, columns, onChange, addLabel = 'Add row', minRows = 1 }) => {
+const RowsEditor = ({
+  rows,
+  columns,
+  onChange,
+  addLabel = 'Add row',
+  minRows = 1,
+}) => {
   const update = (rowIndex, key, value) =>
-    onChange(rows.map((row, i) => (i === rowIndex ? { ...row, [key]: value } : row)))
+    onChange(
+      rows.map((row, i) => (i === rowIndex ? { ...row, [key]: value } : row))
+    )
 
   const remove = (rowIndex) => onChange(rows.filter((_, i) => i !== rowIndex))
 
   const add = () =>
-    onChange([...rows, Object.fromEntries(columns.map((column) => [column.key, '']))])
+    onChange([
+      ...rows,
+      Object.fromEntries(columns.map((column) => [column.key, ''])),
+    ])
 
   return (
     <Stack spacing={1}>
@@ -191,7 +225,9 @@ const RowsEditor = ({ rows, columns, onChange, addLabel = 'Add row', minRows = 1
               label={column.label}
               type={column.type || 'text'}
               value={row[column.key] ?? ''}
-              onChange={(event) => update(rowIndex, column.key, event.target.value)}
+              onChange={(event) =>
+                update(rowIndex, column.key, event.target.value)
+              }
               sx={{ flex: column.width ?? 1 }}
             />
           ))}
@@ -222,14 +258,22 @@ const RowsEditor = ({ rows, columns, onChange, addLabel = 'Add row', minRows = 1
   )
 }
 
-const TitleField = ({ block, index, onUpdate, label = 'Block title', helperText }) => (
+const TitleField = ({
+  block,
+  index,
+  onUpdate,
+  label = 'Block title',
+  helperText,
+}) => (
   <TextField
     size="small"
     fullWidth
     label={label}
     helperText={helperText}
     value={block.title ?? ''}
-    onChange={(event) => onUpdate(index, { ...block, title: event.target.value })}
+    onChange={(event) =>
+      onUpdate(index, { ...block, title: event.target.value })
+    }
   />
 )
 
@@ -258,8 +302,13 @@ export const ChartBlockCard = ({ block, index, onUpdate, ...shell }) => {
               creatable={false}
               disableClearable={true}
               options={CHART_KINDS}
-              value={CHART_KINDS.find((option) => option.value === kind) ?? CHART_KINDS[0]}
-              onChange={(option) => set({ chartKind: option?.value ?? 'donut' })}
+              value={
+                CHART_KINDS.find((option) => option.value === kind) ??
+                CHART_KINDS[0]
+              }
+              onChange={(option) =>
+                set({ chartKind: option?.value ?? 'donut' })
+              }
             />
           </Box>
         </Stack>
@@ -288,7 +337,9 @@ export const ChartBlockCard = ({ block, index, onUpdate, ...shell }) => {
               size="small"
               label="Centre label"
               value={block.chartCentreLabel ?? ''}
-              onChange={(event) => set({ chartCentreLabel: event.target.value })}
+              onChange={(event) =>
+                set({ chartCentreLabel: event.target.value })
+              }
               sx={{ minWidth: 160 }}
             />
           ) : null}
@@ -315,7 +366,14 @@ export const ScorecardBlockCard = ({ block, index, onUpdate, ...shell }) => {
   const stats = block.stats || []
 
   return (
-    <BlockShell block={block} index={index} chips={<Chip label={`${stats.length} cards`} size="small" variant="outlined" />} {...shell}>
+    <BlockShell
+      block={block}
+      index={index}
+      chips={
+        <Chip label={`${stats.length} cards`} size="small" variant="outlined" />
+      }
+      {...shell}
+    >
       <Stack spacing={2}>
         <TitleField block={block} index={index} onUpdate={onUpdate} />
         <RowsEditor
@@ -367,7 +425,8 @@ export const HeroBlockCard = ({ block, index, onUpdate, ...shell }) => {
     <BlockShell block={block} index={index} {...shell}>
       <Stack spacing={2}>
         <Typography variant="caption" color="text.secondary">
-          Takes a full page of its own, with the background image bleeding to the paper edge.
+          Takes a full page of its own, with the background image bleeding to
+          the paper edge.
         </Typography>
         <Stack direction="row" spacing={1}>
           <TextField
@@ -378,7 +437,12 @@ export const HeroBlockCard = ({ block, index, onUpdate, ...shell }) => {
             onChange={(event) => set({ heroHighlight: event.target.value })}
             sx={{ minWidth: 140 }}
           />
-          <TitleField block={block} index={index} onUpdate={onUpdate} label="Headline" />
+          <TitleField
+            block={block}
+            index={index}
+            onUpdate={onUpdate}
+            label="Headline"
+          />
         </Stack>
         <TextField
           size="small"
@@ -411,7 +475,10 @@ export const HeroBlockCard = ({ block, index, onUpdate, ...shell }) => {
                 ) ?? HERO_BACKGROUND_OPTIONS[0]
               }
               onChange={(option) =>
-                set({ heroImage: !option || option.value === 'none' ? '' : option.value })
+                set({
+                  heroImage:
+                    !option || option.value === 'none' ? '' : option.value,
+                })
               }
             />
           </Box>

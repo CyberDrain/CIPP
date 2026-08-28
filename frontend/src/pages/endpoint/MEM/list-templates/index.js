@@ -1,7 +1,13 @@
 import { Layout as DashboardLayout } from '../../../../layouts/index.js'
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
-import { Edit, GitHub, LocalOffer, LocalOfferOutlined, CopyAll } from '@mui/icons-material'
+import {
+  Edit,
+  GitHub,
+  LocalOffer,
+  LocalOfferOutlined,
+  CopyAll,
+} from '@mui/icons-material'
 import CippJsonView from '../../../../components/CippFormPages/CippJSONView'
 import { ApiGetCall } from '../../../../api/ApiCall'
 import { CippPolicyImportDrawer } from '../../../../components/CippComponents/CippPolicyImportDrawer.jsx'
@@ -94,7 +100,8 @@ const Page = () => {
           },
         },
       ],
-      confirmText: 'Enter the package name to assign to the selected template(s).',
+      confirmText:
+        'Enter the package name to assign to the selected template(s).',
       multiPost: true,
       icon: <LocalOffer />,
       color: 'info',
@@ -104,7 +111,8 @@ const Page = () => {
       type: 'POST',
       url: '/api/ExecSetPackageTag',
       data: { GUID: 'GUID', Remove: true },
-      confirmText: 'Are you sure you want to remove the selected template(s) from their package?',
+      confirmText:
+        'Are you sure you want to remove the selected template(s) from their package?',
       multiPost: true,
       icon: <LocalOfferOutlined />,
       color: 'warning',
@@ -150,8 +158,10 @@ const Page = () => {
           rows: 4,
         },
       ],
-      confirmText: 'Are you sure you want to save this template to the selected repository?',
-      condition: () => integrations.isSuccess && integrations?.data?.GitHub?.Enabled,
+      confirmText:
+        'Are you sure you want to save this template to the selected repository?',
+      condition: () =>
+        integrations.isSuccess && integrations?.data?.GitHub?.Enabled,
     },
     {
       label: 'Delete Template',
@@ -195,7 +205,8 @@ const Page = () => {
                       <Link
                         component={NextLink}
                         href={
-                          u.cippLink ?? `/tenant/standards/templates/template?id=${u.templateId}`
+                          u.cippLink ??
+                          `/tenant/standards/templates/template?id=${u.templateId}`
                         }
                         underline="hover"
                       >
@@ -204,7 +215,10 @@ const Page = () => {
                     </TableCell>
                     <TableCell>
                       {u.matchType === 'package' ? (
-                        <Tooltip title={`Included via package tag "${u.package}"`} arrow>
+                        <Tooltip
+                          title={`Included via package tag "${u.package}"`}
+                          arrow
+                        >
                           <Chip
                             label={u.package}
                             size="small"
@@ -217,7 +231,11 @@ const Page = () => {
                           title="This template is directly referenced by GUID in the standards template"
                           arrow
                         >
-                          <Chip label="Direct" size="small" variant="outlined" />
+                          <Chip
+                            label="Direct"
+                            size="small"
+                            variant="outlined"
+                          />
                         </Tooltip>
                       )}
                     </TableCell>
@@ -233,7 +251,14 @@ const Page = () => {
     size: 'lg',
   }
 
-  const simpleColumns = ['displayName', 'isSynced', 'package', 'description', 'Type', 'usage']
+  const simpleColumns = [
+    'displayName',
+    'isSynced',
+    'package',
+    'description',
+    'Type',
+    'usage',
+  ]
 
   const filterList = [
     {

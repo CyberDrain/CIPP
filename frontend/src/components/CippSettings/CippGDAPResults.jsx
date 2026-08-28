@@ -1,41 +1,55 @@
-import { Alert, Button, List, ListItem, Skeleton, SvgIcon, Typography } from "@mui/material";
-import { Cancel, CheckCircle, Warning } from "@mui/icons-material";
-import { CippPropertyList } from "../CippComponents/CippPropertyList";
-import { WrenchIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { CippOffCanvas } from "../CippComponents/CippOffCanvas";
-import { CippDataTable } from "../CippTable/CippDataTable";
-import { ApiPostCall } from "../../api/ApiCall";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { useEffect, useState } from "react";
+import {
+  Alert,
+  Button,
+  List,
+  ListItem,
+  Skeleton,
+  SvgIcon,
+  Typography,
+} from '@mui/material'
+import { Cancel, CheckCircle, Warning } from '@mui/icons-material'
+import { CippPropertyList } from '../CippComponents/CippPropertyList'
+import { WrenchIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { CippOffCanvas } from '../CippComponents/CippOffCanvas'
+import { CippDataTable } from '../CippTable/CippDataTable'
+import { ApiPostCall } from '../../api/ApiCall'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { useEffect, useState } from 'react'
 
 export const CippGDAPResults = (props) => {
-  const { executeCheck, offcanvasVisible, setOffcanvasVisible, importReport, setCardIcon } = props;
-  const [results, setResults] = useState({});
+  const {
+    executeCheck,
+    offcanvasVisible,
+    setOffcanvasVisible,
+    importReport,
+    setCardIcon,
+  } = props
+  const [results, setResults] = useState({})
 
   const repairRoleMappings = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["ExecAccessChecks-GDAP"],
-  });
+    relatedQueryKeys: ['ExecAccessChecks-GDAP'],
+  })
 
   const handleRepairRoleMappings = () => {
     repairRoleMappings.mutate({
-      url: "/api/ExecGDAPRepairRoleMappings",
+      url: '/api/ExecGDAPRepairRoleMappings',
       data: {},
-      queryKey: "RepairGDAPRoleMappings",
-    });
-  };
+      queryKey: 'RepairGDAPRoleMappings',
+    })
+  }
 
   const hasRoleMappingIssues = results?.Results?.RoleMappingResults?.some(
-    (item) => item?.Status === "Stale" || item?.Status === "Missing",
-  );
+    (item) => item?.Status === 'Stale' || item?.Status === 'Missing'
+  )
 
   useEffect(() => {
     if (importReport) {
-      setResults(importReport);
+      setResults(importReport)
     } else {
-      setResults(executeCheck?.data);
+      setResults(executeCheck?.data)
     }
-  }, [executeCheck, importReport]);
+  }, [executeCheck, importReport])
 
   useEffect(() => {
     if (
@@ -43,101 +57,114 @@ export const CippGDAPResults = (props) => {
       results?.Results?.MissingGroups?.length > 0 ||
       hasRoleMappingIssues
     ) {
-      setCardIcon(<Cancel />);
+      setCardIcon(<Cancel />)
     } else {
-      setCardIcon(<CheckCircle />);
+      setCardIcon(<CheckCircle />)
     }
-  }, [results]);
+  }, [results])
 
   const GdapIssueValue = ({ results, type, match }) => {
-    var issues = [];
-    if (type) issues = results?.Results?.GDAPIssues?.filter((issue) => issue.Type === type)?.length;
+    var issues = []
+    if (type)
+      issues = results?.Results?.GDAPIssues?.filter(
+        (issue) => issue.Type === type
+      )?.length
     if (match)
       issues = results?.Results?.GDAPIssues?.filter((issue) =>
-        new RegExp(match).test(issue.Issue),
-      )?.length;
+        new RegExp(match).test(issue.Issue)
+      )?.length
     return (
       <>
         <SvgIcon fontSize="sm" style={{ marginRight: 4 }}>
-          {type && <>{type === "Warning" ? <Warning /> : <XMarkIcon />}</>}
+          {type && <>{type === 'Warning' ? <Warning /> : <XMarkIcon />}</>}
           {match && <>{issues > 0 ? <Warning /> : <CheckCircle />}</>}
         </SvgIcon>
         {issues}
       </>
-    );
-  };
+    )
+  }
 
   const gdapTests = [
     {
-      resultProperty: "GDAPIssues",
-      matchProperty: "Issue",
-      match: ".+Partner Center API.+",
+      resultProperty: 'GDAPIssues',
+      matchProperty: 'Issue',
+      match: '.+Partner Center API.+',
       count: 0,
-      successMessage: "Partner Center API access is granted to the SAM application",
+      successMessage:
+        'Partner Center API access is granted to the SAM application',
       failureMessage:
-        "The SAM application cannot access the Partner Center API. Click Details for more information.",
+        'The SAM application cannot access the Partner Center API. Click Details for more information.',
     },
     {
-      resultProperty: "Memberships",
-      matchProperty: "displayName",
-      match: "AdminAgents",
+      resultProperty: 'Memberships',
+      matchProperty: 'displayName',
+      match: 'AdminAgents',
       count: 1,
-      successMessage: "User is a member of the AdminAgents group",
-      failureMessage: "User is not a member of the AdminAgents group",
+      successMessage: 'User is a member of the AdminAgents group',
+      failureMessage: 'User is not a member of the AdminAgents group',
     },
     {
-      resultProperty: "Memberships",
-      matchProperty: "displayName",
-      match: "^M365 GDAP.+",
+      resultProperty: 'Memberships',
+      matchProperty: 'displayName',
+      match: '^M365 GDAP.+',
       count: 15,
-      successMessage: "User is a member of the 15 CIPP Recommended GDAP groups",
-      failureMessage: "User is not a member of the 15 CIPP Recommended GDAP groups",
-    },
-    {
-      resultProperty: "GDAPIssues",
-      matchProperty: "Issue",
-      match: ".+Microsoft Led Transition.+$",
-      count: 0,
-      successMessage: "No Microsoft Led Transition relationships found",
-      failureMessage: "Microsoft Led Transition relationships found",
-    },
-    {
-      resultProperty: "GDAPIssues",
-      matchProperty: "Issue",
-      match: ".+global administrator.+$",
-      count: 0,
-      successMessage: "No Global Admin relationships found",
-      failureMessage: "Global Admin relationships found",
-    },
-    {
-      resultProperty: "RoleMappingResults",
-      matchProperty: "Status",
-      match: "^(Stale|Missing)$",
-      count: 0,
-      successMessage: "All GDAP role mappings reference existing security groups",
+      successMessage: 'User is a member of the 15 CIPP Recommended GDAP groups',
       failureMessage:
-        "One or more GDAP role mappings reference stale or missing security groups. Click Details to repair.",
+        'User is not a member of the 15 CIPP Recommended GDAP groups',
     },
-  ];
+    {
+      resultProperty: 'GDAPIssues',
+      matchProperty: 'Issue',
+      match: '.+Microsoft Led Transition.+$',
+      count: 0,
+      successMessage: 'No Microsoft Led Transition relationships found',
+      failureMessage: 'Microsoft Led Transition relationships found',
+    },
+    {
+      resultProperty: 'GDAPIssues',
+      matchProperty: 'Issue',
+      match: '.+global administrator.+$',
+      count: 0,
+      successMessage: 'No Global Admin relationships found',
+      failureMessage: 'Global Admin relationships found',
+    },
+    {
+      resultProperty: 'RoleMappingResults',
+      matchProperty: 'Status',
+      match: '^(Stale|Missing)$',
+      count: 0,
+      successMessage:
+        'All GDAP role mappings reference existing security groups',
+      failureMessage:
+        'One or more GDAP role mappings reference stale or missing security groups. Click Details to repair.',
+    },
+  ]
 
   const propertyItems = [
     {
-      label: "Warnings",
+      label: 'Warnings',
       value: <GdapIssueValue results={results} type="Warning" />,
     },
     {
-      label: "Errors",
+      label: 'Errors',
       value: <GdapIssueValue results={results} type="Error" />,
     },
     {
-      label: "Microsoft Led Transition Relationships",
-      value: <GdapIssueValue results={results} match=".+Microsoft Led Transition.+" />,
+      label: 'Microsoft Led Transition Relationships',
+      value: (
+        <GdapIssueValue
+          results={results}
+          match=".+Microsoft Led Transition.+"
+        />
+      ),
     },
     {
-      label: "Global Admin Relationships",
-      value: <GdapIssueValue results={results} match=".+global administrator.+" />,
+      label: 'Global Admin Relationships',
+      value: (
+        <GdapIssueValue results={results} match=".+global administrator.+" />
+      ),
     },
-  ];
+  ]
 
   return (
     <>
@@ -163,22 +190,24 @@ export const CippGDAPResults = (props) => {
         </List>
       ) : !importReport && executeCheck?.isError ? (
         <Alert severity="error" sx={{ ml: 3, mr: 1 }}>
-          Failed to load GDAP check results. Please try refreshing or contact support if the issue
-          persists.
+          Failed to load GDAP check results. Please try refreshing or contact
+          support if the issue persists.
         </Alert>
       ) : (
         <>
           <List>
             {gdapTests?.map((test, index) => {
-              var matchedResults = results?.Results?.[test.resultProperty]?.filter((item) =>
-                new RegExp(test.match)?.test(item?.[test.matchProperty]),
-              );
+              var matchedResults = results?.Results?.[
+                test.resultProperty
+              ]?.filter((item) =>
+                new RegExp(test.match)?.test(item?.[test.matchProperty])
+              )
 
-              var testResult = false;
+              var testResult = false
               if (test.count > 1) {
-                testResult = matchedResults?.length >= test.count;
+                testResult = matchedResults?.length >= test.count
               } else {
-                testResult = matchedResults?.length === test.count;
+                testResult = matchedResults?.length === test.count
               }
 
               return (
@@ -190,7 +219,7 @@ export const CippGDAPResults = (props) => {
                     {testResult ? test.successMessage : test.failureMessage}
                   </Typography>
                 </ListItem>
-              );
+              )
             })}
           </List>
 
@@ -199,21 +228,22 @@ export const CippGDAPResults = (props) => {
             title="GDAP Details"
             visible={offcanvasVisible}
             onClose={() => {
-              setOffcanvasVisible(false);
+              setOffcanvasVisible(false)
             }}
             extendedInfo={[]}
           >
-            {results?.Results?.GDAPIssues?.filter((issue) => issue.Category !== "RoleMapping")
-              .length > 0 && (
+            {results?.Results?.GDAPIssues?.filter(
+              (issue) => issue.Category !== 'RoleMapping'
+            ).length > 0 && (
               <>
                 <CippDataTable
                   title="GDAP Issues"
                   isFetching={!importReport && executeCheck?.isFetching}
                   refreshFunction={executeCheck}
                   data={results?.Results?.GDAPIssues?.filter(
-                    (issue) => issue.Category !== "RoleMapping",
+                    (issue) => issue.Category !== 'RoleMapping'
                   )}
-                  simpleColumns={["Tenant", "Type", "Issue", "Link"]}
+                  simpleColumns={['Tenant', 'Type', 'Issue', 'Link']}
                 />
               </>
             )}
@@ -225,7 +255,7 @@ export const CippGDAPResults = (props) => {
                   isFetching={!importReport && executeCheck?.isFetching}
                   refreshFunction={executeCheck}
                   data={results?.Results?.MissingGroups}
-                  simpleColumns={["Name", "Type"]}
+                  simpleColumns={['Name', 'Type']}
                 />
               </>
             )}
@@ -256,13 +286,20 @@ export const CippGDAPResults = (props) => {
                     )
                   }
                   data={results?.Results?.RoleMappingResults}
-                  simpleColumns={["RoleName", "GroupName", "GroupId", "Status", "Message"]}
+                  simpleColumns={[
+                    'RoleName',
+                    'GroupName',
+                    'GroupId',
+                    'Status',
+                    'Message',
+                  ]}
                 />
               </>
             )}
 
             {results?.Results?.Memberships?.filter(
-              (membership) => membership?.["@odata.type"] === "#microsoft.graph.group",
+              (membership) =>
+                membership?.['@odata.type'] === '#microsoft.graph.group'
             ).length > 0 && (
               <>
                 <CippDataTable
@@ -270,15 +307,17 @@ export const CippGDAPResults = (props) => {
                   isFetching={!importReport && executeCheck?.isFetching}
                   refreshFunction={executeCheck}
                   data={results?.Results?.Memberships?.filter(
-                    (membership) => membership?.["@odata.type"] === "#microsoft.graph.group",
+                    (membership) =>
+                      membership?.['@odata.type'] === '#microsoft.graph.group'
                   )}
-                  simpleColumns={["displayName"]}
+                  simpleColumns={['displayName']}
                 />
               </>
             )}
 
             {results?.Results?.Memberships?.filter(
-              (membership) => membership?.["@odata.type"] === "#microsoft.graph.directoryRole",
+              (membership) =>
+                membership?.['@odata.type'] === '#microsoft.graph.directoryRole'
             ).length > 0 && (
               <>
                 <CippDataTable
@@ -287,9 +326,10 @@ export const CippGDAPResults = (props) => {
                   refreshFunction={executeCheck}
                   data={results?.Results?.Memberships?.filter(
                     (membership) =>
-                      membership?.["@odata.type"] === "#microsoft.graph.directoryRole",
+                      membership?.['@odata.type'] ===
+                      '#microsoft.graph.directoryRole'
                   )}
-                  simpleColumns={["displayName"]}
+                  simpleColumns={['displayName']}
                 />
               </>
             )}
@@ -297,5 +337,5 @@ export const CippGDAPResults = (props) => {
         </>
       )}
     </>
-  );
-};
+  )
+}

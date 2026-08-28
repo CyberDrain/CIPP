@@ -1,5 +1,9 @@
 import { useEffect } from 'react'
-import { EyeIcon, MagnifyingGlassIcon, TrashIcon } from '@heroicons/react/24/outline'
+import {
+  EyeIcon,
+  MagnifyingGlassIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline'
 import {
   Archive,
   Clear,
@@ -27,7 +31,16 @@ import {
 import { getCippLicenseTranslation } from '../../utils/get-cipp-license-translation'
 import { useSettings } from '../../hooks/use-settings.js'
 import { usePermissions } from '../../hooks/use-permissions'
-import { Tooltip, Box, Divider, Typography, Alert, Skeleton, Link, IconButton } from '@mui/material'
+import {
+  Tooltip,
+  Box,
+  Divider,
+  Typography,
+  Alert,
+  Skeleton,
+  Link,
+  IconButton,
+} from '@mui/material'
 import CippFormComponent from './CippFormComponent'
 import { CippFormCondition } from './CippFormCondition'
 import { useWatch } from 'react-hook-form'
@@ -129,7 +142,9 @@ const ManageLicensesForm = ({ formControl, tenant }) => {
           multiple={true}
           creatable={false}
           formControl={formControl}
-          validators={{ required: 'Please select at least one license to remove' }}
+          validators={{
+            required: 'Please select at least one license to remove',
+          }}
           api={{
             url: '/api/ListLicenses',
             labelField: (option) => option.displayName || option.skuPartNumber,
@@ -149,7 +164,9 @@ const ManageLicensesForm = ({ formControl, tenant }) => {
           multiple={true}
           creatable={false}
           formControl={formControl}
-          validators={{ required: 'Please select at least one license to replace' }}
+          validators={{
+            required: 'Please select at least one license to replace',
+          }}
           api={{
             url: '/api/ListLicenses',
             labelField: (option) => option.displayName || option.skuPartNumber,
@@ -192,7 +209,10 @@ const ManageLicensesForm = ({ formControl, tenant }) => {
 const TemporaryAccessPassForm = ({ formControl, row }) => {
   const tenantFilter = useSettings().currentTenant
   const rowData = Array.isArray(row) ? row[0] : row
-  const tenant = tenantFilter === 'AllTenants' && rowData?.Tenant ? rowData.Tenant : tenantFilter
+  const tenant =
+    tenantFilter === 'AllTenants' && rowData?.Tenant
+      ? rowData.Tenant
+      : tenantFilter
 
   const tapPolicy = ApiGetCall({
     url: '/api/ListGraphRequest',
@@ -247,9 +267,12 @@ const TemporaryAccessPassForm = ({ formControl, row }) => {
             </Tooltip>
           }
         >
-          Temporary Access Pass is not enabled in this tenant's authentication method policy and
-          creating a TAP will fail. Enable it on the{' '}
-          <Link href="/tenant/administration/authentication-methods" target="_blank">
+          Temporary Access Pass is not enabled in this tenant's authentication
+          method policy and creating a TAP will fail. Enable it on the{' '}
+          <Link
+            href="/tenant/administration/authentication-methods"
+            target="_blank"
+          >
             Authentication Methods
           </Link>{' '}
           page first, then re-check.
@@ -284,7 +307,11 @@ const TemporaryAccessPassForm = ({ formControl, row }) => {
         }
       />
       <Tooltip
-        title={oneTimeUseForced ? 'One-time use is enforced by the tenant TAP policy' : ''}
+        title={
+          oneTimeUseForced
+            ? 'One-time use is enforced by the tenant TAP policy'
+            : ''
+        }
         placement="bottom"
       >
         <Box>
@@ -292,7 +319,9 @@ const TemporaryAccessPassForm = ({ formControl, row }) => {
             type="switch"
             name="isUsableOnce"
             label={
-              oneTimeUseForced ? 'One-time use only (enforced by policy)' : 'One-time use only'
+              oneTimeUseForced
+                ? 'One-time use only (enforced by policy)'
+                : 'One-time use only'
             }
             formControl={formControl}
             disabled={oneTimeUseForced}
@@ -315,7 +344,10 @@ const OutOfOfficeForm = ({ formControl }) => {
   // Send the browser's IANA timezone so the API can display local times in the response
   useEffect(() => {
     try {
-      formControl.setValue('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
+      formControl.setValue(
+        'timezone',
+        Intl.DateTimeFormat().resolvedOptions().timeZone
+      )
     } catch {
       // Fallback: leave timezone unset; API will display UTC
     }
@@ -567,7 +599,9 @@ export const useCippUserActions = () => {
       icon: <Password />,
       url: '/api/ExecCreateTAP',
       data: { ID: 'userPrincipalName' },
-      children: ({ formHook, row }) => <TemporaryAccessPassForm formControl={formHook} row={row} />,
+      children: ({ formHook, row }) => (
+        <TemporaryAccessPassForm formControl={formHook} row={row} />
+      ),
       confirmText:
         'Are you sure you want to create a Temporary Access Pass for [userPrincipalName]?',
       multiPost: false,
@@ -581,7 +615,8 @@ export const useCippUserActions = () => {
       icon: <PhonelinkSetup />,
       url: '/api/ExecResetMFA',
       data: { ID: 'userPrincipalName' },
-      confirmText: 'Are you sure you want to reset MFA for [userPrincipalName]?',
+      confirmText:
+        'Are you sure you want to reset MFA for [userPrincipalName]?',
       multiPost: false,
       condition: () => canWriteUser,
     },
@@ -592,7 +627,8 @@ export const useCippUserActions = () => {
       icon: <PhonelinkLock />,
       url: '/api/ExecSendPush',
       data: { UserEmail: 'userPrincipalName' },
-      confirmText: 'Are you sure you want to send an MFA request to [userPrincipalName]?',
+      confirmText:
+        'Are you sure you want to send an MFA request to [userPrincipalName]?',
       multiPost: false,
     },
     {
@@ -642,7 +678,8 @@ export const useCippUserActions = () => {
           validators: { required: 'Please select a mailbox type' },
         },
       ],
-      confirmText: 'Pick the type of mailbox you want to convert [userPrincipalName] to:',
+      confirmText:
+        'Pick the type of mailbox you want to convert [userPrincipalName] to:',
       multiPost: false,
       condition: () => canWriteMailbox,
     },
@@ -653,7 +690,8 @@ export const useCippUserActions = () => {
       icon: <Archive />,
       url: '/api/ExecEnableArchive',
       data: { ID: 'userPrincipalName' },
-      confirmText: 'Are you sure you want to enable the online archive for [userPrincipalName]?',
+      confirmText:
+        'Are you sure you want to enable the online archive for [userPrincipalName]?',
       multiPost: false,
       condition: (row) => canWriteMailbox,
     },
@@ -667,7 +705,9 @@ export const useCippUserActions = () => {
         userId: 'userPrincipalName',
         tenantFilter: 'Tenant',
       },
-      children: ({ formHook: formControl }) => <OutOfOfficeForm formControl={formControl} />,
+      children: ({ formHook: formControl }) => (
+        <OutOfOfficeForm formControl={formControl} />
+      ),
       confirmText: 'Are you sure you want to set the out of office?',
       multiPost: false,
       condition: () => canWriteMailbox,
@@ -739,7 +779,8 @@ export const useCippUserActions = () => {
           },
         },
       ],
-      confirmText: 'Are you sure you want to add [userPrincipalName] to the selected groups?',
+      confirmText:
+        'Are you sure you want to add [userPrincipalName] to the selected groups?',
       multiPost: false,
       allowResubmit: true,
       condition: () => canWriteGroup,
@@ -755,7 +796,8 @@ export const useCippUserActions = () => {
       children: ({ formHook: formControl }) => (
         <ManageLicensesForm formControl={formControl} tenant={tenant} />
       ),
-      confirmText: 'Are you sure you want to manage licenses for the selected users?',
+      confirmText:
+        'Are you sure you want to manage licenses for the selected users?',
       condition: () => canWriteUser,
     },
     {
@@ -768,7 +810,8 @@ export const useCippUserActions = () => {
         userid: 'userPrincipalName',
         ForwardOption: '!disabled',
       },
-      confirmText: "Are you sure you want to disable forwarding of [userPrincipalName]'s emails?",
+      confirmText:
+        "Are you sure you want to disable forwarding of [userPrincipalName]'s emails?",
       multiPost: false,
       condition: () => canWriteMailbox,
     },
@@ -778,7 +821,8 @@ export const useCippUserActions = () => {
       icon: <CloudDone />,
       url: '/api/ExecOneDriveProvision',
       data: { UserPrincipalName: 'userPrincipalName' },
-      confirmText: 'Are you sure you want to pre-provision OneDrive for [userPrincipalName]?',
+      confirmText:
+        'Are you sure you want to pre-provision OneDrive for [userPrincipalName]?',
       multiPost: false,
       condition: () => canWriteUser,
     },
@@ -797,7 +841,10 @@ export const useCippUserActions = () => {
           creatable: false,
           validators: { required: 'Please select a sharing level' },
           options: [
-            { label: 'Disabled - No external sharing allowed', value: 'Disabled' },
+            {
+              label: 'Disabled - No external sharing allowed',
+              value: 'Disabled',
+            },
             {
               label: 'External User Sharing Only - Guests must sign in',
               value: 'ExternalUserSharingOnly',
@@ -807,13 +854,15 @@ export const useCippUserActions = () => {
               value: 'ExternalUserAndGuestSharing',
             },
             {
-              label: 'Existing External User Sharing Only - Existing guests only',
+              label:
+                'Existing External User Sharing Only - Existing guests only',
               value: 'ExistingExternalUserSharingOnly',
             },
           ],
         },
       ],
-      confirmText: "Select the sharing level for [userPrincipalName]'s OneDrive:",
+      confirmText:
+        "Select the sharing level for [userPrincipalName]'s OneDrive:",
       multiPost: false,
       condition: () => canWriteUser,
     },
@@ -833,7 +882,9 @@ export const useCippUserActions = () => {
           label: 'Select a Site',
           multiple: false,
           creatable: true,
-          validators: { required: 'Please select or enter a SharePoint site URL' },
+          validators: {
+            required: 'Please select or enter a SharePoint site URL',
+          },
           api: {
             url: '/api/ListSites',
             data: { type: 'SharePointSiteUsage', URLOnly: true },
@@ -857,7 +908,11 @@ export const useCippUserActions = () => {
       // selected rows have mixed states. String values match what a radio
       // click produces (e.target.value is always a string).
       defaultvalues: (row) => {
-        const states = [...new Set((Array.isArray(row) ? row : [row]).map((r) => r?.accountEnabled))]
+        const states = [
+          ...new Set(
+            (Array.isArray(row) ? row : [row]).map((r) => r?.accountEnabled)
+          ),
+        ]
         return states.length === 1 && typeof states[0] === 'boolean'
           ? { Enable: String(states[0]) }
           : {}
@@ -875,7 +930,11 @@ export const useCippUserActions = () => {
             required: 'Please select a sign-in state',
             validate: (value, formValues, row) => {
               const states = [
-                ...new Set((Array.isArray(row) ? row : [row]).map((r) => r?.accountEnabled)),
+                ...new Set(
+                  (Array.isArray(row) ? row : [row]).map(
+                    (r) => r?.accountEnabled
+                  )
+                ),
               ]
               if (
                 states.length === 1 &&
@@ -889,7 +948,8 @@ export const useCippUserActions = () => {
           },
         },
       ],
-      confirmText: 'Are you sure you want to set the sign-in state for [userPrincipalName]?',
+      confirmText:
+        'Are you sure you want to set the sign-in state for [userPrincipalName]?',
       multiPost: false,
       condition: () => canWriteUser,
     },
@@ -911,7 +971,8 @@ export const useCippUserActions = () => {
             'Not supported for directory-synced (on-premises AD) accounts. Those resets go through password writeback, which always requires a change at next logon.',
         },
       ],
-      confirmText: 'Are you sure you want to reset the password for [userPrincipalName]?',
+      confirmText:
+        'Are you sure you want to reset the password for [userPrincipalName]?',
       multiPost: false,
       condition: () => canWriteUser,
     },
@@ -940,7 +1001,10 @@ export const useCippUserActions = () => {
           name: 'PasswordPolicy',
           label: 'Password Policy',
           options: [
-            { label: 'Disable Password Expiration', value: 'DisablePasswordExpiration' },
+            {
+              label: 'Disable Password Expiration',
+              value: 'DisablePasswordExpiration',
+            },
             { label: 'Enable Password Expiration', value: 'None' },
           ],
           validators: { required: 'Please select a password policy' },
@@ -959,9 +1023,13 @@ export const useCippUserActions = () => {
       data: {
         ID: 'id',
       },
-      confirmText: 'Are you sure you want to clear the Immutable ID for [userPrincipalName]?',
+      confirmText:
+        'Are you sure you want to clear the Immutable ID for [userPrincipalName]?',
       multiPost: false,
-      condition: (row) => !row?.onPremisesSyncEnabled && row?.onPremisesImmutableId && canWriteUser,
+      condition: (row) =>
+        !row?.onPremisesSyncEnabled &&
+        row?.onPremisesImmutableId &&
+        canWriteUser,
     },
     {
       label: 'Set Source of Authority',
@@ -979,7 +1047,9 @@ export const useCippUserActions = () => {
       defaultvalues: (row) => {
         const states = [
           ...new Set(
-            (Array.isArray(row) ? row : [row]).map((r) => r?.onPremisesSyncEnabled === true)
+            (Array.isArray(row) ? row : [row]).map(
+              (r) => r?.onPremisesSyncEnabled === true
+            )
           ),
         ]
         return states.length === 1 ? { isCloudManaged: String(!states[0]) } : {}
@@ -998,7 +1068,9 @@ export const useCippUserActions = () => {
             validate: (value, formValues, row) => {
               const states = [
                 ...new Set(
-                  (Array.isArray(row) ? row : [row]).map((r) => r?.onPremisesSyncEnabled === true)
+                  (Array.isArray(row) ? row : [row]).map(
+                    (r) => r?.onPremisesSyncEnabled === true
+                  )
                 ),
               ]
               if (states.length === 1 && String(value) === String(!states[0])) {
@@ -1040,7 +1112,8 @@ export const useCippUserActions = () => {
       icon: <PersonOff />,
       url: '/api/ExecRevokeSessions',
       data: { ID: 'id', Username: 'userPrincipalName' },
-      confirmText: 'Are you sure you want to revoke all sessions for [userPrincipalName]?',
+      confirmText:
+        'Are you sure you want to revoke all sessions for [userPrincipalName]?',
       multiPost: false,
       condition: () => canWriteUser,
     },
@@ -1084,7 +1157,9 @@ export const useCippUserActions = () => {
 // Legacy wrapper function for backward compatibility - but this should not be used
 // Instead, components should use the useCippUserActions hook
 export const CippUserActions = () => {
-  console.warn('CippUserActions() function is deprecated. Use useCippUserActions() hook instead.')
+  console.warn(
+    'CippUserActions() function is deprecated. Use useCippUserActions() hook instead.'
+  )
   return useCippUserActions()
 }
 

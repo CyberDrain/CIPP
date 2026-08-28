@@ -1,69 +1,71 @@
-import { useEffect } from "react";
-import { Alert, Box, Stack } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import { useRouter } from "next/router";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormSkeleton from "../../../../components/CippFormPages/CippFormSkeleton";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import CippJsonView from "../../../../components/CippFormPages/CippJSONView";
-import { ApiGetCall } from "../../../../api/ApiCall";
-import { useSettings } from "../../../../hooks/use-settings";
+import { useEffect } from 'react'
+import { Alert, Box, Stack } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import { useRouter } from 'next/router'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormSkeleton from '../../../../components/CippFormPages/CippFormSkeleton'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import CippJsonView from '../../../../components/CippFormPages/CippJSONView'
+import { ApiGetCall } from '../../../../api/ApiCall'
+import { useSettings } from '../../../../hooks/use-settings'
 
 const EditReusableSetting = () => {
-  const router = useRouter();
-  const { id, tenant } = router.query;
-  const { currentTenant } = useSettings();
+  const router = useRouter()
+  const { id, tenant } = router.query
+  const { currentTenant } = useSettings()
 
-  const effectiveTenant = tenant || currentTenant;
+  const effectiveTenant = tenant || currentTenant
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       tenantFilter: effectiveTenant,
     },
-  });
+  })
 
-  const { reset } = formControl;
+  const { reset } = formControl
 
   const settingQuery = ApiGetCall({
-    url: "/api/ListIntuneReusableSettings",
-    queryKey: ["ListIntuneReusableSettings", effectiveTenant, id],
+    url: '/api/ListIntuneReusableSettings',
+    queryKey: ['ListIntuneReusableSettings', effectiveTenant, id],
     enabled: !!id && !!effectiveTenant,
     data: { tenantFilter: effectiveTenant, ID: id },
-  });
+  })
 
-  const record = Array.isArray(settingQuery.data) ? settingQuery.data[0] : settingQuery.data;
+  const record = Array.isArray(settingQuery.data)
+    ? settingQuery.data[0]
+    : settingQuery.data
 
-  const getRawJson = (source) => source?.RawJSON ?? "";
+  const getRawJson = (source) => source?.RawJSON ?? ''
 
   useEffect(() => {
     if (record) {
-      const rawJsonValue = getRawJson(record);
+      const rawJsonValue = getRawJson(record)
       reset({
         tenantFilter: effectiveTenant,
         ID: record.id,
         displayName: record.displayName,
         description: record.description,
         rawJSON: rawJsonValue,
-      });
+      })
     }
-  }, [record, effectiveTenant, reset]);
+  }, [record, effectiveTenant, reset])
 
   const safeJson = () => {
-    const rawJsonValue = getRawJson(record);
-    if (!rawJsonValue) return null;
+    const rawJsonValue = getRawJson(record)
+    if (!rawJsonValue) return null
     try {
-      return JSON.parse(rawJsonValue);
+      return JSON.parse(rawJsonValue)
     } catch (e) {
-      console.error("Failed to parse RawJSON for reusable setting preview", {
+      console.error('Failed to parse RawJSON for reusable setting preview', {
         error: e,
         recordId: record?.id,
-      });
-      return null;
+      })
+      return null
     }
-  };
+  }
 
   const customDataformatter = (values) => ({
     tenantFilter: values.tenantFilter || effectiveTenant,
@@ -72,15 +74,17 @@ const EditReusableSetting = () => {
     displayName: values.displayName,
     description: values.description,
     rawJSON: values.rawJSON,
-  });
+  })
 
   return (
     <CippFormPage
       title={
-        record?.displayName ? `Reusable Setting - ${record.displayName}` : "Edit Reusable Setting"
+        record?.displayName
+          ? `Reusable Setting - ${record.displayName}`
+          : 'Edit Reusable Setting'
       }
       formControl={formControl}
-      queryKey={["ListIntuneReusableSettings", effectiveTenant, id]}
+      queryKey={['ListIntuneReusableSettings', effectiveTenant, id]}
       backButtonTitle="Reusable Settings"
       postUrl="/api/AddIntuneReusableSetting"
       customDataformatter={customDataformatter}
@@ -91,13 +95,23 @@ const EditReusableSetting = () => {
         {settingQuery.isLoading ? (
           <CippFormSkeleton layout={[2, 2, 2]} />
         ) : settingQuery.isError || !record ? (
-          <Alert severity="error">Error loading reusable setting or setting not found.</Alert>
+          <Alert severity="error">
+            Error loading reusable setting or setting not found.
+          </Alert>
         ) : (
           <Stack spacing={2}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12 }}>
-                <CippFormComponent type="hidden" name="tenantFilter" formControl={formControl} />
-                <CippFormComponent type="hidden" name="ID" formControl={formControl} />
+                <CippFormComponent
+                  type="hidden"
+                  name="tenantFilter"
+                  formControl={formControl}
+                />
+                <CippFormComponent
+                  type="hidden"
+                  name="ID"
+                  formControl={formControl}
+                />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <CippFormComponent
@@ -105,7 +119,7 @@ const EditReusableSetting = () => {
                   name="displayName"
                   label="Display Name"
                   formControl={formControl}
-                  validators={{ required: "Display Name is required" }}
+                  validators={{ required: 'Display Name is required' }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -124,19 +138,25 @@ const EditReusableSetting = () => {
                   label="Raw JSON"
                   formControl={formControl}
                   required
-                  validators={{ required: "Raw JSON is required" }}
+                  validators={{ required: 'Raw JSON is required' }}
                   rows={14}
                 />
               </Grid>
             </Grid>
-            <CippJsonView object={safeJson()} type="intune" defaultOpen={true} />
+            <CippJsonView
+              object={safeJson()}
+              type="intune"
+              defaultOpen={true}
+            />
           </Stack>
         )}
       </Box>
     </CippFormPage>
-  );
-};
+  )
+}
 
-EditReusableSetting.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+EditReusableSetting.getLayout = (page) => (
+  <DashboardLayout>{page}</DashboardLayout>
+)
 
-export default EditReusableSetting;
+export default EditReusableSetting

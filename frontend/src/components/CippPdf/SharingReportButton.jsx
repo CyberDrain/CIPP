@@ -34,7 +34,8 @@ import { useReportVariables } from './useReportVariables'
 import { useBrandingSettings } from './useBrandingSettings'
 
 const nz = (value) => Number(value ?? 0)
-const joinList = (value) => (Array.isArray(value) ? value.join(', ') : (value ?? ''))
+const joinList = (value) =>
+  Array.isArray(value) ? value.join(', ') : (value ?? '')
 const plural = (count, singular, pluralForm) =>
   `${count} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`
 
@@ -73,20 +74,27 @@ export const SharingReportDocument = ({
   const exposureColour = severityColour(exposure.severity)
 
   const canEdit = (row) =>
-    joinList(row.roles).includes('write') || joinList(row.roles).includes('owner')
-  const anonEditRows = links.filter((row) => row.classification === 'Anonymous' && canEdit(row))
+    joinList(row.roles).includes('write') ||
+    joinList(row.roles).includes('owner')
+  const anonEditRows = links.filter(
+    (row) => row.classification === 'Anonymous' && canEdit(row)
+  )
   const neverExpiringRows = links.filter(
     (row) => row.classification === 'Anonymous' && !row.expirationDateTime
   )
   const folderShareRows = links.filter(
-    (row) => row.itemType === 'Folder' && ['Anonymous', 'External'].includes(row.classification)
+    (row) =>
+      row.itemType === 'Folder' &&
+      ['Anonymous', 'External'].includes(row.classification)
   )
   const externalRows = links.filter((row) => row.classification === 'External')
 
   const locationOf = (row) =>
     `${row.siteName || row.siteUrl || 'Unknown site'}${row.driveName ? ` / ${row.driveName}` : ''}`
   const expiryOf = (row) =>
-    row.expirationDateTime ? new Date(row.expirationDateTime).toLocaleDateString() : 'Never'
+    row.expirationDateTime
+      ? new Date(row.expirationDateTime).toLocaleDateString()
+      : 'Never'
 
   return (
     <ReportDocument
@@ -114,14 +122,17 @@ export const SharingReportDocument = ({
       }
     >
       {/* EXECUTIVE SUMMARY */}
-      <ContentPage title="Executive Summary" subtitle="What has been shared, and how far it reaches">
-
+      <ContentPage
+        title="Executive Summary"
+        subtitle="What has been shared, and how far it reaches"
+      >
         <Section>
           <Paragraph>
-            Sharing links are created by users on individual files and folders. They hand out access
-            outside the permission structure an administrator sets on a site or library, they
-            accumulate quietly as people work, and nothing prompts anyone to review them. This
-            report covers what exists today across SharePoint and OneDrive in{' '}
+            Sharing links are created by users on individual files and folders.
+            They hand out access outside the permission structure an
+            administrator sets on a site or library, they accumulate quietly as
+            people work, and nothing prompts anyone to review them. This report
+            covers what exists today across SharePoint and OneDrive in{' '}
             <Bold>{tenantName}</Bold>.
           </Paragraph>
 
@@ -130,22 +141,34 @@ export const SharingReportDocument = ({
               {
                 value: nz(summary.anonymousEditLinks),
                 label: 'Anonymous & Editable',
-                colour: nz(summary.anonymousEditLinks) > 0 ? REPORT_COLOURS.danger : undefined,
+                colour:
+                  nz(summary.anonymousEditLinks) > 0
+                    ? REPORT_COLOURS.danger
+                    : undefined,
               },
               {
                 value: nz(summary.neverExpiringAnonymous),
                 label: 'Anonymous, No Expiry',
-                colour: nz(summary.neverExpiringAnonymous) > 0 ? REPORT_COLOURS.danger : undefined,
+                colour:
+                  nz(summary.neverExpiringAnonymous) > 0
+                    ? REPORT_COLOURS.danger
+                    : undefined,
               },
               {
                 value: nz(summary.folderShares),
                 label: 'Shared Folders',
-                colour: nz(summary.folderShares) > 0 ? REPORT_COLOURS.warning : undefined,
+                colour:
+                  nz(summary.folderShares) > 0
+                    ? REPORT_COLOURS.warning
+                    : undefined,
               },
               {
                 value: nz(summary.externalRecipients),
                 label: 'External Recipients',
-                colour: nz(summary.externalRecipients) > 0 ? REPORT_COLOURS.warning : undefined,
+                colour:
+                  nz(summary.externalRecipients) > 0
+                    ? REPORT_COLOURS.warning
+                    : undefined,
               },
             ]}
           />
@@ -166,28 +189,33 @@ export const SharingReportDocument = ({
         <Section title="Scope of This Review">
           <InfoBox title="What was examined">
             {nz(summary.totalLinks)} sharing links and external shares across{' '}
-            {nz(summary.sharePointSites)} SharePoint sites, {nz(summary.teamsSites)} Teams-connected
-            sites and {nz(summary.oneDriveAccounts)} OneDrive accounts, covering{' '}
-            {nz(summary.itemsShared)} distinct shared items. Data is taken from the last completed
-            sync, not read live.
+            {nz(summary.sharePointSites)} SharePoint sites,{' '}
+            {nz(summary.teamsSites)} Teams-connected sites and{' '}
+            {nz(summary.oneDriveAccounts)} OneDrive accounts, covering{' '}
+            {nz(summary.itemsShared)} distinct shared items. Data is taken from
+            the last completed sync, not read live.
           </InfoBox>
           <InfoBox title="What is not covered">
-            This report covers sharing links only. Permissions granted on a site or document library
-            are a separate access path, governed differently, and are covered by the Permissions
-            Report. A clean result here does not mean access is restricted — it means nothing has
-            been shared out by link.
+            This report covers sharing links only. Permissions granted on a site
+            or document library are a separate access path, governed
+            differently, and are covered by the Permissions Report. A clean
+            result here does not mean access is restricted — it means nothing
+            has been shared out by link.
           </InfoBox>
         </Section>
       </ContentPage>
 
       {/* FINDINGS */}
-      <ContentPage title="Findings" subtitle="Shares worth reviewing, most urgent first">
-
+      <ContentPage
+        title="Findings"
+        subtitle="Shares worth reviewing, most urgent first"
+      >
         <Section title="Finding 1: Anonymous Links That Allow Editing">
           <InfoBox title="Why this matters">
-            An anonymous link works for anyone who holds it — no sign-in, no record of who used it.
-            When that link also grants editing, anyone it has been forwarded to can change or delete
-            the content, and the change is attributed to nobody. This is the only combination that
+            An anonymous link works for anyone who holds it — no sign-in, no
+            record of who used it. When that link also grants editing, anyone it
+            has been forwarded to can change or delete the content, and the
+            change is attributed to nobody. This is the only combination that
             allows untraceable modification.
           </InfoBox>
           {anonEditRows.length > 0 ? (
@@ -196,7 +224,8 @@ export const SharingReportDocument = ({
                 title={plural(anonEditRows.length, 'anonymous editable link')}
                 colour={REPORT_COLOURS.danger}
               >
-                Revoke these, or downgrade them to view-only where the sharing is still needed.
+                Revoke these, or downgrade them to view-only where the sharing
+                is still needed.
               </AlertBox>
               <DataTable
                 columns={[
@@ -220,9 +249,9 @@ export const SharingReportDocument = ({
 
         <Section title="Finding 2: Anonymous Links That Never Expire">
           <InfoBox title="Why this matters">
-            A link with no expiry date stays live indefinitely, long after the reason for sharing
-            has passed. Expiry is the only control that withdraws this access without somebody
-            remembering to do it.
+            A link with no expiry date stays live indefinitely, long after the
+            reason for sharing has passed. Expiry is the only control that
+            withdraws this access without somebody remembering to do it.
           </InfoBox>
           {neverExpiringRows.length > 0 ? (
             <>
@@ -230,8 +259,8 @@ export const SharingReportDocument = ({
                 title={`${plural(neverExpiringRows.length, 'anonymous link')} with no expiry`}
                 colour={REPORT_COLOURS.warning}
               >
-                Set a tenant-level default expiry so this cannot recur, then revoke the existing
-                links that are no longer needed.
+                Set a tenant-level default expiry so this cannot recur, then
+                revoke the existing links that are no longer needed.
               </AlertBox>
               <DataTable
                 columns={[
@@ -256,12 +285,12 @@ export const SharingReportDocument = ({
 
       {/* FINDINGS CONTINUED */}
       <ContentPage title="Findings (continued)" subtitle="Reach and recipients">
-
         <Section title="Finding 3: Shared Folders">
           <InfoBox title="Why this matters">
-            Sharing a folder shares everything inside it, including anything added later. The
-            recipient's access grows over time without anyone re-approving it, which is the main way
-            a small share quietly becomes a large one.
+            Sharing a folder shares everything inside it, including anything
+            added later. The recipient's access grows over time without anyone
+            re-approving it, which is the main way a small share quietly becomes
+            a large one.
           </InfoBox>
           {folderShareRows.length > 0 ? (
             <>
@@ -269,7 +298,8 @@ export const SharingReportDocument = ({
                 title={`${plural(folderShareRows.length, 'folder')} shared externally or anonymously`}
                 colour={REPORT_COLOURS.warning}
               >
-                Check what each folder holds now, not what it held when it was shared.
+                Check what each folder holds now, not what it held when it was
+                shared.
               </AlertBox>
               <DataTable
                 columns={[
@@ -286,23 +316,29 @@ export const SharingReportDocument = ({
             </>
           ) : (
             <ClearBox title="✔️ No externally shared folders">
-              External and anonymous shares point at individual files rather than folders.
+              External and anonymous shares point at individual files rather
+              than folders.
             </ClearBox>
           )}
         </Section>
 
         <Section title="Finding 4: External Recipients">
           <InfoBox title="Why this matters">
-            Every external recipient is a person outside the organisation holding access that was
-            granted individually, usually for a specific piece of work. Nothing withdraws it when
-            that work ends.
+            Every external recipient is a person outside the organisation
+            holding access that was granted individually, usually for a specific
+            piece of work. Nothing withdraws it when that work ends.
           </InfoBox>
           {topRecipients.length > 0 ? (
             <>
               <Paragraph>
-                {plural(nz(summary.externalRecipients), 'external identity', 'external identities')}{' '}
-                hold shared content, across {plural(externalRows.length, 'share')}. The most
-                frequent are listed below.
+                {plural(
+                  nz(summary.externalRecipients),
+                  'external identity',
+                  'external identities'
+                )}{' '}
+                hold shared content, across{' '}
+                {plural(externalRows.length, 'share')}. The most frequent are
+                listed below.
               </Paragraph>
               <DataTable
                 columns={[
@@ -326,8 +362,9 @@ export const SharingReportDocument = ({
         {topLibraries.length > 0 && (
           <Section title="Where Sharing Concentrates">
             <Paragraph>
-              The libraries below account for the most sharing links. Concentration is not a problem
-              in itself, but it shows where a review will have the most effect.
+              The libraries below account for the most sharing links.
+              Concentration is not a problem in itself, but it shows where a
+              review will have the most effect.
             </Paragraph>
             <DataTable
               columns={[
@@ -345,11 +382,14 @@ export const SharingReportDocument = ({
       </ContentPage>
 
       {/* RECOMMENDATIONS */}
-      <ContentPage title="Recommendations" subtitle="What to do about the findings">
-
+      <ContentPage
+        title="Recommendations"
+        subtitle="What to do about the findings"
+      >
         <Section title="Priority Actions">
           <Paragraph>
-            Ordered by how much exposure each removes relative to the effort involved.
+            Ordered by how much exposure each removes relative to the effort
+            involved.
           </Paragraph>
           <BulletList
             items={[
@@ -418,7 +458,11 @@ export const SharingReportButton = ({ sharingData, tenantName }) => {
 
   const handleOpen = () => {
     setGeneratedOn(
-      new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
     )
     setDialogOpen(true)
   }
@@ -457,7 +501,11 @@ export const SharingReportButton = ({ sharingData, tenantName }) => {
         PaperProps={{ sx: { height: '90vh' } }}
       >
         <DialogTitle>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="h6" component="div">
               Sharing Report Preview
             </Typography>
@@ -488,7 +536,9 @@ export const SharingReportButton = ({ sharingData, tenantName }) => {
             {({ loading }) => (
               <Button
                 variant="contained"
-                startIcon={loading ? <CircularProgress size={20} /> : <Download />}
+                startIcon={
+                  loading ? <CircularProgress size={20} /> : <Download />
+                }
                 disabled={loading}
               >
                 {loading ? 'Generating…' : 'Download PDF'}

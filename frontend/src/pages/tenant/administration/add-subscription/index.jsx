@@ -1,51 +1,51 @@
-import { Box } from "@mui/material";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useForm, useWatch } from "react-hook-form";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { useSettings } from "../../../../hooks/use-settings";
-import { Grid, darken, lighten, styled } from "@mui/system";
-import { CippPropertyListCard } from "../../../../components/CippCards/CippPropertyListCard";
-import { getCippFormatting } from "../../../../utils/get-cipp-formatting";
-import { getCippTranslation } from "../../../../utils/get-cipp-translation";
+import { Box } from '@mui/material'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useForm, useWatch } from 'react-hook-form'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { useSettings } from '../../../../hooks/use-settings'
+import { Grid, darken, lighten, styled } from '@mui/system'
+import { CippPropertyListCard } from '../../../../components/CippCards/CippPropertyListCard'
+import { getCippFormatting } from '../../../../utils/get-cipp-formatting'
+import { getCippTranslation } from '../../../../utils/get-cipp-translation'
 
 const Page = () => {
-  const userSettingsDefaults = useSettings();
-  const tenantDomain = userSettingsDefaults?.currentTenant;
+  const userSettingsDefaults = useSettings()
+  const tenantDomain = userSettingsDefaults?.currentTenant
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       tenantFilter: tenantDomain,
-      action: "NewSub",
+      action: 'NewSub',
       iagree: false,
     },
-  });
+  })
 
   const selectedSku = useWatch({
     control: formControl.control,
-    name: "sku",
-  });
+    name: 'sku',
+  })
 
-  const GroupHeader = styled("div")(({ theme }) => ({
-    position: "sticky",
-    top: "-8px",
-    padding: "4px 10px",
+  const GroupHeader = styled('div')(({ theme }) => ({
+    position: 'sticky',
+    top: '-8px',
+    padding: '4px 10px',
     color: theme.palette.primary.main,
     backgroundColor: lighten(theme.palette.primary.light, 0.85),
-    ...theme.applyStyles("dark", {
+    ...theme.applyStyles('dark', {
       backgroundColor: darken(theme.palette.primary.main, 0.8),
     }),
-  }));
+  }))
 
-  const GroupItems = styled("ul")({
+  const GroupItems = styled('ul')({
     padding: 0,
-  });
+  })
 
   return (
     <>
       <CippFormPage
-        queryKey={"CippFormPage"}
+        queryKey={'CippFormPage'}
         formControl={formControl}
         title="Add Subscription"
         backButtonTitle="CSP Licenses"
@@ -62,14 +62,15 @@ const Page = () => {
                 name="sku"
                 api={{
                   queryKey: `SKU-${tenantDomain}`,
-                  url: "/api/ListCSPsku",
-                  labelField: (option) => `${option?.name[0]?.value} (${option?.sku})`,
-                  valueField: "sku",
+                  url: '/api/ListCSPsku',
+                  labelField: (option) =>
+                    `${option?.name[0]?.value} (${option?.sku})`,
+                  valueField: 'sku',
 
                   addedField: {
-                    billingCycle: "billingCycle",
-                    commitmentTerm: "commitmentTerm",
-                    description: "description",
+                    billingCycle: 'billingCycle',
+                    commitmentTerm: 'commitmentTerm',
+                    description: 'description',
                   },
                 }}
                 multiple={false}
@@ -77,7 +78,7 @@ const Page = () => {
                 required={true}
                 validators={{
                   validate: (option) => {
-                    return option?.value ? true : "This field is required.";
+                    return option?.value ? true : 'This field is required.'
                   },
                 }}
                 sortOptions={true}
@@ -90,10 +91,10 @@ const Page = () => {
                 name="Quantity"
                 formControl={formControl}
                 validators={{
-                  required: "This field is required.",
+                  required: 'This field is required.',
                   min: {
                     value: 1,
-                    message: "Minimum value is 1.",
+                    message: 'Minimum value is 1.',
                   },
                 }}
                 required={true}
@@ -106,20 +107,24 @@ const Page = () => {
                   variant="outlined"
                   showDivider={false}
                   propertyItems={[
-                    { label: "Name", value: selectedSku?.label },
+                    { label: 'Name', value: selectedSku?.label },
                     {
-                      label: "Billing Cycle",
-                      value: getCippTranslation(selectedSku?.addedFields?.billingCycle),
+                      label: 'Billing Cycle',
+                      value: getCippTranslation(
+                        selectedSku?.addedFields?.billingCycle
+                      ),
                     },
                     {
-                      label: "Commitment Term",
-                      value: getCippTranslation(selectedSku?.addedFields?.commitmentTerm),
+                      label: 'Commitment Term',
+                      value: getCippTranslation(
+                        selectedSku?.addedFields?.commitmentTerm
+                      ),
                     },
                     {
-                      label: "Description",
+                      label: 'Description',
                       value: getCippFormatting(
                         selectedSku?.addedFields?.description?.[0]?.value,
-                        "htmlDescription"
+                        'htmlDescription'
                       ),
                     },
                   ]}
@@ -133,7 +138,7 @@ const Page = () => {
                 name="iagree"
                 formControl={formControl}
                 validators={{
-                  required: "This field is required.",
+                  required: 'This field is required.',
                 }}
               />
             </Grid>
@@ -141,9 +146,9 @@ const Page = () => {
         </Box>
       </CippFormPage>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

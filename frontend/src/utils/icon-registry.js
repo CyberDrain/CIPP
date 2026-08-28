@@ -106,7 +106,8 @@ export const iconRegistry = {
   VpnKey,
 }
 
-export const getIconComponentByName = (iconName) => iconRegistry[iconName] ?? null
+export const getIconComponentByName = (iconName) =>
+  iconRegistry[iconName] ?? null
 
 export const getIconByName = (iconName, props = {}) => {
   const Icon = getIconComponentByName(iconName)

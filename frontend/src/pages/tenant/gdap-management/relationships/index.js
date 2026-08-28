@@ -1,49 +1,49 @@
-import { TabbedLayout } from "../../../../layouts/TabbedLayout";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import tabOptions from "../tabOptions";
-import CippTablePage from "../../../../components/CippComponents/CippTablePage";
-import CippGdapActions from "../../../../components/CippComponents/CippGdapActions";
+import { TabbedLayout } from '../../../../layouts/TabbedLayout'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import tabOptions from '../tabOptions'
+import CippTablePage from '../../../../components/CippComponents/CippTablePage'
+import CippGdapActions from '../../../../components/CippComponents/CippGdapActions'
 
-const actions = CippGdapActions();
+const actions = CippGdapActions()
 
 const simpleColumns = [
-  "customer.displayName",
-  "displayName",
-  "status",
-  "createdDateTime",
-  "activatedDateTime",
-  "endDateTime",
-  "autoExtendDuration",
-  "accessDetails.unifiedRoles",
-];
+  'customer.displayName',
+  'displayName',
+  'status',
+  'createdDateTime',
+  'activatedDateTime',
+  'endDateTime',
+  'autoExtendDuration',
+  'accessDetails.unifiedRoles',
+]
 
 const filters = [
   {
-    filterName: "Active",
-    value: [{ id: "status", value: "active" }],
-    type: "column",
+    filterName: 'Active',
+    value: [{ id: 'status', value: 'active' }],
+    type: 'column',
   },
   {
-    filterName: "Approval Pending",
-    value: [{ id: "status", value: "approvalPending" }],
-    type: "column",
+    filterName: 'Approval Pending',
+    value: [{ id: 'status', value: 'approvalPending' }],
+    type: 'column',
   },
   {
-    filterName: "Terminating",
-    value: [{ id: "status", value: "terminating" }],
-    type: "column",
+    filterName: 'Terminating',
+    value: [{ id: 'status', value: 'terminating' }],
+    type: 'column',
   },
   {
-    filterName: "Terminated",
-    value: [{ id: "status", value: "terminated" }],
-    type: "column",
+    filterName: 'Terminated',
+    value: [{ id: 'status', value: 'terminated' }],
+    type: 'column',
   },
-];
+]
 
 const offCanvas = {
   actions: actions,
   extendedInfoFields: simpleColumns,
-};
+}
 
 const Page = () => {
   return (
@@ -62,15 +62,15 @@ const Page = () => {
       simpleColumns={simpleColumns}
       maxHeightOffset="460px"
       filters={filters}
-      defaultSorting={[{ id: "customer.displayName", desc: false }]}
+      defaultSorting={[{ id: 'customer.displayName', desc: false }]}
     />
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
+export default Page

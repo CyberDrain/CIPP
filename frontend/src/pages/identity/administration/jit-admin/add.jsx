@@ -16,14 +16,19 @@ import { useEffect, useState } from 'react'
 
 const Page = () => {
   const formControl = useForm({ mode: 'onChange' })
-  const selectedTenant = useWatch({ control: formControl.control, name: 'tenantFilter' })
+  const selectedTenant = useWatch({
+    control: formControl.control,
+    name: 'tenantFilter',
+  })
   const [selectedTemplate, setSelectedTemplate] = useState(null)
 
   const jitAdminTemplates = ApiGetCall({
     url: selectedTenant
       ? `/api/ListJITAdminTemplates?TenantFilter=${selectedTenant.value}`
       : undefined,
-    queryKey: selectedTenant ? `JITAdminTemplates-${selectedTenant.value}` : 'JITAdminTemplates',
+    queryKey: selectedTenant
+      ? `JITAdminTemplates-${selectedTenant.value}`
+      : 'JITAdminTemplates',
     refetchOnMount: false,
     refetchOnReconnect: false,
     waiting: !!selectedTenant,
@@ -31,7 +36,10 @@ const Page = () => {
 
   const watcher = useWatch({ control: formControl.control })
   const useTAP = useWatch({ control: formControl.control, name: 'UseTAP' })
-  const startDate = useWatch({ control: formControl.control, name: 'startDate' })
+  const startDate = useWatch({
+    control: formControl.control,
+    name: 'startDate',
+  })
   const endDate = useWatch({ control: formControl.control, name: 'endDate' })
   const tapLifetimeInMinutes = useWatch({
     control: formControl.control,
@@ -45,12 +53,18 @@ const Page = () => {
         'policies/authenticationMethodsPolicy/authenticationMethodConfigurations/TemporaryAccessPass',
       tenantFilter: selectedTenant?.value,
     },
-    queryKey: selectedTenant ? `TAPPolicy-${selectedTenant.value}` : 'TAPPolicy',
+    queryKey: selectedTenant
+      ? `TAPPolicy-${selectedTenant.value}`
+      : 'TAPPolicy',
     waiting: !!selectedTenant,
   })
-  const tapEnabled = tapPolicy.isSuccess && tapPolicy.data?.Results?.[0]?.state === 'enabled'
+  const tapEnabled =
+    tapPolicy.isSuccess && tapPolicy.data?.Results?.[0]?.state === 'enabled'
   const useRoles = useWatch({ control: formControl.control, name: 'useRoles' })
-  const useGroups = useWatch({ control: formControl.control, name: 'useGroups' })
+  const useGroups = useWatch({
+    control: formControl.control,
+    name: 'useGroups',
+  })
 
   useEffect(() => {
     if (!useTAP || !startDate || !endDate) {
@@ -61,7 +75,10 @@ const Page = () => {
     const requestedMinutes = Math.max(1, Math.round((endDate - startDate) / 60))
     const tapPolicyConfig = tapPolicy.data?.Results?.[0]
     const policyMax = tapPolicyConfig?.maximumLifetimeInMinutes ?? 1440
-    const policyMin = Math.min(tapPolicyConfig?.minimumLifetimeInMinutes ?? 1, policyMax)
+    const policyMin = Math.min(
+      tapPolicyConfig?.minimumLifetimeInMinutes ?? 1,
+      policyMax
+    )
     formControl.setValue(
       'tapLifetimeInMinutes',
       Math.min(Math.max(requestedMinutes, policyMin), policyMax)
@@ -90,11 +107,18 @@ const Page = () => {
       formControl.setValue('expireAction', null)
     } else if (!useGroups && currentAction.value === 'RemoveGroups') {
       formControl.setValue('expireAction', null)
-    } else if ((!useRoles || !useGroups) && currentAction.value === 'RemoveRolesAndGroups') {
+    } else if (
+      (!useRoles || !useGroups) &&
+      currentAction.value === 'RemoveRolesAndGroups'
+    ) {
       formControl.setValue('expireAction', null)
     } else if (useRoles && useGroups && currentAction.value === 'RemoveRoles') {
       formControl.setValue('expireAction', null)
-    } else if (useRoles && useGroups && currentAction.value === 'RemoveGroups') {
+    } else if (
+      useRoles &&
+      useGroups &&
+      currentAction.value === 'RemoveGroups'
+    ) {
       formControl.setValue('expireAction', null)
     }
   }, [useRoles, useGroups])
@@ -150,7 +174,9 @@ const Page = () => {
       // If not found, fall back to AllTenants default template
       if (!defaultTemplate) {
         defaultTemplate = templates.find(
-          (template) => template.defaultForTenant === true && template.tenantFilter === 'AllTenants'
+          (template) =>
+            template.defaultForTenant === true &&
+            template.tenantFilter === 'AllTenants'
         )
       }
 
@@ -195,46 +221,77 @@ const Page = () => {
     }
 
     // Set all template-driven fields
-    formControl.setValue('useRoles', template.defaultUseRoles ?? true, { shouldDirty: true })
-    formControl.setValue('useGroups', template.defaultUseGroups ?? false, { shouldDirty: true })
-    formControl.setValue('adminRoles', template.defaultRoles || [], { shouldDirty: true })
-    formControl.setValue('groupMemberships', template.defaultGroups || [], { shouldDirty: true })
+    formControl.setValue('useRoles', template.defaultUseRoles ?? true, {
+      shouldDirty: true,
+    })
+    formControl.setValue('useGroups', template.defaultUseGroups ?? false, {
+      shouldDirty: true,
+    })
+    formControl.setValue('adminRoles', template.defaultRoles || [], {
+      shouldDirty: true,
+    })
+    formControl.setValue('groupMemberships', template.defaultGroups || [], {
+      shouldDirty: true,
+    })
     formControl.setValue('expireAction', template.defaultExpireAction || null, {
       shouldDirty: true,
     })
-    formControl.setValue('postExecution', template.defaultNotificationActions || [], {
+    formControl.setValue(
+      'postExecution',
+      template.defaultNotificationActions || [],
+      {
+        shouldDirty: true,
+      }
+    )
+    formControl.setValue('UseTAP', template.generateTAPByDefault ?? false, {
       shouldDirty: true,
     })
-    formControl.setValue('UseTAP', template.generateTAPByDefault ?? false, { shouldDirty: true })
-    formControl.setValue('reason', template.reasonTemplate || '', { shouldDirty: true })
+    formControl.setValue('reason', template.reasonTemplate || '', {
+      shouldDirty: true,
+    })
 
     // User action and user details
     if (template.defaultUserAction) {
-      formControl.setValue('userAction', template.defaultUserAction, { shouldDirty: true })
+      formControl.setValue('userAction', template.defaultUserAction, {
+        shouldDirty: true,
+      })
     }
     if (template.defaultFirstName) {
-      formControl.setValue('firstName', template.defaultFirstName, { shouldDirty: true })
+      formControl.setValue('firstName', template.defaultFirstName, {
+        shouldDirty: true,
+      })
     }
     if (template.defaultLastName) {
-      formControl.setValue('lastName', template.defaultLastName, { shouldDirty: true })
+      formControl.setValue('lastName', template.defaultLastName, {
+        shouldDirty: true,
+      })
     }
     if (template.defaultUserName) {
-      formControl.setValue('userName', template.defaultUserName, { shouldDirty: true })
+      formControl.setValue('userName', template.defaultUserName, {
+        shouldDirty: true,
+      })
     }
     if (template.defaultDomain) {
-      formControl.setValue('domain', template.defaultDomain, { shouldDirty: true })
+      formControl.setValue('domain', template.defaultDomain, {
+        shouldDirty: true,
+      })
     }
     if (template.defaultExistingUser) {
-      formControl.setValue('existingUser', template.defaultExistingUser, { shouldDirty: true })
+      formControl.setValue('existingUser', template.defaultExistingUser, {
+        shouldDirty: true,
+      })
     }
     if (template.defaultUsageLocation) {
-      formControl.setValue('usageLocation', template.defaultUsageLocation, { shouldDirty: true })
+      formControl.setValue('usageLocation', template.defaultUsageLocation, {
+        shouldDirty: true,
+      })
     }
 
     // Dates
     if (template.defaultDuration) {
       const duration =
-        typeof template.defaultDuration === 'object' && template.defaultDuration !== null
+        typeof template.defaultDuration === 'object' &&
+        template.defaultDuration !== null
           ? template.defaultDuration.value
           : template.defaultDuration
       const start = roundDown15(new Date())
@@ -292,7 +349,8 @@ const Page = () => {
                 multiple={false}
                 creatable={false}
                 options={
-                  jitAdminTemplates.isSuccess && Array.isArray(jitAdminTemplates.data)
+                  jitAdminTemplates.isSuccess &&
+                  Array.isArray(jitAdminTemplates.data)
                     ? jitAdminTemplates.data?.map((template) => ({
                         label: template.templateName,
                         value: template.GUID,
@@ -428,7 +486,11 @@ const Page = () => {
                   required: 'End date is required',
                   validate: (value) => {
                     const startDate = formControl.getValues('startDate')
-                    if (value && startDate && new Date(value) < new Date(startDate)) {
+                    if (
+                      value &&
+                      startDate &&
+                      new Date(value) < new Date(startDate)
+                    ) {
                       return 'End date must be after start date'
                     }
                     return true
@@ -469,7 +531,10 @@ const Page = () => {
                   fullWidth
                   label="Roles"
                   name="adminRoles"
-                  options={jitAdminRoles.map((role) => ({ label: role.Name, value: role.ObjectId }))}
+                  options={jitAdminRoles.map((role) => ({
+                    label: role.Name,
+                    value: role.ObjectId,
+                  }))}
                   formControl={formControl}
                   required={true}
                   validators={{
@@ -536,12 +601,20 @@ const Page = () => {
                 formControl={formControl}
               />
               {useTAP && tapPolicy.isSuccess && !tapEnabled && (
-                <Box sx={{ color: 'error.main', fontSize: '0.875rem', mt: 0.5 }}>
+                <Box
+                  sx={{ color: 'error.main', fontSize: '0.875rem', mt: 0.5 }}
+                >
                   TAP is not enabled in this tenant. TAP generation will fail.
                 </Box>
               )}
               {useTAP && tapLifetimeInMinutes && (
-                <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mt: 0.5 }}>
+                <Box
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: '0.875rem',
+                    mt: 0.5,
+                  }}
+                >
                   TAP will be valid for {tapLifetimeInMinutes} minutes.
                 </Box>
               )}
@@ -561,7 +634,10 @@ const Page = () => {
                     { label: 'Disable User', value: 'DisableUser' },
                   ]
                   if (useRoles && useGroups) {
-                    opts.push({ label: 'Remove Roles and Groups', value: 'RemoveRolesAndGroups' })
+                    opts.push({
+                      label: 'Remove Roles and Groups',
+                      value: 'RemoveRolesAndGroups',
+                    })
                   } else if (useRoles) {
                     opts.push({ label: 'Remove Roles', value: 'RemoveRoles' })
                   } else if (useGroups) {

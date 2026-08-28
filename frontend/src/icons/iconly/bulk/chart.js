@@ -5,7 +5,8 @@ const Chart = (props) => (
     viewBox="0 0 24 24"
     width={24}
     xmlns="http://www.w3.org/2000/svg"
-    {...props}>
+    {...props}
+  >
     <path
       d="M16.6756 2H7.33333C3.92889 2 2 3.92889 2 7.33333V16.6667C2 20.0711 3.92889 22 7.33333 22H16.6756C20.08 22 22 20.0711 22 16.6667V7.33333C22 3.92889 20.08 2 16.6756 2Z"
       fill="currentColor"
@@ -24,6 +25,6 @@ const Chart = (props) => (
       fill="currentColor"
     />
   </svg>
-);
+)
 
-export default Chart;
+export default Chart

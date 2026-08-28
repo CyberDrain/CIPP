@@ -1,47 +1,58 @@
-import { useMemo } from "react";
-import { ResponsiveSankey } from "@nivo/sankey";
-import { Box, ButtonBase, Typography, useTheme } from "@mui/material";
-import { useIsMobileLayout } from "../../hooks/use-breakpoint";
+import { useMemo } from 'react'
+import { ResponsiveSankey } from '@nivo/sankey'
+import { Box, ButtonBase, Typography, useTheme } from '@mui/material'
+import { useIsMobileLayout } from '../../hooks/use-breakpoint'
 
 // A node's weight: what flows in, or out if nothing flows in (the leftmost column).
 const nodeTotals = (data) => {
-  const incoming = new Map();
-  const outgoing = new Map();
-  (data?.links ?? []).forEach((link) => {
-    incoming.set(link.target, (incoming.get(link.target) ?? 0) + (link.value ?? 0));
-    outgoing.set(link.source, (outgoing.get(link.source) ?? 0) + (link.value ?? 0));
-  });
+  const incoming = new Map()
+  const outgoing = new Map()
+  ;(data?.links ?? []).forEach((link) => {
+    incoming.set(
+      link.target,
+      (incoming.get(link.target) ?? 0) + (link.value ?? 0)
+    )
+    outgoing.set(
+      link.source,
+      (outgoing.get(link.source) ?? 0) + (link.value ?? 0)
+    )
+  })
   return (data?.nodes ?? []).map((node) => ({
     ...node,
     total: incoming.get(node.id) ?? outgoing.get(node.id) ?? 0,
-  }));
-};
+  }))
+}
 
 export const CippSankey = ({ data, onNodeClick, onLinkClick }) => {
   // The painted palette, not the theme *setting*: when the setting is "browser" the app
   // resolves dark/light from the OS preference, so checking the setting for "dark" said
   // light while the page was dark — and a "multiply" blend over a dark card composites the
   // link ribbons to black.
-  const isDark = useTheme().palette.mode === "dark";
+  const isDark = useTheme().palette.mode === 'dark'
   // A sankey is three columns of nodes plus their labels. At desktop widths the labels sit
   // horizontally inside an 18px-thick node and still read. On a ~350px card they cannot: a
   // node carrying a handful of users is a couple of pixels tall, and its label — rotated or
   // not — is longer than the node it belongs to, so the small ones pile on top of each other
   // into an unreadable smear. Below md the chart drops its labels and names the nodes in a
   // legend underneath, where there is room to read them and a real tap target per node.
-  const isMobile = useIsMobileLayout();
-  const legend = useMemo(() => (isMobile ? nodeTotals(data) : []), [isMobile, data]);
+  const isMobile = useIsMobileLayout()
+  const legend = useMemo(
+    () => (isMobile ? nodeTotals(data) : []),
+    [isMobile, data]
+  )
 
   const theme = {
     tooltip: {
       container: {
-        background: isDark ? "rgba(33, 33, 33, 0.95)" : "rgba(255, 255, 255, 0.95)",
-        color: isDark ? "#ffffff" : "#000000",
-        border: isDark ? "1px solid #555" : "1px solid #ccc",
-        borderRadius: "4px",
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-        fontSize: "12px",
-        padding: "8px 12px",
+        background: isDark
+          ? 'rgba(33, 33, 33, 0.95)'
+          : 'rgba(255, 255, 255, 0.95)',
+        color: isDark ? '#ffffff' : '#000000',
+        border: isDark ? '1px solid #555' : '1px solid #ccc',
+        borderRadius: '4px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+        fontSize: '12px',
+        padding: '8px 12px',
       },
     },
     labels: {
@@ -49,18 +60,18 @@ export const CippSankey = ({ data, onNodeClick, onLinkClick }) => {
         fontSize: isMobile ? 9 : 12,
       },
     },
-  };
+  }
 
   return (
     <div
-      className={`h-full w-full ${isDark ? "sankey-dark-mode" : "sankey-light-mode"}`}
+      className={`h-full w-full ${isDark ? 'sankey-dark-mode' : 'sankey-light-mode'}`}
       style={{
-        height: "100%",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         minHeight: 0,
-        cursor: onNodeClick || onLinkClick ? "pointer" : "default",
+        cursor: onNodeClick || onLinkClick ? 'pointer' : 'default',
       }}
     >
       <div style={{ flex: 1, minHeight: 0 }}>
@@ -81,8 +92,8 @@ export const CippSankey = ({ data, onNodeClick, onLinkClick }) => {
           nodeSpacing={isMobile ? 12 : 24}
           nodeBorderWidth={0}
           nodeBorderColor={{
-            from: "color",
-            modifiers: [["darker", 0.8]],
+            from: 'color',
+            modifiers: [['darker', 0.8]],
           }}
           nodeBorderRadius={3}
           linkOpacity={isMobile ? 0.75 : 0.5}
@@ -94,22 +105,22 @@ export const CippSankey = ({ data, onNodeClick, onLinkClick }) => {
           // fill it can composite the ribbons to nothing, which shows as bare node bars with
           // no links between them. Blend is decoration here, so mobile renders them plainly
           // and leans on opacity instead.
-          linkBlendMode={isMobile ? "normal" : isDark ? "lighten" : "multiply"}
+          linkBlendMode={isMobile ? 'normal' : isDark ? 'lighten' : 'multiply'}
           enableLinkGradient={!isMobile}
           enableLabels={!isMobile}
           labelPosition="inside"
-          labelOrientation={isMobile ? "vertical" : "horizontal"}
+          labelOrientation={isMobile ? 'vertical' : 'horizontal'}
           labelPadding={isMobile ? 6 : 16}
-          labelTextColor={isDark ? "#ffffff" : "#000000"}
+          labelTextColor={isDark ? '#ffffff' : '#000000'}
           sort="input"
           legends={[]}
           valueFormat={(value) => `${value}`}
           isInteractive={true}
           onClick={(node, event) => {
             if (onNodeClick && node.id) {
-              onNodeClick(node);
+              onNodeClick(node)
             } else if (onLinkClick && node.source) {
-              onLinkClick(node);
+              onLinkClick(node)
             }
           }}
         />
@@ -118,12 +129,12 @@ export const CippSankey = ({ data, onNodeClick, onLinkClick }) => {
         <Box
           component="ul"
           sx={{
-            listStyle: "none",
+            listStyle: 'none',
             m: 0,
             mt: 1,
             p: 0,
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
             columnGap: 1,
             rowGap: 0.25,
           }}
@@ -134,15 +145,15 @@ export const CippSankey = ({ data, onNodeClick, onLinkClick }) => {
                 onClick={() => onNodeClick?.(node)}
                 disabled={!onNodeClick}
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   minHeight: 28,
                   px: 0.5,
                   borderRadius: 0.5,
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 0.75,
-                  textAlign: "left",
-                  justifyContent: "flex-start",
+                  textAlign: 'left',
+                  justifyContent: 'flex-start',
                 }}
               >
                 <Box
@@ -154,13 +165,17 @@ export const CippSankey = ({ data, onNodeClick, onLinkClick }) => {
                     bgcolor: node.nodeColor,
                   }}
                 />
-                <Typography variant="caption" noWrap sx={{ minWidth: 0, flex: 1 }}>
+                <Typography
+                  variant="caption"
+                  noWrap
+                  sx={{ minWidth: 0, flex: 1 }}
+                >
                   {node.label ?? node.id}
                 </Typography>
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}
+                  sx={{ flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}
                 >
                   {node.total}
                 </Typography>
@@ -170,5 +185,5 @@ export const CippSankey = ({ data, onNodeClick, onLinkClick }) => {
         </Box>
       )}
     </div>
-  );
-};
+  )
+}

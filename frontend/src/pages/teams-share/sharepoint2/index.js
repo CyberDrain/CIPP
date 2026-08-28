@@ -33,7 +33,8 @@ const openUrls = (rows) => {
   })
 }
 
-const queryString = (value) => (typeof value === 'string' && value.length > 0 ? value : null)
+const queryString = (value) =>
+  typeof value === 'string' && value.length > 0 ? value : null
 
 const isSiteRow = (row) => row?.type === 'site'
 
@@ -67,7 +68,11 @@ const MOBILE_SIMPLE_COLUMNS = [
  * Mobile fallback: CippDataTable cards on ListSiteBrowser (root only).
  * Desktop explorer stays in SharePointBrowserDesktop — no library drill-in here.
  */
-const SharePointBrowserMobile = ({ tenantFilter, canReadSite, canWriteSite }) => {
+const SharePointBrowserMobile = ({
+  tenantFilter,
+  canReadSite,
+  canWriteSite,
+}) => {
   // Distinct from desktop ApiGetCall's `…-root` key — infinite queries need { pages, pageParams }.
   const tableQueryKey = `ListSiteBrowser-${tenantFilter}-root-table`
 
@@ -150,7 +155,9 @@ const SharePointBrowserMobile = ({ tenantFilter, canReadSite, canWriteSite }) =>
 
   if (!tenantFilter || tenantFilter === 'AllTenants') {
     return (
-      <Typography color="text.secondary">Select a tenant to browse SharePoint sites.</Typography>
+      <Typography color="text.secondary">
+        Select a tenant to browse SharePoint sites.
+      </Typography>
     )
   }
 
@@ -172,7 +179,11 @@ const SharePointBrowserMobile = ({ tenantFilter, canReadSite, canWriteSite }) =>
   )
 }
 
-const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) => {
+const SharePointBrowserDesktop = ({
+  tenantFilter,
+  canReadSite,
+  canWriteSite,
+}) => {
   const router = useRouter()
   const [checkedIds, setCheckedIds] = useState([])
   const [permissionsOpen, setPermissionsOpen] = useState(false)
@@ -186,7 +197,10 @@ const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) =
       ? {
           id: siteId,
           webUrl: siteMeta?.id === siteId ? siteMeta.webUrl : undefined,
-          displayName: siteMeta?.id === siteId ? siteMeta.displayName || siteMeta.webUrl : '…',
+          displayName:
+            siteMeta?.id === siteId
+              ? siteMeta.displayName || siteMeta.webUrl
+              : '…',
           type: 'site',
           canOpen: true,
           storageUsedInBytes:
@@ -213,7 +227,9 @@ const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) =
     delete query.siteUrl
     delete query.siteName
     delete query.siteType
-    router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
+    router.replace({ pathname: router.pathname, query }, undefined, {
+      shallow: true,
+    })
   }
 
   const rootQueryKey = `ListSiteBrowser-${tenantFilter}-root`
@@ -223,7 +239,9 @@ const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) =
       tenantFilter,
       ...(siteId ? { SiteId: siteId } : {}),
     },
-    queryKey: siteId ? `ListSiteBrowser-${tenantFilter}-${siteId}` : rootQueryKey,
+    queryKey: siteId
+      ? `ListSiteBrowser-${tenantFilter}-${siteId}`
+      : rootQueryKey,
     waiting: router.isReady && !!tenantFilter && tenantFilter !== 'AllTenants',
   })
 
@@ -298,7 +316,9 @@ const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) =
         noConfirm: true,
         customFunction: (rows) => openUrls(rows),
         condition: (rows) =>
-          (Array.isArray(rows) ? rows : [rows]).some((row) => Boolean(row?.webUrl)),
+          (Array.isArray(rows) ? rows : [rows]).some((row) =>
+            Boolean(row?.webUrl)
+          ),
       },
       {
         label: 'Storage',
@@ -352,7 +372,8 @@ const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) =
       {
         label: 'Storage',
         icon: <StorageIcon fontSize="small" />,
-        condition: (item) => canReadSite && isSiteRow(item) && Boolean(item?.webUrl),
+        condition: (item) =>
+          canReadSite && isSiteRow(item) && Boolean(item?.webUrl),
         onClick: (item) => {
           if (item?.id) setCheckedIds([item.id])
           setStorageOpen(true)
@@ -370,7 +391,9 @@ const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) =
 
   if (!tenantFilter || tenantFilter === 'AllTenants') {
     return (
-      <Typography color="text.secondary">Select a tenant to browse SharePoint sites.</Typography>
+      <Typography color="text.secondary">
+        Select a tenant to browse SharePoint sites.
+      </Typography>
     )
   }
 
@@ -386,15 +409,16 @@ const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) =
         showStorage={showStorage}
         onStorageClick={() => setStorageOpen(true)}
         showPermissions={
-          canReadSite && (selected?.type === 'site' || selected?.type === 'library')
+          canReadSite &&
+          (selected?.type === 'site' || selected?.type === 'library')
         }
         onPermissionsClick={() => setPermissionsOpen(true)}
         showNew={canWriteSite}
-        showEditSite={canWriteSite && (Boolean(openedSite) || isSiteRow(selected))}
+        showEditSite={
+          canWriteSite && (Boolean(openedSite) || isSiteRow(selected))
+        }
         queryKeys={
-          siteId
-            ? `ListSiteBrowser-${tenantFilter}-${siteId}`
-            : rootQueryKey
+          siteId ? `ListSiteBrowser-${tenantFilter}-${siteId}` : rootQueryKey
         }
         onRefresh={() => browserApi.refetch()}
         refreshDisabled={browserApi.isFetching}
@@ -404,7 +428,9 @@ const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) =
         onClose={() => setPermissionsOpen(false)}
         item={selected}
         tenantFilter={tenantFilter}
-        siteUrl={selected?.type === 'library' ? openedSite?.webUrl : selected?.webUrl}
+        siteUrl={
+          selected?.type === 'library' ? openedSite?.webUrl : selected?.webUrl
+        }
         siteId={selected?.type === 'library' ? openedSite?.id : selected?.id}
       />
       <CippSharePointBrowserStorage
@@ -420,7 +446,9 @@ const SharePointBrowserDesktop = ({ tenantFilter, canReadSite, canWriteSite }) =
             tenantFilter={tenantFilter}
             isFetching={browserApi.isFetching}
             emptyMessage={
-              atRoot ? 'Select a site to view details.' : 'Select a library to view details.'
+              atRoot
+                ? 'Select a site to view details.'
+                : 'Select a library to view details.'
             }
           />
         </Grid>
@@ -452,7 +480,10 @@ const Page = () => {
   const tenantFilter = useSettings().currentTenant
   const { checkPermissions } = usePermissions()
   const canWriteSite = checkPermissions(['Sharepoint.Site.ReadWrite'])
-  const canReadSite = checkPermissions(['Sharepoint.Site.Read', 'Sharepoint.Site.ReadWrite'])
+  const canReadSite = checkPermissions([
+    'Sharepoint.Site.Read',
+    'Sharepoint.Site.ReadWrite',
+  ])
   const isNarrow = useIsNarrowForTables()
 
   // Mobile has no library drill-in — drop ?siteId= so deep links don't strand the URL.
@@ -467,7 +498,9 @@ const Page = () => {
     delete query.siteUrl
     delete query.siteName
     delete query.siteType
-    router.replace({ pathname: router.pathname, query }, undefined, { shallow: true })
+    router.replace({ pathname: router.pathname, query }, undefined, {
+      shallow: true,
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when drill-in query keys appear on mobile
   }, [isNarrow, router.isReady, siteIdQuery, siteUrlQuery, siteNameQuery])
 

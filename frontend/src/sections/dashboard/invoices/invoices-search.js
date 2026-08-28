@@ -1,11 +1,11 @@
-import { useCallback } from 'react';
-import PropTypes from 'prop-types';
-import AdjustmentsHorizontalIcon from '@heroicons/react/24/outline/AdjustmentsHorizontalIcon';
-import { Box, Button, Divider, Stack, SvgIcon, Tab, Tabs } from '@mui/material';
-import { BulkActionsMenu } from '../../../components/bulk-actions-menu';
-import { FilterDialog } from '../../../components/filter-dialog';
-import { QueryField } from '../../../components/query-field';
-import { useDialog } from '../../../hooks/use-dialog';
+import { useCallback } from 'react'
+import PropTypes from 'prop-types'
+import AdjustmentsHorizontalIcon from '@heroicons/react/24/outline/AdjustmentsHorizontalIcon'
+import { Box, Button, Divider, Stack, SvgIcon, Tab, Tabs } from '@mui/material'
+import { BulkActionsMenu } from '../../../components/bulk-actions-menu'
+import { FilterDialog } from '../../../components/filter-dialog'
+import { QueryField } from '../../../components/query-field'
+import { useDialog } from '../../../hooks/use-dialog'
 import {
   containsOperator,
   endsWithOperator,
@@ -18,27 +18,27 @@ import {
   lessThanOperator,
   notContainsOperator,
   notEqualOperator,
-  startsWithOperator
-} from '../../../utils/filter-operators';
+  startsWithOperator,
+} from '../../../utils/filter-operators'
 
 const viewOptions = [
   {
     label: 'Show all',
-    value: 'all'
+    value: 'all',
   },
   {
     label: 'Ongoing',
-    value: 'ongoing'
+    value: 'ongoing',
   },
   {
     label: 'Paid',
-    value: 'paid'
+    value: 'paid',
   },
   {
     label: 'Overdue',
-    value: 'overdue'
-  }
-];
+    value: 'overdue',
+  },
+]
 
 const filterProperties = [
   {
@@ -51,8 +51,8 @@ const filterProperties = [
       'notContains',
       'startsWith',
       'isBlank',
-      'isPresent'
-    ]
+      'isPresent',
+    ],
   },
   {
     label: 'Status',
@@ -64,8 +64,8 @@ const filterProperties = [
       'notContains',
       'startsWith',
       'isBlank',
-      'isPresent'
-    ]
+      'isPresent',
+    ],
   },
   {
     label: 'Payment Method',
@@ -77,25 +77,32 @@ const filterProperties = [
       'notContains',
       'startsWith',
       'isBlank',
-      'isPresent'
-    ]
+      'isPresent',
+    ],
   },
   {
     label: 'Total',
     name: 'totalAmount',
-    operators: ['equals', 'greaterThan', 'lessThan', 'notEqual', 'isBlank', 'isPresent']
+    operators: [
+      'equals',
+      'greaterThan',
+      'lessThan',
+      'notEqual',
+      'isBlank',
+      'isPresent',
+    ],
   },
   {
     label: 'Issue Date',
     name: 'issueDate',
-    operators: ['isAfter', 'isBefore', 'isBlank', 'isPresent']
+    operators: ['isAfter', 'isBefore', 'isBlank', 'isPresent'],
   },
   {
     label: 'Due Date',
     name: 'dueDate',
-    operators: ['isAfter', 'isBefore', 'isBlank', 'isPresent']
-  }
-];
+    operators: ['isAfter', 'isBefore', 'isBlank', 'isPresent'],
+  },
+]
 
 const filterOperators = [
   containsOperator,
@@ -109,8 +116,8 @@ const filterOperators = [
   lessThanOperator,
   notContainsOperator,
   notEqualOperator,
-  startsWithOperator
-];
+  startsWithOperator,
+]
 
 export const InvoicesSearch = (props) => {
   const {
@@ -122,22 +129,25 @@ export const InvoicesSearch = (props) => {
     onViewChange,
     query = '',
     selected = [],
-    view = 'all'
-  } = props;
-  const filterDialog = useDialog();
+    view = 'all',
+  } = props
+  const filterDialog = useDialog()
 
-  const handleFiltersApply = useCallback((filters) => {
-    filterDialog.handleClose();
-    onFiltersApply?.(filters);
-  }, [filterDialog, onFiltersApply]);
+  const handleFiltersApply = useCallback(
+    (filters) => {
+      filterDialog.handleClose()
+      onFiltersApply?.(filters)
+    },
+    [filterDialog, onFiltersApply]
+  )
 
   const handleFiltersClear = useCallback(() => {
-    filterDialog.handleClose();
-    onFiltersClear?.();
-  }, [filterDialog, onFiltersClear]);
+    filterDialog.handleClose()
+    onFiltersClear?.()
+  }, [filterDialog, onFiltersClear])
 
-  const hasSelection = selected.length > 0;
-  const hasFilters = filters.length > 0;
+  const hasSelection = selected.length > 0
+  const hasFilters = filters.length > 0
 
   return (
     <>
@@ -145,8 +155,8 @@ export const InvoicesSearch = (props) => {
         <Box
           sx={{
             px: {
-              sm: 3
-            }
+              sm: 3,
+            },
           }}
         >
           <Tabs
@@ -179,8 +189,8 @@ export const InvoicesSearch = (props) => {
               sx={{
                 order: {
                   xs: 3,
-                  sm: 1
-                }
+                  sm: 1,
+                },
               }}
             />
           )}
@@ -192,8 +202,8 @@ export const InvoicesSearch = (props) => {
               flexGrow: 1,
               order: {
                 xs: 1,
-                sm: 2
-              }
+                sm: 2,
+              },
             }}
             value={query}
           />
@@ -201,11 +211,11 @@ export const InvoicesSearch = (props) => {
             disabled={disabled}
             onClick={filterDialog.handleOpen}
             size="large"
-            startIcon={(
+            startIcon={
               <SvgIcon fontSize="small">
                 <AdjustmentsHorizontalIcon />
               </SvgIcon>
-            )}
+            }
             sx={{ order: 2 }}
             variant={hasFilters ? 'contained' : 'text'}
           >
@@ -223,8 +233,8 @@ export const InvoicesSearch = (props) => {
         properties={filterProperties}
       />
     </>
-  );
-};
+  )
+}
 
 InvoicesSearch.propTypes = {
   disabled: PropTypes.bool,
@@ -235,5 +245,5 @@ InvoicesSearch.propTypes = {
   onViewChange: PropTypes.func,
   query: PropTypes.string,
   selected: PropTypes.array,
-  view: PropTypes.oneOf(['all', 'ongoing', 'paid', 'overdue'])
-};
+  view: PropTypes.oneOf(['all', 'ongoing', 'paid', 'overdue']),
+}

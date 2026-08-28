@@ -15,7 +15,12 @@ describe('CippHead', () => {
 
   it('sets document.title without tenant when currentTenant is null', () => {
     renderWithProviders(<CippHead title="Users" />, {
-      settings: { currentTenant: null, handleUpdate: () => {}, handleReset: () => {}, isCustom: false },
+      settings: {
+        currentTenant: null,
+        handleUpdate: () => {},
+        handleReset: () => {},
+        isCustom: false,
+      },
     })
     expect(document.title).toBe('Users')
   })

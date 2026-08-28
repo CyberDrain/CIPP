@@ -20,26 +20,56 @@ import { getCippValidator } from '../../utils/get-cipp-validator'
 import countryList from '../../data/countryList.json'
 
 export const CippWizardVacationActions = (props) => {
-  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep, lastStep } = props
+  const {
+    postUrl,
+    formControl,
+    onPreviousStep,
+    onNextStep,
+    currentStep,
+    lastStep,
+  } = props
 
-  const currentTenant = useWatch({ control: formControl.control, name: 'tenantFilter' })
+  const currentTenant = useWatch({
+    control: formControl.control,
+    name: 'tenantFilter',
+  })
   const tenantDomain = currentTenant?.value || currentTenant
 
-  const enableCA = useWatch({ control: formControl.control, name: 'enableCAExclusion' })
+  const enableCA = useWatch({
+    control: formControl.control,
+    name: 'enableCAExclusion',
+  })
   const enableLocationAlertExclusion = useWatch({
     control: formControl.control,
     name: 'excludeLocationAuditAlerts',
   })
-  const enableMailbox = useWatch({ control: formControl.control, name: 'enableMailboxPermissions' })
-  const enableForwarding = useWatch({ control: formControl.control, name: 'enableForwarding' })
-  const enableOOO = useWatch({ control: formControl.control, name: 'enableOOO' })
+  const enableMailbox = useWatch({
+    control: formControl.control,
+    name: 'enableMailboxPermissions',
+  })
+  const enableForwarding = useWatch({
+    control: formControl.control,
+    name: 'enableForwarding',
+  })
+  const enableOOO = useWatch({
+    control: formControl.control,
+    name: 'enableOOO',
+  })
   const atLeastOneEnabled =
-    enableCA || enableLocationAlertExclusion || enableMailbox || enableForwarding || enableOOO
+    enableCA ||
+    enableLocationAlertExclusion ||
+    enableMailbox ||
+    enableForwarding ||
+    enableOOO
 
   const users = useWatch({ control: formControl.control, name: 'Users' })
   const firstUser = Array.isArray(users) && users.length > 0 ? users[0] : null
-  const firstUserUpn = firstUser?.addedFields?.userPrincipalName || firstUser?.value || null
-  const forwardOption = useWatch({ control: formControl.control, name: 'forwardOption' })
+  const firstUserUpn =
+    firstUser?.addedFields?.userPrincipalName || firstUser?.value || null
+  const forwardOption = useWatch({
+    control: formControl.control,
+    name: 'forwardOption',
+  })
 
   const oooData = ApiGetCall({
     url: '/api/ListOoO',
@@ -90,10 +120,16 @@ export const CippWizardVacationActions = (props) => {
       const currentInternal = formControl.getValues('oooInternalMessage')
       const currentExternal = formControl.getValues('oooExternalMessage')
       if (!currentInternal) {
-        formControl.setValue('oooInternalMessage', oooData.data.InternalMessage || '')
+        formControl.setValue(
+          'oooInternalMessage',
+          oooData.data.InternalMessage || ''
+        )
       }
       if (!currentExternal) {
-        formControl.setValue('oooExternalMessage', oooData.data.ExternalMessage || '')
+        formControl.setValue(
+          'oooExternalMessage',
+          oooData.data.ExternalMessage || ''
+        )
       }
       // Pre-populate calendar options from existing config
       if (oooData.data.CreateOOFEvent != null) {
@@ -109,10 +145,16 @@ export const CippWizardVacationActions = (props) => {
         )
       }
       if (oooData.data.DeclineEventsForScheduledOOF != null) {
-        formControl.setValue('oooDeclineEvents', !!oooData.data.DeclineEventsForScheduledOOF)
+        formControl.setValue(
+          'oooDeclineEvents',
+          !!oooData.data.DeclineEventsForScheduledOOF
+        )
       }
       if (oooData.data.DeclineMeetingMessage) {
-        formControl.setValue('oooDeclineMeetingMessage', oooData.data.DeclineMeetingMessage)
+        formControl.setValue(
+          'oooDeclineMeetingMessage',
+          oooData.data.DeclineMeetingMessage
+        )
       }
     }
   }, [oooData.isSuccess, oooData.data, formControl])
@@ -151,11 +193,12 @@ export const CippWizardVacationActions = (props) => {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                   <Alert severity="info" sx={{ mb: 1 }}>
-                    Vacation mode uses group-based exclusions for reliability. The exclusion group
-                    follows the format: &apos;Vacation Exclusion - $Policy.displayName&apos;. For
-                    longer policy names the name is shortened and suffixed with the start of the
-                    policy ID, e.g. &apos;Vacation Exclusion - CA005-RegisterSecurityInfo: Require...
-                    [a1b2c3d4]&apos;
+                    Vacation mode uses group-based exclusions for reliability.
+                    The exclusion group follows the format: &apos;Vacation
+                    Exclusion - $Policy.displayName&apos;. For longer policy
+                    names the name is shortened and suffixed with the start of
+                    the policy ID, e.g. &apos;Vacation Exclusion -
+                    CA005-RegisterSecurityInfo: Require... [a1b2c3d4]&apos;
                   </Alert>
                 </Grid>
                 <Grid size={{ xs: 12 }}>
@@ -216,12 +259,14 @@ export const CippWizardVacationActions = (props) => {
                 >
                   <Grid size={{ xs: 12 }}>
                     <Alert severity="info" sx={{ mb: 1 }}>
-                      Excluding a user from a CA policy allows sign-ins from anywhere. This option
-                      closes that gap: at the start date a named location and a conditional access
-                      policy named &apos;Travel Policy &lt;users&gt; - &lt;start date&gt; - &lt;end
-                      date&gt;&apos; are created, blocking sign-ins for the selected users from
-                      every location except the travel destination. At the end date, the policy and
-                      the named location are deleted automatically.
+                      Excluding a user from a CA policy allows sign-ins from
+                      anywhere. This option closes that gap: at the start date a
+                      named location and a conditional access policy named
+                      &apos;Travel Policy &lt;users&gt; - &lt;start date&gt; -
+                      &lt;end date&gt;&apos; are created, blocking sign-ins for
+                      the selected users from every location except the travel
+                      destination. At the end date, the policy and the named
+                      location are deleted automatically.
                     </Alert>
                   </Grid>
                   <Grid size={{ xs: 12 }}>
@@ -278,10 +323,11 @@ export const CippWizardVacationActions = (props) => {
               clearOnHide={false}
             >
               <Alert severity="info">
-                The users are added to the audit log location alert exclusion list at the start
-                date and removed again at the end date, so alerts that fire on sign-ins from an
-                unusual location stay quiet while they travel. This works on its own and does not
-                require a Conditional Access policy.
+                The users are added to the audit log location alert exclusion
+                list at the start date and removed again at the end date, so
+                alerts that fire on sign-ins from an unusual location stay quiet
+                while they travel. This works on its own and does not require a
+                Conditional Access policy.
               </Alert>
             </CippFormCondition>
           </Stack>
@@ -314,9 +360,10 @@ export const CippWizardVacationActions = (props) => {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                   <Alert severity="info" sx={{ mb: 1 }}>
-                    Grant temporary mailbox permissions (Full Access, Send As, Send On Behalf) and
-                    optional calendar access to delegates. Permissions are automatically added at
-                    the start date and removed at the end date.
+                    Grant temporary mailbox permissions (Full Access, Send As,
+                    Send On Behalf) and optional calendar access to delegates.
+                    Permissions are automatically added at the start date and
+                    removed at the end date.
                   </Alert>
                 </Grid>
 
@@ -324,7 +371,9 @@ export const CippWizardVacationActions = (props) => {
                 <Grid size={{ xs: 12 }}>
                   <CippFormUserSelector
                     label={
-                      tenantDomain ? `Delegate(s) in ${tenantDomain}` : 'Select a tenant first'
+                      tenantDomain
+                        ? `Delegate(s) in ${tenantDomain}`
+                        : 'Select a tenant first'
                     }
                     formControl={formControl}
                     name="delegates"
@@ -332,7 +381,9 @@ export const CippWizardVacationActions = (props) => {
                     addedField={{
                       userPrincipalName: 'userPrincipalName',
                     }}
-                    validators={{ required: 'At least one delegate is required' }}
+                    validators={{
+                      required: 'At least one delegate is required',
+                    }}
                     required={true}
                     disabled={!tenantDomain}
                     showRefresh={true}
@@ -353,7 +404,9 @@ export const CippWizardVacationActions = (props) => {
                       { label: 'Send As', value: 'SendAs' },
                       { label: 'Send On Behalf', value: 'SendOnBehalf' },
                     ]}
-                    validators={{ required: 'At least one permission type is required' }}
+                    validators={{
+                      required: 'At least one permission type is required',
+                    }}
                     required={true}
                   />
                 </Grid>
@@ -405,10 +458,19 @@ export const CippWizardVacationActions = (props) => {
                         { label: 'Author', value: 'Author' },
                         { label: 'Contributor', value: 'Contributor' },
                         { label: 'Editor', value: 'Editor' },
-                        { label: 'Non Editing Author', value: 'NonEditingAuthor' },
+                        {
+                          label: 'Non Editing Author',
+                          value: 'NonEditingAuthor',
+                        },
                         { label: 'Owner', value: 'Owner' },
-                        { label: 'Publishing Author', value: 'PublishingAuthor' },
-                        { label: 'Publishing Editor', value: 'PublishingEditor' },
+                        {
+                          label: 'Publishing Author',
+                          value: 'PublishingAuthor',
+                        },
+                        {
+                          label: 'Publishing Editor',
+                          value: 'PublishingEditor',
+                        },
                         { label: 'Reviewer', value: 'Reviewer' },
                         { label: 'Available Only', value: 'AvailabilityOnly' },
                         { label: 'Limited Details', value: 'LimitedDetails' },
@@ -472,9 +534,10 @@ export const CippWizardVacationActions = (props) => {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                   <Alert severity="info" sx={{ mb: 1 }}>
-                    Vacation mode will enable forwarding at the start date and disable forwarding
-                    again at the end date. Existing forwarding settings are not restored after the
-                    vacation ends.
+                    Vacation mode will enable forwarding at the start date and
+                    disable forwarding again at the end date. Existing
+                    forwarding settings are not restored after the vacation
+                    ends.
                   </Alert>
                 </Grid>
                 <Grid size={{ xs: 12 }}>
@@ -483,9 +546,13 @@ export const CippWizardVacationActions = (props) => {
                     name="forwardOption"
                     formControl={formControl}
                     options={[
-                      { label: 'Forward to Internal Address', value: 'internalAddress' },
                       {
-                        label: 'Forward to External Address (Tenant must allow this)',
+                        label: 'Forward to Internal Address',
+                        value: 'internalAddress',
+                      },
+                      {
+                        label:
+                          'Forward to External Address (Tenant must allow this)',
                         value: 'ExternalAddress',
                       },
                     ]}
@@ -586,9 +653,10 @@ export const CippWizardVacationActions = (props) => {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                   <Alert severity="info" sx={{ mb: 1 }}>
-                    Out of office will be enabled with the messages below at the start date and
-                    automatically disabled at the end date. The disable task preserves any message
-                    updates the user may have made during their vacation.
+                    Out of office will be enabled with the messages below at the
+                    start date and automatically disabled at the end date. The
+                    disable task preserves any message updates the user may have
+                    made during their vacation.
                   </Alert>
                 </Grid>
                 <Grid size={{ xs: 12 }}>
@@ -597,7 +665,11 @@ export const CippWizardVacationActions = (props) => {
                       <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                         Internal Message
                       </Typography>
-                      <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 1 }} />
+                      <Skeleton
+                        variant="rectangular"
+                        height={140}
+                        sx={{ borderRadius: 1 }}
+                      />
                     </>
                   ) : (
                     <CippFormComponent
@@ -616,7 +688,11 @@ export const CippWizardVacationActions = (props) => {
                       <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                         External Message (optional)
                       </Typography>
-                      <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 1 }} />
+                      <Skeleton
+                        variant="rectangular"
+                        height={140}
+                        sx={{ borderRadius: 1 }}
+                      />
                     </>
                   ) : (
                     <CippFormComponent

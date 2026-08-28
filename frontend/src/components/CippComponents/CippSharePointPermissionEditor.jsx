@@ -1,17 +1,25 @@
-import { useFieldArray } from "react-hook-form";
-import { Alert, Box, Button, IconButton, Stack, Typography, Tooltip } from "@mui/material";
-import { Grid } from "@mui/system";
-import { Add, Delete } from "@mui/icons-material";
-import CippFormComponent from "./CippFormComponent";
+import { useFieldArray } from 'react-hook-form'
+import {
+  Alert,
+  Box,
+  Button,
+  IconButton,
+  Stack,
+  Typography,
+  Tooltip,
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import { Add, Delete } from '@mui/icons-material'
+import CippFormComponent from './CippFormComponent'
 
 // SharePoint built-in permission levels. Used for both site-root and per-library grants.
 export const SHAREPOINT_PERMISSION_LEVELS = [
-  { label: "Read", value: "read" },
-  { label: "Contribute", value: "contribute" },
-  { label: "Edit", value: "edit" },
-  { label: "Design", value: "design" },
-  { label: "Full Control", value: "fullControl" },
-];
+  { label: 'Read', value: 'read' },
+  { label: 'Contribute', value: 'contribute' },
+  { label: 'Edit', value: 'edit' },
+  { label: 'Design', value: 'design' },
+  { label: 'Full Control', value: 'fullControl' },
+]
 
 // Reusable list of { principal, permissionLevel } grants backed by a react-hook-form field array.
 // Groups are referenced by display name only (the same convention CA templates use): the name is
@@ -20,18 +28,19 @@ export const SHAREPOINT_PERMISSION_LEVELS = [
 export const CippSharePointPermissionEditor = ({
   formControl,
   name,
-  emptyText = "No permissions configured.",
+  emptyText = 'No permissions configured.',
 }) => {
   const { fields, append, remove } = useFieldArray({
     control: formControl.control,
     name,
-  });
+  })
 
   return (
     <Box>
       <Alert severity="info" sx={{ mb: 2 }}>
-        Groups are referenced by display name. During deployment the name is matched against each
-        target tenant, so the same template works everywhere.
+        Groups are referenced by display name. During deployment the name is
+        matched against each target tenant, so the same template works
+        everywhere.
       </Alert>
       {fields.length === 0 && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -47,7 +56,7 @@ export const CippSharePointPermissionEditor = ({
                 label="Group Display Name"
                 name={`${name}.${index}.principal`}
                 formControl={formControl}
-                validators={{ required: "A group display name is required" }}
+                validators={{ required: 'A group display name is required' }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -57,10 +66,13 @@ export const CippSharePointPermissionEditor = ({
                 name={`${name}.${index}.permissionLevel`}
                 formControl={formControl}
                 options={SHAREPOINT_PERMISSION_LEVELS}
-                validators={{ required: "Select a permission level" }}
+                validators={{ required: 'Select a permission level' }}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 1 }} sx={{ display: "flex", justifyContent: "center" }}>
+            <Grid
+              size={{ xs: 12, md: 1 }}
+              sx={{ display: 'flex', justifyContent: 'center' }}
+            >
               <Tooltip title="Remove permission">
                 <IconButton
                   aria-label="remove permission"
@@ -77,13 +89,13 @@ export const CippSharePointPermissionEditor = ({
       <Button
         size="small"
         startIcon={<Add />}
-        onClick={() => append({ principal: "", permissionLevel: "read" })}
+        onClick={() => append({ principal: '', permissionLevel: 'read' })}
         sx={{ mt: fields.length > 0 ? 1 : 0 }}
       >
         Add Permission
       </Button>
     </Box>
-  );
-};
+  )
+}
 
-export default CippSharePointPermissionEditor;
+export default CippSharePointPermissionEditor

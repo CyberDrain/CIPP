@@ -5,7 +5,8 @@ const TwoUser = (props) => (
     viewBox="0 0 24 24"
     width={24}
     xmlns="http://www.w3.org/2000/svg"
-    {...props}>
+    {...props}
+  >
     <path
       d="M9.34933 14.8577C5.38553 14.8577 2 15.47 2 17.9174C2 20.3666 5.364 21 9.34933 21C13.3131 21 16.6987 20.3877 16.6987 17.9404C16.6987 15.4911 13.3347 14.8577 9.34933 14.8577Z"
       fill="currentColor"
@@ -25,6 +26,6 @@ const TwoUser = (props) => (
       fill="currentColor"
     />
   </svg>
-);
+)
 
-export default TwoUser;
+export default TwoUser

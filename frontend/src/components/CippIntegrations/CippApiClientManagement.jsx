@@ -1,126 +1,145 @@
-import { Button, Stack, SvgIcon, Menu, MenuItem, ListItemText, Alert, Tooltip } from "@mui/material";
-import { useState, useEffect, useMemo } from "react";
-import isEqual from "lodash/isEqual";
-import { useRouter } from "next/router";
-import { useForm } from "react-hook-form";
-import { ApiGetCall, ApiGetCallWithPagination, ApiPostCall } from "../../api/ApiCall";
-import { CippDataTable } from "../CippTable/CippDataTable";
+import {
+  Button,
+  Stack,
+  SvgIcon,
+  Menu,
+  MenuItem,
+  ListItemText,
+  Alert,
+  Tooltip,
+} from '@mui/material'
+import { useState, useEffect, useMemo } from 'react'
+import isEqual from 'lodash/isEqual'
+import { useRouter } from 'next/router'
+import { useForm } from 'react-hook-form'
+import {
+  ApiGetCall,
+  ApiGetCallWithPagination,
+  ApiPostCall,
+} from '../../api/ApiCall'
+import { CippDataTable } from '../CippTable/CippDataTable'
 import {
   ChevronDownIcon,
   ClipboardDocumentIcon,
   PencilIcon,
   PlusSmallIcon,
   TrashIcon,
-} from "@heroicons/react/24/outline";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { CippApiDialog } from "../CippComponents/CippApiDialog";
-import { Create, InfoOutlined, Key, Save, Sync } from "@mui/icons-material";
-import { CippPropertyListCard } from "../CippCards/CippPropertyListCard";
-import { CippCopyToClipBoard } from "../CippComponents/CippCopyToClipboard";
-import { Box } from "@mui/system";
+} from '@heroicons/react/24/outline'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { CippApiDialog } from '../CippComponents/CippApiDialog'
+import { Create, InfoOutlined, Key, Save, Sync } from '@mui/icons-material'
+import { CippPropertyListCard } from '../CippCards/CippPropertyListCard'
+import { CippCopyToClipBoard } from '../CippComponents/CippCopyToClipboard'
+import { Box } from '@mui/system'
 
 const CippApiClientManagement = () => {
-  const router = useRouter();
-  const [openAddClientDialog, setOpenAddClientDialog] = useState(false);
-  const [openAddExistingAppDialog, setOpenAddExistingAppDialog] = useState(false);
-  const [addClientRetryPayload, setAddClientRetryPayload] = useState(null);
-  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const router = useRouter()
+  const [openAddClientDialog, setOpenAddClientDialog] = useState(false)
+  const [openAddExistingAppDialog, setOpenAddExistingAppDialog] =
+    useState(false)
+  const [addClientRetryPayload, setAddClientRetryPayload] = useState(null)
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null)
 
   const formControl = useForm({
-    mode: "onChange",
-  });
+    mode: 'onChange',
+  })
 
   const postCall = ApiPostCall({
     datafromUrl: true,
-    relatedQueryKeys: ["ApiClients", "AzureConfiguration"],
-  });
+    relatedQueryKeys: ['ApiClients', 'AzureConfiguration'],
+  })
 
   const azureConfig = ApiGetCall({
-    url: "/api/ExecApiClient",
-    data: { Action: "GetAzureConfiguration" },
-    queryKey: "AzureConfiguration",
-  });
+    url: '/api/ExecApiClient',
+    data: { Action: 'GetAzureConfiguration' },
+    queryKey: 'AzureConfiguration',
+  })
 
   const apiClients = ApiGetCallWithPagination({
-    url: "/api/ExecApiClient",
-    data: { Action: "List" },
-    queryKey: "ApiClients",
-  });
+    url: '/api/ExecApiClient',
+    data: { Action: 'List' },
+    queryKey: 'ApiClients',
+  })
 
   const hasUnsavedChanges = useMemo(() => {
-    if (!azureConfig.isSuccess || !apiClients.isSuccess) return false;
+    if (!azureConfig.isSuccess || !apiClients.isSuccess) return false
     return !isEqual(
       (apiClients.data?.pages?.[0]?.Results || [])
         .filter((c) => c.Enabled)
         .map((c) => c.ClientId)
         .sort(),
       (azureConfig.data?.Results?.ClientIDs || []).sort()
-    );
-  }, [azureConfig.isSuccess, azureConfig.data, apiClients.isSuccess, apiClients.data]);
+    )
+  }, [
+    azureConfig.isSuccess,
+    azureConfig.data,
+    apiClients.isSuccess,
+    apiClients.data,
+  ])
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = "";
+        e.preventDefault()
+        e.returnValue = ''
       }
-    };
+    }
 
     const handleRouteChange = (url) => {
       if (
         hasUnsavedChanges &&
         !window.confirm(
-          "You have unsaved API client changes. Are you sure you want to leave this page?"
+          'You have unsaved API client changes. Are you sure you want to leave this page?'
         )
       ) {
-        router.events.emit("routeChangeError");
-        throw "Route change aborted due to unsaved changes.";
+        router.events.emit('routeChangeError')
+        throw 'Route change aborted due to unsaved changes.'
       }
-    };
+    }
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    router.events.on("routeChangeStart", handleRouteChange);
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    router.events.on('routeChangeStart', handleRouteChange)
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      router.events.off("routeChangeStart", handleRouteChange);
-    };
-  }, [hasUnsavedChanges, router.events]);
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      router.events.off('routeChangeStart', handleRouteChange)
+    }
+  }, [hasUnsavedChanges, router.events])
 
   const handleMenuOpen = (event) => {
-    setMenuAnchorEl(event.currentTarget);
-  };
+    setMenuAnchorEl(event.currentTarget)
+  }
 
   const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-  };
+    setMenuAnchorEl(null)
+  }
 
   const handleSaveToAzure = () => {
-    handleMenuClose();
+    handleMenuClose()
     if (
       !window.confirm(
-        "Saving to Azure will restart the CIPP instance. Changes may take up to 60 seconds to reflect. Do you want to continue?"
+        'Saving to Azure will restart the CIPP instance. Changes may take up to 60 seconds to reflect. Do you want to continue?'
       )
     ) {
-      return;
+      return
     }
     postCall.mutate({
       url: `/api/ExecApiClient?action=SaveToAzure`,
       data: {},
-    });
-  };
+    })
+  }
 
   const getRetryPayload = (result) => {
-    const firstResult = result?.Results?.[0];
+    const firstResult = result?.Results?.[0]
     if (firstResult?.retryAvailable === true) {
-      return firstResult.retryPayload;
+      return firstResult.retryPayload
     }
-    return null;
-  };
+    return null
+  }
 
   const mergeApiDataWithRetry = (baseData, retryPayload) => {
     if (!retryPayload) {
-      return baseData;
+      return baseData
     }
 
     return {
@@ -130,119 +149,120 @@ const CippApiClientManagement = () => {
         ...(baseData.CIPPAPI || {}),
         ...(retryPayload.CIPPAPI || {}),
       },
-    };
-  };
+    }
+  }
 
   const handleAddClientAfterEffect = (result) => {
-    setAddClientRetryPayload(getRetryPayload(result));
-  };
+    setAddClientRetryPayload(getRetryPayload(result))
+  }
 
   const actions = [
     {
-      label: "Edit",
+      label: 'Edit',
       icon: (
         <SvgIcon>
           <PencilIcon />
         </SvgIcon>
       ),
-      confirmText: "Update the API client settings for [AppName]?",
+      confirmText: 'Update the API client settings for [AppName]?',
       hideBulk: true,
       setDefaultValues: true,
       fields: [
         {
-          type: "autoComplete",
-          name: "Role",
+          type: 'autoComplete',
+          name: 'Role',
           multiple: false,
           creatable: false,
-          label: "Select Role",
-          placeholder: "Choose a role from the CIPP Role list.",
+          label: 'Select Role',
+          placeholder: 'Choose a role from the CIPP Role list.',
           api: {
-            url: "/api/ListCustomRole",
-            queryKey: "CustomRoleList",
-            labelField: "RoleName",
-            valueField: "RoleName",
+            url: '/api/ListCustomRole',
+            queryKey: 'CustomRoleList',
+            labelField: 'RoleName',
+            valueField: 'RoleName',
             showRefresh: true,
           },
         },
         {
-          type: "autoComplete",
-          name: "IPRange",
+          type: 'autoComplete',
+          name: 'IPRange',
           multiple: true,
           freeSolo: true,
           creatable: true,
           options: [],
-          label: "Enter IP Range (Single hosts or CIDR notation)",
-          placeholder: "Type in the IP addresses and hit enter.",
+          label: 'Enter IP Range (Single hosts or CIDR notation)',
+          placeholder: 'Type in the IP addresses and hit enter.',
         },
         {
-          type: "switch",
-          name: "Enabled",
-          label: "Enable this client",
+          type: 'switch',
+          name: 'Enabled',
+          label: 'Enable this client',
         },
         {
-          type: "switch",
-          name: "MCPAllowed",
-          label: "MCP Access Allowed",
+          type: 'switch',
+          name: 'MCPAllowed',
+          label: 'MCP Access Allowed',
         },
         {
-          type: "alert",
-          name: "mcpAccessWarning",
-          severity: "warning",
+          type: 'alert',
+          name: 'mcpAccessWarning',
+          severity: 'warning',
           label:
-            "Enabling MCP Access converts this client into the MCP resource app — it can no longer be used as a normal API client, and only one client per tenant can hold this role. Going forward, MCP is only supported on CIPP-NG.",
+            'Enabling MCP Access converts this client into the MCP resource app — it can no longer be used as a normal API client, and only one client per tenant can hold this role. Going forward, MCP is only supported on CIPP-NG.',
         },
       ],
-      type: "POST",
-      url: "/api/ExecApiClient",
+      type: 'POST',
+      url: '/api/ExecApiClient',
       data: {
-        Action: "AddUpdate",
-        ClientId: "ClientId",
+        Action: 'AddUpdate',
+        ClientId: 'ClientId',
       },
-      relatedQueryKeys: ["ApiClients"],
+      relatedQueryKeys: ['ApiClients'],
     },
     {
-      label: "Reset Application Secret",
+      label: 'Reset Application Secret',
       icon: <Key />,
-      confirmText: "Are you sure you want to reset the application secret for [AppName]?",
-      type: "POST",
-      url: "/api/ExecApiClient",
+      confirmText:
+        'Are you sure you want to reset the application secret for [AppName]?',
+      type: 'POST',
+      url: '/api/ExecApiClient',
       data: {
-        Action: "ResetSecret",
-        ClientId: "ClientId",
+        Action: 'ResetSecret',
+        ClientId: 'ClientId',
       },
       hideBulk: true,
     },
     {
-      label: "Copy API Scope",
+      label: 'Copy API Scope',
       icon: <ClipboardDocumentIcon />,
       noConfirm: true,
       customFunction: (row, action, formData) => {
-        var scope = `api://${row.ClientId}/.default`;
-        navigator.clipboard.writeText(scope);
+        var scope = `api://${row.ClientId}/.default`
+        navigator.clipboard.writeText(scope)
       },
       hideBulk: true,
     },
     {
-      label: "Delete Client",
+      label: 'Delete Client',
       icon: <TrashIcon />,
-      confirmText: "Are you sure you want to delete [AppName]?",
-      type: "POST",
-      url: "/api/ExecApiClient",
+      confirmText: 'Are you sure you want to delete [AppName]?',
+      type: 'POST',
+      url: '/api/ExecApiClient',
       data: {
-        Action: "Delete",
-        ClientId: "ClientId",
+        Action: 'Delete',
+        ClientId: 'ClientId',
       },
       fields: [
         {
-          type: "switch",
-          name: "RemoveAppReg",
-          label: "Remove App Registration",
+          type: 'switch',
+          name: 'RemoveAppReg',
+          label: 'Remove App Registration',
         },
       ],
-      relatedQueryKeys: ["ApiClients"],
+      relatedQueryKeys: ['ApiClients'],
       multiPost: false,
     },
-  ];
+  ]
 
   return (
     <>
@@ -262,43 +282,47 @@ const CippApiClientManagement = () => {
               >
                 Actions
               </Button>
-              <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={handleMenuClose}>
+              <Menu
+                anchorEl={menuAnchorEl}
+                open={Boolean(menuAnchorEl)}
+                onClose={handleMenuClose}
+              >
                 <MenuItem
                   onClick={() => {
-                    handleMenuClose();
-                    setAddClientRetryPayload(null);
-                    setOpenAddClientDialog(true);
+                    handleMenuClose()
+                    setAddClientRetryPayload(null)
+                    setOpenAddClientDialog(true)
                   }}
                 >
-                  <SvgIcon fontSize="small" sx={{ minWidth: "30px" }}>
+                  <SvgIcon fontSize="small" sx={{ minWidth: '30px' }}>
                     <Create />
                   </SvgIcon>
                   <ListItemText>Create New Client</ListItemText>
                 </MenuItem>
                 <MenuItem
                   onClick={() => {
-                    handleMenuClose();
-                    setOpenAddExistingAppDialog(true);
+                    handleMenuClose()
+                    setOpenAddExistingAppDialog(true)
                   }}
                 >
-                  <SvgIcon fontSize="small" sx={{ minWidth: "30px" }}>
+                  <SvgIcon fontSize="small" sx={{ minWidth: '30px' }}>
                     <PlusSmallIcon />
                   </SvgIcon>
                   <ListItemText>Add Existing Client</ListItemText>
                 </MenuItem>
                 <MenuItem
                   onClick={() => {
-                    azureConfig.refetch();
-                    handleMenuClose();
+                    azureConfig.refetch()
+                    handleMenuClose()
                   }}
                 >
-                  <SvgIcon fontSize="small" sx={{ minWidth: "30px" }}>
+                  <SvgIcon fontSize="small" sx={{ minWidth: '30px' }}>
                     <Sync />
                   </SvgIcon>
                   <ListItemText>Refresh Configuration</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={handleSaveToAzure}>
-                  <SvgIcon fontSize="small" sx={{ minWidth: "30px" }}>
+                  <SvgIcon fontSize="small" sx={{ minWidth: '30px' }}>
                     <Save />
                   </SvgIcon>
                   <ListItemText>Save to Azure</ListItemText>
@@ -308,50 +332,59 @@ const CippApiClientManagement = () => {
           }
           propertyItems={[
             {
-              label: "Microsoft Authentication Enabled",
+              label: 'Microsoft Authentication Enabled',
               value: azureConfig.data?.Results?.Enabled,
             },
             {
-              label: "API Url",
+              label: 'API Url',
               value: azureConfig.data?.Results?.ApiUrl ? (
-                <CippCopyToClipBoard type="chip" text={azureConfig.data?.Results?.ApiUrl} />
+                <CippCopyToClipBoard
+                  type="chip"
+                  text={azureConfig.data?.Results?.ApiUrl}
+                />
               ) : (
-                "Not Available"
+                'Not Available'
               ),
             },
             {
-              label: "MCP API URL",
+              label: 'MCP API URL',
               value: azureConfig.data?.Results?.ApiUrl ? (
                 <>
                   <CippCopyToClipBoard
                     type="chip"
-                    text={`${azureConfig.data.Results.ApiUrl.replace(/\/+$/, "")}/api/ExecMcp`}
+                    text={`${azureConfig.data.Results.ApiUrl.replace(/\/+$/, '')}/api/ExecMcp`}
                   />
                   <Tooltip title="Use this full URL when adding CIPP as an MCP connector in an AI client (e.g. Claude custom connectors).">
-                    <InfoOutlined color="action" sx={{ fontSize: 16, verticalAlign: "middle" }} />
+                    <InfoOutlined
+                      color="action"
+                      sx={{ fontSize: 16, verticalAlign: 'middle' }}
+                    />
                   </Tooltip>
                 </>
               ) : (
-                "Not Available"
+                'Not Available'
               ),
             },
             {
-              label: "Token URL",
+              label: 'Token URL',
               value: azureConfig.data?.Results?.TenantID ? (
                 <CippCopyToClipBoard
                   type="chip"
                   text={`https://login.microsoftonline.com/${azureConfig.data?.Results?.TenantID}/oauth2/v2.0/token`}
                 />
               ) : (
-                "Not Available"
+                'Not Available'
               ),
             },
             {
-              label: "Tenant ID",
+              label: 'Tenant ID',
               value: azureConfig.data?.Results?.TenantID ? (
-                <CippCopyToClipBoard type="chip" text={azureConfig.data?.Results?.TenantID} />
+                <CippCopyToClipBoard
+                  type="chip"
+                  text={azureConfig.data?.Results?.TenantID}
+                />
               ) : (
-                "Not Available"
+                'Not Available'
               ),
             },
           ]}
@@ -364,22 +397,24 @@ const CippApiClientManagement = () => {
             {hasUnsavedChanges && (
               <Box sx={{ px: 3 }}>
                 <Alert severity="warning">
-                  You have unsaved changes. Click Actions &gt; Save Azure Configuration to update
-                  the allowed API Clients. If you've just saved your API clients, try refreshing the
-                  configuration first.
+                  You have unsaved changes. Click Actions &gt; Save Azure
+                  Configuration to update the allowed API Clients. If you've
+                  just saved your API clients, try refreshing the configuration
+                  first.
                 </Alert>
               </Box>
             )}
           </>
         )}
-        {azureConfig.isSuccess && azureConfig.data?.Results?.Enabled === false && (
-          <Box sx={{ px: 3 }}>
-            <Alert severity="warning">
-              Microsoft Authentication is disabled. Configure API Clients and click Actions &gt;
-              Save Azure Configuration.
-            </Alert>
-          </Box>
-        )}
+        {azureConfig.isSuccess &&
+          azureConfig.data?.Results?.Enabled === false && (
+            <Box sx={{ px: 3 }}>
+              <Alert severity="warning">
+                Microsoft Authentication is disabled. Configure API Clients and
+                click Actions &gt; Save Azure Configuration.
+              </Alert>
+            </Box>
+          )}
         <Box sx={{ px: 3 }}>
           <CippApiResults apiObject={postCall} />
         </Box>
@@ -387,11 +422,18 @@ const CippApiClientManagement = () => {
           actions={actions}
           title="CIPP-API Clients"
           api={{
-            url: "/api/ExecApiClient",
-            data: { Action: "List" },
-            dataKey: "Results",
+            url: '/api/ExecApiClient',
+            data: { Action: 'List' },
+            dataKey: 'Results',
           }}
-          simpleColumns={["Enabled", "MCPAllowed", "AppName", "ClientId", "Role", "IPRange"]}
+          simpleColumns={[
+            'Enabled',
+            'MCPAllowed',
+            'AppName',
+            'ClientId',
+            'Role',
+            'IPRange',
+          ]}
           queryKey={`ApiClients`}
         />
       </Stack>
@@ -400,8 +442,8 @@ const CippApiClientManagement = () => {
         createDialog={{
           open: openAddClientDialog,
           handleClose: () => {
-            setOpenAddClientDialog(false);
-            setAddClientRetryPayload(null);
+            setOpenAddClientDialog(false)
+            setAddClientRetryPayload(null)
           },
         }}
         allowResubmit={true}
@@ -409,59 +451,62 @@ const CippApiClientManagement = () => {
         title="Add Client"
         fields={[
           {
-            type: "textField",
-            name: "AppName",
-            label: "App Name",
-            placeholder: "Enter a name for this Application Registration.",
+            type: 'textField',
+            name: 'AppName',
+            label: 'App Name',
+            placeholder: 'Enter a name for this Application Registration.',
             disableVariables: true,
           },
           {
-            type: "autoComplete",
-            name: "Role",
+            type: 'autoComplete',
+            name: 'Role',
             multiple: false,
             creatable: false,
-            label: "Select Role",
+            label: 'Select Role',
             api: {
-              url: "/api/ListCustomRole",
-              queryKey: "CustomRoleList",
-              labelField: "RoleName",
-              valueField: "RoleName",
+              url: '/api/ListCustomRole',
+              queryKey: 'CustomRoleList',
+              labelField: 'RoleName',
+              valueField: 'RoleName',
               showRefresh: true,
             },
-            placeholder: "Choose a role from the CIPP Role list.",
+            placeholder: 'Choose a role from the CIPP Role list.',
           },
           {
-            type: "autoComplete",
-            name: "IPRange",
+            type: 'autoComplete',
+            name: 'IPRange',
             multiple: true,
             freeSolo: true,
             creatable: true,
             options: [],
-            label: "Enter IP Ranges (Single hosts or CIDR notation)",
-            placeholder: "Type in the IP addresses and hit enter.",
+            label: 'Enter IP Ranges (Single hosts or CIDR notation)',
+            placeholder: 'Type in the IP addresses and hit enter.',
           },
           {
-            type: "switch",
-            name: "Enabled",
-            label: "Enable this client",
+            type: 'switch',
+            name: 'Enabled',
+            label: 'Enable this client',
           },
           {
-            type: "switch",
-            name: "MCPAllowed",
-            label: "MCP Access Allowed",
+            type: 'switch',
+            name: 'MCPAllowed',
+            label: 'MCP Access Allowed',
           },
           {
-            type: "alert",
-            name: "mcpAccessWarning",
-            severity: "warning",
+            type: 'alert',
+            name: 'mcpAccessWarning',
+            severity: 'warning',
             label:
-              "Enabling MCP Access converts this client into the MCP resource app — it can no longer be used as a normal API client, and only one client per tenant can hold this role. Going forward, MCP is only supported on CIPP-NG.",
+              'Enabling MCP Access converts this client into the MCP resource app — it can no longer be used as a normal API client, and only one client per tenant can hold this role. Going forward, MCP is only supported on CIPP-NG.',
           },
         ]}
         api={{
-          type: "POST",
-          url: "/api/ExecApiClient",
-          data: mergeApiDataWithRetry({ Action: "AddUpdate" }, addClientRetryPayload),
+          type: 'POST',
+          url: '/api/ExecApiClient',
+          data: mergeApiDataWithRetry(
+            { Action: 'AddUpdate' },
+            addClientRetryPayload
+          ),
           relatedQueryKeys: [`ApiClients`],
         }}
       />
@@ -469,27 +514,27 @@ const CippApiClientManagement = () => {
         createDialog={{
           open: openAddExistingAppDialog,
           handleClose: () => {
-            setOpenAddExistingAppDialog(false);
+            setOpenAddExistingAppDialog(false)
           },
         }}
         title="Add Existing App"
         fields={[
           {
-            type: "autoComplete",
-            name: "ClientId",
-            label: "Existing App",
-            placeholder: "Select an existing API application.",
+            type: 'autoComplete',
+            name: 'ClientId',
+            label: 'Existing App',
+            placeholder: 'Select an existing API application.',
             api: {
-              type: "GET",
-              url: "/api/ExecApiClient",
-              data: { Action: "ListAvailable" },
+              type: 'GET',
+              url: '/api/ExecApiClient',
+              data: { Action: 'ListAvailable' },
               queryKey: `AvailableApiApps`,
-              dataKey: "Results",
+              dataKey: 'Results',
               labelField: (app) => `${app.displayName} (${app.appId})`,
-              valueField: "appId",
+              valueField: 'appId',
               addedField: {
-                displayName: "displayName",
-                createdDateTime: "createdDateTime",
+                displayName: 'displayName',
+                createdDateTime: 'createdDateTime',
               },
               showRefresh: true,
             },
@@ -497,57 +542,57 @@ const CippApiClientManagement = () => {
             multiple: false,
           },
           {
-            type: "autoComplete",
-            name: "Role",
+            type: 'autoComplete',
+            name: 'Role',
             multiple: false,
             creatable: false,
-            label: "Select Role",
-            placeholder: "Choose a role from the CIPP Role list.",
+            label: 'Select Role',
+            placeholder: 'Choose a role from the CIPP Role list.',
             api: {
-              url: "/api/ListCustomRole",
-              queryKey: "CustomRoleList",
-              labelField: "RoleName",
-              valueField: "RoleName",
+              url: '/api/ListCustomRole',
+              queryKey: 'CustomRoleList',
+              labelField: 'RoleName',
+              valueField: 'RoleName',
               showRefresh: true,
             },
           },
           {
-            type: "autoComplete",
-            name: "IPRange",
+            type: 'autoComplete',
+            name: 'IPRange',
             multiple: true,
             freeSolo: true,
             creatable: true,
             options: [],
-            label: "Enter IP Ranges (Single hosts or CIDR notation)",
-            placeholder: "Type in the IP addresses and hit enter.",
+            label: 'Enter IP Ranges (Single hosts or CIDR notation)',
+            placeholder: 'Type in the IP addresses and hit enter.',
           },
           {
-            type: "switch",
-            name: "Enabled",
-            label: "Enable this client",
+            type: 'switch',
+            name: 'Enabled',
+            label: 'Enable this client',
           },
           {
-            type: "switch",
-            name: "MCPAllowed",
-            label: "MCP Access Allowed",
+            type: 'switch',
+            name: 'MCPAllowed',
+            label: 'MCP Access Allowed',
           },
           {
-            type: "alert",
-            name: "mcpAccessWarning",
-            severity: "warning",
+            type: 'alert',
+            name: 'mcpAccessWarning',
+            severity: 'warning',
             label:
-              "Enabling MCP Access converts this client into the MCP resource app — it can no longer be used as a normal API client, and only one client per tenant can hold this role. Going forward, MCP is only supported on CIPP-NG.",
+              'Enabling MCP Access converts this client into the MCP resource app — it can no longer be used as a normal API client, and only one client per tenant can hold this role. Going forward, MCP is only supported on CIPP-NG.',
           },
         ]}
         api={{
-          type: "POST",
-          url: "/api/ExecApiClient",
-          data: { Action: "!AddUpdate", CIPPAPI: { ResetSecret: true } },
+          type: 'POST',
+          url: '/api/ExecApiClient',
+          data: { Action: '!AddUpdate', CIPPAPI: { ResetSecret: true } },
           relatedQueryKeys: [`ApiClients`],
         }}
       />
     </>
-  );
-};
+  )
+}
 
-export default CippApiClientManagement;
+export default CippApiClientManagement

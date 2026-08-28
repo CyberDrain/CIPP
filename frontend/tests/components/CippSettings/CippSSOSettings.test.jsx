@@ -5,8 +5,15 @@ import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '../../test-utils'
 import { CippSSOSettings } from '../../../src/components/CippSettings/CippSSOSettings'
 
-vi.mock('../../../src/api/ApiCall', async () => (await import('../../mocks/api-call')).apiCallMock())
-import { api, getResult, paginatedResult, postResult } from '../../mocks/api-call'
+vi.mock('../../../src/api/ApiCall', async () =>
+  (await import('../../mocks/api-call')).apiCallMock()
+)
+import {
+  api,
+  getResult,
+  paginatedResult,
+  postResult,
+} from '../../mocks/api-call'
 
 // not under test, pulls clipboard/codeblock trees
 vi.mock('../../../src/components/CippComponents/CippApiResults', () => ({
@@ -29,7 +36,8 @@ const statusResults = (overrides) => ({
   appId: '5f9c2d1e-8f30-4c9e-9d5a-1b2c3d4e5f60',
   multiTenant: false,
   tenantId: '11111111-2222-3333-4444-555555555555',
-  issuer: 'https://login.microsoftonline.com/11111111-2222-3333-4444-555555555555/v2.0',
+  issuer:
+    'https://login.microsoftonline.com/11111111-2222-3333-4444-555555555555/v2.0',
   audiences: ['api://5f9c2d1e-8f30-4c9e-9d5a-1b2c3d4e5f60'],
   allowedApps: ['5f9c2d1e-8f30-4c9e-9d5a-1b2c3d4e5f60'],
   excludedPaths: [],
@@ -61,7 +69,9 @@ describe('CippSSOSettings sign-in URL state', () => {
     // graph app read failed -> RedirectUris falls back to the required set, every required uri listed missing
     seedStatus(statusResults({ missingRedirectUris: [AZURE_CB, CUSTOM_CB] }))
     renderWithProviders(<CippSSOSettings />)
-    expect(chipRoot('cippabc.azurewebsites.net')).toHaveClass('MuiChip-colorWarning')
+    expect(chipRoot('cippabc.azurewebsites.net')).toHaveClass(
+      'MuiChip-colorWarning'
+    )
     expect(chipRoot('cipp.contoso.com')).toHaveClass('MuiChip-colorWarning')
     // hostFromUri applied to the chip side, raw uri never shown
     expect(screen.queryByText(AZURE_CB)).not.toBeInTheDocument()
@@ -93,20 +103,29 @@ describe('CippSSOSettings sign-in URL state', () => {
   it('fully registered hosts stay default chips with no missing caption', () => {
     seedStatus(statusResults())
     renderWithProviders(<CippSSOSettings />)
-    expect(chipRoot('cippabc.azurewebsites.net')).toHaveClass('MuiChip-colorDefault')
+    expect(chipRoot('cippabc.azurewebsites.net')).toHaveClass(
+      'MuiChip-colorDefault'
+    )
     expect(chipRoot('cipp.contoso.com')).not.toHaveClass('MuiChip-colorWarning')
     expect(
       screen.queryByText(/bound to this instance but not registered/)
     ).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Refresh Sign-in URLs' })).not.toHaveClass(
-      'MuiButton-colorWarning'
-    )
-    expect(screen.queryByText(/This list may be incomplete/)).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Refresh Sign-in URLs' })
+    ).not.toHaveClass('MuiButton-colorWarning')
+    expect(
+      screen.queryByText(/This list may be incomplete/)
+    ).not.toBeInTheDocument()
   })
 
   it('missing host absent from the registered list still surfaces through the caption', () => {
     // app readable -> redirectUris is the registered set only, the caption is the missing host's only trace
-    seedStatus(statusResults({ redirectUris: [AZURE_CB], missingRedirectUris: [CUSTOM_CB] }))
+    seedStatus(
+      statusResults({
+        redirectUris: [AZURE_CB],
+        missingRedirectUris: [CUSTOM_CB],
+      })
+    )
     renderWithProviders(<CippSSOSettings />)
     expect(screen.queryByText('cipp.contoso.com')).not.toBeInTheDocument()
     expect(
@@ -114,9 +133,9 @@ describe('CippSSOSettings sign-in URL state', () => {
     ).toHaveTextContent(
       'cipp.contoso.com is bound to this instance but not registered on the app. Click Refresh Sign-in URLs to add it.'
     )
-    expect(screen.getByRole('button', { name: 'Refresh Sign-in URLs' })).toHaveClass(
-      'MuiButton-colorWarning'
-    )
+    expect(
+      screen.getByRole('button', { name: 'Refresh Sign-in URLs' })
+    ).toHaveClass('MuiButton-colorWarning')
   })
 
   it('unverified domain discovery shows the may-be-incomplete warning with the arm error', () => {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useState, useEffect } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import {
   Box,
   Button,
@@ -13,40 +13,46 @@ import {
   IconButton,
   Tooltip,
   CircularProgress,
-} from "@mui/material";
-import { ExpandMore, Search, Save, Delete } from "@mui/icons-material";
-import { CippFormComponent } from "../CippComponents/CippFormComponent";
-import { ApiGetCall, ApiPostCall } from "../../api/ApiCall";
-import { Grid } from "@mui/system";
-import defaultPresets from "../../data/DiagnosticsPresets.json";
-import { useIsMobileLayout } from "../../hooks/use-breakpoint";
+} from '@mui/material'
+import { ExpandMore, Search, Save, Delete } from '@mui/icons-material'
+import { CippFormComponent } from '../CippComponents/CippFormComponent'
+import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
+import { Grid } from '@mui/system'
+import defaultPresets from '../../data/DiagnosticsPresets.json'
+import { useIsMobileLayout } from '../../hooks/use-breakpoint'
 
 const CippDiagnosticsFilter = ({ onSubmitFilter }) => {
   // A 12-row monospace query box is roughly half a phone viewport before anything else.
-  const isMobile = useIsMobileLayout();
-  const [expanded, setExpanded] = useState(true);
-  const [selectedPreset, setSelectedPreset] = useState(null);
-  const [presetOptions, setPresetOptions] = useState([]);
+  const isMobile = useIsMobileLayout()
+  const [expanded, setExpanded] = useState(true)
+  const [selectedPreset, setSelectedPreset] = useState(null)
+  const [presetOptions, setPresetOptions] = useState([])
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      presetName: "",
+      presetName: '',
       queryPreset: null,
-      query: "",
+      query: '',
     },
-  });
+  })
 
-  const { handleSubmit } = formControl;
-  const queryValue = useWatch({ control: formControl.control, name: "query" });
-  const queryPreset = useWatch({ control: formControl.control, name: "queryPreset" });
-  const presetName = useWatch({ control: formControl.control, name: "presetName" });
+  const { handleSubmit } = formControl
+  const queryValue = useWatch({ control: formControl.control, name: 'query' })
+  const queryPreset = useWatch({
+    control: formControl.control,
+    name: 'queryPreset',
+  })
+  const presetName = useWatch({
+    control: formControl.control,
+    name: 'presetName',
+  })
 
   // Load presets
   const presetList = ApiGetCall({
-    url: "/api/ListDiagnosticsPresets",
-    queryKey: "ListDiagnosticsPresets",
-  });
+    url: '/api/ListDiagnosticsPresets',
+    queryKey: 'ListDiagnosticsPresets',
+  })
 
   useEffect(() => {
     // Combine built-in presets with custom presets
@@ -56,7 +62,7 @@ const CippDiagnosticsFilter = ({ onSubmitFilter }) => {
       query: preset.query,
       columns: preset.columns || null,
       isBuiltin: true,
-    }));
+    }))
 
     const customOptions =
       presetList.isSuccess && presetList.data
@@ -66,49 +72,49 @@ const CippDiagnosticsFilter = ({ onSubmitFilter }) => {
             query: preset.query,
             isBuiltin: false,
           }))
-        : [];
+        : []
 
-    setPresetOptions([...builtInOptions, ...customOptions]);
-  }, [presetList.isSuccess, presetList.data]);
+    setPresetOptions([...builtInOptions, ...customOptions])
+  }, [presetList.isSuccess, presetList.data])
 
   // Load preset when selected
   useEffect(() => {
     if (queryPreset) {
       // queryPreset is the full object from autoComplete
       // Check if it's an array (multiple) or object (single)
-      const preset = Array.isArray(queryPreset) ? queryPreset[0] : queryPreset;
+      const preset = Array.isArray(queryPreset) ? queryPreset[0] : queryPreset
 
       if (preset?.query) {
-        formControl.setValue("query", preset.query);
-        formControl.setValue("presetName", preset.label);
-        setSelectedPreset(preset);
+        formControl.setValue('query', preset.query)
+        formControl.setValue('presetName', preset.label)
+        setSelectedPreset(preset)
         // Clear the preset selection so user can edit freely
-        formControl.setValue("queryPreset", null);
+        formControl.setValue('queryPreset', null)
       }
     }
-  }, [queryPreset, formControl]);
+  }, [queryPreset, formControl])
 
   // Clear selectedPreset when query is manually edited (unless preset is custom or has no columns)
   useEffect(() => {
     if (selectedPreset && queryValue !== selectedPreset.query) {
       // Only clear if preset is built-in and has columns defined
       if (selectedPreset.isBuiltin && selectedPreset.columns) {
-        setSelectedPreset(null);
+        setSelectedPreset(null)
       }
     }
-  }, [queryValue, selectedPreset]);
+  }, [queryValue, selectedPreset])
 
   const savePresetApi = ApiPostCall({
-    relatedQueryKeys: ["ListDiagnosticsPresets"],
-  });
+    relatedQueryKeys: ['ListDiagnosticsPresets'],
+  })
 
   const deletePresetApi = ApiPostCall({
-    relatedQueryKeys: ["ListDiagnosticsPresets"],
-  });
+    relatedQueryKeys: ['ListDiagnosticsPresets'],
+  })
 
   const handleSavePreset = () => {
     if (!presetName || !queryValue) {
-      return;
+      return
     }
 
     // Built-in presets get saved as new custom presets (no GUID = new preset)
@@ -116,40 +122,42 @@ const CippDiagnosticsFilter = ({ onSubmitFilter }) => {
     const presetData = {
       name: presetName,
       query: queryValue,
-      GUID: selectedPreset?.isBuiltin ? undefined : selectedPreset?.value || undefined,
-    };
+      GUID: selectedPreset?.isBuiltin
+        ? undefined
+        : selectedPreset?.value || undefined,
+    }
 
-    const isUpdate = selectedPreset && !selectedPreset.isBuiltin;
+    const isUpdate = selectedPreset && !selectedPreset.isBuiltin
 
     savePresetApi.mutate({
-      url: "/api/ExecDiagnosticsPresets",
+      url: '/api/ExecDiagnosticsPresets',
       data: presetData,
-      title: isUpdate ? "Update Preset" : "Save Preset",
+      title: isUpdate ? 'Update Preset' : 'Save Preset',
       message: isUpdate
         ? `Preset "${presetName}" updated successfully`
         : `Preset "${presetName}" saved successfully`,
-    });
-  };
+    })
+  }
 
   const handleDeletePreset = () => {
     if (!selectedPreset || selectedPreset.isBuiltin) {
-      return;
+      return
     }
 
     deletePresetApi.mutate({
-      url: "/api/ExecDiagnosticsPresets",
+      url: '/api/ExecDiagnosticsPresets',
       data: {
         GUID: selectedPreset.value,
-        action: "delete",
+        action: 'delete',
       },
-      title: "Delete Preset",
+      title: 'Delete Preset',
       message: `Preset "${selectedPreset.label}" deleted successfully`,
-    });
+    })
 
-    formControl.setValue("queryPreset", null);
-    formControl.setValue("presetName", "");
-    setSelectedPreset(null);
-  };
+    formControl.setValue('queryPreset', null)
+    formControl.setValue('presetName', '')
+    setSelectedPreset(null)
+  }
 
   const onSubmit = (values) => {
     if (values.query && values.query.trim()) {
@@ -157,21 +165,21 @@ const CippDiagnosticsFilter = ({ onSubmitFilter }) => {
         ...values,
         presetDisplayName: values.presetName || selectedPreset?.label || null,
         columns: selectedPreset?.columns || null,
-      });
-      setExpanded(false);
+      })
+      setExpanded(false)
     }
-  };
+  }
 
   const handleClear = () => {
-    formControl.reset({ query: "", presetName: "", queryPreset: null });
-    onSubmitFilter({ query: "", presetDisplayName: null, columns: null });
+    formControl.reset({ query: '', presetName: '', queryPreset: null })
+    onSubmitFilter({ query: '', presetDisplayName: null, columns: null })
     // Only clear selectedPreset if it's a built-in preset
     // Keep custom preset reference so user can continue editing and saving
     if (selectedPreset?.isBuiltin) {
-      setSelectedPreset(null);
+      setSelectedPreset(null)
     }
-    setExpanded(true);
-  };
+    setExpanded(true)
+  }
 
   return (
     <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
@@ -184,8 +192,9 @@ const CippDiagnosticsFilter = ({ onSubmitFilter }) => {
             <AlertTitle>Requirements</AlertTitle>
             <Typography variant="body2">
               • Application Insights must be deployed for your CIPP environment
-              <br />• The Function App's managed identity must have <strong>Reader</strong>{" "}
-              permissions on the Application Insights resource
+              <br />• The Function App's managed identity must have{' '}
+              <strong>Reader</strong> permissions on the Application Insights
+              resource
               <br />• Queries are executed using Kusto Query Language (KQL)
             </Typography>
           </Alert>
@@ -220,27 +229,35 @@ const CippDiagnosticsFilter = ({ onSubmitFilter }) => {
                         <Tooltip
                           title={
                             selectedPreset?.isBuiltin
-                              ? "Save as New Custom Preset"
+                              ? 'Save as New Custom Preset'
                               : selectedPreset
-                              ? "Update Preset"
-                              : "Save Preset"
+                                ? 'Update Preset'
+                                : 'Save Preset'
                           }
                         >
                           <span>
                             <IconButton
                               color="primary"
                               onClick={handleSavePreset}
-                              disabled={!presetName || !queryValue || savePresetApi.isPending}
+                              disabled={
+                                !presetName ||
+                                !queryValue ||
+                                savePresetApi.isPending
+                              }
                             >
-                              {savePresetApi.isPending ? <CircularProgress size={24} /> : <Save />}
+                              {savePresetApi.isPending ? (
+                                <CircularProgress size={24} />
+                              ) : (
+                                <Save />
+                              )}
                             </IconButton>
                           </span>
                         </Tooltip>
                         <Tooltip
                           title={
                             selectedPreset?.isBuiltin
-                              ? "Built-in presets cannot be deleted"
-                              : "Delete Preset"
+                              ? 'Built-in presets cannot be deleted'
+                              : 'Delete Preset'
                           }
                         >
                           <span>
@@ -277,9 +294,9 @@ const CippDiagnosticsFilter = ({ onSubmitFilter }) => {
                 placeholder={`Enter your KQL query here, for example:\n\ntraces\n| where timestamp > ago(1h)\n| where severityLevel >= 2\n| project timestamp, message, severityLevel\n| order by timestamp desc`}
                 helperText="Enter a valid Kusto Query Language (KQL) query to execute against Application Insights"
                 sx={{
-                  "& textarea": {
-                    fontFamily: "monospace",
-                    fontSize: "0.875rem",
+                  '& textarea': {
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem',
                   },
                 }}
               />
@@ -302,7 +319,7 @@ const CippDiagnosticsFilter = ({ onSubmitFilter }) => {
         </Stack>
       </AccordionDetails>
     </Accordion>
-  );
-};
+  )
+}
 
-export default CippDiagnosticsFilter;
+export default CippDiagnosticsFilter

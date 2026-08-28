@@ -1,31 +1,30 @@
-import { useForm } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import ContactFormLayout from "../../../../components/CippFormPages/CippAddEditContact";
+import { useForm } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import ContactFormLayout from '../../../../components/CippFormPages/CippAddEditContact'
 
 const AddContactTemplates = () => {
-
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      displayName: "",
-      firstName: "",
-      lastName: "",
-      email: "",
+      displayName: '',
+      firstName: '',
+      lastName: '',
+      email: '',
       hidefromGAL: false,
-      streetAddress: "",
-      postalCode: "",
-      city: "",
-      state: "",
-      country: "",
-      companyName: "",
-      mobilePhone: "",
-      businessPhone: "",
-      jobTitle: "",
-      website: "",
-      mailTip: "",
+      streetAddress: '',
+      postalCode: '',
+      city: '',
+      state: '',
+      country: '',
+      companyName: '',
+      mobilePhone: '',
+      businessPhone: '',
+      jobTitle: '',
+      website: '',
+      mailTip: '',
     },
-  });
+  })
 
   return (
     <CippFormPage
@@ -53,16 +52,16 @@ const AddContactTemplates = () => {
           businessPhone: values.businessPhone,
           website: values.website,
           mailTip: values.mailTip,
-        };
+        }
       }}
     >
-      <ContactFormLayout
-        formControl={formControl}
-      />
+      <ContactFormLayout formControl={formControl} />
     </CippFormPage>
-  );
-};
+  )
+}
 
-AddContactTemplates.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+AddContactTemplates.getLayout = (page) => (
+  <DashboardLayout>{page}</DashboardLayout>
+)
 
-export default AddContactTemplates;
+export default AddContactTemplates

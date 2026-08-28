@@ -9,8 +9,14 @@ import { ApiGetCall } from '../../api/ApiCall'
 const SHARING_CAPABILITY_OPTIONS = [
   { label: 'Disabled — internal only', value: 'Disabled' },
   { label: 'Existing guests only', value: 'ExistingExternalUserSharingOnly' },
-  { label: 'New and existing guests (sign-in required)', value: 'ExternalUserSharingOnly' },
-  { label: 'Anyone — including anonymous links', value: 'ExternalUserAndGuestSharing' },
+  {
+    label: 'New and existing guests (sign-in required)',
+    value: 'ExternalUserSharingOnly',
+  },
+  {
+    label: 'Anyone — including anonymous links',
+    value: 'ExternalUserAndGuestSharing',
+  },
 ]
 const LINK_TYPE_OPTIONS = [
   { label: 'Tenant default', value: 'None' },
@@ -54,16 +60,26 @@ export const CippEditSitePropertiesForm = ({ formHook, row, tenantFilter }) => {
     const p = propsApi.data?.Results
     // autoComplete fields hold { label, value } objects; map raw values to their option.
     const toOption = (options, value) =>
-      options.find((o) => o.value === value) ?? (value ? { label: value, value } : null)
+      options.find((o) => o.value === value) ??
+      (value ? { label: value, value } : null)
     if (p && typeof p === 'object' && p.Url) {
       formHook.reset({
         Title: p.Title ?? '',
-        SharingCapability: toOption(SHARING_CAPABILITY_OPTIONS, p.SharingCapability),
-        DefaultSharingLinkType: toOption(LINK_TYPE_OPTIONS, p.DefaultSharingLinkType),
-        DefaultLinkPermission: toOption(LINK_PERMISSION_OPTIONS, p.DefaultLinkPermission),
+        SharingCapability: toOption(
+          SHARING_CAPABILITY_OPTIONS,
+          p.SharingCapability
+        ),
+        DefaultSharingLinkType: toOption(
+          LINK_TYPE_OPTIONS,
+          p.DefaultSharingLinkType
+        ),
+        DefaultLinkPermission: toOption(
+          LINK_PERMISSION_OPTIONS,
+          p.DefaultLinkPermission
+        ),
         SharingDomainRestrictionMode: toOption(
           DOMAIN_MODE_OPTIONS,
-          p.SharingDomainRestrictionMode,
+          p.SharingDomainRestrictionMode
         ),
         SharingAllowedDomainList: p.SharingAllowedDomainList ?? '',
         SharingBlockedDomainList: p.SharingBlockedDomainList ?? '',
@@ -95,7 +111,9 @@ export const CippEditSitePropertiesForm = ({ formHook, row, tenantFilter }) => {
     return (
       <Alert severity="error">
         Failed to load site properties.{' '}
-        {typeof propsApi.data?.Results === 'string' ? propsApi.data.Results : ''}
+        {typeof propsApi.data?.Results === 'string'
+          ? propsApi.data.Results
+          : ''}
       </Alert>
     )
   }
@@ -104,8 +122,9 @@ export const CippEditSitePropertiesForm = ({ formHook, row, tenantFilter }) => {
     <Stack spacing={1.5}>
       {isGroupSite && (
         <Alert severity="info">
-          Group-connected (Team) site: only the sharing level, default link settings, lock state
-          and storage limits can be managed here. Rename the site by renaming its M365 group.
+          Group-connected (Team) site: only the sharing level, default link
+          settings, lock state and storage limits can be managed here. Rename
+          the site by renaming its M365 group.
         </Alert>
       )}
       {!isGroupSite && (
@@ -219,8 +238,8 @@ export const CippEditSitePropertiesForm = ({ formHook, row, tenantFilter }) => {
         formControl={formHook}
       />
       <Alert severity="info">
-        Storage limits only apply when the tenant uses manual site storage limits. Lock state
-        changes can take a few minutes to fully propagate.
+        Storage limits only apply when the tenant uses manual site storage
+        limits. Lock state changes can take a few minutes to fully propagate.
       </Alert>
       <CippFormComponent
         type="number"
@@ -282,4 +301,3 @@ export const CippEditSitePropertiesForm = ({ formHook, row, tenantFilter }) => {
     </Stack>
   )
 }
-

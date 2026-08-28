@@ -1,11 +1,17 @@
-import CippFormComponent from "./CippFormComponent";
-import { Typography } from "@mui/material";
-import { Grid } from "@mui/system";
-import { CippFormTenantSelector } from "./CippFormTenantSelector";
-import { CippFormCondition } from "./CippFormCondition";
-import CippTenantGroupRuleBuilder from "./CippTenantGroupRuleBuilder";
+import CippFormComponent from './CippFormComponent'
+import { Typography } from '@mui/material'
+import { Grid } from '@mui/system'
+import { CippFormTenantSelector } from './CippFormTenantSelector'
+import { CippFormCondition } from './CippFormCondition'
+import CippTenantGroupRuleBuilder from './CippTenantGroupRuleBuilder'
 
-const CippAddEditTenantGroups = ({ formControl, initialValues, title, backButtonTitle, hideSubmitButton = false }) => {
+const CippAddEditTenantGroups = ({
+  formControl,
+  initialValues,
+  title,
+  backButtonTitle,
+  hideSubmitButton = false,
+}) => {
   return (
     <>
       <Typography variant="h6">Properties</Typography>
@@ -20,11 +26,11 @@ const CippAddEditTenantGroups = ({ formControl, initialValues, title, backButton
             required
             fullWidth
             validators={{
-              required: "Group name is required",
+              required: 'Group name is required',
               minLength: {
                 value: 2,
-                message: "Group name must be at least 2 characters long"
-              }
+                message: 'Group name must be at least 2 characters long',
+              },
             }}
           />
         </Grid>
@@ -46,8 +52,8 @@ const CippAddEditTenantGroups = ({ formControl, initialValues, title, backButton
             name="groupType"
             label="Group Type"
             options={[
-              { label: "Static", value: "static" },
-              { label: "Dynamic", value: "dynamic" }
+              { label: 'Static', value: 'static' },
+              { label: 'Dynamic', value: 'dynamic' },
             ]}
             formControl={formControl}
             required
@@ -97,7 +103,7 @@ const CippAddEditTenantGroups = ({ formControl, initialValues, title, backButton
         </Grid>
       </Grid>
     </>
-  );
-};
+  )
+}
 
-export default CippAddEditTenantGroups;
+export default CippAddEditTenantGroups

@@ -8,7 +8,9 @@ import { AppleADEEnrollmentProfiles } from '../../../src/components/CippComponen
 // appleFilters presets must carry type: 'column', untyped presets land the
 // [{id, value}] array in the global filter slot ("[object Object]", zero rows)
 
-vi.mock('../../../src/api/ApiCall', async () => (await import('../../mocks/api-call')).apiCallMock())
+vi.mock('../../../src/api/ApiCall', async () =>
+  (await import('../../mocks/api-call')).apiCallMock()
+)
 import { api, getResult, postResult } from '../../mocks/api-call'
 
 // fixture mirrors Invoke-ListAppleEnrollmentProfiles.ps1: Results.Tokens from graph
@@ -97,7 +99,8 @@ const appleResult = getResult({
 
 const emptyGetResult = getResult({ isSuccess: false })
 
-api.get = (opts) => (opts.url === '/api/ListAppleEnrollmentProfiles' ? appleResult : emptyGetResult)
+api.get = (opts) =>
+  opts.url === '/api/ListAppleEnrollmentProfiles' ? appleResult : emptyGetResult
 api.post = postResult()
 api.paginated = emptyGetResult
 
@@ -125,7 +128,9 @@ describe('AppleADEEnrollmentProfiles - platform preset filters', () => {
     await screen.findByText('1-3 of 3')
 
     await user.click(screen.getByRole('button', { name: 'Filters' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'iOS/iPadOS' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'iOS/iPadOS' })
+    )
 
     await waitFor(() => {
       expect(screen.getByText('1-1 of 1')).toBeInTheDocument()

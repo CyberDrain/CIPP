@@ -108,7 +108,8 @@ export const CIPPM365OAuthButton = ({
   // part way through a sign-in is therefore unrecoverable except with a fresh code. The
   // poll is left running anyway, because the sign-in may still be getting finished at
   // microsoft.com/devicelogin in another browser.
-  const canRestartDeviceLogin = useDeviceCode && authInProgress && devicePopupClosed
+  const canRestartDeviceLogin =
+    useDeviceCode && authInProgress && devicePopupClosed
 
   const restartDeviceLogin = async () => {
     // Supersede the in-flight poll before requesting a new code, or it would keep
@@ -145,7 +146,9 @@ export const CIPPM365OAuthButton = ({
     try {
       // Get the application ID to use
       const appId =
-        applicationId || appIdInfo?.data?.applicationId || '1b730954-1685-4b74-9bfd-dac224a7b894' // Default to MS Graph Explorer app ID
+        applicationId ||
+        appIdInfo?.data?.applicationId ||
+        '1b730954-1685-4b74-9bfd-dac224a7b894' // Default to MS Graph Explorer app ID
 
       // Request device code from our API endpoint
       const deviceCodeResponse = await fetch(
@@ -162,14 +165,16 @@ export const CIPPM365OAuthButton = ({
         // Error getting device code
         setAuthError({
           errorCode: deviceCodeData.error || 'device_code_error',
-          errorMessage: deviceCodeData.error_description || 'Failed to get device code',
+          errorMessage:
+            deviceCodeData.error_description || 'Failed to get device code',
           timestamp: new Date().toISOString(),
         })
       }
     } catch (error) {
       setAuthError({
         errorCode: 'device_code_error',
-        errorMessage: error.message || 'An error occurred retrieving device code',
+        errorMessage:
+          error.message || 'An error occurred retrieving device code',
         timestamp: new Date().toISOString(),
       })
     } finally {
@@ -204,7 +209,9 @@ export const CIPPM365OAuthButton = ({
     try {
       // Get the application ID to use - refetch already happened at the start of this function
       const appId =
-        applicationId || appIdInfo?.data?.applicationId || '1b730954-1685-4b74-9bfd-dac224a7b894' // Default to MS Graph Explorer app ID
+        applicationId ||
+        appIdInfo?.data?.applicationId ||
+        '1b730954-1685-4b74-9bfd-dac224a7b894' // Default to MS Graph Explorer app ID
 
       // Open popup to device login page. If it is closed or blocked the poll below keeps
       // running - the button turns into "Reopen sign-in window" rather than locking up.
@@ -262,7 +269,8 @@ export const CIPPM365OAuthButton = ({
             closeDeviceLoginPopup()
             setAuthError({
               errorCode: tokenData.error || 'token_error',
-              errorMessage: tokenData.error_description || 'Failed to get token',
+              errorMessage:
+                tokenData.error_description || 'Failed to get token',
               timestamp: new Date().toISOString(),
             })
             setAuthInProgress(false)
@@ -277,7 +285,9 @@ export const CIPPM365OAuthButton = ({
     } catch (error) {
       setAuthError({
         errorCode: 'device_code_error',
-        errorMessage: error.message || 'An error occurred during device code authentication',
+        errorMessage:
+          error.message ||
+          'An error occurred during device code authentication',
         timestamp: new Date().toISOString(),
       })
       setAuthInProgress(false)
@@ -287,9 +297,13 @@ export const CIPPM365OAuthButton = ({
   // Process token response (common for both auth methods)
   const handleTokenResponse = (tokenData) => {
     // Extract token information
-    const accessTokenExpiresOn = new Date(Date.now() + tokenData.expires_in * 1000)
+    const accessTokenExpiresOn = new Date(
+      Date.now() + tokenData.expires_in * 1000
+    )
     // Refresh tokens typically last for 90 days, but this can vary
-    const refreshTokenExpiresOn = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+    const refreshTokenExpiresOn = new Date(
+      Date.now() + 90 * 24 * 60 * 60 * 1000
+    )
 
     // Extract information from ID token if available
     let username = 'unknown user'
@@ -298,7 +312,9 @@ export const CIPPM365OAuthButton = ({
 
     if (tokenData.id_token) {
       try {
-        const idTokenPayload = JSON.parse(atob(tokenData.id_token.split('.')[1]))
+        const idTokenPayload = JSON.parse(
+          atob(tokenData.id_token.split('.')[1])
+        )
 
         username =
           idTokenPayload.preferred_username ||
@@ -311,10 +327,16 @@ export const CIPPM365OAuthButton = ({
           tenantId = idTokenPayload.tid
         }
 
-        if (username && username.includes('@') && username.includes('.onmicrosoft.com')) {
+        if (
+          username &&
+          username.includes('@') &&
+          username.includes('.onmicrosoft.com')
+        ) {
           onmicrosoftDomain = username.split('@')[1]
         } else if (idTokenPayload.iss) {
-          const issuerMatch = idTokenPayload.iss.match(/https:\/\/sts\.windows\.net\/([^/]+)\//)
+          const issuerMatch = idTokenPayload.iss.match(
+            /https:\/\/sts\.windows\.net\/([^/]+)\//
+          )
           if (issuerMatch && issuerMatch[1]) {
           }
         }
@@ -442,7 +464,10 @@ export const CIPPM365OAuthButton = ({
     // Generate PKCE code verifier and S256 challenge
     const codeVerifier = randomUrlSafeString(32)
     const codeChallenge = base64UrlEncode(
-      await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier))
+      await window.crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(codeVerifier)
+      )
     )
     const state = randomUrlSafeString(16)
     // prompt=login, not select_account: this flow mints the refresh token CIPP runs on, and
@@ -473,7 +498,8 @@ export const CIPPM365OAuthButton = ({
     const handleAuthorizationCode = async (code, receivedState) => {
       // Verify the state parameter matches what we sent (security check)
       if (receivedState !== state) {
-        const errorMessage = 'State mismatch in auth response - possible CSRF attack'
+        const errorMessage =
+          'State mismatch in auth response - possible CSRF attack'
         const error = {
           errorCode: 'state_mismatch',
           errorMessage: errorMessage,
@@ -509,7 +535,8 @@ export const CIPPM365OAuthButton = ({
             },
             body: JSON.stringify({
               tokenRequest,
-              tokenUrl: 'https://login.microsoftonline.com/organizations/oauth2/v2.0/token',
+              tokenUrl:
+                'https://login.microsoftonline.com/organizations/oauth2/v2.0/token',
               tenantId: appId, // Pass the tenant ID to retrieve the correct client secret
             }),
           })
@@ -530,7 +557,9 @@ export const CIPPM365OAuthButton = ({
             retryCount++
             if (retryCount <= maxRetries) {
               // Wait before retrying (exponential backoff)
-              await new Promise((resolve) => setTimeout(resolve, 2000 * retryCount))
+              await new Promise((resolve) =>
+                setTimeout(resolve, 2000 * retryCount)
+              )
               continue
             }
           }
@@ -540,12 +569,14 @@ export const CIPPM365OAuthButton = ({
 
         // Check if the response contains an error
         if (tokenData.error) {
-          const secretNotReady = tokenData.error_description?.includes('AADSTS7000215')
+          const secretNotReady =
+            tokenData.error_description?.includes('AADSTS7000215')
           const error = {
             errorCode: tokenData.error || 'token_error',
             errorMessage: secretNotReady
               ? 'The application secret created for CIPP is not active yet. Microsoft can take several minutes to replicate a new secret across Entra ID. Wait a few minutes and run this step again - nothing needs to be recreated.'
-              : tokenData.error_description || 'Failed to exchange authorization code for tokens',
+              : tokenData.error_description ||
+                'Failed to exchange authorization code for tokens',
             timestamp: new Date().toISOString(),
           }
           setAuthError(error)
@@ -560,23 +591,31 @@ export const CIPPM365OAuthButton = ({
             try {
               // Extract tid from access_token jwt base64
               const accessTokenParts = tokenData.access_token.split('.')
-              const accessTokenPayload = JSON.parse(atob(accessTokenParts[1] || ''))
+              const accessTokenPayload = JSON.parse(
+                atob(accessTokenParts[1] || '')
+              )
               tokenData.tid = accessTokenPayload.tid
-              const refreshResponse = await fetch(`/api/ExecUpdateRefreshToken`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  tenantId: tokenData.tid,
-                  refreshtoken: tokenData.refresh_token,
-                  tenantMode: tokenData.tenantMode,
-                  allowPartnerTenantManagement: tokenData.allowPartnerTenantManagement,
-                }),
-              })
+              const refreshResponse = await fetch(
+                `/api/ExecUpdateRefreshToken`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    tenantId: tokenData.tid,
+                    refreshtoken: tokenData.refresh_token,
+                    tenantMode: tokenData.tenantMode,
+                    allowPartnerTenantManagement:
+                      tokenData.allowPartnerTenantManagement,
+                  }),
+                }
+              )
 
               if (!refreshResponse.ok) {
-                console.warn('Failed to store refresh token, but continuing with authentication')
+                console.warn(
+                  'Failed to store refresh token, but continuing with authentication'
+                )
               } else {
                 // Invalidate the listAppId and tenants-table queryKeys to refresh data
                 appIdInfo.refetch()
@@ -592,7 +631,8 @@ export const CIPPM365OAuthButton = ({
           const error = {
             errorCode: tokenData.error || 'token_error',
             errorMessage:
-              tokenData.error_description || 'Failed to exchange authorization code for tokens',
+              tokenData.error_description ||
+              'Failed to exchange authorization code for tokens',
             timestamp: new Date().toISOString(),
           }
           setAuthError(error)
@@ -601,7 +641,8 @@ export const CIPPM365OAuthButton = ({
       } catch (error) {
         const errorObj = {
           errorCode: 'token_exchange_error',
-          errorMessage: error.message || 'Failed to exchange authorization code for tokens',
+          errorMessage:
+            error.message || 'Failed to exchange authorization code for tokens',
           timestamp: new Date().toISOString(),
         }
         setAuthError(errorObj)
@@ -654,13 +695,17 @@ export const CIPPM365OAuthButton = ({
           retryCount < maxRetries
         ) {
           setAuthInProgress(false)
-          setTimeout(() => handleMsalAuthentication(retryCount + 1), 2000 * (retryCount + 1))
+          setTimeout(
+            () => handleMsalAuthentication(retryCount + 1),
+            2000 * (retryCount + 1)
+          )
           return
         }
 
         const error = {
           errorCode: event.data.error || 'auth_error',
-          errorMessage: event.data.errorDescription || 'Unknown authentication error',
+          errorMessage:
+            event.data.errorDescription || 'Unknown authentication error',
           timestamp: new Date().toISOString(),
         }
         setAuthError(error)
@@ -751,50 +796,61 @@ export const CIPPM365OAuthButton = ({
                 {authInProgress ? (
                   <>
                     When asked to log onto an account, please use a{' '}
-                    <strong>CIPP Service Account</strong>. Enter this code to authenticate:{' '}
+                    <strong>CIPP Service Account</strong>. Enter this code to
+                    authenticate:{' '}
                   </>
                 ) : (
                   <>
-                    Click the button below to authenticate. When asked to log onto an account,
-                    please use a <strong>CIPP Service Account</strong>. You will need to enter this
-                    code:{' '}
+                    Click the button below to authenticate. When asked to log
+                    onto an account, please use a{' '}
+                    <strong>CIPP Service Account</strong>. You will need to
+                    enter this code:{' '}
                   </>
                 )}
-                <CippCopyToClipBoard text={deviceCodeInfo.user_code} type="chip" />
+                <CippCopyToClipBoard
+                  text={deviceCodeInfo.user_code}
+                  type="chip"
+                />
               </Typography>
               <Typography variant="body2" gutterBottom>
                 {authInProgress && devicePopupClosed ? (
                   <>
                     The sign-in window was closed. If you are still finishing at{' '}
-                    <strong>microsoft.com/devicelogin</strong> in another browser, CIPP is still
-                    waiting. If you had already entered the code, it cannot be used again - start
-                    over below to get a new one.
+                    <strong>microsoft.com/devicelogin</strong> in another
+                    browser, CIPP is still waiting. If you had already entered
+                    the code, it cannot be used again - start over below to get
+                    a new one.
                   </>
                 ) : authInProgress ? (
                   <>
-                    If the popup was blocked or you closed it, you can also go to{' '}
-                    <strong>microsoft.com/devicelogin</strong> manually and enter the code shown
-                    above.
+                    If the popup was blocked or you closed it, you can also go
+                    to <strong>microsoft.com/devicelogin</strong> manually and
+                    enter the code shown above.
                   </>
                 ) : (
                   <>
                     When you click the button below, a popup will open to{' '}
-                    <strong>microsoft.com/devicelogin</strong> where you'll enter this code.
+                    <strong>microsoft.com/devicelogin</strong> where you'll
+                    enter this code.
                   </>
                 )}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Code expires in {Math.round(deviceCodeInfo.expires_in / 60)} minutes
+                Code expires in {Math.round(deviceCodeInfo.expires_in / 60)}{' '}
+                minutes
               </Typography>
             </Alert>
           ) : tokens.accessToken ? (
             <>
               {showSuccessAlert ? (
                 <Alert severity="success">
-                  <Typography variant="subtitle2">Authentication Successful</Typography>
+                  <Typography variant="subtitle2">
+                    Authentication Successful
+                  </Typography>
                   <Typography variant="body2">
-                    You've successfully refreshed your token. The account you're using for
-                    authentication is: <strong>{tokens.username}</strong>
+                    You've successfully refreshed your token. The account you're
+                    using for authentication is:{' '}
+                    <strong>{tokens.username}</strong>
                   </Typography>
                   <Typography variant="body2">
                     Tenant ID: <strong>{tokens.tenantId}</strong>
@@ -806,21 +862,25 @@ export const CIPPM365OAuthButton = ({
                     )}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Refresh token expires: {tokens.refreshTokenExpiresOn?.toLocaleString()}
+                    Refresh token expires:{' '}
+                    {tokens.refreshTokenExpiresOn?.toLocaleString()}
                   </Typography>
                 </Alert>
               ) : null}
 
               {!isServiceAccount && (
                 <Alert severity="warning" sx={{ mt: 1 }}>
-                  <Typography variant="subtitle2">Service Account Required</Typography>
-                  <Typography variant="body2">
-                    CIPP requires a service account for authentication. The account you're using (
-                    <strong>{tokens.username}</strong>) does not appear to be a service account.
+                  <Typography variant="subtitle2">
+                    Service Account Required
                   </Typography>
                   <Typography variant="body2">
-                    Please redo authentication using an account with "service" or "cipp" in the
-                    username.
+                    CIPP requires a service account for authentication. The
+                    account you're using (<strong>{tokens.username}</strong>)
+                    does not appear to be a service account.
+                  </Typography>
+                  <Typography variant="body2">
+                    Please redo authentication using an account with "service"
+                    or "cipp" in the username.
                   </Typography>
                 </Alert>
               )}
@@ -835,7 +895,12 @@ export const CIPPM365OAuthButton = ({
                 Time: {authError.timestamp}
               </Typography>
               <Box mt={1}>
-                <Button size="small" variant="outlined" color="error" onClick={handleCloseError}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  onClick={handleCloseError}
+                >
                   Dismiss
                 </Button>
               </Box>

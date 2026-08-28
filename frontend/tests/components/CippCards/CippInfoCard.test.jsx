@@ -12,7 +12,12 @@ describe('CippInfoCard', () => {
 
   it('renders action link with href', () => {
     renderWithTheme(
-      <CippInfoCard label="Total Users" value={1234} actionLink="/users" actionText="View All" />
+      <CippInfoCard
+        label="Total Users"
+        value={1234}
+        actionLink="/users"
+        actionText="View All"
+      />
     )
     const link = screen.getByRole('link', { name: /View All/i })
     expect(link).toHaveAttribute('href', '/users')

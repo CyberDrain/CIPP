@@ -10,7 +10,8 @@ export const LinearProgressWithLabel = (props) => {
     }
 
     // Check if flipped mode is enabled
-    const isFlipped = colourLevels === 'flipped' || colourLevels.flipped === true
+    const isFlipped =
+      colourLevels === 'flipped' || colourLevels.flipped === true
 
     if (isFlipped) {
       // Flipped color order: green -> yellow -> orange -> red
@@ -59,7 +60,9 @@ export const LinearProgressWithLabel = (props) => {
           {...otherProps}
         />
       </Box>
-      <Box sx={{ minWidth: 135 }}>{`${Math.round(value)}% ${addedLabel ?? ''}`}</Box>
+      <Box
+        sx={{ minWidth: 135 }}
+      >{`${Math.round(value)}% ${addedLabel ?? ''}`}</Box>
     </Box>
   )
 }

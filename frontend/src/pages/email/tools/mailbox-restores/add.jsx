@@ -1,51 +1,60 @@
-import { useEffect } from "react";
-import { Grid } from "@mui/system";
-import { useForm, useWatch } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { useSettings } from "../../../../hooks/use-settings";
-import { getCippTranslation } from "../../../../utils/get-cipp-translation";
-import { Alert, Divider, Typography } from "@mui/material";
+import { useEffect } from 'react'
+import { Grid } from '@mui/system'
+import { useForm, useWatch } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { useSettings } from '../../../../hooks/use-settings'
+import { getCippTranslation } from '../../../../utils/get-cipp-translation'
+import { Alert, Divider, Typography } from '@mui/material'
 
 const wellKnownFolders = [
-  "Inbox",
-  "SentItems",
-  "DeletedItems",
-  "Calendar",
-  "Contacts",
-  "Drafts",
-  "Journal",
-  "Tasks",
-  "Notes",
-  "JunkEmail",
-  "CommunicationHistory",
-  "Voicemail",
-  "Fax",
-  "Conflicts",
-  "SyncIssues",
-  "LocalFailures",
-  "ServerFailures",
-].map((folder) => ({ value: `#${folder}#`, label: getCippTranslation(folder) }));
+  'Inbox',
+  'SentItems',
+  'DeletedItems',
+  'Calendar',
+  'Contacts',
+  'Drafts',
+  'Journal',
+  'Tasks',
+  'Notes',
+  'JunkEmail',
+  'CommunicationHistory',
+  'Voicemail',
+  'Fax',
+  'Conflicts',
+  'SyncIssues',
+  'LocalFailures',
+  'ServerFailures',
+].map((folder) => ({ value: `#${folder}#`, label: getCippTranslation(folder) }))
 
 const MailboxRestoreForm = () => {
-  const tenantDomain = useSettings().currentTenant;
+  const tenantDomain = useSettings().currentTenant
 
   const formControl = useForm({
-    mode: "onChange",
-  });
+    mode: 'onChange',
+  })
 
-  const sourceMailbox = useWatch({ control: formControl.control, name: "SourceMailbox" });
-  const targetMailbox = useWatch({ control: formControl.control, name: "TargetMailbox" });
+  const sourceMailbox = useWatch({
+    control: formControl.control,
+    name: 'SourceMailbox',
+  })
+  const targetMailbox = useWatch({
+    control: formControl.control,
+    name: 'TargetMailbox',
+  })
 
   useEffect(() => {
     if (sourceMailbox && targetMailbox) {
-      const sourceUPN = sourceMailbox.value;
-      const targetUPN = targetMailbox.value;
-      const randomGUID = crypto.randomUUID();
-      formControl.setValue("RequestName", `Restore ${sourceUPN} to ${targetUPN} (${randomGUID})`);
+      const sourceUPN = sourceMailbox.value
+      const targetUPN = targetMailbox.value
+      const randomGUID = crypto.randomUUID()
+      formControl.setValue(
+        'RequestName',
+        `Restore ${sourceUPN} to ${targetUPN} (${randomGUID})`
+      )
     }
-  }, [sourceMailbox, targetMailbox, formControl]);
+  }, [sourceMailbox, targetMailbox, formControl])
 
   return (
     <CippFormPage
@@ -59,9 +68,11 @@ const MailboxRestoreForm = () => {
           TenantFilter: tenantDomain,
           RequestName: values.RequestName,
           SourceMailbox:
-            values.SourceMailbox?.addedFields?.ExchangeGuid ?? values.SourceMailbox?.value,
+            values.SourceMailbox?.addedFields?.ExchangeGuid ??
+            values.SourceMailbox?.value,
           TargetMailbox:
-            values.TargetMailbox?.addedFields?.ExchangeGuid ?? values.TargetMailbox?.value,
+            values.TargetMailbox?.addedFields?.ExchangeGuid ??
+            values.TargetMailbox?.value,
           BadItemLimit: values.BadItemLimit,
           LargeItemLimit: values.LargeItemLimit,
           AcceptLargeDataLoss: values.AcceptLargeDataLoss,
@@ -77,15 +88,16 @@ const MailboxRestoreForm = () => {
           ExcludeDumpster: values.ExcludeDumpster,
           SourceIsArchive: values.SourceIsArchive,
           TargetIsArchive: values.TargetIsArchive,
-        };
-        return shippedValues;
+        }
+        return shippedValues
       }}
     >
       <Grid container spacing={2}>
         <Grid size={12}>
           <Alert severity="info">
-            Use this form to restore a mailbox from a soft-deleted state to the target mailbox. Use
-            the optional settings tailor the restore request for your needs.
+            Use this form to restore a mailbox from a soft-deleted state to the
+            target mailbox. Use the optional settings tailor the restore request
+            for your needs.
           </Alert>
         </Grid>
         <Grid size={12}>
@@ -102,12 +114,18 @@ const MailboxRestoreForm = () => {
             required={true}
             api={{
               labelField: (option) => `${option.displayName} (${option.UPN})`,
-              valueField: "UPN",
-              addedField: { displayName: "displayName", ExchangeGuid: "ExchangeGuid" },
-              url: "/api/ListMailboxes?SoftDeletedMailbox=true",
+              valueField: 'UPN',
+              addedField: {
+                displayName: 'displayName',
+                ExchangeGuid: 'ExchangeGuid',
+              },
+              url: '/api/ListMailboxes?SoftDeletedMailbox=true',
               queryKey: `ListMailboxes-${tenantDomain}-SoftDeleted`,
             }}
-            validators={{ validate: (value) => (value ? true : "Please select a source mailbox.") }}
+            validators={{
+              validate: (value) =>
+                value ? true : 'Please select a source mailbox.',
+            }}
           />
         </Grid>
         {/* Target Mailbox */}
@@ -123,12 +141,18 @@ const MailboxRestoreForm = () => {
             api={{
               queryKey: `ListMailboxes-${tenantDomain}`,
               labelField: (option) => `${option.displayName} (${option.UPN})`,
-              valueField: "UPN",
-              addedField: { displayName: "displayName", ExchangeGuid: "ExchangeGuid" },
-              url: "/api/ListMailboxes",
+              valueField: 'UPN',
+              addedField: {
+                displayName: 'displayName',
+                ExchangeGuid: 'ExchangeGuid',
+              },
+              url: '/api/ListMailboxes',
               data: { UseReportDB: true },
             }}
-            validators={{ validate: (value) => (value ? true : "Please select a target mailbox.") }}
+            validators={{
+              validate: (value) =>
+                value ? true : 'Please select a target mailbox.',
+            }}
           />
         </Grid>
         <Grid size={12}>
@@ -138,7 +162,7 @@ const MailboxRestoreForm = () => {
             name="RequestName"
             required={true}
             formControl={formControl}
-            validators={{ required: "Please enter a request name." }}
+            validators={{ required: 'Please enter a request name.' }}
           />
         </Grid>
         <Grid size={12}>
@@ -178,9 +202,9 @@ const MailboxRestoreForm = () => {
             name="AssociatedMessagesCopyOption"
             formControl={formControl}
             options={[
-              { value: "DoNotCopy", label: "Do Not Copy" },
-              { value: "MapByMessageClass", label: "Map By Message Class" },
-              { value: "Copy", label: "Copy" },
+              { value: 'DoNotCopy', label: 'Do Not Copy' },
+              { value: 'MapByMessageClass', label: 'Map By Message Class' },
+              { value: 'Copy', label: 'Copy' },
             ]}
           />
         </Grid>
@@ -223,12 +247,12 @@ const MailboxRestoreForm = () => {
             formControl={formControl}
             multiple={false}
             options={[
-              { value: "ForceCopy", label: "Force Copy" },
-              { value: "KeepAll", label: "Keep All" },
-              { value: "KeepLatestItem", label: "Keep Latest Item" },
-              { value: "KeepSourceItem", label: "Keep Source Item" },
-              { value: "KeepTargetItem", label: "Keep Target Item" },
-              { value: "UpdateFromSource", label: "Update From Source" },
+              { value: 'ForceCopy', label: 'Force Copy' },
+              { value: 'KeepAll', label: 'Keep All' },
+              { value: 'KeepLatestItem', label: 'Keep Latest Item' },
+              { value: 'KeepSourceItem', label: 'Keep Source Item' },
+              { value: 'KeepTargetItem', label: 'Keep Target Item' },
+              { value: 'UpdateFromSource', label: 'Update From Source' },
             ]}
           />
         </Grid>
@@ -256,9 +280,9 @@ const MailboxRestoreForm = () => {
             multiple={false}
             formControl={formControl}
             options={[
-              { value: "Archive", label: "Archive" },
-              { value: "MailboxLocation", label: "Mailbox Location" },
-              { value: "Primary", label: "Primary" },
+              { value: 'Archive', label: 'Archive' },
+              { value: 'MailboxLocation', label: 'Mailbox Location' },
+              { value: 'Primary', label: 'Primary' },
             ]}
           />
         </Grid>
@@ -288,9 +312,11 @@ const MailboxRestoreForm = () => {
         </Grid>
       </Grid>
     </CippFormPage>
-  );
-};
+  )
+}
 
-MailboxRestoreForm.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+MailboxRestoreForm.getLayout = (page) => (
+  <DashboardLayout>{page}</DashboardLayout>
+)
 
-export default MailboxRestoreForm;
+export default MailboxRestoreForm

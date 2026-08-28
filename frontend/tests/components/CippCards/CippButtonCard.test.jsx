@@ -27,11 +27,16 @@ describe('CippButtonCard', () => {
 
   it('renders CardButton when provided', () => {
     renderWithTheme(
-      <CippButtonCard title="Card with Button" CardButton={<button>Click Me</button>}>
+      <CippButtonCard
+        title="Card with Button"
+        CardButton={<button>Click Me</button>}
+      >
         <span>Some content</span>
       </CippButtonCard>
     )
-    expect(screen.getByRole('button', { name: /Click Me/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Click Me/i })
+    ).toBeInTheDocument()
   })
 
   it('renders without title and has no card header', () => {
@@ -46,7 +51,9 @@ describe('CippButtonCard', () => {
         <span>Check no header</span>
       </CippButtonCard>
     )
-    expect(container.querySelector('.MuiCardHeader-root')).not.toBeInTheDocument()
+    expect(
+      container.querySelector('.MuiCardHeader-root')
+    ).not.toBeInTheDocument()
   })
 
   it('renders as accordion and toggles expand on click', async () => {

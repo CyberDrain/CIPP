@@ -6,7 +6,12 @@ import { ApiGetCall } from '../../../../api/ApiCall'
 import { useSettings } from '../../../../hooks/use-settings'
 import { CippApiResults } from '../../../../components/CippComponents/CippApiResults'
 import { CippDomainCards } from '../../../../components/CippCards/CippDomainCards'
-import { DeleteForever, TravelExplore, Refresh, Settings } from '@mui/icons-material'
+import {
+  DeleteForever,
+  TravelExplore,
+  Refresh,
+  Settings,
+} from '@mui/icons-material'
 import { DomainAnalyserDialog } from '../../../../components/CippComponents/DomainAnalyserDialog'
 import { useDialog } from '../../../../hooks/use-dialog'
 
@@ -43,13 +48,16 @@ const Page = () => {
       icon: <DeleteForever />,
       url: '/api/ExecDnsConfig',
       data: { Action: '!RemoveDomain', Domain: 'Domain' },
-      confirmText: 'Are you sure you want to delete this domain from the analyser?',
+      confirmText:
+        'Are you sure you want to delete this domain from the analyser?',
       multiPost: false,
     },
   ]
 
   const offCanvas = {
-    children: (extendedData) => <CippDomainCards domain={extendedData.Domain} fullwidth={true} />,
+    children: (extendedData) => (
+      <CippDomainCards domain={extendedData.Domain} fullwidth={true} />
+    ),
   }
   return (
     <>

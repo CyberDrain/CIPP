@@ -51,8 +51,14 @@
         "name": "standards.CopilotSettings.allowWebSearch",
         "options": [
           { "label": "Do not configure", "value": "donotconfigure" },
-          { "label": "Enabled in Microsoft 365 Copilot and Microsoft 365 Copilot Chat", "value": "0" },
-          { "label": "Disabled in Microsoft 365 Copilot and Microsoft 365 Copilot Chat", "value": "1" },
+          {
+            "label": "Enabled in Microsoft 365 Copilot and Microsoft 365 Copilot Chat",
+            "value": "0"
+          },
+          {
+            "label": "Disabled in Microsoft 365 Copilot and Microsoft 365 Copilot Chat",
+            "value": "1"
+          },
           {
             "label": "Disabled in Microsoft 365 Copilot Work mode, Enabled in Microsoft 365 Copilot Chat",
             "value": "2"
@@ -239,7 +245,11 @@
   {
     "name": "standards.AuditLog",
     "cat": "Global Standards",
-    "tag": ["CIS M365 7.0.0 (3.1.1)", "mip_search_auditlog", "NIST CSF 2.0 (DE.CM-09)"],
+    "tag": [
+      "CIS M365 7.0.0 (3.1.1)",
+      "mip_search_auditlog",
+      "NIST CSF 2.0 (DE.CM-09)"
+    ],
     "appliesToTest": ["CISAMSEXO171", "CISAMSEXO173", "CIS_3_1_1"],
     "helpText": "Enables the Unified Audit Log for tracking and auditing activities. Also runs Enable-OrganizationCustomization if necessary.",
     "executiveText": "Activates comprehensive activity logging across Microsoft 365 services to track user actions, system changes, and security events. This provides essential audit trails for compliance requirements, security investigations, and regulatory reporting.",
@@ -366,8 +376,16 @@
           { "label": "Partial-screen background", "value": "verticalSplit" }
         ]
       },
-      { "type": "switch", "name": "standards.Branding.isHeaderShown", "label": "Show header" },
-      { "type": "switch", "name": "standards.Branding.isFooterShown", "label": "Show footer" }
+      {
+        "type": "switch",
+        "name": "standards.Branding.isHeaderShown",
+        "label": "Show header"
+      },
+      {
+        "type": "switch",
+        "name": "standards.Branding.isFooterShown",
+        "label": "Show footer"
+      }
     ],
     "label": "Set branding for the tenant",
     "impact": "Low Impact",
@@ -495,7 +513,11 @@
   {
     "name": "standards.ActivityBasedTimeout",
     "cat": "Global Standards",
-    "tag": ["CIS M365 7.0.0 (1.3.2)", "spo_idle_session_timeout", "NIST CSF 2.0 (PR.AA-03)"],
+    "tag": [
+      "CIS M365 7.0.0 (1.3.2)",
+      "spo_idle_session_timeout",
+      "NIST CSF 2.0 (PR.AA-03)"
+    ],
     "appliesToTest": ["CIS_1_3_2", "ZTNA21813", "ZTNA21814", "ZTNA21815"],
     "helpText": "Enables and sets Idle session timeout for Microsoft 365 to 1 hour. This policy affects most M365 web apps",
     "executiveText": "Automatically logs out inactive users from Microsoft 365 applications after a specified time period to prevent unauthorized access to company data on unattended devices. This security measure protects against data breaches when employees leave workstations unlocked.",
@@ -1029,7 +1051,13 @@
     "name": "standards.laps",
     "cat": "Entra (AAD) Standards",
     "tag": ["CIS M365 7.0.0 (5.1.4.5)", "SMB1001 (2.2)"],
-    "appliesToTest": ["CIS_5_1_4_5", "SMB1001_2_2", "ZTNA21953", "ZTNA21955", "ZTNA24560"],
+    "appliesToTest": [
+      "CIS_5_1_4_5",
+      "SMB1001_2_2",
+      "ZTNA21953",
+      "ZTNA21955",
+      "ZTNA24560"
+    ],
     "helpText": "Enables the tenant to use LAPS. You must still create a policy for LAPS to be active on all devices. Use the template standards to deploy this by default.",
     "docsDescription": "Enables the LAPS functionality on the tenant. Prerequisite for using Windows LAPS via Azure AD.",
     "executiveText": "Enables Local Administrator Password Solution (LAPS) capability, which automatically manages and rotates local administrator passwords on company computers. This significantly improves security by preventing the use of shared or static administrator passwords that could be exploited by attackers.",
@@ -1473,7 +1501,10 @@
         "label": "Authentication method to nudge users to register (default is Microsoft Authenticator)",
         "name": "standards.NudgeMFA.targetedAuthenticationMethod",
         "options": [
-          { "label": "Microsoft Authenticator", "value": "microsoftAuthenticator" },
+          {
+            "label": "Microsoft Authenticator",
+            "value": "microsoftAuthenticator"
+          },
           { "label": "Passkey (FIDO2)", "value": "fido2" }
         ],
         "condition": {
@@ -1791,8 +1822,19 @@
   {
     "name": "standards.GuestInvite",
     "cat": "Entra (AAD) Standards",
-    "tag": ["CISA (MS.AAD.18.1v1)", "EIDSCA.AP04", "EIDSCA.AP07", "SMB1001 (2.8)"],
-    "appliesToTest": ["CIS_5_1_6_3", "EIDSCAAP04", "EIDSCAAP07", "SMB1001_2_8", "ZTNA21791"],
+    "tag": [
+      "CISA (MS.AAD.18.1v1)",
+      "EIDSCA.AP04",
+      "EIDSCA.AP07",
+      "SMB1001 (2.8)"
+    ],
+    "appliesToTest": [
+      "CIS_5_1_6_3",
+      "EIDSCAAP04",
+      "EIDSCAAP07",
+      "SMB1001_2_8",
+      "ZTNA21791"
+    ],
     "helpText": "This setting controls who can invite guests to your directory to collaborate on resources secured by your company, such as SharePoint sites or Azure resources.",
     "executiveText": "Controls who within the organization can invite external partners and vendors to access company resources, ensuring proper oversight of external access while enabling necessary business collaboration. This helps maintain security while supporting partnership and vendor relationships.",
     "addedComponent": [
@@ -1809,7 +1851,10 @@
             "label": "Admins, Guest inviters and All Members",
             "value": "adminsGuestInvitersAndAllMembers"
           },
-          { "label": "Admins and Guest inviters", "value": "adminsAndGuestInviters" },
+          {
+            "label": "Admins and Guest inviters",
+            "value": "adminsAndGuestInviters"
+          },
           { "label": "None", "value": "none" }
         ]
       }
@@ -1824,7 +1869,11 @@
   {
     "name": "standards.StaleEntraDevices",
     "cat": "Entra (AAD) Standards",
-    "tag": ["Essential 8 (1501)", "NIST CSF 2.0 (ID.AM-08)", "NIST CSF 2.0 (PR.PS-03)"],
+    "tag": [
+      "Essential 8 (1501)",
+      "NIST CSF 2.0 (ID.AM-08)",
+      "NIST CSF 2.0 (PR.PS-03)"
+    ],
     "helpText": "Cleans up Entra devices that have not connected/signed in for the specified number of days. Remediation first disables stale enabled devices and, on a later run, deletes stale devices that are already disabled. Hybrid-joined, Intune-managed and Autopilot devices are skipped. Deleting a device permanently removes any BitLocker recovery keys stored on it.",
     "docsDescription": "Cleans up Entra devices that have not connected/signed in for the specified number of days. Remediation first disables stale enabled devices once they pass the disable threshold, and later deletes devices that are already disabled once they have been inactive for the disable threshold plus the configured grace delta (deletion age = disable threshold + grace days). The disable-before-delete grace period is further guaranteed by never deleting a device in the same pass it was disabled. Hybrid-joined (on-premises synced), Intune-managed/compliant, and system-managed Autopilot devices are excluded, in line with the [Microsoft guidance](https://learn.microsoft.com/en-us/entra/identity/devices/manage-stale-devices). **Warning:** deleting a device permanently removes any BitLocker recovery keys stored on that device object.",
     "executiveText": "Automatically identifies and removes inactive devices that haven't connected to company systems for a specified period, reducing security risks from abandoned or lost devices. This maintains a clean device inventory and prevents potential unauthorized access through dormant device registrations.",
@@ -1875,7 +1924,12 @@
   {
     "name": "standards.SecurityDefaults",
     "cat": "Entra (AAD) Standards",
-    "tag": ["CISA (MS.AAD.11.1v1)", "SMB1001 (2.5)", "SMB1001 (2.6)", "SMB1001 (2.9)"],
+    "tag": [
+      "CISA (MS.AAD.11.1v1)",
+      "SMB1001 (2.5)",
+      "SMB1001 (2.6)",
+      "SMB1001 (2.9)"
+    ],
     "appliesToTest": ["SMB1001_2_5", "SMB1001_2_6", "SMB1001_2_9", "ZTNA21843"],
     "helpText": "Enables security defaults for the tenant, for newer tenants this is enabled by default. Do not enable this feature if you use Conditional Access.",
     "docsDescription": "Enables SD for the tenant, which disables all forms of basic authentication and enforces users to configure MFA. Users are only prompted for MFA when a logon is considered 'suspect' by Microsoft.",
@@ -1958,7 +2012,13 @@
       "SMB1001 (2.6)",
       "SMB1001 (2.9)"
     ],
-    "appliesToTest": ["CIS_5_2_3_7", "SMB1001_2_5", "SMB1001_2_5_L4", "SMB1001_2_6", "SMB1001_2_9"],
+    "appliesToTest": [
+      "CIS_5_2_3_7",
+      "SMB1001_2_5",
+      "SMB1001_2_5_L4",
+      "SMB1001_2_6",
+      "SMB1001_2_9"
+    ],
     "helpText": "This blocks users from using email as an MFA method. This disables the email OTP option for guest users, and instead prompts them to create a Microsoft account.",
     "executiveText": "Disables email-based authentication codes due to security concerns with email interception and account compromise. This forces users to adopt more secure authentication methods, particularly affecting guest users who must use stronger verification methods.",
     "addedComponent": [],
@@ -2066,7 +2126,11 @@
         "creatable": false,
         "name": "standards.UserPreferredLanguage.preferredLanguage",
         "label": "Preferred Language",
-        "api": { "url": "/languageList.json", "labelField": "tag", "valueField": "tag" }
+        "api": {
+          "url": "/languageList.json",
+          "labelField": "tag",
+          "valueField": "tag"
+        }
       }
     ],
     "label": "Preferred language for all users",
@@ -2673,7 +2737,13 @@
     "name": "standards.AddDKIM",
     "cat": "Exchange Standards",
     "tag": ["CIS M365 7.0.0 (2.1.9)", "SMB1001 (2.12)"],
-    "appliesToTest": ["CISAMSEXO31", "CIS_2_1_9", "ORCA108", "ORCA108_1", "SMB1001_2_12"],
+    "appliesToTest": [
+      "CISAMSEXO31",
+      "CIS_2_1_9",
+      "ORCA108",
+      "ORCA108_1",
+      "SMB1001_2_12"
+    ],
     "helpText": "Enables DKIM for all domains that currently support it",
     "executiveText": "Enables email authentication technology that digitally signs outgoing emails to verify they actually came from your organization. This prevents email spoofing, improves email deliverability, and protects the company's reputation by ensuring recipients can trust emails from your domains.",
     "addedComponent": [],
@@ -2694,7 +2764,12 @@
   {
     "name": "standards.AddDMARCToMOERA",
     "cat": "Global Standards",
-    "tag": ["CIS M365 7.0.0 (2.1.10)", "Security", "PhishingProtection", "SMB1001 (2.12)"],
+    "tag": [
+      "CIS M365 7.0.0 (2.1.10)",
+      "Security",
+      "PhishingProtection",
+      "SMB1001 (2.12)"
+    ],
     "appliesToTest": ["CIS_2_1_10", "SMB1001_2_12"],
     "helpText": "** Remediation is not available ** Note: requires 'Domain Name Administrator' GDAP role. This should be enabled even if the MOERA (onmicrosoft.com) domains is not used for sending. Enabling this prevents email spoofing. The default value is 'v=DMARC1; p=reject;' recommended because the domain is only used within M365 and reporting is not needed. Omitting pct tag default to 100%",
     "docsDescription": "** Remediation is not available ** Note: requires 'Domain Name Administrator' GDAP role. Adds a DMARC record to MOERA (onmicrosoft.com) domains. This should be enabled even if the MOERA (onmicrosoft.com) domains is not used for sending. Enabling this prevents email spoofing. The default record is 'v=DMARC1; p=reject;' recommended because the domain is only used within M365 and reporting is not needed. Omitting pct tag default to 100%",
@@ -2709,7 +2784,10 @@
         "label": "Value",
         "name": "standards.AddDMARCToMOERA.RecordValue",
         "options": [
-          { "label": "v=DMARC1; p=reject; (recommended)", "value": "v=DMARC1; p=reject;" }
+          {
+            "label": "v=DMARC1; p=reject; (recommended)",
+            "value": "v=DMARC1; p=reject;"
+          }
         ]
       }
     ],
@@ -2900,7 +2978,10 @@
             "label": "Non Editing Author - The user has full read access and create items. Can can delete only own items.",
             "value": "NonEditingAuthor"
           },
-          { "label": "Reviewer - The user can read all items in the folder.", "value": "Reviewer" },
+          {
+            "label": "Reviewer - The user can read all items in the folder.",
+            "value": "Reviewer"
+          },
           {
             "label": "Contributor - The user can create items and folders.",
             "value": "Contributor"
@@ -2913,7 +2994,10 @@
             "label": "Limited Details - The user can view free/busy time within the calendar and the subject and location of appointments.",
             "value": "LimitedDetails"
           },
-          { "label": "None - The user has no permissions on the folder.", "value": "none" }
+          {
+            "label": "None - The user has no permissions on the folder.",
+            "value": "none"
+          }
         ]
       }
     ],
@@ -3802,8 +3886,14 @@
         "label": "Quarantine policy for Spoof",
         "name": "standards.AntiPhishPolicy.SpoofQuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
@@ -3817,7 +3907,10 @@
         "name": "standards.AntiPhishPolicy.TargetedUserProtectionAction",
         "options": [
           { "label": "Move to Junk Folder", "value": "MoveToJmf" },
-          { "label": "Delete the message before its delivered", "value": "Delete" },
+          {
+            "label": "Delete the message before its delivered",
+            "value": "Delete"
+          },
           { "label": "Quarantine the message", "value": "Quarantine" }
         ]
       },
@@ -3828,8 +3921,14 @@
         "label": "Quarantine policy for user impersonation",
         "name": "standards.AntiPhishPolicy.TargetedUserQuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
@@ -3843,7 +3942,10 @@
         "name": "standards.AntiPhishPolicy.TargetedDomainProtectionAction",
         "options": [
           { "label": "Move to Junk Folder", "value": "MoveToJmf" },
-          { "label": "Delete the message before its delivered", "value": "Delete" },
+          {
+            "label": "Delete the message before its delivered",
+            "value": "Delete"
+          },
           { "label": "Quarantine the message", "value": "Quarantine" }
         ]
       },
@@ -3858,8 +3960,14 @@
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
           },
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" }
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          }
         ]
       },
       {
@@ -3869,7 +3977,10 @@
         "name": "standards.AntiPhishPolicy.MailboxIntelligenceProtectionAction",
         "options": [
           { "label": "Move to Junk Folder", "value": "MoveToJmf" },
-          { "label": "Delete the message before its delivered", "value": "Delete" },
+          {
+            "label": "Delete the message before its delivered",
+            "value": "Delete"
+          },
           { "label": "Quarantine the message", "value": "Quarantine" }
         ]
       },
@@ -3880,8 +3991,14 @@
         "label": "Apply quarantine policy",
         "name": "standards.AntiPhishPolicy.MailboxIntelligenceQuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
@@ -3941,15 +4058,25 @@
         "label": "QuarantineTag",
         "name": "standards.SafeAttachmentPolicy.QuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
           }
         ]
       },
-      { "type": "switch", "label": "Redirect", "name": "standards.SafeAttachmentPolicy.Redirect" },
+      {
+        "type": "switch",
+        "label": "Redirect",
+        "name": "standards.SafeAttachmentPolicy.Redirect"
+      },
       {
         "type": "textField",
         "name": "standards.SafeAttachmentPolicy.RedirectAddress",
@@ -4119,8 +4246,14 @@
         "label": "QuarantineTag",
         "name": "standards.MalwareFilterPolicy.QuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
@@ -4281,8 +4414,14 @@
         "label": "Spam Quarantine Tag",
         "name": "standards.SpamFilterPolicy.SpamQuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
@@ -4309,8 +4448,14 @@
         "label": "High Confidence Spam Quarantine Tag",
         "name": "standards.SpamFilterPolicy.HighConfidenceSpamQuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
@@ -4337,8 +4482,14 @@
         "label": "Bulk Quarantine Tag",
         "name": "standards.SpamFilterPolicy.BulkQuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
@@ -4365,8 +4516,14 @@
         "label": "Phish Quarantine Tag",
         "name": "standards.SpamFilterPolicy.PhishQuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
@@ -4381,8 +4538,14 @@
         "label": "High Confidence Phish Quarantine Tag",
         "name": "standards.SpamFilterPolicy.HighConfidencePhishQuarantineTag",
         "options": [
-          { "label": "AdminOnlyAccessPolicy", "value": "AdminOnlyAccessPolicy" },
-          { "label": "DefaultFullAccessPolicy", "value": "DefaultFullAccessPolicy" },
+          {
+            "label": "AdminOnlyAccessPolicy",
+            "value": "AdminOnlyAccessPolicy"
+          },
+          {
+            "label": "DefaultFullAccessPolicy",
+            "value": "DefaultFullAccessPolicy"
+          },
           {
             "label": "DefaultFullAccessWithNotificationPolicy",
             "value": "DefaultFullAccessWithNotificationPolicy"
@@ -4611,7 +4774,13 @@
     "addedDate": "2026-01-27",
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.WindowsBackupRestore",
@@ -4640,7 +4809,13 @@
     "addedDate": "2026-02-26",
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.intuneDeviceRetirementDays",
@@ -4661,7 +4836,13 @@
     "addedDate": "2023-05-19",
     "powershellEquivalent": "Graph API",
     "recommendedBy": ["CIPP"],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.intuneBrandingProfile",
@@ -4736,7 +4917,13 @@
     "addedDate": "2024-06-20",
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.IntuneComplianceSettings",
@@ -4775,7 +4962,13 @@
     "addedDate": "2024-11-12",
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.MDMScope",
@@ -4808,7 +5001,13 @@
     "addedDate": "2025-02-18",
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.DefaultPlatformRestrictions",
@@ -4885,7 +5084,13 @@
     "addedDate": "2025-04-01",
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.MDMEnrollmentDuringRegistration",
@@ -4907,7 +5112,13 @@
     "addedDate": "2025-12-15",
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.EnrollmentWindowsHelloForBusinessConfiguration",
@@ -5050,7 +5261,13 @@
     "addedDate": "2025-09-25",
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.intuneDeviceReg",
@@ -5073,12 +5290,22 @@
     "addedDate": "2023-03-27",
     "powershellEquivalent": "Update-MgBetaPolicyDeviceRegistrationPolicy",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.intuneDeviceRegLocalAdmins",
     "cat": "Entra (AAD) Standards",
-    "tag": ["CIS M365 7.0.0 (5.1.4.3)", "CIS M365 7.0.0 (5.1.4.4)", "SMB1001 (2.2)"],
+    "tag": [
+      "CIS M365 7.0.0 (5.1.4.3)",
+      "CIS M365 7.0.0 (5.1.4.4)",
+      "SMB1001 (2.2)"
+    ],
     "appliesToTest": ["CIS_5_1_4_3", "CIS_5_1_4_4", "SMB1001_2_2"],
     "helpText": "Controls whether users who register Microsoft Entra joined devices are granted local administrator rights on those devices and if Global Administrators are added as local admins.",
     "docsDescription": "Configures the Device Registration Policy local administrator behavior for registering users. When enabled, users who register devices are not granted local administrator rights, you can also configure if Global Administrators are added as local admins.",
@@ -5323,7 +5550,11 @@
   {
     "name": "standards.SPDisallowInfectedFiles",
     "cat": "SharePoint Standards",
-    "tag": ["CIS M365 7.0.0 (7.3.1)", "CISA (MS.SPO.3.1v1)", "NIST CSF 2.0 (DE.CM-09)"],
+    "tag": [
+      "CIS M365 7.0.0 (7.3.1)",
+      "CISA (MS.SPO.3.1v1)",
+      "NIST CSF 2.0 (DE.CM-09)"
+    ],
     "appliesToTest": ["CIS_7_3_1", "ZTNA21817"],
     "helpText": "Ensure Office 365 SharePoint infected files are disallowed for download",
     "executiveText": "Prevents employees from downloading files that have been identified as containing malware or viruses from SharePoint and OneDrive. This security measure protects against malware distribution through file sharing while maintaining access to clean, safe documents.",
@@ -5459,7 +5690,11 @@
   {
     "name": "standards.DefaultSharingLink",
     "cat": "SharePoint Standards",
-    "tag": ["CIS M365 7.0.0 (7.2.7)", "CIS M365 7.0.0 (7.2.11)", "CISA (MS.SPO.1.4v1)"],
+    "tag": [
+      "CIS M365 7.0.0 (7.2.7)",
+      "CIS M365 7.0.0 (7.2.11)",
+      "CISA (MS.SPO.1.4v1)"
+    ],
     "appliesToTest": ["CIS_7_2_11", "CIS_7_2_7", "ZTNA21803", "ZTNA21804"],
     "helpText": "Configure the SharePoint default sharing link type and permission. This setting controls both the type of sharing link created by default and the permission level assigned to those links.",
     "docsDescription": "Sets the default sharing link type (Direct or Internal) and permission (View) in SharePoint and OneDrive. Direct sharing means links only work for specific people, while Internal sharing means links work for anyone in the organization. Setting the view permission as the default ensures that users must deliberately select the edit permission when sharing a link, reducing the risk of unintentionally granting edit privileges.",
@@ -5473,8 +5708,14 @@
         "label": "Default Sharing Link Type",
         "name": "standards.DefaultSharingLink.SharingLinkType",
         "options": [
-          { "label": "Direct - Only the people the user specifies", "value": "Direct" },
-          { "label": "Internal - Only people in your organization", "value": "Internal" }
+          {
+            "label": "Direct - Only the people the user specifies",
+            "value": "Direct"
+          },
+          {
+            "label": "Internal - Only people in your organization",
+            "value": "Internal"
+          }
         ]
       }
     ],
@@ -5646,7 +5887,11 @@
   {
     "name": "standards.DisableReshare",
     "cat": "SharePoint Standards",
-    "tag": ["CIS M365 7.0.0 (7.2.5)", "CISA (MS.AAD.14.2v1)", "CISA (MS.SPO.1.2v1)"],
+    "tag": [
+      "CIS M365 7.0.0 (7.2.5)",
+      "CISA (MS.AAD.14.2v1)",
+      "CISA (MS.SPO.1.2v1)"
+    ],
     "appliesToTest": ["CIS_7_2_5", "ZTNA21803", "ZTNA21804"],
     "helpText": "Disables the ability for external users to share files they don't own. Sharing links can only be made for People with existing access",
     "docsDescription": "Disables the ability for external users to share files they don't own. Sharing links can only be made for People with existing access. This is a tenant wide setting and overrules any settings set on the site level",
@@ -5769,12 +6014,22 @@
     "addedDate": "2025-06-13",
     "powershellEquivalent": "Set-SPOTenant -ConditionalAccessPolicy AllowFullAccess | AllowLimitedAccess | BlockAccess",
     "recommendedBy": ["CIS"],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.sharingDomainRestriction",
     "cat": "SharePoint Standards",
-    "tag": ["CIS M365 7.0.0 (7.2.6)", "CISA (MS.AAD.14.3v1)", "CISA (MS.SPO.1.3v1)"],
+    "tag": [
+      "CIS M365 7.0.0 (7.2.6)",
+      "CISA (MS.AAD.14.3v1)",
+      "CISA (MS.SPO.1.3v1)"
+    ],
     "appliesToTest": ["CIS_7_2_6", "ZTNA21803", "ZTNA21804"],
     "helpText": "Restricts sharing to only users with the specified domain. This is useful for organizations that only want to share with their own domain.",
     "executiveText": "Controls which external domains employees can share files with, enabling secure collaboration with trusted partners while blocking sharing with unauthorized organizations. This targeted approach maintains necessary business relationships while preventing data exposure to unknown entities.",
@@ -5786,7 +6041,10 @@
         "label": "Limit external sharing by domains",
         "options": [
           { "label": "Off", "value": "none" },
-          { "label": "Restrict sharing to specific domains", "value": "allowList" },
+          {
+            "label": "Restrict sharing to specific domains",
+            "value": "allowList"
+          },
           { "label": "Block sharing to specific domains", "value": "blockList" }
         ]
       },
@@ -5849,7 +6107,10 @@
         "label": "Default value of the `Who can present?`",
         "options": [
           { "label": "Everyone", "value": "EveryoneUserOverride" },
-          { "label": "People in my organization", "value": "EveryoneInCompanyUserOverride" },
+          {
+            "label": "People in my organization",
+            "value": "EveryoneInCompanyUserOverride"
+          },
           { "label": "Only organizer", "value": "OrganizerOnlyUserOverride" }
         ]
       },
@@ -5872,7 +6133,10 @@
         "label": "Who can bypass the lobby?",
         "helperText": "If left blank, the current value will not be changed.",
         "options": [
-          { "label": "Only organizers and co-organizers", "value": "OrganizerOnly" },
+          {
+            "label": "Only organizers and co-organizers",
+            "value": "OrganizerOnly"
+          },
           {
             "label": "People in organization excluding guests",
             "value": "EveryoneInCompanyExcludingGuests"
@@ -5899,7 +6163,10 @@
         "label": "Meeting chat policy",
         "options": [
           { "label": "On for everyone", "value": "Enabled" },
-          { "label": "On for everyone but anonymous users", "value": "EnabledExceptAnonymous" },
+          {
+            "label": "On for everyone but anonymous users",
+            "value": "EnabledExceptAnonymous"
+          },
           { "label": "Off for everyone", "value": "Disabled" }
         ]
       },
@@ -5946,7 +6213,13 @@
     "addedDate": "2024-11-12",
     "powershellEquivalent": "Set-CsTeamsMeetingPolicy -AllowAnonymousUsersToJoinMeeting $false -AllowAnonymousUsersToStartMeeting $false -AutoAdmittedUsers $AutoAdmittedUsers -AllowPSTNUsersToBypassLobby $false -MeetingChatEnabledType EnabledExceptAnonymous -DesignatedPresenterRoleMode $DesignatedPresenterRoleMode -AllowExternalParticipantGiveRequestControl $false -AllowParticipantGiveRequestControl $false -AllowExternalNonTrustedMeetingChat $false -AllowCloudRecording $false",
     "recommendedBy": ["CIS"],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsChatProtection",
@@ -5975,7 +6248,13 @@
     "addedDate": "2025-10-02",
     "powershellEquivalent": "Set-CsTeamsMessagingConfiguration -FileTypeCheck 'Enabled' -UrlReputationCheck 'Enabled' -ReportIncorrectSecurityDetections 'Enabled'",
     "recommendedBy": ["CIPP"],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsExternalChatWithAnyone",
@@ -6003,7 +6282,13 @@
     "addedDate": "2025-11-03",
     "powershellEquivalent": "Set-CsTeamsMessagingPolicy -Identity Global -UseB2BInvitesToAddExternalUsers $false/$true",
     "recommendedBy": ["CIPP"],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsEmailIntegration",
@@ -6026,7 +6311,13 @@
     "recommendedBy": ["CIS"],
     "tag": ["CIS M365 7.0.0 (8.1.2)"],
     "appliesToTest": ["CIS_8_1_2"],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsGuestAccess",
@@ -6048,7 +6339,13 @@
     "addedDate": "2025-06-03",
     "powershellEquivalent": "Set-CsTeamsClientConfiguration -AllowGuestUser $true",
     "recommendedBy": [],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsMeetingVerification",
@@ -6079,7 +6376,13 @@
     "addedDate": "2025-06-14",
     "powershellEquivalent": "Set-CsTeamsMeetingPolicy -CaptchaVerificationForMeetingJoin",
     "recommendedBy": ["CIPP"],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsExternalFileSharing",
@@ -6121,7 +6424,13 @@
     "addedDate": "2024-07-28",
     "powershellEquivalent": "Set-CsTeamsClientConfiguration -AllowGoogleDrive $false -AllowShareFile $false -AllowBox $false -AllowDropBox $false -AllowEgnyte $false",
     "recommendedBy": ["CIS"],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsEnrollUser",
@@ -6150,7 +6459,13 @@
     "addedDate": "2024-11-12",
     "powershellEquivalent": "Set-CsTeamsMeetingPolicy -Identity Global -EnrollUserOverride $false",
     "recommendedBy": [],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsExternalAccessPolicy",
@@ -6188,7 +6503,13 @@
     "addedDate": "2024-07-30",
     "powershellEquivalent": "Set-CsExternalAccessPolicy",
     "recommendedBy": [],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsFederationConfiguration",
@@ -6222,10 +6543,22 @@
         "name": "standards.TeamsFederationConfiguration.DomainControl",
         "label": "Communication Mode",
         "options": [
-          { "label": "Allow all external domains", "value": "AllowAllExternal" },
-          { "label": "Block all external domains", "value": "BlockAllExternal" },
-          { "label": "Allow specific external domains", "value": "AllowSpecificExternal" },
-          { "label": "Block specific external domains", "value": "BlockSpecificExternal" }
+          {
+            "label": "Allow all external domains",
+            "value": "AllowAllExternal"
+          },
+          {
+            "label": "Block all external domains",
+            "value": "BlockAllExternal"
+          },
+          {
+            "label": "Allow specific external domains",
+            "value": "AllowSpecificExternal"
+          },
+          {
+            "label": "Block specific external domains",
+            "value": "BlockSpecificExternal"
+          }
         ]
       },
       {
@@ -6246,7 +6579,13 @@
     "addedDate": "2024-07-31",
     "powershellEquivalent": "Set-CsTenantFederationConfiguration",
     "recommendedBy": [],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsMeetingRecordingExpiration",
@@ -6274,7 +6613,13 @@
     "addedDate": "2025-04-17",
     "powershellEquivalent": "Set-CsTeamsMeetingPolicy -Identity Global -MeetingRecordingExpirationDays <days>",
     "recommendedBy": [],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.TeamsMessagingPolicy",
@@ -6353,7 +6698,13 @@
     "addedDate": "2025-01-10",
     "powershellEquivalent": "Set-CsTeamsMessagingPolicy",
     "recommendedBy": [],
-    "requiredCapabilities": ["MCOSTANDARD", "MCOEV", "MCOIMP", "TEAMS1", "Teams_Room_Standard"]
+    "requiredCapabilities": [
+      "MCOSTANDARD",
+      "MCOEV",
+      "MCOIMP",
+      "TEAMS1",
+      "Teams_Room_Standard"
+    ]
   },
   {
     "name": "standards.AutopilotStatusPage",
@@ -6428,7 +6779,13 @@
     "addedDate": "2023-12-30",
     "impactColour": "info",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.AutopilotProfile",
@@ -6462,7 +6819,11 @@
         "required": false,
         "name": "standards.AutopilotProfile.Languages",
         "label": "Languages",
-        "api": { "url": "/languageList.json", "labelField": "languageTag", "valueField": "tag" }
+        "api": {
+          "url": "/languageList.json",
+          "labelField": "languageTag",
+          "valueField": "tag"
+        }
       },
       {
         "type": "switch",
@@ -6524,7 +6885,13 @@
     "impactColour": "info",
     "addedDate": "2023-12-30",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.DevicePrepProfile",
@@ -6630,7 +6997,13 @@
     "impactColour": "danger",
     "addedDate": "2026-05-25",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.AppleEnrollmentTypeProfile",
@@ -6660,9 +7033,18 @@
         "name": "standards.AppleEnrollmentTypeProfile.EnrollmentType",
         "label": "Enrollment Type",
         "options": [
-          { "label": "Web based device enrollment", "value": "webDeviceEnrollment" },
-          { "label": "Account driven user enrollment", "value": "accountDrivenUserEnrollment" },
-          { "label": "Device enrollment with Company Portal", "value": "device" }
+          {
+            "label": "Web based device enrollment",
+            "value": "webDeviceEnrollment"
+          },
+          {
+            "label": "Account driven user enrollment",
+            "value": "accountDrivenUserEnrollment"
+          },
+          {
+            "label": "Device enrollment with Company Portal",
+            "value": "device"
+          }
         ]
       },
       {
@@ -6692,7 +7074,13 @@
     "impactColour": "warning",
     "addedDate": "2026-08-18",
     "recommendedBy": [],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.IntuneTemplate",
@@ -6762,7 +7150,11 @@
           "labelField": "Displayname",
           "valueField": "GUID",
           "showRefresh": true,
-          "templateView": { "title": "Intune Template", "property": "RAWJson", "type": "intune" }
+          "templateView": {
+            "title": "Intune Template",
+            "property": "RAWJson",
+            "type": "intune"
+          }
         }
       },
       {
@@ -6787,7 +7179,10 @@
           { "label": "Do not assign", "value": "On" },
           { "label": "Assign to all users", "value": "allLicensedUsers" },
           { "label": "Assign to all devices", "value": "AllDevices" },
-          { "label": "Assign to all users and devices", "value": "AllDevicesAndUsers" },
+          {
+            "label": "Assign to all users and devices",
+            "value": "AllDevicesAndUsers"
+          },
           { "label": "Assign to Custom Group", "value": "customGroup" }
         ]
       },
@@ -6797,7 +7192,11 @@
         "name": "customGroup",
         "label": "Enter the custom group name if you selected 'Assign to Custom Group'. Wildcards are allowed."
       },
-      { "type": "switch", "name": "verifyAssignments", "label": "Verify policy assignments" },
+      {
+        "type": "switch",
+        "name": "verifyAssignments",
+        "label": "Verify policy assignments"
+      },
       {
         "name": "excludeGroup",
         "label": "Exclude Groups",
@@ -6819,8 +7218,14 @@
         "required": false,
         "helpText": "Choose whether to include or exclude devices matching the filter. Only applies if you specified a filter name above. Defaults to Include if not specified.",
         "options": [
-          { "label": "Include - Assign to devices matching the filter", "value": "include" },
-          { "label": "Exclude - Assign to devices NOT matching the filter", "value": "exclude" }
+          {
+            "label": "Include - Assign to devices matching the filter",
+            "value": "include"
+          },
+          {
+            "label": "Exclude - Assign to devices NOT matching the filter",
+            "value": "exclude"
+          }
         ]
       },
       {
@@ -6886,7 +7291,11 @@
           "labelField": "displayName",
           "valueField": "GUID",
           "showRefresh": true,
-          "templateView": { "title": "Reusable Settings", "property": "RawJSON", "type": "intune" }
+          "templateView": {
+            "title": "Reusable Settings",
+            "property": "RawJSON",
+            "type": "intune"
+          }
         }
       }
     ],
@@ -7029,7 +7438,10 @@
           { "value": "donotchange", "label": "Do not change state" },
           { "value": "Enabled", "label": "Set to enabled" },
           { "value": "Disabled", "label": "Set to disabled" },
-          { "value": "enabledForReportingButNotEnforced", "label": "Set to report only" }
+          {
+            "value": "enabledForReportingButNotEnforced",
+            "label": "Set to report only"
+          }
         ]
       },
       {
@@ -7037,7 +7449,11 @@
         "name": "DisableSD",
         "label": "Disable Security Defaults when deploying policy"
       },
-      { "type": "switch", "name": "CreateGroups", "label": "Create groups if they do not exist" }
+      {
+        "type": "switch",
+        "name": "CreateGroups",
+        "label": "Create groups if they do not exist"
+      }
     ],
     "requiredCapabilities": ["AAD_PREMIUM", "AAD_PREMIUM_P2"]
   },
@@ -7097,7 +7513,11 @@
         }
       }
     ],
-    "requiredCapabilities": ["EXCHANGE_S_STANDARD", "EXCHANGE_S_ENTERPRISE", "EXCHANGE_LITE"]
+    "requiredCapabilities": [
+      "EXCHANGE_S_STANDARD",
+      "EXCHANGE_S_ENTERPRISE",
+      "EXCHANGE_LITE"
+    ]
   },
   {
     "name": "standards.DlpCompliancePolicyTemplate",
@@ -7228,7 +7648,13 @@
         }
       }
     ],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.TenantAllowBlockListTemplate",
@@ -7330,7 +7756,10 @@
         "name": "standards.OWAAttachmentRestrictions.ConditionalAccessPolicy",
         "label": "Attachment Restriction Policy",
         "options": [
-          { "label": "Read Only (View/Edit via Office Online, no download)", "value": "ReadOnly" },
+          {
+            "label": "Read Only (View/Edit via Office Online, no download)",
+            "value": "ReadOnly"
+          },
           {
             "label": "Read Only Plus Attachments Blocked (Cannot see attachments)",
             "value": "ReadOnlyPlusAttachmentsBlocked"
@@ -7528,7 +7957,10 @@
           { "label": "Do not assign", "value": "On" },
           { "label": "Assign to all users", "value": "allLicensedUsers" },
           { "label": "Assign to all devices", "value": "AllDevices" },
-          { "label": "Assign to all users and devices", "value": "AllDevicesAndUsers" },
+          {
+            "label": "Assign to all users and devices",
+            "value": "AllDevicesAndUsers"
+          },
           { "label": "Assign to Custom Group", "value": "customGroup" }
         ]
       },
@@ -7545,7 +7977,13 @@
     "addedDate": "2025-09-18",
     "powershellEquivalent": "Add-CIPPW32ScriptApplication",
     "recommendedBy": ["CIPP"],
-    "requiredCapabilities": ["INTUNE_A", "MDM_Services", "EMS", "SCCM", "MICROSOFTINTUNEPLAN1"]
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ]
   },
   {
     "name": "standards.SecureScoreRemediation",
@@ -7560,7 +7998,11 @@
         "required": false,
         "name": "standards.SecureScoreRemediation.Default",
         "label": "Controls to set to Default",
-        "api": { "url": "/secureScore.json", "labelField": "title", "valueField": "id" }
+        "api": {
+          "url": "/secureScore.json",
+          "labelField": "title",
+          "valueField": "id"
+        }
       },
       {
         "type": "autoComplete",
@@ -7569,7 +8011,11 @@
         "required": false,
         "name": "standards.SecureScoreRemediation.Ignored",
         "label": "Controls to set to Ignored",
-        "api": { "url": "/secureScore.json", "labelField": "title", "valueField": "id" }
+        "api": {
+          "url": "/secureScore.json",
+          "labelField": "title",
+          "valueField": "id"
+        }
       },
       {
         "type": "autoComplete",
@@ -7578,7 +8024,11 @@
         "required": false,
         "name": "standards.SecureScoreRemediation.ThirdParty",
         "label": "Controls to set to Third-Party",
-        "api": { "url": "/secureScore.json", "labelField": "title", "valueField": "id" }
+        "api": {
+          "url": "/secureScore.json",
+          "labelField": "title",
+          "valueField": "id"
+        }
       },
       {
         "type": "autoComplete",
@@ -7587,7 +8037,11 @@
         "creatable": true,
         "name": "standards.SecureScoreRemediation.Reviewed",
         "label": "Controls to set to Reviewed",
-        "api": { "url": "/secureScore.json", "labelField": "title", "valueField": "id" }
+        "api": {
+          "url": "/secureScore.json",
+          "labelField": "title",
+          "valueField": "id"
+        }
       }
     ],
     "label": "Update Secure Score Control Profiles",
@@ -8190,8 +8644,14 @@
         "label": "Target OS Version",
         "required": true,
         "options": [
-          { "label": "Windows 11, version 24H2", "value": "Windows 11, version 24H2" },
-          { "label": "Windows 11, version 25H2", "value": "Windows 11, version 25H2" }
+          {
+            "label": "Windows 11, version 24H2",
+            "value": "Windows 11, version 24H2"
+          },
+          {
+            "label": "Windows 11, version 25H2",
+            "value": "Windows 11, version 25H2"
+          }
         ],
         "defaultValue": "Windows 11, version 25H2"
       },
@@ -8419,7 +8879,10 @@
         "options": [
           { "label": "Device-bound only", "value": "deviceBound" },
           { "label": "Synced only", "value": "synced" },
-          { "label": "Both device-bound and synced", "value": "deviceBound,synced" }
+          {
+            "label": "Both device-bound and synced",
+            "value": "deviceBound,synced"
+          }
         ],
         "required": true
       },
@@ -8429,7 +8892,10 @@
         "name": "standards.FIDO2PasskeyProfiles.AttestationEnforcement",
         "label": "Attestation Enforcement",
         "options": [
-          { "label": "Disabled (required for synced passkeys)", "value": "disabled" },
+          {
+            "label": "Disabled (required for synced passkeys)",
+            "value": "disabled"
+          },
           { "label": "Registration only", "value": "registrationOnly" }
         ],
         "required": true
@@ -8534,7 +9000,10 @@
         "label": "Expire Versions After Days (0 = never, otherwise 30-36500, when auto trim is off)",
         "default": 0,
         "validators": {
-          "min": { "value": 0, "message": "Use 0 for never, or 30 or more days" },
+          "min": {
+            "value": 0,
+            "message": "Use 0 for never, or 30 or more days"
+          },
           "max": { "value": 36500, "message": "Maximum value is 36500" }
         }
       },

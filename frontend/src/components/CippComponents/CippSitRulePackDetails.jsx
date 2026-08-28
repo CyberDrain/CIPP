@@ -5,11 +5,13 @@ import { CippCodeBlock } from './CippCodeBlock'
 // More-info panel for a live custom Sensitive Information Type: looks up its rule pack by RulePackId and
 // shows what it actually detects (parsed configuration + the raw ClassificationRuleCollection XML).
 export const CippSitRulePackDetails = ({ row, tenant }) => {
-  const isCustom = Boolean(row?.Publisher) && !String(row.Publisher).startsWith('Microsoft')
+  const isCustom =
+    Boolean(row?.Publisher) && !String(row.Publisher).startsWith('Microsoft')
   // Only classic regex/keyword (Entity) SITs have an inspectable rule configuration.
   const isEntity = row?.Type === 'Entity'
   const shouldShow = isCustom && isEntity
-  const tenantFilter = tenant === 'AllTenants' && row?.Tenant ? row.Tenant : tenant
+  const tenantFilter =
+    tenant === 'AllTenants' && row?.Tenant ? row.Tenant : tenant
 
   const rulePack = ApiGetCall({
     url: '/api/ListSensitiveInfoTypeRulePackage',
@@ -39,7 +41,8 @@ export const CippSitRulePackDetails = ({ row, tenant }) => {
   if (rulePack.isError || !rulePack.data?.Xml) {
     return (
       <Alert severity="warning" variant="outlined">
-        Could not load the rule pack configuration for this Sensitive Information Type.
+        Could not load the rule pack configuration for this Sensitive
+        Information Type.
       </Alert>
     )
   }
@@ -53,8 +56,16 @@ export const CippSitRulePackDetails = ({ row, tenant }) => {
         language="json"
         type="syntax"
       />
-      <Typography variant="subtitle2">Rule pack XML ({data.RulePackId})</Typography>
-      <CippCodeBlock code={data.Xml} language="xml" type="editor" readOnly editorHeight="400px" />
+      <Typography variant="subtitle2">
+        Rule pack XML ({data.RulePackId})
+      </Typography>
+      <CippCodeBlock
+        code={data.Xml}
+        language="xml"
+        type="editor"
+        readOnly
+        editorHeight="400px"
+      />
     </Stack>
   )
 }

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useForm, useWatch, useFormState } from "react-hook-form";
+import { useEffect, useState } from 'react'
+import { useForm, useWatch, useFormState } from 'react-hook-form'
 import {
   Button,
   Drawer,
@@ -13,8 +13,8 @@ import {
   CardContent,
   Chip,
   Tooltip,
-} from "@mui/material";
-import { Grid } from "@mui/system";
+} from '@mui/material'
+import { Grid } from '@mui/system'
 import {
   Close as CloseIcon,
   RestoreFromTrash,
@@ -22,94 +22,108 @@ import {
   Archive,
   Storage,
   AccountBox,
-} from "@mui/icons-material";
-import { useSettings } from "../../hooks/use-settings";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
-import CippFormComponent from "./CippFormComponent";
-import { CippApiResults } from "./CippApiResults";
-import { ApiPostCall } from "../../api/ApiCall";
+} from '@mui/icons-material'
+import { useSettings } from '../../hooks/use-settings'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
+import CippFormComponent from './CippFormComponent'
+import { CippApiResults } from './CippApiResults'
+import { ApiPostCall } from '../../api/ApiCall'
 
 const wellKnownFolders = [
-  "Inbox",
-  "SentItems",
-  "DeletedItems",
-  "Calendar",
-  "Contacts",
-  "Drafts",
-  "Journal",
-  "Tasks",
-  "Notes",
-  "JunkEmail",
-  "CommunicationHistory",
-  "Voicemail",
-  "Fax",
-  "Conflicts",
-  "SyncIssues",
-  "LocalFailures",
-  "ServerFailures",
-].map((folder) => ({ value: `#${folder}#`, label: getCippTranslation(folder) }));
+  'Inbox',
+  'SentItems',
+  'DeletedItems',
+  'Calendar',
+  'Contacts',
+  'Drafts',
+  'Journal',
+  'Tasks',
+  'Notes',
+  'JunkEmail',
+  'CommunicationHistory',
+  'Voicemail',
+  'Fax',
+  'Conflicts',
+  'SyncIssues',
+  'LocalFailures',
+  'ServerFailures',
+].map((folder) => ({ value: `#${folder}#`, label: getCippTranslation(folder) }))
 
 export const CippMailboxRestoreDrawer = ({
-  buttonText = "New Restore Job",
+  buttonText = 'New Restore Job',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const userSettingsDefaults = useSettings();
-  const tenantDomain = userSettingsDefaults.currentTenant;
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const userSettingsDefaults = useSettings()
+  const tenantDomain = userSettingsDefaults.currentTenant
 
   const formControl = useForm({
-    mode: "onBlur",
+    mode: 'onBlur',
     defaultValues: {
       tenantFilter: tenantDomain,
     },
-  });
+  })
 
   const createRestore = ApiPostCall({
-    relatedQueryKeys: ["MailboxRestores*"],
+    relatedQueryKeys: ['MailboxRestores*'],
     datafromurl: true,
-  });
+  })
 
-  const { isValid, isDirty } = useFormState({ control: formControl.control });
+  const { isValid, isDirty } = useFormState({ control: formControl.control })
 
-  const sourceMailbox = useWatch({ control: formControl.control, name: "SourceMailbox" });
-  const targetMailbox = useWatch({ control: formControl.control, name: "TargetMailbox" });
+  const sourceMailbox = useWatch({
+    control: formControl.control,
+    name: 'SourceMailbox',
+  })
+  const targetMailbox = useWatch({
+    control: formControl.control,
+    name: 'TargetMailbox',
+  })
 
   // Helper function to check if archive is active (GUID exists and is not all zeros)
   const hasActiveArchive = (mailbox) => {
-    const archiveGuid = mailbox?.addedFields?.ArchiveGuid;
+    const archiveGuid = mailbox?.addedFields?.ArchiveGuid
     return (
       archiveGuid &&
-      archiveGuid !== "00000000-0000-0000-0000-000000000000" &&
-      archiveGuid.replace(/0/g, "").replace(/-/g, "") !== ""
-    );
-  };
+      archiveGuid !== '00000000-0000-0000-0000-000000000000' &&
+      archiveGuid.replace(/0/g, '').replace(/-/g, '') !== ''
+    )
+  }
 
   useEffect(() => {
     if (sourceMailbox && targetMailbox) {
-      const sourceUPN = sourceMailbox.value;
-      const targetUPN = targetMailbox.value;
-      const randomGUID = crypto.randomUUID();
-      formControl.setValue("RequestName", `Restore ${sourceUPN} to ${targetUPN} (${randomGUID})`, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+      const sourceUPN = sourceMailbox.value
+      const targetUPN = targetMailbox.value
+      const randomGUID = crypto.randomUUID()
+      formControl.setValue(
+        'RequestName',
+        `Restore ${sourceUPN} to ${targetUPN} (${randomGUID})`,
+        {
+          shouldDirty: true,
+          shouldValidate: true,
+        }
+      )
     }
-  }, [sourceMailbox?.value, targetMailbox?.value]);
+  }, [sourceMailbox?.value, targetMailbox?.value])
 
   useEffect(() => {
     if (createRestore.isSuccess) {
-      formControl.reset();
+      formControl.reset()
     }
-  }, [createRestore.isSuccess]);
+  }, [createRestore.isSuccess])
 
   const handleSubmit = () => {
-    const values = formControl.getValues();
+    const values = formControl.getValues()
     const shippedValues = {
       TenantFilter: tenantDomain,
       RequestName: values.RequestName,
-      SourceMailbox: values.SourceMailbox?.addedFields?.ExchangeGuid ?? values.SourceMailbox?.value,
-      TargetMailbox: values.TargetMailbox?.addedFields?.ExchangeGuid ?? values.TargetMailbox?.value,
+      SourceMailbox:
+        values.SourceMailbox?.addedFields?.ExchangeGuid ??
+        values.SourceMailbox?.value,
+      TargetMailbox:
+        values.TargetMailbox?.addedFields?.ExchangeGuid ??
+        values.TargetMailbox?.value,
       BadItemLimit: values.BadItemLimit,
       LargeItemLimit: values.LargeItemLimit,
       AcceptLargeDataLoss: values.AcceptLargeDataLoss,
@@ -125,18 +139,18 @@ export const CippMailboxRestoreDrawer = ({
       ExcludeDumpster: values.ExcludeDumpster,
       SourceIsArchive: values.SourceIsArchive,
       TargetIsArchive: values.TargetIsArchive,
-    };
+    }
 
     createRestore.mutate({
-      url: "/api/ExecMailboxRestore",
+      url: '/api/ExecMailboxRestore',
       data: shippedValues,
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    formControl.reset();
-    setDrawerVisible(false);
-  };
+    formControl.reset()
+    setDrawerVisible(false)
+  }
 
   return (
     <>
@@ -153,12 +167,24 @@ export const CippMailboxRestoreDrawer = ({
         open={drawerVisible}
         onClose={handleCloseDrawer}
         PaperProps={{
-          sx: { width: { xs: "100%", sm: 600, md: 800 } },
+          sx: { width: { xs: '100%', sm: 600, md: 800 } },
         }}
       >
-        <Box sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column" }}>
+        <Box
+          sx={{
+            p: 3,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           <Box
-            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 3,
+            }}
           >
             <Typography variant="h5">New Mailbox Restore</Typography>
             <IconButton onClick={handleCloseDrawer}>
@@ -166,12 +192,13 @@ export const CippMailboxRestoreDrawer = ({
             </IconButton>
           </Box>
 
-          <Box sx={{ flexGrow: 1, overflowY: "auto", mb: 3, px: 2 }}>
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 3, px: 2 }}>
             <Grid container spacing={2}>
               <Grid size={12}>
                 <Alert severity="info">
-                  Use this form to restore a mailbox from a soft-deleted state to the target
-                  mailbox. Use the optional settings to tailor the restore request for your needs.
+                  Use this form to restore a mailbox from a soft-deleted state
+                  to the target mailbox. Use the optional settings to tailor the
+                  restore request for your needs.
                 </Alert>
               </Grid>
 
@@ -189,32 +216,36 @@ export const CippMailboxRestoreDrawer = ({
                   creatable={true}
                   required={true}
                   api={{
-                    labelField: (option) => `${option.displayName} (${option.UPN})`,
-                    valueField: "UPN",
+                    labelField: (option) =>
+                      `${option.displayName} (${option.UPN})`,
+                    valueField: 'UPN',
                     addedField: {
-                      displayName: "displayName",
-                      ExchangeGuid: "ExchangeGuid",
-                      recipientTypeDetails: "recipientTypeDetails",
-                      ArchiveStatus: "ArchiveStatus",
-                      ArchiveGuid: "ArchiveGuid",
-                      ProhibitSendQuota: "ProhibitSendQuota",
-                      TotalItemSize: "TotalItemSize",
-                      ItemCount: "ItemCount",
-                      WhenSoftDeleted: "WhenSoftDeleted",
+                      displayName: 'displayName',
+                      ExchangeGuid: 'ExchangeGuid',
+                      recipientTypeDetails: 'recipientTypeDetails',
+                      ArchiveStatus: 'ArchiveStatus',
+                      ArchiveGuid: 'ArchiveGuid',
+                      ProhibitSendQuota: 'ProhibitSendQuota',
+                      TotalItemSize: 'TotalItemSize',
+                      ItemCount: 'ItemCount',
+                      WhenSoftDeleted: 'WhenSoftDeleted',
                     },
-                    url: "/api/ListMailboxes?SoftDeletedMailbox=true",
+                    url: '/api/ListMailboxes?SoftDeletedMailbox=true',
                     queryKey: `ListMailboxes-${tenantDomain}-SoftDeleted`,
                     showRefresh: true,
                   }}
                   validators={{
-                    validate: (value) => (value ? true : "Please select a source mailbox."),
+                    validate: (value) =>
+                      value ? true : 'Please select a source mailbox.',
                   }}
                 />
               </Grid>
 
               {sourceMailbox && (
                 <Grid size={12}>
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1 }}>
+                  <Box
+                    sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}
+                  >
                     {sourceMailbox.addedFields?.recipientTypeDetails && (
                       <Tooltip
                         title={`Mailbox type: ${sourceMailbox.addedFields.recipientTypeDetails}`}
@@ -231,19 +262,23 @@ export const CippMailboxRestoreDrawer = ({
                     <Tooltip
                       title={
                         hasActiveArchive(sourceMailbox)
-                          ? "This mailbox has an active archive available for restore"
-                          : "This mailbox does not have an active archive - archive options will be disabled"
+                          ? 'This mailbox has an active archive available for restore'
+                          : 'This mailbox does not have an active archive - archive options will be disabled'
                       }
                     >
                       <Chip
                         icon={<Archive />}
                         label={
                           hasActiveArchive(sourceMailbox)
-                            ? "Archive Active"
-                            : "Archive Not Available"
+                            ? 'Archive Active'
+                            : 'Archive Not Available'
                         }
                         size="small"
-                        color={hasActiveArchive(sourceMailbox) ? "success" : "warning"}
+                        color={
+                          hasActiveArchive(sourceMailbox)
+                            ? 'success'
+                            : 'warning'
+                        }
                         variant="outlined"
                       />
                     </Tooltip>
@@ -262,31 +297,35 @@ export const CippMailboxRestoreDrawer = ({
                   required={true}
                   api={{
                     queryKey: `ListMailboxes-${tenantDomain}`,
-                    labelField: (option) => `${option.displayName} (${option.UPN})`,
-                    valueField: "UPN",
+                    labelField: (option) =>
+                      `${option.displayName} (${option.UPN})`,
+                    valueField: 'UPN',
                     addedField: {
-                      displayName: "displayName",
-                      ExchangeGuid: "ExchangeGuid",
-                      recipientTypeDetails: "recipientTypeDetails",
-                      ArchiveStatus: "ArchiveStatus",
-                      ArchiveGuid: "ArchiveGuid",
-                      ProhibitSendQuota: "ProhibitSendQuota",
-                      TotalItemSize: "TotalItemSize",
-                      ItemCount: "ItemCount",
+                      displayName: 'displayName',
+                      ExchangeGuid: 'ExchangeGuid',
+                      recipientTypeDetails: 'recipientTypeDetails',
+                      ArchiveStatus: 'ArchiveStatus',
+                      ArchiveGuid: 'ArchiveGuid',
+                      ProhibitSendQuota: 'ProhibitSendQuota',
+                      TotalItemSize: 'TotalItemSize',
+                      ItemCount: 'ItemCount',
                     },
-                    url: "/api/ListMailboxes",
+                    url: '/api/ListMailboxes',
                     data: { UseReportDB: true },
                     showRefresh: true,
                   }}
                   validators={{
-                    validate: (value) => (value ? true : "Please select a target mailbox."),
+                    validate: (value) =>
+                      value ? true : 'Please select a target mailbox.',
                   }}
                 />
               </Grid>
 
               {targetMailbox && (
                 <Grid size={12}>
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1 }}>
+                  <Box
+                    sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}
+                  >
                     {targetMailbox.addedFields?.recipientTypeDetails && (
                       <Tooltip
                         title={`Target mailbox type: ${targetMailbox.addedFields.recipientTypeDetails}`}
@@ -303,19 +342,23 @@ export const CippMailboxRestoreDrawer = ({
                     <Tooltip
                       title={
                         hasActiveArchive(targetMailbox)
-                          ? "This target mailbox has an active archive available"
-                          : "This target mailbox does not have an active archive - archive options will be limited"
+                          ? 'This target mailbox has an active archive available'
+                          : 'This target mailbox does not have an active archive - archive options will be limited'
                       }
                     >
                       <Chip
                         icon={<Archive />}
                         label={
                           hasActiveArchive(targetMailbox)
-                            ? "Archive Active"
-                            : "Archive Not Available"
+                            ? 'Archive Active'
+                            : 'Archive Not Available'
                         }
                         size="small"
-                        color={hasActiveArchive(targetMailbox) ? "success" : "warning"}
+                        color={
+                          hasActiveArchive(targetMailbox)
+                            ? 'success'
+                            : 'warning'
+                        }
                         variant="outlined"
                       />
                     </Tooltip>
@@ -343,7 +386,7 @@ export const CippMailboxRestoreDrawer = ({
                   name="RequestName"
                   required={true}
                   formControl={formControl}
-                  validators={{ required: "Please enter a request name." }}
+                  validators={{ required: 'Please enter a request name.' }}
                 />
               </Grid>
 
@@ -389,9 +432,12 @@ export const CippMailboxRestoreDrawer = ({
                   name="AssociatedMessagesCopyOption"
                   formControl={formControl}
                   options={[
-                    { value: "DoNotCopy", label: "Do Not Copy" },
-                    { value: "MapByMessageClass", label: "Map By Message Class" },
-                    { value: "Copy", label: "Copy" },
+                    { value: 'DoNotCopy', label: 'Do Not Copy' },
+                    {
+                      value: 'MapByMessageClass',
+                      label: 'Map By Message Class',
+                    },
+                    { value: 'Copy', label: 'Copy' },
                   ]}
                 />
               </Grid>
@@ -437,12 +483,12 @@ export const CippMailboxRestoreDrawer = ({
                   formControl={formControl}
                   multiple={false}
                   options={[
-                    { value: "ForceCopy", label: "Force Copy" },
-                    { value: "KeepAll", label: "Keep All" },
-                    { value: "KeepLatestItem", label: "Keep Latest Item" },
-                    { value: "KeepSourceItem", label: "Keep Source Item" },
-                    { value: "KeepTargetItem", label: "Keep Target Item" },
-                    { value: "UpdateFromSource", label: "Update From Source" },
+                    { value: 'ForceCopy', label: 'Force Copy' },
+                    { value: 'KeepAll', label: 'Keep All' },
+                    { value: 'KeepLatestItem', label: 'Keep Latest Item' },
+                    { value: 'KeepSourceItem', label: 'Keep Source Item' },
+                    { value: 'KeepTargetItem', label: 'Keep Target Item' },
+                    { value: 'UpdateFromSource', label: 'Update From Source' },
                   ]}
                 />
               </Grid>
@@ -473,9 +519,9 @@ export const CippMailboxRestoreDrawer = ({
                   multiple={false}
                   formControl={formControl}
                   options={[
-                    { value: "Archive", label: "Archive" },
-                    { value: "MailboxLocation", label: "Mailbox Location" },
-                    { value: "Primary", label: "Primary" },
+                    { value: 'Archive', label: 'Archive' },
+                    { value: 'MailboxLocation', label: 'Mailbox Location' },
+                    { value: 'Primary', label: 'Primary' },
                   ]}
                 />
               </Grid>
@@ -515,8 +561,8 @@ export const CippMailboxRestoreDrawer = ({
             <CippApiResults apiObject={createRestore} />
           </Box>
 
-          <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
-            <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>
+          <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
               <Button variant="outlined" onClick={handleCloseDrawer}>
                 Cancel
               </Button>
@@ -525,15 +571,19 @@ export const CippMailboxRestoreDrawer = ({
                 onClick={handleSubmit}
                 disabled={!isValid || !isDirty || createRestore.isPending}
                 startIcon={
-                  createRestore.isPending ? <CircularProgress size={16} /> : <RestoreFromTrash />
+                  createRestore.isPending ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <RestoreFromTrash />
+                  )
                 }
               >
-                {createRestore.isPending ? "Creating..." : "Create Restore Job"}
+                {createRestore.isPending ? 'Creating...' : 'Create Restore Job'}
               </Button>
             </Box>
           </Box>
         </Box>
       </Drawer>
     </>
-  );
-};
+  )
+}

@@ -1,5 +1,13 @@
 import { useSyncExternalStore } from 'react'
-import { Avatar, Box, Card, Chip, Divider, Skeleton, Typography } from '@mui/material'
+import {
+  Avatar,
+  Box,
+  Card,
+  Chip,
+  Divider,
+  Skeleton,
+  Typography,
+} from '@mui/material'
 import { AccessTime } from '@mui/icons-material'
 import { ApiGetCallWithPagination } from '../../api/ApiCall'
 import { useSettings } from '../../hooks/use-settings'
@@ -29,7 +37,8 @@ export const getNextSchedulerRun = (now = new Date()) => {
   // setMinutes(60) rolls into the next hour on its own, so hour, day and DST boundaries are all
   // handled by Date rather than by arithmetic here.
   nextRun.setMinutes(
-    (Math.floor(now.getMinutes() / SCHEDULER_INTERVAL_MINUTES) + 1) * SCHEDULER_INTERVAL_MINUTES
+    (Math.floor(now.getMinutes() / SCHEDULER_INTERVAL_MINUTES) + 1) *
+      SCHEDULER_INTERVAL_MINUTES
   )
   return nextRun
 }
@@ -86,7 +95,11 @@ export const formatInFlightLabel = (count) =>
 
 // Hidden below sm, where the row wraps and a rule between wrapped lines reads as noise.
 const VerticalRule = () => (
-  <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
+  <Divider
+    orientation="vertical"
+    flexItem
+    sx={{ display: { xs: 'none', sm: 'block' } }}
+  />
 )
 
 // The wall clock is external state, so it is read through useSyncExternalStore rather than an
@@ -121,7 +134,11 @@ const getServerClockSnapshot = () => null
  *                            screen, so it tracks the Show System Jobs toggle.
  */
 export const CippSchedulerCountdown = ({ apiUrl, queryKey }) => {
-  const clock = useSyncExternalStore(subscribeToClock, getClockSnapshot, getServerClockSnapshot)
+  const clock = useSyncExternalStore(
+    subscribeToClock,
+    getClockSnapshot,
+    getServerClockSnapshot
+  )
   const tenant = useSettings().currentTenant
   const tasks = ApiGetCallWithPagination({
     url: apiUrl,
@@ -138,7 +155,9 @@ export const CippSchedulerCountdown = ({ apiUrl, queryKey }) => {
   // Held at the last successful result through a background refetch: dropping to the skeleton on
   // every poll would flicker a number that has almost certainly not changed.
   const rows = tasks.isSuccess
-    ? (tasks.data?.pages ?? []).flatMap((page) => (Array.isArray(page) ? page : []))
+    ? (tasks.data?.pages ?? []).flatMap((page) =>
+        Array.isArray(page) ? page : []
+      )
     : null
   const dueCount = rows === null ? null : countDueTasks(rows, nextRun)
   const inFlightCount = rows === null ? 0 : countInFlightTasks(rows)
@@ -174,7 +193,14 @@ export const CippSchedulerCountdown = ({ apiUrl, queryKey }) => {
           </Typography>
           {/* The countdown is the point of the tile; the due time is a qualifier on it, so it
               rides on the same baseline at body size rather than as a second peer metric. */}
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flexWrap: 'wrap' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: 1,
+              flexWrap: 'wrap',
+            }}
+          >
             <Typography
               variant="h5"
               sx={{
@@ -191,7 +217,11 @@ export const CippSchedulerCountdown = ({ apiUrl, queryKey }) => {
               noWrap
               sx={{ fontVariantNumeric: 'tabular-nums' }}
             >
-              due at {nextRun.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+              due at{' '}
+              {nextRun.toLocaleTimeString(undefined, {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </Typography>
           </Box>
         </Box>
@@ -200,7 +230,14 @@ export const CippSchedulerCountdown = ({ apiUrl, queryKey }) => {
 
         {/* Sits in the outer row rather than on the value line: a chip has no text baseline to
             share with the countdown, so it centres against the tile instead. */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
+        >
           {dueCount === null ? (
             <Skeleton variant="rounded" width={86} height={24} />
           ) : (
@@ -229,8 +266,9 @@ export const CippSchedulerCountdown = ({ apiUrl, queryKey }) => {
           color="text.secondary"
           sx={{ flex: '1 1 260px', minWidth: 0 }}
         >
-          Scheduled tasks are picked up every {SCHEDULER_INTERVAL_MINUTES} minutes. A task whose
-          scheduled time has passed stays Planned until the next run.
+          Scheduled tasks are picked up every {SCHEDULER_INTERVAL_MINUTES}{' '}
+          minutes. A task whose scheduled time has passed stays Planned until
+          the next run.
         </Typography>
       </Box>
     </Card>

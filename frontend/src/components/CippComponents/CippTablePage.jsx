@@ -1,10 +1,10 @@
-import { Alert, Card, Divider } from "@mui/material";
-import { Box, Container, Stack } from "@mui/system";
-import { CippDataTable } from "../CippTable/CippDataTable";
-import { useSettings } from "../../hooks/use-settings";
-import { useTableViewMode } from "../../hooks/use-breakpoint";
-import { CippHead } from "./CippHead";
-import { useState, useEffect } from "react";
+import { Alert, Card, Divider } from '@mui/material'
+import { Box, Container, Stack } from '@mui/system'
+import { CippDataTable } from '../CippTable/CippDataTable'
+import { useSettings } from '../../hooks/use-settings'
+import { useTableViewMode } from '../../hooks/use-breakpoint'
+import { CippHead } from './CippHead'
+import { useState, useEffect } from 'react'
 
 export const CippTablePage = (props) => {
   const {
@@ -28,19 +28,20 @@ export const CippTablePage = (props) => {
     initialFilters,
     sx = {},
     ...other
-  } = props;
-  const tenant = useSettings().currentTenant;
-  const viewMode = useTableViewMode({ viewMode: other.viewMode });
-  const isCardView = viewMode === "cards";
+  } = props
+  const tenant = useSettings().currentTenant
+  const viewMode = useTableViewMode({ viewMode: other.viewMode })
+  const isCardView = viewMode === 'cards'
 
   // Use initialFilters if provided, otherwise use regular filters
-  const activeFilters = initialFilters || filters;
+  const activeFilters = initialFilters || filters
 
   // Pages without an explicit queryKey have always keyed their query on the title —
   // which embeds the tenant. Card view drops the tenant from the DISPLAY title, so the
   // cache key must keep carrying it explicitly or tenant switches serve stale data.
   const effectiveQueryKey =
-    queryKey ?? (tenantInTitle && tenant !== null ? `${title} - ${tenant}` : title);
+    queryKey ??
+    (tenantInTitle && tenant !== null ? `${title} - ${tenant}` : title)
 
   const table = (
     <CippDataTable
@@ -48,7 +49,11 @@ export const CippTablePage = (props) => {
       cardButton={cardButton}
       // Card view drops the tenant suffix: the tenant lives in the top bar there, and
       // the concatenated string wraps to multiple lines at phone widths.
-      title={tenantInTitle && tenant !== null && !isCardView ? `${title} - ${tenant}` : title}
+      title={
+        tenantInTitle && tenant !== null && !isCardView
+          ? `${title} - ${tenant}`
+          : title
+      }
       noDataButton={noDataButton}
       actions={actions}
       simple={false}
@@ -64,18 +69,22 @@ export const CippTablePage = (props) => {
       onChange={onChange}
       {...other}
     />
-  );
+  )
 
   return (
     <>
       <CippHead title={title} />
       <Box sx={sx}>
-        <Container maxWidth={false} sx={{ height: "100%", ...(isCardView && { px: 0.5 }) }}>
-          <Stack spacing={isCardView ? 1 : 2} sx={{ height: "100%" }}>
+        <Container
+          maxWidth={false}
+          sx={{ height: '100%', ...(isCardView && { px: 0.5 }) }}
+        >
+          <Stack spacing={isCardView ? 1 : 2} sx={{ height: '100%' }}>
             {tableFilter}
             {tenantInTitle && (!tenant || tenant === null) && (
               <Alert severity="warning">
-                No tenant selected. Please select a tenant from the dropdown above.
+                No tenant selected. Please select a tenant from the dropdown
+                above.
               </Alert>
             )}
             {isCardView ? (
@@ -85,7 +94,7 @@ export const CippTablePage = (props) => {
             ) : (
               <Card
                 sx={{
-                  display: "flex",
+                  display: 'flex',
                 }}
               >
                 <Divider />
@@ -97,7 +106,7 @@ export const CippTablePage = (props) => {
         </Container>
       </Box>
     </>
-  );
-};
+  )
+}
 
-export default CippTablePage;
+export default CippTablePage

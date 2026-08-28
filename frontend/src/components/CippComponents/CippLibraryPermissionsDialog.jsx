@@ -10,7 +10,13 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { Add, Delete, LinkOff, Link as LinkIcon, Tune } from '@mui/icons-material'
+import {
+  Add,
+  Delete,
+  LinkOff,
+  Link as LinkIcon,
+  Tune,
+} from '@mui/icons-material'
 import { useForm } from 'react-hook-form'
 import { CippDataTable } from '../CippTable/CippDataTable'
 import { CippApiDialog } from './CippApiDialog'
@@ -29,7 +35,8 @@ const SITE_ROOT_OPTION = { label: 'Site root (whole site)', value: SITE_ROOT }
 const NO_ASSIGNMENTS = []
 
 // Unwraps the { label, value } shape the select controls persist.
-const optionValue = (x) => (x && typeof x === 'object' && 'value' in x ? x.value : x)
+const optionValue = (x) =>
+  x && typeof x === 'object' && 'value' in x ? x.value : x
 
 // Custom-component action dialog: shows the permissions of a site's document library (or of the
 // site root), and lets them be added, changed, removed, and detached from or reattached to the
@@ -89,7 +96,9 @@ export const CippLibraryPermissionsDialog = ({
   })
 
   const scopeOptions = useMemo(() => {
-    const libs = Array.isArray(libraries.data?.Results) ? libraries.data.Results : []
+    const libs = Array.isArray(libraries.data?.Results)
+      ? libraries.data.Results
+      : []
     return [
       SITE_ROOT_OPTION,
       ...libs.map((library) => ({ label: library.Title, value: library.Id })),
@@ -101,14 +110,17 @@ export const CippLibraryPermissionsDialog = ({
       ? roleDefinitions.data.Results
       : []
     return definitions.map((definition) => ({
-      label: definition.IsCustom ? `${definition.Name} (custom)` : definition.Name,
+      label: definition.IsCustom
+        ? `${definition.Name} (custom)`
+        : definition.Name,
       value: definition.Id,
     }))
   }, [roleDefinitions.data])
 
   // The endpoint returns an error string in Results instead of the permission object.
   const result = permissions.data?.Results
-  const permissionData = typeof result === 'object' && result !== null ? result : null
+  const permissionData =
+    typeof result === 'object' && result !== null ? result : null
   const loadError = typeof result === 'string' ? result : null
   const assignments = permissionData?.Assignments ?? NO_ASSIGNMENTS
   const hasUnique = permissionData?.HasUniqueRoleAssignments === true
@@ -185,7 +197,12 @@ export const CippLibraryPermissionsDialog = ({
   ]
 
   return (
-    <Dialog fullWidth maxWidth="lg" open={isOpen} onClose={() => setDrawerVisible(false)}>
+    <Dialog
+      fullWidth
+      maxWidth="lg"
+      open={isOpen}
+      onClose={() => setDrawerVisible(false)}
+    >
       <DialogTitle>
         Permissions{siteRow?.displayName ? ` — ${siteRow.displayName}` : ''}
       </DialogTitle>
@@ -204,45 +221,50 @@ export const CippLibraryPermissionsDialog = ({
 
           {loadError && <Alert severity="error">{loadError}</Alert>}
 
-          {!loadError && !isSiteRoot && !permissions.isFetching && permissionData && (
-            <Alert severity={hasUnique ? 'warning' : 'info'}>
-              <AlertTitle>
-                {hasUnique ? 'Unique permissions' : 'Inheriting from the site'}
-              </AlertTitle>
-              {hasUnique
-                ? `${libraryName} has its own permissions and no longer follows the site. Restoring inheritance discards the permissions listed below.`
-                : `${libraryName} follows the site's permissions. Granting or changing a permission here stops it inheriting and copies the current permissions across.`}
-              <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
-                {hasUnique ? (
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="warning"
-                    startIcon={<LinkIcon />}
-                    disabled={!canWrite}
-                    onClick={resetDialog.handleOpen}
-                  >
-                    Restore Inheritance
-                  </Button>
-                ) : (
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<LinkOff />}
-                    disabled={!canWrite}
-                    onClick={breakDialog.handleOpen}
-                  >
-                    Stop Inheriting
-                  </Button>
-                )}
-              </Stack>
-            </Alert>
-          )}
+          {!loadError &&
+            !isSiteRoot &&
+            !permissions.isFetching &&
+            permissionData && (
+              <Alert severity={hasUnique ? 'warning' : 'info'}>
+                <AlertTitle>
+                  {hasUnique
+                    ? 'Unique permissions'
+                    : 'Inheriting from the site'}
+                </AlertTitle>
+                {hasUnique
+                  ? `${libraryName} has its own permissions and no longer follows the site. Restoring inheritance discards the permissions listed below.`
+                  : `${libraryName} follows the site's permissions. Granting or changing a permission here stops it inheriting and copies the current permissions across.`}
+                <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                  {hasUnique ? (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="warning"
+                      startIcon={<LinkIcon />}
+                      disabled={!canWrite}
+                      onClick={resetDialog.handleOpen}
+                    >
+                      Restore Inheritance
+                    </Button>
+                  ) : (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<LinkOff />}
+                      disabled={!canWrite}
+                      onClick={breakDialog.handleOpen}
+                    >
+                      Stop Inheriting
+                    </Button>
+                  )}
+                </Stack>
+              </Alert>
+            )}
 
           {isSiteRoot && (
             <Typography variant="body2" color="text.secondary">
-              These are the permissions on the site itself. Every library that still inherits gets
-              its permissions from here.
+              These are the permissions on the site itself. Every library that
+              still inherits gets its permissions from here.
             </Typography>
           )}
 
@@ -323,7 +345,8 @@ export const CippLibraryPermissionsDialog = ({
                 },
                 queryKey: 'ListUsersAutoComplete',
                 dataKey: 'Results',
-                labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+                labelField: (user) =>
+                  `${user.displayName} (${user.userPrincipalName})`,
                 valueField: 'userPrincipalName',
                 addedField: {
                   id: 'id',
@@ -349,7 +372,9 @@ export const CippLibraryPermissionsDialog = ({
                 queryKey: 'ListGroupsAutoComplete',
                 dataKey: 'Results',
                 labelField: (group) =>
-                  group.mail ? `${group.displayName} (${group.mail})` : group.displayName,
+                  group.mail
+                    ? `${group.displayName} (${group.mail})`
+                    : group.displayName,
                 valueField: 'id',
                 addedField: {
                   securityEnabled: 'securityEnabled',
@@ -400,8 +425,9 @@ export const CippLibraryPermissionsDialog = ({
               formControl={formHook}
             />
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Turn this off to start from an empty permission set. Nobody but site collection admins
-              will reach the library until permissions are granted.
+              Turn this off to start from an empty permission set. Nobody but
+              site collection admins will reach the library until permissions
+              are granted.
             </Typography>
             <CippFormComponent
               type="switch"

@@ -19,7 +19,9 @@ const isPathPrefix = (pathname, itemPath) => {
   if (pathname === itemPath) return true
   // Root "/" maps to /dashboardv2 under the hood
   if (itemPath === '/') return pathname.startsWith('/dashboardv2')
-  return pathname.startsWith(itemPath + '/') || pathname.startsWith(itemPath + '?')
+  return (
+    pathname.startsWith(itemPath + '/') || pathname.startsWith(itemPath + '?')
+  )
 }
 
 const markOpenItems = (items, pathname) => {
@@ -47,20 +49,35 @@ const markOpenItems = (items, pathname) => {
   })
 }
 
-const renderItems = ({ collapse = false, depth = 0, items, pathname, category = '' }) =>
+const renderItems = ({
+  collapse = false,
+  depth = 0,
+  items,
+  pathname,
+  category = '',
+}) =>
   items.reduce(
-    (acc, item) => reduceChildRoutes({ acc, collapse, depth, item, pathname, category }),
+    (acc, item) =>
+      reduceChildRoutes({ acc, collapse, depth, item, pathname, category }),
     []
   )
 
-const reduceChildRoutes = ({ acc, collapse, depth, item, pathname, category }) => {
+const reduceChildRoutes = ({
+  acc,
+  collapse,
+  depth,
+  item,
+  pathname,
+  category,
+}) => {
   const checkPath = !!(item.path && pathname)
   const exactMatch = checkPath && pathname === item.path
   const partialMatch = checkPath ? isPathPrefix(pathname, item.path) : false
 
   const hasChildren = item.items && item.items.length > 0
   const isActive = exactMatch || (partialMatch && !hasChildren)
-  const currentCategory = depth === 0 && item.type === 'header' ? item.title : category
+  const currentCategory =
+    depth === 0 && item.type === 'header' ? item.title : category
 
   if (hasChildren) {
     acc.push(
@@ -122,7 +139,10 @@ export const SideNav = (props) => {
   const pathname = usePathname()
   const [hovered, setHovered] = useState(false)
   const collapse = !(pinned || hovered)
-  const { data: profile } = ApiGetCall({ url: '/api/me', queryKey: 'authmecipp' })
+  const { data: profile } = ApiGetCall({
+    url: '/api/me',
+    queryKey: 'authmecipp',
+  })
   const settings = useSettings()
   const showSidebarBookmarks = settings.bookmarkSidebar !== false
   const paperRef = useRef(null)
@@ -165,7 +185,10 @@ export const SideNav = (props) => {
     const handleWheel = (e) => {
       e.preventDefault()
       const maxScroll = el.scrollHeight - el.clientHeight
-      targetScrollTop = Math.max(0, Math.min(maxScroll, targetScrollTop + e.deltaY))
+      targetScrollTop = Math.max(
+        0,
+        Math.min(maxScroll, targetScrollTop + e.deltaY)
+      )
       if (!animating) {
         animating = true
         requestAnimationFrame(animate)
@@ -176,7 +199,11 @@ export const SideNav = (props) => {
     // resync the target so the easing loop doesn't fight them for the thumb.
     // mid-animation, events matching our own write are the loop's echo, skip those
     const handleScroll = () => {
-      if (animating && lastWrite !== null && Math.abs(el.scrollTop - lastWrite) < 1) {
+      if (
+        animating &&
+        lastWrite !== null &&
+        Math.abs(el.scrollTop - lastWrite) < 1
+      ) {
         return
       }
       targetScrollTop = el.scrollTop
@@ -197,77 +224,83 @@ export const SideNav = (props) => {
   const processedItems = markOpenItems(items, pathname)
   return (
     <>
-      {profile?.clientPrincipal && profile?.clientPrincipal?.userRoles?.length > 2 && (
-        <Drawer
-          open
-          variant="permanent"
-          data-tutorial="side-nav"
-          PaperProps={{
-            ref: paperRef,
-            onMouseEnter: () => setHovered(true),
-            onMouseLeave: () => setHovered(false),
-            sx: {
-              backgroundColor: 'background.default',
-              height: `calc(100% - (${CHROME_TOP_OFFSET}))`,
-              overflowX: 'hidden',
-              overflowY: 'auto',
-              scrollbarGutter: 'stable',
-              top: CHROME_TOP_OFFSET,
-              transition: 'width 250ms ease-in-out',
-              width: collapse ? SIDE_NAV_COLLAPSED_WIDTH : SIDE_NAV_WIDTH,
-              zIndex: (theme) => theme.zIndex.appBar - 100,
-            },
-          }}
-        >
-          <Box
-            component="nav"
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              p: 2,
-              // The breadcrumb rail across the seam starts 10px under the top nav; starting
-              // the Bookmarks header at the same offset lets the two rows share a line.
-              pt: '10px',
+      {profile?.clientPrincipal &&
+        profile?.clientPrincipal?.userRoles?.length > 2 && (
+          <Drawer
+            open
+            variant="permanent"
+            data-tutorial="side-nav"
+            PaperProps={{
+              ref: paperRef,
+              onMouseEnter: () => setHovered(true),
+              onMouseLeave: () => setHovered(false),
+              sx: {
+                backgroundColor: 'background.default',
+                height: `calc(100% - (${CHROME_TOP_OFFSET}))`,
+                overflowX: 'hidden',
+                overflowY: 'auto',
+                scrollbarGutter: 'stable',
+                top: CHROME_TOP_OFFSET,
+                transition: 'width 250ms ease-in-out',
+                width: collapse ? SIDE_NAV_COLLAPSED_WIDTH : SIDE_NAV_WIDTH,
+                zIndex: (theme) => theme.zIndex.appBar - 100,
+              },
             }}
           >
             <Box
-              component="ul"
+              component="nav"
               sx={{
-                flexGrow: 1,
-                listStyle: 'none',
-                m: 0,
-                p: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                p: 2,
+                // The breadcrumb rail across the seam starts 10px under the top nav; starting
+                // the Bookmarks header at the same offset lets the two rows share a line.
+                pt: '10px',
               }}
             >
-              {/* Bookmarks section above Dashboard */}
-              {showSidebarBookmarks && (
-                <>
-                  <SideNavBookmarks collapse={collapse} alignWithRail />
-                  {/* mt matches the rail row's mb: 1, so the dividers meet across the seam */}
-                  <Divider sx={{ mt: 1, mb: 1 }} />
-                </>
-              )}
-              {/* Render all menu items */}
-              {renderItems({
-                collapse,
-                depth: 0,
-                items: processedItems,
-                pathname,
-              })}
-            </Box>{' '}
-            {/* Add this closing tag */}
-            {profile?.clientPrincipal && (
               <Box
-                sx={{ position: 'sticky', bottom: 0, backgroundColor: 'background.default', pt: 1 }}
+                component="ul"
+                sx={{
+                  flexGrow: 1,
+                  listStyle: 'none',
+                  m: 0,
+                  p: 0,
+                }}
               >
-                <CippSponsor />
-              </Box>
-            )}
-          </Box>{' '}
-          {/* Closing tag for the parent Box */}
-        </Drawer>
-      )}
+                {/* Bookmarks section above Dashboard */}
+                {showSidebarBookmarks && (
+                  <>
+                    <SideNavBookmarks collapse={collapse} alignWithRail />
+                    {/* mt matches the rail row's mb: 1, so the dividers meet across the seam */}
+                    <Divider sx={{ mt: 1, mb: 1 }} />
+                  </>
+                )}
+                {/* Render all menu items */}
+                {renderItems({
+                  collapse,
+                  depth: 0,
+                  items: processedItems,
+                  pathname,
+                })}
+              </Box>{' '}
+              {/* Add this closing tag */}
+              {profile?.clientPrincipal && (
+                <Box
+                  sx={{
+                    position: 'sticky',
+                    bottom: 0,
+                    backgroundColor: 'background.default',
+                    pt: 1,
+                  }}
+                >
+                  <CippSponsor />
+                </Box>
+              )}
+            </Box>{' '}
+            {/* Closing tag for the parent Box */}
+          </Drawer>
+        )}
     </>
   )
 }

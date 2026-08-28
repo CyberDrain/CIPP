@@ -1,5 +1,5 @@
-import PropTypes from "prop-types";
-import { useState, useCallback } from "react";
+import PropTypes from 'prop-types'
+import { useState, useCallback } from 'react'
 import {
   Box,
   Card,
@@ -11,10 +11,10 @@ import {
   Stack,
   SvgIcon,
   Typography,
-} from "@mui/material";
-import ChevronDownIcon from "@heroicons/react/24/outline/ChevronDownIcon";
-import { CippPropertyListCard } from "./CippPropertyListCard";
-import { CippDataTable } from "../CippTable/CippDataTable";
+} from '@mui/material'
+import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon'
+import { CippPropertyListCard } from './CippPropertyListCard'
+import { CippDataTable } from '../CippTable/CippDataTable'
 
 export const CippBannerListCard = (props) => {
   const {
@@ -25,27 +25,27 @@ export const CippBannerListCard = (props) => {
     onSelectionChange,
     selectedItems = [],
     ...other
-  } = props;
-  const [expanded, setExpanded] = useState(null);
+  } = props
+  const [expanded, setExpanded] = useState(null)
 
   const handleExpand = useCallback((itemId) => {
-    setExpanded((prevState) => (prevState === itemId ? null : itemId));
-  }, []);
+    setExpanded((prevState) => (prevState === itemId ? null : itemId))
+  }, [])
 
   const handleCheckboxChange = useCallback(
     (itemId, checked) => {
       if (onSelectionChange) {
         if (checked) {
-          onSelectionChange([...selectedItems, itemId]);
+          onSelectionChange([...selectedItems, itemId])
         } else {
-          onSelectionChange(selectedItems.filter((id) => id !== itemId));
+          onSelectionChange(selectedItems.filter((id) => id !== itemId))
         }
       }
     },
     [onSelectionChange, selectedItems]
-  );
+  )
 
-  const hasItems = items.length > 0;
+  const hasItems = items.length > 0
 
   if (isFetching) {
     // Render skeletons during loading
@@ -53,7 +53,13 @@ export const CippBannerListCard = (props) => {
       <Stack spacing={3} {...other}>
         {[...Array(1)].map((_, index) => (
           <Card key={index}>
-            <Stack useFlexGap direction="row" flexWrap="wrap" justifyContent="space-between" sx={{ p: 3 }}>
+            <Stack
+              useFlexGap
+              direction="row"
+              flexWrap="wrap"
+              justifyContent="space-between"
+              sx={{ p: 3 }}
+            >
               <Stack direction="row" spacing={2} alignItems="center">
                 <Box>
                   <Skeleton variant="text" width={80} />
@@ -68,7 +74,7 @@ export const CippBannerListCard = (props) => {
           </Card>
         ))}
       </Stack>
-    );
+    )
   }
 
   return (
@@ -81,14 +87,14 @@ export const CippBannerListCard = (props) => {
             component="ul"
             divider={<Divider />}
             sx={{
-              listStyle: "none",
+              listStyle: 'none',
               m: 0,
               p: 0,
             }}
           >
             {items.map((item) => {
-              const isExpanded = expanded === item.id;
-              const statusColor = item.statusColor || "neutral.500"; // Default color
+              const isExpanded = expanded === item.id
+              const statusColor = item.statusColor || 'neutral.500' // Default color
 
               return (
                 <li key={item.id}>
@@ -99,50 +105,58 @@ export const CippBannerListCard = (props) => {
                     // one line with them squeezed the text column to about 90px, which broke
                     // the subtext one word per line and ellipsed every title.
                     useFlexGap
-                    flexWrap={{ xs: "wrap", md: "nowrap" }}
+                    flexWrap={{ xs: 'wrap', md: 'nowrap' }}
                     rowGap={1.5}
                     sx={{
                       p: { xs: 2, md: 3 },
                       ...(isCollapsible && {
-                        cursor: "pointer",
-                        "&:hover": {
-                          bgcolor: "action.hover",
+                        cursor: 'pointer',
+                        '&:hover': {
+                          bgcolor: 'action.hover',
                         },
                       }),
                     }}
-                    onClick={isCollapsible ? () => handleExpand(item.id) : undefined}
+                    onClick={
+                      isCollapsible ? () => handleExpand(item.id) : undefined
+                    }
                   >
                     {/* Left Side: cardLabelBox */}
                     <Stack
                       direction="row"
                       spacing={2}
                       alignItems="center"
-                      sx={{ flex: { xs: "1 1 100%", md: "1 1 auto" }, minWidth: 0 }}
+                      sx={{
+                        flex: { xs: '1 1 100%', md: '1 1 auto' },
+                        minWidth: 0,
+                      }}
                     >
                       {onSelectionChange && (
                         <Checkbox
                           checked={selectedItems.includes(item.id)}
                           onChange={(e) => {
-                            e.stopPropagation();
-                            handleCheckboxChange(item.id, e.target.checked);
+                            e.stopPropagation()
+                            handleCheckboxChange(item.id, e.target.checked)
                           }}
                           onClick={(e) => e.stopPropagation()}
                         />
                       )}
                       <Box
                         sx={{
-                          alignItems: "center",
-                          display: "flex",
-                          flexDirection: "column",
+                          alignItems: 'center',
+                          display: 'flex',
+                          flexDirection: 'column',
                           flexShrink: 0,
                         }}
                       >
-                        {typeof item.cardLabelBox === "object" ? (
+                        {typeof item.cardLabelBox === 'object' ? (
                           <>
                             <Typography color="text.secondary" variant="h5">
                               {item.cardLabelBox.cardLabelBoxHeader}
                             </Typography>
-                            <Typography color="text.secondary" variant="caption">
+                            <Typography
+                              color="text.secondary"
+                              variant="caption"
+                            >
                               {item.cardLabelBox.cardLabelBoxText}
                             </Typography>
                           </>
@@ -159,9 +173,9 @@ export const CippBannerListCard = (props) => {
                           color="text.primary"
                           variant="h6"
                           sx={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           {item.text}
@@ -180,36 +194,40 @@ export const CippBannerListCard = (props) => {
                       // Pushed to the right edge once this group wraps onto its own row,
                       // so the expander sits in the same place on every item instead of
                       // trailing whatever width that item's action button happens to be.
-                      sx={{ flexShrink: 0, ml: { xs: "auto", md: 0 } }}
+                      sx={{ flexShrink: 0, ml: { xs: 'auto', md: 0 } }}
                     >
                       {item?.statusText && (
                         <Stack alignItems="center" direction="row" spacing={1}>
                           <Box
                             sx={{
                               backgroundColor: statusColor,
-                              borderRadius: "50%",
+                              borderRadius: '50%',
                               height: 8,
                               width: 8,
                             }}
                           />
-                          <Typography variant="body2">{item.statusText}</Typography>
+                          <Typography variant="body2">
+                            {item.statusText}
+                          </Typography>
                         </Stack>
                       )}
                       {item?.cardLabelBoxActions && (
-                        <Box onClick={(e) => e.stopPropagation()}>{item.cardLabelBoxActions}</Box>
+                        <Box onClick={(e) => e.stopPropagation()}>
+                          {item.cardLabelBoxActions}
+                        </Box>
                       )}
                       {isCollapsible && (
                         <IconButton
                           onClick={(e) => {
-                            e.stopPropagation();
-                            handleExpand(item.id);
+                            e.stopPropagation()
+                            handleExpand(item.id)
                           }}
                         >
                           <SvgIcon
                             fontSize="small"
                             sx={{
-                              transition: "transform 150ms",
-                              transform: isExpanded ? "rotate(180deg)" : "none",
+                              transition: 'transform 150ms',
+                              transform: isExpanded ? 'rotate(180deg)' : 'none',
                             }}
                           >
                             <ChevronDownIcon />
@@ -225,25 +243,29 @@ export const CippBannerListCard = (props) => {
                         {item?.propertyItems?.length > 0 && (
                           <CippPropertyListCard
                             propertyItems={item.propertyItems || []}
-                            layout={other.layout || "dual"}
+                            layout={other.layout || 'dual'}
                             isFetching={item.isFetching || false}
                           />
                         )}
                         {item?.table && <CippDataTable {...item.table} />}
-                        {item?.children && <Box sx={{ pl: 3 }}>{item.children}</Box>}
-                        {item?.actionButton && <Box sx={{ pl: 3, pb: 2 }}>{item.actionButton}</Box>}
+                        {item?.children && (
+                          <Box sx={{ pl: 3 }}>{item.children}</Box>
+                        )}
+                        {item?.actionButton && (
+                          <Box sx={{ pl: 3, pb: 2 }}>{item.actionButton}</Box>
+                        )}
                       </Stack>
                     </Collapse>
                   )}
                 </li>
-              );
+              )
             })}
           </Stack>
         </Card>
       )}
     </Stack>
-  );
-};
+  )
+}
 
 CippBannerListCard.propTypes = {
   items: PropTypes.arrayOf(
@@ -272,4 +294,4 @@ CippBannerListCard.propTypes = {
   isFetching: PropTypes.bool,
   onSelectionChange: PropTypes.func,
   selectedItems: PropTypes.array,
-};
+}

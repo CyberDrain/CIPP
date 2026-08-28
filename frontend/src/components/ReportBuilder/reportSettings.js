@@ -38,7 +38,8 @@ export const DEFAULT_PAGE_SETTINGS = {
   brandingPresetId: DEFAULT_BRANDING_OPTION,
 }
 
-const unwrap = (value) => (value && typeof value === 'object' ? value.value : value)
+const unwrap = (value) =>
+  value && typeof value === 'object' ? value.value : value
 
 /** Turn the page-setup form into the settings object the PDF renderer consumes. */
 export const toReportSettings = (values = {}) => ({
@@ -91,7 +92,11 @@ export const resolveBranding = (defaultBranding, presets, presetId) => {
  * report and meant it. The per-report default exists so that everything nobody has been specific
  * about still lands somewhere sensible.
  */
-export const resolvePresetId = (templatePresetId, defaultBranding, reportType) => {
+export const resolvePresetId = (
+  templatePresetId,
+  defaultBranding,
+  reportType
+) => {
   if (templatePresetId) return templatePresetId
   return defaultBranding?.reportDefaults?.[reportType] ?? ''
 }

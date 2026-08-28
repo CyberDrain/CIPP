@@ -88,7 +88,9 @@ const relativeLuminance = (hex) => {
   const { r, g, b } = toRgb(hex)
   const channel = (value) => {
     const scaled = value / 255
-    return scaled <= 0.03928 ? scaled / 12.92 : Math.pow((scaled + 0.055) / 1.055, 2.4)
+    return scaled <= 0.03928
+      ? scaled / 12.92
+      : Math.pow((scaled + 0.055) / 1.055, 2.4)
   }
   return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
 }
@@ -161,9 +163,21 @@ export const withAlpha = (hex, alpha) => {
  */
 const buildSeries = (primary, secondary) => {
   if (primary === secondary) {
-    return [primary, lighten(primary, 0.35), REPORT_COLOURS.info, darken(primary, 0.3), lighten(primary, 0.65)]
+    return [
+      primary,
+      lighten(primary, 0.35),
+      REPORT_COLOURS.info,
+      darken(primary, 0.3),
+      lighten(primary, 0.65),
+    ]
   }
-  return [primary, secondary, lighten(primary, 0.4), lighten(secondary, 0.4), darken(primary, 0.25)]
+  return [
+    primary,
+    secondary,
+    lighten(primary, 0.4),
+    lighten(secondary, 0.4),
+    darken(primary, 0.25),
+  ]
 }
 
 const DEFAULT_FOOTER_TEMPLATE = ''
@@ -199,7 +213,8 @@ export const REPORT_COLOUR_ROLES = [
     key: 'chartAccent',
     setting: 'chartAccentColour',
     label: 'Chart accent',
-    description: 'Second series colour. The rest of the series is built between the two.',
+    description:
+      'Second series colour. The rest of the series is built between the two.',
     from: ({ secondary }) => secondary,
   },
   {
@@ -220,14 +235,16 @@ export const REPORT_COLOUR_ROLES = [
     key: 'subtitle',
     setting: 'subtitleColour',
     label: 'Subtitles',
-    description: 'The line under a page title, and captions beneath charts and stats.',
+    description:
+      'The line under a page title, and captions beneath charts and stats.',
     from: () => REPORT_COLOURS.muted,
   },
   {
     key: 'heading',
     setting: 'headingColour',
     label: 'Section headings',
-    description: 'The heading above each block of content, and the rule under the page header.',
+    description:
+      'The heading above each block of content, and the rule under the page header.',
     from: ({ primary }) => primary,
   },
   {
@@ -248,14 +265,16 @@ export const REPORT_COLOUR_ROLES = [
     key: 'card',
     setting: 'cardColour',
     label: 'Info cards',
-    description: 'The accent stripe on callout boxes and the rule above each stat card.',
+    description:
+      'The accent stripe on callout boxes and the rule above each stat card.',
     from: ({ secondary }) => secondary,
   },
   {
     key: 'table',
     setting: 'tableColour',
     label: 'Data tables',
-    description: 'The header band across the top of every table. Header text follows it.',
+    description:
+      'The header band across the top of every table. Header text follows it.',
     from: ({ primary }) => primary,
   },
   {
@@ -269,7 +288,8 @@ export const REPORT_COLOUR_ROLES = [
     key: 'infographicBackground',
     setting: 'infographicBackgroundColour',
     label: 'Infographic background',
-    description: 'The full-bleed divider page behind the artwork. Its text follows it.',
+    description:
+      'The full-bleed divider page behind the artwork. Its text follows it.',
     from: () => '#000000',
   },
   {
@@ -293,8 +313,10 @@ export const buildPalette = (branding, { primary, secondary }) => {
     // `roleColours` is where the branding UI saves them — one map rather than ten columns, so a
     // role added here needs no backend change. A flat property is also accepted, which is what lets
     // a report template or a preset set one directly.
-    const configured = branding?.roleColours?.[role.setting] ?? branding?.[role.setting]
-    palette[role.key] = normaliseHex(configured) ?? role.from({ primary, secondary })
+    const configured =
+      branding?.roleColours?.[role.setting] ?? branding?.[role.setting]
+    palette[role.key] =
+      normaliseHex(configured) ?? role.from({ primary, secondary })
   }
   return palette
 }
@@ -409,7 +431,9 @@ export const createReportTheme = (branding) => {
       // found and flipped before typed text does anything) reads as the field being broken.
       // Same shape as the footer above, deliberately.
       show: branding?.watermarkEnabled !== false,
-      enabled: branding?.watermarkEnabled !== false && Boolean(branding?.watermarkText),
+      enabled:
+        branding?.watermarkEnabled !== false &&
+        Boolean(branding?.watermarkText),
       text: branding?.watermarkText || DEFAULT_WATERMARK_TEXT,
     },
     // The confidentiality note on the cover. Empty means "leave the report's own wording alone" —
@@ -423,7 +447,11 @@ export const createReportTheme = (branding) => {
  * tree does not have to convert at once.
  */
 export const asReportTheme = (themeOrColour) => {
-  if (themeOrColour && typeof themeOrColour === 'object' && 'primary' in themeOrColour) {
+  if (
+    themeOrColour &&
+    typeof themeOrColour === 'object' &&
+    'primary' in themeOrColour
+  ) {
     return themeOrColour
   }
   if (typeof themeOrColour === 'string') {

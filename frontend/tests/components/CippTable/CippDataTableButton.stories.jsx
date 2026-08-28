@@ -68,7 +68,9 @@ export const LiveNestedTable = {
             ],
           })
         ),
-        http.post('/api/ExecTestRelated', () => HttpResponse.json({ Results: 'ok' })),
+        http.post('/api/ExecTestRelated', () =>
+          HttpResponse.json({ Results: 'ok' })
+        ),
       ],
     },
   },

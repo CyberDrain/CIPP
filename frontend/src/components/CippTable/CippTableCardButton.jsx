@@ -61,7 +61,11 @@ export const CippTableCardButton = ({ cardButton, row }) => {
     return (
       <Stack direction="row" spacing={1} alignItems="center">
         {cardButton.map((item, index) => (
-          <CippTableCardButton key={item?.label ?? index} cardButton={item} row={row} />
+          <CippTableCardButton
+            key={item?.label ?? index}
+            cardButton={item}
+            row={row}
+          />
         ))}
       </Stack>
     )

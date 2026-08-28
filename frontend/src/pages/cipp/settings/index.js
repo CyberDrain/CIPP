@@ -1,20 +1,23 @@
-import { Container } from "@mui/material";
-import { Grid } from "@mui/system";
-import { TabbedLayout } from "../../../layouts/TabbedLayout";
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import tabOptions from "./tabOptions";
+import { Container } from '@mui/material'
+import { Grid } from '@mui/system'
+import { TabbedLayout } from '../../../layouts/TabbedLayout'
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import tabOptions from './tabOptions'
 
-import CippVersionProperties from "../../../components/CippSettings/CippVersionProperties";
-import CippPasswordSettings from "../../../components/CippSettings/CippPasswordSettings";
-import CippDnsSettings from "../../../components/CippSettings/CippDnsSettings";
-import CippCacheSettings from "../../../components/CippSettings/CippCacheSettings";
-import CippBackupSettings from "../../../components/CippSettings/CippBackupSettings";
-import CippBackupRetentionSettings from "../../../components/CippSettings/CippBackupRetentionSettings";
-import CippLogRetentionSettings from "../../../components/CippSettings/CippLogRetentionSettings";
-import CippJitAdminSettings from "../../../components/CippSettings/CippJitAdminSettings";
+import CippVersionProperties from '../../../components/CippSettings/CippVersionProperties'
+import CippPasswordSettings from '../../../components/CippSettings/CippPasswordSettings'
+import CippDnsSettings from '../../../components/CippSettings/CippDnsSettings'
+import CippCacheSettings from '../../../components/CippSettings/CippCacheSettings'
+import CippBackupSettings from '../../../components/CippSettings/CippBackupSettings'
+import CippBackupRetentionSettings from '../../../components/CippSettings/CippBackupRetentionSettings'
+import CippLogRetentionSettings from '../../../components/CippSettings/CippLogRetentionSettings'
+import CippJitAdminSettings from '../../../components/CippSettings/CippJitAdminSettings'
 const Page = () => {
   return (
-    <Container sx={{ pt: { xs: 0, md: 3 }, px: { xs: 1.5, md: 3 } }} maxWidth="xl">
+    <Container
+      sx={{ pt: { xs: 0, md: 3 }, px: { xs: 1.5, md: 3 } }}
+      maxWidth="xl"
+    >
       <Grid container spacing={2}>
         <Grid size={{ lg: 4, md: 6, sm: 12, xs: 12 }}>
           <CippVersionProperties />
@@ -42,13 +45,13 @@ const Page = () => {
         </Grid>
       </Grid>
     </Container>
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
+export default Page

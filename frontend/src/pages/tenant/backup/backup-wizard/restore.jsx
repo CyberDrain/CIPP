@@ -1,20 +1,20 @@
-import { useState, useEffect } from "react";
-import { Alert, Divider, Typography } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { useSettings } from "../../../../hooks/use-settings";
-import { CippFormCondition } from "../../../../components/CippComponents/CippFormCondition";
-import { Chip, Stack } from "@mui/material";
+import { useState, useEffect } from 'react'
+import { Alert, Divider, Typography } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { useSettings } from '../../../../hooks/use-settings'
+import { CippFormCondition } from '../../../../components/CippComponents/CippFormCondition'
+import { Chip, Stack } from '@mui/material'
 
 const RestoreBackupForm = () => {
-  const userSettingsDefaults = useSettings();
-  const tenantFilter = userSettingsDefaults.currentTenant || "";
+  const userSettingsDefaults = useSettings()
+  const tenantFilter = userSettingsDefaults.currentTenant || ''
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       tenantFilter: tenantFilter,
       users: true,
@@ -34,11 +34,11 @@ const RestoreBackupForm = () => {
       psa: false,
       backup: null,
     },
-  });
+  })
 
-  const [backups, setBackups] = useState([]);
-  const [backupsError, setBackupsError] = useState(null);
-  const [backupsLoading, setBackupsLoading] = useState(false);
+  const [backups, setBackups] = useState([])
+  const [backupsError, setBackupsError] = useState(null)
+  const [backupsLoading, setBackupsLoading] = useState(false)
 
   // Since we cannot make API calls, we need to handle backups differently
   // For the purpose of this example, let's assume that backups are passed as props or are hardcoded
@@ -46,19 +46,23 @@ const RestoreBackupForm = () => {
 
   useEffect(() => {
     // Mock data for backups
-    const mockBackups = [{ RowKey: "Backup1" }, { RowKey: "Backup2" }, { RowKey: "Backup3" }];
+    const mockBackups = [
+      { RowKey: 'Backup1' },
+      { RowKey: 'Backup2' },
+      { RowKey: 'Backup3' },
+    ]
 
     if (tenantFilter) {
-      setBackupsLoading(true);
+      setBackupsLoading(true)
       // Simulate loading
       setTimeout(() => {
-        setBackups(mockBackups);
-        setBackupsLoading(false);
-      }, 500); // Simulate loading delay
+        setBackups(mockBackups)
+        setBackupsLoading(false)
+      }, 500) // Simulate loading delay
     } else {
-      setBackups([]);
+      setBackups([])
     }
-  }, [tenantFilter]);
+  }, [tenantFilter])
 
   return (
     <CippFormPage
@@ -66,15 +70,15 @@ const RestoreBackupForm = () => {
       formControl={formControl}
       postUrl="/api/AddScheduledItem"
       customDataformatter={(values) => {
-        const startDate = new Date();
-        const unixTime = Math.floor(startDate.getTime() / 1000) - 45;
-        const tenantFilterValue = tenantFilter;
+        const startDate = new Date()
+        const unixTime = Math.floor(startDate.getTime() / 1000) - 45
+        const tenantFilterValue = tenantFilter
         const shippedValues = {
           TenantFilter: tenantFilterValue,
           Name: `CIPP Restore ${tenantFilterValue}`,
           Command: { value: `New-CIPPRestore` },
           Parameters: {
-            Type: "Scheduled",
+            Type: 'Scheduled',
             RestoreValues: {
               backup: values.backup?.value || values.backup,
               users: values.users,
@@ -97,14 +101,14 @@ const RestoreBackupForm = () => {
             PSA: values.psa,
           },
           DisallowDuplicateName: true,
-        };
-        return shippedValues;
+        }
+        return shippedValues
       }}
       backButtonTitle="Backup Tasks"
     >
       <Typography variant="body1" sx={{ mb: 2 }}>
-        Use this form to restore a backup for a tenant. Please select the tenant, backup, and
-        restore options.
+        Use this form to restore a backup for a tenant. Please select the
+        tenant, backup, and restore options.
       </Typography>
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {/* Backup Selector */}
@@ -115,22 +119,26 @@ const RestoreBackupForm = () => {
             name="backup"
             multiple={false}
             api={{
-              url: "/api/ExecListBackup",
+              url: '/api/ExecListBackup',
               queryKey: `BackupList-${tenantFilter}`,
               labelField: (option) => {
-                const match = option.BackupName.match(/.*_(\d{4}-\d{2}-\d{2})-(\d{2})(\d{2})/);
-                return match ? `${match[1]} @ ${match[2]}:${match[3]}` : option.BackupName;
+                const match = option.BackupName.match(
+                  /.*_(\d{4}-\d{2}-\d{2})-(\d{2})(\d{2})/
+                )
+                return match
+                  ? `${match[1]} @ ${match[2]}:${match[3]}`
+                  : option.BackupName
               },
-              valueField: "BackupName",
+              valueField: 'BackupName',
               data: {
-                Type: "Scheduled",
+                Type: 'Scheduled',
                 NameOnly: true,
               },
             }}
             formControl={formControl}
             required={true}
             validators={{
-              validate: (value) => !!value || "Please select a backup",
+              validate: (value) => !!value || 'Please select a backup',
             }}
           />
         </Grid>
@@ -149,7 +157,12 @@ const RestoreBackupForm = () => {
             name="users"
             formControl={formControl}
           />
-          <CippFormComponent type="switch" label="Groups" name="groups" formControl={formControl} />
+          <CippFormComponent
+            type="switch"
+            label="Groups"
+            name="groups"
+            formControl={formControl}
+          />
         </Grid>
 
         {/* Conditional Access */}
@@ -236,11 +249,12 @@ const RestoreBackupForm = () => {
           >
             <Grid size={{ xs: 12 }}>
               <Alert severity="warning">
-                <strong>Warning:</strong> Overwriting existing entries will remove the current
-                settings and replace them with the backup settings. If you have selected to restore
-                users, all properties will be overwritten with the backup settings. To prevent and
-                skip already existing entries, deselect the setting from the list above, or disable
-                overwrite.
+                <strong>Warning:</strong> Overwriting existing entries will
+                remove the current settings and replace them with the backup
+                settings. If you have selected to restore users, all properties
+                will be overwritten with the backup settings. To prevent and
+                skip already existing entries, deselect the setting from the
+                list above, or disable overwrite.
               </Alert>
             </Grid>
           </CippFormCondition>
@@ -259,10 +273,20 @@ const RestoreBackupForm = () => {
           />
         </Grid>
         <Grid size={{ md: 4, xs: 12 }}>
-          <CippFormComponent type="switch" label="E-mail" name="email" formControl={formControl} />
+          <CippFormComponent
+            type="switch"
+            label="E-mail"
+            name="email"
+            formControl={formControl}
+          />
         </Grid>
         <Grid size={{ md: 4, xs: 12 }}>
-          <CippFormComponent type="switch" label="PSA" name="psa" formControl={formControl} />
+          <CippFormComponent
+            type="switch"
+            label="PSA"
+            name="psa"
+            formControl={formControl}
+          />
         </Grid>
         <Grid size={{ xs: 12 }}>
           <Divider />
@@ -283,13 +307,15 @@ const RestoreBackupForm = () => {
         <Grid size={{ xs: 12 }}>
           <Typography variant="subtitle1">Selected Backup:</Typography>
           <Typography variant="body2" color="textSecondary">
-            {formControl.watch("backup")?.label || "None selected"}
+            {formControl.watch('backup')?.label || 'None selected'}
           </Typography>
         </Grid>
         <Grid size={{ xs: 12 }}>
-          <Typography variant="subtitle1">Overwrite Existing Configuration:</Typography>
+          <Typography variant="subtitle1">
+            Overwrite Existing Configuration:
+          </Typography>
           <Typography variant="body2" color="textSecondary">
-            {formControl.watch("overwrite") ? "Yes" : "No"}
+            {formControl.watch('overwrite') ? 'Yes' : 'No'}
           </Typography>
         </Grid>
 
@@ -297,20 +323,28 @@ const RestoreBackupForm = () => {
           <Typography variant="subtitle1">Send Results To:</Typography>
           <Typography variant="body2" color="textSecondary">
             <Stack direction="row" spacing={1}>
-              {formControl.watch("webhook") && <Chip color="primary" label="Webhook" />}
-              {formControl.watch("email") && <Chip color="primary" label="E-mail" />}
-              {formControl.watch("psa") && <Chip color="primary" label="PSA" />}
-              {!formControl.watch("webhook") &&
-                !formControl.watch("email") &&
-                !formControl.watch("psa") && <Chip color="default" label="None" />}
+              {formControl.watch('webhook') && (
+                <Chip color="primary" label="Webhook" />
+              )}
+              {formControl.watch('email') && (
+                <Chip color="primary" label="E-mail" />
+              )}
+              {formControl.watch('psa') && <Chip color="primary" label="PSA" />}
+              {!formControl.watch('webhook') &&
+                !formControl.watch('email') &&
+                !formControl.watch('psa') && (
+                  <Chip color="default" label="None" />
+                )}
             </Stack>
           </Typography>
         </Grid>
       </Grid>
     </CippFormPage>
-  );
-};
+  )
+}
 
-RestoreBackupForm.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+RestoreBackupForm.getLayout = (page) => (
+  <DashboardLayout>{page}</DashboardLayout>
+)
 
-export default RestoreBackupForm;
+export default RestoreBackupForm

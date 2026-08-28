@@ -1,5 +1,5 @@
-import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon';
-import EllipsisVerticalIcon from '@heroicons/react/24/outline/EllipsisVerticalIcon';
+import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon'
+import EllipsisVerticalIcon from '@heroicons/react/24/outline/EllipsisVerticalIcon'
 import {
   Button,
   Card,
@@ -7,25 +7,21 @@ import {
   cardHeaderClasses,
   IconButton,
   Stack,
-  SvgIcon
-} from '@mui/material';
+  SvgIcon,
+} from '@mui/material'
 
 export const CardHeading3 = () => (
   <Card>
     <CardHeader
-      action={(
-        <Stack
-          alignItems="center"
-          direction="row"
-          spacing={1}
-        >
+      action={
+        <Stack alignItems="center" direction="row" spacing={1}>
           <Button
             color="inherit"
-            endIcon={(
+            endIcon={
               <SvgIcon fontSize="small">
                 <ChevronDownIcon />
               </SvgIcon>
-            )}
+            }
             size="small"
             variant="text"
           >
@@ -37,14 +33,14 @@ export const CardHeading3 = () => (
             </SvgIcon>
           </IconButton>
         </Stack>
-      )}
+      }
       subheader="List of the latest orders"
       sx={{
         [`& .${cardHeaderClasses.action}`]: {
-          alignSelf: 'center'
-        }
+          alignSelf: 'center',
+        },
       }}
       title="Orders"
     />
   </Card>
-);
+)

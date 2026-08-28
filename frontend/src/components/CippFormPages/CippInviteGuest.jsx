@@ -1,8 +1,8 @@
-import "@mui/material";
-import { Grid } from "@mui/system";
-import CippFormComponent from "../CippComponents/CippFormComponent";
+import '@mui/material'
+import { Grid } from '@mui/system'
+import CippFormComponent from '../CippComponents/CippFormComponent'
 const CippInviteUser = (props) => {
-  const { formControl, userSettingsDefaults } = props;
+  const { formControl, userSettingsDefaults } = props
 
   return (
     <Grid container spacing={2}>
@@ -44,7 +44,7 @@ const CippInviteUser = (props) => {
         />
       </Grid>
     </Grid>
-  );
-};
+  )
+}
 
-export default CippInviteUser;
+export default CippInviteUser

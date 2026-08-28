@@ -1,79 +1,85 @@
-﻿import { useState, useEffect } from "react";
-import { Button, Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useFormState, useWatch } from "react-hook-form";
-import { RocketLaunch } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormTenantSelector } from "./CippFormTenantSelector";
-import { CippApiResults } from "./CippApiResults";
-import { ApiPostCall } from "../../api/ApiCall";
+﻿import { useState, useEffect } from 'react'
+import { Button, Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useFormState, useWatch } from 'react-hook-form'
+import { RocketLaunch } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippFormTenantSelector } from './CippFormTenantSelector'
+import { CippApiResults } from './CippApiResults'
+import { ApiPostCall } from '../../api/ApiCall'
 
 export const CippAddConnectorDrawer = ({
-  buttonText = "Deploy Connector",
+  buttonText = 'Deploy Connector',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false)
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       selectedTenants: [],
       TemplateList: null,
-      PowerShellCommand: "",
+      PowerShellCommand: '',
     },
-  });
+  })
 
-  const { isValid } = useFormState({ control: formControl.control });
-  const templateListVal = useWatch({ control: formControl.control, name: "TemplateList" });
+  const { isValid } = useFormState({ control: formControl.control })
+  const templateListVal = useWatch({
+    control: formControl.control,
+    name: 'TemplateList',
+  })
 
   const addConnector = ApiPostCall({
     urlFromData: true,
-  });
+  })
 
   // Update PowerShellCommand when template is selected
   useEffect(() => {
     if (templateListVal?.value) {
-      formControl.setValue("PowerShellCommand", JSON.stringify(templateListVal?.value));
+      formControl.setValue(
+        'PowerShellCommand',
+        JSON.stringify(templateListVal?.value)
+      )
     }
-  }, [templateListVal, formControl]);
+  }, [templateListVal, formControl])
 
   // Reset form fields on successful creation
   useEffect(() => {
     if (addConnector.isSuccess) {
-      const currentTenants = formControl.getValues("selectedTenants");
+      const currentTenants = formControl.getValues('selectedTenants')
       formControl.reset({
         selectedTenants: currentTenants,
         TemplateList: null,
-        PowerShellCommand: "",
-      });
+        PowerShellCommand: '',
+      })
     }
-  }, [addConnector.isSuccess, formControl]);
+  }, [addConnector.isSuccess, formControl])
 
   const handleSubmit = () => {
-    formControl.trigger();
+    formControl.trigger()
     // Check if the form is valid before proceeding
     if (!isValid) {
-      return;
+      return
     }
 
-    const formData = formControl.getValues();
+    const formData = formControl.getValues()
 
     addConnector.mutate({
-      url: "/api/AddExConnector",
+      url: '/api/AddExConnector',
       data: formData,
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
       selectedTenants: [],
       TemplateList: null,
-      PowerShellCommand: "",
-    });
-  };
+      PowerShellCommand: '',
+    })
+  }
 
   return (
     <>
@@ -90,7 +96,13 @@ export const CippAddConnectorDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -98,10 +110,10 @@ export const CippAddConnectorDrawer = ({
               disabled={addConnector.isLoading || !isValid}
             >
               {addConnector.isLoading
-                ? "Deploying..."
+                ? 'Deploying...'
                 : addConnector.isSuccess
-                ? "Deploy Another"
-                : "Deploy Connector"}
+                  ? 'Deploy Another'
+                  : 'Deploy Connector'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -119,11 +131,11 @@ export const CippAddConnectorDrawer = ({
               type="multiple"
               allTenants={true}
               preselectedEnabled={true}
-              validators={{ required: "At least one tenant must be selected" }}
+              validators={{ required: 'At least one tenant must be selected' }}
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Template List */}
           <Grid size={{ md: 12, xs: 12 }}>
@@ -135,15 +147,15 @@ export const CippAddConnectorDrawer = ({
               multiple={false}
               api={{
                 queryKey: `TemplateListConnectors`,
-                labelField: "name",
+                labelField: 'name',
                 valueField: (option) => option,
-                url: "/api/ListExconnectorTemplates",
+                url: '/api/ListExconnectorTemplates',
               }}
               placeholder="Select a template or enter PowerShell JSON manually"
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* PowerShell Command */}
           <Grid size={{ xs: 12 }}>
@@ -154,7 +166,9 @@ export const CippAddConnectorDrawer = ({
               formControl={formControl}
               multiline
               rows={6}
-              validators={{ required: "Please enter the PowerShell parameters as JSON." }}
+              validators={{
+                required: 'Please enter the PowerShell parameters as JSON.',
+              }}
             />
           </Grid>
 
@@ -162,5 +176,5 @@ export const CippAddConnectorDrawer = ({
         </Grid>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

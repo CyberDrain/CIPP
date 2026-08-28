@@ -1,4 +1,12 @@
-import { Box, Card, CardContent, CardHeader, Divider, Stack, Typography } from '@mui/material'
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Stack,
+  Typography,
+} from '@mui/material'
 import { Grid } from '@mui/system'
 import Link from 'next/link'
 import { Button } from '@mui/material'
@@ -24,8 +32,12 @@ import {
 
 /** Card shell that renders its own fetch error inline rather than blanking the section. */
 const DashboardCard = ({ title, subheader, api, children, action }) => {
-  const isError = Array.isArray(api) ? api.some((item) => item?.isError) : api?.isError
-  const error = Array.isArray(api) ? api.find((item) => item?.isError)?.error : api?.error
+  const isError = Array.isArray(api)
+    ? api.some((item) => item?.isError)
+    : api?.isError
+  const error = Array.isArray(api)
+    ? api.find((item) => item?.isError)?.error
+    : api?.error
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -39,7 +51,11 @@ const DashboardCard = ({ title, subheader, api, children, action }) => {
       <Divider />
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {isError ? (
-          <Typography variant="body2" color="error" sx={{ py: 2, textAlign: 'center' }}>
+          <Typography
+            variant="body2"
+            color="error"
+            sx={{ py: 2, textAlign: 'center' }}
+          >
             {getCippError(error)}
           </Typography>
         ) : (
@@ -122,15 +138,23 @@ export const AllTenantsDashboard = () => {
           data={portfolioBarItems}
         />
         {!countsApi.isLoading && !cache.hasData && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
-            No cached collections were returned. The nightly cache job may not have run yet.
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mt: 1.5, display: 'block' }}
+          >
+            No cached collections were returned. The nightly cache job may not
+            have run yet.
           </Typography>
         )}
       </Box>
 
       {/* ------------------------------------------------------------ security */}
       <Box>
-        <AllTenantsBandHeading title="Security posture" description="How the estate is trending" />
+        <AllTenantsBandHeading
+          title="Security posture"
+          description="How the estate is trending"
+        />
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, lg: 5 }}>
             <DashboardCard
@@ -138,43 +162,60 @@ export const AllTenantsDashboard = () => {
               subheader="Portfolio average, from the nightly cache"
               api={secureScoreApi}
               action={
-                <Button component={Link} href="/tenant/administration/securescore" size="small">
+                <Button
+                  component={Link}
+                  href="/tenant/administration/securescore"
+                  size="small"
+                >
                   View
                 </Button>
               }
             >
-              <Stack direction="row" spacing={3} alignItems="baseline" sx={{ mb: 2 }}>
+              <Stack
+                direction="row"
+                spacing={3}
+                alignItems="baseline"
+                sx={{ mb: 2 }}
+              >
                 <Box>
-                  <Typography variant="h4" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontVariantNumeric: 'tabular-nums' }}
+                  >
                     {secureScore.average}%
                   </Typography>
                   <Typography variant="caption" color="text.disabled">
                     across {secureScore.scored} tenants
                   </Typography>
                 </Box>
-                {secureScore.delta !== null && secureScore.delta !== undefined && (
-                  <Box>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{
-                        fontVariantNumeric: 'tabular-nums',
-                        color: severityColor(
-                          secureScore.delta > 0
-                            ? 'ok'
-                            : secureScore.delta < 0
-                              ? 'critical'
-                              : 'neutral'
-                        ),
-                      }}
-                    >
-                      {secureScore.delta > 0 ? '▲' : secureScore.delta < 0 ? '▼' : '■'}{' '}
-                      {Math.abs(secureScore.delta)} pts
-                    </Typography>
-                    <Typography variant="caption" color="text.disabled">
-                      over {secureScore.trend.length} days
-                    </Typography>
-                  </Box>
-                )}
+                {secureScore.delta !== null &&
+                  secureScore.delta !== undefined && (
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          fontVariantNumeric: 'tabular-nums',
+                          color: severityColor(
+                            secureScore.delta > 0
+                              ? 'ok'
+                              : secureScore.delta < 0
+                                ? 'critical'
+                                : 'neutral'
+                          ),
+                        }}
+                      >
+                        {secureScore.delta > 0
+                          ? '▲'
+                          : secureScore.delta < 0
+                            ? '▼'
+                            : '■'}{' '}
+                        {Math.abs(secureScore.delta)} pts
+                      </Typography>
+                      <Typography variant="caption" color="text.disabled">
+                        over {secureScore.trend.length} days
+                      </Typography>
+                    </Box>
+                  )}
               </Stack>
 
               {secureScore.scored > 0 ? (
@@ -184,16 +225,28 @@ export const AllTenantsDashboard = () => {
                       points={secureScore.trend}
                       isFetching={secureScoreApi.isLoading}
                       severity={
-                        secureScore.delta < 0 ? 'critical' : secureScore.delta > 0 ? 'ok' : 'info'
+                        secureScore.delta < 0
+                          ? 'critical'
+                          : secureScore.delta > 0
+                            ? 'ok'
+                            : 'info'
                       }
                     />
                   </Box>
-                  <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    sx={{ mb: 2 }}
+                  >
                     <Box sx={{ minWidth: 0, pr: 1 }}>
                       <Typography variant="caption" color="text.disabled">
                         Best
                       </Typography>
-                      <Typography variant="body2" noWrap title={secureScore.best?.name}>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        title={secureScore.best?.name}
+                      >
                         {secureScore.best?.name}
                       </Typography>
                       <Typography
@@ -210,7 +263,11 @@ export const AllTenantsDashboard = () => {
                       <Typography variant="caption" color="text.disabled">
                         Worst
                       </Typography>
-                      <Typography variant="body2" noWrap title={secureScore.worst?.name}>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        title={secureScore.worst?.name}
+                      >
                         {secureScore.worst?.name}
                       </Typography>
                       <Typography
@@ -241,7 +298,11 @@ export const AllTenantsDashboard = () => {
               subheader="Counted in tenants, not users"
               api={failedTestsApi}
               action={
-                <Button component={Link} href="/dashboardv2/identity" size="small">
+                <Button
+                  component={Link}
+                  href="/dashboardv2/identity"
+                  size="small"
+                >
                   View
                 </Button>
               }
@@ -304,16 +365,25 @@ export const AllTenantsDashboard = () => {
           <Grid size={{ xs: 12, lg: 3 }}>
             <DashboardCard
               title="Mail hygiene"
-              subheader={mail.total ? `${mail.total} domains` : 'Domain analyser results'}
+              subheader={
+                mail.total ? `${mail.total} domains` : 'Domain analyser results'
+              }
               api={domainsApi}
               action={
-                <Button component={Link} href="/tenant/standards/domains-analyser" size="small">
+                <Button
+                  component={Link}
+                  href="/tenant/standards/domains-analyser"
+                  size="small"
+                >
                   View
                 </Button>
               }
             >
               {mail.meters.length ? (
-                <AllTenantsMeterList meters={mail.meters} isFetching={domainsApi.isLoading} />
+                <AllTenantsMeterList
+                  meters={mail.meters}
+                  isFetching={domainsApi.isLoading}
+                />
               ) : (
                 !domainsApi.isLoading && (
                   <Typography variant="body2" color="text.secondary">
@@ -329,14 +399,26 @@ export const AllTenantsDashboard = () => {
               subheader="Tenants bucketed by combined alignment score"
               api={alignmentApi}
               action={
-                <Button component={Link} href="/tenant/standards/alignment" size="small">
+                <Button
+                  component={Link}
+                  href="/tenant/standards/alignment"
+                  size="small"
+                >
                   View
                 </Button>
               }
             >
-              <Stack direction="row" spacing={3} alignItems="center" sx={{ mb: 2 }}>
+              <Stack
+                direction="row"
+                spacing={3}
+                alignItems="center"
+                sx={{ mb: 2 }}
+              >
                 <Box>
-                  <Typography variant="h4" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontVariantNumeric: 'tabular-nums' }}
+                  >
                     {alignment.average}%
                   </Typography>
                   <Typography variant="caption" color="text.disabled">
@@ -351,7 +433,9 @@ export const AllTenantsDashboard = () => {
                 rows={alignmentBuckets.map((bucket) => ({
                   label: bucket.label,
                   total: bucket.value,
-                  segments: [{ value: bucket.value, severity: bucket.severity }],
+                  segments: [
+                    { value: bucket.value, severity: bucket.severity },
+                  ],
                 }))}
               />
               {alignment.lowest.length > 0 && (
@@ -375,7 +459,9 @@ export const AllTenantsDashboard = () => {
                           sx={{
                             fontVariantNumeric: 'tabular-nums',
                             fontWeight: 600,
-                            color: severityColor(item.score < 50 ? 'critical' : 'warning'),
+                            color: severityColor(
+                              item.score < 50 ? 'critical' : 'warning'
+                            ),
                           }}
                         >
                           {item.score}%
@@ -479,22 +565,30 @@ export const AllTenantsDashboard = () => {
                   {
                     label: '0 – 7 days',
                     total: delegation.buckets.week,
-                    segments: [{ value: delegation.buckets.week, severity: 'critical' }],
+                    segments: [
+                      { value: delegation.buckets.week, severity: 'critical' },
+                    ],
                   },
                   {
                     label: '8 – 30 days',
                     total: delegation.buckets.month,
-                    segments: [{ value: delegation.buckets.month, severity: 'warning' }],
+                    segments: [
+                      { value: delegation.buckets.month, severity: 'warning' },
+                    ],
                   },
                   {
                     label: '31 – 90 days',
                     total: delegation.buckets.quarter,
-                    segments: [{ value: delegation.buckets.quarter, severity: 'info' }],
+                    segments: [
+                      { value: delegation.buckets.quarter, severity: 'info' },
+                    ],
                   },
                   {
                     label: 'Over 90 days',
                     total: delegation.buckets.healthy,
-                    segments: [{ value: delegation.buckets.healthy, severity: 'ok' }],
+                    segments: [
+                      { value: delegation.buckets.healthy, severity: 'ok' },
+                    ],
                   },
                 ]}
               />

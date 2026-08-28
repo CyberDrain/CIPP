@@ -37,20 +37,62 @@ const Page = () => {
       name: 'usernameFormat',
       type: 'autoComplete',
       options: [
-        { label: '%FirstName%.%LastName% (john.doe)', value: '%FirstName%.%LastName%' },
-        { label: '%FirstName%%LastName% (johndoe)', value: '%FirstName%%LastName%' },
-        { label: '%LastName%.%FirstName% (doe.john)', value: '%LastName%.%FirstName%' },
-        { label: '%LastName%%FirstName% (doejohn)', value: '%LastName%%FirstName%' },
-        { label: '%FirstName%_%LastName% (john_doe)', value: '%FirstName%_%LastName%' },
-        { label: '%LastName%_%FirstName% (doe_john)', value: '%LastName%_%FirstName%' },
-        { label: '%FirstName%-%LastName% (john-doe)', value: '%FirstName%-%LastName%' },
-        { label: '%LastName%-%FirstName% (doe-john)', value: '%LastName%-%FirstName%' },
-        { label: '%FirstName[1]%%LastName% (jdoe)', value: '%FirstName[1]%%LastName%' },
-        { label: '%FirstName[2]%%LastName% (jodoe)', value: '%FirstName[2]%%LastName%' },
-        { label: '%FirstName[3]%%LastName% (johdoe)', value: '%FirstName[3]%%LastName%' },
-        { label: '%FirstName%.%LastName[1]% (john.d)', value: '%FirstName%.%LastName[1]%' },
-        { label: '%FirstName%%LastName[1]% (johnd)', value: '%FirstName%%LastName[1]%' },
-        { label: '%FirstName[1]%.%LastName% (j.doe)', value: '%FirstName[1]%.%LastName%' },
+        {
+          label: '%FirstName%.%LastName% (john.doe)',
+          value: '%FirstName%.%LastName%',
+        },
+        {
+          label: '%FirstName%%LastName% (johndoe)',
+          value: '%FirstName%%LastName%',
+        },
+        {
+          label: '%LastName%.%FirstName% (doe.john)',
+          value: '%LastName%.%FirstName%',
+        },
+        {
+          label: '%LastName%%FirstName% (doejohn)',
+          value: '%LastName%%FirstName%',
+        },
+        {
+          label: '%FirstName%_%LastName% (john_doe)',
+          value: '%FirstName%_%LastName%',
+        },
+        {
+          label: '%LastName%_%FirstName% (doe_john)',
+          value: '%LastName%_%FirstName%',
+        },
+        {
+          label: '%FirstName%-%LastName% (john-doe)',
+          value: '%FirstName%-%LastName%',
+        },
+        {
+          label: '%LastName%-%FirstName% (doe-john)',
+          value: '%LastName%-%FirstName%',
+        },
+        {
+          label: '%FirstName[1]%%LastName% (jdoe)',
+          value: '%FirstName[1]%%LastName%',
+        },
+        {
+          label: '%FirstName[2]%%LastName% (jodoe)',
+          value: '%FirstName[2]%%LastName%',
+        },
+        {
+          label: '%FirstName[3]%%LastName% (johdoe)',
+          value: '%FirstName[3]%%LastName%',
+        },
+        {
+          label: '%FirstName%.%LastName[1]% (john.d)',
+          value: '%FirstName%.%LastName[1]%',
+        },
+        {
+          label: '%FirstName%%LastName[1]% (johnd)',
+          value: '%FirstName%%LastName[1]%',
+        },
+        {
+          label: '%FirstName[1]%.%LastName% (j.doe)',
+          value: '%FirstName[1]%.%LastName%',
+        },
         { label: '%LastName% (doe)', value: '%LastName%' },
         { label: '%FirstName% (john)', value: '%FirstName%' },
       ],
@@ -74,7 +116,8 @@ const Page = () => {
       label: 'Username Space Replacement',
       name: 'usernameSpaceReplacement',
       type: 'textField',
-      helperText: 'Used when space handling is set to Replace spaces (example: _ or .).',
+      helperText:
+        'Used when space handling is set to Replace spaces (example: _ or .).',
     },
     {
       label: 'Primary Domain',
@@ -172,7 +215,8 @@ const Page = () => {
         { label: 'Send As', value: 'SendAs' },
         { label: 'Send on Behalf', value: 'SendOnBehalf' },
       ],
-      helperText: 'Defaults to Full Access. Select several to grant them together.',
+      helperText:
+        'Defaults to Full Access. Select several to grant them together.',
       multiple: true,
       creatable: false,
     },
@@ -317,7 +361,8 @@ const Page = () => {
       'businessPhones',
       ...(userSettings?.userAttributes
         ?.filter((attribute) => attribute.value !== 'sponsor')
-        .map((attribute) => `defaultAttributes.${attribute.label}.Value`) || []),
+        .map((attribute) => `defaultAttributes.${attribute.label}.Value`) ||
+        []),
     ],
     actions: actions,
   }
@@ -350,7 +395,11 @@ const Page = () => {
             'department',
           ]}
           cardButton={
-            <Button startIcon={<Add />} onClick={createDialog.handleOpen} sx={{ mr: 1 }}>
+            <Button
+              startIcon={<Add />}
+              onClick={createDialog.handleOpen}
+              sx={{ mr: 1 }}
+            >
               Add Template
             </Button>
           }

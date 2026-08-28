@@ -70,7 +70,11 @@ export const ReportDocument = ({
 
   const date =
     generatedOn ??
-    new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
 
   // What every `%variable%` resolves to in this report. The report's own three override CIPP's,
   // so `%tenantname%` still resolves before the variables fetch lands.
@@ -81,7 +85,16 @@ export const ReportDocument = ({
     reportdate: date,
   }
 
-  const context = { theme, styles, variables, logo, footerLabel, size, orientation, date }
+  const context = {
+    theme,
+    styles,
+    variables,
+    logo,
+    footerLabel,
+    size,
+    orientation,
+    date,
+  }
 
   // Branding's cover note wins; a report's own wording is the fallback. Leave the prop undefined
   // when neither is set so CoverPage's default confidentiality line still appears. Variables are
@@ -110,7 +123,9 @@ export const ReportDocument = ({
             subtitle={coverSubtitle}
             // Naming the client on the cover is what makes it a client report. Every report wanted
             // it and each one printed it slightly differently; `coverTenant={false}` opts out.
-            tenantName={coverTenant === false ? null : coverTenant || tenantName}
+            tenantName={
+              coverTenant === false ? null : coverTenant || tenantName
+            }
             footerNote={coverNote}
           >
             {coverMeta}

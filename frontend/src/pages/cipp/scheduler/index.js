@@ -1,97 +1,103 @@
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import CippTablePage from "../../../components/CippComponents/CippTablePage";
-import { Button } from "@mui/material";
-import { CalendarDaysIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
-import ScheduledTaskDetails from "../../../components/CippComponents/ScheduledTaskDetails";
-import { CippScheduledTaskActions } from "../../../components/CippComponents/CippScheduledTaskActions";
-import { CippSchedulerDrawer } from "../../../components/CippComponents/CippSchedulerDrawer";
-import { CippSchedulerCountdown } from "../../../components/CippComponents/CippSchedulerCountdown";
-import { useSettings } from "../../../hooks/use-settings";
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import CippTablePage from '../../../components/CippComponents/CippTablePage'
+import { Button } from '@mui/material'
+import { CalendarDaysIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
+import ScheduledTaskDetails from '../../../components/CippComponents/ScheduledTaskDetails'
+import { CippScheduledTaskActions } from '../../../components/CippComponents/CippScheduledTaskActions'
+import { CippSchedulerDrawer } from '../../../components/CippComponents/CippSchedulerDrawer'
+import { CippSchedulerCountdown } from '../../../components/CippComponents/CippSchedulerCountdown'
+import { useSettings } from '../../../hooks/use-settings'
 
 const Page = () => {
-  const [editTaskId, setEditTaskId] = useState(null);
-  const [cloneTaskId, setCloneTaskId] = useState(null);
-  const currentTenant = useSettings().currentTenant;
+  const [editTaskId, setEditTaskId] = useState(null)
+  const [cloneTaskId, setCloneTaskId] = useState(null)
+  const currentTenant = useSettings().currentTenant
 
   const drawerHandlers = {
     openEditDrawer: (row) => {
-      setEditTaskId(row.RowKey);
+      setEditTaskId(row.RowKey)
     },
     openCloneDrawer: (row) => {
-      setCloneTaskId(row.RowKey);
+      setCloneTaskId(row.RowKey)
     },
-  };
+  }
 
-  const actions = CippScheduledTaskActions(drawerHandlers);
+  const actions = CippScheduledTaskActions(drawerHandlers)
 
   const filterList = [
     {
-      filterName: "Running",
-      value: [{ id: "TaskState", value: "Running" }],
-      type: "column",
+      filterName: 'Running',
+      value: [{ id: 'TaskState', value: 'Running' }],
+      type: 'column',
     },
     {
-      filterName: "Planned",
-      value: [{ id: "TaskState", value: "Planned" }],
-      type: "column",
+      filterName: 'Planned',
+      value: [{ id: 'TaskState', value: 'Planned' }],
+      type: 'column',
     },
     {
-      filterName: "Failed",
-      value: [{ id: "TaskState", value: "Failed" }],
-      type: "column",
+      filterName: 'Failed',
+      value: [{ id: 'TaskState', value: 'Failed' }],
+      type: 'column',
     },
     {
-      filterName: "Completed",
-      value: [{ id: "TaskState", value: "Completed" }],
-      type: "column",
+      filterName: 'Completed',
+      value: [{ id: 'TaskState', value: 'Completed' }],
+      type: 'column',
     },
-  ];
+  ]
 
   const offCanvas = {
     children: (extendedData) => (
-      <ScheduledTaskDetails data={extendedData} showActions={true} showTitle={false} />
+      <ScheduledTaskDetails
+        data={extendedData}
+        showActions={true}
+        showTitle={false}
+      />
     ),
-    size: "xl",
+    size: 'xl',
     actions: actions,
-  };
-  const [showHiddenJobs, setShowHiddenJobs] = useState(false);
+  }
+  const [showHiddenJobs, setShowHiddenJobs] = useState(false)
   // Hoisted so the countdown can subscribe to exactly the cache entry the table populates,
   // rather than issuing a second request for the same rows.
   const apiUrl = showHiddenJobs
     ? `/api/ListScheduledItems?ShowHidden=true`
-    : `/api/ListScheduledItems`;
+    : `/api/ListScheduledItems`
   const queryKey = showHiddenJobs
     ? `ListScheduledItems-hidden-${currentTenant}`
-    : `ListScheduledItems-${currentTenant}`;
+    : `ListScheduledItems-${currentTenant}`
   return (
     <>
       <CippTablePage
         cardButton={
           <>
             <Button onClick={() => setShowHiddenJobs((prev) => !prev)}>
-              {showHiddenJobs ? "Hide" : "Show"} System Jobs
+              {showHiddenJobs ? 'Hide' : 'Show'} System Jobs
             </Button>
             <CippSchedulerDrawer buttonText="Add Task" />
           </>
         }
         title="Scheduled Tasks"
-        tableFilter={<CippSchedulerCountdown apiUrl={apiUrl} queryKey={queryKey} />}
+        tableFilter={
+          <CippSchedulerCountdown apiUrl={apiUrl} queryKey={queryKey} />
+        }
         apiUrl={apiUrl}
         queryKey={queryKey}
         simpleColumns={[
-          "ExecutedTime",
-          "TaskState",
-          "Tenant",
-          "Name",
-          "ScheduledTime",
-          "Command",
-          "Parameters",
-          "PostExecution",
-          "Reference",
-          "PsaTicketId",
-          "Recurrence",
-          "Results",
+          'ExecutedTime',
+          'TaskState',
+          'Tenant',
+          'Name',
+          'ScheduledTime',
+          'Command',
+          'Parameters',
+          'PostExecution',
+          'Reference',
+          'PsaTicketId',
+          'Recurrence',
+          'Results',
         ]}
         actions={actions}
         offCanvas={offCanvas}
@@ -125,9 +131,9 @@ const Page = () => {
         />
       )}
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

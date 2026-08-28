@@ -1,35 +1,41 @@
-import { useEffect } from "react";
-import { Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useWatch } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { CippFormTenantSelector } from "../../../../components/CippComponents/CippFormTenantSelector";
+import { useEffect } from 'react'
+import { Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useWatch } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { CippFormTenantSelector } from '../../../../components/CippComponents/CippFormTenantSelector'
 
 const AddPolicy = () => {
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       selectedTenants: [],
       TemplateList: null,
-      PowerShellCommand: "",
+      PowerShellCommand: '',
     },
-  });
+  })
 
-  const templateListVal = useWatch({ control: formControl.control, name: "TemplateList" });
+  const templateListVal = useWatch({
+    control: formControl.control,
+    name: 'TemplateList',
+  })
 
   useEffect(() => {
     if (templateListVal?.value) {
-      formControl.setValue("PowerShellCommand", JSON.stringify(templateListVal?.value));
+      formControl.setValue(
+        'PowerShellCommand',
+        JSON.stringify(templateListVal?.value)
+      )
     }
-  }, [templateListVal, formControl]);
+  }, [templateListVal, formControl])
 
   // Watch the value of QuarantineNotification
   const quarantineNotification = useWatch({
     control: formControl.control,
-    name: "QuarantineNotification",
-  });
+    name: 'QuarantineNotification',
+  })
 
   return (
     <CippFormPage
@@ -48,7 +54,7 @@ const AddPolicy = () => {
             type="multiple"
             allTenants={true}
             preselectedEnabled={true}
-            validators={{ required: "At least one tenant must be selected" }}
+            validators={{ required: 'At least one tenant must be selected' }}
           />
         </Grid>
 
@@ -72,7 +78,7 @@ const AddPolicy = () => {
           />
         </Grid> */}
 
-        <Divider sx={{ my: 2, width: "100%" }} />
+        <Divider sx={{ my: 2, width: '100%' }} />
         <Grid size={{ xs: 12, sm: 6 }}>
           <CippFormComponent
             type="textField"
@@ -82,7 +88,7 @@ const AddPolicy = () => {
             formControl={formControl}
             required={true}
           />
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
           <CippFormComponent
             type="autoComplete"
             label="Release Action Preference"
@@ -92,14 +98,19 @@ const AddPolicy = () => {
             required={true}
             multiple={false}
             options={[
-              { label: "Release", value: "Release" },
-              { label: "Request Release", value: "RequestRelease" },
+              { label: 'Release', value: 'Release' },
+              { label: 'Request Release', value: 'RequestRelease' },
             ]}
           />
         </Grid>
 
         <Grid size={{ xs: 12, md: 2 }}>
-          <CippFormComponent type="switch" label="Delete" name="Delete" formControl={formControl} />
+          <CippFormComponent
+            type="switch"
+            label="Delete"
+            name="Delete"
+            formControl={formControl}
+          />
           <CippFormComponent
             type="switch"
             label="Preview"
@@ -136,9 +147,9 @@ const AddPolicy = () => {
         </Grid>
       </Grid>
     </CippFormPage>
-  );
-};
+  )
+}
 
-AddPolicy.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+AddPolicy.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default AddPolicy;
+export default AddPolicy

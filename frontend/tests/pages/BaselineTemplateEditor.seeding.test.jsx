@@ -6,7 +6,9 @@ import { renderWithProviders } from '../test-utils'
 import router from '../mocks/next-router'
 import fixture from '../mocks/baseline-tenant-fixture.json'
 
-vi.mock('../../src/api/ApiCall', async () => (await import('../mocks/api-call')).apiCallMock())
+vi.mock('../../src/api/ApiCall', async () =>
+  (await import('../mocks/api-call')).apiCallMock()
+)
 import { api, getResult, postResult } from '../mocks/api-call'
 
 import Page from '../../src/pages/tenant/baselines/template.jsx'
@@ -44,7 +46,9 @@ describe('Baseline template editor - migrated variable seeding', () => {
     const inputs = await screen.findAllByRole('textbox')
     const byLabel = {}
     for (const input of inputs) {
-      const label = input.closest('.MuiFormControl-root')?.querySelector('label')?.textContent
+      const label = input
+        .closest('.MuiFormControl-root')
+        ?.querySelector('label')?.textContent
       if (label) byLabel[label] = input.value
     }
     console.log('DBG editor fields:', JSON.stringify(byLabel))
@@ -52,12 +56,11 @@ describe('Baseline template editor - migrated variable seeding', () => {
     await waitFor(() => {
       const security = screen
         .getAllByRole('textbox')
-        .find(
-          (input) =>
-            input
-              .closest('.MuiFormControl-root')
-              ?.querySelector('label')
-              ?.textContent?.includes('Security contact email')
+        .find((input) =>
+          input
+            .closest('.MuiFormControl-root')
+            ?.querySelector('label')
+            ?.textContent?.includes('Security contact email')
         )
       expect(security).toBeTruthy()
       expect(security.value).toBe('support@bezalu.com')

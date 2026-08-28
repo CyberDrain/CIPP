@@ -54,12 +54,15 @@ const defaultScriptContentFields = [{ name: 'scriptContent', label: 'Script' }]
 // throwing on Buffer.from(undefined).
 const getScriptContentFields = (script) => {
   if (!script) return []
-  const fields = scriptContentFields[script.scriptType] ?? defaultScriptContentFields
+  const fields =
+    scriptContentFields[script.scriptType] ?? defaultScriptContentFields
   return fields.filter((field) => script[field.name] !== undefined)
 }
 
-const decodeScript = (value) => (value ? Buffer.from(value, 'base64').toString('utf8') : '')
-const encodeScript = (value) => Buffer.from(value ?? '', 'utf8').toString('base64')
+const decodeScript = (value) =>
+  value ? Buffer.from(value, 'base64').toString('utf8') : ''
+const encodeScript = (value) =>
+  Buffer.from(value ?? '', 'utf8').toString('base64')
 
 const Page = () => {
   const pageTitle = 'Scripts'
@@ -87,10 +90,15 @@ const Page = () => {
 
   const language = useMemo(() => {
     const scriptType = currentScript?.scriptType?.toLowerCase()
-    return scriptType === 'macos' || scriptType === 'linux' ? 'shell' : 'powershell'
+    return scriptType === 'macos' || scriptType === 'linux'
+      ? 'shell'
+      : 'powershell'
   }, [currentScript?.scriptType])
 
-  const contentFields = useMemo(() => getScriptContentFields(currentScript), [currentScript])
+  const contentFields = useMemo(
+    () => getScriptContentFields(currentScript),
+    [currentScript]
+  )
   // Built-in Microsoft remediations cannot be modified, Graph rejects the PATCH.
   const isReadOnly = currentScript?.isGlobalScript === true
   const activeField = contentFields[activeContentTab]
@@ -269,12 +277,15 @@ const Page = () => {
     multiple: true,
     creatable: false,
     allowResubmit: true,
-    ...(required && { validators: { required: 'Please select at least one group' } }),
+    ...(required && {
+      validators: { required: 'Please select at least one group' },
+    }),
     api: {
       url: '/api/ListGraphRequest',
       dataKey: 'Results',
       queryKey: `ListScriptAssignmentGroups-${tenantFilter}`,
-      labelField: (group) => (group.id ? `${group.displayName} (${group.id})` : group.displayName),
+      labelField: (group) =>
+        group.id ? `${group.displayName} (${group.id})` : group.displayName,
       valueField: 'id',
       addedField: {
         description: 'description',
@@ -309,9 +320,13 @@ const Page = () => {
             'Replace will overwrite existing assignments. Append keeps current assignments and adds the new ones.',
         },
       ],
-      confirmText: 'Are you sure you want to assign "[displayName]" to all users?',
+      confirmText:
+        'Are you sure you want to assign "[displayName]" to all users?',
       customDataformatter: (row, action, formData) => ({
-        tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
+        tenantFilter:
+          tenantFilter === 'AllTenants' && row?.Tenant
+            ? row.Tenant
+            : tenantFilter,
         ID: row?.id,
         Type: getScriptEndpoint(row?.scriptType),
         AssignTo: 'allLicensedUsers',
@@ -336,9 +351,13 @@ const Page = () => {
             'Replace will overwrite existing assignments. Append keeps current assignments and adds the new ones.',
         },
       ],
-      confirmText: 'Are you sure you want to assign "[displayName]" to all devices?',
+      confirmText:
+        'Are you sure you want to assign "[displayName]" to all devices?',
       customDataformatter: (row, action, formData) => ({
-        tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
+        tenantFilter:
+          tenantFilter === 'AllTenants' && row?.Tenant
+            ? row.Tenant
+            : tenantFilter,
         ID: row?.id,
         Type: getScriptEndpoint(row?.scriptType),
         AssignTo: 'AllDevices',
@@ -363,9 +382,13 @@ const Page = () => {
             'Replace will overwrite existing assignments. Append keeps current assignments and adds the new ones.',
         },
       ],
-      confirmText: 'Are you sure you want to assign "[displayName]" to all users and devices?',
+      confirmText:
+        'Are you sure you want to assign "[displayName]" to all users and devices?',
       customDataformatter: (row, action, formData) => ({
-        tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
+        tenantFilter:
+          tenantFilter === 'AllTenants' && row?.Tenant
+            ? row.Tenant
+            : tenantFilter,
         ID: row?.id,
         Type: getScriptEndpoint(row?.scriptType),
         AssignTo: 'AllDevicesAndUsers',
@@ -396,7 +419,8 @@ const Page = () => {
                 return true
               }
               return (
-                (Array.isArray(value) && value.length > 0) || 'Please select at least one group'
+                (Array.isArray(value) && value.length > 0) ||
+                'Please select at least one group'
               )
             },
           },
@@ -426,12 +450,17 @@ const Page = () => {
         },
       ],
       customDataformatter: (row, action, formData) => {
-        const selectedGroups = Array.isArray(formData?.groupTargets) ? formData.groupTargets : []
+        const selectedGroups = Array.isArray(formData?.groupTargets)
+          ? formData.groupTargets
+          : []
         const isExclude = formData?.assignmentDirection === 'exclude'
         const ids = selectedGroups.map((group) => group.value).filter(Boolean)
         const names = selectedGroups.map((group) => group.label).filter(Boolean)
         return {
-          tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
+          tenantFilter:
+            tenantFilter === 'AllTenants' && row?.Tenant
+              ? row.Tenant
+              : tenantFilter,
           ID: row?.id,
           Type: getScriptEndpoint(row?.scriptType),
           GroupIds: isExclude ? [] : ids,
@@ -527,11 +556,16 @@ const Page = () => {
             </IconButton>
           )}
           {isSaving && (
-            <CircularProgress size={20} sx={{ position: 'absolute', right: 55, top: 14 }} />
+            <CircularProgress
+              size={20}
+              sx={{ position: 'absolute', right: 55, top: 14 }}
+            />
           )}
         </DialogTitle>
         <DialogContent dividers>
-          {(scriptIsFetching || scriptIsLoading) && <CircularProgress size={40} />}
+          {(scriptIsFetching || scriptIsLoading) && (
+            <CircularProgress size={40} />
+          )}
           {!scriptIsFetching && !scriptIsLoading && (
             <>
               {isReadOnly && (
@@ -548,7 +582,9 @@ const Page = () => {
                 <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                   <Tabs
                     value={activeContentTab}
-                    onChange={(event, newValue) => setActiveContentTab(newValue)}
+                    onChange={(event, newValue) =>
+                      setActiveContentTab(newValue)
+                    }
                     aria-label="Script content"
                   >
                     {contentFields.map((field) => (
@@ -574,7 +610,9 @@ const Page = () => {
       <Dialog open={warnOpen} fullWidth maxWidth="sm">
         <DialogTitle>Confirmation</DialogTitle>
         <DialogContent>
-          <Stack spacing={3}>Changes detected, are you sure you want to close?</Stack>
+          <Stack spacing={3}>
+            Changes detected, are you sure you want to close?
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button color="inherit" onClick={() => setWarnOpen(false)}>

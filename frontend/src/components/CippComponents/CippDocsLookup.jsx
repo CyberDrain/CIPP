@@ -1,23 +1,23 @@
-import { Search } from "@mui/icons-material";
-import { Chip, IconButton, SvgIcon, Tooltip } from "@mui/material";
-import { useState } from "react";
+import { Search } from '@mui/icons-material'
+import { Chip, IconButton, SvgIcon, Tooltip } from '@mui/material'
+import { useState } from 'react'
 
 export const CippDocsLookup = (props) => {
-  const { text, type = "button", visible = true, ...other } = props;
-  const [showPassword, setShowPassword] = useState(false);
+  const { text, type = 'button', visible = true, ...other } = props
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleTogglePassword = () => {
-    setShowPassword((prev) => !prev);
-  };
+    setShowPassword((prev) => !prev)
+  }
 
   const handleDocsLookup = () => {
-    const searchUrl = `https://docs.cipp.app/?q=Help+with:+${encodeURIComponent(text)}&ask=true`;
-    window.open(searchUrl, '_blank');
-  };
+    const searchUrl = `https://docs.cipp.app/?q=Help+with:+${encodeURIComponent(text)}&ask=true`
+    window.open(searchUrl, '_blank')
+  }
 
-  if (!visible) return null;
+  if (!visible) return null
 
-  if (type === "button") {
+  if (type === 'button') {
     return (
       <Tooltip title="Search in documentation">
         <IconButton size="small" onClick={handleDocsLookup}>
@@ -26,10 +26,10 @@ export const CippDocsLookup = (props) => {
           </SvgIcon>
         </IconButton>
       </Tooltip>
-    );
+    )
   }
 
-  if (type === "chip") {
+  if (type === 'chip') {
     return (
       <Tooltip title="Search in documentation">
         <Chip
@@ -37,35 +37,37 @@ export const CippDocsLookup = (props) => {
           variant="outlined"
           size="small"
           color="info"
-          sx={{ mr: "0.25rem", cursor: "pointer" }}
+          sx={{ mr: '0.25rem', cursor: 'pointer' }}
           onClick={handleDocsLookup}
           {...other}
         />
       </Tooltip>
-    );
+    )
   }
 
-  if (type === "password") {
+  if (type === 'password') {
     return (
       <>
-        <Tooltip title={showPassword ? "Hide password" : "Show password"}>
+        <Tooltip title={showPassword ? 'Hide password' : 'Show password'}>
           <IconButton size="small" onClick={handleTogglePassword}>
-            <SvgIcon>{showPassword ? <VisibilityOff /> : <Visibility />}</SvgIcon>
+            <SvgIcon>
+              {showPassword ? <VisibilityOff /> : <Visibility />}
+            </SvgIcon>
           </IconButton>
         </Tooltip>
         <Tooltip title="Search in documentation">
           <Chip
-            label={showPassword ? text : "********"}
+            label={showPassword ? text : '********'}
             variant="outlined"
             size="small"
             color="info"
-            sx={{ mr: "0.25rem", cursor: "pointer" }}
+            sx={{ mr: '0.25rem', cursor: 'pointer' }}
             onClick={handleDocsLookup}
           />
         </Tooltip>
       </>
-    );
+    )
   }
 
-  return null;
-}; 
+  return null
+}

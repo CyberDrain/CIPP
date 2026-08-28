@@ -49,12 +49,15 @@ export const OpenOffCanvas = {
   play: async ({ canvasElement, step }) => {
     // Drawer portals to document.body, query from there
     const body = within(canvasElement.ownerDocument.body)
-    await step('drawer shows title and extended fields, dotted path resolves', async () => {
-      await expect(await body.findByText('Device Details')).toBeVisible()
-      await expect(body.getByText('DESKTOP-ENTRA-01')).toBeVisible()
-      // dotted extendedInfoFields path resolves into the nested object
-      await expect(body.getByText('Windows 11')).toBeVisible()
-    })
+    await step(
+      'drawer shows title and extended fields, dotted path resolves',
+      async () => {
+        await expect(await body.findByText('Device Details')).toBeVisible()
+        await expect(body.getByText('DESKTOP-ENTRA-01')).toBeVisible()
+        // dotted extendedInfoFields path resolves into the nested object
+        await expect(body.getByText('Windows 11')).toBeVisible()
+      }
+    )
   },
 }
 
@@ -103,5 +106,4 @@ export const InteractiveOffCanvas = {
       </>
     )
   },
-
 }

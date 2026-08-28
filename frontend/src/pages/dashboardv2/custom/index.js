@@ -36,9 +36,13 @@ const Page = () => {
     url: '/api/ListTestReports',
     queryKey: 'ListTestReports',
   })
-  const reportDescription = reportsApi.data?.find((r) => r.id === selectedReport)?.description
+  const reportDescription = reportsApi.data?.find(
+    (r) => r.id === selectedReport
+  )?.description
 
-  const customTests = testsApi.data?.TestResults?.filter((test) => test.TestType === 'Custom') || []
+  const customTests =
+    testsApi.data?.TestResults?.filter((test) => test.TestType === 'Custom') ||
+    []
 
   const offCanvas = {
     size: 'lg',
@@ -129,4 +133,3 @@ Page.getLayout = (page) => (
 )
 
 export default Page
-

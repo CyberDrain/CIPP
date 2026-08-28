@@ -1,5 +1,5 @@
-import PropTypes from "prop-types";
-import { Stack } from "@mui/material";
+import PropTypes from 'prop-types'
+import { Stack } from '@mui/material'
 
 /**
  * The Back / Next / Submit row shared by the wizard step buttons and the three steps that
@@ -17,31 +17,31 @@ import { Stack } from "@mui/material";
  *    what needs the width.
  */
 export const CippWizardActionsRow = (props) => {
-  const { sx, children } = props;
+  const { sx, children } = props
 
   return (
     <Stack
       spacing={2}
-      direction={{ xs: "column-reverse", md: "row" }}
-      alignItems={{ xs: "stretch", md: "center" }}
+      direction={{ xs: 'column-reverse', md: 'row' }}
+      alignItems={{ xs: 'stretch', md: 'center' }}
       justifyContent="flex-end"
       sx={{
         // In dialog mode this row is portalled into DialogActions, which is a flex
         // container that would otherwise size it to its widest label.
-        width: { xs: "100%", md: "auto" },
-        "& .MuiButton-root": {
-          width: { xs: "100%", md: "auto" },
-          minHeight: { xs: 44, md: "auto" },
+        width: { xs: '100%', md: 'auto' },
+        '& .MuiButton-root': {
+          width: { xs: '100%', md: 'auto' },
+          minHeight: { xs: 44, md: 'auto' },
         },
         ...sx,
       }}
     >
       {children}
     </Stack>
-  );
-};
+  )
+}
 
 CippWizardActionsRow.propTypes = {
   sx: PropTypes.object,
   children: PropTypes.node,
-};
+}

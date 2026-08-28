@@ -1,75 +1,75 @@
-import { useState, useEffect } from "react";
-import { Button, Box } from "@mui/material";
-import { useForm, useFormState } from "react-hook-form";
-import { GroupAdd } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import { CippApiResults } from "./CippApiResults";
-import { ApiPostCall } from "../../api/ApiCall";
-import CippAddEditTenantGroups from "./CippAddEditTenantGroups";
+import { useState, useEffect } from 'react'
+import { Button, Box } from '@mui/material'
+import { useForm, useFormState } from 'react-hook-form'
+import { GroupAdd } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import { CippApiResults } from './CippApiResults'
+import { ApiPostCall } from '../../api/ApiCall'
+import CippAddEditTenantGroups from './CippAddEditTenantGroups'
 
 export const CippAddTenantGroupDrawer = ({
-  buttonText = "Add Tenant Group",
+  buttonText = 'Add Tenant Group',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false)
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      groupType: "static",
-      ruleLogic: "and",
-      dynamicRules: [{}]
+      groupType: 'static',
+      ruleLogic: 'and',
+      dynamicRules: [{}],
     },
-  });
+  })
 
   const createTenantGroup = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["TenantGroupListPage"],
-  });
+    relatedQueryKeys: ['TenantGroupListPage'],
+  })
 
-  const { isValid, isDirty } = useFormState({ control: formControl.control });
+  const { isValid, isDirty } = useFormState({ control: formControl.control })
 
   useEffect(() => {
     if (createTenantGroup.isSuccess) {
       formControl.reset({
-        groupType: "static",
-        ruleLogic: "and",
-        dynamicRules: [{}]
-      });
+        groupType: 'static',
+        ruleLogic: 'and',
+        dynamicRules: [{}],
+      })
     }
-  }, [createTenantGroup.isSuccess]);
+  }, [createTenantGroup.isSuccess])
 
   const handleSubmit = (data) => {
     const formattedData = {
       ...data,
-      Action: "AddEdit",
-    };
+      Action: 'AddEdit',
+    }
 
     // If it's a dynamic group, format the rules for the backend
-    if (data.groupType === "dynamic" && data.dynamicRules) {
-      formattedData.dynamicRules = data.dynamicRules.map(rule => ({
+    if (data.groupType === 'dynamic' && data.dynamicRules) {
+      formattedData.dynamicRules = data.dynamicRules.map((rule) => ({
         property: rule.property?.value || rule.property,
         operator: rule.operator?.value || rule.operator,
         value: rule.value,
-      }));
-      formattedData.ruleLogic = data.ruleLogic || "and";
+      }))
+      formattedData.ruleLogic = data.ruleLogic || 'and'
     }
 
     createTenantGroup.mutate({
-      url: "/api/ExecTenantGroup",
+      url: '/api/ExecTenantGroup',
       data: formattedData,
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
-      groupType: "static",
-      ruleLogic: "and",
-      dynamicRules: [{}]
-    });
-  };
+      groupType: 'static',
+      ruleLogic: 'and',
+      dynamicRules: [{}],
+    })
+  }
 
   return (
     <>
@@ -86,18 +86,28 @@ export const CippAddTenantGroupDrawer = ({
         onClose={handleCloseDrawer}
         size="xl"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
               onClick={formControl.handleSubmit(handleSubmit)}
-              disabled={createTenantGroup.isPending || !isValid || (!isDirty && !createTenantGroup.isSuccess)}
+              disabled={
+                createTenantGroup.isPending ||
+                !isValid ||
+                (!isDirty && !createTenantGroup.isSuccess)
+              }
             >
               {createTenantGroup.isPending
-                ? "Creating Group..."
+                ? 'Creating Group...'
                 : createTenantGroup.isSuccess
-                ? "Create Another Group"
-                : "Create Group"}
+                  ? 'Create Another Group'
+                  : 'Create Group'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -116,5 +126,5 @@ export const CippAddTenantGroupDrawer = ({
         <CippApiResults apiObject={createTenantGroup} />
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

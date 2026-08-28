@@ -1,66 +1,66 @@
-import { useCallback, useMemo, useState } from "react";
-import { Card, CardContent, Container, Stack } from "@mui/material";
-import { WizardBusinessStep } from "../../../../components/CippWizard/CippWizardOptionsList";
-import { WizardConfirmationStep } from "../../../../components/CippWizard/CippWizardConfirmation";
-import { WizardNotificationsStep } from "../../../../components/CippWizard/CippPSASyncOptions";
-import { WizardProfileStep } from "../../../../components/CippWizard/CippPSACredentialsStep";
-import { WizardSteps } from "../../../../components/CippWizard/wizard-steps";
-import { Grid } from "@mui/system";
+import { useCallback, useMemo, useState } from 'react'
+import { Card, CardContent, Container, Stack } from '@mui/material'
+import { WizardBusinessStep } from '../../../../components/CippWizard/CippWizardOptionsList'
+import { WizardConfirmationStep } from '../../../../components/CippWizard/CippWizardConfirmation'
+import { WizardNotificationsStep } from '../../../../components/CippWizard/CippPSASyncOptions'
+import { WizardProfileStep } from '../../../../components/CippWizard/CippPSACredentialsStep'
+import { WizardSteps } from '../../../../components/CippWizard/wizard-steps'
+import { Grid } from '@mui/system'
 
 const steps = [
   {
-    title: "Step 1",
-    description: "Select your source",
+    title: 'Step 1',
+    description: 'Select your source',
   },
   {
-    title: "Step 2",
-    description: "Enter your credentials",
+    title: 'Step 2',
+    description: 'Enter your credentials',
   },
   {
-    title: "Step 3",
-    description: "Select your Sync Options",
+    title: 'Step 3',
+    description: 'Select your Sync Options',
   },
   {
-    title: "Step 4",
-    description: "Confirmation",
+    title: 'Step 4',
+    description: 'Confirmation',
   },
-];
+]
 
 export const Wizard = (props) => {
-  const { orientation = "horizontal" } = props;
-  const [activeStep, setActiveStep] = useState(0);
+  const { orientation = 'horizontal' } = props
+  const [activeStep, setActiveStep] = useState(0)
   const [values, setValues] = useState({
-    businessType: "saas",
-    name: "",
-    website: "",
-    companyName: "",
-    notifications: ["productUpdate", "weeklyNews"],
-  });
+    businessType: 'saas',
+    name: '',
+    website: '',
+    companyName: '',
+    notifications: ['productUpdate', 'weeklyNews'],
+  })
 
   const handleBack = useCallback(() => {
     setActiveStep((prevState) => {
       if (prevState > 0) {
-        return prevState - 1;
+        return prevState - 1
       }
 
-      return prevState;
-    });
-  }, []);
+      return prevState
+    })
+  }, [])
 
   const handleNext = useCallback((values) => {
     setValues((prevState) => ({
       ...prevState,
       ...values,
-    }));
+    }))
 
     setActiveStep((prevState) => {
       if (prevState < steps.length - 1) {
-        return prevState + 1;
+        return prevState + 1
       }
 
-      return prevState;
-    });
-  }, []);
+      return prevState
+    })
+  }, [])
 
   const content = useMemo(() => {
     switch (activeStep) {
@@ -72,7 +72,7 @@ export const Wizard = (props) => {
               businessType: values.businessType,
             }}
           />
-        );
+        )
 
       case 1:
         return (
@@ -85,7 +85,7 @@ export const Wizard = (props) => {
               website: values.website,
             }}
           />
-        );
+        )
 
       case 2:
         return (
@@ -96,33 +96,41 @@ export const Wizard = (props) => {
               notifications: values.notifications,
             }}
           />
-        );
+        )
 
       case 3:
-        return <WizardConfirmationStep onPreviousStep={handleBack} values={values} />;
+        return (
+          <WizardConfirmationStep onPreviousStep={handleBack} values={values} />
+        )
 
       default:
-        return null;
+        return null
     }
-  }, [activeStep, handleNext, handleBack, values]);
+  }, [activeStep, handleNext, handleBack, values])
 
   return (
     <Card>
-      {orientation === "vertical" ? (
+      {orientation === 'vertical' ? (
         <CardContent>
           <Grid container spacing={3}>
             <Grid size={{ md: 4, xs: 12 }}>
-              <WizardSteps activeStep={activeStep} orientation={orientation} steps={steps} />
+              <WizardSteps
+                activeStep={activeStep}
+                orientation={orientation}
+                steps={steps}
+              />
             </Grid>
-            <Grid size={{ md: 8, xs: 12 }}>
-              {content}
-            </Grid>
+            <Grid size={{ md: 8, xs: 12 }}>{content}</Grid>
           </Grid>
         </CardContent>
       ) : (
         <CardContent>
           <Stack spacing={6}>
-            <WizardSteps activeStep={activeStep} orientation={orientation} steps={steps} />
+            <WizardSteps
+              activeStep={activeStep}
+              orientation={orientation}
+              steps={steps}
+            />
             <div>
               <Container maxWidth="sm">{content}</Container>
             </div>
@@ -130,5 +138,5 @@ export const Wizard = (props) => {
         </CardContent>
       )}
     </Card>
-  );
-};
+  )
+}

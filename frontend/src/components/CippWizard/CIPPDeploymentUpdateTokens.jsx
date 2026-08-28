@@ -1,33 +1,41 @@
-import { useState } from "react";
-import { Stack, Typography, CircularProgress, SvgIcon, Box, Chip, Skeleton } from "@mui/material";
-import { CheckCircle, Person, Apartment } from "@mui/icons-material";
-import CippButtonCard from "../CippCards/CippButtonCard";
-import { ApiGetCall } from "../../api/ApiCall";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { CIPPM365OAuthButton } from "../CippComponents/CIPPM365OAuthButton";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
+import { useState } from 'react'
+import {
+  Stack,
+  Typography,
+  CircularProgress,
+  SvgIcon,
+  Box,
+  Chip,
+  Skeleton,
+} from '@mui/material'
+import { CheckCircle, Person, Apartment } from '@mui/icons-material'
+import CippButtonCard from '../CippCards/CippButtonCard'
+import { ApiGetCall } from '../../api/ApiCall'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { CIPPM365OAuthButton } from '../CippComponents/CIPPM365OAuthButton'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
 
 export const CIPPDeploymentUpdateTokens = ({ formControl }) => {
-  const [tokens, setTokens] = useState(null);
+  const [tokens, setTokens] = useState(null)
 
   // Get application ID information for the card header
   const appId = ApiGetCall({
     url: `/api/ExecListAppId`,
-    queryKey: "listAppId",
+    queryKey: 'listAppId',
     waiting: true,
-  });
+  })
 
   // Handle successful authentication
   const handleAuthSuccess = (tokenData) => {
-    setTokens(tokenData);
-  };
+    setTokens(tokenData)
+  }
 
   return (
     <Stack spacing={2}>
       <CippButtonCard
         variant="outlined"
         title={
-          <Stack direction="row" justifyContent={"space-between"}>
+          <Stack direction="row" justifyContent={'space-between'}>
             <Box>Update Tokens</Box>
             <Stack direction="row" spacing={2}>
               {appId.isLoading ? (
@@ -48,9 +56,10 @@ export const CIPPDeploymentUpdateTokens = ({ formControl }) => {
         }
       >
         <Typography variant="body2" gutterBottom sx={{ mb: 2 }}>
-          Click the button to refresh the Graph token for your tenants using popup authentication.
-          Use this to update your refresh token or change the logged in user. This method opens a
-          popup window where you can sign in to your Microsoft account.
+          Click the button to refresh the Graph token for your tenants using
+          popup authentication. Use this to update your refresh token or change
+          the logged in user. This method opens a popup window where you can
+          sign in to your Microsoft account.
         </Typography>
 
         <Typography variant="h6" gutterBottom>
@@ -123,7 +132,7 @@ export const CIPPDeploymentUpdateTokens = ({ formControl }) => {
         <CippApiResults apiObject={appId} errorsOnly />
       </CippButtonCard>
     </Stack>
-  );
-};
+  )
+}
 
-export default CIPPDeploymentUpdateTokens;
+export default CIPPDeploymentUpdateTokens

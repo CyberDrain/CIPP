@@ -1,4 +1,4 @@
-import Portals from "../data/portals";
+import Portals from '../data/portals'
 
 // Which M365 portal links the user wants shown, resolved from user-specific settings
 // (preferred), tenant-level settings, or the all-on defaults. Pure so both the dashboard
@@ -16,22 +16,22 @@ export const getFilteredPortals = (settings) => {
     Compliance_Portal: true,
     Power_Platform_Portal: true,
     Power_BI_Portal: true,
-  };
+  }
 
-  let portalLinks;
+  let portalLinks
   if (settings?.UserSpecificSettings?.portalLinks) {
     portalLinks = {
       ...defaultLinks,
       ...settings.UserSpecificSettings.portalLinks,
-    };
+    }
   } else if (settings?.portalLinks) {
-    portalLinks = { ...defaultLinks, ...settings.portalLinks };
+    portalLinks = { ...defaultLinks, ...settings.portalLinks }
   } else {
-    portalLinks = defaultLinks;
+    portalLinks = defaultLinks
   }
 
   return Portals.filter((portal) => {
-    const settingKey = portal.name;
-    return settingKey ? portalLinks[settingKey] === true : true;
-  });
-};
+    const settingKey = portal.name
+    return settingKey ? portalLinks[settingKey] === true : true
+  })
+}

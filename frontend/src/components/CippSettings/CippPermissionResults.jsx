@@ -1,13 +1,22 @@
-import { Alert, Button, Link, List, ListItem, Skeleton, SvgIcon, Typography } from "@mui/material";
-import { Cancel, CheckCircle } from "@mui/icons-material";
-import { CippPropertyList } from "../CippComponents/CippPropertyList";
-import { WrenchIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { CippOffCanvas } from "../CippComponents/CippOffCanvas";
-import { CippPropertyListCard } from "../CippCards/CippPropertyListCard";
-import { CippDataTable } from "../CippTable/CippDataTable";
-import { ApiPostCall } from "../../api/ApiCall";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { useEffect, useState } from "react";
+import {
+  Alert,
+  Button,
+  Link,
+  List,
+  ListItem,
+  Skeleton,
+  SvgIcon,
+  Typography,
+} from '@mui/material'
+import { Cancel, CheckCircle } from '@mui/icons-material'
+import { CippPropertyList } from '../CippComponents/CippPropertyList'
+import { WrenchIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { CippOffCanvas } from '../CippComponents/CippOffCanvas'
+import { CippPropertyListCard } from '../CippCards/CippPropertyListCard'
+import { CippDataTable } from '../CippTable/CippDataTable'
+import { ApiPostCall } from '../../api/ApiCall'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { useEffect, useState } from 'react'
 
 export const CippPermissionResults = (props) => {
   const {
@@ -17,66 +26,66 @@ export const CippPermissionResults = (props) => {
     setOffcanvasVisible,
     importReport,
     setCardIcon,
-  } = props;
-  const [results, setResults] = useState({});
+  } = props
+  const [results, setResults] = useState({})
 
   useEffect(() => {
     if (importReport) {
-      setResults(importReport);
+      setResults(importReport)
     } else {
-      setResults(executeCheck?.data);
+      setResults(executeCheck?.data)
     }
-  }, [executeCheck, importReport]);
+  }, [executeCheck, importReport])
 
   useEffect(() => {
     if (
       results?.Results?.MissingPermissions?.length > 0 ||
       results?.Results?.ErrorMessages?.length > 0
     ) {
-      setCardIcon(<Cancel />);
+      setCardIcon(<Cancel />)
     } else {
-      setCardIcon(<CheckCircle />);
+      setCardIcon(<CheckCircle />)
     }
-  }, [results]);
+  }, [results])
 
-  const accessTokenHeaders = ["Name", "UserPrincipalName", "IPAddress"];
+  const accessTokenHeaders = ['Name', 'UserPrincipalName', 'IPAddress']
 
   const addMissingPermissions = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["ExecAccessChecks-Permissions"],
-  });
+    relatedQueryKeys: ['ExecAccessChecks-Permissions'],
+  })
 
   const startCPVRefresh = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["ExecAccessChecks-Permissions"],
-  });
+    relatedQueryKeys: ['ExecAccessChecks-Permissions'],
+  })
 
   const handleAddMissingPermissions = (data) => {
-    setSkipCache(true);
+    setSkipCache(true)
     addMissingPermissions.mutate({
-      url: "/api/ExecPermissionRepair",
+      url: '/api/ExecPermissionRepair',
       data: {},
-      queryKey: "RepairPermissions",
-    });
-  };
+      queryKey: 'RepairPermissions',
+    })
+  }
 
   const handleStartCPVRefresh = () => {
     startCPVRefresh.mutate({
-      url: "/api/ExecCPVRefresh",
+      url: '/api/ExecCPVRefresh',
       data: {},
-      queryKey: "CPVRefresh",
-    });
-  };
+      queryKey: 'CPVRefresh',
+    })
+  }
 
-  var propertyItems = [];
+  var propertyItems = []
   accessTokenHeaders.forEach((header) => {
     propertyItems.push({
       label: header,
       value: results?.Results?.AccessTokenDetails?.[header],
-    });
-  });
+    })
+  })
   propertyItems.push({
-    label: "App Registration",
+    label: 'App Registration',
     value: (
       <Link
         href={`https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/${results?.Results?.AccessTokenDetails?.AppId}`}
@@ -85,7 +94,7 @@ export const CippPermissionResults = (props) => {
         {results?.Results?.AccessTokenDetails?.AppName}
       </Link>
     ),
-  });
+  })
 
   return (
     <>
@@ -109,8 +118,8 @@ export const CippPermissionResults = (props) => {
         </List>
       ) : !importReport && executeCheck?.isError ? (
         <Alert severity="error" sx={{ ml: 3, mr: 1 }}>
-          Failed to load permission check results. Please try refreshing or contact support if the
-          issue persists.
+          Failed to load permission check results. Please try refreshing or
+          contact support if the issue persists.
         </Alert>
       ) : (
         <>
@@ -141,7 +150,8 @@ export const CippPermissionResults = (props) => {
                   <SvgIcon fontSize="sm" style={{ marginRight: 4 }}>
                     <XMarkIcon />
                   </SvgIcon>
-                  There are new permissions to apply. Please click "Details" to review and apply the new permissions.
+                  There are new permissions to apply. Please click "Details" to
+                  review and apply the new permissions.
                 </Typography>
               </ListItem>
             )}
@@ -152,7 +162,7 @@ export const CippPermissionResults = (props) => {
             title="Permission Details"
             visible={offcanvasVisible}
             onClose={() => {
-              setOffcanvasVisible(false);
+              setOffcanvasVisible(false)
             }}
             extendedInfo={[]}
           >
@@ -169,7 +179,7 @@ export const CippPermissionResults = (props) => {
                       </Link>
                     ),
                     label: link.Text,
-                  };
+                  }
                 })}
               />
             )}
@@ -196,7 +206,7 @@ export const CippPermissionResults = (props) => {
                     </Button>
                   }
                   data={results?.Results?.MissingPermissions}
-                  simpleColumns={["Application", "Type", "Permission"]}
+                  simpleColumns={['Application', 'Type', 'Permission']}
                 />
               </>
             )}
@@ -222,7 +232,11 @@ export const CippPermissionResults = (props) => {
                 isFetching={!importReport && executeCheck?.isFetching}
                 refreshFunction={executeCheck}
                 data={results?.Results?.CPVRefreshList}
-                simpleColumns={["DisplayName", "DefaultDomainName", "LastRefresh"]}
+                simpleColumns={[
+                  'DisplayName',
+                  'DefaultDomainName',
+                  'LastRefresh',
+                ]}
               />
             )}
 
@@ -232,12 +246,14 @@ export const CippPermissionResults = (props) => {
                   title="Current Delegated Scopes"
                   isFetching={!importReport && executeCheck?.isFetching}
                   refreshFunction={executeCheck}
-                  data={results?.Results?.AccessTokenDetails?.Scope?.map((scope) => {
-                    return {
-                      Scope: scope,
-                    };
-                  })}
-                  simpleColumns={["Scope"]}
+                  data={results?.Results?.AccessTokenDetails?.Scope?.map(
+                    (scope) => {
+                      return {
+                        Scope: scope,
+                      }
+                    }
+                  )}
+                  simpleColumns={['Scope']}
                 />
               </>
             )}
@@ -247,12 +263,14 @@ export const CippPermissionResults = (props) => {
                   title="Current Application Roles"
                   isFetching={!importReport && executeCheck?.isFetching}
                   refreshFunction={executeCheck}
-                  data={results?.Results?.ApplicationTokenDetails?.Roles?.map((role) => {
-                    return {
-                      Role: role,
-                    };
-                  })}
-                  simpleColumns={["Role"]}
+                  data={results?.Results?.ApplicationTokenDetails?.Roles?.map(
+                    (role) => {
+                      return {
+                        Role: role,
+                      }
+                    }
+                  )}
+                  simpleColumns={['Role']}
                 />
               </>
             )}
@@ -260,5 +278,5 @@ export const CippPermissionResults = (props) => {
         </>
       )}
     </>
-  );
-};
+  )
+}

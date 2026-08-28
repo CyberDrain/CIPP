@@ -39,9 +39,12 @@ const Page = () => {
   const spRequest = ApiGetCall({
     url: '/api/ListGraphRequest',
     data: {
-      Endpoint: spObjectId ? `servicePrincipals/${spObjectId}` : 'servicePrincipals',
+      Endpoint: spObjectId
+        ? `servicePrincipals/${spObjectId}`
+        : 'servicePrincipals',
       $select: spSelect,
-      tenantFilter: router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
+      tenantFilter:
+        router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
     },
     queryKey: `EnterpriseApp-spId-${spObjectId}-permissions`,
     waiting: waiting,
@@ -60,18 +63,25 @@ const Page = () => {
 
   const title = !spRequest.isSuccess
     ? 'Loading...'
-    : spData?.displayName || spData?.appId || spObjectId || 'Enterprise application'
+    : spData?.displayName ||
+      spData?.appId ||
+      spObjectId ||
+      'Enterprise application'
 
   const subtitle =
     spRequest.isSuccess && spData
       ? [
           {
             icon: <Badge />,
-            text: <CippCopyToClipBoard type="chip" text={spData?.appId || 'N/A'} />,
+            text: (
+              <CippCopyToClipBoard type="chip" text={spData?.appId || 'N/A'} />
+            ),
           },
           {
             icon: <Fingerprint />,
-            text: <CippCopyToClipBoard type="chip" text={spData?.id || 'N/A'} />,
+            text: (
+              <CippCopyToClipBoard type="chip" text={spData?.id || 'N/A'} />
+            ),
           },
           {
             icon: <CalendarIcon />,
@@ -108,11 +118,13 @@ const Page = () => {
     if (!spData) {
       return undefined
     }
-    const tenant = router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+    const tenant =
+      router.query.tenantFilter ?? userSettingsDefaults.currentTenant
     return { ...spData, Tenant: tenant }
   }, [spData, router.query.tenantFilter, userSettingsDefaults.currentTenant])
 
-  const tenantFilter = router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+  const tenantFilter =
+    router.query.tenantFilter ?? userSettingsDefaults.currentTenant
 
   return (
     <HeaderedTabbedLayout
@@ -122,7 +134,9 @@ const Page = () => {
         <CippEnterpriseAppSwitcher
           title={title}
           currentSpId={spObjectId}
-          tenantFilter={router.query.tenantFilter ?? userSettingsDefaults.currentTenant}
+          tenantFilter={
+            router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+          }
         />
       }
       subtitle={subtitle}

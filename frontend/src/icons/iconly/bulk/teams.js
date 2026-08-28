@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId } from 'react'
 
 /**
  * Microsoft Teams product mark — shapes from the Teams logo,
@@ -6,17 +6,24 @@ import { useId } from "react";
  * Accepts MUI-like fontSize / sx for drop-in use next to @mui/icons-material icons.
  */
 const sizeFromFontSize = (fontSize) => {
-  if (fontSize == null || fontSize === "inherit") return "1em";
-  if (typeof fontSize === "number") return fontSize;
-  if (fontSize === "small") return 20;
-  if (fontSize === "medium") return 24;
-  if (fontSize === "large") return 35;
-  return fontSize;
-};
+  if (fontSize == null || fontSize === 'inherit') return '1em'
+  if (typeof fontSize === 'number') return fontSize
+  if (fontSize === 'small') return 20
+  if (fontSize === 'medium') return 24
+  if (fontSize === 'large') return 35
+  return fontSize
+}
 
-const Teams = ({ fontSize = "inherit", sx, width, height, style, ...props }) => {
-  const gradientId = useId().replace(/:/g, "");
-  const resolved = width ?? height ?? sizeFromFontSize(sx?.fontSize ?? fontSize);
+const Teams = ({
+  fontSize = 'inherit',
+  sx,
+  width,
+  height,
+  style,
+  ...props
+}) => {
+  const gradientId = useId().replace(/:/g, '')
+  const resolved = width ?? height ?? sizeFromFontSize(sx?.fontSize ?? fontSize)
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -25,7 +32,12 @@ const Teams = ({ fontSize = "inherit", sx, width, height, style, ...props }) => 
       height={resolved}
       fill="none"
       aria-hidden
-      style={{ display: "inline-block", flexShrink: 0, verticalAlign: "middle", ...style }}
+      style={{
+        display: 'inline-block',
+        flexShrink: 0,
+        verticalAlign: 'middle',
+        ...style,
+      }}
       {...props}
     >
       <path
@@ -102,7 +114,7 @@ const Teams = ({ fontSize = "inherit", sx, width, height, style, ...props }) => 
         d="M820.211,828.193H630.241v517.297H509.211V828.193H320.123V727.844h500.088V828.193z"
       />
     </svg>
-  );
-};
+  )
+}
 
-export default Teams;
+export default Teams

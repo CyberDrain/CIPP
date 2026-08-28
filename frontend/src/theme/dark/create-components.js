@@ -6,9 +6,9 @@ import {
   tableCellClasses,
   inputLabelClasses,
   tableRowClasses,
-} from "@mui/material";
-import { common } from "@mui/material/colors";
-import { alpha } from "@mui/material/styles";
+} from '@mui/material'
+import { common } from '@mui/material/colors'
+import { alpha } from '@mui/material/styles'
 
 export const createComponents = ({ palette }) => {
   return {
@@ -16,7 +16,7 @@ export const createComponents = ({ palette }) => {
       styleOverrides: {
         paper: {
           borderWidth: 1,
-          borderStyle: "solid",
+          borderStyle: 'solid',
           borderColor: palette.neutral[600],
         },
       },
@@ -32,7 +32,7 @@ export const createComponents = ({ palette }) => {
     MuiButton: {
       styleOverrides: {
         root: {
-          "&:focus": {
+          '&:focus': {
             boxShadow: `${alpha(palette.primary.main, 0.25)} 0 0 0 0.2rem`,
           },
         },
@@ -60,7 +60,7 @@ export const createComponents = ({ palette }) => {
     MuiInputBase: {
       styleOverrides: {
         input: {
-          "&::placeholder": {
+          '&::placeholder': {
             color: palette.text.secondary,
           },
         },
@@ -72,16 +72,16 @@ export const createComponents = ({ palette }) => {
           backgroundColor: palette.background.paper,
           borderColor: palette.neutral[600],
           boxShadow: `0px 1px 2px 0px ${alpha(palette.neutral[900], 0.08)}`,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: palette.action.hover,
           },
           [`&.${filledInputClasses.disabled}`]: {
             backgroundColor: palette.action.disabledBackground,
             borderColor: palette.neutral[800],
-            boxShadow: "none",
+            boxShadow: 'none',
           },
           [`&.${filledInputClasses.focused}`]: {
-            backgroundColor: "transparent",
+            backgroundColor: 'transparent',
             borderColor: palette.primary.main,
             boxShadow: `${alpha(palette.primary.main, 0.25)} 0 0 0 0.2rem`,
           },
@@ -98,14 +98,16 @@ export const createComponents = ({ palette }) => {
           color: palette.text.secondary,
           [`&.${inputLabelClasses.shrink}`]: {
             backgroundColor:
-              palette.mode === "dark" ? palette.background.paper : palette.background.default,
-            padding: "0 8px", // Make the label background a bit wider
-            transform: "translate(12px, -6px) scale(0.75)", // Label moves up when input is focused or filled
+              palette.mode === 'dark'
+                ? palette.background.paper
+                : palette.background.default,
+            padding: '0 8px', // Make the label background a bit wider
+            transform: 'translate(12px, -6px) scale(0.75)', // Label moves up when input is focused or filled
           },
           [`&.Mui-focused`]: {
             backgroundColor: palette.primary.main, // Set the background to primary color when selected
             color: palette.primary.contrastText, // Change the text color to contrast with the background
-            padding: "0 8px", // Keep the padding to ensure background width
+            padding: '0 8px', // Keep the padding to ensure background width
           },
         },
       },
@@ -121,8 +123,22 @@ export const createComponents = ({ palette }) => {
             xmlns="http://www.w3.org/2000/svg"
           >
             <rect width="18" height="18" rx="9" fill="currentColor" />
-            <rect x="2" y="2" width="14" height="14" rx="7" fill="currentColor" />
-            <rect x="5" y="5" width="8" height="8" rx="4" fill={palette.background?.paper} />
+            <rect
+              x="2"
+              y="2"
+              width="14"
+              height="14"
+              rx="7"
+              fill="currentColor"
+            />
+            <rect
+              x="5"
+              y="5"
+              width="8"
+              height="8"
+              rx="4"
+              fill={palette.background?.paper}
+            />
           </svg>
         ),
         icon: (
@@ -134,7 +150,14 @@ export const createComponents = ({ palette }) => {
             xmlns="http://www.w3.org/2000/svg"
           >
             <rect width="18" height="18" rx="9" fill="currentColor" />
-            <rect x="2" y="2" width="14" height="14" rx="7" fill={palette.background.paper} />
+            <rect
+              x="2"
+              y="2"
+              width="14"
+              height="14"
+              rx="7"
+              fill={palette.background.paper}
+            />
           </svg>
         ),
       },
@@ -157,7 +180,7 @@ export const createComponents = ({ palette }) => {
     MuiSwitch: {
       styleOverrides: {
         root: {
-          "&:focus-within": {
+          '&:focus-within': {
             boxShadow: `${alpha(palette.primary.main, 0.25)} 0 0 0 0.2rem`,
           },
         },
@@ -183,7 +206,7 @@ export const createComponents = ({ palette }) => {
       styleOverrides: {
         root: {
           borderBottomWidth: 1,
-          borderBottomStyle: "solid",
+          borderBottomStyle: 'solid',
           borderBottomColor: palette.neutral[800],
         },
       },
@@ -193,7 +216,7 @@ export const createComponents = ({ palette }) => {
         root: {
           backgroundColor: palette.neutral[900],
           borderBottomWidth: 1,
-          borderBottomStyle: "solid",
+          borderBottomStyle: 'solid',
           borderBottomColor: palette.neutral[800],
           [`.${tableCellClasses.root}`]: {
             color: palette.text.secondary,
@@ -217,5 +240,5 @@ export const createComponents = ({ palette }) => {
         },
       },
     },
-  };
-};
+  }
+}

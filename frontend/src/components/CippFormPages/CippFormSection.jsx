@@ -1,8 +1,8 @@
-import { Button, CardContent, CardActions } from "@mui/material";
-import { ApiPostCall } from "../../api/ApiCall";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { useEffect } from "react";
-import { useFormState } from "react-hook-form";
+import { Button, CardContent, CardActions } from '@mui/material'
+import { ApiPostCall } from '../../api/ApiCall'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { useEffect } from 'react'
+import { useFormState } from 'react-hook-form'
 
 const CippFormSection = (props) => {
   const {
@@ -13,37 +13,37 @@ const CippFormSection = (props) => {
     customDataformatter,
     relatedQueryKeys,
     resetForm = true,
-  } = props;
+  } = props
 
   const postCall = ApiPostCall({
     datafromUrl: true,
     relatedQueryKeys: relatedQueryKeys,
-  });
+  })
 
-  const { isValid } = useFormState({ control: formControl.control });
+  const { isValid } = useFormState({ control: formControl.control })
 
   useEffect(() => {
     if (postCall.isSuccess) {
       if (resetForm) {
-        formControl.reset();
+        formControl.reset()
       }
     }
-  }, [postCall.isSuccess]);
+  }, [postCall.isSuccess])
 
   const handleSubmit = () => {
     if (!isValid) {
-      return;
+      return
     }
-    let values = formControl.getValues();
+    let values = formControl.getValues()
     if (customDataformatter) {
-      values = customDataformatter(values);
+      values = customDataformatter(values)
     }
     postCall.mutate({
       url: postUrl,
       data: values,
       queryKey: queryKey,
-    });
-  };
+    })
+  }
   return (
     <>
       <CardContent>
@@ -51,7 +51,7 @@ const CippFormSection = (props) => {
         <CippApiResults apiObject={postCall} />
       </CardContent>
 
-      <CardActions sx={{ justifyContent: "flex-end" }}>
+      <CardActions sx={{ justifyContent: 'flex-end' }}>
         <Button
           disabled={postCall.isPending || !isValid}
           onClick={formControl.handleSubmit(handleSubmit)}
@@ -62,7 +62,7 @@ const CippFormSection = (props) => {
         </Button>
       </CardActions>
     </>
-  );
-};
+  )
+}
 
-export default CippFormSection;
+export default CippFormSection

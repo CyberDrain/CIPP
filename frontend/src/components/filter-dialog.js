@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import PropTypes from "prop-types";
-import XMarkIcon from "@heroicons/react/24/outline/XMarkIcon";
+import { useCallback } from 'react'
+import PropTypes from 'prop-types'
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon'
 import {
   Button,
   Chip,
@@ -13,9 +13,9 @@ import {
   Stack,
   SvgIcon,
   Typography,
-} from "@mui/material";
-import { useFilters } from "../hooks/use-filters";
-import { FilterDialogItem } from "./filter-dialog-item";
+} from '@mui/material'
+import { useFilters } from '../hooks/use-filters'
+import { FilterDialogItem } from './filter-dialog-item'
 
 export const FilterDialog = (props) => {
   const {
@@ -26,16 +26,16 @@ export const FilterDialog = (props) => {
     open = false,
     operators = [],
     properties = [],
-  } = props;
-  const filtersController = useFilters(operators, properties, filters);
+  } = props
+  const filtersController = useFilters(operators, properties, filters)
 
   const handleApply = useCallback(() => {
     if (filtersController.valid) {
-      onApply?.(filtersController.filters);
+      onApply?.(filtersController.filters)
     }
-  }, [filtersController.filters, filtersController.valid, onApply]);
+  }, [filtersController.filters, filtersController.valid, onApply])
 
-  const displayClear = filters.length > 0;
+  const displayClear = filters.length > 0
 
   return (
     <Dialog
@@ -44,15 +44,15 @@ export const FilterDialog = (props) => {
       PaperProps={{
         sx: {
           maxWidth: 500,
-          width: "100%",
+          width: '100%',
         },
       }}
     >
       <DialogTitle
         sx={{
-          alignItems: "center",
-          justifyContent: "space-between",
-          display: "flex",
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          display: 'flex',
         }}
       >
         <Typography variant="inherit">Filter</Typography>
@@ -72,7 +72,7 @@ export const FilterDialog = (props) => {
           }
         >
           {filtersController.filters.map((filter, index) => {
-            const displayAdd = filtersController.filters.length === index + 1;
+            const displayAdd = filtersController.filters.length === index + 1
 
             return (
               <FilterDialogItem
@@ -89,7 +89,7 @@ export const FilterDialog = (props) => {
                 operators={operators}
                 properties={properties}
               />
-            );
+            )
           })}
         </Stack>
       </DialogContent>
@@ -99,13 +99,17 @@ export const FilterDialog = (props) => {
             Clear ({filters.length})
           </Button>
         )}
-        <Button disabled={!filtersController.valid} onClick={handleApply} variant="contained">
+        <Button
+          disabled={!filtersController.valid}
+          onClick={handleApply}
+          variant="contained"
+        >
           Apply
         </Button>
       </DialogActions>
     </Dialog>
-  );
-};
+  )
+}
 
 FilterDialog.propTypes = {
   onApply: PropTypes.func,
@@ -114,4 +118,4 @@ FilterDialog.propTypes = {
   open: PropTypes.bool,
   operators: PropTypes.array,
   properties: PropTypes.array,
-};
+}

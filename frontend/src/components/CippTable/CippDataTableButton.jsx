@@ -1,29 +1,39 @@
-import { useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogTitle, IconButton, Button, useMediaQuery } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import { CippDataTable } from "./CippDataTable";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
-import { resolveRowTemplates, getRowTenant } from "../../utils/resolve-row-templates";
-import { useSettings } from "../../hooks/use-settings";
+import { useMemo, useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Button,
+  useMediaQuery,
+} from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import { CippDataTable } from './CippDataTable'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
+import {
+  resolveRowTemplates,
+  getRowTenant,
+} from '../../utils/resolve-row-templates'
+import { useSettings } from '../../hooks/use-settings'
 
 const applyTenantFilterDefault = (api, row, currentTenant) => {
   if (!api) {
-    return api;
+    return api
   }
-  const data = { ...(api.data || {}) };
+  const data = { ...(api.data || {}) }
   if (data.tenantFilter === undefined && data.TenantFilter === undefined) {
-    const tenant = getRowTenant(row, currentTenant);
+    const tenant = getRowTenant(row, currentTenant)
     if (tenant) {
-      data.tenantFilter = tenant;
+      data.tenantFilter = tenant
     }
   }
-  return { ...api, data };
-};
+  return { ...api, data }
+}
 
 const CippDataTableButton = ({
   data,
   title,
-  tableTitle = "Data",
+  tableTitle = 'Data',
   row,
   api,
   label,
@@ -31,61 +41,61 @@ const CippDataTableButton = ({
   queryKey,
   ...tableProps
 }) => {
-  const [openDialogs, setOpenDialogs] = useState([]);
-  const [liveOpen, setLiveOpen] = useState(false);
-  const mdDown = useMediaQuery((theme) => theme.breakpoints.down("md"));
-  const settings = useSettings();
-  const isLive = Boolean(api?.url);
+  const [openDialogs, setOpenDialogs] = useState([])
+  const [liveOpen, setLiveOpen] = useState(false)
+  const mdDown = useMediaQuery((theme) => theme.breakpoints.down('md'))
+  const settings = useSettings()
+  const isLive = Boolean(api?.url)
 
-  const nestedTitle = title ?? tableTitle ?? "Data";
+  const nestedTitle = title ?? tableTitle ?? 'Data'
 
   const handleOpenStaticDialog = (event) => {
-    event?.stopPropagation();
+    event?.stopPropagation()
 
-    let dataArray;
+    let dataArray
 
     if (Array.isArray(data)) {
-      dataArray = data;
-    } else if (typeof data === "object" && data !== null) {
+      dataArray = data
+    } else if (typeof data === 'object' && data !== null) {
       dataArray = Object.keys(data).map((key) => ({
         key: getCippTranslation(key),
         value: data[key],
-      }));
+      }))
     } else {
-      dataArray = [data];
+      dataArray = [data]
     }
-    setOpenDialogs([...openDialogs, dataArray]);
-  };
+    setOpenDialogs([...openDialogs, dataArray])
+  }
 
   const handleCloseStaticDialog = (index, event) => {
-    event?.stopPropagation?.();
-    setOpenDialogs(openDialogs.filter((_, i) => i !== index));
-  };
+    event?.stopPropagation?.()
+    setOpenDialogs(openDialogs.filter((_, i) => i !== index))
+  }
 
   const handleOpenLiveDialog = (event) => {
-    event?.stopPropagation();
-    setLiveOpen(true);
-  };
+    event?.stopPropagation()
+    setLiveOpen(true)
+  }
 
   const handleCloseLiveDialog = (event) => {
-    event?.stopPropagation?.();
-    setLiveOpen(false);
-  };
+    event?.stopPropagation?.()
+    setLiveOpen(false)
+  }
 
   const liveTableProps = useMemo(() => {
     if (!isLive || !liveOpen) {
-      return null;
+      return null
     }
     const templatedApi = applyTenantFilterDefault(
       resolveRowTemplates(api, row),
       row,
       settings?.currentTenant
-    );
+    )
     const templatedQueryKey = queryKey
       ? resolveRowTemplates(queryKey, row)
-      : undefined;
-    const templatedTitle = resolveRowTemplates(nestedTitle, row);
-    const { title: _ignoredTitle, ...rest } = tableProps;
+      : undefined
+    const templatedTitle = resolveRowTemplates(nestedTitle, row)
+    const { title: _ignoredTitle, ...rest } = tableProps
 
     return {
       ...rest,
@@ -96,31 +106,43 @@ const CippDataTableButton = ({
       isInDialog: true,
       simple: rest.simple ?? false,
       hideTitle: mdDown,
-      maxHeightOffset: rest.maxHeightOffset ?? "160px",
-    };
-  }, [api, isLive, liveOpen, mdDown, nestedTitle, queryKey, row, settings?.currentTenant, tableProps]);
+      maxHeightOffset: rest.maxHeightOffset ?? '160px',
+    }
+  }, [
+    api,
+    isLive,
+    liveOpen,
+    mdDown,
+    nestedTitle,
+    queryKey,
+    row,
+    settings?.currentTenant,
+    tableProps,
+  ])
 
   const dataIsNotANullArray =
     !Array.isArray(data) &&
-    (typeof data !== "object" || data === null || Object.keys(data).length === 0);
+    (typeof data !== 'object' ||
+      data === null ||
+      Object.keys(data).length === 0)
   const dataLength = Array.isArray(data)
     ? data.length
-    : typeof data === "object" && data !== null
-    ? Object.keys(data).length
-    : 0;
+    : typeof data === 'object' && data !== null
+      ? Object.keys(data).length
+      : 0
 
-  const liveDisabled = typeof condition === "function" ? !condition(row) : false;
+  const liveDisabled = typeof condition === 'function' ? !condition(row) : false
   const buttonLabel = isLive
-    ? typeof label === "function"
+    ? typeof label === 'function'
       ? label(row)
-      : label ?? "View"
+      : (label ?? 'View')
     : dataIsNotANullArray
-    ? "No items"
-    : `${dataLength} items`;
+      ? 'No items'
+      : `${dataLength} items`
 
   const dialogTitle = isLive
-    ? liveTableProps?.title ?? nestedTitle
-    : tableTitle;
+    ? (liveTableProps?.title ?? nestedTitle)
+    : tableTitle
 
   return (
     <>
@@ -145,7 +167,15 @@ const CippDataTableButton = ({
           maxWidth="lg"
         >
           {mdDown && (
-            <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 0.5, py: 1, px: 1 }}>
+            <DialogTitle
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                py: 1,
+                px: 1,
+              }}
+            >
               <IconButton
                 onClick={handleCloseLiveDialog}
                 aria-label="Close"
@@ -175,7 +205,15 @@ const CippDataTableButton = ({
             maxWidth="lg"
           >
             {mdDown && (
-              <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 0.5, py: 1, px: 1 }}>
+              <DialogTitle
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  py: 1,
+                  px: 1,
+                }}
+              >
                 <IconButton
                   onClick={(event) => handleCloseStaticDialog(index, event)}
                   aria-label="Close"
@@ -186,9 +224,9 @@ const CippDataTableButton = ({
                 {tableTitle}
               </DialogTitle>
             )}
-            <DialogContent sx={tableTitle !== "Data" && { p: mdDown ? 1 : 0 }}>
+            <DialogContent sx={tableTitle !== 'Data' && { p: mdDown ? 1 : 0 }}>
               <CippDataTable
-                noCard={tableTitle === "Data"}
+                noCard={tableTitle === 'Data'}
                 title={tableTitle}
                 data={dialogData}
                 simple={false}
@@ -203,7 +241,7 @@ const CippDataTableButton = ({
           </Dialog>
         ))}
     </>
-  );
-};
+  )
+}
 
-export default CippDataTableButton;
+export default CippDataTableButton

@@ -1,144 +1,151 @@
-import React, { useState, useEffect } from "react";
-import { Button, Box } from "@mui/material";
-import { useForm, useWatch, useFormState } from "react-hook-form";
-import { PersonAdd } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import { CippApiResults } from "./CippApiResults";
-import { useSettings } from "../../hooks/use-settings";
-import { ApiPostCall } from "../../api/ApiCall";
-import CippAddEditUser from "../CippFormPages/CippAddEditUser";
-import { Stack } from "@mui/system";
+import React, { useState, useEffect } from 'react'
+import { Button, Box } from '@mui/material'
+import { useForm, useWatch, useFormState } from 'react-hook-form'
+import { PersonAdd } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import { CippApiResults } from './CippApiResults'
+import { useSettings } from '../../hooks/use-settings'
+import { ApiPostCall } from '../../api/ApiCall'
+import CippAddEditUser from '../CippFormPages/CippAddEditUser'
+import { Stack } from '@mui/system'
 
 export const CippAddUserDrawer = ({
-  buttonText = "Add User",
+  buttonText = 'Add User',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false)
   // Bumped after each successful create. The form fields only auto-populate on mount
   // (domain selector's auto-select of the default domain, template auto-apply), so an
   // in-place reset leaves the required primDomain empty with no visible error and the
   // Create button stays disabled. Remounting restores the same state as a fresh open.
-  const [formResetKey, setFormResetKey] = useState(0);
-  const userSettingsDefaults = useSettings();
+  const [formResetKey, setFormResetKey] = useState(0)
+  const userSettingsDefaults = useSettings()
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       tenantFilter: userSettingsDefaults.currentTenant,
       usageLocation: userSettingsDefaults.usageLocation,
     },
-  });
+  })
 
   const createUser = ApiPostCall({
     datafromUrl: true,
     relatedQueryKeys: [`Users-${userSettingsDefaults.currentTenant}`],
-  });
+  })
 
-  const { isValid, isDirty } = useFormState({ control: formControl.control });
+  const { isValid, isDirty } = useFormState({ control: formControl.control })
 
-  const formValues = useWatch({ control: formControl.control, name: "userProperties" });
+  const formValues = useWatch({
+    control: formControl.control,
+    name: 'userProperties',
+  })
 
   useEffect(() => {
     if (formValues) {
-      const { userPrincipalName, usageLocation, ...restFields } = formValues.addedFields || {};
-      let newFields = { ...restFields };
+      const { userPrincipalName, usageLocation, ...restFields } =
+        formValues.addedFields || {}
+      let newFields = { ...restFields }
       if (userPrincipalName) {
-        const [mailNickname, domainNamePart] = userPrincipalName.split("@");
+        const [mailNickname, domainNamePart] = userPrincipalName.split('@')
         if (mailNickname) {
-          newFields.mailNickname = mailNickname;
+          newFields.mailNickname = mailNickname
         }
         if (domainNamePart) {
-          newFields.primDomain = { label: domainNamePart, value: domainNamePart };
+          newFields.primDomain = {
+            label: domainNamePart,
+            value: domainNamePart,
+          }
         }
       }
       if (usageLocation) {
-        newFields.usageLocation = { label: usageLocation, value: usageLocation };
+        newFields.usageLocation = { label: usageLocation, value: usageLocation }
       }
-      newFields.tenantFilter = userSettingsDefaults.currentTenant;
+      newFields.tenantFilter = userSettingsDefaults.currentTenant
 
       // Preserve the currently selected template when copying properties
-      const currentTemplate = formControl.getValues("userTemplate");
+      const currentTemplate = formControl.getValues('userTemplate')
       if (currentTemplate) {
-        newFields.userTemplate = currentTemplate;
+        newFields.userTemplate = currentTemplate
       }
 
-      formControl.reset(newFields);
+      formControl.reset(newFields)
     }
-  }, [formValues]);
+  }, [formValues])
 
   useEffect(() => {
     if (createUser.isSuccess) {
       const resetValues = {
         tenantFilter: userSettingsDefaults.currentTenant,
         usageLocation: userSettingsDefaults.usageLocation,
-      };
+      }
 
       // Preserve the default template if it exists
-      const currentTemplate = formControl.getValues("userTemplate");
+      const currentTemplate = formControl.getValues('userTemplate')
       if (currentTemplate?.addedFields?.defaultForTenant) {
-        resetValues.userTemplate = currentTemplate;
+        resetValues.userTemplate = currentTemplate
       }
 
-      formControl.reset(resetValues);
-      setFormResetKey((key) => key + 1);
+      formControl.reset(resetValues)
+      setFormResetKey((key) => key + 1)
     }
-  }, [createUser.isSuccess]);
+  }, [createUser.isSuccess])
 
   const handleSubmit = async () => {
-    const isFormValid = await formControl.trigger();
+    const isFormValid = await formControl.trigger()
     if (!isFormValid) {
-      return;
+      return
     }
-    const values = formControl.getValues();
+    const values = formControl.getValues()
     Object.keys(values).forEach((key) => {
-      if (values[key] === "" || values[key] === null) {
-        delete values[key];
+      if (values[key] === '' || values[key] === null) {
+        delete values[key]
       }
-    });
+    })
     createUser.mutate({
-      url: "/api/AddUser",
+      url: '/api/AddUser',
       data: values,
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = (event, reason) => {
     // Closing resets the form, so a stray backdrop click or Escape would silently wipe
     // everything typed so far (#390). A dirty-check is no help: the domain selector
     // auto-picks the default domain on open, so the form is dirty before the user types.
     // Ignore those dismissals — the X and Close buttons call this without a reason.
-    if (reason === "backdropClick" || reason === "escapeKeyDown") {
-      return;
+    if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+      return
     }
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     const resetValues = {
       tenantFilter: userSettingsDefaults.currentTenant,
       usageLocation: userSettingsDefaults.usageLocation,
-    };
-
-    // Preserve the default template if it exists
-    const currentTemplate = formControl.getValues("userTemplate");
-    if (currentTemplate?.addedFields?.defaultForTenant) {
-      resetValues.userTemplate = currentTemplate;
     }
 
-    formControl.reset(resetValues);
-  };
+    // Preserve the default template if it exists
+    const currentTemplate = formControl.getValues('userTemplate')
+    if (currentTemplate?.addedFields?.defaultForTenant) {
+      resetValues.userTemplate = currentTemplate
+    }
+
+    formControl.reset(resetValues)
+  }
 
   const handleOpenDrawer = () => {
     const resetValues = {
       tenantFilter: userSettingsDefaults.currentTenant,
       usageLocation: userSettingsDefaults.usageLocation,
-    };
-
-    const currentTemplate = formControl.getValues("userTemplate");
-    if (currentTemplate?.addedFields?.defaultForTenant) {
-      resetValues.userTemplate = currentTemplate;
     }
 
-    formControl.reset(resetValues);
-    setDrawerVisible(true);
-  };
+    const currentTemplate = formControl.getValues('userTemplate')
+    if (currentTemplate?.addedFields?.defaultForTenant) {
+      resetValues.userTemplate = currentTemplate
+    }
+
+    formControl.reset(resetValues)
+    setDrawerVisible(true)
+  }
 
   return (
     <>
@@ -157,18 +164,28 @@ export const CippAddUserDrawer = ({
         footer={
           <Stack spacing={2}>
             <CippApiResults apiObject={createUser} />
-            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                justifyContent: 'flex-start',
+              }}
+            >
               <Button
                 variant="contained"
                 color="primary"
                 onClick={formControl.handleSubmit(handleSubmit)}
-                disabled={createUser.isPending || !isValid || (!isDirty && !createUser.isSuccess)}
+                disabled={
+                  createUser.isPending ||
+                  !isValid ||
+                  (!isDirty && !createUser.isSuccess)
+                }
               >
                 {createUser.isPending
-                  ? "Creating User..."
+                  ? 'Creating User...'
                   : createUser.isSuccess
-                    ? "Create Another User"
-                    : "Create User"}
+                    ? 'Create Another User'
+                    : 'Create User'}
               </Button>
               <Button variant="outlined" onClick={handleCloseDrawer}>
                 Close
@@ -187,5 +204,5 @@ export const CippAddUserDrawer = ({
         </Box>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

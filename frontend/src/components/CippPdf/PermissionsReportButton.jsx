@@ -77,18 +77,26 @@ export const PermissionsReportDocument = ({
 
   // Placeholder rows carry no principal, and Limited Access grants nothing on its own — both are
   // excluded from the counts, so they have to be excluded here or the tables contradict them.
-  const realAssignments = assignments.filter((row) => row.principalId && !row.isSystemManaged)
+  const realAssignments = assignments.filter(
+    (row) => row.principalId && !row.isSystemManaged
+  )
   const broadClaimRows = realAssignments.filter((row) => row.broadClaim)
-  const externalGrantRows = realAssignments.filter((row) => row.isGuest === true)
+  const externalGrantRows = realAssignments.filter(
+    (row) => row.isGuest === true
+  )
   const fullControlRows = realAssignments.filter(
-    (row) => row.permissionLevel === 'Full Control' && row.principalType !== 'SharePoint Group'
+    (row) =>
+      row.permissionLevel === 'Full Control' &&
+      row.principalType !== 'SharePoint Group'
   )
   const libraryRows = realAssignments.filter((row) => row.scope === 'Library')
 
   // getAllSites does not always return a display name, so fall back to the URL.
   const siteLabel = (row) => row.siteName || row.siteUrl || 'Unnamed site'
   const scopeLabel = (row) =>
-    row.scope === 'Library' ? `${siteLabel(row)} / ${row.libraryTitle}` : siteLabel(row)
+    row.scope === 'Library'
+      ? `${siteLabel(row)} / ${row.libraryTitle}`
+      : siteLabel(row)
 
   return (
     <ReportDocument
@@ -116,15 +124,19 @@ export const PermissionsReportDocument = ({
       }
     >
       {/* EXECUTIVE SUMMARY */}
-      <ContentPage title="Executive Summary" subtitle="Who is allowed in, and how widely">
-
+      <ContentPage
+        title="Executive Summary"
+        subtitle="Who is allowed in, and how widely"
+      >
         <Section>
           <Paragraph>
-            Permissions are set by administrators on a site or document library and decide who is
-            structurally allowed in. They change rarely, which is what makes them worth auditing: a
-            permission granted for one project stays in place indefinitely, and a permission granted
-            to the whole organisation looks identical to one granted to a single team until somebody
-            reads it. This report covers <Bold>{tenantName}</Bold>.
+            Permissions are set by administrators on a site or document library
+            and decide who is structurally allowed in. They change rarely, which
+            is what makes them worth auditing: a permission granted for one
+            project stays in place indefinitely, and a permission granted to the
+            whole organisation looks identical to one granted to a single team
+            until somebody reads it. This report covers{' '}
+            <Bold>{tenantName}</Bold>.
           </Paragraph>
 
           <StatRow
@@ -132,18 +144,26 @@ export const PermissionsReportDocument = ({
               {
                 value: nz(summary.broadClaimGrants),
                 label: 'Tenant-Wide Grants',
-                colour: nz(summary.broadClaimGrants) > 0 ? REPORT_COLOURS.danger : undefined,
+                colour:
+                  nz(summary.broadClaimGrants) > 0
+                    ? REPORT_COLOURS.danger
+                    : undefined,
               },
               {
                 value: nz(summary.externalGrants),
                 label: 'External Grants',
-                colour: nz(summary.externalGrants) > 0 ? REPORT_COLOURS.warning : undefined,
+                colour:
+                  nz(summary.externalGrants) > 0
+                    ? REPORT_COLOURS.warning
+                    : undefined,
               },
               {
                 value: nz(summary.directFullControlGrants),
                 label: 'Direct Full Control',
                 colour:
-                  nz(summary.directFullControlGrants) > 0 ? REPORT_COLOURS.warning : undefined,
+                  nz(summary.directFullControlGrants) > 0
+                    ? REPORT_COLOURS.warning
+                    : undefined,
               },
               {
                 value: nz(summary.uniquePermissionLibraries),
@@ -167,41 +187,49 @@ export const PermissionsReportDocument = ({
 
         <Section title="Scope of This Review">
           <InfoBox title="What was examined">
-            {nz(summary.sitesScanned)} SharePoint sites and {nz(summary.librariesScanned)} document
-            libraries were read, producing {nz(summary.totalAssignments)} permission assignments.
+            {nz(summary.sitesScanned)} SharePoint sites and{' '}
+            {nz(summary.librariesScanned)} document libraries were read,
+            producing {nz(summary.totalAssignments)} permission assignments.
             Data is taken from the last completed sync, not read live.
           </InfoBox>
           <InfoBox title="What is not covered">
-            Permissions are reported as grant paths, not effective access — a group holding a
-            permission is one entry and its members are not expanded, so a person may hold access
-            that shows here only via their group. Permissions on individual folders and files are
-            not enumerated. OneDrive personal sites are out of scope. Access handed out by sharing
-            link is a separate path, covered by the Sharing Report.
+            Permissions are reported as grant paths, not effective access — a
+            group holding a permission is one entry and its members are not
+            expanded, so a person may hold access that shows here only via their
+            group. Permissions on individual folders and files are not
+            enumerated. OneDrive personal sites are out of scope. Access handed
+            out by sharing link is a separate path, covered by the Sharing
+            Report.
           </InfoBox>
           {skippedSites.length > 0 ? (
             <AlertBox
               title={`${plural(skippedSites.length, 'site')} could not be read`}
               colour={REPORT_COLOURS.warning}
             >
-              These sites could not be read on the most recent scan. Where a site was read
-              successfully before, its earlier results are still shown and are as old as that scan;
-              a site never read successfully contributes nothing. Either way, an absence of findings
-              for these sites is not evidence of good configuration.
+              These sites could not be read on the most recent scan. Where a
+              site was read successfully before, its earlier results are still
+              shown and are as old as that scan; a site never read successfully
+              contributes nothing. Either way, an absence of findings for these
+              sites is not evidence of good configuration.
             </AlertBox>
           ) : null}
         </Section>
       </ContentPage>
 
       {/* FINDINGS */}
-      <ContentPage title="Findings" subtitle="Permissions worth reviewing, most urgent first">
-
+      <ContentPage
+        title="Findings"
+        subtitle="Permissions worth reviewing, most urgent first"
+      >
         <Section title="Finding 1: Tenant-Wide Grants">
           <InfoBox title="Why this matters">
-            SharePoint offers a handful of special audiences — Everyone, Everyone except external
-            users, and All Users — that resolve to the whole organisation rather than to named
-            people. A library carrying one is readable by every employee no matter what the site's
-            membership says, and it is the single most common cause of data appearing in search
-            results or AI assistant answers where it was not expected.
+            SharePoint offers a handful of special audiences — Everyone,
+            Everyone except external users, and All Users — that resolve to the
+            whole organisation rather than to named people. A library carrying
+            one is readable by every employee no matter what the site's
+            membership says, and it is the single most common cause of data
+            appearing in search results or AI assistant answers where it was not
+            expected.
           </InfoBox>
           {broadClaimRows.length > 0 ? (
             <>
@@ -209,9 +237,9 @@ export const PermissionsReportDocument = ({
                 title={`${plural(broadClaimRows.length, 'tenant-wide grant')} found`}
                 colour={REPORT_COLOURS.danger}
               >
-                Confirm the content is genuinely meant to be organisation-wide. If not, replace the
-                grant with a specific group — one edit removes access for everyone who was never
-                meant to have it.
+                Confirm the content is genuinely meant to be organisation-wide.
+                If not, replace the grant with a specific group — one edit
+                removes access for everyone who was never meant to have it.
               </AlertBox>
               <DataTable
                 columns={[
@@ -228,17 +256,18 @@ export const PermissionsReportDocument = ({
             </>
           ) : (
             <ClearBox title="✔️ No tenant-wide grants found">
-              No site or library grants access to Everyone, Everyone except external users, or All
-              Users.
+              No site or library grants access to Everyone, Everyone except
+              external users, or All Users.
             </ClearBox>
           )}
         </Section>
 
         <Section title="Finding 2: External and Guest Access">
           <InfoBox title="Why this matters">
-            Guest accounts holding permissions retain that access until somebody removes it — unlike
-            a sharing link, nothing expires it. Guests from finished projects are a common source of
-            standing access nobody is reviewing.
+            Guest accounts holding permissions retain that access until somebody
+            removes it — unlike a sharing link, nothing expires it. Guests from
+            finished projects are a common source of standing access nobody is
+            reviewing.
           </InfoBox>
           {externalGrantRows.length > 0 ? (
             <>
@@ -246,7 +275,8 @@ export const PermissionsReportDocument = ({
                 title={`${plural(externalGrantRows.length, 'grant')} held by external identities`}
                 colour={REPORT_COLOURS.warning}
               >
-                Verify each guest still needs access and that the relationship is current.
+                Verify each guest still needs access and that the relationship
+                is current.
               </AlertBox>
               <DataTable
                 columns={[
@@ -263,21 +293,25 @@ export const PermissionsReportDocument = ({
             </>
           ) : (
             <ClearBox title="✔️ No external grants found">
-              No guest or external identity holds a permission on a scanned site or library.
+              No guest or external identity holds a permission on a scanned site
+              or library.
             </ClearBox>
           )}
         </Section>
       </ContentPage>
 
       {/* FINDINGS CONTINUED */}
-      <ContentPage title="Findings (continued)" subtitle="Elevated rights and inheritance">
-
+      <ContentPage
+        title="Findings (continued)"
+        subtitle="Elevated rights and inheritance"
+      >
         <Section title="Finding 3: Directly Granted Full Control">
           <InfoBox title="Why this matters">
-            Every site has an Owners group that holds Full Control by design, and that is expected.
-            Full Control granted straight to a person or a directory group is different: it sits
-            outside the membership structure, so it is not removed when someone leaves a team and it
-            is easy to overlook when reviewing who administers a site.
+            Every site has an Owners group that holds Full Control by design,
+            and that is expected. Full Control granted straight to a person or a
+            directory group is different: it sits outside the membership
+            structure, so it is not removed when someone leaves a team and it is
+            easy to overlook when reviewing who administers a site.
           </InfoBox>
           {fullControlRows.length > 0 ? (
             <>
@@ -285,8 +319,8 @@ export const PermissionsReportDocument = ({
                 title={`${plural(fullControlRows.length, 'direct Full Control grant')}`}
                 colour={REPORT_COLOURS.warning}
               >
-                Move these into the site's Owners group where the access is legitimate, so
-                membership changes take effect automatically.
+                Move these into the site's Owners group where the access is
+                legitimate, so membership changes take effect automatically.
               </AlertBox>
               <DataTable
                 columns={[
@@ -303,39 +337,45 @@ export const PermissionsReportDocument = ({
             </>
           ) : (
             <ClearBox title="✔️ Full Control is held through Owners groups">
-              No user or directory group holds Full Control outside a site's Owners group.
+              No user or directory group holds Full Control outside a site's
+              Owners group.
             </ClearBox>
           )}
         </Section>
 
         <Section title="Finding 4: Libraries With Their Own Permissions">
           <InfoBox title="Why this matters">
-            A library normally inherits from its site, so managing the site manages everything in
-            it. A detached library keeps its own permissions and later site-level changes no longer
-            reach it. That is legitimate when deliberate and a blind spot when not — removing
+            A library normally inherits from its site, so managing the site
+            manages everything in it. A detached library keeps its own
+            permissions and later site-level changes no longer reach it. That is
+            legitimate when deliberate and a blind spot when not — removing
             somebody from the site does not remove them here.
           </InfoBox>
           {nz(summary.uniquePermissionLibraries) > 0 ? (
             <Paragraph>
-              {nz(summary.uniquePermissionLibraries)} of {nz(summary.librariesScanned)} libraries no
-              longer inherit from their site. Their assignments are listed in the appendix. Review
+              {nz(summary.uniquePermissionLibraries)} of{' '}
+              {nz(summary.librariesScanned)} libraries no longer inherit from
+              their site. Their assignments are listed in the appendix. Review
               whether each detachment was intentional and is still needed.
             </Paragraph>
           ) : (
             <ClearBox title="✔️ All libraries inherit from their site">
-              Every scanned library takes its permissions from its site, so site-level access
-              management covers them all.
+              Every scanned library takes its permissions from its site, so
+              site-level access management covers them all.
             </ClearBox>
           )}
         </Section>
       </ContentPage>
 
       {/* RECOMMENDATIONS */}
-      <ContentPage title="Recommendations" subtitle="What to do about the findings">
-
+      <ContentPage
+        title="Recommendations"
+        subtitle="What to do about the findings"
+      >
         <Section title="Priority Actions">
           <Paragraph>
-            Ordered by how much access each removes relative to the effort involved.
+            Ordered by how much access each removes relative to the effort
+            involved.
           </Paragraph>
           <BulletList
             items={[
@@ -393,8 +433,10 @@ export const PermissionsReportDocument = ({
       </ContentPage>
 
       {/* APPENDIX */}
-      <ContentPage title="Appendix: Detached Library Permissions" subtitle="Assignments on libraries that no longer inherit from their site">
-
+      <ContentPage
+        title="Appendix: Detached Library Permissions"
+        subtitle="Assignments on libraries that no longer inherit from their site"
+      >
         <Section>
           <DataTable
             columns={[
@@ -427,7 +469,11 @@ export const PermissionsReportButton = ({ permissionsData, tenantName }) => {
 
   const handleOpen = () => {
     setGeneratedOn(
-      new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
     )
     setDialogOpen(true)
   }
@@ -466,7 +512,11 @@ export const PermissionsReportButton = ({ permissionsData, tenantName }) => {
         PaperProps={{ sx: { height: '90vh' } }}
       >
         <DialogTitle>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="h6" component="div">
               Permissions Report Preview
             </Typography>
@@ -497,7 +547,9 @@ export const PermissionsReportButton = ({ permissionsData, tenantName }) => {
             {({ loading }) => (
               <Button
                 variant="contained"
-                startIcon={loading ? <CircularProgress size={20} /> : <Download />}
+                startIcon={
+                  loading ? <CircularProgress size={20} /> : <Download />
+                }
                 disabled={loading}
               >
                 {loading ? 'Generating…' : 'Download PDF'}

@@ -22,9 +22,15 @@ export const CippCADeployDrawer = ({
   const [internalDrawerVisible, setInternalDrawerVisible] = useState(false)
   const formControl = useForm()
   const tenantFilter = useSettings()?.tenantFilter
-  const CATemplates = ApiGetCall({ url: '/api/ListCATemplates', queryKey: 'CATemplates' })
+  const CATemplates = ApiGetCall({
+    url: '/api/ListCATemplates',
+    queryKey: 'CATemplates',
+  })
   const [JSONData, setJSONData] = useState()
-  const watcher = useWatch({ control: formControl.control, name: 'TemplateList' })
+  const watcher = useWatch({
+    control: formControl.control,
+    name: 'TemplateList',
+  })
   const selectedReplaceMode = useWatch({
     control: formControl.control,
     name: 'replacename',
@@ -37,7 +43,9 @@ export const CippCADeployDrawer = ({
   const updateTemplate = useCallback(
     (templateGuid) => {
       if (CATemplates.isSuccess && templateGuid) {
-        const template = CATemplates.data.find((template) => template.GUID === templateGuid)
+        const template = CATemplates.data.find(
+          (template) => template.GUID === templateGuid
+        )
         if (template) {
           setJSONData(template)
           formControl.setValue('rawjson', JSON.stringify(template, null))
@@ -51,10 +59,15 @@ export const CippCADeployDrawer = ({
   useEffect(() => {
     if (templateId && CATemplates.isSuccess) {
       // Find the template to get the display name
-      const template = CATemplates.data.find((template) => template.GUID === templateId)
+      const template = CATemplates.data.find(
+        (template) => template.GUID === templateId
+      )
       if (template) {
         // Pre-select the template when drawer opens
-        formControl.setValue('TemplateList', { value: templateId, label: template.displayName })
+        formControl.setValue('TemplateList', {
+          value: templateId,
+          label: template.displayName,
+        })
         updateTemplate(templateId)
       }
     }
@@ -66,7 +79,10 @@ export const CippCADeployDrawer = ({
 
   const deployPolicy = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ['CATemplates', `Conditional Access Policies - ${tenantFilter}`],
+    relatedQueryKeys: [
+      'CATemplates',
+      `Conditional Access Policies - ${tenantFilter}`,
+    ],
   })
 
   const handleSubmit = () => {
@@ -141,7 +157,11 @@ export const CippCADeployDrawer = ({
           <CippFormComponent
             type="autoComplete"
             name="TemplateList"
-            label={templateId ? 'Selected Template' : 'Please choose a template to apply.'}
+            label={
+              templateId
+                ? 'Selected Template'
+                : 'Please choose a template to apply.'
+            }
             isFetching={CATemplates.isLoading}
             multiple={false}
             creatable={false}
@@ -175,7 +195,10 @@ export const CippCADeployDrawer = ({
             options={[
               { value: 'leave', label: 'Leave the groups and users as is' },
               { value: 'displayName', label: 'Replace by display name' },
-              { value: 'AllUsers', label: 'Remove all exclusions, apply to all users' },
+              {
+                value: 'AllUsers',
+                label: 'Remove all exclusions, apply to all users',
+              },
             ]}
           />
 
@@ -188,7 +211,10 @@ export const CippCADeployDrawer = ({
               { value: 'donotchange', label: 'Do not change state' },
               { value: 'Enabled', label: 'Set to enabled' },
               { value: 'Disabled', label: 'Set to disabled' },
-              { value: 'enabledForReportingButNotEnforced', label: 'Set to report only' },
+              {
+                value: 'enabledForReportingButNotEnforced',
+                label: 'Set to report only',
+              },
             ]}
           />
 

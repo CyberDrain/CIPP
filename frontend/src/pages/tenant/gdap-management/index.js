@@ -74,7 +74,11 @@ const Page = () => {
   }, [roleTemplates])
 
   useEffect(() => {
-    if (mappedRoles.isSuccess && roleTemplates.isSuccess && pendingInvites.isSuccess) {
+    if (
+      mappedRoles.isSuccess &&
+      roleTemplates.isSuccess &&
+      pendingInvites.isSuccess
+    ) {
       const mappedRolesFirstPage = mappedRoles?.data?.pages?.[0]
       if (
         mappedRolesFirstPage &&
@@ -181,7 +185,12 @@ const Page = () => {
             <Grid size={{ xs: 12, sm: 6 }}>
               <CippButtonCard
                 title="GDAP Setup"
-                cardSx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}
+                cardSx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  width: '100%',
+                }}
               >
                 <WizardSteps
                   activeStep={activeStep}
@@ -198,11 +207,13 @@ const Page = () => {
                     },
                     {
                       title: 'Create Invites',
-                      description: 'Create invites based on your Role Templates.',
+                      description:
+                        'Create invites based on your Role Templates.',
                     },
                     {
                       title: 'Setup Complete',
-                      description: "You're ready to start adding your tenants using CIPP.",
+                      description:
+                        "You're ready to start adding your tenants using CIPP.",
                     },
                   ]}
                 />

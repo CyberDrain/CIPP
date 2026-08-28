@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import {
   Paper,
   Typography,
@@ -8,10 +8,10 @@ import {
   ListItem,
   useTheme,
   CircularProgress,
-} from "@mui/material";
-import { ApiGetCall } from "../../api/ApiCall";
-import { useSettings } from "../../hooks/use-settings.js";
-import { getCippError } from "../../utils/get-cipp-error";
+} from '@mui/material'
+import { ApiGetCall } from '../../api/ApiCall'
+import { useSettings } from '../../hooks/use-settings.js'
+import { getCippError } from '../../utils/get-cipp-error'
 
 /**
  * Autocomplete component specifically for custom variables
@@ -23,74 +23,83 @@ export const CippVariableAutocomplete = React.memo(
     anchorEl,
     onClose,
     onSelect,
-    searchQuery = "",
+    searchQuery = '',
     tenantFilter = null,
     includeSystemVariables = false,
     position = { top: 0, left: 0 }, // Cursor position for floating box
     customVariables = null,
   }) => {
-    const theme = useTheme();
-    const settings = useSettings();
+    const theme = useTheme()
+    const settings = useSettings()
 
     // State management similar to CippAutocomplete
-    const [variables, setVariables] = useState([]);
-    const [getRequestInfo, setGetRequestInfo] = useState({ url: "", waiting: false, queryKey: "" });
-    const [filteredVariables, setFilteredVariables] = useState([]);
-    const [selectedIndex, setSelectedIndex] = useState(0); // For keyboard navigation
-    const hasCustomVariables = Array.isArray(customVariables);
+    const [variables, setVariables] = useState([])
+    const [getRequestInfo, setGetRequestInfo] = useState({
+      url: '',
+      waiting: false,
+      queryKey: '',
+    })
+    const [filteredVariables, setFilteredVariables] = useState([])
+    const [selectedIndex, setSelectedIndex] = useState(0) // For keyboard navigation
+    const hasCustomVariables = Array.isArray(customVariables)
 
     // Get current tenant like CippAutocomplete does
-    const currentTenant = tenantFilter || settings.currentTenant;
+    const currentTenant = tenantFilter || settings.currentTenant
 
     // API call using the same pattern as CippAutocomplete
     const actionGetRequest = ApiGetCall({
       ...getRequestInfo,
-    });
+    })
 
     useEffect(() => {
       if (!hasCustomVariables) {
-        return;
+        return
       }
 
       const processedVariables = customVariables.map((variable) => ({
-        name: variable.name || variable.label || variable.value || variable.variable,
+        name:
+          variable.name ||
+          variable.label ||
+          variable.value ||
+          variable.variable,
         variable: variable.variable || variable.value || variable.label,
         label: variable.label || variable.value || variable.variable,
         value: variable.value || variable.variable || variable.label,
-        description: variable.description || "",
-        type: variable.type || "schema",
-        category: variable.category || "custom",
-      }));
+        description: variable.description || '',
+        type: variable.type || 'schema',
+        category: variable.category || 'custom',
+      }))
 
-      setVariables(processedVariables);
-    }, [customVariables, hasCustomVariables]);
+      setVariables(processedVariables)
+    }, [customVariables, hasCustomVariables])
 
     // Setup API request when component mounts or tenant changes
     useEffect(() => {
       if (open && !hasCustomVariables) {
         // Normalize tenant filter
-        const normalizedTenantFilter = currentTenant === "AllTenants" ? null : currentTenant;
+        const normalizedTenantFilter =
+          currentTenant === 'AllTenants' ? null : currentTenant
 
         // Build API URL
-        let apiUrl = "/api/ListCustomVariables";
-        const params = new URLSearchParams();
+        let apiUrl = '/api/ListCustomVariables'
+        const params = new URLSearchParams()
 
         if (normalizedTenantFilter) {
-          params.append("tenantFilter", normalizedTenantFilter);
+          params.append('tenantFilter', normalizedTenantFilter)
         }
 
         if (!includeSystemVariables) {
-          params.append("includeSystem", "false");
+          params.append('includeSystem', 'false')
         }
 
         if (params.toString()) {
-          apiUrl += `?${params.toString()}`;
+          apiUrl += `?${params.toString()}`
         }
 
         // Generate query key
-        const queryKey = `CustomVariables-${normalizedTenantFilter || "global"}-${
-          includeSystemVariables ? "withSystem" : "noSystem"
-        }`;
+        const queryKey = `CustomVariables-${normalizedTenantFilter || 'global'}-${
+          includeSystemVariables ? 'withSystem' : 'noSystem'
+        }`
 
         setGetRequestInfo({
           url: apiUrl,
@@ -100,129 +109,144 @@ export const CippVariableAutocomplete = React.memo(
           refetchOnMount: false,
           refetchOnReconnect: false,
           refetchOnWindowFocus: false,
-        });
+        })
       }
-    }, [open, currentTenant, includeSystemVariables, hasCustomVariables]);
+    }, [open, currentTenant, includeSystemVariables, hasCustomVariables])
 
     // Process API response like CippAutocomplete does
     useEffect(() => {
       if (hasCustomVariables) {
-        return;
+        return
       }
 
       if (actionGetRequest.isSuccess && actionGetRequest.data?.Results) {
-        const processedVariables = actionGetRequest.data.Results.map((variable) => ({
-          // Core properties
-          name: variable.Name,
-          variable: variable.Variable,
-          label: variable.Variable, // What shows in autocomplete
-          value: variable.Variable, // What gets inserted
+        const processedVariables = actionGetRequest.data.Results.map(
+          (variable) => ({
+            // Core properties
+            name: variable.Name,
+            variable: variable.Variable,
+            label: variable.Variable, // What shows in autocomplete
+            value: variable.Variable, // What gets inserted
 
-          // Metadata for display and filtering
-          description: variable.Description,
-          type: variable.Type, // 'reserved' or 'custom'
-          category: variable.Category, // 'system', 'tenant', 'partner', 'cipp', 'global', 'tenant-custom'
+            // Metadata for display and filtering
+            description: variable.Description,
+            type: variable.Type, // 'reserved' or 'custom'
+            category: variable.Category, // 'system', 'tenant', 'partner', 'cipp', 'global', 'tenant-custom'
 
-          // Custom variable specific
-          ...(variable.Type === "custom" && {
-            customValue: variable.Value,
-            scope: variable.Scope,
-          }),
+            // Custom variable specific
+            ...(variable.Type === 'custom' && {
+              customValue: variable.Value,
+              scope: variable.Scope,
+            }),
 
-          // For grouping in autocomplete
-          group:
-            variable.Type === "reserved"
-              ? `Reserved (${variable.Category})`
-              : variable.category === "global"
-              ? "Global Custom Variables"
-              : "Tenant Custom Variables",
-        }));
+            // For grouping in autocomplete
+            group:
+              variable.Type === 'reserved'
+                ? `Reserved (${variable.Category})`
+                : variable.category === 'global'
+                  ? 'Global Custom Variables'
+                  : 'Tenant Custom Variables',
+          })
+        )
 
-        setVariables(processedVariables);
+        setVariables(processedVariables)
       }
 
       if (actionGetRequest.isError) {
         setVariables([
           {
             label: getCippError(actionGetRequest.error),
-            value: "error",
-            name: "error",
-            variable: "error",
-            description: "Error loading variables",
+            value: 'error',
+            name: 'error',
+            variable: 'error',
+            description: 'Error loading variables',
           },
-        ]);
+        ])
       }
-    }, [actionGetRequest.isSuccess, actionGetRequest.isError, actionGetRequest.data, hasCustomVariables]);
+    }, [
+      actionGetRequest.isSuccess,
+      actionGetRequest.isError,
+      actionGetRequest.data,
+      hasCustomVariables,
+    ])
 
     // Filter variables based on search query
     useEffect(() => {
       if (!searchQuery) {
-        setFilteredVariables(variables);
-        setSelectedIndex(0); // Reset selection when filtering
-        return;
+        setFilteredVariables(variables)
+        setSelectedIndex(0) // Reset selection when filtering
+        return
       }
 
-      const lowerQuery = searchQuery.toLowerCase();
+      const lowerQuery = searchQuery.toLowerCase()
       const filtered = variables.filter(
         (variable) =>
           variable.name?.toLowerCase().includes(lowerQuery) ||
           variable.description?.toLowerCase().includes(lowerQuery)
-      );
-      setFilteredVariables(filtered);
-      setSelectedIndex(0); // Reset selection when filtering
-    }, [searchQuery, variables]);
+      )
+      setFilteredVariables(filtered)
+      setSelectedIndex(0) // Reset selection when filtering
+    }, [searchQuery, variables])
 
     const handleSelect = (event, value) => {
       if (value && onSelect) {
-        onSelect(value.variable); // Pass the full variable string like %tenantname%
+        onSelect(value.variable) // Pass the full variable string like %tenantname%
       }
-      onClose();
-    };
+      onClose()
+    }
 
     // Keyboard navigation handlers
     const handleKeyDown = useCallback(
       (event) => {
-        if (!open || filteredVariables.length === 0) return;
+        if (!open || filteredVariables.length === 0) return
 
         switch (event.key) {
-          case "ArrowDown":
-            event.preventDefault();
-            setSelectedIndex((prev) => (prev < filteredVariables.length - 1 ? prev + 1 : 0));
-            break;
-          case "ArrowUp":
-            event.preventDefault();
-            setSelectedIndex((prev) => (prev > 0 ? prev - 1 : filteredVariables.length - 1));
-            break;
-          case "Tab":
-          case "Enter":
-            event.preventDefault();
+          case 'ArrowDown':
+            event.preventDefault()
+            setSelectedIndex((prev) =>
+              prev < filteredVariables.length - 1 ? prev + 1 : 0
+            )
+            break
+          case 'ArrowUp':
+            event.preventDefault()
+            setSelectedIndex((prev) =>
+              prev > 0 ? prev - 1 : filteredVariables.length - 1
+            )
+            break
+          case 'Tab':
+          case 'Enter':
+            event.preventDefault()
             if (filteredVariables[selectedIndex]) {
-              handleSelect(event, filteredVariables[selectedIndex]);
+              handleSelect(event, filteredVariables[selectedIndex])
             }
-            break;
-          case "Escape":
-            event.preventDefault();
-            onClose();
-            break;
+            break
+          case 'Escape':
+            event.preventDefault()
+            onClose()
+            break
         }
       },
       [open, filteredVariables, selectedIndex, onClose]
-    );
+    )
 
     // Set up keyboard event listeners
     useEffect(() => {
       if (open) {
-        document.addEventListener("keydown", handleKeyDown);
-        return () => document.removeEventListener("keydown", handleKeyDown);
+        document.addEventListener('keydown', handleKeyDown)
+        return () => document.removeEventListener('keydown', handleKeyDown)
       }
-    }, [open, handleKeyDown]);
+    }, [open, handleKeyDown])
 
     if (!open) {
-      return null;
+      return null
     }
 
     // Show loading state like CippAutocomplete
-    if (!hasCustomVariables && actionGetRequest.isLoading && (!variables || variables.length === 0)) {
+    if (
+      !hasCustomVariables &&
+      actionGetRequest.isLoading &&
+      (!variables || variables.length === 0)
+    ) {
       return (
         <Popper
           open={open}
@@ -250,15 +274,15 @@ export const CippVariableAutocomplete = React.memo(
             </Box>
           </Paper>
         </Popper>
-      );
+      )
     }
 
     if (!variables || variables.length === 0) {
-      return null;
+      return null
     }
 
     if (filteredVariables.length === 0) {
-      return null;
+      return null
     }
 
     return (
@@ -276,16 +300,16 @@ export const CippVariableAutocomplete = React.memo(
             border: `1px solid ${theme.palette.divider}`,
             borderRadius: 1,
             maxHeight: 240,
-            overflow: "auto",
+            overflow: 'auto',
             // Clamped to the viewport: the Paper shrink-to-fits against unclamped variable
             // descriptions, and popper.js can only shift a too-wide popper, not shrink it —
             // at the 500px cap a phone got ~110px hanging off the right edge, scrolling the
             // whole document sideways.
-            minWidth: "min(300px, calc(100vw - 32px))",
-            maxWidth: "min(500px, calc(100vw - 32px))",
+            minWidth: 'min(300px, calc(100vw - 32px))',
+            maxWidth: 'min(500px, calc(100vw - 32px))',
           }}
           onClick={(e) => {
-            e.stopPropagation();
+            e.stopPropagation()
           }}
         >
           {filteredVariables.map((variable, index) => (
@@ -296,43 +320,48 @@ export const CippVariableAutocomplete = React.memo(
                   ? (el) => {
                       // Scroll selected item into view
                       if (el) {
-                        el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                        el.scrollIntoView({
+                          block: 'nearest',
+                          behavior: 'smooth',
+                        })
                       }
                     }
                   : null
               }
               onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                handleSelect(e, variable);
+                e.stopPropagation()
+                e.preventDefault()
+                handleSelect(e, variable)
               }}
               sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 py: 1,
                 px: 2,
                 borderBottom: `1px solid ${theme.palette.divider}`,
                 backgroundColor:
-                  index === selectedIndex ? theme.palette.action.selected : "transparent",
+                  index === selectedIndex
+                    ? theme.palette.action.selected
+                    : 'transparent',
                 borderLeft:
                   index === selectedIndex
                     ? `3px solid ${theme.palette.primary.main}`
-                    : "3px solid transparent",
-                "&:hover": {
+                    : '3px solid transparent',
+                '&:hover': {
                   backgroundColor: theme.palette.action.hover,
                 },
-                cursor: "pointer",
+                cursor: 'pointer',
               }}
             >
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
                   variant="body2"
                   sx={{
-                    fontFamily: "monospace",
-                    fontWeight: "bold",
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold',
                     color: theme.palette.primary.main,
-                    fontSize: "0.875rem",
+                    fontSize: '0.875rem',
                   }}
                 >
                   {variable.variable}
@@ -341,23 +370,23 @@ export const CippVariableAutocomplete = React.memo(
                   variant="caption"
                   color="text.secondary"
                   sx={{
-                    display: "block",
+                    display: 'block',
                     mt: 0.25,
-                    fontSize: "0.75rem",
+                    fontSize: '0.75rem',
                   }}
                 >
                   {variable.description}
                 </Typography>
               </Box>
 
-              <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0, ml: 1 }}>
+              <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0, ml: 1 }}>
                 <Chip
                   label={variable.type}
                   size="small"
-                  color={variable.type === "reserved" ? "primary" : "secondary"}
+                  color={variable.type === 'reserved' ? 'primary' : 'secondary'}
                   sx={{
                     height: 18,
-                    fontSize: "0.65rem",
+                    fontSize: '0.65rem',
                   }}
                 />
               </Box>
@@ -365,6 +394,6 @@ export const CippVariableAutocomplete = React.memo(
           ))}
         </Paper>
       </Popper>
-    );
+    )
   }
-);
+)

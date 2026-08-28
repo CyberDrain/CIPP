@@ -1,25 +1,25 @@
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import { CippTablePage } from "../../../components/CippComponents/CippTablePage.jsx";
-import { EyeIcon } from "@heroicons/react/24/outline";
-import { Button } from "@mui/material";
-import { Search } from "@mui/icons-material";
-import { BreachSearchDialog } from "../../../components/CippComponents/BreachSearchDialog";
-import { useDialog } from "../../../hooks/use-dialog";
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import { CippTablePage } from '../../../components/CippComponents/CippTablePage.jsx'
+import { EyeIcon } from '@heroicons/react/24/outline'
+import { Button } from '@mui/material'
+import { Search } from '@mui/icons-material'
+import { BreachSearchDialog } from '../../../components/CippComponents/BreachSearchDialog'
+import { useDialog } from '../../../hooks/use-dialog'
 
 const Page = () => {
-  const pageTitle = "Potential Breached passwords and information";
-  const apiUrl = "/api/ListBreachesTenant";
-  const breachSearchDialog = useDialog();
-  
+  const pageTitle = 'Potential Breached passwords and information'
+  const apiUrl = '/api/ListBreachesTenant'
+  const breachSearchDialog = useDialog()
+
   const actions = [
     {
-      label: "View User",
-      link: "/tools/breachlookup?account=[email]",
+      label: 'View User',
+      link: '/tools/breachlookup?account=[email]',
       multiPost: false,
       icon: <EyeIcon />,
-      color: "success",
+      color: 'success',
     },
-  ];
+  ]
 
   return (
     <>
@@ -27,11 +27,14 @@ const Page = () => {
         actions={actions}
         title={pageTitle}
         apiUrl={apiUrl}
-        simpleColumns={["email", "password", "sources"]}
+        simpleColumns={['email', 'password', 'sources']}
         tenantInTitle={false}
         cardButton={
           <>
-            <Button onClick={breachSearchDialog.handleOpen} startIcon={<Search />}>
+            <Button
+              onClick={breachSearchDialog.handleOpen}
+              startIcon={<Search />}
+            >
               Run Breach Check
             </Button>
           </>
@@ -39,9 +42,9 @@ const Page = () => {
       />
       <BreachSearchDialog createDialog={breachSearchDialog} />
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

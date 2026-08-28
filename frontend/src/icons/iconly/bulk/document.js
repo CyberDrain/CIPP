@@ -5,7 +5,8 @@ const Document = (props) => (
     viewBox="0 0 24 24"
     width={24}
     xmlns="http://www.w3.org/2000/svg"
-    {...props}>
+    {...props}
+  >
     <path
       d="M16.191 2H7.81C4.77 2 3 3.78 3 6.83V17.16C3 20.26 4.77 22 7.81 22H16.191C19.28 22 21 20.26 21 17.16V6.83C21 3.78 19.28 2 16.191 2Z"
       fill="currentColor"
@@ -16,6 +17,6 @@ const Document = (props) => (
       fill="currentColor"
     />
   </svg>
-);
+)
 
-export default Document;
+export default Document

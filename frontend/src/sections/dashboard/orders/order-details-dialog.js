@@ -1,7 +1,7 @@
-import PropTypes from 'prop-types';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import toast from 'react-hot-toast';
+import PropTypes from 'prop-types'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import toast from 'react-hot-toast'
 import {
   Button,
   Dialog,
@@ -11,46 +11,46 @@ import {
   FormHelperText,
   MenuItem,
   Stack,
-  TextField
-} from '@mui/material';
+  TextField,
+} from '@mui/material'
 
 const statusOptions = [
   {
     label: 'Placed',
-    value: 'placed'
+    value: 'placed',
   },
   {
     label: 'Processed',
-    value: 'processed'
+    value: 'processed',
   },
   {
     label: 'Delivered',
-    value: 'delivered'
+    value: 'delivered',
   },
   {
     label: 'Complete',
-    value: 'complete'
-  }
-];
+    value: 'complete',
+  },
+]
 
 const countryOptions = [
   {
     value: 'USA',
-    cities: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Austin']
+    cities: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Austin'],
   },
   {
     value: 'Germany',
-    cities: ['Berlin', 'Hamburg', 'Munich', 'Dortmund', 'Bremen']
+    cities: ['Berlin', 'Hamburg', 'Munich', 'Dortmund', 'Bremen'],
   },
   {
     value: 'Spain',
-    cities: ['Madrid', 'Barcelona', 'Valencia', 'Málaga', 'Sevilla']
+    cities: ['Madrid', 'Barcelona', 'Valencia', 'Málaga', 'Sevilla'],
   },
   {
     value: 'Italy',
-    cities: ['Rome', 'Milan', 'Naples', 'Turin', 'Palermo']
-  }
-];
+    cities: ['Rome', 'Milan', 'Naples', 'Turin', 'Palermo'],
+  },
+]
 
 const getInitialValues = (order) => {
   return {
@@ -60,62 +60,49 @@ const getInitialValues = (order) => {
     phone: order?.customer?.phone || '',
     status: order?.status || '',
     street: order?.address?.street || '',
-    submit: null
-  };
-};
+    submit: null,
+  }
+}
 
 const validationSchema = Yup.object({
-  address: Yup
-    .string()
-    .max(255)
-    .required('Address is required'),
-  country: Yup
-    .string()
+  address: Yup.string().max(255).required('Address is required'),
+  country: Yup.string()
     .max(255)
     .oneOf(countryOptions.map((option) => option.value))
     .required('Country is required'),
-  email: Yup
-    .string()
+  email: Yup.string()
     .max(255)
     .email('Must be a valid email')
     .required('Email is required'),
-  phone: Yup
-    .string()
-    .max(255)
-    .required('Phone number is required'),
-  city: Yup
-    .string()
-    .max(255)
-    .required('City is required'),
-  status: Yup
-    .string()
-    .max(255)
-    .required('Status is required')
-});
+  phone: Yup.string().max(255).required('Phone number is required'),
+  city: Yup.string().max(255).required('City is required'),
+  status: Yup.string().max(255).required('Status is required'),
+})
 
 export const OrderDetailsDialog = (props) => {
-  const { open = false, onClose, order } = props;
+  const { open = false, onClose, order } = props
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: getInitialValues(order),
     validationSchema,
     onSubmit: async (values, helpers) => {
       try {
-        toast.success('Order updated');
-        helpers.setStatus({ success: true });
-        helpers.setSubmitting(false);
-        onClose?.();
+        toast.success('Order updated')
+        helpers.setStatus({ success: true })
+        helpers.setSubmitting(false)
+        onClose?.()
       } catch (err) {
-        console.error(err);
-        helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
-        helpers.setSubmitting(false);
+        console.error(err)
+        helpers.setStatus({ success: false })
+        helpers.setErrors({ submit: err.message })
+        helpers.setSubmitting(false)
       }
-    }
-  });
+    },
+  })
 
-  const cityOptions = countryOptions.find((option) => option.value
-    === formik.values.country)?.cities || [];
+  const cityOptions =
+    countryOptions.find((option) => option.value === formik.values.country)
+      ?.cities || []
 
   return (
     <Dialog
@@ -124,12 +111,10 @@ export const OrderDetailsDialog = (props) => {
       onClose={onClose}
       open={open}
       TransitionProps={{
-        onExited: () => formik.resetForm()
+        onExited: () => formik.resetForm(),
       }}
     >
-      <DialogTitle>
-        Edit order
-      </DialogTitle>
+      <DialogTitle>Edit order</DialogTitle>
       <DialogContent>
         <Stack spacing={3}>
           <TextField
@@ -175,10 +160,7 @@ export const OrderDetailsDialog = (props) => {
             value={formik.values.status}
           >
             {statusOptions.map((option) => (
-              <MenuItem
-                key={option.value}
-                value={option.value}
-              >
+              <MenuItem key={option.value} value={option.value}>
                 {option.label}
               </MenuItem>
             ))}
@@ -195,10 +177,7 @@ export const OrderDetailsDialog = (props) => {
             value={formik.values.country}
           >
             {countryOptions.map((option) => (
-              <MenuItem
-                key={option.value}
-                value={option.value}
-              >
+              <MenuItem key={option.value} value={option.value}>
                 {option.value}
               </MenuItem>
             ))}
@@ -216,44 +195,37 @@ export const OrderDetailsDialog = (props) => {
             value={formik.values.city}
           >
             {cityOptions.map((option) => (
-              <MenuItem
-                key={option}
-                value={option}
-              >
+              <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>
             ))}
           </TextField>
         </Stack>
         {formik.errors.submit && (
-          <FormHelperText
-            error
-            sx={{ mt: 2 }}
-          >
+          <FormHelperText error sx={{ mt: 2 }}>
             {formik.errors.submit}
           </FormHelperText>
         )}
       </DialogContent>
       <DialogActions>
-        <Button
-          color="inherit"
-          onClick={onClose}
-        >
+        <Button color="inherit" onClick={onClose}>
           Cancel
         </Button>
         <Button
-          onClick={() => { formik.handleSubmit(); }}
+          onClick={() => {
+            formik.handleSubmit()
+          }}
           variant="contained"
         >
           Save Changes
         </Button>
       </DialogActions>
     </Dialog>
-  );
-};
+  )
+}
 
 OrderDetailsDialog.propTypes = {
   onClose: PropTypes.func,
   open: PropTypes.bool,
-  order: PropTypes.object
-};
+  order: PropTypes.object,
+}

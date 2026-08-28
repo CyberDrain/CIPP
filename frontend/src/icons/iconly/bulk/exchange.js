@@ -28,12 +28,19 @@ const Exchange = (props) => (
       d="M32,20.33008V44.66992A2.326,2.326,0,0,1,29.66992,47H11V18H29.66992A2.326,2.326,0,0,1,32,20.33008Z"
       opacity="0.1"
     />
-    <rect x="4.00022" y="18" width="28" height="28" rx="2.33333" fill="#0078d4" />
+    <rect
+      x="4.00022"
+      y="18"
+      width="28"
+      height="28"
+      rx="2.33333"
+      fill="#0078d4"
+    />
     <path
       d="M22.58533,26.88121h-6.5472V30.7098h6.14535v2.45375H16.03813V37.1401h6.89609v2.4434h-9.868V24.4165h9.5191Z"
       fill="#fff"
     />
   </svg>
-);
+)
 
-export default Exchange;
+export default Exchange

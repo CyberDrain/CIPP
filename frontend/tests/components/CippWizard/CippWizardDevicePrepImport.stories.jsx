@@ -12,7 +12,9 @@ const fields = [
 
 const handlers = [
   http.get('*/api/ListGraphRequest', () => HttpResponse.json({ Results: [] })),
-  http.get('*/api/ListGraphExplorerPresets', () => HttpResponse.json({ Results: [] })),
+  http.get('*/api/ListGraphExplorerPresets', () =>
+    HttpResponse.json({ Results: [] })
+  ),
 ]
 
 const Harness = ({ defaultValues }) => {
@@ -49,8 +51,16 @@ export const WithDevices = {
     <Harness
       defaultValues={{
         devicePrepData: [
-          { manufacturer: 'Dell', model: 'XPS 13 9345', serialNumber: 'SN0001' },
-          { manufacturer: 'HP', model: 'EliteBook 840 G11', serialNumber: 'SN0002' },
+          {
+            manufacturer: 'Dell',
+            model: 'XPS 13 9345',
+            serialNumber: 'SN0001',
+          },
+          {
+            manufacturer: 'HP',
+            model: 'EliteBook 840 G11',
+            serialNumber: 'SN0002',
+          },
         ],
       }}
     />

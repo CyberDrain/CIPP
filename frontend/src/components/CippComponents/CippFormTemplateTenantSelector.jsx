@@ -25,7 +25,9 @@ export const CippFormTemplateTenantSelector = ({
 }) => {
   // Build a set of excluded values for fast lookup
   const excludedValues = new Set(
-    excludedTenants.map((t) => (typeof t === 'object' ? t?.value : t)).filter(Boolean)
+    excludedTenants
+      .map((t) => (typeof t === 'object' ? t?.value : t))
+      .filter(Boolean)
   )
   const isExcluded = (value) => excludedValues.has(value)
   const [options, setOptions] = useState([])
@@ -34,9 +36,14 @@ export const CippFormTemplateTenantSelector = ({
   const hasAllTenants = templateTenants.some(
     (t) => t?.value === 'AllTenants' || t?.value === 'allTenants'
   )
-  const groupIds = templateTenants.filter((t) => t?.type === 'Group').map((t) => t.value)
+  const groupIds = templateTenants
+    .filter((t) => t?.type === 'Group')
+    .map((t) => t.value)
   const individualTenants = templateTenants.filter(
-    (t) => t?.type !== 'Group' && t?.value !== 'AllTenants' && t?.value !== 'allTenants'
+    (t) =>
+      t?.type !== 'Group' &&
+      t?.value !== 'AllTenants' &&
+      t?.value !== 'allTenants'
   )
 
   // Fetch all tenants when AllTenants is targeted
@@ -57,7 +64,13 @@ export const CippFormTemplateTenantSelector = ({
   )
 
   useEffect(() => {
-    const built = [{ label: 'All Tenants in Template', value: 'allTenants', group: 'All Tenants' }]
+    const built = [
+      {
+        label: 'All Tenants in Template',
+        value: 'allTenants',
+        group: 'All Tenants',
+      },
+    ]
 
     if (hasAllTenants) {
       if (allTenantList.isSuccess && Array.isArray(allTenantList.data)) {
@@ -87,7 +100,9 @@ export const CippFormTemplateTenantSelector = ({
 
         if (matchedGroup) {
           // Individual members only — group itself is not selectable
-          const members = Array.isArray(matchedGroup.Members) ? matchedGroup.Members : []
+          const members = Array.isArray(matchedGroup.Members)
+            ? matchedGroup.Members
+            : []
           members.forEach((m) => {
             if (isExcluded(m.defaultDomainName)) return
             built.push({
@@ -122,7 +137,8 @@ export const CippFormTemplateTenantSelector = ({
   ])
 
   const isFetching =
-    (hasAllTenants && allTenantList.isFetching) || groupRequests.some((r) => r.isFetching)
+    (hasAllTenants && allTenantList.isFetching) ||
+    groupRequests.some((r) => r.isFetching)
 
   return (
     <CippFormComponent
@@ -138,7 +154,9 @@ export const CippFormTemplateTenantSelector = ({
       isFetching={isFetching}
       groupBy={(option) => option.group}
       validators={
-        required ? { required: { value: true, message: 'Please select a tenant' } } : undefined
+        required
+          ? { required: { value: true, message: 'Please select a tenant' } }
+          : undefined
       }
       {...other}
     />

@@ -1,13 +1,21 @@
-import { useState, useEffect, use } from "react";
-import { Alert, Skeleton, Stack, Typography, Button, Box, Link } from "@mui/material";
-import { CippFormComponent } from "./CippFormComponent";
-import { CippFormCondition } from "./CippFormCondition";
-import { CippApiResults } from "./CippApiResults";
-import { Grid } from "@mui/system";
-import CippPermissionPreview from "./CippPermissionPreview";
-import { useWatch } from "react-hook-form";
-import { CippPermissionSetDrawer } from "./CippPermissionSetDrawer";
-import { ApiGetCall } from "../../api/ApiCall";
+import { useState, useEffect, use } from 'react'
+import {
+  Alert,
+  Skeleton,
+  Stack,
+  Typography,
+  Button,
+  Box,
+  Link,
+} from '@mui/material'
+import { CippFormComponent } from './CippFormComponent'
+import { CippFormCondition } from './CippFormCondition'
+import { CippApiResults } from './CippApiResults'
+import { Grid } from '@mui/system'
+import CippPermissionPreview from './CippPermissionPreview'
+import { useWatch } from 'react-hook-form'
+import { CippPermissionSetDrawer } from './CippPermissionSetDrawer'
+import { ApiGetCall } from '../../api/ApiCall'
 
 const AppApprovalTemplateForm = ({
   formControl,
@@ -20,155 +28,163 @@ const AppApprovalTemplateForm = ({
   refetchKey,
   hideSubmitButton = false, // New prop to hide the submit button when used in a drawer
 }) => {
-  const forbiddenManifestProperties = ["keyCredentials", "passwordCredentials"];
-  const [selectedPermissionSet, setSelectedPermissionSet] = useState(null);
-  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
-  const [permissionSetDrawerVisible, setPermissionSetDrawerVisible] = useState(false);
-  const [manifestSanitizeMessage, setManifestSanitizeMessage] = useState(null);
+  const forbiddenManifestProperties = ['keyCredentials', 'passwordCredentials']
+  const [selectedPermissionSet, setSelectedPermissionSet] = useState(null)
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false)
+  const [permissionSetDrawerVisible, setPermissionSetDrawerVisible] =
+    useState(false)
+  const [manifestSanitizeMessage, setManifestSanitizeMessage] = useState(null)
 
   // Shares its queryKey with the permission set autocomplete below, so this reuses that cache.
   const permissionSets = ApiGetCall({
-    url: "/api/ExecAppPermissionTemplate",
-    queryKey: "execAppPermissionTemplate",
-  });
+    url: '/api/ExecAppPermissionTemplate',
+    queryKey: 'execAppPermissionTemplate',
+  })
 
   const getManifestValidationError = (manifest) => {
     if (!manifest.displayName) {
-      return "Application manifest must include a 'displayName' property";
+      return "Application manifest must include a 'displayName' property"
     }
 
-    if (manifest.signInAudience && manifest.signInAudience !== "AzureADMyOrg") {
-      return "signInAudience must be null, undefined, or 'AzureADMyOrg' for security reasons";
+    if (manifest.signInAudience && manifest.signInAudience !== 'AzureADMyOrg') {
+      return "signInAudience must be null, undefined, or 'AzureADMyOrg' for security reasons"
     }
 
     const presentForbiddenProperties = forbiddenManifestProperties.filter(
-      (propertyName) => Object.prototype.hasOwnProperty.call(manifest, propertyName)
-    );
+      (propertyName) =>
+        Object.prototype.hasOwnProperty.call(manifest, propertyName)
+    )
     if (presentForbiddenProperties.length > 0) {
-      return `Remove unsupported manifest properties: ${presentForbiddenProperties.join(", ")}.`;
+      return `Remove unsupported manifest properties: ${presentForbiddenProperties.join(', ')}.`
     }
 
-    return null;
-  };
+    return null
+  }
 
   const handleSanitizeManifest = () => {
-    const currentManifest = formControl.getValues("applicationManifest");
+    const currentManifest = formControl.getValues('applicationManifest')
 
     if (!currentManifest) {
       setManifestSanitizeMessage({
-        severity: "warning",
-        text: "Paste a manifest first, then use cleanup.",
-      });
-      return;
+        severity: 'warning',
+        text: 'Paste a manifest first, then use cleanup.',
+      })
+      return
     }
 
     try {
-      const parsedManifest = JSON.parse(currentManifest);
-      const removedProperties = forbiddenManifestProperties.filter((propertyName) =>
-        Object.prototype.hasOwnProperty.call(parsedManifest, propertyName)
-      );
+      const parsedManifest = JSON.parse(currentManifest)
+      const removedProperties = forbiddenManifestProperties.filter(
+        (propertyName) =>
+          Object.prototype.hasOwnProperty.call(parsedManifest, propertyName)
+      )
 
       if (removedProperties.length === 0) {
         setManifestSanitizeMessage({
-          severity: "info",
-          text: "No forbidden sections found. Your manifest is already clean.",
-        });
-        return;
+          severity: 'info',
+          text: 'No forbidden sections found. Your manifest is already clean.',
+        })
+        return
       }
 
       removedProperties.forEach((propertyName) => {
-        delete parsedManifest[propertyName];
-      });
+        delete parsedManifest[propertyName]
+      })
 
-      formControl.setValue("applicationManifest", JSON.stringify(parsedManifest, null, 2), {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+      formControl.setValue(
+        'applicationManifest',
+        JSON.stringify(parsedManifest, null, 2),
+        {
+          shouldDirty: true,
+          shouldValidate: true,
+        }
+      )
 
       setManifestSanitizeMessage({
-        severity: "success",
-        text: `Removed forbidden sections: ${removedProperties.join(", ")}.`,
-      });
+        severity: 'success',
+        text: `Removed forbidden sections: ${removedProperties.join(', ')}.`,
+      })
     } catch (error) {
       setManifestSanitizeMessage({
-        severity: "error",
-        text: "Manifest JSON is invalid. Fix the JSON and try cleanup again.",
-      });
+        severity: 'error',
+        text: 'Manifest JSON is invalid. Fix the JSON and try cleanup again.',
+      })
     }
-  };
+  }
 
   // Watch for app type selection changes
   const selectedAppType = useWatch({
     control: formControl?.control,
-    name: "appType",
-    defaultValue: "EnterpriseApp",
-  });
+    name: 'appType',
+    defaultValue: 'EnterpriseApp',
+  })
   const selectedGalleryTemplate = useWatch({
     control: formControl?.control,
-    name: "galleryTemplateId",
-  });
+    name: 'galleryTemplateId',
+  })
 
   // Watch for application manifest changes
   const selectedApplicationManifest = useWatch({
     control: formControl?.control,
-    name: "applicationManifest",
-  });
+    name: 'applicationManifest',
+  })
 
   const getForbiddenManifestPropertiesPresent = (manifestValue) => {
     if (!manifestValue) {
-      return [];
+      return []
     }
 
     try {
-      const manifest = JSON.parse(manifestValue);
+      const manifest = JSON.parse(manifestValue)
       return forbiddenManifestProperties.filter((propertyName) =>
         Object.prototype.hasOwnProperty.call(manifest, propertyName)
-      );
+      )
     } catch {
-      return [];
+      return []
     }
-  };
+  }
 
   const forbiddenPropertiesInCurrentManifest =
-    selectedAppType === "ApplicationManifest"
+    selectedAppType === 'ApplicationManifest'
       ? getForbiddenManifestPropertiesPresent(selectedApplicationManifest)
-      : [];
-  const showSanitizeManifestButton = forbiddenPropertiesInCurrentManifest.length > 0;
-  const isTemplateFormValid = formControl?.formState?.isValid ?? false;
+      : []
+  const showSanitizeManifestButton =
+    forbiddenPropertiesInCurrentManifest.length > 0
+  const isTemplateFormValid = formControl?.formState?.isValid ?? false
 
   // Watch for app selection changes to update template name
   const selectedApp = useWatch({
     control: formControl?.control,
-    name: "appId",
-  });
+    name: 'appId',
+  })
 
   // When templateData changes, update the form
   useEffect(() => {
-    if (!formControl) return; // Early return if formControl is not available
+    if (!formControl) return // Early return if formControl is not available
 
     if (!isEditing && !isCopy) {
-      formControl.setValue("templateName", "New App Deployment Template");
-      formControl.setValue("appType", "EnterpriseApp");
-      setPermissionsLoaded(false);
+      formControl.setValue('templateName', 'New App Deployment Template')
+      formControl.setValue('appType', 'EnterpriseApp')
+      setPermissionsLoaded(false)
     } else if (templateData && isCopy) {
       // When copying, we want to load the template data but not the ID
       if (templateData[0]) {
-        const copyName = `Copy of ${templateData[0].TemplateName}`;
-        formControl.setValue("templateName", copyName);
+        const copyName = `Copy of ${templateData[0].TemplateName}`
+        formControl.setValue('templateName', copyName)
 
         // Set app type based on whether it's a gallery template, defaulting to EnterpriseApp for backward compatibility
         const appType =
           templateData[0].AppType ||
           (templateData[0].GalleryTemplateId
-            ? "GalleryTemplate"
+            ? 'GalleryTemplate'
             : templateData[0].ApplicationManifest
-            ? "ApplicationManifest"
-            : "EnterpriseApp");
-        formControl.setValue("appType", appType);
+              ? 'ApplicationManifest'
+              : 'EnterpriseApp')
+        formControl.setValue('appType', appType)
 
-        if (appType === "GalleryTemplate") {
-          formControl.setValue("galleryTemplateId", {
-            label: templateData[0].AppName || "Unknown",
+        if (appType === 'GalleryTemplate') {
+          formControl.setValue('galleryTemplateId', {
+            label: templateData[0].AppName || 'Unknown',
             value: templateData[0].GalleryTemplateId,
             addedFields: {
               displayName: templateData[0].AppName,
@@ -176,62 +192,62 @@ const AppApprovalTemplateForm = ({
               // Include saved gallery information for proper display
               ...(templateData[0].GalleryInformation || {}),
             },
-          });
-        } else if (appType === "ApplicationManifest") {
+          })
+        } else if (appType === 'ApplicationManifest') {
           // For Application Manifest, load the manifest JSON
           if (templateData[0].ApplicationManifest) {
             formControl.setValue(
-              "applicationManifest",
+              'applicationManifest',
               JSON.stringify(templateData[0].ApplicationManifest, null, 2)
-            );
+            )
           }
         } else {
-          formControl.setValue("appId", {
-            label: `${templateData[0].AppName || "Unknown"} (${templateData[0].AppId})`,
+          formControl.setValue('appId', {
+            label: `${templateData[0].AppName || 'Unknown'} (${templateData[0].AppId})`,
             value: templateData[0].AppId,
             addedFields: {
               displayName: templateData[0].AppName,
             },
-          });
+          })
         }
 
         // Set permission set and trigger loading of permissions (only for Enterprise Apps)
-        if (appType === "EnterpriseApp") {
+        if (appType === 'EnterpriseApp') {
           const permissionSetValue = {
-            label: templateData[0].PermissionSetName || "Custom Permissions",
+            label: templateData[0].PermissionSetName || 'Custom Permissions',
             value: templateData[0].PermissionSetId,
             addedFields: {
               Permissions: templateData[0].Permissions || {},
             },
-          };
+          }
 
-          formControl.setValue("permissionSetId", permissionSetValue);
-          setSelectedPermissionSet(permissionSetValue);
-          setPermissionsLoaded(true);
+          formControl.setValue('permissionSetId', permissionSetValue)
+          setSelectedPermissionSet(permissionSetValue)
+          setPermissionsLoaded(true)
         } else {
           // For Gallery Templates, no permission set needed
-          setSelectedPermissionSet(null);
-          setPermissionsLoaded(false);
+          setSelectedPermissionSet(null)
+          setPermissionsLoaded(false)
         }
       }
     } else if (templateData) {
       // For editing, load all template data
       if (templateData[0]) {
-        formControl.setValue("templateName", templateData[0].TemplateName);
+        formControl.setValue('templateName', templateData[0].TemplateName)
 
         // Set app type based on whether it's a gallery template, defaulting to EnterpriseApp for backward compatibility
         const appType =
           templateData[0].AppType ||
           (templateData[0].GalleryTemplateId
-            ? "GalleryTemplate"
+            ? 'GalleryTemplate'
             : templateData[0].ApplicationManifest
-            ? "ApplicationManifest"
-            : "EnterpriseApp");
-        formControl.setValue("appType", appType);
+              ? 'ApplicationManifest'
+              : 'EnterpriseApp')
+        formControl.setValue('appType', appType)
 
-        if (appType === "GalleryTemplate") {
-          formControl.setValue("galleryTemplateId", {
-            label: templateData[0].AppName || "Unknown",
+        if (appType === 'GalleryTemplate') {
+          formControl.setValue('galleryTemplateId', {
+            label: templateData[0].AppName || 'Unknown',
             value: templateData[0].GalleryTemplateId,
             addedFields: {
               displayName: templateData[0].AppName,
@@ -239,112 +255,127 @@ const AppApprovalTemplateForm = ({
               // Include saved gallery information for proper display
               ...(templateData[0].GalleryInformation || {}),
             },
-          });
-        } else if (appType === "ApplicationManifest") {
+          })
+        } else if (appType === 'ApplicationManifest') {
           // For Application Manifest, load the manifest JSON
           if (templateData[0].ApplicationManifest) {
             formControl.setValue(
-              "applicationManifest",
+              'applicationManifest',
               JSON.stringify(templateData[0].ApplicationManifest, null, 2)
-            );
+            )
           }
         } else {
-          formControl.setValue("appId", {
-            label: `${templateData[0].AppName || "Unknown"} (${templateData[0].AppId})`,
+          formControl.setValue('appId', {
+            label: `${templateData[0].AppName || 'Unknown'} (${templateData[0].AppId})`,
             value: templateData[0].AppId,
             addedFields: {
               displayName: templateData[0].AppName,
             },
-          });
+          })
         }
 
         // Set permission set and trigger loading of permissions (only for Enterprise Apps)
-        if (appType === "EnterpriseApp") {
+        if (appType === 'EnterpriseApp') {
           const permissionSetValue = {
-            label: templateData[0].PermissionSetName || "Custom Permissions",
+            label: templateData[0].PermissionSetName || 'Custom Permissions',
             value: templateData[0].PermissionSetId,
             addedFields: {
               Permissions: templateData[0].Permissions || {},
             },
-          };
+          }
 
-          formControl.setValue("permissionSetId", permissionSetValue);
-          setSelectedPermissionSet(permissionSetValue);
-          setPermissionsLoaded(true);
+          formControl.setValue('permissionSetId', permissionSetValue)
+          setSelectedPermissionSet(permissionSetValue)
+          setPermissionsLoaded(true)
         } else {
           // For Gallery Templates and Application Manifests, no permission set needed
-          setSelectedPermissionSet(null);
-          setPermissionsLoaded(false);
+          setSelectedPermissionSet(null)
+          setPermissionsLoaded(false)
         }
       }
     }
-  }, [templateData, isCopy, isEditing, formControl]);
+  }, [templateData, isCopy, isEditing, formControl])
 
   // A template stores a copy of the permission set taken when it was last saved, and that copy goes
   // stale as soon as the set is edited. Re-seed from the linked set once it loads so the preview and
   // the saved payload match the permissions deployment actually consents.
   useEffect(() => {
-    if (!formControl || !(isEditing || isCopy)) return;
+    if (!formControl || !(isEditing || isCopy)) return
 
-    const template = templateData?.[0];
-    if (!template?.PermissionSetId) return;
+    const template = templateData?.[0]
+    if (!template?.PermissionSetId) return
 
-    const liveSet = permissionSets.data?.find((set) => set.TemplateId === template.PermissionSetId);
-    if (!liveSet) return;
+    const liveSet = permissionSets.data?.find(
+      (set) => set.TemplateId === template.PermissionSetId
+    )
+    if (!liveSet) return
 
     const permissionSetValue = {
-      label: liveSet.TemplateName || template.PermissionSetName || "Custom Permissions",
+      label:
+        liveSet.TemplateName ||
+        template.PermissionSetName ||
+        'Custom Permissions',
       value: template.PermissionSetId,
       addedFields: {
         Permissions: liveSet.Permissions || {},
       },
-    };
+    }
 
-    formControl.setValue("permissionSetId", permissionSetValue, { shouldDirty: false });
-    setSelectedPermissionSet(permissionSetValue);
-    setPermissionsLoaded(true);
-  }, [permissionSets.data, templateData, isEditing, isCopy, formControl]);
+    formControl.setValue('permissionSetId', permissionSetValue, {
+      shouldDirty: false,
+    })
+    setSelectedPermissionSet(permissionSetValue)
+    setPermissionsLoaded(true)
+  }, [permissionSets.data, templateData, isEditing, isCopy, formControl])
 
   useEffect(() => {
-    if (!formControl) return; // Early return if formControl is not available
+    if (!formControl) return // Early return if formControl is not available
 
     // Update template name when app is selected if we're in add mode and name hasn't been manually changed
     if (!isEditing && !isCopy) {
-      const currentName = formControl.getValues("templateName");
+      const currentName = formControl.getValues('templateName')
       // Only update if it's still the default or empty
-      if (currentName === "New App Deployment Template" || !currentName) {
-        let appName = null;
+      if (currentName === 'New App Deployment Template' || !currentName) {
+        let appName = null
 
-        if (selectedAppType === "GalleryTemplate" && selectedGalleryTemplate) {
+        if (selectedAppType === 'GalleryTemplate' && selectedGalleryTemplate) {
           appName =
-            selectedGalleryTemplate.addedFields?.displayName || selectedGalleryTemplate.label;
-        } else if (selectedAppType === "EnterpriseApp" && selectedApp) {
+            selectedGalleryTemplate.addedFields?.displayName ||
+            selectedGalleryTemplate.label
+        } else if (selectedAppType === 'EnterpriseApp' && selectedApp) {
           // Extract app name from the label (format is usually "AppName (AppId)")
-          appName = selectedApp.label.split(" (")[0];
+          appName = selectedApp.label.split(' (')[0]
         }
 
         if (appName) {
-          formControl.setValue("templateName", `${appName} Template`);
+          formControl.setValue('templateName', `${appName} Template`)
         }
       }
     }
-  }, [selectedApp, selectedGalleryTemplate, selectedAppType, isEditing, isCopy, formControl]);
+  }, [
+    selectedApp,
+    selectedGalleryTemplate,
+    selectedAppType,
+    isEditing,
+    isCopy,
+    formControl,
+  ])
 
   // Watch for permission set selection changes
   const selectedPermissionSetValue = useWatch({
     control: formControl?.control,
-    name: "permissionSetId",
-  });
+    name: 'permissionSetId',
+  })
 
   useEffect(() => {
     if (selectedPermissionSetValue?.value) {
-      setSelectedPermissionSet(selectedPermissionSetValue);
-      setPermissionsLoaded(true);
+      setSelectedPermissionSet(selectedPermissionSetValue)
+      setPermissionsLoaded(true)
     } else {
-      setSelectedPermissionSet(null);
-      setPermissionsLoaded(false);
+      setSelectedPermissionSet(null)
+      setPermissionsLoaded(false)
     }
-  }, [selectedPermissionSetValue]);
+  }, [selectedPermissionSetValue])
 
   // Handle initial data loading for editing and copying
   useEffect(() => {
@@ -352,17 +383,17 @@ const AppApprovalTemplateForm = ({
     if (isEditing || isCopy) {
       if (templateData?.[0]?.Permissions) {
         // Ensure permissions are immediately available for the preview
-        setPermissionsLoaded(true);
+        setPermissionsLoaded(true)
       }
     }
-  }, [isEditing, isCopy, templateData]);
+  }, [isEditing, isCopy, templateData])
 
   useEffect(() => {
     if (!formControl) {
-      return;
+      return
     }
 
-    formControl.trigger();
+    formControl.trigger()
   }, [
     formControl,
     selectedAppType,
@@ -371,46 +402,48 @@ const AppApprovalTemplateForm = ({
     selectedGalleryTemplate,
     selectedPermissionSetValue,
     templateData,
-  ]);
+  ])
 
   // Handle form submission
   const handleSubmit = (data) => {
-    let appDisplayName, appId, galleryTemplateId, applicationManifest;
+    let appDisplayName, appId, galleryTemplateId, applicationManifest
 
-    if (data.appType === "GalleryTemplate") {
+    if (data.appType === 'GalleryTemplate') {
       appDisplayName =
-        data.galleryTemplateId?.addedFields?.displayName || data.galleryTemplateId?.label;
-      appId = data.galleryTemplateId?.addedFields?.applicationId;
-      galleryTemplateId = data.galleryTemplateId?.value;
-    } else if (data.appType === "ApplicationManifest") {
+        data.galleryTemplateId?.addedFields?.displayName ||
+        data.galleryTemplateId?.label
+      appId = data.galleryTemplateId?.addedFields?.applicationId
+      galleryTemplateId = data.galleryTemplateId?.value
+    } else if (data.appType === 'ApplicationManifest') {
       try {
-        applicationManifest = JSON.parse(data.applicationManifest);
+        applicationManifest = JSON.parse(data.applicationManifest)
 
-        const manifestValidationError = getManifestValidationError(applicationManifest);
+        const manifestValidationError =
+          getManifestValidationError(applicationManifest)
         if (manifestValidationError) {
           setManifestSanitizeMessage({
-            severity: "error",
+            severity: 'error',
             text: manifestValidationError,
-          });
-          return; // Don't submit if validation fails
+          })
+          return // Don't submit if validation fails
         }
 
         // Extract app name from manifest
         appDisplayName =
           applicationManifest.displayName ||
           applicationManifest.appDisplayName ||
-          "Custom Application";
+          'Custom Application'
         // Application ID will be generated during deployment for manifests
-        appId = null;
+        appId = null
       } catch (error) {
-        console.error("Failed to parse application manifest:", error);
-        return; // Don't submit if manifest is invalid
+        console.error('Failed to parse application manifest:', error)
+        return // Don't submit if manifest is invalid
       }
     } else {
       appDisplayName =
         data.appId?.addedFields?.displayName ||
-        (data.appId?.label ? data.appId.label.split(" (")[0] : undefined);
-      appId = data.appId?.value;
+        (data.appId?.label ? data.appId.label.split(' (')[0] : undefined)
+      appId = data.appId?.value
     }
 
     const payload = {
@@ -418,29 +451,29 @@ const AppApprovalTemplateForm = ({
       AppType: data.appType,
       AppId: appId,
       AppName: appDisplayName,
-    };
+    }
 
     // Only include permission set data for Enterprise Apps
-    if (data.appType === "EnterpriseApp") {
-      payload.PermissionSetId = data.permissionSetId?.value;
-      payload.PermissionSetName = data.permissionSetId?.label;
-      payload.Permissions = data.permissionSetId?.addedFields?.Permissions;
+    if (data.appType === 'EnterpriseApp') {
+      payload.PermissionSetId = data.permissionSetId?.value
+      payload.PermissionSetName = data.permissionSetId?.label
+      payload.Permissions = data.permissionSetId?.addedFields?.Permissions
     }
     // For Gallery Templates, permissions will be auto-handled from the template's app registration
-    if (data.appType === "GalleryTemplate") {
-      payload.Permissions = null; // No permissions needed for Gallery Templates
-      payload.GalleryTemplateId = galleryTemplateId;
-      payload.GalleryInformation = selectedGalleryTemplate?.addedFields || {};
+    if (data.appType === 'GalleryTemplate') {
+      payload.Permissions = null // No permissions needed for Gallery Templates
+      payload.GalleryTemplateId = galleryTemplateId
+      payload.GalleryInformation = selectedGalleryTemplate?.addedFields || {}
     }
 
     // For Application Manifests, store the manifest data
-    if (data.appType === "ApplicationManifest") {
-      payload.Permissions = null; // Permissions defined in manifest
-      payload.ApplicationManifest = applicationManifest;
+    if (data.appType === 'ApplicationManifest') {
+      payload.Permissions = null // Permissions defined in manifest
+      payload.ApplicationManifest = applicationManifest
     }
 
     if (isEditing && !isCopy && templateData?.[0]?.TemplateId) {
-      payload.TemplateId = templateData[0].TemplateId;
+      payload.TemplateId = templateData[0].TemplateId
     }
 
     // Store values before submission to set them back afterward
@@ -451,29 +484,43 @@ const AppApprovalTemplateForm = ({
       galleryTemplateId: data.galleryTemplateId,
       permissionSetId: data.permissionSetId,
       applicationManifest: data.applicationManifest,
-    };
+    }
 
-    onSubmit(payload);
+    onSubmit(payload)
 
     // After submission, set the values back to what they were but mark as clean
     // This will only apply to add page, as edit will get refreshed data
     if (!isEditing) {
       setTimeout(() => {
-        formControl.setValue("templateName", currentValues.templateName, { shouldDirty: false });
-        formControl.setValue("appType", currentValues.appType, { shouldDirty: false });
-        formControl.setValue("appId", currentValues.appId, { shouldDirty: false });
-        formControl.setValue("galleryTemplateId", currentValues.galleryTemplateId, {
+        formControl.setValue('templateName', currentValues.templateName, {
           shouldDirty: false,
-        });
-        formControl.setValue("permissionSetId", currentValues.permissionSetId, {
+        })
+        formControl.setValue('appType', currentValues.appType, {
           shouldDirty: false,
-        });
-        formControl.setValue("applicationManifest", currentValues.applicationManifest, {
+        })
+        formControl.setValue('appId', currentValues.appId, {
           shouldDirty: false,
-        });
-      }, 100);
+        })
+        formControl.setValue(
+          'galleryTemplateId',
+          currentValues.galleryTemplateId,
+          {
+            shouldDirty: false,
+          }
+        )
+        formControl.setValue('permissionSetId', currentValues.permissionSetId, {
+          shouldDirty: false,
+        })
+        formControl.setValue(
+          'applicationManifest',
+          currentValues.applicationManifest,
+          {
+            shouldDirty: false,
+          }
+        )
+      }, 100)
     }
-  };
+  }
 
   return (
     <Grid container spacing={2} sx={{ mb: 2 }}>
@@ -484,26 +531,30 @@ const AppApprovalTemplateForm = ({
           {(!templateLoading || !isEditing) && (
             <>
               <Alert severity="info">
-                App approval templates allow you to define an application with its permissions that
-                can be deployed to multiple tenants. Choose from three template types:
+                App approval templates allow you to define an application with
+                its permissions that can be deployed to multiple tenants. Choose
+                from three template types:
                 <br />
                 <br />
-                <strong>• Enterprise Application:</strong> Deploy existing multi-tenant apps from
-                your tenant. Requires "Multiple organizations" or "Personal Microsoft accounts" in
-                App Registration settings.
+                <strong>• Enterprise Application:</strong> Deploy existing
+                multi-tenant apps from your tenant. Requires "Multiple
+                organizations" or "Personal Microsoft accounts" in App
+                Registration settings.
                 <br />
-                <strong>• Gallery Template:</strong> Deploy pre-configured applications from
-                Microsoft's Enterprise Application Gallery with standard permissions.
+                <strong>• Gallery Template:</strong> Deploy pre-configured
+                applications from Microsoft's Enterprise Application Gallery
+                with standard permissions.
                 <br />
-                <strong>• Application Manifest:</strong> Deploy custom applications using JSON
-                manifests. For security, only single-tenant apps (AzureADMyOrg) are supported.
+                <strong>• Application Manifest:</strong> Deploy custom
+                applications using JSON manifests. For security, only
+                single-tenant apps (AzureADMyOrg) are supported.
               </Alert>
               <CippFormComponent
                 formControl={formControl}
                 name="templateName"
                 label="Template Name"
                 type="textField"
-                validators={{ required: "Template name is required" }}
+                validators={{ required: 'Template name is required' }}
               />
               <CippFormComponent
                 formControl={formControl}
@@ -512,13 +563,16 @@ const AppApprovalTemplateForm = ({
                 type="select"
                 clearable={false}
                 options={[
-                  { label: "Enterprise Application", value: "EnterpriseApp" },
-                  { label: "Gallery Template", value: "GalleryTemplate" },
-                  { label: "Application Manifest", value: "ApplicationManifest" },
+                  { label: 'Enterprise Application', value: 'EnterpriseApp' },
+                  { label: 'Gallery Template', value: 'GalleryTemplate' },
+                  {
+                    label: 'Application Manifest',
+                    value: 'ApplicationManifest',
+                  },
                 ]}
                 creatable={false}
                 required={true}
-                validators={{ required: "Application type is required" }}
+                validators={{ required: 'Application type is required' }}
               />
               <CippFormCondition
                 field="appType"
@@ -532,28 +586,30 @@ const AppApprovalTemplateForm = ({
                   label="Select Enterprise Application"
                   type="autoComplete"
                   api={{
-                    url: "/api/ExecServicePrincipals",
-                    queryKey: "execServicePrincipals",
-                    dataKey: "Results",
+                    url: '/api/ExecServicePrincipals',
+                    queryKey: 'execServicePrincipals',
+                    dataKey: 'Results',
                     labelField: (item) => `${item.displayName} (${item.appId})`,
-                    valueField: "appId",
+                    valueField: 'appId',
                     addedField: {
-                      displayName: "displayName",
-                      signInAudience: "signInAudience",
+                      displayName: 'displayName',
+                      signInAudience: 'signInAudience',
                     },
                     dataFilter: (data) => {
                       return data.filter(
                         (item) =>
-                          item.addedFields?.signInAudience === "AzureADMultipleOrgs" ||
-                          item.addedFields?.signInAudience === "AzureADandPersonalMicrosoftAccount"
-                      );
+                          item.addedFields?.signInAudience ===
+                            'AzureADMultipleOrgs' ||
+                          item.addedFields?.signInAudience ===
+                            'AzureADandPersonalMicrosoftAccount'
+                      )
                     },
                     showRefresh: true,
                   }}
                   multiple={false}
                   creatable={false}
                   required={true}
-                  validators={{ required: "Application is required" }}
+                  validators={{ required: 'Application is required' }}
                   helperText="Select a multi-tenant application to deploy in this template."
                 />
               </CippFormCondition>
@@ -569,27 +625,27 @@ const AppApprovalTemplateForm = ({
                   label="Select Gallery Template"
                   type="autoComplete"
                   api={{
-                    url: "/api/ListGraphRequest",
-                    queryKey: "listApplicationTemplates",
+                    url: '/api/ListGraphRequest',
+                    queryKey: 'listApplicationTemplates',
                     data: {
-                      Endpoint: "applicationTemplates",
+                      Endpoint: 'applicationTemplates',
                       $select:
-                        "id,displayName,description,categories,publisher,logoUrl,homePageUrl,supportedSingleSignOnModes,supportedProvisioningTypes",
+                        'id,displayName,description,categories,publisher,logoUrl,homePageUrl,supportedSingleSignOnModes,supportedProvisioningTypes',
                       $top: 999,
                     },
-                    dataKey: "Results",
+                    dataKey: 'Results',
                     labelField: (item) => item.displayName,
-                    valueField: "id",
+                    valueField: 'id',
                     addedField: {
-                      displayName: "displayName",
-                      applicationId: "applicationId",
-                      description: "description",
-                      categories: "categories",
-                      publisher: "publisher",
-                      logoUrl: "logoUrl",
-                      homePageUrl: "homePageUrl",
-                      supportedSingleSignOnModes: "supportedSingleSignOnModes",
-                      supportedProvisioningTypes: "supportedProvisioningTypes",
+                      displayName: 'displayName',
+                      applicationId: 'applicationId',
+                      description: 'description',
+                      categories: 'categories',
+                      publisher: 'publisher',
+                      logoUrl: 'logoUrl',
+                      homePageUrl: 'homePageUrl',
+                      supportedSingleSignOnModes: 'supportedSingleSignOnModes',
+                      supportedProvisioningTypes: 'supportedProvisioningTypes',
                     },
                     showRefresh: true,
                   }}
@@ -597,7 +653,7 @@ const AppApprovalTemplateForm = ({
                   creatable={false}
                   required={true}
                   sortOptions={true}
-                  validators={{ required: "Gallery template is required" }}
+                  validators={{ required: 'Gallery template is required' }}
                 />
               </CippFormCondition>
               <CippFormCondition
@@ -615,13 +671,13 @@ const AppApprovalTemplateForm = ({
                   rows={10}
                   helperText="Paste your application manifest JSON here. Use the 'Microsoft Graph App Manifest' format. For security reasons, signInAudience must be 'AzureADMyOrg' or not specified."
                   validators={{
-                    required: "Application manifest is required",
+                    required: 'Application manifest is required',
                     validate: (value) => {
                       try {
-                        const manifest = JSON.parse(value);
-                        return getManifestValidationError(manifest) ?? true;
+                        const manifest = JSON.parse(value)
+                        return getManifestValidationError(manifest) ?? true
                       } catch (e) {
-                        return "Invalid JSON format";
+                        return 'Invalid JSON format'
                       }
                     },
                   }}
@@ -629,7 +685,10 @@ const AppApprovalTemplateForm = ({
                 <Stack spacing={1} sx={{ mt: 1 }}>
                   {showSanitizeManifestButton && (
                     <Box>
-                      <Button variant="outlined" onClick={handleSanitizeManifest}>
+                      <Button
+                        variant="outlined"
+                        onClick={handleSanitizeManifest}
+                      >
                         Remove Forbidden Sections
                       </Button>
                     </Box>
@@ -654,22 +713,22 @@ const AppApprovalTemplateForm = ({
                   label="Select Permission Set"
                   type="autoComplete"
                   api={{
-                    url: "/api/ExecAppPermissionTemplate",
-                    queryKey: "execAppPermissionTemplate",
+                    url: '/api/ExecAppPermissionTemplate',
+                    queryKey: 'execAppPermissionTemplate',
                     labelField: (item) => item.TemplateName,
-                    valueField: "TemplateId",
+                    valueField: 'TemplateId',
                     addedField: {
-                      Permissions: "Permissions",
+                      Permissions: 'Permissions',
                     },
                     showRefresh: true,
                   }}
                   multiple={false}
                   creatable={false}
                   required={true}
-                  validators={{ required: "Permission Set is required" }}
+                  validators={{ required: 'Permission Set is required' }}
                   helperText={
                     <>
-                      Select a permission set to apply to this application.{" "}
+                      Select a permission set to apply to this application.{' '}
                       <CippPermissionSetDrawer
                         buttonText="Create Permission Set"
                         isEditMode={false}
@@ -688,9 +747,11 @@ const AppApprovalTemplateForm = ({
                       variant="contained"
                       color="primary"
                       onClick={formControl.handleSubmit(handleSubmit)}
-                      disabled={updatePermissions.isPending || !isTemplateFormValid}
+                      disabled={
+                        updatePermissions.isPending || !isTemplateFormValid
+                      }
                     >
-                      {isEditing ? "Update Template" : "Create Template"}
+                      {isEditing ? 'Update Template' : 'Create Template'}
                     </Button>
                   </Box>
                   <CippApiResults apiObject={updatePermissions} />
@@ -703,26 +764,32 @@ const AppApprovalTemplateForm = ({
       <Grid size={{ xs: 12, sm: 6 }}>
         <CippPermissionPreview
           permissions={
-            selectedAppType === "GalleryTemplate" || selectedAppType === "ApplicationManifest"
+            selectedAppType === 'GalleryTemplate' ||
+            selectedAppType === 'ApplicationManifest'
               ? null // Gallery templates and Application Manifests will handle permissions differently
               : selectedPermissionSet?.addedFields?.Permissions
           }
           isLoading={templateLoading}
           title={
-            selectedAppType === "GalleryTemplate"
-              ? "Gallery Template Info"
-              : selectedAppType === "ApplicationManifest"
-              ? "Application Manifest"
-              : "Permission Preview"
+            selectedAppType === 'GalleryTemplate'
+              ? 'Gallery Template Info'
+              : selectedAppType === 'ApplicationManifest'
+                ? 'Application Manifest'
+                : 'Permission Preview'
           }
-          galleryTemplate={selectedAppType === "GalleryTemplate" ? selectedGalleryTemplate : null}
+          galleryTemplate={
+            selectedAppType === 'GalleryTemplate'
+              ? selectedGalleryTemplate
+              : null
+          }
           applicationManifest={
-            selectedAppType === "ApplicationManifest" && selectedApplicationManifest
+            selectedAppType === 'ApplicationManifest' &&
+            selectedApplicationManifest
               ? (() => {
                   try {
-                    return JSON.parse(selectedApplicationManifest);
+                    return JSON.parse(selectedApplicationManifest)
                   } catch (e) {
-                    return null; // Return null if JSON is invalid
+                    return null // Return null if JSON is invalid
                   }
                 })()
               : null
@@ -730,7 +797,7 @@ const AppApprovalTemplateForm = ({
         />
       </Grid>
     </Grid>
-  );
-};
+  )
+}
 
-export default AppApprovalTemplateForm;
+export default AppApprovalTemplateForm

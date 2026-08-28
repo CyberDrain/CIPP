@@ -1,6 +1,6 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
-import { useSettings } from "../../../../hooks/use-settings";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
+import { useSettings } from '../../../../hooks/use-settings'
 import {
   Card,
   CardContent,
@@ -12,181 +12,181 @@ import {
   CircularProgress,
   Button,
   SvgIcon,
-} from "@mui/material";
-import { Sync, OpenInNew } from "@mui/icons-material";
-import { Grid } from "@mui/system";
-import { ApiGetCall } from "../../../../api/ApiCall";
-import { CippHead } from "../../../../components/CippComponents/CippHead";
-import { useDialog } from "../../../../hooks/use-dialog";
-import { CippApiDialog } from "../../../../components/CippComponents/CippApiDialog";
-import { CippQueueTracker } from "../../../../components/CippTable/CippQueueTracker";
-import { CippPropertyListCard } from "../../../../components/CippCards/CippPropertyListCard";
-import { getCippFormatting } from "../../../../utils/get-cipp-formatting";
-import { useState } from "react";
-import { useCippReportDB } from "../../../../components/CippComponents/CippReportDBControls";
+} from '@mui/material'
+import { Sync, OpenInNew } from '@mui/icons-material'
+import { Grid } from '@mui/system'
+import { ApiGetCall } from '../../../../api/ApiCall'
+import { CippHead } from '../../../../components/CippComponents/CippHead'
+import { useDialog } from '../../../../hooks/use-dialog'
+import { CippApiDialog } from '../../../../components/CippComponents/CippApiDialog'
+import { CippQueueTracker } from '../../../../components/CippTable/CippQueueTracker'
+import { CippPropertyListCard } from '../../../../components/CippCards/CippPropertyListCard'
+import { getCippFormatting } from '../../../../utils/get-cipp-formatting'
+import { useState } from 'react'
+import { useCippReportDB } from '../../../../components/CippComponents/CippReportDBControls'
 
 const statusColors = {
-  enabled: "success",
-  available: "success",
-  unavailable: "error",
-  unresponsive: "warning",
-  notSetUp: "default",
-  error: "error",
-};
+  enabled: 'success',
+  available: 'success',
+  unavailable: 'error',
+  unresponsive: 'warning',
+  notSetUp: 'default',
+  error: 'error',
+}
 
 const statusLabels = {
-  enabled: "Enabled",
-  available: "Available",
-  unavailable: "Unavailable",
-  unresponsive: "Unresponsive",
-  notSetUp: "Not Set Up",
-  error: "Error",
-};
+  enabled: 'Enabled',
+  available: 'Available',
+  unavailable: 'Unavailable',
+  unresponsive: 'Unresponsive',
+  notSetUp: 'Not Set Up',
+  error: 'Error',
+}
 
 const SingleTenantView = ({ tenant }) => {
-  const syncDialog = useDialog();
-  const [syncQueueId, setSyncQueueId] = useState(null);
+  const syncDialog = useDialog()
+  const [syncQueueId, setSyncQueueId] = useState(null)
 
   const tenantList = ApiGetCall({
-    url: "/api/listTenants",
-    queryKey: "TenantSelector",
-  });
+    url: '/api/listTenants',
+    queryKey: 'TenantSelector',
+  })
 
   const tenantId = tenantList.data?.find(
     (t) => t.defaultDomainName === tenant
-  )?.customerId;
+  )?.customerId
 
   const { data, isFetching } = ApiGetCall({
-    url: "/api/ListMDEOnboarding",
+    url: '/api/ListMDEOnboarding',
     queryKey: `MDEOnboarding-${tenant}`,
     data: { tenantFilter: tenant, UseReportDB: true },
     waiting: true,
-  });
+  })
 
-  const item = Array.isArray(data) ? data[0] : data;
-  const status = item?.partnerState || "Unknown";
+  const item = Array.isArray(data) ? data[0] : data
+  const status = item?.partnerState || 'Unknown'
 
   const platformItems = [
     {
-      label: "Windows",
-      value: getCippFormatting(item?.windowsEnabled, "windowsEnabled"),
+      label: 'Windows',
+      value: getCippFormatting(item?.windowsEnabled, 'windowsEnabled'),
     },
     {
-      label: "iOS",
-      value: getCippFormatting(item?.iosEnabled, "iosEnabled"),
+      label: 'iOS',
+      value: getCippFormatting(item?.iosEnabled, 'iosEnabled'),
     },
     {
-      label: "Android",
-      value: getCippFormatting(item?.androidEnabled, "androidEnabled"),
+      label: 'Android',
+      value: getCippFormatting(item?.androidEnabled, 'androidEnabled'),
     },
     {
-      label: "macOS",
-      value: getCippFormatting(item?.macEnabled, "macEnabled"),
+      label: 'macOS',
+      value: getCippFormatting(item?.macEnabled, 'macEnabled'),
     },
-  ];
+  ]
 
   const mamItems = [
     {
-      label: "iOS MAM",
+      label: 'iOS MAM',
       value: getCippFormatting(
         item?.iosMobileApplicationManagementEnabled,
-        "iosMobileApplicationManagementEnabled"
+        'iosMobileApplicationManagementEnabled'
       ),
     },
     {
-      label: "Android MAM",
+      label: 'Android MAM',
       value: getCippFormatting(
         item?.androidMobileApplicationManagementEnabled,
-        "androidMobileApplicationManagementEnabled"
+        'androidMobileApplicationManagementEnabled'
       ),
     },
     {
-      label: "Windows MAM",
+      label: 'Windows MAM',
       value: getCippFormatting(
         item?.windowsMobileApplicationManagementEnabled,
-        "windowsMobileApplicationManagementEnabled"
+        'windowsMobileApplicationManagementEnabled'
       ),
     },
     {
-      label: "MDE Attach",
+      label: 'MDE Attach',
       value: getCippFormatting(
         item?.microsoftDefenderForEndpointAttachEnabled,
-        "microsoftDefenderForEndpointAttachEnabled"
+        'microsoftDefenderForEndpointAttachEnabled'
       ),
     },
-  ];
+  ]
 
   const dataCollectionItems = [
     {
-      label: "Block iOS on missing partner data",
+      label: 'Block iOS on missing partner data',
       value: getCippFormatting(
         item?.iosDeviceBlockedOnMissingPartnerData,
-        "iosDeviceBlockedOnMissingPartnerData"
+        'iosDeviceBlockedOnMissingPartnerData'
       ),
     },
     {
-      label: "Block Android on missing partner data",
+      label: 'Block Android on missing partner data',
       value: getCippFormatting(
         item?.androidDeviceBlockedOnMissingPartnerData,
-        "androidDeviceBlockedOnMissingPartnerData"
+        'androidDeviceBlockedOnMissingPartnerData'
       ),
     },
     {
-      label: "Block Windows on missing partner data",
+      label: 'Block Windows on missing partner data',
       value: getCippFormatting(
         item?.windowsDeviceBlockedOnMissingPartnerData,
-        "windowsDeviceBlockedOnMissingPartnerData"
+        'windowsDeviceBlockedOnMissingPartnerData'
       ),
     },
     {
-      label: "Block macOS on missing partner data",
+      label: 'Block macOS on missing partner data',
       value: getCippFormatting(
         item?.macDeviceBlockedOnMissingPartnerData,
-        "macDeviceBlockedOnMissingPartnerData"
+        'macDeviceBlockedOnMissingPartnerData'
       ),
     },
     {
-      label: "Block unsupported OS versions",
+      label: 'Block unsupported OS versions',
       value: getCippFormatting(
         item?.partnerUnsupportedOsVersionBlocked,
-        "partnerUnsupportedOsVersionBlocked"
+        'partnerUnsupportedOsVersionBlocked'
       ),
     },
     {
-      label: "Unresponsiveness threshold (days)",
+      label: 'Unresponsiveness threshold (days)',
       value:
         item?.partnerUnresponsivenessThresholdInDays ??
-        getCippFormatting(null, "partnerUnresponsivenessThresholdInDays"),
+        getCippFormatting(null, 'partnerUnresponsivenessThresholdInDays'),
     },
     {
-      label: "Collect iOS app metadata",
+      label: 'Collect iOS app metadata',
       value: getCippFormatting(
         item?.allowPartnerToCollectIOSApplicationMetadata,
-        "allowPartnerToCollectIOSApplicationMetadata"
+        'allowPartnerToCollectIOSApplicationMetadata'
       ),
     },
     {
-      label: "Collect iOS personal app metadata",
+      label: 'Collect iOS personal app metadata',
       value: getCippFormatting(
         item?.allowPartnerToCollectIOSPersonalApplicationMetadata,
-        "allowPartnerToCollectIOSPersonalApplicationMetadata"
+        'allowPartnerToCollectIOSPersonalApplicationMetadata'
       ),
     },
     {
-      label: "Collect iOS certificate metadata",
+      label: 'Collect iOS certificate metadata',
       value: getCippFormatting(
         item?.allowPartnerToCollectIosCertificateMetadata,
-        "allowPartnerToCollectIosCertificateMetadata"
+        'allowPartnerToCollectIosCertificateMetadata'
       ),
     },
     {
-      label: "Collect iOS personal certificate metadata",
+      label: 'Collect iOS personal certificate metadata',
       value: getCippFormatting(
         item?.allowPartnerToCollectIosPersonalCertificateMetadata,
-        "allowPartnerToCollectIosPersonalCertificateMetadata"
+        'allowPartnerToCollectIosPersonalCertificateMetadata'
       ),
     },
-  ];
+  ]
 
   return (
     <>
@@ -226,19 +226,20 @@ const SingleTenantView = ({ tenant }) => {
                     <Typography variant="body1">Status:</Typography>
                     <Chip
                       label={statusLabels[status] || status}
-                      color={statusColors[status] || "default"}
+                      color={statusColors[status] || 'default'}
                       size="medium"
                     />
                   </Stack>
                   {item?.lastHeartbeatDateTime && (
                     <Typography variant="body2" color="text.secondary">
-                      Last heartbeat:{" "}
+                      Last heartbeat:{' '}
                       {new Date(item.lastHeartbeatDateTime).toLocaleString()}
                     </Typography>
                   )}
                   {item?.CacheTimestamp && (
                     <Typography variant="caption" color="text.secondary">
-                      Last synced: {new Date(item.CacheTimestamp).toLocaleString()}
+                      Last synced:{' '}
+                      {new Date(item.CacheTimestamp).toLocaleString()}
                     </Typography>
                   )}
                   {item?.error && (
@@ -246,18 +247,20 @@ const SingleTenantView = ({ tenant }) => {
                       {item.error}
                     </Typography>
                   )}
-                  {tenantId && status !== "enabled" && status !== "available" && (
-                    <Button
-                      variant="contained"
-                      startIcon={<OpenInNew />}
-                      href={`https://security.microsoft.com/securitysettings/endpoints/onboarding?tid=${tenantId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{ alignSelf: "flex-start" }}
-                    >
-                      Start Onboarding
-                    </Button>
-                  )}
+                  {tenantId &&
+                    status !== 'enabled' &&
+                    status !== 'available' && (
+                      <Button
+                        variant="contained"
+                        startIcon={<OpenInNew />}
+                        href={`https://security.microsoft.com/securitysettings/endpoints/onboarding?tid=${tenantId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ alignSelf: 'flex-start' }}
+                      >
+                        Start Onboarding
+                      </Button>
+                    )}
                 </Stack>
               )}
             </CardContent>
@@ -298,39 +301,39 @@ const SingleTenantView = ({ tenant }) => {
         title="Sync MDE Onboarding Status"
         fields={[]}
         api={{
-          type: "GET",
-          url: "/api/ExecCIPPDBCache",
+          type: 'GET',
+          url: '/api/ExecCIPPDBCache',
           confirmText: `Run MDE onboarding status sync for ${tenant}? This will update the data immediately.`,
           relatedQueryKeys: [`MDEOnboarding-${tenant}`],
           data: {
-            Name: "MDEOnboarding",
+            Name: 'MDEOnboarding',
           },
           onSuccess: (result) => {
             if (result?.Metadata?.QueueId) {
-              setSyncQueueId(result.Metadata.QueueId);
+              setSyncQueueId(result.Metadata.QueueId)
             }
           },
         }}
       />
     </>
-  );
-};
+  )
+}
 
 const Page = () => {
-  const currentTenant = useSettings().currentTenant;
-  const isAllTenants = currentTenant === "AllTenants";
+  const currentTenant = useSettings().currentTenant
+  const isAllTenants = currentTenant === 'AllTenants'
 
   const reportDB = useCippReportDB({
-    apiUrl: "/api/ListMDEOnboarding",
-    queryKey: "MDEOnboarding",
-    cacheName: "MDEOnboarding",
-    syncTitle: "Sync MDE Onboarding Status",
+    apiUrl: '/api/ListMDEOnboarding',
+    queryKey: 'MDEOnboarding',
+    cacheName: 'MDEOnboarding',
+    syncTitle: 'Sync MDE Onboarding Status',
     allowToggle: false,
     defaultCached: true,
-  });
+  })
 
   if (!isAllTenants) {
-    return <SingleTenantView tenant={currentTenant} />;
+    return <SingleTenantView tenant={currentTenant} />
   }
 
   return (
@@ -341,27 +344,27 @@ const Page = () => {
         apiData={reportDB.resolvedApiData}
         queryKey={reportDB.resolvedQueryKey}
         simpleColumns={[
-          "Tenant",
-          "partnerState",
-          "lastHeartbeatDateTime",
-          "microsoftDefenderForEndpointAttachEnabled",
-          "windowsEnabled",
-          "iosEnabled",
-          "androidEnabled",
-          "macEnabled",
-          "iosMobileApplicationManagementEnabled",
-          "androidMobileApplicationManagementEnabled",
-          "windowsMobileApplicationManagementEnabled",
-          "partnerUnresponsivenessThresholdInDays",
-          "CacheTimestamp",
+          'Tenant',
+          'partnerState',
+          'lastHeartbeatDateTime',
+          'microsoftDefenderForEndpointAttachEnabled',
+          'windowsEnabled',
+          'iosEnabled',
+          'androidEnabled',
+          'macEnabled',
+          'iosMobileApplicationManagementEnabled',
+          'androidMobileApplicationManagementEnabled',
+          'windowsMobileApplicationManagementEnabled',
+          'partnerUnresponsivenessThresholdInDays',
+          'CacheTimestamp',
         ]}
         dataSourceControls={reportDB.controls}
       />
       {reportDB.syncDialog}
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

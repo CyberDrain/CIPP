@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -8,28 +8,33 @@ import {
   Stack,
   Box,
   Alert,
-} from "@mui/material";
-import { useForm } from "react-hook-form";
-import { ApiGetCall } from "../../../api/ApiCall";
-import CippFormComponent from "../../CippComponents/CippFormComponent";
-import { CippGDAPTraceResults } from "./CippGDAPTraceResults";
+} from '@mui/material'
+import { useForm } from 'react-hook-form'
+import { ApiGetCall } from '../../../api/ApiCall'
+import CippFormComponent from '../../CippComponents/CippFormComponent'
+import { CippGDAPTraceResults } from './CippGDAPTraceResults'
 
-export const CippGDAPTraceDialog = ({ createDialog, row, title = "Trace GDAP Access", onClose }) => {
+export const CippGDAPTraceDialog = ({
+  createDialog,
+  row,
+  title = 'Trace GDAP Access',
+  onClose,
+}) => {
   const formHook = useForm({
     defaultValues: {
-      UPN: "",
+      UPN: '',
     },
-    mode: "onChange",
-  });
+    mode: 'onChange',
+  })
 
   const [apiRequest, setApiRequest] = useState({
-    url: "",
+    url: '',
     waiting: false,
     queryKey: null,
     data: {},
-  });
+  })
 
-  const tenantFilter = row?.customerId || row?.defaultDomainName || "";
+  const tenantFilter = row?.customerId || row?.defaultDomainName || ''
 
   const apiCall = ApiGetCall({
     url: apiRequest.url,
@@ -37,58 +42,66 @@ export const CippGDAPTraceDialog = ({ createDialog, row, title = "Trace GDAP Acc
     enabled: apiRequest.waiting && !!apiRequest.url,
     refetchOnMount: false,
     refetchOnReconnect: false,
-  });
+  })
 
   useEffect(() => {
     if (createDialog.open) {
-      formHook.reset({ UPN: "" });
+      formHook.reset({ UPN: '' })
       setApiRequest({
-        url: "",
+        url: '',
         waiting: false,
         queryKey: null,
         data: {},
-      });
+      })
     }
-  }, [createDialog.open]);
+  }, [createDialog.open])
 
   const onSubmit = (data) => {
-    const url = `/api/ExecGDAPTrace?TenantFilter=${encodeURIComponent(tenantFilter)}&UPN=${encodeURIComponent(data.UPN)}`;
+    const url = `/api/ExecGDAPTrace?TenantFilter=${encodeURIComponent(tenantFilter)}&UPN=${encodeURIComponent(data.UPN)}`
     setApiRequest({
       url: url,
       waiting: true,
       queryKey: Date.now(),
       data: data,
-    });
-  };
+    })
+  }
 
   const handleClose = () => {
-    createDialog.handleClose();
-    formHook.reset();
+    createDialog.handleClose()
+    formHook.reset()
     setApiRequest({
-      url: "",
+      url: '',
       waiting: false,
       queryKey: null,
       data: {},
-    });
+    })
     if (onClose) {
-      onClose();
+      onClose()
     }
-  };
+  }
 
-  const isLoading = apiCall.isFetching || apiCall.isPending;
-  const error = apiCall.isError ? apiCall.error?.response?.data?.Error || apiCall.error?.message : null;
-  const data = apiCall.isSuccess ? (apiCall.data?.data || apiCall.data) : null;
+  const isLoading = apiCall.isFetching || apiCall.isPending
+  const error = apiCall.isError
+    ? apiCall.error?.response?.data?.Error || apiCall.error?.message
+    : null
+  const data = apiCall.isSuccess ? apiCall.data?.data || apiCall.data : null
 
   return (
-    <Dialog fullWidth maxWidth="lg" onClose={handleClose} open={createDialog.open}>
+    <Dialog
+      fullWidth
+      maxWidth="lg"
+      onClose={handleClose}
+      open={createDialog.open}
+    >
       <form onSubmit={formHook.handleSubmit(onSubmit)}>
         <DialogTitle>{title}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Alert severity="warning" sx={{ mb: 1 }}>
-              <strong>Beta Feature:</strong> This GDAP access tracing feature is currently in beta and may not
-              account for all scenarios. Results should be used as a reference and verified through other
-              methods when making critical access decisions.
+              <strong>Beta Feature:</strong> This GDAP access tracing feature is
+              currently in beta and may not account for all scenarios. Results
+              should be used as a reference and verified through other methods
+              when making critical access decisions.
             </Alert>
             <Box>
               <CippFormComponent
@@ -102,7 +115,11 @@ export const CippGDAPTraceDialog = ({ createDialog, row, title = "Trace GDAP Acc
               />
             </Box>
             <Box sx={{ mt: 2 }}>
-              <CippGDAPTraceResults data={data} isLoading={isLoading} error={error} />
+              <CippGDAPTraceResults
+                data={data}
+                isLoading={isLoading}
+                error={error}
+              />
             </Box>
           </Stack>
         </DialogContent>
@@ -115,10 +132,10 @@ export const CippGDAPTraceDialog = ({ createDialog, row, title = "Trace GDAP Acc
             type="submit"
             disabled={!formHook.formState.isValid || isLoading}
           >
-            {isLoading ? "Tracing..." : "Trace"}
+            {isLoading ? 'Tracing...' : 'Trace'}
           </Button>
         </DialogActions>
       </form>
     </Dialog>
-  );
-};
+  )
+}

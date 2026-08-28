@@ -1,51 +1,58 @@
-import { Box } from "@mui/material";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useForm, useWatch } from "react-hook-form";
-import { useSettings } from "../../../../hooks/use-settings";
-import { useEffect } from "react";
+import { Box } from '@mui/material'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useForm, useWatch } from 'react-hook-form'
+import { useSettings } from '../../../../hooks/use-settings'
+import { useEffect } from 'react'
 
-import CippAddEditUser from "../../../../components/CippFormPages/CippAddEditUser";
+import CippAddEditUser from '../../../../components/CippFormPages/CippAddEditUser'
 const Page = () => {
-  const userSettingsDefaults = useSettings();
-  const tenantDomain = useSettings().currentTenant;
+  const userSettingsDefaults = useSettings()
+  const tenantDomain = useSettings().currentTenant
 
   const formControl = useForm({
-    mode: "onBlur",
+    mode: 'onBlur',
     defaultValues: {
       tenantFilter: userSettingsDefaults.currentTenant,
       usageLocation: userSettingsDefaults.usageLocation,
     },
-  });
+  })
 
-  const formValues = useWatch({ control: formControl.control, name: "userProperties" });
+  const formValues = useWatch({
+    control: formControl.control,
+    name: 'userProperties',
+  })
   useEffect(() => {
     if (formValues) {
-      const { userPrincipalName, usageLocation, ...restFields } = formValues.addedFields || {};
-      let newFields = { ...restFields };
+      const { userPrincipalName, usageLocation, ...restFields } =
+        formValues.addedFields || {}
+      let newFields = { ...restFields }
       if (userPrincipalName) {
-        const [mailNickname, domainNamePart] = userPrincipalName.split("@");
+        const [mailNickname, domainNamePart] = userPrincipalName.split('@')
         if (mailNickname) {
-          newFields.mailNickname = mailNickname;
+          newFields.mailNickname = mailNickname
         }
         if (domainNamePart) {
-          newFields.primDomain = { label: domainNamePart, value: domainNamePart };
+          newFields.primDomain = {
+            label: domainNamePart,
+            value: domainNamePart,
+          }
         }
       }
       if (usageLocation) {
-        newFields.usageLocation = { label: usageLocation, value: usageLocation };
+        newFields.usageLocation = { label: usageLocation, value: usageLocation }
       }
-      newFields.tenantFilter = userSettingsDefaults.currentTenant;
+      newFields.tenantFilter = userSettingsDefaults.currentTenant
 
       // Preserve the currently selected template when copying properties
-      const currentTemplate = formControl.getValues("userTemplate");
+      const currentTemplate = formControl.getValues('userTemplate')
       if (currentTemplate) {
-        newFields.userTemplate = currentTemplate;
+        newFields.userTemplate = currentTemplate
       }
 
-      formControl.reset(newFields);
+      formControl.reset(newFields)
     }
-  }, [formValues]);
+  }, [formValues])
   return (
     <>
       <CippFormPage
@@ -57,13 +64,16 @@ const Page = () => {
         relatedQueryKeys={`Users - ${tenantDomain}`}
       >
         <Box sx={{ my: 2 }}>
-          <CippAddEditUser formControl={formControl} userSettingsDefaults={userSettingsDefaults} />
+          <CippAddEditUser
+            formControl={formControl}
+            userSettingsDefaults={userSettingsDefaults}
+          />
         </Box>
       </CippFormPage>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

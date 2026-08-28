@@ -42,7 +42,8 @@ const RISK_COLOURS = {
   low: '#3B82F6',
   informational: '#10B981',
 }
-const riskColor = (risk) => RISK_COLOURS[String(risk).toLowerCase()] ?? '#A0AEC0'
+const riskColor = (risk) =>
+  RISK_COLOURS[String(risk).toLowerCase()] ?? '#A0AEC0'
 
 // Executive Shadow AI report. Written as a pages fragment with no theme, stylesheet or page
 // furniture of its own, which is what lets the executive report drop the same pages into its own
@@ -189,16 +190,18 @@ export const ShadowAIReportPages = ({
         >
           <Section>
             <Paragraph>
-              This report identifies the artificial intelligence tools discovered in the{' '}
-              <Bold>{tenantName || 'your organization'}</Bold> environment, combining software
-              inventory from managed devices (Intune) with cloud application consent data from Entra
-              ID. Each tool is matched against a curated catalog of known AI services and assigned a
-              risk level based on its data handling practices.
+              This report identifies the artificial intelligence tools
+              discovered in the <Bold>{tenantName || 'your organization'}</Bold>{' '}
+              environment, combining software inventory from managed devices
+              (Intune) with cloud application consent data from Entra ID. Each
+              tool is matched against a curated catalog of known AI services and
+              assigned a risk level based on its data handling practices.
             </Paragraph>
             <Paragraph>
-              Tools that have been explicitly approved are marked as company sanctioned and report
-              the Informational risk level. Everything else represents shadow AI: tools adopted by
-              employees without review or approval, whose handling of company data is unknown.
+              Tools that have been explicitly approved are marked as company
+              sanctioned and report the Informational risk level. Everything
+              else represents shadow AI: tools adopted by employees without
+              review or approval, whose handling of company data is unknown.
             </Paragraph>
           </Section>
 
@@ -206,7 +209,10 @@ export const ShadowAIReportPages = ({
             <StatRow
               stats={[
                 { value: summary.aiToolsDetected ?? 0, label: 'AI Tools' },
-                { value: summary.deviceInstalls ?? 0, label: 'Device Installs' },
+                {
+                  value: summary.deviceInstalls ?? 0,
+                  label: 'Device Installs',
+                },
                 { value: summary.consentedAiApps ?? 0, label: 'Entra AI Apps' },
                 {
                   value: summary.highRiskTools ?? 0,
@@ -272,17 +278,19 @@ export const ShadowAIReportPages = ({
         >
           <Section>
             <Paragraph>
-              Shadow AI is the use of artificial intelligence tools by employees without the
-              knowledge or approval of the organization - the AI-era equivalent of shadow IT.
-              Because most AI tools are free, browser-based and immediately useful, adoption happens
-              quietly and quickly: an employee pastes a customer email into a chatbot to draft a
-              reply, uploads a spreadsheet for analysis, or installs an AI notetaker that joins
-              every meeting.
+              Shadow AI is the use of artificial intelligence tools by employees
+              without the knowledge or approval of the organization - the AI-era
+              equivalent of shadow IT. Because most AI tools are free,
+              browser-based and immediately useful, adoption happens quietly and
+              quickly: an employee pastes a customer email into a chatbot to
+              draft a reply, uploads a spreadsheet for analysis, or installs an
+              AI notetaker that joins every meeting.
             </Paragraph>
             <Paragraph>
-              The goal of a shadow AI program is not zero AI usage, but zero unsanctioned usage.
-              Every tool in this report should end up either approved and managed, or replaced and
-              blocked. The four risk areas below explain why unmanaged usage deserves attention.
+              The goal of a shadow AI program is not zero AI usage, but zero
+              unsanctioned usage. Every tool in this report should end up either
+              approved and managed, or replaced and blocked. The four risk areas
+              below explain why unmanaged usage deserves attention.
             </Paragraph>
           </Section>
 
@@ -304,10 +312,12 @@ export const ShadowAIReportPages = ({
         >
           <Section>
             <Paragraph>
-              Detected tools are matched against a curated catalog of known AI services, each
-              carrying a risk classification based on its data handling practices, account model and
-              enterprise controls. Marking a tool as company sanctioned overrides its catalog risk
-              with the Informational level, so the figures below reflect only unapproved use.
+              Detected tools are matched against a curated catalog of known AI
+              services, each carrying a risk classification based on its data
+              handling practices, account model and enterprise controls. Marking
+              a tool as company sanctioned overrides its catalog risk with the
+              Informational level, so the figures below reflect only unapproved
+              use.
             </Paragraph>
           </Section>
 
@@ -348,17 +358,18 @@ export const ShadowAIReportPages = ({
         >
           <Section>
             <Paragraph>
-              The tools listed below are permitted in this environment. They are allowed either
-              because a business justification exists for their use, or because the system
-              administrator has explicitly approved these tools for deployment. Sanctioned tools
-              report the Informational risk level and are excluded from the shadow AI risk figures
-              in this report; they remain listed for visibility into where AI is used across the
-              organization.
+              The tools listed below are permitted in this environment. They are
+              allowed either because a business justification exists for their
+              use, or because the system administrator has explicitly approved
+              these tools for deployment. Sanctioned tools report the
+              Informational risk level and are excluded from the shadow AI risk
+              figures in this report; they remain listed for visibility into
+              where AI is used across the organization.
             </Paragraph>
             <Paragraph>
-              Approval is not permanent: sanctioned tools should be reviewed periodically to confirm
-              that the plan in use, the vendor's data handling terms and the business justification
-              still hold.
+              Approval is not permanent: sanctioned tools should be reviewed
+              periodically to confirm that the plan in use, the vendor's data
+              handling terms and the business justification still hold.
             </Paragraph>
           </Section>
 
@@ -386,13 +397,13 @@ export const ShadowAIReportPages = ({
         >
           <Section>
             <Paragraph>
-              The following AI applications were detected in the software inventory of managed
-              devices
+              The following AI applications were detected in the software
+              inventory of managed devices
               {detectedApps.length > detectedRows.length
                 ? `, showing the top ${detectedRows.length} of ${detectedApps.length} entries`
                 : ''}
-              . Device counts indicate how widely each application has spread through the
-              environment.
+              . Device counts indicate how widely each application has spread
+              through the environment.
             </Paragraph>
           </Section>
 
@@ -401,10 +412,20 @@ export const ShadowAIReportPages = ({
               limit={detectedRows.length}
               emptyText="No AI software was detected on managed devices during the last inventory sync."
               columns={[
-                { header: 'Application', key: 'application', width: 4, bold: true },
+                {
+                  header: 'Application',
+                  key: 'application',
+                  width: 4,
+                  bold: true,
+                },
                 { header: 'AI Tool', key: 'aiTool', width: 3 },
                 { header: 'Category', key: 'category', width: 3 },
-                { header: 'Risk', key: 'risk', width: 2, colour: (row) => riskColor(row.risk) },
+                {
+                  header: 'Risk',
+                  key: 'risk',
+                  width: 2,
+                  colour: (row) => riskColor(row.risk),
+                },
                 { header: 'Status', key: 'status', width: 2.5 },
                 { header: 'Devices', key: 'deviceCount', width: 1.5 },
               ]}
@@ -422,12 +443,13 @@ export const ShadowAIReportPages = ({
         >
           <Section>
             <Paragraph>
-              The following AI services are registered as applications in the tenant, including any
-              permissions users have consented to
+              The following AI services are registered as applications in the
+              tenant, including any permissions users have consented to
               {consentedApps.length > consentedRows.length
                 ? `, showing the top ${consentedRows.length} of ${consentedApps.length} entries`
                 : ''}
-              . The consent date shows when each service first gained a foothold in the environment.
+              . The consent date shows when each service first gained a foothold
+              in the environment.
             </Paragraph>
           </Section>
 
@@ -436,12 +458,26 @@ export const ShadowAIReportPages = ({
               limit={consentedRows.length}
               emptyText="No AI applications were found in Entra ID."
               columns={[
-                { header: 'Application', key: 'application', width: 4, bold: true },
+                {
+                  header: 'Application',
+                  key: 'application',
+                  width: 4,
+                  bold: true,
+                },
                 { header: 'AI Tool', key: 'aiTool', width: 3 },
-                { header: 'Risk', key: 'risk', width: 2, colour: (row) => riskColor(row.risk) },
+                {
+                  header: 'Risk',
+                  key: 'risk',
+                  width: 2,
+                  colour: (row) => riskColor(row.risk),
+                },
                 { header: 'Status', key: 'status', width: 2.5 },
                 { header: 'Users (7d)', key: 'activeUsersLast7Days', width: 2 },
-                { header: 'First Consented', key: 'firstConsented', width: 2.5 },
+                {
+                  header: 'First Consented',
+                  key: 'firstConsented',
+                  width: 2.5,
+                },
               ]}
               rows={consentedRows.map((app) => ({
                 ...app,
@@ -483,8 +519,9 @@ export const ShadowAIReportPages = ({
         >
           <Section>
             <Paragraph>
-              A structured response to shadow AI combines approval of useful tools with controls on
-              the rest. The following actions are recommended based on the findings in this report:
+              A structured response to shadow AI combines approval of useful
+              tools with controls on the rest. The following actions are
+              recommended based on the findings in this report:
             </Paragraph>
           </Section>
 
@@ -494,9 +531,10 @@ export const ShadowAIReportPages = ({
 
           <Section>
             <InfoBox title="Next Review">
-              The AI tool landscape changes quickly and new tools appear in tenants within days of
-              release. We recommend re-running this assessment monthly and reviewing newly detected
-              tools against your acceptable AI use policy.
+              The AI tool landscape changes quickly and new tools appear in
+              tenants within days of release. We recommend re-running this
+              assessment monthly and reviewing newly detected tools against your
+              acceptable AI use policy.
             </InfoBox>
           </Section>
         </ContentPage>
@@ -507,7 +545,12 @@ export const ShadowAIReportPages = ({
 
 // Exported so the branding preview can render this report against sample data, and so tests can
 // render it to a real PDF.
-export const ShadowAIReportDocument = ({ tenantName, brandingSettings, variables, ...props }) => (
+export const ShadowAIReportDocument = ({
+  tenantName,
+  brandingSettings,
+  variables,
+  ...props
+}) => (
   <ReportDocument
     brandingSettings={brandingSettings}
     tenantName={tenantName}
@@ -622,8 +665,8 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
         </Typography>
       )}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Configure which sections to include in your Shadow AI report. Changes are reflected in
-        real-time.
+        Configure which sections to include in your Shadow AI report. Changes
+        are reflected in real-time.
       </Typography>
 
       <Stack spacing={1.5}>
@@ -634,15 +677,21 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
             sx={{
               p: 1.5,
               border: '1px solid',
-              borderColor: sectionConfig[option.key] ? 'primary.main' : 'divider',
-              bgcolor: sectionConfig[option.key] ? 'primary.50' : 'background.paper',
+              borderColor: sectionConfig[option.key]
+                ? 'primary.main'
+                : 'divider',
+              bgcolor: sectionConfig[option.key]
+                ? 'primary.50'
+                : 'background.paper',
               cursor: 'pointer',
               transition: 'all 0.2s ease-in-out',
               display: 'flex',
               alignItems: 'center',
               '&:hover': {
                 borderColor: 'primary.main',
-                bgcolor: sectionConfig[option.key] ? 'primary.100' : 'primary.25',
+                bgcolor: sectionConfig[option.key]
+                  ? 'primary.100'
+                  : 'primary.25',
               },
             }}
           >
@@ -661,10 +710,18 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
               }
             />
             <Box sx={{ ml: 1, flexGrow: 1, minWidth: 0 }}>
-              <Typography variant="subtitle2" fontWeight="bold" sx={{ fontSize: '0.875rem' }}>
+              <Typography
+                variant="subtitle2"
+                fontWeight="bold"
+                sx={{ fontSize: '0.875rem' }}
+              >
                 {option.label}
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: '0.75rem' }}
+              >
                 {option.description}
               </Typography>
             </Box>
@@ -686,7 +743,14 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
       />
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewOpen, tenantName, data, brandingSettings, variables, JSON.stringify(sectionConfig)])
+  }, [
+    previewOpen,
+    tenantName,
+    data,
+    brandingSettings,
+    variables,
+    JSON.stringify(sectionConfig),
+  ])
 
   return (
     <>
@@ -801,7 +865,8 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
         >
           <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="caption" color="text.secondary">
-              Sections enabled: {Object.values(sectionConfig).filter(Boolean).length} of{' '}
+              Sections enabled:{' '}
+              {Object.values(sectionConfig).filter(Boolean).length} of{' '}
               {sectionOptions.length}
             </Typography>
           </Box>

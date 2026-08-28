@@ -29,9 +29,13 @@ export const CippTenantAllowBlockListTemplateDrawer = ({
 }) => {
   const [internalDrawerVisible, internalSetDrawerVisible] = useState(false)
   const drawerVisible =
-    controlledDrawerVisible !== undefined ? controlledDrawerVisible : internalDrawerVisible
+    controlledDrawerVisible !== undefined
+      ? controlledDrawerVisible
+      : internalDrawerVisible
   const setDrawerVisible =
-    controlledSetDrawerVisible !== undefined ? controlledSetDrawerVisible : internalSetDrawerVisible
+    controlledSetDrawerVisible !== undefined
+      ? controlledSetDrawerVisible
+      : internalSetDrawerVisible
 
   const isEditMode = !!editData
 
@@ -48,7 +52,9 @@ export const CippTenantAllowBlockListTemplateDrawer = ({
           ? editData.entries.join(', ')
           : editData.entries || '',
         notes: editData.notes || '',
-        listType: editData.listType ? { label: editData.listType, value: editData.listType } : null,
+        listType: editData.listType
+          ? { label: editData.listType, value: editData.listType }
+          : null,
         listMethod: editData.listMethod
           ? { label: editData.listMethod, value: editData.listMethod }
           : null,
@@ -60,16 +66,28 @@ export const CippTenantAllowBlockListTemplateDrawer = ({
 
   const { isValid } = useFormState({ control: formControl.control })
 
-  const noExpiration = useWatch({ control: formControl.control, name: 'NoExpiration' })
-  const removeAfter = useWatch({ control: formControl.control, name: 'RemoveAfter' })
-  const listMethod = useWatch({ control: formControl.control, name: 'listMethod' })
+  const noExpiration = useWatch({
+    control: formControl.control,
+    name: 'NoExpiration',
+  })
+  const removeAfter = useWatch({
+    control: formControl.control,
+    name: 'RemoveAfter',
+  })
+  const listMethod = useWatch({
+    control: formControl.control,
+    name: 'listMethod',
+  })
   const listType = useWatch({ control: formControl.control, name: 'listType' })
 
   const isListMethodBlock = listMethod?.value === 'Block'
   const isListTypeFileHash = listType?.value === 'FileHash'
-  const isListTypeSenderUrlOrFileHash = ['Sender', 'Url', 'FileHash'].includes(listType?.value)
+  const isListTypeSenderUrlOrFileHash = ['Sender', 'Url', 'FileHash'].includes(
+    listType?.value
+  )
   const isNoExpirationCompatible =
-    isListMethodBlock || (listMethod?.value === 'Allow' && ['Url', 'IP'].includes(listType?.value))
+    isListMethodBlock ||
+    (listMethod?.value === 'Allow' && ['Url', 'IP'].includes(listType?.value))
 
   const saveTemplate = ApiPostCall({
     relatedQueryKeys: ['ListTenantAllowBlockListTemplates'],
@@ -88,7 +106,11 @@ export const CippTenantAllowBlockListTemplateDrawer = ({
       formControl.setValue('RemoveAfter', false, { shouldValidate: true })
     }
 
-    if (listType && !isListTypeSenderUrlOrFileHash && formControl.getValues('RemoveAfter')) {
+    if (
+      listType &&
+      !isListTypeSenderUrlOrFileHash &&
+      formControl.getValues('RemoveAfter')
+    ) {
       formControl.setValue('RemoveAfter', false, { shouldValidate: true })
     }
 
@@ -126,7 +148,8 @@ export const CippTenantAllowBlockListTemplateDrawer = ({
 
     if (currentListType === 'FileHash') {
       for (const entry of entries) {
-        if (entry.length !== 64) return 'File hash entries must be exactly 64 characters'
+        if (entry.length !== 64)
+          return 'File hash entries must be exactly 64 characters'
 
         const hashResult = getCippValidator(entry, 'sha256')
         if (hashResult !== true) return hashResult
@@ -266,7 +289,13 @@ export const CippTenantAllowBlockListTemplateDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -390,7 +419,8 @@ export const CippTenantAllowBlockListTemplateDrawer = ({
                 removeAfter ||
                 !(
                   isListMethodBlock ||
-                  (listMethod?.value === 'Allow' && ['Url', 'IP'].includes(listType?.value))
+                  (listMethod?.value === 'Allow' &&
+                    ['Url', 'IP'].includes(listType?.value))
                 )
               }
             />

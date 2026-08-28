@@ -1,5 +1,8 @@
 import { useRouter } from 'next/router'
-import { useTabNavigation, useTitleClaimedByTabPicker } from '../../layouts/tab-navigation-context'
+import {
+  useTabNavigation,
+  useTitleClaimedByTabPicker,
+} from '../../layouts/tab-navigation-context'
 import {
   Box,
   Container,
@@ -68,7 +71,8 @@ const CippFormPage = (props) => {
 
   useEffect(() => {
     if (router.query) {
-      const { tenantFilter: _tenantFilter, ...queryWithoutTenant } = router.query
+      const { tenantFilter: _tenantFilter, ...queryWithoutTenant } =
+        router.query
       const resetValues = {
         ...formControl.getValues(),
         ...queryWithoutTenant,
@@ -102,11 +106,15 @@ const CippFormPage = (props) => {
     //when preserveNullValues is set, explicit nulls are kept so the API can
     //distinguish "clear this field" from "field omitted"
     const isEmptyValue = (value) =>
-      value === '' || value === undefined || (!preserveNullValues && value === null)
+      value === '' ||
+      value === undefined ||
+      (!preserveNullValues && value === null)
     const removeEmpty = (obj) => {
       if (Array.isArray(obj)) {
         return obj
-          .map((item) => (item && typeof item === 'object' ? removeEmpty(item) : item))
+          .map((item) =>
+            item && typeof item === 'object' ? removeEmpty(item) : item
+          )
           .filter((item) => !isEmptyValue(item))
       }
       Object.keys(obj).forEach((key) => {
@@ -185,12 +193,18 @@ const CippFormPage = (props) => {
                     direction={{ xs: 'column-reverse', sm: 'row' }}
                     sx={{
                       width: { xs: '100%', sm: 'auto' },
-                      '& .MuiButton-root': { minHeight: { xs: 44, sm: 'auto' } },
+                      '& .MuiButton-root': {
+                        minHeight: { xs: 44, sm: 'auto' },
+                      },
                     }}
                   >
                     {addedButtons && addedButtons}
                     <Button
-                      disabled={postCall.isPending || !isValid || (!allowResubmit && !isDirty)}
+                      disabled={
+                        postCall.isPending ||
+                        !isValid ||
+                        (!allowResubmit && !isDirty)
+                      }
                       onClick={formControl.handleSubmit(handleSubmit)}
                       type="submit"
                       variant="contained"

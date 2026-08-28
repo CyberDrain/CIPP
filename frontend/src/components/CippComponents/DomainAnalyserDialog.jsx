@@ -1,54 +1,65 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogTitle, Button, DialogActions } from "@mui/material";
-import { Refresh } from "@mui/icons-material";
-import { useForm, FormProvider } from "react-hook-form";
-import { CippFormTenantSelector } from "./CippFormTenantSelector";
-import { ApiPostCall } from "../../api/ApiCall";
-import { CippApiResults } from "./CippApiResults";
+import { useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Button,
+  DialogActions,
+} from '@mui/material'
+import { Refresh } from '@mui/icons-material'
+import { useForm, FormProvider } from 'react-hook-form'
+import { CippFormTenantSelector } from './CippFormTenantSelector'
+import { ApiPostCall } from '../../api/ApiCall'
+import { CippApiResults } from './CippApiResults'
 
 export const DomainAnalyserDialog = ({ createDialog }) => {
   const methods = useForm({
     defaultValues: {
       tenantFilter: {
-        value: "AllTenants",
-        label: "*All Tenants",
+        value: 'AllTenants',
+        label: '*All Tenants',
       },
     },
-  });
+  })
 
   // Use methods for form handling and control
-  const { handleSubmit, control } = methods;
+  const { handleSubmit, control } = methods
 
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useState(false)
   const domainAnalyserResults = ApiPostCall({
     urlFromData: true,
-  });
+  })
 
   const handleForm = (values) => {
-    setIsRunning(true);
+    setIsRunning(true)
     domainAnalyserResults.mutate({
-      url: "/api/ExecDomainAnalyser",
+      url: '/api/ExecDomainAnalyser',
       queryKey: `domain-analyser-${values.tenantFilter}`,
       data: values.tenantFilter ? { TenantFilter: values.tenantFilter } : {},
-    });
-  };
+    })
+  }
 
   // Reset running state when dialog is closed
   const handleClose = () => {
-    setIsRunning(false);
-    createDialog.handleClose();
-  };
+    setIsRunning(false)
+    createDialog.handleClose()
+  }
 
   return (
-    <Dialog open={createDialog.open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={createDialog.open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+    >
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleForm)}>
           <DialogTitle>Run Domain Analysis</DialogTitle>
           <DialogContent>
             <div className="mb-3">
               <p>
-                This will run a Domain Analysis to check for DNS configuration issues. Select a
-                tenant (or all tenants) below.
+                This will run a Domain Analysis to check for DNS configuration
+                issues. Select a tenant (or all tenants) below.
               </p>
               <CippFormTenantSelector
                 formControl={control}
@@ -59,7 +70,10 @@ export const DomainAnalyserDialog = ({ createDialog }) => {
                 type="single"
               />
             </div>
-            <CippApiResults apiObject={domainAnalyserResults} alertSx={{ mt: 2 }} />
+            <CippApiResults
+              apiObject={domainAnalyserResults}
+              alertSx={{ mt: 2 }}
+            />
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Cancel</Button>
@@ -75,5 +89,5 @@ export const DomainAnalyserDialog = ({ createDialog }) => {
         </form>
       </FormProvider>
     </Dialog>
-  );
-};
+  )
+}

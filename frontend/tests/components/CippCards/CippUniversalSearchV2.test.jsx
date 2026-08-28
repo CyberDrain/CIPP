@@ -13,7 +13,10 @@ vi.mock('../../../src/hooks/use-breakpoint', async (importOriginal) => ({
 
 const bookmarkState = vi.hoisted(() => ({ bookmarks: [] }))
 vi.mock('../../../src/hooks/use-user-bookmarks', () => ({
-  useUserBookmarks: () => ({ bookmarks: bookmarkState.bookmarks, setBookmarks: () => {} }),
+  useUserBookmarks: () => ({
+    bookmarks: bookmarkState.bookmarks,
+    setBookmarks: () => {},
+  }),
 }))
 
 const idle = vi.hoisted(() => ({
@@ -44,7 +47,10 @@ vi.mock('next/router', () => ({
 vi.mock('../../../src/hooks/use-permissions', () => ({
   // the page index filters by permission; 'Identity.User.Read' satisfies the config's
   // 'Identity.User.*' requirement so the Users pages exist to be found
-  usePermissions: () => ({ userPermissions: ['Identity.User.Read'], userRoles: ['superadmin'] }),
+  usePermissions: () => ({
+    userPermissions: ['Identity.User.Read'],
+    userRoles: ['superadmin'],
+  }),
 }))
 
 import { CippUniversalSearchV2 } from '../../../src/components/CippCards/CippUniversalSearchV2'
@@ -59,7 +65,9 @@ describe('CippUniversalSearchV2 mobile layout', () => {
   it('keeps the scope dropdown on desktop, no chips', () => {
     renderWithProviders(<CippUniversalSearchV2 defaultSearchType="Pages" />)
     expect(screen.getByRole('button', { name: /pages/i })).toBeInTheDocument()
-    expect(screen.queryByText('Users', { selector: '.MuiChip-label' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Users', { selector: '.MuiChip-label' })
+    ).not.toBeInTheDocument()
   })
 
   // The desktop scope dropdown cost two taps, and entity search had no direct mobile entry
@@ -69,31 +77,54 @@ describe('CippUniversalSearchV2 mobile layout', () => {
     const user = userEvent.setup()
     renderWithProviders(<CippUniversalSearchV2 defaultSearchType="Pages" />)
 
-    for (const label of ['Users', 'Groups', 'Applications', 'Licenses', 'BitLocker', 'Pages']) {
-      expect(screen.getByText(label, { selector: '.MuiChip-label' })).toBeInTheDocument()
+    for (const label of [
+      'Users',
+      'Groups',
+      'Applications',
+      'Licenses',
+      'BitLocker',
+      'Pages',
+    ]) {
+      expect(
+        screen.getByText(label, { selector: '.MuiChip-label' })
+      ).toBeInTheDocument()
     }
 
     await user.click(screen.getByText('Users', { selector: '.MuiChip-label' }))
     expect(screen.getByPlaceholderText(/search users/i)).toBeInTheDocument()
 
     // BitLocker reveals its lookup sub-choice as a second chip row
-    await user.click(screen.getByText('BitLocker', { selector: '.MuiChip-label' }))
-    expect(screen.getByText('Key ID', { selector: '.MuiChip-label' })).toBeInTheDocument()
-    expect(screen.getByText('Device ID', { selector: '.MuiChip-label' })).toBeInTheDocument()
+    await user.click(
+      screen.getByText('BitLocker', { selector: '.MuiChip-label' })
+    )
+    expect(
+      screen.getByText('Key ID', { selector: '.MuiChip-label' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Device ID', { selector: '.MuiChip-label' })
+    ).toBeInTheDocument()
   })
 
   it('fills the empty state with bookmarks that navigate and close', async () => {
     layoutState.isMobile = true
     bookmarkState.bookmarks = [
-      { label: 'GDAP Relationships', path: '/tenant/gdap-management/relationships', category: 'Tenant' },
+      {
+        label: 'GDAP Relationships',
+        path: '/tenant/gdap-management/relationships',
+        category: 'Tenant',
+      },
     ]
     const onConfirm = vi.fn()
     const user = userEvent.setup()
-    renderWithProviders(<CippUniversalSearchV2 defaultSearchType="Pages" onConfirm={onConfirm} />)
+    renderWithProviders(
+      <CippUniversalSearchV2 defaultSearchType="Pages" onConfirm={onConfirm} />
+    )
 
     expect(screen.getByText('Bookmarks')).toBeInTheDocument()
     await user.click(screen.getByText('GDAP Relationships'))
-    expect(routerState.push).toHaveBeenCalledWith('/tenant/gdap-management/relationships')
+    expect(routerState.push).toHaveBeenCalledWith(
+      '/tenant/gdap-management/relationships'
+    )
     expect(onConfirm).toHaveBeenCalled()
   })
 
@@ -103,7 +134,9 @@ describe('CippUniversalSearchV2 mobile layout', () => {
     layoutState.isMobile = true
     const onConfirm = vi.fn()
     const user = userEvent.setup()
-    renderWithProviders(<CippUniversalSearchV2 defaultSearchType="Pages" onConfirm={onConfirm} />)
+    renderWithProviders(
+      <CippUniversalSearchV2 defaultSearchType="Pages" onConfirm={onConfirm} />
+    )
 
     await user.type(screen.getByPlaceholderText(/search pages/i), 'users')
     const result = await screen.findAllByRole('menuitem')

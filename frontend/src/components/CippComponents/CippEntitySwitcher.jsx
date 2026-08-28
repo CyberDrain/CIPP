@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { useRouter } from "next/router";
+import { useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/router'
 import {
   Box,
   ButtonBase,
@@ -11,12 +11,12 @@ import {
   Skeleton,
   TextField,
   Typography,
-} from "@mui/material";
-import { visuallyHidden } from "@mui/utils";
-import { Check, KeyboardArrowDown, Search } from "@mui/icons-material";
-import { ApiGetCall } from "../../api/ApiCall";
-import { CippBottomSheet } from "./CippBottomSheet";
-import { useIsMobileLayout } from "../../hooks/use-breakpoint";
+} from '@mui/material'
+import { visuallyHidden } from '@mui/utils'
+import { Check, KeyboardArrowDown, Search } from '@mui/icons-material'
+import { ApiGetCall } from '../../api/ApiCall'
+import { CippBottomSheet } from './CippBottomSheet'
+import { useIsMobileLayout } from '../../hooks/use-breakpoint'
 
 /**
  * A detail page's title as a switcher: the entity's name in heading clothes with a chevron,
@@ -44,50 +44,67 @@ export const CippEntitySwitcher = ({
   sortByPrimary = false,
   eager = false,
 }) => {
-  const router = useRouter();
-  const isMobile = useIsMobileLayout();
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const anchorRef = useRef(null);
+  const router = useRouter()
+  const isMobile = useIsMobileLayout()
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const anchorRef = useRef(null)
 
   const listRequest = ApiGetCall({
     ...api,
     waiting: open || eager,
-  });
+  })
 
   const filtered = useMemo(() => {
-    let rows = getOptions(listRequest.data) ?? [];
+    let rows = getOptions(listRequest.data) ?? []
     if (sortByPrimary) {
       rows = [...rows].sort((a, b) =>
-        String(getPrimary(a) ?? "").localeCompare(String(getPrimary(b) ?? ""), undefined, {
-          sensitivity: "base",
-        })
-      );
+        String(getPrimary(a) ?? '').localeCompare(
+          String(getPrimary(b) ?? ''),
+          undefined,
+          {
+            sensitivity: 'base',
+          }
+        )
+      )
     }
-    const needle = search.trim().toLowerCase();
-    if (!needle) return rows;
+    const needle = search.trim().toLowerCase()
+    if (!needle) return rows
     return rows.filter(
       (row) =>
-        String(getPrimary(row) ?? "").toLowerCase().includes(needle) ||
-        String(getSecondary?.(row) ?? "").toLowerCase().includes(needle)
-    );
-  }, [listRequest.data, search, sortByPrimary, getOptions, getId, getPrimary, getSecondary]);
+        String(getPrimary(row) ?? '')
+          .toLowerCase()
+          .includes(needle) ||
+        String(getSecondary?.(row) ?? '')
+          .toLowerCase()
+          .includes(needle)
+    )
+  }, [
+    listRequest.data,
+    search,
+    sortByPrimary,
+    getOptions,
+    getId,
+    getPrimary,
+    getSecondary,
+  ])
 
   const handleClose = () => {
-    setOpen(false);
-    setSearch("");
-  };
+    setOpen(false)
+    setSearch('')
+  }
 
   const handleSelect = (row) => {
-    handleClose();
-    if (getId(row) === currentId) return;
+    handleClose()
+    if (getId(row) === currentId) return
     router.push({
       pathname: router.pathname,
       query: { ...router.query, [queryParamKey]: getId(row) },
-    });
-  };
+    })
+  }
 
-  const sheetTitle = entityNamePlural.charAt(0).toUpperCase() + entityNamePlural.slice(1);
+  const sheetTitle =
+    entityNamePlural.charAt(0).toUpperCase() + entityNamePlural.slice(1)
 
   const listBody = (
     <>
@@ -113,7 +130,11 @@ export const CippEntitySwitcher = ({
       </Box>
       {/* Dense two-line rows in the tenant selector's clothes — the first cut used the
           default List metrics and read as a page of loosely scattered names. */}
-      <List dense disablePadding sx={{ overflowY: "auto", maxHeight: isMobile ? "55vh" : 340, pb: 1 }}>
+      <List
+        dense
+        disablePadding
+        sx={{ overflowY: 'auto', maxHeight: isMobile ? '55vh' : 340, pb: 1 }}
+      >
         {listRequest.isFetching &&
           [...Array(6)].map((_, index) => (
             <Box key={index} sx={{ px: 2, py: 0.75 }}>
@@ -122,7 +143,11 @@ export const CippEntitySwitcher = ({
             </Box>
           ))}
         {!listRequest.isFetching && filtered.length === 0 && (
-          <Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ px: 2, py: 2 }}
+          >
             No {entityNamePlural} match.
           </Typography>
         )}
@@ -137,18 +162,26 @@ export const CippEntitySwitcher = ({
               <ListItemText
                 primary={getPrimary(row)}
                 secondary={getSecondary?.(row)}
-                primaryTypographyProps={{ noWrap: true, variant: "body2", fontWeight: 500 }}
-                secondaryTypographyProps={{ noWrap: true, variant: "caption" }}
+                primaryTypographyProps={{
+                  noWrap: true,
+                  variant: 'body2',
+                  fontWeight: 500,
+                }}
+                secondaryTypographyProps={{ noWrap: true, variant: 'caption' }}
                 sx={{ my: 0, minWidth: 0 }}
               />
               {getId(row) === currentId && (
-                <Check fontSize="small" color="primary" sx={{ flexShrink: 0 }} />
+                <Check
+                  fontSize="small"
+                  color="primary"
+                  sx={{ flexShrink: 0 }}
+                />
               )}
             </ListItemButton>
           ))}
       </List>
     </>
-  );
+  )
 
   return (
     <>
@@ -158,13 +191,13 @@ export const CippEntitySwitcher = ({
         aria-haspopup="dialog"
         sx={{
           minWidth: 0,
-          maxWidth: "100%",
-          display: "flex",
-          alignItems: "center",
+          maxWidth: '100%',
+          display: 'flex',
+          alignItems: 'center',
           gap: 0.75,
           borderRadius: 1,
-          textAlign: "left",
-          justifyContent: "flex-start",
+          textAlign: 'left',
+          justifyContent: 'flex-start',
         }}
       >
         {/* Same wrap rule as the layout's plain title: truncate on mobile, wrap on desktop.
@@ -181,14 +214,21 @@ export const CippEntitySwitcher = ({
             <Box component="span" sx={visuallyHidden}>
               switch {entityName}
             </Box>
-            <KeyboardArrowDown sx={{ flexShrink: 0, opacity: 0.7, fontSize: 20 }} />
+            <KeyboardArrowDown
+              sx={{ flexShrink: 0, opacity: 0.7, fontSize: 20 }}
+            />
           </>
         ) : (
           <>
             <Typography variant="h4" sx={{ minWidth: 0 }}>
               {title}
               <KeyboardArrowDown
-                sx={{ opacity: 0.7, fontSize: 24, verticalAlign: "middle", ml: 0.75 }}
+                sx={{
+                  opacity: 0.7,
+                  fontSize: 24,
+                  verticalAlign: 'middle',
+                  ml: 0.75,
+                }}
               />
             </Typography>
             {/* Sibling of the heading, not inside it: inline nodes concatenate without a
@@ -208,14 +248,21 @@ export const CippEntitySwitcher = ({
           open={open}
           onClose={handleClose}
           anchorEl={anchorRef.current}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
           slotProps={{
-            paper: { sx: { width: 320, maxWidth: "calc(100vw - 32px)", borderRadius: 1.5, mt: 0.5 } },
+            paper: {
+              sx: {
+                width: 320,
+                maxWidth: 'calc(100vw - 32px)',
+                borderRadius: 1.5,
+                mt: 0.5,
+              },
+            },
           }}
         >
           {listBody}
         </Popover>
       )}
     </>
-  );
-};
+  )
+}

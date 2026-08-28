@@ -17,9 +17,16 @@ vi.mock('../../../src/hooks/use-breakpoint', async (importOriginal) => ({
 }))
 
 vi.mock('../../../src/api/ApiCall', () => ({
-  ApiGetCall: vi.fn(() => ({ data: undefined, isFetching: false, isSuccess: false })),
+  ApiGetCall: vi.fn(() => ({
+    data: undefined,
+    isFetching: false,
+    isSuccess: false,
+  })),
   ApiPostCall: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
-  ApiGetCallWithPagination: vi.fn(() => ({ data: undefined, isFetching: false })),
+  ApiGetCallWithPagination: vi.fn(() => ({
+    data: undefined,
+    isFetching: false,
+  })),
 }))
 
 // The six the real autopilot wizard passes — the count is the point.
@@ -33,7 +40,10 @@ const fields = [
 ]
 
 const Harness = () => {
-  const formControl = useForm({ mode: 'onChange', defaultValues: { autopilotData: [] } })
+  const formControl = useForm({
+    mode: 'onChange',
+    defaultValues: { autopilotData: [] },
+  })
   return (
     <CippWizardAutopilotImport
       formControl={formControl}
@@ -50,7 +60,9 @@ const Harness = () => {
 const openManualImport = async () => {
   const user = userEvent.setup()
   renderWithProviders(<Harness />)
-  await user.click(await screen.findByRole('button', { name: /manual import/i }))
+  await user.click(
+    await screen.findByRole('button', { name: /manual import/i })
+  )
   return within(await screen.findByRole('dialog'))
 }
 
@@ -66,7 +78,9 @@ describe('CippWizardAutopilotImport manual entry', () => {
     const dialog = await openManualImport()
 
     expect(dialog.getByText('Device 1')).toBeInTheDocument()
-    expect(dialog.getByRole('button', { name: 'Remove device 1' })).toBeInTheDocument()
+    expect(
+      dialog.getByRole('button', { name: 'Remove device 1' })
+    ).toBeInTheDocument()
     // every field still there, just stacked
     fields.forEach((field) => {
       expect(dialog.getByLabelText(field.friendlyName)).toBeInTheDocument()
@@ -77,7 +91,9 @@ describe('CippWizardAutopilotImport manual entry', () => {
     const dialog = await openManualImport()
 
     expect(dialog.queryByText('Device 1')).not.toBeInTheDocument()
-    expect(dialog.queryByRole('button', { name: 'Remove device 1' })).not.toBeInTheDocument()
+    expect(
+      dialog.queryByRole('button', { name: 'Remove device 1' })
+    ).not.toBeInTheDocument()
     fields.forEach((field) => {
       expect(dialog.getByLabelText(field.friendlyName)).toBeInTheDocument()
     })

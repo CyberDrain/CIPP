@@ -1,6 +1,13 @@
 import { Layout as DashboardLayout } from '../../../layouts/index.js'
 import { CippTablePage } from '../../../components/CippComponents/CippTablePage.jsx'
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from '@mui/material'
 import {
   Add,
   AddToPhotos,
@@ -97,7 +104,10 @@ const VersionCleanupStatusBody = ({ statusApi }) => {
       propertyItems={
         propertyItems.length
           ? propertyItems
-          : VERSION_CLEANUP_FIELDS.map((key) => ({ label: VERSION_CLEANUP_LABELS[key], value: '' }))
+          : VERSION_CLEANUP_FIELDS.map((key) => ({
+              label: VERSION_CLEANUP_LABELS[key],
+              value: '',
+            }))
       }
     />
   )
@@ -105,7 +115,12 @@ const VersionCleanupStatusBody = ({ statusApi }) => {
 
 // Custom-component action modal: opens directly (no confirmation step) and fetches the trim
 // job status for the selected site, rendering it as a property list.
-const VersionCleanupStatusModal = ({ row, tenantFilter, drawerVisible, setDrawerVisible }) => {
+const VersionCleanupStatusModal = ({
+  row,
+  tenantFilter,
+  drawerVisible,
+  setDrawerVisible,
+}) => {
   const siteRow = Array.isArray(row) ? row[0] : row
   const siteUrl = siteRow?.webUrl
   const statusApi = ApiGetCall({
@@ -119,9 +134,15 @@ const VersionCleanupStatusModal = ({ row, tenantFilter, drawerVisible, setDrawer
   })
 
   return (
-    <Dialog fullWidth maxWidth="sm" open={!!drawerVisible} onClose={() => setDrawerVisible(false)}>
+    <Dialog
+      fullWidth
+      maxWidth="sm"
+      open={!!drawerVisible}
+      onClose={() => setDrawerVisible(false)}
+    >
       <DialogTitle>
-        Cleanup Job Status{siteRow?.displayName ? ` — ${siteRow.displayName}` : ''}
+        Cleanup Job Status
+        {siteRow?.displayName ? ` — ${siteRow.displayName}` : ''}
       </DialogTitle>
       <DialogContent dividers>
         <VersionCleanupStatusBody statusApi={statusApi} />
@@ -140,7 +161,10 @@ const Page = () => {
   const tenantFilter = useSettings().currentTenant
   const { checkPermissions } = usePermissions()
   const canWriteSite = checkPermissions(['Sharepoint.Site.ReadWrite'])
-  const canReadSite = checkPermissions(['Sharepoint.Site.Read', 'Sharepoint.Site.ReadWrite'])
+  const canReadSite = checkPermissions([
+    'Sharepoint.Site.Read',
+    'Sharepoint.Site.ReadWrite',
+  ])
   const canReadRecycleBin = checkPermissions([
     'Sharepoint.SiteRecycleBin.Read',
     'Sharepoint.SiteRecycleBin.ReadWrite',
@@ -166,7 +190,8 @@ const Page = () => {
     url: reportDB.resolvedApiUrl,
     data: reportDB.resolvedApiData,
     queryKey: reportDB.resolvedQueryKey,
-    check: (rows) => isReportAnonymized(rows, ['ownerPrincipalName', 'ownerDisplayName']),
+    check: (rows) =>
+      isReportAnonymized(rows, ['ownerPrincipalName', 'ownerDisplayName']),
   })
 
   // Empty usage report: getSharePointSiteUsageDetail returns no rows at all for tenants
@@ -211,7 +236,8 @@ const Page = () => {
             },
             queryKey: 'ListUsersAutoComplete',
             dataKey: 'Results',
-            labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+            labelField: (user) =>
+              `${user.displayName} (${user.userPrincipalName})`,
             valueField: 'userPrincipalName',
             addedField: {
               id: 'id',
@@ -280,7 +306,9 @@ const Page = () => {
                 options.filter(
                   (option, index, all) =>
                     option.value &&
-                    ['Owners', 'Members', 'Visitors'].includes(option.addedFields?.Group) &&
+                    ['Owners', 'Members', 'Visitors'].includes(
+                      option.addedFields?.Group
+                    ) &&
                     all.findIndex(
                       (o) =>
                         o.value === option.value &&
@@ -364,7 +392,10 @@ const Page = () => {
           name: 'Scope',
           label: 'Which links to revoke',
           options: [
-            { label: 'Anonymous links only (anyone with the link)', value: 'Anonymous' },
+            {
+              label: 'Anonymous links only (anyone with the link)',
+              value: 'Anonymous',
+            },
             { label: 'Anonymous + external user shares', value: 'External' },
             { label: 'All sharing links, including internal', value: 'All' },
           ],
@@ -384,10 +415,15 @@ const Page = () => {
         'Edit site properties for [displayName]. Fields are prefilled with the current values.',
       condition: () => canWriteSite,
       children: ({ formHook, row }) => (
-        <CippEditSitePropertiesForm formHook={formHook} row={row} tenantFilter={tenantFilter} />
+        <CippEditSitePropertiesForm
+          formHook={formHook}
+          row={row}
+          tenantFilter={tenantFilter}
+        />
       ),
       customDataformatter: (row, action, formData) => {
-        const v = (x) => (x && typeof x === 'object' && 'value' in x ? x.value : x)
+        const v = (x) =>
+          x && typeof x === 'object' && 'value' in x ? x.value : x
         // isGroupSite is evaluated per site: a selection can mix group-backed and classic
         // sites, and the group-backed ones reject the properties guarded below.
         const formatRow = (siteRow) => {
@@ -402,18 +438,30 @@ const Page = () => {
           }
           if (!isGroupSite) {
             payload.Title = formData.Title
-            payload.SharingDomainRestrictionMode = v(formData.SharingDomainRestrictionMode)
+            payload.SharingDomainRestrictionMode = v(
+              formData.SharingDomainRestrictionMode
+            )
             payload.OverrideTenantAnonymousLinkExpirationPolicy =
               !!formData.OverrideTenantAnonymousLinkExpirationPolicy
-            payload.InheritVersionPolicyFromTenant = !!formData.InheritVersionPolicyFromTenant
+            payload.InheritVersionPolicyFromTenant =
+              !!formData.InheritVersionPolicyFromTenant
           }
-          if (!isGroupSite && v(formData.SharingDomainRestrictionMode) === 'AllowList') {
+          if (
+            !isGroupSite &&
+            v(formData.SharingDomainRestrictionMode) === 'AllowList'
+          ) {
             payload.SharingAllowedDomainList = formData.SharingAllowedDomainList
           }
-          if (!isGroupSite && v(formData.SharingDomainRestrictionMode) === 'BlockList') {
+          if (
+            !isGroupSite &&
+            v(formData.SharingDomainRestrictionMode) === 'BlockList'
+          ) {
             payload.SharingBlockedDomainList = formData.SharingBlockedDomainList
           }
-          if (!isGroupSite && formData.OverrideTenantAnonymousLinkExpirationPolicy) {
+          if (
+            !isGroupSite &&
+            formData.OverrideTenantAnonymousLinkExpirationPolicy
+          ) {
             payload.AnonymousLinkExpirationInDays = parseInt(
               formData.AnonymousLinkExpirationInDays ?? 0,
               10
@@ -421,13 +469,22 @@ const Page = () => {
           }
           const storageMax = parseInt(formData.StorageMaximumLevel, 10)
           const storageWarn = parseInt(formData.StorageWarningLevel, 10)
-          if (!isNaN(storageMax) && storageMax > 0) payload.StorageMaximumLevel = storageMax
-          if (!isNaN(storageWarn) && storageWarn > 0) payload.StorageWarningLevel = storageWarn
+          if (!isNaN(storageMax) && storageMax > 0)
+            payload.StorageMaximumLevel = storageMax
+          if (!isNaN(storageWarn) && storageWarn > 0)
+            payload.StorageWarningLevel = storageWarn
           if (!isGroupSite && !formData.InheritVersionPolicyFromTenant) {
-            payload.EnableAutoExpirationVersionTrim = !!formData.EnableAutoExpirationVersionTrim
+            payload.EnableAutoExpirationVersionTrim =
+              !!formData.EnableAutoExpirationVersionTrim
             if (!formData.EnableAutoExpirationVersionTrim) {
-              payload.MajorVersionLimit = parseInt(formData.MajorVersionLimit ?? 0, 10)
-              payload.ExpireVersionsAfterDays = parseInt(formData.ExpireVersionsAfterDays ?? 0, 10)
+              payload.MajorVersionLimit = parseInt(
+                formData.MajorVersionLimit ?? 0,
+                10
+              )
+              payload.ExpireVersionsAfterDays = parseInt(
+                formData.ExpireVersionsAfterDays ?? 0,
+                10
+              )
             }
           }
           return payload
@@ -468,7 +525,8 @@ const Page = () => {
             },
             queryKey: 'ListUsersAutoComplete',
             dataKey: 'Results',
-            labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+            labelField: (user) =>
+              `${user.displayName} (${user.userPrincipalName})`,
             valueField: 'userPrincipalName',
             addedField: {
               id: 'id',
@@ -508,7 +566,8 @@ const Page = () => {
             },
             queryKey: 'ListUsersAutoComplete',
             dataKey: 'Results',
-            labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+            labelField: (user) =>
+              `${user.displayName} (${user.userPrincipalName})`,
             valueField: 'userPrincipalName',
             addedField: {
               id: 'id',
@@ -600,12 +659,20 @@ const Page = () => {
             label="Cleanup Mode"
             formControl={formHook}
             options={[
-              { label: 'Sync Policy — apply site version policy to existing versions', value: '2' },
               {
-                label: 'Delete Older Than Days — remove versions older than a set number of days',
+                label:
+                  'Sync Policy — apply site version policy to existing versions',
+                value: '2',
+              },
+              {
+                label:
+                  'Delete Older Than Days — remove versions older than a set number of days',
                 value: '0',
               },
-              { label: 'Count Limits — keep a maximum number of major versions', value: '1' },
+              {
+                label: 'Count Limits — keep a maximum number of major versions',
+                value: '1',
+              },
             ]}
           />
           <CippFormCondition
@@ -621,7 +688,10 @@ const Page = () => {
               formControl={formHook}
               validators={{
                 required: 'Please enter the number of days',
-                min: { value: 30, message: 'SharePoint requires at least 30 days' },
+                min: {
+                  value: 30,
+                  message: 'SharePoint requires at least 30 days',
+                },
               }}
             />
           </CippFormCondition>
@@ -643,7 +713,9 @@ const Page = () => {
               name="MajorWithMinorVersionsLimit"
               label="Major Versions That Keep Their Minor Versions"
               formControl={formHook}
-              validators={{ required: 'Please enter the major-with-minor version limit' }}
+              validators={{
+                required: 'Please enter the major-with-minor version limit',
+              }}
             />
           </CippFormCondition>
         </>
@@ -657,9 +729,13 @@ const Page = () => {
           SiteUrl: singleRow.webUrl,
           BatchDeleteMode: parseInt(formData.BatchDeleteMode, 10),
           DeleteOlderThanDays:
-            formData.BatchDeleteMode === '0' ? parseInt(formData.DeleteOlderThanDays, 10) : -1,
+            formData.BatchDeleteMode === '0'
+              ? parseInt(formData.DeleteOlderThanDays, 10)
+              : -1,
           MajorVersionLimit:
-            formData.BatchDeleteMode === '1' ? parseInt(formData.MajorVersionLimit, 10) : -1,
+            formData.BatchDeleteMode === '1'
+              ? parseInt(formData.MajorVersionLimit, 10)
+              : -1,
           MajorWithMinorVersionsLimit:
             formData.BatchDeleteMode === '1'
               ? parseInt(formData.MajorWithMinorVersionsLimit, 10)
@@ -719,7 +795,14 @@ const Page = () => {
           },
           dataKey: 'Results',
         }}
-        simpleColumns={['Title', 'Email', 'Group', 'Type', 'IsGuest', 'IsSiteAdmin']}
+        simpleColumns={[
+          'Title',
+          'Email',
+          'Group',
+          'Type',
+          'IsGuest',
+          'IsSiteAdmin',
+        ]}
       />
     ),
     size: 'lg', // Make the offcanvas extra large
@@ -741,7 +824,11 @@ const Page = () => {
 
   const pageActions = (
     <Stack direction="row" spacing={1} alignItems="center">
-      <Button component={Link} href="/teams-share/sharepoint/add-site" startIcon={<Add />}>
+      <Button
+        component={Link}
+        href="/teams-share/sharepoint/add-site"
+        startIcon={<Add />}
+      >
         Add Site
       </Button>
       <Button
@@ -770,14 +857,15 @@ const Page = () => {
           <>
             <CippSharePointQuotaCard />
             <CippAnonymizedReportAlert show={anonymizedReport}>
-              Site owner names in this report are pseudo-anonymised because Microsoft 365 report
-              anonymization is enabled for this tenant.
+              Site owner names in this report are pseudo-anonymised because
+              Microsoft 365 report anonymization is enabled for this tenant.
             </CippAnonymizedReportAlert>
             {!anonymizedReport && noUsageData && (
               <Alert severity="info">
-                Microsoft returned no SharePoint usage report for this tenant, so activity,
-                storage and file count are blank. The site list itself is complete. Usage reports
-                can take up to 48 hours to appear on a new tenant.
+                Microsoft returned no SharePoint usage report for this tenant,
+                so activity, storage and file count are blank. The site list
+                itself is complete. Usage reports can take up to 48 hours to
+                appear on a new tenant.
               </Alert>
             )}
           </>
@@ -788,6 +876,8 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+)
 
 export default Page

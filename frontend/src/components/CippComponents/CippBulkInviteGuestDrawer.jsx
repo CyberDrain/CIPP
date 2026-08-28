@@ -1,142 +1,154 @@
-import { useState } from "react";
-import { Button, Link, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useWatch } from "react-hook-form";
-import { GroupAdd, Delete } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippDataTable } from "../CippTable/CippDataTable";
-import { CippApiResults } from "./CippApiResults";
-import { useSettings } from "../../hooks/use-settings";
-import { ApiPostCall } from "../../api/ApiCall";
-import { getCippValidator } from "../../utils/get-cipp-validator";
+import { useState } from 'react'
+import {
+  Button,
+  Link,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useWatch } from 'react-hook-form'
+import { GroupAdd, Delete } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippDataTable } from '../CippTable/CippDataTable'
+import { CippApiResults } from './CippApiResults'
+import { useSettings } from '../../hooks/use-settings'
+import { ApiPostCall } from '../../api/ApiCall'
+import { getCippValidator } from '../../utils/get-cipp-validator'
 
 export const CippBulkInviteGuestDrawer = ({
-  buttonText = "Bulk Invite Guests",
+  buttonText = 'Bulk Invite Guests',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [addRowDialogOpen, setAddRowDialogOpen] = useState(false);
-  const initialState = useSettings();
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const [addRowDialogOpen, setAddRowDialogOpen] = useState(false)
+  const initialState = useSettings()
 
-  const fields = ["displayName", "mail", "redirectUri"];
+  const fields = ['displayName', 'mail', 'redirectUri']
 
   const formControl = useForm({
-    mode: "onBlur",
+    mode: 'onBlur',
     defaultValues: {
       tenantFilter: initialState.currentTenant,
       sendInvite: true,
-      message: "",
+      message: '',
       bulkGuests: [],
     },
-  });
+  })
 
-  const bulkGuestsData = useWatch({ control: formControl.control, name: "bulkGuests" });
+  const bulkGuestsData = useWatch({
+    control: formControl.control,
+    name: 'bulkGuests',
+  })
 
   const inviteGuestsBulk = ApiPostCall({
     urlFromData: true,
     relatedQueryKeys: [`Users-${initialState.currentTenant}`],
-  });
+  })
 
-  formControl.register("bulkGuests", {
+  formControl.register('bulkGuests', {
     validate: (value) => Array.isArray(value) && value.length > 0,
-  });
+  })
 
   const handleRemoveItem = (row) => {
-    if (row === undefined) return false;
-    const currentData = formControl.getValues("bulkGuests") || [];
+    if (row === undefined) return false
+    const currentData = formControl.getValues('bulkGuests') || []
     // Match Bulk User drawer behavior first (reference equality)
-    let index = currentData.findIndex((item) => item === row);
+    let index = currentData.findIndex((item) => item === row)
 
     // Fallback: table/CSV layers can change object references
     if (index < 0) {
       const normalize = (value) =>
-        String(value ?? "")
+        String(value ?? '')
           .trim()
-          .toLowerCase();
-      const targetDisplayName = normalize(row?.displayName);
-      const targetMail = normalize(row?.mail);
-      const targetRedirectUri = normalize(row?.redirectUri);
+          .toLowerCase()
+      const targetDisplayName = normalize(row?.displayName)
+      const targetMail = normalize(row?.mail)
+      const targetRedirectUri = normalize(row?.redirectUri)
 
       index = currentData.findIndex((item) => {
         return (
           normalize(item?.displayName) === targetDisplayName &&
           normalize(item?.mail) === targetMail &&
           normalize(item?.redirectUri) === targetRedirectUri
-        );
-      });
+        )
+      })
     }
 
-    if (index < 0) return false;
-    const newData = [...currentData];
-    newData.splice(index, 1);
-    formControl.setValue("bulkGuests", newData, { shouldValidate: true });
-  };
+    if (index < 0) return false
+    const newData = [...currentData]
+    newData.splice(index, 1)
+    formControl.setValue('bulkGuests', newData, { shouldValidate: true })
+  }
 
   const handleAddItem = () => {
-    const newRowData = formControl.getValues("addrow");
-    if (!newRowData) return;
+    const newRowData = formControl.getValues('addrow')
+    if (!newRowData) return
 
     const nextRow = {
-      displayName: newRowData.displayName ?? "",
-      mail: newRowData.mail ?? "",
-      redirectUri: newRowData.redirectUri ?? "",
-    };
-
-    if (!nextRow.displayName || !nextRow.mail) {
-      return;
+      displayName: newRowData.displayName ?? '',
+      mail: newRowData.mail ?? '',
+      redirectUri: newRowData.redirectUri ?? '',
     }
 
-    const currentData = formControl.getValues("bulkGuests") || [];
-    formControl.setValue("bulkGuests", [...currentData, nextRow], { shouldValidate: true });
-    setAddRowDialogOpen(false);
+    if (!nextRow.displayName || !nextRow.mail) {
+      return
+    }
+
+    const currentData = formControl.getValues('bulkGuests') || []
+    formControl.setValue('bulkGuests', [...currentData, nextRow], {
+      shouldValidate: true,
+    })
+    setAddRowDialogOpen(false)
     formControl.reset({
       ...formControl.getValues(),
       addrow: {},
-    });
-  };
+    })
+  }
 
   const handleSubmit = () => {
-    const formData = formControl.getValues();
-    const tenantFilter = formData.tenantFilter;
+    const formData = formControl.getValues()
+    const tenantFilter = formData.tenantFilter
 
     const payload = (formData.bulkGuests || []).map((row) => ({
       tenantFilter,
-      displayName: row?.displayName ?? "",
-      mail: row?.mail ?? "",
-      redirectUri: row?.redirectUri ?? "",
-      message: formData.message ?? "",
+      displayName: row?.displayName ?? '',
+      mail: row?.mail ?? '',
+      redirectUri: row?.redirectUri ?? '',
+      message: formData.message ?? '',
       sendInvite: !!formData.sendInvite,
-    }));
+    }))
 
     inviteGuestsBulk.mutate({
-      url: "/api/AddGuest",
+      url: '/api/AddGuest',
       bulkRequest: true,
       data: payload,
       relatedQueryKeys: [`Users-${initialState.currentTenant}`],
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
       tenantFilter: initialState.currentTenant,
       sendInvite: true,
-      message: "",
+      message: '',
       bulkGuests: [],
-    });
-  };
+    })
+  }
 
   const actions = [
     {
       icon: <Delete />,
-      label: "Delete Row",
-      confirmText: "Are you sure you want to delete this row?",
+      label: 'Delete Row',
+      confirmText: 'Are you sure you want to delete this row?',
       customFunction: handleRemoveItem,
       noConfirm: true,
     },
-  ];
+  ]
 
   return (
     <>
@@ -153,20 +165,28 @@ export const CippBulkInviteGuestDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
               onClick={handleSubmit}
               disabled={
-                inviteGuestsBulk.isLoading || !bulkGuestsData || bulkGuestsData.length === 0
+                inviteGuestsBulk.isLoading ||
+                !bulkGuestsData ||
+                bulkGuestsData.length === 0
               }
             >
               {inviteGuestsBulk.isLoading
-                ? "Sending Invites..."
+                ? 'Sending Invites...'
                 : inviteGuestsBulk.isSuccess
-                  ? "Send More Invites"
-                  : "Send Invites"}
+                  ? 'Send More Invites'
+                  : 'Send Invites'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -201,7 +221,7 @@ export const CippBulkInviteGuestDrawer = ({
           <Grid size={{ xs: 12 }}>
             <Link
               href={`data:text/csv;charset=utf-8,%EF%BB%BF${encodeURIComponent(
-                fields.join(",") + "\n",
+                fields.join(',') + '\n'
               )}`}
               download="BulkGuestInvite.csv"
             >
@@ -210,7 +230,11 @@ export const CippBulkInviteGuestDrawer = ({
           </Grid>
 
           <Grid size={{ xs: 12 }}>
-            <CippFormComponent type="CSVReader" name="bulkGuests" formControl={formControl} />
+            <CippFormComponent
+              type="CSVReader"
+              name="bulkGuests"
+              formControl={formControl}
+            />
           </Grid>
 
           <Grid size={{ xs: 12 }}>
@@ -257,8 +281,9 @@ export const CippBulkInviteGuestDrawer = ({
                   type="textField"
                   formControl={formControl}
                   validators={{
-                    required: "E-mail address is required",
-                    validate: (value) => !value || getCippValidator(value, "email"),
+                    required: 'E-mail address is required',
+                    validate: (value) =>
+                      !value || getCippValidator(value, 'email'),
                   }}
                 />
               </Grid>
@@ -273,7 +298,10 @@ export const CippBulkInviteGuestDrawer = ({
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button variant="outlined" onClick={() => setAddRowDialogOpen(false)}>
+            <Button
+              variant="outlined"
+              onClick={() => setAddRowDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="contained" onClick={handleAddItem}>
@@ -283,5 +311,5 @@ export const CippBulkInviteGuestDrawer = ({
         </Dialog>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

@@ -10,63 +10,72 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from "@mui/material";
-import { CippCopyToClipBoard } from "./CippCopyToClipboard";
-import { ApiGetCall } from "../../api/ApiCall";
+} from '@mui/material'
+import { CippCopyToClipBoard } from './CippCopyToClipboard'
+import { ApiGetCall } from '../../api/ApiCall'
 
 const Field = ({ label, value, mono = false }) => {
-  if (value === null || value === undefined || value === "") return null;
+  if (value === null || value === undefined || value === '') return null
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 1,
         py: 1,
-        borderBottom: "1px solid",
-        borderColor: "divider",
+        borderBottom: '1px solid',
+        borderColor: 'divider',
       }}
     >
       <Box sx={{ minWidth: 160 }}>
-        <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase" }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ textTransform: 'uppercase' }}
+        >
           {label}
         </Typography>
       </Box>
       <Typography
         variant="body2"
-        sx={{ flex: 1, fontFamily: mono ? "monospace" : "inherit", wordBreak: "break-all" }}
+        sx={{
+          flex: 1,
+          fontFamily: mono ? 'monospace' : 'inherit',
+          wordBreak: 'break-all',
+        }}
       >
         {String(value)}
       </Typography>
       <CippCopyToClipBoard text={String(value)} />
     </Box>
-  );
-};
+  )
+}
 
 export const CippLicenseDetailsDrawer = ({ data }) => {
-  if (!data) return null;
-  const fromCatalog = data.source === "catalog";
+  if (!data) return null
+  const fromCatalog = data.source === 'catalog'
 
   // For catalog-only hits, backfill tenant usage from the API by skuId.
   const usageQuery = ApiGetCall({
     url: `/api/ExecUniversalSearchV2`,
     data: {
-      searchTerms: data.skuId || data.skuPartNumber || "",
+      searchTerms: data.skuId || data.skuPartNumber || '',
       limit: 1,
-      type: "Licenses",
+      type: 'Licenses',
     },
-    queryKey: `licenseUsage-${data.skuId || data.skuPartNumber || ""}`,
+    queryKey: `licenseUsage-${data.skuId || data.skuPartNumber || ''}`,
     waiting: fromCatalog && Boolean(data.skuId || data.skuPartNumber),
-  });
+  })
 
   const apiMatch = (() => {
-    if (!fromCatalog || !usageQuery.isSuccess) return null;
-    const rows = Array.isArray(usageQuery.data) ? usageQuery.data : [];
-    const target = String(data.skuId || "").toLowerCase();
+    if (!fromCatalog || !usageQuery.isSuccess) return null
+    const rows = Array.isArray(usageQuery.data) ? usageQuery.data : []
+    const target = String(data.skuId || '').toLowerCase()
     const hit =
-      rows.find((r) => String(r?.Data?.skuId || "").toLowerCase() === target) || rows[0];
-    return hit?.Data || null;
-  })();
+      rows.find((r) => String(r?.Data?.skuId || '').toLowerCase() === target) ||
+      rows[0]
+    return hit?.Data || null
+  })()
 
   const merged = apiMatch
     ? {
@@ -76,30 +85,32 @@ export const CippLicenseDetailsDrawer = ({ data }) => {
         totalAvailable: apiMatch.totalAvailable ?? data.totalAvailable,
         tenants: Array.isArray(apiMatch.tenants) ? apiMatch.tenants : [],
       }
-    : data;
+    : data
 
-  const servicePlans = Array.isArray(merged.servicePlans) ? merged.servicePlans : [];
-  const tenants = Array.isArray(merged.tenants) ? merged.tenants : [];
-  const hasUsage = !fromCatalog || apiMatch !== null;
-  const usageLoading = fromCatalog && usageQuery.isFetching && !apiMatch;
-  const usageNotFound = fromCatalog && usageQuery.isSuccess && !apiMatch;
+  const servicePlans = Array.isArray(merged.servicePlans)
+    ? merged.servicePlans
+    : []
+  const tenants = Array.isArray(merged.tenants) ? merged.tenants : []
+  const hasUsage = !fromCatalog || apiMatch !== null
+  const usageLoading = fromCatalog && usageQuery.isFetching && !apiMatch
+  const usageNotFound = fromCatalog && usageQuery.isSuccess && !apiMatch
 
   return (
     <Box sx={{ p: 3 }}>
       <Stack spacing={0.5} sx={{ mb: 2 }}>
         <Typography variant="h6">
-          {merged.displayName || merged.skuPartNumber || "License"}
+          {merged.displayName || merged.skuPartNumber || 'License'}
         </Typography>
         <Typography variant="caption" color="text.secondary">
           {hasUsage
-            ? `${merged.tenantCount || 0} tenant${merged.tenantCount === 1 ? "" : "s"} · ${
+            ? `${merged.tenantCount || 0} tenant${merged.tenantCount === 1 ? '' : 's'} · ${
                 merged.totalAssigned || 0
               }/${merged.totalAvailable || 0} assigned`
             : usageLoading
-              ? "Microsoft published catalog · loading tenant usage…"
+              ? 'Microsoft published catalog · loading tenant usage…'
               : usageNotFound
-                ? "Microsoft published catalog · not assigned in any tenant"
-                : "Microsoft published catalog"}
+                ? 'Microsoft published catalog · not assigned in any tenant'
+                : 'Microsoft published catalog'}
         </Typography>
       </Stack>
 
@@ -116,7 +127,7 @@ export const CippLicenseDetailsDrawer = ({ data }) => {
       )}
 
       {usageLoading && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, py: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 2 }}>
           <CircularProgress size={16} />
           <Typography variant="body2" color="text.secondary">
             Looking up tenant usage…
@@ -141,17 +152,23 @@ export const CippLicenseDetailsDrawer = ({ data }) => {
               </TableHead>
               <TableBody>
                 {servicePlans.map((plan, idx) => {
-                  const id = plan.servicePlanId || plan.servicePlanid || "";
-                  const name = plan.servicePlanName || "";
-                  const friendly = plan.friendlyName || "";
+                  const id = plan.servicePlanId || plan.servicePlanid || ''
+                  const name = plan.servicePlanName || ''
+                  const friendly = plan.friendlyName || ''
                   return (
                     <TableRow key={id || `${name}-${idx}`}>
-                      <TableCell sx={{ fontFamily: "monospace" }}>{name}</TableCell>
+                      <TableCell sx={{ fontFamily: 'monospace' }}>
+                        {name}
+                      </TableCell>
                       <TableCell>{friendly}</TableCell>
-                      <TableCell sx={{ fontFamily: "monospace" }}>{id}</TableCell>
-                      <TableCell>{id && <CippCopyToClipBoard text={id} />}</TableCell>
+                      <TableCell sx={{ fontFamily: 'monospace' }}>
+                        {id}
+                      </TableCell>
+                      <TableCell>
+                        {id && <CippCopyToClipBoard text={id} />}
+                      </TableCell>
                     </TableRow>
-                  );
+                  )
                 })}
               </TableBody>
             </Table>
@@ -179,10 +196,12 @@ export const CippLicenseDetailsDrawer = ({ data }) => {
                 {tenants.map((t, idx) => (
                   <TableRow key={`${t.tenant}-${idx}`}>
                     <TableCell>{t.tenant}</TableCell>
-                    <TableCell align="right">{t.used ?? "-"}</TableCell>
-                    <TableCell align="right">{t.total ?? "-"}</TableCell>
+                    <TableCell align="right">{t.used ?? '-'}</TableCell>
+                    <TableCell align="right">{t.total ?? '-'}</TableCell>
                     <TableCell>
-                      {t.tenant && <CippCopyToClipBoard text={String(t.tenant)} />}
+                      {t.tenant && (
+                        <CippCopyToClipBoard text={String(t.tenant)} />
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -192,5 +211,5 @@ export const CippLicenseDetailsDrawer = ({ data }) => {
         </>
       )}
     </Box>
-  );
-};
+  )
+}

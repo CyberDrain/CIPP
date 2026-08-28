@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
-import { useRouter } from "next/router";
+import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/router'
 import {
   installOverlayHistory,
   pushOverlayEntry,
   releaseOverlayEntry,
-} from "../utils/overlay-history";
+} from '../utils/overlay-history'
 
 /**
  * Gives an overlay a history entry of its own, so a phone's back gesture dismisses it
@@ -22,19 +22,20 @@ import {
  * outgoing one's entry.
  */
 export const useHistoryDismiss = (open, onClose, enabled = true) => {
-  const router = useRouter();
-  const closeRef = useRef(onClose);
+  const router = useRouter()
+  const closeRef = useRef(onClose)
 
   useEffect(() => {
-    closeRef.current = onClose;
-  }, [onClose]);
+    closeRef.current = onClose
+  }, [onClose])
 
   useEffect(() => {
     // Nothing to hand the gesture to — an overlay with no onClose can't be dismissed, and
     // claiming a history entry for it would only eat a back press.
-    if (!enabled || !open || typeof closeRef.current !== "function") return undefined;
-    installOverlayHistory(router);
-    const entry = pushOverlayEntry(() => closeRef.current?.());
-    return () => releaseOverlayEntry(entry);
-  }, [enabled, open, router]);
-};
+    if (!enabled || !open || typeof closeRef.current !== 'function')
+      return undefined
+    installOverlayHistory(router)
+    const entry = pushOverlayEntry(() => closeRef.current?.())
+    return () => releaseOverlayEntry(entry)
+  }, [enabled, open, router])
+}

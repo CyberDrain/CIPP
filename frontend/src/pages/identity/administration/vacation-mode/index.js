@@ -1,83 +1,83 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippTablePage from "../../../../components/CippComponents/CippTablePage";
-import { Delete } from "@mui/icons-material";
-import { EyeIcon } from "@heroicons/react/24/outline";
-import { Button } from "@mui/material";
-import Link from "next/link";
-import { EventAvailable } from "@mui/icons-material";
-import { useSettings } from "../../../../hooks/use-settings.js";
-import ScheduledTaskDetails from "../../../../components/CippComponents/ScheduledTaskDetails";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippTablePage from '../../../../components/CippComponents/CippTablePage'
+import { Delete } from '@mui/icons-material'
+import { EyeIcon } from '@heroicons/react/24/outline'
+import { Button } from '@mui/material'
+import Link from 'next/link'
+import { EventAvailable } from '@mui/icons-material'
+import { useSettings } from '../../../../hooks/use-settings.js'
+import ScheduledTaskDetails from '../../../../components/CippComponents/ScheduledTaskDetails'
 
 const Page = () => {
-  const initialState = useSettings();
-  const currentTenant = initialState.currentTenant;
+  const initialState = useSettings()
+  const currentTenant = initialState.currentTenant
 
   const actions = [
     {
-      label: "View Task Details",
-      link: "/cipp/scheduler/task?id=[RowKey]",
+      label: 'View Task Details',
+      link: '/cipp/scheduler/task?id=[RowKey]',
       pinned: true,
       icon: <EyeIcon />,
     },
     {
-      label: "Cancel Vacation Mode",
-      type: "POST",
-      url: "/api/RemoveScheduledItem",
-      data: { ID: "RowKey" },
+      label: 'Cancel Vacation Mode',
+      type: 'POST',
+      url: '/api/RemoveScheduledItem',
+      data: { ID: 'RowKey' },
       confirmText:
-        "Are you sure you want to cancel this vacation mode entry? This might mean the user will remain in vacation mode permanently.",
+        'Are you sure you want to cancel this vacation mode entry? This might mean the user will remain in vacation mode permanently.',
       icon: <Delete />,
       multiPost: false,
     },
-  ];
+  ]
 
   const filterList = [
     {
-      filterName: "Running",
-      value: [{ id: "TaskState", value: "Running" }],
-      type: "column",
+      filterName: 'Running',
+      value: [{ id: 'TaskState', value: 'Running' }],
+      type: 'column',
     },
     {
-      filterName: "Planned",
-      value: [{ id: "TaskState", value: "Planned" }],
-      type: "column",
+      filterName: 'Planned',
+      value: [{ id: 'TaskState', value: 'Planned' }],
+      type: 'column',
     },
     {
-      filterName: "Failed",
-      value: [{ id: "TaskState", value: "Failed" }],
-      type: "column",
+      filterName: 'Failed',
+      value: [{ id: 'TaskState', value: 'Failed' }],
+      type: 'column',
     },
     {
-      filterName: "Completed",
-      value: [{ id: "TaskState", value: "Completed" }],
-      type: "column",
+      filterName: 'Completed',
+      value: [{ id: 'TaskState', value: 'Completed' }],
+      type: 'column',
     },
     {
-      filterName: "CA Exclusion",
-      value: [{ id: "Name", value: "CA Exclusion" }],
-      type: "column",
+      filterName: 'CA Exclusion',
+      value: [{ id: 'Name', value: 'CA Exclusion' }],
+      type: 'column',
     },
     {
-      filterName: "Location Alerts",
-      value: [{ id: "Name", value: "Location Alert Exclusion" }],
-      type: "column",
+      filterName: 'Location Alerts',
+      value: [{ id: 'Name', value: 'Location Alert Exclusion' }],
+      type: 'column',
     },
     {
-      filterName: "Mailbox Permissions",
-      value: [{ id: "Name", value: "Mailbox Vacation" }],
-      type: "column",
+      filterName: 'Mailbox Permissions',
+      value: [{ id: 'Name', value: 'Mailbox Vacation' }],
+      type: 'column',
     },
     {
-      filterName: "Mail Forwarding",
-      value: [{ id: "Name", value: "Forwarding Vacation" }],
-      type: "column",
+      filterName: 'Mail Forwarding',
+      value: [{ id: 'Name', value: 'Forwarding Vacation' }],
+      type: 'column',
     },
     {
-      filterName: "Out of Office",
-      value: [{ id: "Name", value: "OOO Vacation" }],
-      type: "column",
+      filterName: 'Out of Office',
+      value: [{ id: 'Name', value: 'OOO Vacation' }],
+      type: 'column',
     },
-  ];
+  ]
 
   return (
     <CippTablePage
@@ -94,13 +94,24 @@ const Page = () => {
       apiUrl="/api/ListScheduledItems?SearchTitle=*Vacation*"
       queryKey={`VacationMode-${currentTenant}`}
       actions={actions}
-      simpleColumns={["Tenant", "Name", "Reference", "TaskState", "ScheduledTime", "ExecutedTime"]}
+      simpleColumns={[
+        'Tenant',
+        'Name',
+        'Reference',
+        'TaskState',
+        'ScheduledTime',
+        'ExecutedTime',
+      ]}
       filters={filterList}
       offCanvas={{
         children: (extendedData) => (
-          <ScheduledTaskDetails data={extendedData} showActions={true} showTitle={false} />
+          <ScheduledTaskDetails
+            data={extendedData}
+            showActions={true}
+            showTitle={false}
+          />
         ),
-        size: "xl",
+        size: 'xl',
         actions: actions,
       }}
       rowOpen={{
@@ -108,9 +119,9 @@ const Page = () => {
         condition: (row) => Boolean(row?.RowKey),
       }}
     />
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

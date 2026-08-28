@@ -14,7 +14,10 @@ export const CippFormDomainSelector = ({
   showRefresh = false,
   ...other
 }) => {
-  const currentTenant = useWatch({ control: formControl.control, name: 'tenantFilter' })
+  const currentTenant = useWatch({
+    control: formControl.control,
+    name: 'tenantFilter',
+  })
   const selectedTenant = useSettings().currentTenant
 
   const apiConfig = useMemo(

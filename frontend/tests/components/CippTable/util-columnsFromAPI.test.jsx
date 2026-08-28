@@ -1,10 +1,21 @@
-import { utilColumnsFromAPI, resolveSimpleColumnVariables } from '../../../src/components/CippTable/util-columnsFromAPI'
+import {
+  utilColumnsFromAPI,
+  resolveSimpleColumnVariables,
+} from '../../../src/components/CippTable/util-columnsFromAPI'
 
 describe('utilColumnsFromAPI', () => {
   it('generates columns from simple flat data', () => {
     const data = [
-      { displayName: 'Alice Smith', mail: 'alice@contoso.com', department: 'IT' },
-      { displayName: 'Bob Johnson', mail: 'bob@contoso.com', department: 'Sales' },
+      {
+        displayName: 'Alice Smith',
+        mail: 'alice@contoso.com',
+        department: 'IT',
+      },
+      {
+        displayName: 'Bob Johnson',
+        mail: 'bob@contoso.com',
+        department: 'Sales',
+      },
     ]
     const columns = utilColumnsFromAPI(data)
     const ids = columns.map((c) => c.id)
@@ -30,9 +41,7 @@ describe('utilColumnsFromAPI', () => {
   })
 
   it('generates columns for nested object properties', () => {
-    const data = [
-      { info: { city: 'Seattle', state: 'WA' }, name: 'Test' },
-    ]
+    const data = [{ info: { city: 'Seattle', state: 'WA' }, name: 'Test' }]
     const columns = utilColumnsFromAPI(data)
     const ids = columns.map((c) => c.id)
     expect(ids).toContain('info.city')
@@ -91,7 +100,10 @@ describe('resolveSimpleColumnVariables', () => {
     const data = [
       { displayName: 'Alice', extension_abc123_cippUser: 'alice@contoso.com' },
     ]
-    const result = resolveSimpleColumnVariables(['displayName', '%cippuserschema%'], data)
+    const result = resolveSimpleColumnVariables(
+      ['displayName', '%cippuserschema%'],
+      data
+    )
     expect(result).toEqual(['displayName', 'extension_abc123_cippUser'])
   })
 

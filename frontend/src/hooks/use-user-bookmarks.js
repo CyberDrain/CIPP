@@ -1,103 +1,103 @@
-import { useCallback, useMemo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { ApiGetCall, ApiPostCall } from "../api/ApiCall";
+import { useCallback, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { ApiGetCall, ApiPostCall } from '../api/ApiCall'
 
-export const MAX_BOOKMARKS = 50;
+export const MAX_BOOKMARKS = 50
 
 const sanitizeBookmark = (bookmark) => {
-  if (!bookmark || typeof bookmark !== "object") {
-    return null;
+  if (!bookmark || typeof bookmark !== 'object') {
+    return null
   }
 
-  if (typeof bookmark.path !== "string") {
-    return null;
+  if (typeof bookmark.path !== 'string') {
+    return null
   }
 
-  const path = bookmark.path.trim();
+  const path = bookmark.path.trim()
   if (!path) {
-    return null;
+    return null
   }
 
   const label =
-    typeof bookmark.label === "string" && bookmark.label.trim()
+    typeof bookmark.label === 'string' && bookmark.label.trim()
       ? bookmark.label.trim()
-      : path;
+      : path
 
   return {
     ...bookmark,
     path,
     label,
-  };
-};
+  }
+}
 
 const normalizeBookmarks = (value) => {
   if (Array.isArray(value)) {
-    return value.map(sanitizeBookmark).filter(Boolean);
+    return value.map(sanitizeBookmark).filter(Boolean)
   }
 
-  const singleBookmark = sanitizeBookmark(value);
+  const singleBookmark = sanitizeBookmark(value)
   if (singleBookmark) {
-    return [singleBookmark];
+    return [singleBookmark]
   }
 
-  return [];
-};
+  return []
+}
 
 const getBookmarksFromSettings = (settingsData) => {
   if (!settingsData) {
-    return [];
+    return []
   }
 
   if (settingsData.UserBookmarks) {
-    return normalizeBookmarks(settingsData.UserBookmarks);
+    return normalizeBookmarks(settingsData.UserBookmarks)
   }
 
   if (settingsData.bookmarks) {
-    return normalizeBookmarks(settingsData.bookmarks);
+    return normalizeBookmarks(settingsData.bookmarks)
   }
 
-  return [];
-};
+  return []
+}
 
 export const useUserBookmarks = () => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const userSettings = ApiGetCall({
-    url: "/api/ListUserSettings",
-    queryKey: "userSettings",
-  });
+    url: '/api/ListUserSettings',
+    queryKey: 'userSettings',
+  })
 
   const auth = ApiGetCall({
-    url: "/api/me",
-    queryKey: "authmecipp",
-  });
+    url: '/api/me',
+    queryKey: 'authmecipp',
+  })
 
   const saveBookmarksPost = ApiPostCall({
-    relatedQueryKeys: "userSettings",
-  });
+    relatedQueryKeys: 'userSettings',
+  })
 
   const bookmarks = useMemo(() => {
-    return getBookmarksFromSettings(userSettings.data);
-  }, [userSettings.data]);
+    return getBookmarksFromSettings(userSettings.data)
+  }, [userSettings.data])
 
   const persistBookmarks = useCallback(
     (nextBookmarks, callbacks = {}) => {
-      const safeBookmarks = normalizeBookmarks(nextBookmarks);
+      const safeBookmarks = normalizeBookmarks(nextBookmarks)
 
-      queryClient.setQueryData(["userSettings"], (previous) => ({
+      queryClient.setQueryData(['userSettings'], (previous) => ({
         ...(previous || {}),
         UserBookmarks: safeBookmarks,
         bookmarks: safeBookmarks,
-      }));
+      }))
 
-      const user = auth.data?.clientPrincipal?.userDetails;
+      const user = auth.data?.clientPrincipal?.userDetails
       if (!user) {
-        return false;
+        return false
       }
 
       saveBookmarksPost.mutate(
         {
-          url: "/api/ExecUserBookmarks",
+          url: '/api/ExecUserBookmarks',
           data: {
             user,
             currentSettings: {
@@ -106,47 +106,49 @@ export const useUserBookmarks = () => {
           },
         },
         callbacks
-      );
+      )
 
-      return true;
+      return true
     },
     [auth.data?.clientPrincipal?.userDetails, queryClient, saveBookmarksPost]
-  );
+  )
 
   const setBookmarks = useCallback(
     (nextBookmarks) => {
-      persistBookmarks(nextBookmarks);
+      persistBookmarks(nextBookmarks)
     },
     [persistBookmarks]
-  );
+  )
 
   const isBookmarked = useCallback(
     (path) => bookmarks.some((bookmark) => bookmark.path === path),
     [bookmarks]
-  );
+  )
 
   // Bookmarks are keyed on path alone, so adding and removing are the same gesture. Returns the
   // action taken so callers can react to hitting the cap instead of silently doing nothing.
   const toggleBookmark = useCallback(
     (bookmark) => {
       if (!bookmark?.path) {
-        return "invalid";
+        return 'invalid'
       }
 
       if (bookmarks.some((existing) => existing.path === bookmark.path)) {
-        setBookmarks(bookmarks.filter((existing) => existing.path !== bookmark.path));
-        return "removed";
+        setBookmarks(
+          bookmarks.filter((existing) => existing.path !== bookmark.path)
+        )
+        return 'removed'
       }
 
       if (bookmarks.length >= MAX_BOOKMARKS) {
-        return "limit";
+        return 'limit'
       }
 
-      setBookmarks([...bookmarks, bookmark]);
-      return "added";
+      setBookmarks([...bookmarks, bookmark])
+      return 'added'
     },
     [bookmarks, setBookmarks]
-  );
+  )
 
   return {
     bookmarks,
@@ -155,5 +157,5 @@ export const useUserBookmarks = () => {
     toggleBookmark,
     isLoading: userSettings.isLoading,
     isSaving: saveBookmarksPost.isPending,
-  };
-};
+  }
+}

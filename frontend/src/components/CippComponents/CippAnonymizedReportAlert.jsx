@@ -42,7 +42,14 @@ export const isReportAnonymized = (rows, fields = DEFAULT_FIELDS) => {
  * @param {string[]} [fields] - Name fields to test for hashes.
  * @param {Function} [check]  - Optional custom predicate (rows) => bool, replaces the hash test.
  */
-export const useReportAnonymized = ({ url, data, queryKey, dataKey, fields, check }) => {
+export const useReportAnonymized = ({
+  url,
+  data,
+  queryKey,
+  dataKey,
+  fields,
+  check,
+}) => {
   const tenant = useSettings().currentTenant
   const query = ApiGetCallWithPagination({
     url,
@@ -77,8 +84,8 @@ export const CippAnonymizedReportAlert = ({ show, children }) => {
       >
         Enable Usernames instead of pseudo anonymised names in reports
       </Link>{' '}
-      standard might need to be enabled to have the data populate correctly. Re-run the report sync
-      after changing the setting.
+      standard might need to be enabled to have the data populate correctly.
+      Re-run the report sync after changing the setting.
     </Alert>
   )
 }

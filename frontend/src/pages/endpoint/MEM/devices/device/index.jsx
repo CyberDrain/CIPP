@@ -24,7 +24,15 @@ import { CippCopyToClipBoard } from '../../../../../components/CippComponents/Ci
 import { getIntuneDeviceActions } from '../../../../../components/CippComponents/CippIntuneDeviceActions.jsx'
 import { Box, Stack } from '@mui/system'
 import { Grid } from '@mui/system'
-import { SvgIcon, Typography, Card, CardHeader, Divider, Tooltip, IconButton } from '@mui/material'
+import {
+  SvgIcon,
+  Typography,
+  Card,
+  CardHeader,
+  Divider,
+  Tooltip,
+  IconButton,
+} from '@mui/material'
 import { CippBannerListCard } from '../../../../../components/CippCards/CippBannerListCard'
 import { CippTimeAgo } from '../../../../../components/CippComponents/CippTimeAgo'
 import { useEffect, useState, useRef } from 'react'
@@ -52,7 +60,8 @@ const Page = () => {
     url: '/api/ListGraphRequest',
     data: {
       Endpoint: `deviceManagement/managedDevices/${deviceId}`,
-      tenantFilter: router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
+      tenantFilter:
+        router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
     },
     queryKey: `ManagedDevice-${deviceId}`,
     waiting: waiting,
@@ -103,7 +112,10 @@ const Page = () => {
     // /devices/{id} requires the Entra directory object, not the Intune managedDevice id,
     // so address it by alternate key. All-zeros means the device is not Entra-joined.
     const azureADDeviceId = deviceData?.azureADDeviceId
-    if (azureADDeviceId && azureADDeviceId !== '00000000-0000-0000-0000-000000000000') {
+    if (
+      azureADDeviceId &&
+      azureADDeviceId !== '00000000-0000-0000-0000-000000000000'
+    ) {
       requests.push({
         id: 'deviceMemberOf',
         // No /microsoft.graph.group cast: OData cast is an advanced query needing
@@ -141,11 +153,17 @@ const Page = () => {
   ])
 
   const bulkData = deviceBulkRequest?.data?.data ?? []
-  const deviceComplianceData = bulkData?.find((item) => item.id === 'deviceCompliance')
-  const deviceConfigurationData = bulkData?.find((item) => item.id === 'deviceConfiguration')
+  const deviceComplianceData = bulkData?.find(
+    (item) => item.id === 'deviceCompliance'
+  )
+  const deviceConfigurationData = bulkData?.find(
+    (item) => item.id === 'deviceConfiguration'
+  )
   const detectedAppsData = bulkData?.find((item) => item.id === 'detectedApps')
   const usersData = bulkData?.find((item) => item.id === 'users')
-  const deviceMemberOfData = bulkData?.find((item) => item.id === 'deviceMemberOf')
+  const deviceMemberOfData = bulkData?.find(
+    (item) => item.id === 'deviceMemberOf'
+  )
 
   const deviceCompliance = deviceComplianceData?.body?.value || []
   const deviceConfiguration = deviceConfigurationData?.body?.value || []
@@ -167,7 +185,9 @@ const Page = () => {
     ? [
         {
           icon: <Computer />,
-          text: <CippCopyToClipBoard type="chip" text={deviceData?.deviceName} />,
+          text: (
+            <CippCopyToClipBoard type="chip" text={deviceData?.deviceName} />
+          ),
         },
         {
           icon: <Fingerprint />,
@@ -210,7 +230,8 @@ const Page = () => {
     if (!data?.operatingSystem) return <Computer />
     const os = data.operatingSystem.toLowerCase()
     if (os.includes('android')) return <PhoneAndroid />
-    if (os.includes('ios') || os.includes('iphone') || os.includes('ipad')) return <PhoneIphone />
+    if (os.includes('ios') || os.includes('iphone') || os.includes('ipad'))
+      return <PhoneIphone />
     if (os.includes('windows') || os.includes('macos')) return <Laptop />
     return <Computer />
   }
@@ -221,11 +242,19 @@ const Page = () => {
     compliancePolicyItems = deviceCompliance.map((policy, index) => ({
       id: index,
       cardLabelBox: {
-        cardLabelBoxHeader: policy.complianceState === 'compliant' ? <CheckCircle /> : <Warning />,
+        cardLabelBoxHeader:
+          policy.complianceState === 'compliant' ? (
+            <CheckCircle />
+          ) : (
+            <Warning />
+          ),
       },
       text: policy.displayName || 'Unknown Policy',
       subtext: `State: ${policy.complianceState || 'Unknown'}`,
-      statusColor: policy.complianceState === 'compliant' ? 'success.main' : 'warning.main',
+      statusColor:
+        policy.complianceState === 'compliant'
+          ? 'success.main'
+          : 'warning.main',
       statusText: policy.complianceState || 'Unknown',
       propertyItems: [
         {
@@ -270,11 +299,13 @@ const Page = () => {
     configurationPolicyItems = deviceConfiguration.map((policy, index) => ({
       id: index,
       cardLabelBox: {
-        cardLabelBoxHeader: policy.state === 'compliant' ? <CheckCircle /> : <Warning />,
+        cardLabelBoxHeader:
+          policy.state === 'compliant' ? <CheckCircle /> : <Warning />,
       },
       text: policy.displayName || 'Unknown Policy',
       subtext: `State: ${policy.state || 'Unknown'}`,
-      statusColor: policy.state === 'compliant' ? 'success.main' : 'warning.main',
+      statusColor:
+        policy.state === 'compliant' ? 'success.main' : 'warning.main',
       statusText: policy.state || 'Unknown',
       propertyItems: [
         {
@@ -305,7 +336,8 @@ const Page = () => {
         id: 1,
         cardLabelBox: '-',
         text: 'No configuration policies available',
-        subtext: 'This device does not have any configuration policies assigned.',
+        subtext:
+          'This device does not have any configuration policies assigned.',
         statusColor: 'warning.main',
         statusText: 'No Policies',
         propertyItems: [],
@@ -429,8 +461,9 @@ const Page = () => {
             text: 'Groups',
             subtext: 'List of groups the device is a member of',
             statusText: ` ${
-              deviceMemberOf?.filter((item) => item?.['@odata.type'] === '#microsoft.graph.group')
-                .length
+              deviceMemberOf?.filter(
+                (item) => item?.['@odata.type'] === '#microsoft.graph.group'
+              ).length
             } Group(s)`,
             statusColor: 'info.main',
             table: {
@@ -448,7 +481,12 @@ const Page = () => {
                 (item) => item?.['@odata.type'] === '#microsoft.graph.group'
               ),
               refreshFunction: refreshFunction,
-              simpleColumns: ['displayName', 'groupTypes', 'securityEnabled', 'mailEnabled'],
+              simpleColumns: [
+                'displayName',
+                'groupTypes',
+                'securityEnabled',
+                'mailEnabled',
+              ],
             },
           },
         ]
@@ -490,7 +528,8 @@ const Page = () => {
             url: '/api/ListGraphRequest',
             data: {
               Endpoint: 'deviceManagement/managedDevices',
-              tenantFilter: router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
+              tenantFilter:
+                router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
               // Intune endpoints reject $orderby/$count, so ordering happens client-side.
               $select: 'id,deviceName,userPrincipalName',
               $top: 999,
@@ -541,8 +580,12 @@ const Page = () => {
                     divider
                     value={
                       <Stack alignItems="center" spacing={1}>
-                        <SvgIcon sx={{ fontSize: 64 }}>{getDeviceIcon()}</SvgIcon>
-                        <Typography variant="h6">{data?.deviceName || 'N/A'}</Typography>
+                        <SvgIcon sx={{ fontSize: 64 }}>
+                          {getDeviceIcon()}
+                        </SvgIcon>
+                        <Typography variant="h6">
+                          {data?.deviceName || 'N/A'}
+                        </Typography>
                         <Typography variant="body2" color="text.secondary">
                           {data?.manufacturer} {data?.model}
                         </Typography>
@@ -555,15 +598,26 @@ const Page = () => {
                     value={
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Device Name:
                           </Typography>
                           <Typography variant="inherit">
-                            {getCippFormatting(data?.deviceName, 'deviceName') || 'N/A'}
+                            {getCippFormatting(
+                              data?.deviceName,
+                              'deviceName'
+                            ) || 'N/A'}
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Device ID:
                           </Typography>
                           <Typography variant="inherit">
@@ -571,41 +625,75 @@ const Page = () => {
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Operating System:
                           </Typography>
                           <Typography variant="inherit">
-                            {data?.operatingSystem || 'N/A'} {data?.osVersion || ''}
+                            {data?.operatingSystem || 'N/A'}{' '}
+                            {data?.osVersion || ''}
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Manufacturer:
                           </Typography>
-                          <Typography variant="inherit">{data?.manufacturer || 'N/A'}</Typography>
+                          <Typography variant="inherit">
+                            {data?.manufacturer || 'N/A'}
+                          </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Model:
                           </Typography>
-                          <Typography variant="inherit">{data?.model || 'N/A'}</Typography>
+                          <Typography variant="inherit">
+                            {data?.model || 'N/A'}
+                          </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Serial Number:
                           </Typography>
-                          <Typography variant="inherit">{data?.serialNumber || 'N/A'}</Typography>
+                          <Typography variant="inherit">
+                            {data?.serialNumber || 'N/A'}
+                          </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Compliance State:
                           </Typography>
                           <Typography variant="inherit">
-                            {getCippFormatting(data?.complianceState, 'complianceState') || 'N/A'}
+                            {getCippFormatting(
+                              data?.complianceState,
+                              'complianceState'
+                            ) || 'N/A'}
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Enrolled Date:
                           </Typography>
                           <Typography variant="inherit">
@@ -615,7 +703,11 @@ const Page = () => {
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Last Sync:
                           </Typography>
                           <Typography variant="inherit">
@@ -625,7 +717,11 @@ const Page = () => {
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Owner Type:
                           </Typography>
                           <Typography variant="inherit">
@@ -636,7 +732,11 @@ const Page = () => {
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Enrollment Type:
                           </Typography>
                           <Typography variant="inherit">
@@ -648,27 +748,41 @@ const Page = () => {
                         </Grid>
                         {data?.userPrincipalName && (
                           <Grid size={{ xs: 12 }}>
-                            <Typography variant="inherit" color="text.primary" gutterBottom>
+                            <Typography
+                              variant="inherit"
+                              color="text.primary"
+                              gutterBottom
+                            >
                               Primary User:
                             </Typography>
                             <Typography variant="inherit">
-                              {getCippFormatting(data?.userPrincipalName, 'userPrincipalName') ||
-                                'N/A'}
+                              {getCippFormatting(
+                                data?.userPrincipalName,
+                                'userPrincipalName'
+                              ) || 'N/A'}
                             </Typography>
                           </Grid>
                         )}
                         {data?.totalStorageSpaceInBytes && (
                           <Grid size={{ xs: 12 }}>
-                            <Typography variant="inherit" color="text.primary" gutterBottom>
+                            <Typography
+                              variant="inherit"
+                              color="text.primary"
+                              gutterBottom
+                            >
                               Storage:
                             </Typography>
                             <Typography variant="inherit">
-                              {formatBytesToGB(data.freeStorageSpaceInBytes || 0)} free of{' '}
+                              {formatBytesToGB(
+                                data.freeStorageSpaceInBytes || 0
+                              )}{' '}
+                              free of{' '}
                               {formatBytesToGB(data.totalStorageSpaceInBytes)}
                               {data.freeStorageSpaceInBytes &&
                                 data.totalStorageSpaceInBytes &&
                                 ` (${Math.round(
-                                  ((data.totalStorageSpaceInBytes - data.freeStorageSpaceInBytes) /
+                                  ((data.totalStorageSpaceInBytes -
+                                    data.freeStorageSpaceInBytes) /
                                     data.totalStorageSpaceInBytes) *
                                     100
                                 )}% used)`}

@@ -1,88 +1,89 @@
-﻿import React, { useState, useEffect } from "react";
-import { Button, Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useFormState } from "react-hook-form";
-import { AddHomeWork } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormDomainSelector } from "./CippFormDomainSelector";
-import { CippApiResults } from "./CippApiResults";
-import { useSettings } from "../../hooks/use-settings";
-import { ApiPostCall } from "../../api/ApiCall";
+﻿import React, { useState, useEffect } from 'react'
+import { Button, Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useFormState } from 'react-hook-form'
+import { AddHomeWork } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippFormDomainSelector } from './CippFormDomainSelector'
+import { CippApiResults } from './CippApiResults'
+import { useSettings } from '../../hooks/use-settings'
+import { ApiPostCall } from '../../api/ApiCall'
 
 export const CippAddRoomDrawer = ({
-  buttonText = "Add Room Mailbox",
+  buttonText = 'Add Room Mailbox',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const tenantDomain = useSettings().currentTenant;
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const tenantDomain = useSettings().currentTenant
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      displayName: "",
-      username: "",
+      displayName: '',
+      username: '',
       domain: null,
-      resourceCapacity: "",
+      resourceCapacity: '',
     },
-  });
+  })
 
-  const { isValid } = useFormState({ control: formControl.control });
+  const { isValid } = useFormState({ control: formControl.control })
 
   const addRoom = ApiPostCall({
     urlFromData: true,
     relatedQueryKeys: [`RoomMailbox-${tenantDomain}`],
-  });
+  })
 
   // Reset form fields on successful creation
   useEffect(() => {
     if (addRoom.isSuccess) {
       formControl.reset({
-        displayName: "",
-        username: "",
+        displayName: '',
+        username: '',
         domain: null,
-        resourceCapacity: "",
-      });
+        resourceCapacity: '',
+      })
     }
-  }, [addRoom.isSuccess, formControl]);
+  }, [addRoom.isSuccess, formControl])
 
   const handleSubmit = () => {
-    formControl.trigger();
+    formControl.trigger()
     // Check if the form is valid before proceeding
     if (!isValid) {
-      return;
+      return
     }
 
-    const formData = formControl.getValues();
+    const formData = formControl.getValues()
     const shippedValues = {
       tenantID: tenantDomain,
       domain: formData.domain?.value,
       displayName: formData.displayName.trim(),
       username: formData.username.trim(),
-      userPrincipalName: formData.username.trim() + "@" + (formData.domain?.value || "").trim(),
-    };
+      userPrincipalName:
+        formData.username.trim() + '@' + (formData.domain?.value || '').trim(),
+    }
 
-    if (formData.resourceCapacity && formData.resourceCapacity.trim() !== "") {
-      shippedValues.resourceCapacity = formData.resourceCapacity.trim();
+    if (formData.resourceCapacity && formData.resourceCapacity.trim() !== '') {
+      shippedValues.resourceCapacity = formData.resourceCapacity.trim()
     }
 
     addRoom.mutate({
-      url: "/api/AddRoomMailbox",
+      url: '/api/AddRoomMailbox',
       data: shippedValues,
       relatedQueryKeys: [`RoomMailbox-${tenantDomain}`],
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
-      displayName: "",
-      username: "",
+      displayName: '',
+      username: '',
       domain: null,
-      resourceCapacity: "",
-    });
-  };
+      resourceCapacity: '',
+    })
+  }
 
   return (
     <>
@@ -99,7 +100,13 @@ export const CippAddRoomDrawer = ({
         onClose={handleCloseDrawer}
         size="md"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -107,10 +114,10 @@ export const CippAddRoomDrawer = ({
               disabled={addRoom.isLoading || !isValid}
             >
               {addRoom.isLoading
-                ? "Creating..."
+                ? 'Creating...'
                 : addRoom.isSuccess
-                ? "Create Another"
-                : "Create Room Mailbox"}
+                  ? 'Create Another'
+                  : 'Create Room Mailbox'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -126,11 +133,11 @@ export const CippAddRoomDrawer = ({
               label="Display Name"
               name="displayName"
               formControl={formControl}
-              validators={{ required: "Display Name is required" }}
+              validators={{ required: 'Display Name is required' }}
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Username and Domain */}
           <Grid size={{ md: 6, xs: 12 }}>
@@ -139,7 +146,7 @@ export const CippAddRoomDrawer = ({
               label="Username"
               name="username"
               formControl={formControl}
-              validators={{ required: "Username is required" }}
+              validators={{ required: 'Username is required' }}
             />
           </Grid>
           <Grid size={{ md: 6, xs: 12 }}>
@@ -147,11 +154,11 @@ export const CippAddRoomDrawer = ({
               formControl={formControl}
               name="domain"
               label="Primary Domain name"
-              validators={{ required: "Please select a domain" }}
+              validators={{ required: 'Please select a domain' }}
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Resource Capacity (Optional) */}
           <Grid size={{ xs: 12 }}>
@@ -167,5 +174,5 @@ export const CippAddRoomDrawer = ({
         </Grid>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

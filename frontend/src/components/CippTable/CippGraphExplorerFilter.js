@@ -21,7 +21,10 @@ import { CippCodeBlock } from '../CippComponents/CippCodeBlock'
 import CippSchedulerForm from '../CippFormPages/CippSchedulerForm'
 import defaultPresets from '../../data/GraphExplorerPresets'
 import { Grid, Stack } from '@mui/system'
-import { GroupHeader, GroupItems } from '../CippComponents/CippAutocompleteGrouping'
+import {
+  GroupHeader,
+  GroupItems,
+} from '../CippComponents/CippAutocompleteGrouping'
 
 const CippGraphExplorerFilter = ({
   endpointFilter = '',
@@ -110,7 +113,10 @@ const CippGraphExplorerFilter = ({
   // updates the subscribed Controller mid-render ("Cannot update a component while rendering
   // a different component"). It fires twice on mobile, where the table remounts as cards.
   useEffect(() => {
-    if (endpointFilter && formControl.getValues('endpoint') !== endpointFilter) {
+    if (
+      endpointFilter &&
+      formControl.getValues('endpoint') !== endpointFilter
+    ) {
       formControl.setValue('endpoint', endpointFilter)
     }
   }, [endpointFilter, formControl])
@@ -131,7 +137,8 @@ const CippGraphExplorerFilter = ({
       .filter(
         (item) =>
           !endpointFilter ||
-          normalizeEndpoint(item.params.endpoint) === normalizeEndpoint(endpointFilter)
+          normalizeEndpoint(item.params.endpoint) ===
+            normalizeEndpoint(endpointFilter)
       )
       .forEach((item) => {
         presetOptionList.push({
@@ -173,7 +180,11 @@ const CippGraphExplorerFilter = ({
   }, [currentEndpoint, debouncedRefetch])
 
   const savePresetApi = ApiPostCall({
-    relatedQueryKeys: ['ListGraphExplorerPresets*', 'ListGraphRequest', ...relatedQueryKeys],
+    relatedQueryKeys: [
+      'ListGraphExplorerPresets*',
+      'ListGraphRequest',
+      ...relatedQueryKeys,
+    ],
   })
 
   // Save preset function
@@ -195,7 +206,10 @@ const CippGraphExplorerFilter = ({
     })
   }
 
-  const selectedPresets = useWatch({ control: presetControl.control, name: 'reportTemplate' })
+  const selectedPresets = useWatch({
+    control: presetControl.control,
+    name: 'reportTemplate',
+  })
 
   // Sync with parent component's selected preset
   // Handles two shapes:
@@ -225,7 +239,12 @@ const CippGraphExplorerFilter = ({
       presetControl.setValue('reportTemplate', option)
     }
     // selectedPreset?.value covers the autocomplete option shape (no id/filterName keys)
-  }, [selectedPreset?.id, selectedPreset?.filterName, selectedPreset?.value, presetOptions])
+  }, [
+    selectedPreset?.id,
+    selectedPreset?.filterName,
+    selectedPreset?.value,
+    presetOptions,
+  ])
 
   useEffect(() => {
     if (selectedPresets?.addedFields?.params) {
@@ -245,7 +264,9 @@ const CippGraphExplorerFilter = ({
           typeof item === 'string' ? { label: item, value: item } : item
         )
       } else if (typeof params.$select === 'string' && params.$select !== '') {
-        params.$select = params.$select.split(',').map((item) => ({ label: item, value: item }))
+        params.$select = params.$select
+          .split(',')
+          .map((item) => ({ label: item, value: item }))
       } else {
         params.$select = []
       }
@@ -253,7 +274,9 @@ const CippGraphExplorerFilter = ({
       // Convert version string to autocomplete object format, default to beta if not present
       if (params.version) {
         const versionValue =
-          typeof params.version === 'string' ? params.version : params.version.value
+          typeof params.version === 'string'
+            ? params.version
+            : params.version.value
         params.version = { label: versionValue, value: versionValue }
       } else {
         params.version = { label: 'beta', value: 'beta' }
@@ -463,7 +486,8 @@ const CippGraphExplorerFilter = ({
           Import / Export Graph Explorer Preset
         </Typography>
         <Typography variant="body2" sx={{ mb: 2 }}>
-          Copy the JSON below to export your preset, or paste a preset JSON to import it.
+          Copy the JSON below to export your preset, or paste a preset JSON to
+          import it.
         </Typography>
         <CippCodeBlock
           type="editor"
@@ -486,7 +510,13 @@ const CippGraphExplorerFilter = ({
         <CippApiResults apiObject={savePresetApi} />
       </>
     ))
-  }, [editorValues, savePresetApi.isPending, formControl, selectedPresets, watchedValues])
+  }, [
+    editorValues,
+    savePresetApi.isPending,
+    formControl,
+    selectedPresets,
+    watchedValues,
+  ])
 
   const handleImport = () => {
     setOffCanvasOpen(true) // Open the offCanvas, the content will be updated by useEffect
@@ -533,7 +563,9 @@ const CippGraphExplorerFilter = ({
     })
 
     if (onPresetChange) {
-      const presetName = lastPresetTitle ? `Graph Explorer - ${lastPresetTitle}` : null
+      const presetName = lastPresetTitle
+        ? `Graph Explorer - ${lastPresetTitle}`
+        : null
       if (presetName) onPresetChange(presetName)
     }
     onSubmitFilter(values)
@@ -636,7 +668,10 @@ const CippGraphExplorerFilter = ({
               options={
                 (propertyList.isSuccess &&
                   propertyList?.data?.Results?.length > 0 &&
-                  propertyList?.data?.Results?.map((item) => ({ label: item, value: item }))) || [
+                  propertyList?.data?.Results?.map((item) => ({
+                    label: item,
+                    value: item,
+                  }))) || [
                   {
                     label: 'No properties found, check your endpoint',
                     value: '',
@@ -798,7 +833,10 @@ const CippGraphExplorerFilter = ({
                 <Stack
                   spacing={1.5}
                   direction={{ xs: 'column', md: 'row' }}
-                  sx={{ display: 'flex', alignItems: { xs: 'stretch', md: 'center' } }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: { xs: 'stretch', md: 'center' },
+                  }}
                 >
                   <Button
                     variant="contained"
@@ -883,7 +921,9 @@ const CippGraphExplorerFilter = ({
                     <Button
                       variant="outlined"
                       onClick={handleSavePreset}
-                      startIcon={<>{presetOwner ? <SaveIcon /> : <CopyAll />}</>}
+                      startIcon={
+                        <>{presetOwner ? <SaveIcon /> : <CopyAll />}</>
+                      }
                       fullWidth
                     >
                       {presetOwner || !selectedPreset ? 'Save' : 'Copy'} Preset
@@ -913,7 +953,10 @@ const CippGraphExplorerFilter = ({
                       Import/Export
                     </Button>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <Grid
+                    size={{ xs: 12, sm: 6 }}
+                    sx={{ display: 'flex', justifyContent: 'center' }}
+                  >
                     <CippFormComponent
                       name="IsShared"
                       type="switch"

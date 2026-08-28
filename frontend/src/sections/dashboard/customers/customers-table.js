@@ -1,8 +1,8 @@
-import PropTypes from 'prop-types';
-import NextLink from 'next/link';
-import { format } from 'date-fns';
-import StarOutlineIcon from '@heroicons/react/24/outline/StarIcon';
-import StarSolidIcon from '@heroicons/react/24/solid/StarIcon';
+import PropTypes from 'prop-types'
+import NextLink from 'next/link'
+import { format } from 'date-fns'
+import StarOutlineIcon from '@heroicons/react/24/outline/StarIcon'
+import StarSolidIcon from '@heroicons/react/24/solid/StarIcon'
 import {
   Avatar,
   Box,
@@ -18,50 +18,50 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TableSortLabel
-} from '@mui/material';
-import { Pagination } from '../../../components/pagination';
-import { ResourceError } from '../../../components/resource-error';
-import { ResourceUnavailable } from '../../../components/resource-unavailable';
-import { Scrollbar } from '../../../components/scrollbar';
-import { paths } from '../../../paths';
-import { CustomersTableMenu } from './customers-table-menu';
+  TableSortLabel,
+} from '@mui/material'
+import { Pagination } from '../../../components/pagination'
+import { ResourceError } from '../../../components/resource-error'
+import { ResourceUnavailable } from '../../../components/resource-unavailable'
+import { Scrollbar } from '../../../components/scrollbar'
+import { paths } from '../../../paths'
+import { CustomersTableMenu } from './customers-table-menu'
 
 const columns = [
   {
     id: 'name',
     disablePadding: true,
     label: 'Name',
-    sortable: true
+    sortable: true,
   },
   {
     id: 'phone',
     label: 'Phone',
-    sortable: true
+    sortable: true,
   },
   {
     id: 'email',
     label: 'Email',
-    sortable: true
+    sortable: true,
   },
   {
     id: 'createdAt',
     label: 'Created',
-    sortable: true
-  }
-];
+    sortable: true,
+  },
+]
 
 const getResourcesState = (params) => {
   if (params.isLoading) {
-    return 'loading';
+    return 'loading'
   }
 
   if (params.error) {
-    return 'error';
+    return 'error'
   }
 
-  return params.items.length > 0 ? 'available' : 'unavailable';
-};
+  return params.items.length > 0 ? 'available' : 'unavailable'
+}
 
 export const CustomersTable = (props) => {
   const {
@@ -79,24 +79,24 @@ export const CustomersTable = (props) => {
     rowsPerPage = 0,
     selected = [],
     sortBy = 'createdAt',
-    sortDir = 'desc'
-  } = props;
+    sortDir = 'desc',
+  } = props
 
   const resourcesState = getResourcesState({
     isLoading,
     error,
-    items
-  });
+    items,
+  })
 
-  const selectedSome = (selected.length > 0) && (selected.length < items.length);
-  const selectedAll = (items.length > 0) && (selected.length === items.length);
+  const selectedSome = selected.length > 0 && selected.length < items.length
+  const selectedAll = items.length > 0 && selected.length === items.length
 
   return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        flexGrow: 1
+        flexGrow: 1,
       }}
     >
       <Scrollbar>
@@ -110,9 +110,9 @@ export const CustomersTable = (props) => {
                   indeterminate={selectedSome}
                   onChange={(event) => {
                     if (event.target.checked) {
-                      onSelectAll?.();
+                      onSelectAll?.()
                     } else {
-                      onDeselectAll?.();
+                      onDeselectAll?.()
                     }
                   }}
                 />
@@ -123,18 +123,18 @@ export const CustomersTable = (props) => {
                   key={column.id}
                   padding={column.disablePadding ? 'none' : 'normal'}
                 >
-                  {column.sortable
-                    ? (
-                      <TableSortLabel
-                        active={sortBy === column.id}
-                        direction={sortBy === column.id ? sortDir : 'asc'}
-                        disabled={!(resourcesState === 'available')}
-                        onClick={() => onSortChange?.(column.id)}
-                      >
-                        {column.label}
-                      </TableSortLabel>
-                    )
-                    : column.label}
+                  {column.sortable ? (
+                    <TableSortLabel
+                      active={sortBy === column.id}
+                      direction={sortBy === column.id ? sortDir : 'asc'}
+                      disabled={!(resourcesState === 'available')}
+                      onClick={() => onSortChange?.(column.id)}
+                    >
+                      {column.label}
+                    </TableSortLabel>
+                  ) : (
+                    column.label
+                  )}
                 </TableCell>
               ))}
               <TableCell />
@@ -143,23 +143,21 @@ export const CustomersTable = (props) => {
           {resourcesState === 'available' && (
             <TableBody>
               {items.map((customer) => {
-                const isSelected = !!selected.find((customerId) => customerId === customer.id);
-                const createdAt = format(customer.createdAt, 'dd/MM/yyyy HH:mm');
+                const isSelected = !!selected.find(
+                  (customerId) => customerId === customer.id
+                )
+                const createdAt = format(customer.createdAt, 'dd/MM/yyyy HH:mm')
 
                 return (
-                  <TableRow
-                    hover
-                    key={customer.id}
-                    selected={isSelected}
-                  >
+                  <TableRow hover key={customer.id} selected={isSelected}>
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={isSelected}
                         onChange={(event) => {
                           if (event.target.checked) {
-                            onSelectOne?.(customer.id);
+                            onSelectOne?.(customer.id)
                           } else {
-                            onDeselectOne?.(customer.id);
+                            onDeselectOne?.(customer.id)
                           }
                         }}
                       />
@@ -168,37 +166,34 @@ export const CustomersTable = (props) => {
                       <Box
                         sx={{
                           display: 'flex',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
                         }}
                       >
-                        <IconButton
-                          onClick={() => { }}
-                          size="small"
-                        >
+                        <IconButton onClick={() => {}} size="small">
                           <SvgIcon
                             fontSize="small"
                             sx={{
                               color: customer.isFavorite
                                 ? 'warning.main'
-                                : 'action.disabled'
+                                : 'action.disabled',
                             }}
                           >
-                            {customer.isFavorite ? <StarSolidIcon /> : <StarOutlineIcon />}
+                            {customer.isFavorite ? (
+                              <StarSolidIcon />
+                            ) : (
+                              <StarOutlineIcon />
+                            )}
                           </SvgIcon>
                         </IconButton>
                       </Box>
                     </TableCell>
                     <TableCell padding="none">
-                      <Stack
-                        alignItems="center"
-                        direction="row"
-                        spacing={1}
-                      >
+                      <Stack alignItems="center" direction="row" spacing={1}>
                         <Avatar
                           src={customer.avatar}
                           sx={{
                             height: 36,
-                            width: 36
+                            width: 36,
                           }}
                           variant="rounded"
                         />
@@ -213,20 +208,14 @@ export const CustomersTable = (props) => {
                         </Link>
                       </Stack>
                     </TableCell>
-                    <TableCell>
-                      {customer.phone}
-                    </TableCell>
-                    <TableCell>
-                      {customer.email}
-                    </TableCell>
-                    <TableCell>
-                      {createdAt}
-                    </TableCell>
+                    <TableCell>{customer.phone}</TableCell>
+                    <TableCell>{customer.email}</TableCell>
+                    <TableCell>{createdAt}</TableCell>
                     <TableCell align="right">
                       <CustomersTableMenu />
                     </TableCell>
                   </TableRow>
-                );
+                )
               })}
             </TableBody>
           )}
@@ -255,7 +244,7 @@ export const CustomersTable = (props) => {
           message="Something went wrong"
           sx={{
             flexGrow: 1,
-            m: 2
+            m: 2,
           }}
         />
       )}
@@ -264,13 +253,13 @@ export const CustomersTable = (props) => {
           message="Resources are not available"
           sx={{
             flexGrow: 1,
-            m: 2
+            m: 2,
           }}
         />
       )}
     </Box>
-  );
-};
+  )
+}
 
 CustomersTable.propTypes = {
   count: PropTypes.number,
@@ -287,5 +276,5 @@ CustomersTable.propTypes = {
   rowsPerPage: PropTypes.number,
   selected: PropTypes.array,
   sortBy: PropTypes.string,
-  sortDir: PropTypes.oneOf(['asc', 'desc'])
-};
+  sortDir: PropTypes.oneOf(['asc', 'desc']),
+}

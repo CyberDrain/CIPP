@@ -1,18 +1,18 @@
-import { useEffect } from "react";
-import "@mui/material";
-import { Grid } from "@mui/system";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { CippFormCondition } from "../CippComponents/CippFormCondition";
-import { CippFormLicenseSelector } from "../CippComponents/CippFormLicenseSelector";
+import { useEffect } from 'react'
+import '@mui/material'
+import { Grid } from '@mui/system'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { CippFormCondition } from '../CippComponents/CippFormCondition'
+import { CippFormLicenseSelector } from '../CippComponents/CippFormLicenseSelector'
 
 const CippAddGroupTemplateForm = (props) => {
-  const { formControl } = props;
+  const { formControl } = props
 
   // Debug the current form values, especially groupType
   useEffect(() => {
-    const subscription = formControl.watch((value, { name, type }) => {});
-    return () => subscription.unsubscribe();
-  }, [formControl]);
+    const subscription = formControl.watch((value, { name, type }) => {})
+    return () => subscription.unsubscribe()
+  }, [formControl])
 
   return (
     <Grid container spacing={2}>
@@ -55,16 +55,18 @@ const CippAddGroupTemplateForm = (props) => {
           name="groupType"
           formControl={formControl}
           options={[
-            { label: "Azure Role Group", value: "azurerole" },
-            { label: "Security Group", value: "generic" },
-            { label: "Microsoft 365 Group", value: "m365" },
-            { label: "Dynamic Group", value: "dynamic" },
-            { label: "Distribution List", value: "distribution" },
-            { label: "Mail Enabled Security Group", value: "security" },
+            { label: 'Azure Role Group', value: 'azurerole' },
+            { label: 'Security Group', value: 'generic' },
+            { label: 'Microsoft 365 Group', value: 'm365' },
+            { label: 'Dynamic Group', value: 'dynamic' },
+            { label: 'Distribution List', value: 'distribution' },
+            { label: 'Mail Enabled Security Group', value: 'security' },
           ]}
         />
         {/* Debug output */}
-        <div style={{ display: "none" }}>Current groupType: {formControl.watch("groupType")}</div>
+        <div style={{ display: 'none' }}>
+          Current groupType: {formControl.watch('groupType')}
+        </div>
       </Grid>
       <CippFormCondition
         formControl={formControl}
@@ -85,7 +87,7 @@ const CippAddGroupTemplateForm = (props) => {
         formControl={formControl}
         field="groupType"
         compareType="isOneOf"
-        compareValue={["distribution", "dynamicDistribution"]}
+        compareValue={['distribution', 'dynamicDistribution']}
       >
         <Grid size={{ xs: 12 }}>
           <CippFormComponent
@@ -100,7 +102,7 @@ const CippAddGroupTemplateForm = (props) => {
         formControl={formControl}
         field="groupType"
         compareType="isOneOf"
-        compareValue={["distribution", "security"]}
+        compareValue={['distribution', 'security']}
       >
         <Grid size={{ xs: 12 }}>
           <CippFormComponent
@@ -158,7 +160,7 @@ const CippAddGroupTemplateForm = (props) => {
         </Grid>
       </CippFormCondition>
     </Grid>
-  );
-};
+  )
+}
 
-export default CippAddGroupTemplateForm;
+export default CippAddGroupTemplateForm

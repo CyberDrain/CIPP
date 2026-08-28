@@ -13,8 +13,14 @@ import { useSettings } from '../../hooks/use-settings'
 import { CippFormTenantSelector } from './CippFormTenantSelector'
 
 const assignmentFilterTypeOptions = [
-  { label: 'Include - Apply policy to devices matching filter', value: 'include' },
-  { label: 'Exclude - Apply policy to devices NOT matching filter', value: 'exclude' },
+  {
+    label: 'Include - Apply policy to devices matching filter',
+    value: 'include',
+  },
+  {
+    label: 'Exclude - Apply policy to devices NOT matching filter',
+    value: 'exclude',
+  },
 ]
 
 // Reserved replacement variables handled server-side by Get-CIPPTextReplacement.
@@ -46,7 +52,7 @@ const reservedReplacementVariables = new Set(
     'cippurl',
     'defaultdomain',
     'organizationid',
-  ].map((variable) => variable.toLowerCase()),
+  ].map((variable) => variable.toLowerCase())
 )
 
 export const CippPolicyDeployDrawer = ({
@@ -60,16 +66,27 @@ export const CippPolicyDeployDrawer = ({
   })
   const { isValid } = useFormState({ control: formControl.control })
   const tenantFilter = useSettings()?.currentTenant
-  const selectedTenants = useWatch({ control: formControl.control, name: 'tenantFilter' }) || []
-  const CATemplates = ApiGetCall({ url: '/api/ListIntuneTemplates', queryKey: 'IntuneTemplates' })
+  const selectedTenants =
+    useWatch({ control: formControl.control, name: 'tenantFilter' }) || []
+  const CATemplates = ApiGetCall({
+    url: '/api/ListIntuneTemplates',
+    queryKey: 'IntuneTemplates',
+  })
   const [JSONData, setJSONData] = useState()
-  const watcher = useWatch({ control: formControl.control, name: 'TemplateList' })
+  const watcher = useWatch({
+    control: formControl.control,
+    name: 'TemplateList',
+  })
   const jsonWatch = useWatch({ control: formControl.control, name: 'RAWJson' })
   useEffect(() => {
     if (CATemplates.isSuccess && watcher?.value) {
-      const template = CATemplates.data?.find((template) => template.GUID === watcher.value)
+      const template = CATemplates.data?.find(
+        (template) => template.GUID === watcher.value
+      )
       if (template) {
-        const jsonTemplate = template.RAWJson ? JSON.parse(template.RAWJson) : null
+        const jsonTemplate = template.RAWJson
+          ? JSON.parse(template.RAWJson)
+          : null
         setJSONData(jsonTemplate)
         formControl.setValue('RAWJson', template.RAWJson)
         formControl.setValue('displayName', template.Displayname)
@@ -211,7 +228,10 @@ export const CippPolicyDeployDrawer = ({
                 { label: 'Do not assign', value: 'On' },
                 { label: 'Assign to all users', value: 'allLicensedUsers' },
                 { label: 'Assign to all devices', value: 'AllDevices' },
-                { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                {
+                  label: 'Assign to all users and devices',
+                  value: 'AllDevicesAndUsers',
+                },
                 { label: 'Assign to Custom Group', value: 'customGroup' },
               ]}
               formControl={formControl}
@@ -252,7 +272,12 @@ export const CippPolicyDeployDrawer = ({
             formControl={formControl}
             field="AssignTo"
             compareType="isOneOf"
-            compareValue={['allLicensedUsers', 'AllDevices', 'AllDevicesAndUsers', 'customGroup']}
+            compareValue={[
+              'allLicensedUsers',
+              'AllDevices',
+              'AllDevicesAndUsers',
+              'customGroup',
+            ]}
           >
             <Grid size={{ xs: 12 }}>
               <CippFormComponent
@@ -290,11 +315,19 @@ export const CippPolicyDeployDrawer = ({
           >
             {(() => {
               const rawJson = jsonWatch ? jsonWatch : ''
-              const placeholderMatches = [...rawJson.matchAll(/%(\w+)%/g)].map((m) => m[1])
-              const uniquePlaceholders = Array.from(new Set(placeholderMatches)).filter(
-                (placeholder) => !reservedReplacementVariables.has(placeholder.toLowerCase()),
+              const placeholderMatches = [...rawJson.matchAll(/%(\w+)%/g)].map(
+                (m) => m[1]
               )
-              if (uniquePlaceholders.length === 0 || selectedTenants.length === 0) {
+              const uniquePlaceholders = Array.from(
+                new Set(placeholderMatches)
+              ).filter(
+                (placeholder) =>
+                  !reservedReplacementVariables.has(placeholder.toLowerCase())
+              )
+              if (
+                uniquePlaceholders.length === 0 ||
+                selectedTenants.length === 0
+              ) {
                 return null
               }
               return uniquePlaceholders.map((placeholder) => (
@@ -314,7 +347,9 @@ export const CippPolicyDeployDrawer = ({
                       name={`replacemap.${tenant.value}.%${placeholder}%`}
                       label={`Value for '${placeholder}' in Tenant '${tenant.addedFields.defaultDomainName}'`}
                       formControl={formControl}
-                      validators={{ required: `Please provide a value for ${placeholder}` }}
+                      validators={{
+                        required: `Please provide a value for ${placeholder}`,
+                      }}
                       sx={{ m: 1 }}
                     />
                   ))}

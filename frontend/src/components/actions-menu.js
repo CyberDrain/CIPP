@@ -1,17 +1,17 @@
-import ChevronDownIcon from "@heroicons/react/24/outline/ChevronDownIcon";
-import PropTypes from "prop-types";
-import { Button, ListItemText, Menu, MenuItem, SvgIcon } from "@mui/material";
-import { usePopover } from "../hooks/use-popover";
-import { useActionsDispatch } from "../hooks/use-actions-dispatch";
+import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon'
+import PropTypes from 'prop-types'
+import { Button, ListItemText, Menu, MenuItem, SvgIcon } from '@mui/material'
+import { usePopover } from '../hooks/use-popover'
+import { useActionsDispatch } from '../hooks/use-actions-dispatch'
 
 export const ActionsMenu = (props) => {
-  const { actions = [], label = "Actions", data, queryKeys, ...other } = props;
-  const popover = usePopover();
+  const { actions = [], label = 'Actions', data, queryKeys, ...other } = props
+  const popover = usePopover()
   const { visibleActions, isDisabled, dispatch, dialog } = useActionsDispatch({
     actions,
     data,
     queryKeys,
-  });
+  })
 
   return (
     <>
@@ -26,7 +26,7 @@ export const ActionsMenu = (props) => {
         variant="outlined"
         sx={{
           flexShrink: 0,
-          whiteSpace: "nowrap",
+          whiteSpace: 'nowrap',
         }}
       >
         {label}
@@ -34,8 +34,8 @@ export const ActionsMenu = (props) => {
       <Menu
         anchorEl={popover.anchorRef.current}
         anchorOrigin={{
-          horizontal: "right",
-          vertical: "bottom",
+          horizontal: 'right',
+          vertical: 'bottom',
         }}
         MenuListProps={{
           dense: true,
@@ -44,8 +44,8 @@ export const ActionsMenu = (props) => {
         onClose={popover.handleClose}
         open={popover.open}
         transformOrigin={{
-          horizontal: "right",
-          vertical: "top",
+          horizontal: 'right',
+          vertical: 'top',
         }}
       >
         {visibleActions.map((action, index) => (
@@ -53,11 +53,11 @@ export const ActionsMenu = (props) => {
             disabled={isDisabled(action)}
             key={index}
             onClick={() => {
-              dispatch(action);
-              popover.handleClose();
+              dispatch(action)
+              popover.handleClose()
             }}
           >
-            <SvgIcon fontSize="small" sx={{ minWidth: "30px" }}>
+            <SvgIcon fontSize="small" sx={{ minWidth: '30px' }}>
               {action.icon}
             </SvgIcon>
             <ListItemText>{action.label}</ListItemText>
@@ -66,10 +66,10 @@ export const ActionsMenu = (props) => {
       </Menu>
       {dialog}
     </>
-  );
-};
+  )
+}
 
 ActionsMenu.propTypes = {
   actions: PropTypes.array,
   label: PropTypes.string,
-};
+}

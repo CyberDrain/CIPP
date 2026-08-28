@@ -1,89 +1,90 @@
-import { useEffect, useState } from "react";
-import { Alert, Stack, Box, Link } from "@mui/material";
-import { CIPPM365OAuthButton } from "../CippComponents/CIPPM365OAuthButton";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { ApiPostCall } from "../../api/ApiCall";
-import { CippWizardStepButtons } from "./CippWizardStepButtons";
+import { useEffect, useState } from 'react'
+import { Alert, Stack, Box, Link } from '@mui/material'
+import { CIPPM365OAuthButton } from '../CippComponents/CIPPM365OAuthButton'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { ApiPostCall } from '../../api/ApiCall'
+import { CippWizardStepButtons } from './CippWizardStepButtons'
 
 export const CippSAMDeploy = (props) => {
-  const { formControl, currentStep, onPreviousStep, onNextStep } = props;
+  const { formControl, currentStep, onPreviousStep, onNextStep } = props
   const [authStatus, setAuthStatus] = useState({
     success: false,
     error: null,
     loading: false,
-  });
+  })
 
   // Block next step until SAM app is created
-  formControl.register("SAMWizard", {
+  formControl.register('SAMWizard', {
     required: true,
-  });
+  })
 
   // Set SAMWizard = true if auth is successful
   useEffect(() => {
     if (authStatus.success) {
-      formControl.setValue("SAMWizard", true);
-      formControl.trigger("SAMWizard");
+      formControl.setValue('SAMWizard', true)
+      formControl.trigger('SAMWizard')
     }
-  }, [authStatus, formControl]);
+  }, [authStatus, formControl])
 
-  const createSamApp = ApiPostCall({ urlfromdata: true });
+  const createSamApp = ApiPostCall({ urlfromdata: true })
 
   const handleAuthSuccess = (tokenData) => {
     setAuthStatus({
       success: false,
       error: null,
       loading: true,
-    });
+    })
 
     createSamApp.mutate({
-      url: "/api/ExecCreateSamApp",
+      url: '/api/ExecCreateSamApp',
       data: { access_token: tokenData.accessToken },
-    });
-  };
+    })
+  }
 
   const handleAuthError = (error) => {
     setAuthStatus({
       success: false,
-      error: error.errorMessage || "Authentication failed",
+      error: error.errorMessage || 'Authentication failed',
       loading: false,
-    });
-  };
+    })
+  }
 
   useEffect(() => {
     if (createSamApp.isSuccess && authStatus.loading && createSamApp.data) {
-      const data = createSamApp.data?.data;
-      if (data.severity === "error") {
+      const data = createSamApp.data?.data
+      if (data.severity === 'error') {
         setAuthStatus({
           success: false,
-          error: data.message || "Failed to create SAM application",
+          error: data.message || 'Failed to create SAM application',
           loading: false,
-        });
-      } else if (data.severity === "success") {
+        })
+      } else if (data.severity === 'success') {
         setAuthStatus({
           success: true,
           error: null,
           loading: false,
-        });
+        })
       }
     }
-  }, [createSamApp, authStatus]);
+  }, [createSamApp, authStatus])
 
   useEffect(() => {
     if (createSamApp.isError && authStatus.loading) {
       setAuthStatus({
         success: false,
-        error: "An error occurred while creating the SAM application",
+        error: 'An error occurred while creating the SAM application',
         loading: false,
-      });
+      })
     }
-  }, [createSamApp, authStatus]);
+  }, [createSamApp, authStatus])
 
   return (
     <Stack spacing={2}>
       <Alert severity="info">
         To run this setup you will need the following prerequisites:
         <li>
-          A CIPP Service Account. For more information on how to create a service account, click{" "}
+          A CIPP Service Account. For more information on how to create a
+          service account, click{' '}
           <Link
             href="https://docs.cipp.app/setup/installation/creating-the-cipp-service-account-gdap-ready"
             rel="noreferrer"
@@ -97,18 +98,18 @@ export const CippSAMDeploy = (props) => {
           <li>User Administrator</li>
         </li>
         <li>
-          Multi-factor authentication enabled for the CIPP Service Account, with no trusted
-          locations or other exclusions.
+          Multi-factor authentication enabled for the CIPP Service Account, with
+          no trusted locations or other exclusions.
         </li>
         <li>
-          Device code sign-in permitted in your partner tenant. Security defaults and Conditional
-          Access authentication flow policies can block it, which will stop this step from
-          completing.
+          Device code sign-in permitted in your partner tenant. Security
+          defaults and Conditional Access authentication flow policies can block
+          it, which will stop this step from completing.
         </li>
       </Alert>
       <Alert severity="info">
-        This step only creates the CIPP-SAM application registration. The token CIPP runs on is
-        created by the sign-in on the next step.
+        This step only creates the CIPP-SAM application registration. The token
+        CIPP runs on is created by the sign-in on the next step.
       </Alert>
 
       {authStatus.error && (
@@ -116,7 +117,7 @@ export const CippSAMDeploy = (props) => {
           {authStatus.error}
         </Alert>
       )}
-      <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 2 }}>
         <Stack direction="row" spacing={2} alignItems="center">
           <CIPPM365OAuthButton
             onAuthSuccess={handleAuthSuccess}
@@ -139,7 +140,7 @@ export const CippSAMDeploy = (props) => {
         noSubmitButton={true}
       />
     </Stack>
-  );
-};
+  )
+}
 
-export default CippSAMDeploy;
+export default CippSAMDeploy

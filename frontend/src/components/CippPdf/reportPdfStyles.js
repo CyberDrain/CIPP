@@ -1,5 +1,10 @@
 import { StyleSheet } from '@react-pdf/renderer'
-import { asReportTheme, DEFAULT_BRAND_COLOUR, REPORT_COLOURS, withAlpha } from './reportTheme'
+import {
+  asReportTheme,
+  DEFAULT_BRAND_COLOUR,
+  REPORT_COLOURS,
+  withAlpha,
+} from './reportTheme'
 
 // The @react-pdf/renderer style system shared by CIPP's client-facing PDF reports: a cover page,
 // branded content pages, hero/chapter dividers, stat cards, progress bars, callout boxes, data
@@ -30,8 +35,20 @@ export const DEFAULT_PAGE_SETUP = { size: 'A4', orientation: 'portrait' }
 
 // Paper widths in points, matching the names above. Needed because a table has to know how wide its
 // columns actually are to wrap a long value without a hyphen — see measureText.js.
-const PAGE_WIDTHS = { A4: 595.28, LETTER: 612, LEGAL: 612, A3: 841.89, A5: 419.53 }
-const PAGE_HEIGHTS = { A4: 841.89, LETTER: 792, LEGAL: 1008, A3: 1190.55, A5: 595.28 }
+const PAGE_WIDTHS = {
+  A4: 595.28,
+  LETTER: 612,
+  LEGAL: 612,
+  A3: 841.89,
+  A5: 419.53,
+}
+const PAGE_HEIGHTS = {
+  A4: 841.89,
+  LETTER: 792,
+  LEGAL: 1008,
+  A3: 1190.55,
+  A5: 595.28,
+}
 
 /**
  * The margin down each side of a content page.
@@ -57,7 +74,10 @@ export const TABLE_ROW_PADDING = 12
  * Width in points available to a table on the page — paper, less the page padding on both sides,
  * less the row padding on both sides.
  */
-export const contentWidth = (size = DEFAULT_PAGE_SETUP.size, orientation = 'portrait') => {
+export const contentWidth = (
+  size = DEFAULT_PAGE_SETUP.size,
+  orientation = 'portrait'
+) => {
   const key = String(size).toUpperCase()
   const width = PAGE_WIDTHS[key] ?? PAGE_WIDTHS.A4
   const height = PAGE_HEIGHTS[key] ?? PAGE_HEIGHTS.A4
@@ -136,7 +156,12 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
       bottom: 0,
       opacity: 0.5,
     },
-    coverHero: { flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start', paddingTop: 24 },
+    coverHero: {
+      flex: 1,
+      justifyContent: 'flex-start',
+      alignItems: 'flex-start',
+      paddingTop: 24,
+    },
     coverLabel: {
       backgroundColor: brandColor,
       color: theme.onPrimary,
@@ -171,8 +196,17 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
     },
     // The block beneath the cover title identifying who the report is about — the tenant on most
     // reports, the compromised user on the BEC one.
-    coverMetaCard: { backgroundColor: 'transparent', padding: 0, maxWidth: 500 },
-    coverMetaLabel: { fontSize: 18, fontWeight: 'bold', color: coverTextColor, marginBottom: 8 },
+    coverMetaCard: {
+      backgroundColor: 'transparent',
+      padding: 0,
+      maxWidth: 500,
+    },
+    coverMetaLabel: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: coverTextColor,
+      marginBottom: 8,
+    },
     coverMetavalue: { fontSize: 12, color: subtitleColor, marginBottom: 4 },
     // A grade or qualifier under the cover detail lines.
     coverMetaNote: { fontSize: 11, color: subtitleColor, marginTop: 8 },
@@ -299,13 +333,23 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
     pageHeaderContent: { flex: 1 },
     // The gap between the 20pt title and its 11pt subtitle. Not a lever for fitting more on the
     // page — they are one unit, and closing it up makes them read as a single run-on line.
-    pageTitle: { fontSize: 20, fontWeight: 'bold', color: titleColor, marginBottom: 8 },
+    pageTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: titleColor,
+      marginBottom: 8,
+    },
     pageSubtitle: { fontSize: 11, color: subtitleColor },
 
     // The gap between one block of content and the next. Every page carries several, so this is
     // the single biggest lever on how much fits — 24 spent more of the page on gaps than on text.
     section: { marginBottom: 12 },
-    sectionTitle: { fontSize: 14, fontWeight: 'bold', color: headingColor, marginBottom: 8 },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: headingColor,
+      marginBottom: 8,
+    },
     bodyText: {
       fontSize: 9,
       color: REPORT_COLOURS.body,
@@ -347,7 +391,11 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
     },
 
     bulletList: { marginLeft: 12, marginBottom: 12 },
-    bulletItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 },
+    bulletItem: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 6,
+    },
     bulletPoint: {
       fontSize: 8,
       color: headingColor,
@@ -387,7 +435,12 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
       padding: 12,
       marginBottom: 16,
     },
-    alertTitle: { fontSize: 11, fontWeight: 'bold', color: cardColor, marginBottom: 6 },
+    alertTitle: {
+      fontSize: 11,
+      fontWeight: 'bold',
+      color: cardColor,
+      marginBottom: 6,
+    },
     alertText: { fontSize: 9, color: bodyColor, lineHeight: 1.4 },
 
     infoBox: {
@@ -402,7 +455,12 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
       padding: 12,
       marginBottom: 12,
     },
-    infoTitle: { fontSize: 10, fontWeight: 'bold', color: bodyColor, marginBottom: 6 },
+    infoTitle: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: bodyColor,
+      marginBottom: 6,
+    },
     infoText: { fontSize: 8, color: subtitleColor, lineHeight: 1.4 },
     okBox: { backgroundColor: '#F0FDF4' },
     okTitle: { color: REPORT_COLOURS.success },
@@ -445,7 +503,12 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
       textAlign: 'center',
       fontWeight: 'bold',
     },
-    statCaption: { fontSize: 7, color: subtitleColor, marginTop: 4, textAlign: 'center' },
+    statCaption: {
+      fontSize: 7,
+      color: subtitleColor,
+      marginTop: 4,
+      textAlign: 'center',
+    },
 
     // PROGRESS BARS
     progressList: { marginBottom: 16 },
@@ -458,7 +521,12 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
       border: `1px solid ${REPORT_COLOURS.line}`,
       marginBottom: 8,
     },
-    progressLabel: { fontSize: 8, color: bodyColor, width: 110, fontWeight: 'bold' },
+    progressLabel: {
+      fontSize: 8,
+      color: bodyColor,
+      width: 110,
+      fontWeight: 'bold',
+    },
     progressTrack: {
       flex: 1,
       height: 6,
@@ -484,7 +552,12 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
       marginBottom: 20,
       alignItems: 'center',
     },
-    chartTitle: { fontSize: 10, fontWeight: 'bold', color: bodyColor, marginBottom: 12 },
+    chartTitle: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: bodyColor,
+      marginBottom: 12,
+    },
     chartCanvas: { width: 400, height: 200, marginBottom: 8 },
     chartCaption: {
       fontSize: 8,
@@ -547,10 +620,20 @@ export const createReportStyles = (themeOrColour = DEFAULT_BRAND_COLOUR) => {
     // The same line height as its neighbours. Without it this inherited the page's 1.4, so the bold
     // first column stood in an 11.2pt line box while every other cell had 10.4 — the row was set by
     // the taller one and the space under the shorter cells was visibly deeper than the space above.
-    tableCellBold: { fontSize: 8, fontWeight: 'bold', color: bodyColor, lineHeight: 1.3 },
+    tableCellBold: {
+      fontSize: 8,
+      fontWeight: 'bold',
+      color: bodyColor,
+      lineHeight: 1.3,
+    },
     // A cell holding a node — a badge, a bar — rather than text, so it aligns independently.
     tableCellSlot: { alignItems: 'flex-start', justifyContent: 'center' },
-    tableEmpty: { fontSize: 8, color: REPORT_COLOURS.faint, fontStyle: 'italic', padding: 12 },
+    tableEmpty: {
+      fontSize: 8,
+      color: REPORT_COLOURS.faint,
+      fontStyle: 'italic',
+      padding: 12,
+    },
     truncationNote: {
       fontSize: 8,
       color: REPORT_COLOURS.faint,

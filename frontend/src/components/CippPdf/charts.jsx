@@ -40,7 +40,9 @@ export const normaliseChartData = (data) =>
     .filter((entry) => entry.label !== '' || entry.value !== 0)
 
 const seriesColour = (theme, entry, index) =>
-  entry.colour || theme?.series?.[index % (theme?.series?.length || 1)] || REPORT_COLOURS.info
+  entry.colour ||
+  theme?.series?.[index % (theme?.series?.length || 1)] ||
+  REPORT_COLOURS.info
 
 const ChartFrame = ({ styles, title, caption, children, empty, emptyText }) => (
   <View style={styles.chartContainer} wrap={false}>
@@ -48,11 +50,16 @@ const ChartFrame = ({ styles, title, caption, children, empty, emptyText }) => (
     {empty ? (
       <Text style={styles.chartEmpty}>{emptyText}</Text>
     ) : (
-      <Svg style={styles.chartCanvas} viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}>
+      <Svg
+        style={styles.chartCanvas}
+        viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
+      >
         {children}
       </Svg>
     )}
-    {caption && !empty ? <Text style={styles.chartCaption}>{caption}</Text> : null}
+    {caption && !empty ? (
+      <Text style={styles.chartCaption}>{caption}</Text>
+    ) : null}
   </View>
 )
 
@@ -64,7 +71,8 @@ const ChartFrame = ({ styles, title, caption, children, empty, emptyText }) => (
  * entries wrap instead.
  */
 const renderLegend = ({ entries, theme, y }) => {
-  const perRow = entries.length <= 3 ? entries.length : Math.ceil(entries.length / 2)
+  const perRow =
+    entries.length <= 3 ? entries.length : Math.ceil(entries.length / 2)
   const columnWidth = (VIEW_WIDTH - 40) / Math.max(perRow, 1)
 
   return entries.map((entry, index) => {
@@ -83,7 +91,12 @@ const renderLegend = ({ entries, theme, y }) => {
           fill={seriesColour(theme, entry, entry.seriesIndex ?? index)}
           rx="1"
         />
-        <SvgText x={x + 12} y={rowY + 1} fontSize="7" fill={REPORT_COLOURS.body}>
+        <SvgText
+          x={x + 12}
+          y={rowY + 1}
+          fontSize="7"
+          fill={REPORT_COLOURS.body}
+        >
           {`${entry.label} (${entry.value})`}
         </SvgText>
       </G>
@@ -107,12 +120,17 @@ export const DonutChart = ({
   ...props
 }) => {
   const { styles, theme } = useReportStyles(props)
-  const entries = normaliseChartData(data).map((entry, index) => ({ ...entry, seriesIndex: index }))
+  const entries = normaliseChartData(data).map((entry, index) => ({
+    ...entry,
+    seriesIndex: index,
+  }))
   const visible = entries.filter((entry) => entry.value > 0)
   const total = visible.reduce((sum, entry) => sum + entry.value, 0)
 
   if (total === 0) {
-    return <ChartFrame styles={styles} title={title} empty emptyText={emptyText} />
+    return (
+      <ChartFrame styles={styles} title={title} empty emptyText={emptyText} />
+    )
   }
 
   const centreX = VIEW_WIDTH / 2
@@ -124,7 +142,9 @@ export const DonutChart = ({
   // variable, so the geometry is a pure function of the data — the list is short enough that the
   // repeated prefix sum costs nothing.
   const slices = visible.map((entry, index) => {
-    const preceding = visible.slice(0, index).reduce((sum, item) => sum + item.value, 0)
+    const preceding = visible
+      .slice(0, index)
+      .reduce((sum, item) => sum + item.value, 0)
     // Start at twelve o'clock rather than three.
     const startAngle = -90 + (preceding / total) * 360
     const angle = Math.min((entry.value / total) * 360, 359.99)
@@ -207,7 +227,9 @@ export const TrendChart = ({
   const entries = normaliseChartData(data)
 
   if (entries.length === 0) {
-    return <ChartFrame styles={styles} title={title} empty emptyText={emptyText} />
+    return (
+      <ChartFrame styles={styles} title={title} empty emptyText={emptyText} />
+    )
   }
 
   const colour = theme?.primary || REPORT_COLOURS.info
@@ -228,7 +250,9 @@ export const TrendChart = ({
 
   const points = entries.map(pointAt)
   // A single reading has no line to draw — the point alone still shows where it sits on the axis.
-  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+  const linePath = points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
+    .join(' ')
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${plotBottom} L ${points[0].x} ${plotBottom} Z`
 
   // Only label as many x ticks as will fit without overlapping.
@@ -256,10 +280,20 @@ export const TrendChart = ({
           strokeWidth="0.5"
         />
       ))}
-      {points.length > 1 ? <Path d={areaPath} fill={colour} fillOpacity="0.3" /> : null}
-      {points.length > 1 ? <Path d={linePath} fill="none" stroke={colour} strokeWidth="2" /> : null}
+      {points.length > 1 ? (
+        <Path d={areaPath} fill={colour} fillOpacity="0.3" />
+      ) : null}
+      {points.length > 1 ? (
+        <Path d={linePath} fill="none" stroke={colour} strokeWidth="2" />
+      ) : null}
       {points.map((point, index) => (
-        <Circle key={`point-${index}`} cx={point.x} cy={point.y} r="3" fill={colour} />
+        <Circle
+          key={`point-${index}`}
+          cx={point.x}
+          cy={point.y}
+          r="3"
+          fill={colour}
+        />
       ))}
       {entries.map((entry, index) =>
         index % labelStride === 0 ? (
@@ -303,7 +337,9 @@ export const BarChart = ({
   const entries = normaliseChartData(data)
 
   if (entries.length === 0) {
-    return <ChartFrame styles={styles} title={title} empty emptyText={emptyText} />
+    return (
+      <ChartFrame styles={styles} title={title} empty emptyText={emptyText} />
+    )
   }
 
   const plotLeft = 40
@@ -329,7 +365,10 @@ export const BarChart = ({
       {entries.map((entry, index) => {
         // Zero-valued bars still get a hairline so the category reads as present-but-empty rather
         // than missing from the chart.
-        const height = Math.max((entry.value / maxValue) * plotHeight, entry.value > 0 ? 2 : 1)
+        const height = Math.max(
+          (entry.value / maxValue) * plotHeight,
+          entry.value > 0 ? 2 : 1
+        )
         const x = plotLeft + index * slot + (slot - barWidth) / 2
         const y = plotBottom - height
 
@@ -359,7 +398,9 @@ export const BarChart = ({
               fontSize="7"
               fill={REPORT_COLOURS.muted}
             >
-              {entry.label.length > 14 ? `${entry.label.slice(0, 13)}…` : entry.label}
+              {entry.label.length > 14
+                ? `${entry.label.slice(0, 13)}…`
+                : entry.label}
             </SvgText>
           </G>
         )

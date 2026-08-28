@@ -12,7 +12,9 @@ const sampleItems = [
 
 describe('CippPropertyList', () => {
   it('renders all property items in single layout', () => {
-    renderWithTheme(<CippPropertyList propertyItems={sampleItems} layout="single" />)
+    renderWithTheme(
+      <CippPropertyList propertyItems={sampleItems} layout="single" />
+    )
 
     expect(screen.getByText('Name')).toBeInTheDocument()
     expect(screen.getByText('John Doe')).toBeInTheDocument()
@@ -28,7 +30,11 @@ describe('CippPropertyList', () => {
     // Use layout="dual", in that branch the Skeleton is not overridden by item spread,
     // so MuiSkeleton-root elements are reliably rendered (one per item across both columns).
     const { container } = renderWithTheme(
-      <CippPropertyList propertyItems={sampleItems} isFetching={true} layout="dual" />
+      <CippPropertyList
+        propertyItems={sampleItems}
+        isFetching={true}
+        layout="dual"
+      />
     )
 
     const skeletons = container.querySelectorAll('.MuiSkeleton-root')
@@ -36,7 +42,9 @@ describe('CippPropertyList', () => {
   })
 
   it('renders in dual-column layout with all items present', () => {
-    renderWithTheme(<CippPropertyList propertyItems={sampleItems} layout="dual" />)
+    renderWithTheme(
+      <CippPropertyList propertyItems={sampleItems} layout="dual" />
+    )
 
     expect(screen.getByText('Name')).toBeInTheDocument()
     expect(screen.getByText('John Doe')).toBeInTheDocument()
@@ -49,7 +57,9 @@ describe('CippPropertyList', () => {
   })
 
   it('renders empty when no items provided', () => {
-    const { container } = renderWithTheme(<CippPropertyList propertyItems={[]} />)
+    const { container } = renderWithTheme(
+      <CippPropertyList propertyItems={[]} />
+    )
 
     expect(container.querySelectorAll('.MuiSkeleton-root').length).toBe(0)
     sampleItems.forEach((item) => {

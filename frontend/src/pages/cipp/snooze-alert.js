@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { Layout as DashboardLayout } from '../../layouts/index.js'
-import { Box, Typography, CircularProgress, Alert, Button, Stack } from '@mui/material'
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Alert,
+  Button,
+  Stack,
+} from '@mui/material'
 import { ApiPostCall } from '../../api/ApiCall'
 import { CippApiResults } from '../../components/CippComponents/CippApiResults'
 import CippPageCard from '../../components/CippCards/CippPageCard'
@@ -28,7 +35,9 @@ const Page = () => {
     if (submitted) return
 
     if (!cmdlet || !tenant || !data || !duration) {
-      setParseError('Missing required parameters (cmdlet, tenant, data, duration).')
+      setParseError(
+        'Missing required parameters (cmdlet, tenant, data, duration).'
+      )
       return
     }
 
@@ -104,7 +113,9 @@ const Page = () => {
             <Button
               variant="outlined"
               onClick={() =>
-                router.push('/tenant/administration/alert-configuration/snoozed-alerts')
+                router.push(
+                  '/tenant/administration/alert-configuration/snoozed-alerts'
+                )
               }
             >
               View Snoozed Alerts

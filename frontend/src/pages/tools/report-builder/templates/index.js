@@ -16,7 +16,9 @@ const Page = () => {
       icon: <OpenInNew />,
       noConfirm: true,
       customFunction: (row) => {
-        router.push(`/tools/report-builder/builder?id=${row.GUID || row.RowKey}`)
+        router.push(
+          `/tools/report-builder/builder?id=${row.GUID || row.RowKey}`
+        )
       },
     },
     {
@@ -60,7 +62,8 @@ const Page = () => {
           rows: 4,
         },
       ],
-      confirmText: 'Are you sure you want to save this template to the selected repository?',
+      confirmText:
+        'Are you sure you want to save this template to the selected repository?',
       relatedQueryKeys: ['ListReportBuilderTemplates'],
     },
     {
@@ -98,7 +101,10 @@ const Page = () => {
           >
             New Report
           </Button>
-          <CippPolicyImportDrawer mode="ReportBuilder" buttonText="Browse Catalog" />
+          <CippPolicyImportDrawer
+            mode="ReportBuilder"
+            buttonText="Browse Catalog"
+          />
         </Box>
       }
     />

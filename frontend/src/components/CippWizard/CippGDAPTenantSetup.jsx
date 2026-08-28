@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 import {
   Stack,
   Box,
@@ -12,91 +12,95 @@ import {
   AccordionSummary,
   AccordionDetails,
   SvgIcon,
-} from "@mui/material";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { ApiPostCall, ApiGetCall } from "../../api/ApiCall";
-import { CippWizardStepButtons } from "./CippWizardStepButtons";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { useWatch } from "react-hook-form";
-import { CippPropertyList } from "../CippComponents/CippPropertyList";
-import { CippCopyToClipBoard } from "../CippComponents/CippCopyToClipboard";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { PlusIcon } from "@heroicons/react/24/outline";
+} from '@mui/material'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { ApiPostCall, ApiGetCall } from '../../api/ApiCall'
+import { CippWizardStepButtons } from './CippWizardStepButtons'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { useWatch } from 'react-hook-form'
+import { CippPropertyList } from '../CippComponents/CippPropertyList'
+import { CippCopyToClipBoard } from '../CippComponents/CippCopyToClipboard'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import { PlusIcon } from '@heroicons/react/24/outline'
 
 export const CippGDAPTenantSetup = (props) => {
-  const { formControl, currentStep, onPreviousStep, onNextStep } = props;
-  const [inviteGenerated, setInviteGenerated] = useState(false);
-  const [inviteAccepted, setInviteAccepted] = useState(false);
-  const [inviteData, setInviteData] = useState(null);
-  const [createDefaults, setCreateDefaults] = useState(false);
+  const { formControl, currentStep, onPreviousStep, onNextStep } = props
+  const [inviteGenerated, setInviteGenerated] = useState(false)
+  const [inviteAccepted, setInviteAccepted] = useState(false)
+  const [inviteData, setInviteData] = useState(null)
+  const [createDefaults, setCreateDefaults] = useState(false)
 
-  formControl.register("GDAPInviteAccepted", {
+  formControl.register('GDAPInviteAccepted', {
     required: true,
-  });
+  })
 
-  formControl.register("GDAPRelationshipId", {
+  formControl.register('GDAPRelationshipId', {
     required: true,
-  });
+  })
 
   const createCippDefaults = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["ListGDAPRoleTemplatesAutocomplete-wizard", "ListGDAPRoleTemplates-wizard"],
-  });
+    relatedQueryKeys: [
+      'ListGDAPRoleTemplatesAutocomplete-wizard',
+      'ListGDAPRoleTemplates-wizard',
+    ],
+  })
 
   const selectedTemplate = useWatch({
     control: formControl.control,
-    name: "gdapTemplate",
-  });
+    name: 'gdapTemplate',
+  })
 
   const templateList = ApiGetCall({
-    url: "/api/ExecGDAPRoleTemplate",
-    queryKey: "ListGDAPRoleTemplates-wizard",
-  });
+    url: '/api/ExecGDAPRoleTemplate',
+    queryKey: 'ListGDAPRoleTemplates-wizard',
+  })
 
   const generateInvite = ApiPostCall({
     urlFromData: true,
-  });
+  })
 
   useEffect(() => {
     if (templateList?.data?.Results?.length === 0) {
-      setCreateDefaults(true);
+      setCreateDefaults(true)
     } else {
-      setCreateDefaults(false);
+      setCreateDefaults(false)
     }
-  }, [templateList.isSuccess, templateList.data]);
+  }, [templateList.isSuccess, templateList.data])
 
   const handleGenerateInvite = () => {
     if (!selectedTemplate) {
-      return;
+      return
     }
 
     const inviteData = {
       roleMappings: selectedTemplate.value,
-      Reference: "Created via Setup Wizard",
-    };
+      Reference: 'Created via Setup Wizard',
+    }
 
     generateInvite.mutate({
-      url: "/api/ExecGDAPInvite",
+      url: '/api/ExecGDAPInvite',
       data: inviteData,
-    });
-  };
+    })
+  }
 
   useEffect(() => {
     if (generateInvite.isSuccess && generateInvite.data) {
-      const invite = generateInvite.data?.data?.Invite || generateInvite.data?.Invite;
+      const invite =
+        generateInvite.data?.data?.Invite || generateInvite.data?.Invite
       if (invite) {
-        setInviteGenerated(true);
-        setInviteData(invite);
+        setInviteGenerated(true)
+        setInviteData(invite)
         // Store the relationship ID for the next step
-        formControl.setValue("GDAPRelationshipId", invite.RowKey);
+        formControl.setValue('GDAPRelationshipId', invite.RowKey)
       }
     }
-  }, [generateInvite.isSuccess, generateInvite.data, formControl]);
+  }, [generateInvite.isSuccess, generateInvite.data, formControl])
 
   useEffect(() => {
-    formControl.setValue("GDAPInviteAccepted", inviteAccepted);
-    formControl.trigger("GDAPInviteAccepted");
-  }, [inviteAccepted, formControl]);
+    formControl.setValue('GDAPInviteAccepted', inviteAccepted)
+    formControl.trigger('GDAPInviteAccepted')
+  }, [inviteAccepted, formControl])
 
   return (
     <Stack spacing={3}>
@@ -105,10 +109,15 @@ export const CippGDAPTenantSetup = (props) => {
           GDAP Tenant Setup
         </Typography>
         <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
-          This process will help you set up a new GDAP relationship with a customer tenant. You'll
-          generate an invite that the customer needs to accept before completing onboarding. For
-          more information about GDAP setup, visit the{" "}
-          <Link href="https://docs.cipp.app/setup/installation/gdap-invite-wizard#wizard-steps-for-gdap-tenants" target="_blank" rel="noopener noreferrer">
+          This process will help you set up a new GDAP relationship with a
+          customer tenant. You'll generate an invite that the customer needs to
+          accept before completing onboarding. For more information about GDAP
+          setup, visit the{' '}
+          <Link
+            href="https://docs.cipp.app/setup/installation/gdap-invite-wizard#wizard-steps-for-gdap-tenants"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             GDAP documentation
           </Link>
           .
@@ -120,14 +129,15 @@ export const CippGDAPTenantSetup = (props) => {
           {createDefaults && (
             <Box>
               <Alert severity="warning">
-                The CIPP Defaults template is missing from the GDAP Role Templates. Create it now?
+                The CIPP Defaults template is missing from the GDAP Role
+                Templates. Create it now?
                 <Button
                   size="small"
                   variant="outlined"
                   onClick={() =>
                     createCippDefaults.mutate({
-                      url: "/api/ExecAddGDAPRole",
-                      data: { TemplateId: "CIPP Defaults" },
+                      url: '/api/ExecAddGDAPRole',
+                      data: { TemplateId: 'CIPP Defaults' },
                     })
                   }
                   sx={{ ml: 2 }}
@@ -150,9 +160,9 @@ export const CippGDAPTenantSetup = (props) => {
               label="Select GDAP Role Template"
               type="autoComplete"
               api={{
-                url: "/api/ExecGDAPRoleTemplate",
-                queryKey: "ListGDAPRoleTemplatesAutocomplete-wizard",
-                dataKey: "Results",
+                url: '/api/ExecGDAPRoleTemplate',
+                queryKey: 'ListGDAPRoleTemplatesAutocomplete-wizard',
+                dataKey: 'Results',
                 labelField: (option) => option.TemplateId,
                 valueField: (option) => option.RoleMappings,
               }}
@@ -166,7 +176,9 @@ export const CippGDAPTenantSetup = (props) => {
             <Box>
               <Accordion variant="outlined">
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="subtitle1">Selected Role Mappings</Typography>
+                  <Typography variant="subtitle1">
+                    Selected Role Mappings
+                  </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <CippPropertyList
@@ -176,7 +188,7 @@ export const CippGDAPTenantSetup = (props) => {
                       return {
                         label: `${role.RoleName}`,
                         value: `Mapped to '${role.GroupName}'`,
-                      };
+                      }
                     })}
                   />
                 </AccordionDetails>
@@ -190,7 +202,9 @@ export const CippGDAPTenantSetup = (props) => {
               onClick={handleGenerateInvite}
               disabled={!selectedTemplate || generateInvite.isPending}
             >
-              {generateInvite.isPending ? "Generating Invite..." : "Generate Invite URL"}
+              {generateInvite.isPending
+                ? 'Generating Invite...'
+                : 'Generate Invite URL'}
             </Button>
           </Box>
 
@@ -202,8 +216,8 @@ export const CippGDAPTenantSetup = (props) => {
         <>
           <Alert severity="success">
             <Typography variant="body2">
-              Invite generated successfully! Send the invite link below to your customer's Global
-              Administrator to accept.
+              Invite generated successfully! Send the invite link below to your
+              customer's Global Administrator to accept.
             </Typography>
           </Alert>
 
@@ -218,13 +232,15 @@ export const CippGDAPTenantSetup = (props) => {
                   showDivider={true}
                   propertyItems={[
                     {
-                      label: "Relationship ID",
+                      label: 'Relationship ID',
                       value: inviteData.RowKey,
                     },
                     {
-                      label: "Invite URL",
+                      label: 'Invite URL',
                       value: (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        >
                           <Link
                             href={inviteData.InviteUrl}
                             target="_blank"
@@ -232,13 +248,16 @@ export const CippGDAPTenantSetup = (props) => {
                           >
                             {inviteData.InviteUrl}
                           </Link>
-                          <CippCopyToClipBoard text={inviteData.InviteUrl} type="button" />
+                          <CippCopyToClipBoard
+                            text={inviteData.InviteUrl}
+                            type="button"
+                          />
                         </Box>
                       ),
                     },
                     {
-                      label: "Reference",
-                      value: inviteData.Reference || "N/A",
+                      label: 'Reference',
+                      value: inviteData.Reference || 'N/A',
                     },
                   ]}
                 />
@@ -249,8 +268,8 @@ export const CippGDAPTenantSetup = (props) => {
           <Box>
             <Alert severity="warning" sx={{ mb: 2 }}>
               <Typography variant="body2">
-                The customer must accept this invite as a Global Administrator before you can
-                proceed with onboarding.
+                The customer must accept this invite as a Global Administrator
+                before you can proceed with onboarding.
               </Typography>
             </Alert>
             <FormControlLabel
@@ -275,7 +294,7 @@ export const CippGDAPTenantSetup = (props) => {
         nextButtonDisabled={!inviteAccepted}
       />
     </Stack>
-  );
-};
+  )
+}
 
-export default CippGDAPTenantSetup;
+export default CippGDAPTenantSetup

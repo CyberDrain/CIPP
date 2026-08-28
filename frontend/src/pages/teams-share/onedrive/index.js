@@ -51,7 +51,8 @@ const Page = () => {
             },
             queryKey: 'ListUsersAutoComplete',
             dataKey: 'Results',
-            labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+            labelField: (user) =>
+              `${user.displayName} (${user.userPrincipalName})`,
             valueField: 'userPrincipalName',
             addedField: {
               id: 'id',
@@ -71,7 +72,8 @@ const Page = () => {
         URL: 'webUrl',
         RemovePermission: true,
       },
-      confirmText: "Select the User to remove from this user's OneDrive permissions",
+      confirmText:
+        "Select the User to remove from this user's OneDrive permissions",
       fields: [
         {
           type: 'autoComplete',
@@ -109,10 +111,15 @@ const Page = () => {
         'Edit OneDrive site properties for [displayName]. Fields are prefilled with the current values.',
       condition: () => canWriteSite,
       children: ({ formHook, row }) => (
-        <CippEditSitePropertiesForm formHook={formHook} row={row} tenantFilter={tenantFilter} />
+        <CippEditSitePropertiesForm
+          formHook={formHook}
+          row={row}
+          tenantFilter={tenantFilter}
+        />
       ),
       customDataformatter: (row, action, formData) => {
-        const v = (x) => (x && typeof x === 'object' && 'value' in x ? x.value : x)
+        const v = (x) =>
+          x && typeof x === 'object' && 'value' in x ? x.value : x
         // OneDrive sites are never group-connected, so the full personal-site property set
         // applies to every selected row.
         const formatRow = (siteRow) => {
@@ -123,10 +130,13 @@ const Page = () => {
             SharingCapability: v(formData.SharingCapability),
             DefaultSharingLinkType: v(formData.DefaultSharingLinkType),
             DefaultLinkPermission: v(formData.DefaultLinkPermission),
-            SharingDomainRestrictionMode: v(formData.SharingDomainRestrictionMode),
+            SharingDomainRestrictionMode: v(
+              formData.SharingDomainRestrictionMode
+            ),
             OverrideTenantAnonymousLinkExpirationPolicy:
               !!formData.OverrideTenantAnonymousLinkExpirationPolicy,
-            InheritVersionPolicyFromTenant: !!formData.InheritVersionPolicyFromTenant,
+            InheritVersionPolicyFromTenant:
+              !!formData.InheritVersionPolicyFromTenant,
             LockState: v(formData.LockState),
           }
           if (v(formData.SharingDomainRestrictionMode) === 'AllowList') {
@@ -143,13 +153,22 @@ const Page = () => {
           }
           const storageMax = parseInt(formData.StorageMaximumLevel, 10)
           const storageWarn = parseInt(formData.StorageWarningLevel, 10)
-          if (!isNaN(storageMax) && storageMax > 0) payload.StorageMaximumLevel = storageMax
-          if (!isNaN(storageWarn) && storageWarn > 0) payload.StorageWarningLevel = storageWarn
+          if (!isNaN(storageMax) && storageMax > 0)
+            payload.StorageMaximumLevel = storageMax
+          if (!isNaN(storageWarn) && storageWarn > 0)
+            payload.StorageWarningLevel = storageWarn
           if (!formData.InheritVersionPolicyFromTenant) {
-            payload.EnableAutoExpirationVersionTrim = !!formData.EnableAutoExpirationVersionTrim
+            payload.EnableAutoExpirationVersionTrim =
+              !!formData.EnableAutoExpirationVersionTrim
             if (!formData.EnableAutoExpirationVersionTrim) {
-              payload.MajorVersionLimit = parseInt(formData.MajorVersionLimit ?? 0, 10)
-              payload.ExpireVersionsAfterDays = parseInt(formData.ExpireVersionsAfterDays ?? 0, 10)
+              payload.MajorVersionLimit = parseInt(
+                formData.MajorVersionLimit ?? 0,
+                10
+              )
+              payload.ExpireVersionsAfterDays = parseInt(
+                formData.ExpireVersionsAfterDays ?? 0,
+                10
+              )
             }
           }
           return payload
@@ -193,6 +212,8 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+)
 
 export default Page

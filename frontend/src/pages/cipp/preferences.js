@@ -1,22 +1,22 @@
-import Head from "next/head";
-import { Alert, Box, Container, Stack } from "@mui/material";
-import { Grid } from "@mui/system";
-import { Layout as DashboardLayout } from "../../layouts/index.js";
-import { CippPropertyListCard } from "../../components/CippCards/CippPropertyListCard";
-import CippFormComponent from "../../components/CippComponents/CippFormComponent";
-import { useForm, useWatch } from "react-hook-form";
-import { useSettings } from "../../hooks/use-settings";
-import countryList from "../../data/countryList.json";
-import { CippSettingsSideBar } from "../../components/CippComponents/CippSettingsSideBar";
-import CippDevOptions from "../../components/CippComponents/CippDevOptions";
-import { CippOffboardingDefaultSettings } from "../../components/CippComponents/CippOffboardingDefaultSettings";
-import { ApiGetCall } from "../../api/ApiCall";
-import { getCippFormatting } from "../../utils/get-cipp-formatting";
-import { useEffect, useState } from "react";
+import Head from 'next/head'
+import { Alert, Box, Container, Stack } from '@mui/material'
+import { Grid } from '@mui/system'
+import { Layout as DashboardLayout } from '../../layouts/index.js'
+import { CippPropertyListCard } from '../../components/CippCards/CippPropertyListCard'
+import CippFormComponent from '../../components/CippComponents/CippFormComponent'
+import { useForm, useWatch } from 'react-hook-form'
+import { useSettings } from '../../hooks/use-settings'
+import countryList from '../../data/countryList.json'
+import { CippSettingsSideBar } from '../../components/CippComponents/CippSettingsSideBar'
+import CippDevOptions from '../../components/CippComponents/CippDevOptions'
+import { CippOffboardingDefaultSettings } from '../../components/CippComponents/CippOffboardingDefaultSettings'
+import { ApiGetCall } from '../../api/ApiCall'
+import { getCippFormatting } from '../../utils/get-cipp-formatting'
+import { useEffect, useState } from 'react'
 
 const Page = () => {
-  const settings = useSettings();
-  const [initialUserType, setInitialUserType] = useState(null);
+  const settings = useSettings()
+  const [initialUserType, setInitialUserType] = useState(null)
 
   // Default portal links configuration
   const defaultPortalLinks = {
@@ -31,211 +31,231 @@ const Page = () => {
     Compliance_Portal: true,
     Power_Platform_Portal: true,
     Power_BI_Portal: true,
-  };
+  }
 
   const auth = ApiGetCall({
-    url: "/api/me",
-    queryKey: "authmecipp",
-  });
+    url: '/api/me',
+    queryKey: 'authmecipp',
+  })
 
   // Test suites for the default Home page suite selector (shared cache with the dashboard)
   const reportsApi = ApiGetCall({
-    url: "/api/ListTestReports",
-    queryKey: "ListTestReports",
-  });
+    url: '/api/ListTestReports',
+    queryKey: 'ListTestReports',
+  })
 
-  const cleanedSettings = { ...settings };
+  const cleanedSettings = { ...settings }
 
   if (cleanedSettings.offboardingDefaults?.keepCopy) {
-    delete cleanedSettings.offboardingDefaults.keepCopy;
-    settings.handleUpdate(cleanedSettings);
+    delete cleanedSettings.offboardingDefaults.keepCopy
+    settings.handleUpdate(cleanedSettings)
   }
 
   // Determine if we have user-specific settings and set initial user type
   useEffect(() => {
-    if (cleanedSettings && auth.data?.clientPrincipal?.userDetails && initialUserType === null) {
+    if (
+      cleanedSettings &&
+      auth.data?.clientPrincipal?.userDetails &&
+      initialUserType === null
+    ) {
       const hasUserSpecificSettings =
         cleanedSettings.UserSpecificSettings &&
-        Object.keys(cleanedSettings.UserSpecificSettings).length > 0;
+        Object.keys(cleanedSettings.UserSpecificSettings).length > 0
 
-      setInitialUserType(hasUserSpecificSettings ? "currentUser" : "allUsers");
+      setInitialUserType(hasUserSpecificSettings ? 'currentUser' : 'allUsers')
     }
-  }, [cleanedSettings, auth.data?.clientPrincipal?.userDetails, initialUserType]);
+  }, [
+    cleanedSettings,
+    auth.data?.clientPrincipal?.userDetails,
+    initialUserType,
+  ])
 
   // Set default portal links if they don't exist at global level
   if (!cleanedSettings.portalLinks) {
-    cleanedSettings.portalLinks = defaultPortalLinks;
+    cleanedSettings.portalLinks = defaultPortalLinks
   }
 
   // Determine initial portal links based on user type
   const getInitialPortalLinks = () => {
-    if (initialUserType === "currentUser" && cleanedSettings.UserSpecificSettings?.portalLinks) {
+    if (
+      initialUserType === 'currentUser' &&
+      cleanedSettings.UserSpecificSettings?.portalLinks
+    ) {
       // Merge with defaults to ensure all keys exist
-      return { ...defaultPortalLinks, ...cleanedSettings.UserSpecificSettings.portalLinks };
+      return {
+        ...defaultPortalLinks,
+        ...cleanedSettings.UserSpecificSettings.portalLinks,
+      }
     }
 
     // Use global settings or defaults
-    return { ...defaultPortalLinks, ...cleanedSettings.portalLinks };
-  };
+    return { ...defaultPortalLinks, ...cleanedSettings.portalLinks }
+  }
 
   // Set up initial form values with proper user selector default
   const initialFormValues = {
     ...cleanedSettings,
     user:
-      initialUserType === "currentUser"
+      initialUserType === 'currentUser'
         ? {
-            label: "Current User",
-            value: auth.data?.clientPrincipal?.userDetails || "currentUser",
+            label: 'Current User',
+            value: auth.data?.clientPrincipal?.userDetails || 'currentUser',
           }
         : {
-            label: "All Users",
-            value: "allUsers",
+            label: 'All Users',
+            value: 'allUsers',
           },
     portalLinks: getInitialPortalLinks(),
-  };
+  }
 
   const formcontrol = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: initialFormValues,
-  });
+  })
 
   // Watch the user selector to determine which settings to show
   const selectedUser = useWatch({
     control: formcontrol.control,
-    name: "user",
-  });
+    name: 'user',
+  })
 
   // Update form when initial user type is determined
   useEffect(() => {
     if (initialUserType !== null && auth.data?.clientPrincipal?.userDetails) {
       const userValue =
-        initialUserType === "currentUser"
+        initialUserType === 'currentUser'
           ? {
-              label: "Current User",
+              label: 'Current User',
               value: auth.data.clientPrincipal.userDetails,
             }
           : {
-              label: "All Users",
-              value: "allUsers",
-            };
+              label: 'All Users',
+              value: 'allUsers',
+            }
 
       const newFormValues = {
         ...cleanedSettings,
         user: userValue,
         portalLinks: getInitialPortalLinks(),
-      };
+      }
 
       // Reset the entire form with new values
-      formcontrol.reset(newFormValues);
+      formcontrol.reset(newFormValues)
     }
-  }, [initialUserType, auth.data?.clientPrincipal?.userDetails]);
+  }, [initialUserType, auth.data?.clientPrincipal?.userDetails])
 
   // Handle switching between user types
   useEffect(() => {
     if (selectedUser?.value && initialUserType !== null) {
       const getPortalLinksForUserType = () => {
-        if (selectedUser.value === "allUsers") {
+        if (selectedUser.value === 'allUsers') {
           // Show global settings (root level)
-          return { ...defaultPortalLinks, ...cleanedSettings.portalLinks };
+          return { ...defaultPortalLinks, ...cleanedSettings.portalLinks }
         } else {
           // Show user-specific settings if they exist, otherwise show global settings
-          const userSpecificLinks = cleanedSettings.UserSpecificSettings?.portalLinks;
-          const globalLinks = cleanedSettings.portalLinks;
-          return { ...defaultPortalLinks, ...globalLinks, ...userSpecificLinks };
+          const userSpecificLinks =
+            cleanedSettings.UserSpecificSettings?.portalLinks
+          const globalLinks = cleanedSettings.portalLinks
+          return { ...defaultPortalLinks, ...globalLinks, ...userSpecificLinks }
         }
-      };
+      }
 
-      const newPortalLinks = getPortalLinksForUserType();
-      const currentPortalLinks = formcontrol.getValues("portalLinks");
+      const newPortalLinks = getPortalLinksForUserType()
+      const currentPortalLinks = formcontrol.getValues('portalLinks')
 
       // Only update if the portal links actually changed
-      if (JSON.stringify(currentPortalLinks) !== JSON.stringify(newPortalLinks)) {
+      if (
+        JSON.stringify(currentPortalLinks) !== JSON.stringify(newPortalLinks)
+      ) {
         // Reset form with updated portal links but preserve other values
-        const currentValues = formcontrol.getValues();
+        const currentValues = formcontrol.getValues()
         formcontrol.reset({
           ...currentValues,
           portalLinks: newPortalLinks,
-        });
+        })
       }
     }
-  }, [selectedUser?.value, cleanedSettings, initialUserType]);
+  }, [selectedUser?.value, cleanedSettings, initialUserType])
 
   const addedAttributes = [
-    { value: "consentProvidedForMinor", label: "consentProvidedForMinor" },
-    { value: "employeeId", label: "employeeId" },
-    { value: "employeeHireDate", label: "employeeHireDate" },
-    { value: "employeeLeaveDateTime", label: "employeeLeaveDateTime" },
-    { value: "employeeType", label: "employeeType" },
-    { value: "faxNumber", label: "faxNumber" },
-    { value: "legalAgeGroupClassification", label: "legalAgeGroupClassification" },
-    { value: "officeLocation", label: "officeLocation" },
-    { value: "otherMails", label: "otherMails" },
-    { value: "showInAddressList", label: "showInAddressList" },
-    { value: "sponsor", label: "sponsor" },
-  ];
+    { value: 'consentProvidedForMinor', label: 'consentProvidedForMinor' },
+    { value: 'employeeId', label: 'employeeId' },
+    { value: 'employeeHireDate', label: 'employeeHireDate' },
+    { value: 'employeeLeaveDateTime', label: 'employeeLeaveDateTime' },
+    { value: 'employeeType', label: 'employeeType' },
+    { value: 'faxNumber', label: 'faxNumber' },
+    {
+      value: 'legalAgeGroupClassification',
+      label: 'legalAgeGroupClassification',
+    },
+    { value: 'officeLocation', label: 'officeLocation' },
+    { value: 'otherMails', label: 'otherMails' },
+    { value: 'showInAddressList', label: 'showInAddressList' },
+    { value: 'sponsor', label: 'sponsor' },
+  ]
 
   const pageSizes = [
-    { value: "25", label: "25" },
-    { value: "50", label: "50" },
-    { value: "100", label: "100" },
-    { value: "250", label: "250" },
-  ];
+    { value: '25', label: '25' },
+    { value: '50', label: '50' },
+    { value: '100', label: '100' },
+    { value: '250', label: '250' },
+  ]
 
   const languageListOptions = countryList.map((language) => {
-    return { value: language.Code, label: language.Name };
-  });
+    return { value: language.Code, label: language.Name }
+  })
 
   // Portal links configuration
   const portalLinksConfig = [
     {
-      name: "portalLinks.M365_Portal",
-      label: "M365",
+      name: 'portalLinks.M365_Portal',
+      label: 'M365',
     },
     {
-      name: "portalLinks.Exchange_Portal",
-      label: "Exchange",
+      name: 'portalLinks.Exchange_Portal',
+      label: 'Exchange',
     },
     {
-      name: "portalLinks.Entra_Portal",
-      label: "Entra",
+      name: 'portalLinks.Entra_Portal',
+      label: 'Entra',
     },
     {
-      name: "portalLinks.Teams_Portal",
-      label: "Teams",
+      name: 'portalLinks.Teams_Portal',
+      label: 'Teams',
     },
     {
-      name: "portalLinks.Azure_Portal",
-      label: "Azure",
+      name: 'portalLinks.Azure_Portal',
+      label: 'Azure',
     },
     {
-      name: "portalLinks.Intune_Portal",
-      label: "Intune",
+      name: 'portalLinks.Intune_Portal',
+      label: 'Intune',
     },
     {
-      name: "portalLinks.SharePoint_Admin",
-      label: "SharePoint",
+      name: 'portalLinks.SharePoint_Admin',
+      label: 'SharePoint',
     },
     {
-      name: "portalLinks.Security_Portal",
-      label: "Security",
+      name: 'portalLinks.Security_Portal',
+      label: 'Security',
     },
     {
-      name: "portalLinks.Compliance_Portal",
-      label: "Purview",
+      name: 'portalLinks.Compliance_Portal',
+      label: 'Purview',
     },
     {
-      name: "portalLinks.Power_Platform_Portal",
-      label: "Power Platform",
+      name: 'portalLinks.Power_Platform_Portal',
+      label: 'Power Platform',
     },
     {
-      name: "portalLinks.Power_BI_Portal",
-      label: "Power BI",
+      name: 'portalLinks.Power_BI_Portal',
+      label: 'Power BI',
     },
-  ];
+  ]
 
   // Don't render until we've determined the initial user type
   if (initialUserType === null || !auth.data?.clientPrincipal?.userDetails) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
 
   return (
@@ -249,7 +269,7 @@ const Page = () => {
           py: 4,
         }}
       >
-        <Container maxWidth="xl" sx={{ height: "100%" }}>
+        <Container maxWidth="xl" sx={{ height: '100%' }}>
           <Stack spacing={4}>
             <div>
               <Grid container spacing={3}>
@@ -260,7 +280,7 @@ const Page = () => {
                       title="General Settings"
                       propertyItems={[
                         {
-                          label: "Default usage location for users *",
+                          label: 'Default usage location for users *',
                           value: (
                             <CippFormComponent
                               type="autoComplete"
@@ -271,49 +291,64 @@ const Page = () => {
                               multiple={false}
                               options={languageListOptions}
                               validators={{
-                                required: { value: true, message: "This field is required" },
+                                required: {
+                                  value: true,
+                                  message: 'This field is required',
+                                },
                               }}
                             />
                           ),
                         },
                         {
-                          label: "Default Page Size *",
+                          label: 'Default Page Size *',
                           value: (
                             <CippFormComponent
                               type="autoComplete"
                               disableClearable={true}
-                              defaultValue={{ value: "25", label: "25" }}
+                              defaultValue={{ value: '25', label: '25' }}
                               name="tablePageSize"
                               formControl={formcontrol}
                               multiple={false}
                               options={pageSizes}
                               validators={{
-                                required: { value: true, message: "This field is required" },
+                                required: {
+                                  value: true,
+                                  message: 'This field is required',
+                                },
                               }}
                             />
                           ),
                         },
                         {
-                          label: "Table view on small screens",
+                          label: 'Table view on small screens',
                           value: (
                             <CippFormComponent
                               type="autoComplete"
                               creatable={false}
                               disableClearable={true}
-                              defaultValue={{ value: "auto", label: "Automatic (cards on mobile)" }}
+                              defaultValue={{
+                                value: 'auto',
+                                label: 'Automatic (cards on mobile)',
+                              }}
                               name="tableViewMode"
                               formControl={formcontrol}
                               multiple={false}
                               options={[
-                                { value: "auto", label: "Automatic (cards on mobile)" },
-                                { value: "cards", label: "Always card list" },
-                                { value: "table", label: "Always classic table" },
+                                {
+                                  value: 'auto',
+                                  label: 'Automatic (cards on mobile)',
+                                },
+                                { value: 'cards', label: 'Always card list' },
+                                {
+                                  value: 'table',
+                                  label: 'Always classic table',
+                                },
                               ]}
                             />
                           ),
                         },
                         {
-                          label: "Default test suite on the Home page",
+                          label: 'Default test suite on the Home page',
                           value: (
                             <CippFormComponent
                               type="autoComplete"
@@ -321,16 +356,18 @@ const Page = () => {
                               name="defaultTestSuite"
                               formControl={formcontrol}
                               multiple={false}
-                              options={(reportsApi.data || []).map((report) => ({
-                                value: report.id,
-                                label: report.name,
-                              }))}
+                              options={(reportsApi.data || []).map(
+                                (report) => ({
+                                  value: report.id,
+                                  label: report.name,
+                                })
+                              )}
                               isFetching={reportsApi.isFetching}
                             />
                           ),
                         },
                         {
-                          label: "Added Attributes when creating a new user",
+                          label: 'Added Attributes when creating a new user',
                           value: (
                             <CippFormComponent
                               type="autoComplete"
@@ -342,7 +379,7 @@ const Page = () => {
                           ),
                         },
                         {
-                          label: "Save last used table filter",
+                          label: 'Save last used table filter',
                           value: (
                             <CippFormComponent
                               type="switch"
@@ -359,7 +396,7 @@ const Page = () => {
                       title="Navigation Settings"
                       propertyItems={[
                         {
-                          label: "Show Sidebar Bookmarks",
+                          label: 'Show Sidebar Bookmarks',
                           value: (
                             <CippFormComponent
                               type="switch"
@@ -369,7 +406,7 @@ const Page = () => {
                           ),
                         },
                         {
-                          label: "Show Popover Bookmarks",
+                          label: 'Show Popover Bookmarks',
                           value: (
                             <CippFormComponent
                               type="switch"
@@ -379,7 +416,7 @@ const Page = () => {
                           ),
                         },
                         {
-                          label: "Bookmark Reorder Mode",
+                          label: 'Bookmark Reorder Mode',
                           value: (
                             <CippFormComponent
                               type="radio"
@@ -387,14 +424,14 @@ const Page = () => {
                               formControl={formcontrol}
                               row={true}
                               options={[
-                                { value: "arrows", label: "Arrow Buttons" },
-                                { value: "drag", label: "Drag and Drop" },
+                                { value: 'arrows', label: 'Arrow Buttons' },
+                                { value: 'drag', label: 'Drag and Drop' },
                               ]}
                             />
                           ),
                         },
                         {
-                          label: "Compact Navigation",
+                          label: 'Compact Navigation',
                           value: (
                             <CippFormComponent
                               type="switch"
@@ -415,11 +452,16 @@ const Page = () => {
                   <Stack spacing={3}>
                     <CippPropertyListCard
                       title={`CIPP Roles for ${auth?.data?.clientPrincipal?.userDetails}`}
-                      propertyItems={(auth?.data?.clientPrincipal?.userRoles ?? [])
-                        .filter((role) => !["anonymous", "authenticated"].includes(role))
+                      propertyItems={(
+                        auth?.data?.clientPrincipal?.userRoles ?? []
+                      )
+                        .filter(
+                          (role) =>
+                            !['anonymous', 'authenticated'].includes(role)
+                        )
                         .map((role) => ({
-                          label: "",
-                          value: getCippFormatting(role, "role"),
+                          label: '',
+                          value: getCippFormatting(role, 'role'),
                         }))}
                       showDivider={false}
                     />
@@ -452,9 +494,9 @@ const Page = () => {
         </Container>
       </Box>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

@@ -57,36 +57,43 @@ export function useSecureScore({ waiting = true } = {}) {
     if (isAllTenants) return
     if (controlScore.isSuccess && secureScore.isSuccess) {
       const secureScoreData = secureScore.data.Results[0]
-      const updatedControlScores = secureScoreData.controlScores.map((control) => {
-        const translation = controlScore.data.Results?.find(
-          (controlTranslation) => controlTranslation.id === control.controlName
-        )
-        const remediation = getStandards().find((standard) =>
-          standard.tag?.includes(control.controlName)
-        )
-        return {
-          ...control,
-          title: translation?.title,
-          threats: translation?.threats,
-          complianceInformation: translation?.complianceInformation,
-          actionUrl: remediation
-            ? //this needs to be updated to be a direct url to apply this standard.
-              '/tenant/standards'
-            : translation?.actionUrl,
-          remediation: remediation
-            ? `1. Enable the CIPP Standard: ${remediation.label}`
-            : translation?.remediation,
-          remediationImpact: translation?.remediationImpact,
-          implementationCost: translation?.implementationCost,
-          tier: translation?.tier,
-          userImpact: translation?.userImpact,
-          vendorInformation: translation?.vendorInformation,
-          controlStateUpdates: translation?.controlStateUpdates //remove each controlStateUpdate that has the state 'default' as it is not relevant.
-            ? translation.controlStateUpdates.filter((update) => update.state !== 'Default')
-            : [],
+      const updatedControlScores = secureScoreData.controlScores.map(
+        (control) => {
+          const translation = controlScore.data.Results?.find(
+            (controlTranslation) =>
+              controlTranslation.id === control.controlName
+          )
+          const remediation = getStandards().find((standard) =>
+            standard.tag?.includes(control.controlName)
+          )
+          return {
+            ...control,
+            title: translation?.title,
+            threats: translation?.threats,
+            complianceInformation: translation?.complianceInformation,
+            actionUrl: remediation
+              ? //this needs to be updated to be a direct url to apply this standard.
+                '/tenant/standards'
+              : translation?.actionUrl,
+            remediation: remediation
+              ? `1. Enable the CIPP Standard: ${remediation.label}`
+              : translation?.remediation,
+            remediationImpact: translation?.remediationImpact,
+            implementationCost: translation?.implementationCost,
+            tier: translation?.tier,
+            userImpact: translation?.userImpact,
+            vendorInformation: translation?.vendorInformation,
+            controlStateUpdates: translation?.controlStateUpdates //remove each controlStateUpdate that has the state 'default' as it is not relevant.
+              ? translation.controlStateUpdates.filter(
+                  (update) => update.state !== 'Default'
+                )
+              : [],
+          }
         }
-      })
-      updatedControlScores.sort((a, b) => b.scoreInPercentage - a.scoreInPercentage)
+      )
+      updatedControlScores.sort(
+        (a, b) => b.scoreInPercentage - a.scoreInPercentage
+      )
       setTranslatedData({
         ...secureScoreData,
         //secureScoreData.currentscore is the current score, secureScoreData.maxscore is the max score. calculate % reached.

@@ -3,7 +3,16 @@ import { CippTablePage } from '../../../../components/CippComponents/CippTablePa
 import { Layout as DashboardLayout } from '../../../../layouts/index.js' // had to add an extra path here because I added an extra folder structure. We should switch to absolute pathing so we dont have to deal with relative.
 import { TabbedLayout } from '../../../../layouts/TabbedLayout'
 import Link from 'next/link'
-import { CopyAll, Delete, PlayArrow, AddBox, Edit, GitHub, ContentCopy, Schedule } from '@mui/icons-material'
+import {
+  CopyAll,
+  Delete,
+  PlayArrow,
+  AddBox,
+  Edit,
+  GitHub,
+  ContentCopy,
+  Schedule,
+} from '@mui/icons-material'
 import { ApiGetCall, ApiPostCall } from '../../../../api/ApiCall'
 import { Grid } from '@mui/system'
 import { CippApiResults } from '../../../../components/CippComponents/CippApiResults'
@@ -14,7 +23,10 @@ import { PermissionButton } from '../../../../utils/permissions.js'
 import { CippFormTemplateTenantSelector } from '../../../../components/CippComponents/CippFormTemplateTenantSelector.jsx'
 
 const Page = () => {
-  const oldStandards = ApiGetCall({ url: '/api/ListStandards', queryKey: 'ListStandards-legacy' })
+  const oldStandards = ApiGetCall({
+    url: '/api/ListStandards',
+    queryKey: 'ListStandards-legacy',
+  })
   const integrations = ApiGetCall({
     url: '/api/ListExtensionsConfig',
     queryKey: 'Integrations',
@@ -78,8 +90,12 @@ const Page = () => {
       children: ({ formHook, row }) => (
         <CippFormTemplateTenantSelector
           formControl={formHook}
-          templateTenants={Array.isArray(row?.tenantFilter) ? row.tenantFilter : []}
-          excludedTenants={Array.isArray(row?.excludedTenants) ? row.excludedTenants : []}
+          templateTenants={
+            Array.isArray(row?.tenantFilter) ? row.tenantFilter : []
+          }
+          excludedTenants={
+            Array.isArray(row?.excludedTenants) ? row.excludedTenants : []
+          }
         />
       ),
       confirmText: 'Are you sure you want to force a run of this template?',
@@ -106,7 +122,9 @@ const Page = () => {
             { label: 'Enable schedule', value: 'false' },
           ],
           required: true,
-          validators: { required: { value: true, message: 'This field is required' } },
+          validators: {
+            required: { value: true, message: 'This field is required' },
+          },
         },
       ],
       confirmText: 'Set the schedule for [templateName]?',
@@ -154,8 +172,10 @@ const Page = () => {
           rows: 4,
         },
       ],
-      confirmText: 'Are you sure you want to save this template to the selected repository?',
-      condition: () => integrations.isSuccess && integrations?.data?.GitHub?.Enabled,
+      confirmText:
+        'Are you sure you want to save this template to the selected repository?',
+      condition: () =>
+        integrations.isSuccess && integrations?.data?.GitHub?.Enabled,
     },
     {
       label: 'Delete Template',
@@ -169,7 +189,9 @@ const Page = () => {
       multiPost: false,
     },
   ]
-  const conversionApi = ApiPostCall({ relatedQueryKeys: 'listStandardTemplates' })
+  const conversionApi = ApiPostCall({
+    relatedQueryKeys: 'listStandardTemplates',
+  })
   const handleConversion = () => {
     conversionApi.mutate({
       url: '/api/execStandardConvert',
@@ -186,13 +208,17 @@ const Page = () => {
               style={{ display: 'flex', alignItems: 'center', width: '100%' }}
             >
               <Grid size={12}>
-                You have legacy standards available. Press the button to convert these standards to
-                the new format. This will create a new template for each standard you had, but will
-                disable the schedule. After conversion, please check the new templates to ensure
-                they are correct and re-enable the schedule.
+                You have legacy standards available. Press the button to convert
+                these standards to the new format. This will create a new
+                template for each standard you had, but will disable the
+                schedule. After conversion, please check the new templates to
+                ensure they are correct and re-enable the schedule.
               </Grid>
               <Grid size={{ xs: 12, md: 2 }}>
-                <Button onClick={() => handleConversion()} variant={'contained'}>
+                <Button
+                  onClick={() => handleConversion()}
+                  variant={'contained'}
+                >
                   Convert Legacy Standards
                 </Button>
               </Grid>

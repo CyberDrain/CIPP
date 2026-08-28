@@ -1,5 +1,12 @@
 import { useEffect, useMemo } from 'react'
-import { Alert, Box, Skeleton, Stack, TextField, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Skeleton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { ApiGetCall } from '../../api/ApiCall'
 import { CippWizardStepButtons } from './CippWizardStepButtons'
 import { CippCopyToClipBoard } from '../CippComponents/CippCopyToClipboard'
@@ -37,7 +44,10 @@ export const CippIndirectResellerLink = (props) => {
     }
   }, [linkData.isFetching, providerOptions])
 
-  const selectedProvider = useWatch({ control: formControl.control, name: 'indirectProviderId' })
+  const selectedProvider = useWatch({
+    control: formControl.control,
+    name: 'indirectProviderId',
+  })
 
   const finalUrl = useMemo(() => {
     if (!inviteUrl) return null
@@ -55,9 +65,10 @@ export const CippIndirectResellerLink = (props) => {
           Indirect Reseller Relationship Link
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Generate an invite link to send to a customer so they can authorize you as their indirect
-          reseller. This does <strong>not</strong> add the tenant to CIPP — it only provides the
-          Microsoft Admin Portal invitation link.
+          Generate an invite link to send to a customer so they can authorize
+          you as their indirect reseller. This does <strong>not</strong> add the
+          tenant to CIPP — it only provides the Microsoft Admin Portal
+          invitation link.
         </Typography>
       </Box>
 
@@ -74,12 +85,14 @@ export const CippIndirectResellerLink = (props) => {
 
       {linkData.isError && (
         <Alert severity="error">
-          Failed to load relationship link from the Partner Center API. Ensure your CIPP application
-          has the required Partner Center permissions.
+          Failed to load relationship link from the Partner Center API. Ensure
+          your CIPP application has the required Partner Center permissions.
         </Alert>
       )}
 
-      {inviteUrlError && !linkData.isError && <Alert severity="warning">{inviteUrlError}</Alert>}
+      {inviteUrlError && !linkData.isError && (
+        <Alert severity="warning">{inviteUrlError}</Alert>
+      )}
 
       {!linkData.isFetching && !linkData.isError && inviteUrl && (
         <>
@@ -108,15 +121,20 @@ export const CippIndirectResellerLink = (props) => {
               />
               <CippCopyToClipBoard text={finalUrl} />
             </Stack>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-              Send this link to your customer. When they follow it, they will be linked to your
-              reseller account in the Microsoft Admin Portal.
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mt: 0.5, display: 'block' }}
+            >
+              Send this link to your customer. When they follow it, they will be
+              linked to your reseller account in the Microsoft Admin Portal.
             </Typography>
           </Box>
 
           <Alert severity="info">
-            There is no automatic confirmation when the customer accepts this invite. You can verify
-            the relationship in Partner Center once the customer has completed the process.
+            There is no automatic confirmation when the customer accepts this
+            invite. You can verify the relationship in Partner Center once the
+            customer has completed the process.
           </Alert>
         </>
       )}

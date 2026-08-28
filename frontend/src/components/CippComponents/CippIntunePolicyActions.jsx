@@ -14,8 +14,14 @@ const assignmentModeOptions = [
 ]
 
 const assignmentFilterTypeOptions = [
-  { label: 'Include - Apply policy to devices matching filter', value: 'include' },
-  { label: 'Exclude - Apply policy to devices NOT matching filter', value: 'exclude' },
+  {
+    label: 'Include - Apply policy to devices matching filter',
+    value: 'include',
+  },
+  {
+    label: 'Exclude - Apply policy to devices NOT matching filter',
+    value: 'exclude',
+  },
 ]
 
 const assignmentDirectionOptions = [
@@ -37,7 +43,11 @@ const assignmentDirectionOptions = [
  * @param {object} options.templateData - Data for template creation
  * @returns {Array} Array of action objects
  */
-export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => {
+export const useCippIntunePolicyActions = (
+  tenant,
+  policyType,
+  options = {}
+) => {
   const {
     platformType = null,
     includeCreateTemplate = true,
@@ -56,12 +66,15 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
     multiple: true,
     creatable: false,
     allowResubmit: true,
-    ...(required && { validators: { required: 'Please select at least one group' } }),
+    ...(required && {
+      validators: { required: 'Please select at least one group' },
+    }),
     api: {
       url: '/api/ListGraphRequest',
       dataKey: 'Results',
       queryKey: `ListPolicyAssignmentGroups-${tenant}`,
-      labelField: (group) => (group.id ? `${group.displayName} (${group.id})` : group.displayName),
+      labelField: (group) =>
+        group.id ? `${group.displayName} (${group.id})` : group.displayName,
       valueField: 'id',
       addedField: {
         description: 'description',
@@ -118,8 +131,13 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
       label: 'Assignment Filter Mode',
       options: assignmentFilterTypeOptions,
       defaultValue: 'include',
-      helperText: 'Choose whether to include or exclude devices matching the filter.',
-      condition: { field: 'assignmentFilter', compareType: 'hasValue', clearOnHide: false },
+      helperText:
+        'Choose whether to include or exclude devices matching the filter.',
+      condition: {
+        field: 'assignmentFilter',
+        compareType: 'hasValue',
+        clearOnHide: false,
+      },
     },
   ]
 
@@ -141,7 +159,8 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
     },
     {
       ...getGroupPickerField('groupTargets', 'Group(s)', false),
-      helperText: 'Leave empty with Exclude + Replace to remove all exclusions (keeps includes).',
+      helperText:
+        'Leave empty with Exclude + Replace to remove all exclusions (keeps includes).',
       validators: {
         // Required, except Exclude + Replace where an empty selection clears all exclusions.
         validate: (value, formValues) => {
@@ -151,7 +170,10 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
           ) {
             return true
           }
-          return (Array.isArray(value) && value.length > 0) || 'Please select at least one group'
+          return (
+            (Array.isArray(value) && value.length > 0) ||
+            'Please select at least one group'
+          )
         },
       },
     },
@@ -174,14 +196,19 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
   const getCustomDataFormatter = (assignTo) => (row, action, formData) => {
     const rows = Array.isArray(row) ? row : [row]
     return rows.map((item) => ({
-      tenantFilter: tenant === 'AllTenants' && item?.Tenant ? item.Tenant : tenant,
+      tenantFilter:
+        tenant === 'AllTenants' && item?.Tenant ? item.Tenant : tenant,
       ID: item?.id,
       type: item?.URLName || policyType,
       ...(platformType && { platformType }),
       AssignTo: assignTo,
       assignmentMode: formData?.assignmentMode || 'append',
-      ExcludeGroupIds: (formData?.excludeGroupTargets || []).map((g) => g.value).filter(Boolean),
-      ExcludeGroupNames: (formData?.excludeGroupTargets || []).map((g) => g.label).filter(Boolean),
+      ExcludeGroupIds: (formData?.excludeGroupTargets || [])
+        .map((g) => g.value)
+        .filter(Boolean),
+      ExcludeGroupNames: (formData?.excludeGroupTargets || [])
+        .map((g) => g.label)
+        .filter(Boolean),
       AssignmentFilterName: formData?.assignmentFilter?.value || null,
       AssignmentFilterType: formData?.assignmentFilter?.value
         ? formData?.assignmentFilterType || 'include'
@@ -191,12 +218,15 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
 
   const getCustomDataFormatterForGroups = () => (row, action, formData) => {
     const rows = Array.isArray(row) ? row : [row]
-    const selectedGroups = Array.isArray(formData?.groupTargets) ? formData.groupTargets : []
+    const selectedGroups = Array.isArray(formData?.groupTargets)
+      ? formData.groupTargets
+      : []
     const isExclude = formData?.assignmentDirection === 'exclude'
     const ids = selectedGroups.map((group) => group.value).filter(Boolean)
     const names = selectedGroups.map((group) => group.label).filter(Boolean)
     return rows.map((item) => ({
-      tenantFilter: tenant === 'AllTenants' && item?.Tenant ? item.Tenant : tenant,
+      tenantFilter:
+        tenant === 'AllTenants' && item?.Tenant ? item.Tenant : tenant,
       ID: item?.id,
       type: item?.URLName || policyType,
       ...(platformType && { platformType }),
@@ -225,7 +255,8 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
         ID: 'id',
         URLName: policyType === 'URLName' ? 'URLName' : policyType,
       },
-      confirmText: 'Are you sure you want to create a template based on this policy?',
+      confirmText:
+        'Are you sure you want to create a template based on this policy?',
       icon: <Book />,
       color: 'info',
       multiPost: false,
@@ -316,7 +347,8 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
     multiPost: false,
     fields: getBroadAssignFields(),
     customDataformatter: getCustomDataFormatter('allLicensedUsers'),
-    confirmText: 'Are you sure you want to assign "[displayName]" to all users?',
+    confirmText:
+      'Are you sure you want to assign "[displayName]" to all users?',
     icon: <UserIcon />,
     color: 'info',
   })
@@ -336,7 +368,8 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
     multiPost: false,
     fields: getBroadAssignFields(),
     customDataformatter: getCustomDataFormatter('AllDevices'),
-    confirmText: 'Are you sure you want to assign "[displayName]" to all devices?',
+    confirmText:
+      'Are you sure you want to assign "[displayName]" to all devices?',
     icon: <LaptopChromebook />,
     color: 'info',
   })
@@ -356,7 +389,8 @@ export const useCippIntunePolicyActions = (tenant, policyType, options = {}) => 
     multiPost: false,
     fields: getBroadAssignFields(),
     customDataformatter: getCustomDataFormatter('AllDevicesAndUsers'),
-    confirmText: 'Are you sure you want to assign "[displayName]" to all users and devices?',
+    confirmText:
+      'Are you sure you want to assign "[displayName]" to all users and devices?',
     icon: <GlobeAltIcon />,
     color: 'info',
   })

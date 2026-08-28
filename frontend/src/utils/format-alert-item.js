@@ -12,7 +12,9 @@ export const humanizeCmdlet = (cmdlet) => {
 }
 
 export const formatFieldName = (key) =>
-  key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase())
+  key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/^./, (c) => c.toUpperCase())
 
 export const formatValue = (value) => {
   if (value == null) return ''
@@ -24,7 +26,11 @@ export const formatValue = (value) => {
   const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2})?/)
   if (isoMatch) {
     const date = new Date(
-      Date.UTC(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]))
+      Date.UTC(
+        Number(isoMatch[1]),
+        Number(isoMatch[2]) - 1,
+        Number(isoMatch[3])
+      )
     )
     if (!Number.isNaN(date.getTime())) {
       return date.toLocaleDateString(undefined, {
@@ -53,7 +59,8 @@ const parsePreview = (preview) => {
     }
   }
   const obj = {}
-  const pairRegex = /"([^"]+)"\s*:\s*(?:"([^"]*)"|(-?\d+(?:\.\d+)?)|(true|false|null))/g
+  const pairRegex =
+    /"([^"]+)"\s*:\s*(?:"([^"]*)"|(-?\d+(?:\.\d+)?)|(true|false|null))/g
   let match
   while ((match = pairRegex.exec(text)) !== null) {
     const [, key, str, num, lit] = match
@@ -98,7 +105,8 @@ const pickDetail = (item, title) => {
 export const describeAlertItem = (rawItem, contentPreview) => {
   let item = rawItem
   if (item == null) item = parsePreview(contentPreview)
-  if (typeof item === 'string' && item.trim()) return { title: item.trim(), detail: '' }
+  if (typeof item === 'string' && item.trim())
+    return { title: item.trim(), detail: '' }
   if (item && typeof item === 'object') {
     const title = pickTitle(item)
     if (title) return { title, detail: pickDetail(item, title) }

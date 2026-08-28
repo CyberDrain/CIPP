@@ -58,21 +58,34 @@ const SharingLinkDetail = ({ row }) => {
     { label: 'Type', value: row.itemType },
     { label: 'Link Scope', value: row.linkScope },
     { label: 'Link Type', value: row.linkType },
-    { label: 'Permission', value: Array.isArray(row.roles) ? row.roles.join(', ') : row.roles },
+    {
+      label: 'Permission',
+      value: Array.isArray(row.roles) ? row.roles.join(', ') : row.roles,
+    },
     { label: 'Password Protected', value: row.hasPassword ? 'Yes' : 'No' },
     {
       label: 'Expires',
-      value: row.expirationDateTime ? new Date(row.expirationDateTime).toLocaleString() : 'Never',
+      value: row.expirationDateTime
+        ? new Date(row.expirationDateTime).toLocaleString()
+        : 'Never',
     },
     {
       label: 'Last Modified',
-      value: row.lastModifiedDateTime ? new Date(row.lastModifiedDateTime).toLocaleString() : '',
+      value: row.lastModifiedDateTime
+        ? new Date(row.lastModifiedDateTime).toLocaleString()
+        : '',
     },
   ]
 
   return (
     <Stack spacing={2} sx={{ p: 2 }}>
-      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        flexWrap="wrap"
+        useFlexGap
+      >
         <Typography variant="h6">{row.fileName}</Typography>
         <Chip
           size="small"
@@ -85,7 +98,12 @@ const SharingLinkDetail = ({ row }) => {
       <Divider />
       <Grid container spacing={2}>
         {properties
-          .filter((prop) => prop.value !== undefined && prop.value !== null && prop.value !== '')
+          .filter(
+            (prop) =>
+              prop.value !== undefined &&
+              prop.value !== null &&
+              prop.value !== ''
+          )
           .map((prop) => (
             <Grid size={{ md: 4, xs: 12 }} key={prop.label}>
               <Typography variant="subtitle2" color="text.secondary">
@@ -103,7 +121,12 @@ const SharingLinkDetail = ({ row }) => {
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             {row.sharedWith.map((recipient) => (
-              <Chip key={recipient} size="small" variant="outlined" label={recipient} />
+              <Chip
+                key={recipient}
+                size="small"
+                variant="outlined"
+                label={recipient}
+              />
             ))}
           </Stack>
         </>
@@ -289,7 +312,10 @@ const Page = () => {
                     relatedQueryKeys={[queryKey]}
                     label="Sharing sync"
                   />
-                  <SharingReportButton sharingData={data} tenantName={currentTenant} />
+                  <SharingReportButton
+                    sharingData={data}
+                    tenantName={currentTenant}
+                  />
                   <Button
                     size="small"
                     variant="outlined"
@@ -309,9 +335,10 @@ const Page = () => {
               </Stack>
               {needsSync && (
                 <Alert severity="info" sx={{ mb: 1 }}>
-                  No cached sharing data found for this tenant yet. Click "Sync data" to scan the
-                  tenant's SharePoint sites and OneDrive accounts for sharing links; the report
-                  populates once the sync completes.
+                  No cached sharing data found for this tenant yet. Click "Sync
+                  data" to scan the tenant's SharePoint sites and OneDrive
+                  accounts for sharing links; the report populates once the sync
+                  completes.
                 </Alert>
               )}
             </Grid>
@@ -351,13 +378,22 @@ const Page = () => {
                 isFetching={sharing.isFetching}
                 showDivider={false}
                 propertyItems={[
-                  { label: 'Anonymous & Editable', value: `${summary.anonymousEditLinks ?? 0}` },
+                  {
+                    label: 'Anonymous & Editable',
+                    value: `${summary.anonymousEditLinks ?? 0}`,
+                  },
                   {
                     label: 'Anonymous, No Expiry',
                     value: `${summary.neverExpiringAnonymous ?? 0}`,
                   },
-                  { label: 'Shared Folders', value: `${summary.folderShares ?? 0}` },
-                  { label: 'External Recipients', value: `${summary.externalRecipients ?? 0}` },
+                  {
+                    label: 'Shared Folders',
+                    value: `${summary.folderShares ?? 0}`,
+                  },
+                  {
+                    label: 'External Recipients',
+                    value: `${summary.externalRecipients ?? 0}`,
+                  },
                 ]}
               />
             </Grid>
@@ -367,10 +403,22 @@ const Page = () => {
                 isFetching={sharing.isFetching}
                 showDivider={false}
                 propertyItems={[
-                  { label: 'SharePoint Sites', value: `${summary.sharePointSites ?? 0}` },
-                  { label: 'Teams-Connected Sites', value: `${summary.teamsSites ?? 0}` },
-                  { label: 'OneDrive Accounts', value: `${summary.oneDriveAccounts ?? 0}` },
-                  { label: 'Shared Items', value: `${summary.itemsShared ?? 0}` },
+                  {
+                    label: 'SharePoint Sites',
+                    value: `${summary.sharePointSites ?? 0}`,
+                  },
+                  {
+                    label: 'Teams-Connected Sites',
+                    value: `${summary.teamsSites ?? 0}`,
+                  },
+                  {
+                    label: 'OneDrive Accounts',
+                    value: `${summary.oneDriveAccounts ?? 0}`,
+                  },
+                  {
+                    label: 'Shared Items',
+                    value: `${summary.itemsShared ?? 0}`,
+                  },
                 ]}
               />
             </Grid>
@@ -514,7 +562,9 @@ const Page = () => {
                     return
                   }
                   setSyncQueueIds((previous) =>
-                    previous.includes(queueId) ? previous : [...previous, queueId]
+                    previous.includes(queueId)
+                      ? previous
+                      : [...previous, queueId]
                   )
                 },
               }}
@@ -530,4 +580,3 @@ const Page = () => {
 Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
 export default Page
-

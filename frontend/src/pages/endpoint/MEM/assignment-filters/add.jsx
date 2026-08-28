@@ -1,24 +1,27 @@
-import { Box } from "@mui/material";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useForm } from "react-hook-form";
-import { useSettings } from "../../../../hooks/use-settings";
-import { useEffect } from "react";
-import CippAddAssignmentFilterForm from "../../../../components/CippFormPages/CippAddAssignmentFilterForm";
+import { Box } from '@mui/material'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useForm } from 'react-hook-form'
+import { useSettings } from '../../../../hooks/use-settings'
+import { useEffect } from 'react'
+import CippAddAssignmentFilterForm from '../../../../components/CippFormPages/CippAddAssignmentFilterForm'
 
 const Page = () => {
-  const userSettingsDefaults = useSettings();
+  const userSettingsDefaults = useSettings()
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      assignmentFilterManagementType: "devices",
+      assignmentFilterManagementType: 'devices',
     },
-  });
+  })
 
   useEffect(() => {
-    formControl.setValue("tenantFilter", userSettingsDefaults?.currentTenant || "");
-  }, [userSettingsDefaults, formControl]);
+    formControl.setValue(
+      'tenantFilter',
+      userSettingsDefaults?.currentTenant || ''
+    )
+  }, [userSettingsDefaults, formControl])
 
   return (
     <>
@@ -34,9 +37,9 @@ const Page = () => {
         </Box>
       </CippFormPage>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

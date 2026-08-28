@@ -48,7 +48,10 @@ const Page = () => {
   const blocks = useMemo(() => {
     if (!report?.Blocks) return []
     try {
-      const raw = typeof report.Blocks === 'string' ? JSON.parse(report.Blocks) : report.Blocks
+      const raw =
+        typeof report.Blocks === 'string'
+          ? JSON.parse(report.Blocks)
+          : report.Blocks
       return Array.isArray(raw) ? raw : []
     } catch {
       return []
@@ -60,7 +63,9 @@ const Page = () => {
   const reportSettings = useMemo(() => {
     if (!report?.Settings) return null
     try {
-      return typeof report.Settings === 'string' ? JSON.parse(report.Settings) : report.Settings
+      return typeof report.Settings === 'string'
+        ? JSON.parse(report.Settings)
+        : report.Settings
     } catch {
       return null
     }
@@ -78,7 +83,9 @@ const Page = () => {
   const effectiveBranding = useMemo(() => {
     const presetId = reportSettings?.brandingPresetId
     if (!presetId) return brandingSettings
-    const presets = Array.isArray(brandingPresetsApi.data) ? brandingPresetsApi.data : []
+    const presets = Array.isArray(brandingPresetsApi.data)
+      ? brandingPresetsApi.data
+      : []
     return presets.find((preset) => preset.id === presetId) || brandingSettings
   }, [reportSettings, brandingPresetsApi.data, brandingSettings])
 
@@ -125,7 +132,11 @@ const Page = () => {
         <Container maxWidth={false}>
           <Stack spacing={2}>
             {/* Header skeleton */}
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
               <Stack direction="row" spacing={1} alignItems="center">
                 <Skeleton variant="circular" width={32} height={32} />
                 <Skeleton variant="text" width={250} height={40} />
@@ -165,7 +176,11 @@ const Page = () => {
     <Box sx={{ flexGrow: 1 }}>
       <Container maxWidth={false}>
         <Stack spacing={2}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Stack direction="row" spacing={1} alignItems="center">
               <IconButton size="small" onClick={handleBackClick}>
                 <ArrowBack />

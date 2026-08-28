@@ -1,6 +1,6 @@
-import { CippFormComponent } from "./CippFormComponent";
-import { useWatch } from "react-hook-form";
-import { useSettings } from "../../hooks/use-settings";
+import { CippFormComponent } from './CippFormComponent'
+import { useWatch } from 'react-hook-form'
+import { useSettings } from '../../hooks/use-settings'
 
 export const CippFormUserSelector = ({
   formControl,
@@ -8,7 +8,7 @@ export const CippFormUserSelector = ({
   label,
   allTenants = false,
   multiple = false,
-  type = "multiple",
+  type = 'multiple',
   select,
   addedField,
   valueField,
@@ -16,8 +16,11 @@ export const CippFormUserSelector = ({
   showRefresh = false,
   ...other
 }) => {
-  const currentTenant = useWatch({ control: formControl.control, name: "tenantFilter" });
-  const selectedTenant = useSettings().currentTenant;
+  const currentTenant = useWatch({
+    control: formControl.control,
+    name: 'tenantFilter',
+  })
+  const selectedTenant = useSettings().currentTenant
   return (
     <CippFormComponent
       name={name}
@@ -28,31 +31,32 @@ export const CippFormUserSelector = ({
       api={{
         addedField: addedField,
         tenantFilter: currentTenant ? currentTenant.value : selectedTenant,
-        url: "/api/ListGraphRequest",
-        dataKey: "Results",
-        labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
-        valueField: valueField ? valueField : "id",
+        url: '/api/ListGraphRequest',
+        dataKey: 'Results',
+        labelField: (option) =>
+          `${option.displayName} (${option.userPrincipalName})`,
+        valueField: valueField ? valueField : 'id',
         queryKey: `ListUsers-${currentTenant?.value ? currentTenant.value : selectedTenant}-${
-          select ? select : "default"
+          select ? select : 'default'
         }`,
         data: {
-          Endpoint: "users",
+          Endpoint: 'users',
           manualPagination: true,
-          $select: select ? select : "id,userPrincipalName,displayName",
+          $select: select ? select : 'id,userPrincipalName,displayName',
           $count: true,
-          $orderby: "displayName",
+          $orderby: 'displayName',
           $top: 999,
         },
         dataFilter: (options) => {
           if (dataFilter) {
-            return options.filter(dataFilter);
+            return options.filter(dataFilter)
           }
-          return options;
+          return options
         },
         showRefresh: showRefresh,
       }}
       creatable={false}
       {...other}
     />
-  );
-};
+  )
+}

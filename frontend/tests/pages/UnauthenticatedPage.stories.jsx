@@ -22,7 +22,10 @@ export const AccessDenied = {
   render: () => <UnauthenticatedPage reason="permissions" />,
   parameters: {
     msw: {
-      handlers: authHandlers({ message: 'Permission Denied' }, { clientPrincipal: null }),
+      handlers: authHandlers(
+        { message: 'Permission Denied' },
+        { clientPrincipal: null }
+      ),
     },
   },
   play: async ({ canvasElement, step }) => {
@@ -32,7 +35,9 @@ export const AccessDenied = {
         expect(canvas.getByText('Access Denied')).toBeInTheDocument()
       })
       await expect(canvas.getByText('Permission Denied')).toBeInTheDocument()
-      await expect(canvas.getByRole('link', { name: /Login/i })).toBeInTheDocument()
+      await expect(
+        canvas.getByRole('link', { name: /Login/i })
+      ).toBeInTheDocument()
     })
   },
 }
@@ -53,15 +58,20 @@ export const AccessDeniedNamedAccount = {
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
-    await step('the denied account is named and switching is offered', async () => {
-      await waitFor(() => {
-        expect(canvas.getByText('john@contoso.com')).toBeInTheDocument()
-      })
-      await expect(
-        canvas.getByRole('link', { name: 'Sign in with a different account' })
-      ).toBeInTheDocument()
-      await expect(canvas.getByRole('link', { name: /Return to Home/i })).toBeInTheDocument()
-    })
+    await step(
+      'the denied account is named and switching is offered',
+      async () => {
+        await waitFor(() => {
+          expect(canvas.getByText('john@contoso.com')).toBeInTheDocument()
+        })
+        await expect(
+          canvas.getByRole('link', { name: 'Sign in with a different account' })
+        ).toBeInTheDocument()
+        await expect(
+          canvas.getByRole('link', { name: /Return to Home/i })
+        ).toBeInTheDocument()
+      }
+    )
   },
 }
 

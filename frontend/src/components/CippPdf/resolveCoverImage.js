@@ -57,7 +57,8 @@ const parseUploadsArray = (uploads) => {
     try {
       const parsed = JSON.parse(uploads)
       if (Array.isArray(parsed)) return parsed
-      if (typeof parsed === 'string' && parsed.startsWith('data:image/')) return [parsed]
+      if (typeof parsed === 'string' && parsed.startsWith('data:image/'))
+        return [parsed]
       return []
     } catch {
       return []
@@ -71,7 +72,9 @@ const normalizeUploadsForIds = (uploads, ids, selectedFallback) => {
   if (ids.length > 0) {
     return ids.map((_, index) => {
       const item = parsed[index]
-      return typeof item === 'string' && item.startsWith('data:image/') ? item : ''
+      return typeof item === 'string' && item.startsWith('data:image/')
+        ? item
+        : ''
     })
   }
   if (
@@ -81,7 +84,9 @@ const normalizeUploadsForIds = (uploads, ids, selectedFallback) => {
   ) {
     parsed = [selectedFallback, ...parsed]
   }
-  return parsed.filter((item) => typeof item === 'string' && item.startsWith('data:image/'))
+  return parsed.filter(
+    (item) => typeof item === 'string' && item.startsWith('data:image/')
+  )
 }
 
 /**
@@ -112,7 +117,10 @@ export const normalizeLogoUploads = (brandingSettings) =>
  * Explicit "none" stock means no cover (no fallback).
  * Otherwise selected stock, then the report-specific fallback.
  */
-export const resolveCoverImage = (brandingSettings, fallback = DEFAULT_COVER_STOCK) => {
+export const resolveCoverImage = (
+  brandingSettings,
+  fallback = DEFAULT_COVER_STOCK
+) => {
   if (brandingSettings?.coverImage) {
     return brandingSettings.coverImage
   }

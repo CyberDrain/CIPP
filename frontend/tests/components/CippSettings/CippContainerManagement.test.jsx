@@ -5,19 +5,28 @@ import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '../../test-utils'
 import { CippContainerManagement } from '../../../src/components/CippSettings/CippContainerManagement'
 
-vi.mock('../../../src/api/ApiCall', async () => (await import('../../mocks/api-call')).apiCallMock())
-import { api, getResult, paginatedResult, postResult } from '../../mocks/api-call'
+vi.mock('../../../src/api/ApiCall', async () =>
+  (await import('../../mocks/api-call')).apiCallMock()
+)
+import {
+  api,
+  getResult,
+  paginatedResult,
+  postResult,
+} from '../../mocks/api-call'
 
 // stable references, fresh literals per call spin CippAutoComplete's mapping effect
 const statusGet = getResult()
 // status payload only answers its own url, the page's other GETs stay idle
 const idleGet = getResult({ isSuccess: false })
-api.get = (opts) => (opts.url === '/api/ExecContainerManagement' ? statusGet : idleGet)
+api.get = (opts) =>
+  opts.url === '/api/ExecContainerManagement' ? statusGet : idleGet
 api.paginated = paginatedResult()
 api.post = postResult()
 
 // Status shape from Invoke-ExecContainerManagement.ps1 (Action=Status)
-const BUILD_PATTERN = '^(preview|feat|fix|refactor|perf|chore|build|revert)-[a-z0-9][a-z0-9._-]{0,54}$'
+const BUILD_PATTERN =
+  '^(preview|feat|fix|refactor|perf|chore|build|revert)-[a-z0-9][a-z0-9._-]{0,54}$'
 
 const statusResults = (channel) => ({
   CurrentVersion: '8.0.0',
@@ -48,8 +57,16 @@ const channelListResults = [
   { label: 'latest', value: 'latest', group: 'Standard channels' },
   { label: 'dev', value: 'dev', group: 'Standard channels' },
   { label: 'nightly', value: 'nightly', group: 'Standard channels' },
-  { label: 'feat-new-widget', value: 'feat-new-widget', group: 'Branch builds (latest)' },
-  { label: 'fix-sso-thing-a1b2c3d', value: 'fix-sso-thing-a1b2c3d', group: 'Branch builds (pinned)' },
+  {
+    label: 'feat-new-widget',
+    value: 'feat-new-widget',
+    group: 'Branch builds (latest)',
+  },
+  {
+    label: 'fix-sso-thing-a1b2c3d',
+    value: 'fix-sso-thing-a1b2c3d',
+    group: 'Branch builds (pinned)',
+  },
 ]
 
 const PINNED_PRETTY = 'fix-sso-thing — pinned a1b2c3d'
@@ -73,7 +90,9 @@ describe('CippContainerManagement branch-build flagging', () => {
     statusGet.data = { Results: statusResults('feat-new-widget') }
     renderWithProviders(<CippContainerManagement />)
     expect(await screen.findByText(ALERT_RE)).toBeInTheDocument()
-    expect(screen.getByRole('combobox', { name: 'Release Channel' })).toHaveValue('feat-new-widget')
+    expect(
+      screen.getByRole('combobox', { name: 'Release Channel' })
+    ).toHaveValue('feat-new-widget')
   })
 
   it('standard channel chips its friendly label and raises no branch alert', async () => {
@@ -82,7 +101,9 @@ describe('CippContainerManagement branch-build flagging', () => {
     expect(screen.getByText('Dev')).toBeInTheDocument()
     // wait for the seed effect so the alert-absence check runs against the settled form
     await waitFor(() => {
-      expect(screen.getByRole('combobox', { name: 'Release Channel' })).toHaveValue('Dev')
+      expect(
+        screen.getByRole('combobox', { name: 'Release Channel' })
+      ).toHaveValue('Dev')
     })
     expect(screen.queryByText(ALERT_RE)).not.toBeInTheDocument()
   })
@@ -93,7 +114,9 @@ describe('CippContainerManagement branch-build flagging', () => {
     renderWithProviders(<CippContainerManagement />)
     expect(screen.getByText('Unknown')).toBeInTheDocument()
     await waitFor(() => {
-      expect(screen.getByRole('combobox', { name: 'Release Channel' })).toHaveValue('8.0.1')
+      expect(
+        screen.getByRole('combobox', { name: 'Release Channel' })
+      ).toHaveValue('8.0.1')
     })
     expect(screen.queryByText(ALERT_RE)).not.toBeInTheDocument()
   })
@@ -105,13 +128,17 @@ describe('CippContainerManagement branch-build flagging', () => {
     renderWithProviders(<CippContainerManagement />)
 
     await waitFor(() => {
-      expect(screen.getByRole('combobox', { name: 'Release Channel' })).toHaveValue('Latest (Stable)')
+      expect(
+        screen.getByRole('combobox', { name: 'Release Channel' })
+      ).toHaveValue('Latest (Stable)')
     })
     expect(screen.queryByText(ALERT_RE)).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('combobox', { name: 'Release Channel' }))
     // producer group flows through rawData into groupBy
-    expect(await screen.findByText('Branch builds (pinned)')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Branch builds (pinned)')
+    ).toBeInTheDocument()
     await user.click(screen.getByRole('option', { name: PINNED_PRETTY }))
 
     const alert = await screen.findByText(ALERT_RE)

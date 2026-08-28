@@ -1,5 +1,5 @@
-import { useWatch } from "react-hook-form";
-import CippFormComponent from "./CippFormComponent";
+import { useWatch } from 'react-hook-form'
+import CippFormComponent from './CippFormComponent'
 
 /**
  * A form component for selecting specific resources from a Graph API endpoint
@@ -16,9 +16,9 @@ import CippFormComponent from "./CippFormComponent";
 const CippGraphResourceSelector = ({
   formControl,
   name,
-  resourceFieldName = "DeltaResource",
-  tenantFilterFieldName = "tenantFilter",
-  label = "Filter Specific Resources (Optional)",
+  resourceFieldName = 'DeltaResource',
+  tenantFilterFieldName = 'tenantFilter',
+  label = 'Filter Specific Resources (Optional)',
   helperText,
   multiple = true,
   required = false,
@@ -28,82 +28,89 @@ const CippGraphResourceSelector = ({
   const selectedResource = useWatch({
     control: formControl.control,
     name: resourceFieldName,
-  });
+  })
 
   // Watch for changes in the tenant filter field
   const tenantFilter = useWatch({
     control: formControl.control,
     name: tenantFilterFieldName,
-  });
+  })
 
   // Extract the value whether selectedResource is an object or string
-  const resourceValue = selectedResource?.value || selectedResource;
+  const resourceValue = selectedResource?.value || selectedResource
 
   // Extract the tenant filter value - handle both object and string formats
-  const tenantFilterValue = tenantFilter?.value || tenantFilter;
+  const tenantFilterValue = tenantFilter?.value || tenantFilter
 
   const getHelperText = () => {
-    if (helperText) return helperText;
+    if (helperText) return helperText
 
     if (!resourceValue) {
-      return "Select a resource type above to filter specific resources";
+      return 'Select a resource type above to filter specific resources'
     }
 
     if (
       !tenantFilterValue ||
-      tenantFilterValue === "AllTenants" ||
-      (tenantFilter && typeof tenantFilter === "object" && tenantFilter.type === "Group")
+      tenantFilterValue === 'AllTenants' ||
+      (tenantFilter &&
+        typeof tenantFilter === 'object' &&
+        tenantFilter.type === 'Group')
     ) {
-      return "Resource filtering is not available for All Tenants or tenant groups";
+      return 'Resource filtering is not available for All Tenants or tenant groups'
     }
 
     if (multiple) {
-      return "Optionally select specific resources to monitor (will create filter with OR statements: id eq 'id1' or id eq 'id2')";
+      return "Optionally select specific resources to monitor (will create filter with OR statements: id eq 'id1' or id eq 'id2')"
     }
 
-    return "Optionally select a specific resource to monitor";
-  };
+    return 'Optionally select a specific resource to monitor'
+  }
 
   // Check if we should make the API call
   const shouldFetchResources = () => {
     // Must have a resource type selected
-    if (!resourceValue) return false;
+    if (!resourceValue) return false
 
     // Must have a tenant filter
-    if (!tenantFilterValue) return false;
+    if (!tenantFilterValue) return false
 
     // Cannot be null or undefined
-    if (tenantFilterValue === null || tenantFilterValue === undefined) return false;
+    if (tenantFilterValue === null || tenantFilterValue === undefined)
+      return false
 
     // Cannot be AllTenants
-    if (tenantFilterValue === "AllTenants") return false;
+    if (tenantFilterValue === 'AllTenants') return false
 
     // Cannot be a tenant group (check if tenantFilter object has type: "Group")
-    if (tenantFilter && typeof tenantFilter === "object" && tenantFilter.type === "Group")
-      return false;
+    if (
+      tenantFilter &&
+      typeof tenantFilter === 'object' &&
+      tenantFilter.type === 'Group'
+    )
+      return false
 
-    return true;
-  };
+    return true
+  }
 
-  const isDisabled = !resourceValue || !shouldFetchResources();
+  const isDisabled = !resourceValue || !shouldFetchResources()
 
   const api = shouldFetchResources()
     ? {
-        url: "/api/ListGraphRequest",
+        url: '/api/ListGraphRequest',
         queryKey: `graph-resources-${resourceValue}-${tenantFilterValue}`,
         data: {
           Endpoint: resourceValue,
           IgnoreErrors: true,
-          $select: "id,displayName",
+          $select: 'id,displayName',
           $top: 100,
           tenantFilter: tenantFilterValue,
         },
         labelField: (item) => item.displayName || item.id,
-        valueField: "id",
-        dataKey: "Results",
+        valueField: 'id',
+        dataKey: 'Results',
         waiting: true,
       }
-    : null;
+    : null
 
   return (
     <CippFormComponent
@@ -119,14 +126,14 @@ const CippGraphResourceSelector = ({
       helperText={getHelperText()}
       placeholder={
         !resourceValue
-          ? "Select a resource type first"
+          ? 'Select a resource type first'
           : !shouldFetchResources()
-          ? "Resource filtering not available"
-          : undefined
+            ? 'Resource filtering not available'
+            : undefined
       }
       {...otherProps}
     />
-  );
-};
+  )
+}
 
-export default CippGraphResourceSelector;
+export default CippGraphResourceSelector

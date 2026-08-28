@@ -36,7 +36,8 @@ const Page = () => {
       confirmText:
         'Fully remove guest access for [DisplayName]? This deletes their Entra guest account (if one exists) AND removes them from every site listed in the Sites column, so nothing is left orphaned. Sharing links they hold can be revoked from the Sharing Report; the inert SharePoint store entry ages out on its own.',
       color: 'error',
-      condition: (row) => canWriteSite && (row.InEntra || (row.Sites ?? []).length > 0),
+      condition: (row) =>
+        canWriteSite && (row.InEntra || (row.Sites ?? []).length > 0),
       multiPost: false,
     },
   ]
@@ -44,7 +45,9 @@ const Page = () => {
   const filters = [
     {
       filterName: 'SharePoint-only',
-      value: [{ id: 'GuestType', value: 'SharePoint-only (email authenticated)' }],
+      value: [
+        { id: 'GuestType', value: 'SharePoint-only (email authenticated)' },
+      ],
       type: 'column',
     },
     {

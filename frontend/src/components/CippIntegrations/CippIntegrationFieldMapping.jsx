@@ -7,71 +7,74 @@ import {
   Tooltip,
   Button,
   Alert,
-} from "@mui/material";
-import CippFormSection from "../CippFormPages/CippFormSection";
-import { useForm } from "react-hook-form";
-import { ApiGetCall } from "../../api/ApiCall";
-import { useRouter } from "next/router";
-import extensions from "../../data/Extensions.json";
-import React, { useEffect, useState } from "react";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { Sync } from "@mui/icons-material";
-import { Stack, Grid } from "@mui/system";
+} from '@mui/material'
+import CippFormSection from '../CippFormPages/CippFormSection'
+import { useForm } from 'react-hook-form'
+import { ApiGetCall } from '../../api/ApiCall'
+import { useRouter } from 'next/router'
+import extensions from '../../data/Extensions.json'
+import React, { useEffect, useState } from 'react'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { Sync } from '@mui/icons-material'
+import { Stack, Grid } from '@mui/system'
 
 const CippIntegrationFieldMapping = () => {
-  const router = useRouter();
+  const router = useRouter()
 
   const fieldMapping = ApiGetCall({
-    url: "/api/ExecExtensionMapping",
+    url: '/api/ExecExtensionMapping',
     data: {
       List: `${router.query.id}Fields`,
     },
     queryKey: `IntegrationFieldMapping-${router.query.id}`,
-  });
+  })
 
   const formControl = useForm({
-    mode: "onChange",
-  });
+    mode: 'onChange',
+  })
 
-  const extension = extensions.find((extension) => extension.id === router.query.id);
-  const [missingMappings, setMissingMappings] = useState([]);
+  const extension = extensions.find(
+    (extension) => extension.id === router.query.id
+  )
+  const [missingMappings, setMissingMappings] = useState([])
 
   useEffect(() => {
     if (fieldMapping.isSuccess) {
-      var newMappings = {};
-      var missingMappings = [];
+      var newMappings = {}
+      var missingMappings = []
       fieldMapping?.data?.Mappings?.forEach((mapping) => {
         const exists = fieldMapping?.data?.IntegrationFields?.some(
-          (integrationField) => String(integrationField?.value) === mapping.IntegrationId
-        );
+          (integrationField) =>
+            String(integrationField?.value) === mapping.IntegrationId
+        )
         if (exists) {
           newMappings[mapping.RowKey] = {
             label: mapping?.IntegrationName,
             value: mapping?.IntegrationId,
-          };
-        } else if (mapping.IntegrationId === "") {
+          }
+        } else if (mapping.IntegrationId === '') {
           newMappings[mapping.RowKey] = {
-            label: "--- Do not synchronize ---",
+            label: '--- Do not synchronize ---',
             value: null,
-          };
+          }
         } else {
           const missingField = fieldMapping?.data?.CIPPFields?.find(
             (field) => field.FieldName === mapping.RowKey
-          );
+          )
           if (missingField) {
-            missingMappings.push(missingField.FieldLabel);
+            missingMappings.push(missingField.FieldLabel)
           }
         }
-      });
+      })
 
-      setMissingMappings(missingMappings);
+      setMissingMappings(missingMappings)
 
       formControl.reset({
         ...newMappings,
-      });
-      formControl.trigger();
+      })
+      formControl.trigger()
     }
-  }, [fieldMapping.isSuccess, fieldMapping?.data]);
+  }, [fieldMapping.isSuccess, fieldMapping?.data])
 
   return (
     <>
@@ -86,66 +89,72 @@ const CippIntegrationFieldMapping = () => {
           resetForm={false}
         >
           <>
-            {fieldMapping?.data?.CIPPFieldHeaders?.map((header, headerIndex) => (
-              <React.Fragment key={`header-${headerIndex}`}>
-                <Stack direction="row" justifyContent="space-between">
-                  <Box>
-                    <Typography variant="h4">{header.Title}</Typography>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
-                      {header.Description}
-                    </Typography>
-                  </Box>
-                  {headerIndex === 0 && (
+            {fieldMapping?.data?.CIPPFieldHeaders?.map(
+              (header, headerIndex) => (
+                <React.Fragment key={`header-${headerIndex}`}>
+                  <Stack direction="row" justifyContent="space-between">
                     <Box>
-                      <Tooltip title="Refresh Mappings">
-                        <Button
-                          onClick={() => {
-                            fieldMapping.refetch();
-                          }}
-                          variant="contained"
-                        >
-                          <Sync />
-                        </Button>
-                      </Tooltip>
+                      <Typography variant="h4">{header.Title}</Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        {header.Description}
+                      </Typography>
                     </Box>
-                  )}
-                </Stack>
-                <Divider />
-                <Grid container spacing={3} sx={{ my: 3 }}>
-                  {fieldMapping?.data?.CIPPFields?.filter(
-                    (field) => field.FieldType === header.FieldType
-                  ).map((field, fieldIndex) => (
-                    <Grid size={{ xs: 12, md: 6 }} key={`field-${headerIndex}-${fieldIndex}`}>
-                      <CippFormComponent
-                        name={field.FieldName}
-                        type="autoComplete"
-                        label={field.FieldLabel}
-                        options={fieldMapping?.data?.IntegrationFields?.filter(
-                          (integrationField) =>
-                            (integrationField?.type === field.Type &&
-                              integrationField?.FieldType === field.FieldType) ||
-                            integrationField?.type === "unset"
-                        )?.map((integrationField) => {
-                          return {
-                            label: integrationField?.name,
-                            value: integrationField?.value,
-                          };
-                        })}
-                        formControl={formControl}
-                        multiple={false}
-                        creatable={false}
-                        fullWidth
-                        isFetching={fieldMapping.isFetching}
-                        disableClearable={true}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              </React.Fragment>
-            ))}
+                    {headerIndex === 0 && (
+                      <Box>
+                        <Tooltip title="Refresh Mappings">
+                          <Button
+                            onClick={() => {
+                              fieldMapping.refetch()
+                            }}
+                            variant="contained"
+                          >
+                            <Sync />
+                          </Button>
+                        </Tooltip>
+                      </Box>
+                    )}
+                  </Stack>
+                  <Divider />
+                  <Grid container spacing={3} sx={{ my: 3 }}>
+                    {fieldMapping?.data?.CIPPFields?.filter(
+                      (field) => field.FieldType === header.FieldType
+                    ).map((field, fieldIndex) => (
+                      <Grid
+                        size={{ xs: 12, md: 6 }}
+                        key={`field-${headerIndex}-${fieldIndex}`}
+                      >
+                        <CippFormComponent
+                          name={field.FieldName}
+                          type="autoComplete"
+                          label={field.FieldLabel}
+                          options={fieldMapping?.data?.IntegrationFields?.filter(
+                            (integrationField) =>
+                              (integrationField?.type === field.Type &&
+                                integrationField?.FieldType ===
+                                  field.FieldType) ||
+                              integrationField?.type === 'unset'
+                          )?.map((integrationField) => {
+                            return {
+                              label: integrationField?.name,
+                              value: integrationField?.value,
+                            }
+                          })}
+                          formControl={formControl}
+                          multiple={false}
+                          creatable={false}
+                          fullWidth
+                          isFetching={fieldMapping.isFetching}
+                          disableClearable={true}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </React.Fragment>
+              )
+            )}
             {missingMappings.length > 0 && (
               <Alert severity="warning">
-                The following mappings are missing: {missingMappings.join(", ")}
+                The following mappings are missing: {missingMappings.join(', ')}
               </Alert>
             )}
           </>
@@ -172,7 +181,7 @@ const CippIntegrationFieldMapping = () => {
             <Grid container spacing={3}>
               <Grid size={{ xs: 12 }}>
                 <Box sx={{ p: 3 }}>
-                  <Box sx={{ textAlign: "center" }}>Extension not found</Box>
+                  <Box sx={{ textAlign: 'center' }}>Extension not found</Box>
                 </Box>
               </Grid>
             </Grid>
@@ -180,7 +189,7 @@ const CippIntegrationFieldMapping = () => {
         </CardContent>
       )}
     </>
-  );
-};
+  )
+}
 
-export default CippIntegrationFieldMapping;
+export default CippIntegrationFieldMapping

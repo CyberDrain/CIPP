@@ -1,16 +1,17 @@
-import { Alert, Stack } from "@mui/material";
-import { Grid } from "@mui/system";
-import CippWizardStepButtons from "./CippWizardStepButtons";
-import CippFormComponent from "../CippComponents/CippFormComponent";
+import { Alert, Stack } from '@mui/material'
+import { Grid } from '@mui/system'
+import CippWizardStepButtons from './CippWizardStepButtons'
+import CippFormComponent from '../CippComponents/CippFormComponent'
 export const CippWizardAutopilotOptions = (props) => {
-  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } = props;
+  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } =
+    props
 
   return (
     <Stack spacing={3}>
       <>
         <Alert severity="warning">
-          If a Group Tag was provided in the imported device data, it will take precedence over any
-          Group Tag specified here.
+          If a Group Tag was provided in the imported device data, it will take
+          precedence over any Group Tag specified here.
         </Alert>
         <Grid container spacing={3}>
           <Grid size={{ md: 12, xs: 12 }}>
@@ -32,5 +33,5 @@ export const CippWizardAutopilotOptions = (props) => {
         formControl={formControl}
       />
     </Stack>
-  );
-};
+  )
+}

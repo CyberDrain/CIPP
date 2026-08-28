@@ -1,5 +1,14 @@
 import PropTypes from 'prop-types'
-import { Box, Button, Card, IconButton, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  Card,
+  IconButton,
+  Skeleton,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import {
   Add,
   Edit,
@@ -82,7 +91,12 @@ export const CippSharePointBrowserBanner = ({
             </Typography>
           )}
         </Typography>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ flexShrink: 0 }}
+        >
           {showActions ? (
             <ActionsMenu
               label={selectedRows.length > 1 ? 'Bulk Actions' : 'Actions'}
@@ -92,12 +106,20 @@ export const CippSharePointBrowserBanner = ({
             />
           ) : null}
           {showStorage ? (
-            <Button variant="outlined" startIcon={<StorageIcon />} onClick={onStorageClick}>
+            <Button
+              variant="outlined"
+              startIcon={<StorageIcon />}
+              onClick={onStorageClick}
+            >
               Storage
             </Button>
           ) : null}
           {showPermissions ? (
-            <Button variant="outlined" startIcon={<Security />} onClick={onPermissionsClick}>
+            <Button
+              variant="outlined"
+              startIcon={<Security />}
+              onClick={onPermissionsClick}
+            >
               Permissions
             </Button>
           ) : null}
@@ -107,7 +129,11 @@ export const CippSharePointBrowserBanner = ({
             </Button>
           ) : null}
           {showEditSite ? (
-            <Button variant="outlined" startIcon={<Edit />} onClick={onEditSiteClick}>
+            <Button
+              variant="outlined"
+              startIcon={<Edit />}
+              onClick={onEditSiteClick}
+            >
               Edit Site
             </Button>
           ) : null}

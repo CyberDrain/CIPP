@@ -37,7 +37,13 @@ import rehypeRaw from 'rehype-raw'
 import { unified } from 'unified'
 import packageInfo from '../../public/version.json'
 import { ApiGetCall } from '../api/ApiCall'
-import { Check, Close, GitHub, KeyboardArrowDown, MoreHoriz } from '@mui/icons-material'
+import {
+  Check,
+  Close,
+  GitHub,
+  KeyboardArrowDown,
+  MoreHoriz,
+} from '@mui/icons-material'
 import { CippAutoComplete } from './CippComponents/CippAutocomplete'
 
 const RELEASE_COOKIE_KEY = 'cipp_release_notice'
@@ -75,7 +81,9 @@ const setCookie = (name, value, days = 365) => {
     return
   }
 
-  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
+  const expires = new Date(
+    Date.now() + days * 24 * 60 * 60 * 1000
+  ).toUTCString()
   document.cookie = `${name}=${encodeURIComponent(
     value
   )}; expires=${expires}; path=/; SameSite=Lax;${secureFlag()}`
@@ -113,9 +121,12 @@ const formatReleaseBody = (body) => {
     return ''
   }
 
-  return body.replace(/(^|[^\w/])@([a-zA-Z0-9-]+)/g, (match, prefix, username) => {
-    return `${prefix}[@${username}](https://github.com/${username})`
-  })
+  return body.replace(
+    /(^|[^\w/])@([a-zA-Z0-9-]+)/g,
+    (match, prefix, username) => {
+      return `${prefix}[@${username}](https://github.com/${username})`
+    }
+  )
 }
 
 class MarkdownErrorBoundary extends Component {
@@ -158,7 +169,10 @@ const pickDisplayRelease = (catalog, releaseMeta) =>
   catalog[0]
 
 export const ReleaseNotesDialog = forwardRef((_props, ref) => {
-  const releaseMeta = useMemo(() => buildReleaseMetadata(packageInfo.version), [])
+  const releaseMeta = useMemo(
+    () => buildReleaseMetadata(packageInfo.version),
+    []
+  )
   const [isEligible, setIsEligible] = useState(false)
   const [open, setOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -192,7 +206,8 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
       return
     }
 
-    const permanentlyHidden = window.localStorage.getItem(RELEASE_PERMANENT_HIDE_KEY) === 'true'
+    const permanentlyHidden =
+      window.localStorage.getItem(RELEASE_PERMANENT_HIDE_KEY) === 'true'
 
     if (!permanentlyHidden && storedValue !== releaseMeta.releaseTag) {
       setIsEligible(true)
@@ -208,7 +223,8 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
     staleTime: 300000,
   })
 
-  const isReleaseListLoading = releaseListQuery.isLoading || releaseListQuery.isFetching
+  const isReleaseListLoading =
+    releaseListQuery.isLoading || releaseListQuery.isFetching
 
   const releaseCatalog = useMemo(() => {
     return Array.isArray(releaseListQuery.data) ? releaseListQuery.data : []
@@ -220,11 +236,15 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
     }
 
     if (!selectedReleaseTag) {
-      setSelectedReleaseTag(pickDisplayRelease(releaseCatalog, releaseMeta)?.releaseTag)
+      setSelectedReleaseTag(
+        pickDisplayRelease(releaseCatalog, releaseMeta)?.releaseTag
+      )
       return
     }
 
-    const hasSelected = releaseCatalog.some((release) => release.releaseTag === selectedReleaseTag)
+    const hasSelected = releaseCatalog.some(
+      (release) => release.releaseTag === selectedReleaseTag
+    )
 
     if (!hasSelected) {
       const fallbackRelease = pickDisplayRelease(releaseCatalog, releaseMeta)
@@ -254,7 +274,10 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
       }
     })
 
-    if (selectedReleaseTag && !mapped.some((option) => option.value === selectedReleaseTag)) {
+    if (
+      selectedReleaseTag &&
+      !mapped.some((option) => option.value === selectedReleaseTag)
+    ) {
       mapped.push({
         label: selectedReleaseTag,
         value: selectedReleaseTag,
@@ -304,9 +327,15 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
     }
 
     return (
-      releaseCatalog.find((release) => release.releaseTag === selectedReleaseTag) ||
-      releaseCatalog.find((release) => release.releaseTag === releaseMeta.releaseTag) ||
-      releaseCatalog.find((release) => release.releaseTag === releaseMeta.baseTag) ||
+      releaseCatalog.find(
+        (release) => release.releaseTag === selectedReleaseTag
+      ) ||
+      releaseCatalog.find(
+        (release) => release.releaseTag === releaseMeta.releaseTag
+      ) ||
+      releaseCatalog.find(
+        (release) => release.releaseTag === releaseMeta.baseTag
+      ) ||
       null
     )
   }, [releaseCatalog, selectedReleaseTag, releaseMeta])
@@ -348,16 +377,26 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
   }
 
   const requestedVersionLabel =
-    selectedReleaseData?.releaseTag ?? selectedReleaseTag ?? releaseMeta.currentTag
+    selectedReleaseData?.releaseTag ??
+    selectedReleaseTag ??
+    releaseMeta.currentTag
   const releaseName =
-    selectedReleaseData?.name || selectedReleaseValue?.label || `CIPP ${releaseMeta.currentTag}`
+    selectedReleaseData?.name ||
+    selectedReleaseValue?.label ||
+    `CIPP ${releaseMeta.currentTag}`
   const releaseHeading = releaseName || requestedVersionLabel
-  const releaseBody = typeof selectedReleaseData?.body === 'string' ? selectedReleaseData.body : ''
+  const releaseBody =
+    typeof selectedReleaseData?.body === 'string'
+      ? selectedReleaseData.body
+      : ''
   const releaseUrl =
     selectedReleaseData?.htmlUrl ??
     selectedReleaseValue?.addedFields?.htmlUrl ??
     releaseMeta.releaseUrl
-  const formattedReleaseBody = useMemo(() => formatReleaseBody(releaseBody), [releaseBody])
+  const formattedReleaseBody = useMemo(
+    () => formatReleaseBody(releaseBody),
+    [releaseBody]
+  )
   const gfmSupport = useMemo(() => {
     if (!formattedReleaseBody) {
       return { plugins: [remarkGfm], error: null }
@@ -439,10 +478,17 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
             <Box component="span" sx={visuallyHidden}>
               switch release
             </Box>
-            <KeyboardArrowDown sx={{ flexShrink: 0, opacity: 0.7, fontSize: 20 }} />
+            <KeyboardArrowDown
+              sx={{ flexShrink: 0, opacity: 0.7, fontSize: 20 }}
+            />
           </ButtonBase>
         ) : (
-          <Stack alignItems="center" direction="row" spacing={1.5} sx={{ width: '100%' }}>
+          <Stack
+            alignItems="center"
+            direction="row"
+            spacing={1.5}
+            sx={{ width: '100%' }}
+          >
             <Typography sx={{ flexGrow: 1 }} variant="h6" component="div">
               {`Release notes for ${releaseHeading}`}
             </Typography>
@@ -488,16 +534,27 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
       >
         <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
           {releaseListQuery.error ? (
-            <Typography color="error" variant="body2" sx={{ px: { xs: 2, md: 3 } }}>
-              We couldn't load additional releases right now. The latest release notes are shown
-              below.
-              {releaseListQuery.error?.message ? ` (${releaseListQuery.error.message})` : ''}
+            <Typography
+              color="error"
+              variant="body2"
+              sx={{ px: { xs: 2, md: 3 } }}
+            >
+              We couldn't load additional releases right now. The latest release
+              notes are shown below.
+              {releaseListQuery.error?.message
+                ? ` (${releaseListQuery.error.message})`
+                : ''}
             </Typography>
           ) : null}
           {gfmSupport.error ? (
-            <Typography color="warning.main" variant="body2" sx={{ px: { xs: 2, md: 3 } }}>
-              Displaying these release notes without GitHub-flavoured markdown enhancements due to a
-              parsing issue. Formatting may look different.
+            <Typography
+              color="warning.main"
+              variant="body2"
+              sx={{ px: { xs: 2, md: 3 } }}
+            >
+              Displaying these release notes without GitHub-flavoured markdown
+              enhancements due to a parsing issue. Formatting may look
+              different.
             </Typography>
           ) : null}
           {isReleaseListLoading && !selectedReleaseData ? (
@@ -505,9 +562,16 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
               <CircularProgress />
             </Box>
           ) : releaseListQuery.error ? (
-            <Typography color="error" variant="body2" sx={{ px: { xs: 2, md: 3 } }}>
-              We couldn't load the release notes right now. You can view them on GitHub instead.
-              {releaseListQuery.error?.message ? ` (${releaseListQuery.error.message})` : ''}
+            <Typography
+              color="error"
+              variant="body2"
+              sx={{ px: { xs: 2, md: 3 } }}
+            >
+              We couldn't load the release notes right now. You can view them on
+              GitHub instead.
+              {releaseListQuery.error?.message
+                ? ` (${releaseListQuery.error.message})`
+                : ''}
             </Typography>
           ) : (
             <Box
@@ -532,7 +596,11 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
                   whiteSpace: 'pre',
                   overflowWrap: 'normal',
                 },
-                '& table': { display: 'block', maxWidth: '100%', overflowX: 'auto' },
+                '& table': {
+                  display: 'block',
+                  maxWidth: '100%',
+                  overflowX: 'auto',
+                },
                 '& img': { maxWidth: '100%', height: 'auto' },
               }}
             >
@@ -541,12 +609,16 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
                   <Stack spacing={1.5}>
                     <Typography color="error" variant="body2">
                       We couldn't format these release notes
-                      {error?.message ? ` (${error.message})` : ''}. A plain-text version is shown
-                      below.
+                      {error?.message ? ` (${error.message})` : ''}. A
+                      plain-text version is shown below.
                     </Typography>
                     <Box
                       component="pre"
-                      sx={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', m: 0 }}
+                      sx={{
+                        whiteSpace: 'pre-wrap',
+                        fontFamily: 'inherit',
+                        m: 0,
+                      }}
                     >
                       {releaseBody}
                     </Box>
@@ -556,14 +628,24 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
                 <ReactMarkdown
                   components={{
                     a: ({ node, ...props }) => (
-                      <Link {...props} rel="noopener" target="_blank" underline="hover" />
+                      <Link
+                        {...props}
+                        rel="noopener"
+                        target="_blank"
+                        underline="hover"
+                      />
                     ),
                     img: ({ node, ...props }) => (
                       <Box
                         alt={props.alt}
                         component="img"
                         loading="lazy"
-                        sx={{ borderRadius: 1, display: 'block', height: 'auto', maxWidth: '100%' }}
+                        sx={{
+                          borderRadius: 1,
+                          display: 'block',
+                          height: 'auto',
+                          maxWidth: '100%',
+                        }}
                         {...props}
                       />
                     ),
@@ -637,7 +719,10 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
             variant="contained"
             // small keeps the 44px tap target but drops the chunky medium padding
             size="small"
-            sx={{ minHeight: { xs: 44, md: 'auto' }, flex: { xs: 1, md: '0 0 auto' } }}
+            sx={{
+              minHeight: { xs: 44, md: 'auto' },
+              flex: { xs: 1, md: '0 0 auto' },
+            }}
           >
             Don't show until next release
           </Button>
@@ -675,7 +760,10 @@ export const ReleaseNotesDialog = forwardRef((_props, ref) => {
                   if (!selected) handleReleaseChange(option)
                 }}
               >
-                <ListItemText primary={option.label} primaryTypographyProps={{ noWrap: true }} />
+                <ListItemText
+                  primary={option.label}
+                  primaryTypographyProps={{ noWrap: true }}
+                />
                 {selected && <Check fontSize="small" color="primary" />}
               </ListItemButton>
             )

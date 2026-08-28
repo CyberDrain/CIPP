@@ -75,10 +75,17 @@ const TOP_LIBRARIES = 8
 
 const formatBytes = (bytes) => {
   const num = Number(bytes)
-  if (bytes === null || bytes === undefined || bytes === '' || Number.isNaN(num)) return null
+  if (
+    bytes === null ||
+    bytes === undefined ||
+    bytes === '' ||
+    Number.isNaN(num)
+  )
+    return null
   if (num < 1024) return `${num} B`
   const gb = num / (1024 * 1024 * 1024)
-  if (gb >= 0.01) return `${gb.toLocaleString(undefined, { maximumFractionDigits: 2 })} GB`
+  if (gb >= 0.01)
+    return `${gb.toLocaleString(undefined, { maximumFractionDigits: 2 })} GB`
   const mb = num / (1024 * 1024)
   return `${mb.toLocaleString(undefined, { maximumFractionDigits: 2 })} MB`
 }
@@ -98,7 +105,8 @@ const formatVersionPolicy = (props) => {
       ? null
       : Number(props.MajorVersionLimit)
   const days =
-    props.ExpireVersionsAfterDays === null || props.ExpireVersionsAfterDays === undefined
+    props.ExpireVersionsAfterDays === null ||
+    props.ExpireVersionsAfterDays === undefined
       ? null
       : Number(props.ExpireVersionsAfterDays)
 
@@ -139,7 +147,11 @@ const jobStatusChip = (progress) => {
   if (status.includes('fail') || status.includes('error')) {
     return { label: progress.Status, color: 'error' }
   }
-  if (status.includes('run') || status.includes('progress') || status.includes('pending')) {
+  if (
+    status.includes('run') ||
+    status.includes('progress') ||
+    status.includes('pending')
+  ) {
     return { label: progress.Status, color: 'warning' }
   }
   return { label: progress.Status, color: 'info' }
@@ -153,12 +165,19 @@ const VersionCleanupFields = ({ formHook }) => (
       label="Cleanup Mode"
       formControl={formHook}
       options={[
-        { label: 'Sync Policy — apply site version policy to existing versions', value: '2' },
         {
-          label: 'Delete Older Than Days — remove versions older than a set number of days',
+          label: 'Sync Policy — apply site version policy to existing versions',
+          value: '2',
+        },
+        {
+          label:
+            'Delete Older Than Days — remove versions older than a set number of days',
           value: '0',
         },
-        { label: 'Count Limits — keep a maximum number of major versions', value: '1' },
+        {
+          label: 'Count Limits — keep a maximum number of major versions',
+          value: '1',
+        },
       ]}
     />
     <CippFormCondition
@@ -196,7 +215,9 @@ const VersionCleanupFields = ({ formHook }) => (
         name="MajorWithMinorVersionsLimit"
         label="Major Versions That Keep Their Minor Versions"
         formControl={formHook}
-        validators={{ required: 'Please enter the major-with-minor version limit' }}
+        validators={{
+          required: 'Please enter the major-with-minor version limit',
+        }}
       />
     </CippFormCondition>
   </>
@@ -316,7 +337,9 @@ export const CippSharePointBrowserStorage = ({
       ? Math.min(100, Math.round((usedBytes / quotaBytes) * 1000) / 10)
       : null
   const nearWarning =
-    warningBytes && usedBytes !== null ? usedBytes >= warningBytes : usedPct !== null && usedPct >= 85
+    warningBytes && usedBytes !== null
+      ? usedBytes >= warningBytes
+      : usedPct !== null && usedPct >= 85
   const quotaBarColor = nearWarning ? 'warning' : 'primary'
 
   const libraryRows = useMemo(() => {
@@ -381,7 +404,11 @@ export const CippSharePointBrowserStorage = ({
           <Typography variant="h6" component="span">
             Storage — {siteName}
           </Typography>
-          <Stack direction="row" spacing={0.5} sx={{ position: 'absolute', right: 8, top: 8 }}>
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
             <Tooltip title="Refresh">
               <span>
                 <IconButton
@@ -400,7 +427,9 @@ export const CippSharePointBrowserStorage = ({
         </DialogTitle>
         <DialogContent dividers sx={{ minHeight: { xs: 360, md: 520 } }}>
           {!siteUrl ? (
-            <Alert severity="warning">No site URL available for this selection.</Alert>
+            <Alert severity="warning">
+              No site URL available for this selection.
+            </Alert>
           ) : (
             <Stack spacing={1.5}>
               <Tabs
@@ -418,7 +447,9 @@ export const CippSharePointBrowserStorage = ({
               <TabPanel value={tab} index={0}>
                 <Stack spacing={2}>
                   {glanceLoading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                    <Box
+                      sx={{ display: 'flex', justifyContent: 'center', py: 2 }}
+                    >
                       <CircularProgress size={28} />
                     </Box>
                   ) : (
@@ -445,7 +476,11 @@ export const CippSharePointBrowserStorage = ({
                         <Chip
                           size="small"
                           variant="outlined"
-                          label={versionsLabel ? `Policy: ${versionsLabel}` : 'Policy: —'}
+                          label={
+                            versionsLabel
+                              ? `Policy: ${versionsLabel}`
+                              : 'Policy: —'
+                          }
                         />
                         {librariesMeasuredLabel ? (
                           <Chip
@@ -473,9 +508,10 @@ export const CippSharePointBrowserStorage = ({
                       ) : null}
 
                       <Alert severity="info">
-                        <strong>Cleanup path:</strong> check largest libraries → Recycle bin
-                        (1st/2nd stage) → Versions if history looks like the gap. Version bytes are
-                        not measured live (that would scan files).
+                        <strong>Cleanup path:</strong> check largest libraries →
+                        Recycle bin (1st/2nd stage) → Versions if history looks
+                        like the gap. Version bytes are not measured live (that
+                        would scan files).
                       </Alert>
                     </Stack>
                   )}
@@ -488,12 +524,15 @@ export const CippSharePointBrowserStorage = ({
                       justifyContent="space-between"
                       sx={{ mb: 1 }}
                     >
-                      <Typography variant="subtitle2">Largest libraries</Typography>
+                      <Typography variant="subtitle2">
+                        Largest libraries
+                      </Typography>
                       {libsLoading ? <CircularProgress size={18} /> : null}
                     </Stack>
                     {librariesApi.isError ? (
                       <Alert severity="warning">
-                        Could not load library sizes. You can still use Recycle and Versions.
+                        Could not load library sizes. You can still use Recycle
+                        and Versions.
                       </Alert>
                     ) : !libsLoading && !topLibraries.length ? (
                       <Typography variant="body2" color="text.secondary">
@@ -501,7 +540,12 @@ export const CippSharePointBrowserStorage = ({
                       </Typography>
                     ) : (
                       <TableContainer
-                        sx={{ border: 1, borderColor: 'divider', borderRadius: 1, maxHeight: 320 }}
+                        sx={{
+                          border: 1,
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          maxHeight: 320,
+                        }}
                       >
                         <Table size="small" stickyHeader>
                           <TableHead>
@@ -517,23 +561,39 @@ export const CippSharePointBrowserStorage = ({
                           <TableBody>
                             {topLibraries.map((lib) => {
                               const pct =
-                                maxLibBytes > 0 && !Number.isNaN(lib._bytes) && lib._bytes > 0
-                                  ? Math.min(100, (lib._bytes / maxLibBytes) * 100)
+                                maxLibBytes > 0 &&
+                                !Number.isNaN(lib._bytes) &&
+                                lib._bytes > 0
+                                  ? Math.min(
+                                      100,
+                                      (lib._bytes / maxLibBytes) * 100
+                                    )
                                   : 0
                               return (
                                 <TableRow key={lib.id}>
                                   <TableCell>
-                                    <Typography variant="body2" noWrap title={lib.displayName}>
+                                    <Typography
+                                      variant="body2"
+                                      noWrap
+                                      title={lib.displayName}
+                                    >
                                       {lib.displayName || lib.name || '—'}
                                     </Typography>
                                   </TableCell>
                                   <TableCell>
-                                    <Typography variant="body2" color="text.secondary" noWrap>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      noWrap
+                                    >
                                       {lib.siteType || '—'}
                                     </Typography>
                                   </TableCell>
                                   <TableCell align="right">
-                                    <Typography variant="body2" color="text.secondary">
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
                                       {lib.fileCount != null
                                         ? Number(lib.fileCount).toLocaleString()
                                         : '—'}
@@ -542,13 +602,18 @@ export const CippSharePointBrowserStorage = ({
                                   <TableCell align="right">
                                     <Stack spacing={0.5} alignItems="flex-end">
                                       <Typography variant="body2">
-                                        {formatBytes(lib.storageUsedInBytes) || '—'}
+                                        {formatBytes(lib.storageUsedInBytes) ||
+                                          '—'}
                                       </Typography>
                                       {pct > 0 ? (
                                         <LinearProgress
                                           variant="determinate"
                                           value={pct}
-                                          sx={{ width: 96, height: 4, borderRadius: 1 }}
+                                          sx={{
+                                            width: 96,
+                                            height: 4,
+                                            borderRadius: 1,
+                                          }}
                                         />
                                       ) : null}
                                     </Stack>
@@ -565,8 +630,9 @@ export const CippSharePointBrowserStorage = ({
                       color="text.secondary"
                       sx={{ display: 'block', mt: 0.75 }}
                     >
-                      Library size = root folder StorageMetrics (live). Site used may be higher —
-                      recycle, versions, and other lists are not in this table.
+                      Library size = root folder StorageMetrics (live). Site
+                      used may be higher — recycle, versions, and other lists
+                      are not in this table.
                       {libraryRows.length > TOP_LIBRARIES
                         ? ` Showing top ${TOP_LIBRARIES} of ${libraryRows.length}.`
                         : ''}
@@ -583,8 +649,9 @@ export const CippSharePointBrowserStorage = ({
                 ) : (
                   <>
                     <Alert severity="info" sx={{ mb: 1.5 }}>
-                      First and second stage together (newest first, capped by the API). Filter on
-                      Item State. Sizes are per item — totals are not fully summed live.
+                      First and second stage together (newest first, capped by
+                      the API). Filter on Item State. Sizes are per item —
+                      totals are not fully summed live.
                     </Alert>
                     <CippDataTable
                       noCard={true}
@@ -622,7 +689,9 @@ export const CippSharePointBrowserStorage = ({
                   sx={{ mb: 1.5 }}
                 >
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="subtitle2">Version history trim</Typography>
+                    <Typography variant="subtitle2">
+                      Version history trim
+                    </Typography>
                     <Chip size="small" color={chip.color} label={chip.label} />
                   </Stack>
                   <Stack direction="row" spacing={1}>
@@ -658,21 +727,25 @@ export const CippSharePointBrowserStorage = ({
                 </Stack>
 
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  Site policy: {versionsLabel || '—'}. A cleanup job trims existing file versions; it
-                  does not change the policy. Use when libraries look smaller than site used and
-                  recycle is already thin — classic version bloat.
+                  Site policy: {versionsLabel || '—'}. A cleanup job trims
+                  existing file versions; it does not change the policy. Use
+                  when libraries look smaller than site used and recycle is
+                  already thin — classic version bloat.
                 </Alert>
 
                 {jobStatusApi.isError ? (
                   <Alert severity="error" sx={{ mb: 2 }}>
-                    {typeof jobStatusApi.error?.response?.data?.Results === 'string'
+                    {typeof jobStatusApi.error?.response?.data?.Results ===
+                    'string'
                       ? jobStatusApi.error.response.data.Results
                       : 'Failed to load cleanup job status.'}
                   </Alert>
                 ) : null}
 
                 {jobStatusApi.isPending && !jobProgress ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'center', py: 4 }}
+                  >
                     <CircularProgress size={28} />
                   </Box>
                 ) : !jobProgress ||
@@ -680,7 +753,8 @@ export const CippSharePointBrowserStorage = ({
                   jobProgress?.Status === 'NoRequestFound' ||
                   jobProgress?.Status === 'NoJob' ? (
                   <Alert severity="info">
-                    {jobProgress?.Message || 'No cleanup job found for this site.'}
+                    {jobProgress?.Message ||
+                      'No cleanup job found for this site.'}
                   </Alert>
                 ) : typeof jobProgress === 'string' ? (
                   <Alert severity="info">{jobProgress}</Alert>
@@ -689,7 +763,9 @@ export const CippSharePointBrowserStorage = ({
                     isFetching={jobStatusApi.isPending}
                     layout="two"
                     propertyItems={VERSION_CLEANUP_FIELDS.filter(
-                      (key) => jobProgress?.[key] !== undefined && jobProgress?.[key] !== ''
+                      (key) =>
+                        jobProgress?.[key] !== undefined &&
+                        jobProgress?.[key] !== ''
                     ).map((key) => ({
                       label: VERSION_CLEANUP_LABELS[key],
                       value: String(jobProgress[key]),
@@ -713,17 +789,24 @@ export const CippSharePointBrowserStorage = ({
           url: '/api/ExecSiteBrowserActions',
           confirmText: `Start a file version cleanup job for ${siteName}. This will trim old file versions based on the selected mode.`,
           customDataformatter: (row, action, formData) => {
-            const mode = parseInt(optionValue(formData.BatchDeleteMode) ?? '2', 10)
+            const mode = parseInt(
+              optionValue(formData.BatchDeleteMode) ?? '2',
+              10
+            )
             return {
               tenantFilter: tenant,
               SiteUrl: siteUrl,
               SiteId: siteId,
               Action: 'StartVersionCleanup',
               BatchDeleteMode: mode,
-              DeleteOlderThanDays: mode === 0 ? parseInt(formData.DeleteOlderThanDays, 10) : -1,
-              MajorVersionLimit: mode === 1 ? parseInt(formData.MajorVersionLimit, 10) : -1,
+              DeleteOlderThanDays:
+                mode === 0 ? parseInt(formData.DeleteOlderThanDays, 10) : -1,
+              MajorVersionLimit:
+                mode === 1 ? parseInt(formData.MajorVersionLimit, 10) : -1,
               MajorWithMinorVersionsLimit:
-                mode === 1 ? parseInt(formData.MajorWithMinorVersionsLimit, 10) : -1,
+                mode === 1
+                  ? parseInt(formData.MajorWithMinorVersionsLimit, 10)
+                  : -1,
             }
           },
           multiPost: false,

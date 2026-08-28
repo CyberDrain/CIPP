@@ -1,42 +1,42 @@
-import { useForm } from "react-hook-form";
-import { useEffect } from "react";
-import { useRouter } from "next/router";
-import { Layout as DashboardLayout } from "../../../../../layouts/index.js";
-import CippFormPage from "../../../../../components/CippFormPages/CippFormPage";
-import CippFormSkeleton from "../../../../../components/CippFormPages/CippFormSkeleton";
-import { useSettings } from "../../../../../hooks/use-settings";
-import { Grid } from "@mui/system";
-import { Divider } from "@mui/material";
-import CippFormComponent from "../../../../../components/CippComponents/CippFormComponent";
-import { ApiGetCall } from "../../../../../api/ApiCall";
+import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { useRouter } from 'next/router'
+import { Layout as DashboardLayout } from '../../../../../layouts/index.js'
+import CippFormPage from '../../../../../components/CippFormPages/CippFormPage'
+import CippFormSkeleton from '../../../../../components/CippFormPages/CippFormSkeleton'
+import { useSettings } from '../../../../../hooks/use-settings'
+import { Grid } from '@mui/system'
+import { Divider } from '@mui/material'
+import CippFormComponent from '../../../../../components/CippComponents/CippFormComponent'
+import { ApiGetCall } from '../../../../../api/ApiCall'
 
 const RetentionTag = () => {
-  const userSettingsDefaults = useSettings();
-  const router = useRouter();
-  const { name } = router.query;
-  const isEdit = !!name;
+  const userSettingsDefaults = useSettings()
+  const router = useRouter()
+  const { name } = router.query
+  const isEdit = !!name
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       tenantFilter: userSettingsDefaults.currentTenant,
-      Name: "",
-      Type: "",
-      Comment: "",
-      RetentionAction: "",
-      AgeLimitForRetention: "",
+      Name: '',
+      Type: '',
+      Comment: '',
+      RetentionAction: '',
+      AgeLimitForRetention: '',
       RetentionEnabled: true,
-      LocalizedComment: "",
-      LocalizedRetentionPolicyTagName: "",
+      LocalizedComment: '',
+      LocalizedRetentionPolicyTagName: '',
     },
-  });
+  })
 
   // Get existing tag data if editing
   const existingTagRequest = ApiGetCall({
     url: `/api/ExecManageRetentionTags?tenantFilter=${userSettingsDefaults.currentTenant}${isEdit ? `&name=${encodeURIComponent(name)}` : ''}`,
     queryKey: `RetentionTag-${name}-${userSettingsDefaults.currentTenant}`,
     waiting: isEdit,
-  });
+  })
 
   const tagTypes = [
     { label: 'All', value: 'All' },
@@ -59,111 +59,137 @@ const RetentionTag = () => {
     { label: 'Tasks', value: 'Tasks' },
     { label: 'Contacts', value: 'Contacts' },
     { label: 'RSS Subscriptions', value: 'RssSubscriptions' },
-    { label: 'Managed Custom Folder', value: 'ManagedCustomFolder' }
-  ];
+    { label: 'Managed Custom Folder', value: 'ManagedCustomFolder' },
+  ]
 
   const retentionActions = [
     { label: 'Delete and Allow Recovery', value: 'DeleteAndAllowRecovery' },
     { label: 'Permanently Delete', value: 'PermanentlyDelete' },
     { label: 'Move to Archive', value: 'MoveToArchive' },
-    { label: 'Mark as Past Retention Limit', value: 'MarkAsPastRetentionLimit' }
-  ];
+    {
+      label: 'Mark as Past Retention Limit',
+      value: 'MarkAsPastRetentionLimit',
+    },
+  ]
 
   // Parse AgeLimitForRetention from TimeSpan format "90.00:00:00" to just days "90"
   const parseAgeLimitDays = (ageLimit) => {
-    if (!ageLimit) return "";
-    const match = ageLimit.toString().match(/^(\d+)\./);
-    return match ? match[1] : "";
-  };
+    if (!ageLimit) return ''
+    const match = ageLimit.toString().match(/^(\d+)\./)
+    return match ? match[1] : ''
+  }
 
   // Pre-fill form when editing
   useEffect(() => {
     if (isEdit && existingTagRequest.isSuccess && existingTagRequest.data) {
-      const tag = existingTagRequest.data;
-      
+      const tag = existingTagRequest.data
+
       // Find the matching options for dropdowns
-      const typeOption = tagTypes.find(option => option.value === tag.Type) || null;
-      const actionOption = retentionActions.find(option => option.value === tag.RetentionAction) || null;
+      const typeOption =
+        tagTypes.find((option) => option.value === tag.Type) || null
+      const actionOption =
+        retentionActions.find(
+          (option) => option.value === tag.RetentionAction
+        ) || null
 
       // Handle localized fields (arrays in API, strings in form)
-      const localizedComment = Array.isArray(tag.LocalizedComment) 
-        ? tag.LocalizedComment[0] || "" 
-        : tag.LocalizedComment || "";
-      const localizedTagName = Array.isArray(tag.LocalizedRetentionPolicyTagName) 
-        ? tag.LocalizedRetentionPolicyTagName[0] || "" 
-        : tag.LocalizedRetentionPolicyTagName || "";
+      const localizedComment = Array.isArray(tag.LocalizedComment)
+        ? tag.LocalizedComment[0] || ''
+        : tag.LocalizedComment || ''
+      const localizedTagName = Array.isArray(
+        tag.LocalizedRetentionPolicyTagName
+      )
+        ? tag.LocalizedRetentionPolicyTagName[0] || ''
+        : tag.LocalizedRetentionPolicyTagName || ''
 
       formControl.reset({
         tenantFilter: userSettingsDefaults.currentTenant,
-        Name: tag.Name || "",
+        Name: tag.Name || '',
         Type: typeOption,
-        Comment: tag.Comment || "",
+        Comment: tag.Comment || '',
         RetentionAction: actionOption,
         AgeLimitForRetention: parseAgeLimitDays(tag.AgeLimitForRetention),
         RetentionEnabled: tag.RetentionEnabled !== false,
         LocalizedComment: localizedComment,
         LocalizedRetentionPolicyTagName: localizedTagName,
-      });
+      })
     }
-  }, [isEdit, existingTagRequest.isSuccess, existingTagRequest.data, userSettingsDefaults.currentTenant, formControl]);
+  }, [
+    isEdit,
+    existingTagRequest.isSuccess,
+    existingTagRequest.data,
+    userSettingsDefaults.currentTenant,
+    formControl,
+  ])
 
   return (
     <CippFormPage
       formControl={formControl}
-      queryKey={isEdit ? `RetentionTag-${name}` : "AddRetentionTag"}
-      title={isEdit ? `Edit Retention Tag: ${name}` : "Add Retention Tag"}
+      queryKey={isEdit ? `RetentionTag-${name}` : 'AddRetentionTag'}
+      title={isEdit ? `Edit Retention Tag: ${name}` : 'Add Retention Tag'}
       backButtonTitle="Retention Tags"
-      formPageType={isEdit ? "Edit" : "Add"}
+      formPageType={isEdit ? 'Edit' : 'Add'}
       postUrl="/api/ExecManageRetentionTags"
       resetForm={false}
       relatedQueryKeys={[
         `RetentionTags-${userSettingsDefaults.currentTenant}`,
         `RetentionTags-ForManagement${userSettingsDefaults.currentTenant}`,
-        `RetentionTag-${name}-${userSettingsDefaults.currentTenant}`
+        `RetentionTag-${name}-${userSettingsDefaults.currentTenant}`,
       ]}
       customDataformatter={(values) => {
         const tagData = {
           Name: values.Name,
           Comment: values.Comment,
           RetentionEnabled: values.RetentionEnabled,
-        };
+        }
 
         // Extract .value from select objects and only include non-empty optional fields
         if (values.RetentionAction) {
-          tagData.RetentionAction = typeof values.RetentionAction === 'string' 
-            ? values.RetentionAction 
-            : values.RetentionAction.value;
+          tagData.RetentionAction =
+            typeof values.RetentionAction === 'string'
+              ? values.RetentionAction
+              : values.RetentionAction.value
         }
         if (values.AgeLimitForRetention) {
-          tagData.AgeLimitForRetention = parseInt(values.AgeLimitForRetention);
+          tagData.AgeLimitForRetention = parseInt(values.AgeLimitForRetention)
         }
         if (values.LocalizedComment) {
-          tagData.LocalizedComment = values.LocalizedComment;
+          tagData.LocalizedComment = values.LocalizedComment
         }
         if (values.LocalizedRetentionPolicyTagName) {
-          tagData.LocalizedRetentionPolicyTagName = values.LocalizedRetentionPolicyTagName;
+          tagData.LocalizedRetentionPolicyTagName =
+            values.LocalizedRetentionPolicyTagName
         }
 
         if (isEdit) {
           return {
-            ModifyTags: [{
-              Identity: name,
-              ...tagData,
-            }],
+            ModifyTags: [
+              {
+                Identity: name,
+                ...tagData,
+              },
+            ],
             tenantFilter: values.tenantFilter,
-          };
+          }
         } else {
           return {
-            CreateTags: [{
-              Type: typeof values.Type === 'string' ? values.Type : values.Type.value,
-              ...tagData,
-            }],
+            CreateTags: [
+              {
+                Type:
+                  typeof values.Type === 'string'
+                    ? values.Type
+                    : values.Type.value,
+                ...tagData,
+              },
+            ],
             tenantFilter: values.tenantFilter,
-          };
+          }
         }
       }}
     >
-      {existingTagRequest.isLoading && isEdit && <CippFormSkeleton layout={[2, 2, 1, 2, 2, 2]} />}
+      {existingTagRequest.isLoading && isEdit && (
+        <CippFormSkeleton layout={[2, 2, 1, 2, 2, 2]} />
+      )}
       {(!isEdit || !existingTagRequest.isLoading) && (
         <Grid container spacing={2}>
           {/* Tag Name */}
@@ -173,10 +199,10 @@ const RetentionTag = () => {
               label="Tag Name *"
               name="Name"
               formControl={formControl}
-              validators={{ required: "Tag name is required" }}
+              validators={{ required: 'Tag name is required' }}
             />
           </Grid>
-          
+
           {/* Tag Type */}
           <Grid size={{ md: 6, xs: 12 }}>
             <CippFormComponent
@@ -186,13 +212,15 @@ const RetentionTag = () => {
               creatable={false}
               options={tagTypes}
               formControl={formControl}
-              validators={{ required: "Tag type is required" }}
+              validators={{ required: 'Tag type is required' }}
               disabled={isEdit}
-              helperText={isEdit ? "Tag type cannot be changed when editing" : ""}
+              helperText={
+                isEdit ? 'Tag type cannot be changed when editing' : ''
+              }
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Retention Action */}
           <Grid size={{ md: 6, xs: 12 }}>
@@ -228,7 +256,7 @@ const RetentionTag = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Comment */}
           <Grid size={{ md: 12, xs: 12 }}>
@@ -263,14 +291,13 @@ const RetentionTag = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
-
+          <Divider sx={{ my: 2, width: '100%' }} />
         </Grid>
       )}
     </CippFormPage>
-  );
-};
+  )
+}
 
-RetentionTag.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+RetentionTag.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default RetentionTag;
+export default RetentionTag

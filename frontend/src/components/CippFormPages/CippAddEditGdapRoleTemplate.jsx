@@ -1,15 +1,16 @@
-import { Alert, Box, Stack, Typography } from "@mui/material";
-import CippFormComponent from "../CippComponents/CippFormComponent";
+import { Alert, Box, Stack, Typography } from '@mui/material'
+import CippFormComponent from '../CippComponents/CippFormComponent'
 
 export const CippAddEditGdapRoleTemplate = (props) => {
-  const { formControl, availableRoles } = props;
+  const { formControl, availableRoles } = props
 
   return (
     <Stack spacing={2} sx={{ mt: 2 }}>
       <Alert severity="info">
         <Typography variant="subtitle">
-          GDAP Role templates are used to create new GDAP invites for your customer tenants. Make
-          sure to select a template that matches the permissions you want to grant.
+          GDAP Role templates are used to create new GDAP invites for your
+          customer tenants. Make sure to select a template that matches the
+          permissions you want to grant.
         </Typography>
       </Alert>
 
@@ -39,13 +40,13 @@ export const CippAddEditGdapRoleTemplate = (props) => {
         validators={{
           validate: (value) => {
             if (!value || value.length === 0) {
-              return "Please select at least one GDAP Role Mapping";
+              return 'Please select at least one GDAP Role Mapping'
             }
-            return true;
+            return true
           },
         }}
         sortOptions={true}
       />
     </Stack>
-  );
-};
+  )
+}

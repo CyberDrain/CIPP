@@ -4,9 +4,7 @@
     "templateName": ".Baseline - Tenant",
     "baselineName": ".Baseline - Tenant",
     "description": "<p>description</p>",
-    "assignedTenants": [
-      "Exported Template"
-    ],
+    "assignedTenants": ["Exported Template"],
     "assignments": {
       "label": "Exported Template",
       "value": "Exported Template",
@@ -18,9 +16,7 @@
     "alertWebhookUrl": "",
     "disableScheduledRuns": false,
     "standardsCount": 9,
-    "stageNames": [
-      "Default"
-    ],
+    "stageNames": ["Default"],
     "stages": [
       {
         "name": "Default",
@@ -128,9 +124,7 @@
         "stage": 1,
         "name": "Default",
         "standardsCount": 9,
-        "tenants": [
-          null
-        ],
+        "tenants": [null],
         "nextAdvanceAt": null
       }
     ],
@@ -141,10 +135,7 @@
       "name": "DisableBasicAuthSMTP",
       "label": "Disable SMTP Basic Authentication",
       "cat": "Exchange Standards",
-      "tag": [
-        "CIS M365 7.0.0 (6.5.4)",
-        "NIST CSF 2.0 (PR.IR-01)"
-      ],
+      "tag": ["CIS M365 7.0.0 (6.5.4)", "NIST CSF 2.0 (PR.IR-01)"],
       "impact": "Medium Impact",
       "helpText": "Disables SMTP AUTH organization-wide, impacting POP and IMAP clients that rely on SMTP for sending emails. Default for new tenants. For more information, see the [Microsoft documentation](https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission)",
       "executiveText": "Disables outdated email authentication methods that are vulnerable to security attacks, forcing applications and devices to use modern, more secure authentication protocols. This reduces the risk of email-based security breaches and credential theft.",
@@ -152,15 +143,8 @@
       "impactColour": "warning",
       "addedDate": "2021-11-16",
       "powershellEquivalent": "Set-TransportConfig -SmtpClientAuthenticationDisabled $true",
-      "appliesToTest": [
-        "CISAMSEXO51",
-        "CIS_6_5_4",
-        "ZTNA21799"
-      ],
-      "recommendedBy": [
-        "CIS",
-        "CIPP"
-      ],
+      "appliesToTest": ["CISAMSEXO51", "CIS_6_5_4", "ZTNA21799"],
+      "recommendedBy": ["CIS", "CIPP"],
       "requiredCapabilities": [
         "EXCHANGE_S_STANDARD",
         "EXCHANGE_S_ENTERPRISE",
@@ -206,15 +190,8 @@
       "impactColour": "warning",
       "addedDate": "2022-04-13",
       "powershellEquivalent": "Portal or Graph API",
-      "appliesToTest": [
-        "CIS_1_3_2",
-        "ZTNA21813",
-        "ZTNA21814",
-        "ZTNA21815"
-      ],
-      "recommendedBy": [
-        "CIS"
-      ],
+      "appliesToTest": ["CIS_1_3_2", "ZTNA21813", "ZTNA21814", "ZTNA21815"],
+      "recommendedBy": ["CIS"],
       "requiredCapabilities": [],
       "secureScoreImpact": 5,
       "compare": "subset",
@@ -272,9 +249,7 @@
       "impactColour": "info",
       "addedDate": "2021-11-16",
       "powershellEquivalent": "Update-MgBetaAdminReportSetting -BodyParameter @{displayConcealedNames = $true}",
-      "recommendedBy": [
-        "CIPP"
-      ],
+      "recommendedBy": ["CIPP"],
       "requiredCapabilities": [],
       "secureScoreImpact": 0,
       "compare": "subset",
@@ -313,15 +288,8 @@
       "impactColour": "info",
       "addedDate": "2021-11-16",
       "powershellEquivalent": "Enable-OrganizationCustomization",
-      "appliesToTest": [
-        "CISAMSEXO171",
-        "CISAMSEXO173",
-        "CIS_3_1_1"
-      ],
-      "recommendedBy": [
-        "CIS",
-        "CIPP"
-      ],
+      "appliesToTest": ["CISAMSEXO171", "CISAMSEXO173", "CIS_3_1_1"],
+      "recommendedBy": ["CIS", "CIPP"],
       "requiredCapabilities": [
         "EXCHANGE_S_STANDARD",
         "EXCHANGE_S_ENTERPRISE",
@@ -392,9 +360,7 @@
         "SMB1001_2_8",
         "ZTNA21792"
       ],
-      "recommendedBy": [
-        "CIPP"
-      ],
+      "recommendedBy": ["CIPP"],
       "requiredCapabilities": [],
       "secureScoreImpact": 0,
       "compare": "subset",
@@ -479,11 +445,7 @@
       "name": "FormsPhishingProtection",
       "label": "Enable internal phishing protection for Forms",
       "cat": "Global Standards",
-      "tag": [
-        "CIS M365 7.0.0 (1.3.5)",
-        "Security",
-        "PhishingProtection"
-      ],
+      "tag": ["CIS M365 7.0.0 (1.3.5)", "Security", "PhishingProtection"],
       "impact": "Low Impact",
       "helpText": "Enables internal phishing protection for Microsoft Forms to help prevent malicious forms from being created and shared within the organization. This feature scans forms created by internal users for potential phishing content and suspicious patterns.",
       "executiveText": "Automatically scans Microsoft Forms created by employees for malicious content and phishing attempts, preventing the creation and distribution of harmful forms within the organization. This protects against both internal threats and compromised accounts that might be used to distribute malicious content.",
@@ -491,13 +453,8 @@
       "impactColour": "info",
       "addedDate": "2025-06-06",
       "powershellEquivalent": "Graph API",
-      "appliesToTest": [
-        "CIS_1_3_5"
-      ],
-      "recommendedBy": [
-        "CIS",
-        "CIPP"
-      ],
+      "appliesToTest": ["CIS_1_3_5"],
+      "recommendedBy": ["CIS", "CIPP"],
       "requiredCapabilities": [],
       "secureScoreImpact": 0,
       "compare": "subset",

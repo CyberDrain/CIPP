@@ -22,7 +22,12 @@ export const SAMPLE_TENANT_NAME = 'Contoso (sample data)'
 
 /** Executive report — user counts, secure score history, licences, devices, CA policies. */
 export const SAMPLE_EXECUTIVE = {
-  userStats: { licensedUsers: 128, unlicensedUsers: 12, guests: 9, globalAdmins: 3 },
+  userStats: {
+    licensedUsers: 128,
+    unlicensedUsers: 12,
+    guests: 9,
+    globalAdmins: 3,
+  },
   secureScoreData: {
     isSuccess: true,
     translatedData: { currentScore: 61, maxScore: 100, percentageCurrent: 61 },
@@ -44,9 +49,24 @@ export const SAMPLE_EXECUTIVE = {
   // (`skuPartNumber`, `consumedUnits`) and every cell fell through to its 'N/A' fallback, so the
   // preview showed an empty-looking table while the real report showed data.
   licensingData: [
-    { License: 'Microsoft 365 E3', CountUsed: 88, CountAvailable: 12, TotalLicenses: 100 },
-    { License: 'Exchange Online (Plan 1)', CountUsed: 27, CountAvailable: 3, TotalLicenses: 30 },
-    { License: 'Microsoft Defender for Office 365', CountUsed: 64, CountAvailable: 36, TotalLicenses: 100 },
+    {
+      License: 'Microsoft 365 E3',
+      CountUsed: 88,
+      CountAvailable: 12,
+      TotalLicenses: 100,
+    },
+    {
+      License: 'Exchange Online (Plan 1)',
+      CountUsed: 27,
+      CountAvailable: 3,
+      TotalLicenses: 30,
+    },
+    {
+      License: 'Microsoft Defender for Office 365',
+      CountUsed: 64,
+      CountAvailable: 36,
+      TotalLicenses: 100,
+    },
   ],
   // A plain array, matching `deviceData?.data?.Results` in the real report — the wrapper the sample
   // used to carry meant `Array.isArray` failed and the whole Device Management section was skipped.
@@ -119,12 +139,27 @@ export const SAMPLE_EXECUTIVE = {
       tenantFilter: 'contoso.com',
       alignedCount: 42,
       currentDeviations: [
-        { standardName: 'standards.AntiPhishPolicy', receivedValue: 'Disabled' },
-        { standardName: 'standards.SafeLinksPolicy', receivedValue: 'Disabled' },
+        {
+          standardName: 'standards.AntiPhishPolicy',
+          receivedValue: 'Disabled',
+        },
+        {
+          standardName: 'standards.SafeLinksPolicy',
+          receivedValue: 'Disabled',
+        },
       ],
-      acceptedDeviations: [{ standardName: 'standards.AuditLog', receivedValue: 'Custom' }],
-      deniedDeviations: [{ standardName: 'standards.DisableBasicAuth', receivedValue: 'Enabled' }],
-      customerSpecificDeviations: [{ standardName: 'standards.Guests', receivedValue: 'Allowed' }],
+      acceptedDeviations: [
+        { standardName: 'standards.AuditLog', receivedValue: 'Custom' },
+      ],
+      deniedDeviations: [
+        {
+          standardName: 'standards.DisableBasicAuth',
+          receivedValue: 'Enabled',
+        },
+      ],
+      customerSpecificDeviations: [
+        { standardName: 'standards.Guests', receivedValue: 'Allowed' },
+      ],
     },
   ],
   // Drives two things: the Security Standards page, and the Applied Standards section of the drift
@@ -139,11 +174,19 @@ export const SAMPLE_EXECUTIVE = {
       tenantFilter: 'contoso.com',
       'standards.AntiPhishPolicy': { Value: true },
       'standards.SafeLinksPolicy': { Value: true },
-      'standards.AuditLog': { CurrentValue: 'Enabled', ExpectedValue: 'Enabled' },
+      'standards.AuditLog': {
+        CurrentValue: 'Enabled',
+        ExpectedValue: 'Enabled',
+      },
       'standards.Guests': { CurrentValue: 'Allowed', ExpectedValue: 'Blocked' },
       'standards.PasswordExpireDisabled': { Value: true },
-      'standards.DisableBasicAuth': { CurrentValue: 'Partial', ExpectedValue: 'Disabled' },
-      'standards.IntuneTemplate.8f2a1c4e-6b3d-4f5a-9e7c-1d2b3a4c5e6f': { Value: true },
+      'standards.DisableBasicAuth': {
+        CurrentValue: 'Partial',
+        ExpectedValue: 'Disabled',
+      },
+      'standards.IntuneTemplate.8f2a1c4e-6b3d-4f5a-9e7c-1d2b3a4c5e6f': {
+        Value: true,
+      },
     },
   ],
   standardTemplatesData: [
@@ -276,7 +319,8 @@ export const SAMPLE_REPORT_BUILDER_BLOCKS = [
     title: 'Raw Response',
     static: true,
     format: 'json',
-    content: '{\n  "tenant": "contoso.com",\n  "policies": 191,\n  "enabled": 5\n}',
+    content:
+      '{\n  "tenant": "contoso.com",\n  "policies": 191,\n  "enabled": 5\n}',
   },
 ]
 
@@ -303,9 +347,27 @@ export const SAMPLE_SHADOW_AI = {
     { risk: 'Informational', tools: 2 },
   ],
   topTools: [
-    { tool: 'Sample AI Assistant', category: 'Chat', status: 'Unsanctioned', devices: 22, users: 18 },
-    { tool: 'Sample Code Helper', category: 'Development', status: 'Unsanctioned', devices: 14, users: 9 },
-    { tool: 'Sample Notetaker', category: 'Meetings', status: 'Sanctioned', devices: 11, users: 24 },
+    {
+      tool: 'Sample AI Assistant',
+      category: 'Chat',
+      status: 'Unsanctioned',
+      devices: 22,
+      users: 18,
+    },
+    {
+      tool: 'Sample Code Helper',
+      category: 'Development',
+      status: 'Unsanctioned',
+      devices: 14,
+      users: 9,
+    },
+    {
+      tool: 'Sample Notetaker',
+      category: 'Meetings',
+      status: 'Sanctioned',
+      devices: 11,
+      users: 24,
+    },
   ],
   detectedApps: [
     {
@@ -365,7 +427,10 @@ export const SAMPLE_SHADOW_AI = {
 /** BEC remediation report. Field shapes mirror the real Push-BECRun payload so the preview
  * renders every report section with plausible values rather than 'Unknown' placeholders. */
 export const SAMPLE_BEC = {
-  userData: { displayName: 'Sample User', userPrincipalName: 'sample.user@example.com' },
+  userData: {
+    displayName: 'Sample User',
+    userPrincipalName: 'sample.user@example.com',
+  },
   becData: {
     ExtractedAt: '2026-08-05T09:00:00Z',
     ExtractResult: 'Successfully extracted logs from auditlog',
@@ -373,7 +438,8 @@ export const SAMPLE_BEC = {
     NewRules: [
       {
         Name: 'Sample forwarding rule',
-        Description: 'Move messages from billing@example.com to folder RSS Feeds',
+        Description:
+          'Move messages from billing@example.com to folder RSS Feeds',
         MoveToFolder: 'RSS Feeds',
         RecentlyChanged: true,
       },
@@ -467,7 +533,8 @@ export const SAMPLE_BEC = {
     },
     MFADevices: [
       {
-        '@odata.type': '#microsoft.graph.microsoftAuthenticatorAuthenticationMethod',
+        '@odata.type':
+          '#microsoft.graph.microsoftAuthenticatorAuthenticationMethod',
         displayName: 'Sample phone',
         createdDateTime: '2026-08-03T12:00:00Z',
       },
@@ -501,7 +568,8 @@ export const SAMPLE_BEC = {
         Date: '2026-08-04T10:15:00Z',
         Workload: 'OneDrive',
         FileName: 'Payroll Q3.xlsx',
-        ItemUrl: 'https://example-my.sharepoint.com/personal/sample_user/Documents/Payroll Q3.xlsx',
+        ItemUrl:
+          'https://example-my.sharepoint.com/personal/sample_user/Documents/Payroll Q3.xlsx',
         Target: null,
         TargetType: null,
         ClientIP: '203.0.113.10',

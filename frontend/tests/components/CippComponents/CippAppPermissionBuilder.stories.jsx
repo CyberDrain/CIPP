@@ -29,7 +29,10 @@ const handlers = [
 ]
 
 const Harness = (props) => {
-  const formControl = useForm({ mode: 'onChange', defaultValues: { servicePrincipal: null } })
+  const formControl = useForm({
+    mode: 'onChange',
+    defaultValues: { servicePrincipal: null },
+  })
   return (
     <CippAppPermissionBuilder
       formControl={formControl}
@@ -38,7 +41,9 @@ const Harness = (props) => {
       currentPermissions={{
         Permissions: {
           '00000003-0000-0000-c000-000000000000': {
-            applicationPermissions: [{ id: '1', value: 'Application.ReadWrite.All' }],
+            applicationPermissions: [
+              { id: '1', value: 'Application.ReadWrite.All' },
+            ],
             delegatedPermissions: [{ id: '2', value: 'User.Read' }],
           },
         },

@@ -133,8 +133,9 @@ export const LegacyRedirectDialog = () => {
           for now, but that forward is temporary and will be switched off.
         </Typography>
         <Typography sx={{ mb: 2 }}>
-          Make sure to add your custom domain using your management portal so your own URL keeps working.
-          Once done you will need to clear your cache to clear the old redirect from your browser.
+          Make sure to add your custom domain using your management portal so
+          your own URL keeps working. Once done you will need to clear your
+          cache to clear the old redirect from your browser.
         </Typography>
         {currentHost && (
           <Typography variant="body2" color="text.secondary">

@@ -1,3 +1,3 @@
-import DashboardV2 from "./dashboardv2";
+import DashboardV2 from './dashboardv2'
 
-export default DashboardV2;
+export default DashboardV2

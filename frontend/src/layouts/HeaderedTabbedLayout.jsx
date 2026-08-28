@@ -1,8 +1,8 @@
-import { useCallback, useMemo } from "react";
-import { usePathname } from "next/navigation";
-import { useRouter } from "next/router";
-import PropTypes from "prop-types";
-import ArrowLeftIcon from "@heroicons/react/24/outline/ArrowLeftIcon";
+import { useCallback, useMemo } from 'react'
+import { usePathname } from 'next/navigation'
+import { useRouter } from 'next/router'
+import PropTypes from 'prop-types'
+import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon'
 import {
   Box,
   Container,
@@ -13,15 +13,18 @@ import {
   Tab,
   Tabs,
   Typography,
-} from "@mui/material";
-import { ActionsMenu } from "../components/actions-menu";
-import { getIconByName } from "../utils/icon-registry";
-import { useIsMobileLayout } from "../hooks/use-breakpoint";
-import { useActionsDispatch } from "../hooks/use-actions-dispatch";
-import { TabNavigationContext, useTabNavigationValue } from "./tab-navigation-context";
-import { CippPageActionsFab } from "../components/CippComponents/CippPageActionsFab";
-import { CippTabPicker } from "../components/CippComponents/CippTabPicker";
-import { ApiGetCall } from "../api/ApiCall";
+} from '@mui/material'
+import { ActionsMenu } from '../components/actions-menu'
+import { getIconByName } from '../utils/icon-registry'
+import { useIsMobileLayout } from '../hooks/use-breakpoint'
+import { useActionsDispatch } from '../hooks/use-actions-dispatch'
+import {
+  TabNavigationContext,
+  useTabNavigationValue,
+} from './tab-navigation-context'
+import { CippPageActionsFab } from '../components/CippComponents/CippPageActionsFab'
+import { CippTabPicker } from '../components/CippComponents/CippTabPicker'
+import { ApiGetCall } from '../api/ApiCall'
 
 export const HeaderedTabbedLayout = (props) => {
   const {
@@ -38,14 +41,14 @@ export const HeaderedTabbedLayout = (props) => {
     backUrl,
     // Optional replacement for the title Typography — same slot, same truncation duties.
     titleControl,
-  } = props;
+  } = props
 
   // The shared hook rather than an inline useMediaQuery: same threshold, but only this one is
   // mockable, and jsdom has no width-based matchMedia to drive the mobile branch with.
-  const isMobile = useIsMobileLayout();
-  const router = useRouter();
-  const pathname = usePathname();
-  const queryParams = router.query;
+  const isMobile = useIsMobileLayout()
+  const router = useRouter()
+  const pathname = usePathname()
+  const queryParams = router.query
   const navigateToTab = useCallback(
     (value) => {
       //if we have query params, we need to append them to the new path
@@ -56,60 +59,70 @@ export const HeaderedTabbedLayout = (props) => {
         },
         undefined,
         { shallow: true }
-      );
+      )
     },
     [router, queryParams]
-  );
+  )
 
-  const handleTabsChange = useCallback((event, value) => navigateToTab(value), [navigateToTab]);
+  const handleTabsChange = useCallback(
+    (event, value) => navigateToTab(value),
+    [navigateToTab]
+  )
 
   // Feature-flag gating, same rules as TabbedLayout: a DISABLED flag hides its Pages;
   // an ENABLED flag hides its HidesPages (the pages it replaces - e.g. Baselines
   // supersedes the classic Standards and Drift tabs on Manage Tenant).
   const featureFlags = ApiGetCall({
-    url: "/api/ListFeatureFlags",
-    queryKey: "featureFlags",
+    url: '/api/ListFeatureFlags',
+    queryKey: 'featureFlags',
     staleTime: 600000,
-  });
+  })
   const visibleTabs = useMemo(() => {
-    if (!featureFlags.isSuccess || !Array.isArray(featureFlags.data)) return tabOptions;
+    if (!featureFlags.isSuccess || !Array.isArray(featureFlags.data))
+      return tabOptions
     const disabledPages = featureFlags.data
       .filter((flag) => flag.Enabled === false || flag.enabled === false)
       .flatMap((flag) => flag.Pages || flag.pages || [])
-      .filter((page) => typeof page === "string");
+      .filter((page) => typeof page === 'string')
     const replacedPages = featureFlags.data
       .filter((flag) => flag.Enabled === true || flag.enabled === true)
       .flatMap((flag) => flag.HidesPages || flag.hidesPages || [])
-      .filter((page) => typeof page === "string");
-    const hiddenPages = [...disabledPages, ...replacedPages];
-    if (hiddenPages.length === 0) return tabOptions;
-    return tabOptions.filter((option) => !hiddenPages.includes(option.path));
-  }, [tabOptions, featureFlags.isSuccess, featureFlags.data]);
+      .filter((page) => typeof page === 'string')
+    const hiddenPages = [...disabledPages, ...replacedPages]
+    if (hiddenPages.length === 0) return tabOptions
+    return tabOptions.filter((option) => !hiddenPages.includes(option.path))
+  }, [tabOptions, featureFlags.isSuccess, featureFlags.data])
 
-  const currentTab = visibleTabs.find((option) => option.path === pathname);
+  const currentTab = visibleTabs.find((option) => option.path === pathname)
 
   // Below md the tab row scrolls horizontally and still hides tabs off the right edge, so
   // navigation collapses to a picker in the title row — the one part of that row that is
   // empty at this width, since the Actions menu gets clipped here and moves to the FAB.
-  const actionsDispatch = useActionsDispatch({ actions, data: actionsData, queryKeys });
+  const actionsDispatch = useActionsDispatch({
+    actions,
+    data: actionsData,
+    queryKeys,
+  })
   // No isFetching term: the desktop menu's equivalent `disabled` prop is swallowed by
   // ActionsMenu's unspread ...other, so including it here greyed out every action on mobile
   // during a background refetch while desktop left them clickable. Actions operate on
   // stale-but-present data quite happily; aligning down keeps the two surfaces identical
   // without changing desktop.
-  const { visibleActions, isDisabled, dispatch } = actionsDispatch;
+  const { visibleActions, isDisabled, dispatch } = actionsDispatch
   const sheetActions = useMemo(
     () =>
       isMobile
         ? visibleActions.map((action) => ({
             label: action.label,
-            icon: action.icon ? <SvgIcon fontSize="small">{action.icon}</SvgIcon> : null,
+            icon: action.icon ? (
+              <SvgIcon fontSize="small">{action.icon}</SvgIcon>
+            ) : null,
             disabled: isDisabled(action),
             onClick: () => dispatch(action),
           }))
         : [],
     [isMobile, visibleActions, isDisabled, dispatch]
-  );
+  )
 
   const tabNavValue = useTabNavigationValue({
     tabs: visibleTabs,
@@ -118,7 +131,7 @@ export const HeaderedTabbedLayout = (props) => {
     actions: sheetActions,
     enabled: isMobile,
     providesGutters: true,
-  });
+  })
 
   const subtitleBlock = isFetching ? (
     <Skeleton variant="text" width={200} />
@@ -142,7 +155,7 @@ export const HeaderedTabbedLayout = (props) => {
             right edge of the screen. */}
         {subtitle.map((item, index) =>
           item.component ? (
-            <Box key={index} sx={{ minWidth: 0, maxWidth: "100%" }}>
+            <Box key={index} sx={{ minWidth: 0, maxWidth: '100%' }}>
               {item.component}
             </Box>
           ) : (
@@ -151,7 +164,7 @@ export const HeaderedTabbedLayout = (props) => {
               alignItems="center"
               direction="row"
               spacing={1}
-              sx={{ minWidth: 0, maxWidth: "100%" }}
+              sx={{ minWidth: 0, maxWidth: '100%' }}
             >
               <SvgIcon fontSize="small" sx={{ flexShrink: 0 }}>
                 {item.icon}
@@ -160,7 +173,7 @@ export const HeaderedTabbedLayout = (props) => {
                 component="div"
                 color="text.secondary"
                 variant="body2"
-                sx={{ minWidth: 0, "& .MuiChip-root": { maxWidth: "100%" } }}
+                sx={{ minWidth: 0, '& .MuiChip-root': { maxWidth: '100%' } }}
               >
                 {item.text}
               </Typography>
@@ -169,7 +182,7 @@ export const HeaderedTabbedLayout = (props) => {
         )}
       </Stack>
     )
-  );
+  )
 
   return (
     <TabNavigationContext.Provider value={tabNavValue}>
@@ -182,12 +195,12 @@ export const HeaderedTabbedLayout = (props) => {
         {/* One gutter for the whole page, matching the layout's breadcrumb rail
             (mx: {xs: 2, md: 3}): the breadcrumbs, this header's text and the left edge of
             every card below it then share a single left edge. */}
-        <Container maxWidth="xl" sx={{ height: "100%", px: { xs: 2, md: 3 } }}>
-          <Stack spacing={1} sx={{ height: "100%" }}>
+        <Container maxWidth="xl" sx={{ height: '100%', px: { xs: 2, md: 3 } }}>
+          <Stack spacing={1} sx={{ height: '100%' }}>
             <Stack spacing={2}>
               <Stack spacing={1}>
                 <Stack
-                  alignItems={isMobile ? "center" : "flex-start"}
+                  alignItems={isMobile ? 'center' : 'flex-start'}
                   direction="row"
                   justifyContent="space-between"
                   spacing={1}
@@ -195,7 +208,7 @@ export const HeaderedTabbedLayout = (props) => {
                   {/* minWidth: 0 so a long tenant/entity name truncates in the space the
                       picker leaves rather than pushing it off the right edge of the row.
                       Scoped to the picker's own breakpoint — above md this is unchanged. */}
-                  <Stack spacing={1} sx={{ minWidth: { xs: 0, md: "auto" } }}>
+                  <Stack spacing={1} sx={{ minWidth: { xs: 0, md: 'auto' } }}>
                     <Stack
                       alignItems="center"
                       direction="row"
@@ -208,18 +221,22 @@ export const HeaderedTabbedLayout = (props) => {
                           in the same clothes (the View User pages mount a user switcher). */}
                       {isFetching ? (
                         <Typography
-                          variant={isMobile ? "h6" : "h4"}
+                          variant={isMobile ? 'h6' : 'h4'}
                           noWrap={isMobile}
                           sx={{ minWidth: 0, flex: 1 }}
                         >
                           <Skeleton variant="text" sx={{ maxWidth: 280 }} />
                         </Typography>
                       ) : (
-                        titleControl ?? (
-                          <Typography variant={isMobile ? "h6" : "h4"} noWrap={isMobile} sx={{ minWidth: 0 }}>
+                        (titleControl ?? (
+                          <Typography
+                            variant={isMobile ? 'h6' : 'h4'}
+                            noWrap={isMobile}
+                            sx={{ minWidth: 0 }}
+                          >
                             {title}
                           </Typography>
-                        )
+                        ))
                       )}
                     </Stack>
                     {!isMobile && subtitleBlock}
@@ -231,7 +248,11 @@ export const HeaderedTabbedLayout = (props) => {
                   ) : (
                     actions &&
                     actions.length > 0 && (
-                      <ActionsMenu actions={actions} data={actionsData} disabled={isFetching} />
+                      <ActionsMenu
+                        actions={actions}
+                        data={actionsData}
+                        disabled={isFetching}
+                      />
                     )
                   )}
                 </Stack>
@@ -247,15 +268,18 @@ export const HeaderedTabbedLayout = (props) => {
                     value={currentTab?.path}
                     variant="scrollable"
                     sx={{
-                      "& .MuiTab-root:first-of-type": {
+                      '& .MuiTab-root:first-of-type': {
                         ml: 2,
                       },
                     }}
                   >
                     {visibleTabs.map((option) => {
-                      const icon = getIconByName(option.icon, { fontSize: "small" });
-                      const iconPosition = option.iconPosition ?? "start";
-                      const compactIcon = icon && ["end", "start"].includes(iconPosition);
+                      const icon = getIconByName(option.icon, {
+                        fontSize: 'small',
+                      })
+                      const iconPosition = option.iconPosition ?? 'start'
+                      const compactIcon =
+                        icon && ['end', 'start'].includes(iconPosition)
 
                       return (
                         <Tab
@@ -264,9 +288,11 @@ export const HeaderedTabbedLayout = (props) => {
                           value={option.path}
                           icon={icon ?? undefined}
                           iconPosition={icon ? iconPosition : undefined}
-                          sx={compactIcon ? { minHeight: 48, py: 1.5 } : undefined}
+                          sx={
+                            compactIcon ? { minHeight: 48, py: 1.5 } : undefined
+                          }
                         />
-                      );
+                      )
                     })}
                   </Tabs>
                   <Divider />
@@ -277,8 +303,8 @@ export const HeaderedTabbedLayout = (props) => {
               sx={
                 !isMobile && {
                   flexGrow: 1,
-                  overflow: "auto",
-                  height: "calc(100vh - 350px)",
+                  overflow: 'auto',
+                  height: 'calc(100vh - 350px)',
                 }
               }
             >
@@ -293,12 +319,17 @@ export const HeaderedTabbedLayout = (props) => {
       {actionsDispatch.dialog}
       {/* Actions only, and only when no page FAB claimed the corner — otherwise they ride in
           that sheet. Tabs are in the title row and never come down here. */}
-      {isMobile && sheetActions.length > 0 && !tabNavValue.isActionCornerClaimed && (
-        <CippPageActionsFab ariaLabel="Page actions" claimActionCorner={false} />
-      )}
+      {isMobile &&
+        sheetActions.length > 0 &&
+        !tabNavValue.isActionCornerClaimed && (
+          <CippPageActionsFab
+            ariaLabel="Page actions"
+            claimActionCorner={false}
+          />
+        )}
     </TabNavigationContext.Provider>
-  );
-};
+  )
+}
 
 HeaderedTabbedLayout.propTypes = {
   children: PropTypes.node,
@@ -307,7 +338,7 @@ HeaderedTabbedLayout.propTypes = {
       label: PropTypes.string.isRequired,
       path: PropTypes.string.isRequired,
       icon: PropTypes.string,
-      iconPosition: PropTypes.oneOf(["bottom", "end", "start", "top"]),
+      iconPosition: PropTypes.oneOf(['bottom', 'end', 'start', 'top']),
     })
   ).isRequired,
   title: PropTypes.string.isRequired,
@@ -325,4 +356,4 @@ HeaderedTabbedLayout.propTypes = {
     })
   ),
   isFetching: PropTypes.bool,
-};
+}

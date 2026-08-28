@@ -1,7 +1,7 @@
-import { Children } from 'react';
-import Document, { Head, Html, Main, NextScript } from 'next/document';
-import createEmotionServer from '@emotion/server/create-instance';
-import { createEmotionCache } from '../utils/create-emotion-cache';
+import { Children } from 'react'
+import Document, { Head, Html, Main, NextScript } from 'next/document'
+import createEmotionServer from '@emotion/server/create-instance'
+import { createEmotionCache } from '../utils/create-emotion-cache'
 
 class CustomDocument extends Document {
   render() {
@@ -26,46 +26,40 @@ class CustomDocument extends Document {
           <link rel="manifest" href="/manifest.json" />
           <meta name="theme-color" content="#ffffff" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <meta
+            name="apple-mobile-web-app-status-bar-style"
+            content="black-translucent"
+          />
           <meta name="apple-mobile-web-app-title" content="CIPP" />
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-          <link
-            rel="preconnect"
-            href="https://fonts.googleapis.com"
-          />
-          <link
-            rel="preconnect"
-            href="https://fonts.gstatic.com"
-          />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" />
           <link
             rel="stylesheet"
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           />
         </Head>
         <body>
-        <Main />
-        <NextScript />
+          <Main />
+          <NextScript />
         </body>
       </Html>
-    );
+    )
   }
 }
 
 CustomDocument.getInitialProps = async (ctx) => {
-  const originalRenderPage = ctx.renderPage;
-  const cache = createEmotionCache();
-  const { extractCriticalToChunks } = createEmotionServer(cache);
+  const originalRenderPage = ctx.renderPage
+  const cache = createEmotionCache()
+  const { extractCriticalToChunks } = createEmotionServer(cache)
 
-  ctx.renderPage = () => originalRenderPage({
-    enhanceApp: (App) => (props) => (
-      <App
-        emotionCache={cache}
-        {...props} />
-    )
-  });
+  ctx.renderPage = () =>
+    originalRenderPage({
+      enhanceApp: (App) => (props) => <App emotionCache={cache} {...props} />,
+    })
 
-  const initialProps = await Document.getInitialProps(ctx);
-  const emotionStyles = extractCriticalToChunks(initialProps.html);
+  const initialProps = await Document.getInitialProps(ctx)
+  const emotionStyles = extractCriticalToChunks(initialProps.html)
   const emotionStyleTags = emotionStyles.styles.map((style) => (
     <style
       data-emotion={`${style.key} ${style.ids.join(' ')}`}
@@ -73,12 +67,12 @@ CustomDocument.getInitialProps = async (ctx) => {
       // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: style.css }}
     />
-  ));
+  ))
 
   return {
     ...initialProps,
-    styles: [...Children.toArray(initialProps.styles), ...emotionStyleTags]
-  };
-};
+    styles: [...Children.toArray(initialProps.styles), ...emotionStyleTags],
+  }
+}
 
-export default CustomDocument;
+export default CustomDocument

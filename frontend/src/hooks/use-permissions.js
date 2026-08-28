@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import { ApiGetCall } from "../api/ApiCall";
-import { hasAccess, hasPermission, hasRole } from "../utils/permissions";
+import { useCallback } from 'react'
+import { ApiGetCall } from '../api/ApiCall'
+import { hasAccess, hasPermission, hasRole } from '../utils/permissions'
 
 /**
  * Hook for checking user permissions and roles
@@ -8,14 +8,14 @@ import { hasAccess, hasPermission, hasRole } from "../utils/permissions";
  */
 export const usePermissions = () => {
   const currentRole = ApiGetCall({
-    url: "/api/me",
-    queryKey: "authmecipp",
-  });
+    url: '/api/me',
+    queryKey: 'authmecipp',
+  })
 
-  const userRoles = currentRole.data?.clientPrincipal?.userRoles || [];
-  const userPermissions = currentRole.data?.permissions || [];
-  const isLoading = currentRole.isLoading;
-  const isAuthenticated = currentRole.isSuccess && userRoles.length > 0;
+  const userRoles = currentRole.data?.clientPrincipal?.userRoles || []
+  const userPermissions = currentRole.data?.permissions || []
+  const isLoading = currentRole.isLoading
+  const isAuthenticated = currentRole.isSuccess && userRoles.length > 0
 
   /**
    * Check if user has specific permissions
@@ -24,11 +24,11 @@ export const usePermissions = () => {
    */
   const checkPermissions = useCallback(
     (requiredPermissions) => {
-      if (!isAuthenticated) return false;
-      return hasPermission(userPermissions, requiredPermissions);
+      if (!isAuthenticated) return false
+      return hasPermission(userPermissions, requiredPermissions)
     },
     [userPermissions, isAuthenticated]
-  );
+  )
 
   /**
    * Check if user has specific roles
@@ -37,11 +37,11 @@ export const usePermissions = () => {
    */
   const checkRoles = useCallback(
     (requiredRoles) => {
-      if (!isAuthenticated) return false;
-      return hasRole(userRoles, requiredRoles);
+      if (!isAuthenticated) return false
+      return hasRole(userRoles, requiredRoles)
     },
     [userRoles, isAuthenticated]
-  );
+  )
 
   /**
    * Check if user has access based on both permissions and roles
@@ -52,19 +52,19 @@ export const usePermissions = () => {
    */
   const checkAccess = useCallback(
     (config = {}) => {
-      if (!isAuthenticated) return false;
+      if (!isAuthenticated) return false
 
-      const { requiredPermissions = [], requiredRoles = [] } = config;
+      const { requiredPermissions = [], requiredRoles = [] } = config
 
       return hasAccess({
         userPermissions,
         userRoles,
         requiredPermissions,
         requiredRoles,
-      });
+      })
     },
     [userPermissions, userRoles, isAuthenticated]
-  );
+  )
 
   return {
     userPermissions,
@@ -74,8 +74,8 @@ export const usePermissions = () => {
     checkPermissions,
     checkRoles,
     checkAccess,
-  };
-};
+  }
+}
 
 /**
  * Hook specifically for checking permissions with a simpler API
@@ -83,14 +83,17 @@ export const usePermissions = () => {
  * @param {string[]} requiredRoles - Array of required roles
  * @returns {Object} - Object containing hasAccess boolean and loading state
  */
-export const useHasPermission = (requiredPermissions = [], requiredRoles = []) => {
-  const { checkAccess, isLoading, isAuthenticated } = usePermissions();
+export const useHasPermission = (
+  requiredPermissions = [],
+  requiredRoles = []
+) => {
+  const { checkAccess, isLoading, isAuthenticated } = usePermissions()
 
-  const hasAccess = checkAccess({ requiredPermissions, requiredRoles });
+  const hasAccess = checkAccess({ requiredPermissions, requiredRoles })
 
   return {
     hasAccess,
     isLoading,
     isAuthenticated,
-  };
-};
+  }
+}

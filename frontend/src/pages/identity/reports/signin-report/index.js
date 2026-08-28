@@ -6,17 +6,23 @@ import { CippApiDialog } from '../../../../components/CippComponents/CippApiDial
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button, Stack } from '@mui/material'
-import { FilterList as FilterListIcon, Save as SaveIcon } from '@mui/icons-material'
+import {
+  FilterList as FilterListIcon,
+  Save as SaveIcon,
+} from '@mui/icons-material'
 import { Grid } from '@mui/system'
 import CippButtonCard from '../../../../components/CippCards/CippButtonCard'
 import { useSettings } from '../../../../hooks/use-settings.js'
 import { useDialog } from '../../../../hooks/use-dialog.js'
 import signinErrorCodes from '../../../../data/signinErrorCodes.json'
 
-const ERROR_CODE_OPTIONS = Object.entries(signinErrorCodes).map(([code, description]) => ({
-  label: code === '0' ? `${code} - ${description}` : `${code} - ${description}`,
-  value: code,
-}))
+const ERROR_CODE_OPTIONS = Object.entries(signinErrorCodes).map(
+  ([code, description]) => ({
+    label:
+      code === '0' ? `${code} - ${description}` : `${code} - ${description}`,
+    value: code,
+  })
+)
 
 const SIGN_IN_EVENT_TYPES = [
   { label: 'Interactive', value: 'interactiveUser' },
@@ -47,7 +53,9 @@ const buildGraphFilter = ({
   const clauses = [`createdDateTime ge ${dateStr}`]
 
   if (hideDirSync) {
-    clauses.push(`userDisplayName ne 'On-Premises Directory Synchronization Service Account'`)
+    clauses.push(
+      `userDisplayName ne 'On-Premises Directory Synchronization Service Account'`
+    )
   }
 
   const errorCodeValues = Array.isArray(errorCodes)
@@ -56,25 +64,40 @@ const buildGraphFilter = ({
   if (errorCodeValues.length === 1) {
     clauses.push(`status/errorCode eq ${errorCodeValues[0]}`)
   } else if (errorCodeValues.length > 1) {
-    clauses.push(`(${errorCodeValues.map((c) => `status/errorCode eq ${c}`).join(' or ')})`)
+    clauses.push(
+      `(${errorCodeValues.map((c) => `status/errorCode eq ${c}`).join(' or ')})`
+    )
   }
-  if (userFilter) clauses.push(`startsWith(userPrincipalName,'${userFilter.replace(/'/g, "''")}')`)
-  if (appFilter) clauses.push(`startsWith(appDisplayName,'${appFilter.replace(/'/g, "''")}')`)
+  if (userFilter)
+    clauses.push(
+      `startsWith(userPrincipalName,'${userFilter.replace(/'/g, "''")}')`
+    )
+  if (appFilter)
+    clauses.push(
+      `startsWith(appDisplayName,'${appFilter.replace(/'/g, "''")}')`
+    )
 
-  const caValues = Array.isArray(caStatus) ? caStatus.map((o) => o.value).filter(Boolean) : []
+  const caValues = Array.isArray(caStatus)
+    ? caStatus.map((o) => o.value).filter(Boolean)
+    : []
   if (caValues.length === 1) {
     clauses.push(`conditionalAccessStatus eq '${caValues[0]}'`)
   } else if (caValues.length > 1) {
-    clauses.push(`(${caValues.map((v) => `conditionalAccessStatus eq '${v}'`).join(' or ')})`)
+    clauses.push(
+      `(${caValues.map((v) => `conditionalAccessStatus eq '${v}'`).join(' or ')})`
+    )
   }
 
   const eventTypes = Array.isArray(signInEventType)
     ? signInEventType.map((o) => o.value).filter(Boolean)
     : []
   const isInteractiveOnly =
-    eventTypes.length === 0 || (eventTypes.length === 1 && eventTypes[0] === 'interactiveUser')
+    eventTypes.length === 0 ||
+    (eventTypes.length === 1 && eventTypes[0] === 'interactiveUser')
   if (!isInteractiveOnly) {
-    clauses.push(`signInEventTypes/any(t: ${eventTypes.map((t) => `t eq '${t}'`).join(' OR ')})`)
+    clauses.push(
+      `signInEventTypes/any(t: ${eventTypes.map((t) => `t eq '${t}'`).join(' OR ')})`
+    )
   }
 
   return clauses.join(' and ')
@@ -87,7 +110,7 @@ const buildGraphFilterTemplate = (values) => {
   const compiled = buildGraphFilter({ ...values, Days: 0 })
   return compiled.replace(
     /createdDateTime ge [^\s]+/,
-    `createdDateTime ge {DaysAgo:${Number(values.Days)}}`,
+    `createdDateTime ge {DaysAgo:${Number(values.Days)}}`
   )
 }
 
@@ -116,12 +139,19 @@ const SP_COLUMNS = [
 ]
 
 const getSimpleColumns = (signInEventType) => {
-  const types = Array.isArray(signInEventType) ? signInEventType.map((o) => o.value) : []
-  const hasUserTypes = types.some((t) => t === 'interactiveUser' || t === 'nonInteractiveUser')
-  const hasSpTypes = types.some((t) => t === 'servicePrincipal' || t === 'managedIdentity')
+  const types = Array.isArray(signInEventType)
+    ? signInEventType.map((o) => o.value)
+    : []
+  const hasUserTypes = types.some(
+    (t) => t === 'interactiveUser' || t === 'nonInteractiveUser'
+  )
+  const hasSpTypes = types.some(
+    (t) => t === 'servicePrincipal' || t === 'managedIdentity'
+  )
   if (hasSpTypes && !hasUserTypes) return SP_COLUMNS
   if (hasUserTypes && !hasSpTypes) return USER_COLUMNS
-  if (hasSpTypes && hasUserTypes) return [...new Set([...USER_COLUMNS, ...SP_COLUMNS])]
+  if (hasSpTypes && hasUserTypes)
+    return [...new Set([...USER_COLUMNS, ...SP_COLUMNS])]
   return USER_COLUMNS
 }
 
@@ -242,7 +272,13 @@ const Page = () => {
           />
         </Grid>
         <Grid size={{ xs: 12 }}>
-          <Stack direction="row" spacing={2} alignItems="flex-start" flexWrap="wrap" useFlexGap>
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="flex-start"
+            flexWrap="wrap"
+            useFlexGap
+          >
             <Button
               variant="contained"
               color="primary"
@@ -274,7 +310,9 @@ const Page = () => {
   }
 
   const offCanvas = {
-    children: (row) => <CippJsonView object={row} defaultOpen={true} title="Sign-In Details" />,
+    children: (row) => (
+      <CippJsonView object={row} defaultOpen={true} title="Sign-In Details" />
+    ),
     size: 'xl',
   }
 
@@ -325,6 +363,8 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+)
 
 export default Page

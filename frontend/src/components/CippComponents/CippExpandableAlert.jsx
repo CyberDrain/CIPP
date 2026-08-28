@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { Alert, Box, Link } from "@mui/material";
-import { useIsMobileLayout } from "../../hooks/use-breakpoint";
+import { useEffect, useRef, useState } from 'react'
+import { Alert, Box, Link } from '@mui/material'
+import { useIsMobileLayout } from '../../hooks/use-breakpoint'
 
 /**
  * An Alert that earns its screen space on a phone: below the mobile breakpoint the message
@@ -11,21 +11,25 @@ import { useIsMobileLayout } from "../../hooks/use-breakpoint";
  * Whether the toggle appears is measured, not assumed: a message short enough to fit its
  * clamp renders exactly like a plain Alert.
  */
-export const CippExpandableAlert = ({ children, collapsedLines = 3, ...alertProps }) => {
-  const isMobile = useIsMobileLayout();
-  const [expanded, setExpanded] = useState(false);
-  const [clipped, setClipped] = useState(false);
-  const messageRef = useRef(null);
+export const CippExpandableAlert = ({
+  children,
+  collapsedLines = 3,
+  ...alertProps
+}) => {
+  const isMobile = useIsMobileLayout()
+  const [expanded, setExpanded] = useState(false)
+  const [clipped, setClipped] = useState(false)
+  const messageRef = useRef(null)
 
   useEffect(() => {
     // Measure only while clamped: expanding removes the overflow, and remeasuring then
     // would drop the Show less control with no way back.
-    if (!isMobile || expanded) return;
-    const el = messageRef.current;
-    if (el) setClipped(el.scrollHeight > el.clientHeight + 1);
-  }, [isMobile, expanded, children]);
+    if (!isMobile || expanded) return
+    const el = messageRef.current
+    if (el) setClipped(el.scrollHeight > el.clientHeight + 1)
+  }, [isMobile, expanded, children])
 
-  const clamped = isMobile && !expanded;
+  const clamped = isMobile && !expanded
 
   return (
     <Alert {...alertProps}>
@@ -34,10 +38,10 @@ export const CippExpandableAlert = ({ children, collapsedLines = 3, ...alertProp
         sx={
           clamped
             ? {
-                display: "-webkit-box",
-                WebkitBoxOrient: "vertical",
+                display: '-webkit-box',
+                WebkitBoxOrient: 'vertical',
                 WebkitLineClamp: collapsedLines,
-                overflow: "hidden",
+                overflow: 'hidden',
               }
             : undefined
         }
@@ -52,9 +56,9 @@ export const CippExpandableAlert = ({ children, collapsedLines = 3, ...alertProp
           onClick={() => setExpanded((prev) => !prev)}
           sx={{ mt: 0.5, fontWeight: 600 }}
         >
-          {expanded ? "Show less" : "Show more"}
+          {expanded ? 'Show less' : 'Show more'}
         </Link>
       )}
     </Alert>
-  );
-};
+  )
+}

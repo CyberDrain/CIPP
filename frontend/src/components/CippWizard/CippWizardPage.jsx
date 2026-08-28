@@ -9,26 +9,26 @@ import {
   Divider,
   IconButton,
   SvgIcon,
-} from "@mui/material";
-import { Close } from "@mui/icons-material";
-import { CippWizard } from "./CippWizard";
-import { useRouter } from "next/router";
-import { ArrowLeftIcon } from "@mui/x-date-pickers";
-import { CippHead } from "../CippComponents/CippHead";
-import { CippWizardDialogContext } from "./CippWizardDialogContext";
-import { useIsMobileLayout } from "../../hooks/use-breakpoint";
-import { useState, useCallback } from "react";
+} from '@mui/material'
+import { Close } from '@mui/icons-material'
+import { CippWizard } from './CippWizard'
+import { useRouter } from 'next/router'
+import { ArrowLeftIcon } from '@mui/x-date-pickers'
+import { CippHead } from '../CippComponents/CippHead'
+import { CippWizardDialogContext } from './CippWizardDialogContext'
+import { useIsMobileLayout } from '../../hooks/use-breakpoint'
+import { useState, useCallback } from 'react'
 
 const CippWizardPage = (props) => {
-  const router = useRouter();
+  const router = useRouter()
   const {
     postUrl,
     initialState,
     steps,
     wizardTitle,
     backButton = true,
-    wizardOrientation = "horizontal",
-    maxWidth = "xl",
+    wizardOrientation = 'horizontal',
+    maxWidth = 'xl',
     dialogMode = false,
     open = false,
     onClose,
@@ -36,11 +36,11 @@ const CippWizardPage = (props) => {
     relatedQueryKeys,
     completionButton,
     ...other
-  } = props;
+  } = props
 
-  const isMobile = useIsMobileLayout();
-  const [actionsEl, setActionsEl] = useState(null);
-  const actionsRef = useCallback((el) => setActionsEl(el), []);
+  const isMobile = useIsMobileLayout()
+  const [actionsEl, setActionsEl] = useState(null)
+  const actionsRef = useCallback((el) => setActionsEl(el), [])
 
   const wizardNode = (
     <CippWizard
@@ -49,7 +49,7 @@ const CippWizardPage = (props) => {
       orientation={wizardOrientation}
       steps={steps}
     />
-  );
+  )
 
   if (dialogMode) {
     return (
@@ -61,21 +61,23 @@ const CippWizardPage = (props) => {
         fullScreen={isMobile}
         PaperProps={{
           sx: {
-            display: "flex",
-            flexDirection: "column",
-            ...(!isMobile && { height: "90vh" }),
+            display: 'flex',
+            flexDirection: 'column',
+            ...(!isMobile && { height: '90vh' }),
           },
         }}
       >
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, p: 2 }}>
+        <DialogTitle
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 2 }}
+        >
           {dialogIcon}
           {wizardTitle}
-          <IconButton aria-label="close" onClick={onClose} sx={{ ml: "auto" }}>
+          <IconButton aria-label="close" onClick={onClose} sx={{ ml: 'auto' }}>
             <Close />
           </IconButton>
         </DialogTitle>
         <Divider />
-        <DialogContent sx={{ flex: 1, overflow: "auto", p: { xs: 1, md: 2 } }}>
+        <DialogContent sx={{ flex: 1, overflow: 'auto', p: { xs: 1, md: 2 } }}>
           <CippWizardDialogContext.Provider
             value={{ actionsEl, relatedQueryKeys, onClose, completionButton }}
           >
@@ -85,7 +87,7 @@ const CippWizardPage = (props) => {
         <Divider />
         <DialogActions ref={actionsRef} sx={{ px: { xs: 2, md: 3 }, py: 2 }} />
       </Dialog>
-    );
+    )
   }
 
   return (
@@ -93,7 +95,7 @@ const CippWizardPage = (props) => {
       <CippHead title={wizardTitle} />
       <Box
         sx={{
-          backgroundColor: "background.default",
+          backgroundColor: 'background.default',
           flexGrow: 1,
           pb: { xs: 2, md: 4 },
         }}
@@ -110,6 +112,6 @@ const CippWizardPage = (props) => {
         </Container>
       </Box>
     </>
-  );
-};
-export default CippWizardPage;
+  )
+}
+export default CippWizardPage

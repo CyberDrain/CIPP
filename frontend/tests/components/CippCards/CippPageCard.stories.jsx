@@ -16,7 +16,11 @@ export const Default = {
 export const WithInfoBar = {
   args: {
     title: 'Users Overview',
-    infoBar: <div style={{ padding: '12px', background: '#f5f5f5', borderRadius: 4 }}>Stats here</div>,
+    infoBar: (
+      <div style={{ padding: '12px', background: '#f5f5f5', borderRadius: 4 }}>
+        Stats here
+      </div>
+    ),
     children: <p>User list content goes here.</p>,
   },
 }

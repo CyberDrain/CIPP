@@ -9,7 +9,9 @@ export const extractCsvColumnValues = (csvRows, csvColumn) => {
   return csvRows
     .map((row) => {
       if (!row || typeof row !== 'object') return null
-      const key = Object.keys(row).find((k) => k.trim().toLowerCase() === colLower)
+      const key = Object.keys(row).find(
+        (k) => k.trim().toLowerCase() === colLower
+      )
       return key ? String(row[key]).trim() : null
     })
     .filter((v) => v != null && v !== '')
@@ -19,7 +21,11 @@ export const extractCsvColumnValues = (csvRows, csvColumn) => {
  * Flatten autocomplete form values to plain string ids/UPNs.
  */
 export const normalizeAutoCompleteValues = (value) => {
-  const items = Array.isArray(value) ? value : value != null && value !== '' ? [value] : []
+  const items = Array.isArray(value)
+    ? value
+    : value != null && value !== ''
+      ? [value]
+      : []
   return items
     .filter(Boolean)
     .map((item) =>
@@ -42,7 +48,10 @@ export const mergeCsvFormFields = (formData, fields) => {
     if (!field.csvColumn || !field.name) return
     const csvFieldName = `${field.name}__csv`
     const acValues = normalizeAutoCompleteValues(merged[field.name])
-    const csvValues = extractCsvColumnValues(merged[csvFieldName], field.csvColumn)
+    const csvValues = extractCsvColumnValues(
+      merged[csvFieldName],
+      field.csvColumn
+    )
     merged[field.name] = [...acValues, ...csvValues]
     delete merged[csvFieldName]
   })

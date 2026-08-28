@@ -46,7 +46,8 @@ const useSecureScoreReport = () => {
   return { reportApi, rows, summary }
 }
 
-const scoreSeverity = (value) => (value >= 75 ? 'ok' : value >= 50 ? 'warning' : 'critical')
+const scoreSeverity = (value) =>
+  value >= 75 ? 'ok' : value >= 50 ? 'warning' : 'critical'
 
 /**
  * Ranked tenant rows with a score bar; each row links to that tenant's own secure score view via
@@ -69,7 +70,11 @@ const LeaderboardCard = ({ title, subheader, rows, isFetching }) => (
           ))}
         </Stack>
       ) : rows.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ py: 2, textAlign: 'center' }}
+        >
           No scored tenants yet
         </Typography>
       ) : (
@@ -94,7 +99,11 @@ const LeaderboardCard = ({ title, subheader, rows, isFetching }) => (
               <Typography
                 variant="caption"
                 color="text.disabled"
-                sx={{ width: 24, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}
+                sx={{
+                  width: 24,
+                  flexShrink: 0,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
               >
                 #{row.rank}
               </Typography>
@@ -112,7 +121,9 @@ const LeaderboardCard = ({ title, subheader, rows, isFetching }) => (
                     backgroundColor: 'action.hover',
                     '& .MuiLinearProgress-bar': {
                       borderRadius: 5,
-                      backgroundColor: severityColor(scoreSeverity(row.percent)),
+                      backgroundColor: severityColor(
+                        scoreSeverity(row.percent)
+                      ),
                     },
                   }}
                 />
@@ -138,7 +149,11 @@ const LeaderboardCard = ({ title, subheader, rows, isFetching }) => (
 const ReportError = ({ error }) => (
   <Card>
     <CardContent>
-      <Typography variant="body2" color="error" sx={{ py: 2, textAlign: 'center' }}>
+      <Typography
+        variant="body2"
+        color="error"
+        sx={{ py: 2, textAlign: 'center' }}
+      >
         {getCippError(error)}
       </Typography>
     </CardContent>
@@ -151,7 +166,9 @@ export const AllTenantsSecureScoreSummary = () => {
   if (reportApi.isError) return <ReportError error={reportApi.error} />
 
   const deltaLabel =
-    summary.delta === null ? '—' : `${summary.delta > 0 ? '+' : ''}${summary.delta} pts`
+    summary.delta === null
+      ? '—'
+      : `${summary.delta > 0 ? '+' : ''}${summary.delta} pts`
 
   const infoBarItems = [
     {
@@ -161,11 +178,17 @@ export const AllTenantsSecureScoreSummary = () => {
       toolTip: `Average of each tenant's latest cached score, across ${summary.scored} tenants`,
     },
     {
-      name: summary.trend.length > 1 ? `Change over ${summary.trend.length} days` : 'Change',
+      name:
+        summary.trend.length > 1
+          ? `Change over ${summary.trend.length} days`
+          : 'Change',
       data: deltaLabel,
-      icon: summary.delta < 0 ? <ArrowTrendingDownIcon /> : <ArrowTrendingUpIcon />,
-      color: summary.delta < 0 ? 'error' : summary.delta > 0 ? 'success' : 'primary',
-      toolTip: 'Movement of the portfolio average across the retained history window',
+      icon:
+        summary.delta < 0 ? <ArrowTrendingDownIcon /> : <ArrowTrendingUpIcon />,
+      color:
+        summary.delta < 0 ? 'error' : summary.delta > 0 ? 'success' : 'primary',
+      toolTip:
+        'Movement of the portfolio average across the retained history window',
     },
     {
       name: 'Highest',
@@ -204,7 +227,9 @@ export const AllTenantsSecureScoreSummary = () => {
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 6 }}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Card
+            sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+          >
             <CardHeader
               title="Portfolio trend"
               subheader="Daily average of every tenant's cached score"
@@ -217,7 +242,13 @@ export const AllTenantsSecureScoreSummary = () => {
                 points={summary.trend}
                 isFetching={reportApi.isLoading}
                 height={280}
-                severity={summary.delta < 0 ? 'critical' : summary.delta > 0 ? 'ok' : 'info'}
+                severity={
+                  summary.delta < 0
+                    ? 'critical'
+                    : summary.delta > 0
+                      ? 'ok'
+                      : 'info'
+                }
               />
             </CardContent>
           </Card>
@@ -252,8 +283,13 @@ export const AllTenantsSecureScoreTable = () => {
     return (
       <Card>
         <CardContent>
-          <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
-            No cached secure scores yet. Scores appear after the nightly cache job has run.
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ py: 2, textAlign: 'center' }}
+          >
+            No cached secure scores yet. Scores appear after the nightly cache
+            job has run.
           </Typography>
         </CardContent>
       </Card>

@@ -1,6 +1,13 @@
-import { Avatar, Card, CardContent, Stack, SvgIcon, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
-import { CippWizardStepButtons } from "./CippWizardStepButtons";
+import {
+  Avatar,
+  Card,
+  CardContent,
+  Stack,
+  SvgIcon,
+  Typography,
+} from '@mui/material'
+import { useEffect, useState } from 'react'
+import { CippWizardStepButtons } from './CippWizardStepButtons'
 
 export const CippWizardOptionsList = (props) => {
   const {
@@ -11,31 +18,31 @@ export const CippWizardOptionsList = (props) => {
     formControl,
     currentStep,
     onPreviousStep,
-    name = "selectedOption",
-  } = props;
-  const [selectedOption, setSelectedOption] = useState(null);
+    name = 'selectedOption',
+  } = props
+  const [selectedOption, setSelectedOption] = useState(null)
   // Register the name field in react-hook-form
   formControl.register(name, {
     required: true,
-  });
+  })
 
   //only perform a reset if the form has more options than 'selectedOption'
   useEffect(() => {
     //find if we have more properties than just 'selectedOption'
-    const formValues = formControl.getValues();
-    const formEntries = Object.entries(formValues);
-    const formKeys = formEntries.map(([key]) => key);
-    const hasMoreThanSelectedOption = formKeys.length > 1;
+    const formValues = formControl.getValues()
+    const formEntries = Object.entries(formValues)
+    const formKeys = formEntries.map(([key]) => key)
+    const hasMoreThanSelectedOption = formKeys.length > 1
     if (hasMoreThanSelectedOption) {
-      formControl.reset({ selectedOption: "" });
+      formControl.reset({ selectedOption: '' })
     }
-  }, [formControl]);
+  }, [formControl])
 
   const handleOptionClick = (value) => {
-    setSelectedOption(value); // Visually select the option
-    formControl.setValue(name, value); // Update form value in React Hook Form
-    formControl.trigger();
-  };
+    setSelectedOption(value) // Visually select the option
+    formControl.setValue(name, value) // Update form value in React Hook Form
+    formControl.trigger()
+  }
 
   return (
     <Stack spacing={3}>
@@ -47,7 +54,7 @@ export const CippWizardOptionsList = (props) => {
       </Stack>
       <Stack spacing={2}>
         {options.map((option) => {
-          const isSelected = selectedOption === option.value; // Check if the option is selected
+          const isSelected = selectedOption === option.value // Check if the option is selected
 
           return (
             <Card
@@ -55,11 +62,12 @@ export const CippWizardOptionsList = (props) => {
               onClick={() => handleOptionClick(option.value)} // Handle option click
               variant="outlined"
               sx={{
-                cursor: "pointer",
+                cursor: 'pointer',
                 ...(isSelected && {
-                  boxShadow: (theme) => `0px 0px 0px 2px ${theme.palette.primary.main}`,
+                  boxShadow: (theme) =>
+                    `0px 0px 0px 2px ${theme.palette.primary.main}`,
                 }),
-                "&:hover": {
+                '&:hover': {
                   ...(isSelected ? {} : { boxShadow: 8 }), // Hover effect
                 },
               }}
@@ -69,9 +77,9 @@ export const CippWizardOptionsList = (props) => {
                   <Avatar
                     variant="rounded"
                     sx={{
-                      backgroundColor: "background.default",
-                      borderColor: "divider",
-                      borderStyle: "solid",
+                      backgroundColor: 'background.default',
+                      borderColor: 'divider',
+                      borderStyle: 'solid',
                       borderWidth: 1,
                     }}
                   >
@@ -79,12 +87,14 @@ export const CippWizardOptionsList = (props) => {
                   </Avatar>
                   <Stack spacing={1}>
                     <Typography variant="h6">{option.label}</Typography>
-                    <Typography color="text.secondary">{option.description}</Typography>
+                    <Typography color="text.secondary">
+                      {option.description}
+                    </Typography>
                   </Stack>
                 </Stack>
               </CardContent>
             </Card>
-          );
+          )
         })}
       </Stack>
       <CippWizardStepButtons
@@ -94,5 +104,5 @@ export const CippWizardOptionsList = (props) => {
         formControl={formControl}
       />
     </Stack>
-  );
-};
+  )
+}

@@ -1,88 +1,88 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
-import { EyeIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Edit, Block } from "@mui/icons-material";
-import { useCippReportDB } from "../../../../components/CippComponents/CippReportDBControls";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
+import { EyeIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { Edit, Block } from '@mui/icons-material'
+import { useCippReportDB } from '../../../../components/CippComponents/CippReportDBControls'
 
 const Page = () => {
-  const pageTitle = "Inactive users (6 months)";
+  const pageTitle = 'Inactive users (6 months)'
 
   const reportDB = useCippReportDB({
-    apiUrl: "/api/ListInactiveAccounts",
-    queryKey: "inactive-users",
-    cacheName: "Users",
-    syncTitle: "Sync User Cache",
+    apiUrl: '/api/ListInactiveAccounts',
+    queryKey: 'inactive-users',
+    cacheName: 'Users',
+    syncTitle: 'Sync User Cache',
     allowToggle: false,
     defaultCached: true,
-    cacheColumns: ["lastRefreshedDateTime"],
-  });
+    cacheColumns: ['lastRefreshedDateTime'],
+  })
 
   const actions = [
     {
-      label: "View User",
-      link: "/identity/administration/users/user?userId=[azureAdUserId]&tenantFilter=[tenantId]",
+      label: 'View User',
+      link: '/identity/administration/users/user?userId=[azureAdUserId]&tenantFilter=[tenantId]',
       pinned: true,
       multiPost: false,
       icon: <EyeIcon />,
-      color: "success",
+      color: 'success',
     },
     {
-      label: "Edit User",
-      link: "/identity/administration/users/user/edit?userId=[azureAdUserId]&tenantFilter=[tenantId]",
+      label: 'Edit User',
+      link: '/identity/administration/users/user/edit?userId=[azureAdUserId]&tenantFilter=[tenantId]',
       pinned: true,
       icon: <Edit />,
-      color: "success",
-      target: "_self",
+      color: 'success',
+      target: '_self',
     },
     {
-      label: "Block Sign In",
-      type: "POST",
+      label: 'Block Sign In',
+      type: 'POST',
       icon: <Block />,
-      url: "/api/ExecDisableUser",
-      data: { ID: "azureAdUserId" },
-      confirmText: "Are you sure you want to block the sign-in for this user?",
+      url: '/api/ExecDisableUser',
+      data: { ID: 'azureAdUserId' },
+      confirmText: 'Are you sure you want to block the sign-in for this user?',
       multiPost: false,
     },
     {
-      label: "Delete User",
-      type: "POST",
+      label: 'Delete User',
+      type: 'POST',
       icon: <TrashIcon />,
-      url: "/api/RemoveUser",
-      data: { ID: "azureAdUserId" },
-      confirmText: "Are you sure you want to delete this user?",
+      url: '/api/RemoveUser',
+      data: { ID: 'azureAdUserId' },
+      confirmText: 'Are you sure you want to delete this user?',
       multiPost: false,
     },
-  ];
+  ]
 
   const offCanvas = {
     extendedInfoFields: [
-      "tenantDisplayName",
-      "displayName",
-      "userPrincipalName",
-      "userType",
-      "createdDateTime",
-      "lastSignInDateTime",
-      "lastNonInteractiveSignInDateTime",
-      "lastSuccessfulSignInDateTime",
-      "numberOfAssignedLicenses",
-      "daysSinceLastSignIn",
-      "lastRefreshedDateTime",
+      'tenantDisplayName',
+      'displayName',
+      'userPrincipalName',
+      'userType',
+      'createdDateTime',
+      'lastSignInDateTime',
+      'lastNonInteractiveSignInDateTime',
+      'lastSuccessfulSignInDateTime',
+      'numberOfAssignedLicenses',
+      'daysSinceLastSignIn',
+      'lastRefreshedDateTime',
     ],
     actions: actions,
-  };
+  }
 
   const simpleColumns = [
-    ...reportDB.cacheColumns.filter((c) => c === "Tenant"),
-    "tenantDisplayName",
-    "userPrincipalName",
-    "displayName",
-    "lastSignInDateTime",
-    "lastNonInteractiveSignInDateTime",
-    "lastSuccessfulSignInDateTime",
-    "numberOfAssignedLicenses",
-    "daysSinceLastSignIn",
-    ...reportDB.cacheColumns.filter((c) => c !== "Tenant"),
-  ];
+    ...reportDB.cacheColumns.filter((c) => c === 'Tenant'),
+    'tenantDisplayName',
+    'userPrincipalName',
+    'displayName',
+    'lastSignInDateTime',
+    'lastNonInteractiveSignInDateTime',
+    'lastSuccessfulSignInDateTime',
+    'numberOfAssignedLicenses',
+    'daysSinceLastSignIn',
+    ...reportDB.cacheColumns.filter((c) => c !== 'Tenant'),
+  ]
 
   return (
     <>
@@ -101,9 +101,9 @@ const Page = () => {
       />
       {reportDB.syncDialog}
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

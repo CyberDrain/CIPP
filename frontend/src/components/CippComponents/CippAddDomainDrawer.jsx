@@ -1,67 +1,67 @@
-import { useState, useEffect } from "react";
-import { Button, Box, Alert } from "@mui/material";
-import { useForm, useFormState } from "react-hook-form";
-import { AddCircleOutline } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import { CippApiResults } from "./CippApiResults";
-import { useSettings } from "../../hooks/use-settings";
-import { ApiPostCall } from "../../api/ApiCall";
-import { Stack } from "@mui/system";
-import { CippFormComponent } from "./CippFormComponent";
+import { useState, useEffect } from 'react'
+import { Button, Box, Alert } from '@mui/material'
+import { useForm, useFormState } from 'react-hook-form'
+import { AddCircleOutline } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import { CippApiResults } from './CippApiResults'
+import { useSettings } from '../../hooks/use-settings'
+import { ApiPostCall } from '../../api/ApiCall'
+import { Stack } from '@mui/system'
+import { CippFormComponent } from './CippFormComponent'
 
 export const CippAddDomainDrawer = ({
-  buttonText = "Add Domain",
+  buttonText = 'Add Domain',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const userSettingsDefaults = useSettings();
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const userSettingsDefaults = useSettings()
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       tenantFilter: userSettingsDefaults.currentTenant,
     },
-  });
+  })
 
   const createDomain = ApiPostCall({
     datafromUrl: true,
     relatedQueryKeys: [`Domains - ${userSettingsDefaults.currentTenant}`],
-  });
+  })
 
-  const { isValid, isDirty } = useFormState({ control: formControl.control });
+  const { isValid, isDirty } = useFormState({ control: formControl.control })
 
   useEffect(() => {
     if (createDomain.isSuccess) {
       formControl.reset({
         tenantFilter: userSettingsDefaults.currentTenant,
-      });
+      })
     }
-  }, [createDomain.isSuccess]);
+  }, [createDomain.isSuccess])
 
   const handleSubmit = (values) => {
     createDomain.mutate({
-      url: "/api/AddDomain",
+      url: '/api/AddDomain',
       data: values,
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
       tenantFilter: userSettingsDefaults.currentTenant,
-    });
-  };
+    })
+  }
 
   const formFields = [
     {
-      type: "textField",
-      name: "domain",
-      label: "Domain Name",
-      placeholder: "example.com",
-      required: "Domain name is required",
+      type: 'textField',
+      name: 'domain',
+      label: 'Domain Name',
+      placeholder: 'example.com',
+      required: 'Domain name is required',
     },
-  ];
+  ]
 
   return (
     <>
@@ -80,20 +80,28 @@ export const CippAddDomainDrawer = ({
         footer={
           <Stack spacing={2}>
             <CippApiResults apiObject={createDomain} />
-            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                justifyContent: 'flex-start',
+              }}
+            >
               <Button
                 variant="contained"
                 color="primary"
                 onClick={formControl.handleSubmit(handleSubmit)}
                 disabled={
-                  createDomain.isPending || !isValid || (!isDirty && !createDomain.isSuccess)
+                  createDomain.isPending ||
+                  !isValid ||
+                  (!isDirty && !createDomain.isSuccess)
                 }
               >
                 {createDomain.isPending
-                  ? "Adding Domain..."
+                  ? 'Adding Domain...'
                   : createDomain.isSuccess
-                  ? "Add Another Domain"
-                  : "Add Domain"}
+                    ? 'Add Another Domain'
+                    : 'Add Domain'}
               </Button>
               <Button variant="outlined" onClick={handleCloseDrawer}>
                 Close
@@ -104,9 +112,10 @@ export const CippAddDomainDrawer = ({
       >
         <Stack spacing={2}>
           <Alert severity="info">
-            Add a new domain to the current tenant. Ensure that the appropriate DNS records are
-            configured by checking the verification and service records after adding the domain. You
-            can find these in the "More info" section once the domain is added.
+            Add a new domain to the current tenant. Ensure that the appropriate
+            DNS records are configured by checking the verification and service
+            records after adding the domain. You can find these in the "More
+            info" section once the domain is added.
           </Alert>
           <CippFormComponent
             formControl={formControl}
@@ -117,5 +126,5 @@ export const CippAddDomainDrawer = ({
         </Stack>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

@@ -26,12 +26,18 @@ const Page = () => {
   const allZeroStorage = useReportAnonymized({
     url: reportDB.resolvedApiUrl,
     queryKey: reportDB.resolvedQueryKey,
-    check: (rows) => rows.every((mailbox) => !Number(mailbox?.storageUsedInBytes)),
+    check: (rows) =>
+      rows.every((mailbox) => !Number(mailbox?.storageUsedInBytes)),
   })
 
   // Define off-canvas details
   const offCanvas = {
-    extendedInfoFields: ['displayName', 'UPN', 'AdditionalEmailAddresses', 'recipientTypeDetails'],
+    extendedInfoFields: [
+      'displayName',
+      'UPN',
+      'AdditionalEmailAddresses',
+      'recipientTypeDetails',
+    ],
     actions: CippExchangeActions(),
   }
 
@@ -93,9 +99,11 @@ const Page = () => {
         simpleColumns={simpleColumns}
         filters={filterList}
         tableFilter={
-          <CippAnonymizedReportAlert show={reportDB.useReportDB && allZeroStorage}>
-            All mailboxes report 0 storage used, which usually means Microsoft 365 report
-            anonymization is enabled for this tenant.
+          <CippAnonymizedReportAlert
+            show={reportDB.useReportDB && allZeroStorage}
+          >
+            All mailboxes report 0 storage used, which usually means Microsoft
+            365 report anonymization is enabled for this tenant.
           </CippAnonymizedReportAlert>
         }
         cardButton={
@@ -110,6 +118,8 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+)
 
 export default Page

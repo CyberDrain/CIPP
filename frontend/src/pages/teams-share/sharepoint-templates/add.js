@@ -1,15 +1,23 @@
-import { useEffect } from "react";
-import { useRouter } from "next/router";
-import { useForm, useWatch } from "react-hook-form";
-import { Box, Button, Container, IconButton, Stack, Tooltip, Typography } from "@mui/material";
-import { Grid } from "@mui/system";
-import { ArrowBack, InfoOutlined, Save } from "@mui/icons-material";
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import { ApiGetCall, ApiPostCall } from "../../../api/ApiCall";
-import { CippHead } from "../../../components/CippComponents/CippHead";
-import CippFormComponent from "../../../components/CippComponents/CippFormComponent";
-import { CippApiResults } from "../../../components/CippComponents/CippApiResults";
-import CippButtonCard from "../../../components/CippCards/CippButtonCard";
+import { useEffect } from 'react'
+import { useRouter } from 'next/router'
+import { useForm, useWatch } from 'react-hook-form'
+import {
+  Box,
+  Button,
+  Container,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import { ArrowBack, InfoOutlined, Save } from '@mui/icons-material'
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import { ApiGetCall, ApiPostCall } from '../../../api/ApiCall'
+import { CippHead } from '../../../components/CippComponents/CippHead'
+import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
+import { CippApiResults } from '../../../components/CippComponents/CippApiResults'
+import CippButtonCard from '../../../components/CippCards/CippButtonCard'
 import {
   CippSharePointTemplateBuilder,
   CippSharePointTemplateBuilderSkeleton,
@@ -19,67 +27,83 @@ import {
   getSiteLanguageOption,
   siteTemplateBlocksSave,
   SHAREPOINT_TEMPLATE_ENGINE_VERSION,
-} from "../../../components/CippComponents/CippSharePointTemplateBuilder";
+} from '../../../components/CippComponents/CippSharePointTemplateBuilder'
 
 const emptyTemplate = {
-  templateName: "",
+  templateName: '',
   templateEngineVersion: SHAREPOINT_TEMPLATE_ENGINE_VERSION,
-  siteType: "sharePoint",
+  siteType: 'sharePoint',
   overrideSiteType: false,
   createMissingGroups: false,
   skipIfExists: false,
   siteTemplates: [],
-};
+}
 
 const Page = () => {
-  const router = useRouter();
-  const { template, copy } = router.query;
+  const router = useRouter()
+  const { template, copy } = router.query
   // Next may give query values as string | string[]. Treat only explicit copy=true as copy mode
   // so title and save (TemplateId) cannot disagree.
-  const templateId = Array.isArray(template) ? template[0] : template;
-  const isCopy = copy === true || copy === "true";
-  const isEdit = !!templateId && !isCopy;
+  const templateId = Array.isArray(template) ? template[0] : template
+  const isCopy = copy === true || copy === 'true'
+  const isEdit = !!templateId && !isCopy
   const pageTitle = isCopy
-    ? "Copy SharePoint Template"
+    ? 'Copy SharePoint Template'
     : isEdit
-    ? "Edit SharePoint Template"
-    : "Create SharePoint Template";
+      ? 'Edit SharePoint Template'
+      : 'Create SharePoint Template'
 
-  const formControl = useForm({ mode: "onChange", defaultValues: emptyTemplate });
+  const formControl = useForm({
+    mode: 'onChange',
+    defaultValues: emptyTemplate,
+  })
 
   const templateQuery = ApiGetCall({
-    url: templateId ? `/api/ExecSharePointTemplate?Action=Get&TemplateId=${templateId}` : null,
+    url: templateId
+      ? `/api/ExecSharePointTemplate?Action=Get&TemplateId=${templateId}`
+      : null,
     queryKey: templateId ? `ExecSharePointTemplate-${templateId}` : null,
     waiting: !!templateId,
     // Edit/copy must never paint a stale cached template — always refetch on open.
     staleTime: 0,
-    refetchOnMount: "always",
-  });
-  const templateData = templateQuery.data;
+    refetchOnMount: 'always',
+  })
+  const templateData = templateQuery.data
   // Treat in-flight refetch like loading so a previous cache cannot flash into the form.
   const isLoadingTemplate =
-    !!templateId && (templateQuery.isLoading || templateQuery.isFetching);
+    !!templateId && (templateQuery.isLoading || templateQuery.isFetching)
 
   // Site-template fields that block Save (name, root perms, library names). Cards outline offenders in red.
-  const siteTemplatesValue = useWatch({ control: formControl.control, name: "siteTemplates" });
-  const siteTemplatesBlockSave = (siteTemplatesValue || []).some(siteTemplateBlocksSave);
-  const siteTemplateSaveIssues = getSiteTemplateSaveIssues(siteTemplatesValue || []);
+  const siteTemplatesValue = useWatch({
+    control: formControl.control,
+    name: 'siteTemplates',
+  })
+  const siteTemplatesBlockSave = (siteTemplatesValue || []).some(
+    siteTemplateBlocksSave
+  )
+  const siteTemplateSaveIssues = getSiteTemplateSaveIssues(
+    siteTemplatesValue || []
+  )
 
   const saveTemplate = ApiPostCall({
     // Wildcard: Get uses ExecSharePointTemplate-{id}, not the bare ExecSharePointTemplate key.
-    relatedQueryKeys: ["ListSharePointTemplates", "ExecSharePointTemplate-*"],
-  });
+    relatedQueryKeys: ['ListSharePointTemplates', 'ExecSharePointTemplate-*'],
+  })
 
   // Hydrate only after a fresh fetch finishes. Skip while isFetching so we never reset() from
   // a stale cache entry that React Query still exposes during refetch.
   useEffect(() => {
-    if (!templateId || templateQuery.isFetching) return;
-    const result = Array.isArray(templateData) ? templateData[0] : templateData?.Results;
-    if (!result) return;
+    if (!templateId || templateQuery.isFetching) return
+    const result = Array.isArray(templateData)
+      ? templateData[0]
+      : templateData?.Results
+    if (!result) return
     const normalizeSiteType = (value) =>
-      value === "teams" || value?.value === "teams" ? "teams" : "sharePoint";
+      value === 'teams' || value?.value === 'teams' ? 'teams' : 'sharePoint'
     formControl.reset({
-      templateName: isCopy ? `${result.templateName || ""} (Copy)` : result.templateName || "",
+      templateName: isCopy
+        ? `${result.templateName || ''} (Copy)`
+        : result.templateName || '',
       templateEngineVersion: SHAREPOINT_TEMPLATE_ENGINE_VERSION,
       siteType: normalizeSiteType(result.siteType),
       overrideSiteType: !!result.overrideSiteType,
@@ -90,29 +114,35 @@ const Page = () => {
         siteType: normalizeSiteType(site.siteType),
         language: getSiteLanguageOption(site.language),
       })),
-    });
-    formControl.trigger();
+    })
+    formControl.trigger()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId, templateData, isCopy, templateQuery.isFetching, templateQuery.dataUpdatedAt]);
+  }, [
+    templateId,
+    templateData,
+    isCopy,
+    templateQuery.isFetching,
+    templateQuery.dataUpdatedAt,
+  ])
 
   const handleSubmit = (payload) => {
-    payload.templateEngineVersion = SHAREPOINT_TEMPLATE_ENGINE_VERSION;
+    payload.templateEngineVersion = SHAREPOINT_TEMPLATE_ENGINE_VERSION
     if (isEdit) {
-      payload.TemplateId = templateId;
+      payload.TemplateId = templateId
     }
     saveTemplate.mutate(
       {
-        url: "/api/ExecSharePointTemplate?Action=Save",
+        url: '/api/ExecSharePointTemplate?Action=Save',
         data: payload,
-        queryKey: "ExecSharePointTemplate",
+        queryKey: 'ExecSharePointTemplate',
       },
       {
         onSuccess: () => {
-          router.push("/teams-share/sharepoint-templates");
+          router.push('/teams-share/sharepoint-templates')
         },
       }
-    );
-  };
+    )
+  }
 
   return (
     <>
@@ -120,11 +150,11 @@ const Page = () => {
       <Box sx={{ flexGrow: 1, py: 3 }}>
         <Container maxWidth={false}>
           <Stack spacing={2}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Button
                 color="inherit"
                 startIcon={<ArrowBack />}
-                onClick={() => router.push("/teams-share/sharepoint-templates")}
+                onClick={() => router.push('/teams-share/sharepoint-templates')}
               >
                 Back
               </Button>
@@ -151,7 +181,7 @@ const Page = () => {
                           !formControl.formState.isValid
                         }
                       >
-                        {saveTemplate.isPending ? "Saving..." : "Save Template"}
+                        {saveTemplate.isPending ? 'Saving...' : 'Save Template'}
                       </Button>
                       {siteTemplatesBlockSave && (
                         <Tooltip
@@ -166,7 +196,7 @@ const Page = () => {
                           <IconButton
                             size="small"
                             aria-label="What needs fixing before save"
-                            sx={{ color: "error.main" }}
+                            sx={{ color: 'error.main' }}
                           >
                             <InfoOutlined fontSize="small" />
                           </IconButton>
@@ -181,7 +211,7 @@ const Page = () => {
                       label="Template Name"
                       name="templateName"
                       formControl={formControl}
-                      validators={{ required: "A template name is required" }}
+                      validators={{ required: 'A template name is required' }}
                     />
                     <CippFormComponent
                       type="switch"
@@ -220,9 +250,9 @@ const Page = () => {
         </Container>
       </Box>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

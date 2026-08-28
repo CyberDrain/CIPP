@@ -5,8 +5,16 @@ import CippDiagnosticsFilter from '../../../src/components/CippTable/CippDiagnos
 const mswHandlers = [
   http.get('/api/ListDiagnosticsPresets', () => {
     return HttpResponse.json([
-      { GUID: 'a1b2c3d4-1234-5678-9012-abcdef123456', name: 'Exchange Health Check', query: 'traces | where message contains "Exchange"' },
-      { GUID: 'b2c3d4e5-2345-6789-0123-bcdef1234567', name: 'License Report', query: 'traces | where message contains "License"' },
+      {
+        GUID: 'a1b2c3d4-1234-5678-9012-abcdef123456',
+        name: 'Exchange Health Check',
+        query: 'traces | where message contains "Exchange"',
+      },
+      {
+        GUID: 'b2c3d4e5-2345-6789-0123-bcdef1234567',
+        name: 'License Report',
+        query: 'traces | where message contains "License"',
+      },
     ])
   }),
   http.post('/api/ExecDiagnosticsPresets', () => {
@@ -37,9 +45,14 @@ export const Default = {
       await expect(canvas.getByText('Requirements')).toBeVisible()
     })
 
-    await step('Execute Query stays disabled while the query is empty', async () => {
-      await expect(canvas.getByRole('button', { name: /execute query/i })).toBeDisabled()
-    })
+    await step(
+      'Execute Query stays disabled while the query is empty',
+      async () => {
+        await expect(
+          canvas.getByRole('button', { name: /execute query/i })
+        ).toBeDisabled()
+      }
+    )
   },
 }
 
@@ -55,12 +68,16 @@ export const ExecuteQuery = {
       await userEvent.click(queryInput)
       await userEvent.type(queryInput, 'traces | where timestamp > ago(1h)')
       await waitFor(() => {
-        expect(canvas.getByRole('button', { name: /execute query/i })).toBeEnabled()
+        expect(
+          canvas.getByRole('button', { name: /execute query/i })
+        ).toBeEnabled()
       })
     })
 
     await step('submit passes the query to onSubmitFilter', async () => {
-      await userEvent.click(canvas.getByRole('button', { name: /execute query/i }))
+      await userEvent.click(
+        canvas.getByRole('button', { name: /execute query/i })
+      )
       await waitFor(() => {
         expect(args.onSubmitFilter).toHaveBeenCalledWith(
           expect.objectContaining({

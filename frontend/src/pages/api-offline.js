@@ -44,7 +44,8 @@ const ApiOfflinePage = () => {
         }
       } else if (error.request) {
         // Request was made but no response received
-        errorMessage = 'No response received from API. Check if your Function App is running.'
+        errorMessage =
+          'No response received from API. Check if your Function App is running.'
       } else {
         // Error in setting up the request
         errorMessage = `Error: ${error.message}`
@@ -76,12 +77,14 @@ const ApiOfflinePage = () => {
               The CIPP API appears to be offline or out of date.
             </Typography>
             <Typography variant="body1" sx={{ mt: 2 }}>
-              If you are self-hosting CIPP, please ensure your Function App is running and up to
-              date.
+              If you are self-hosting CIPP, please ensure your Function App is
+              running and up to date.
             </Typography>
           </>
         }
-        actionText={testingConnection ? 'Testing Connection...' : 'Test API Connection'}
+        actionText={
+          testingConnection ? 'Testing Connection...' : 'Test API Connection'
+        }
         onActionClick={handleTestConnection}
         actionDisabled={testingConnection}
       >

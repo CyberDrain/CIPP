@@ -14,7 +14,10 @@ import { useSettings } from '../../../../hooks/use-settings'
 const Page = () => {
   const { currentTenant } = useSettings()
   const formControl = useForm({ mode: 'onChange' })
-  const selectedTests = useWatch({ control: formControl.control, name: 'testIds' })
+  const selectedTests = useWatch({
+    control: formControl.control,
+    name: 'testIds',
+  })
   const [runDialog, setRunDialog] = useState({ open: false })
 
   // Comma-joined test IDs; empty string means "all custom tests". Custom test IDs
@@ -39,7 +42,11 @@ const Page = () => {
   const resultsQueryKey = `TestResultsTenants-${currentTenant}-${testIdParam || 'all'}`
   const resultsApi = ApiGetCall({
     url: '/api/ListTestResultsTenants',
-    data: { testId: testIdParam, tenantFilter: currentTenant, testType: 'Custom' },
+    data: {
+      testId: testIdParam,
+      tenantFilter: currentTenant,
+      testType: 'Custom',
+    },
     queryKey: resultsQueryKey,
     waiting: !!currentTenant,
   })
@@ -54,13 +61,41 @@ const Page = () => {
   const data = resultsApi.data?.Results || []
 
   const filters = [
-    { filterName: 'Passed', value: [{ id: 'Status', value: 'Passed' }], type: 'column' },
-    { filterName: 'Failed', value: [{ id: 'Status', value: 'Failed' }], type: 'column' },
-    { filterName: 'Investigate', value: [{ id: 'Status', value: 'Investigate' }], type: 'column' },
-    { filterName: 'Skipped', value: [{ id: 'Status', value: 'Skipped' }], type: 'column' },
-    { filterName: 'High Risk', value: [{ id: 'Risk', value: 'High' }], type: 'column' },
-    { filterName: 'Medium Risk', value: [{ id: 'Risk', value: 'Medium' }], type: 'column' },
-    { filterName: 'Low Risk', value: [{ id: 'Risk', value: 'Low' }], type: 'column' },
+    {
+      filterName: 'Passed',
+      value: [{ id: 'Status', value: 'Passed' }],
+      type: 'column',
+    },
+    {
+      filterName: 'Failed',
+      value: [{ id: 'Status', value: 'Failed' }],
+      type: 'column',
+    },
+    {
+      filterName: 'Investigate',
+      value: [{ id: 'Status', value: 'Investigate' }],
+      type: 'column',
+    },
+    {
+      filterName: 'Skipped',
+      value: [{ id: 'Status', value: 'Skipped' }],
+      type: 'column',
+    },
+    {
+      filterName: 'High Risk',
+      value: [{ id: 'Risk', value: 'High' }],
+      type: 'column',
+    },
+    {
+      filterName: 'Medium Risk',
+      value: [{ id: 'Risk', value: 'Medium' }],
+      type: 'column',
+    },
+    {
+      filterName: 'Low Risk',
+      value: [{ id: 'Risk', value: 'Low' }],
+      type: 'column',
+    },
   ]
 
   const offCanvas = {
@@ -93,7 +128,10 @@ const Page = () => {
             </SvgIcon>
           }
           onClick={() =>
-            setRunDialog({ open: true, handleClose: () => setRunDialog({ open: false }) })
+            setRunDialog({
+              open: true,
+              handleClose: () => setRunDialog({ open: false }),
+            })
           }
         >
           Run Custom Tests
@@ -107,7 +145,14 @@ const Page = () => {
             : `All Custom Tests — ${scopeLabel}`
         }
         data={data}
-        simpleColumns={['Tenant', 'Name', 'Enabled', 'Risk', 'Status', 'LastRun']}
+        simpleColumns={[
+          'Tenant',
+          'Name',
+          'Enabled',
+          'Risk',
+          'Status',
+          'LastRun',
+        ]}
         isFetching={resultsApi.isFetching}
         offCanvas={offCanvas}
         filters={filters}
@@ -137,4 +182,3 @@ const Page = () => {
 Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
 export default Page
-

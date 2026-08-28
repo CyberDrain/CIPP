@@ -60,7 +60,9 @@ const Page = () => {
         simpleColumns={simpleColumns}
         cardButton={
           <Stack direction="row" spacing={1} alignItems="center">
-            <CippAddTenantAllowBlockListDrawer requiredPermissions={cardButtonPermissions} />
+            <CippAddTenantAllowBlockListDrawer
+              requiredPermissions={cardButtonPermissions}
+            />
           </Stack>
         }
         dataSourceControls={reportDB.controls}
@@ -70,6 +72,8 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+)
 
 export default Page

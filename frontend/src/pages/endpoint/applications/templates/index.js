@@ -73,8 +73,10 @@ const Page = () => {
           rows: 4,
         },
       ],
-      confirmText: 'Are you sure you want to save this template to the selected repository?',
-      condition: () => integrations.isSuccess && integrations?.data?.GitHub?.Enabled,
+      confirmText:
+        'Are you sure you want to save this template to the selected repository?',
+      condition: () =>
+        integrations.isSuccess && integrations?.data?.GitHub?.Enabled,
     },
     {
       label: 'Deploy Template',
@@ -92,7 +94,8 @@ const Page = () => {
           api: {
             url: '/api/ListTenants?AllTenantSelector=true',
             queryKey: 'ListTenants-AppTemplateDeploy',
-            labelField: (tenant) => `${tenant.displayName} (${tenant.defaultDomainName})`,
+            labelField: (tenant) =>
+              `${tenant.displayName} (${tenant.defaultDomainName})`,
             valueField: 'defaultDomainName',
             addedField: {
               customerId: 'customerId',
@@ -110,7 +113,10 @@ const Page = () => {
             { label: 'Do not assign', value: 'On' },
             { label: 'Assign to all users', value: 'allLicensedUsers' },
             { label: 'Assign to all devices', value: 'AllDevices' },
-            { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+            {
+              label: 'Assign to all users and devices',
+              value: 'AllDevicesAndUsers',
+            },
             { label: 'Assign to Custom Group', value: 'customGroup' },
           ],
         },
@@ -135,7 +141,8 @@ const Page = () => {
         customGroup: formData?.customGroup || '',
         excludeGroup: formData?.excludeGroup || '',
       }),
-      confirmText: 'Deploy "[displayName]" ([appCount] apps) to the selected tenants?',
+      confirmText:
+        'Deploy "[displayName]" ([appCount] apps) to the selected tenants?',
     },
     {
       label: 'Delete Template',
@@ -149,7 +156,9 @@ const Page = () => {
   ]
 
   const offCanvas = {
-    children: (row) => <CippJsonView object={row} type="intune" defaultOpen={true} />,
+    children: (row) => (
+      <CippJsonView object={row} type="intune" defaultOpen={true} />
+    ),
     size: 'lg',
   }
 
@@ -161,7 +170,13 @@ const Page = () => {
         apiUrl="/api/ListAppTemplates"
         actions={actions}
         offCanvas={offCanvas}
-        simpleColumns={['displayName', 'description', 'appCount', 'appTypes', 'appNames']}
+        simpleColumns={[
+          'displayName',
+          'description',
+          'appCount',
+          'appTypes',
+          'appNames',
+        ]}
         queryKey="ListAppTemplates"
         cardButton={
           <Box sx={{ display: 'flex', gap: 1 }}>

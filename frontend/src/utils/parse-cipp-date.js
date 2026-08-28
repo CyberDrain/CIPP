@@ -9,7 +9,10 @@
 const allDigits = /^\d+$/
 
 export const parseCippDate = (data) => {
-  if (typeof data === 'number' || (typeof data === 'string' && allDigits.test(data))) {
+  if (
+    typeof data === 'number' ||
+    (typeof data === 'string' && allDigits.test(data))
+  ) {
     return new Date(Number(data) * 1000)
   }
   return new Date(data)

@@ -23,19 +23,21 @@
  */
 const resize = async (width, height) => {
   try {
-    const { page } = await import("@vitest/browser/context");
-    await page.viewport(width, height);
+    const { page } = await import('@vitest/browser/context')
+    await page.viewport(width, height)
     // Measured: window.innerWidth is ALREADY the new value when this resolves — the width is
     // not what lags. What lags is React: matchMedia listeners fire, useMediaQuery setStates,
     // and the breakpoint branch renders a tick later. A frame here covers the common case; it
     // is not a guarantee, which is why callers must still findBy/waitFor (see below).
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    return true;
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+    return true
   } catch {
-    return false;
+    return false
   }
-};
+}
 
-export const shrinkToPhoneViewport = async (width = 390, height = 844) => resize(width, height);
+export const shrinkToPhoneViewport = async (width = 390, height = 844) =>
+  resize(width, height)
 
-export const growToDesktopViewport = async (width = 1280, height = 900) => resize(width, height);
+export const growToDesktopViewport = async (width = 1280, height = 900) =>
+  resize(width, height)

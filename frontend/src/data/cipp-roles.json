@@ -1,19 +1,10 @@
 {
   "readonly": {
-    "include": [
-      "*.Read"
-    ],
-    "exclude": [
-      "CIPP.SuperAdmin.*",
-      "CIPP.Admin.*",
-      "CIPP.AppSettings.*"
-    ]
+    "include": ["*.Read"],
+    "exclude": ["CIPP.SuperAdmin.*", "CIPP.Admin.*", "CIPP.AppSettings.*"]
   },
   "editor": {
-    "include": [
-      "*.Read",
-      "*.ReadWrite"
-    ],
+    "include": ["*.Read", "*.ReadWrite"],
     "exclude": [
       "CIPP.SuperAdmin.*",
       "CIPP.Admin.*",
@@ -23,17 +14,11 @@
     ]
   },
   "admin": {
-    "include": [
-      "*"
-    ],
-    "exclude": [
-      "CIPP.SuperAdmin.*"
-    ]
+    "include": ["*"],
+    "exclude": ["CIPP.SuperAdmin.*"]
   },
   "superadmin": {
-    "include": [
-      "*"
-    ],
+    "include": ["*"],
     "exclude": []
   }
 }

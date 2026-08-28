@@ -68,7 +68,9 @@ const Page = () => {
     waiting: !!currentTenant,
   })
 
-  const reportOptions = (Array.isArray(reportListApi.data) ? reportListApi.data : []).map((r) => ({
+  const reportOptions = (
+    Array.isArray(reportListApi.data) ? reportListApi.data : []
+  ).map((r) => ({
     label: prettifyReportName(r.name),
     value: r.name,
     type: r.type ?? null,
@@ -95,7 +97,14 @@ const Page = () => {
           <Stack spacing={2}>
             {/* Toolbar */}
             <Card sx={{ p: 2 }}>
-              <Stack useFlexGap direction="row" columnGap={2} rowGap={1} alignItems="flex-start" flexWrap="wrap">
+              <Stack
+                useFlexGap
+                direction="row"
+                columnGap={2}
+                rowGap={1}
+                alignItems="flex-start"
+                flexWrap="wrap"
+              >
                 <Box sx={{ minWidth: 260 }}>
                   <CippFormComponent
                     name="source"
@@ -117,7 +126,11 @@ const Page = () => {
                     formControl={formControl}
                     isFetching={reportListApi.isFetching}
                     options={reportOptions}
-                    placeholder={reportListApi.isFetching ? 'Loading reports…' : 'Choose a report'}
+                    placeholder={
+                      reportListApi.isFetching
+                        ? 'Loading reports…'
+                        : 'Choose a report'
+                    }
                     creatable={false}
                     sortOptions={true}
                   />
@@ -146,7 +159,9 @@ const Page = () => {
 
             {/* Results */}
             {!currentTenant && (
-              <Alert severity="warning">Please select a tenant to get started.</Alert>
+              <Alert severity="warning">
+                Please select a tenant to get started.
+              </Alert>
             )}
             {currentTenant && !report && (
               <Alert severity="info">Select a report above to load data.</Alert>
@@ -155,7 +170,9 @@ const Page = () => {
               <CippAnonymizedReportAlert
                 show={
                   !reportDataApi.isFetching &&
-                  isReportAnonymized(Array.isArray(reportDataApi.data) ? reportDataApi.data : [])
+                  isReportAnonymized(
+                    Array.isArray(reportDataApi.data) ? reportDataApi.data : []
+                  )
                 }
               />
             )}
@@ -163,12 +180,17 @@ const Page = () => {
               <Card>
                 {reportDataApi.isError ? (
                   <Alert severity="error" sx={{ m: 2 }}>
-                    {reportDataApi.error?.message ?? 'Failed to load report data.'}
+                    {reportDataApi.error?.message ??
+                      'Failed to load report data.'}
                   </Alert>
                 ) : (
                   <CippDataTable
                     title={`${prettifyReportName(report)}${showPeriod ? ` (${period})` : ''}`}
-                    data={Array.isArray(reportDataApi.data) ? reportDataApi.data : []}
+                    data={
+                      Array.isArray(reportDataApi.data)
+                        ? reportDataApi.data
+                        : []
+                    }
                     isFetching={reportDataApi.isFetching}
                     simple={false}
                     reportTitle={`${source}-${report}`}

@@ -66,8 +66,13 @@ const AndroidQrDialog = ({ row, drawerVisible, setDrawerVisible }) => {
 
     try {
       const parsed = JSON.parse(row.qrCodeContent)
-      const adminExtras = parsed?.['android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE']
-      return adminExtras?.['com.google.android.apps.work.clouddpc.EXTRA_ENROLLMENT_TOKEN'] || ''
+      const adminExtras =
+        parsed?.['android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE']
+      return (
+        adminExtras?.[
+          'com.google.android.apps.work.clouddpc.EXTRA_ENROLLMENT_TOKEN'
+        ] || ''
+      )
     } catch {
       return ''
     }
@@ -112,7 +117,12 @@ const AndroidQrDialog = ({ row, drawerVisible, setDrawerVisible }) => {
             />
           </Box>
         )}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mb: 1 }}
+        >
           <Typography variant="subtitle2">Token value</Typography>
           <Button
             size="small"
@@ -182,10 +192,12 @@ export const AppleADEEnrollmentProfiles = () => {
     },
   }
   const syncErrorTokens = tokens.filter(
-    (token) => token.lastSyncErrorCode != null && Number(token.lastSyncErrorCode) !== 0
+    (token) =>
+      token.lastSyncErrorCode != null && Number(token.lastSyncErrorCode) !== 0
   )
   const expiringTokens = tokens.filter(
-    (token) => token.daysUntilExpiration !== null && token.daysUntilExpiration <= 30
+    (token) =>
+      token.daysUntilExpiration !== null && token.daysUntilExpiration <= 30
   )
   const totalSyncedDevices = tokens.reduce(
     (sum, token) => sum + Number(token.syncedDeviceCount || 0),
@@ -239,7 +251,9 @@ export const AppleADEEnrollmentProfiles = () => {
     {
       icon: <Sync />,
       name: 'Last Successful Sync',
-      data: lastSuccessfulSync ? new Date(lastSuccessfulSync).toLocaleString() : 'N/A',
+      data: lastSuccessfulSync
+        ? new Date(lastSuccessfulSync).toLocaleString()
+        : 'N/A',
       toolTip: `${totalSyncedDevices} synced devices across all tokens`,
     },
   ]
@@ -257,7 +271,8 @@ export const AppleADEEnrollmentProfiles = () => {
         profileType: 'profileType',
         displayName: 'displayName',
       },
-      confirmText: 'Are you sure you want to delete enrollment profile [displayName]?',
+      confirmText:
+        'Are you sure you want to delete enrollment profile [displayName]?',
       color: 'danger',
     },
   ]
@@ -265,7 +280,11 @@ export const AppleADEEnrollmentProfiles = () => {
   const appleFilters = useMemo(
     () => [
       { filterName: 'All', value: [], type: 'column' },
-      { filterName: 'macOS', value: [{ id: 'platform', value: 'macOS' }], type: 'column' },
+      {
+        filterName: 'macOS',
+        value: [{ id: 'platform', value: 'macOS' }],
+        type: 'column',
+      },
       {
         filterName: 'iOS/iPadOS',
         value: [{ id: 'platform', value: 'iOS/iPadOS' }],
@@ -287,7 +306,9 @@ export const AppleADEEnrollmentProfiles = () => {
               severity: 'warning',
             }
             const tokenName = token.tokenName || token.id || 'Unknown token'
-            const appleIdentifier = token.appleIdentifier ? ` (${token.appleIdentifier})` : ''
+            const appleIdentifier = token.appleIdentifier
+              ? ` (${token.appleIdentifier})`
+              : ''
             const lastSuccessfulSyncText = token.lastSuccessfulSyncDateTime
               ? ` Last successful sync: ${new Date(
                   token.lastSuccessfulSyncDateTime
@@ -305,7 +326,10 @@ export const AppleADEEnrollmentProfiles = () => {
           })}
 
         <Card>
-          <CippInfoBar data={infoBarData} isFetching={appleProfiles.isFetching} />
+          <CippInfoBar
+            data={infoBarData}
+            isFetching={appleProfiles.isFetching}
+          />
         </Card>
 
         <Card>
@@ -328,7 +352,9 @@ export const AppleADEEnrollmentProfiles = () => {
               'requiresUserAuthentication',
             ]}
             offCanvas={{
-              children: (row) => <CippJsonView object={row} type="intune" defaultOpen />,
+              children: (row) => (
+                <CippJsonView object={row} type="intune" defaultOpen />
+              ),
               size: 'xl',
             }}
             cardButton={
@@ -363,7 +389,10 @@ export const AndroidEnterpriseEnrollmentProfiles = () => {
       icon: <QrCode2 />,
       hideBulk: true,
       noConfirm: true,
-      condition: (row) => Boolean(row?.tokenValue || row?.qrCodeImage?.value || row?.qrCodeContent),
+      condition: (row) =>
+        Boolean(
+          row?.tokenValue || row?.qrCodeImage?.value || row?.qrCodeContent
+        ),
       customComponent: (row, { drawerVisible, setDrawerVisible }) => (
         <AndroidQrDialog
           row={row}
@@ -382,7 +411,8 @@ export const AndroidEnterpriseEnrollmentProfiles = () => {
         profileType: '!android',
         displayName: 'displayName',
       },
-      confirmText: 'Are you sure you want to delete Android enrollment profile [displayName]?',
+      confirmText:
+        'Are you sure you want to delete Android enrollment profile [displayName]?',
       color: 'danger',
     },
   ]
@@ -411,7 +441,9 @@ export const AndroidEnterpriseEnrollmentProfiles = () => {
             'lastModifiedDateTime',
           ]}
           offCanvas={{
-            children: (row) => <CippJsonView object={row} type="intune" defaultOpen />,
+            children: (row) => (
+              <CippJsonView object={row} type="intune" defaultOpen />
+            ),
             size: 'xl',
           }}
         />
@@ -493,7 +525,9 @@ export const WindowsAutopilotEnrollmentProfiles = () => {
         ProfileId: row.id,
         ProfileName: row.displayName,
         AssignTo: 'customGroup',
-        GroupIds: (formData?.GroupIds || []).map((g) => g.value).filter(Boolean),
+        GroupIds: (formData?.GroupIds || [])
+          .map((g) => g.value)
+          .filter(Boolean),
       }),
     },
     {
@@ -522,7 +556,10 @@ export const WindowsAutopilotEnrollmentProfiles = () => {
           validators: {
             validate: (value, formValues) => {
               if (formValues?.removeAll) return true
-              return (Array.isArray(value) && value.length > 0) || 'Please select at least one assignment'
+              return (
+                (Array.isArray(value) && value.length > 0) ||
+                'Please select at least one assignment'
+              )
             },
           },
           options: (row) =>
@@ -543,7 +580,11 @@ export const WindowsAutopilotEnrollmentProfiles = () => {
                 return null
               })
               .filter(Boolean),
-          condition: { field: 'removeAll', compareType: 'is', compareValue: false },
+          condition: {
+            field: 'removeAll',
+            compareType: 'is',
+            compareValue: false,
+          },
         },
       ],
       customDataformatter: (row, action, formData) => ({
@@ -561,7 +602,11 @@ export const WindowsAutopilotEnrollmentProfiles = () => {
       icon: <Delete />,
       type: 'POST',
       url: '/api/RemoveAutopilotConfig',
-      data: { ID: 'id', displayName: 'displayName', assignments: 'assignments' },
+      data: {
+        ID: 'id',
+        displayName: 'displayName',
+        assignments: 'assignments',
+      },
       confirmText:
         'Are you sure you want to delete this Autopilot profile? This action cannot be undone.',
       color: 'danger',
@@ -592,7 +637,9 @@ export const WindowsAutopilotEnrollmentProfiles = () => {
             'deviceNameTemplate',
           ]}
           offCanvas={{
-            children: (row) => <CippJsonView object={row} type="intune" defaultOpen />,
+            children: (row) => (
+              <CippJsonView object={row} type="intune" defaultOpen />
+            ),
             size: 'xl',
           }}
           cardButton={<CippAutopilotProfileDrawer />}
@@ -601,4 +648,3 @@ export const WindowsAutopilotEnrollmentProfiles = () => {
     </EnrollmentProfilesPage>
   )
 }
-

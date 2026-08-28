@@ -1,92 +1,98 @@
-import { useState, useEffect, useMemo } from "react";
-import { Typography, Box, Button, TextField, Chip, Stack } from "@mui/material";
-import { Add } from "@mui/icons-material";
-import { useWatch } from "react-hook-form";
-import { CippFormDomainSelector } from "./CippFormDomainSelector";
+import { useState, useEffect, useMemo } from 'react'
+import { Typography, Box, Button, TextField, Chip, Stack } from '@mui/material'
+import { Add } from '@mui/icons-material'
+import { useWatch } from 'react-hook-form'
+import { CippFormDomainSelector } from './CippFormDomainSelector'
 
 const CippAliasDialog = ({ formHook }) => {
-  const [aliasPrefix, setAliasPrefix] = useState("");
+  const [aliasPrefix, setAliasPrefix] = useState('')
 
   // Initialize the form field if it doesn't exist
   useEffect(() => {
     // Set default empty array if AddedAliases doesn't exist in the form
-    if (!formHook.getValues("AddedAliases")) {
-      formHook.setValue("AddedAliases", []);
+    if (!formHook.getValues('AddedAliases')) {
+      formHook.setValue('AddedAliases', [])
     }
-  }, [formHook]);
+  }, [formHook])
 
   // Use useWatch to subscribe to form field changes
   const aliasList = useWatch({
     control: formHook.control,
-    name: "AddedAliases",
+    name: 'AddedAliases',
     defaultValue: [],
-  });
+  })
 
   const selectedDomain = useWatch({
     control: formHook.control,
-    name: "AliasDomain",
-  });
+    name: 'AliasDomain',
+  })
 
-  const isPending = formHook.formState.isSubmitting;
+  const isPending = formHook.formState.isSubmitting
 
   const selectedDomainValue = useMemo(() => {
-    if (!selectedDomain) return "";
+    if (!selectedDomain) return ''
     if (Array.isArray(selectedDomain)) {
-      return selectedDomain[0]?.value || selectedDomain[0] || "";
+      return selectedDomain[0]?.value || selectedDomain[0] || ''
     }
-    if (typeof selectedDomain === "object") {
-      return selectedDomain?.value || "";
+    if (typeof selectedDomain === 'object') {
+      return selectedDomain?.value || ''
     }
-    return selectedDomain;
-  }, [selectedDomain]);
+    return selectedDomain
+  }, [selectedDomain])
 
   const handleAddAlias = () => {
-    const prefix = aliasPrefix.trim();
-    const domain = selectedDomainValue;
+    const prefix = aliasPrefix.trim()
+    const domain = selectedDomainValue
 
     if (!prefix || !domain) {
-      return;
+      return
     }
 
-    const formattedAlias = `${prefix}@${domain}`;
-    const currentAliases = formHook.getValues("AddedAliases") || [];
+    const formattedAlias = `${prefix}@${domain}`
+    const currentAliases = formHook.getValues('AddedAliases') || []
 
-    if (currentAliases.some((alias) => alias.toLowerCase() === formattedAlias.toLowerCase())) {
-      setAliasPrefix("");
-      return;
+    if (
+      currentAliases.some(
+        (alias) => alias.toLowerCase() === formattedAlias.toLowerCase()
+      )
+    ) {
+      setAliasPrefix('')
+      return
     }
 
-    const newList = [...currentAliases, formattedAlias];
-    formHook.setValue("AddedAliases", newList, { shouldValidate: true });
-    setAliasPrefix("");
-  };
+    const newList = [...currentAliases, formattedAlias]
+    formHook.setValue('AddedAliases', newList, { shouldValidate: true })
+    setAliasPrefix('')
+  }
 
   const handleDeleteAlias = (aliasToDelete) => {
-    const currentAliases = formHook.getValues("AddedAliases") || [];
-    const updatedList = currentAliases.filter((alias) => alias !== aliasToDelete);
-    formHook.setValue("AddedAliases", updatedList, { shouldValidate: true });
-  };
+    const currentAliases = formHook.getValues('AddedAliases') || []
+    const updatedList = currentAliases.filter(
+      (alias) => alias !== aliasToDelete
+    )
+    formHook.setValue('AddedAliases', updatedList, { shouldValidate: true })
+  }
 
   const handleKeyPress = (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      handleAddAlias();
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      handleAddAlias()
     }
-  };
+  }
 
   return (
     <>
       <Stack spacing={3} sx={{ mt: 1 }}>
         <Typography variant="body2" color="text.secondary">
-          Add proxy addresses (aliases) for this user. Enter a prefix, choose a verified tenant
-          domain, and click Add or press Enter.
+          Add proxy addresses (aliases) for this user. Enter a prefix, choose a
+          verified tenant domain, and click Add or press Enter.
         </Typography>
         <Box
           sx={{
-            display: "flex",
+            display: 'flex',
             gap: 1,
-            flexWrap: { xs: "wrap", sm: "nowrap" },
-            alignItems: "flex-start",
+            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+            alignItems: 'flex-start',
           }}
         >
           <TextField
@@ -99,15 +105,15 @@ const CippAliasDialog = ({ formHook }) => {
             disabled={isPending}
             size="small"
             sx={{
-              "& .MuiOutlinedInput-root": {
-                fontFamily: "monospace",
-                "& .MuiOutlinedInput-input": {
+              '& .MuiOutlinedInput-root': {
+                fontFamily: 'monospace',
+                '& .MuiOutlinedInput-input': {
                   px: 2,
                 },
               },
             }}
           />
-          <Box sx={{ minWidth: { xs: "100%", sm: 240 } }}>
+          <Box sx={{ minWidth: { xs: '100%', sm: 240 } }}>
             <CippFormDomainSelector
               formControl={formHook}
               name="AliasDomain"
@@ -129,16 +135,16 @@ const CippAliasDialog = ({ formHook }) => {
         </Box>
         <Box
           sx={{
-            display: "flex",
-            flexWrap: "wrap",
+            display: 'flex',
+            flexWrap: 'wrap',
             gap: 1,
-            minHeight: "40px",
+            minHeight: '40px',
             p: 1,
-            border: "1px dashed",
-            borderColor: "divider",
+            border: '1px dashed',
+            borderColor: 'divider',
             borderRadius: 1,
-            alignItems: "center",
-            justifyContent: "center",
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           {aliasList.length === 0 ? (
@@ -148,8 +154,8 @@ const CippAliasDialog = ({ formHook }) => {
               sx={{
                 px: 2,
                 py: 1,
-                textAlign: "center",
-                width: "100%",
+                textAlign: 'center',
+                width: '100%',
               }}
             >
               No aliases added yet
@@ -168,7 +174,7 @@ const CippAliasDialog = ({ formHook }) => {
         </Box>
       </Stack>
     </>
-  );
-};
+  )
+}
 
-export default CippAliasDialog;
+export default CippAliasDialog

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react'
 import {
   Box,
   Typography,
@@ -12,26 +12,30 @@ import {
   Tooltip,
   Stack,
   Skeleton,
-} from "@mui/material";
-import { ApiGetCall } from "../../api/ApiCall";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
-import { CippPropertyListCard } from "../CippCards/CippPropertyListCard";
-import { ExpandMore, Sync, Search, Close } from "@mui/icons-material";
-import { getCippFormatting } from "../../utils/get-cipp-formatting";
-import { CippDataTable } from "../CippTable/CippDataTable";
-import { CippTimeAgo } from "./CippTimeAgo";
-import { ActionsMenu } from "../actions-menu";
-import { CippScheduledTaskActions } from "./CippScheduledTaskActions";
-import { CippApiLogsDrawer } from "./CippApiLogsDrawer";
+} from '@mui/material'
+import { ApiGetCall } from '../../api/ApiCall'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
+import { CippPropertyListCard } from '../CippCards/CippPropertyListCard'
+import { ExpandMore, Sync, Search, Close } from '@mui/icons-material'
+import { getCippFormatting } from '../../utils/get-cipp-formatting'
+import { CippDataTable } from '../CippTable/CippDataTable'
+import { CippTimeAgo } from './CippTimeAgo'
+import { ActionsMenu } from '../actions-menu'
+import { CippScheduledTaskActions } from './CippScheduledTaskActions'
+import { CippApiLogsDrawer } from './CippApiLogsDrawer'
 
-const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) => {
-  const [taskDetails, setTaskDetails] = useState(null);
-  const [expanded, setExpanded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+const ScheduledTaskDetails = ({
+  data,
+  showActions = true,
+  showTitle = true,
+}) => {
+  const [taskDetails, setTaskDetails] = useState(null)
+  const [expanded, setExpanded] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleChange = (panel) => (event, newExpanded) => {
-    setExpanded(newExpanded ? panel : false);
-  };
+    setExpanded(newExpanded ? panel : false)
+  }
 
   const taskDetailResults = ApiGetCall({
     url: `/api/ListScheduledItemDetails`,
@@ -39,55 +43,64 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
       RowKey: data.RowKey,
     },
     queryKey: `ListScheduledItemDetails-${data.RowKey}`,
-  });
+  })
 
   const taskProperties = [
-    "TaskState",
-    "Command",
-    "Tenant",
-    "Recurrence",
-    "ScheduledTime",
-    "ExecutedTime",
-    "PostExecution",
-  ];
+    'TaskState',
+    'Command',
+    'Tenant',
+    'Recurrence',
+    'ScheduledTime',
+    'ExecutedTime',
+    'PostExecution',
+  ]
 
   useEffect(() => {
     if (taskDetailResults.isSuccess && taskDetailResults?.data) {
-      setTaskDetails(taskDetailResults.data);
+      setTaskDetails(taskDetailResults.data)
 
       // Auto-expand the only result if there's just one
       if (taskDetailResults.data.Details?.length === 1) {
-        setExpanded(`execution-results-0`);
+        setExpanded(`execution-results-0`)
       }
     }
-  }, [data.RowKey, taskDetailResults.isSuccess, taskDetailResults.data]);
+  }, [data.RowKey, taskDetailResults.isSuccess, taskDetailResults.data])
 
   const filteredDetails = taskDetails?.Details?.filter((result) => {
-    if (!searchQuery) return true;
+    if (!searchQuery) return true
 
-    const searchLower = searchQuery.toLowerCase();
-    const tenantMatches = (result.TenantName || result.Tenant || "")
+    const searchLower = searchQuery.toLowerCase()
+    const tenantMatches = (result.TenantName || result.Tenant || '')
       .toLowerCase()
-      .includes(searchLower);
+      .includes(searchLower)
 
-    let resultsMatches = false;
-    if (typeof result.Results === "object" && result.Results !== null) {
-      const resultsStr = JSON.stringify(result.Results).toLowerCase();
-      resultsMatches = resultsStr.includes(searchLower);
+    let resultsMatches = false
+    if (typeof result.Results === 'object' && result.Results !== null) {
+      const resultsStr = JSON.stringify(result.Results).toLowerCase()
+      resultsMatches = resultsStr.includes(searchLower)
     }
 
-    return tenantMatches || resultsMatches;
-  });
+    return tenantMatches || resultsMatches
+  })
 
   return (
     <>
       <Stack spacing={2}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="flex-start"
+        >
           <Typography variant="h5">
-            {showTitle && (taskDetailResults.isLoading ? <Skeleton width="250px" /> : taskDetails?.Task?.Name)}
+            {showTitle &&
+              (taskDetailResults.isLoading ? (
+                <Skeleton width="250px" />
+              ) : (
+                taskDetails?.Task?.Name
+              ))}
           </Typography>
           {showActions && (
-            <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
+            <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
               <CippApiLogsDrawer
                 scheduledTaskFilter={data?.RowKey}
                 buttonText="View Logs"
@@ -105,7 +118,10 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
         <CippPropertyListCard
           actionButton={
             <Tooltip title="Refresh">
-              <IconButton size="small" onClick={() => taskDetailResults.refetch()}>
+              <IconButton
+                size="small"
+                onClick={() => taskDetailResults.refetch()}
+              >
                 <Sync />
               </IconButton>
             </Tooltip>
@@ -115,12 +131,16 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
           variant="outlined"
           showDivider={false}
           propertyItems={taskProperties
-            .filter((prop) => taskDetails?.Task?.[prop] != null && taskDetails?.Task?.[prop] !== "")
+            .filter(
+              (prop) =>
+                taskDetails?.Task?.[prop] != null &&
+                taskDetails?.Task?.[prop] !== ''
+            )
             .map((prop) => {
               return {
                 label: getCippTranslation(prop),
                 value: getCippFormatting(taskDetails?.Task?.[prop], prop),
-              };
+              }
             })}
           isFetching={taskDetailResults.isFetching}
         />
@@ -128,8 +148,8 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
         {taskDetails?.Task?.Trigger && (
           <Accordion
             variant="outlined"
-            expanded={expanded === "task-trigger"}
-            onChange={handleChange("task-trigger")}
+            expanded={expanded === 'task-trigger'}
+            onChange={handleChange('task-trigger')}
           >
             <AccordionSummary expandIcon={<ExpandMore />}>
               <Typography variant="h6">Trigger Configuration</Typography>
@@ -138,12 +158,14 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
               <CippPropertyListCard
                 showDivider={false}
                 layout="dual"
-                propertyItems={Object.entries(taskDetails.Task.Trigger).map(([key, value]) => {
-                  return {
-                    label: key,
-                    value: getCippFormatting(value, key),
-                  };
-                })}
+                propertyItems={Object.entries(taskDetails.Task.Trigger).map(
+                  ([key, value]) => {
+                    return {
+                      label: key,
+                      value: getCippFormatting(value, key),
+                    }
+                  }
+                )}
                 isFetching={taskDetailResults.isFetching}
               />
             </AccordionDetails>
@@ -157,8 +179,8 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
             {taskDetails?.Task?.Parameters && (
               <Accordion
                 variant="outlined"
-                expanded={expanded === "task-parameters"}
-                onChange={handleChange("task-parameters")}
+                expanded={expanded === 'task-parameters'}
+                onChange={handleChange('task-parameters')}
               >
                 <AccordionSummary expandIcon={<ExpandMore />}>
                   <Typography variant="h6">Task Parameters</Typography>
@@ -167,14 +189,14 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
                   <CippPropertyListCard
                     showDivider={false}
                     layout="dual"
-                    propertyItems={Object.entries(taskDetails.Task.Parameters).map(
-                      ([key, value]) => {
-                        return {
-                          label: key,
-                          value: getCippFormatting(value, key),
-                        };
+                    propertyItems={Object.entries(
+                      taskDetails.Task.Parameters
+                    ).map(([key, value]) => {
+                      return {
+                        label: key,
+                        value: getCippFormatting(value, key),
                       }
-                    )}
+                    })}
                     isFetching={taskDetailResults.isFetching}
                   />
                 </AccordionDetails>
@@ -196,10 +218,15 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
                   sx={{ mt: 4, mb: 2 }}
                 >
                   <Typography variant="h6">
-                    Execution Results{" "}
+                    Execution Results{' '}
                     {filteredDetails && (
-                      <Typography component="span" variant="body2" color="text.secondary">
-                        ({filteredDetails.length} of {taskDetails.Details.length})
+                      <Typography
+                        component="span"
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        ({filteredDetails.length} of{' '}
+                        {taskDetails.Details.length})
                       </Typography>
                     )}
                   </Typography>
@@ -221,7 +248,7 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
                           <Tooltip title="Clear search">
                             <IconButton
                               size="small"
-                              onClick={() => setSearchQuery("")}
+                              onClick={() => setSearchQuery('')}
                               aria-label="Clear search"
                             >
                               <Close />
@@ -245,16 +272,25 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
                         <AccordionSummary
                           expandIcon={<ExpandMore />}
                           sx={{
-                            "& .MuiAccordionSummary-content": {
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              width: "100%",
+                            '& .MuiAccordionSummary-content': {
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              width: '100%',
                             },
                           }}
                         >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            {getCippFormatting(result.TenantName || result.Tenant, "Tenant")}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            {getCippFormatting(
+                              result.TenantName || result.Tenant,
+                              'Tenant'
+                            )}
                           </Box>
                           <Chip
                             size="small"
@@ -265,25 +301,45 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
                           />
                         </AccordionSummary>
                         <AccordionDetails>
-                          {result.Results === "null" || !result.Results ? (
-                            <Typography color="text.secondary">No data available</Typography>
+                          {result.Results === 'null' || !result.Results ? (
+                            <Typography color="text.secondary">
+                              No data available
+                            </Typography>
                           ) : Array.isArray(result.Results) ? (
                             <CippDataTable
                               noCard
                               data={result.Results}
                               disablePagination={result.Results.length <= 10}
-                              refreshFunction={() => taskDetailResults.refetch()}
+                              refreshFunction={() =>
+                                taskDetailResults.refetch()
+                              }
                             />
-                          ) : typeof result.Results === "object" ? (
+                          ) : typeof result.Results === 'object' ? (
                             <CippPropertyListCard
-                              propertyItems={Object.entries(result.Results).map(([key, value]) => ({
-                                label: key,
-                                value: typeof value === "object" ? JSON.stringify(value) : value,
-                              }))}
+                              propertyItems={Object.entries(result.Results).map(
+                                ([key, value]) => ({
+                                  label: key,
+                                  value:
+                                    typeof value === 'object'
+                                      ? JSON.stringify(value)
+                                      : value,
+                                })
+                              )}
                             />
                           ) : (
-                            <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
-                              <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                            <Box
+                              sx={{
+                                p: 2,
+                                bgcolor: 'background.paper',
+                                borderRadius: 1,
+                              }}
+                            >
+                              <pre
+                                style={{
+                                  whiteSpace: 'pre-wrap',
+                                  wordBreak: 'break-word',
+                                }}
+                              >
                                 {result.Results}
                               </pre>
                             </Box>
@@ -295,9 +351,9 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
                     <Box
                       sx={{
                         p: 2,
-                        bgcolor: "background.paper",
+                        bgcolor: 'background.paper',
                         borderRadius: 1,
-                        textAlign: "center",
+                        textAlign: 'center',
                       }}
                     >
                       <Typography color="text.secondary">
@@ -312,7 +368,7 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
         )}
       </Stack>
     </>
-  );
-};
+  )
+}
 
-export default ScheduledTaskDetails;
+export default ScheduledTaskDetails

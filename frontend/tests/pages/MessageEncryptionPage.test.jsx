@@ -35,10 +35,12 @@ describe('Message Encryption page', () => {
     // ListMailboxes returns a bare array (no Results wrapper, the page's api sets no dataKey)
     api.paginated = paginatedResult([], {
       data: {
-        pages: [[
-          { displayName: 'Admin', UPN: 'admin@contoso.com' },
-          { displayName: 'Helpdesk', UPN: 'helpdesk@contoso.com' },
-        ]],
+        pages: [
+          [
+            { displayName: 'Admin', UPN: 'admin@contoso.com' },
+            { displayName: 'Helpdesk', UPN: 'helpdesk@contoso.com' },
+          ],
+        ],
       },
     })
   })
@@ -135,7 +137,9 @@ describe('Message Encryption page', () => {
     renderWithProviders(<Page />)
 
     await screen.findByText('Current Configuration')
-    await user.click(screen.getByRole('switch', { name: /Show the Encrypt button/i }))
+    await user.click(
+      screen.getByRole('switch', { name: /Show the Encrypt button/i })
+    )
     await user.click(screen.getByRole('button', { name: 'Submit' }))
 
     expect(api.post.mutate).toHaveBeenCalledWith({

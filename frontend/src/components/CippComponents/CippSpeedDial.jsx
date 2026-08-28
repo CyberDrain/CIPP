@@ -100,7 +100,9 @@ const CippSpeedDial = ({
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (speedDialOpen) {
-        const speedDial = document.querySelector('[aria-label="Navigation SpeedDial"]')
+        const speedDial = document.querySelector(
+          '[aria-label="Navigation SpeedDial"]'
+        )
         if (speedDial && !speedDial.contains(event.target)) {
           setSpeedDialOpen(false)
         }
@@ -195,13 +197,17 @@ const CippSpeedDial = ({
                 style={{ minHeight: '150px' }}
                 editorProps={{
                   attributes: {
-                    style: 'min-height: 150px; font-size: 1.1rem; padding: 1rem;',
+                    style:
+                      'min-height: 150px; font-size: 1.1rem; padding: 1rem;',
                   },
                 }}
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => handleDialogClose(action.id)} disabled={loading}>
+              <Button
+                onClick={() => handleDialogClose(action.id)}
+                disabled={loading}
+              >
                 Cancel
               </Button>
               <Button
@@ -225,7 +231,11 @@ const CippSpeedDial = ({
         onClose={() => setShowSnackbar(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setShowSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+        <Alert
+          onClose={() => setShowSnackbar(false)}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>

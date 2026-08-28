@@ -8,7 +8,9 @@ import { CippFormComponent } from '../../../src/components/CippComponents/CippFo
 
 const FormWrapper = ({ defaultValues, children }) => {
   const formControl = useForm({ defaultValues })
-  return <>{typeof children === 'function' ? children(formControl) : children}</>
+  return (
+    <>{typeof children === 'function' ? children(formControl) : children}</>
+  )
 }
 
 describe('CippFormCondition', () => {
@@ -206,7 +208,10 @@ describe('CippFormCondition', () => {
     )
     expect(screen.queryByTestId('child-content')).not.toBeInTheDocument()
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'Status' }), 'active')
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Status' }),
+      'active'
+    )
     expect(await screen.findByTestId('child-content')).toBeInTheDocument()
 
     // and back: appending breaks the "is" match again
@@ -256,7 +261,9 @@ describe('CippFormCondition', () => {
     // break the condition, clearOnHide defaults to true -> field reset to null
     await userEvent.type(screen.getByRole('textbox', { name: 'Status' }), 'x')
     await waitFor(() => {
-      expect(screen.queryByRole('textbox', { name: 'Extra' })).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('textbox', { name: 'Extra' })
+      ).not.toBeInTheDocument()
     })
     await waitFor(() => {
       expect(capturedFormControl.getValues('extra')).toBeNull()

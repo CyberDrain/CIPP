@@ -52,7 +52,8 @@ const ManageDriftPage = () => {
   const { templateId } = router.query
   const userSettingsDefaults = useSettings()
   // Prioritize URL query parameter, then fall back to settings
-  const tenantFilter = router.query.tenantFilter || userSettingsDefaults.currentTenant || ''
+  const tenantFilter =
+    router.query.tenantFilter || userSettingsDefaults.currentTenant || ''
   const [anchorEl, setAnchorEl] = useState({})
   const [bulkActionsAnchorEl, setBulkActionsAnchorEl] = useState(null)
   const createDialog = useDialog()
@@ -158,7 +159,9 @@ const ManageDriftPage = () => {
 
     const expectedPrefix =
       `Persistent Drift Remediation: ${settingName} - ${tenantFilter}`.toLowerCase()
-    return [...persistentTaskNameSet].some((name) => name.startsWith(expectedPrefix))
+    return [...persistentTaskNameSet].some((name) =>
+      name.startsWith(expectedPrefix)
+    )
   }
 
   // Process drift data for chart - filter by current tenant and aggregate
@@ -173,25 +176,38 @@ const ManageDriftPage = () => {
       acc.acceptedDeviationsCount += item.acceptedDeviationsCount || 0
       acc.currentDeviationsCount += item.currentDeviationsCount || 0
       acc.alignedCount += item.alignedCount || 0
-      acc.customerSpecificDeviations += item.customerSpecificDeviationsCount || 0
+      acc.customerSpecificDeviations +=
+        item.customerSpecificDeviationsCount || 0
       acc.deniedDeviationsCount += item.deniedDeviationsCount || 0
 
       // Use the API's direct arrays instead of filtering allDeviations
       if (item.currentDeviations && Array.isArray(item.currentDeviations)) {
-        acc.currentDeviations.push(...item.currentDeviations.filter((dev) => dev !== null))
+        acc.currentDeviations.push(
+          ...item.currentDeviations.filter((dev) => dev !== null)
+        )
       }
       if (item.acceptedDeviations && Array.isArray(item.acceptedDeviations)) {
-        acc.acceptedDeviations.push(...item.acceptedDeviations.filter((dev) => dev !== null))
+        acc.acceptedDeviations.push(
+          ...item.acceptedDeviations.filter((dev) => dev !== null)
+        )
       }
-      if (item.customerSpecificDeviations && Array.isArray(item.customerSpecificDeviations)) {
+      if (
+        item.customerSpecificDeviations &&
+        Array.isArray(item.customerSpecificDeviations)
+      ) {
         acc.customerSpecificDeviationsList.push(
           ...item.customerSpecificDeviations.filter((dev) => dev !== null)
         )
       }
       if (item.deniedDeviations && Array.isArray(item.deniedDeviations)) {
-        acc.deniedDeviationsList.push(...item.deniedDeviations.filter((dev) => dev !== null))
+        acc.deniedDeviationsList.push(
+          ...item.deniedDeviations.filter((dev) => dev !== null)
+        )
       }
-      if (item.licenseMissingDeviations && Array.isArray(item.licenseMissingDeviations)) {
+      if (
+        item.licenseMissingDeviations &&
+        Array.isArray(item.licenseMissingDeviations)
+      ) {
         acc.licenseMissingDeviationsList.push(
           ...item.licenseMissingDeviations.filter((dev) => dev !== null)
         )
@@ -219,9 +235,12 @@ const ManageDriftPage = () => {
               const guid = standardName.substring('IntuneTemplate.'.length)
 
               // First try to find in standardSettings
-              const intuneTemplates = item.driftSettings?.standardSettings?.IntuneTemplate
+              const intuneTemplates =
+                item.driftSettings?.standardSettings?.IntuneTemplate
               if (Array.isArray(intuneTemplates)) {
-                const template = intuneTemplates.find((t) => t.TemplateList?.value === guid)
+                const template = intuneTemplates.find(
+                  (t) => t.TemplateList?.value === guid
+                )
                 if (template?.TemplateList?.label) {
                   displayName = template.TemplateList.label
                 }
@@ -229,7 +248,9 @@ const ManageDriftPage = () => {
 
               // If not found in standardSettings, look up in all Intune templates (for tag templates)
               if (!displayName && intuneTemplatesApi.data) {
-                const template = intuneTemplatesApi.data.find((t) => t.GUID === guid)
+                const template = intuneTemplatesApi.data.find(
+                  (t) => t.GUID === guid
+                )
                 if (template?.Displayname) {
                   displayName = template.Displayname
                 }
@@ -240,17 +261,24 @@ const ManageDriftPage = () => {
                 return null
               }
             } else if (standardName.startsWith('ConditionalAccessTemplate.')) {
-              const guid = standardName.substring('ConditionalAccessTemplate.'.length)
-              const caTemplates = item.driftSettings?.standardSettings?.ConditionalAccessTemplate
+              const guid = standardName.substring(
+                'ConditionalAccessTemplate.'.length
+              )
+              const caTemplates =
+                item.driftSettings?.standardSettings?.ConditionalAccessTemplate
               if (Array.isArray(caTemplates)) {
-                const template = caTemplates.find((t) => t.TemplateList?.value === guid)
+                const template = caTemplates.find(
+                  (t) => t.TemplateList?.value === guid
+                )
                 if (template?.TemplateList?.label) {
                   displayName = template.TemplateList.label
                 }
               }
               // If not found in standardSettings, look up in all CA templates (for tag templates)
               if (!displayName && Array.isArray(caTemplatesApi.data)) {
-                const template = caTemplatesApi.data.find((t) => t.GUID === guid)
+                const template = caTemplatesApi.data.find(
+                  (t) => t.GUID === guid
+                )
                 if (template?.displayName) {
                   displayName = template.displayName
                 }
@@ -262,14 +290,19 @@ const ManageDriftPage = () => {
               }
             } else if (standardName.startsWith('ReusableSettingsTemplate.')) {
               // TemplateList is multi-select for this standard, so each entry holds an array
-              const guid = standardName.substring('ReusableSettingsTemplate.'.length)
-              const rsTemplates = item.driftSettings?.standardSettings?.ReusableSettingsTemplate
+              const guid = standardName.substring(
+                'ReusableSettingsTemplate.'.length
+              )
+              const rsTemplates =
+                item.driftSettings?.standardSettings?.ReusableSettingsTemplate
               if (Array.isArray(rsTemplates)) {
                 for (const template of rsTemplates) {
                   const templateList = Array.isArray(template.TemplateList)
                     ? template.TemplateList
                     : [template.TemplateList].filter(Boolean)
-                  const match = templateList.find((entry) => entry?.value === guid)
+                  const match = templateList.find(
+                    (entry) => entry?.value === guid
+                  )
                   if (match?.label) {
                     displayName = match.label
                     break
@@ -283,7 +316,9 @@ const ManageDriftPage = () => {
               }
             } else if (standardName.startsWith('QuarantineTemplate.')) {
               // The sub-key suffix is hex-encoded — decode it to get the readable display name
-              const hexSuffix = standardName.substring('QuarantineTemplate.'.length)
+              const hexSuffix = standardName.substring(
+                'QuarantineTemplate.'.length
+              )
               const decodedName = (hexSuffix.match(/.{2}/g) || [])
                 .map((h) => String.fromCharCode(parseInt(h, 16)))
                 .join('')
@@ -315,7 +350,8 @@ const ManageDriftPage = () => {
       if (
         item.latestDataCollection &&
         (!acc.latestDataCollection ||
-          new Date(item.latestDataCollection) > new Date(acc.latestDataCollection))
+          new Date(item.latestDataCollection) >
+            new Date(acc.latestDataCollection))
       ) {
         acc.latestDataCollection = item.latestDataCollection
       }
@@ -433,7 +469,12 @@ const ManageDriftPage = () => {
     // Find the standard in standards.json by name
     const standard = getStandards().find((s) => s.name === standardName)
     if (standard) {
-      return standard.helpText || standard.docsDescription || standard.executiveText || null
+      return (
+        standard.helpText ||
+        standard.docsDescription ||
+        standard.executiveText ||
+        null
+      )
     }
 
     return null
@@ -444,8 +485,10 @@ const ManageDriftPage = () => {
     if (!expected || !current) return null
 
     try {
-      const expectedObj = typeof expected === 'string' ? JSON.parse(expected) : expected
-      const currentObj = typeof current === 'string' ? JSON.parse(current) : current
+      const expectedObj =
+        typeof expected === 'string' ? JSON.parse(expected) : expected
+      const currentObj =
+        typeof current === 'string' ? JSON.parse(current) : current
 
       // Deep comparison - if they're equal, return null (no diff)
       if (JSON.stringify(expectedObj) === JSON.stringify(currentObj)) {
@@ -454,7 +497,10 @@ const ManageDriftPage = () => {
 
       // Find differences
       const differences = {}
-      const allKeys = new Set([...Object.keys(expectedObj), ...Object.keys(currentObj)])
+      const allKeys = new Set([
+        ...Object.keys(expectedObj),
+        ...Object.keys(currentObj),
+      ])
 
       allKeys.forEach((key) => {
         const expectedVal = expectedObj[key]
@@ -484,8 +530,13 @@ const ManageDriftPage = () => {
       formatted.push({
         property: key,
         expected:
-          value.expected !== undefined ? JSON.stringify(value.expected, null, 2) : 'Not set',
-        current: value.current !== undefined ? JSON.stringify(value.current, null, 2) : 'Not set',
+          value.expected !== undefined
+            ? JSON.stringify(value.expected, null, 2)
+            : 'Not set',
+        current:
+          value.current !== undefined
+            ? JSON.stringify(value.current, null, 2)
+            : 'Not set',
       })
     })
 
@@ -566,7 +617,10 @@ const ManageDriftPage = () => {
         let jsonDifferences = null
 
         if (deviation.ExpectedValue && deviation.CurrentValue) {
-          jsonDifferences = compareJsonObjects(deviation.ExpectedValue, deviation.CurrentValue)
+          jsonDifferences = compareJsonObjects(
+            deviation.ExpectedValue,
+            deviation.CurrentValue
+          )
           // If there are no differences, this is actually compliant
           if (jsonDifferences === null) {
             isActuallyCompliant = true
@@ -601,11 +655,15 @@ const ManageDriftPage = () => {
           : isLicenseSkipped
             ? 'Skipped - No License Available'
             : getDeviationStatusText(actualStatus)
-        const isPersistentDenyEnabled = hasPersistentDenyTask(deviation.standardName)
+        const isPersistentDenyEnabled = hasPersistentDenyTask(
+          deviation.standardName
+        )
 
         // For skipped items, show different expected/received values
-        let displayExpectedValue = deviation.ExpectedValue || deviation.expectedValue
-        let displayReceivedValue = deviation.CurrentValue || deviation.receivedValue
+        let displayExpectedValue =
+          deviation.ExpectedValue || deviation.expectedValue
+        let displayReceivedValue =
+          deviation.CurrentValue || deviation.receivedValue
 
         // If we have JSON differences, format them for display
         let formattedDifferences = null
@@ -613,19 +671,27 @@ const ManageDriftPage = () => {
 
         if (jsonDifferences && !isLicenseSkipped && !isActuallyCompliant) {
           formattedDifferences = formatDifferences(jsonDifferences)
-        } else if ((isActuallyCompliant || actualStatus === 'aligned') && displayExpectedValue) {
+        } else if (
+          (isActuallyCompliant || actualStatus === 'aligned') &&
+          displayExpectedValue
+        ) {
           // For compliant items, format the properties to show them matching
-          formattedCompliantProps = formatCompliantProperties(displayExpectedValue)
+          formattedCompliantProps =
+            formatCompliantProperties(displayExpectedValue)
         }
 
         return {
-          id: statusOverride ? `${statusOverride}-${index + 1}` : `current-${index + 1}`,
+          id: statusOverride
+            ? `${statusOverride}-${index + 1}`
+            : `current-${index + 1}`,
           cardLabelBox: {
             cardLabelBoxHeader: getDeviationIcon(actualStatus),
           },
           text: prettyName,
           subtext: description,
-          statusColor: isLicenseSkipped ? 'text.secondary' : getDeviationColor(actualStatus),
+          statusColor: isLicenseSkipped
+            ? 'text.secondary'
+            : getDeviationColor(actualStatus),
           statusText: isPersistentDenyEnabled
             ? `${actualStatusText} | Persistent deny (12h)`
             : actualStatusText,
@@ -665,9 +731,13 @@ const ManageDriftPage = () => {
                     borderColor: 'warning.main',
                   }}
                 >
-                  <Typography variant="body2" color="warning.dark" sx={{ fontWeight: 600 }}>
-                    ⚠️ This standard was skipped because the required license is not available for
-                    this tenant.
+                  <Typography
+                    variant="body2"
+                    color="warning.dark"
+                    sx={{ fontWeight: 600 }}
+                  >
+                    ⚠️ This standard was skipped because the required license is
+                    not available for this tenant.
                   </Typography>
                 </Box>
               )}
@@ -698,7 +768,11 @@ const ManageDriftPage = () => {
                         {diff.property}
                       </Typography>
                       <Box
-                        sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}
+                        sx={{
+                          display: 'flex',
+                          gap: 2,
+                          flexDirection: { xs: 'column', sm: 'row' },
+                        }}
                       >
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
@@ -812,7 +886,8 @@ const ManageDriftPage = () => {
                     </Box>
                   ))}
                 </Stack>
-              ) : formattedCompliantProps && formattedCompliantProps.length > 0 ? (
+              ) : formattedCompliantProps &&
+                formattedCompliantProps.length > 0 ? (
                 <Stack spacing={2}>
                   <Typography
                     variant="caption"
@@ -838,7 +913,11 @@ const ManageDriftPage = () => {
                         {prop.property}
                       </Typography>
                       <Box
-                        sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}
+                        sx={{
+                          display: 'flex',
+                          gap: 2,
+                          flexDirection: { xs: 'column', sm: 'row' },
+                        }}
                       >
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
@@ -953,7 +1032,13 @@ const ManageDriftPage = () => {
                   ))}
                 </Stack>
               ) : displayExpectedValue || displayReceivedValue ? (
-                <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    flexDirection: { xs: 'column', sm: 'row' },
+                  }}
+                >
                   {displayExpectedValue && (
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography
@@ -977,7 +1062,9 @@ const ManageDriftPage = () => {
                               ? 'success.lighter'
                               : 'action.hover',
                           borderRadius:
-                            isActuallyCompliant || actualStatus === 'aligned' ? '12px' : 1,
+                            isActuallyCompliant || actualStatus === 'aligned'
+                              ? '12px'
+                              : 1,
                           border:
                             isActuallyCompliant || actualStatus === 'aligned'
                               ? '2px solid'
@@ -989,7 +1076,8 @@ const ManageDriftPage = () => {
                           position: 'relative',
                         }}
                       >
-                        {(isActuallyCompliant || actualStatus === 'aligned') && (
+                        {(isActuallyCompliant ||
+                          actualStatus === 'aligned') && (
                           <Box
                             sx={{
                               position: 'absolute',
@@ -1051,7 +1139,9 @@ const ManageDriftPage = () => {
                               ? 'success.lighter'
                               : 'action.hover',
                           borderRadius:
-                            isActuallyCompliant || actualStatus === 'aligned' ? '12px' : 1,
+                            isActuallyCompliant || actualStatus === 'aligned'
+                              ? '12px'
+                              : 1,
                           border:
                             isActuallyCompliant || actualStatus === 'aligned'
                               ? '2px solid'
@@ -1063,7 +1153,8 @@ const ManageDriftPage = () => {
                           position: 'relative',
                         }}
                       >
-                        {(isActuallyCompliant || actualStatus === 'aligned') && (
+                        {(isActuallyCompliant ||
+                          actualStatus === 'aligned') && (
                           <Box
                             sx={{
                               position: 'absolute',
@@ -1116,7 +1207,9 @@ const ManageDriftPage = () => {
                         >
                           Reason
                         </Typography>
-                        <Typography variant="body2">{deviation.Reason}</Typography>
+                        <Typography variant="body2">
+                          {deviation.Reason}
+                        </Typography>
                       </Box>
                     )}
                     {deviation.lastChangedByUser && (
@@ -1127,7 +1220,9 @@ const ManageDriftPage = () => {
                         >
                           Changed By
                         </Typography>
-                        <Typography variant="body2">{deviation.lastChangedByUser}</Typography>
+                        <Typography variant="body2">
+                          {deviation.lastChangedByUser}
+                        </Typography>
                       </Box>
                     )}
                     {processedDriftData.latestDataCollection && (
@@ -1139,7 +1234,9 @@ const ManageDriftPage = () => {
                           Last Updated
                         </Typography>
                         <Typography variant="body2">
-                          {new Date(processedDriftData.latestDataCollection).toLocaleString()}
+                          {new Date(
+                            processedDriftData.latestDataCollection
+                          ).toLocaleString()}
                         </Typography>
                       </Box>
                     )}
@@ -1152,7 +1249,9 @@ const ManageDriftPage = () => {
       })
   }
 
-  const deviationItems = createDeviationItems(processedDriftData.currentDeviations)
+  const deviationItems = createDeviationItems(
+    processedDriftData.currentDeviations
+  )
   const acceptedDeviationItems = createDeviationItems(
     processedDriftData.acceptedDeviations,
     'accepted'
@@ -1165,7 +1264,10 @@ const ManageDriftPage = () => {
     processedDriftData.deniedDeviationsList,
     'denied'
   )
-  const alignedStandardItems = createDeviationItems(processedDriftData.alignedStandards, 'aligned')
+  const alignedStandardItems = createDeviationItems(
+    processedDriftData.alignedStandards,
+    'aligned'
+  )
   const licenseMissingDeviationItems = createDeviationItems(
     processedDriftData.licenseMissingDeviationsList,
     'skipped'
@@ -1176,7 +1278,9 @@ const ManageDriftPage = () => {
     ...licenseMissingDeviationItems,
     ...deviationItems.filter((item) => item.isLicenseSkipped),
   ]
-  const compliantFromDeviations = deviationItems.filter((item) => item.isActuallyCompliant)
+  const compliantFromDeviations = deviationItems.filter(
+    (item) => item.isActuallyCompliant
+  )
   const actualDeviationItems = deviationItems.filter(
     (item) => !item.isLicenseSkipped && !item.isActuallyCompliant
   )
@@ -1186,7 +1290,8 @@ const ManageDriftPage = () => {
 
   // Tenant-only policies (exist in the tenant but not in the template) can be deleted but not
   // remediated; policies that are backed by the template can be remediated but not deleted.
-  const TENANT_ONLY_EXPECTED_VALUE = 'This policy only exists in the tenant, not in the template.'
+  const TENANT_ONLY_EXPECTED_VALUE =
+    'This policy only exists in the tenant, not in the template.'
 
   const isTenantOnlyPolicy = (item) => {
     const expectedValue =
@@ -1352,7 +1457,8 @@ const ManageDriftPage = () => {
         break
       case 'deny-all-remediate':
         status = 'DeniedRemediate'
-        actionText = 'deny selected deviations and remediate to align with template'
+        actionText =
+          'deny selected deviations and remediate to align with template'
         break
       default:
         setBulkActionsAnchorEl(null)
@@ -1428,7 +1534,9 @@ const ManageDriftPage = () => {
   )
 
   // Actions for the ActionsMenu
-  const currentDriftTemplate = standardsApi.data?.find((t) => t.GUID === templateId)
+  const currentDriftTemplate = standardsApi.data?.find(
+    (t) => t.GUID === templateId
+  )
   const actions = createDriftManagementActions({
     templateId,
     onRefresh: () => {
@@ -1478,7 +1586,9 @@ const ManageDriftPage = () => {
   const getCompareTemplateGuid = (item) => {
     const name = item?.standardName
     if (!name) return null
-    const withoutPrefix = name.startsWith('standards.') ? name.substring('standards.'.length) : name
+    const withoutPrefix = name.startsWith('standards.')
+      ? name.substring('standards.'.length)
+      : name
     return withoutPrefix.startsWith('IntuneTemplate.')
       ? withoutPrefix.substring('IntuneTemplate.'.length)
       : null
@@ -1523,16 +1633,19 @@ const ManageDriftPage = () => {
   }))
 
   // Add action buttons to accepted deviation items
-  const acceptedDeviationItemsWithActions = acceptedDeviationItems.map((item) => ({
-    ...item,
-    cardLabelBoxActions: buildCardActions(item, `accepted-${item.id}`),
-  }))
+  const acceptedDeviationItemsWithActions = acceptedDeviationItems.map(
+    (item) => ({
+      ...item,
+      cardLabelBoxActions: buildCardActions(item, `accepted-${item.id}`),
+    })
+  )
 
   // Add action buttons to customer specific deviation items
-  const customerSpecificDeviationItemsWithActions = customerSpecificDeviationItems.map((item) => ({
-    ...item,
-    cardLabelBoxActions: buildCardActions(item, `customer-${item.id}`),
-  }))
+  const customerSpecificDeviationItemsWithActions =
+    customerSpecificDeviationItems.map((item) => ({
+      ...item,
+      cardLabelBoxActions: buildCardActions(item, `customer-${item.id}`),
+    }))
 
   // Add action buttons to denied deviation items
   const deniedDeviationItemsWithActions = deniedDeviationItems.map((item) => ({
@@ -1560,9 +1673,11 @@ const ManageDriftPage = () => {
     .map((itemId) => allActionableItems.find((d) => d.id === itemId))
     .filter(Boolean)
   const selectedSupportDelete =
-    selectedActionableItems.length > 0 && selectedActionableItems.every(supportsDeleteAction)
+    selectedActionableItems.length > 0 &&
+    selectedActionableItems.every(supportsDeleteAction)
   const selectedSupportRemediate =
-    selectedActionableItems.length > 0 && selectedActionableItems.every(supportsRemediateAction)
+    selectedActionableItems.length > 0 &&
+    selectedActionableItems.every(supportsRemediateAction)
 
   // Calculate compliance metrics for badges
   // Accepted and Customer Specific deviations count as compliant since they are user-approved
@@ -1585,7 +1700,9 @@ const ManageDriftPage = () => {
 
   // Calculate missing license percentage
   const missingLicensePercentage =
-    totalPolicies > 0 ? Math.round((licenseSkippedItems.length / totalPolicies) * 100) : 0
+    totalPolicies > 0
+      ? Math.round((licenseSkippedItems.length / totalPolicies) * 100)
+      : 0
 
   // Total Score: Alignment + License Missing (represents addressable compliance)
   const combinedScore = compliancePercentage + missingLicensePercentage
@@ -1593,8 +1710,10 @@ const ManageDriftPage = () => {
   // Helper function to get category from standardName
   const getCategory = (standardName) => {
     if (!standardName) return 'Other Standards'
-    if (standardName.includes('ConditionalAccessTemplate')) return 'Conditional Access Policies'
-    if (standardName.includes('ReusableSettingsTemplate')) return 'Intune Policies'
+    if (standardName.includes('ConditionalAccessTemplate'))
+      return 'Conditional Access Policies'
+    if (standardName.includes('ReusableSettingsTemplate'))
+      return 'Intune Policies'
     if (standardName.includes('IntuneTemplate')) return 'Intune Policies'
     if (standardName.includes('QuarantineTemplate')) return 'Defender Standards'
 
@@ -1623,7 +1742,9 @@ const ManageDriftPage = () => {
     if (sortBy === 'name') {
       filtered.sort((a, b) => (a.text || '').localeCompare(b.text || ''))
     } else if (sortBy === 'status') {
-      filtered.sort((a, b) => (a.statusText || '').localeCompare(b.statusText || ''))
+      filtered.sort((a, b) =>
+        (a.statusText || '').localeCompare(b.statusText || '')
+      )
     } else if (sortBy === 'category') {
       // Sort by category, then by name within each category
       filtered.sort((a, b) => {
@@ -1641,7 +1762,9 @@ const ManageDriftPage = () => {
 
   const filteredDeviationItems = applyFilters(deviationItemsWithActions)
   const filteredAcceptedItems = applyFilters(acceptedDeviationItemsWithActions)
-  const filteredCustomerSpecificItems = applyFilters(customerSpecificDeviationItemsWithActions)
+  const filteredCustomerSpecificItems = applyFilters(
+    customerSpecificDeviationItemsWithActions
+  )
   const filteredDeniedItems = applyFilters(deniedDeviationItemsWithActions)
   const filteredAlignedItems = applyFilters(alignedItemsWithActions)
   const filteredLicenseSkippedItems = applyFilters(licenseSkippedItems)
@@ -1701,7 +1824,9 @@ const ManageDriftPage = () => {
   // Simple filter for drift templates
   const driftTemplateOptions = standardsApi.data
     ? standardsApi.data
-        .filter((template) => template.type === 'drift' || template.Type === 'drift')
+        .filter(
+          (template) => template.type === 'drift' || template.Type === 'drift'
+        )
         .map((template) => ({
           label:
             template.displayName ||
@@ -1715,7 +1840,8 @@ const ManageDriftPage = () => {
   // Find currently selected template
   const selectedTemplateOption =
     templateId && driftTemplateOptions.length
-      ? driftTemplateOptions.find((option) => option.value === templateId) || null
+      ? driftTemplateOptions.find((option) => option.value === templateId) ||
+        null
       : null
   const title = 'Manage Drift'
   const subtitle = []
@@ -1739,19 +1865,24 @@ const ManageDriftPage = () => {
       <Box sx={{ py: 2 }}>
         {/* Check if there's no drift data */}
         {!driftApi.isFetching &&
-        (!rawDriftData || rawDriftData.length === 0 || tenantDriftData.length === 0) ? (
+        (!rawDriftData ||
+          rawDriftData.length === 0 ||
+          tenantDriftData.length === 0) ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Typography variant="h5" color="text.secondary" sx={{ mb: 2 }}>
               No Drift Data Available
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              This standard does not have any drift entries, or it is not a drift compatible
-              standard.
+              This standard does not have any drift entries, or it is not a
+              drift compatible standard.
             </Typography>
             <Typography variant="body2" color="text.secondary">
               To enable drift monitoring for this tenant, please ensure:
             </Typography>
-            <Box component="ul" sx={{ textAlign: 'left', display: 'inline-block', mt: 2 }}>
+            <Box
+              component="ul"
+              sx={{ textAlign: 'left', display: 'inline-block', mt: 2 }}
+            >
               <Typography component="li" variant="body2" color="text.secondary">
                 A drift template has been created and assigned to this tenant
               </Typography>
@@ -1771,7 +1902,11 @@ const ManageDriftPage = () => {
                 {/* Stats Card */}
                 <CippButtonCard title="Breakdown">
                   <Stack spacing={1.5}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Aligned
                       </Typography>
@@ -1782,7 +1917,11 @@ const ManageDriftPage = () => {
                         variant="outlined"
                       />
                     </Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Current
                       </Typography>
@@ -1793,7 +1932,11 @@ const ManageDriftPage = () => {
                         variant="outlined"
                       />
                     </Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Accepted
                       </Typography>
@@ -1804,7 +1947,11 @@ const ManageDriftPage = () => {
                         variant="outlined"
                       />
                     </Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Customer Specific
                       </Typography>
@@ -1814,7 +1961,11 @@ const ManageDriftPage = () => {
                         variant="outlined"
                       />
                     </Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Denied
                       </Typography>
@@ -1825,20 +1976,40 @@ const ManageDriftPage = () => {
                         variant="outlined"
                       />
                     </Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Skipped (No License)
                       </Typography>
-                      <Chip label={licenseSkippedItems.length} size="small" variant="outlined" />
+                      <Chip
+                        label={licenseSkippedItems.length}
+                        size="small"
+                        variant="outlined"
+                      />
                     </Box>
                     <Divider />
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="body2" fontWeight={600}>
                         Total
                       </Typography>
-                      <Chip label={totalPolicies} size="small" variant="filled" />
+                      <Chip
+                        label={totalPolicies}
+                        size="small"
+                        variant="filled"
+                      />
                     </Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Alignment Score
                       </Typography>
@@ -1849,7 +2020,11 @@ const ManageDriftPage = () => {
                         variant="outlined"
                       />
                     </Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
                       <Typography variant="body2" fontWeight={600}>
                         Total Score
                       </Typography>
@@ -1927,7 +2102,10 @@ const ManageDriftPage = () => {
                         { label: 'All Deviations', value: 'all' },
                         { label: 'Current Deviations', value: 'current' },
                         { label: 'Accepted', value: 'accepted' },
-                        { label: 'Customer Specific', value: 'customerspecific' },
+                        {
+                          label: 'Customer Specific',
+                          value: 'customerspecific',
+                        },
                         { label: 'Denied', value: 'denied' },
                         { label: 'Compliant', value: 'compliant' },
                       ]}
@@ -1954,7 +2132,9 @@ const ManageDriftPage = () => {
                             }
                           : null
                       }
-                      onChange={(newValue) => setSortBy(newValue?.value || 'name')}
+                      onChange={(newValue) =>
+                        setSortBy(newValue?.value || 'name')
+                      }
                       multiple={false}
                     />
                   </Stack>
@@ -1968,7 +2148,9 @@ const ManageDriftPage = () => {
                 {/* Current Deviations Section */}
                 {(!filterStatus ||
                   filterStatus.length === 0 ||
-                  filterStatus.some((f) => f.value === 'all' || f.value === 'current')) && (
+                  filterStatus.some(
+                    (f) => f.value === 'all' || f.value === 'current'
+                  )) && (
                   <Box>
                     {/* Header with bulk actions */}
                     <Box
@@ -1984,7 +2166,9 @@ const ManageDriftPage = () => {
                           <Button
                             variant="outlined"
                             endIcon={<ExpandMore />}
-                            onClick={(e) => setBulkActionsAnchorEl(e.currentTarget)}
+                            onClick={(e) =>
+                              setBulkActionsAnchorEl(e.currentTarget)
+                            }
                             size="small"
                           >
                             Bulk Actions ({selectedItems.length})
@@ -1995,28 +2179,41 @@ const ManageDriftPage = () => {
                             onClose={() => setBulkActionsAnchorEl(null)}
                           >
                             <MenuItem
-                              onClick={() => handleBulkAction('accept-all-customer-specific')}
+                              onClick={() =>
+                                handleBulkAction('accept-all-customer-specific')
+                              }
                             >
                               <CheckBox sx={{ mr: 1, color: 'success.main' }} />
                               Accept Selected Deviations - Customer Specific
                             </MenuItem>
-                            <MenuItem onClick={() => handleBulkAction('accept-all')}>
+                            <MenuItem
+                              onClick={() => handleBulkAction('accept-all')}
+                            >
                               <Check sx={{ mr: 1, color: 'info.main' }} />
                               Accept Selected Deviations
                             </MenuItem>
                             {/* Delete only applies to Intune/CA policies that exist in the tenant
                                 but not in the template, so require every selected item to qualify */}
                             {selectedSupportDelete && (
-                              <MenuItem onClick={() => handleBulkAction('deny-all-delete')}>
+                              <MenuItem
+                                onClick={() =>
+                                  handleBulkAction('deny-all-delete')
+                                }
+                              >
                                 <Block sx={{ mr: 1, color: 'error.main' }} />
                                 Deny Selected Deviations - Delete
                               </MenuItem>
                             )}
                             {/* Remediate only applies to policies that are in the template */}
                             {selectedSupportRemediate && (
-                              <MenuItem onClick={() => handleBulkAction('deny-all-remediate')}>
+                              <MenuItem
+                                onClick={() =>
+                                  handleBulkAction('deny-all-remediate')
+                                }
+                              >
                                 <Cancel sx={{ mr: 1, color: 'error.main' }} />
-                                Deny Selected Deviations - Remediate to align with template
+                                Deny Selected Deviations - Remediate to align
+                                with template
                               </MenuItem>
                             )}
                             <MenuItem onClick={handleRemoveDriftCustomization}>
@@ -2034,7 +2231,9 @@ const ManageDriftPage = () => {
                 {/* Accepted Deviations Section */}
                 {(!filterStatus ||
                   filterStatus.length === 0 ||
-                  filterStatus.some((f) => f.value === 'all' || f.value === 'accepted')) &&
+                  filterStatus.some(
+                    (f) => f.value === 'all' || f.value === 'accepted'
+                  )) &&
                   filteredAcceptedItems.length > 0 && (
                     <Box>
                       <Typography variant="h6" sx={{ mb: 2 }}>
@@ -2047,7 +2246,9 @@ const ManageDriftPage = () => {
                 {/* Customer Specific Deviations Section */}
                 {(!filterStatus ||
                   filterStatus.length === 0 ||
-                  filterStatus.some((f) => f.value === 'all' || f.value === 'customerspecific')) &&
+                  filterStatus.some(
+                    (f) => f.value === 'all' || f.value === 'customerspecific'
+                  )) &&
                   filteredCustomerSpecificItems.length > 0 && (
                     <Box>
                       <Typography variant="h6" sx={{ mb: 2 }}>
@@ -2060,7 +2261,9 @@ const ManageDriftPage = () => {
                 {/* Denied Deviations Section */}
                 {(!filterStatus ||
                   filterStatus.length === 0 ||
-                  filterStatus.some((f) => f.value === 'all' || f.value === 'denied')) &&
+                  filterStatus.some(
+                    (f) => f.value === 'all' || f.value === 'denied'
+                  )) &&
                   filteredDeniedItems.length > 0 && (
                     <Box>
                       <Typography variant="h6" sx={{ mb: 2 }}>
@@ -2073,7 +2276,9 @@ const ManageDriftPage = () => {
                 {/* Compliant Standards Section - Only shown when filtered by All or Compliant */}
                 {(!filterStatus ||
                   filterStatus.length === 0 ||
-                  filterStatus.some((f) => f.value === 'all' || f.value === 'compliant')) &&
+                  filterStatus.some(
+                    (f) => f.value === 'all' || f.value === 'compliant'
+                  )) &&
                   filteredAlignedItems.length > 0 && (
                     <Box>
                       <Typography variant="h6" sx={{ mb: 2 }}>
@@ -2089,9 +2294,13 @@ const ManageDriftPage = () => {
                     <Typography variant="h6" sx={{ mb: 2 }}>
                       Skipped - No License Available
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      These standards were skipped because the required licenses are not available
-                      for this tenant.
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2 }}
+                    >
+                      These standards were skipped because the required licenses
+                      are not available for this tenant.
                     </Typography>
                     <CippBannerListCard
                       items={filteredLicenseSkippedItems}
@@ -2117,7 +2326,9 @@ const ManageDriftPage = () => {
               label: 'Reason for change (Mandatory)',
               required: true,
             },
-            ...(actionData.data?.deviations?.some((d) => d.status === 'DeniedRemediate')
+            ...(actionData.data?.deviations?.some(
+              (d) => d.status === 'DeniedRemediate'
+            )
               ? [
                   {
                     type: 'switch',
@@ -2146,7 +2357,10 @@ const ManageDriftPage = () => {
             },
           }}
           row={actionData.data}
-          relatedQueryKeys={[`TenantDrift-${tenantFilter}`, `PersistentDriftTasks-${tenantFilter}`]}
+          relatedQueryKeys={[
+            `TenantDrift-${tenantFilter}`,
+            `PersistentDriftTasks-${tenantFilter}`,
+          ]}
         />
       )}
 

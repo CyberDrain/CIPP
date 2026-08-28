@@ -1,6 +1,13 @@
 import NextLink from 'next/link'
 import PropTypes from 'prop-types'
-import { Box, Button, Card, LinearProgress, Stack, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  Card,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { Grid } from '@mui/system'
 import { blue } from '../../theme/colors'
@@ -88,7 +95,8 @@ export const CippAuthShell = ({
 }) => {
   // href wins over onClick so a caller passing both gets one control, not two
   const hasPrimary = Boolean(actionText) && Boolean(actionHref || onActionClick)
-  const hasSecondary = Boolean(secondaryText) && Boolean(secondaryHref || onSecondaryClick)
+  const hasSecondary =
+    Boolean(secondaryText) && Boolean(secondaryHref || onSecondaryClick)
 
   return (
     <Box sx={{ ...fullHeight, bgcolor: 'background.default' }}>
@@ -97,7 +105,10 @@ export const CippAuthShell = ({
           a phone is half the screen of empty brand colour above the sign-in card — so on
           xs the panel sizes to its own content instead. The gap below it is the same
           background.default the right half sits on, so the seam is invisible. */}
-      <Grid container sx={{ ...fullHeight, alignItems: { xs: 'flex-start', md: 'stretch' } }}>
+      <Grid
+        container
+        sx={{ ...fullHeight, alignItems: { xs: 'flex-start', md: 'stretch' } }}
+      >
         <Grid
           size={{ xs: 12, md: 6 }}
           sx={{
@@ -213,11 +224,18 @@ export const CippAuthShell = ({
         >
           <Box sx={{ width: '100%', maxWidth: 520 }}>
             <Card aria-busy={busy || undefined} sx={{ overflow: 'hidden' }}>
-              <Box sx={{ height: 4 }}>{busy && <LinearProgress sx={{ height: 4 }} />}</Box>
+              <Box sx={{ height: 4 }}>
+                {busy && <LinearProgress sx={{ height: 4 }} />}
+              </Box>
               <Box sx={{ p: { xs: 3, md: 4 } }}>
                 {/* icon is a sibling of the title, never nested inside it, so the
                     heading stays a single unambiguous text node */}
-                <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1.5}
+                  sx={{ mb: 2 }}
+                >
                   {titleIcon}
                   <Typography variant="h4" component="h1">
                     {title}
@@ -226,7 +244,10 @@ export const CippAuthShell = ({
 
                 {description &&
                   (typeof description === 'string' ? (
-                    <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                    <Typography
+                      variant="body1"
+                      sx={{ color: 'text.secondary' }}
+                    >
                       {description}
                     </Typography>
                   ) : (
@@ -234,7 +255,13 @@ export const CippAuthShell = ({
                   ))}
 
                 {(hasPrimary || hasSecondary) && (
-                  <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" sx={{ mt: 4 }}>
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    useFlexGap
+                    flexWrap="wrap"
+                    sx={{ mt: 4 }}
+                  >
                     {hasPrimary &&
                       (actionHref ? (
                         <Button
@@ -270,7 +297,11 @@ export const CippAuthShell = ({
                           {secondaryText}
                         </Button>
                       ) : (
-                        <Button onClick={onSecondaryClick} variant="outlined" size="large">
+                        <Button
+                          onClick={onSecondaryClick}
+                          variant="outlined"
+                          size="large"
+                        >
                           {secondaryText}
                         </Button>
                       ))}

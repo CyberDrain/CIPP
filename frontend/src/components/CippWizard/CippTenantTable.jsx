@@ -1,12 +1,20 @@
-import { Button, SvgIcon } from "@mui/material";
-import { CippTablePage } from "../CippComponents/CippTablePage.jsx";
-import { Sync, Block, PlayArrow, RestartAlt, Delete, Add, Refresh } from "@mui/icons-material";
-import { useDialog } from "../../hooks/use-dialog";
-import { CippApiDialog } from "../CippComponents/CippApiDialog";
-import cacheTypes from "../../data/CIPPDBCacheTypes.json";
+import { Button, SvgIcon } from '@mui/material'
+import { CippTablePage } from '../CippComponents/CippTablePage.jsx'
+import {
+  Sync,
+  Block,
+  PlayArrow,
+  RestartAlt,
+  Delete,
+  Add,
+  Refresh,
+} from '@mui/icons-material'
+import { useDialog } from '../../hooks/use-dialog'
+import { CippApiDialog } from '../CippComponents/CippApiDialog'
+import cacheTypes from '../../data/CIPPDBCacheTypes.json'
 
 export const CippTenantTable = ({
-  title = "Tenants",
+  title = 'Tenants',
   tenantInTitle = false,
   customColumns = null,
   customFilters = null,
@@ -15,78 +23,80 @@ export const CippTenantTable = ({
   showAllTenantsSelector = true,
   onRefreshButtonClick = null,
 }) => {
-  const createDialog = useDialog();
+  const createDialog = useDialog()
 
   // Actions formatted as per your guidelines
   const actions = [
     {
-      label: "Exclude Tenants",
-      type: "POST",
+      label: 'Exclude Tenants',
+      type: 'POST',
       url: `/api/ExecExcludeTenant?AddExclusion=true`,
       icon: <Block />,
-      data: { value: "customerId" },
-      confirmText: "Are you sure you want to exclude [displayName]?",
+      data: { value: 'customerId' },
+      confirmText: 'Are you sure you want to exclude [displayName]?',
       multiPost: false,
-      condition: (row) => row.displayName !== "*Partner Tenant",
+      condition: (row) => row.displayName !== '*Partner Tenant',
     },
     {
-      label: "Include Tenants",
-      type: "POST",
+      label: 'Include Tenants',
+      type: 'POST',
       url: `/api/ExecExcludeTenant?RemoveExclusion=true`,
       icon: <Add />,
-      data: { value: "customerId" },
-      confirmText: "Are you sure you want to include [displayName]?",
+      data: { value: 'customerId' },
+      confirmText: 'Are you sure you want to include [displayName]?',
       multiPost: false,
-      condition: (row) => row.displayName !== "*Partner Tenant",
+      condition: (row) => row.displayName !== '*Partner Tenant',
     },
     {
-      label: "Refresh CPV Permissions",
-      type: "POST",
+      label: 'Refresh CPV Permissions',
+      type: 'POST',
       url: `/api/ExecCPVPermissions`,
       icon: <PlayArrow />,
-      data: { tenantFilter: "customerId" },
-      confirmText: "Are you sure you want to refresh the CPV permissions for [displayName]?",
+      data: { tenantFilter: 'customerId' },
+      confirmText:
+        'Are you sure you want to refresh the CPV permissions for [displayName]?',
       multiPost: false,
     },
     {
-      label: "Reset CPV Permissions",
-      type: "POST",
+      label: 'Reset CPV Permissions',
+      type: 'POST',
       url: `/api/ExecCPVPermissions?&ResetSP=true`,
       icon: <RestartAlt />,
-      data: { tenantFilter: "customerId" },
+      data: { tenantFilter: 'customerId' },
       confirmText:
-        "Are you sure you want to reset the CPV permissions for [displayName]? (This will delete the Service Principal and re-add it.)",
+        'Are you sure you want to reset the CPV permissions for [displayName]? (This will delete the Service Principal and re-add it.)',
       multiPost: false,
       condition: (row) =>
-        row.displayName !== "*Partner Tenant" && row.delegatedPrivilegeStatus !== "directTenant",
+        row.displayName !== '*Partner Tenant' &&
+        row.delegatedPrivilegeStatus !== 'directTenant',
     },
     {
-      label: "Remove Tenant",
-      type: "POST",
+      label: 'Remove Tenant',
+      type: 'POST',
       url: `/api/ExecRemoveTenant`,
       icon: <Delete />,
-      data: { TenantID: "customerId" },
+      data: { TenantID: 'customerId' },
       confirmText:
-        "Are you sure you want to remove [displayName]? If this is a Direct Tenant, this will no longer be accessible until you add it via the Setup Wizard.",
+        'Are you sure you want to remove [displayName]? If this is a Direct Tenant, this will no longer be accessible until you add it via the Setup Wizard.',
       multiPost: false,
-      condition: (row) => row.displayName !== "*Partner Tenant",
+      condition: (row) => row.displayName !== '*Partner Tenant',
     },
     {
-      label: "Refresh CIPPDB Cache",
-      type: "GET",
+      label: 'Refresh CIPPDB Cache',
+      type: 'GET',
       url: `/api/ExecCIPPDBCache`,
       icon: <Refresh />,
-      data: { Name: "Name", TenantFilter: "customerId" },
-      confirmText: "Select the cache type to refresh for [displayName]:",
+      data: { Name: 'Name', TenantFilter: 'customerId' },
+      confirmText: 'Select the cache type to refresh for [displayName]:',
       multiPost: false,
       allowResubmit: true,
       hideBulk: true,
       fields: [
         {
-          type: "autoComplete",
-          name: "Name",
-          label: "Cache Type",
-          placeholder: "Select a cache type",
+          type: 'autoComplete',
+          name: 'Name',
+          label: 'Cache Type',
+          placeholder: 'Select a cache type',
           options: cacheTypes.map((cacheType) => ({
             label: cacheType.friendlyName,
             value: cacheType.type,
@@ -98,54 +108,55 @@ export const CippTenantTable = ({
         },
       ],
       customDataformatter: (rowData, actionData, formData) => {
-        const tenantFilter = rowData?.defaultDomainName || rowData?.customerId || "";
-        const cacheTypeName = formData.Name?.value || formData.Name || "";
+        const tenantFilter =
+          rowData?.defaultDomainName || rowData?.customerId || ''
+        const cacheTypeName = formData.Name?.value || formData.Name || ''
         return {
           Name: cacheTypeName,
           TenantFilter: tenantFilter,
-        };
+        }
       },
     },
-  ];
+  ]
 
   // Offcanvas details
   const offCanvas = {
     extendedInfoFields: [
-      "displayName",
-      "defaultDomainName",
-      "delegatedPrivilegeStatus",
-      "Excluded",
-      "ExcludeDate",
-      "ExcludeUser",
+      'displayName',
+      'defaultDomainName',
+      'delegatedPrivilegeStatus',
+      'Excluded',
+      'ExcludeDate',
+      'ExcludeUser',
     ],
     actions: actions,
-  };
+  }
 
   // Columns for the table
   const columns = customColumns || [
-    "displayName", // Tenant Name
-    "defaultDomainName", // Default Domain
-    "delegatedPrivilegeStatus", // Delegated Privilege Status
-    "Excluded", // Excluded Status
-    "ExcludeDate", // Exclude Date
-    "ExcludeUser", // Exclude User
-  ];
+    'displayName', // Tenant Name
+    'defaultDomainName', // Default Domain
+    'delegatedPrivilegeStatus', // Delegated Privilege Status
+    'Excluded', // Excluded Status
+    'ExcludeDate', // Exclude Date
+    'ExcludeUser', // Exclude User
+  ]
 
   // Default filters
   const defaultFilters = [
     {
-      filterName: "Included tenants",
-      value: [{ id: "Excluded", value: "No" }],
-      type: "column",
+      filterName: 'Included tenants',
+      value: [{ id: 'Excluded', value: 'No' }],
+      type: 'column',
     },
     {
-      filterName: "Excluded tenants",
-      value: [{ id: "Excluded", value: "Yes" }],
-      type: "column",
+      filterName: 'Excluded tenants',
+      value: [{ id: 'Excluded', value: 'Yes' }],
+      type: 'column',
     },
-  ];
+  ]
 
-  const filters = customFilters || defaultFilters;
+  const filters = customFilters || defaultFilters
 
   return (
     <>
@@ -182,24 +193,24 @@ export const CippTenantTable = ({
           createDialog={createDialog}
           fields={[
             {
-              type: "textField",
-              name: "tenantFilter",
-              label: "Default Domain Name or Tenant ID",
+              type: 'textField',
+              name: 'tenantFilter',
+              label: 'Default Domain Name or Tenant ID',
               disableVariables: true,
             },
           ]}
           api={{
-            url: "/api/ListTenants",
+            url: '/api/ListTenants',
             confirmText:
-              "This will refresh the tenant and update the tenant details. This can be used to force a tenant to reappear in the list. Run this with no Tenant Filter to refresh all tenants.",
-            type: "GET",
-            data: { TriggerRefresh: "!true" },
-            replacementBehaviour: "removeNulls",
+              'This will refresh the tenant and update the tenant details. This can be used to force a tenant to reappear in the list. Run this with no Tenant Filter to refresh all tenants.',
+            type: 'GET',
+            data: { TriggerRefresh: '!true' },
+            replacementBehaviour: 'removeNulls',
           }}
         />
       )}
     </>
-  );
-};
+  )
+}
 
-export default CippTenantTable;
+export default CippTenantTable

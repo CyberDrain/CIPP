@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react'
 import {
   Badge,
   Box,
@@ -9,13 +9,13 @@ import {
   ListItemText,
   SvgIcon,
   Typography,
-} from "@mui/material";
+} from '@mui/material'
 import {
   ModernSearchContainer,
   ModernSearchInput,
   ModernButton,
   ModernIconButton,
-} from "./toolbar-primitives";
+} from './toolbar-primitives'
 import {
   ArrowDownward,
   ArrowUpward,
@@ -24,11 +24,11 @@ import {
   Search,
   SwapVert,
   TableChart,
-} from "@mui/icons-material";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
-import { CippBottomSheet } from "../CippComponents/CippBottomSheet";
-import { CippTableFilterSheet } from "./CippTableFilterSheet";
-import { useSheetHandoff } from "../../hooks/use-sheet-handoff";
+} from '@mui/icons-material'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
+import { CippBottomSheet } from '../CippComponents/CippBottomSheet'
+import { CippTableFilterSheet } from './CippTableFilterSheet'
+import { useSheetHandoff } from '../../hooks/use-sheet-handoff'
 
 // Presentational mobile controls for the card list. All filter/sort/visibility state and
 // handlers are owned by CIPPTableToptoolbar (the same instance the desktop toolbar uses),
@@ -65,62 +65,67 @@ export const CippMobileTableControls = (props) => {
     embedded = false,
     queueTracker,
     dataSourceControls,
-  } = props;
+  } = props
 
-  const [sortOpen, setSortOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [bulkOpen, setBulkOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [bulkOpen, setBulkOpen] = useState(false)
   // Graph filters, the API-response drawer and bulk dialogs are all Modals; let the sheet
   // finish closing before they mount (see useSheetHandoff).
-  const filterSheet = useSheetHandoff(() => setFilterOpen(false));
-  const bulkSheet = useSheetHandoff(() => setBulkOpen(false));
+  const filterSheet = useSheetHandoff(() => setFilterOpen(false))
+  const bulkSheet = useSheetHandoff(() => setBulkOpen(false))
 
-  const sorting = table.getState().sorting ?? [];
+  const sorting = table.getState().sorting ?? []
   const sortableColumns = table
     .getAllColumns()
-    .filter((column) => !column.id.startsWith("mrt-") && column.getCanSort());
+    .filter((column) => !column.id.startsWith('mrt-') && column.getCanSort())
 
   // Tap cycles: none -> asc -> desc -> none. Single-column sort — replaces, not appends.
   const cycleSort = (columnId) => {
-    const current = sorting.find((s) => s.id === columnId);
+    const current = sorting.find((s) => s.id === columnId)
     if (!current) {
-      table.setSorting([{ id: columnId, desc: false }]);
+      table.setSorting([{ id: columnId, desc: false }])
     } else if (!current.desc) {
-      table.setSorting([{ id: columnId, desc: true }]);
+      table.setSorting([{ id: columnId, desc: true }])
     } else {
-      table.setSorting([]);
+      table.setSorting([])
     }
-  };
+  }
 
-  const selectedCount = table.getSelectedRowModel().rows.length;
-  const totalCount = table.getFilteredRowModel().rows.length;
-  const enabledBulkActions = customBulkActions.filter((action) => !action.disabled);
+  const selectedCount = table.getSelectedRowModel().rows.length
+  const totalCount = table.getFilteredRowModel().rows.length
+  const enabledBulkActions = customBulkActions.filter(
+    (action) => !action.disabled
+  )
 
   return (
     <>
       <Box
         sx={{
-          position: "sticky",
+          position: 'sticky',
           top: 0,
           zIndex: 10,
-          display: "flex",
+          display: 'flex',
           gap: 1,
           px: embedded ? 0 : 1,
           py: 1,
           // matches the card-view paper surface it sticks over
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <ModernSearchContainer elevation={0} sx={{ height: 44, flex: 1, minWidth: 0 }}>
-          <Search fontSize="small" sx={{ color: "text.secondary" }} />
+        <ModernSearchContainer
+          elevation={0}
+          sx={{ height: 44, flex: 1, minWidth: 0 }}
+        >
+          <Search fontSize="small" sx={{ color: 'text.secondary' }} />
           <ModernSearchInput
             type="search"
             placeholder="Search…"
             value={searchValue}
             onChange={onSearchChange}
-            inputProps={{ enterKeyHint: "search", "aria-label": "Search" }}
+            inputProps={{ enterKeyHint: 'search', 'aria-label': 'Search' }}
           />
         </ModernSearchContainer>
         {selectionEnabled && !selectModeLocked && (
@@ -128,13 +133,17 @@ export const CippMobileTableControls = (props) => {
             onClick={() => onSelectModeChange?.(!selectMode)}
             sx={{ height: 44, flexShrink: 0 }}
           >
-            {selectMode ? "Cancel" : "Select"}
+            {selectMode ? 'Cancel' : 'Select'}
           </ModernButton>
         )}
         <ModernIconButton
           aria-label="Sort"
           onClick={() => setSortOpen(true)}
-          sx={sorting.length ? { borderColor: "primary.main", color: "primary.main" } : undefined}
+          sx={
+            sorting.length
+              ? { borderColor: 'primary.main', color: 'primary.main' }
+              : undefined
+          }
         >
           <SwapVert fontSize="small" />
         </ModernIconButton>
@@ -144,7 +153,7 @@ export const CippMobileTableControls = (props) => {
           onClick={() => setFilterOpen(true)}
           sx={
             activeSlotCount > 0
-              ? { borderColor: "primary.main", color: "primary.main" }
+              ? { borderColor: 'primary.main', color: 'primary.main' }
               : undefined
           }
         >
@@ -171,18 +180,26 @@ export const CippMobileTableControls = (props) => {
         onClose={() => setSortOpen(false)}
         title="Sort by"
         footer={
-          <Button fullWidth variant="contained" sx={{ minHeight: 44 }} onClick={() => setSortOpen(false)}>
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{ minHeight: 44 }}
+            onClick={() => setSortOpen(false)}
+          >
             Done
           </Button>
         }
       >
         {sortableColumns.map((column) => {
-          const current = sorting.find((s) => s.id === column.id);
+          const current = sorting.find((s) => s.id === column.id)
           return (
             <ListItemButton
               key={column.id}
               onClick={() => cycleSort(column.id)}
-              sx={{ minHeight: 48, color: current ? "primary.main" : "inherit" }}
+              sx={{
+                minHeight: 48,
+                color: current ? 'primary.main' : 'inherit',
+              }}
             >
               <ListItemText
                 primary={getCippTranslation(column.id)}
@@ -194,12 +211,15 @@ export const CippMobileTableControls = (props) => {
                 </SvgIcon>
               )}
             </ListItemButton>
-          );
+          )
         })}
         {sorting.length > 0 && (
           <>
             <Divider />
-            <ListItemButton onClick={() => table.setSorting([])} sx={{ minHeight: 48 }}>
+            <ListItemButton
+              onClick={() => table.setSorting([])}
+              sx={{ minHeight: 48 }}
+            >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <RestartAlt fontSize="small" />
               </ListItemIcon>
@@ -237,29 +257,33 @@ export const CippMobileTableControls = (props) => {
       {selectMode && selectionEnabled && (
         <Box
           sx={{
-            position: fixedChrome ? "fixed" : "sticky",
+            position: fixedChrome ? 'fixed' : 'sticky',
             left: 0,
             right: 0,
             bottom: 0,
             zIndex: (theme) => theme.zIndex.speedDial,
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 1,
             px: 1.5,
             pt: 1.25,
-            pb: "calc(env(safe-area-inset-bottom) + 12px)",
-            bgcolor: "background.paper",
+            pb: 'calc(env(safe-area-inset-bottom) + 12px)',
+            bgcolor: 'background.paper',
             borderTop: 1,
-            borderColor: "divider",
+            borderColor: 'divider',
           }}
         >
-          <Typography variant="subtitle2" aria-live="polite" sx={{ flexShrink: 0 }}>
+          <Typography
+            variant="subtitle2"
+            aria-live="polite"
+            sx={{ flexShrink: 0 }}
+          >
             {selectedCount} selected
           </Typography>
           <Button
             size="small"
             onClick={() => table.toggleAllRowsSelected(true)}
-            sx={{ mr: "auto", flexShrink: 0 }}
+            sx={{ mr: 'auto', flexShrink: 0 }}
           >
             Select all ({totalCount})
           </Button>
@@ -278,7 +302,7 @@ export const CippMobileTableControls = (props) => {
               variant="outlined"
               color="inherit"
               onClick={() => onSelectModeChange?.(false)}
-              sx={{ minHeight: 40, borderColor: "divider" }}
+              sx={{ minHeight: 40, borderColor: 'divider' }}
             >
               Done
             </Button>
@@ -308,5 +332,5 @@ export const CippMobileTableControls = (props) => {
         ))}
       </CippBottomSheet>
     </>
-  );
-};
+  )
+}

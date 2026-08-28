@@ -2,7 +2,11 @@ import React from 'react'
 import { screen } from '@testing-library/react'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
-try { TimeAgo.addDefaultLocale(en) } catch (e) { /* already added */ }
+try {
+  TimeAgo.addDefaultLocale(en)
+} catch (e) {
+  /* already added */
+}
 import { renderWithTheme } from '../../test-utils'
 import { CippTimeAgo } from '../../../src/components/CippComponents/CippTimeAgo'
 

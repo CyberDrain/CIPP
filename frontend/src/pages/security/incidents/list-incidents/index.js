@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { Layout as DashboardLayout } from '../../../../layouts/index.js'
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
-import { PersonAdd, PlayArrow, Assignment, Done, Warning } from '@mui/icons-material'
+import {
+  PersonAdd,
+  PlayArrow,
+  Assignment,
+  Done,
+  Warning,
+} from '@mui/icons-material'
 import {
   Button,
   Accordion,
@@ -30,23 +36,34 @@ const Page = () => {
   const pageTitle = 'Incidents List'
   const userSettingsDefaults = useSettings()
 
-  const formControl = useForm({ defaultValues: { startDate: defaultStartDate, endDate: null } })
+  const formControl = useForm({
+    defaultValues: { startDate: defaultStartDate, endDate: null },
+  })
   const [expanded, setExpanded] = useState(false)
   const [filterEnabled, setFilterEnabled] = useState(true)
   const [startDate, setStartDate] = useState(
-    new Date(defaultStartDate * 1000).toISOString().split('T')[0].replace(/-/g, '')
+    new Date(defaultStartDate * 1000)
+      .toISOString()
+      .split('T')[0]
+      .replace(/-/g, '')
   )
   const [endDate, setEndDate] = useState(null)
 
   const onSubmit = (data) => {
     setStartDate(
       data.startDate
-        ? new Date(data.startDate * 1000).toISOString().split('T')[0].replace(/-/g, '')
+        ? new Date(data.startDate * 1000)
+            .toISOString()
+            .split('T')[0]
+            .replace(/-/g, '')
         : null
     )
     setEndDate(
       data.endDate
-        ? new Date(data.endDate * 1000).toISOString().split('T')[0].replace(/-/g, '')
+        ? new Date(data.endDate * 1000)
+            .toISOString()
+            .split('T')[0]
+            .replace(/-/g, '')
         : null
     )
     setFilterEnabled(data.startDate !== null || data.endDate !== null)
@@ -108,7 +125,10 @@ const Page = () => {
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              <Button variant="contained" onClick={formControl.handleSubmit(onSubmit)}>
+              <Button
+                variant="contained"
+                onClick={formControl.handleSubmit(onSubmit)}
+              >
                 Apply
               </Button>
               <Button
@@ -260,6 +280,8 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+)
 
 export default Page

@@ -1,2 +1,6 @@
 build
 out
+public/intune-definitions/
+public/intuneCategories.json
+public/mockServiceWorker.js
+src/data/M365Licenses.json

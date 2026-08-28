@@ -102,9 +102,9 @@ describe('attachParentRow', () => {
 
 describe('getRowTenant', () => {
   it('returns the current tenant outside AllTenants', () => {
-    expect(
-      getRowTenant({ Tenant: 'other.com' }, 'contoso.com')
-    ).toBe('contoso.com')
+    expect(getRowTenant({ Tenant: 'other.com' }, 'contoso.com')).toBe(
+      'contoso.com'
+    )
   })
 
   it('prefers the row tenant in AllTenants', () => {

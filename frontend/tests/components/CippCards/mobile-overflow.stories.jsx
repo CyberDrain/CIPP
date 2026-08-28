@@ -78,7 +78,9 @@ export const ImageCardAtPhoneWidth = {
       // collapsing the illustration to zero width — "no overflow" while showing nothing
       const img = canvasElement.querySelector('img')
       const imgBox = img.getBoundingClientRect()
-      expect(imgBox.top).toBeGreaterThanOrEqual(title.getBoundingClientRect().bottom)
+      expect(imgBox.top).toBeGreaterThanOrEqual(
+        title.getBoundingClientRect().bottom
+      )
       expect(imgBox.width).toBeGreaterThanOrEqual(200)
       noBodyOverflow()
     })
@@ -95,7 +97,11 @@ const PopperHost = () => {
   useEffect(() => setAnchorEl(anchorRef.current), [])
   return (
     <Box sx={{ p: 2 }}>
-      <div ref={anchorRef} data-testid="anchor" style={{ width: 200, height: 40 }} />
+      <div
+        ref={anchorRef}
+        data-testid="anchor"
+        style={{ width: 200, height: 40 }}
+      />
       {anchorEl && (
         <CippVariableAutocomplete
           open
@@ -144,7 +150,8 @@ export const SsoPermissionTableReadable = {
         rows={[
           {
             name: 'Policy.ReadWrite.ApplicationConfiguration',
-            reason: 'Exempts CIPP from a tenant app management policy that blocks secrets.',
+            reason:
+              'Exempts CIPP from a tenant app management policy that blocks secrets.',
           },
         ]}
       />
@@ -154,7 +161,9 @@ export const SsoPermissionTableReadable = {
     const onAPhone = await shrinkToPhoneViewport()
     if (!onAPhone) return
     const canvas = within(canvasElement)
-    const name = await canvas.findByText(/ApplicationConfiguration/, { exact: false })
+    const name = await canvas.findByText(/ApplicationConfiguration/, {
+      exact: false,
+    })
     await waitFor(() => {
       // reachable: the name's box ends inside the card, not under its clipped edge
       const card = name.closest('.MuiCard-root')

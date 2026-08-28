@@ -33,7 +33,11 @@ const Harness = (props) => {
   const [open, setOpen] = useState(false)
   return (
     <Box sx={{ p: 2 }}>
-      <Button variant="contained" data-testid="open-nav" onClick={() => setOpen(true)}>
+      <Button
+        variant="contained"
+        data-testid="open-nav"
+        onClick={() => setOpen(true)}
+      >
         Open nav
       </Button>
       <MobileNav
@@ -78,14 +82,23 @@ export const DragClosesFromWhereItWasLeft = {
       return
     }
     await waitFor(() =>
-      expect(new DOMMatrixReadOnly(getComputedStyle(paper).transform).m41).toBe(0)
+      expect(new DOMMatrixReadOnly(getComputedStyle(paper).transform).m41).toBe(
+        0
+      )
     )
 
     // Dispatched on a node inside the paper and left to bubble: MUI reads event.target to
     // decide the gesture started in the drawer, so firing at the document bails immediately.
     const target = paper.querySelector('nav') ?? paper
     const at = (clientX) =>
-      new Touch({ identifier: 1, target, clientX, clientY: 400, pageX: clientX, pageY: 400 })
+      new Touch({
+        identifier: 1,
+        target,
+        clientX,
+        clientY: 400,
+        pageX: clientX,
+        pageY: 400,
+      })
     const fire = (type, clientX) =>
       target.dispatchEvent(
         new TouchEvent(type, {
@@ -106,7 +119,8 @@ export const DragClosesFromWhereItWasLeft = {
       await tick()
     }
 
-    const draggedTo = new DOMMatrixReadOnly(getComputedStyle(paper).transform).m41
+    const draggedTo = new DOMMatrixReadOnly(getComputedStyle(paper).transform)
+      .m41
     expect(draggedTo).toBeLessThan(-100)
     fire('touchend', 40)
 
@@ -123,7 +137,9 @@ export const DragClosesFromWhereItWasLeft = {
     expect(firstExitFrame).toBeLessThan(draggedTo * 0.6)
 
     await waitFor(() =>
-      expect(document.querySelector('.MuiDrawer-root').getAttribute('aria-hidden')).toBe('true')
+      expect(
+        document.querySelector('.MuiDrawer-root').getAttribute('aria-hidden')
+      ).toBe('true')
     )
   },
 }
@@ -140,8 +156,14 @@ const tallItems = [
         title: 'Advanced',
         path: '/cipp/advanced',
         items: [
-          { title: 'Super Admin', path: '/cipp/advanced/super-admin/tenant-mode' },
-          { title: 'Container Management', path: '/cipp/advanced/container-management/status' },
+          {
+            title: 'Super Admin',
+            path: '/cipp/advanced/super-admin/tenant-mode',
+          },
+          {
+            title: 'Container Management',
+            path: '/cipp/advanced/container-management/status',
+          },
           { title: 'Authentication', path: '/cipp/advanced/authentication' },
           { title: 'Timers', path: '/cipp/advanced/timers' },
         ],
@@ -172,7 +194,9 @@ export const NavListIsTheOnlyScroller = {
       return
     }
     await waitFor(() =>
-      expect(new DOMMatrixReadOnly(getComputedStyle(paper).transform).m41).toBe(0)
+      expect(new DOMMatrixReadOnly(getComputedStyle(paper).transform).m41).toBe(
+        0
+      )
     )
 
     await userEvent.click(await within(paper).findByText('CIPP'))

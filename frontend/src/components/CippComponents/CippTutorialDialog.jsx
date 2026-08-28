@@ -29,7 +29,8 @@ import { useTutorials } from '../../contexts/tutorial-context'
 import { useRouter } from 'next/router'
 
 const CippTutorialDialog = ({ open, onClose }) => {
-  const { tutorials, completedIds, startTutorial, resetProgress } = useTutorials()
+  const { tutorials, completedIds, startTutorial, resetProgress } =
+    useTutorials()
   const [search, setSearch] = useState('')
   const router = useRouter()
 
@@ -61,7 +62,13 @@ const CippTutorialDialog = ({ open, onClose }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <TutorialIcon color="primary" />
           <Typography variant="h6">Tutorials</Typography>
@@ -92,20 +99,29 @@ const CippTutorialDialog = ({ open, onClose }) => {
         />
 
         {categoryKeys.length === 0 && (
-          <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+          <Typography
+            color="text.secondary"
+            sx={{ textAlign: 'center', py: 4 }}
+          >
             No tutorials found.
           </Typography>
         )}
 
         {categoryKeys.map((category) => (
           <Box key={category} sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ px: 2, py: 0.5 }}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ px: 2, py: 0.5 }}
+            >
               {category}
             </Typography>
             <List dense disablePadding>
               {grouped[category].map((tutorial) => {
                 const isCompleted = completedIds.includes(tutorial.id)
-                const isOnPage = !tutorial.pages?.length || tutorial.pages.includes(router.pathname)
+                const isOnPage =
+                  !tutorial.pages?.length ||
+                  tutorial.pages.includes(router.pathname)
 
                 return (
                   <ListItemButton
@@ -128,11 +144,24 @@ const CippTutorialDialog = ({ open, onClose }) => {
                         secondary: { variant: 'caption' },
                       }}
                     />
-                    <Box sx={{ display: 'flex', gap: 0.5, ml: 1, flexShrink: 0 }}>
+                    <Box
+                      sx={{ display: 'flex', gap: 0.5, ml: 1, flexShrink: 0 }}
+                    >
                       {isCompleted && (
-                        <Chip label="Done" size="small" color="success" variant="outlined" />
+                        <Chip
+                          label="Done"
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                        />
                       )}
-                      {!isOnPage && <Chip label="Navigates away" size="small" variant="outlined" />}
+                      {!isOnPage && (
+                        <Chip
+                          label="Navigates away"
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
                       <Chip
                         label={`${tutorial.steps?.length || 0} steps`}
                         size="small"
@@ -148,7 +177,11 @@ const CippTutorialDialog = ({ open, onClose }) => {
         ))}
       </DialogContent>
       <DialogActions>
-        <Typography variant="caption" color="text.secondary" sx={{ mr: 'auto', pl: 2 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mr: 'auto', pl: 2 }}
+        >
           {completedIds.length} of {tutorials.length} completed
         </Typography>
         <Button onClick={onClose}>Close</Button>

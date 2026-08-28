@@ -1,5 +1,8 @@
 const hasOwn = (row, key) =>
-  Boolean(key) && row != null && typeof row === 'object' && Object.prototype.hasOwnProperty.call(row, key)
+  Boolean(key) &&
+  row != null &&
+  typeof row === 'object' &&
+  Object.prototype.hasOwnProperty.call(row, key)
 
 const hasPopulatedColumnValue = (row, columnId) => {
   if (!hasOwn(row, columnId)) {
@@ -36,8 +39,16 @@ export const subTableIsSelected = (sub, selectedIds) => {
 export const subTableShowsCachedColumn = (sub, data) =>
   Boolean(sub?.cachedColumn) && dataHasPopulatedColumn(data, sub.cachedColumn)
 
-export const resolveSubTableSimpleColumns = (simpleColumns, subTables, data) => {
-  if (!Array.isArray(simpleColumns) || !Array.isArray(subTables) || subTables.length === 0) {
+export const resolveSubTableSimpleColumns = (
+  simpleColumns,
+  subTables,
+  data
+) => {
+  if (
+    !Array.isArray(simpleColumns) ||
+    !Array.isArray(subTables) ||
+    subTables.length === 0
+  ) {
     return simpleColumns
   }
 
@@ -59,7 +70,9 @@ export const getSubTableDisplayColumnIds = (subTables, simpleColumns, data) => {
     if (!subTableIsSelected(sub, simpleColumns)) {
       continue
     }
-    const columnId = subTableShowsCachedColumn(sub, data) ? sub.cachedColumn : sub.id
+    const columnId = subTableShowsCachedColumn(sub, data)
+      ? sub.cachedColumn
+      : sub.id
     if (columnId) {
       ids.push(columnId)
     }
@@ -73,7 +86,11 @@ export const getSubTableDisplayColumnIds = (subTables, simpleColumns, data) => {
  * stay as MRT columns, live↔cache toggles don't look "stale" to columnOrder
  * sanitization, but the column virtualizer still blows up on pinned-index drift.
  */
-export const getInactiveSubTableColumnIds = (subTables, simpleColumns, data) => {
+export const getInactiveSubTableColumnIds = (
+  subTables,
+  simpleColumns,
+  data
+) => {
   if (!Array.isArray(subTables) || subTables.length === 0) {
     return []
   }
@@ -106,7 +123,11 @@ export const columnOrderHasStaleIds = (columnOrder, displayColumnIds) => {
  * ids — e.g. membersCsv after switching ReportDB cache → live — so this must run
  * in the same render as the column swap, not in a later useEffect.
  */
-export const sanitizeColumnOrder = (columnOrder, displayColumnIds, preferredIds = []) => {
+export const sanitizeColumnOrder = (
+  columnOrder,
+  displayColumnIds,
+  preferredIds = []
+) => {
   const displayIds = (displayColumnIds ?? []).filter(Boolean)
   if (displayIds.length === 0) {
     return columnOrder ?? []
@@ -119,9 +140,7 @@ export const sanitizeColumnOrder = (columnOrder, displayColumnIds, preferredIds 
   )
   const mrtTrailing = (columnOrder ?? []).filter(
     (id) =>
-      id &&
-      String(id).startsWith('mrt-') &&
-      !String(id).includes('select')
+      id && String(id).startsWith('mrt-') && !String(id).includes('select')
   )
   const preferred = (preferredIds ?? []).filter((id) => displayIds.includes(id))
   const selected = preferred.length > 0 ? preferred : displayIds

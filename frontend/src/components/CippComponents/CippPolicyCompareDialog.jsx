@@ -50,7 +50,12 @@ export const CippPolicyCompareDialog = ({
         sourceA: { type: 'template', templateGuid, tenantFilter },
         // standardsTemplateId lets the lookup honour the standard's fuzzy match setting, so the
         // comparison targets the policy remediation would actually overwrite.
-        sourceB: { type: 'tenantPolicyByTemplate', templateGuid, tenantFilter, standardsTemplateId },
+        sourceB: {
+          type: 'tenantPolicyByTemplate',
+          templateGuid,
+          tenantFilter,
+          standardsTemplateId,
+        },
       },
     })
     // Refire on every open so the comparison is always against the tenant's current state.
@@ -80,7 +85,9 @@ export const CippPolicyCompareDialog = ({
 
   return (
     <Dialog fullWidth maxWidth="lg" open={open} onClose={handleClose}>
-      <DialogTitle>Compare to baseline{templateName ? ` - ${templateName}` : ''}</DialogTitle>
+      <DialogTitle>
+        Compare to baseline{templateName ? ` - ${templateName}` : ''}
+      </DialogTitle>
       <DialogContent dividers>
         {compareApi.isPending && (
           <Stack spacing={2}>
@@ -105,8 +112,8 @@ export const CippPolicyCompareDialog = ({
                   <Box component="strong">
                     {results.missingPolicyName || templateName || 'this policy'}
                   </Box>{' '}
-                  exists in this tenant, so there is nothing to compare against. This is why the
-                  standard reports it as non-compliant.
+                  exists in this tenant, so there is nothing to compare against.
+                  This is why the standard reports it as non-compliant.
                 </Typography>
                 <Typography variant="body2">
                   {results.fuzzyDistance > 0
@@ -117,7 +124,13 @@ export const CippPolicyCompareDialog = ({
             ) : (
               <Alert
                 severity={results.identical ? 'success' : 'warning'}
-                icon={results.identical ? <CheckCircleIcon /> : <CompareArrowsIcon />}
+                icon={
+                  results.identical ? (
+                    <CheckCircleIcon />
+                  ) : (
+                    <CompareArrowsIcon />
+                  )
+                }
               >
                 {results.identical
                   ? 'The tenant policy matches the baseline template - no differences found.'
@@ -131,15 +144,22 @@ export const CippPolicyCompareDialog = ({
               <Alert severity="info" icon={<InfoIcon />}>
                 <AlertTitle>Matched by similar name</AlertTitle>
                 No policy exactly named{' '}
-                <Box component="strong">{templateName || 'the template'}</Box> exists in this tenant,
-                so this compares against{' '}
-                <Box component="strong">{results.matchedName}</Box> - the policy the standard&apos;s
-                fuzzy match setting would overwrite on the next remediation.
+                <Box component="strong">
+                  {templateName || 'the template'}
+                </Box>{' '}
+                exists in this tenant, so this compares against{' '}
+                <Box component="strong">{results.matchedName}</Box> - the policy
+                the standard&apos;s fuzzy match setting would overwrite on the
+                next remediation.
               </Alert>
             )}
 
             {!results.identical && comparisonRows.length > 0 && (
-              <CippPolicyDiffTable rows={comparisonRows} labelA="Baseline" labelB="Tenant" />
+              <CippPolicyDiffTable
+                rows={comparisonRows}
+                labelA="Baseline"
+                labelB="Tenant"
+              />
             )}
 
             {results.sourceAData && (

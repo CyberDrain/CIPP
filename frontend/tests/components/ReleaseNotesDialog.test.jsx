@@ -15,7 +15,9 @@ vi.mock('../../src/hooks/use-breakpoint', async (importOriginal) => ({
   useIsMobileLayout: () => layoutState.isMobile,
 }))
 
-vi.mock('../../src/api/ApiCall', async () => (await import('../mocks/api-call')).apiCallMock())
+vi.mock('../../src/api/ApiCall', async () =>
+  (await import('../mocks/api-call')).apiCallMock()
+)
 
 import { api, getResult } from '../mocks/api-call'
 import { ReleaseNotesDialog } from '../../src/components/ReleaseNotesDialog'
@@ -72,7 +74,9 @@ describe('ReleaseNotesDialog', () => {
     expect(
       await screen.findByDisplayValue('v10.9.0 - Something Newer')
     ).toBeInTheDocument()
-    expect(screen.queryByText('Notes for the hotfix that is actually running')).toBeNull()
+    expect(
+      screen.queryByText('Notes for the hotfix that is actually running')
+    ).toBeNull()
   })
 
   it('still lets you pick a hotfix release from the picker', async () => {
@@ -93,8 +97,12 @@ describe('ReleaseNotesDialog', () => {
 
     const { unmount } = renderWithProviders(<ReleaseNotesDialog />)
     await screen.findByDisplayValue('v10.9.0 - Something Newer')
-    await user.click(screen.getByRole('button', { name: "Don't show until next release" }))
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    await user.click(
+      screen.getByRole('button', { name: "Don't show until next release" })
+    )
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    )
 
     // the tag of the build being run, not the newest tag on GitHub - storing v10.9.0 here left a
     // cookie the eligibility check could never match, so the dialog reopened on every page load
@@ -113,7 +121,9 @@ describe('ReleaseNotesDialog', () => {
 
     renderWithProviders(<ReleaseNotesDialog />)
 
-    expect(await screen.findByDisplayValue('v10.9.0 - Something Newer')).toBeInTheDocument()
+    expect(
+      await screen.findByDisplayValue('v10.9.0 - Something Newer')
+    ).toBeInTheDocument()
   })
 
   // On phones the two low-emphasis actions live behind the kebab as bottom-sheet rows —
@@ -123,15 +133,24 @@ describe('ReleaseNotesDialog', () => {
     const user = userEvent.setup()
     renderWithProviders(<ReleaseNotesDialog />)
     // the house pick-one pattern: a trigger, not a text input — no keyboard to summon
-    const trigger = await screen.findByRole('button', { name: /switch release/i })
+    const trigger = await screen.findByRole('button', {
+      name: /switch release/i,
+    })
     expect(trigger).toHaveTextContent('v10.9.0 - Something Newer')
-    expect(screen.queryByDisplayValue('v10.9.0 - Something Newer')).not.toBeInTheDocument()
+    expect(
+      screen.queryByDisplayValue('v10.9.0 - Something Newer')
+    ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'More options' }))
     // the desktop footer's copy is only display:none'd by a media query jsdom can't
     // evaluate — scope to the sheet's drawer paper
-    const github = await screen.findByRole('link', { name: /view release notes on github/i })
-    expect(github).toHaveAttribute('href', 'https://github.com/CyberDrain/CIPP/releases/tag/v10.9.0')
+    const github = await screen.findByRole('link', {
+      name: /view release notes on github/i,
+    })
+    expect(github).toHaveAttribute(
+      'href',
+      'https://github.com/CyberDrain/CIPP/releases/tag/v10.9.0'
+    )
     const sheet = within(github.closest('.MuiDrawer-paper'))
 
     await user.click(sheet.getByText("Don't show again"))
@@ -144,14 +163,20 @@ describe('ReleaseNotesDialog', () => {
     const user = userEvent.setup()
     renderWithProviders(<ReleaseNotesDialog />)
 
-    await user.click(await screen.findByRole('button', { name: /switch release/i }))
-    const sheet = within((await screen.findByText('Release')).closest('.MuiDrawer-paper'))
+    await user.click(
+      await screen.findByRole('button', { name: /switch release/i })
+    )
+    const sheet = within(
+      (await screen.findByText('Release')).closest('.MuiDrawer-paper')
+    )
     await user.click(sheet.getByText('v10.8.2 - Hotfix'))
 
-    expect(await screen.findByText('Notes for the hotfix that is actually running')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /switch release/i })).toHaveTextContent(
-      'v10.8.2 - Hotfix'
-    )
+    expect(
+      await screen.findByText('Notes for the hotfix that is actually running')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /switch release/i })
+    ).toHaveTextContent('v10.8.2 - Hotfix')
   })
 
   it('falls back to the .0 notes when the running version has no release of its own', async () => {
@@ -159,7 +184,9 @@ describe('ReleaseNotesDialog', () => {
 
     renderWithProviders(<ReleaseNotesDialog />)
 
-    expect(await screen.findByDisplayValue('v10.9.0 - Something Newer')).toBeInTheDocument()
+    expect(
+      await screen.findByDisplayValue('v10.9.0 - Something Newer')
+    ).toBeInTheDocument()
   })
 
   it('honours a permanent dismissal', async () => {

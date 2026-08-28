@@ -102,16 +102,25 @@ export const Default = {
       await expect(canvas.getByText('Dashboard Content')).toBeInTheDocument()
     })
 
-    await step('side nav keeps known items after permission filtering', async () => {
-      await waitFor(() => {
-        expect(canvasElement.querySelector('[data-tutorial="side-nav"]')).not.toBeNull()
-      })
-      const sideNav = within(canvasElement.querySelector('[data-tutorial="side-nav"]'))
-      await waitFor(() => {
-        expect(sideNav.getByText('Dashboard')).toBeInTheDocument()
-      })
-      await expect(sideNav.getByText('Identity Management')).toBeInTheDocument()
-    })
+    await step(
+      'side nav keeps known items after permission filtering',
+      async () => {
+        await waitFor(() => {
+          expect(
+            canvasElement.querySelector('[data-tutorial="side-nav"]')
+          ).not.toBeNull()
+        })
+        const sideNav = within(
+          canvasElement.querySelector('[data-tutorial="side-nav"]')
+        )
+        await waitFor(() => {
+          expect(sideNav.getByText('Dashboard')).toBeInTheDocument()
+        })
+        await expect(
+          sideNav.getByText('Identity Management')
+        ).toBeInTheDocument()
+      }
+    )
 
     await step('no maintenance banner when no notice is set', async () => {
       await expect(canvas.queryByLabelText('Maintenance notice')).toBeNull()
@@ -125,9 +134,15 @@ export const MaintenanceUpcoming = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
     await step('banner announces the upcoming window', async () => {
-      const banner = await waitFor(() => canvas.getByLabelText('Maintenance notice'))
-      await expect(within(banner).getByText('Scheduled Maintenance')).toBeInTheDocument()
-      await expect(within(banner).getByText(/starts in 7 days/i)).toBeInTheDocument()
+      const banner = await waitFor(() =>
+        canvas.getByLabelText('Maintenance notice')
+      )
+      await expect(
+        within(banner).getByText('Scheduled Maintenance')
+      ).toBeInTheDocument()
+      await expect(
+        within(banner).getByText(/starts in 7 days/i)
+      ).toBeInTheDocument()
     })
 
     await step('no Live chip before the window opens', async () => {
@@ -137,7 +152,9 @@ export const MaintenanceUpcoming = {
 
     await step('dismiss hides it', async () => {
       const banner = canvas.getByLabelText('Maintenance notice')
-      within(banner).getByRole('button', { name: /dismiss maintenance notice/i }).click()
+      within(banner)
+        .getByRole('button', { name: /dismiss maintenance notice/i })
+        .click()
       await waitFor(() => {
         expect(canvas.queryByLabelText('Maintenance notice')).toBeNull()
       })
@@ -152,7 +169,8 @@ export const MaintenanceActive = {
       handlers: makeHandlers([
         maintenanceAlert({
           title: 'Maintenance in progress',
-          Alert: 'Scheduled jobs and standards runs are delayed while storage is migrated.',
+          Alert:
+            'Scheduled jobs and standards runs are delayed while storage is migrated.',
           noticeId: 'storybook-active',
           startTime: daysFromNow(-2),
           endTime: daysFromNow(12),
@@ -163,12 +181,21 @@ export const MaintenanceActive = {
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
-    await step('banner shows the Live chip and a countdown to the end', async () => {
-      const banner = await waitFor(() => canvas.getByLabelText('Maintenance notice'))
-      await expect(within(banner).getByText('Maintenance in progress')).toBeInTheDocument()
-      await expect(within(banner).getByText('Live')).toBeInTheDocument()
-      await expect(within(banner).getByText(/ends .* in 12 days/i)).toBeInTheDocument()
-    })
+    await step(
+      'banner shows the Live chip and a countdown to the end',
+      async () => {
+        const banner = await waitFor(() =>
+          canvas.getByLabelText('Maintenance notice')
+        )
+        await expect(
+          within(banner).getByText('Maintenance in progress')
+        ).toBeInTheDocument()
+        await expect(within(banner).getByText('Live')).toBeInTheDocument()
+        await expect(
+          within(banner).getByText(/ends .* in 12 days/i)
+        ).toBeInTheDocument()
+      }
+    )
   },
 }
 
@@ -179,7 +206,8 @@ export const MaintenanceOutage = {
       handlers: makeHandlers([
         maintenanceAlert({
           title: 'CIPP is read-only',
-          Alert: 'CIPP is read-only during the storage cutover. Changes will fail to save.',
+          Alert:
+            'CIPP is read-only during the storage cutover. Changes will fail to save.',
           type: 'error',
           noticeId: 'storybook-outage',
           startTime: daysFromNow(-1),
@@ -193,10 +221,16 @@ export const MaintenanceOutage = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
     await step('a non-dismissible outage has no close button', async () => {
-      const banner = await waitFor(() => canvas.getByLabelText('Maintenance notice'))
-      await expect(within(banner).getByText('CIPP is read-only')).toBeInTheDocument()
+      const banner = await waitFor(() =>
+        canvas.getByLabelText('Maintenance notice')
+      )
       await expect(
-        within(banner).queryByRole('button', { name: /dismiss maintenance notice/i })
+        within(banner).getByText('CIPP is read-only')
+      ).toBeInTheDocument()
+      await expect(
+        within(banner).queryByRole('button', {
+          name: /dismiss maintenance notice/i,
+        })
       ).toBeNull()
     })
   },
@@ -222,12 +256,21 @@ export const MaintenanceMinimal = {
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
-    await step('message-only notice renders without a window line or link', async () => {
-      const banner = await waitFor(() => canvas.getByLabelText('Maintenance notice'))
-      await expect(
-        within(banner).getByText('Planned maintenance this weekend. No downtime expected.')
-      ).toBeInTheDocument()
-      await expect(within(banner).queryByRole('link', { name: 'Details' })).toBeNull()
-    })
+    await step(
+      'message-only notice renders without a window line or link',
+      async () => {
+        const banner = await waitFor(() =>
+          canvas.getByLabelText('Maintenance notice')
+        )
+        await expect(
+          within(banner).getByText(
+            'Planned maintenance this weekend. No downtime expected.'
+          )
+        ).toBeInTheDocument()
+        await expect(
+          within(banner).queryByRole('link', { name: 'Details' })
+        ).toBeNull()
+      }
+    )
   },
 }

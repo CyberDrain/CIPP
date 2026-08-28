@@ -1,7 +1,17 @@
-import { useDispatch as useReduxDispatch, useSelector as useReduxSelector } from 'react-redux'
+import {
+  useDispatch as useReduxDispatch,
+  useSelector as useReduxSelector,
+} from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 import { rootReducer } from './root-reducer'
-import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE } from 'redux-persist'
+import {
+  FLUSH,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+  REHYDRATE,
+} from 'redux-persist'
 
 export const store = configureStore({
   reducer: rootReducer,

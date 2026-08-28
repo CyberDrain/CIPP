@@ -1,35 +1,37 @@
-import "@mui/material";
-import { Grid } from "@mui/system";
-import { useWatch } from "react-hook-form";
-import CippFormComponent from "../CippComponents/CippFormComponent";
+import '@mui/material'
+import { Grid } from '@mui/system'
+import { useWatch } from 'react-hook-form'
+import CippFormComponent from '../CippComponents/CippFormComponent'
 
 const DEVICE_PLATFORM_OPTIONS = [
-  { label: "Windows 10 and later", value: "windows10AndLater" },
-  { label: "iOS", value: "iOS" },
-  { label: "macOS", value: "macOS" },
-  { label: "Android Enterprise", value: "androidForWork" },
-  { label: "Android device administrator", value: "android" },
-  { label: "Android Work Profile", value: "androidWorkProfile" },
-  { label: "Android (AOSP)", value: "androidAOSP" },
-];
+  { label: 'Windows 10 and later', value: 'windows10AndLater' },
+  { label: 'iOS', value: 'iOS' },
+  { label: 'macOS', value: 'macOS' },
+  { label: 'Android Enterprise', value: 'androidForWork' },
+  { label: 'Android device administrator', value: 'android' },
+  { label: 'Android Work Profile', value: 'androidWorkProfile' },
+  { label: 'Android (AOSP)', value: 'androidAOSP' },
+]
 
 const APP_PLATFORM_OPTIONS = [
-  { label: "Windows", value: "windowsMobileApplicationManagement" },
-  { label: "Android", value: "androidMobileApplicationManagement" },
-  { label: "iOS/iPadOS", value: "iOSMobileApplicationManagement" },
-];
+  { label: 'Windows', value: 'windowsMobileApplicationManagement' },
+  { label: 'Android', value: 'androidMobileApplicationManagement' },
+  { label: 'iOS/iPadOS', value: 'iOSMobileApplicationManagement' },
+]
 
 const CippAddAssignmentFilterForm = (props) => {
-  const { formControl, isEdit = false } = props;
+  const { formControl, isEdit = false } = props
 
   const assignmentFilterManagementType =
     useWatch({
       control: formControl?.control ?? formControl,
-      name: "assignmentFilterManagementType",
-      defaultValue: "devices",
-    }) ?? "devices";
+      name: 'assignmentFilterManagementType',
+      defaultValue: 'devices',
+    }) ?? 'devices'
   const platformOptions =
-    assignmentFilterManagementType === "apps" ? APP_PLATFORM_OPTIONS : DEVICE_PLATFORM_OPTIONS;
+    assignmentFilterManagementType === 'apps'
+      ? APP_PLATFORM_OPTIONS
+      : DEVICE_PLATFORM_OPTIONS
 
   return (
     <Grid container spacing={2}>
@@ -39,7 +41,7 @@ const CippAddAssignmentFilterForm = (props) => {
           label="Display Name"
           name="displayName"
           formControl={formControl}
-          validators={{ required: "Display Name is required" }}
+          validators={{ required: 'Display Name is required' }}
           fullWidth
         />
       </Grid>
@@ -59,12 +61,14 @@ const CippAddAssignmentFilterForm = (props) => {
           name="assignmentFilterManagementType"
           label="Filter Type"
           formControl={formControl}
-          validators={{ required: "Filter Type is required" }}
+          validators={{ required: 'Filter Type is required' }}
           disabled={isEdit}
-          helperText={isEdit ? "Filter type cannot be changed after creation" : undefined}
+          helperText={
+            isEdit ? 'Filter type cannot be changed after creation' : undefined
+          }
           options={[
-            { label: "Devices", value: "devices" },
-            { label: "Apps", value: "apps" },
+            { label: 'Devices', value: 'devices' },
+            { label: 'Apps', value: 'apps' },
           ]}
         />
       </Grid>
@@ -75,9 +79,11 @@ const CippAddAssignmentFilterForm = (props) => {
           name="platform"
           label="Platform"
           formControl={formControl}
-          validators={{ required: "Platform is required" }}
+          validators={{ required: 'Platform is required' }}
           disabled={isEdit}
-          helperText={isEdit ? "Platform cannot be changed after creation" : undefined}
+          helperText={
+            isEdit ? 'Platform cannot be changed after creation' : undefined
+          }
           options={platformOptions}
         />
       </Grid>
@@ -88,18 +94,18 @@ const CippAddAssignmentFilterForm = (props) => {
           label="Filter Rule"
           name="rule"
           formControl={formControl}
-          validators={{ required: "Filter Rule is required" }}
+          validators={{ required: 'Filter Rule is required' }}
           placeholder='Enter filter rule syntax (e.g., (device.deviceName -eq "Test Device"))'
           helperText={
             <>
-              Enter the filter rule using Intune filter syntax. See{" "}
+              Enter the filter rule using Intune filter syntax. See{' '}
               <a
                 href="https://learn.microsoft.com/en-us/mem/intune/fundamentals/filters-device-properties"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 Microsoft documentation
-              </a>{" "}
+              </a>{' '}
               for supported properties and operators.
             </>
           }
@@ -109,7 +115,7 @@ const CippAddAssignmentFilterForm = (props) => {
         />
       </Grid>
     </Grid>
-  );
-};
+  )
+}
 
-export default CippAddAssignmentFilterForm;
+export default CippAddAssignmentFilterForm

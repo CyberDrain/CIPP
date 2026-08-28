@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef } from 'react'
 
 /**
  * Hands a bottom sheet off to the overlay it launches.
@@ -19,41 +19,41 @@ import { useCallback, useRef } from "react";
  */
 // Drawer's exit is ~195ms; well past it the sheet is gone whether or not the transition
 // reported in. Running late beats never running, and flush() is idempotent.
-const EXIT_FALLBACK_MS = 400;
+const EXIT_FALLBACK_MS = 400
 
 export const useSheetHandoff = (close) => {
-  const pendingRef = useRef(null);
-  const fallbackRef = useRef(null);
+  const pendingRef = useRef(null)
+  const fallbackRef = useRef(null)
 
   const flush = useCallback(() => {
     if (fallbackRef.current) {
-      clearTimeout(fallbackRef.current);
-      fallbackRef.current = null;
+      clearTimeout(fallbackRef.current)
+      fallbackRef.current = null
     }
-    const pending = pendingRef.current;
-    pendingRef.current = null;
-    pending?.();
-  }, []);
+    const pending = pendingRef.current
+    pendingRef.current = null
+    pending?.()
+  }, [])
 
   const run = useCallback(
     (fn) => {
-      pendingRef.current = typeof fn === "function" ? fn : null;
-      if (fallbackRef.current) clearTimeout(fallbackRef.current);
-      fallbackRef.current = setTimeout(flush, EXIT_FALLBACK_MS);
-      close?.();
+      pendingRef.current = typeof fn === 'function' ? fn : null
+      if (fallbackRef.current) clearTimeout(fallbackRef.current)
+      fallbackRef.current = setTimeout(flush, EXIT_FALLBACK_MS)
+      close?.()
     },
     [close, flush]
-  );
+  )
 
   // Dismissed without picking anything — drop whatever was parked.
   const cancel = useCallback(() => {
-    pendingRef.current = null;
+    pendingRef.current = null
     if (fallbackRef.current) {
-      clearTimeout(fallbackRef.current);
-      fallbackRef.current = null;
+      clearTimeout(fallbackRef.current)
+      fallbackRef.current = null
     }
-    close?.();
-  }, [close]);
+    close?.()
+  }, [close])
 
-  return { run, handleExited: flush, cancel };
-};
+  return { run, handleExited: flush, cancel }
+}

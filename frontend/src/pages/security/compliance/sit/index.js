@@ -23,9 +23,11 @@ const Page = () => {
         Identity: 'Name',
       },
       hideBulk: true,
-      confirmText: 'Are you sure you want to create a template based on this Sensitive Information Type?',
+      confirmText:
+        'Are you sure you want to create a template based on this Sensitive Information Type?',
       // Only Microsoft built-ins can't be templated; custom regex and fingerprint SITs both can.
-      condition: (row) => row.Publisher && !String(row.Publisher).startsWith('Microsoft'),
+      condition: (row) =>
+        row.Publisher && !String(row.Publisher).startsWith('Microsoft'),
     },
     {
       label: 'Delete SIT',
@@ -53,7 +55,9 @@ const Page = () => {
       'State',
     ],
     actions: actions,
-    children: (row) => <CippSitRulePackDetails row={row} tenant={tenantFilter} />,
+    children: (row) => (
+      <CippSitRulePackDetails row={row} tenant={tenantFilter} />
+    ),
     size: 'lg',
   }
 
@@ -86,5 +90,7 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+)
 export default Page

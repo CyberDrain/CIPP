@@ -1,59 +1,66 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
-import { Box, Card, CardContent, CardHeader, Divider, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { ActionsMenu } from '../../../components/actions-menu';
-import { Chart } from '../../../components/chart';
+import { useState } from 'react'
+import PropTypes from 'prop-types'
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Typography,
+} from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import { ActionsMenu } from '../../../components/actions-menu'
+import { Chart } from '../../../components/chart'
 
 const useChartOptions = () => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return {
     chart: {
       background: 'transparent',
       toolbar: {
-        show: false
-      }
+        show: false,
+      },
     },
     colors: [theme.palette.primary.main, theme.palette.primary.dark],
     dataLabels: {
-      enabled: false
+      enabled: false,
     },
     grid: {
       borderColor: theme.palette.divider,
       strokeDashArray: 2,
       yaxis: {
         lines: {
-          show: true
-        }
-      }
+          show: true,
+        },
+      },
     },
     plotOptions: {
       bar: {
-        columnWidth: '40px'
-      }
+        columnWidth: '40px',
+      },
     },
     states: {
       active: {
         filter: {
-          type: 'none'
-        }
+          type: 'none',
+        },
       },
       hover: {
         filter: {
-          type: 'none'
-        }
-      }
+          type: 'none',
+        },
+      },
     },
     theme: {
-      mode: theme.palette.mode
+      mode: theme.palette.mode,
     },
     xaxis: {
       axisBorder: {
-        show: false
+        show: false,
       },
       axisTicks: {
-        show: false
+        show: false,
       },
       categories: [
         'Capital One',
@@ -62,55 +69,61 @@ const useChartOptions = () => {
         'Ridgewood',
         'BT Transilvania',
         'CEC',
-        'CBC'
+        'CBC',
       ],
       labels: {
         style: {
-          colors: theme.palette.text.secondary
-        }
-      }
+          colors: theme.palette.text.secondary,
+        },
+      },
     },
     yaxis: {
       labels: {
         offsetX: -12,
         style: {
-          colors: theme.palette.text.secondary
-        }
-      }
-    }
-  };
-};
+          colors: theme.palette.text.secondary,
+        },
+      },
+    },
+  }
+}
 
 export const OverviewBills = (props) => {
-  const { chartSeries = [], stats = [] } = props;
-  const [range, setRange] = useState('Last 7 days');
-  const chartOptions = useChartOptions();
+  const { chartSeries = [], stats = [] } = props
+  const [range, setRange] = useState('Last 7 days')
+  const chartOptions = useChartOptions()
 
   return (
     <Card>
       <CardHeader
-        action={(
+        action={
           <ActionsMenu
             color="inherit"
             actions={[
               {
                 label: 'Last 7 days',
-                handler: () => { setRange('Last 7 days'); }
+                handler: () => {
+                  setRange('Last 7 days')
+                },
               },
               {
                 label: 'Last Month',
-                handler: () => { setRange('Last Month'); }
+                handler: () => {
+                  setRange('Last Month')
+                },
               },
               {
                 label: 'Last Year',
-                handler: () => { setRange('Last Year'); }
-              }
+                handler: () => {
+                  setRange('Last Year')
+                },
+              },
             ]}
             label={range}
             size="small"
             variant="text"
           />
-        )}
+        }
         title="Bills and Orders"
       />
       <Divider />
@@ -122,8 +135,8 @@ export const OverviewBills = (props) => {
             gridTemplateColumns: {
               xs: 'repeat(1, 1fr)',
               sm: 'repeat(2, 1fr)',
-              md: 'repeat(4, 1fr)'
-            }
+              md: 'repeat(4, 1fr)',
+            },
           }}
         >
           {stats.map((item) => (
@@ -131,22 +144,16 @@ export const OverviewBills = (props) => {
               key={item.label}
               sx={{
                 alignItems: 'center',
-                backgroundColor: (theme) => theme.palette.mode === 'dark'
-                  ? 'neutral.900'
-                  : 'neutral.50',
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'dark' ? 'neutral.900' : 'neutral.50',
                 borderRadius: 1,
-                p: 2
+                p: 2,
               }}
             >
-              <Typography
-                color="text.secondary"
-                variant="overline"
-              >
+              <Typography color="text.secondary" variant="overline">
                 {item.label}
               </Typography>
-              <Typography variant="h6">
-                {item.value}
-              </Typography>
+              <Typography variant="h6">{item.value}</Typography>
             </Box>
           ))}
         </Box>
@@ -158,10 +165,10 @@ export const OverviewBills = (props) => {
         />
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
 OverviewBills.propTypes = {
   chartSeries: PropTypes.array,
-  stats: PropTypes.array
-};
+  stats: PropTypes.array,
+}

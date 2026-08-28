@@ -73,7 +73,11 @@ const renderRoute = (routeType) => {
 describe('PrivateRoute', () => {
   it('shows the sign-in page when the session request errors', async () => {
     // api reachable, session errored, sign-in page needs one settled query to render
-    authState.swa = result({ isError: true, isSuccess: false, error: new Error('boom') })
+    authState.swa = result({
+      isError: true,
+      isSuccess: false,
+      error: new Error('boom'),
+    })
     authState.me = result({ data: { message: 'Permission Denied' } })
     renderRoute()
 
@@ -93,7 +97,8 @@ describe('PrivateRoute', () => {
       data: {
         clientPrincipal: null,
         permissions: [],
-        message: 'Your IP address (203.0.113.7) is not in the allowed range for your role(s)',
+        message:
+          'Your IP address (203.0.113.7) is not in the allowed range for your role(s)',
       },
     })
     renderRoute()
@@ -118,7 +123,11 @@ describe('PrivateRoute', () => {
 
   it('shows loading page while roles are resolving', () => {
     authState.swa = result({ data: swaPrincipal() })
-    authState.me = result({ isLoading: true, isPending: true, isSuccess: false })
+    authState.me = result({
+      isLoading: true,
+      isPending: true,
+      isSuccess: false,
+    })
     renderRoute()
 
     expect(screen.getByText('Logging into CIPP')).toBeInTheDocument()
@@ -147,7 +156,9 @@ describe('PrivateRoute', () => {
 
   it('shows access denied, naming the account, when only blocked roles remain', async () => {
     authState.swa = result({ data: swaPrincipal() })
-    authState.me = result({ data: cippPrincipal(['anonymous', 'authenticated']) })
+    authState.me = result({
+      data: cippPrincipal(['anonymous', 'authenticated']),
+    })
     renderRoute()
 
     await waitFor(() => {
@@ -161,7 +172,9 @@ describe('PrivateRoute', () => {
 
   it('renders children for an swa session with a real role', () => {
     authState.swa = result({ data: swaPrincipal() })
-    authState.me = result({ data: cippPrincipal(['anonymous', 'authenticated', 'editor']) })
+    authState.me = result({
+      data: cippPrincipal(['anonymous', 'authenticated', 'editor']),
+    })
     renderRoute()
 
     expect(screen.getByText('app content')).toBeInTheDocument()
@@ -170,7 +183,9 @@ describe('PrivateRoute', () => {
   it('renders children for an easyauth array session with a real role', () => {
     // app service easyauth shape, no clientPrincipal wrapper
     authState.swa = result({ data: [{ user_id: 'abc', user_claims: [] }] })
-    authState.me = result({ data: cippPrincipal(['anonymous', 'authenticated', 'editor']) })
+    authState.me = result({
+      data: cippPrincipal(['anonymous', 'authenticated', 'editor']),
+    })
     renderRoute()
 
     expect(screen.getByText('app content')).toBeInTheDocument()
@@ -178,14 +193,18 @@ describe('PrivateRoute', () => {
 
   it('gates admin routes on the admin role', async () => {
     authState.swa = result({ data: swaPrincipal() })
-    authState.me = result({ data: cippPrincipal(['anonymous', 'authenticated', 'editor']) })
+    authState.me = result({
+      data: cippPrincipal(['anonymous', 'authenticated', 'editor']),
+    })
     renderRoute('admin')
 
     await waitFor(() => {
       expect(screen.getByText('Access Denied')).toBeInTheDocument()
     })
 
-    authState.me = result({ data: cippPrincipal(['anonymous', 'authenticated', 'admin']) })
+    authState.me = result({
+      data: cippPrincipal(['anonymous', 'authenticated', 'admin']),
+    })
     renderRoute('admin')
     expect(screen.getByText('app content')).toBeInTheDocument()
   })
@@ -235,7 +254,9 @@ describe('PrivateRoute', () => {
     expect(screen.getByText('app content')).toBeInTheDocument()
 
     // absent field (older api, early-return /api/me shapes) must never gate
-    authState.me = result({ data: cippPrincipal(['anonymous', 'authenticated', 'editor']) })
+    authState.me = result({
+      data: cippPrincipal(['anonymous', 'authenticated', 'editor']),
+    })
     renderRoute()
     expect(screen.getAllByText('app content').length).toBeGreaterThan(0)
   })

@@ -76,7 +76,11 @@ export const CippTabPicker = (props) => {
         <Typography
           variant={isCompact ? 'body2' : 'h6'}
           noWrap
-          sx={{ minWidth: 0, flex: isCompact ? 1 : '0 1 auto', fontWeight: isCompact ? 500 : undefined }}
+          sx={{
+            minWidth: 0,
+            flex: isCompact ? 1 : '0 1 auto',
+            fontWeight: isCompact ? 500 : undefined,
+          }}
         >
           {label}
         </Typography>
@@ -89,11 +93,19 @@ export const CippTabPicker = (props) => {
         {/* Compact rides the control's right edge; the heading form keeps the chevron
             beside the text, where a title's disclosure affordance belongs. */}
         <KeyboardArrowDown
-          sx={{ flexShrink: 0, ml: isCompact ? 'auto' : 0, opacity: 0.7, fontSize: isCompact ? 18 : 20 }}
+          sx={{
+            flexShrink: 0,
+            ml: isCompact ? 'auto' : 0,
+            opacity: 0.7,
+            fontSize: isCompact ? 18 : 20,
+          }}
         />
       </ButtonBase>
       <CippBottomSheet open={open} onClose={() => setOpen(false)} title="Views">
-        <CippTabNavigationSection title={null} onNavigate={() => setOpen(false)} />
+        <CippTabNavigationSection
+          title={null}
+          onNavigate={() => setOpen(false)}
+        />
       </CippBottomSheet>
     </>
   )

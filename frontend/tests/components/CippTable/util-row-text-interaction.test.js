@@ -12,22 +12,25 @@ describe('hasTextSelection', () => {
   })
 
   it('returns true when text is selected', () => {
-    window.getSelection = () => ({ type: 'Range', toString: () => 'alice@contoso.com' })
+    window.getSelection = () => ({
+      type: 'Range',
+      toString: () => 'alice@contoso.com',
+    })
     expect(hasTextSelection()).toBe(true)
   })
 })
 
 describe('isPointerDrag', () => {
   it('returns false for a click without movement', () => {
-    expect(
-      isPointerDrag({ x: 10, y: 10 }, { clientX: 11, clientY: 12 })
-    ).toBe(false)
+    expect(isPointerDrag({ x: 10, y: 10 }, { clientX: 11, clientY: 12 })).toBe(
+      false
+    )
   })
 
   it('returns true when the pointer moved far enough to select', () => {
-    expect(
-      isPointerDrag({ x: 10, y: 10 }, { clientX: 20, clientY: 10 })
-    ).toBe(true)
+    expect(isPointerDrag({ x: 10, y: 10 }, { clientX: 20, clientY: 10 })).toBe(
+      true
+    )
   })
 })
 

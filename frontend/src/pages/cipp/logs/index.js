@@ -33,7 +33,16 @@ const simpleColumns = [
 ]
 
 const offcanvas = {
-  extendedInfoFields: ['DateTime', 'API', 'Severity', 'Message', 'User', 'AppId', 'IP', 'LogData'],
+  extendedInfoFields: [
+    'DateTime',
+    'API',
+    'Severity',
+    'Message',
+    'User',
+    'AppId',
+    'IP',
+    'LogData',
+  ],
 }
 
 const apiUrl = '/api/Listlogs'
@@ -84,9 +93,10 @@ const Page = () => {
       return (
         <Grid size={{ xs: 12, md: 7 }}>
           <Alert severity="warning">
-            You have selected a date range of {Math.ceil(daysDifference)} days. Large date ranges
-            may cause timeouts or errors due to the amount of data being processed. Consider
-            narrowing your date range if you encounter issues.
+            You have selected a date range of {Math.ceil(daysDifference)} days.
+            Large date ranges may cause timeouts or errors due to the amount of
+            data being processed. Consider narrowing your date range if you
+            encounter issues.
           </Alert>
         </Grid>
       )
@@ -107,14 +117,20 @@ const Page = () => {
     // Format start date if available
     setStartDate(
       data.startDate
-        ? new Date(data.startDate * 1000).toISOString().split('T')[0].replace(/-/g, '')
+        ? new Date(data.startDate * 1000)
+            .toISOString()
+            .split('T')[0]
+            .replace(/-/g, '')
         : null
     )
 
     // Format end date if available
     setEndDate(
       data.endDate
-        ? new Date(data.endDate * 1000).toISOString().split('T')[0].replace(/-/g, '')
+        ? new Date(data.endDate * 1000)
+            .toISOString()
+            .split('T')[0]
+            .replace(/-/g, '')
         : null
     )
 
@@ -152,11 +168,19 @@ const Page = () => {
       tableFilter={
         <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ minWidth: 0 }}
+            >
               <SvgIcon>
                 <FunnelIcon />
               </SvgIcon>
-              <Typography variant="h6" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
+              <Typography
+                variant="h6"
+                sx={{ minWidth: 0, overflowWrap: 'anywhere' }}
+              >
                 Logbook Filters
                 {filterEnabled ? (
                   <Box
@@ -173,13 +197,19 @@ const Page = () => {
                       <>
                         {startDate
                           ? new Date(
-                              startDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') + 'T00:00:00'
+                              startDate.replace(
+                                /(\d{4})(\d{2})(\d{2})/,
+                                '$1-$2-$3'
+                              ) + 'T00:00:00'
                             ).toLocaleDateString()
                           : new Date().toLocaleDateString()}
                         {startDate && endDate ? ' - ' : ''}
                         {endDate
                           ? new Date(
-                              endDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') + 'T00:00:00'
+                              endDate.replace(
+                                /(\d{4})(\d{2})(\d{2})/,
+                                '$1-$2-$3'
+                              ) + 'T00:00:00'
                             ).toLocaleDateString()
                           : ''}
                       </>
@@ -211,16 +241,18 @@ const Page = () => {
                 {/* Date Filter */}
                 <Grid size={{ xs: 12, md: 7 }}>
                   <Alert severity="info">
-                    Use the filters below to narrow down your logbook results. You can filter by
-                    date range, username, and severity levels. By default, the logbook shows the
-                    current day based on UTC time. Your local time is{' '}
-                    {new Date().getTimezoneOffset() / -60} hours offset from UTC.
+                    Use the filters below to narrow down your logbook results.
+                    You can filter by date range, username, and severity levels.
+                    By default, the logbook shows the current day based on UTC
+                    time. Your local time is{' '}
+                    {new Date().getTimezoneOffset() / -60} hours offset from
+                    UTC.
                   </Alert>
                 </Grid>
                 <Grid size={{ xs: 12, md: 7 }}>
                   {/* Two full-width pickers side by side leaves each about 150px on a
                       phone, which is narrower than the date they have to show. */}
-                  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                     <Box flexGrow={1}>
                       <CippFormComponent
                         type="datePicker"
@@ -246,7 +278,8 @@ const Page = () => {
                             if (
                               startDate &&
                               value &&
-                              new Date(value * 1000) < new Date(startDate * 1000)
+                              new Date(value * 1000) <
+                                new Date(startDate * 1000)
                             ) {
                               return 'End date must be after start date'
                             }

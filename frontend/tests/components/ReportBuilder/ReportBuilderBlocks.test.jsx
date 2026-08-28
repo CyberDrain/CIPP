@@ -89,7 +89,9 @@ describe('createStructuredBlock', () => {
   })
 
   it('gives a scorecard starter cards', () => {
-    expect(createStructuredBlock('scorecard', 'b1').stats.length).toBeGreaterThan(0)
+    expect(
+      createStructuredBlock('scorecard', 'b1').stats.length
+    ).toBeGreaterThan(0)
   })
 
   it('gives a progress block a bar with a sane maximum', () => {
@@ -125,7 +127,9 @@ describe('ChartBlockCard', () => {
     const latest = renderLive(createStructuredBlock('chart', 'b1'))
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Chart type' }))
-    await userEvent.click(within(await screen.findByRole('listbox')).getByText('Bar'))
+    await userEvent.click(
+      within(await screen.findByRole('listbox')).getByText('Bar')
+    )
 
     expect(latest.current.chartKind).toBe('bar')
   })
@@ -159,13 +163,18 @@ describe('ChartBlockCard', () => {
     const block = createStructuredBlock('chart', 'b1')
     const latest = renderLive(block)
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Remove row' })[0])
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'Remove row' })[0]
+    )
 
     expect(latest.current.chartData).toHaveLength(block.chartData.length - 1)
   })
 
   it('will not let the last row be removed, leaving a chart with nothing to draw', () => {
-    const block = { ...createStructuredBlock('chart', 'b1'), chartData: [{ label: 'A', value: 1 }] }
+    const block = {
+      ...createStructuredBlock('chart', 'b1'),
+      chartData: [{ label: 'A', value: 1 }],
+    }
     renderLive(block)
 
     expect(screen.getByRole('button', { name: 'Remove row' })).toBeDisabled()
@@ -197,7 +206,10 @@ describe('ScorecardBlockCard', () => {
   it('warns once a row holds more cards than will read at PDF width', () => {
     renderLive({
       ...createStructuredBlock('scorecard', 'b1'),
-      stats: Array.from({ length: 5 }, (_, i) => ({ label: `S${i}`, value: `${i}` })),
+      stats: Array.from({ length: 5 }, (_, i) => ({
+        label: `S${i}`,
+        value: `${i}`,
+      })),
     })
 
     expect(screen.getByText(/too narrow to read/i)).toBeInTheDocument()
@@ -206,7 +218,10 @@ describe('ScorecardBlockCard', () => {
   it('does not warn at four cards', () => {
     renderLive({
       ...createStructuredBlock('scorecard', 'b1'),
-      stats: Array.from({ length: 4 }, (_, i) => ({ label: `S${i}`, value: `${i}` })),
+      stats: Array.from({ length: 4 }, (_, i) => ({
+        label: `S${i}`,
+        value: `${i}`,
+      })),
     })
 
     expect(screen.queryByText(/too narrow to read/i)).not.toBeInTheDocument()
@@ -247,7 +262,10 @@ describe('HeroBlockCard', () => {
   it('edits the supporting text', async () => {
     const latest = renderLive(createStructuredBlock('hero', 'b1'))
 
-    await userEvent.type(screen.getByLabelText('Supporting text'), 'of orgs were breached')
+    await userEvent.type(
+      screen.getByLabelText('Supporting text'),
+      'of orgs were breached'
+    )
 
     expect(latest.current.heroSubText).toBe('of orgs were breached')
   })
@@ -256,7 +274,9 @@ describe('HeroBlockCard', () => {
     const latest = renderLive(createStructuredBlock('hero', 'b1'))
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Background' }))
-    await userEvent.click(within(await screen.findByRole('listbox')).getByText('No cover image'))
+    await userEvent.click(
+      within(await screen.findByRole('listbox')).getByText('No cover image')
+    )
 
     expect(latest.current.heroImage).toBe('')
   })
@@ -281,19 +301,30 @@ describe('block controls', () => {
   })
 
   it('disables move-down on the last block', () => {
-    renderLive(createStructuredBlock('chart', 'b1'), { index: 2, totalBlocks: 3 })
+    renderLive(createStructuredBlock('chart', 'b1'), {
+      index: 2,
+      totalBlocks: 3,
+    })
     expect(screen.getByRole('button', { name: 'Move down' })).toBeDisabled()
   })
 
   it('enables both in the middle of the list', () => {
-    renderLive(createStructuredBlock('chart', 'b1'), { index: 1, totalBlocks: 3 })
+    renderLive(createStructuredBlock('chart', 'b1'), {
+      index: 1,
+      totalBlocks: 3,
+    })
     expect(screen.getByRole('button', { name: 'Move up' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Move down' })).toBeEnabled()
   })
 
   it('removes the block by index', async () => {
     const props = shell({ index: 1 })
-    renderWithProviders(<StructuredBlockCard block={createStructuredBlock('chart', 'b1')} {...props} />)
+    renderWithProviders(
+      <StructuredBlockCard
+        block={createStructuredBlock('chart', 'b1')}
+        {...props}
+      />
+    )
 
     await userEvent.click(screen.getByRole('button', { name: 'Remove block' }))
 
@@ -302,7 +333,12 @@ describe('block controls', () => {
 
   it('moves the block by index', async () => {
     const props = shell({ index: 1 })
-    renderWithProviders(<StructuredBlockCard block={createStructuredBlock('chart', 'b1')} {...props} />)
+    renderWithProviders(
+      <StructuredBlockCard
+        block={createStructuredBlock('chart', 'b1')}
+        {...props}
+      />
+    )
 
     await userEvent.click(screen.getByRole('button', { name: 'Move up' }))
 

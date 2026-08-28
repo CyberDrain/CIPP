@@ -4,7 +4,12 @@ import { TabbedLayout } from '../../../../layouts/TabbedLayout'
 import { ApiGetCallWithPagination } from '../../../../api/ApiCall'
 import { useSettings } from '../../../../hooks/use-settings'
 import { Delete, Edit } from '@mui/icons-material'
-import { EyeIcon, ListBulletIcon, ChartBarIcon, Squares2X2Icon } from '@heroicons/react/24/outline'
+import {
+  EyeIcon,
+  ListBulletIcon,
+  ChartBarIcon,
+  Squares2X2Icon,
+} from '@heroicons/react/24/outline'
 import tabOptions from '../tabOptions.json'
 import { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -39,7 +44,8 @@ const compliancePriority = {
   'non-compliant': 60,
 }
 
-const getComplianceStatus = (status) => String(status ?? 'Unknown').trim() || 'Unknown'
+const getComplianceStatus = (status) =>
+  String(status ?? 'Unknown').trim() || 'Unknown'
 
 const getComplianceColor = (status) =>
   complianceColors[getComplianceStatus(status).toLowerCase()] ?? 'default'
@@ -92,7 +98,12 @@ const Page = () => {
   })
 
   useEffect(() => {
-    if (isByStandard && byStandardIsSuccess && byStandardHasNextPage && !byStandardIsFetching) {
+    if (
+      isByStandard &&
+      byStandardIsSuccess &&
+      byStandardHasNextPage &&
+      !byStandardIsFetching
+    ) {
       fetchNextByStandardPage()
     }
   }, [
@@ -117,7 +128,9 @@ const Page = () => {
       if (!standardKey) return
 
       const standardInfo = getStandardInfo(row.standardId)
-      const hasExactMatch = getStandards().find((s) => s.name === row.standardId)
+      const hasExactMatch = getStandards().find(
+        (s) => s.name === row.standardId
+      )
       const standardName = hasExactMatch
         ? (standardInfo?.label ?? row.standardName ?? standardKey)
         : (row.standardName ?? standardInfo?.label ?? standardKey)
@@ -136,7 +149,8 @@ const Page = () => {
       const standardType = row.standardType ?? row.templateType
       if (standardType) standard.standardTypes.add(standardType)
 
-      const tenantKey = row.tenantFilter ?? row.tenantName ?? row.Tenant ?? 'Unknown'
+      const tenantKey =
+        row.tenantFilter ?? row.tenantName ?? row.Tenant ?? 'Unknown'
       const status = getComplianceStatus(row.complianceStatus)
       const tenant = standard.tenants.get(tenantKey) ?? {
         tenantFilter: tenantKey,
@@ -145,7 +159,10 @@ const Page = () => {
       }
 
       tenant.rows.push(row)
-      if (getCompliancePriority(status) > getCompliancePriority(tenant.complianceStatus)) {
+      if (
+        getCompliancePriority(status) >
+        getCompliancePriority(tenant.complianceStatus)
+      ) {
         tenant.complianceStatus = status
       }
       standard.tenants.set(tenantKey, tenant)
@@ -156,7 +173,9 @@ const Page = () => {
         const tenants = Array.from(standard.tenants.values())
           .map((tenant) => {
             const templateNames = [
-              ...new Set(tenant.rows.map((row) => row.templateName).filter(Boolean)),
+              ...new Set(
+                tenant.rows.map((row) => row.templateName).filter(Boolean)
+              ),
             ]
             const latestDataCollection = tenant.rows
               .map((row) => row.latestDataCollection)
@@ -176,7 +195,9 @@ const Page = () => {
 
         const counts = tenants.reduce(
           (acc, tenant) => {
-            switch (getComplianceStatus(tenant.complianceStatus).toLowerCase()) {
+            switch (
+              getComplianceStatus(tenant.complianceStatus).toLowerCase()
+            ) {
               case 'compliant':
                 acc.compliantCount += 1
                 break
@@ -213,7 +234,9 @@ const Page = () => {
 
         const totalTenants = tenants.length
         const alignedCount =
-          counts.compliantCount + counts.acceptedDeviationCount + counts.customerSpecificCount
+          counts.compliantCount +
+          counts.acceptedDeviationCount +
+          counts.customerSpecificCount
         const compliancePercentage = totalTenants
           ? Math.round((alignedCount / totalTenants) * 100)
           : 0
@@ -225,17 +248,22 @@ const Page = () => {
           standardId: standard.standardId,
           standardName: standard.standardName,
           category: standard.category,
-          standardType: Array.from(standard.standardTypes).sort().join(', ') || 'N/A',
+          standardType:
+            Array.from(standard.standardTypes).sort().join(', ') || 'N/A',
           totalTenants,
           alignedCount,
           compliancePercentage,
           alignmentScore: compliancePercentage,
           LicenseMissingPercentage: licenseMissingPercentage,
           complianceScore: `${compliancePercentage}%`,
-          summaryStatus: compliancePercentage === 100 ? 'Fully Compliant' : 'Needs Attention',
+          summaryStatus:
+            compliancePercentage === 100
+              ? 'Fully Compliant'
+              : 'Needs Attention',
           hasNonCompliant: counts.nonCompliantCount > 0 ? 'Yes' : 'No',
           hasLicenseMissing: counts.licenseMissingCount > 0 ? 'Yes' : 'No',
-          hasAcceptedDeviation: counts.acceptedDeviationCount > 0 ? 'Yes' : 'No',
+          hasAcceptedDeviation:
+            counts.acceptedDeviationCount > 0 ? 'Yes' : 'No',
           isFullyCompliant: compliancePercentage === 100 ? 'Yes' : 'No',
           tenants,
           ...counts,
@@ -406,15 +434,24 @@ const Page = () => {
       const expectedObj = normalizeObj(
         typeof expected === 'object' ? expected : JSON.parse(expected)
       )
-      const currentObj = normalizeObj(typeof current === 'object' ? current : JSON.parse(current))
-      if (JSON.stringify(expectedObj) === JSON.stringify(currentObj)) return null
+      const currentObj = normalizeObj(
+        typeof current === 'object' ? current : JSON.parse(current)
+      )
+      if (JSON.stringify(expectedObj) === JSON.stringify(currentObj))
+        return null
       const differences = {}
-      const allKeys = new Set([...Object.keys(expectedObj), ...Object.keys(currentObj)])
+      const allKeys = new Set([
+        ...Object.keys(expectedObj),
+        ...Object.keys(currentObj),
+      ])
       allKeys.forEach((key) => {
         const e = normalizeObj(expectedObj[key])
         const c = normalizeObj(currentObj[key])
         if (JSON.stringify(e) !== JSON.stringify(c)) {
-          differences[key] = { expected: expectedObj[key], current: currentObj[key] }
+          differences[key] = {
+            expected: expectedObj[key],
+            current: currentObj[key],
+          }
         }
       })
       return Object.keys(differences).length > 0 ? differences : null
@@ -445,7 +482,10 @@ const Page = () => {
         { label: 'Template', value: row.templateName },
         {
           label: 'Type',
-          value: row.standardType === 'drift' ? 'Drift Standard' : 'Classic Standard',
+          value:
+            row.standardType === 'drift'
+              ? 'Drift Standard'
+              : 'Classic Standard',
         },
         {
           label: 'Last Applied',
@@ -474,11 +514,20 @@ const Page = () => {
                   py: 1,
                 }}
               >
-                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 90 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ minWidth: 90 }}
+                >
                   {label}
                 </Typography>
                 {color ? (
-                  <Chip variant="outlined" label={value ?? 'N/A'} size="small" color={color} />
+                  <Chip
+                    variant="outlined"
+                    label={value ?? 'N/A'}
+                    size="small"
+                    color={color}
+                  />
                 ) : (
                   <Typography variant="body2" sx={{ textAlign: 'right' }}>
                     {value ?? 'N/A'}
@@ -652,10 +701,14 @@ const Page = () => {
                       <Box
                         sx={{
                           p: 1.5,
-                          bgcolor: row.compliant ? 'success.lighter' : 'error.lighter',
+                          bgcolor: row.compliant
+                            ? 'success.lighter'
+                            : 'error.lighter',
                           borderRadius: '12px',
                           border: '2px solid',
-                          borderColor: row.compliant ? 'success.main' : 'error.main',
+                          borderColor: row.compliant
+                            ? 'success.main'
+                            : 'error.main',
                         }}
                       >
                         <Typography
@@ -665,7 +718,9 @@ const Page = () => {
                             fontSize: '0.8125rem',
                             whiteSpace: 'pre-wrap',
                             wordBreak: 'break-word',
-                            color: row.compliant ? 'success.dark' : 'error.dark',
+                            color: row.compliant
+                              ? 'success.dark'
+                              : 'error.dark',
                           }}
                         >
                           {typeof currentParsed === 'object'
@@ -696,7 +751,10 @@ const Page = () => {
         { label: 'Type', value: row.standardType },
         { label: 'Tenants', value: row.totalTenants },
         { label: 'Compliance', value: `${row.alignmentScore}%` },
-        { label: 'Licenses Missing', value: `${row.LicenseMissingPercentage}%` },
+        {
+          label: 'Licenses Missing',
+          value: `${row.LicenseMissingPercentage}%`,
+        },
       ]
       const tenants = row.tenants ?? []
       const compliantTenants = tenants.filter((tenant) =>
@@ -730,7 +788,11 @@ const Page = () => {
                   py: 1,
                 }}
               >
-                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 90 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ minWidth: 90 }}
+                >
                   {label}
                 </Typography>
                 <Typography variant="body2" sx={{ textAlign: 'right' }}>
@@ -741,7 +803,9 @@ const Page = () => {
           </Stack>
 
           {standardInfo?.helpText && (
-            <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Box
+              sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}
+            >
               <Typography
                 variant="caption"
                 sx={{
@@ -771,7 +835,9 @@ const Page = () => {
                   },
                 }}
               >
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{standardInfo.helpText}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {standardInfo.helpText}
+                </ReactMarkdown>
               </Box>
             </Box>
           )}
@@ -803,11 +869,17 @@ const Page = () => {
                 }}
                 sx={{
                   alignSelf: { xs: 'flex-start', sm: 'center' },
-                  '& .MuiToggleButton-root': { py: 0.25, px: 1, fontSize: '0.75rem' },
+                  '& .MuiToggleButton-root': {
+                    py: 0.25,
+                    px: 1,
+                    fontSize: '0.75rem',
+                  },
                 }}
               >
                 <ToggleButton value="all">All ({tenants.length})</ToggleButton>
-                <ToggleButton value="compliant">Compliant ({compliantTenants.length})</ToggleButton>
+                <ToggleButton value="compliant">
+                  Compliant ({compliantTenants.length})
+                </ToggleButton>
                 <ToggleButton value="nonCompliant">
                   Noncompliant ({nonCompliantTenants.length})
                 </ToggleButton>
@@ -836,10 +908,18 @@ const Page = () => {
                   justifyContent="space-between"
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }} noWrap>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 600 }}
+                      noWrap
+                    >
                       {tenant.tenantFilter}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block' }}
+                    >
                       Template: {tenant.templateName}
                     </Typography>
                   </Box>
@@ -859,7 +939,9 @@ const Page = () => {
                   {tenant.latestDataCollection
                     ? new Date(tenant.latestDataCollection).toLocaleString()
                     : 'N/A'}
-                  {tenant.rowCount > 1 ? ` (${tenant.rowCount} template matches)` : ''}
+                  {tenant.rowCount > 1
+                    ? ` (${tenant.rowCount} template matches)`
+                    : ''}
                 </Typography>
               </Box>
             ))}
@@ -870,7 +952,9 @@ const Page = () => {
   }
 
   const modeToggle = (
-    <Box sx={{ display: 'inline-flex', alignItems: 'center', mr: 1, mt: '4px' }}>
+    <Box
+      sx={{ display: 'inline-flex', alignItems: 'center', mr: 1, mt: '4px' }}
+    >
       <ToggleButtonGroup
         value={viewMode}
         exclusive
@@ -878,7 +962,9 @@ const Page = () => {
         onChange={(event, newViewMode) => {
           if (newViewMode !== null) setViewMode(newViewMode)
         }}
-        sx={{ '& .MuiToggleButton-root': { py: 0.25, px: 1, fontSize: '0.75rem' } }}
+        sx={{
+          '& .MuiToggleButton-root': { py: 0.25, px: 1, fontSize: '0.75rem' },
+        }}
       >
         <ToggleButton value="summary" aria-label="summary view">
           <Tooltip title="Tenant/template summary" placement="top">
@@ -891,15 +977,22 @@ const Page = () => {
         <ToggleButton value="granular" aria-label="per standard view">
           <Tooltip title="Tenant rows for each standard" placement="top">
             <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <ListBulletIcon style={{ width: 16, height: 16, marginRight: 6 }} />
+              <ListBulletIcon
+                style={{ width: 16, height: 16, marginRight: 6 }}
+              />
               Per Standard
             </Box>
           </Tooltip>
         </ToggleButton>
         <ToggleButton value="byStandard" aria-label="by standard summary view">
-          <Tooltip title="Aggregate tenant compliance by standard" placement="top">
+          <Tooltip
+            title="Aggregate tenant compliance by standard"
+            placement="top"
+          >
             <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Squares2X2Icon style={{ width: 16, height: 16, marginRight: 6 }} />
+              <Squares2X2Icon
+                style={{ width: 16, height: 16, marginRight: 6 }}
+              />
               By Standard
             </Box>
           </Tooltip>
@@ -917,9 +1010,15 @@ const Page = () => {
       data={isByStandard ? byStandardData : undefined}
       isFetching={isByStandard && byStandardIsFetching}
       tenantInTitle={false}
-      actions={isGranular ? granularActions : isSummary ? summaryActions : undefined}
+      actions={
+        isGranular ? granularActions : isSummary ? summaryActions : undefined
+      }
       filters={
-        isGranular ? granularFilterList : isByStandard ? byStandardFilterList : summaryFilterList
+        isGranular
+          ? granularFilterList
+          : isByStandard
+            ? byStandardFilterList
+            : summaryFilterList
       }
       simpleColumns={
         isGranular
@@ -964,7 +1063,13 @@ const Page = () => {
             ? 'listTenantAlignment-byStandard'
             : 'listTenantAlignment'
       }
-      offCanvas={isGranular ? granularOffCanvas : isByStandard ? byStandardOffCanvas : undefined}
+      offCanvas={
+        isGranular
+          ? granularOffCanvas
+          : isByStandard
+            ? byStandardOffCanvas
+            : undefined
+      }
       cardButton={modeToggle}
     />
   )
@@ -977,4 +1082,3 @@ Page.getLayout = (page) => (
 )
 
 export default Page
-

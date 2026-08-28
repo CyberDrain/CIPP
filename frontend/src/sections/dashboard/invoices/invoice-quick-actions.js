@@ -1,14 +1,14 @@
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import PropTypes from 'prop-types';
-import toast from 'react-hot-toast';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import ArrowDownOnSquareIcon from '@heroicons/react/24/outline/ArrowDownOnSquareIcon';
-import CurrencyDollarIcon from '@heroicons/react/24/outline/CurrencyDollarIcon';
-import DocumentDuplicateIcon from '@heroicons/react/24/outline/DocumentDuplicateIcon';
-import EyeIcon from '@heroicons/react/24/outline/EyeIcon';
-import InboxIcon from '@heroicons/react/24/outline/InboxIcon';
-import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
+import { useCallback, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import PropTypes from 'prop-types'
+import toast from 'react-hot-toast'
+import { PDFDownloadLink } from '@react-pdf/renderer'
+import ArrowDownOnSquareIcon from '@heroicons/react/24/outline/ArrowDownOnSquareIcon'
+import CurrencyDollarIcon from '@heroicons/react/24/outline/CurrencyDollarIcon'
+import DocumentDuplicateIcon from '@heroicons/react/24/outline/DocumentDuplicateIcon'
+import EyeIcon from '@heroicons/react/24/outline/EyeIcon'
+import InboxIcon from '@heroicons/react/24/outline/InboxIcon'
+import TrashIcon from '@heroicons/react/24/outline/TrashIcon'
 import {
   Button,
   Card,
@@ -17,60 +17,60 @@ import {
   Divider,
   MenuItem,
   SvgIcon,
-  TextField
-} from '@mui/material';
-import { ActionList } from '../../../components/action-list';
-import { ActionListItem } from '../../../components/action-list-item';
-import { ConfirmationDialog } from '../../../components/confirmation-dialog';
-import { useDialog } from '../../../hooks/use-dialog';
-import { paths } from '../../../paths';
-import { InvoicePdfDocument } from './invoice-pdf-document';
+  TextField,
+} from '@mui/material'
+import { ActionList } from '../../../components/action-list'
+import { ActionListItem } from '../../../components/action-list-item'
+import { ConfirmationDialog } from '../../../components/confirmation-dialog'
+import { useDialog } from '../../../hooks/use-dialog'
+import { paths } from '../../../paths'
+import { InvoicePdfDocument } from './invoice-pdf-document'
 
 const notificationOptions = [
   {
     label: 'Invoice created',
-    value: 'invoiceCreated'
+    value: 'invoiceCreated',
   },
   {
     label: 'Payment received',
-    value: 'paymentConfirmation'
-  }
-];
+    value: 'paymentConfirmation',
+  },
+]
 
 export const InvoiceQuickActions = (props) => {
-  const { invoice } = props;
-  const router = useRouter();
-  const markDialog = useDialog();
-  const duplicateDialog = useDialog();
-  const archiveDialog = useDialog();
-  const [notification, setNotification] = useState(notificationOptions[0].value);
+  const { invoice } = props
+  const router = useRouter()
+  const markDialog = useDialog()
+  const duplicateDialog = useDialog()
+  const archiveDialog = useDialog()
+  const [notification, setNotification] = useState(notificationOptions[0].value)
 
   const handleStatusChange = useCallback((event) => {
-    setNotification(event.target.value);
-  }, []);
+    setNotification(event.target.value)
+  }, [])
 
   const handleSendNotification = useCallback(() => {
-    toast.success('Notification sent');
-  }, []);
+    toast.success('Notification sent')
+  }, [])
 
   const handleMark = useCallback(() => {
-    markDialog.handleClose();
-    toast.error('This action is not available on demo');
-  }, [markDialog]);
+    markDialog.handleClose()
+    toast.error('This action is not available on demo')
+  }, [markDialog])
 
   const handleDuplicate = useCallback(() => {
-    duplicateDialog.handleClose();
-    toast.error('This action is not available on demo');
-  }, [duplicateDialog]);
+    duplicateDialog.handleClose()
+    toast.error('This action is not available on demo')
+  }, [duplicateDialog])
 
   const handleDelete = useCallback(() => {
-    archiveDialog.handleClose();
-    toast.error('This action is not available on demo');
-  }, [archiveDialog]);
+    archiveDialog.handleClose()
+    toast.error('This action is not available on demo')
+  }, [archiveDialog])
 
   const handlePreview = useCallback(() => {
-    router.push(paths.dashboard.invoices.details.preview);
-  }, [router]);
+    router.push(paths.dashboard.invoices.details.preview)
+  }, [router])
 
   return (
     <>
@@ -85,21 +85,18 @@ export const InvoiceQuickActions = (props) => {
             value={notification}
           >
             {notificationOptions.map((option) => (
-              <MenuItem
-                key={option.value}
-                value={option.value}
-              >
+              <MenuItem key={option.value} value={option.value}>
                 {option.label}
               </MenuItem>
             ))}
           </TextField>
           <Button
             onClick={handleSendNotification}
-            startIcon={(
+            startIcon={
               <SvgIcon fontSize="small">
                 <InboxIcon />
               </SvgIcon>
-            )}
+            }
             sx={{ mt: 2 }}
             variant="outlined"
           >
@@ -109,29 +106,29 @@ export const InvoiceQuickActions = (props) => {
         <Divider />
         <ActionList>
           <ActionListItem
-            icon={(
+            icon={
               <SvgIcon fontSize="small">
                 <EyeIcon />
               </SvgIcon>
-            )}
+            }
             label="Preview"
             onClick={handlePreview}
           />
           <ActionListItem
-            icon={(
+            icon={
               <SvgIcon fontSize="small">
                 <CurrencyDollarIcon />
               </SvgIcon>
-            )}
+            }
             label="Mark Paid"
             onClick={markDialog.handleOpen}
           />
           <ActionListItem
-            icon={(
+            icon={
               <SvgIcon fontSize="small">
                 <DocumentDuplicateIcon />
               </SvgIcon>
-            )}
+            }
             label="Duplicate"
             onClick={duplicateDialog.handleOpen}
           />
@@ -140,24 +137,24 @@ export const InvoiceQuickActions = (props) => {
             fileName="invoice"
             style={{
               color: 'inherit',
-              textDecoration: 'none'
+              textDecoration: 'none',
             }}
           >
             <ActionListItem
-              icon={(
+              icon={
                 <SvgIcon fontSize="small">
                   <ArrowDownOnSquareIcon />
                 </SvgIcon>
-              )}
+              }
               label="Download (PDF)"
             />
           </PDFDownloadLink>
           <ActionListItem
-            icon={(
+            icon={
               <SvgIcon fontSize="small">
                 <TrashIcon />
               </SvgIcon>
-            )}
+            }
             label="Delete"
             onClick={archiveDialog.handleOpen}
           />
@@ -188,9 +185,9 @@ export const InvoiceQuickActions = (props) => {
         variant="error"
       />
     </>
-  );
-};
+  )
+}
 
 InvoiceQuickActions.propTypes = {
-  invoice: PropTypes.object.isRequired
-};
+  invoice: PropTypes.object.isRequired,
+}

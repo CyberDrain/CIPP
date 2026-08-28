@@ -1,42 +1,44 @@
-let cachedVersion = null;
-let fetchPromise = null;
+let cachedVersion = null
+let fetchPromise = null
 
 // Attempt to derive version from public/version.json (client) or env/package (SSR fallback)
 export async function getCippVersion() {
-  if (cachedVersion) return cachedVersion;
+  if (cachedVersion) return cachedVersion
 
   // Server-side fallback (no window)
-  if (typeof window === "undefined") {
-    return "unknown";
+  if (typeof window === 'undefined') {
+    return 'unknown'
   }
 
   if (!fetchPromise) {
-    fetchPromise = fetch("/version.json")
+    fetchPromise = fetch('/version.json')
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         // Support multiple possible keys
-        cachedVersion = j?.version || "unknown";
-        return cachedVersion;
+        cachedVersion = j?.version || 'unknown'
+        return cachedVersion
       })
       .catch(() => {
-        cachedVersion = "unknown";
-        return cachedVersion;
-      });
+        cachedVersion = 'unknown'
+        return cachedVersion
+      })
   }
-  return fetchPromise;
+  return fetchPromise
 }
 
-import { getImpersonatedRole } from "./impersonation";
+import { getImpersonatedRole } from './impersonation'
 
 // Build headers including X-CIPP-Version. Accept extra headers to merge.
 export async function buildVersionedHeaders(extra = {}) {
-  const version = await getCippVersion();
+  const version = await getCippVersion()
   // Backend honors this only for real superadmins; harmless for everyone else.
-  const impersonatedRole = getImpersonatedRole();
+  const impersonatedRole = getImpersonatedRole()
   return {
-    "Content-Type": "application/json",
-    "X-CIPP-Version": version,
-    ...(impersonatedRole ? { "x-cipp-impersonate-role": impersonatedRole } : {}),
+    'Content-Type': 'application/json',
+    'X-CIPP-Version': version,
+    ...(impersonatedRole
+      ? { 'x-cipp-impersonate-role': impersonatedRole }
+      : {}),
     ...extra,
-  };
+  }
 }

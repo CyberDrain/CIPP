@@ -1,23 +1,20 @@
-import { Button, Card, CardHeader, Divider, useMediaQuery } from '@mui/material';
-import { PropertyList } from '../../../components/property-list';
-import { PropertyListItem } from '../../../components/property-list-item';
+import { Button, Card, CardHeader, Divider, useMediaQuery } from '@mui/material'
+import { PropertyList } from '../../../components/property-list'
+import { PropertyListItem } from '../../../components/property-list-item'
 
 export const OrganizationBillingDetails = () => {
-  const mdDown = useMediaQuery((theme) => theme.breakpoints.down('md'));
+  const mdDown = useMediaQuery((theme) => theme.breakpoints.down('md'))
 
-  const align = mdDown ? 'vertical' : 'horizontal';
+  const align = mdDown ? 'vertical' : 'horizontal'
 
   return (
     <Card>
       <CardHeader
-        action={(
-          <Button
-            color="inherit"
-            size="small"
-          >
+        action={
+          <Button color="inherit" size="small">
             Edit
           </Button>
-        )}
+        }
         title="Billing Details"
       />
       <Divider />
@@ -40,12 +37,8 @@ export const OrganizationBillingDetails = () => {
           label="Zip Code"
           value="6753454"
         />
-        <PropertyListItem
-          align={align}
-          label="City"
-          value="Berlin"
-        />
+        <PropertyListItem align={align} label="City" value="Berlin" />
       </PropertyList>
     </Card>
-  );
-};
+  )
+}

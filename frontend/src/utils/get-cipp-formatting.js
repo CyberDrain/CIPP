@@ -14,7 +14,10 @@ import { Chip, Link, SvgIcon, Tooltip } from '@mui/material'
 import NextLink from 'next/link'
 import { alpha } from '@mui/material/styles'
 import { Box } from '@mui/system'
-import { formatCellText, CippCellText } from '../components/CippTable/CippCellText'
+import {
+  formatCellText,
+  CippCellText,
+} from '../components/CippTable/CippCellText'
 import { CippCopyToClipBoard } from '../components/CippComponents/CippCopyToClipboard'
 import { getCippLicenseTranslation } from './get-cipp-license-translation'
 import CippDataTableButton from '../components/CippTable/CippDataTableButton'
@@ -284,7 +287,10 @@ export const getCippFormatting = (
     // receive a rendered node ('both': off-canvas, card views) or explicitly wants a
     // string (false: CSV export); a raw Date is not a valid React child.
     // cell mode: long absolute string in the browser's locale + timezone.
-    if (isText) return canReceive === 'both' || canReceive === false ? dt.toLocaleString() : dt
+    if (isText)
+      return canReceive === 'both' || canReceive === false
+        ? dt.toLocaleString()
+        : dt
     return dt.toLocaleString()
   }
 
@@ -738,8 +744,7 @@ export const getCippFormatting = (
 
   if (cellName === 'standardName') {
     // Already resolved for templates; do a standards.json lookup for classic standards
-    if (!data?.startsWith('standards.'))
-      return formatCellText(data, isText)
+    if (!data?.startsWith('standards.')) return formatCellText(data, isText)
     const baseName = data.split('.').slice(0, -1).join('.')
     const label =
       getStandards().find((s) => s.name === data)?.label ??
@@ -1066,7 +1071,10 @@ export const getCippFormatting = (
   if (cellName === 'Members' && Array.isArray(data)) {
     return isText ? (
       data
-        .map((member) => member?.displayName || member?.userPrincipalName || member?.id)
+        .map(
+          (member) =>
+            member?.displayName || member?.userPrincipalName || member?.id
+        )
         .filter(Boolean)
         .join(', ')
     ) : (

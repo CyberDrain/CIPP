@@ -1,6 +1,6 @@
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import toast from "react-hot-toast";
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import toast from 'react-hot-toast'
 import {
   Avatar,
   Box,
@@ -12,48 +12,54 @@ import {
   Stack,
   TextField,
   Typography,
-} from "@mui/material";
-import { Grid } from "@mui/system";
-import { useMockedUser } from "../../../hooks/use-mocked-user";
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import { useMockedUser } from '../../../hooks/use-mocked-user'
 
-const companySizeOptions = ["1-10", "11-30", "31-50", "50+"];
+const companySizeOptions = ['1-10', '11-30', '31-50', '50+']
 
 const initialValues = {
-  companyName: "Devias IO",
-  companySize: "1-10",
-  email: "chen.simmons@devias.io",
-  jobTitle: "Operation",
-  name: "Chen Simmons",
+  companyName: 'Devias IO',
+  companySize: '1-10',
+  email: 'chen.simmons@devias.io',
+  jobTitle: 'Operation',
+  name: 'Chen Simmons',
   submit: null,
-};
+}
 
 const validationSchema = Yup.object({
-  companyName: Yup.string().max(255).required("Company name is required"),
-  companySize: Yup.string().max(255).oneOf(companySizeOptions).required("Company size is required"),
-  email: Yup.string().max(255).email("Must be a valid email").required("Email is required"),
-  jobTitle: Yup.string().max(255).required("Job name is required"),
-  name: Yup.string().max(255).required("Name is required"),
-});
+  companyName: Yup.string().max(255).required('Company name is required'),
+  companySize: Yup.string()
+    .max(255)
+    .oneOf(companySizeOptions)
+    .required('Company size is required'),
+  email: Yup.string()
+    .max(255)
+    .email('Must be a valid email')
+    .required('Email is required'),
+  jobTitle: Yup.string().max(255).required('Job name is required'),
+  name: Yup.string().max(255).required('Name is required'),
+})
 
 export const AccountDetails = (props) => {
-  const user = useMockedUser();
+  const user = useMockedUser()
   const formik = useFormik({
     initialValues,
     validationSchema,
     onSubmit: async (values, helpers) => {
       try {
-        toast.success("Settings saved");
-        helpers.resetForm();
-        helpers.setStatus({ success: true });
-        helpers.setSubmitting(false);
+        toast.success('Settings saved')
+        helpers.resetForm()
+        helpers.setStatus({ success: true })
+        helpers.setSubmitting(false)
       } catch (err) {
-        console.error(err);
-        helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
-        helpers.setSubmitting(false);
+        console.error(err)
+        helpers.setStatus({ success: false })
+        helpers.setErrors({ submit: err.message })
+        helpers.setSubmitting(false)
       }
     },
-  });
+  })
 
   return (
     <Card>
@@ -63,7 +69,12 @@ export const AccountDetails = (props) => {
             <Typography variant="h6">Settings</Typography>
           </Grid>
           <Grid size={{ md: 7, xs: 12 }}>
-            <Stack alignItems="center" direction="row" spacing={2} sx={{ mb: 3 }}>
+            <Stack
+              alignItems="center"
+              direction="row"
+              spacing={2}
+              sx={{ mb: 3 }}
+            >
               <Avatar
                 src={user.avatar}
                 sx={{
@@ -119,9 +130,13 @@ export const AccountDetails = (props) => {
                   value={formik.values.jobTitle}
                 />
                 <TextField
-                  error={!!(formik.touched.companyName && formik.errors.companyName)}
+                  error={
+                    !!(formik.touched.companyName && formik.errors.companyName)
+                  }
                   fullWidth
-                  helperText={formik.touched.companyName && formik.errors.companyName}
+                  helperText={
+                    formik.touched.companyName && formik.errors.companyName
+                  }
                   label="Company name"
                   name="companyName"
                   onBlur={formik.handleBlur}
@@ -129,9 +144,13 @@ export const AccountDetails = (props) => {
                   value={formik.values.companyName}
                 />
                 <TextField
-                  error={!!(formik.touched.companySize && formik.errors.companySize)}
+                  error={
+                    !!(formik.touched.companySize && formik.errors.companySize)
+                  }
                   fullWidth
-                  helperText={formik.touched.companySize && formik.errors.companySize}
+                  helperText={
+                    formik.touched.companySize && formik.errors.companySize
+                  }
                   label="Company size"
                   name="companySize"
                   onBlur={formik.handleBlur}
@@ -161,5 +180,5 @@ export const AccountDetails = (props) => {
         </Grid>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

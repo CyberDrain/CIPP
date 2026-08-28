@@ -1,7 +1,6 @@
-import { Container } from "@mui/material";
+import { Container } from '@mui/material'
 
 export const Footer = () => {
-
   //randomize the order of the sponsor images
 
   return (
@@ -9,18 +8,18 @@ export const Footer = () => {
       <Container
         maxWidth="xl"
         sx={{
-          display: "flex",
+          display: 'flex',
           flexDirection: {
-            xs: "column",
-            sm: "row",
+            xs: 'column',
+            sm: 'row',
           },
           py: 1,
-          "& a": {
+          '& a': {
             mt: {
               xs: 1,
               sm: 0,
             },
-            "&:not(:last-child)": {
+            '&:not(:last-child)': {
               mr: {
                 xs: 0,
                 sm: 2,
@@ -30,5 +29,5 @@ export const Footer = () => {
         }}
       ></Container>
     </div>
-  );
-};
+  )
+}

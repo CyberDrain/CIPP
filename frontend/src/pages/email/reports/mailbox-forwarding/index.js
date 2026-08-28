@@ -1,40 +1,40 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
-import { useCippReportDB } from "../../../../components/CippComponents/CippReportDBControls";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
+import { useCippReportDB } from '../../../../components/CippComponents/CippReportDBControls'
 
 const Page = () => {
   const reportDB = useCippReportDB({
-    apiUrl: "/api/ListMailboxForwarding",
-    queryKey: "mailbox-forwarding",
-    cacheName: "Mailboxes",
-    syncTitle: "Sync Mailbox Cache",
+    apiUrl: '/api/ListMailboxForwarding',
+    queryKey: 'mailbox-forwarding',
+    cacheName: 'Mailboxes',
+    syncTitle: 'Sync Mailbox Cache',
     allowToggle: false,
     defaultCached: true,
-  });
+  })
 
   const columns = [
-    ...reportDB.cacheColumns.filter((c) => c === "Tenant"),
-    "UPN",
-    "DisplayName",
-    "RecipientTypeDetails",
-    "ForwardingType",
-    "ForwardTo",
-    "DeliverToMailboxAndForward",
-    ...reportDB.cacheColumns.filter((c) => c !== "Tenant"),
-  ];
+    ...reportDB.cacheColumns.filter((c) => c === 'Tenant'),
+    'UPN',
+    'DisplayName',
+    'RecipientTypeDetails',
+    'ForwardingType',
+    'ForwardTo',
+    'DeliverToMailboxAndForward',
+    ...reportDB.cacheColumns.filter((c) => c !== 'Tenant'),
+  ]
 
   const filters = [
     {
-      filterName: "External Forwarding",
-      value: [{ id: "ForwardingType", value: "External" }],
-      type: "column",
+      filterName: 'External Forwarding',
+      value: [{ id: 'ForwardingType', value: 'External' }],
+      type: 'column',
     },
     {
-      filterName: "Internal Forwarding",
-      value: [{ id: "ForwardingType", value: "Internal" }],
-      type: "column",
+      filterName: 'Internal Forwarding',
+      value: [{ id: 'ForwardingType', value: 'Internal' }],
+      type: 'column',
     },
-  ];
+  ]
 
   return (
     <>
@@ -50,9 +50,9 @@ const Page = () => {
       />
       {reportDB.syncDialog}
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

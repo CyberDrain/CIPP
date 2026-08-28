@@ -1,18 +1,25 @@
-import { Drawer, Box, Button, IconButton, Typography, Divider } from "@mui/material";
-import { CippPropertyListCard } from "../CippCards/CippPropertyListCard";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
-import { getCippFormatting } from "../../utils/get-cipp-formatting";
-import { useMediaQuery, Grid } from "@mui/system";
-import CloseIcon from "@mui/icons-material/Close";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { renderUrlValue } from "../../utils/render-url-value";
-import { useHistoryDismiss } from "../../hooks/use-history-dismiss";
+import {
+  Drawer,
+  Box,
+  Button,
+  IconButton,
+  Typography,
+  Divider,
+} from '@mui/material'
+import { CippPropertyListCard } from '../CippCards/CippPropertyListCard'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
+import { getCippFormatting } from '../../utils/get-cipp-formatting'
+import { useMediaQuery, Grid } from '@mui/system'
+import CloseIcon from '@mui/icons-material/Close'
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import { renderUrlValue } from '../../utils/render-url-value'
+import { useHistoryDismiss } from '../../hooks/use-history-dismiss'
 
 export const CippOffCanvas = (props) => {
   const {
-    title = "Extended Info",
+    title = 'Extended Info',
     visible,
     extendedInfoFields = [],
     extendedData,
@@ -20,7 +27,7 @@ export const CippOffCanvas = (props) => {
     onClose,
     isFetching,
     children,
-    size = "sm",
+    size = 'sm',
     footer,
     onNavigateUp,
     onNavigateDown,
@@ -29,48 +36,56 @@ export const CippOffCanvas = (props) => {
     navigationPosition,
     contentPadding = 2,
     keepMounted = false,
-    actionsPosition = "top",
+    actionsPosition = 'top',
     richFormatting = false,
     aboveModal = false,
-  } = props;
+  } = props
 
-  const mdDown = useMediaQuery((theme) => theme.breakpoints.down("md"));
+  const mdDown = useMediaQuery((theme) => theme.breakpoints.down('md'))
   // Pages that hand-pick extendedInfoFields expect the flat text rendering. richFormatting
   // asks for the same nodes the table cells use — copy chips, links, status icons — which
   // is what the card view's generated fallback needs, since its fields ARE table columns.
   const formatField = (value, field, isArray) => {
     if (!richFormatting) {
-      return getCippFormatting(value, field, isArray ? "array" : "text", "both");
+      return getCippFormatting(value, field, isArray ? 'array' : 'text', 'both')
     }
-    return renderUrlValue(value, field) ?? getCippFormatting(value, field, undefined, "both");
-  };
+    return (
+      renderUrlValue(value, field) ??
+      getCippFormatting(value, field, undefined, 'both')
+    )
+  }
 
   const extendedInfo = extendedInfoFields.map((field) => {
-    const value = field.split(".").reduce((acc, part) => acc && acc[part], extendedData);
+    const value = field
+      .split('.')
+      .reduce((acc, part) => acc && acc[part], extendedData)
     if (value === undefined || value === null) {
-      if (extendedData?.[field] !== undefined && extendedData?.[field] !== null) {
+      if (
+        extendedData?.[field] !== undefined &&
+        extendedData?.[field] !== null
+      ) {
         return {
           label: getCippTranslation(field),
           value: formatField(extendedData[field], field, false),
-        };
+        }
       } else {
         return {
           label: getCippTranslation(field),
-          value: "N/A",
-        };
+          value: 'N/A',
+        }
       }
     } else if (Array.isArray(value)) {
       return {
         label: getCippTranslation(field),
         value: formatField(value, field, true),
-      };
+      }
     } else {
       return {
         label: getCippTranslation(field),
         value: formatField(value, field, false),
-      };
+      }
     }
-  });
+  })
 
   const infoCard = (extendedInfo.length > 0 || actions?.length > 0) && (
     <Grid size={{ xs: 12 }}>
@@ -83,19 +98,19 @@ export const CippOffCanvas = (props) => {
         data={extendedData}
       />
     </Grid>
-  );
+  )
 
-  const SIZE_WIDTHS = { sm: 400, md: 600, lg: 800, xl: 1000 };
-  const drawerWidth = mdDown ? "100%" : (SIZE_WIDTHS[size] ?? 400);
+  const SIZE_WIDTHS = { sm: 400, md: 600, lg: 800, xl: 1000 }
+  const drawerWidth = mdDown ? '100%' : (SIZE_WIDTHS[size] ?? 400)
   // Prev/next navigation exists on this drawer (row detail view); on phones the 24px
   // header arrows move to a 44px bottom bar in thumb reach.
-  const hasRowNavigation = canNavigateUp || canNavigateDown;
-  const showBottomNav = mdDown && hasRowNavigation;
+  const hasRowNavigation = canNavigateUp || canNavigateDown
+  const showBottomNav = mdDown && hasRowNavigation
 
   // Below md this drawer reads as a detail page, so the back gesture has to behave like the
   // header's back chevron. Without a history entry of its own, swiping back from a row's
   // details leaves the list page entirely — and takes the table's loaded state with it.
-  useHistoryDismiss(visible, onClose, mdDown);
+  useHistoryDismiss(visible, onClose, mdDown)
 
   return (
     <>
@@ -108,17 +123,31 @@ export const CippOffCanvas = (props) => {
         }}
         // A stock Drawer sits at 1200 and a Dialog at 1300, so a drawer opened from inside a
         // dialog renders behind it. Same lift CippBottomSheet takes, for the same reason.
-        sx={aboveModal ? { zIndex: (theme) => theme.zIndex.modal + 1 } : undefined}
-        anchor={"right"}
+        sx={
+          aboveModal ? { zIndex: (theme) => theme.zIndex.modal + 1 } : undefined
+        }
+        anchor={'right'}
         open={visible}
         onClose={onClose}
       >
         <Box
-          sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: 1.5 }}
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            p: 1.5,
+          }}
         >
           {/* Phone convention: back chevron on the left — the drawer reads as a detail page */}
           {mdDown ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                minWidth: 0,
+              }}
+            >
               <IconButton onClick={onClose} aria-label="Back" sx={{ ml: -0.5 }}>
                 <ArrowBackIosNewIcon fontSize="small" />
               </IconButton>
@@ -129,7 +158,7 @@ export const CippOffCanvas = (props) => {
           ) : (
             <Typography variant="h5">{title}</Typography>
           )}
-          <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
             {hasRowNavigation && !mdDown && (
               <>
                 <IconButton
@@ -160,41 +189,43 @@ export const CippOffCanvas = (props) => {
         <Divider />
         <Box
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            height: "calc(100vh - 73px)", // Account for header + divider
+            display: 'flex',
+            flexDirection: 'column',
+            height: 'calc(100vh - 73px)', // Account for header + divider
             minHeight: 0,
           }}
         >
           <Box
             sx={{
-              overflowY: "auto",
+              overflowY: 'auto',
               flexGrow: 1,
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               minHeight: 0,
             }}
           >
             <Grid container spacing={1} sx={{ flexGrow: 1 }}>
-              {actionsPosition !== "bottom" && infoCard}
+              {actionsPosition !== 'bottom' && infoCard}
               <Grid
                 size={{ xs: 12 }}
-                sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}
+                sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}
               >
                 <Box
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
+                    display: 'flex',
+                    flexDirection: 'column',
                     flexGrow: 1,
                     minHeight: 0,
                     p: contentPadding,
                   }}
                 >
                   {/* Render children if provided, otherwise render default content */}
-                  {typeof children === "function" ? children(extendedData) : children}
+                  {typeof children === 'function'
+                    ? children(extendedData)
+                    : children}
                 </Box>
               </Grid>
-              {actionsPosition === "bottom" && infoCard}
+              {actionsPosition === 'bottom' && infoCard}
             </Grid>
           </Box>
 
@@ -203,10 +234,10 @@ export const CippOffCanvas = (props) => {
             <Box
               sx={{
                 borderTop: 1,
-                borderColor: "divider",
+                borderColor: 'divider',
                 p: 2,
                 flexShrink: 0,
-                mt: "auto",
+                mt: 'auto',
               }}
             >
               {footer}
@@ -217,14 +248,14 @@ export const CippOffCanvas = (props) => {
           {showBottomNav && (
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 1.5,
                 borderTop: 1,
-                borderColor: "divider",
+                borderColor: 'divider',
                 px: 1.5,
                 pt: 1.25,
-                pb: "calc(env(safe-area-inset-bottom) + 12px)",
+                pb: 'calc(env(safe-area-inset-bottom) + 12px)',
                 flexShrink: 0,
               }}
             >
@@ -234,12 +265,16 @@ export const CippOffCanvas = (props) => {
                 startIcon={<KeyboardArrowUpIcon />}
                 onClick={onNavigateUp}
                 disabled={!canNavigateUp}
-                sx={{ flex: 1, minHeight: 44, borderColor: "divider" }}
+                sx={{ flex: 1, minHeight: 44, borderColor: 'divider' }}
               >
                 Prev
               </Button>
               {navigationPosition?.total > 0 && (
-                <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
                   {navigationPosition.index} of {navigationPosition.total}
                 </Typography>
               )}
@@ -249,7 +284,7 @@ export const CippOffCanvas = (props) => {
                 endIcon={<KeyboardArrowDownIcon />}
                 onClick={onNavigateDown}
                 disabled={!canNavigateDown}
-                sx={{ flex: 1, minHeight: 44, borderColor: "divider" }}
+                sx={{ flex: 1, minHeight: 44, borderColor: 'divider' }}
               >
                 Next
               </Button>
@@ -258,5 +293,5 @@ export const CippOffCanvas = (props) => {
         </Box>
       </Drawer>
     </>
-  );
-};
+  )
+}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import {
   TextField,
   Box,
@@ -17,74 +17,74 @@ import {
   ListItemIcon,
   ListSubheader,
   Stack,
-} from "@mui/material";
-import { Search as SearchIcon, Star as StarIcon } from "@mui/icons-material";
-import { ApiGetCall } from "../../api/ApiCall";
-import { useRouter } from "next/router";
-import { BulkActionsMenu } from "../bulk-actions-menu";
-import { CippOffCanvas } from "../CippComponents/CippOffCanvas";
-import { CippBitlockerKeySearch } from "../CippComponents/CippBitlockerKeySearch";
-import { nativeMenuItems } from "../../layouts/config";
-import { usePermissions } from "../../hooks/use-permissions";
-import { useIsMobileLayout } from "../../hooks/use-breakpoint";
-import { useUserBookmarks } from "../../hooks/use-user-bookmarks";
-import { searchLocalLicenseCatalog } from "../../utils/get-cipp-license-catalog";
+} from '@mui/material'
+import { Search as SearchIcon, Star as StarIcon } from '@mui/icons-material'
+import { ApiGetCall } from '../../api/ApiCall'
+import { useRouter } from 'next/router'
+import { BulkActionsMenu } from '../bulk-actions-menu'
+import { CippOffCanvas } from '../CippComponents/CippOffCanvas'
+import { CippBitlockerKeySearch } from '../CippComponents/CippBitlockerKeySearch'
+import { nativeMenuItems } from '../../layouts/config'
+import { usePermissions } from '../../hooks/use-permissions'
+import { useIsMobileLayout } from '../../hooks/use-breakpoint'
+import { useUserBookmarks } from '../../hooks/use-user-bookmarks'
+import { searchLocalLicenseCatalog } from '../../utils/get-cipp-license-catalog'
 
 function getLeafItems(items = []) {
-  let result = [];
+  let result = []
 
   for (const item of items) {
     if (item.items && Array.isArray(item.items) && item.items.length > 0) {
-      result = result.concat(getLeafItems(item.items));
+      result = result.concat(getLeafItems(item.items))
     } else {
-      result.push(item);
+      result.push(item)
     }
   }
 
-  return result;
+  return result
 }
 
 async function loadTabOptions() {
   const tabOptionPaths = [
-    "/email/administration/exchange-retention",
-    "/cipp/custom-data",
-    "/cipp/advanced/super-admin",
-    "/cipp/advanced/container-management",
-    "/cipp/advanced/authentication",
-    "/endpoint/MEM/enrollment-profiles",
-    "/tenant/standards",
-    "/tenant/manage",
-    "/tenant/administration/applications",
-    "/tenant/administration/tenants",
-    "/tenant/administration/audit-logs",
-    "/identity/administration/users/user",
-    "/tenant/administration/securescore",
-    "/tenant/gdap-management",
-    "/tenant/gdap-management/relationships/relationship",
-    "/cipp/settings",
-  ];
+    '/email/administration/exchange-retention',
+    '/cipp/custom-data',
+    '/cipp/advanced/super-admin',
+    '/cipp/advanced/container-management',
+    '/cipp/advanced/authentication',
+    '/endpoint/MEM/enrollment-profiles',
+    '/tenant/standards',
+    '/tenant/manage',
+    '/tenant/administration/applications',
+    '/tenant/administration/tenants',
+    '/tenant/administration/audit-logs',
+    '/identity/administration/users/user',
+    '/tenant/administration/securescore',
+    '/tenant/gdap-management',
+    '/tenant/gdap-management/relationships/relationship',
+    '/cipp/settings',
+  ]
 
-  const tabOptions = [];
+  const tabOptions = []
 
   for (const basePath of tabOptionPaths) {
     try {
-      const module = await import(`../../pages${basePath}/tabOptions.json`);
-      const options = module.default || module;
+      const module = await import(`../../pages${basePath}/tabOptions.json`)
+      const options = module.default || module
 
       options.forEach((option) => {
         tabOptions.push({
           title: option.label,
           path: option.path,
-          type: "tab",
+          type: 'tab',
           basePath,
-        });
-      });
+        })
+      })
     } catch (error) {
-      console.debug(`Could not load tabOptions for ${basePath}:`, error);
+      console.debug(`Could not load tabOptions for ${basePath}:`, error)
     }
   }
 
-  return tabOptions;
+  return tabOptions
 }
 
 function filterItemsByPermissionsAndRoles(items, userPermissions, userRoles) {
@@ -93,28 +93,28 @@ function filterItemsByPermissionsAndRoles(items, userPermissions, userRoles) {
       const hasPermission = userPermissions?.some((userPerm) => {
         return item.permissions.some((requiredPerm) => {
           if (userPerm === requiredPerm) {
-            return true;
+            return true
           }
 
-          if (requiredPerm.includes("*")) {
+          if (requiredPerm.includes('*')) {
             const regexPattern = requiredPerm
-              .replace(/\\/g, "\\\\")
-              .replace(/\./g, "\\.")
-              .replace(/\*/g, ".*");
-            const regex = new RegExp(`^${regexPattern}$`);
-            return regex.test(userPerm);
+              .replace(/\\/g, '\\\\')
+              .replace(/\./g, '\\.')
+              .replace(/\*/g, '.*')
+            const regex = new RegExp(`^${regexPattern}$`)
+            return regex.test(userPerm)
           }
 
-          return false;
-        });
-      });
+          return false
+        })
+      })
       if (!hasPermission) {
-        return false;
+        return false
       }
     }
 
-    return true;
-  });
+    return true
+  })
 }
 
 export const CippUniversalSearchV2 = React.forwardRef(
@@ -124,32 +124,36 @@ export const CippUniversalSearchV2 = React.forwardRef(
       onChange = () => {},
       onLicenseSelect,
       maxResults = 10,
-      value = "",
+      value = '',
       autoFocus = false,
-      defaultSearchType = "Users",
+      defaultSearchType = 'Users',
     },
-    ref,
+    ref
   ) => {
-    const [searchValue, setSearchValue] = useState(value);
-    const [searchType, setSearchType] = useState(defaultSearchType);
-    const [bitlockerLookupType, setBitlockerLookupType] = useState("keyId");
-    const [tabOptions, setTabOptions] = useState([]);
-    const [showDropdown, setShowDropdown] = useState(false);
-    const [highlightedIndex, setHighlightedIndex] = useState(-1);
-    const [bitlockerDrawerVisible, setBitlockerDrawerVisible] = useState(false);
+    const [searchValue, setSearchValue] = useState(value)
+    const [searchType, setSearchType] = useState(defaultSearchType)
+    const [bitlockerLookupType, setBitlockerLookupType] = useState('keyId')
+    const [tabOptions, setTabOptions] = useState([])
+    const [showDropdown, setShowDropdown] = useState(false)
+    const [highlightedIndex, setHighlightedIndex] = useState(-1)
+    const [bitlockerDrawerVisible, setBitlockerDrawerVisible] = useState(false)
     const [bitlockerDrawerDefaults, setBitlockerDrawerDefaults] = useState({
-      searchTerm: "",
-      searchType: "keyId",
-    });
-    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
-    const [dropdownMaxHeight, setDropdownMaxHeight] = useState(400);
-    const containerRef = useRef(null);
-    const textFieldRef = useRef(null);
-    const dropdownRef = useRef(null);
-    const router = useRouter();
-    const { userPermissions, userRoles } = usePermissions();
-    const isMobile = useIsMobileLayout();
-    const { bookmarks } = useUserBookmarks();
+      searchTerm: '',
+      searchType: 'keyId',
+    })
+    const [dropdownPosition, setDropdownPosition] = useState({
+      top: 0,
+      left: 0,
+      width: 0,
+    })
+    const [dropdownMaxHeight, setDropdownMaxHeight] = useState(400)
+    const containerRef = useRef(null)
+    const textFieldRef = useRef(null)
+    const dropdownRef = useRef(null)
+    const router = useRouter()
+    const { userPermissions, userRoles } = usePermissions()
+    const isMobile = useIsMobileLayout()
+    const { bookmarks } = useUserBookmarks()
 
     const universalSearch = ApiGetCall({
       url: `/api/ExecUniversalSearchV2`,
@@ -160,320 +164,357 @@ export const CippUniversalSearchV2 = React.forwardRef(
       },
       queryKey: `searchV2-${searchType}-${searchValue}`,
       waiting: false,
-    });
+    })
 
     // Local-first license lookup. The frontend ships the full Microsoft SKU
     // catalog in M365Licenses.json, so for the Licenses type we match locally
     // and only fall back to the API when the catalog has no hit.
     const localLicenseResults = useMemo(() => {
-      if (searchType !== "Licenses") return [];
-      return searchLocalLicenseCatalog(searchValue, maxResults);
-    }, [searchType, searchValue, maxResults]);
+      if (searchType !== 'Licenses') return []
+      return searchLocalLicenseCatalog(searchValue, maxResults)
+    }, [searchType, searchValue, maxResults])
 
     const bitlockerSearch = ApiGetCall({
-      url: "/api/ExecBitlockerSearch",
+      url: '/api/ExecBitlockerSearch',
       data: {
         [bitlockerLookupType]: searchValue,
       },
       queryKey: `bitlocker-universal-${bitlockerLookupType}-${searchValue}`,
       waiting: false,
-    });
+    })
 
     const activeSearch =
-      searchType === "BitLocker" ? bitlockerSearch : searchType === "Pages" ? null : universalSearch;
+      searchType === 'BitLocker'
+        ? bitlockerSearch
+        : searchType === 'Pages'
+          ? null
+          : universalSearch
 
     const flattenedMenuItems = useMemo(() => {
-      const allLeafItems = getLeafItems(nativeMenuItems);
+      const allLeafItems = getLeafItems(nativeMenuItems)
 
       const buildBreadcrumbPath = (items, targetPath) => {
         const searchRecursive = (nestedItems, currentPath = []) => {
           for (const item of nestedItems) {
-            const shouldAddToPath = item.title !== "Dashboard" || item.path !== "/";
-            const newPath = shouldAddToPath ? [...currentPath, item.title] : currentPath;
+            const shouldAddToPath =
+              item.title !== 'Dashboard' || item.path !== '/'
+            const newPath = shouldAddToPath
+              ? [...currentPath, item.title]
+              : currentPath
 
             if (item.path) {
-              const normalizedItemPath = item.path.replace(/\/$/, "");
-              const normalizedTargetPath = targetPath.replace(/\/$/, "");
+              const normalizedItemPath = item.path.replace(/\/$/, '')
+              const normalizedTargetPath = targetPath.replace(/\/$/, '')
 
-              if (normalizedItemPath !== "/" && normalizedItemPath.startsWith(normalizedTargetPath)) {
-                return newPath;
+              if (
+                normalizedItemPath !== '/' &&
+                normalizedItemPath.startsWith(normalizedTargetPath)
+              ) {
+                return newPath
               }
             }
 
             if (item.items && item.items.length > 0) {
-              const childResult = searchRecursive(item.items, newPath);
+              const childResult = searchRecursive(item.items, newPath)
               if (childResult.length > 0) {
-                return childResult;
+                return childResult
               }
             }
           }
-          return [];
-        };
+          return []
+        }
 
-        return searchRecursive(items);
-      };
+        return searchRecursive(items)
+      }
 
       const filteredMainMenu = filterItemsByPermissionsAndRoles(
         allLeafItems,
         userPermissions,
-        userRoles,
+        userRoles
       ).map((item) => {
-        const rawBreadcrumbs = buildBreadcrumbPath(nativeMenuItems, item.path) || [];
+        const rawBreadcrumbs =
+          buildBreadcrumbPath(nativeMenuItems, item.path) || []
         const trimmedBreadcrumbs =
-          rawBreadcrumbs.length > 0 && rawBreadcrumbs[rawBreadcrumbs.length - 1] === item.title
+          rawBreadcrumbs.length > 0 &&
+          rawBreadcrumbs[rawBreadcrumbs.length - 1] === item.title
             ? rawBreadcrumbs.slice(0, -1)
-            : rawBreadcrumbs;
+            : rawBreadcrumbs
         return {
           ...item,
           breadcrumbs: trimmedBreadcrumbs,
-        };
-      });
+        }
+      })
 
       const leafItemIndex = allLeafItems.reduce((acc, item) => {
         if (item.path) {
-          acc[item.path.replace(/\/$/, "")] = item;
+          acc[item.path.replace(/\/$/, '')] = item
         }
-        return acc;
-      }, {});
+        return acc
+      }, {})
 
       const filteredTabOptions = tabOptions
         .map((tab) => {
-          const normalizedTabPath = tab.path.replace(/\/$/, "");
-          const normalizedBasePath = tab.basePath?.replace(/\/$/, "");
+          const normalizedTabPath = tab.path.replace(/\/$/, '')
+          const normalizedBasePath = tab.basePath?.replace(/\/$/, '')
 
-          let pageItem = leafItemIndex[normalizedTabPath];
+          let pageItem = leafItemIndex[normalizedTabPath]
 
           if (!pageItem && normalizedBasePath) {
             pageItem = allLeafItems.find((item) => {
-              const normalizedItemPath = item.path?.replace(/\/$/, "");
-              return normalizedItemPath && normalizedItemPath.startsWith(normalizedBasePath);
-            });
+              const normalizedItemPath = item.path?.replace(/\/$/, '')
+              return (
+                normalizedItemPath &&
+                normalizedItemPath.startsWith(normalizedBasePath)
+              )
+            })
           }
 
-          if (!pageItem) return null;
+          if (!pageItem) return null
 
           const hasAccessToPage =
-            filterItemsByPermissionsAndRoles([pageItem], userPermissions, userRoles).length > 0;
-          if (!hasAccessToPage) return null;
+            filterItemsByPermissionsAndRoles(
+              [pageItem],
+              userPermissions,
+              userRoles
+            ).length > 0
+          if (!hasAccessToPage) return null
 
-          const breadcrumbs = buildBreadcrumbPath(nativeMenuItems, pageItem.path) || [];
+          const breadcrumbs =
+            buildBreadcrumbPath(nativeMenuItems, pageItem.path) || []
           const trimmedBreadcrumbs =
-            breadcrumbs.length > 0 && breadcrumbs[breadcrumbs.length - 1] === tab.title
+            breadcrumbs.length > 0 &&
+            breadcrumbs[breadcrumbs.length - 1] === tab.title
               ? breadcrumbs.slice(0, -1)
-              : breadcrumbs;
+              : breadcrumbs
 
           return {
             ...tab,
             breadcrumbs: trimmedBreadcrumbs,
-          };
+          }
         })
-        .filter(Boolean);
+        .filter(Boolean)
 
-      return [...filteredMainMenu, ...filteredTabOptions];
-    }, [userPermissions, userRoles, tabOptions]);
+      return [...filteredMainMenu, ...filteredTabOptions]
+    }, [userPermissions, userRoles, tabOptions])
 
-    const normalizedSearch = searchValue.trim().toLowerCase();
+    const normalizedSearch = searchValue.trim().toLowerCase()
     const pageResults = flattenedMenuItems.filter((leaf) => {
-      const inTitle = leaf.title?.toLowerCase().includes(normalizedSearch);
-      const inPath = leaf.path?.toLowerCase().includes(normalizedSearch);
+      const inTitle = leaf.title?.toLowerCase().includes(normalizedSearch)
+      const inPath = leaf.path?.toLowerCase().includes(normalizedSearch)
       const inBreadcrumbs = leaf.breadcrumbs?.some((crumb) =>
-        crumb?.toLowerCase().includes(normalizedSearch),
-      );
-      const inScope = (leaf.scope === "global" ? "global" : "tenant").includes(normalizedSearch);
+        crumb?.toLowerCase().includes(normalizedSearch)
+      )
+      const inScope = (leaf.scope === 'global' ? 'global' : 'tenant').includes(
+        normalizedSearch
+      )
 
-      return normalizedSearch ? inTitle || inPath || inBreadcrumbs || inScope : false;
-    });
+      return normalizedSearch
+        ? inTitle || inPath || inBreadcrumbs || inScope
+        : false
+    })
 
     const handleChange = (event) => {
-      const newValue = event.target.value;
-      setSearchValue(newValue);
-      onChange(newValue);
+      const newValue = event.target.value
+      setSearchValue(newValue)
+      onChange(newValue)
 
       if (newValue.length === 0) {
-        setShowDropdown(false);
-      } else if (searchType === "Pages") {
-        updateDropdownPosition();
-        setShowDropdown(true);
-      } else if (searchType === "Licenses") {
+        setShowDropdown(false)
+      } else if (searchType === 'Pages') {
+        updateDropdownPosition()
+        setShowDropdown(true)
+      } else if (searchType === 'Licenses') {
         // Local catalog is in-memory, so reveal results as the user types.
         // The API fallback still requires the Search button (handleSearch).
-        updateDropdownPosition();
-        setShowDropdown(true);
+        updateDropdownPosition()
+        setShowDropdown(true)
       }
-    };
+    }
 
     const updateDropdownPosition = () => {
       // Anchored to the whole joined control, not the field inset within it: results then
       // span the full search width instead of starting past the scope button, which is
       // what was clipping every email, UPN and route path.
-      const anchor = containerRef.current ?? textFieldRef.current;
+      const anchor = containerRef.current ?? textFieldRef.current
       if (anchor) {
-        const rect = anchor.getBoundingClientRect();
-        const availableHeight = Math.max(220, window.innerHeight - rect.bottom - 16);
+        const rect = anchor.getBoundingClientRect()
+        const availableHeight = Math.max(
+          220,
+          window.innerHeight - rect.bottom - 16
+        )
         setDropdownPosition({
           top: rect.bottom + window.scrollY + 4,
           left: rect.left + window.scrollX,
           width: rect.width,
-        });
-        setDropdownMaxHeight(availableHeight);
+        })
+        setDropdownMaxHeight(availableHeight)
       }
-    };
+    }
 
     const handleKeyDown = (event) => {
-      if (event.key === "Escape" && showDropdown) {
-        event.preventDefault();
-        setShowDropdown(false);
-        setHighlightedIndex(-1);
-        return;
+      if (event.key === 'Escape' && showDropdown) {
+        event.preventDefault()
+        setShowDropdown(false)
+        setHighlightedIndex(-1)
+        return
       }
 
-      if ((event.key === "ArrowDown" || event.key === "ArrowUp") && showDropdown && hasResults) {
-        event.preventDefault();
-        const direction = event.key === "ArrowDown" ? 1 : -1;
-        const total = activeResults.length;
+      if (
+        (event.key === 'ArrowDown' || event.key === 'ArrowUp') &&
+        showDropdown &&
+        hasResults
+      ) {
+        event.preventDefault()
+        const direction = event.key === 'ArrowDown' ? 1 : -1
+        const total = activeResults.length
         setHighlightedIndex((prev) => {
           if (prev < 0) {
-            return direction === 1 ? 0 : total - 1;
+            return direction === 1 ? 0 : total - 1
           }
-          return (prev + direction + total) % total;
-        });
-        return;
+          return (prev + direction + total) % total
+        })
+        return
       }
 
-      if (event.key === "Enter" && showDropdown && hasResults && highlightedIndex >= 0) {
-        event.preventDefault();
-        const selectedItem = activeResults[highlightedIndex];
+      if (
+        event.key === 'Enter' &&
+        showDropdown &&
+        hasResults &&
+        highlightedIndex >= 0
+      ) {
+        event.preventDefault()
+        const selectedItem = activeResults[highlightedIndex]
         if (!selectedItem) {
-          return;
+          return
         }
-        if (searchType === "BitLocker") {
-          handleBitlockerResultClick(selectedItem);
+        if (searchType === 'BitLocker') {
+          handleBitlockerResultClick(selectedItem)
         } else {
-          handleResultClick(selectedItem);
+          handleResultClick(selectedItem)
         }
-        return;
+        return
       }
 
-      if (event.key === "Enter" && searchValue.length > 0) {
-        handleSearch();
+      if (event.key === 'Enter' && searchValue.length > 0) {
+        handleSearch()
       }
-    };
+    }
 
     const handleSearch = () => {
       if (searchValue.length > 0) {
-        updateDropdownPosition();
-        if (searchType === "Licenses") {
+        updateDropdownPosition()
+        if (searchType === 'Licenses') {
           // Only hit the API when the local catalog produced nothing.
           if (localLicenseResults.length === 0) {
-            activeSearch?.refetch();
+            activeSearch?.refetch()
           }
-        } else if (searchType !== "Pages") {
-          activeSearch?.refetch();
+        } else if (searchType !== 'Pages') {
+          activeSearch?.refetch()
         }
-        setShowDropdown(true);
+        setShowDropdown(true)
       }
-    };
+    }
 
     const handleResultClick = (match) => {
-      const itemData = match.Data || {};
-      const tenantDomain = match.Tenant || "";
-      if (searchType === "Users") {
+      const itemData = match.Data || {}
+      const tenantDomain = match.Tenant || ''
+      if (searchType === 'Users') {
         router.push(
-          `/identity/administration/users/user?tenantFilter=${tenantDomain}&userId=${itemData.id}`,
-        );
-      } else if (searchType === "Groups") {
+          `/identity/administration/users/user?tenantFilter=${tenantDomain}&userId=${itemData.id}`
+        )
+      } else if (searchType === 'Groups') {
         router.push(
-          `/identity/administration/groups/group?groupId=${itemData.id}&tenantFilter=${tenantDomain}`,
-        );
-      } else if (searchType === "Applications") {
-        if (match.Type === "Apps") {
+          `/identity/administration/groups/group?groupId=${itemData.id}&tenantFilter=${tenantDomain}`
+        )
+      } else if (searchType === 'Applications') {
+        if (match.Type === 'Apps') {
           router.push(
-            `/tenant/administration/applications/app-registration?appId=${itemData.appId || itemData.id}&tenantFilter=${tenantDomain}`,
-          );
+            `/tenant/administration/applications/app-registration?appId=${itemData.appId || itemData.id}&tenantFilter=${tenantDomain}`
+          )
         } else {
           router.push(
-            `/tenant/administration/applications/enterprise-app?spId=${itemData.id}&tenantFilter=${tenantDomain}`,
-          );
+            `/tenant/administration/applications/enterprise-app?spId=${itemData.id}&tenantFilter=${tenantDomain}`
+          )
         }
-      } else if (searchType === "Pages") {
-        router.push(match.path, undefined, { shallow: true });
-      } else if (searchType === "Licenses") {
-        if (typeof onLicenseSelect === "function") {
-          onLicenseSelect(itemData);
+      } else if (searchType === 'Pages') {
+        router.push(match.path, undefined, { shallow: true })
+      } else if (searchType === 'Licenses') {
+        if (typeof onLicenseSelect === 'function') {
+          onLicenseSelect(itemData)
         }
       }
-      setSearchValue("");
-      setShowDropdown(false);
-      onConfirm(match);
-    };
+      setSearchValue('')
+      setShowDropdown(false)
+      onConfirm(match)
+    }
 
     const handleTypeChange = (type) => {
-      setSearchType(type);
-      if (type === "BitLocker") {
-        setBitlockerLookupType("keyId");
+      setSearchType(type)
+      if (type === 'BitLocker') {
+        setBitlockerLookupType('keyId')
       }
-      setShowDropdown(false);
-    };
+      setShowDropdown(false)
+    }
 
     const handleBitlockerResultClick = (match) => {
       setBitlockerDrawerDefaults({
         searchTerm:
-          bitlockerLookupType === "deviceId"
+          bitlockerLookupType === 'deviceId'
             ? match?.deviceId || searchValue
             : match?.keyId || searchValue,
         searchType: bitlockerLookupType,
-      });
-      setBitlockerDrawerVisible(true);
-      setSearchValue("");
-      setShowDropdown(false);
-      onConfirm(match);
-    };
+      })
+      setBitlockerDrawerVisible(true)
+      setSearchValue('')
+      setShowDropdown(false)
+      onConfirm(match)
+    }
 
     const typeMenuActions = [
       {
-        label: "Users",
-        icon: "Groups",
-        onClick: () => handleTypeChange("Users"),
+        label: 'Users',
+        icon: 'Groups',
+        onClick: () => handleTypeChange('Users'),
       },
       {
-        label: "Groups",
-        icon: "Group",
-        onClick: () => handleTypeChange("Groups"),
+        label: 'Groups',
+        icon: 'Group',
+        onClick: () => handleTypeChange('Groups'),
       },
       {
-        label: "Applications",
-        icon: "Apps",
-        onClick: () => handleTypeChange("Applications"),
+        label: 'Applications',
+        icon: 'Apps',
+        onClick: () => handleTypeChange('Applications'),
       },
       {
-        label: "Licenses",
-        icon: "VpnKey",
-        onClick: () => handleTypeChange("Licenses"),
+        label: 'Licenses',
+        icon: 'VpnKey',
+        onClick: () => handleTypeChange('Licenses'),
       },
       {
-        label: "BitLocker",
-        icon: "FilePresent",
-        onClick: () => handleTypeChange("BitLocker"),
+        label: 'BitLocker',
+        icon: 'FilePresent',
+        onClick: () => handleTypeChange('BitLocker'),
       },
       {
-        label: "Pages",
-        icon: "Public",
-        onClick: () => handleTypeChange("Pages"),
+        label: 'Pages',
+        icon: 'Public',
+        onClick: () => handleTypeChange('Pages'),
       },
-    ];
+    ]
 
     const bitlockerLookupActions = [
       {
-        label: "Key ID",
-        icon: "FilePresent",
-        onClick: () => setBitlockerLookupType("keyId"),
+        label: 'Key ID',
+        icon: 'FilePresent',
+        onClick: () => setBitlockerLookupType('keyId'),
       },
       {
-        label: "Device ID",
-        icon: "Laptop",
-        onClick: () => setBitlockerLookupType("deviceId"),
+        label: 'Device ID',
+        icon: 'Laptop',
+        onClick: () => setBitlockerLookupType('deviceId'),
       },
-    ];
+    ]
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -481,157 +522,161 @@ export const CippUniversalSearchV2 = React.forwardRef(
         if (
           containerRef.current &&
           !containerRef.current.contains(event.target) &&
-          !event.target.closest("[data-dropdown-portal]") &&
+          !event.target.closest('[data-dropdown-portal]') &&
           // the in-flow mobile results are outside the joined control — this ran on
           // mousedown and unmounted a row before its click could navigate
-          !event.target.closest("[data-search-results]")
+          !event.target.closest('[data-search-results]')
         ) {
-          setShowDropdown(false);
+          setShowDropdown(false)
         }
-      };
+      }
 
       if (showDropdown) {
-        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener('mousedown', handleClickOutside)
         return () => {
-          document.removeEventListener("mousedown", handleClickOutside);
-        };
+          document.removeEventListener('mousedown', handleClickOutside)
+        }
       }
-    }, [showDropdown]);
+    }, [showDropdown])
 
     // Update position on scroll/resize
     useEffect(() => {
       if (showDropdown) {
-        updateDropdownPosition();
-        const handleScroll = () => updateDropdownPosition();
-        const handleResize = () => updateDropdownPosition();
-        window.addEventListener("scroll", handleScroll, true);
-        window.addEventListener("resize", handleResize);
+        updateDropdownPosition()
+        const handleScroll = () => updateDropdownPosition()
+        const handleResize = () => updateDropdownPosition()
+        window.addEventListener('scroll', handleScroll, true)
+        window.addEventListener('resize', handleResize)
         return () => {
-          window.removeEventListener("scroll", handleScroll, true);
-          window.removeEventListener("resize", handleResize);
-        };
+          window.removeEventListener('scroll', handleScroll, true)
+          window.removeEventListener('resize', handleResize)
+        }
       }
       // isMobile changes the search button's width, so the anchor's box changes with it
-    }, [showDropdown, isMobile]);
+    }, [showDropdown, isMobile])
 
     useEffect(() => {
-      setHighlightedIndex(-1);
-    }, [searchType, searchValue, showDropdown]);
+      setHighlightedIndex(-1)
+    }, [searchType, searchValue, showDropdown])
 
     useEffect(() => {
       if (!showDropdown || highlightedIndex < 0 || !dropdownRef.current) {
-        return;
+        return
       }
 
       const activeRow = dropdownRef.current.querySelector(
-        `[data-result-index="${highlightedIndex}"]`,
-      );
+        `[data-result-index="${highlightedIndex}"]`
+      )
 
-      if (activeRow && typeof activeRow.scrollIntoView === "function") {
-        activeRow.scrollIntoView({ block: "nearest" });
+      if (activeRow && typeof activeRow.scrollIntoView === 'function') {
+        activeRow.scrollIntoView({ block: 'nearest' })
       }
-    }, [highlightedIndex, showDropdown]);
+    }, [highlightedIndex, showDropdown])
 
     useEffect(() => {
-      loadTabOptions().then(setTabOptions);
-    }, []);
+      loadTabOptions().then(setTabOptions)
+    }, [])
 
     useEffect(() => {
-      setSearchType(defaultSearchType);
-      if (defaultSearchType === "BitLocker") {
-        setBitlockerLookupType("keyId");
+      setSearchType(defaultSearchType)
+      if (defaultSearchType === 'BitLocker') {
+        setBitlockerLookupType('keyId')
       }
-    }, [defaultSearchType]);
+    }, [defaultSearchType])
 
     const bitlockerResults = Array.isArray(bitlockerSearch?.data?.Results)
       ? bitlockerSearch.data.Results
-      : [];
-    const universalResults = Array.isArray(universalSearch?.data) ? universalSearch.data : [];
+      : []
+    const universalResults = Array.isArray(universalSearch?.data)
+      ? universalSearch.data
+      : []
     const licenseResults =
-      searchType === "Licenses"
+      searchType === 'Licenses'
         ? localLicenseResults.length > 0
           ? localLicenseResults
           : universalResults
-        : universalResults;
+        : universalResults
     const activeResults =
-      searchType === "BitLocker"
+      searchType === 'BitLocker'
         ? bitlockerResults
-        : searchType === "Pages"
+        : searchType === 'Pages'
           ? pageResults
-          : searchType === "Licenses"
+          : searchType === 'Licenses'
             ? licenseResults
-            : universalResults;
+            : universalResults
     const hasResults =
-      searchType === "BitLocker"
+      searchType === 'BitLocker'
         ? bitlockerResults.length > 0
-        : searchType === "Pages"
+        : searchType === 'Pages'
           ? pageResults.length > 0
-          : searchType === "Licenses"
+          : searchType === 'Licenses'
             ? licenseResults.length > 0
-            : universalResults.length > 0;
-    const shouldShowDropdown = showDropdown && searchValue.length > 0;
+            : universalResults.length > 0
+    const shouldShowDropdown = showDropdown && searchValue.length > 0
 
     const getLabel = () => {
-      if (searchType === "Users") {
-        return "Search users by UPN or Display Name";
-      } else if (searchType === "Groups") {
-        return "Search groups by Display Name";
-      } else if (searchType === "BitLocker") {
-        return bitlockerLookupType === "deviceId"
-          ? "Search BitLocker by Device ID"
-          : "Search BitLocker by Recovery Key ID";
-      } else if (searchType === "Pages") {
-        return "Search pages, tabs, paths, or scope";
-      } else if (searchType === "Licenses") {
-        return "Search licenses by SKU ID, part number, name, or service plan";
+      if (searchType === 'Users') {
+        return 'Search users by UPN or Display Name'
+      } else if (searchType === 'Groups') {
+        return 'Search groups by Display Name'
+      } else if (searchType === 'BitLocker') {
+        return bitlockerLookupType === 'deviceId'
+          ? 'Search BitLocker by Device ID'
+          : 'Search BitLocker by Recovery Key ID'
+      } else if (searchType === 'Pages') {
+        return 'Search pages, tabs, paths, or scope'
+      } else if (searchType === 'Licenses') {
+        return 'Search licenses by SKU ID, part number, name, or service plan'
       }
-      return "Search";
-    };
+      return 'Search'
+    }
 
     // One results body, two surfaces: desktop anchors it under the joined control as a
     // floating panel; the phone dialog IS the surface, so it renders in flow.
     const resultsBody = (
       <>
-              {activeSearch?.isFetching ? (
-                <Box sx={{ p: 2 }}>
-                  <Skeleton height={60} sx={{ mb: 1 }} />
-                  <Skeleton height={60} />
-                </Box>
-              ) : hasResults ? (
-                searchType === "BitLocker" ? (
-                  <BitlockerResults
-                    items={bitlockerResults}
-                    onResultClick={handleBitlockerResultClick}
-                    highlightedIndex={highlightedIndex}
-                    setHighlightedIndex={setHighlightedIndex}
-                  />
-                ) : searchType === "Pages" ? (
-                  <PageResults
-                    items={pageResults}
-                    searchValue={searchValue}
-                    onResultClick={handleResultClick}
-                    highlightedIndex={highlightedIndex}
-                    setHighlightedIndex={setHighlightedIndex}
-                  />
-                ) : (
-                  <Results
-                    items={searchType === "Licenses" ? licenseResults : universalResults}
-                    searchValue={searchValue}
-                    onResultClick={handleResultClick}
-                    searchType={searchType}
-                    highlightedIndex={highlightedIndex}
-                    setHighlightedIndex={setHighlightedIndex}
-                  />
-                )
-              ) : (
-                <Box sx={{ p: 3, textAlign: "center" }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No results found.
-                  </Typography>
-                </Box>
-              )}
+        {activeSearch?.isFetching ? (
+          <Box sx={{ p: 2 }}>
+            <Skeleton height={60} sx={{ mb: 1 }} />
+            <Skeleton height={60} />
+          </Box>
+        ) : hasResults ? (
+          searchType === 'BitLocker' ? (
+            <BitlockerResults
+              items={bitlockerResults}
+              onResultClick={handleBitlockerResultClick}
+              highlightedIndex={highlightedIndex}
+              setHighlightedIndex={setHighlightedIndex}
+            />
+          ) : searchType === 'Pages' ? (
+            <PageResults
+              items={pageResults}
+              searchValue={searchValue}
+              onResultClick={handleResultClick}
+              highlightedIndex={highlightedIndex}
+              setHighlightedIndex={setHighlightedIndex}
+            />
+          ) : (
+            <Results
+              items={
+                searchType === 'Licenses' ? licenseResults : universalResults
+              }
+              searchValue={searchValue}
+              onResultClick={handleResultClick}
+              searchType={searchType}
+              highlightedIndex={highlightedIndex}
+              setHighlightedIndex={setHighlightedIndex}
+            />
+          )
+        ) : (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              No results found.
+            </Typography>
+          </Box>
+        )}
       </>
-    );
+    )
 
     return (
       <>
@@ -641,34 +686,39 @@ export const CippUniversalSearchV2 = React.forwardRef(
         <Box
           ref={containerRef}
           sx={{
-            width: "100%",
-            display: "flex",
-            alignItems: "stretch",
-            "& > *": { flexShrink: 0 },
+            width: '100%',
+            display: 'flex',
+            alignItems: 'stretch',
+            '& > *': { flexShrink: 0 },
             // Collapse the doubled borders where the controls meet
-            "& > * + *": { ml: "-1px" },
-            "& .MuiButton-root": { borderRadius: 0, whiteSpace: "nowrap" },
-            "& > :first-of-type .MuiButton-root, & > :first-of-type": {
+            '& > * + *': { ml: '-1px' },
+            '& .MuiButton-root': { borderRadius: 0, whiteSpace: 'nowrap' },
+            '& > :first-of-type .MuiButton-root, & > :first-of-type': {
               borderTopLeftRadius: (theme) => theme.shape.borderRadius,
               borderBottomLeftRadius: (theme) => theme.shape.borderRadius,
             },
-            "& > :last-child .MuiButton-root, & > :last-child": {
+            '& > :last-child .MuiButton-root, & > :last-child': {
               borderTopRightRadius: (theme) => theme.shape.borderRadius,
               borderBottomRightRadius: (theme) => theme.shape.borderRadius,
             },
-            "& .MuiOutlinedInput-root": { borderRadius: 0, height: "100%" },
+            '& .MuiOutlinedInput-root': { borderRadius: 0, height: '100%' },
             // The field is the only part that should absorb the leftover width
-            "& > .MuiFormControl-root": { flex: "1 1 auto", minWidth: 0 },
+            '& > .MuiFormControl-root': { flex: '1 1 auto', minWidth: 0 },
             // Keep the focused field's outline on top of the adjacent borders
-            "& .MuiOutlinedInput-root.Mui-focused": { zIndex: 1 },
+            '& .MuiOutlinedInput-root.Mui-focused': { zIndex: 1 },
           }}
         >
           {!isMobile && (
-            <BulkActionsMenu buttonName={searchType} actions={typeMenuActions} />
-          )}
-          {!isMobile && searchType === "BitLocker" && (
             <BulkActionsMenu
-              buttonName={bitlockerLookupType === "deviceId" ? "Device ID" : "Key ID"}
+              buttonName={searchType}
+              actions={typeMenuActions}
+            />
+          )}
+          {!isMobile && searchType === 'BitLocker' && (
+            <BulkActionsMenu
+              buttonName={
+                bitlockerLookupType === 'deviceId' ? 'Device ID' : 'Key ID'
+              }
               actions={bitlockerLookupActions}
             />
           )}
@@ -678,11 +728,11 @@ export const CippUniversalSearchV2 = React.forwardRef(
             // why the scope button and the field rendered as two separate boxes.
             variant="outlined"
             ref={(node) => {
-              textFieldRef.current = node;
-              if (typeof ref === "function") {
-                ref(node);
+              textFieldRef.current = node
+              if (typeof ref === 'function') {
+                ref(node)
               } else if (ref) {
-                ref.current = node;
+                ref.current = node
               }
             }}
             fullWidth
@@ -696,7 +746,12 @@ export const CippUniversalSearchV2 = React.forwardRef(
               startAdornment: (
                 <InputAdornment
                   position="start"
-                  sx={{ display: "flex", alignItems: "center", mb: 0, mt: "12px" }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    mb: 0,
+                    mt: '12px',
+                  }}
                 >
                   <SearchIcon color="action" sx={{ fontSize: 20 }} />
                 </InputAdornment>
@@ -707,14 +762,14 @@ export const CippUniversalSearchV2 = React.forwardRef(
                 </InputAdornment>
               ) : null,
               sx: {
-                "& .MuiInputAdornment-root": {
-                  marginTop: "0 !important",
-                  alignSelf: "center",
+                '& .MuiInputAdornment-root': {
+                  marginTop: '0 !important',
+                  alignSelf: 'center',
                 },
               },
             }}
           />
-          {searchType !== "Pages" && (
+          {searchType !== 'Pages' && (
             <Button
               variant="contained"
               onClick={handleSearch}
@@ -722,9 +777,13 @@ export const CippUniversalSearchV2 = React.forwardRef(
               startIcon={isMobile ? undefined : <SearchIcon />}
               aria-label="Search"
               // Icon-only on phones: the label costs the field width it needs more
-              sx={{ flexShrink: 0, minWidth: isMobile ? 48 : undefined, px: isMobile ? 0 : undefined }}
+              sx={{
+                flexShrink: 0,
+                minWidth: isMobile ? 48 : undefined,
+                px: isMobile ? 0 : undefined,
+              }}
             >
-              {isMobile ? <SearchIcon /> : "Search"}
+              {isMobile ? <SearchIcon /> : 'Search'}
             </Button>
           )}
         </Box>
@@ -732,37 +791,50 @@ export const CippUniversalSearchV2 = React.forwardRef(
         {/* One tap to any scope — the desktop dropdown cost two, and the recorded mobile
             gap was that entity search had no direct entry point at all. */}
         {isMobile && (
-          <Stack direction="row" useFlexGap flexWrap="wrap" spacing={1} sx={{ mt: 1.5 }}>
+          <Stack
+            direction="row"
+            useFlexGap
+            flexWrap="wrap"
+            spacing={1}
+            sx={{ mt: 1.5 }}
+          >
             {typeMenuActions.map((action) => {
-              const active = action.label === searchType;
+              const active = action.label === searchType
               return (
                 <Chip
                   key={action.label}
                   label={action.label}
-                  color={active ? "primary" : "default"}
-                  variant={active ? "filled" : "outlined"}
+                  color={active ? 'primary' : 'default'}
+                  variant={active ? 'filled' : 'outlined'}
                   onClick={action.onClick}
                   sx={{ height: 36, borderRadius: 999 }}
                 />
-              );
+              )
             })}
           </Stack>
         )}
-        {isMobile && searchType === "BitLocker" && (
-          <Stack direction="row" useFlexGap flexWrap="wrap" spacing={1} sx={{ mt: 1 }}>
+        {isMobile && searchType === 'BitLocker' && (
+          <Stack
+            direction="row"
+            useFlexGap
+            flexWrap="wrap"
+            spacing={1}
+            sx={{ mt: 1 }}
+          >
             {bitlockerLookupActions.map((action) => {
               const active =
-                (action.label === "Device ID") === (bitlockerLookupType === "deviceId");
+                (action.label === 'Device ID') ===
+                (bitlockerLookupType === 'deviceId')
               return (
                 <Chip
                   key={action.label}
                   label={action.label}
-                  color={active ? "primary" : "default"}
-                  variant={active ? "filled" : "outlined"}
+                  color={active ? 'primary' : 'default'}
+                  variant={active ? 'filled' : 'outlined'}
                   onClick={action.onClick}
                   sx={{ height: 36, borderRadius: 999 }}
                 />
-              );
+              )
             })}
           </Stack>
         )}
@@ -773,10 +845,10 @@ export const CippUniversalSearchV2 = React.forwardRef(
             data-search-results
             sx={{
               mt: 1.5,
-              overflowX: "hidden",
-              overflowWrap: "anywhere",
+              overflowX: 'hidden',
+              overflowWrap: 'anywhere',
               borderTop: 1,
-              borderColor: "divider",
+              borderColor: 'divider',
             }}
           >
             {resultsBody}
@@ -784,9 +856,12 @@ export const CippUniversalSearchV2 = React.forwardRef(
         )}
         {isMobile && !shouldShowDropdown && (bookmarks?.length ?? 0) > 0 && (
           <List
-            sx={{ mt: 1.5, py: 0, borderTop: 1, borderColor: "divider" }}
+            sx={{ mt: 1.5, py: 0, borderTop: 1, borderColor: 'divider' }}
             subheader={
-              <ListSubheader disableSticky sx={{ bgcolor: "transparent", px: 0 }}>
+              <ListSubheader
+                disableSticky
+                sx={{ bgcolor: 'transparent', px: 0 }}
+              >
                 Bookmarks
               </ListSubheader>
             }
@@ -796,8 +871,8 @@ export const CippUniversalSearchV2 = React.forwardRef(
                 key={bookmark.path}
                 sx={{ minHeight: 48, px: 0.5 }}
                 onClick={() => {
-                  router.push(bookmark.path);
-                  onConfirm(bookmark);
+                  router.push(bookmark.path)
+                  onConfirm(bookmark)
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 40 }}>
@@ -819,21 +894,21 @@ export const CippUniversalSearchV2 = React.forwardRef(
               ref={dropdownRef}
               elevation={8}
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 top: `${dropdownPosition.top}px`,
                 left: `${dropdownPosition.left}px`,
                 width: `${dropdownPosition.width}px`,
                 maxHeight: `${dropdownMaxHeight}px`,
-                overflowY: "auto",
+                overflowY: 'auto',
                 // Emails, UPNs and route paths are single unbreakable tokens: whiteSpace
                 // normal can't wrap them, so without this they widen the panel and the
                 // result text runs off the right edge.
-                overflowX: "hidden",
-                overflowWrap: "anywhere",
+                overflowX: 'hidden',
+                overflowWrap: 'anywhere',
                 zIndex: 9999,
                 boxShadow: 3,
-                border: "1px solid",
-                borderColor: "divider",
+                border: '1px solid',
+                borderColor: 'divider',
               }}
             >
               {resultsBody}
@@ -855,24 +930,24 @@ export const CippUniversalSearchV2 = React.forwardRef(
           />
         </CippOffCanvas>
       </>
-    );
-  },
-);
+    )
+  }
+)
 
-CippUniversalSearchV2.displayName = "CippUniversalSearchV2";
+CippUniversalSearchV2.displayName = 'CippUniversalSearchV2'
 
 const Results = ({
   items = [],
   searchValue,
   onResultClick,
-  searchType = "Users",
+  searchType = 'Users',
   highlightedIndex = -1,
   setHighlightedIndex = () => {},
 }) => {
   const highlightMatch = (text) => {
-    if (!text || !searchValue) return text;
-    const escapedSearch = searchValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const parts = text?.split(new RegExp(`(${escapedSearch})`, "gi"));
+    if (!text || !searchValue) return text
+    const escapedSearch = searchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const parts = text?.split(new RegExp(`(${escapedSearch})`, 'gi'))
     return parts?.map((part, index) =>
       part.toLowerCase() === searchValue.toLowerCase() ? (
         <Box component="span" fontWeight="bold" key={index}>
@@ -880,22 +955,24 @@ const Results = ({
         </Box>
       ) : (
         part
-      ),
-    );
-  };
+      )
+    )
+  }
 
   return (
     <>
       {items.map((match, index) => {
-        const itemData = match.Data || {};
-        const tenantDomain = match.Tenant || "";
+        const itemData = match.Data || {}
+        const tenantDomain = match.Tenant || ''
 
-        if (searchType === "Licenses") {
-          const servicePlans = Array.isArray(itemData.servicePlans) ? itemData.servicePlans : [];
+        if (searchType === 'Licenses') {
+          const servicePlans = Array.isArray(itemData.servicePlans)
+            ? itemData.servicePlans
+            : []
           const planNames = servicePlans
             .map((p) => p?.servicePlanName)
             .filter(Boolean)
-            .join(", ");
+            .join(', ')
           return (
             <MenuItem
               key={match.RowKey || index}
@@ -906,24 +983,41 @@ const Results = ({
               sx={{
                 py: 1.5,
                 px: 2,
-                borderBottom: index < items.length - 1 ? "1px solid" : "none",
-                borderColor: "divider",
-                alignItems: "flex-start",
-                whiteSpace: "normal",
-                backgroundColor: highlightedIndex === index ? "action.selected" : "transparent",
-                "&:hover": { backgroundColor: "action.hover" },
+                borderBottom: index < items.length - 1 ? '1px solid' : 'none',
+                borderColor: 'divider',
+                alignItems: 'flex-start',
+                whiteSpace: 'normal',
+                backgroundColor:
+                  highlightedIndex === index
+                    ? 'action.selected'
+                    : 'transparent',
+                '&:hover': { backgroundColor: 'action.hover' },
               }}
             >
               <ListItemText
                 primary={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      flexWrap: 'wrap',
+                    }}
+                  >
                     <Typography variant="body1" fontWeight="medium">
-                      {highlightMatch(itemData.displayName || itemData.skuPartNumber || "Unknown SKU")}
+                      {highlightMatch(
+                        itemData.displayName ||
+                          itemData.skuPartNumber ||
+                          'Unknown SKU'
+                      )}
                     </Typography>
                     {itemData.skuPartNumber && (
                       <Typography
                         variant="caption"
-                        sx={{ fontFamily: "monospace", color: "text.secondary" }}
+                        sx={{
+                          fontFamily: 'monospace',
+                          color: 'text.secondary',
+                        }}
                       >
                         {highlightMatch(itemData.skuPartNumber)}
                       </Typography>
@@ -935,28 +1029,38 @@ const Results = ({
                     {itemData.skuId && (
                       <Typography
                         variant="body2"
-                        sx={{ fontFamily: "monospace", color: "text.secondary" }}
+                        sx={{
+                          fontFamily: 'monospace',
+                          color: 'text.secondary',
+                        }}
                       >
                         {highlightMatch(itemData.skuId)}
                       </Typography>
                     )}
-                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                      {itemData.tenantCount || 0} tenant{itemData.tenantCount === 1 ? "" : "s"}
-                      {" · "}
-                      {itemData.totalAssigned || 0}/{itemData.totalAvailable || 0} assigned
-                      {servicePlans.length > 0 && ` · ${servicePlans.length} service plan${servicePlans.length === 1 ? "" : "s"}`}
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mt: 0.5 }}
+                    >
+                      {itemData.tenantCount || 0} tenant
+                      {itemData.tenantCount === 1 ? '' : 's'}
+                      {' · '}
+                      {itemData.totalAssigned || 0}/
+                      {itemData.totalAvailable || 0} assigned
+                      {servicePlans.length > 0 &&
+                        ` · ${servicePlans.length} service plan${servicePlans.length === 1 ? '' : 's'}`}
                     </Typography>
                     {planNames && (
                       <Typography
                         variant="caption"
                         color="text.secondary"
                         sx={{
-                          display: "-webkit-box",
+                          display: '-webkit-box',
                           mt: 0.5,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
                           WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
+                          WebkitBoxOrient: 'vertical',
                         }}
                       >
                         {highlightMatch(planNames)}
@@ -966,7 +1070,7 @@ const Results = ({
                 }
               />
             </MenuItem>
-          );
+          )
         }
 
         return (
@@ -979,51 +1083,60 @@ const Results = ({
             sx={{
               py: 1.5,
               px: 2,
-              borderBottom: index < items.length - 1 ? "1px solid" : "none",
-              borderColor: "divider",
-              backgroundColor: highlightedIndex === index ? "action.selected" : "transparent",
-              "&:hover": {
-                backgroundColor: "action.hover",
+              borderBottom: index < items.length - 1 ? '1px solid' : 'none',
+              borderColor: 'divider',
+              backgroundColor:
+                highlightedIndex === index ? 'action.selected' : 'transparent',
+              '&:hover': {
+                backgroundColor: 'action.hover',
               },
             }}
           >
             <ListItemText
               primary={
                 <Typography variant="body1" fontWeight="medium">
-                  {highlightMatch(itemData.displayName || "")}
+                  {highlightMatch(itemData.displayName || '')}
                 </Typography>
               }
               secondary={
                 <Box>
-                  {searchType === "Users" && (
+                  {searchType === 'Users' && (
                     <Typography variant="body2" color="text.secondary">
-                      {highlightMatch(itemData.userPrincipalName || "")}
+                      {highlightMatch(itemData.userPrincipalName || '')}
                     </Typography>
                   )}
-                  {searchType === "Groups" && (
+                  {searchType === 'Groups' && (
                     <>
                       {itemData.mail && (
                         <Typography variant="body2" color="text.secondary">
-                          {highlightMatch(itemData.mail || "")}
+                          {highlightMatch(itemData.mail || '')}
                         </Typography>
                       )}
                       {itemData.description && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                          {highlightMatch(itemData.description || "")}
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
+                          {highlightMatch(itemData.description || '')}
                         </Typography>
                       )}
                     </>
                   )}
-                  {searchType === "Applications" && (
+                  {searchType === 'Applications' && (
                     <>
                       {itemData.appId && (
                         <Typography variant="body2" color="text.secondary">
-                          {highlightMatch(itemData.appId || "")}
+                          {highlightMatch(itemData.appId || '')}
                         </Typography>
                       )}
                       {itemData.publisherName && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                          {highlightMatch(itemData.publisherName || "")}
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
+                          {highlightMatch(itemData.publisherName || '')}
                         </Typography>
                       )}
                     </>
@@ -1031,7 +1144,7 @@ const Results = ({
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ display: "block", mt: 0.5 }}
+                    sx={{ display: 'block', mt: 0.5 }}
                   >
                     Tenant: {tenantDomain}
                   </Typography>
@@ -1039,11 +1152,11 @@ const Results = ({
               }
             />
           </MenuItem>
-        );
+        )
       })}
     </>
-  );
-};
+  )
+}
 
 const PageResults = ({
   items = [],
@@ -1052,10 +1165,10 @@ const PageResults = ({
   highlightedIndex = -1,
   setHighlightedIndex = () => {},
 }) => {
-  const highlightMatch = (text = "") => {
-    if (!text || !searchValue) return text;
-    const escapedSearch = searchValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const parts = text.split(new RegExp(`(${escapedSearch})`, "gi"));
+  const highlightMatch = (text = '') => {
+    if (!text || !searchValue) return text
+    const escapedSearch = searchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const parts = text.split(new RegExp(`(${escapedSearch})`, 'gi'))
     return parts.map((part, index) =>
       part.toLowerCase() === searchValue.toLowerCase() ? (
         <Box component="span" fontWeight="bold" key={index}>
@@ -1063,15 +1176,15 @@ const PageResults = ({
         </Box>
       ) : (
         part
-      ),
-    );
-  };
+      )
+    )
+  }
 
   return (
     <>
       {items.map((item, index) => {
-        const isGlobal = item.scope === "global";
-        const itemType = item.type === "tab" ? "Tab" : "Page";
+        const isGlobal = item.scope === 'global'
+        const itemType = item.type === 'tab' ? 'Tab' : 'Page'
 
         return (
           <MenuItem
@@ -1083,26 +1196,34 @@ const PageResults = ({
             sx={{
               py: 1.5,
               px: 2,
-              borderBottom: index < items.length - 1 ? "1px solid" : "none",
-              borderColor: "divider",
-              alignItems: "flex-start",
-              backgroundColor: highlightedIndex === index ? "action.selected" : "transparent",
-              "&:hover": {
-                backgroundColor: "action.hover",
+              borderBottom: index < items.length - 1 ? '1px solid' : 'none',
+              borderColor: 'divider',
+              alignItems: 'flex-start',
+              backgroundColor:
+                highlightedIndex === index ? 'action.selected' : 'transparent',
+              '&:hover': {
+                backgroundColor: 'action.hover',
               },
             }}
           >
             <ListItemText
               primary={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   <Typography variant="body1" fontWeight="medium">
-                    {highlightMatch(item.title || "")}
+                    {highlightMatch(item.title || '')}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {itemType}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {isGlobal ? "Global" : "Tenant"}
+                    {isGlobal ? 'Global' : 'Tenant'}
                   </Typography>
                 </Box>
               }
@@ -1113,25 +1234,29 @@ const PageResults = ({
                       {item.breadcrumbs.map((crumb, idx) => (
                         <React.Fragment key={idx}>
                           {highlightMatch(crumb)}
-                          {idx < item.breadcrumbs.length - 1 && " > "}
+                          {idx < item.breadcrumbs.length - 1 && ' > '}
                         </React.Fragment>
                       ))}
-                      {" > "}
-                      {highlightMatch(item.title || "")}
+                      {' > '}
+                      {highlightMatch(item.title || '')}
                     </Typography>
                   )}
-                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                    Path: {highlightMatch(item.path || "")}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
+                    Path: {highlightMatch(item.path || '')}
                   </Typography>
                 </Box>
               }
             />
           </MenuItem>
-        );
+        )
       })}
     </>
-  );
-};
+  )
+}
 
 const BitlockerResults = ({
   items = [],
@@ -1151,30 +1276,35 @@ const BitlockerResults = ({
           sx={{
             py: 1.5,
             px: 2,
-            borderBottom: index < items.length - 1 ? "1px solid" : "none",
-            borderColor: "divider",
-            backgroundColor: highlightedIndex === index ? "action.selected" : "transparent",
-            "&:hover": {
-              backgroundColor: "action.hover",
+            borderBottom: index < items.length - 1 ? '1px solid' : 'none',
+            borderColor: 'divider',
+            backgroundColor:
+              highlightedIndex === index ? 'action.selected' : 'transparent',
+            '&:hover': {
+              backgroundColor: 'action.hover',
             },
           }}
         >
           <ListItemText
             primary={
               <Typography variant="body1" fontWeight="medium">
-                {result.deviceName || "Unknown Device"}
+                {result.deviceName || 'Unknown Device'}
               </Typography>
             }
             secondary={
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  Key ID: {result.keyId || "N/A"}
+                  Key ID: {result.keyId || 'N/A'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Device ID: {result.deviceId || "N/A"}
+                  Device ID: {result.deviceId || 'N/A'}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                  Tenant: {result.tenant || "N/A"}
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.5 }}
+                >
+                  Tenant: {result.tenant || 'N/A'}
                 </Typography>
               </Box>
             }
@@ -1182,5 +1312,5 @@ const BitlockerResults = ({
         </MenuItem>
       ))}
     </>
-  );
-};
+  )
+}

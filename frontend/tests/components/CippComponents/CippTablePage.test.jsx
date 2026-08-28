@@ -50,9 +50,12 @@ describe('CippTablePage', () => {
   })
 
   it('warns when no tenant is selected and keeps the plain title', () => {
-    renderWithProviders(<CippTablePage title="Users" apiUrl="/api/ListUsers" />, {
-      settings: noTenantSettings,
-    })
+    renderWithProviders(
+      <CippTablePage title="Users" apiUrl="/api/ListUsers" />,
+      {
+        settings: noTenantSettings,
+      }
+    )
 
     expect(screen.getByText(/No tenant selected/)).toBeInTheDocument()
     expect(captured.props.title).toBe('Users')
@@ -60,7 +63,11 @@ describe('CippTablePage', () => {
 
   it('suppresses the tenant warning and suffix with tenantInTitle=false', () => {
     renderWithProviders(
-      <CippTablePage title="Users" apiUrl="/api/ListUsers" tenantInTitle={false} />,
+      <CippTablePage
+        title="Users"
+        apiUrl="/api/ListUsers"
+        tenantInTitle={false}
+      />,
       { settings: noTenantSettings }
     )
 

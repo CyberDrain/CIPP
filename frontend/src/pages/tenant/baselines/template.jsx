@@ -326,10 +326,9 @@ const StagePanel = ({
               Graduation conditions
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              A tenant advances from Stage {stageIndex} into this stage once
-              the conditions below are met. Earlier stages keep applying; if
-              the same standard is configured in both, this stage's settings
-              win.
+              A tenant advances from Stage {stageIndex} into this stage once the
+              conditions below are met. Earlier stages keep applying; if the
+              same standard is configured in both, this stage's settings win.
             </Typography>
             {conditionIds.length > 1 && (
               <Box sx={{ maxWidth: 380 }}>

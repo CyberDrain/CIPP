@@ -1,17 +1,23 @@
-import { useForm } from "react-hook-form";
-import CippFormPage from "../../../components/CippFormPages/CippFormPage";
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import CippSchedulerForm from "../../../components/CippFormPages/CippSchedulerForm";
-import { useRouter } from "next/router";
+import { useForm } from 'react-hook-form'
+import CippFormPage from '../../../components/CippFormPages/CippFormPage'
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import CippSchedulerForm from '../../../components/CippFormPages/CippSchedulerForm'
+import { useRouter } from 'next/router'
 
 const Page = () => {
-  const formControl = useForm({ mode: "onChange" });
-  const router = useRouter();
+  const formControl = useForm({ mode: 'onChange' })
+  const router = useRouter()
   return (
     <CippFormPage
-      queryKey={["ListScheduledItems-Edit", "ListScheduledItems-hidden", "ListScheduledItems"]}
+      queryKey={[
+        'ListScheduledItems-Edit',
+        'ListScheduledItems-hidden',
+        'ListScheduledItems',
+      ]}
       backButtonTitle="Scheduler"
-      formPageType={router.query.id ? "Edit" : router.query.Clone ? "Clone" : "Add"}
+      formPageType={
+        router.query.id ? 'Edit' : router.query.Clone ? 'Clone' : 'Add'
+      }
       formControl={formControl}
       title="Scheduler"
       resetForm={false}
@@ -19,9 +25,9 @@ const Page = () => {
     >
       <CippSchedulerForm formControl={formControl} />
     </CippFormPage>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

@@ -22,7 +22,9 @@ const PackageDetailPanel = ({ row }) => {
         Package detail (allowed / acquired users &amp; groups, elements)
       </Typography>
       {detail.isFetching && <Skeleton variant="rounded" height={220} />}
-      {detail.isSuccess && <CippJsonView object={detail.data} defaultOpen={true} />}
+      {detail.isSuccess && (
+        <CippJsonView object={detail.data} defaultOpen={true} />
+      )}
     </Box>
   )
 }

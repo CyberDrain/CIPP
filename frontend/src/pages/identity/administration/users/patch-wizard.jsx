@@ -131,7 +131,14 @@ const PATCHABLE_PROPERTIES = [
 
 // Step 1: Display users to be updated
 const UsersDisplayStep = (props) => {
-  const { onNextStep, onPreviousStep, formControl, currentStep, users, onUsersChange } = props
+  const {
+    onNextStep,
+    onPreviousStep,
+    formControl,
+    currentStep,
+    users,
+    onUsersChange,
+  } = props
 
   const handleRemoveUser = (userToRemove) => {
     const updatedUsers = users.filter((user) => user.id !== userToRemove.id)
@@ -167,8 +174,8 @@ const UsersDisplayStep = (props) => {
       <Stack spacing={1}>
         <Typography variant="h6">Users to be updated</Typography>
         <Typography color="text.secondary" variant="body2">
-          The following users will be updated with the properties you select in the next step. You
-          can remove users from this list if needed.
+          The following users will be updated with the properties you select in
+          the next step. You can remove users from this list if needed.
         </Typography>
       </Stack>
 
@@ -189,8 +196,13 @@ const UsersDisplayStep = (props) => {
       ) : (
         <Card variant="outlined">
           <CardContent>
-            <Typography color="text.secondary" variant="body2" sx={{ textAlign: 'center', py: 2 }}>
-              No users selected. Please go back and select users from the main table.
+            <Typography
+              color="text.secondary"
+              variant="body2"
+              sx={{ textAlign: 'center', py: 2 }}
+            >
+              No users selected. Please go back and select users from the main
+              table.
             </Typography>
           </CardContent>
         </Card>
@@ -214,14 +226,19 @@ const PropertySelectionStep = (props) => {
 
   // Get unique tenant domains from users
   const tenantDomains =
-    [...new Set(users?.map((user) => user.Tenant || user.tenantFilter).filter(Boolean))] || []
+    [
+      ...new Set(
+        users?.map((user) => user.Tenant || user.tenantFilter).filter(Boolean)
+      ),
+    ] || []
   const firstTenantDomain = tenantDomains[0]
   const isSingleTenant = tenantDomains.length <= 1
   const hasManagerSelected = selectedProperties.includes('manager')
   const hasSponsorSelected = selectedProperties.includes('sponsor')
   const hasRelationshipSelected = hasManagerSelected || hasSponsorSelected
   const hasUPNSelected = selectedProperties.includes('userPrincipalName')
-  const hasTenantScopedSelectorSelected = hasRelationshipSelected || hasUPNSelected
+  const hasTenantScopedSelectorSelected =
+    hasRelationshipSelected || hasUPNSelected
 
   useEffect(() => {
     if (!hasTenantScopedSelectorSelected || !firstTenantDomain) {
@@ -251,13 +268,17 @@ const PropertySelectionStep = (props) => {
     if (customDataMappings.isSuccess && customDataMappings.data?.Results) {
       return customDataMappings.data.Results.filter((mapping) => {
         // Only include single-value properties, filter out multivalue ones
-        const dataType = mapping.customDataAttribute.addedFields.dataType?.toLowerCase()
-        const isMultiValue = mapping.customDataAttribute.addedFields.isMultiValue
+        const dataType =
+          mapping.customDataAttribute.addedFields.dataType?.toLowerCase()
+        const isMultiValue =
+          mapping.customDataAttribute.addedFields.isMultiValue
         return !isMultiValue && dataType !== 'collection'
       }).map((mapping) => ({
         property: mapping.customDataAttribute.value, // Use the actual attribute name, not nested under customData
         label: `${mapping.manualEntryFieldLabel} (Custom)`,
-        type: mapping.customDataAttribute.addedFields.dataType?.toLowerCase() || 'string',
+        type:
+          mapping.customDataAttribute.addedFields.dataType?.toLowerCase() ||
+          'string',
         isCustomData: true,
       }))
     }
@@ -268,7 +289,8 @@ const PropertySelectionStep = (props) => {
   const allProperties = useMemo(() => {
     return [
       ...PATCHABLE_PROPERTIES.filter(
-        (property) => isSingleTenant || property.property !== 'userPrincipalName'
+        (property) =>
+          isSingleTenant || property.property !== 'userPrincipalName'
       ),
       ...customDataProperties,
     ]
@@ -295,7 +317,9 @@ const PropertySelectionStep = (props) => {
           control={
             <Switch
               checked={currentValue === true}
-              onChange={(e) => handlePropertyValueChange(propertyName, e.target.checked)}
+              onChange={(e) =>
+                handlePropertyValueChange(propertyName, e.target.checked)
+              }
             />
           }
           label={property.label}
@@ -323,8 +347,8 @@ const PropertySelectionStep = (props) => {
       return (
         <Stack key={propertyName} spacing={2}>
           <Alert severity="warning">
-            Changes the domain after @ only. Users will be logged out and must sign in with the new
-            UPN.
+            Changes the domain after @ only. Users will be logged out and must
+            sign in with the new UPN.
           </Alert>
           <CippFormDomainSelector
             formControl={formControl}
@@ -344,7 +368,9 @@ const PropertySelectionStep = (props) => {
         label={property?.label || propertyName}
         fullWidth
         value={currentValue || ''}
-        onChange={(e) => handlePropertyValueChange(propertyName, e.target.value)}
+        onChange={(e) =>
+          handlePropertyValueChange(propertyName, e.target.value)
+        }
         placeholder={`Enter new value for ${property?.label || propertyName}`}
         variant="filled"
         size="small"
@@ -368,20 +394,29 @@ const PropertySelectionStep = (props) => {
       <Stack spacing={1}>
         <Typography variant="h6">Select Properties to update</Typography>
         <Typography color="text.secondary" variant="body2">
-          Choose which user properties you want to modify and provide the new values.
+          Choose which user properties you want to modify and provide the new
+          values.
           {customDataProperties.length > 0 && (
-            <> Custom data fields are available based on your tenant's manual entry mappings.</>
+            <>
+              {' '}
+              Custom data fields are available based on your tenant's manual
+              entry mappings.
+            </>
           )}
         </Typography>
         {customDataMappings.isLoading && (
-          <Typography color="text.secondary" variant="body2" sx={{ fontStyle: 'italic' }}>
+          <Typography
+            color="text.secondary"
+            variant="body2"
+            sx={{ fontStyle: 'italic' }}
+          >
             Loading custom data mappings...
           </Typography>
         )}
         {!isSingleTenant && (
           <Alert severity="info">
-            UPN domain suffix changes are only available when all selected users are from the same
-            tenant.
+            UPN domain suffix changes are only available when all selected users
+            are from the same tenant.
           </Alert>
         )}
       </Stack>
@@ -397,15 +432,20 @@ const PropertySelectionStep = (props) => {
           },
           ...allProperties,
         ]}
-        value={allProperties.filter((prop) => selectedProperties.includes(prop.property))}
+        value={allProperties.filter((prop) =>
+          selectedProperties.includes(prop.property)
+        )}
         onChange={(event, newValue) => {
           // Check if "Select All" was clicked
           const selectAllOption = newValue.find((option) => option.isSelectAll)
 
           if (selectAllOption) {
             // If Select All is in the new value, select all properties
-            const allSelected = selectedProperties.length === allProperties.length
-            const newProperties = allSelected ? [] : allProperties.map((p) => p.property)
+            const allSelected =
+              selectedProperties.length === allProperties.length
+            const newProperties = allSelected
+              ? []
+              : allProperties.map((p) => p.property)
             setSelectedProperties(newProperties)
             formControl.setValue('selectedProperties', newProperties)
 
@@ -440,12 +480,16 @@ const PropertySelectionStep = (props) => {
           }
         }}
         getOptionLabel={(option) => option.label}
-        isOptionEqualToValue={(option, value) => option.property === value.property}
+        isOptionEqualToValue={(option, value) =>
+          option.property === value.property
+        }
         size="small"
         renderOption={(props, option, { selected }) => {
-          const isAllSelected = selectedProperties.length === allProperties.length
+          const isAllSelected =
+            selectedProperties.length === allProperties.length
           const isIndeterminate =
-            selectedProperties.length > 0 && selectedProperties.length < allProperties.length
+            selectedProperties.length > 0 &&
+            selectedProperties.length < allProperties.length
 
           if (option.isSelectAll) {
             return (
@@ -455,7 +499,9 @@ const PropertySelectionStep = (props) => {
                   indeterminate={isIndeterminate}
                   style={{ marginRight: 8 }}
                 />
-                <Typography sx={{ fontWeight: 'bold' }}>{option.label}</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>
+                  {option.label}
+                </Typography>
               </li>
             )
           }
@@ -511,11 +557,14 @@ const PropertySelectionStep = (props) => {
             </Typography>
             {hasRelationshipSelected && tenantDomains.length > 1 && (
               <Alert severity="warning" sx={{ mb: 2 }}>
-                The user picker is scoped to {firstTenantDomain}. Cross-tenant manager or sponsor
-                assignment is not supported, so the selected user must exist in each target tenant.
+                The user picker is scoped to {firstTenantDomain}. Cross-tenant
+                manager or sponsor assignment is not supported, so the selected
+                user must exist in each target tenant.
               </Alert>
             )}
-            <Stack spacing={2}>{selectedProperties.map(renderPropertyInput)}</Stack>
+            <Stack spacing={2}>
+              {selectedProperties.map(renderPropertyInput)}
+            </Stack>
           </CardContent>
         </Card>
       )}
@@ -532,7 +581,14 @@ const PropertySelectionStep = (props) => {
 
 // Step 3: Confirmation
 const ConfirmationStep = (props) => {
-  const { lastStep, formControl, onPreviousStep, currentStep, users, allProperties } = props
+  const {
+    lastStep,
+    formControl,
+    onPreviousStep,
+    currentStep,
+    users,
+    allProperties,
+  } = props
   const formValues = formControl.getValues()
   const { selectedProperties = [], propertyValues = {} } = formValues
 
@@ -558,7 +614,11 @@ const ConfirmationStep = (props) => {
       selectedProperties.forEach((propName) => {
         const propertyValue = propertyValues[propName]
 
-        if (propertyValue !== undefined && propertyValue !== '' && propertyValue !== null) {
+        if (
+          propertyValue !== undefined &&
+          propertyValue !== '' &&
+          propertyValue !== null
+        ) {
           if (propName === 'manager' || propName === 'sponsor') {
             if (propertyValue?.value) userData[propName] = propertyValue.value
             return
@@ -570,9 +630,12 @@ const ConfirmationStep = (props) => {
           }
 
           if (propName === 'userPrincipalName') {
-            const selectedDomain = propertyValue?.value || propertyValue?.label || propertyValue
+            const selectedDomain =
+              propertyValue?.value || propertyValue?.label || propertyValue
             const currentUPN = user.userPrincipalName || ''
-            const upnPrefix = currentUPN.includes('@') ? currentUPN.split('@')[0] : currentUPN
+            const upnPrefix = currentUPN.includes('@')
+              ? currentUPN.split('@')[0]
+              : currentUPN
 
             if (selectedDomain && upnPrefix) {
               userData[propName] = `${upnPrefix}@${selectedDomain}`
@@ -630,9 +693,9 @@ const ConfirmationStep = (props) => {
       <Stack spacing={1}>
         <Typography variant="h6">Confirm User Updates</Typography>
         <Typography color="text.secondary" variant="body2">
-          Review the users that will be updated with {selectedProperties.length} selected{' '}
-          {selectedProperties.length === 1 ? 'property' : 'properties'}, then click Submit to apply
-          the changes.
+          Review the users that will be updated with {selectedProperties.length}{' '}
+          selected {selectedProperties.length === 1 ? 'property' : 'properties'}
+          , then click Submit to apply the changes.
         </Typography>
       </Stack>
 
@@ -645,7 +708,9 @@ const ConfirmationStep = (props) => {
             </Typography>
             <Stack spacing={1}>
               {selectedProperties.map((propName) => {
-                const property = allProperties.find((p) => p.property === propName)
+                const property = allProperties.find(
+                  (p) => p.property === propName
+                )
                 const value = propertyValues[propName]
                 let displayValue = value || 'Not set'
 
@@ -653,20 +718,29 @@ const ConfirmationStep = (props) => {
                   displayValue = value?.label || value?.value || 'Not set'
                 } else if (propName === 'userPrincipalName') {
                   const selectedDomain = value?.label || value?.value || value
-                  displayValue = selectedDomain ? `Change domain to: ${selectedDomain}` : 'Not set'
+                  displayValue = selectedDomain
+                    ? `Change domain to: ${selectedDomain}`
+                    : 'Not set'
                 } else if (property?.type === 'boolean') {
                   displayValue = value ? 'Yes' : 'No'
                 }
 
                 return (
-                  <Box key={propName} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    key={propName}
+                    sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+                  >
                     <Typography
                       variant="body2"
                       sx={{ fontWeight: 'medium', minWidth: 'fit-content' }}
                     >
                       {property?.label || propName}:
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ flex: 1 }}
+                    >
                       {displayValue}
                     </Typography>
                   </Box>
@@ -693,7 +767,11 @@ const ConfirmationStep = (props) => {
       ) : (
         <Card variant="outlined">
           <CardContent>
-            <Typography color="text.secondary" variant="body2" sx={{ textAlign: 'center', py: 2 }}>
+            <Typography
+              color="text.secondary"
+              variant="body2"
+              sx={{ textAlign: 'center', py: 2 }}
+            >
               No users to update. Please go back and select users.
             </Typography>
           </CardContent>
@@ -710,7 +788,12 @@ const ConfirmationStep = (props) => {
         sx={{ mt: 3 }}
       >
         {currentStep > 0 && (
-          <Button color="inherit" onClick={onPreviousStep} size="large" type="button">
+          <Button
+            color="inherit"
+            onClick={onPreviousStep}
+            size="large"
+            type="button"
+          >
             Back
           </Button>
         )}
@@ -762,7 +845,11 @@ const Page = () => {
   // Get unique tenant domains from users
   const tenantDomains = useMemo(() => {
     return (
-      [...new Set(users?.map((user) => user.Tenant || user.tenantFilter).filter(Boolean))] || []
+      [
+        ...new Set(
+          users?.map((user) => user.Tenant || user.tenantFilter).filter(Boolean)
+        ),
+      ] || []
     )
   }, [users])
 
@@ -783,13 +870,17 @@ const Page = () => {
     if (customDataMappings.isSuccess && customDataMappings.data?.Results) {
       return customDataMappings.data.Results.filter((mapping) => {
         // Only include single-value properties, filter out multivalue ones
-        const dataType = mapping.customDataAttribute.addedFields.dataType?.toLowerCase()
-        const isMultiValue = mapping.customDataAttribute.addedFields.isMultiValue
+        const dataType =
+          mapping.customDataAttribute.addedFields.dataType?.toLowerCase()
+        const isMultiValue =
+          mapping.customDataAttribute.addedFields.isMultiValue
         return !isMultiValue && dataType !== 'collection'
       }).map((mapping) => ({
         property: mapping.customDataAttribute.value, // Use the actual attribute name, not nested under customData
         label: `${mapping.manualEntryFieldLabel} (Custom)`,
-        type: mapping.customDataAttribute.addedFields.dataType?.toLowerCase() || 'string',
+        type:
+          mapping.customDataAttribute.addedFields.dataType?.toLowerCase() ||
+          'string',
         isCustomData: true,
       }))
     }

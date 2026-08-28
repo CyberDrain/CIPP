@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo } from 'react'
 import {
   Box,
   Typography,
@@ -7,55 +7,66 @@ import {
   Chip,
   Alert,
   useTheme,
-} from "@mui/material";
-import { diffLines } from "diff";
+} from '@mui/material'
+import { diffLines } from 'diff'
 
-export const CippScriptDiff = ({ oldScript, newScript, oldLabel = "Old", newLabel = "New" }) => {
-  const theme = useTheme();
-  const isDarkMode = theme.palette.mode === "dark";
+export const CippScriptDiff = ({
+  oldScript,
+  newScript,
+  oldLabel = 'Old',
+  newLabel = 'New',
+}) => {
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   const diffResult = useMemo(() => {
-    if (!oldScript || !newScript) return [];
-    return diffLines(oldScript, newScript);
-  }, [oldScript, newScript]);
+    if (!oldScript || !newScript) return []
+    return diffLines(oldScript, newScript)
+  }, [oldScript, newScript])
 
   const stats = useMemo(() => {
-    let added = 0;
-    let removed = 0;
-    let unchanged = 0;
+    let added = 0
+    let removed = 0
+    let unchanged = 0
 
     diffResult.forEach((part) => {
-      const lineCount = part.value.split("\n").filter((line) => line.length > 0).length;
+      const lineCount = part.value
+        .split('\n')
+        .filter((line) => line.length > 0).length
       if (part.added) {
-        added += lineCount;
+        added += lineCount
       } else if (part.removed) {
-        removed += lineCount;
+        removed += lineCount
       } else {
-        unchanged += lineCount;
+        unchanged += lineCount
       }
-    });
+    })
 
-    return { added, removed, unchanged };
-  }, [diffResult]);
+    return { added, removed, unchanged }
+  }, [diffResult])
 
   if (!oldScript || !newScript) {
     return (
       <Alert severity="warning">
-        <Typography variant="body2">Unable to compare - one or both scripts are empty.</Typography>
+        <Typography variant="body2">
+          Unable to compare - one or both scripts are empty.
+        </Typography>
       </Alert>
-    );
+    )
   }
 
   if (oldScript === newScript) {
     return (
       <Alert severity="info">
-        <Typography variant="body2">No differences found - scripts are identical.</Typography>
+        <Typography variant="body2">
+          No differences found - scripts are identical.
+        </Typography>
       </Alert>
-    );
+    )
   }
 
   return (
     <Box>
-      <Stack direction="row" spacing={2} sx={{ mb: 2, alignItems: "center" }}>
+      <Stack direction="row" spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
         <Typography variant="body2" color="text.secondary">
           Comparing:
         </Typography>
@@ -63,7 +74,12 @@ export const CippScriptDiff = ({ oldScript, newScript, oldLabel = "Old", newLabe
         <Typography variant="body2" color="text.secondary">
           →
         </Typography>
-        <Chip label={newLabel} size="small" variant="outlined" color="primary" />
+        <Chip
+          label={newLabel}
+          size="small"
+          variant="outlined"
+          color="primary"
+        />
       </Stack>
 
       <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
@@ -95,8 +111,8 @@ export const CippScriptDiff = ({ oldScript, newScript, oldLabel = "Old", newLabe
       <Paper
         variant="outlined"
         sx={{
-          overflow: "auto",
-          maxHeight: "600px",
+          overflow: 'auto',
+          maxHeight: '600px',
         }}
       >
         <Box
@@ -105,46 +121,50 @@ export const CippScriptDiff = ({ oldScript, newScript, oldLabel = "Old", newLabe
             margin: 0,
             padding: 2,
             fontFamily: '"Consolas", "Monaco", "Courier New", monospace',
-            fontSize: "0.875rem",
+            fontSize: '0.875rem',
             lineHeight: 1.6,
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
           }}
         >
           {diffResult.map((part, index) => {
-            let bgcolor = "transparent";
-            let color = "inherit";
-            let borderLeft = "3px solid transparent";
-            let prefix = " ";
+            let bgcolor = 'transparent'
+            let color = 'inherit'
+            let borderLeft = '3px solid transparent'
+            let prefix = ' '
 
             if (part.added) {
-              bgcolor = isDarkMode ? "#1a4d2e" : "#e6ffed";
-              color = isDarkMode ? "#7ee087" : "#22863a";
-              borderLeft = isDarkMode ? "3px solid #34d058" : "3px solid #34d058";
-              prefix = "+";
+              bgcolor = isDarkMode ? '#1a4d2e' : '#e6ffed'
+              color = isDarkMode ? '#7ee087' : '#22863a'
+              borderLeft = isDarkMode
+                ? '3px solid #34d058'
+                : '3px solid #34d058'
+              prefix = '+'
             } else if (part.removed) {
-              bgcolor = isDarkMode ? "#4d1a1a" : "#ffeef0";
-              color = isDarkMode ? "#ff8181" : "#cb2431";
-              borderLeft = isDarkMode ? "3px solid #d73a49" : "3px solid #d73a49";
-              prefix = "-";
+              bgcolor = isDarkMode ? '#4d1a1a' : '#ffeef0'
+              color = isDarkMode ? '#ff8181' : '#cb2431'
+              borderLeft = isDarkMode
+                ? '3px solid #d73a49'
+                : '3px solid #d73a49'
+              prefix = '-'
             }
 
             // Split into lines and add prefix
-            const lines = part.value.split("\n");
+            const lines = part.value.split('\n')
             const displayValue = lines
               .map((line, i) => {
                 // Don't add prefix to empty last line
-                if (i === lines.length - 1 && line === "") return "";
-                return prefix + " " + line;
+                if (i === lines.length - 1 && line === '') return ''
+                return prefix + ' ' + line
               })
-              .join("\n");
+              .join('\n')
 
             return (
               <Box
                 key={index}
                 component="span"
                 sx={{
-                  display: "block",
+                  display: 'block',
                   bgcolor,
                   color,
                   borderLeft,
@@ -156,10 +176,10 @@ export const CippScriptDiff = ({ oldScript, newScript, oldLabel = "Old", newLabe
               >
                 {displayValue}
               </Box>
-            );
+            )
           })}
         </Box>
       </Paper>
     </Box>
-  );
-};
+  )
+}

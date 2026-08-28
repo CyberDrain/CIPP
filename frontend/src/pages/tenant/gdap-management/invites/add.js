@@ -1,12 +1,12 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useForm, useWatch } from "react-hook-form";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { Grid } from "@mui/system";
-import CippPageCard from "../../../../components/CippCards/CippPageCard";
-import { ApiGetCall, ApiPostCall } from "../../../../api/ApiCall";
-import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
-import { CippApiResults } from "../../../../components/CippComponents/CippApiResults";
-import { CippExpandableAlert } from "../../../../components/CippComponents/CippExpandableAlert";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useForm, useWatch } from 'react-hook-form'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { Grid } from '@mui/system'
+import CippPageCard from '../../../../components/CippCards/CippPageCard'
+import { ApiGetCall, ApiPostCall } from '../../../../api/ApiCall'
+import { CippDataTable } from '../../../../components/CippTable/CippDataTable'
+import { CippApiResults } from '../../../../components/CippComponents/CippApiResults'
+import { CippExpandableAlert } from '../../../../components/CippComponents/CippExpandableAlert'
 import {
   Accordion,
   AccordionDetails,
@@ -21,62 +21,68 @@ import {
   ListItem,
   SvgIcon,
   Typography,
-} from "@mui/material";
-import { PlusIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
-import { CippPropertyList } from "../../../../components/CippComponents/CippPropertyList";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import NextLink from "next/link";
+} from '@mui/material'
+import { PlusIcon } from '@heroicons/react/24/outline'
+import { useEffect, useState } from 'react'
+import { CippPropertyList } from '../../../../components/CippComponents/CippPropertyList'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import NextLink from 'next/link'
 
 const Page = () => {
-  const [inviteData, setInviteData] = useState([]);
-  const [createDefaults, setCreateDefaults] = useState(false);
+  const [inviteData, setInviteData] = useState([])
+  const [createDefaults, setCreateDefaults] = useState(false)
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       inviteCount: 1,
     },
-  });
+  })
 
   const createCippDefaults = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["ListGDAPRoleTemplatesAutocomplete", "ListGDAPRoleTemplates"],
-  });
+    relatedQueryKeys: [
+      'ListGDAPRoleTemplatesAutocomplete',
+      'ListGDAPRoleTemplates',
+    ],
+  })
 
   const templateList = ApiGetCall({
-    url: "/api/ExecGDAPRoleTemplate",
-    queryKey: "ListGDAPRoleTemplates-list",
-  });
-  const selectedTemplate = useWatch({ control: formControl.control, name: "roleMappings" });
+    url: '/api/ExecGDAPRoleTemplate',
+    queryKey: 'ListGDAPRoleTemplates-list',
+  })
+  const selectedTemplate = useWatch({
+    control: formControl.control,
+    name: 'roleMappings',
+  })
 
   useEffect(() => {
     if (templateList?.data?.Results?.length === 0) {
-      setCreateDefaults(true);
+      setCreateDefaults(true)
     } else {
-      setCreateDefaults(false);
+      setCreateDefaults(false)
     }
-  }, [templateList.isSuccess]);
+  }, [templateList.isSuccess])
 
   const addInvites = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["GDAPInvite"],
-  });
+    relatedQueryKeys: ['GDAPInvite'],
+  })
 
   const handleSubmit = (values) => {
-    formControl.trigger();
-    if (!formControl.formState.isValid) return;
+    formControl.trigger()
+    if (!formControl.formState.isValid) return
     const eachInvite = Array.from({ length: values.inviteCount }, (_, i) => ({
       roleMappings: values.roleMappings.value,
       Reference: values.Reference,
-    }));
+    }))
 
     addInvites.mutate({
-      url: "/api/ExecGDAPInvite",
+      url: '/api/ExecGDAPInvite',
       bulkRequest: true,
       data: eachInvite,
-    });
-  };
+    })
+  }
 
   useEffect(() => {
     if (addInvites?.data?.length > 0) {
@@ -84,15 +90,16 @@ const Page = () => {
         const newData = addInvites.data.map((invite) => ({
           ...invite.Invite,
           Message: invite.Message,
-        }));
-        const mergedData = [...prevData, ...newData];
+        }))
+        const mergedData = [...prevData, ...newData]
         const deduplicatedData = mergedData.filter(
-          (item, index, self) => index === self.findIndex((t) => t.InviteUrl === item.InviteUrl)
-        );
-        return deduplicatedData;
-      });
+          (item, index, self) =>
+            index === self.findIndex((t) => t.InviteUrl === item.InviteUrl)
+        )
+        return deduplicatedData
+      })
     }
-  }, [addInvites?.data?.length]);
+  }, [addInvites?.data?.length])
 
   return (
     <>
@@ -102,25 +109,32 @@ const Page = () => {
             <Grid size={12}>
               <CippExpandableAlert severity="info">
                 <Typography variant="body2">
-                  Use this form to generate invites for the selected GDAP Role Template. After
-                  generating the invite, you will receive two URLs:
+                  Use this form to generate invites for the selected GDAP Role
+                  Template. After generating the invite, you will receive two
+                  URLs:
                 </Typography>
-                <List dense={true} sx={{ listStyleType: "disc", listStylePosition: "inside" }}>
-                  <ListItem sx={{ display: "list-item" }}>
-                    The Invite link is to send to a client or accept as a Global Administrator on
-                    the customer tenant.
+                <List
+                  dense={true}
+                  sx={{ listStyleType: 'disc', listStylePosition: 'inside' }}
+                >
+                  <ListItem sx={{ display: 'list-item' }}>
+                    The Invite link is to send to a client or accept as a Global
+                    Administrator on the customer tenant.
                   </ListItem>
-                  <ListItem sx={{ display: "list-item" }}>
-                    The Onboarding link is for a CIPP Administrator to complete the onboarding
-                    process.
+                  <ListItem sx={{ display: 'list-item' }}>
+                    The Onboarding link is for a CIPP Administrator to complete
+                    the onboarding process.
                   </ListItem>
                 </List>
                 <Typography variant="body2">
-                  The onboarding process will also run on a nightly schedule. For automated
-                  onboardings, please check out{" "}
-                  <Link component={NextLink} href="/cipp/settings/partner-webhooks">
+                  The onboarding process will also run on a nightly schedule.
+                  For automated onboardings, please check out{' '}
+                  <Link
+                    component={NextLink}
+                    href="/cipp/settings/partner-webhooks"
+                  >
                     Automated Onboarding
-                  </Link>{" "}
+                  </Link>{' '}
                   in Application Settings.
                 </Typography>
               </CippExpandableAlert>
@@ -129,15 +143,15 @@ const Page = () => {
               <>
                 <Grid size={12}>
                   <Alert severity="warning">
-                    The CIPP Defaults template is missing from the GDAP Role Templates. Create it
-                    now?
+                    The CIPP Defaults template is missing from the GDAP Role
+                    Templates. Create it now?
                     <Button
                       size="small"
                       variant="outlined"
                       onClick={() =>
                         createCippDefaults.mutate({
-                          url: "/api/ExecAddGDAPRole",
-                          data: { TemplateId: "CIPP Defaults" },
+                          url: '/api/ExecAddGDAPRole',
+                          data: { TemplateId: 'CIPP Defaults' },
                         })
                       }
                       sx={{ ml: 2 }}
@@ -163,9 +177,9 @@ const Page = () => {
                 label="Select GDAP Role Template"
                 type="autoComplete"
                 api={{
-                  url: "/api/ExecGDAPRoleTemplate",
-                  queryKey: "ListGDAPRoleTemplatesAutocomplete",
-                  dataKey: "Results",
+                  url: '/api/ExecGDAPRoleTemplate',
+                  queryKey: 'ListGDAPRoleTemplatesAutocomplete',
+                  dataKey: 'Results',
                   labelField: (option) => option.TemplateId,
                   valueField: (option) => option.RoleMappings,
                 }}
@@ -175,9 +189,9 @@ const Page = () => {
                 validators={{
                   validate: (value) => {
                     if (!value) {
-                      return "Please select a GDAP Role Template";
+                      return 'Please select a GDAP Role Template'
                     }
-                    return true;
+                    return true
                   },
                 }}
               />
@@ -214,7 +228,7 @@ const Page = () => {
                         return {
                           label: `${role.RoleName}`,
                           value: `Mapped to '${role.GroupName}'`,
-                        };
+                        }
                       })}
                     />
                   </AccordionDetails>
@@ -235,14 +249,14 @@ const Page = () => {
                     title="Invites"
                     data={inviteData}
                     noCard={true}
-                    simpleColumns={["Message", "InviteUrl", "OnboardingUrl"]}
+                    simpleColumns={['Message', 'InviteUrl', 'OnboardingUrl']}
                   />
                 </Grid>
               </>
             )}
           </Grid>
         </CardContent>
-        <CardActions sx={{ justifyContent: "flex-end" }}>
+        <CardActions sx={{ justifyContent: 'flex-end' }}>
           <Button
             variant="contained"
             disabled={!formControl.formState.isValid || addInvites.isPending}
@@ -258,9 +272,9 @@ const Page = () => {
         </CardActions>
       </CippPageCard>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

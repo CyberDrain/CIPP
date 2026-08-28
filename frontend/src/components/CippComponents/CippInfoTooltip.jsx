@@ -1,5 +1,5 @@
-import { IconButton, Tooltip } from "@mui/material";
-import { InfoOutlined } from "@mui/icons-material";
+import { IconButton, Tooltip } from '@mui/material'
+import { InfoOutlined } from '@mui/icons-material'
 
 /**
  * Small info icon that shows a tooltip on hover.
@@ -8,12 +8,12 @@ import { InfoOutlined } from "@mui/icons-material";
  * @param {string} [placement="top"] - MUI Tooltip placement
  * @param {number} [fontSize=16] - Icon size in px
  */
-const CippInfoTooltip = ({ title, placement = "top", fontSize = 16 }) => (
+const CippInfoTooltip = ({ title, placement = 'top', fontSize = 16 }) => (
   <Tooltip title={title} placement={placement} arrow>
     <IconButton size="small" sx={{ p: 0.25 }} aria-label="More information">
       <InfoOutlined sx={{ fontSize }} />
     </IconButton>
   </Tooltip>
-);
+)
 
-export default CippInfoTooltip;
+export default CippInfoTooltip

@@ -31,7 +31,8 @@ export const dashboardDemoData = {
       ],
     },
     OverviewCaDevicesAllUsers: {
-      description: 'Over the past 30 days, 71.2% of sign-ins were from compliant devices.',
+      description:
+        'Over the past 30 days, 71.2% of sign-ins were from compliant devices.',
       nodes: [
         { source: 'User sign in', target: 'Unmanaged', value: 500 },
         { source: 'User sign in', target: 'Managed', value: 1150 },
@@ -40,7 +41,8 @@ export const dashboardDemoData = {
       ],
     },
     OverviewAuthMethodsPrivilegedUsers: {
-      description: 'Authentication methods used by privileged users over the past 30 days.',
+      description:
+        'Authentication methods used by privileged users over the past 30 days.',
       nodes: [
         { source: 'Users', target: 'Single factor', value: 5 },
         { source: 'Users', target: 'Phishable', value: 28 },
@@ -52,7 +54,8 @@ export const dashboardDemoData = {
       ],
     },
     OverviewAuthMethodsAllUsers: {
-      description: 'Authentication methods used by all users over the past 30 days.',
+      description:
+        'Authentication methods used by all users over the past 30 days.',
       nodes: [
         { source: 'Users', target: 'Single factor', value: 120 },
         { source: 'Users', target: 'Phishable', value: 580 },
@@ -65,7 +68,8 @@ export const dashboardDemoData = {
     },
     DeviceOverview: {
       DesktopDevicesSummary: {
-        description: 'Desktop devices (Windows and macOS) by join type and compliance status.',
+        description:
+          'Desktop devices (Windows and macOS) by join type and compliance status.',
         nodes: [
           // Level 1: Desktop devices to OS
           { source: 'Desktop devices', target: 'Windows', value: 585 },

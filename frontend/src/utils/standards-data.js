@@ -1,51 +1,51 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 
 // data/standards.json (~0.4MB) was statically imported by a hot formatting util + several standards
 // screens, inlining it into the common bundle. Load it as its own async chunk instead. Cached at
 // module scope; preloaded on first import so sync consumers usually see data by the time they run.
-let cache = null;
-let pending = null;
+let cache = null
+let pending = null
 
 export function ensureStandards() {
-  if (cache) return Promise.resolve(cache);
+  if (cache) return Promise.resolve(cache)
   if (!pending) {
-    pending = import("../data/standards.json")
+    pending = import('../data/standards.json')
       .then((m) => {
-        cache = m.default || m;
-        return cache;
+        cache = m.default || m
+        return cache
       })
       .catch((err) => {
-        pending = null;
-        throw err;
-      });
+        pending = null
+        throw err
+      })
   }
-  return pending;
+  return pending
 }
 
 // Synchronous accessor for non-React utilities — returns [] until the chunk has loaded.
 export function getStandards() {
-  return cache || [];
+  return cache || []
 }
 
 // Hook for React components — re-renders once the chunk has loaded.
 export function useStandards() {
-  const [data, setData] = useState(cache || []);
+  const [data, setData] = useState(cache || [])
   useEffect(() => {
     if (cache) {
-      setData(cache);
-      return;
+      setData(cache)
+      return
     }
-    let alive = true;
+    let alive = true
     ensureStandards()
       .then((s) => {
-        if (alive) setData(s);
+        if (alive) setData(s)
       })
-      .catch(() => {});
+      .catch(() => {})
     return () => {
-      alive = false;
-    };
-  }, []);
-  return data;
+      alive = false
+    }
+  }, [])
+  return data
 }
 
-ensureStandards().catch(() => {});
+ensureStandards().catch(() => {})

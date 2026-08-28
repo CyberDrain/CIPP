@@ -1,55 +1,55 @@
-import React, { useEffect } from "react";
-import { Divider, Typography } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../../layouts/index.js";
-import CippFormPage from "../../../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../../../components/CippComponents/CippFormComponent";
-import CippFormSkeleton from "../../../../../components/CippFormPages/CippFormSkeleton";
-import { useSettings } from "../../../../../hooks/use-settings";
-import { useRouter } from "next/router";
-import { ApiGetCall } from "../../../../../api/ApiCall";
-import countryList from "../../../../../data/countryList.json";
-import timezoneList from "../../../../../data/timezoneList.json";
+import React, { useEffect } from 'react'
+import { Divider, Typography } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../../layouts/index.js'
+import CippFormPage from '../../../../../components/CippFormPages/CippFormPage'
+import CippFormComponent from '../../../../../components/CippComponents/CippFormComponent'
+import CippFormSkeleton from '../../../../../components/CippFormPages/CippFormSkeleton'
+import { useSettings } from '../../../../../hooks/use-settings'
+import { useRouter } from 'next/router'
+import { ApiGetCall } from '../../../../../api/ApiCall'
+import countryList from '../../../../../data/countryList.json'
+import timezoneList from '../../../../../data/timezoneList.json'
 
 // Work days options
 const workDaysOptions = [
-  { value: "Sunday", label: "Sunday" },
-  { value: "Monday", label: "Monday" },
-  { value: "Tuesday", label: "Tuesday" },
-  { value: "Wednesday", label: "Wednesday" },
-  { value: "Thursday", label: "Thursday" },
-  { value: "Friday", label: "Friday" },
-  { value: "Saturday", label: "Saturday" },
-  { value: "WeekDay", label: "Weekdays (Monday-Friday)" },
-  { value: "WeekendDay", label: "Weekend (Saturday-Sunday)" },
-  { value: "AllDays", label: "All Days" },
-];
+  { value: 'Sunday', label: 'Sunday' },
+  { value: 'Monday', label: 'Monday' },
+  { value: 'Tuesday', label: 'Tuesday' },
+  { value: 'Wednesday', label: 'Wednesday' },
+  { value: 'Thursday', label: 'Thursday' },
+  { value: 'Friday', label: 'Friday' },
+  { value: 'Saturday', label: 'Saturday' },
+  { value: 'WeekDay', label: 'Weekdays (Monday-Friday)' },
+  { value: 'WeekendDay', label: 'Weekend (Saturday-Sunday)' },
+  { value: 'AllDays', label: 'All Days' },
+]
 
 // Automation Processing Options
 const automateProcessingOptions = [
-  { value: "None", label: "None - No processing" },
-  { value: "AutoUpdate", label: "AutoUpdate - Accept/Decline but not delete" },
-  { value: "AutoAccept", label: "AutoAccept - Accept and delete" },
-];
+  { value: 'None', label: 'None - No processing' },
+  { value: 'AutoUpdate', label: 'AutoUpdate - Accept/Decline but not delete' },
+  { value: 'AutoAccept', label: 'AutoAccept - Accept and delete' },
+]
 
 const EditEquipmentMailbox = () => {
-  const router = useRouter();
-  const { equipmentId } = router.query;
-  const tenantDomain = useSettings().currentTenant;
+  const router = useRouter()
+  const { equipmentId } = router.query
+  const tenantDomain = useSettings().currentTenant
   const formControl = useForm({
-    mode: "onChange",
-  });
+    mode: 'onChange',
+  })
 
   const equipmentInfo = ApiGetCall({
     url: `/api/ListEquipment?EquipmentId=${equipmentId}&tenantFilter=${tenantDomain}`,
     queryKey: `Equipment-${equipmentId}`,
     waiting: false,
-  });
+  })
 
   useEffect(() => {
     if (equipmentInfo.isSuccess && equipmentInfo.data?.[0]) {
-      const equipment = equipmentInfo.data[0];
+      const equipment = equipmentInfo.data[0]
       formControl.reset({
         // Core Properties
         displayName: equipment.displayName,
@@ -65,8 +65,9 @@ const EditEquipmentMailbox = () => {
         stateOrProvince: equipment.stateOrProvince,
         postalCode: equipment.postalCode,
         countryOrRegion: equipment.countryOrRegion
-          ? countryList.find((c) => c.Name === equipment.countryOrRegion)?.Code || ""
-          : "",
+          ? countryList.find((c) => c.Name === equipment.countryOrRegion)
+              ?.Code || ''
+          : '',
         phone: equipment.phone,
         tags: equipment.tags?.map((tag) => ({ label: tag, value: tag })) || [],
 
@@ -75,14 +76,15 @@ const EditEquipmentMailbox = () => {
         allowRecurringMeetings: equipment.allowRecurringMeetings,
         bookingWindowInDays: equipment.bookingWindowInDays,
         maximumDurationInMinutes: equipment.maximumDurationInMinutes,
-        processExternalMeetingMessages: equipment.processExternalMeetingMessages,
+        processExternalMeetingMessages:
+          equipment.processExternalMeetingMessages,
         forwardRequestsToDelegates: equipment.forwardRequestsToDelegates,
         scheduleOnlyDuringWorkHours: equipment.scheduleOnlyDuringWorkHours,
         automateProcessing: equipment.automateProcessing,
 
         // Calendar Configuration
         workDays:
-          equipment.workDays?.split(",")?.map((day) => ({
+          equipment.workDays?.split(',')?.map((day) => ({
             label: day.trim(),
             value: day.trim(),
           })) || [],
@@ -91,23 +93,26 @@ const EditEquipmentMailbox = () => {
         workingHoursTimeZone: equipment.workingHoursTimeZone
           ? {
               value: equipment.workingHoursTimeZone,
-              label: timezoneList.find((tz) => tz.standardTime === equipment.workingHoursTimeZone)
+              label: timezoneList.find(
+                (tz) => tz.standardTime === equipment.workingHoursTimeZone
+              )
                 ? `${equipment.workingHoursTimeZone} - ${
-                    timezoneList.find((tz) => tz.standardTime === equipment.workingHoursTimeZone)
-                      ?.timezone
+                    timezoneList.find(
+                      (tz) => tz.standardTime === equipment.workingHoursTimeZone
+                    )?.timezone
                   }`
                 : equipment.workingHoursTimeZone,
             }
           : null,
-      });
+      })
     }
-  }, [equipmentInfo.isSuccess, equipmentInfo.data]);
+  }, [equipmentInfo.isSuccess, equipmentInfo.data])
 
   useEffect(() => {
     if (equipmentId) {
-      equipmentInfo.refetch();
+      equipmentInfo.refetch()
     }
-  }, [router.query, equipmentId, tenantDomain]);
+  }, [router.query, equipmentId, tenantDomain])
 
   return (
     <CippFormPage
@@ -131,7 +136,8 @@ const EditEquipmentMailbox = () => {
         city: values.city?.trim(),
         stateOrProvince: values.stateOrProvince?.trim(),
         postalCode: values.postalCode?.trim(),
-        countryOrRegion: values.countryOrRegion?.value || values.countryOrRegion || null,
+        countryOrRegion:
+          values.countryOrRegion?.value || values.countryOrRegion || null,
         phone: values.phone?.trim(),
         tags: values.tags?.map((tag) => tag.value),
 
@@ -143,13 +149,15 @@ const EditEquipmentMailbox = () => {
         processExternalMeetingMessages: values.processExternalMeetingMessages,
         forwardRequestsToDelegates: values.forwardRequestsToDelegates,
         scheduleOnlyDuringWorkHours: values.scheduleOnlyDuringWorkHours,
-        automateProcessing: values.automateProcessing?.value || values.automateProcessing,
+        automateProcessing:
+          values.automateProcessing?.value || values.automateProcessing,
 
         // Calendar Configuration
-        workDays: values.workDays?.map((day) => day.value).join(","),
+        workDays: values.workDays?.map((day) => day.value).join(','),
         workHoursStartTime: values.workHoursStartTime,
         workHoursEndTime: values.workHoursEndTime,
-        workingHoursTimeZone: values.workingHoursTimeZone?.value || values.workingHoursTimeZone,
+        workingHoursTimeZone:
+          values.workingHoursTimeZone?.value || values.workingHoursTimeZone,
       })}
     >
       {equipmentInfo.isLoading && (
@@ -170,7 +178,7 @@ const EditEquipmentMailbox = () => {
               label="Display Name"
               name="displayName"
               formControl={formControl}
-              validators={{ required: "Display Name is required" }}
+              validators={{ required: 'Display Name is required' }}
             />
           </Grid>
 
@@ -183,7 +191,7 @@ const EditEquipmentMailbox = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Booking Information */}
           <Grid size={{ xs: 12 }}>
@@ -200,10 +208,10 @@ const EditEquipmentMailbox = () => {
               name="maximumDurationInMinutes"
               formControl={formControl}
               validators={{
-                min: { value: 0, message: "Minimum is 0 (0 = Unlimited)" },
+                min: { value: 0, message: 'Minimum is 0 (0 = Unlimited)' },
                 max: {
                   value: 2147483647,
-                  message: "Maximum is 2,147,483,647 minutes",
+                  message: 'Maximum is 2,147,483,647 minutes',
                 },
               }}
               InputProps={{
@@ -221,8 +229,8 @@ const EditEquipmentMailbox = () => {
               name="bookingWindowInDays"
               formControl={formControl}
               validators={{
-                min: { value: 0, message: "Minimum is 0 days" },
-                max: { value: 1080, message: "Maximum is 1080 days (3 years)" },
+                min: { value: 0, message: 'Minimum is 0 days' },
+                max: { value: 1080, message: 'Maximum is 1080 days (3 years)' },
               }}
               InputProps={{
                 inputProps: { min: 0, max: 1080 },
@@ -279,7 +287,7 @@ const EditEquipmentMailbox = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Working Hours */}
           <Grid size={{ xs: 12 }}>
@@ -342,7 +350,7 @@ const EditEquipmentMailbox = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Equipment & Location Details */}
           <Grid size={{ xs: 12 }}>
@@ -440,13 +448,15 @@ const EditEquipmentMailbox = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
         </Grid>
       )}
     </CippFormPage>
-  );
-};
+  )
+}
 
-EditEquipmentMailbox.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+EditEquipmentMailbox.getLayout = (page) => (
+  <DashboardLayout>{page}</DashboardLayout>
+)
 
-export default EditEquipmentMailbox;
+export default EditEquipmentMailbox

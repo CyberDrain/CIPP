@@ -1,10 +1,15 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 
 const Page = () => {
-  const pageTitle = "Deleted Mailboxes";
+  const pageTitle = 'Deleted Mailboxes'
 
-  const simpleColumns = ["displayName", "mail", "companyName", "onPremisesSyncEnabled"];
+  const simpleColumns = [
+    'displayName',
+    'mail',
+    'companyName',
+    'onPremisesSyncEnabled',
+  ]
 
   return (
     <CippTablePage
@@ -12,8 +17,10 @@ const Page = () => {
       apiUrl="/api/ListMailboxes?SoftDeletedMailbox=true"
       simpleColumns={simpleColumns}
     />
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>;
-export default Page;
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+)
+export default Page

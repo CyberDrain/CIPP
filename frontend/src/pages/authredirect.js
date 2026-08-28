@@ -25,7 +25,12 @@ const Page = () => {
         <title>Authentication complete</title>
       </Head>
       <div
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
       >
         <p>Authentication complete. This window will close automatically.</p>
       </div>

@@ -39,11 +39,23 @@ export const CippApplicationDeployDrawer = ({
   const updateSearchSelection = useCallback(
     (searchQuerySelection) => {
       if (searchQuerySelection) {
-        formControl.setValue('packagename', searchQuerySelection.value.packagename)
-        formControl.setValue('applicationName', searchQuerySelection.value.applicationName)
-        formControl.setValue('description', searchQuerySelection.value.description)
+        formControl.setValue(
+          'packagename',
+          searchQuerySelection.value.packagename
+        )
+        formControl.setValue(
+          'applicationName',
+          searchQuerySelection.value.applicationName
+        )
+        formControl.setValue(
+          'description',
+          searchQuerySelection.value.description
+        )
         searchQuerySelection.value.customRepo
-          ? formControl.setValue('customRepo', searchQuerySelection.value.customRepo)
+          ? formControl.setValue(
+              'customRepo',
+              searchQuerySelection.value.customRepo
+            )
           : null
       }
     },
@@ -130,7 +142,13 @@ export const CippApplicationDeployDrawer = ({
         onClose={handleCloseDrawer}
         size="xl"
         footer={
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -221,8 +239,9 @@ export const CippApplicationDeployDrawer = ({
               formControl={formControl}
             >
               <Alert severity="info" sx={{ mb: 2 }}>
-                This is a community contribution and is not covered under a vendor sponsorship.
-                Please join our Discord community for assistance with this MSP App.
+                This is a community contribution and is not covered under a
+                vendor sponsorship. Please join our Discord community for
+                assistance with this MSP App.
               </Alert>
             </CippFormCondition>
             <Grid size={{ md: 6, xs: 12 }}>
@@ -251,13 +270,18 @@ export const CippApplicationDeployDrawer = ({
                 />
               </Grid>
               {selectedTenants?.map((tenant, index) => (
-                <Grid size={{ md: 6, xs: 12 }} key={tenant.addedFields.customerId || index}>
+                <Grid
+                  size={{ md: 6, xs: 12 }}
+                  key={tenant.addedFields.customerId || index}
+                >
                   <CippFormComponent
                     type="textField"
                     label={`Datto ID for ${tenant.label}`}
                     name={`params.dattoGuid.${tenant.addedFields.customerId}`}
                     formControl={formControl}
-                    validators={{ required: `Datto ID for ${tenant.label} is required` }}
+                    validators={{
+                      required: `Datto ID for ${tenant.label} is required`,
+                    }}
                   />
                 </Grid>
               ))}
@@ -271,13 +295,18 @@ export const CippApplicationDeployDrawer = ({
               compareValue="syncro"
             >
               {selectedTenants?.map((tenant, index) => (
-                <Grid size={{ md: 6, xs: 12 }} key={tenant.addedFields.customerId || index}>
+                <Grid
+                  size={{ md: 6, xs: 12 }}
+                  key={tenant.addedFields.customerId || index}
+                >
                   <CippFormComponent
                     type="textField"
                     label={`Client URL for ${tenant.label}`}
                     name={`params.ClientURL.${tenant.addedFields.customerId}`}
                     formControl={formControl}
-                    validators={{ required: `Client URL for ${tenant.label} is required` }}
+                    validators={{
+                      required: `Client URL for ${tenant.label} is required`,
+                    }}
                   />
                 </Grid>
               ))}
@@ -300,13 +329,18 @@ export const CippApplicationDeployDrawer = ({
                 />
               </Grid>
               {selectedTenants?.map((tenant, index) => (
-                <Grid size={{ md: 6, xs: 12 }} key={tenant.addedFields.customerId || index}>
+                <Grid
+                  size={{ md: 6, xs: 12 }}
+                  key={tenant.addedFields.customerId || index}
+                >
                   <CippFormComponent
                     type="textField"
                     label={`Organization Key for ${tenant.label}`}
                     name={`params.Orgkey.${tenant.addedFields.customerId}`}
                     formControl={formControl}
-                    validators={{ required: `Organization Key for ${tenant.label} is required` }}
+                    validators={{
+                      required: `Organization Key for ${tenant.label} is required`,
+                    }}
                   />
                 </Grid>
               ))}
@@ -329,13 +363,18 @@ export const CippApplicationDeployDrawer = ({
                 />
               </Grid>
               {selectedTenants?.map((tenant, index) => (
-                <Grid size={{ md: 6, xs: 12 }} key={tenant.addedFields.customerId || index}>
+                <Grid
+                  size={{ md: 6, xs: 12 }}
+                  key={tenant.addedFields.customerId || index}
+                >
                   <CippFormComponent
                     type="textField"
                     label={`Installer Token for ${tenant.label}`}
                     name={`params.InstallerToken.${tenant.addedFields.customerId}`}
                     formControl={formControl}
-                    validators={{ required: `Installer Token for ${tenant.label} is required` }}
+                    validators={{
+                      required: `Installer Token for ${tenant.label} is required`,
+                    }}
                   />
                 </Grid>
               ))}
@@ -349,7 +388,9 @@ export const CippApplicationDeployDrawer = ({
                     label={`Location ID for ${tenant.label}`}
                     name={`params.LocationID.${tenant.addedFields.customerId}`}
                     formControl={formControl}
-                    validators={{ required: `Location ID for ${tenant.label} is required` }}
+                    validators={{
+                      required: `Location ID for ${tenant.label} is required`,
+                    }}
                   />
                 </Grid>
               ))}
@@ -363,13 +404,18 @@ export const CippApplicationDeployDrawer = ({
               compareValue="cwcommand"
             >
               {selectedTenants?.map((tenant, index) => (
-                <Grid size={{ md: 6, xs: 12 }} key={tenant.addedFields.customerId || index}>
+                <Grid
+                  size={{ md: 6, xs: 12 }}
+                  key={tenant.addedFields.customerId || index}
+                >
                   <CippFormComponent
                     type="textField"
                     label={`Client URL for ${tenant.label}`}
                     name={`params.ClientURL.${tenant.addedFields.customerId}`}
                     formControl={formControl}
-                    validators={{ required: `Client URL for ${tenant.label} is required` }}
+                    validators={{
+                      required: `Client URL for ${tenant.label} is required`,
+                    }}
                   />
                 </Grid>
               ))}
@@ -384,7 +430,10 @@ export const CippApplicationDeployDrawer = ({
                   { label: 'Do not assign', value: 'On' },
                   { label: 'Assign to all users', value: 'allLicensedUsers' },
                   { label: 'Assign to all devices', value: 'AllDevices' },
-                  { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                  {
+                    label: 'Assign to all users and devices',
+                    value: 'AllDevicesAndUsers',
+                  },
                   { label: 'Assign to Custom Group', value: 'customGroup' },
                 ]}
                 formControl={formControl}
@@ -522,7 +571,10 @@ export const CippApplicationDeployDrawer = ({
                   { label: 'Do not assign', value: 'On' },
                   { label: 'Assign to all users', value: 'allLicensedUsers' },
                   { label: 'Assign to all devices', value: 'AllDevices' },
-                  { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                  {
+                    label: 'Assign to all users and devices',
+                    value: 'AllDevicesAndUsers',
+                  },
                   { label: 'Assign to Custom Group', value: 'customGroup' },
                 ]}
                 formControl={formControl}
@@ -683,7 +735,10 @@ export const CippApplicationDeployDrawer = ({
                   { label: 'Do not assign', value: 'On' },
                   { label: 'Assign to all users', value: 'allLicensedUsers' },
                   { label: 'Assign to all devices', value: 'AllDevices' },
-                  { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                  {
+                    label: 'Assign to all users and devices',
+                    value: 'AllDevicesAndUsers',
+                  },
                   { label: 'Assign to Custom Group', value: 'customGroup' },
                 ]}
                 formControl={formControl}
@@ -761,7 +816,10 @@ export const CippApplicationDeployDrawer = ({
                   { value: 'firstReleaseCurrent', label: 'Current (Preview)' },
                   { value: 'monthlyEnterprise', label: 'Monthly Enterprise' },
                   { value: 'deferred', label: 'Semi-Annual Enterprise' },
-                  { value: 'firstReleaseDeferred', label: 'Semi-Annual Enterprise (Preview)' },
+                  {
+                    value: 'firstReleaseDeferred',
+                    label: 'Semi-Annual Enterprise (Preview)',
+                  },
                 ]}
                 multiple={false}
                 formControl={formControl}
@@ -839,12 +897,19 @@ export const CippApplicationDeployDrawer = ({
                   formControl={formControl}
                   multiline
                   rows={10}
-                  validators={{ required: 'Please provide custom XML configuration' }}
+                  validators={{
+                    required: 'Please provide custom XML configuration',
+                  }}
                 />
                 <Alert severity="info" sx={{ mt: 1 }}>
-                  Provide a custom Office Configuration XML. When using custom XML, all other Office
-                  configuration options above will be ignored. See{' '}
-                  <a href="https://config.office.com/" target="_blank" rel="noopener noreferrer">
+                  Provide a custom Office Configuration XML. When using custom
+                  XML, all other Office configuration options above will be
+                  ignored. See{' '}
+                  <a
+                    href="https://config.office.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Office Customization Tool
                   </a>{' '}
                   to generate XML.
@@ -861,7 +926,10 @@ export const CippApplicationDeployDrawer = ({
                   { label: 'Do not assign', value: 'On' },
                   { label: 'Assign to all users', value: 'allLicensedUsers' },
                   { label: 'Assign to all devices', value: 'AllDevices' },
-                  { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                  {
+                    label: 'Assign to all users and devices',
+                    value: 'AllDevicesAndUsers',
+                  },
                   { label: 'Assign to Custom Group', value: 'customGroup' },
                 ]}
                 formControl={formControl}
@@ -977,7 +1045,8 @@ export const CippApplicationDeployDrawer = ({
                   multiline
                   rows={6}
                   validators={{
-                    required: 'Detection script is required when using script detection',
+                    required:
+                      'Detection script is required when using script detection',
                   }}
                 />
               </Grid>
@@ -1049,7 +1118,10 @@ export const CippApplicationDeployDrawer = ({
                   { label: 'Do not assign', value: 'On' },
                   { label: 'Assign to all users', value: 'allLicensedUsers' },
                   { label: 'Assign to all devices', value: 'AllDevices' },
-                  { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                  {
+                    label: 'Assign to all users and devices',
+                    value: 'AllDevicesAndUsers',
+                  },
                   { label: 'Assign to Custom Group', value: 'customGroup' },
                 ]}
                 formControl={formControl}

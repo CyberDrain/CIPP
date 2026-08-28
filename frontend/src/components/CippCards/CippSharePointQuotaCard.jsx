@@ -1,4 +1,12 @@
-import { Card, Chip, Skeleton, Stack, SvgIcon, Tooltip, Typography } from '@mui/material'
+import {
+  Card,
+  Chip,
+  Skeleton,
+  Stack,
+  SvgIcon,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { Box } from '@mui/system'
 import { Storage } from '@mui/icons-material'
 import { ApiGetCall } from '../../api/ApiCall'
@@ -31,7 +39,10 @@ const formatStorage = (sizeInMB) => {
 export const CippSharePointQuotaCard = () => {
   const currentTenant = useSettings().currentTenant
   const { checkPermissions } = usePermissions()
-  const canReadQuota = checkPermissions(['Sharepoint.Admin.Read', 'Sharepoint.Admin.ReadWrite'])
+  const canReadQuota = checkPermissions([
+    'Sharepoint.Admin.Read',
+    'Sharepoint.Admin.ReadWrite',
+  ])
   const isAllTenants = currentTenant === 'AllTenants'
   const enabled = !!currentTenant && !isAllTenants && canReadQuota
 
@@ -49,11 +60,16 @@ export const CippSharePointQuotaCard = () => {
   const totalMB = Number(quota.data?.TenantStorageMB)
   // The endpoint returns a 'Not available' percentage and no figures when the SharePoint admin
   // link or the quota call fails, so gate on having real numbers rather than on the status.
-  const hasQuota = Number.isFinite(usedMB) && Number.isFinite(totalMB) && totalMB > 0
-  const percentage = hasQuota ? Math.min(100, Math.round((usedMB / totalMB) * 1000) / 10) : 0
+  const hasQuota =
+    Number.isFinite(usedMB) && Number.isFinite(totalMB) && totalMB > 0
+  const percentage = hasQuota
+    ? Math.min(100, Math.round((usedMB / totalMB) * 1000) / 10)
+    : 0
   // Only worth showing when the tenant actually spans geos - a single-geo tenant's one entry
   // repeats the Used chip above it.
-  const geoLocations = Array.isArray(quota.data?.GeoLocations) ? quota.data.GeoLocations : []
+  const geoLocations = Array.isArray(quota.data?.GeoLocations)
+    ? quota.data.GeoLocations
+    : []
   const isMultiGeo = geoLocations.length > 1
 
   return (
@@ -64,7 +80,12 @@ export const CippSharePointQuotaCard = () => {
         alignItems={{ xs: 'stretch', md: 'center' }}
         sx={{ px: 2, py: 1.5 }}
       >
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 180 }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ minWidth: 180 }}
+        >
           <SvgIcon fontSize="small" color="primary">
             <Storage />
           </SvgIcon>
@@ -77,11 +98,19 @@ export const CippSharePointQuotaCard = () => {
         ) : hasQuota ? (
           <>
             <Box sx={{ flex: 1, minWidth: 200 }}>
-              <LinearProgressWithLabel value={percentage} colourLevels="flipped" addedLabel="used" />
+              <LinearProgressWithLabel
+                value={percentage}
+                colourLevels="flipped"
+                addedLabel="used"
+              />
             </Box>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               <Tooltip title="Storage used across every site in the tenant">
-                <Chip size="small" variant="outlined" label={`Used ${formatStorage(usedMB)}`} />
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={`Used ${formatStorage(usedMB)}`}
+                />
               </Tooltip>
               <Tooltip title="Storage still available in the tenant pool">
                 <Chip
@@ -91,7 +120,11 @@ export const CippSharePointQuotaCard = () => {
                 />
               </Tooltip>
               <Tooltip title="Total tenant storage quota">
-                <Chip size="small" variant="outlined" label={`Total ${formatStorage(totalMB)}`} />
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={`Total ${formatStorage(totalMB)}`}
+                />
               </Tooltip>
               {isMultiGeo &&
                 geoLocations.map((geo, index) => (

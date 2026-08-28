@@ -1,18 +1,41 @@
 const Azure = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="1.06em" height="1em" viewBox="0 0 256 242">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="1.06em"
+    height="1em"
+    viewBox="0 0 256 242"
+  >
     <defs>
-      <linearGradient id="logosMicrosoftAzure0" x1="58.972%" x2="37.191%" y1="7.411%" y2="103.762%">
+      <linearGradient
+        id="logosMicrosoftAzure0"
+        x1="58.972%"
+        x2="37.191%"
+        y1="7.411%"
+        y2="103.762%"
+      >
         <stop offset="0%" stopColor="#114a8b"></stop>
         <stop offset="100%" stopColor="#0669bc"></stop>
       </linearGradient>
-      <linearGradient id="logosMicrosoftAzure1" x1="59.719%" x2="52.691%" y1="52.313%" y2="54.864%">
+      <linearGradient
+        id="logosMicrosoftAzure1"
+        x1="59.719%"
+        x2="52.691%"
+        y1="52.313%"
+        y2="54.864%"
+      >
         <stop offset="0%" stopOpacity={0.3}></stop>
         <stop offset="7.1%" stopOpacity={0.2}></stop>
         <stop offset="32.1%" stopOpacity={0.1}></stop>
         <stop offset="62.3%" stopOpacity={0.05}></stop>
         <stop offset="100%" stopOpacity={0}></stop>
       </linearGradient>
-      <linearGradient id="logosMicrosoftAzure2" x1="37.279%" x2="62.473%" y1="4.6%" y2="99.979%">
+      <linearGradient
+        id="logosMicrosoftAzure2"
+        x1="37.279%"
+        x2="62.473%"
+        y1="4.6%"
+        y2="99.979%"
+      >
         <stop offset="0%" stopColor="#3ccbf4"></stop>
         <stop offset="100%" stopColor="#2892df"></stop>
       </linearGradient>
@@ -34,6 +57,6 @@ const Azure = (props) => (
       d="M182.098 8.207A12.06 12.06 0 0 0 170.67.003H86.245c5.175 0 9.773 3.301 11.428 8.204L170.94 225.3a12.062 12.062 0 0 1-11.428 15.92h84.429a12.062 12.062 0 0 0 11.425-15.92z"
     ></path>
   </svg>
-);
+)
 
-export default Azure;
+export default Azure

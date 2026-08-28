@@ -100,14 +100,20 @@ export const CippAlertSnoozeDialog = ({
                     >
                       {field.label}
                     </Typography>
-                    <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ wordBreak: 'break-word' }}
+                    >
                       {field.value}
                     </Typography>
                   </Box>
                 ))}
               </Stack>
             ) : (
-              <Typography variant="body2" sx={{ mt: 0.5, wordBreak: 'break-word' }}>
+              <Typography
+                variant="body2"
+                sx={{ mt: 0.5, wordBreak: 'break-word' }}
+              >
                 {title}
               </Typography>
             )}
@@ -116,10 +122,13 @@ export const CippAlertSnoozeDialog = ({
         {!submitted ? (
           <Box sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Choose how long to snooze this specific alert item. It will not trigger notifications
-              until the snooze expires.
+              Choose how long to snooze this specific alert item. It will not
+              trigger notifications until the snooze expires.
             </Typography>
-            <RadioGroup value={duration} onChange={(e) => setDuration(e.target.value)}>
+            <RadioGroup
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+            >
               {SNOOZE_OPTIONS.map((option) => (
                 <FormControlLabel
                   key={option.value}

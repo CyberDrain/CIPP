@@ -1,54 +1,61 @@
-import { useEffect } from "react";
-import { Divider, Typography, Alert, Chip } from "@mui/material";
-import { useForm, useWatch } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import CippFormPage from "../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../components/CippComponents/CippFormComponent";
-import { useSettings } from "../../../hooks/use-settings";
-import { CippFormTenantSelector } from "../../../components/CippComponents/CippFormTenantSelector";
-import { Grid } from "@mui/system";
-import { CippFormCondition } from "../../../components/CippComponents/CippFormCondition";
+import { useEffect } from 'react'
+import { Divider, Typography, Alert, Chip } from '@mui/material'
+import { useForm, useWatch } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import CippFormPage from '../../../components/CippFormPages/CippFormPage'
+import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
+import { useSettings } from '../../../hooks/use-settings'
+import { CippFormTenantSelector } from '../../../components/CippComponents/CippFormTenantSelector'
+import { Grid } from '@mui/system'
+import { CippFormCondition } from '../../../components/CippComponents/CippFormCondition'
 
 const TemplateLibrary = () => {
-  const currentTenant = useSettings().currentTenant;
+  const currentTenant = useSettings().currentTenant
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       ca: false,
       intuneconfig: false,
       intunecompliance: false,
       intuneprotection: false,
     },
-  });
+  })
 
-  const templateRepo = useWatch({ control: formControl.control, name: "templateRepo" });
+  const templateRepo = useWatch({
+    control: formControl.control,
+    name: 'templateRepo',
+  })
 
   const customDataFormatter = (values) => {
-    const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-    const unixTime = Math.floor(startDate.getTime() / 1000) - 45;
+    const startDate = new Date()
+    startDate.setHours(0, 0, 0, 0)
+    const unixTime = Math.floor(startDate.getTime() / 1000) - 45
 
     return {
-      TenantFilter: values?.tenantFilter?.value ? values?.tenantFilter?.value : "No tenant",
+      TenantFilter: values?.tenantFilter?.value
+        ? values?.tenantFilter?.value
+        : 'No tenant',
       Name: `CIPP Template ${
-        values.tenantFilter?.value ? values.tenantFilter?.value : values.templateRepo?.value
+        values.tenantFilter?.value
+          ? values.tenantFilter?.value
+          : values.templateRepo?.value
       }`,
       Command: { value: `New-CIPPTemplateRun` },
       Parameters: { TemplateSettings: { ...values } },
       ScheduledTime: unixTime,
-      Recurrence: { value: values.tenantFilter?.value ? "4h" : "7d" },
-    };
-  };
+      Recurrence: { value: values.tenantFilter?.value ? '4h' : '7d' },
+    }
+  }
 
   useEffect(() => {
     if (templateRepo?.value) {
-      formControl.setValue("templateRepoBranch", {
+      formControl.setValue('templateRepoBranch', {
         label: templateRepo.addedFields.branch,
         value: templateRepo.addedFields.branch,
-      });
+      })
     }
-  }, [templateRepo?.value]);
+  }, [templateRepo?.value])
 
   return (
     <CippFormPage
@@ -62,29 +69,30 @@ const TemplateLibrary = () => {
       <Grid container spacing={3}>
         <Grid size={12}>
           <Typography sx={{ mb: 2 }}>
-            Template libraries are tenants set up to retrieve the latest version of a specific
-            tenants policies. These are then stored in CIPPs templates, allowing you to keep an up
-            to date copy of the policies. Tenant-based template libraries sync every 4 hours,
-            while community repository-based template libraries sync every 7 days.
+            Template libraries are tenants set up to retrieve the latest version
+            of a specific tenants policies. These are then stored in CIPPs
+            templates, allowing you to keep an up to date copy of the policies.
+            Tenant-based template libraries sync every 4 hours, while community
+            repository-based template libraries sync every 7 days.
           </Typography>
           <Typography>
-            There are also template repositories, these are community driven and are used to share
-            templates with other users. Template repositories are downloaded when new versions are
-            released.
+            There are also template repositories, these are community driven and
+            are used to share templates with other users. Template repositories
+            are downloaded when new versions are released.
           </Typography>
           <Alert severity="warning" sx={{ my: 2 }}>
             Enabling this feature will overwrite templates with the same name.
           </Alert>
         </Grid>
 
-        <Divider sx={{ mt: 2, width: "100%" }} />
+        <Divider sx={{ mt: 2, width: '100%' }} />
         <Grid
           container
           spacing={2}
           sx={{
-            alignItems: "center",
+            alignItems: 'center',
             my: 1,
-            width: "100%",
+            width: '100%',
           }}
         >
           <Grid size={{ md: 5, xs: 12 }}>
@@ -94,7 +102,14 @@ const TemplateLibrary = () => {
               disableClearable={false}
             />
           </Grid>
-          <Grid size={{ md: 2, xs: 12 }} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Grid
+            size={{ md: 2, xs: 12 }}
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
             <Chip label="OR" color="info" />
           </Grid>
           <Grid size={{ md: 5, xs: 12 }}>
@@ -103,13 +118,13 @@ const TemplateLibrary = () => {
               type="autoComplete"
               label="Community Repository"
               api={{
-                url: "/api/ListCommunityRepos",
-                queryKey: "CommunityRepos",
-                dataKey: "Results",
-                valueField: "FullName",
+                url: '/api/ListCommunityRepos',
+                queryKey: 'CommunityRepos',
+                dataKey: 'Results',
+                valueField: 'FullName',
                 labelField: (option) => `${option.Name} (${option.URL})`,
                 addedField: {
-                  branch: "DefaultBranch",
+                  branch: 'DefaultBranch',
                 },
               }}
               formControl={formControl}
@@ -117,7 +132,7 @@ const TemplateLibrary = () => {
             />
           </Grid>
         </Grid>
-        <Divider sx={{ mt: 2, width: "100%" }} />
+        <Divider sx={{ mt: 2, width: '100%' }} />
         {templateRepo?.value && (
           <Grid size={12}>
             <Typography variant="h6" sx={{ mb: 2 }}>
@@ -129,15 +144,15 @@ const TemplateLibrary = () => {
               label="Select Branch"
               formControl={formControl}
               api={{
-                url: "/api/ExecGitHubAction",
+                url: '/api/ExecGitHubAction',
                 data: {
-                  Action: "GetBranches",
+                  Action: 'GetBranches',
                   FullName: templateRepo?.value,
                 },
                 queryKey: `${templateRepo?.value}-Branches`,
-                dataKey: "Results",
-                valueField: "name",
-                labelField: "name",
+                dataKey: 'Results',
+                valueField: 'name',
+                labelField: 'name',
               }}
               multiple={false}
             />
@@ -147,7 +162,7 @@ const TemplateLibrary = () => {
           formControl={formControl}
           field="templateRepo"
           compareType="doesNotContain"
-          compareValue={"CIPP"}
+          compareValue={'CIPP'}
         >
           <Grid size={12}>
             <Typography variant="h6" sx={{ mb: 1 }}>
@@ -189,7 +204,7 @@ const TemplateLibrary = () => {
           formControl={formControl}
           field="templateRepo"
           compareType="contains"
-          compareValue={"CIPP-"}
+          compareValue={'CIPP-'}
         >
           <Grid size={12}>
             <Typography variant="h6" sx={{ mb: 1 }}>
@@ -223,9 +238,9 @@ const TemplateLibrary = () => {
         </CippFormCondition>
       </Grid>
     </CippFormPage>
-  );
-};
+  )
+}
 
-TemplateLibrary.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+TemplateLibrary.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default TemplateLibrary;
+export default TemplateLibrary

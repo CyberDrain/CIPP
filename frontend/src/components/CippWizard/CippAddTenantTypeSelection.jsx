@@ -1,7 +1,18 @@
-import { Avatar, Card, CardContent, Stack, SvgIcon, Typography } from '@mui/material'
+import {
+  Avatar,
+  Card,
+  CardContent,
+  Stack,
+  SvgIcon,
+  Typography,
+} from '@mui/material'
 import { useState, useEffect } from 'react'
 import { CippWizardStepButtons } from './CippWizardStepButtons'
-import { BuildingOfficeIcon, CloudIcon, LinkIcon } from '@heroicons/react/24/outline'
+import {
+  BuildingOfficeIcon,
+  CloudIcon,
+  LinkIcon,
+} from '@heroicons/react/24/outline'
 import { ApiGetCall } from '../../api/ApiCall'
 
 export const CippAddTenantTypeSelection = (props) => {
@@ -18,7 +29,8 @@ export const CippAddTenantTypeSelection = (props) => {
     queryKey: 'ListPartnerTenantInfo',
   })
 
-  const isPartner = organization.isSuccess && Boolean(organization.data?.isPartnerTenant)
+  const isPartner =
+    organization.isSuccess && Boolean(organization.data?.isPartnerTenant)
   const partnerCheckComplete = organization.isSuccess || organization.isError
 
   // Register the tenantType field in react-hook-form
@@ -117,19 +129,23 @@ export const CippAddTenantTypeSelection = (props) => {
       <Stack spacing={2}>
         {options.map((option) => {
           const isSelected = selectedOption === option.value
-          const isDisabled = option.partnerOnly && partnerCheckComplete && !isPartner
+          const isDisabled =
+            option.partnerOnly && partnerCheckComplete && !isPartner
 
           return (
             <Card
               key={option.value}
-              onClick={isDisabled ? undefined : () => handleOptionClick(option.value)}
+              onClick={
+                isDisabled ? undefined : () => handleOptionClick(option.value)
+              }
               variant="outlined"
               sx={{
                 cursor: isDisabled ? 'not-allowed' : 'pointer',
                 opacity: isDisabled ? 0.5 : 1,
                 ...(isSelected &&
                   !isDisabled && {
-                    boxShadow: (theme) => `0px 0px 0px 2px ${theme.palette.primary.main}`,
+                    boxShadow: (theme) =>
+                      `0px 0px 0px 2px ${theme.palette.primary.main}`,
                   }),
                 '&:hover': {
                   ...(isDisabled ? {} : isSelected ? {} : { boxShadow: 8 }),
@@ -151,7 +167,9 @@ export const CippAddTenantTypeSelection = (props) => {
                   </Avatar>
                   <Stack spacing={1}>
                     <Typography variant="h6">{option.label}</Typography>
-                    <Typography color="text.secondary">{option.description}</Typography>
+                    <Typography color="text.secondary">
+                      {option.description}
+                    </Typography>
                   </Stack>
                 </Stack>
               </CardContent>

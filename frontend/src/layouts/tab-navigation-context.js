@@ -53,9 +53,17 @@ export const useTitleClaimedByTabPicker = (title) => {
   const isMobile = useIsMobileLayout()
   // Mirrors CippTabPicker's own render conditions: below two destinations it draws nothing,
   // so there is no trigger to claim the title.
-  if (!isMobile || !context?.enabled || (context.tabs?.length ?? 0) < 2 || !title) return false
+  if (
+    !isMobile ||
+    !context?.enabled ||
+    (context.tabs?.length ?? 0) < 2 ||
+    !title
+  )
+    return false
   const current = context.tabs.find((tab) => tab.path === context.currentPath)
-  return current?.label?.trim().toLowerCase() === String(title).trim().toLowerCase()
+  return (
+    current?.label?.trim().toLowerCase() === String(title).trim().toLowerCase()
+  )
 }
 
 /**

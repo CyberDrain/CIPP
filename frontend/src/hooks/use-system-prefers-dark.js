@@ -10,7 +10,8 @@ const QUERY = '(prefers-color-scheme: dark)'
 // build prerender falls back to useEffect to avoid the SSR warning and renders
 // light by design; the pre-hydration script in _document.js keeps the page
 // background correct until this kicks in.
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 export const useSystemPrefersDark = () => {
   const [prefersDark, setPrefersDark] = useState(false)

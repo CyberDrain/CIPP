@@ -1,4 +1,12 @@
-import { Box, Card, CardHeader, CardContent, Typography, Divider, Skeleton } from '@mui/material'
+import {
+  Box,
+  Card,
+  CardHeader,
+  CardContent,
+  Typography,
+  Divider,
+  Skeleton,
+} from '@mui/material'
 import { Security as SecurityIcon } from '@mui/icons-material'
 import { useRouter } from 'next/router'
 import {
@@ -67,12 +75,15 @@ export const SecureScoreCard = ({ data, isLoading }) => {
         {isLoading ? (
           <>
             <Box sx={{ height: 250 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2 }}>
+              <Box
+                sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2 }}
+              >
                 <Skeleton variant="rectangular" width="100%" height={200} />
               </Box>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              The Secure Score measures your security posture across your tenant.
+              The Secure Score measures your security posture across your
+              tenant.
             </Typography>
           </>
         ) : !data || !Array.isArray(data) || data.length === 0 ? (
@@ -92,7 +103,8 @@ export const SecureScoreCard = ({ data, isLoading }) => {
               </Box>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              The Secure Score measures your security posture across your tenant.
+              The Secure Score measures your security posture across your
+              tenant.
             </Typography>
           </>
         ) : (
@@ -102,16 +114,24 @@ export const SecureScoreCard = ({ data, isLoading }) => {
               <ResponsiveContainer width="100%" height="250">
                 {(() => {
                   const sortedData = [...data].sort(
-                    (a, b) => new Date(a.createdDateTime) - new Date(b.createdDateTime)
+                    (a, b) =>
+                      new Date(a.createdDateTime) - new Date(b.createdDateTime)
                   )
-                  const maxScore = Math.max(...sortedData.map((s) => s.maxScore))
+                  const maxScore = Math.max(
+                    ...sortedData.map((s) => s.maxScore)
+                  )
                   const chartData = sortedData.map((score) => ({
-                    date: new Date(score.createdDateTime).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    }),
+                    date: new Date(score.createdDateTime).toLocaleDateString(
+                      'en-US',
+                      {
+                        month: 'short',
+                        day: 'numeric',
+                      }
+                    ),
                     score: score.currentScore,
-                    percentage: Math.round((score.currentScore / score.maxScore) * 100),
+                    percentage: Math.round(
+                      (score.currentScore / score.maxScore) * 100
+                    ),
                   }))
                   const ticks = chartData.map((d) => d.date)
                   const axis = secureScoreAxisProps({ isMobile, ticks })
@@ -151,8 +171,10 @@ export const SecureScoreCard = ({ data, isLoading }) => {
                           color: '#000000',
                         }}
                         formatter={(value, name) => {
-                          if (name === 'score') return [value.toFixed(2), 'Score']
-                          if (name === 'percentage') return [value + '%', 'Percentage']
+                          if (name === 'score')
+                            return [value.toFixed(2), 'Score']
+                          if (name === 'percentage')
+                            return [value + '%', 'Percentage']
                           return value
                         }}
                       />
@@ -170,7 +192,8 @@ export const SecureScoreCard = ({ data, isLoading }) => {
               </ResponsiveContainer>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              The Secure Score measures your security posture across your tenant.
+              The Secure Score measures your security posture across your
+              tenant.
             </Typography>
           </>
         )}
@@ -203,7 +226,9 @@ export const SecureScoreCard = ({ data, isLoading }) => {
               </Typography>
               <Typography variant="h6" fontWeight="bold">
                 {Math.round(
-                  (data[data.length - 1].currentScore / data[data.length - 1].maxScore) * 100
+                  (data[data.length - 1].currentScore /
+                    data[data.length - 1].maxScore) *
+                    100
                 )}
                 %
               </Typography>

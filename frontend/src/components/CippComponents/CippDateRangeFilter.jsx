@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useState } from 'react'
 import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
   Button,
   Typography,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import CippFormComponent from "./CippFormComponent";
+} from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import CippFormComponent from './CippFormComponent'
 
 /**
  * Reusable relative / start-end date range filter (the one used on the Saved Logs page).
@@ -19,27 +19,35 @@ import CippFormComponent from "./CippFormComponent";
 export const CippDateRangeFilter = ({
   onApply,
   defaultTime = 7,
-  defaultInterval = { label: "Days", value: "d" },
-  title = "Search Options",
+  defaultInterval = { label: 'Days', value: 'd' },
+  title = 'Search Options',
 }) => {
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      dateFilter: "relative",
+      dateFilter: 'relative',
       Time: defaultTime,
       Interval: defaultInterval,
     },
-  });
+  })
 
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(false)
 
   const onSubmit = (data) => {
-    if (data.dateFilter === "relative") {
-      onApply?.({ RelativeTime: `${data.Time}${data.Interval.value}`, StartDate: null, EndDate: null });
-    } else if (data.dateFilter === "startEnd") {
-      onApply?.({ RelativeTime: null, StartDate: data.startDate, EndDate: data.endDate });
+    if (data.dateFilter === 'relative') {
+      onApply?.({
+        RelativeTime: `${data.Time}${data.Interval.value}`,
+        StartDate: null,
+        EndDate: null,
+      })
+    } else if (data.dateFilter === 'startEnd') {
+      onApply?.({
+        RelativeTime: null,
+        StartDate: data.startDate,
+        EndDate: data.endDate,
+      })
     }
-  };
+  }
 
   return (
     <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
@@ -57,15 +65,15 @@ export const CippDateRangeFilter = ({
                 name="dateFilter"
                 label="Date Filter Type"
                 options={[
-                  { label: "Relative", value: "relative" },
-                  { label: "Start / End", value: "startEnd" },
+                  { label: 'Relative', value: 'relative' },
+                  { label: 'Start / End', value: 'startEnd' },
                 ]}
                 formControl={formControl}
               />
             </Grid>
 
             {/* Relative Time Filter */}
-            {formControl.watch("dateFilter") === "relative" && (
+            {formControl.watch('dateFilter') === 'relative' && (
               <Grid size={{ xs: 12, md: 8 }}>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 2 }}>
@@ -85,8 +93,8 @@ export const CippDateRangeFilter = ({
                       label="Interval"
                       multiple={false}
                       options={[
-                        { label: "Hours", value: "h" },
-                        { label: "Days", value: "d" },
+                        { label: 'Hours', value: 'h' },
+                        { label: 'Days', value: 'd' },
                       ]}
                       formControl={formControl}
                     />
@@ -96,7 +104,7 @@ export const CippDateRangeFilter = ({
             )}
 
             {/* Start and End Date Filters */}
-            {formControl.watch("dateFilter") === "startEnd" && (
+            {formControl.watch('dateFilter') === 'startEnd' && (
               <>
                 <Grid size={{ xs: 12, md: 3 }}>
                   <CippFormComponent
@@ -129,7 +137,7 @@ export const CippDateRangeFilter = ({
         </form>
       </AccordionDetails>
     </Accordion>
-  );
-};
+  )
+}
 
-export default CippDateRangeFilter;
+export default CippDateRangeFilter

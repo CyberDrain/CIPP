@@ -82,7 +82,9 @@ const Page = () => {
               label="Timezone"
               multiple={false}
               formControl={formControl}
-              options={timezones?.length ? timezones : [{ label: 'UTC', value: 'UTC' }]}
+              options={
+                timezones?.length ? timezones : [{ label: 'UTC', value: 'UTC' }]
+              }
               creatable={false}
               validators={{ required: 'Please select a timezone' }}
             />

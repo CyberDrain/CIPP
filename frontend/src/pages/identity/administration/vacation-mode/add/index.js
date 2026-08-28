@@ -41,7 +41,8 @@ const Page = () => {
           addedField: {
             userPrincipalName: 'userPrincipalName',
           },
-          labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
+          labelField: (option) =>
+            `${option.displayName} (${option.userPrincipalName})`,
           valueField: 'userPrincipalName',
         },
       },
@@ -98,7 +99,11 @@ const Page = () => {
   }
 
   return (
-    <CippWizardPage initialState={initialState} steps={steps} wizardTitle="Vacation Mode Wizard" />
+    <CippWizardPage
+      initialState={initialState}
+      steps={steps}
+      wizardTitle="Vacation Mode Wizard"
+    />
   )
 }
 

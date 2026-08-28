@@ -1,7 +1,14 @@
-import NextLink from "next/link";
-import ArrowRightIcon from "@heroicons/react/24/outline/ArrowRightIcon";
-import { Box, Button, LinearProgress, Stack, SvgIcon, Typography } from "@mui/material";
-import { paths } from "../../../paths";
+import NextLink from 'next/link'
+import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon'
+import {
+  Box,
+  Button,
+  LinearProgress,
+  Stack,
+  SvgIcon,
+  Typography,
+} from '@mui/material'
+import { paths } from '../../../paths'
 
 export const OverviewAccountSetup = () => (
   <Stack
@@ -9,10 +16,10 @@ export const OverviewAccountSetup = () => (
     direction="row"
     spacing={3}
     sx={{
-      backgroundColor: "neutral.900",
+      backgroundColor: 'neutral.900',
       borderRadius: 1,
-      color: "common.white",
-      height: "100%",
+      color: 'common.white',
+      height: '100%',
       px: 4,
       py: 2,
     }}
@@ -32,7 +39,7 @@ export const OverviewAccountSetup = () => (
           sx={{
             borderRadius: 1,
             flexGrow: 1,
-            height: "8px",
+            height: '8px',
           }}
           value={20}
           variant="determinate"
@@ -53,13 +60,13 @@ export const OverviewAccountSetup = () => (
     </div>
     <Box
       sx={{
-        "& img": {
+        '& img': {
           maxHeight: 350,
-          width: "100%",
+          width: '100%',
         },
       }}
     >
       <img src="/assets/illustration-reports.png" />
     </Box>
   </Stack>
-);
+)

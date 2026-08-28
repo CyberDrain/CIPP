@@ -1,59 +1,78 @@
-import { Stack } from "@mui/material";
-import CippWizardStepButtons from "./CippWizardStepButtons";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { CippFormCondition } from "../CippComponents/CippFormCondition";
-import { Grid } from "@mui/system";
-import { useWatch } from "react-hook-form";
-import { useEffect, useRef } from "react";
+import { Stack } from '@mui/material'
+import CippWizardStepButtons from './CippWizardStepButtons'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { CippFormCondition } from '../CippComponents/CippFormCondition'
+import { Grid } from '@mui/system'
+import { useWatch } from 'react-hook-form'
+import { useEffect, useRef } from 'react'
 
 export const CippWizardGroupTemplates = (props) => {
-  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } = props;
-  const watcher = useWatch({ control: formControl.control, name: "TemplateList" });
-  const lastAppliedTemplate = useRef(null);
+  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } =
+    props
+  const watcher = useWatch({
+    control: formControl.control,
+    name: 'TemplateList',
+  })
+  const lastAppliedTemplate = useRef(null)
   const groupOptions = [
-    { label: "Dynamic Group", value: "dynamic" },
-    { label: "Security Group", value: "generic" },
-    { label: "Distribution Group", value: "distribution" },
-    { label: "Azure Role Group", value: "azureRole" },
-    { label: "Mail Enabled Security Group", value: "security" },
-  ];
+    { label: 'Dynamic Group', value: 'dynamic' },
+    { label: 'Security Group', value: 'generic' },
+    { label: 'Distribution Group', value: 'distribution' },
+    { label: 'Azure Role Group', value: 'azureRole' },
+    { label: 'Mail Enabled Security Group', value: 'security' },
+  ]
   useEffect(() => {
     if (watcher?.value && watcher.value !== lastAppliedTemplate.current) {
-      lastAppliedTemplate.current = watcher.value;
-      console.log("Loading template:", watcher);
+      lastAppliedTemplate.current = watcher.value
+      console.log('Loading template:', watcher)
 
       // Set groupType first to ensure conditional fields are visible
-      formControl.setValue("groupType", watcher.addedFields.groupType, { shouldValidate: true });
+      formControl.setValue('groupType', watcher.addedFields.groupType, {
+        shouldValidate: true,
+      })
 
       // Use setTimeout to ensure the DOM updates with the groupType before setting other fields
       setTimeout(() => {
-        formControl.setValue("displayName", watcher.addedFields.displayName, {
+        formControl.setValue('displayName', watcher.addedFields.displayName, {
           shouldValidate: true,
-        });
-        formControl.setValue("description", watcher.addedFields.description, {
+        })
+        formControl.setValue('description', watcher.addedFields.description, {
           shouldValidate: true,
-        });
-        formControl.setValue("username", watcher.addedFields.username, { shouldValidate: true });
-        formControl.setValue("allowExternal", watcher.addedFields.allowExternal, {
+        })
+        formControl.setValue('username', watcher.addedFields.username, {
           shouldValidate: true,
-        });
-        formControl.setValue("membershipRules", watcher.addedFields.membershipRules, {
+        })
+        formControl.setValue(
+          'allowExternal',
+          watcher.addedFields.allowExternal,
+          {
+            shouldValidate: true,
+          }
+        )
+        formControl.setValue(
+          'membershipRules',
+          watcher.addedFields.membershipRules,
+          {
+            shouldValidate: true,
+          }
+        )
+        formControl.setValue('licenses', watcher.addedFields.licenses || [], {
           shouldValidate: true,
-        });
-        formControl.setValue("licenses", watcher.addedFields.licenses || [], {
+        })
+        formControl.setValue('aliases', watcher.addedFields.aliases, {
           shouldValidate: true,
-        });
-        formControl.setValue("aliases", watcher.addedFields.aliases, {
-          shouldValidate: true,
-        });
+        })
         formControl.setValue('hideFromGAL', watcher.addedFields.hideFromGAL, {
           shouldValidate: true,
-        });
+        })
 
-        console.log("Set membershipRules to:", watcher.addedFields.membershipRules);
-      }, 100);
+        console.log(
+          'Set membershipRules to:',
+          watcher.addedFields.membershipRules
+        )
+      }, 100)
     }
-  }, [watcher]);
+  }, [watcher])
   return (
     <Stack spacing={3}>
       <Grid container spacing={3}>
@@ -67,21 +86,21 @@ export const CippWizardGroupTemplates = (props) => {
             multiple={false}
             api={{
               excludeTenantFilter: true,
-              url: "/api/ListGroupTemplates",
-              queryKey: "ListGroupTemplates",
+              url: '/api/ListGroupTemplates',
+              queryKey: 'ListGroupTemplates',
               labelField: (option) =>
                 `${option.Displayname || option.displayName} (${option.groupType})`,
-              valueField: "GUID",
+              valueField: 'GUID',
               addedField: {
-                groupType: "groupType",
-                displayName: "displayName",
-                description: "description",
-                username: "username",
-                allowExternal: "allowExternal",
-                membershipRules: "membershipRules",
-                licenses: "licenses",
-                aliases: "aliases",
-                hideFromGAL: "hideFromGAL",
+                groupType: 'groupType',
+                displayName: 'displayName',
+                description: 'description',
+                username: 'username',
+                allowExternal: 'allowExternal',
+                membershipRules: 'membershipRules',
+                licenses: 'licenses',
+                aliases: 'aliases',
+                hideFromGAL: 'hideFromGAL',
               },
               showRefresh: true,
             }}
@@ -94,7 +113,7 @@ export const CippWizardGroupTemplates = (props) => {
             label="Group Type"
             formControl={formControl}
             options={groupOptions}
-            validators={{ required: "Please select a group type" }}
+            validators={{ required: 'Please select a group type' }}
           />
         </Grid>
         <Grid size={12}>
@@ -103,7 +122,7 @@ export const CippWizardGroupTemplates = (props) => {
             name="displayName"
             label="Group Display Name"
             formControl={formControl}
-            validators={{ required: "Group display name is required" }}
+            validators={{ required: 'Group display name is required' }}
           />
         </Grid>
         <Grid size={12}>
@@ -140,7 +159,7 @@ export const CippWizardGroupTemplates = (props) => {
         <CippFormCondition
           field="groupType"
           compareType="isOneOf"
-          compareValue={["dynamic", "dynamicDistribution"]}
+          compareValue={['dynamic', 'dynamicDistribution']}
           formControl={formControl}
         >
           <Grid size={12}>
@@ -149,14 +168,14 @@ export const CippWizardGroupTemplates = (props) => {
               name="membershipRules"
               label="Membership Rules"
               formControl={formControl}
-              validators={{ required: "Membership rules are required" }}
+              validators={{ required: 'Membership rules are required' }}
             />
           </Grid>
         </CippFormCondition>
         <CippFormCondition
           field="groupType"
           compareType="isOneOf"
-          compareValue={["distribution", "security"]}
+          compareValue={['distribution', 'security']}
           formControl={formControl}
         >
           <Grid size={12}>
@@ -189,5 +208,5 @@ export const CippWizardGroupTemplates = (props) => {
         formControl={formControl}
       />
     </Stack>
-  );
-};
+  )
+}

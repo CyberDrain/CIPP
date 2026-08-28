@@ -21,15 +21,25 @@ import { ApiGetCall } from '../../api/ApiCall'
 const SHARED_MAILBOX_WARN_BYTES = 49 * 1024 ** 3
 
 export const CippWizardOffboarding = (props) => {
-  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } = props
+  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } =
+    props
   const currentTenant = formControl.watch('tenantFilter')
   const selectedUsers = useWatch({ control: formControl.control, name: 'user' })
   const [showAlert, setShowAlert] = useState(false)
   const settings = useSettings()
   const userOffboardingDefaults = settings?.offboardingDefaults
-  const disableForwarding = useWatch({ control: formControl.control, name: 'disableForwarding' })
-  const deleteUser = useWatch({ control: formControl.control, name: 'DeleteUser' })
-  const convertToShared = useWatch({ control: formControl.control, name: 'ConvertToShared' })
+  const disableForwarding = useWatch({
+    control: formControl.control,
+    name: 'disableForwarding',
+  })
+  const deleteUser = useWatch({
+    control: formControl.control,
+    name: 'DeleteUser',
+  })
+  const convertToShared = useWatch({
+    control: formControl.control,
+    name: 'ConvertToShared',
+  })
 
   // The HaloPSA ticket box is only meaningful when that integration is configured.
   const integrationSettings = ApiGetCall({
@@ -44,16 +54,21 @@ export const CippWizardOffboarding = (props) => {
     url: '/api/ListMailboxes',
     data: { tenantFilter: currentTenant?.value, UseReportDB: true },
     queryKey: `OffboardingMailboxUsage-${currentTenant?.value}`,
-    waiting: !!convertToShared && !!currentTenant?.value && selectedUsers?.length > 0,
+    waiting:
+      !!convertToShared && !!currentTenant?.value && selectedUsers?.length > 0,
   })
 
   // Selected mailboxes whose cached size would exceed the shared-mailbox limit
   const oversizedMailboxes = useMemo(() => {
-    if (!convertToShared || !mailboxUsage.isSuccess || !Array.isArray(mailboxUsage.data)) {
+    if (
+      !convertToShared ||
+      !mailboxUsage.isSuccess ||
+      !Array.isArray(mailboxUsage.data)
+    ) {
       return []
     }
     const selectedUpns = (selectedUsers || []).map((u) =>
-      (u?.value ?? u)?.toString().toLowerCase(),
+      (u?.value ?? u)?.toString().toLowerCase()
     )
     return mailboxUsage.data
       .filter((mb) => {
@@ -70,7 +85,12 @@ export const CippWizardOffboarding = (props) => {
         upn: mb.UPN,
         sizeGB: (Number(mb.storageUsedInBytes) / 1024 ** 3).toFixed(1),
       }))
-  }, [convertToShared, mailboxUsage.isSuccess, mailboxUsage.data, selectedUsers])
+  }, [
+    convertToShared,
+    mailboxUsage.isSuccess,
+    mailboxUsage.data,
+    selectedUsers,
+  ])
 
   useEffect(() => {
     if (selectedUsers.length >= 3) {
@@ -91,7 +111,9 @@ export const CippWizardOffboarding = (props) => {
   // Apply defaults only once per tenant or when tenant changes
   useEffect(() => {
     const currentTenantId = currentTenant?.value
-    const appliedDefaultsForTenant = formControl.getValues('HIDDEN_appliedDefaultsForTenant')
+    const appliedDefaultsForTenant = formControl.getValues(
+      'HIDDEN_appliedDefaultsForTenant'
+    )
 
     // Only apply defaults if we haven't applied them for this tenant yet
     if (currentTenantId && appliedDefaultsForTenant !== currentTenantId) {
@@ -140,11 +162,16 @@ export const CippWizardOffboarding = (props) => {
                 variant="body2"
                 sx={{
                   mb: 2,
-                  color: getDefaultsSource() === 'tenant' ? 'primary.main' : 'warning.main',
+                  color:
+                    getDefaultsSource() === 'tenant'
+                      ? 'primary.main'
+                      : 'warning.main',
                   fontStyle: 'italic',
                 }}
               >
-                {getDefaultsSource() === 'tenant' ? 'Using Tenant Defaults' : 'Using User Defaults'}
+                {getDefaultsSource() === 'tenant'
+                  ? 'Using Tenant Defaults'
+                  : 'Using User Defaults'}
               </Typography>
               <CippFormComponent
                 name="ConvertToShared"
@@ -266,8 +293,8 @@ export const CippWizardOffboarding = (props) => {
               />
               {deleteUser && (
                 <Alert severity="warning" sx={{ mt: 2 }}>
-                  Deleting the user will remove the associated mailbox, this will prevent actions
-                  such as converting to a shared mailbox.
+                  Deleting the user will remove the associated mailbox, this
+                  will prevent actions such as converting to a shared mailbox.
                 </Alert>
               )}
             </CardContent>
@@ -295,7 +322,8 @@ export const CippWizardOffboarding = (props) => {
                   tenantFilter: currentTenant ? currentTenant.value : undefined,
                   url: '/api/ListGraphRequest',
                   dataKey: 'Results',
-                  labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
+                  labelField: (option) =>
+                    `${option.displayName} (${option.userPrincipalName})`,
                   valueField: 'id',
                   queryKey: `Offboarding-Users-${currentTenant ? currentTenant.value : 'default'}`,
                   data: {
@@ -318,7 +346,8 @@ export const CippWizardOffboarding = (props) => {
                 formControl={formControl}
                 multi
                 api={{
-                  labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
+                  labelField: (option) =>
+                    `${option.displayName} (${option.userPrincipalName})`,
                   valueField: 'id',
                   url: '/api/ListGraphRequest',
                   dataKey: 'Results',
@@ -344,7 +373,8 @@ export const CippWizardOffboarding = (props) => {
                 formControl={formControl}
                 multi
                 api={{
-                  labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
+                  labelField: (option) =>
+                    `${option.displayName} (${option.userPrincipalName})`,
                   valueField: 'id',
                   url: '/api/ListGraphRequest',
                   dataKey: 'Results',
@@ -370,7 +400,8 @@ export const CippWizardOffboarding = (props) => {
                 formControl={formControl}
                 multi
                 api={{
-                  labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
+                  labelField: (option) =>
+                    `${option.displayName} (${option.userPrincipalName})`,
                   valueField: 'id',
                   url: '/api/ListGraphRequest',
                   dataKey: 'Results',
@@ -391,8 +422,8 @@ export const CippWizardOffboarding = (props) => {
               </Typography>
               {deleteUser && (
                 <Alert severity="info" sx={{ mb: 1 }}>
-                  When a user is deleted, their OneDrive is retained for 30 days by default unless
-                  otherwise configured.
+                  When a user is deleted, their OneDrive is retained for 30 days
+                  by default unless otherwise configured.
                 </Alert>
               )}
               <CippFormComponent
@@ -405,7 +436,8 @@ export const CippWizardOffboarding = (props) => {
                 multi
                 api={{
                   tenantFilter: currentTenant ? currentTenant.value : undefined,
-                  labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
+                  labelField: (option) =>
+                    `${option.displayName} (${option.userPrincipalName})`,
                   valueField: 'id',
                   url: '/api/ListGraphRequest',
                   dataKey: 'Results',
@@ -447,8 +479,11 @@ export const CippWizardOffboarding = (props) => {
                   multiple={false}
                   disabled={!!deleteUser}
                   api={{
-                    tenantFilter: currentTenant ? currentTenant.value : undefined,
-                    labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
+                    tenantFilter: currentTenant
+                      ? currentTenant.value
+                      : undefined,
+                    labelField: (option) =>
+                      `${option.displayName} (${option.userPrincipalName})`,
                     valueField: 'id',
                     url: '/api/ListGraphRequest',
                     dataKey: 'Results',
@@ -476,7 +511,15 @@ export const CippWizardOffboarding = (props) => {
                 Out of Office
               </Typography>
               <Box
-                sx={deleteUser ? { pointerEvents: 'none', opacity: 0.5, userSelect: 'none' } : {}}
+                sx={
+                  deleteUser
+                    ? {
+                        pointerEvents: 'none',
+                        opacity: 0.5,
+                        userSelect: 'none',
+                      }
+                    : {}
+                }
               >
                 <CippFormComponent
                   name="OOO"
@@ -486,17 +529,23 @@ export const CippWizardOffboarding = (props) => {
                   fullWidth
                   formControl={formControl}
                 />
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                  CIPP %variable% tokens (for example %tenantname%) stay literal here and are
-                  resolved when the offboarding job runs. %username% is not the offboarded user.
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 1 }}
+                >
+                  CIPP %variable% tokens (for example %tenantname%) stay literal
+                  here and are resolved when the offboarding job runs.
+                  %username% is not the offboarded user.
                 </Typography>
               </Box>
               {convertToShared && oversizedMailboxes.length > 0 && (
                 <Alert severity="warning" sx={{ mt: 2 }}>
-                  The following mailbox{oversizedMailboxes.length > 1 ? 'es' : ''} exceed or are near
-                  the 50 GB shared mailbox limit. Converting to shared may fail, or the mailbox may
-                  stop receiving mail once unlicensed, unless an Exchange Online Plan 2 license is
-                  retained:
+                  The following mailbox
+                  {oversizedMailboxes.length > 1 ? 'es' : ''} exceed or are near
+                  the 50 GB shared mailbox limit. Converting to shared may fail,
+                  or the mailbox may stop receiving mail once unlicensed, unless
+                  an Exchange Online Plan 2 license is retained:
                   <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2.5 }}>
                     {oversizedMailboxes.map((mb) => (
                       <li key={mb.upn}>
@@ -532,7 +581,9 @@ export const CippWizardOffboarding = (props) => {
               compareValue={true}
             >
               <Grid size={{ sm: 12, xs: 12 }}>
-                <Typography variant="subtitle2">Scheduled Offboarding Date</Typography>
+                <Typography variant="subtitle2">
+                  Scheduled Offboarding Date
+                </Typography>
                 <CippFormComponent
                   name="Scheduled.date"
                   type="datePicker"

@@ -1,4 +1,11 @@
-import { Typography, Divider, Card, CardContent, CardHeader, Button } from '@mui/material'
+import {
+  Typography,
+  Divider,
+  Card,
+  CardContent,
+  CardHeader,
+  Button,
+} from '@mui/material'
 import { Grid } from '@mui/system'
 import { useForm } from 'react-hook-form'
 import { Layout as DashboardLayout } from '../../../../layouts/index.js'
@@ -30,8 +37,8 @@ const DeployDefenderForm = () => {
         backButtonTitle="Defender Deployment"
       >
         <Typography variant="body2" sx={{ mb: 2 }}>
-          Run this wizard to setup the default defender policies for your tenants, or use the
-          standards to create specific policies.
+          Run this wizard to setup the default defender policies for your
+          tenants, or use the standards to create specific policies.
         </Typography>
 
         <Grid container spacing={2}>
@@ -67,7 +74,9 @@ const DeployDefenderForm = () => {
           >
             <Grid size={{ xs: 12 }}>
               <Typography variant="h6">Defender Setup</Typography>
-              <Typography variant="subtitle2">Defender and MEM Reporting</Typography>
+              <Typography variant="subtitle2">
+                Defender and MEM Reporting
+              </Typography>
             </Grid>
 
             <Grid size={{ xs: 12 }}>
@@ -76,7 +85,11 @@ const DeployDefenderForm = () => {
                 <Grid size={{ md: 6, xs: 12 }}>
                   {/* General */}
                   <Card variant="outlined" sx={{ mb: 2 }}>
-                    <CardHeader title={<Typography variant="subtitle2">General</Typography>} />
+                    <CardHeader
+                      title={
+                        <Typography variant="subtitle2">General</Typography>
+                      }
+                    />
                     <CardContent sx={{ pt: 0 }}>
                       <CippFormComponent
                         type="switch"
@@ -103,7 +116,11 @@ const DeployDefenderForm = () => {
 
                   {/* Android */}
                   <Card variant="outlined" sx={{ mb: 2 }}>
-                    <CardHeader title={<Typography variant="subtitle2">Android</Typography>} />
+                    <CardHeader
+                      title={
+                        <Typography variant="subtitle2">Android</Typography>
+                      }
+                    />
                     <CardContent sx={{ pt: 0 }}>
                       <CippFormCondition
                         formControl={formControl}
@@ -150,7 +167,9 @@ const DeployDefenderForm = () => {
 
                   {/* macOS */}
                   <Card variant="outlined" sx={{ mb: 2 }}>
-                    <CardHeader title={<Typography variant="subtitle2">macOS</Typography>} />
+                    <CardHeader
+                      title={<Typography variant="subtitle2">macOS</Typography>}
+                    />
                     <CardContent sx={{ pt: 0 }}>
                       <CippFormCondition
                         formControl={formControl}
@@ -185,7 +204,11 @@ const DeployDefenderForm = () => {
 
                   {/* EDR */}
                   <Card variant="outlined" sx={{ mb: 2 }}>
-                    <CardHeader title={<Typography variant="subtitle2">EDR Policy</Typography>} />
+                    <CardHeader
+                      title={
+                        <Typography variant="subtitle2">EDR Policy</Typography>
+                      }
+                    />
                     <CardContent sx={{ pt: 0 }}>
                       <CippFormComponent
                         type="switch"
@@ -211,15 +234,23 @@ const DeployDefenderForm = () => {
                           name="EDR.AssignTo"
                           options={[
                             { label: 'Do not assign', value: 'none' },
-                            { label: 'Assign to all users', value: 'allLicensedUsers' },
-                            { label: 'Assign to all devices', value: 'AllDevices' },
+                            {
+                              label: 'Assign to all users',
+                              value: 'allLicensedUsers',
+                            },
+                            {
+                              label: 'Assign to all devices',
+                              value: 'AllDevices',
+                            },
                             {
                               label: 'Assign to all users and devices',
                               value: 'AllDevicesAndUsers',
                             },
                           ]}
                           formControl={formControl}
-                          validators={{ required: 'Assignment must be selected' }}
+                          validators={{
+                            required: 'Assignment must be selected',
+                          }}
                           row
                         />
                       </CippFormCondition>
@@ -231,7 +262,13 @@ const DeployDefenderForm = () => {
                 <Grid size={{ md: 6, xs: 12 }}>
                   {/* iOS */}
                   <Card variant="outlined" sx={{ mb: 2 }}>
-                    <CardHeader title={<Typography variant="subtitle2">iOS / iPadOS</Typography>} />
+                    <CardHeader
+                      title={
+                        <Typography variant="subtitle2">
+                          iOS / iPadOS
+                        </Typography>
+                      }
+                    />
                     <CardContent sx={{ pt: 0 }}>
                       <CippFormCondition
                         formControl={formControl}
@@ -312,7 +349,11 @@ const DeployDefenderForm = () => {
 
                   {/* Windows */}
                   <Card variant="outlined" sx={{ mb: 2 }}>
-                    <CardHeader title={<Typography variant="subtitle2">Windows</Typography>} />
+                    <CardHeader
+                      title={
+                        <Typography variant="subtitle2">Windows</Typography>
+                      }
+                    />
                     <CardContent sx={{ pt: 0 }}>
                       <CippFormCondition
                         formControl={formControl}
@@ -375,7 +416,9 @@ const DeployDefenderForm = () => {
           >
             <Grid size={{ xs: 12 }}>
               <Typography variant="h6">Defender Defaults Policy</Typography>
-              <Typography variant="subtitle1">Select Defender policies to deploy</Typography>
+              <Typography variant="subtitle1">
+                Select Defender policies to deploy
+              </Typography>
             </Grid>
 
             <Grid size={{ xs: 12 }}>
@@ -474,7 +517,10 @@ const DeployDefenderForm = () => {
                     creatable={false}
                     options={[
                       { label: 'Always prompt', value: '0' },
-                      { label: 'Send safe samples automatically (Default)', value: '1' },
+                      {
+                        label: 'Send safe samples automatically (Default)',
+                        value: '1',
+                      },
                       { label: 'Never send', value: '2' },
                       { label: 'Send all samples automatically', value: '3' },
                     ]}
@@ -599,13 +645,21 @@ const DeployDefenderForm = () => {
                     creatable={false}
                     options={[
                       {
-                        label: 'Clean. Service tries to recover files and try to disinfect.',
+                        label:
+                          'Clean. Service tries to recover files and try to disinfect.',
                         value: 'clean',
                       },
-                      { label: 'Quarantine. Moves files to quarantine.', value: 'quarantine' },
-                      { label: 'Remove. Removes files from system.', value: 'remove' },
                       {
-                        label: 'Allow. Allows file/does none of the above actions.',
+                        label: 'Quarantine. Moves files to quarantine.',
+                        value: 'quarantine',
+                      },
+                      {
+                        label: 'Remove. Removes files from system.',
+                        value: 'remove',
+                      },
+                      {
+                        label:
+                          'Allow. Allows file/does none of the above actions.',
                         value: 'allow',
                       },
                       {
@@ -613,7 +667,10 @@ const DeployDefenderForm = () => {
                           'User defined. Requires user to make a decision on which action to take.',
                         value: 'userDefined',
                       },
-                      { label: 'Block. Blocks file execution.', value: 'block' },
+                      {
+                        label: 'Block. Blocks file execution.',
+                        value: 'block',
+                      },
                     ]}
                     formControl={formControl}
                     sx={{ my: 1 }}
@@ -626,13 +683,21 @@ const DeployDefenderForm = () => {
                     creatable={false}
                     options={[
                       {
-                        label: 'Clean. Service tries to recover files and try to disinfect.',
+                        label:
+                          'Clean. Service tries to recover files and try to disinfect.',
                         value: 'clean',
                       },
-                      { label: 'Quarantine. Moves files to quarantine.', value: 'quarantine' },
-                      { label: 'Remove. Removes files from system.', value: 'remove' },
                       {
-                        label: 'Allow. Allows file/does none of the above actions.',
+                        label: 'Quarantine. Moves files to quarantine.',
+                        value: 'quarantine',
+                      },
+                      {
+                        label: 'Remove. Removes files from system.',
+                        value: 'remove',
+                      },
+                      {
+                        label:
+                          'Allow. Allows file/does none of the above actions.',
                         value: 'allow',
                       },
                       {
@@ -640,7 +705,10 @@ const DeployDefenderForm = () => {
                           'User defined. Requires user to make a decision on which action to take.',
                         value: 'userDefined',
                       },
-                      { label: 'Block. Blocks file execution.', value: 'block' },
+                      {
+                        label: 'Block. Blocks file execution.',
+                        value: 'block',
+                      },
                     ]}
                     formControl={formControl}
                     sx={{ my: 1 }}
@@ -655,13 +723,21 @@ const DeployDefenderForm = () => {
                     creatable={false}
                     options={[
                       {
-                        label: 'Clean. Service tries to recover files and try to disinfect.',
+                        label:
+                          'Clean. Service tries to recover files and try to disinfect.',
                         value: 'clean',
                       },
-                      { label: 'Quarantine. Moves files to quarantine.', value: 'quarantine' },
-                      { label: 'Remove. Removes files from system.', value: 'remove' },
                       {
-                        label: 'Allow. Allows file/does none of the above actions.',
+                        label: 'Quarantine. Moves files to quarantine.',
+                        value: 'quarantine',
+                      },
+                      {
+                        label: 'Remove. Removes files from system.',
+                        value: 'remove',
+                      },
+                      {
+                        label:
+                          'Allow. Allows file/does none of the above actions.',
                         value: 'allow',
                       },
                       {
@@ -669,7 +745,10 @@ const DeployDefenderForm = () => {
                           'User defined. Requires user to make a decision on which action to take.',
                         value: 'userDefined',
                       },
-                      { label: 'Block. Blocks file execution.', value: 'block' },
+                      {
+                        label: 'Block. Blocks file execution.',
+                        value: 'block',
+                      },
                     ]}
                     formControl={formControl}
                     sx={{ my: 1 }}
@@ -682,13 +761,21 @@ const DeployDefenderForm = () => {
                     creatable={false}
                     options={[
                       {
-                        label: 'Clean. Service tries to recover files and try to disinfect.',
+                        label:
+                          'Clean. Service tries to recover files and try to disinfect.',
                         value: 'clean',
                       },
-                      { label: 'Quarantine. Moves files to quarantine.', value: 'quarantine' },
-                      { label: 'Remove. Removes files from system.', value: 'remove' },
                       {
-                        label: 'Allow. Allows file/does none of the above actions.',
+                        label: 'Quarantine. Moves files to quarantine.',
+                        value: 'quarantine',
+                      },
+                      {
+                        label: 'Remove. Removes files from system.',
+                        value: 'remove',
+                      },
+                      {
+                        label:
+                          'Allow. Allows file/does none of the above actions.',
                         value: 'allow',
                       },
                       {
@@ -696,7 +783,10 @@ const DeployDefenderForm = () => {
                           'User defined. Requires user to make a decision on which action to take.',
                         value: 'userDefined',
                       },
-                      { label: 'Block. Blocks file execution.', value: 'block' },
+                      {
+                        label: 'Block. Blocks file execution.',
+                        value: 'block',
+                      },
                     ]}
                     formControl={formControl}
                     sx={{ my: 1 }}
@@ -720,7 +810,10 @@ const DeployDefenderForm = () => {
                   { label: 'Do not assign', value: 'none' },
                   { label: 'Assign to all users', value: 'allLicensedUsers' },
                   { label: 'Assign to all devices', value: 'AllDevices' },
-                  { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                  {
+                    label: 'Assign to all users and devices',
+                    value: 'AllDevicesAndUsers',
+                  },
                 ]}
                 formControl={formControl}
                 validators={{ required: 'Assignment must be selected' }}
@@ -749,7 +842,9 @@ const DeployDefenderForm = () => {
           >
             <Grid size={{ xs: 12 }}>
               <Typography variant="h6">Exclusion Policy</Typography>
-              <Typography variant="subtitle1">Configure Defender Exclusions</Typography>
+              <Typography variant="subtitle1">
+                Configure Defender Exclusions
+              </Typography>
             </Grid>
             <Grid size={{ xs: 12 }}>
               <CippFormInputArray
@@ -791,7 +886,10 @@ const DeployDefenderForm = () => {
                   { label: 'Do not assign', value: 'none' },
                   { label: 'Assign to all users', value: 'allLicensedUsers' },
                   { label: 'Assign to all devices', value: 'AllDevices' },
-                  { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                  {
+                    label: 'Assign to all users and devices',
+                    value: 'AllDevicesAndUsers',
+                  },
                 ]}
                 formControl={formControl}
                 validators={{ required: 'Assignment must be selected' }}
@@ -820,7 +918,9 @@ const DeployDefenderForm = () => {
           >
             <Grid size={{ xs: 12 }}>
               <Typography variant="h6">ASR Rules</Typography>
-              <Typography variant="subtitle1">Set Attack Surface Reduction Rules</Typography>
+              <Typography variant="subtitle1">
+                Set Attack Surface Reduction Rules
+              </Typography>
               <CippFormComponent
                 type="radio"
                 label=""
@@ -966,9 +1066,15 @@ const DeployDefenderForm = () => {
                     name="ASR.AssignTo"
                     options={[
                       { label: 'Do not assign', value: 'none' },
-                      { label: 'Assign to all users', value: 'allLicensedUsers' },
+                      {
+                        label: 'Assign to all users',
+                        value: 'allLicensedUsers',
+                      },
                       { label: 'Assign to all devices', value: 'AllDevices' },
-                      { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                      {
+                        label: 'Assign to all users and devices',
+                        value: 'AllDevicesAndUsers',
+                      },
                     ]}
                     formControl={formControl}
                     validators={{ required: 'Assignment must be selected' }}
@@ -984,7 +1090,8 @@ const DeployDefenderForm = () => {
         createDialog={templateDialog}
         title="Save as Intune Templates"
         api={{
-          confirmText: 'Save the current Defender policy settings as Intune templates?',
+          confirmText:
+            'Save the current Defender policy settings as Intune templates?',
           url: '/api/AddDefenderTemplate',
           type: 'POST',
           customDataformatter: (row, action, formData) => {
@@ -995,11 +1102,17 @@ const DeployDefenderForm = () => {
                   .filter(([, v]) => v !== null && v !== undefined)
                   .map(([k, v]) => [
                     k,
-                    typeof v === 'object' && !Array.isArray(v) ? removeNulls(v) : v,
+                    typeof v === 'object' && !Array.isArray(v)
+                      ? removeNulls(v)
+                      : v,
                   ])
                   .filter(
                     ([, v]) =>
-                      !(typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0)
+                      !(
+                        typeof v === 'object' &&
+                        !Array.isArray(v) &&
+                        Object.keys(v).length === 0
+                      )
                   )
               )
             }
@@ -1014,7 +1127,9 @@ const DeployDefenderForm = () => {
               ...(clean(row.Policy) ? { Policy: clean(row.Policy) } : {}),
               ...(clean(row.ASR) ? { ASR: clean(row.ASR) } : {}),
               ...(clean(row.EDR) ? { EDR: clean(row.EDR) } : {}),
-              ...(clean(row.Exclusion) ? { Exclusion: clean(row.Exclusion) } : {}),
+              ...(clean(row.Exclusion)
+                ? { Exclusion: clean(row.Exclusion) }
+                : {}),
             }
           },
         }}
@@ -1034,7 +1149,8 @@ const DeployDefenderForm = () => {
             name: 'package',
             label: 'Package (optional)',
             placeholder: 'e.g. Defender Baseline',
-            helperText: 'Group these templates under a package for use in standards.',
+            helperText:
+              'Group these templates under a package for use in standards.',
           },
         ]}
         relatedQueryKeys={['ListIntuneTemplates']}
@@ -1043,6 +1159,8 @@ const DeployDefenderForm = () => {
   )
 }
 
-DeployDefenderForm.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
+DeployDefenderForm.getLayout = (page) => (
+  <DashboardLayout>{page}</DashboardLayout>
+)
 
 export default DeployDefenderForm

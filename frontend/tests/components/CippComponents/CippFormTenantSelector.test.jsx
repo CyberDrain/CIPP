@@ -50,7 +50,10 @@ const result = (overrides = {}) => ({
 const controlRef = { current: null }
 
 const Harness = (props) => {
-  const formControl = useForm({ mode: 'onChange', defaultValues: { tenantFilter: [] } })
+  const formControl = useForm({
+    mode: 'onChange',
+    defaultValues: { tenantFilter: [] },
+  })
   useEffect(() => {
     controlRef.current = formControl
   }, [formControl])
@@ -88,7 +91,9 @@ describe('CippFormTenantSelector', () => {
       label: 'Contoso (contoso.com)',
       type: 'Tenant',
     })
-    expect(value[0].addedFields.customerId).toBe('11111111-aaaa-bbbb-cccc-000000000001')
+    expect(value[0].addedFields.customerId).toBe(
+      '11111111-aaaa-bbbb-cccc-000000000001'
+    )
   })
 
   it('merges tenant groups into the options when includeGroups is set', async () => {

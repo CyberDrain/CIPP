@@ -1,20 +1,20 @@
-import { useCallback, useState } from "react";
-import NextLink from "next/link";
-import PropTypes from "prop-types";
-import ChevronRightIcon from "@heroicons/react/24/outline/ChevronRightIcon";
-import ChevronDownIcon from "@heroicons/react/24/outline/ChevronDownIcon";
-import ArrowTopRightOnSquareIcon from "@heroicons/react/24/outline/ArrowTopRightOnSquareIcon";
-import { Box, ButtonBase, Collapse, SvgIcon, Stack } from "@mui/material";
-import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
-import BookmarkIcon from "@mui/icons-material/Bookmark";
-import LanguageIcon from "@mui/icons-material/Language";
-import { useUserBookmarks } from "../hooks/use-user-bookmarks";
-import { useSettings } from "../hooks/use-settings";
+import { useCallback, useState } from 'react'
+import NextLink from 'next/link'
+import PropTypes from 'prop-types'
+import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon'
+import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon'
+import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon'
+import { Box, ButtonBase, Collapse, SvgIcon, Stack } from '@mui/material'
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder'
+import BookmarkIcon from '@mui/icons-material/Bookmark'
+import LanguageIcon from '@mui/icons-material/Language'
+import { useUserBookmarks } from '../hooks/use-user-bookmarks'
+import { useSettings } from '../hooks/use-settings'
 
 export const SideNavItem = (props) => {
   const {
     active = false,
-    category = "",
+    category = '',
     children,
     collapse = false,
     depth = 0,
@@ -24,33 +24,33 @@ export const SideNavItem = (props) => {
     path,
     scope,
     title,
-  } = props;
+  } = props
 
-  const isGlobal = scope === "global";
+  const isGlobal = scope === 'global'
 
-  const [open, setOpen] = useState(openImmediately);
-  const [hovered, setHovered] = useState(false);
-  const { isBookmarked: isPathBookmarked, toggleBookmark } = useUserBookmarks();
-  const settings = useSettings();
-  const compactNav = settings.compactNav ?? false;
-  const isBookmarked = isPathBookmarked(path);
+  const [open, setOpen] = useState(openImmediately)
+  const [hovered, setHovered] = useState(false)
+  const { isBookmarked: isPathBookmarked, toggleBookmark } = useUserBookmarks()
+  const settings = useSettings()
+  const compactNav = settings.compactNav ?? false
+  const isBookmarked = isPathBookmarked(path)
 
   const handleToggle = useCallback(() => {
-    setOpen((prevOpen) => !prevOpen);
-  }, []);
+    setOpen((prevOpen) => !prevOpen)
+  }, [])
 
   const handleBookmarkToggle = useCallback(
     (event) => {
-      event.stopPropagation();
-      toggleBookmark({ label: title, path, category: category || "" });
+      event.stopPropagation()
+      toggleBookmark({ label: title, path, category: category || '' })
     },
     [toggleBookmark, path, title, category]
-  );
+  )
 
   // Dynamic spacing and font sizing based on depth
-  const indent = depth > 0 ? depth * 1.5 : 1; // adjust multiplication factor as needed
-  const fontSize = depth === 0 ? 14 : 13; // top-level 14, nested 13
-  const navItemPy = compactNav ? "6px" : "12px";
+  const indent = depth > 0 ? depth * 1.5 : 1 // adjust multiplication factor as needed
+  const fontSize = depth === 0 ? 14 : 13 // top-level 14, nested 13
+  const navItemPy = compactNav ? '6px' : '12px'
 
   if (children) {
     return (
@@ -64,30 +64,30 @@ export const SideNavItem = (props) => {
           <ButtonBase
             onClick={handleToggle}
             sx={{
-              alignItems: "center",
+              alignItems: 'center',
               borderRadius: 1,
-              display: "flex",
+              display: 'flex',
               fontFamily: (theme) => theme.typography.fontFamily,
               fontSize: fontSize,
               fontWeight: 500,
-              justifyContent: "flex-start",
+              justifyContent: 'flex-start',
               px: `${indent * 6}px`,
               py: navItemPy,
-              textAlign: "left",
-              whiteSpace: "nowrap",
-              width: "100%",
+              textAlign: 'left',
+              whiteSpace: 'nowrap',
+              width: '100%',
             }}
           >
             <Box
               component="span"
               sx={{
-                alignItems: "center",
-                color: "neutral.400",
-                display: "inline-flex",
+                alignItems: 'center',
+                color: 'neutral.400',
+                display: 'inline-flex',
                 flexGrow: 0,
                 flexShrink: 0,
                 height: 24,
-                justifyContent: "center",
+                justifyContent: 'center',
                 width: 24,
               }}
             >
@@ -96,13 +96,13 @@ export const SideNavItem = (props) => {
             <Box
               component="span"
               sx={{
-                color: depth === 0 ? "text.primary" : "text.secondary",
+                color: depth === 0 ? 'text.primary' : 'text.secondary',
                 flexGrow: 1,
                 fontSize: fontSize,
-                mx: "12px",
-                transition: "opacity 250ms ease-in-out",
+                mx: '12px',
+                transition: 'opacity 250ms ease-in-out',
                 ...(active && {
-                  color: "primary.main",
+                  color: 'primary.main',
                 }),
                 ...(collapse && {
                   opacity: 0,
@@ -113,9 +113,9 @@ export const SideNavItem = (props) => {
             </Box>
             <SvgIcon
               sx={{
-                color: "neutral.500",
+                color: 'neutral.500',
                 fontSize: 16,
-                transition: "opacity 250ms ease-in-out",
+                transition: 'opacity 250ms ease-in-out',
                 ...(collapse && {
                   opacity: 0,
                 }),
@@ -129,22 +129,22 @@ export const SideNavItem = (props) => {
           {children}
         </Collapse>
       </li>
-    );
+    )
   }
 
   // Leaf
   const linkProps = path
     ? external
       ? {
-          component: "a",
+          component: 'a',
           href: path,
-          target: "_blank",
+          target: '_blank',
         }
       : {
           component: NextLink,
           href: path,
         }
-    : {};
+    : {}
 
   return (
     <li>
@@ -153,24 +153,24 @@ export const SideNavItem = (props) => {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         sx={{
-          display: "flex",
-          alignItems: "center",
-          width: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
           px: `${indent * 6}px`,
         }}
       >
         <ButtonBase
           sx={{
-            alignItems: "center",
+            alignItems: 'center',
             borderRadius: 1,
-            display: "flex",
+            display: 'flex',
             fontFamily: (theme) => theme.typography.fontFamily,
             fontSize: fontSize,
             fontWeight: 500,
-            justifyContent: "flex-start",
-            textAlign: "left",
-            whiteSpace: "nowrap",
-            width: "calc(100% - 20px)", // Adjust the width to leave space for the bookmark icon
+            justifyContent: 'flex-start',
+            textAlign: 'left',
+            whiteSpace: 'nowrap',
+            width: 'calc(100% - 20px)', // Adjust the width to leave space for the bookmark icon
             py: navItemPy,
           }}
           {...linkProps}
@@ -179,13 +179,13 @@ export const SideNavItem = (props) => {
           <Box
             component="span"
             sx={{
-              alignItems: "center",
-              color: "neutral.400",
-              display: "inline-flex",
+              alignItems: 'center',
+              color: 'neutral.400',
+              display: 'inline-flex',
               flexGrow: 0,
               flexShrink: 0,
               height: 24,
-              justifyContent: "center",
+              justifyContent: 'center',
               width: 24,
             }}
           >
@@ -194,18 +194,18 @@ export const SideNavItem = (props) => {
           <Box
             component="span"
             sx={{
-              color: depth === 0 ? "text.primary" : "text.secondary",
+              color: depth === 0 ? 'text.primary' : 'text.secondary',
               flexGrow: 1,
-              mx: "12px",
-              transition: "opacity 250ms ease-in-out",
-              whiteSpace: "nowrap",
+              mx: '12px',
+              transition: 'opacity 250ms ease-in-out',
+              whiteSpace: 'nowrap',
               ...(hovered && {
-                maxWidth: "calc(100% - 45px)", // Adjust the width to leave space for the bookmark icon
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                maxWidth: 'calc(100% - 45px)', // Adjust the width to leave space for the bookmark icon
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }),
               ...(active && {
-                color: "primary.main",
+                color: 'primary.main',
               }),
               ...(collapse && {
                 opacity: 0,
@@ -219,15 +219,15 @@ export const SideNavItem = (props) => {
               component="span"
               title="Global - not tied to selected tenant"
               sx={{
-                display: "inline-flex",
-                alignItems: "center",
+                display: 'inline-flex',
+                alignItems: 'center',
                 flexShrink: 0,
                 ml: 0.5,
-                transition: "opacity 250ms ease-in-out",
+                transition: 'opacity 250ms ease-in-out',
                 ...(collapse && { opacity: 0 }),
               }}
             >
-              <SvgIcon sx={{ color: "neutral.400", fontSize: 14 }}>
+              <SvgIcon sx={{ color: 'neutral.400', fontSize: 14 }}>
                 <LanguageIcon />
               </SvgIcon>
             </Box>
@@ -235,9 +235,9 @@ export const SideNavItem = (props) => {
           {external && (
             <SvgIcon
               sx={{
-                color: "neutral.500",
+                color: 'neutral.500',
                 fontSize: 18,
-                transition: "opacity 250ms ease-in-out",
+                transition: 'opacity 250ms ease-in-out',
                 ...(collapse && {
                   opacity: 0,
                 }),
@@ -250,20 +250,20 @@ export const SideNavItem = (props) => {
         <SvgIcon
           onClick={handleBookmarkToggle}
           sx={{
-            color: "neutral.500",
+            color: 'neutral.500',
             fontSize: 16,
-            transition: "opacity 250ms ease-in-out",
-            cursor: "pointer",
+            transition: 'opacity 250ms ease-in-out',
+            cursor: 'pointer',
             mr: 1,
-            display: hovered ? "block" : "none",
+            display: hovered ? 'block' : 'none',
           }}
         >
           {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
         </SvgIcon>
       </Stack>
     </li>
-  );
-};
+  )
+}
 
 SideNavItem.propTypes = {
   active: PropTypes.bool,
@@ -276,4 +276,4 @@ SideNavItem.propTypes = {
   path: PropTypes.string,
   scope: PropTypes.string,
   title: PropTypes.string.isRequired,
-};
+}

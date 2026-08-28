@@ -1,5 +1,5 @@
-import { useWatch } from "react-hook-form";
-import CippFormComponent from "./CippFormComponent";
+import { useWatch } from 'react-hook-form'
+import CippFormComponent from './CippFormComponent'
 
 /**
  * A form component for selecting attributes from a Graph API endpoint
@@ -16,8 +16,8 @@ import CippFormComponent from "./CippFormComponent";
 const CippGraphAttributeSelector = ({
   formControl,
   name,
-  resourceFieldName = "DeltaResource",
-  label = "Attributes to Monitor",
+  resourceFieldName = 'DeltaResource',
+  label = 'Attributes to Monitor',
   helperText,
   multiple = true,
   required = false,
@@ -27,24 +27,24 @@ const CippGraphAttributeSelector = ({
   const selectedResource = useWatch({
     control: formControl.control,
     name: resourceFieldName,
-  });
+  })
 
   // Extract the value whether selectedResource is an object or string
-  const resourceValue = selectedResource?.value || selectedResource;
+  const resourceValue = selectedResource?.value || selectedResource
 
   const getHelperText = () => {
-    if (helperText) return helperText;
+    if (helperText) return helperText
 
     if (!resourceValue) {
-      return "Select a resource type above to view available attributes";
+      return 'Select a resource type above to view available attributes'
     }
 
-    return "Select which attributes to monitor for changes";
-  };
+    return 'Select which attributes to monitor for changes'
+  }
 
   const api = resourceValue
     ? {
-        url: "/api/ListGraphRequest",
+        url: '/api/ListGraphRequest',
         queryKey: `graph-properties-${resourceValue}`,
         data: {
           Endpoint: resourceValue,
@@ -53,9 +53,9 @@ const CippGraphAttributeSelector = ({
         },
         labelField: (item) => item,
         valueField: (item) => item,
-        dataKey: "Results",
+        dataKey: 'Results',
       }
-    : null;
+    : null
 
   return (
     <CippFormComponent
@@ -68,10 +68,10 @@ const CippGraphAttributeSelector = ({
       formControl={formControl}
       api={api}
       helperText={getHelperText()}
-      placeholder={!resourceValue ? "Select a resource type first" : undefined}
+      placeholder={!resourceValue ? 'Select a resource type first' : undefined}
       {...otherProps}
     />
-  );
-};
+  )
+}
 
-export default CippGraphAttributeSelector;
+export default CippGraphAttributeSelector

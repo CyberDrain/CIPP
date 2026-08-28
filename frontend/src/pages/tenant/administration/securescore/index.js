@@ -25,7 +25,11 @@ const Page = () => {
   const currentTenant = useSettings().currentTenant
   const createDialog = useDialog()
   const secureScore = useSecureScore()
-  const [actionData, setActionData] = useState({ data: {}, action: {}, ready: false })
+  const [actionData, setActionData] = useState({
+    data: {},
+    action: {},
+    ready: false,
+  })
   const [updatesData, setUpdatesData] = useState({ data: {}, ready: false })
   const cippTableDialog = useDialog()
   const [filterAnchorEl, setFilterAnchorEl] = useState(null)
@@ -66,7 +70,8 @@ const Page = () => {
         return controlScores.filter((score) => score.scoreInPercentage === 0)
       case 'started':
         return controlScores.filter(
-          (score) => score.scoreInPercentage > 0 && score.scoreInPercentage < 100
+          (score) =>
+            score.scoreInPercentage > 0 && score.scoreInPercentage < 100
         )
       default:
         return controlScores
@@ -99,8 +104,16 @@ const Page = () => {
               size={{ md: 12, xs: 12 }}
               sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}
             >
-              <Button variant="outlined" startIcon={<FilterList />} onClick={handleFilterClick}>
-                Filter: {filterOptions.find((opt) => opt.value === selectedFilter)?.label}
+              <Button
+                variant="outlined"
+                startIcon={<FilterList />}
+                onClick={handleFilterClick}
+              >
+                Filter:{' '}
+                {
+                  filterOptions.find((opt) => opt.value === selectedFilter)
+                    ?.label
+                }
               </Button>
               <Menu
                 anchorEl={filterAnchorEl}
@@ -130,7 +143,8 @@ const Page = () => {
                   },
                   {
                     icon: <GlobeAltIcon />,
-                    data: secureScore.translatedData.percentageVsAllTenants + '%',
+                    data:
+                      secureScore.translatedData.percentageVsAllTenants + '%',
                     name: 'Compared score (All Tenants)',
                     color: 'green',
                   },
@@ -156,10 +170,12 @@ const Page = () => {
                     ? [
                         {
                           name: 'Secure Score',
-                          data: secureScore.secureScore.data.Results.map((data) => ({
-                            x: timeAgo.format(new Date(data.createdDateTime)),
-                            y: data.currentScore,
-                          })).reverse(),
+                          data: secureScore.secureScore.data.Results.map(
+                            (data) => ({
+                              x: timeAgo.format(new Date(data.createdDateTime)),
+                              y: data.currentScore,
+                            })
+                          ).reverse(),
                         },
                       ]
                     : []
@@ -171,11 +187,18 @@ const Page = () => {
             {currentTenant !== 'AllTenants' &&
               secureScore.isSuccess &&
               getFilteredControlScores().map((secureScoreControl) => (
-                <Grid size={{ md: 3, xs: 12 }} key={secureScoreControl.controlName}>
+                <Grid
+                  size={{ md: 3, xs: 12 }}
+                  key={secureScoreControl.controlName}
+                >
                   <CippButtonCard
                     title={secureScoreControl.title}
                     isFetching={secureScore.isFetching}
-                    cardSx={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+                    cardSx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%',
+                    }}
                     CardButton={
                       <>
                         <Button
@@ -188,14 +211,18 @@ const Page = () => {
                             createDialog.handleOpen()
                           }}
                           variant="contained"
-                          disabled={secureScoreControl.controlName.startsWith('scid_')}
+                          disabled={secureScoreControl.controlName.startsWith(
+                            'scid_'
+                          )}
                         >
                           Change Status
                         </Button>
                         <Button
                           size="small"
                           variant="outlined"
-                          onClick={() => openRemediation(secureScoreControl.actionUrl)}
+                          onClick={() =>
+                            openRemediation(secureScoreControl.actionUrl)
+                          }
                         >
                           Remediate
                         </Button>
@@ -211,7 +238,8 @@ const Page = () => {
                             }}
                             variant="outlined"
                           >
-                            Updates {`(${secureScoreControl.controlStateUpdates?.length})`}
+                            Updates{' '}
+                            {`(${secureScoreControl.controlStateUpdates?.length})`}
                           </Button>
                         )}
                       </>
@@ -221,7 +249,8 @@ const Page = () => {
                       <Chip
                         variant="outlined"
                         label={`${secureScoreControl.scoreInPercentage}% ${
-                          secureScoreControl.controlStateUpdates?.[0]?.state === 'ThirdParty'
+                          secureScoreControl.controlStateUpdates?.[0]?.state ===
+                          'ThirdParty'
                             ? '- Resolved by Third Party'
                             : ''
                         }`}
@@ -237,7 +266,11 @@ const Page = () => {
 
                       {secureScoreControl.description && (
                         <>
-                          <Typography variant="subtitle2" color="textSecondary" sx={{ mt: 2 }}>
+                          <Typography
+                            variant="subtitle2"
+                            color="textSecondary"
+                            sx={{ mt: 2 }}
+                          >
                             Description
                           </Typography>
                           <Typography
@@ -250,7 +283,9 @@ const Page = () => {
                               },
                             }}
                             dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(secureScoreControl.description),
+                              __html: DOMPurify.sanitize(
+                                secureScoreControl.description
+                              ),
                             }}
                           />
                         </>
@@ -259,7 +294,11 @@ const Page = () => {
                       {secureScoreControl.remediation &&
                         secureScoreControl.scoreInPercentage !== 100 && (
                           <>
-                            <Typography variant="subtitle2" color="textSecondary" sx={{ mt: 2 }}>
+                            <Typography
+                              variant="subtitle2"
+                              color="textSecondary"
+                              sx={{ mt: 2 }}
+                            >
                               Remediation Recommendation
                             </Typography>
                             <Typography
@@ -272,7 +311,9 @@ const Page = () => {
                                 },
                               }}
                               dangerouslySetInnerHTML={{
-                                __html: DOMPurify.sanitize(secureScoreControl.remediation),
+                                __html: DOMPurify.sanitize(
+                                  secureScoreControl.remediation
+                                ),
                               }}
                             />
                           </>
@@ -280,10 +321,16 @@ const Page = () => {
 
                       {secureScoreControl.threats?.length > 0 && (
                         <>
-                          <Typography variant="subtitle2" color="textSecondary" sx={{ mt: 2 }}>
+                          <Typography
+                            variant="subtitle2"
+                            color="textSecondary"
+                            sx={{ mt: 2 }}
+                          >
                             Threats
                           </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 1 }}>
+                          <Box
+                            sx={{ display: 'flex', flexWrap: 'wrap', mt: 1 }}
+                          >
                             {secureScoreControl.threats.map((threat, idx) => (
                               <Chip
                                 key={idx}
@@ -299,19 +346,27 @@ const Page = () => {
 
                       {secureScoreControl.complianceInformation?.length > 0 && (
                         <>
-                          <Typography variant="subtitle2" color="textSecondary" sx={{ mt: 2 }}>
+                          <Typography
+                            variant="subtitle2"
+                            color="textSecondary"
+                            sx={{ mt: 2 }}
+                          >
                             Compliance Frameworks
                           </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 1 }}>
-                            {secureScoreControl.complianceInformation.map((framework, idx) => (
-                              <Chip
-                                key={idx}
-                                label={`${framework.certificationName} - ${framework.certificationControls[0]?.name}`}
-                                size="small"
-                                color="info"
-                                sx={{ mr: 1, mt: 1 }}
-                              />
-                            ))}
+                          <Box
+                            sx={{ display: 'flex', flexWrap: 'wrap', mt: 1 }}
+                          >
+                            {secureScoreControl.complianceInformation.map(
+                              (framework, idx) => (
+                                <Chip
+                                  key={idx}
+                                  label={`${framework.certificationName} - ${framework.certificationControls[0]?.name}`}
+                                  size="small"
+                                  color="info"
+                                  sx={{ mr: 1, mt: 1 }}
+                                />
+                              )
+                            )}
                           </Box>
                         </>
                       )}
@@ -324,7 +379,13 @@ const Page = () => {
                 createDialog={cippTableDialog}
                 title={`Updates for ${updatesData.data.title}`}
                 data={updatesData.data.controlStateUpdates}
-                simpleColumns={['state', 'assignedTo', 'comment', 'updatedBy', 'updatedDateTime']}
+                simpleColumns={[
+                  'state',
+                  'assignedTo',
+                  'comment',
+                  'updatedBy',
+                  'updatedDateTime',
+                ]}
               />
             )}
             <CippApiDialog
@@ -337,15 +398,18 @@ const Page = () => {
                   options: [
                     {
                       value: 'ThirdParty',
-                      label: 'Resolved by Third Party (Mark as completed, receive points)',
+                      label:
+                        'Resolved by Third Party (Mark as completed, receive points)',
                     },
                     {
                       value: 'Ignored',
-                      label: 'Ignored / Risk Accepted (Mark as completed, do not receive points)',
+                      label:
+                        'Ignored / Risk Accepted (Mark as completed, do not receive points)',
                     },
                     {
                       value: 'Default',
-                      label: 'Mark as default (Receive points if Microsoft detects as completed)',
+                      label:
+                        'Mark as default (Receive points if Microsoft detects as completed)',
                     },
                   ],
                   label: 'Resolution Type',

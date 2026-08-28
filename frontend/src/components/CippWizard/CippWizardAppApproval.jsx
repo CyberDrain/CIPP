@@ -1,21 +1,22 @@
-import { Stack, Alert } from "@mui/material";
-import CippWizardStepButtons from "./CippWizardStepButtons";
-import { Grid } from "@mui/system";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { getCippValidator } from "../../utils/get-cipp-validator";
-import { CippFormCondition } from "../CippComponents/CippFormCondition";
-import CippPermissionPreview from "../CippComponents/CippPermissionPreview";
-import { useWatch } from "react-hook-form";
-import { CippPropertyListCard } from "../CippCards/CippPropertyListCard";
+import { Stack, Alert } from '@mui/material'
+import CippWizardStepButtons from './CippWizardStepButtons'
+import { Grid } from '@mui/system'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { getCippValidator } from '../../utils/get-cipp-validator'
+import { CippFormCondition } from '../CippComponents/CippFormCondition'
+import CippPermissionPreview from '../CippComponents/CippPermissionPreview'
+import { useWatch } from 'react-hook-form'
+import { CippPropertyListCard } from '../CippCards/CippPropertyListCard'
 
 export const CippWizardAppApproval = (props) => {
-  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } = props;
+  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } =
+    props
 
   // Watch for the selected template to access permissions and type
   const selectedTemplate = useWatch({
     control: formControl.control,
-    name: "selectedTemplate",
-  });
+    name: 'selectedTemplate',
+  })
 
   return (
     <Stack spacing={2}>
@@ -26,8 +27,8 @@ export const CippWizardAppApproval = (props) => {
         label="Application Configuration Mode"
         defaultValue="template" // Add default value
         options={[
-          { value: "template", label: "Use App Approval Template" },
-          { value: "manual", label: "Manual Configuration" },
+          { value: 'template', label: 'Use App Approval Template' },
+          { value: 'manual', label: 'Manual Configuration' },
         ]}
         formControl={formControl}
       />
@@ -41,32 +42,32 @@ export const CippWizardAppApproval = (props) => {
       >
         <Stack spacing={2}>
           <Alert severity="info">
-            Select an app approval template to deploy. Templates contain predefined permissions that
-            will be applied to the application.
+            Select an app approval template to deploy. Templates contain
+            predefined permissions that will be applied to the application.
           </Alert>
           <CippFormComponent
             type="autoComplete"
             name="selectedTemplate"
             label="Select App Template"
             api={{
-              url: "/api/ListAppApprovalTemplates",
-              queryKey: "appApprovalTemplates",
+              url: '/api/ListAppApprovalTemplates',
+              queryKey: 'appApprovalTemplates',
               labelField: (item) => `${item.TemplateName}`,
-              valueField: "TemplateId",
+              valueField: 'TemplateId',
               addedField: {
-                AppId: "AppId",
-                AppName: "AppName",
-                AppType: "AppType",
-                GalleryTemplateId: "GalleryTemplateId",
-                GalleryInformation: "GalleryInformation",
-                PermissionSetId: "PermissionSetId",
-                PermissionSetName: "PermissionSetName",
-                Permissions: "Permissions",
-                ApplicationManifest: "ApplicationManifest",
+                AppId: 'AppId',
+                AppName: 'AppName',
+                AppType: 'AppType',
+                GalleryTemplateId: 'GalleryTemplateId',
+                GalleryInformation: 'GalleryInformation',
+                PermissionSetId: 'PermissionSetId',
+                PermissionSetName: 'PermissionSetName',
+                Permissions: 'Permissions',
+                ApplicationManifest: 'ApplicationManifest',
               },
               showRefresh: true,
             }}
-            validators={{ required: "A template is required" }}
+            validators={{ required: 'A template is required' }}
             formControl={formControl}
             multiple={false}
           />
@@ -77,48 +78,57 @@ export const CippWizardAppApproval = (props) => {
                 variant="outlined"
                 showDivider={false}
                 propertyItems={[
-                  { label: "App Name", value: selectedTemplate.addedFields.AppName },
-                  { label: "App ID", value: selectedTemplate.addedFields.AppId },
                   {
-                    label: "Template Type",
-                    value:
-                      (selectedTemplate.addedFields.AppType || "EnterpriseApp") ===
-                      "GalleryTemplate"
-                        ? "Gallery Template"
-                        : (selectedTemplate.addedFields.AppType || "EnterpriseApp") ===
-                          "ApplicationManifest"
-                        ? "Application Manifest"
-                        : "Enterprise App",
+                    label: 'App Name',
+                    value: selectedTemplate.addedFields.AppName,
                   },
                   {
-                    label: "Permission Set",
+                    label: 'App ID',
+                    value: selectedTemplate.addedFields.AppId,
+                  },
+                  {
+                    label: 'Template Type',
                     value:
-                      (selectedTemplate.addedFields.AppType || "EnterpriseApp") ===
-                      "GalleryTemplate"
-                        ? "Auto-Consent"
-                        : (selectedTemplate.addedFields.AppType || "EnterpriseApp") ===
-                          "ApplicationManifest"
-                        ? "Defined in Manifest"
-                        : selectedTemplate.addedFields.PermissionSetName,
+                      (selectedTemplate.addedFields.AppType ||
+                        'EnterpriseApp') === 'GalleryTemplate'
+                        ? 'Gallery Template'
+                        : (selectedTemplate.addedFields.AppType ||
+                              'EnterpriseApp') === 'ApplicationManifest'
+                          ? 'Application Manifest'
+                          : 'Enterprise App',
+                  },
+                  {
+                    label: 'Permission Set',
+                    value:
+                      (selectedTemplate.addedFields.AppType ||
+                        'EnterpriseApp') === 'GalleryTemplate'
+                        ? 'Auto-Consent'
+                        : (selectedTemplate.addedFields.AppType ||
+                              'EnterpriseApp') === 'ApplicationManifest'
+                          ? 'Defined in Manifest'
+                          : selectedTemplate.addedFields.PermissionSetName,
                   },
                 ]}
                 title="Template Details"
               />
-              {(selectedTemplate.addedFields.AppType || "EnterpriseApp") === "EnterpriseApp" ? (
+              {(selectedTemplate.addedFields.AppType || 'EnterpriseApp') ===
+              'EnterpriseApp' ? (
                 <CippPermissionPreview
                   permissions={selectedTemplate.addedFields.Permissions}
                   title="Template Permissions"
                   maxHeight={500}
                   showAppIds={true}
                 />
-              ) : (selectedTemplate.addedFields.AppType || "EnterpriseApp") ===
-                "ApplicationManifest" ? (
+              ) : (selectedTemplate.addedFields.AppType || 'EnterpriseApp') ===
+                'ApplicationManifest' ? (
                 <CippPermissionPreview
                   permissions={null}
                   title="Application Manifest"
                   maxHeight={500}
                   showAppIds={false}
-                  applicationManifest={selectedTemplate.addedFields.ApplicationManifest}
+                  applicationManifest={
+                    selectedTemplate.addedFields.ApplicationManifest
+                  }
                 />
               ) : (
                 <CippPermissionPreview
@@ -137,12 +147,16 @@ export const CippWizardAppApproval = (props) => {
                       // Use saved gallery information if available, otherwise provide defaults
                       ...(selectedTemplate.addedFields.GalleryInformation || {
                         description: `Gallery template for ${
-                          selectedTemplate.addedFields.AppName || "application"
+                          selectedTemplate.addedFields.AppName || 'application'
                         }`,
-                        publisher: "Microsoft Gallery",
-                        categories: ["Application"],
-                        supportedSingleSignOnModes: ["saml", "password", "oidc"],
-                        supportedProvisioningTypes: ["sync"],
+                        publisher: 'Microsoft Gallery',
+                        categories: ['Application'],
+                        supportedSingleSignOnModes: [
+                          'saml',
+                          'password',
+                          'oidc',
+                        ],
+                        supportedProvisioningTypes: ['sync'],
                       }),
                     },
                   }}
@@ -166,7 +180,7 @@ export const CippWizardAppApproval = (props) => {
               type="textField"
               label="Application ID"
               validators={{
-                validate: (value) => getCippValidator(value, "guid"),
+                validate: (value) => getCippValidator(value, 'guid'),
               }}
               name="AppId"
               formControl={formControl}
@@ -193,8 +207,8 @@ export const CippWizardAppApproval = (props) => {
             title="Permissions"
             label="Select your permissions"
             queryKey="GraphpermissionsList"
-            api={{ url: "/permissionsList.json" }}
-            simpleColumns={["displayName", "description"]}
+            api={{ url: '/permissionsList.json' }}
+            simpleColumns={['displayName', 'description']}
             formControl={formControl}
           />
         </CippFormCondition>
@@ -208,5 +222,5 @@ export const CippWizardAppApproval = (props) => {
         formControl={formControl}
       />
     </Stack>
-  );
-};
+  )
+}

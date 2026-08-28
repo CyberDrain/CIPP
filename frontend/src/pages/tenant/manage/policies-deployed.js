@@ -1,6 +1,12 @@
 import { Layout as DashboardLayout } from '../../../layouts/index.js'
 import { useRouter } from 'next/router'
-import { Policy, Security, AdminPanelSettings, Devices, ExpandMore } from '@mui/icons-material'
+import {
+  Policy,
+  Security,
+  AdminPanelSettings,
+  Devices,
+  ExpandMore,
+} from '@mui/icons-material'
 import {
   Box,
   Stack,
@@ -25,7 +31,8 @@ const PoliciesDeployedPage = () => {
   const userSettingsDefaults = useSettings()
   const router = useRouter()
   const { templateId } = router.query
-  const tenantFilter = router.query.tenantFilter || userSettingsDefaults.tenantFilter
+  const tenantFilter =
+    router.query.tenantFilter || userSettingsDefaults.tenantFilter
   const currentTenant = userSettingsDefaults.currentTenant
 
   // API call to get standards template data
@@ -70,12 +77,18 @@ const PoliciesDeployedPage = () => {
   })
 
   // Find the current template from standards data
-  const currentTemplate = (standardsApi.data || []).find((template) => template.GUID === templateId)
+  const currentTemplate = (standardsApi.data || []).find(
+    (template) => template.GUID === templateId
+  )
   const templateStandards = currentTemplate?.standards || {}
   const comparisonData = comparisonApi.data?.[0] || {}
 
   // Helper function to get status from comparison data with deviation status
-  const getStatus = (standardKey, templateValue = null, templateType = null) => {
+  const getStatus = (
+    standardKey,
+    templateValue = null,
+    templateType = null
+  ) => {
     const comparisonKey = `standards.${standardKey}`
     const comparisonItem = comparisonData[comparisonKey]
     const value = comparisonItem?.Value
@@ -141,7 +154,11 @@ const PoliciesDeployedPage = () => {
   }
 
   // Helper function to get display name from drift data
-  const getDisplayNameFromDrift = (standardKey, templateValue = null, templateType = null) => {
+  const getDisplayNameFromDrift = (
+    standardKey,
+    templateValue = null,
+    templateType = null
+  ) => {
     const driftData = Array.isArray(driftApi.data) ? driftApi.data : []
 
     // For templates, we need to match against the full template path
@@ -172,15 +189,25 @@ const PoliciesDeployedPage = () => {
     }
 
     // If not found in drift data and this is an Intune template, look it up in the Intune templates API
-    if (templateType === 'IntuneTemplate' && templateValue && intuneTemplatesApi.data) {
-      const template = intuneTemplatesApi.data.find((t) => t.GUID === templateValue)
+    if (
+      templateType === 'IntuneTemplate' &&
+      templateValue &&
+      intuneTemplatesApi.data
+    ) {
+      const template = intuneTemplatesApi.data.find(
+        (t) => t.GUID === templateValue
+      )
       if (template?.Displayname) {
         return template.Displayname
       }
     }
 
     // If not found in drift data and this is a CA template, look it up in the CA templates API
-    if (templateType === 'ConditionalAccessTemplate' && templateValue && caTemplatesApi.data) {
+    if (
+      templateType === 'ConditionalAccessTemplate' &&
+      templateValue &&
+      caTemplatesApi.data
+    ) {
       const template = caTemplatesApi.data.find((t) => t.GUID === templateValue)
       if (template?.displayName) {
         return template.displayName
@@ -212,7 +239,10 @@ const PoliciesDeployedPage = () => {
     const allTemplates = currentTemplate.standards || {}
 
     // Look for the template in the specific type array
-    if (allTemplates[templateType] && Array.isArray(allTemplates[templateType])) {
+    if (
+      allTemplates[templateType] &&
+      Array.isArray(allTemplates[templateType])
+    ) {
       const template = allTemplates[templateType].find(
         (t) => t.TemplateList?.value === templateValue
       )
@@ -224,7 +254,9 @@ const PoliciesDeployedPage = () => {
     // If not found in the specific type, search through all template types
     for (const [key, templates] of Object.entries(allTemplates)) {
       if (Array.isArray(templates)) {
-        const template = templates.find((t) => t.TemplateList?.value === templateValue)
+        const template = templates.find(
+          (t) => t.TemplateList?.value === templateValue
+        )
         if (template?.TemplateList?.label) {
           return template.TemplateList.label
         }
@@ -236,7 +268,9 @@ const PoliciesDeployedPage = () => {
 
   // Process Security Standards (everything NOT IntuneTemplates or ConditionalAccessTemplates)
   const deployedStandards = Object.entries(templateStandards)
-    .filter(([key]) => key !== 'IntuneTemplate' && key !== 'ConditionalAccessTemplate')
+    .filter(
+      ([key]) => key !== 'IntuneTemplate' && key !== 'ConditionalAccessTemplate'
+    )
     .map(([key, value], index) => ({
       id: index + 1,
       name: getStandardName(key),
@@ -252,45 +286,67 @@ const PoliciesDeployedPage = () => {
     console.log('Processing IntuneTemplate in policies-deployed:', template)
 
     // Check if this template has TemplateList-Tags (try both property formats)
-    const templateListTags = template['TemplateList-Tags'] || template.TemplateListTags
+    const templateListTags =
+      template['TemplateList-Tags'] || template.TemplateListTags
 
     // Check if this template has TemplateList-Tags and expand them
-    if (templateListTags?.value && templateListTags?.addedFields?.templates?.length > 0) {
+    if (
+      templateListTags?.value &&
+      templateListTags?.addedFields?.templates?.length > 0
+    ) {
       console.log(
         'Found TemplateList-Tags for IntuneTemplate in policies-deployed:',
         templateListTags
       )
-      console.log('Templates to expand:', templateListTags.addedFields.templates)
+      console.log(
+        'Templates to expand:',
+        templateListTags.addedFields.templates
+      )
 
       // Expand TemplateList-Tags into multiple template items
-      templateListTags.addedFields.templates.forEach((expandedTemplate, expandedIndex) => {
-        console.log('Expanding IntuneTemplate in policies-deployed:', expandedTemplate)
-        const standardKey = `IntuneTemplate.${expandedTemplate.GUID}`
-        const driftDisplayName = getDisplayNameFromDrift(
-          standardKey,
-          expandedTemplate.GUID,
-          'IntuneTemplate'
-        )
-        const packageTagName = templateListTags.value
-        const templateName =
-          expandedTemplate.displayName || expandedTemplate.name || 'Unknown Template'
+      templateListTags.addedFields.templates.forEach(
+        (expandedTemplate, expandedIndex) => {
+          console.log(
+            'Expanding IntuneTemplate in policies-deployed:',
+            expandedTemplate
+          )
+          const standardKey = `IntuneTemplate.${expandedTemplate.GUID}`
+          const driftDisplayName = getDisplayNameFromDrift(
+            standardKey,
+            expandedTemplate.GUID,
+            'IntuneTemplate'
+          )
+          const packageTagName = templateListTags.value
+          const templateName =
+            expandedTemplate.displayName ||
+            expandedTemplate.name ||
+            'Unknown Template'
 
-        intunePolices.push({
-          id: intunePolices.length + 1,
-          name: `${driftDisplayName || templateName} (via ${packageTagName})`,
-          category: 'Intune Template',
-          platform: 'Multi-Platform',
-          status: getStatus(standardKey, expandedTemplate.GUID, 'IntuneTemplate'),
-          lastModified: getLastRefresh(standardKey),
-          assignedGroups: template.AssignTo || 'N/A',
-          templateValue: expandedTemplate.GUID,
-        })
-      })
+          intunePolices.push({
+            id: intunePolices.length + 1,
+            name: `${driftDisplayName || templateName} (via ${packageTagName})`,
+            category: 'Intune Template',
+            platform: 'Multi-Platform',
+            status: getStatus(
+              standardKey,
+              expandedTemplate.GUID,
+              'IntuneTemplate'
+            ),
+            lastModified: getLastRefresh(standardKey),
+            assignedGroups: template.AssignTo || 'N/A',
+            templateValue: expandedTemplate.GUID,
+          })
+        }
+      )
     } else {
       // Regular TemplateList processing
       const templateGuid = template.TemplateList?.value
       const standardKey = `IntuneTemplate.${templateGuid}`
-      const driftDisplayName = getDisplayNameFromDrift(standardKey, templateGuid, 'IntuneTemplate')
+      const driftDisplayName = getDisplayNameFromDrift(
+        standardKey,
+        templateGuid,
+        'IntuneTemplate'
+      )
 
       // Try multiple fallbacks for the name
       let templateName = driftDisplayName
@@ -302,7 +358,9 @@ const PoliciesDeployedPage = () => {
       }
       // If still no name, try looking up directly in intuneTemplatesApi by GUID
       if (!templateName && templateGuid && intuneTemplatesApi.data) {
-        const intuneTemplate = intuneTemplatesApi.data.find((t) => t.GUID === templateGuid)
+        const intuneTemplate = intuneTemplatesApi.data.find(
+          (t) => t.GUID === templateGuid
+        )
         if (intuneTemplate?.Displayname) {
           templateName = intuneTemplate.Displayname
         }
@@ -334,7 +392,11 @@ const PoliciesDeployedPage = () => {
       const alreadyExists = intunePolices.some((p) => p.templateValue === guid)
       if (!alreadyExists && comparisonData[key]?.Value === true) {
         const standardKey = `IntuneTemplate.${guid}`
-        const driftDisplayName = getDisplayNameFromDrift(standardKey, guid, 'IntuneTemplate')
+        const driftDisplayName = getDisplayNameFromDrift(
+          standardKey,
+          guid,
+          'IntuneTemplate'
+        )
 
         intunePolices.push({
           id: intunePolices.length + 1,
@@ -352,76 +414,105 @@ const PoliciesDeployedPage = () => {
 
   // Process Conditional Access Templates
   const conditionalAccessPolicies = []
-  ;(templateStandards.ConditionalAccessTemplate || []).forEach((template, index) => {
-    console.log('Processing ConditionalAccessTemplate in policies-deployed:', template)
-
-    // Check if this template has TemplateList-Tags (try both property formats)
-    const templateListTags = template['TemplateList-Tags'] || template.TemplateListTags
-
-    // Check if this template has TemplateList-Tags and expand them
-    if (templateListTags?.value && templateListTags?.addedFields?.templates?.length > 0) {
+  ;(templateStandards.ConditionalAccessTemplate || []).forEach(
+    (template, index) => {
       console.log(
-        'Found TemplateList-Tags for ConditionalAccessTemplate in policies-deployed:',
-        templateListTags
+        'Processing ConditionalAccessTemplate in policies-deployed:',
+        template
       )
-      console.log('Templates to expand:', templateListTags.addedFields.templates)
 
-      // Expand TemplateList-Tags into multiple template items
-      templateListTags.addedFields.templates.forEach((expandedTemplate, expandedIndex) => {
-        console.log('Expanding ConditionalAccessTemplate in policies-deployed:', expandedTemplate)
-        const standardKey = `ConditionalAccessTemplate.${expandedTemplate.GUID}`
+      // Check if this template has TemplateList-Tags (try both property formats)
+      const templateListTags =
+        template['TemplateList-Tags'] || template.TemplateListTags
+
+      // Check if this template has TemplateList-Tags and expand them
+      if (
+        templateListTags?.value &&
+        templateListTags?.addedFields?.templates?.length > 0
+      ) {
+        console.log(
+          'Found TemplateList-Tags for ConditionalAccessTemplate in policies-deployed:',
+          templateListTags
+        )
+        console.log(
+          'Templates to expand:',
+          templateListTags.addedFields.templates
+        )
+
+        // Expand TemplateList-Tags into multiple template items
+        templateListTags.addedFields.templates.forEach(
+          (expandedTemplate, expandedIndex) => {
+            console.log(
+              'Expanding ConditionalAccessTemplate in policies-deployed:',
+              expandedTemplate
+            )
+            const standardKey = `ConditionalAccessTemplate.${expandedTemplate.GUID}`
+            const driftDisplayName = getDisplayNameFromDrift(
+              standardKey,
+              expandedTemplate.GUID,
+              'ConditionalAccessTemplate'
+            )
+            const packageTagName = templateListTags.value
+            const templateName =
+              expandedTemplate.displayName ||
+              expandedTemplate.name ||
+              'Unknown Template'
+
+            conditionalAccessPolicies.push({
+              id: conditionalAccessPolicies.length + 1,
+              name: `${driftDisplayName || templateName} (via ${packageTagName})`,
+              state: template.state || 'Unknown',
+              conditions: 'Conditional Access Policy',
+              controls: 'Access Control',
+              lastModified: getLastRefresh(standardKey),
+              status: getStatus(
+                standardKey,
+                expandedTemplate.GUID,
+                'ConditionalAccessTemplate'
+              ),
+              templateValue: expandedTemplate.GUID,
+            })
+          }
+        )
+      } else {
+        // Regular TemplateList processing
+        const standardKey = `ConditionalAccessTemplate.${template.TemplateList?.value}`
         const driftDisplayName = getDisplayNameFromDrift(
           standardKey,
-          expandedTemplate.GUID,
+          template.TemplateList?.value,
           'ConditionalAccessTemplate'
         )
-        const packageTagName = templateListTags.value
-        const templateName =
-          expandedTemplate.displayName || expandedTemplate.name || 'Unknown Template'
+        const templateLabel = getTemplateLabel(
+          template.TemplateList?.value,
+          'ConditionalAccessTemplate'
+        )
 
         conditionalAccessPolicies.push({
           id: conditionalAccessPolicies.length + 1,
-          name: `${driftDisplayName || templateName} (via ${packageTagName})`,
+          name: driftDisplayName || `Conditional Access - ${templateLabel}`,
           state: template.state || 'Unknown',
           conditions: 'Conditional Access Policy',
           controls: 'Access Control',
           lastModified: getLastRefresh(standardKey),
-          status: getStatus(standardKey, expandedTemplate.GUID, 'ConditionalAccessTemplate'),
-          templateValue: expandedTemplate.GUID,
+          status: getStatus(
+            standardKey,
+            template.TemplateList?.value,
+            'ConditionalAccessTemplate'
+          ),
+          templateValue: template.TemplateList?.value,
         })
-      })
-    } else {
-      // Regular TemplateList processing
-      const standardKey = `ConditionalAccessTemplate.${template.TemplateList?.value}`
-      const driftDisplayName = getDisplayNameFromDrift(
-        standardKey,
-        template.TemplateList?.value,
-        'ConditionalAccessTemplate'
-      )
-      const templateLabel = getTemplateLabel(
-        template.TemplateList?.value,
-        'ConditionalAccessTemplate'
-      )
-
-      conditionalAccessPolicies.push({
-        id: conditionalAccessPolicies.length + 1,
-        name: driftDisplayName || `Conditional Access - ${templateLabel}`,
-        state: template.state || 'Unknown',
-        conditions: 'Conditional Access Policy',
-        controls: 'Access Control',
-        lastModified: getLastRefresh(standardKey),
-        status: getStatus(standardKey, template.TemplateList?.value, 'ConditionalAccessTemplate'),
-        templateValue: template.TemplateList?.value,
-      })
+      }
     }
-  })
+  )
 
   // Add any CA templates from comparison data that weren't in template standards
   Object.keys(comparisonData).forEach((key) => {
     if (key.startsWith('standards.ConditionalAccessTemplate.')) {
       const guid = key.replace('standards.ConditionalAccessTemplate.', '')
       // Check if this GUID is already in our list
-      const alreadyExists = conditionalAccessPolicies.some((p) => p.templateValue === guid)
+      const alreadyExists = conditionalAccessPolicies.some(
+        (p) => p.templateValue === guid
+      )
       if (!alreadyExists && comparisonData[key]?.Value === true) {
         const standardKey = `ConditionalAccessTemplate.${guid}`
         const driftDisplayName = getDisplayNameFromDrift(
@@ -539,7 +630,11 @@ const PoliciesDeployedPage = () => {
               <Box display="flex" alignItems="center" gap={1}>
                 <Security color="primary" />
                 <Typography variant="h6">Security Standards</Typography>
-                <Chip label={deployedStandards.length} size="small" color="primary" />
+                <Chip
+                  label={deployedStandards.length}
+                  size="small"
+                  color="primary"
+                />
               </Box>
             </AccordionSummary>
             <AccordionDetails>
@@ -549,7 +644,9 @@ const PoliciesDeployedPage = () => {
                 simpleColumns={['name', 'category', 'status', 'lastModified']}
                 noCard={true}
                 isFetching={
-                  standardsApi.isFetching || comparisonApi.isFetching || driftApi.isFetching
+                  standardsApi.isFetching ||
+                  comparisonApi.isFetching ||
+                  driftApi.isFetching
                 }
               />
             </AccordionDetails>
@@ -561,7 +658,11 @@ const PoliciesDeployedPage = () => {
               <Box display="flex" alignItems="center" gap={1}>
                 <Devices color="primary" />
                 <Typography variant="h6">Intune Policies</Typography>
-                <Chip label={intunePolices.length} size="small" color="primary" />
+                <Chip
+                  label={intunePolices.length}
+                  size="small"
+                  color="primary"
+                />
               </Box>
             </AccordionSummary>
             <AccordionDetails>
@@ -578,7 +679,9 @@ const PoliciesDeployedPage = () => {
                 ]}
                 noCard={true}
                 isFetching={
-                  standardsApi.isFetching || comparisonApi.isFetching || driftApi.isFetching
+                  standardsApi.isFetching ||
+                  comparisonApi.isFetching ||
+                  driftApi.isFetching
                 }
               />
             </AccordionDetails>
@@ -589,8 +692,14 @@ const PoliciesDeployedPage = () => {
             <AccordionSummary expandIcon={<ExpandMore />}>
               <Box display="flex" alignItems="center" gap={1}>
                 <AdminPanelSettings color="primary" />
-                <Typography variant="h6">Conditional Access Policies</Typography>
-                <Chip label={conditionalAccessPolicies.length} size="small" color="primary" />
+                <Typography variant="h6">
+                  Conditional Access Policies
+                </Typography>
+                <Chip
+                  label={conditionalAccessPolicies.length}
+                  size="small"
+                  color="primary"
+                />
               </Box>
             </AccordionSummary>
             <AccordionDetails>
@@ -607,7 +716,9 @@ const PoliciesDeployedPage = () => {
                 ]}
                 noCard={true}
                 isFetching={
-                  standardsApi.isFetching || comparisonApi.isFetching || driftApi.isFetching
+                  standardsApi.isFetching ||
+                  comparisonApi.isFetching ||
+                  driftApi.isFetching
                 }
               />
             </AccordionDetails>
@@ -618,6 +729,8 @@ const PoliciesDeployedPage = () => {
   )
 }
 
-PoliciesDeployedPage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
+PoliciesDeployedPage.getLayout = (page) => (
+  <DashboardLayout>{page}</DashboardLayout>
+)
 
 export default PoliciesDeployedPage

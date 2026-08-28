@@ -1,5 +1,5 @@
-import { Fragment, useCallback, useMemo, useRef, useState } from "react";
-import Head from "next/head";
+import { Fragment, useCallback, useMemo, useRef, useState } from 'react'
+import Head from 'next/head'
 import {
   Box,
   Button,
@@ -22,7 +22,7 @@ import {
   ToggleButtonGroup,
   Tooltip,
   Typography,
-} from "@mui/material";
+} from '@mui/material'
 import {
   Memory,
   Speed,
@@ -40,10 +40,10 @@ import {
   FileUpload,
   Refresh,
   Close,
-} from "@mui/icons-material";
-import { Grid } from "@mui/system";
-import { useTheme } from "@mui/material/styles";
-import { useQueryClient } from "@tanstack/react-query";
+} from '@mui/icons-material'
+import { Grid } from '@mui/system'
+import { useTheme } from '@mui/material/styles'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   AreaChart,
   Area,
@@ -57,54 +57,56 @@ import {
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   Legend,
-} from "recharts";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { TabbedLayout } from "../../../../layouts/TabbedLayout";
-import { CippInfoBar } from "../../../../components/CippCards/CippInfoBar";
-import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
-import { ApiGetCall, ApiPostCall } from "../../../../api/ApiCall";
-import tabOptions from "./tabOptions";
-import { useTitleClaimedByTabPicker } from "../../../../layouts/tab-navigation-context";
+} from 'recharts'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { TabbedLayout } from '../../../../layouts/TabbedLayout'
+import { CippInfoBar } from '../../../../components/CippCards/CippInfoBar'
+import { CippDataTable } from '../../../../components/CippTable/CippDataTable'
+import { ApiGetCall, ApiPostCall } from '../../../../api/ApiCall'
+import tabOptions from './tabOptions'
+import { useTitleClaimedByTabPicker } from '../../../../layouts/tab-navigation-context'
 
 const formatDuration = (ms) => {
-  if (ms === 0 || ms == null) return "—";
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-  return `${(ms / 60000).toFixed(1)}m`;
-};
+  if (ms === 0 || ms == null) return '—'
+  if (ms < 1000) return `${ms}ms`
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
+  return `${(ms / 60000).toFixed(1)}m`
+}
 
 const formatUptime = (seconds) => {
-  if (!seconds) return "—";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-};
+  if (!seconds) return '—'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  if (h > 0) return `${h}h ${m}m`
+  return `${m}m`
+}
 
 const WorkerStatusChip = ({ isBusy, currentFunction }) => {
   if (isBusy) {
     return (
-      <Tooltip title={currentFunction || "Busy"} arrow>
+      <Tooltip title={currentFunction || 'Busy'} arrow>
         <Chip
-          label={currentFunction || "Busy"}
+          label={currentFunction || 'Busy'}
           color="warning"
           size="small"
           icon={<PlayArrow />}
           sx={{ maxWidth: 420 }}
         />
       </Tooltip>
-    );
+    )
   }
-  return <Chip label="Idle" color="success" size="small" icon={<CheckCircle />} />;
-};
+  return (
+    <Chip label="Idle" color="success" size="small" icon={<CheckCircle />} />
+  )
+}
 
 const UtilizationBar = ({ value }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
     <Box sx={{ flexGrow: 1 }}>
       <LinearProgress
         variant="determinate"
         value={Math.min(value, 100)}
-        color={value > 80 ? "error" : value > 50 ? "warning" : "primary"}
+        color={value > 80 ? 'error' : value > 50 ? 'warning' : 'primary'}
         sx={{ height: 8, borderRadius: 4 }}
       />
     </Box>
@@ -112,21 +114,21 @@ const UtilizationBar = ({ value }) => (
       {value}%
     </Typography>
   </Box>
-);
+)
 
 const WorkerTable = ({ workers, title }) => {
-  if (!workers || workers.length === 0) return null;
+  if (!workers || workers.length === 0) return null
 
   return (
-    <Card sx={{ width: "100%", height: "100%" }}>
-      <CardHeader title={title} titleTypographyProps={{ variant: "h6" }} />
-      <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
+    <Card sx={{ width: '100%', height: '100%' }}>
+      <CardHeader title={title} titleTypographyProps={{ variant: 'h6' }} />
+      <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
         <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Worker</TableCell>
-                <TableCell sx={{ whiteSpace: "nowrap" }}>Status</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
                 <TableCell align="right">Invocations</TableCell>
                 <TableCell align="right">Utilization</TableCell>
                 <TableCell align="right">Avg</TableCell>
@@ -146,20 +148,36 @@ const WorkerTable = ({ workers, title }) => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <WorkerStatusChip isBusy={w.IsBusy} currentFunction={w.CurrentFunction} />
+                    <WorkerStatusChip
+                      isBusy={w.IsBusy}
+                      currentFunction={w.CurrentFunction}
+                    />
                   </TableCell>
-                  <TableCell align="right">{w.TotalInvocations?.toLocaleString() ?? 0}</TableCell>
+                  <TableCell align="right">
+                    {w.TotalInvocations?.toLocaleString() ?? 0}
+                  </TableCell>
                   <TableCell align="right">
                     <UtilizationBar value={w.UtilizationPct ?? 0} />
                   </TableCell>
-                  <TableCell align="right">{formatDuration(w.AvgDurationMs)}</TableCell>
-                  <TableCell align="right">{formatDuration(w.MinDurationMs)}</TableCell>
-                  <TableCell align="right">{formatDuration(w.MaxDurationMs)}</TableCell>
-                  <TableCell align="right">{formatDuration(w.LastDurationMs)}</TableCell>
                   <TableCell align="right">
-                    <Tooltip title={`Total ${w.TotalAllocMB ?? 0} MB • last ${w.LastAllocMB ?? 0} MB • avg ${w.AvgAllocMB ?? 0} MB / call`} arrow>
+                    {formatDuration(w.AvgDurationMs)}
+                  </TableCell>
+                  <TableCell align="right">
+                    {formatDuration(w.MinDurationMs)}
+                  </TableCell>
+                  <TableCell align="right">
+                    {formatDuration(w.MaxDurationMs)}
+                  </TableCell>
+                  <TableCell align="right">
+                    {formatDuration(w.LastDurationMs)}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Tooltip
+                      title={`Total ${w.TotalAllocMB ?? 0} MB • last ${w.LastAllocMB ?? 0} MB • avg ${w.AvgAllocMB ?? 0} MB / call`}
+                      arrow
+                    >
                       <Typography variant="body2" fontWeight={500}>
-                        {w.TotalAllocMB != null ? `${w.TotalAllocMB} MB` : "—"}
+                        {w.TotalAllocMB != null ? `${w.TotalAllocMB} MB` : '—'}
                       </Typography>
                     </Tooltip>
                   </TableCell>
@@ -167,7 +185,7 @@ const WorkerTable = ({ workers, title }) => {
                     {w.TotalFaults > 0 ? (
                       <Chip label={w.TotalFaults} color="error" size="small" />
                     ) : (
-                      "0"
+                      '0'
                     )}
                   </TableCell>
                 </TableRow>
@@ -177,73 +195,102 @@ const WorkerTable = ({ workers, title }) => {
         </TableContainer>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
 const TIME_RANGES = [
-  { label: "1h", minutes: 60 },
-  { label: "6h", minutes: 360 },
-  { label: "24h", minutes: 1440 },
-  { label: "3d", minutes: 4320 },
-  { label: "7d", minutes: 10080 },
-];
+  { label: '1h', minutes: 60 },
+  { label: '6h', minutes: 360 },
+  { label: '24h', minutes: 1440 },
+  { label: '3d', minutes: 4320 },
+  { label: '7d', minutes: 10080 },
+]
 
 const formatChartTime = (timestamp, rangeMinutes) => {
-  const d = new Date(timestamp);
+  const d = new Date(timestamp)
   if (rangeMinutes <= 1440) {
-    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
   }
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
 const STARTUP_PHASES = [
-  { key: "BaseWorkerMs", label: "Base Worker", fkey: "BaseFunctionCount", color: "#7c4dff" },
-  { key: "WarmupMs", label: "Warmup", fkey: null, color: "#ffc107" },
-  { key: "HttpReadyMs", label: "HTTP Ready", fkey: "HttpFunctionCount", color: "#00c853" },
-  { key: "HttpPoolFullMs", label: "HTTP Pool Full", fkey: null, color: "#69f0ae" },
-  { key: "BgReadyMs", label: "BG Ready", fkey: "BgFunctionCount", color: "#29b6f6" },
-  { key: "FullyReadyMs", label: "Fully Ready", fkey: null, color: "#66bb6a" },
-];
+  {
+    key: 'BaseWorkerMs',
+    label: 'Base Worker',
+    fkey: 'BaseFunctionCount',
+    color: '#7c4dff',
+  },
+  { key: 'WarmupMs', label: 'Warmup', fkey: null, color: '#ffc107' },
+  {
+    key: 'HttpReadyMs',
+    label: 'HTTP Ready',
+    fkey: 'HttpFunctionCount',
+    color: '#00c853',
+  },
+  {
+    key: 'HttpPoolFullMs',
+    label: 'HTTP Pool Full',
+    fkey: null,
+    color: '#69f0ae',
+  },
+  {
+    key: 'BgReadyMs',
+    label: 'BG Ready',
+    fkey: 'BgFunctionCount',
+    color: '#29b6f6',
+  },
+  { key: 'FullyReadyMs', label: 'Fully Ready', fkey: null, color: '#66bb6a' },
+]
 
 const StartupTimingBar = ({ startup }) => {
-  if (!startup) return null;
+  if (!startup) return null
 
   // Build segments as incremental durations between phases
-  const phases = STARTUP_PHASES.filter((p) => startup[p.key] > 0);
-  const totalMs = startup.FullyReadyMs || Math.max(...phases.map((p) => startup[p.key]), 1);
+  const phases = STARTUP_PHASES.filter((p) => startup[p.key] > 0)
+  const totalMs =
+    startup.FullyReadyMs || Math.max(...phases.map((p) => startup[p.key]), 1)
 
   // Compute incremental segments (each phase = cumulative time to that point)
   const segments = phases.map((phase, i) => {
-    const cumMs = startup[phase.key];
-    const prevMs = i > 0 ? startup[phases[i - 1].key] : 0;
-    const deltaMs = Math.max(cumMs - prevMs, 0);
+    const cumMs = startup[phase.key]
+    const prevMs = i > 0 ? startup[phases[i - 1].key] : 0
+    const deltaMs = Math.max(cumMs - prevMs, 0)
     return {
       ...phase,
       cumMs,
       deltaMs,
       pct: totalMs > 0 ? (deltaMs / totalMs) * 100 : 0,
       functions: phase.fkey ? startup[phase.fkey] : null,
-    };
-  });
+    }
+  })
 
   return (
     <Card>
       <CardHeader
         title="Startup Timing"
-        titleTypographyProps={{ variant: "subtitle1" }}
+        titleTypographyProps={{ variant: 'subtitle1' }}
         avatar={<RocketLaunch fontSize="small" color="primary" />}
         subheader={`${startup.ReadinessMode} / ${startup.WarmupMode} — ${startup.CpuCount} CPUs, ${startup.HttpPoolSize}H + ${startup.BgPoolSize}BG — Total: ${formatDuration(totalMs)}`}
-        subheaderTypographyProps={{ variant: "caption" }}
+        subheaderTypographyProps={{ variant: 'caption' }}
         sx={{ pb: 0 }}
       />
-      <CardContent sx={{ pt: 1.5, pb: "12px !important" }}>
+      <CardContent sx={{ pt: 1.5, pb: '12px !important' }}>
         {/* Single horizontal stacked bar */}
-        <Box sx={{ display: "flex", height: 28, borderRadius: 1, overflow: "hidden", mb: 1.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            height: 28,
+            borderRadius: 1,
+            overflow: 'hidden',
+            mb: 1.5,
+          }}
+        >
           {segments.map((seg) => (
             <Tooltip
               key={seg.key}
@@ -254,7 +301,8 @@ const StartupTimingBar = ({ startup }) => {
                     {seg.label}
                   </Typography>
                   <Typography variant="caption">
-                    {formatDuration(seg.deltaMs)} (cumulative: {formatDuration(seg.cumMs)})
+                    {formatDuration(seg.deltaMs)} (cumulative:{' '}
+                    {formatDuration(seg.cumMs)})
                   </Typography>
                   {seg.functions != null && (
                     <Typography variant="caption" display="block">
@@ -268,19 +316,24 @@ const StartupTimingBar = ({ startup }) => {
                 sx={{
                   width: `${Math.max(seg.pct, 1)}%`,
                   backgroundColor: seg.color,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   minWidth: seg.pct > 8 ? 0 : 4,
-                  cursor: "pointer",
-                  transition: "filter 0.15s",
-                  "&:hover": { filter: "brightness(1.2)" },
+                  cursor: 'pointer',
+                  transition: 'filter 0.15s',
+                  '&:hover': { filter: 'brightness(1.2)' },
                 }}
               >
                 {seg.pct > 12 && (
                   <Typography
                     variant="caption"
-                    sx={{ color: "#fff", fontWeight: 600, fontSize: 10, textShadow: "0 1px 2px rgba(0,0,0,.4)" }}
+                    sx={{
+                      color: '#fff',
+                      fontWeight: 600,
+                      fontSize: 10,
+                      textShadow: '0 1px 2px rgba(0,0,0,.4)',
+                    }}
                   >
                     {formatDuration(seg.deltaMs)}
                   </Typography>
@@ -292,129 +345,196 @@ const StartupTimingBar = ({ startup }) => {
         {/* Legend */}
         <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
           {segments.map((seg) => (
-            <Stack key={seg.key} direction="row" alignItems="center" spacing={0.5}>
-              <Box sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: seg.color, flexShrink: 0 }} />
+            <Stack
+              key={seg.key}
+              direction="row"
+              alignItems="center"
+              spacing={0.5}
+            >
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  backgroundColor: seg.color,
+                  flexShrink: 0,
+                }}
+              />
               <Typography variant="caption" color="text.secondary">
                 {seg.label}
                 {seg.functions != null && ` (${seg.functions})`}
               </Typography>
             </Stack>
           ))}
-          <Typography variant="caption" color="text.secondary" sx={{ ml: "auto !important" }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ ml: 'auto !important' }}
+          >
             Modules: {startup.SharedModuleCount} shared
-            {startup.HttpOnlyModuleCount > 0 && `, ${startup.HttpOnlyModuleCount} HTTP`}
-            {startup.BgOnlyModuleCount > 0 && `, ${startup.BgOnlyModuleCount} BG`}
+            {startup.HttpOnlyModuleCount > 0 &&
+              `, ${startup.HttpOnlyModuleCount} HTTP`}
+            {startup.BgOnlyModuleCount > 0 &&
+              `, ${startup.BgOnlyModuleCount} BG`}
           </Typography>
         </Stack>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
 const CompactStatsRow = ({ snapshot }) => {
-  if (!snapshot) return null;
+  if (!snapshot) return null
 
-  const http = snapshot.HttpPool || {};
-  const bg = snapshot.BgPool || {};
-  const jobs = snapshot.Jobs || {};
-  const limiter = snapshot.Limiter || {};
-  const mem = snapshot.Memory || {};
+  const http = snapshot.HttpPool || {}
+  const bg = snapshot.BgPool || {}
+  const jobs = snapshot.Jobs || {}
+  const limiter = snapshot.Limiter || {}
+  const mem = snapshot.Memory || {}
 
   const sections = [
     {
-      label: "HTTP Pool",
-      color: "primary",
+      label: 'HTTP Pool',
+      color: 'primary',
       stats: [
-        { k: "Size", v: http.PoolSize ?? 0 },
-        { k: "Busy", v: http.BusyCount ?? 0, w: http.BusyCount >= http.PoolSize },
-        { k: "Invocations", v: http.TotalInvocations?.toLocaleString() ?? 0 },
-        { k: "Util", v: `${http.AvgUtilizationPct ?? 0}%`, w: http.AvgUtilizationPct > 80 },
-        { k: "Avg", v: formatDuration(http.AvgDurationMs) },
-        { k: "Faults", v: http.TotalFaults ?? 0, w: http.TotalFaults > 0 },
+        { k: 'Size', v: http.PoolSize ?? 0 },
+        {
+          k: 'Busy',
+          v: http.BusyCount ?? 0,
+          w: http.BusyCount >= http.PoolSize,
+        },
+        { k: 'Invocations', v: http.TotalInvocations?.toLocaleString() ?? 0 },
+        {
+          k: 'Util',
+          v: `${http.AvgUtilizationPct ?? 0}%`,
+          w: http.AvgUtilizationPct > 80,
+        },
+        { k: 'Avg', v: formatDuration(http.AvgDurationMs) },
+        { k: 'Faults', v: http.TotalFaults ?? 0, w: http.TotalFaults > 0 },
       ],
     },
     {
-      label: "BG Pool",
-      color: "warning",
+      label: 'BG Pool',
+      color: 'warning',
       stats: [
-        { k: "Size", v: bg.PoolSize ?? 0 },
-        { k: "Busy", v: bg.BusyCount ?? 0, w: bg.BusyCount >= bg.PoolSize },
-        { k: "Invocations", v: bg.TotalInvocations?.toLocaleString() ?? 0 },
-        { k: "Util", v: `${bg.AvgUtilizationPct ?? 0}%`, w: bg.AvgUtilizationPct > 80 },
-        { k: "Avg", v: formatDuration(bg.AvgDurationMs) },
-        { k: "Faults", v: bg.TotalFaults ?? 0, w: bg.TotalFaults > 0 },
+        { k: 'Size', v: bg.PoolSize ?? 0 },
+        { k: 'Busy', v: bg.BusyCount ?? 0, w: bg.BusyCount >= bg.PoolSize },
+        { k: 'Invocations', v: bg.TotalInvocations?.toLocaleString() ?? 0 },
+        {
+          k: 'Util',
+          v: `${bg.AvgUtilizationPct ?? 0}%`,
+          w: bg.AvgUtilizationPct > 80,
+        },
+        { k: 'Avg', v: formatDuration(bg.AvgDurationMs) },
+        { k: 'Faults', v: bg.TotalFaults ?? 0, w: bg.TotalFaults > 0 },
       ],
     },
     {
-      label: "Jobs",
-      color: "info",
+      label: 'Jobs',
+      color: 'info',
       stats: [
-        { k: "Running", v: jobs.Running ?? 0 },
-        { k: "Queued", v: jobs.Queued ?? 0, w: jobs.Queued > 10 },
-        { k: "Done", v: jobs.Completed?.toLocaleString() ?? 0 },
-        { k: "Failed", v: jobs.Failed ?? 0, w: jobs.Failed > 0 },
+        { k: 'Running', v: jobs.Running ?? 0 },
+        { k: 'Queued', v: jobs.Queued ?? 0, w: jobs.Queued > 10 },
+        { k: 'Done', v: jobs.Completed?.toLocaleString() ?? 0 },
+        { k: 'Failed', v: jobs.Failed ?? 0, w: jobs.Failed > 0 },
         // Stale queue entries whose task was gone by dispatch time — benign, so never flagged.
-        { k: "Skipped", v: jobs.Skipped ?? 0 },
+        { k: 'Skipped', v: jobs.Skipped ?? 0 },
       ],
     },
     {
-      label: "Limiter",
-      color: "default",
+      label: 'Limiter',
+      color: 'default',
       stats: [
-        { k: "Active", v: `${limiter.Active ?? 0} / ${limiter.CurrentMax ?? 0}` },
-        { k: "Waiting", v: limiter.Waiting ?? 0 },
-        ...(limiter.IsHttpThrottled ? [{ k: "Status", v: "Throttled", w: true }] : []),
+        {
+          k: 'Active',
+          v: `${limiter.Active ?? 0} / ${limiter.CurrentMax ?? 0}`,
+        },
+        { k: 'Waiting', v: limiter.Waiting ?? 0 },
+        ...(limiter.IsHttpThrottled
+          ? [{ k: 'Status', v: 'Throttled', w: true }]
+          : []),
       ],
     },
     {
-      label: "Memory",
-      color: "secondary",
+      label: 'Memory',
+      color: 'secondary',
       stats: [
-        { k: "Container", v: `${mem.ContainerUsedMB ?? mem.RssMB ?? 0} / ${mem.ContainerLimitMB ?? 0}MB`, w: mem.UsagePct > 85 },
-        { k: "App RSS", v: `${mem.RssMB ?? 0}MB` },
-        { k: "Other", v: `${mem.OtherRssMB ?? 0}MB` },
-        { k: "GC Heap", v: `${mem.HeapMB ?? 0}MB` },
-        { k: "Committed", v: `${mem.CommittedMB ?? 0}MB` },
-        { k: "GC Limit", v: `${mem.GCHeapLimitMB ?? 0}MB` },
-        { k: "Usage", v: `${mem.UsagePct ?? 0}%`, w: mem.UsagePct > 85 },
-        { k: "GC", v: `${mem.GC0 ?? 0}/${mem.GC1 ?? 0}/${mem.GC2 ?? 0}` },
-        ...(mem.TestDataCacheCount != null ? [{ k: "Cache", v: `${mem.TestDataCacheCount} entries` }] : []),
+        {
+          k: 'Container',
+          v: `${mem.ContainerUsedMB ?? mem.RssMB ?? 0} / ${mem.ContainerLimitMB ?? 0}MB`,
+          w: mem.UsagePct > 85,
+        },
+        { k: 'App RSS', v: `${mem.RssMB ?? 0}MB` },
+        { k: 'Other', v: `${mem.OtherRssMB ?? 0}MB` },
+        { k: 'GC Heap', v: `${mem.HeapMB ?? 0}MB` },
+        { k: 'Committed', v: `${mem.CommittedMB ?? 0}MB` },
+        { k: 'GC Limit', v: `${mem.GCHeapLimitMB ?? 0}MB` },
+        { k: 'Usage', v: `${mem.UsagePct ?? 0}%`, w: mem.UsagePct > 85 },
+        { k: 'GC', v: `${mem.GC0 ?? 0}/${mem.GC1 ?? 0}/${mem.GC2 ?? 0}` },
+        ...(mem.TestDataCacheCount != null
+          ? [{ k: 'Cache', v: `${mem.TestDataCacheCount} entries` }]
+          : []),
       ],
     },
     {
-      label: "CPU",
-      color: "warning",
+      label: 'CPU',
+      color: 'warning',
       stats: [
-        { k: "Container", v: `${mem.ContainerCpuPct ?? mem.CpuPct ?? 0}%`, w: (mem.ContainerCpuPct ?? 0) > 80 },
-        { k: "App", v: `${mem.CpuPct ?? 0}%`, w: mem.CpuPct > 80 },
-        { k: "Other", v: `${mem.OtherCpuPct ?? 0}%` },
+        {
+          k: 'Container',
+          v: `${mem.ContainerCpuPct ?? mem.CpuPct ?? 0}%`,
+          w: (mem.ContainerCpuPct ?? 0) > 80,
+        },
+        { k: 'App', v: `${mem.CpuPct ?? 0}%`, w: mem.CpuPct > 80 },
+        { k: 'Other', v: `${mem.OtherCpuPct ?? 0}%` },
       ],
     },
-  ];
+  ]
 
   return (
     <Card>
-      <CardContent sx={{ py: 1, px: 0, "&:last-child": { pb: 1 } }}>
+      <CardContent sx={{ py: 1, px: 0, '&:last-child': { pb: 1 } }}>
         <TableContainer>
-          <Table size="small" sx={{ "& td, & th": { borderBottom: "none", py: 0.25, px: 1 } }}>
+          <Table
+            size="small"
+            sx={{ '& td, & th': { borderBottom: 'none', py: 0.25, px: 1 } }}
+          >
             <TableBody>
               {sections.map((sec) => (
                 <TableRow key={sec.label}>
                   <TableCell sx={{ width: 100 }}>
-                    <Chip label={sec.label} size="small" color={sec.color} variant="outlined" sx={{ fontWeight: 600 }} />
+                    <Chip
+                      label={sec.label}
+                      size="small"
+                      color={sec.color}
+                      variant="outlined"
+                      sx={{ fontWeight: 600 }}
+                    />
                   </TableCell>
                   {sec.stats.map((s) => (
                     <TableCell key={s.k} align="center">
-                      <Typography variant="caption" color="text.secondary" display="block" lineHeight={1.2}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                        lineHeight={1.2}
+                      >
                         {s.k}
                       </Typography>
-                      <Typography variant="body2" fontWeight={600} color={s.w ? "error.main" : "text.primary"} lineHeight={1.3}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        color={s.w ? 'error.main' : 'text.primary'}
+                        lineHeight={1.3}
+                      >
                         {s.v}
                       </Typography>
                     </TableCell>
                   ))}
                   {/* Pad empty cells so columns stay aligned */}
-                  {Array.from({ length: Math.max(0, 6 - sec.stats.length) }).map((_, i) => (
+                  {Array.from({
+                    length: Math.max(0, 6 - sec.stats.length),
+                  }).map((_, i) => (
                     <TableCell key={`pad-${i}`} />
                   ))}
                 </TableRow>
@@ -424,30 +544,46 @@ const CompactStatsRow = ({ snapshot }) => {
         </TableContainer>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
 const HistoryChart = ({ data, rangeMinutes, title, icon, children }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   if (!data || data.length === 0) {
     return (
       <Card>
-        <CardHeader title={title} titleTypographyProps={{ variant: "h6" }} avatar={icon} />
+        <CardHeader
+          title={title}
+          titleTypographyProps={{ variant: 'h6' }}
+          avatar={icon}
+        />
         <CardContent>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 200,
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
-              No historical data available yet — data collection starts after 60 seconds
+              No historical data available yet — data collection starts after 60
+              seconds
             </Typography>
           </Box>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
     <Card>
-      <CardHeader title={title} titleTypographyProps={{ variant: "h6" }} avatar={icon} />
+      <CardHeader
+        title={title}
+        titleTypographyProps={{ variant: 'h6' }}
+        avatar={icon}
+      />
       <CardContent sx={{ pt: 0 }}>
         <Box sx={{ height: 250 }}>
           {/* numeric height, recharts warns before its first measure when both sizes are percentages */}
@@ -457,78 +593,91 @@ const HistoryChart = ({ data, rangeMinutes, title, icon, children }) => {
         </Box>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
 const Page = () => {
-  const theme = useTheme();
-  const titleClaimed = useTitleClaimedByTabPicker("Worker Health");
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef(null);
-  const [historyRange, setHistoryRange] = useState(60);
-  const [paused, setPaused] = useState(false);
-  const [importedData, setImportedData] = useState(null);
-  const [jobLimit, setJobLimit] = useState(2000);
-  const [jobStatus, setJobStatus] = useState("");
+  const theme = useTheme()
+  const titleClaimed = useTitleClaimedByTabPicker('Worker Health')
+  const queryClient = useQueryClient()
+  const fileInputRef = useRef(null)
+  const [historyRange, setHistoryRange] = useState(60)
+  const [paused, setPaused] = useState(false)
+  const [importedData, setImportedData] = useState(null)
+  const [jobLimit, setJobLimit] = useState(2000)
+  const [jobStatus, setJobStatus] = useState('')
 
-  const isImported = importedData !== null;
-  const effectivePaused = paused || isImported;
+  const isImported = importedData !== null
+  const effectivePaused = paused || isImported
 
   const healthQuery = ApiGetCall({
-    url: "/api/ListWorkerHealth",
-    data: { Action: "Snapshot" },
-    queryKey: "WorkerHealth",
+    url: '/api/ListWorkerHealth',
+    data: { Action: 'Snapshot' },
+    queryKey: 'WorkerHealth',
     refetchInterval: effectivePaused ? false : 5000,
-  });
+  })
 
   const startupQuery = ApiGetCall({
-    url: "/api/ListWorkerHealth",
-    data: { Action: "Startup" },
-    queryKey: "WorkerStartup",
-  });
+    url: '/api/ListWorkerHealth',
+    data: { Action: 'Startup' },
+    queryKey: 'WorkerStartup',
+  })
 
   const historyQuery = ApiGetCall({
-    url: "/api/ListWorkerHealth",
-    data: { Action: "History", Minutes: String(historyRange), MaxPoints: "500" },
+    url: '/api/ListWorkerHealth',
+    data: {
+      Action: 'History',
+      Minutes: String(historyRange),
+      MaxPoints: '500',
+    },
     queryKey: `WorkerHistory-${historyRange}`,
     refetchInterval: effectivePaused ? false : 60000,
-  });
+  })
 
   const jobAction = ApiPostCall({
     // wildcard: the job table's query key carries the limit/status suffix
-    relatedQueryKeys: ["WorkerHealthJobs*", "WorkerHealth"],
-  });
+    relatedQueryKeys: ['WorkerHealthJobs*', 'WorkerHealth'],
+  })
 
   const cacheDiagQuery = ApiGetCall({
-    url: "/api/ListWorkerHealth",
-    data: { Action: "CacheDiag" },
-    queryKey: "WorkerCacheDiag",
+    url: '/api/ListWorkerHealth',
+    data: { Action: 'CacheDiag' },
+    queryKey: 'WorkerCacheDiag',
     refetchInterval: effectivePaused ? false : 30000,
-  });
+  })
 
   // Resolve data: imported overrides live
-  const snapshot = isImported ? importedData.snapshot : healthQuery.data?.Results;
-  const startupInfo = isImported ? importedData.startup : startupQuery.data?.Results;
+  const snapshot = isImported
+    ? importedData.snapshot
+    : healthQuery.data?.Results
+  const startupInfo = isImported
+    ? importedData.startup
+    : startupQuery.data?.Results
   const importedJobs = useMemo(() => {
-    if (!isImported || !importedData.jobs) return null;
+    if (!isImported || !importedData.jobs) return null
     // Handle both array and { Results: [...] } shapes from query cache
-    if (Array.isArray(importedData.jobs)) return importedData.jobs;
-    if (Array.isArray(importedData.jobs?.Results)) return importedData.jobs.Results;
-    if (Array.isArray(importedData.jobs?.data?.Results)) return importedData.jobs.data.Results;
-    if (Array.isArray(importedData.jobs?.data)) return importedData.jobs.data;
-    return [];
-  }, [isImported, importedData]);
+    if (Array.isArray(importedData.jobs)) return importedData.jobs
+    if (Array.isArray(importedData.jobs?.Results))
+      return importedData.jobs.Results
+    if (Array.isArray(importedData.jobs?.data?.Results))
+      return importedData.jobs.data.Results
+    if (Array.isArray(importedData.jobs?.data)) return importedData.jobs.data
+    return []
+  }, [isImported, importedData])
 
   const historyData = useMemo(() => {
     const raw = isImported
-      ? importedData.history?.Data ?? importedData.history
-      : historyQuery.data?.Results?.Data;
-    if (!raw || !Array.isArray(raw)) return [];
+      ? (importedData.history?.Data ?? importedData.history)
+      : historyQuery.data?.Results?.Data
+    if (!raw || !Array.isArray(raw)) return []
     return raw.map((p) => ({
       ...p,
-      time: formatChartTime(p.TimestampUtc, isImported ? importedData.historyRange ?? 60 : historyRange),
-    }));
-  }, [historyQuery.data, historyRange, importedData, isImported]);
+      time: formatChartTime(
+        p.TimestampUtc,
+        isImported ? (importedData.historyRange ?? 60) : historyRange
+      ),
+    }))
+  }, [historyQuery.data, historyRange, importedData, isImported])
 
   // ── Export ──
   const handleExport = useCallback(() => {
@@ -539,25 +688,29 @@ const Page = () => {
       startup: startupQuery.data?.Results ?? null,
       history: historyQuery.data?.Results ?? null,
       jobs: null,
-    };
+    }
     // Grab the job data for the currently selected limit/status only — a prefix match
     // would hand back a stale query from a previous filter.
-    const jobsData = queryClient.getQueryData([`WorkerHealthJobs-${jobLimit}-${jobStatus}`]);
+    const jobsData = queryClient.getQueryData([
+      `WorkerHealthJobs-${jobLimit}-${jobStatus}`,
+    ])
     if (jobsData) {
       // CippDataTable uses an infinite query, so the cache holds { pages: [{ Results }] }.
       const rows = Array.isArray(jobsData.pages)
         ? jobsData.pages.flatMap((page) => page?.Results ?? [])
-        : (jobsData.Results ?? jobsData);
-      if (Array.isArray(rows)) payload.jobs = rows;
+        : (jobsData.Results ?? jobsData)
+      if (Array.isArray(rows)) payload.jobs = rows
     }
 
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `worker-health-${new Date().toISOString().slice(0, 16).replace(/:/g, "")}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `worker-health-${new Date().toISOString().slice(0, 16).replace(/:/g, '')}.json`
+    a.click()
+    URL.revokeObjectURL(url)
   }, [
     healthQuery.data,
     startupQuery.data,
@@ -566,153 +719,176 @@ const Page = () => {
     queryClient,
     jobLimit,
     jobStatus,
-  ]);
+  ])
 
   // ── Import ──
   const handleImport = useCallback((event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
     reader.onload = (e) => {
       try {
-        const data = JSON.parse(e.target.result);
-        setImportedData(data);
-        setPaused(true);
+        const data = JSON.parse(e.target.result)
+        setImportedData(data)
+        setPaused(true)
       } catch {
         // invalid JSON — ignore
       }
-    };
-    reader.readAsText(file);
+    }
+    reader.readAsText(file)
     // Reset input so same file can be re-imported
-    event.target.value = "";
-  }, []);
+    event.target.value = ''
+  }, [])
 
   const handleClearImport = useCallback(() => {
-    setImportedData(null);
-    setPaused(false);
-  }, []);
+    setImportedData(null)
+    setPaused(false)
+  }, [])
 
   const handleRefreshHistory = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [`WorkerHistory-${historyRange}`] });
-  }, [queryClient, historyRange]);
+    queryClient.invalidateQueries({
+      queryKey: [`WorkerHistory-${historyRange}`],
+    })
+  }, [queryClient, historyRange])
 
   const infoBarData = useMemo(() => {
-    if (!snapshot) return [];
-    const http = snapshot.HttpPool || {};
-    const bg = snapshot.BgPool || {};
-    const jobs = snapshot.Jobs || {};
-    const limiter = snapshot.Limiter || {};
+    if (!snapshot) return []
+    const http = snapshot.HttpPool || {}
+    const bg = snapshot.BgPool || {}
+    const jobs = snapshot.Jobs || {}
+    const limiter = snapshot.Limiter || {}
 
     return [
       {
         icon: <Memory />,
-        name: "HTTP Workers",
+        name: 'HTTP Workers',
         data: `${http.BusyCount ?? 0} / ${http.PoolSize ?? 0} busy`,
-        color: http.BusyCount >= http.PoolSize ? "error" : "primary",
+        color: http.BusyCount >= http.PoolSize ? 'error' : 'primary',
       },
       {
         icon: <Speed />,
-        name: "BG Workers",
+        name: 'BG Workers',
         data: `${bg.BusyCount ?? 0} / ${bg.PoolSize ?? 0} busy`,
-        color: bg.BusyCount >= bg.PoolSize ? "error" : "primary",
+        color: bg.BusyCount >= bg.PoolSize ? 'error' : 'primary',
       },
       {
         icon: jobs.Running > 0 ? <PlayArrow /> : <HourglassEmpty />,
-        name: "Job Queue",
+        name: 'Job Queue',
         data: `${jobs.Running ?? 0} running, ${jobs.Queued ?? 0} queued`,
-        color: jobs.Queued > 10 ? "warning" : "primary",
+        color: jobs.Queued > 10 ? 'warning' : 'primary',
       },
       {
         icon: limiter.IsHttpThrottled ? <Warning /> : <CheckCircle />,
-        name: "BG Limiter",
+        name: 'BG Limiter',
         data: limiter.IsHttpThrottled
-          ? "HTTP Throttled"
+          ? 'HTTP Throttled'
           : `${limiter.Active ?? 0} / ${limiter.CurrentMax ?? 0} active`,
-        color: limiter.IsHttpThrottled ? "error" : "primary",
+        color: limiter.IsHttpThrottled ? 'error' : 'primary',
       },
       {
         icon: <Memory />,
-        name: "Memory",
+        name: 'Memory',
         data: `${snapshot.Memory?.ContainerUsedMB ?? snapshot.Memory?.RssMB ?? 0}MB / ${snapshot.Memory?.ContainerLimitMB ?? 0}MB (${snapshot.Memory?.UsagePct ?? 0}%)`,
-        color: (snapshot.Memory?.UsagePct ?? 0) > 85 ? "error" : (snapshot.Memory?.UsagePct ?? 0) > 70 ? "warning" : "primary",
+        color:
+          (snapshot.Memory?.UsagePct ?? 0) > 85
+            ? 'error'
+            : (snapshot.Memory?.UsagePct ?? 0) > 70
+              ? 'warning'
+              : 'primary',
       },
       {
         icon: <Speed />,
-        name: "CPU",
+        name: 'CPU',
         data: `${snapshot.Memory?.ContainerCpuPct ?? snapshot.Memory?.CpuPct ?? 0}% container / ${snapshot.Memory?.CpuPct ?? 0}% app`,
-        color: (snapshot.Memory?.ContainerCpuPct ?? snapshot.Memory?.CpuPct ?? 0) > 80 ? "error" : (snapshot.Memory?.ContainerCpuPct ?? snapshot.Memory?.CpuPct ?? 0) > 50 ? "warning" : "primary",
+        color:
+          (snapshot.Memory?.ContainerCpuPct ?? snapshot.Memory?.CpuPct ?? 0) >
+          80
+            ? 'error'
+            : (snapshot.Memory?.ContainerCpuPct ??
+                  snapshot.Memory?.CpuPct ??
+                  0) > 50
+              ? 'warning'
+              : 'primary',
       },
-    ];
-  }, [snapshot]);
+    ]
+  }, [snapshot])
 
-  const jobSimpleColumns = ["Name", "RunName", "Priority", "Status", "QueuedUtc", "WaitSeconds", "DurationSeconds"];
+  const jobSimpleColumns = [
+    'Name',
+    'RunName',
+    'Priority',
+    'Status',
+    'QueuedUtc',
+    'WaitSeconds',
+    'DurationSeconds',
+  ]
 
   const jobActions = useMemo(
     () => [
       {
-        label: "Cancel Job",
+        label: 'Cancel Job',
         icon: <Cancel />,
-        color: "error.main",
+        color: 'error.main',
         noConfirm: true,
         customFunction: (row) => {
           jobAction.mutate({
-            url: "/api/ListWorkerHealth",
-            data: { Action: "CancelJob", JobId: row.Id },
-          });
+            url: '/api/ListWorkerHealth',
+            data: { Action: 'CancelJob', JobId: row.Id },
+          })
         },
-        condition: (row) => row.Status === "Queued",
+        condition: (row) => row.Status === 'Queued',
       },
       {
-        label: "Change Priority",
+        label: 'Change Priority',
         icon: <LowPriority />,
         fields: [
           {
-            type: "textField",
-            name: "Priority",
-            label: "New Priority (0 = highest)",
+            type: 'textField',
+            name: 'Priority',
+            label: 'New Priority (0 = highest)',
           },
         ],
-        url: "/api/ListWorkerHealth",
-        data: { Action: "ChangePriority" },
+        url: '/api/ListWorkerHealth',
+        data: { Action: 'ChangePriority' },
         dataFunction: (row, formData) => ({
-          Action: "ChangePriority",
+          Action: 'ChangePriority',
           JobId: row.Id,
           Priority: parseInt(formData.Priority, 10),
         }),
-        confirmText: "Change",
-        condition: (row) => row.Status === "Queued",
-        relatedQueryKeys: ["WorkerHealthJobs*", "WorkerHealth"],
+        confirmText: 'Change',
+        condition: (row) => row.Status === 'Queued',
+        relatedQueryKeys: ['WorkerHealthJobs*', 'WorkerHealth'],
       },
       {
-        label: "Cancel Run",
+        label: 'Cancel Run',
         icon: <Cancel />,
-        color: "error.main",
+        color: 'error.main',
         noConfirm: true,
         customFunction: (row) => {
           if (row.RunName) {
             jobAction.mutate({
-              url: "/api/ListWorkerHealth",
-              data: { Action: "CancelRun", RunName: row.RunName },
-            });
+              url: '/api/ListWorkerHealth',
+              data: { Action: 'CancelRun', RunName: row.RunName },
+            })
           }
         },
-        condition: (row) => row.Status === "Queued" && row.RunName,
+        condition: (row) => row.Status === 'Queued' && row.RunName,
       },
       {
-        label: "Delete",
+        label: 'Delete',
         icon: <Delete />,
         noConfirm: true,
         customFunction: (row) => {
           jobAction.mutate({
-            url: "/api/ListWorkerHealth",
-            data: { Action: "DeleteJob", JobId: row.Id },
-          });
+            url: '/api/ListWorkerHealth',
+            data: { Action: 'DeleteJob', JobId: row.Id },
+          })
         },
-        condition: (row) => row.Status !== "Queued" && row.Status !== "Running",
+        condition: (row) => row.Status !== 'Queued' && row.Status !== 'Running',
       },
     ],
     [jobAction]
-  );
+  )
 
   return (
     <>
@@ -723,32 +899,48 @@ const Page = () => {
         <Container maxWidth="xl">
           <Stack spacing={2}>
             {/* ── Header toolbar ── */}
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
               {/* Empty Box keeps the toolbar on the right when the mobile tab picker has
                   already said "Worker Health" directly above this row. */}
-              {titleClaimed ? <Box /> : <Typography variant="h4">Worker Health</Typography>}
+              {titleClaimed ? (
+                <Box />
+              ) : (
+                <Typography variant="h4">Worker Health</Typography>
+              )}
               <Stack direction="row" alignItems="center" spacing={1}>
                 {isImported && (
                   <Chip
-                    label={`Viewing imported data (${importedData.exportedAt ? new Date(importedData.exportedAt).toLocaleString() : "unknown"})`}
+                    label={`Viewing imported data (${importedData.exportedAt ? new Date(importedData.exportedAt).toLocaleString() : 'unknown'})`}
                     color="info"
                     size="small"
                     onDelete={handleClearImport}
                     deleteIcon={<Close />}
                   />
                 )}
-                {!isImported && healthQuery.isFetching && <CircularProgress size={16} />}
+                {!isImported && healthQuery.isFetching && (
+                  <CircularProgress size={16} />
+                )}
                 {!isImported && snapshot && (
                   <Typography variant="caption" color="text.secondary">
                     Uptime: {formatUptime(snapshot.UptimeSeconds)}
                   </Typography>
                 )}
-                <Tooltip title={effectivePaused ? "Resume auto-refresh" : "Pause auto-refresh"}>
+                <Tooltip
+                  title={
+                    effectivePaused
+                      ? 'Resume auto-refresh'
+                      : 'Pause auto-refresh'
+                  }
+                >
                   <span>
                     <IconButton
                       size="small"
                       onClick={() => setPaused((p) => !p)}
-                      color={effectivePaused ? "warning" : "default"}
+                      color={effectivePaused ? 'warning' : 'default'}
                       disabled={isImported}
                     >
                       {effectivePaused ? (
@@ -765,7 +957,10 @@ const Page = () => {
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Import page data from JSON">
-                  <IconButton size="small" onClick={() => fileInputRef.current?.click()}>
+                  <IconButton
+                    size="small"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <FileUpload fontSize="small" />
                   </IconButton>
                 </Tooltip>
@@ -773,7 +968,7 @@ const Page = () => {
                   ref={fileInputRef}
                   type="file"
                   accept=".json"
-                  style={{ display: "none" }}
+                  style={{ display: 'none' }}
                   onChange={handleImport}
                 />
               </Stack>
@@ -786,43 +981,52 @@ const Page = () => {
             <CompactStatsRow snapshot={snapshot} />
 
             {/* ── Worker tables ── */}
-            <WorkerTable workers={snapshot?.HttpPool?.Workers} title="HTTP Workers" />
-            <WorkerTable workers={snapshot?.BgPool?.Workers} title="Background Workers" />
+            <WorkerTable
+              workers={snapshot?.HttpPool?.Workers}
+              title="HTTP Workers"
+            />
+            <WorkerTable
+              workers={snapshot?.BgPool?.Workers}
+              title="Background Workers"
+            />
 
             {/* ── Job Queue ── */}
             {isImported && importedJobs ? (
               <Card>
-                <CardHeader title="Job Queue (imported)" titleTypographyProps={{ variant: "h6" }} />
-                <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
+                <CardHeader
+                  title="Job Queue (imported)"
+                  titleTypographyProps={{ variant: 'h6' }}
+                />
+                <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
                   {importedJobs.length === 0 ? (
-                    <Box sx={{ p: 3, textAlign: "center" }}>
+                    <Box sx={{ p: 3, textAlign: 'center' }}>
                       <Typography variant="body2" color="text.secondary">
                         No job data was captured in this export
                       </Typography>
                     </Box>
                   ) : (
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          {jobSimpleColumns.map((col) => (
-                            <TableCell key={col}>{col}</TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {importedJobs.slice(0, 200).map((row, i) => (
-                          <TableRow key={row.Id ?? i}>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
                             {jobSimpleColumns.map((col) => (
-                              <TableCell key={col}>
-                                {row[col] != null ? String(row[col]) : "—"}
-                              </TableCell>
+                              <TableCell key={col}>{col}</TableCell>
                             ))}
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                          {importedJobs.slice(0, 200).map((row, i) => (
+                            <TableRow key={row.Id ?? i}>
+                              {jobSimpleColumns.map((col) => (
+                                <TableCell key={col}>
+                                  {row[col] != null ? String(row[col]) : '—'}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   )}
                 </CardContent>
               </Card>
@@ -831,34 +1035,34 @@ const Page = () => {
                 title="Job Queue"
                 queryKey={`WorkerHealthJobs-${jobLimit}-${jobStatus}`}
                 api={{
-                  url: "/api/ListWorkerHealth",
+                  url: '/api/ListWorkerHealth',
                   // Status is filtered server-side, before Limit truncates — a client-side
                   // filter would only ever see the oldest N jobs (mostly Completed).
                   data: {
-                    Action: "Jobs",
+                    Action: 'Jobs',
                     Limit: String(jobLimit),
                     ...(jobStatus && { Status: jobStatus }),
                   },
-                  dataKey: "Results",
+                  dataKey: 'Results',
                 }}
                 simpleColumns={jobSimpleColumns}
                 actions={jobActions}
                 offCanvas={{
                   extendedInfoFields: [
-                    "Id",
-                    "Name",
-                    "RunName",
-                    "Status",
-                    "Priority",
-                    "QueuedUtc",
-                    "StartedUtc",
-                    "CompletedUtc",
-                    "WaitSeconds",
-                    "DurationSeconds",
-                    "LastError",
+                    'Id',
+                    'Name',
+                    'RunName',
+                    'Status',
+                    'Priority',
+                    'QueuedUtc',
+                    'StartedUtc',
+                    'CompletedUtc',
+                    'WaitSeconds',
+                    'DurationSeconds',
+                    'LastError',
                   ],
                 }}
-                defaultSorting={[{ id: "QueuedUtc", desc: true }]}
+                defaultSorting={[{ id: 'QueuedUtc', desc: true }]}
                 cardButton={
                   <Stack direction="row" spacing={1}>
                     <ToggleButtonGroup
@@ -867,9 +1071,17 @@ const Page = () => {
                       onChange={(_, val) => val !== null && setJobStatus(val)}
                       size="small"
                     >
-                      {["", "Queued", "Running", "Completed", "Failed", "Cancelled", "Skipped"].map((s) => (
-                        <ToggleButton key={s || "all"} value={s}>
-                          {s || "All"}
+                      {[
+                        '',
+                        'Queued',
+                        'Running',
+                        'Completed',
+                        'Failed',
+                        'Cancelled',
+                        'Skipped',
+                      ].map((s) => (
+                        <ToggleButton key={s || 'all'} value={s}>
+                          {s || 'All'}
                         </ToggleButton>
                       ))}
                     </ToggleButtonGroup>
@@ -894,7 +1106,7 @@ const Page = () => {
             <Card>
               <CardHeader
                 title="Historical Trends"
-                titleTypographyProps={{ variant: "h6" }}
+                titleTypographyProps={{ variant: 'h6' }}
                 avatar={<Timeline color="primary" />}
                 action={
                   <Stack direction="row" alignItems="center" spacing={1}>
@@ -906,9 +1118,15 @@ const Page = () => {
                       </Tooltip>
                     )}
                     <ToggleButtonGroup
-                      value={isImported ? (importedData.historyRange ?? 60) : historyRange}
+                      value={
+                        isImported
+                          ? (importedData.historyRange ?? 60)
+                          : historyRange
+                      }
                       exclusive
-                      onChange={(_, val) => val !== null && setHistoryRange(val)}
+                      onChange={(_, val) =>
+                        val !== null && setHistoryRange(val)
+                      }
                       size="small"
                       disabled={isImported}
                     >
@@ -932,10 +1150,25 @@ const Page = () => {
                   icon={<Speed color="primary" />}
                 >
                   {(data, t) => (
-                    <LineChart data={data} margin={{ left: 0, right: 12, top: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={t.palette.divider} />
-                      <XAxis dataKey="time" tick={{ fontSize: 11 }} tickMargin={8} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} tickMargin={4} unit="%" />
+                    <LineChart
+                      data={data}
+                      margin={{ left: 0, right: 12, top: 10, bottom: 10 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={t.palette.divider}
+                      />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fontSize: 11 }}
+                        tickMargin={8}
+                      />
+                      <YAxis
+                        domain={[0, 100]}
+                        tick={{ fontSize: 11 }}
+                        tickMargin={4}
+                        unit="%"
+                      />
                       <RechartsTooltip
                         contentStyle={{
                           backgroundColor: t.palette.background.paper,
@@ -944,8 +1177,22 @@ const Page = () => {
                         }}
                       />
                       <Legend />
-                      <Line type="monotone" dataKey="HttpUtilizationPct" name="HTTP" stroke={t.palette.primary.main} strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="BgUtilizationPct" name="Background" stroke={t.palette.warning.main} strokeWidth={2} dot={false} />
+                      <Line
+                        type="monotone"
+                        dataKey="HttpUtilizationPct"
+                        name="HTTP"
+                        stroke={t.palette.primary.main}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="BgUtilizationPct"
+                        name="Background"
+                        stroke={t.palette.warning.main}
+                        strokeWidth={2}
+                        dot={false}
+                      />
                     </LineChart>
                   )}
                 </HistoryChart>
@@ -958,9 +1205,19 @@ const Page = () => {
                   icon={<PlayArrow color="primary" />}
                 >
                   {(data, t) => (
-                    <BarChart data={data} margin={{ left: 0, right: 12, top: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={t.palette.divider} />
-                      <XAxis dataKey="time" tick={{ fontSize: 11 }} tickMargin={8} />
+                    <BarChart
+                      data={data}
+                      margin={{ left: 0, right: 12, top: 10, bottom: 10 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={t.palette.divider}
+                      />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fontSize: 11 }}
+                        tickMargin={8}
+                      />
                       <YAxis tick={{ fontSize: 11 }} tickMargin={4} />
                       <RechartsTooltip
                         contentStyle={{
@@ -970,8 +1227,16 @@ const Page = () => {
                         }}
                       />
                       <Legend />
-                      <Bar dataKey="HttpInvocations" name="HTTP" fill={t.palette.primary.main} />
-                      <Bar dataKey="BgInvocations" name="Background" fill={t.palette.warning.main} />
+                      <Bar
+                        dataKey="HttpInvocations"
+                        name="HTTP"
+                        fill={t.palette.primary.main}
+                      />
+                      <Bar
+                        dataKey="BgInvocations"
+                        name="Background"
+                        fill={t.palette.warning.main}
+                      />
                     </BarChart>
                   )}
                 </HistoryChart>
@@ -987,9 +1252,19 @@ const Page = () => {
                   icon={<Memory color="primary" />}
                 >
                   {(data, t) => (
-                    <AreaChart data={data} margin={{ left: 0, right: 12, top: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={t.palette.divider} />
-                      <XAxis dataKey="time" tick={{ fontSize: 11 }} tickMargin={8} />
+                    <AreaChart
+                      data={data}
+                      margin={{ left: 0, right: 12, top: 10, bottom: 10 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={t.palette.divider}
+                      />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fontSize: 11 }}
+                        tickMargin={8}
+                      />
                       <YAxis tick={{ fontSize: 11 }} tickMargin={4} unit="MB" />
                       <RechartsTooltip
                         contentStyle={{
@@ -999,11 +1274,46 @@ const Page = () => {
                         }}
                       />
                       <Legend />
-                      <Area type="monotone" dataKey="ContainerUsedMB" name="Container Total" fill={t.palette.error.light} stroke={t.palette.error.main} fillOpacity={0.15} />
-                      <Area type="monotone" dataKey="RssMB" name="App RSS" fill={t.palette.warning.light} stroke={t.palette.warning.main} fillOpacity={0.2} />
-                      <Area type="monotone" dataKey="OtherRssMB" name="Other (sshd, sidecar...)" fill={t.palette.info.light} stroke={t.palette.info.main} fillOpacity={0.2} />
-                      <Area type="monotone" dataKey="HeapMB" name="GC Heap" fill={t.palette.primary.light} stroke={t.palette.primary.main} fillOpacity={0.3} />
-                      <Area type="monotone" dataKey="CommittedMB" name="Committed" fill={t.palette.success.light} stroke={t.palette.success.main} fillOpacity={0.1} />
+                      <Area
+                        type="monotone"
+                        dataKey="ContainerUsedMB"
+                        name="Container Total"
+                        fill={t.palette.error.light}
+                        stroke={t.palette.error.main}
+                        fillOpacity={0.15}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="RssMB"
+                        name="App RSS"
+                        fill={t.palette.warning.light}
+                        stroke={t.palette.warning.main}
+                        fillOpacity={0.2}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="OtherRssMB"
+                        name="Other (sshd, sidecar...)"
+                        fill={t.palette.info.light}
+                        stroke={t.palette.info.main}
+                        fillOpacity={0.2}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="HeapMB"
+                        name="GC Heap"
+                        fill={t.palette.primary.light}
+                        stroke={t.palette.primary.main}
+                        fillOpacity={0.3}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="CommittedMB"
+                        name="Committed"
+                        fill={t.palette.success.light}
+                        stroke={t.palette.success.main}
+                        fillOpacity={0.1}
+                      />
                     </AreaChart>
                   )}
                 </HistoryChart>
@@ -1016,10 +1326,25 @@ const Page = () => {
                   icon={<Speed color="primary" />}
                 >
                   {(data, t) => (
-                    <LineChart data={data} margin={{ left: 0, right: 12, top: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={t.palette.divider} />
-                      <XAxis dataKey="time" tick={{ fontSize: 11 }} tickMargin={8} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} tickMargin={4} unit="%" />
+                    <LineChart
+                      data={data}
+                      margin={{ left: 0, right: 12, top: 10, bottom: 10 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={t.palette.divider}
+                      />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fontSize: 11 }}
+                        tickMargin={8}
+                      />
+                      <YAxis
+                        domain={[0, 100]}
+                        tick={{ fontSize: 11 }}
+                        tickMargin={4}
+                        unit="%"
+                      />
                       <RechartsTooltip
                         contentStyle={{
                           backgroundColor: t.palette.background.paper,
@@ -1028,9 +1353,31 @@ const Page = () => {
                         }}
                       />
                       <Legend />
-                      <Line type="monotone" dataKey="ContainerCpuPct" name="Container CPU" stroke={t.palette.error.main} strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="CpuPct" name="App CPU" stroke={t.palette.secondary.main} strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="OtherCpuPct" name="Other CPU" stroke={t.palette.info.main} strokeWidth={2} strokeDasharray="4 2" dot={false} />
+                      <Line
+                        type="monotone"
+                        dataKey="ContainerCpuPct"
+                        name="Container CPU"
+                        stroke={t.palette.error.main}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="CpuPct"
+                        name="App CPU"
+                        stroke={t.palette.secondary.main}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="OtherCpuPct"
+                        name="Other CPU"
+                        stroke={t.palette.info.main}
+                        strokeWidth={2}
+                        strokeDasharray="4 2"
+                        dot={false}
+                      />
                     </LineChart>
                   )}
                 </HistoryChart>
@@ -1046,9 +1393,19 @@ const Page = () => {
                   icon={<HourglassEmpty color="primary" />}
                 >
                   {(data, t) => (
-                    <AreaChart data={data} margin={{ left: 0, right: 12, top: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={t.palette.divider} />
-                      <XAxis dataKey="time" tick={{ fontSize: 11 }} tickMargin={8} />
+                    <AreaChart
+                      data={data}
+                      margin={{ left: 0, right: 12, top: 10, bottom: 10 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={t.palette.divider}
+                      />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fontSize: 11 }}
+                        tickMargin={8}
+                      />
                       <YAxis tick={{ fontSize: 11 }} tickMargin={4} />
                       <RechartsTooltip
                         contentStyle={{
@@ -1058,8 +1415,22 @@ const Page = () => {
                         }}
                       />
                       <Legend />
-                      <Area type="monotone" dataKey="JobsQueued" name="Queued" fill={t.palette.info.light} stroke={t.palette.info.main} fillOpacity={0.3} />
-                      <Area type="monotone" dataKey="JobsRunning" name="Running" fill={t.palette.success.light} stroke={t.palette.success.main} fillOpacity={0.3} />
+                      <Area
+                        type="monotone"
+                        dataKey="JobsQueued"
+                        name="Queued"
+                        fill={t.palette.info.light}
+                        stroke={t.palette.info.main}
+                        fillOpacity={0.3}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="JobsRunning"
+                        name="Running"
+                        fill={t.palette.success.light}
+                        stroke={t.palette.success.main}
+                        fillOpacity={0.3}
+                      />
                     </AreaChart>
                   )}
                 </HistoryChart>
@@ -1072,11 +1443,31 @@ const Page = () => {
                   icon={<Warning color="primary" />}
                 >
                   {(data, t) => (
-                    <LineChart data={data} margin={{ left: 0, right: 12, top: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={t.palette.divider} />
-                      <XAxis dataKey="time" tick={{ fontSize: 11 }} tickMargin={8} />
-                      <YAxis yAxisId="faults" tick={{ fontSize: 11 }} tickMargin={4} />
-                      <YAxis yAxisId="duration" orientation="right" tick={{ fontSize: 11 }} tickMargin={4} unit="ms" />
+                    <LineChart
+                      data={data}
+                      margin={{ left: 0, right: 12, top: 10, bottom: 10 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={t.palette.divider}
+                      />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fontSize: 11 }}
+                        tickMargin={8}
+                      />
+                      <YAxis
+                        yAxisId="faults"
+                        tick={{ fontSize: 11 }}
+                        tickMargin={4}
+                      />
+                      <YAxis
+                        yAxisId="duration"
+                        orientation="right"
+                        tick={{ fontSize: 11 }}
+                        tickMargin={4}
+                        unit="ms"
+                      />
                       <RechartsTooltip
                         contentStyle={{
                           backgroundColor: t.palette.background.paper,
@@ -1085,10 +1476,44 @@ const Page = () => {
                         }}
                       />
                       <Legend />
-                      <Line yAxisId="faults" type="monotone" dataKey="HttpFaults" name="HTTP Faults" stroke={t.palette.error.main} strokeWidth={2} dot={false} />
-                      <Line yAxisId="faults" type="monotone" dataKey="BgFaults" name="BG Faults" stroke={t.palette.error.light} strokeWidth={2} dot={false} />
-                      <Line yAxisId="duration" type="monotone" dataKey="HttpAvgDurationMs" name="HTTP Avg Duration" stroke={t.palette.primary.light} strokeWidth={1} strokeDasharray="5 5" dot={false} />
-                      <Line yAxisId="duration" type="monotone" dataKey="BgAvgDurationMs" name="BG Avg Duration" stroke={t.palette.warning.light} strokeWidth={1} strokeDasharray="5 5" dot={false} />
+                      <Line
+                        yAxisId="faults"
+                        type="monotone"
+                        dataKey="HttpFaults"
+                        name="HTTP Faults"
+                        stroke={t.palette.error.main}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                      <Line
+                        yAxisId="faults"
+                        type="monotone"
+                        dataKey="BgFaults"
+                        name="BG Faults"
+                        stroke={t.palette.error.light}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                      <Line
+                        yAxisId="duration"
+                        type="monotone"
+                        dataKey="HttpAvgDurationMs"
+                        name="HTTP Avg Duration"
+                        stroke={t.palette.primary.light}
+                        strokeWidth={1}
+                        strokeDasharray="5 5"
+                        dot={false}
+                      />
+                      <Line
+                        yAxisId="duration"
+                        type="monotone"
+                        dataKey="BgAvgDurationMs"
+                        name="BG Avg Duration"
+                        stroke={t.palette.warning.light}
+                        strokeWidth={1}
+                        strokeDasharray="5 5"
+                        dot={false}
+                      />
                     </LineChart>
                   )}
                 </HistoryChart>
@@ -1097,60 +1522,72 @@ const Page = () => {
 
             {/* ── TestData Cache Diagnostics ── */}
             {(() => {
-              const diag = cacheDiagQuery.data?.Results;
-              if (!diag) return null;
-              const types = diag.TypeBreakdown ?? [];
-              const trackedMB = diag.TrackedTotalMB ?? 0;
-              const maxMB = diag.MaxMB ?? 0;
-              const memPct = maxMB > 0 ? (trackedMB / maxMB) * 100 : 0;
-              const totalReads = (diag.Hits ?? 0) + (diag.Misses ?? 0);
-              const fmtUtc = (s) => (s ? new Date(s).toLocaleString() : "—");
+              const diag = cacheDiagQuery.data?.Results
+              if (!diag) return null
+              const types = diag.TypeBreakdown ?? []
+              const trackedMB = diag.TrackedTotalMB ?? 0
+              const maxMB = diag.MaxMB ?? 0
+              const memPct = maxMB > 0 ? (trackedMB / maxMB) * 100 : 0
+              const totalReads = (diag.Hits ?? 0) + (diag.Misses ?? 0)
+              const fmtUtc = (s) => (s ? new Date(s).toLocaleString() : '—')
 
               const cacheStats = [
-                { k: "Hits", v: (diag.Hits ?? 0).toLocaleString() },
-                { k: "Misses", v: (diag.Misses ?? 0).toLocaleString() },
+                { k: 'Hits', v: (diag.Hits ?? 0).toLocaleString() },
+                { k: 'Misses', v: (diag.Misses ?? 0).toLocaleString() },
                 {
-                  k: "Hit Rate",
+                  k: 'Hit Rate',
                   v: `${diag.HitRate ?? 0}%`,
                   w: totalReads > 100 && diag.HitRate < 50,
                 },
                 {
-                  k: "Evictions",
+                  k: 'Evictions',
                   v: (diag.Evictions ?? 0).toLocaleString(),
                   w: (diag.Evictions ?? 0) > 0,
                 },
                 {
-                  k: "Oversized",
+                  k: 'Oversized',
                   v: (diag.Oversized ?? 0).toLocaleString(),
                   w: (diag.Oversized ?? 0) > 0,
-                  tip: "Values that exceeded the per-entry size cap and were silently dropped — they were never cached.",
+                  tip: 'Values that exceeded the per-entry size cap and were silently dropped — they were never cached.',
                 },
-                { k: "Accesses", v: (diag.AccessCount ?? 0).toLocaleString() },
+                { k: 'Accesses', v: (diag.AccessCount ?? 0).toLocaleString() },
                 {
-                  k: "TTL",
+                  k: 'TTL',
                   v: `${diag.TtlSeconds ?? 0}s`,
                   tip: `Earliest expiry: ${fmtUtc(diag.EarliestExpiryUtc)} • Latest expiry: ${fmtUtc(diag.LatestExpiryUtc)}`,
                 },
-              ];
+              ]
 
               return (
                 <Card>
                   <CardHeader
                     title="TestData Cache"
-                    titleTypographyProps={{ variant: "h6" }}
+                    titleTypographyProps={{ variant: 'h6' }}
                     subheader={`${diag.ActiveEntries ?? 0} active / ${diag.ExpiredEntries ?? 0} expired — ${diag.EstimatedTotalMB ?? 0} MB estimated`}
                     action={
                       <Chip
                         label={`${diag.TotalEntries ?? 0} entries`}
-                        color={diag.TotalEntries > 5000 ? "error" : diag.TotalEntries > 1000 ? "warning" : "success"}
+                        color={
+                          diag.TotalEntries > 5000
+                            ? 'error'
+                            : diag.TotalEntries > 1000
+                              ? 'warning'
+                              : 'success'
+                        }
                         size="small"
                       />
                     }
                   />
-                  <CardContent sx={{ pt: 0, pb: types.length > 0 ? 2 : "12px !important" }}>
+                  <CardContent
+                    sx={{ pt: 0, pb: types.length > 0 ? 2 : '12px !important' }}
+                  >
                     {/* Capacity bar */}
                     <Box sx={{ mb: 2 }}>
-                      <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        sx={{ mb: 0.5 }}
+                      >
                         <Typography variant="caption" color="text.secondary">
                           Capacity
                         </Typography>
@@ -1161,41 +1598,56 @@ const Page = () => {
                       <LinearProgress
                         variant="determinate"
                         value={Math.min(memPct, 100)}
-                        color={memPct > 85 ? "error" : memPct > 70 ? "warning" : "primary"}
+                        color={
+                          memPct > 85
+                            ? 'error'
+                            : memPct > 70
+                              ? 'warning'
+                              : 'primary'
+                        }
                         sx={{ height: 6, borderRadius: 3 }}
                       />
                     </Box>
                     {/* Stats row */}
-                    <Stack useFlexGap direction="row" sx={{ flexWrap: "wrap", gap: 2, rowGap: 1 }}>
+                    <Stack
+                      useFlexGap
+                      direction="row"
+                      sx={{ flexWrap: 'wrap', gap: 2, rowGap: 1 }}
+                    >
                       {cacheStats.map((s) => {
                         const cell = (
                           <Box sx={{ minWidth: 80 }}>
-                            <Typography variant="caption" color="text.secondary" display="block" lineHeight={1.2}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              display="block"
+                              lineHeight={1.2}
+                            >
                               {s.k}
                             </Typography>
                             <Typography
                               variant="body2"
                               fontWeight={600}
-                              color={s.w ? "error.main" : "text.primary"}
+                              color={s.w ? 'error.main' : 'text.primary'}
                               lineHeight={1.3}
                             >
                               {s.v}
                             </Typography>
                           </Box>
-                        );
+                        )
                         if (s.tip) {
                           return (
                             <Tooltip key={s.k} title={s.tip} arrow>
                               {cell}
                             </Tooltip>
-                          );
+                          )
                         }
-                        return <Fragment key={s.k}>{cell}</Fragment>;
+                        return <Fragment key={s.k}>{cell}</Fragment>
                       })}
                     </Stack>
                   </CardContent>
                   {types.length > 0 && (
-                    <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
+                    <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
                       <TableContainer sx={{ maxHeight: 300 }}>
                         <Table size="small" stickyHeader>
                           <TableHead>
@@ -1209,9 +1661,17 @@ const Page = () => {
                           <TableBody>
                             {types.map((t) => (
                               <TableRow key={t.Type}>
-                                <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>{t.Type}</TableCell>
-                                <TableCell align="right">{t.EntryCount}</TableCell>
-                                <TableCell align="right">{t.TotalItems?.toLocaleString()}</TableCell>
+                                <TableCell
+                                  sx={{ fontFamily: 'monospace', fontSize: 12 }}
+                                >
+                                  {t.Type}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {t.EntryCount}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {t.TotalItems?.toLocaleString()}
+                                </TableCell>
                                 <TableCell align="right">{t.TotalMB}</TableCell>
                               </TableRow>
                             ))}
@@ -1221,7 +1681,7 @@ const Page = () => {
                     </CardContent>
                   )}
                 </Card>
-              );
+              )
             })()}
 
             {/* ── Startup Timing (bottom) ── */}
@@ -1230,14 +1690,13 @@ const Page = () => {
         </Container>
       </Box>
     </>
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
-
+export default Page

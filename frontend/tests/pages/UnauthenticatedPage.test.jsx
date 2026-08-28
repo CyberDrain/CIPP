@@ -72,7 +72,9 @@ describe('UnauthenticatedPage, permissions', () => {
     const loginButton = screen.getByRole('link', { name: /Login/i })
     expect(loginButton).toHaveAttribute(
       'href',
-      expect.stringContaining('/.auth/login/aad?prompt=select_account&post_login_redirect_uri=')
+      expect.stringContaining(
+        '/.auth/login/aad?prompt=select_account&post_login_redirect_uri='
+      )
     )
   })
 
@@ -91,7 +93,9 @@ describe('UnauthenticatedPage, permissions', () => {
     })
     const homeButton = screen.getByRole('link', { name: /Return to Home/i })
     expect(homeButton).toHaveAttribute('href', '/')
-    expect(screen.queryByRole('link', { name: /Login/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /Login/i })
+    ).not.toBeInTheDocument()
   })
 
   it('names the signed-in account and offers switching once the identity is known', async () => {
@@ -110,7 +114,9 @@ describe('UnauthenticatedPage, permissions', () => {
       screen.getByRole('link', { name: 'Sign in with a different account' })
     ).toBeInTheDocument()
     // no usable roles, so there is nowhere to return to
-    expect(screen.queryByRole('link', { name: /Return to Home/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /Return to Home/i })
+    ).not.toBeInTheDocument()
   })
 })
 
@@ -126,9 +132,13 @@ describe('UnauthenticatedPage, session', () => {
     expect(screen.queryByText('Access Denied')).not.toBeInTheDocument()
     // the /api/me denial message belongs to the permissions screen, not this one
     expect(screen.queryByText('Permission Denied')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Sign in with Microsoft/i })).toHaveAttribute(
+    expect(
+      screen.getByRole('link', { name: /Sign in with Microsoft/i })
+    ).toHaveAttribute(
       'href',
-      expect.stringContaining('/.auth/login/aad?prompt=select_account&post_login_redirect_uri=')
+      expect.stringContaining(
+        '/.auth/login/aad?prompt=select_account&post_login_redirect_uri='
+      )
     )
   })
 

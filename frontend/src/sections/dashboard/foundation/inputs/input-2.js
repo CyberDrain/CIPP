@@ -1,11 +1,11 @@
-import { Autocomplete, Stack, TextField } from '@mui/material';
+import { Autocomplete, Stack, TextField } from '@mui/material'
 
 export const Input2 = () => (
   <Stack
     spacing={2}
     sx={{
       p: 3,
-      maxWidth: 360
+      maxWidth: 360,
     }}
   >
     <Autocomplete
@@ -13,9 +13,7 @@ export const Input2 = () => (
       fullWidth
       options={['Javascript', 'Webflow']}
       renderInput={(inputProps) => (
-        <TextField
-          label="Single Value"
-          {...inputProps} />
+        <TextField label="Single Value" {...inputProps} />
       )}
     />
     <Autocomplete
@@ -24,10 +22,8 @@ export const Input2 = () => (
       multiple
       options={['Javascript', 'Webflow']}
       renderInput={(inputProps) => (
-        <TextField
-          label="Multiple Values"
-          {...inputProps} />
+        <TextField label="Multiple Values" {...inputProps} />
       )}
     />
   </Stack>
-);
+)

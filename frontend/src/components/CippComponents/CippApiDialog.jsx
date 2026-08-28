@@ -56,7 +56,10 @@ export const CippApiDialog = (props) => {
   }
 
   const internalFormHook = useForm({
-    defaultValues: typeof defaultvalues === 'function' ? defaultvalues(row) : defaultvalues || {},
+    defaultValues:
+      typeof defaultvalues === 'function'
+        ? defaultvalues(row)
+        : defaultvalues || {},
     mode: 'onChange', // Enable real-time validation
   })
   const formHook = externalFormHook ?? internalFormHook
@@ -67,7 +70,11 @@ export const CippApiDialog = (props) => {
   useEffect(() => {
     if (createDialog.open) {
       setIsFormSubmitted(false)
-      formHook.reset(typeof defaultvalues === 'function' ? defaultvalues(row) : defaultvalues || {})
+      formHook.reset(
+        typeof defaultvalues === 'function'
+          ? defaultvalues(row)
+          : defaultvalues || {}
+      )
     }
   }, [createDialog.open, defaultvalues])
 
@@ -113,7 +120,8 @@ export const CippApiDialog = (props) => {
   }, [createDialog.open])
 
   const processActionData = (dataObject, row, replacementBehaviour) => {
-    if (typeof api?.dataFunction === 'function') return api.dataFunction(row, dataObject)
+    if (typeof api?.dataFunction === 'function')
+      return api.dataFunction(row, dataObject)
 
     let newData = {}
     if (api?.postEntireRow) {
@@ -135,8 +143,15 @@ export const CippApiDialog = (props) => {
       } else if (typeof value === 'boolean') {
         newData[key] = value
       } else if (typeof value === 'object' && value !== null) {
-        const processedValue = processActionData(value, row, replacementBehaviour)
-        if (replacementBehaviour !== 'removeNulls' || Object.keys(processedValue).length > 0) {
+        const processedValue = processActionData(
+          value,
+          row,
+          replacementBehaviour
+        )
+        if (
+          replacementBehaviour !== 'removeNulls' ||
+          Object.keys(processedValue).length > 0
+        ) {
           newData[key] = processedValue
         }
       } else if (replacementBehaviour !== 'removeNulls') {
@@ -166,9 +181,16 @@ export const CippApiDialog = (props) => {
         return
       }
 
-      const processedActionData = processActionData(action.data, row, action.replacementBehaviour)
+      const processedActionData = processActionData(
+        action.data,
+        row,
+        action.replacementBehaviour
+      )
 
-      if (!processedActionData || Object.keys(processedActionData).length === 0) {
+      if (
+        !processedActionData ||
+        Object.keys(processedActionData).length === 0
+      ) {
         console.warn('No data to process for action:', action)
       } else {
         // MULTI ROW CASES
@@ -183,7 +205,9 @@ export const CippApiDialog = (props) => {
             Object.keys(processedActionData).forEach((key) => {
               const mapped = processedActionData[key]
               const rowValue =
-                typeof mapped === 'string' ? getRowPath(singleRow, mapped) : undefined
+                typeof mapped === 'string'
+                  ? getRowPath(singleRow, mapped)
+                  : undefined
               itemData[key] = rowValue !== undefined ? rowValue : mapped
             })
             return itemData
@@ -240,13 +264,17 @@ export const CippApiDialog = (props) => {
   }
 
   useEffect(() => {
-    if (dialogAfterEffect && (actionPostRequest.isSuccess || actionGetRequest.isSuccess)) {
+    if (
+      dialogAfterEffect &&
+      (actionPostRequest.isSuccess || actionGetRequest.isSuccess)
+    ) {
       dialogAfterEffect(actionPostRequest.data?.data || actionGetRequest.data)
     }
   }, [actionPostRequest.isSuccess, actionGetRequest.isSuccess])
 
   const onSubmit = (data) => handleActionClick(row, api, data)
-  const selectedType = api.type === 'POST' ? actionPostRequest : actionGetRequest
+  const selectedType =
+    api.type === 'POST' ? actionPostRequest : actionGetRequest
 
   useEffect(() => {
     if (api?.setDefaultValues && createDialog.open) {
@@ -295,7 +323,10 @@ export const CippApiDialog = (props) => {
   const getRawNestedValue = (obj, path) => {
     return path
       .split('.')
-      .reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj)
+      .reduce(
+        (acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined),
+        obj
+      )
   }
 
   const getNestedValue = (obj, path) => {
@@ -353,7 +384,10 @@ export const CippApiDialog = (props) => {
         (_, key) => getNestedValue(row, key) || `[${key}]`
       )
     } else if (row.length > 1) {
-      confirmText = api.confirmText.replace(/\[([^\]]+)\]/g, `the ${row.length} selected rows`)
+      confirmText = api.confirmText.replace(
+        /\[([^\]]+)\]/g,
+        `the ${row.length} selected rows`
+      )
     } else if (row.length === 1) {
       confirmText = api.confirmText.replace(
         /\[([^\]]+)\]/g,
@@ -366,16 +400,25 @@ export const CippApiDialog = (props) => {
       if (typeof element === 'string') {
         if (Array.isArray(row)) {
           return row.length > 1
-            ? element.replace(/\[([^\]]+)\]/g, `the ${row.length} selected rows`)
+            ? element.replace(
+                /\[([^\]]+)\]/g,
+                `the ${row.length} selected rows`
+              )
             : element.replace(
                 /\[([^\]]+)\]/g,
                 (_, key) => getNestedValue(row[0], key) || `[${key}]`
               )
         }
-        return element.replace(/\[([^\]]+)\]/g, (_, key) => getNestedValue(row, key) || `[${key}]`)
+        return element.replace(
+          /\[([^\]]+)\]/g,
+          (_, key) => getNestedValue(row, key) || `[${key}]`
+        )
       }
       if (React.isValidElement(element)) {
-        const newChildren = React.Children.map(element.props.children, replaceTextInElement)
+        const newChildren = React.Children.map(
+          element.props.children,
+          replaceTextInElement
+        )
         return React.cloneElement(element, {}, newChildren)
       }
       return element
@@ -386,7 +429,13 @@ export const CippApiDialog = (props) => {
   return (
     <>
       {!api?.link && (
-        <Dialog fullWidth maxWidth="sm" onClose={handleClose} open={createDialog.open} {...other}>
+        <Dialog
+          fullWidth
+          maxWidth="sm"
+          onClose={handleClose}
+          open={createDialog.open}
+          {...other}
+        >
           <form onSubmit={formHook.handleSubmit(onSubmit)}>
             <DialogTitle>{title}</DialogTitle>
             <DialogContent>
@@ -406,7 +455,8 @@ export const CippApiDialog = (props) => {
                 ) : (
                   <>
                     {fields?.map((fieldProps, i) => {
-                      const { condition, component, csvColumn, ...rest } = fieldProps
+                      const { condition, component, csvColumn, ...rest } =
+                        fieldProps
 
                       if (csvColumn && rest.type === 'autoComplete') {
                         const csvFieldName = `${rest.name}__csv`
@@ -414,9 +464,13 @@ export const CippApiDialog = (props) => {
                         rest.validators = {
                           ...rest.validators,
                           validate: (value, formValues) => {
-                            const hasAC = normalizeAutoCompleteValues(value).length > 0
+                            const hasAC =
+                              normalizeAutoCompleteValues(value).length > 0
                             const csvRows = formValues[csvFieldName]
-                            const csvValues = extractCsvColumnValues(csvRows, csvColumn)
+                            const csvValues = extractCsvColumnValues(
+                              csvRows,
+                              csvColumn
+                            )
                             const hasCsvValues = csvValues.length > 0
                             const hasCsvRows =
                               Array.isArray(csvRows) && csvRows.length > 0
@@ -444,7 +498,10 @@ export const CippApiDialog = (props) => {
                           row &&
                           !Array.isArray(row)
                         ) {
-                          const processedData = processActionData(nextApi.data, row)
+                          const processedData = processActionData(
+                            nextApi.data,
+                            row
+                          )
                           nextApi = {
                             ...nextApi,
                             data: processedData,
@@ -486,7 +543,10 @@ export const CippApiDialog = (props) => {
                       return (
                         <Box key={i} sx={{ width: '100%' }}>
                           {condition ? (
-                            <CippFormCondition {...condition} formControl={formHook}>
+                            <CippFormCondition
+                              {...condition}
+                              formControl={formHook}
+                            >
                               {fieldElement}
                               {csvElement}
                             </CippFormCondition>
@@ -504,7 +564,9 @@ export const CippApiDialog = (props) => {
               </Stack>
             </DialogContent>
             <DialogContent>
-              <CippApiResults apiObject={{ ...selectedType, data: partialResults }} />
+              <CippApiResults
+                apiObject={{ ...selectedType, data: partialResults }}
+              />
             </DialogContent>
             <DialogActions>
               <Button color="inherit" onClick={handleClose}>

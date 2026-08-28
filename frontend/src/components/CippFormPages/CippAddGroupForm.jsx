@@ -1,10 +1,10 @@
-import { InputAdornment } from "@mui/material";
-import { Grid } from "@mui/system";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { CippFormCondition } from "../CippComponents/CippFormCondition";
-import { CippFormDomainSelector } from "../CippComponents/CippFormDomainSelector";
-import { CippFormUserSelector } from "../CippComponents/CippFormUserSelector";
-import { CippFormLicenseSelector } from "../CippComponents/CippFormLicenseSelector";
+import { InputAdornment } from '@mui/material'
+import { Grid } from '@mui/system'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { CippFormCondition } from '../CippComponents/CippFormCondition'
+import { CippFormDomainSelector } from '../CippComponents/CippFormDomainSelector'
+import { CippFormUserSelector } from '../CippComponents/CippFormUserSelector'
+import { CippFormLicenseSelector } from '../CippComponents/CippFormLicenseSelector'
 
 const DynamicMembershipRules = ({ formControl }) => (
   <Grid size={{ xs: 12 }}>
@@ -19,10 +19,10 @@ const DynamicMembershipRules = ({ formControl }) => (
       fullWidth
     />
   </Grid>
-);
+)
 
 const CippAddGroupForm = (props) => {
-  const { formControl } = props;
+  const { formControl } = props
 
   return (
     <Grid container spacing={2}>
@@ -66,23 +66,23 @@ const CippAddGroupForm = (props) => {
 
       <Grid size={{ xs: 12 }}>
         <CippFormUserSelector
-          sx={{ mb: "1rem" }}
+          sx={{ mb: '1rem' }}
           formControl={formControl}
           name="owners"
           label="Owners"
           multiple={true}
-          select={"id,userPrincipalName,displayName"}
+          select={'id,userPrincipalName,displayName'}
         />
       </Grid>
 
       <Grid size={{ xs: 12 }}>
         <CippFormUserSelector
-          sx={{ mb: "1rem" }}
+          sx={{ mb: '1rem' }}
           formControl={formControl}
           name="members"
           label="Members"
           multiple={true}
-          select={"id,userPrincipalName,displayName"}
+          select={'id,userPrincipalName,displayName'}
         />
       </Grid>
       <Grid size={{ xs: 12 }}>
@@ -91,12 +91,12 @@ const CippAddGroupForm = (props) => {
           name="groupType"
           formControl={formControl}
           options={[
-            { label: "Azure Role Group", value: "azurerole" },
-            { label: "Security Group", value: "generic" },
-            { label: "Microsoft 365 Group", value: "m365" },
-            { label: "Dynamic Group", value: "dynamic" },
-            { label: "Distribution List", value: "distribution" },
-            { label: "Mail Enabled Security Group", value: "security" },
+            { label: 'Azure Role Group', value: 'azurerole' },
+            { label: 'Security Group', value: 'generic' },
+            { label: 'Microsoft 365 Group', value: 'm365' },
+            { label: 'Dynamic Group', value: 'dynamic' },
+            { label: 'Distribution List', value: 'distribution' },
+            { label: 'Mail Enabled Security Group', value: 'security' },
           ]}
         />
       </Grid>
@@ -104,7 +104,7 @@ const CippAddGroupForm = (props) => {
         formControl={formControl}
         field="groupType"
         compareType="isOneOf"
-        compareValue={["generic", "azurerole", "m365", "dynamic"]}
+        compareValue={['generic', 'azurerole', 'm365', 'dynamic']}
       >
         <Grid size={{ xs: 12 }}>
           <CippFormComponent
@@ -207,7 +207,7 @@ const CippAddGroupForm = (props) => {
         </Grid>
       </CippFormCondition>
     </Grid>
-  );
-};
+  )
+}
 
-export default CippAddGroupForm;
+export default CippAddGroupForm

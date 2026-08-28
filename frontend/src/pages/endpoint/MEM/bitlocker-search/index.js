@@ -1,40 +1,46 @@
-import { useState } from "react";
-import { Box, Button, Container } from "@mui/material";
-import { Grid } from "@mui/system";
-import { Search } from "@mui/icons-material";
-import { useForm, useWatch } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useSettings } from "../../../../hooks/use-settings";
-import CippButtonCard from "../../../../components/CippCards/CippButtonCard";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { CippBitlockerKeySearch } from "../../../../components/CippComponents/CippBitlockerKeySearch";
-import { CippHead } from "../../../../components/CippComponents/CippHead";
+import { useState } from 'react'
+import { Box, Button, Container } from '@mui/material'
+import { Grid } from '@mui/system'
+import { Search } from '@mui/icons-material'
+import { useForm, useWatch } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useSettings } from '../../../../hooks/use-settings'
+import CippButtonCard from '../../../../components/CippCards/CippButtonCard'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { CippBitlockerKeySearch } from '../../../../components/CippComponents/CippBitlockerKeySearch'
+import { CippHead } from '../../../../components/CippComponents/CippHead'
 
 const Page = () => {
-  const currentTenant = useSettings().currentTenant;
+  const currentTenant = useSettings().currentTenant
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      lookupType: "keyId",
-      searchTerm: "",
+      lookupType: 'keyId',
+      searchTerm: '',
     },
-  });
+  })
 
-  const lookupType = useWatch({ control: formControl.control, name: "lookupType" });
-  const searchTerm = useWatch({ control: formControl.control, name: "searchTerm" });
+  const lookupType = useWatch({
+    control: formControl.control,
+    name: 'lookupType',
+  })
+  const searchTerm = useWatch({
+    control: formControl.control,
+    name: 'searchTerm',
+  })
 
-  const [submitted, setSubmitted] = useState(null);
+  const [submitted, setSubmitted] = useState(null)
 
   const handleSearch = () => {
-    const trimmed = searchTerm?.trim();
-    if (!trimmed) return;
+    const trimmed = searchTerm?.trim()
+    if (!trimmed) return
     setSubmitted({
       term: trimmed,
-      type: lookupType || "keyId",
+      type: lookupType || 'keyId',
       key: Date.now(),
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -58,8 +64,8 @@ const Page = () => {
                       formControl={formControl}
                       row
                       options={[
-                        { label: "Key ID", value: "keyId" },
-                        { label: "Device ID", value: "deviceId" },
+                        { label: 'Key ID', value: 'keyId' },
+                        { label: 'Device ID', value: 'deviceId' },
                       ]}
                     />
                   </Grid>
@@ -69,15 +75,15 @@ const Page = () => {
                       name="searchTerm"
                       type="textField"
                       label={
-                        lookupType === "deviceId"
-                          ? "Azure AD Device ID"
-                          : "BitLocker Recovery Key ID"
+                        lookupType === 'deviceId'
+                          ? 'Azure AD Device ID'
+                          : 'BitLocker Recovery Key ID'
                       }
                       required
                       onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          handleSearch();
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          handleSearch()
                         }
                       }}
                     />
@@ -112,9 +118,9 @@ const Page = () => {
         </Container>
       </Box>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

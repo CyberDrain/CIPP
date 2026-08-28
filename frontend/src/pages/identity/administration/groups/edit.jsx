@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
-import { Box, Button, Divider, Typography, Alert } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { CippFormUserSelector } from "../../../../components/CippComponents/CippFormUserSelector";
-import { CippFormUserAndGroupSelector } from "../../../../components/CippComponents/CippFormUserAndGroupSelector";
-import { useRouter } from "next/router";
-import { ApiGetCall } from "../../../../api/ApiCall";
-import { useSettings } from "../../../../hooks/use-settings";
-import { CippFormContactSelector } from "../../../../components/CippComponents/CippFormContactSelector";
-import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
+import { useEffect, useState } from 'react'
+import { Box, Button, Divider, Typography, Alert } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { CippFormUserSelector } from '../../../../components/CippComponents/CippFormUserSelector'
+import { CippFormUserAndGroupSelector } from '../../../../components/CippComponents/CippFormUserAndGroupSelector'
+import { useRouter } from 'next/router'
+import { ApiGetCall } from '../../../../api/ApiCall'
+import { useSettings } from '../../../../hooks/use-settings'
+import { CippFormContactSelector } from '../../../../components/CippComponents/CippFormContactSelector'
+import { CippDataTable } from '../../../../components/CippTable/CippDataTable'
 import { CippFormLicenseSelector } from '../../../../components/CippComponents/CippFormLicenseSelector'
 import { getCippLicenseTranslation } from '../../../../utils/get-cipp-license-translation'
 
@@ -66,7 +66,10 @@ const EditGroup = () => {
             displayName: o.displayName,
           })) || []),
           ...(groupInfo.data?.members?.map((m) => ({
-            type: m?.['@odata.type'] === '#microsoft.graph.orgContact' ? 'Contact' : 'Member',
+            type:
+              m?.['@odata.type'] === '#microsoft.graph.orgContact'
+                ? 'Contact'
+                : 'Member',
             userPrincipalName: m.userPrincipalName ?? m.mail,
             displayName: m.displayName,
           })) || []),
@@ -179,12 +182,13 @@ const EditGroup = () => {
           </>
         }
       >
-        {groupInfo.isSuccess && groupInfo.data?.groupInfo?.onPremisesSyncEnabled && (
-          <Alert severity="error" sx={{ mb: 1 }}>
-            This group is synced from on-premises Active Directory. Changes should be made in the
-            on-premises environment instead.
-          </Alert>
-        )}
+        {groupInfo.isSuccess &&
+          groupInfo.data?.groupInfo?.onPremisesSyncEnabled && (
+            <Alert severity="error" sx={{ mb: 1 }}>
+              This group is synced from on-premises Active Directory. Changes
+              should be made in the on-premises environment instead.
+            </Alert>
+          )}
         {showMembershipTable ? (
           <Box sx={{ my: 2 }}>
             <CippDataTable
@@ -234,7 +238,9 @@ const EditGroup = () => {
                 />
               </Grid>
 
-              {groupInfo.data?.groupInfo?.groupTypes?.includes('DynamicMembership') && (
+              {groupInfo.data?.groupInfo?.groupTypes?.includes(
+                'DynamicMembership'
+              ) && (
                 <Grid size={{ xs: 12 }}>
                   <CippFormComponent
                     type="textField"
@@ -306,52 +312,59 @@ const EditGroup = () => {
                   disabled={groupInfo.isFetching}
                   dataFilter={(option) =>
                     !groupInfo.data?.members
-                      ?.filter((m) => m?.['@odata.type'] === '#microsoft.graph.orgContact')
+                      ?.filter(
+                        (m) =>
+                          m?.['@odata.type'] === '#microsoft.graph.orgContact'
+                      )
                       ?.some((c) => c.id === option.value)
                   }
                 />
               </Grid>
 
-              {groupType !== 'Distribution List' && groupType !== 'Mail-Enabled Security' && (
-                <Grid size={{ xs: 12 }}>
-                  <CippFormComponent
-                    type="autoComplete"
-                    name="AddDevice"
-                    label="Add Devices"
-                    formControl={formControl}
-                    multiple={true}
-                    creatable={false}
-                    isFetching={groupInfo.isFetching}
-                    disabled={groupInfo.isFetching}
-                    api={{
-                      url: '/api/ListGraphRequest',
-                      dataKey: 'Results',
-                      data: {
-                        Endpoint: 'devices',
-                        manualPagination: true,
-                        $select: 'id,displayName,operatingSystem',
-                        $count: true,
-                        $orderby: 'displayName',
-                        $top: 999,
-                      },
-                      labelField: (option) =>
-                        option?.operatingSystem
-                          ? `${option.displayName} (${option.operatingSystem})`
-                          : (option?.displayName ?? ''),
-                      valueField: 'id',
-                      addedField: {
-                        displayName: 'displayName',
-                      },
-                      queryKey: `ListDevices-${tenantFilter}`,
-                      dataFilter: (options) =>
-                        options.filter(
-                          (option) => !groupInfo.data?.members?.some((m) => m.id === option.value)
-                        ),
-                      showRefresh: true,
-                    }}
-                  />
-                </Grid>
-              )}
+              {groupType !== 'Distribution List' &&
+                groupType !== 'Mail-Enabled Security' && (
+                  <Grid size={{ xs: 12 }}>
+                    <CippFormComponent
+                      type="autoComplete"
+                      name="AddDevice"
+                      label="Add Devices"
+                      formControl={formControl}
+                      multiple={true}
+                      creatable={false}
+                      isFetching={groupInfo.isFetching}
+                      disabled={groupInfo.isFetching}
+                      api={{
+                        url: '/api/ListGraphRequest',
+                        dataKey: 'Results',
+                        data: {
+                          Endpoint: 'devices',
+                          manualPagination: true,
+                          $select: 'id,displayName,operatingSystem',
+                          $count: true,
+                          $orderby: 'displayName',
+                          $top: 999,
+                        },
+                        labelField: (option) =>
+                          option?.operatingSystem
+                            ? `${option.displayName} (${option.operatingSystem})`
+                            : (option?.displayName ?? ''),
+                        valueField: 'id',
+                        addedField: {
+                          displayName: 'displayName',
+                        },
+                        queryKey: `ListDevices-${tenantFilter}`,
+                        dataFilter: (options) =>
+                          options.filter(
+                            (option) =>
+                              !groupInfo.data?.members?.some(
+                                (m) => m.id === option.value
+                              )
+                          ),
+                        showRefresh: true,
+                      }}
+                    />
+                  </Grid>
+                )}
 
               <Grid size={{ xs: 12 }}>
                 <Divider sx={{ my: 2 }} />
@@ -369,13 +382,17 @@ const EditGroup = () => {
                   disabled={groupInfo.isFetching}
                   options={
                     groupInfo.data?.members
-                      ?.filter((m) => m?.["@odata.type"] !== "#microsoft.graph.orgContact")
+                      ?.filter(
+                        (m) =>
+                          m?.['@odata.type'] !== '#microsoft.graph.orgContact'
+                      )
                       ?.map((m) => {
-                        const groupType = m.mailEnabled && !m.securityEnabled
-                          ? "Distribution Group"
-                          : m.mailEnabled && m.securityEnabled
-                          ? "Mail-Enabled Security Group"
-                          : "Security Group";
+                        const groupType =
+                          m.mailEnabled && !m.securityEnabled
+                            ? 'Distribution Group'
+                            : m.mailEnabled && m.securityEnabled
+                              ? 'Mail-Enabled Security Group'
+                              : 'Security Group'
                         return {
                           label: m.userPrincipalName
                             ? `${m.displayName} (${m.userPrincipalName})`
@@ -386,7 +403,7 @@ const EditGroup = () => {
                             displayName: m.displayName,
                             id: m.id,
                           },
-                        };
+                        }
                       }) || []
                   }
                   sortOptions={true}
@@ -428,7 +445,10 @@ const EditGroup = () => {
                   disabled={groupInfo.isFetching}
                   options={
                     groupInfo.data?.members
-                      ?.filter((m) => m?.['@odata.type'] === '#microsoft.graph.orgContact')
+                      ?.filter(
+                        (m) =>
+                          m?.['@odata.type'] === '#microsoft.graph.orgContact'
+                      )
                       ?.map((m) => ({
                         label: `${m.displayName} (${m.mail})`,
                         value: m.mail,
@@ -461,7 +481,8 @@ const EditGroup = () => {
                 </Grid>
               )}
 
-              {(groupType === 'Microsoft 365' || groupType === 'Distribution List') && (
+              {(groupType === 'Microsoft 365' ||
+                groupType === 'Distribution List') && (
                 <Grid size={{ xs: 12 }}>
                   <CippFormComponent
                     type="switch"
@@ -512,61 +533,72 @@ const EditGroup = () => {
                 </Grid>
               )}
 
-              {groupType === 'Security' && !groupInfo.data?.groupInfo?.onPremisesSyncEnabled && (
-                <>
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="h6">Licenses</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      Licenses assigned to this group are automatically applied to all members.
-                      Changes can take 2-5 minutes to propagate.
-                    </Typography>
-                  </Grid>
-
-                  {groupInfo.data?.groupInfo?.assignedLicenses?.length > 0 && (
+              {groupType === 'Security' &&
+                !groupInfo.data?.groupInfo?.onPremisesSyncEnabled && (
+                  <>
                     <Grid size={{ xs: 12 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                        Currently assigned licenses:
+                      <Typography variant="h6">Licenses</Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        Licenses assigned to this group are automatically
+                        applied to all members. Changes can take 2-5 minutes to
+                        propagate.
                       </Typography>
-                      {groupInfo.data.groupInfo.assignedLicenses.map((lic) => (
-                        <Typography key={lic.skuId} variant="body2">
-                          - {getCippLicenseTranslation([lic])}
-                        </Typography>
-                      ))}
                     </Grid>
-                  )}
 
-                  <Grid size={{ xs: 12 }}>
-                    <CippFormLicenseSelector
-                      formControl={formControl}
-                      name="AddLicenses"
-                      label="Add Licenses"
-                      multiple={true}
-                      isFetching={groupInfo.isFetching}
-                      disabled={groupInfo.isFetching}
-                    />
-                  </Grid>
+                    {groupInfo.data?.groupInfo?.assignedLicenses?.length >
+                      0 && (
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                          Currently assigned licenses:
+                        </Typography>
+                        {groupInfo.data.groupInfo.assignedLicenses.map(
+                          (lic) => (
+                            <Typography key={lic.skuId} variant="body2">
+                              - {getCippLicenseTranslation([lic])}
+                            </Typography>
+                          )
+                        )}
+                      </Grid>
+                    )}
 
-                  <Grid size={{ xs: 12 }}>
-                    <CippFormComponent
-                      type="autoComplete"
-                      name="RemoveLicenses"
-                      label="Remove Licenses"
-                      formControl={formControl}
-                      multiple={true}
-                      creatable={false}
-                      isFetching={groupInfo.isFetching}
-                      disabled={groupInfo.isFetching}
-                      options={
-                        groupInfo.data?.groupInfo?.assignedLicenses?.map((lic) => ({
-                          label: getCippLicenseTranslation([lic]),
-                          value: lic.skuId,
-                        })) || []
-                      }
-                      sortOptions={true}
-                    />
-                  </Grid>
-                </>
-              )}
+                    <Grid size={{ xs: 12 }}>
+                      <CippFormLicenseSelector
+                        formControl={formControl}
+                        name="AddLicenses"
+                        label="Add Licenses"
+                        multiple={true}
+                        isFetching={groupInfo.isFetching}
+                        disabled={groupInfo.isFetching}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                      <CippFormComponent
+                        type="autoComplete"
+                        name="RemoveLicenses"
+                        label="Remove Licenses"
+                        formControl={formControl}
+                        multiple={true}
+                        creatable={false}
+                        isFetching={groupInfo.isFetching}
+                        disabled={groupInfo.isFetching}
+                        options={
+                          groupInfo.data?.groupInfo?.assignedLicenses?.map(
+                            (lic) => ({
+                              label: getCippLicenseTranslation([lic]),
+                              value: lic.skuId,
+                            })
+                          ) || []
+                        }
+                        sortOptions={true}
+                      />
+                    </Grid>
+                  </>
+                )}
             </Grid>
           </Box>
         )}

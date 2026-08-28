@@ -1,27 +1,27 @@
-import { useState, useEffect } from "react";
-import { Button, Box, Typography, Alert, AlertTitle } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useFormState } from "react-hook-form";
-import { Backup } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormTenantSelector } from "./CippFormTenantSelector";
-import { CippApiResults } from "./CippApiResults";
-import { useSettings } from "../../hooks/use-settings";
-import { ApiPostCall } from "../../api/ApiCall";
-import { omit } from "lodash";
+import { useState, useEffect } from 'react'
+import { Button, Box, Typography, Alert, AlertTitle } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useFormState } from 'react-hook-form'
+import { Backup } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippFormTenantSelector } from './CippFormTenantSelector'
+import { CippApiResults } from './CippApiResults'
+import { useSettings } from '../../hooks/use-settings'
+import { ApiPostCall } from '../../api/ApiCall'
+import { omit } from 'lodash'
 
 export const CippBackupScheduleDrawer = ({
-  buttonText = "Add Backup Schedule",
+  buttonText = 'Add Backup Schedule',
   requiredPermissions = [],
   PermissionButton = Button,
   onSuccess,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const userSettingsDefaults = useSettings();
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const userSettingsDefaults = useSettings()
 
   const formControl = useForm({
-    mode: "onBlur",
+    mode: 'onBlur',
     defaultValues: {
       tenantFilter: userSettingsDefaults.currentTenant,
       users: true,
@@ -36,14 +36,14 @@ export const CippBackupScheduleDrawer = ({
       CippScriptedAlerts: true,
       CippCustomVariables: true,
     },
-  });
+  })
 
   const createBackup = ApiPostCall({
     urlFromData: true,
     relatedQueryKeys: [`BackupTasks-${userSettingsDefaults.currentTenant}`],
-  });
+  })
 
-  const { isValid, isDirty } = useFormState({ control: formControl.control });
+  const { isValid, isDirty } = useFormState({ control: formControl.control })
 
   useEffect(() => {
     if (createBackup.isSuccess) {
@@ -60,45 +60,46 @@ export const CippBackupScheduleDrawer = ({
         CippWebhookAlerts: true,
         CippScriptedAlerts: true,
         CippCustomVariables: true,
-      });
+      })
       // Call onSuccess callback if provided
       if (onSuccess) {
-        onSuccess();
+        onSuccess()
       }
     }
-  }, [createBackup.isSuccess, onSuccess]);
+  }, [createBackup.isSuccess, onSuccess])
 
   const handleSubmit = () => {
-    formControl.trigger();
+    formControl.trigger()
     if (!isValid) {
-      return;
+      return
     }
-    const values = formControl.getValues();
-    const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-    const unixTime = Math.floor(startDate.getTime() / 1000) - 45;
-    const tenantFilter = values.tenantFilter || userSettingsDefaults.currentTenant;
+    const values = formControl.getValues()
+    const startDate = new Date()
+    startDate.setHours(0, 0, 0, 0)
+    const unixTime = Math.floor(startDate.getTime() / 1000) - 45
+    const tenantFilter =
+      values.tenantFilter || userSettingsDefaults.currentTenant
 
     const shippedValues = {
       TenantFilter: tenantFilter,
       Name: `CIPP Backup - ${tenantFilter}`,
       Command: { value: `New-CIPPBackup` },
       Parameters: {
-        backupType: "Scheduled",
-        ScheduledBackupValues: { ...omit(values, ["tenantFilter"]) },
+        backupType: 'Scheduled',
+        ScheduledBackupValues: { ...omit(values, ['tenantFilter']) },
       },
       ScheduledTime: unixTime,
-      Recurrence: { value: "1d" },
-    };
+      Recurrence: { value: '1d' },
+    }
 
     createBackup.mutate({
-      url: "/api/AddScheduledItem?hidden=true&DisallowDuplicateName=true",
+      url: '/api/AddScheduledItem?hidden=true&DisallowDuplicateName=true',
       data: shippedValues,
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
       tenantFilter: userSettingsDefaults.currentTenant,
       users: true,
@@ -112,8 +113,8 @@ export const CippBackupScheduleDrawer = ({
       CippWebhookAlerts: true,
       CippScriptedAlerts: true,
       CippCustomVariables: true,
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -130,7 +131,13 @@ export const CippBackupScheduleDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -138,10 +145,10 @@ export const CippBackupScheduleDrawer = ({
               disabled={createBackup.isPending || !isValid}
             >
               {createBackup.isPending
-                ? "Creating Schedule..."
+                ? 'Creating Schedule...'
                 : createBackup.isSuccess
-                ? "Create Another Schedule"
-                : "Create Schedule"}
+                  ? 'Create Another Schedule'
+                  : 'Create Schedule'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -152,8 +159,9 @@ export const CippBackupScheduleDrawer = ({
         <Box sx={{ my: 2 }}>
           <Alert severity="info" sx={{ mb: 3 }}>
             <AlertTitle>Backup Schedule Information</AlertTitle>
-            Create a scheduled backup task that will automatically backup your tenant configuration.
-            Backups are stored securely and can be restored using the restore functionality.
+            Create a scheduled backup task that will automatically backup your
+            tenant configuration. Backups are stored securely and can be
+            restored using the restore functionality.
           </Alert>
 
           <Grid container spacing={2}>
@@ -283,5 +291,5 @@ export const CippBackupScheduleDrawer = ({
         <CippApiResults apiObject={createBackup} />
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

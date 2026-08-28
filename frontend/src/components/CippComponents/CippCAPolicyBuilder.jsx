@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect } from "react";
+import React, { useMemo, useCallback, useEffect } from 'react'
 import {
   Typography,
   Divider,
@@ -13,20 +13,20 @@ import {
   Paper,
   Button,
   Box,
-} from "@mui/material";
-import { Grid } from "@mui/system";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import PublicIcon from "@mui/icons-material/Public";
-import { useWatch, useFieldArray } from "react-hook-form";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormCondition } from "./CippFormCondition";
-import caSchema from "../../data/conditionalAccessSchema.json";
-import gdapRoles from "../../data/GDAPRoles.json";
-import countryList from "../../data/countryList.json";
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import PublicIcon from '@mui/icons-material/Public'
+import { useWatch, useFieldArray } from 'react-hook-form'
+import CippFormComponent from './CippFormComponent'
+import { CippFormCondition } from './CippFormCondition'
+import caSchema from '../../data/conditionalAccessSchema.json'
+import gdapRoles from '../../data/GDAPRoles.json'
+import countryList from '../../data/countryList.json'
 
 /**
  * CippCAPolicyBuilder — A schema-driven Conditional Access policy builder.
@@ -50,37 +50,40 @@ import countryList from "../../data/countryList.json";
 
 /** Resolve a $ref path like "#/$defs/conditionalAccessUsers" in the schema */
 function resolveRef(ref) {
-  if (!ref) return null;
-  const path = ref.replace("#/", "").split("/");
-  let node = caSchema;
+  if (!ref) return null
+  const path = ref.replace('#/', '').split('/')
+  let node = caSchema
   for (const segment of path) {
-    node = node?.[segment];
+    node = node?.[segment]
   }
-  return node ?? null;
+  return node ?? null
 }
 
 /** Convert schema enum + enumLabels into {label, value} options */
 function enumToOptions(schemaProp) {
-  if (!schemaProp) return [];
-  const enumVals = schemaProp.items?.enum ?? schemaProp.enum ?? [];
-  const labels = schemaProp.items?.enumLabels ?? schemaProp.enumLabels ?? {};
+  if (!schemaProp) return []
+  const enumVals = schemaProp.items?.enum ?? schemaProp.enum ?? []
+  const labels = schemaProp.items?.enumLabels ?? schemaProp.enumLabels ?? {}
   return enumVals.map((v) => ({
     label: labels[v] ?? v,
     value: v,
-  }));
+  }))
 }
 
 /** Build options from wellKnownValues or wellKnownDirectoryRoles */
 function wellKnownToOptions(values) {
-  if (!values) return [];
-  return Object.entries(values).map(([id, label]) => ({ label: `${label}`, value: id }));
+  if (!values) return []
+  return Object.entries(values).map(([id, label]) => ({
+    label: `${label}`,
+    value: id,
+  }))
 }
 
 /** Build special-value options from schema metadata */
 function specialValueOptions(schemaProp) {
-  const vals = schemaProp?.specialValues ?? [];
-  const labels = schemaProp?.specialValueLabels ?? {};
-  return vals.map((v) => ({ label: labels[v] ?? v, value: v }));
+  const vals = schemaProp?.specialValues ?? []
+  const labels = schemaProp?.specialValueLabels ?? {}
+  return vals.map((v) => ({ label: labels[v] ?? v, value: v }))
 }
 
 // ---------------------------------------------------------------------------
@@ -94,7 +97,12 @@ function SectionHeader({ title, description, requiresLicense, icon }) {
       <Typography variant="h6">{title}</Typography>
       {requiresLicense && (
         <Tooltip title={`Requires ${requiresLicense} licence`}>
-          <Chip label={requiresLicense} size="small" color="warning" variant="outlined" />
+          <Chip
+            label={requiresLicense}
+            size="small"
+            color="warning"
+            variant="outlined"
+          />
         </Tooltip>
       )}
       {description && (
@@ -105,32 +113,48 @@ function SectionHeader({ title, description, requiresLicense, icon }) {
         </Tooltip>
       )}
     </Stack>
-  );
+  )
 }
 
 /**
  * The guest / external user block, which Graph models identically on the include and the
  * exclude side. Rendered twice from UsersSection rather than duplicated.
  */
-function GuestsOrExternalUsersFields({ formControl, disabled, prefix, direction, typeOptions }) {
-  const base = `${prefix}.${direction}GuestsOrExternalUsers`;
-  const Verb = direction === "include" ? "Include" : "Exclude";
+function GuestsOrExternalUsersFields({
+  formControl,
+  disabled,
+  prefix,
+  direction,
+  typeOptions,
+}) {
+  const base = `${prefix}.${direction}GuestsOrExternalUsers`
+  const Verb = direction === 'include' ? 'Include' : 'Exclude'
   const scopeHelp =
-    direction === "include"
-      ? "Choose whether the policy applies to all external tenants or specific ones. Only relevant for external user types (not internal guests)."
-      : "Choose whether the exclusion applies to all external tenants or specific ones. Only relevant for external user types (not internal guests).";
+    direction === 'include'
+      ? 'Choose whether the policy applies to all external tenants or specific ones. Only relevant for external user types (not internal guests).'
+      : 'Choose whether the exclusion applies to all external tenants or specific ones. Only relevant for external user types (not internal guests).'
 
   // Entra rejects an include-guests assignment (error 1119) when Include Users also carries one of
   // its special values. The exclude side has no such constraint, so only watch on the include side.
-  const includeUsers = useWatch({ control: formControl.control, name: `${prefix}.includeUsers` });
-  const guestTypes = useWatch({ control: formControl.control, name: `${base}.guestOrExternalUserTypes` });
+  const includeUsers = useWatch({
+    control: formControl.control,
+    name: `${prefix}.includeUsers`,
+  })
+  const guestTypes = useWatch({
+    control: formControl.control,
+    name: `${base}.guestOrExternalUserTypes`,
+  })
   const conflictsWithIncludeUsers = useMemo(() => {
-    if (direction !== "include") return false;
-    const hasGuestTypes = Array.isArray(guestTypes) ? guestTypes.length > 0 : Boolean(guestTypes);
-    if (!hasGuestTypes) return false;
-    const users = Array.isArray(includeUsers) ? includeUsers : [includeUsers];
-    return users.some((u) => ["All", "None", "GuestsOrExternalUsers"].includes(u?.value ?? u));
-  }, [direction, guestTypes, includeUsers]);
+    if (direction !== 'include') return false
+    const hasGuestTypes = Array.isArray(guestTypes)
+      ? guestTypes.length > 0
+      : Boolean(guestTypes)
+    if (!hasGuestTypes) return false
+    const users = Array.isArray(includeUsers) ? includeUsers : [includeUsers]
+    return users.some((u) =>
+      ['All', 'None', 'GuestsOrExternalUsers'].includes(u?.value ?? u)
+    )
+  }, [direction, guestTypes, includeUsers])
 
   return (
     <>
@@ -154,13 +178,14 @@ function GuestsOrExternalUsersFields({ formControl, disabled, prefix, direction,
           placeholder="e.g. Service provider, B2B collaboration guest"
         />
         <Typography variant="caption" color="text.secondary">
-          Select one or more external user types to {direction} {direction === "include" ? "in" : "from"} this
-          policy.
+          Select one or more external user types to {direction}{' '}
+          {direction === 'include' ? 'in' : 'from'} this policy.
         </Typography>
         {conflictsWithIncludeUsers && (
           <Alert severity="warning" sx={{ mt: 1 }}>
-            Entra ID rejects this combination. Clear &quot;Include Users&quot; — an include-guests
-            assignment cannot be combined with All, None or GuestsOrExternalUsers.
+            Entra ID rejects this combination. Clear &quot;Include Users&quot; —
+            an include-guests assignment cannot be combined with All, None or
+            GuestsOrExternalUsers.
           </Alert>
         )}
       </Grid>
@@ -179,8 +204,8 @@ function GuestsOrExternalUsersFields({ formControl, disabled, prefix, direction,
             disabled={disabled}
             creatable={false}
             options={[
-              { label: "All external tenants", value: "all" },
-              { label: "Specific tenants", value: "enumerated" },
+              { label: 'All external tenants', value: 'all' },
+              { label: 'Specific tenants', value: 'enumerated' },
             ]}
             placeholder="Select tenant scope"
           />
@@ -206,39 +231,42 @@ function GuestsOrExternalUsersFields({ formControl, disabled, prefix, direction,
               placeholder="Enter tenant GUIDs"
             />
             <Typography variant="caption" color="text.secondary">
-              Enter the tenant IDs to scope this to (e.g. your partner tenant ID for a service
-              provider {direction === "include" ? "inclusion" : "exclusion"}).
+              Enter the tenant IDs to scope this to (e.g. your partner tenant ID
+              for a service provider{' '}
+              {direction === 'include' ? 'inclusion' : 'exclusion'}).
             </Typography>
           </Grid>
         </CippFormCondition>
       </CippFormCondition>
     </>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
 // Users & Groups section
 // ---------------------------------------------------------------------------
-function UsersSection({ formControl, disabled, prefix = "conditions.users" }) {
-  const schemaDef = resolveRef("#/$defs/conditionalAccessUsers");
-  const guestSchema = resolveRef("#/$defs/conditionalAccessGuestsOrExternalUsers");
+function UsersSection({ formControl, disabled, prefix = 'conditions.users' }) {
+  const schemaDef = resolveRef('#/$defs/conditionalAccessUsers')
+  const guestSchema = resolveRef(
+    '#/$defs/conditionalAccessGuestsOrExternalUsers'
+  )
   const roleOptions = useMemo(
     () => gdapRoles.map((r) => ({ label: r.Name, value: r.ObjectId })),
     []
-  );
+  )
   const specialUserOpts = useMemo(
     () => specialValueOptions(schemaDef?.properties?.includeUsers),
     [schemaDef]
-  );
+  )
 
   const guestTypeOpts = useMemo(() => {
-    const prop = guestSchema?.properties?.guestOrExternalUserTypes;
-    const flags = prop?.flagEnum ?? [];
-    const labels = prop?.flagEnumLabels ?? {};
+    const prop = guestSchema?.properties?.guestOrExternalUserTypes
+    const flags = prop?.flagEnum ?? []
+    const labels = prop?.flagEnumLabels ?? {}
     return flags
-      .filter((f) => f !== "none")
-      .map((f) => ({ label: labels[f] ?? f, value: f }));
-  }, [guestSchema]);
+      .filter((f) => f !== 'none')
+      .map((f) => ({ label: labels[f] ?? f, value: f }))
+  }, [guestSchema])
 
   return (
     <Grid container spacing={2}>
@@ -266,7 +294,9 @@ function UsersSection({ formControl, disabled, prefix = "conditions.users" }) {
           multiple
           freeSolo
           disabled={disabled}
-          options={[{ label: "GuestsOrExternalUsers", value: "GuestsOrExternalUsers" }]}
+          options={[
+            { label: 'GuestsOrExternalUsers', value: 'GuestsOrExternalUsers' },
+          ]}
           placeholder="User display names or IDs"
         />
       </Grid>
@@ -339,27 +369,31 @@ function UsersSection({ formControl, disabled, prefix = "conditions.users" }) {
         typeOptions={guestTypeOpts}
       />
     </Grid>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
 // Applications section
 // ---------------------------------------------------------------------------
-function ApplicationsSection({ formControl, disabled, prefix = "conditions.applications" }) {
-  const schemaDef = resolveRef("#/$defs/conditionalAccessApplications");
+function ApplicationsSection({
+  formControl,
+  disabled,
+  prefix = 'conditions.applications',
+}) {
+  const schemaDef = resolveRef('#/$defs/conditionalAccessApplications')
   const includeAppOpts = useMemo(
     () => specialValueOptions(schemaDef?.properties?.includeApplications),
     [schemaDef]
-  );
+  )
   const userActionOpts = useMemo(
     () => enumToOptions(schemaDef?.properties?.includeUserActions),
     [schemaDef]
-  );
-  const filterSchema = resolveRef("#/$defs/conditionalAccessFilter");
+  )
+  const filterSchema = resolveRef('#/$defs/conditionalAccessFilter')
   const filterModeOpts = useMemo(
     () => enumToOptions(filterSchema?.properties?.mode),
     [filterSchema]
-  );
+  )
 
   return (
     <Grid container spacing={2}>
@@ -411,8 +445,9 @@ function ApplicationsSection({ formControl, disabled, prefix = "conditions.appli
           placeholder="Authentication context IDs (c1-c99) or display names"
         />
         <Typography variant="caption" color="text.secondary">
-          Used instead of cloud apps. In a template, deployment matches these by display name and
-          creates the authentication context in the tenant if it is missing.
+          Used instead of cloud apps. In a template, deployment matches these by
+          display name and creates the authentication context in the tenant if
+          it is missing.
         </Typography>
       </Grid>
 
@@ -446,70 +481,77 @@ function ApplicationsSection({ formControl, disabled, prefix = "conditions.appli
         />
       </Grid>
     </Grid>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
 // Conditions (client apps, platforms, locations, risk, etc.)
 // ---------------------------------------------------------------------------
 function ConditionsSection({ formControl, disabled }) {
-  const condSchema = resolveRef("#/$defs/conditionalAccessConditionSet");
-  const platformSchema = resolveRef("#/$defs/conditionalAccessPlatforms");
-  const authFlowSchema = resolveRef("#/$defs/conditionalAccessAuthenticationFlows");
+  const condSchema = resolveRef('#/$defs/conditionalAccessConditionSet')
+  const platformSchema = resolveRef('#/$defs/conditionalAccessPlatforms')
+  const authFlowSchema = resolveRef(
+    '#/$defs/conditionalAccessAuthenticationFlows'
+  )
 
   const clientAppOpts = useMemo(
     () => enumToOptions(condSchema?.properties?.clientAppTypes),
     [condSchema]
-  );
+  )
   const includePlatOpts = useMemo(
     () => enumToOptions(platformSchema?.properties?.includePlatforms),
     [platformSchema]
-  );
+  )
   const excludePlatOpts = useMemo(
     () => enumToOptions(platformSchema?.properties?.excludePlatforms),
     [platformSchema]
-  );
+  )
   const signInRiskOpts = useMemo(
     () => enumToOptions(condSchema?.properties?.signInRiskLevels),
     [condSchema]
-  );
+  )
   const userRiskOpts = useMemo(
     () => enumToOptions(condSchema?.properties?.userRiskLevels),
     [condSchema]
-  );
+  )
   const spRiskOpts = useMemo(
     () => enumToOptions(condSchema?.properties?.servicePrincipalRiskLevels),
     [condSchema]
-  );
+  )
   const insiderRiskOpts = useMemo(
     () => enumToOptions(condSchema?.properties?.insiderRiskLevels),
     [condSchema]
-  );
+  )
   const authFlowOpts = useMemo(
     () => enumToOptions(authFlowSchema?.properties?.transferMethods),
     [authFlowSchema]
-  );
+  )
 
-  const locationSchema = resolveRef("#/$defs/conditionalAccessLocations");
+  const locationSchema = resolveRef('#/$defs/conditionalAccessLocations')
   const includeLocOpts = useMemo(
     () => specialValueOptions(locationSchema?.properties?.includeLocations),
     [locationSchema]
-  );
+  )
   const excludeLocOpts = useMemo(
     () => specialValueOptions(locationSchema?.properties?.excludeLocations),
     [locationSchema]
-  );
+  )
 
-  const clientAppsSchema = resolveRef("#/$defs/conditionalAccessClientApplications");
+  const clientAppsSchema = resolveRef(
+    '#/$defs/conditionalAccessClientApplications'
+  )
   const includeSpOpts = useMemo(
-    () => specialValueOptions(clientAppsSchema?.properties?.includeServicePrincipals),
+    () =>
+      specialValueOptions(
+        clientAppsSchema?.properties?.includeServicePrincipals
+      ),
     [clientAppsSchema]
-  );
-  const filterSchema = resolveRef("#/$defs/conditionalAccessFilter");
+  )
+  const filterSchema = resolveRef('#/$defs/conditionalAccessFilter')
   const filterModeOpts = useMemo(
     () => enumToOptions(filterSchema?.properties?.mode),
     [filterSchema]
-  );
+  )
 
   return (
     <Grid container spacing={2}>
@@ -523,7 +565,7 @@ function ConditionsSection({ formControl, disabled }) {
           multiple
           disabled={disabled}
           options={clientAppOpts}
-          validators={{ required: "At least one client app type is required" }}
+          validators={{ required: 'At least one client app type is required' }}
         />
       </Grid>
 
@@ -596,8 +638,8 @@ function ConditionsSection({ formControl, disabled }) {
           multiple={false}
           disabled={disabled}
           options={[
-            { label: "Include filtered devices", value: "include" },
-            { label: "Exclude filtered devices", value: "exclude" },
+            { label: 'Include filtered devices', value: 'include' },
+            { label: 'Exclude filtered devices', value: 'exclude' },
           ]}
         />
       </Grid>
@@ -619,7 +661,12 @@ function ConditionsSection({ formControl, disabled }) {
             <Typography variant="caption" color="text.secondary">
               Risk Levels
             </Typography>
-            <Chip label="Entra ID P2" size="small" color="warning" variant="outlined" />
+            <Chip
+              label="Entra ID P2"
+              size="small"
+              color="warning"
+              variant="outlined"
+            />
           </Stack>
         </Divider>
       </Grid>
@@ -690,7 +737,12 @@ function ConditionsSection({ formControl, disabled }) {
             <Typography variant="caption" color="text.secondary">
               Workload Identities
             </Typography>
-            <Chip label="Workload Identities Premium" size="small" color="warning" variant="outlined" />
+            <Chip
+              label="Workload Identities Premium"
+              size="small"
+              color="warning"
+              variant="outlined"
+            />
           </Stack>
         </Divider>
       </Grid>
@@ -707,7 +759,8 @@ function ConditionsSection({ formControl, disabled }) {
           placeholder="All service principals, or service principal object IDs"
         />
         <Typography variant="caption" color="text.secondary">
-          Scopes the policy to workload identities instead of users. Leave empty for a user policy.
+          Scopes the policy to workload identities instead of users. Leave empty
+          for a user policy.
         </Typography>
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -744,40 +797,41 @@ function ConditionsSection({ formControl, disabled }) {
         />
       </Grid>
     </Grid>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
 // Grant Controls section
 // ---------------------------------------------------------------------------
 function GrantControlsSection({ formControl, disabled }) {
-  const grantSchema = resolveRef("#/$defs/conditionalAccessGrantControls");
+  const grantSchema = resolveRef('#/$defs/conditionalAccessGrantControls')
   const operatorOpts = useMemo(
     () => enumToOptions(grantSchema?.properties?.operator),
     [grantSchema]
-  );
+  )
   const builtInOpts = useMemo(
     () => enumToOptions(grantSchema?.properties?.builtInControls),
     [grantSchema]
-  );
+  )
 
-  const authStrengthSchema = resolveRef("#/$defs/authenticationStrengthPolicy");
+  const authStrengthSchema = resolveRef('#/$defs/authenticationStrengthPolicy')
   const authStrengthOpts = useMemo(
-    () => wellKnownToOptions(authStrengthSchema?.properties?.id?.wellKnownValues),
+    () =>
+      wellKnownToOptions(authStrengthSchema?.properties?.id?.wellKnownValues),
     [authStrengthSchema]
-  );
+  )
 
   const selectedControls = useWatch({
     control: formControl.control,
-    name: "grantControls.builtInControls",
-  });
+    name: 'grantControls.builtInControls',
+  })
 
   const hasBlock = useMemo(() => {
-    if (!selectedControls) return false;
-    return (Array.isArray(selectedControls) ? selectedControls : [selectedControls]).some(
-      (c) => (c?.value ?? c) === "block"
-    );
-  }, [selectedControls]);
+    if (!selectedControls) return false
+    return (
+      Array.isArray(selectedControls) ? selectedControls : [selectedControls]
+    ).some((c) => (c?.value ?? c) === 'block')
+  }, [selectedControls])
 
   return (
     <Grid container spacing={2}>
@@ -792,20 +846,22 @@ function GrantControlsSection({ formControl, disabled }) {
           multiple={false}
           validators={{
             validate: (value, formValues) => {
-              const gc = formValues?.grantControls || {};
+              const gc = formValues?.grantControls || {}
               const hasControls =
                 (Array.isArray(gc.builtInControls)
                   ? gc.builtInControls.length
                   : gc.builtInControls) ||
                 gc.authenticationStrength?.id ||
-                (Array.isArray(gc.termsOfUse) ? gc.termsOfUse.length : gc.termsOfUse) ||
+                (Array.isArray(gc.termsOfUse)
+                  ? gc.termsOfUse.length
+                  : gc.termsOfUse) ||
                 (Array.isArray(gc.customAuthenticationFactors)
                   ? gc.customAuthenticationFactors.length
-                  : gc.customAuthenticationFactors);
+                  : gc.customAuthenticationFactors)
               if (hasControls && !(value?.value ?? value)) {
-                return "Grant operator is required when grant controls are set";
+                return 'Grant operator is required when grant controls are set'
               }
-              return true;
+              return true
             },
           }}
         />
@@ -822,8 +878,8 @@ function GrantControlsSection({ formControl, disabled }) {
         />
         {hasBlock && (
           <Alert severity="info" sx={{ mt: 1 }}>
-            &quot;Block access&quot; cannot be combined with other grant controls. All other
-            selections will be ignored by Entra ID.
+            &quot;Block access&quot; cannot be combined with other grant
+            controls. All other selections will be ignored by Entra ID.
           </Alert>
         )}
       </Grid>
@@ -864,42 +920,43 @@ function GrantControlsSection({ formControl, disabled }) {
           placeholder="Custom control IDs"
         />
         <Typography variant="caption" color="text.secondary">
-          Legacy custom controls from an external identity provider, referenced by ID.
+          Legacy custom controls from an external identity provider, referenced
+          by ID.
         </Typography>
       </Grid>
     </Grid>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
 // Session Controls section
 // ---------------------------------------------------------------------------
 function SessionControlsSection({ formControl, disabled }) {
-  const casSchema = resolveRef("#/$defs/cloudAppSecuritySessionControl");
+  const casSchema = resolveRef('#/$defs/cloudAppSecuritySessionControl')
   const casTypeOpts = useMemo(
     () => enumToOptions(casSchema?.properties?.cloudAppSecurityType),
     [casSchema]
-  );
+  )
 
-  const signinSchema = resolveRef("#/$defs/signInFrequencySessionControl");
+  const signinSchema = resolveRef('#/$defs/signInFrequencySessionControl')
   const freqTypeOpts = useMemo(
     () => enumToOptions(signinSchema?.properties?.type),
     [signinSchema]
-  );
+  )
   const freqIntervalOpts = useMemo(
     () => enumToOptions(signinSchema?.properties?.frequencyInterval),
     [signinSchema]
-  );
+  )
   const freqAuthTypeOpts = useMemo(
     () => enumToOptions(signinSchema?.properties?.authenticationType),
     [signinSchema]
-  );
+  )
 
-  const persistSchema = resolveRef("#/$defs/persistentBrowserSessionControl");
+  const persistSchema = resolveRef('#/$defs/persistentBrowserSessionControl')
   const persistModeOpts = useMemo(
     () => enumToOptions(persistSchema?.properties?.mode),
     [persistSchema]
-  );
+  )
 
   return (
     <Grid container spacing={2}>
@@ -925,7 +982,9 @@ function SessionControlsSection({ formControl, disabled }) {
       {/* Cloud App Security */}
       <Grid size={{ xs: 12 }}>
         <Divider sx={{ my: 1 }} />
-        <Typography variant="subtitle2">Conditional Access App Control</Typography>
+        <Typography variant="subtitle2">
+          Conditional Access App Control
+        </Typography>
       </Grid>
       <Grid size={{ xs: 12, md: 4 }}>
         <CippFormComponent
@@ -1044,11 +1103,12 @@ function SessionControlsSection({ formControl, disabled }) {
           disabled={disabled}
         />
         <Typography variant="caption" color="text.secondary">
-          When enabled, Entra ID will not extend existing sessions during outages.
+          When enabled, Entra ID will not extend existing sessions during
+          outages.
         </Typography>
       </Grid>
     </Grid>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -1071,106 +1131,116 @@ function SessionControlsSection({ formControl, disabled }) {
 // (`@odata.type`), so the form uses a sanitised shape with `_type` and
 // `_ipRangesText` fields that we map back on save.
 
-const COUNTRY_TYPE = "#microsoft.graph.countryNamedLocation";
-const IP_TYPE = "#microsoft.graph.ipNamedLocation";
-const IPV4_RANGE_TYPE = "#microsoft.graph.iPv4CidrRange";
-const IPV6_RANGE_TYPE = "#microsoft.graph.iPv6CidrRange";
+const COUNTRY_TYPE = '#microsoft.graph.countryNamedLocation'
+const IP_TYPE = '#microsoft.graph.ipNamedLocation'
+const IPV4_RANGE_TYPE = '#microsoft.graph.iPv4CidrRange'
+const IPV6_RANGE_TYPE = '#microsoft.graph.iPv6CidrRange'
 
-const countryOptions = countryList.map(({ Code, Name }) => ({ value: Code, label: Name }));
+const countryOptions = countryList.map(({ Code, Name }) => ({
+  value: Code,
+  label: Name,
+}))
 
 /** Convert one Graph-shape named location to form-shape. */
 function namedLocationToForm(loc) {
-  if (!loc || typeof loc !== "object") return null;
-  const type = loc["@odata.type"] === IP_TYPE ? "ip" : "country";
-  if (type === "ip") {
+  if (!loc || typeof loc !== 'object') return null
+  const type = loc['@odata.type'] === IP_TYPE ? 'ip' : 'country'
+  if (type === 'ip') {
     const ipRangesText = Array.isArray(loc.ipRanges)
       ? loc.ipRanges
           .map((r) => r?.cidrAddress)
-          .filter((v) => typeof v === "string" && v.trim() !== "")
-          .join("\n")
-      : "";
+          .filter((v) => typeof v === 'string' && v.trim() !== '')
+          .join('\n')
+      : ''
     return {
-      _type: { label: "IP Ranges", value: "ip" },
-      displayName: loc.displayName ?? "",
+      _type: { label: 'IP Ranges', value: 'ip' },
+      displayName: loc.displayName ?? '',
       isTrusted: !!loc.isTrusted,
       _ipRangesText: ipRangesText,
-    };
+    }
   }
-  const countries = Array.isArray(loc.countriesAndRegions) ? loc.countriesAndRegions : [];
-  const lookup = loc.countryLookupMethod ?? "clientIpAddress";
+  const countries = Array.isArray(loc.countriesAndRegions)
+    ? loc.countriesAndRegions
+    : []
+  const lookup = loc.countryLookupMethod ?? 'clientIpAddress'
   return {
-    _type: { label: "Countries / Regions", value: "country" },
-    displayName: loc.displayName ?? "",
+    _type: { label: 'Countries / Regions', value: 'country' },
+    displayName: loc.displayName ?? '',
     countriesAndRegions: countries.map((code) => {
-      const match = countryOptions.find((o) => o.value === code);
-      return match ?? { label: code, value: code };
+      const match = countryOptions.find((o) => o.value === code)
+      return match ?? { label: code, value: code }
     }),
     includeUnknownCountriesAndRegions: !!loc.includeUnknownCountriesAndRegions,
     countryLookupMethod: {
-      label: lookup === "authenticatorAppGps" ? "Authenticator app GPS" : "Client IP address",
+      label:
+        lookup === 'authenticatorAppGps'
+          ? 'Authenticator app GPS'
+          : 'Client IP address',
       value: lookup,
     },
-  };
+  }
 }
 
 /** Unwrap an autoComplete `{label,value}` object to its underlying value. */
 function unwrapAC(v) {
-  if (v && typeof v === "object" && !Array.isArray(v) && "value" in v) return v.value;
-  return v;
+  if (v && typeof v === 'object' && !Array.isArray(v) && 'value' in v)
+    return v.value
+  return v
 }
 
 /** Convert one form-shape named location back to Graph shape. */
 function namedLocationToGraph(item) {
-  if (!item || !item.displayName || !item.displayName.trim()) return null;
-  const typeRaw = unwrapAC(item._type);
-  if (!typeRaw) return null;
-  const type = typeRaw === "ip" ? "ip" : "country";
-  if (type === "ip") {
-    const lines = String(item._ipRangesText ?? "")
+  if (!item || !item.displayName || !item.displayName.trim()) return null
+  const typeRaw = unwrapAC(item._type)
+  if (!typeRaw) return null
+  const type = typeRaw === 'ip' ? 'ip' : 'country'
+  if (type === 'ip') {
+    const lines = String(item._ipRangesText ?? '')
       .split(/\r?\n/)
       .map((s) => s.trim())
-      .filter((s) => s !== "");
-    if (lines.length === 0) return null;
+      .filter((s) => s !== '')
+    if (lines.length === 0) return null
     return {
-      "@odata.type": IP_TYPE,
+      '@odata.type': IP_TYPE,
       displayName: item.displayName.trim(),
       isTrusted: !!item.isTrusted,
       ipRanges: lines.map((cidr) => ({
-        "@odata.type": cidr.includes(":") ? IPV6_RANGE_TYPE : IPV4_RANGE_TYPE,
+        '@odata.type': cidr.includes(':') ? IPV6_RANGE_TYPE : IPV4_RANGE_TYPE,
         cidrAddress: cidr,
       })),
-    };
+    }
   }
   // Country shape — unwrap autoComplete {label,value} objects if present
   const countries = Array.isArray(item.countriesAndRegions)
     ? item.countriesAndRegions
         .map((c) => unwrapAC(c))
-        .filter((v) => typeof v === "string" && v !== "")
-    : [];
-  if (countries.length === 0) return null;
-  const lookup = unwrapAC(item.countryLookupMethod);
+        .filter((v) => typeof v === 'string' && v !== '')
+    : []
+  if (countries.length === 0) return null
+  const lookup = unwrapAC(item.countryLookupMethod)
   return {
-    "@odata.type": COUNTRY_TYPE,
+    '@odata.type': COUNTRY_TYPE,
     displayName: item.displayName.trim(),
     countriesAndRegions: countries,
     includeUnknownCountriesAndRegions: !!item.includeUnknownCountriesAndRegions,
-    countryLookupMethod: lookup || "clientIpAddress",
-  };
+    countryLookupMethod: lookup || 'clientIpAddress',
+  }
 }
 
 function NamedLocationsSection({ formControl, disabled }) {
   const { fields, append, remove } = useFieldArray({
     control: formControl.control,
-    name: "LocationInfo",
-  });
+    name: 'LocationInfo',
+  })
 
   return (
     <Stack spacing={2}>
       <Alert severity="info" icon={<PublicIcon fontSize="small" />}>
-        Named locations defined here are stored inside the template and recreated (or matched by
-        display name) in the target tenant when the template is deployed. Reference them by name
-        in the <strong>Include Locations</strong> / <strong>Exclude Locations</strong> fields
-        under <em>Conditions</em>.
+        Named locations defined here are stored inside the template and
+        recreated (or matched by display name) in the target tenant when the
+        template is deployed. Reference them by name in the{' '}
+        <strong>Include Locations</strong> / <strong>Exclude Locations</strong>{' '}
+        fields under <em>Conditions</em>.
       </Alert>
 
       {fields.length === 0 && (
@@ -1207,7 +1277,7 @@ function NamedLocationsSection({ formControl, disabled }) {
                 label="Display Name"
                 formControl={formControl}
                 disabled={disabled}
-                validators={{ required: "Display name is required" }}
+                validators={{ required: 'Display name is required' }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -1220,10 +1290,10 @@ function NamedLocationsSection({ formControl, disabled }) {
                 creatable={false}
                 disabled={disabled}
                 options={[
-                  { label: "Countries / Regions", value: "country" },
-                  { label: "IP Ranges", value: "ip" },
+                  { label: 'Countries / Regions', value: 'country' },
+                  { label: 'IP Ranges', value: 'ip' },
                 ]}
-                validators={{ required: "Location type is required" }}
+                validators={{ required: 'Location type is required' }}
               />
             </Grid>
 
@@ -1244,7 +1314,9 @@ function NamedLocationsSection({ formControl, disabled }) {
                   rows={4}
                   disabled={disabled}
                   placeholder="e.g. 203.0.113.0/24"
-                  validators={{ required: "At least one CIDR range is required" }}
+                  validators={{
+                    required: 'At least one CIDR range is required',
+                  }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -1274,7 +1346,9 @@ function NamedLocationsSection({ formControl, disabled }) {
                   multiple
                   disabled={disabled}
                   options={countryOptions}
-                  validators={{ required: "At least one country must be selected" }}
+                  validators={{
+                    required: 'At least one country must be selected',
+                  }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -1287,8 +1361,11 @@ function NamedLocationsSection({ formControl, disabled }) {
                   creatable={false}
                   disabled={disabled}
                   options={[
-                    { label: "Client IP address", value: "clientIpAddress" },
-                    { label: "Authenticator app GPS", value: "authenticatorAppGps" },
+                    { label: 'Client IP address', value: 'clientIpAddress' },
+                    {
+                      label: 'Authenticator app GPS',
+                      value: 'authenticatorAppGps',
+                    },
                   ]}
                 />
               </Grid>
@@ -1315,7 +1392,7 @@ function NamedLocationsSection({ formControl, disabled }) {
           onClick={() =>
             append({
               _type: null,
-              displayName: "",
+              displayName: '',
             })
           }
         >
@@ -1323,7 +1400,7 @@ function NamedLocationsSection({ formControl, disabled }) {
         </Button>
       </Box>
     </Stack>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -1335,104 +1412,127 @@ const CippCAPolicyBuilder = ({
   disabled = false,
   showNamedLocations = false,
 }) => {
-  const policySchema = caSchema;
+  const policySchema = caSchema
 
   // Pre-populate form from existing policy when editing
   useEffect(() => {
     if (existingPolicy && formControl) {
-      const populate = (obj, prefix = "") => {
-        if (!obj || typeof obj !== "object") return;
+      const populate = (obj, prefix = '') => {
+        if (!obj || typeof obj !== 'object') return
         Object.entries(obj).forEach(([key, value]) => {
           // Skip read-only / OData / internal / Graph metadata properties
           if (
-            (key === "id" && !prefix) || // Only skip top-level policy id
-            key === "createdDateTime" ||
-            key === "modifiedDateTime" ||
-            key === "deletedDateTime" ||
-            key === "templateId" ||
-            key === "partialEnablementStrategy" ||
-            key.includes("@odata") || // Catch both @odata.type and includePlatforms@odata.type
-            key.startsWith("#") || // Catch #microsoft.graph.restore etc.
-            key === "GUID" ||
-            key === "source" ||
-            key === "isSynced" ||
-            key === "package"
+            (key === 'id' && !prefix) || // Only skip top-level policy id
+            key === 'createdDateTime' ||
+            key === 'modifiedDateTime' ||
+            key === 'deletedDateTime' ||
+            key === 'templateId' ||
+            key === 'partialEnablementStrategy' ||
+            key.includes('@odata') || // Catch both @odata.type and includePlatforms@odata.type
+            key.startsWith('#') || // Catch #microsoft.graph.restore etc.
+            key === 'GUID' ||
+            key === 'source' ||
+            key === 'isSynced' ||
+            key === 'package'
           ) {
-            return;
+            return
           }
           // Skip null, empty arrays, and empty strings — treat as "not set"
-          if (value === null || value === undefined) return;
-          if (Array.isArray(value) && value.length === 0) return;
-          if (typeof value === "string" && value.trim() === "") return;
+          if (value === null || value === undefined) return
+          if (Array.isArray(value) && value.length === 0) return
+          if (typeof value === 'string' && value.trim() === '') return
 
-          const path = prefix ? `${prefix}.${key}` : key;
+          const path = prefix ? `${prefix}.${key}` : key
 
           // Special handling for LocationInfo (template-embedded named locations).
           // Graph-shape entries contain `@odata.type` keys that react-hook-form
           // would interpret as nested paths, so we map them onto a form-friendly
           // shape (`_type`, `_ipRangesText`, …) that NamedLocationsSection consumes.
-          if (key === "LocationInfo" && Array.isArray(value) && !prefix) {
+          if (key === 'LocationInfo' && Array.isArray(value) && !prefix) {
             const formItems = value
               .map((item) => namedLocationToForm(item))
-              .filter((v) => v !== null);
+              .filter((v) => v !== null)
             if (formItems.length > 0) {
-              formControl.setValue("LocationInfo", formItems);
+              formControl.setValue('LocationInfo', formItems)
             }
-            return;
+            return
           }
 
           // Special handling for authenticationStrength — only extract the policy ID,
           // not the full expanded object (displayName, description, allowedCombinations, etc.)
-          if (key === "authenticationStrength" && typeof value === "object" && !Array.isArray(value)) {
+          if (
+            key === 'authenticationStrength' &&
+            typeof value === 'object' &&
+            !Array.isArray(value)
+          ) {
             if (value.id) {
-              formControl.setValue(`${path}.id`, value.id);
+              formControl.setValue(`${path}.id`, value.id)
             }
-            return;
+            return
           }
 
           // Special handling for guestOrExternalUserTypes — Graph stores as comma-separated
           // string but our form uses a multi-select array
-          if (key === "guestOrExternalUserTypes" && typeof value === "string") {
-            const types = value.split(",").filter((t) => t.trim() !== "" && t !== "none");
+          if (key === 'guestOrExternalUserTypes' && typeof value === 'string') {
+            const types = value
+              .split(',')
+              .filter((t) => t.trim() !== '' && t !== 'none')
             if (types.length > 0) {
-              formControl.setValue(path, types);
+              formControl.setValue(path, types)
             }
-            return;
+            return
           }
 
           // Special handling for externalTenants — extract members and set _scope
-          if (key === "externalTenants" && typeof value === "object" && !Array.isArray(value)) {
-            if (value.members && Array.isArray(value.members) && value.members.length > 0) {
-              formControl.setValue(`${path}.members`, value.members);
-              formControl.setValue(`${path}._scope`, { label: "Specific tenants", value: "enumerated" });
+          if (
+            key === 'externalTenants' &&
+            typeof value === 'object' &&
+            !Array.isArray(value)
+          ) {
+            if (
+              value.members &&
+              Array.isArray(value.members) &&
+              value.members.length > 0
+            ) {
+              formControl.setValue(`${path}.members`, value.members)
+              formControl.setValue(`${path}._scope`, {
+                label: 'Specific tenants',
+                value: 'enumerated',
+              })
             } else {
-              formControl.setValue(`${path}._scope`, { label: "All external tenants", value: "all" });
+              formControl.setValue(`${path}._scope`, {
+                label: 'All external tenants',
+                value: 'all',
+              })
             }
-            return;
+            return
           }
 
-          if (typeof value === "object" && !Array.isArray(value)) {
-            populate(value, path);
+          if (typeof value === 'object' && !Array.isArray(value)) {
+            populate(value, path)
           } else {
-            formControl.setValue(path, value);
+            formControl.setValue(path, value)
           }
-        });
-      };
-      populate(existingPolicy);
+        })
+      }
+      populate(existingPolicy)
     }
-  }, [existingPolicy, formControl]);
+  }, [existingPolicy, formControl])
 
   // Schema-level validation: extract options for top-level policy state
   const stateOpts = useMemo(
     () => enumToOptions(policySchema.properties.state),
     [policySchema]
-  );
+  )
 
   return (
     <Stack spacing={2}>
       {/* Policy basics */}
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <SectionHeader title="Policy Basics" description="Display name and enforcement state." />
+        <SectionHeader
+          title="Policy Basics"
+          description="Display name and enforcement state."
+        />
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 8 }}>
             <CippFormComponent
@@ -1441,7 +1541,7 @@ const CippCAPolicyBuilder = ({
               label="Display Name"
               formControl={formControl}
               disabled={disabled}
-              validators={{ required: "Display name is required" }}
+              validators={{ required: 'Display name is required' }}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -1453,7 +1553,7 @@ const CippCAPolicyBuilder = ({
               disabled={disabled}
               multiple={false}
               options={stateOpts}
-              validators={{ required: "Policy state is required" }}
+              validators={{ required: 'Policy state is required' }}
             />
           </Grid>
         </Grid>
@@ -1515,7 +1615,10 @@ const CippCAPolicyBuilder = ({
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <SessionControlsSection formControl={formControl} disabled={disabled} />
+          <SessionControlsSection
+            formControl={formControl}
+            disabled={disabled}
+          />
         </AccordionDetails>
       </Accordion>
 
@@ -1531,15 +1634,18 @@ const CippCAPolicyBuilder = ({
             </Stack>
           </AccordionSummary>
           <AccordionDetails>
-            <NamedLocationsSection formControl={formControl} disabled={disabled} />
+            <NamedLocationsSection
+              formControl={formControl}
+              disabled={disabled}
+            />
           </AccordionDetails>
         </Accordion>
       )}
     </Stack>
-  );
-};
+  )
+}
 
-export default CippCAPolicyBuilder;
+export default CippCAPolicyBuilder
 
 /**
  * Utility: extract a clean CA policy JSON from react-hook-form values.
@@ -1553,93 +1659,99 @@ export default CippCAPolicyBuilder;
  */
 export function extractCAPolicyJSON(formValues) {
   const clean = (obj) => {
-    if (obj === null || obj === undefined) return undefined;
+    if (obj === null || obj === undefined) return undefined
 
     // Unwrap {label,value} from autoComplete
-    if (typeof obj === "object" && "value" in obj && "label" in obj) {
-      return obj.value;
+    if (typeof obj === 'object' && 'value' in obj && 'label' in obj) {
+      return obj.value
     }
 
     if (Array.isArray(obj)) {
-      const arr = obj.map(clean).filter((v) => v !== undefined && v !== null && v !== "");
-      return arr.length > 0 ? arr : undefined;
+      const arr = obj
+        .map(clean)
+        .filter((v) => v !== undefined && v !== null && v !== '')
+      return arr.length > 0 ? arr : undefined
     }
 
-    if (typeof obj === "object") {
-      const result = {};
-      let hasContent = false;
+    if (typeof obj === 'object') {
+      const result = {}
+      let hasContent = false
       for (const [key, value] of Object.entries(obj)) {
         // Strip internal builder fields (e.g. _scope)
-        if (key.startsWith("_")) continue;
+        if (key.startsWith('_')) continue
         // Strip OData annotations EXCEPT @odata.type (required by Graph for polymorphic types)
-        if (key === "@odata.type") {
-          result[key] = value;
-          hasContent = true;
-          continue;
+        if (key === '@odata.type') {
+          result[key] = value
+          hasContent = true
+          continue
         }
-        if (key.includes("@odata") || key.startsWith("#")) continue;
+        if (key.includes('@odata') || key.startsWith('#')) continue
 
-        const cleaned = clean(value);
+        const cleaned = clean(value)
         if (cleaned !== undefined) {
-          result[key] = cleaned;
-          hasContent = true;
+          result[key] = cleaned
+          hasContent = true
         }
       }
-      return hasContent ? result : undefined;
+      return hasContent ? result : undefined
     }
 
     // Booleans, numbers, non-empty strings pass through
-    if (typeof obj === "string" && obj.trim() === "") return undefined;
-    return obj;
-  };
+    if (typeof obj === 'string' && obj.trim() === '') return undefined
+    return obj
+  }
 
-  const cleaned = clean(formValues) ?? {};
+  const cleaned = clean(formValues) ?? {}
 
   // Post-process: fix guestsOrExternalUsers structures for Graph API
   const fixGuestExternalUsers = (guestObj) => {
-    if (!guestObj) return guestObj;
+    if (!guestObj) return guestObj
     // Graph expects guestOrExternalUserTypes as a comma-separated string
     if (Array.isArray(guestObj.guestOrExternalUserTypes)) {
-      guestObj.guestOrExternalUserTypes = guestObj.guestOrExternalUserTypes.join(",");
+      guestObj.guestOrExternalUserTypes =
+        guestObj.guestOrExternalUserTypes.join(',')
     }
     // Determine scope from the internal _scope field or from members presence
-    const scope = guestObj.externalTenants?._scope;
+    const scope = guestObj.externalTenants?._scope
     const hasMembers =
-      guestObj.externalTenants?.members && guestObj.externalTenants.members.length > 0;
+      guestObj.externalTenants?.members &&
+      guestObj.externalTenants.members.length > 0
 
     if (guestObj.externalTenants) {
       // Remove internal _scope field
-      delete guestObj.externalTenants._scope;
+      delete guestObj.externalTenants._scope
 
-      if (scope === "enumerated" || hasMembers) {
-        guestObj.externalTenants["@odata.type"] =
-          "#microsoft.graph.conditionalAccessEnumeratedExternalTenants";
-        guestObj.externalTenants.membershipKind = "enumerated";
+      if (scope === 'enumerated' || hasMembers) {
+        guestObj.externalTenants['@odata.type'] =
+          '#microsoft.graph.conditionalAccessEnumeratedExternalTenants'
+        guestObj.externalTenants.membershipKind = 'enumerated'
       } else {
         guestObj.externalTenants = {
-          "@odata.type": "#microsoft.graph.conditionalAccessAllExternalTenants",
-          membershipKind: "all",
-        };
+          '@odata.type': '#microsoft.graph.conditionalAccessAllExternalTenants',
+          membershipKind: 'all',
+        }
       }
     } else if (guestObj.guestOrExternalUserTypes) {
       // No tenants specified — default to all external tenants
       guestObj.externalTenants = {
-        "@odata.type": "#microsoft.graph.conditionalAccessAllExternalTenants",
-        membershipKind: "all",
-      };
+        '@odata.type': '#microsoft.graph.conditionalAccessAllExternalTenants',
+        membershipKind: 'all',
+      }
     }
-    return guestObj;
-  };
+    return guestObj
+  }
 
   if (cleaned.conditions?.users?.excludeGuestsOrExternalUsers) {
-    cleaned.conditions.users.excludeGuestsOrExternalUsers = fixGuestExternalUsers(
-      cleaned.conditions.users.excludeGuestsOrExternalUsers
-    );
+    cleaned.conditions.users.excludeGuestsOrExternalUsers =
+      fixGuestExternalUsers(
+        cleaned.conditions.users.excludeGuestsOrExternalUsers
+      )
   }
   if (cleaned.conditions?.users?.includeGuestsOrExternalUsers) {
-    cleaned.conditions.users.includeGuestsOrExternalUsers = fixGuestExternalUsers(
-      cleaned.conditions.users.includeGuestsOrExternalUsers
-    );
+    cleaned.conditions.users.includeGuestsOrExternalUsers =
+      fixGuestExternalUsers(
+        cleaned.conditions.users.includeGuestsOrExternalUsers
+      )
   }
 
   // Post-process: strip session control sub-objects where isEnabled is false.
@@ -1647,25 +1759,25 @@ export function extractCAPolicyJSON(formValues) {
   // canonicalizer turns the resulting absence into the null that clears it on the policy.
   if (cleaned.sessionControls) {
     const sessionKeys = [
-      "applicationEnforcedRestrictions",
-      "cloudAppSecurity",
-      "signInFrequency",
-      "persistentBrowser",
-    ];
+      'applicationEnforcedRestrictions',
+      'cloudAppSecurity',
+      'signInFrequency',
+      'persistentBrowser',
+    ]
     for (const key of sessionKeys) {
       if (cleaned.sessionControls[key]?.isEnabled === false) {
-        delete cleaned.sessionControls[key];
+        delete cleaned.sessionControls[key]
       }
     }
     // `disableResilienceDefaults` defaults to false from the switch even when
     // untouched. Left in place it keeps `sessionControls` non-empty, so Graph
     // never persists it on read
     if (cleaned.sessionControls.disableResilienceDefaults !== true) {
-      delete cleaned.sessionControls.disableResilienceDefaults;
+      delete cleaned.sessionControls.disableResilienceDefaults
     }
     // If sessionControls is now empty, remove it too
     if (Object.keys(cleaned.sessionControls).length === 0) {
-      delete cleaned.sessionControls;
+      delete cleaned.sessionControls
     }
   }
 
@@ -1673,15 +1785,15 @@ export function extractCAPolicyJSON(formValues) {
   // back to Graph shape. We read from the raw form values (not `cleaned`)
   // because `clean()` strips internal keys prefixed with `_` (e.g. `_type`,
   // `_ipRangesText`) that the conversion needs.
-  delete cleaned.LocationInfo;
+  delete cleaned.LocationInfo
   if (Array.isArray(formValues?.LocationInfo)) {
-    const graphLocations = formValues.LocationInfo
-      .map((item) => namedLocationToGraph(item))
-      .filter((v) => v !== null);
+    const graphLocations = formValues.LocationInfo.map((item) =>
+      namedLocationToGraph(item)
+    ).filter((v) => v !== null)
     if (graphLocations.length > 0) {
-      cleaned.LocationInfo = graphLocations;
+      cleaned.LocationInfo = graphLocations
     }
   }
 
-  return cleaned;
+  return cleaned
 }

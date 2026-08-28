@@ -9,51 +9,58 @@ import {
   Divider,
   Stack,
   Typography,
-} from "@mui/material";
-import CippFormComponent from "./CippFormComponent";
-import { ApiGetCall, ApiPostCall } from "../../api/ApiCall";
-import { getCippError } from "../../utils/get-cipp-error";
-import { useFormState } from "react-hook-form";
-import { useEffect } from "react";
+} from '@mui/material'
+import CippFormComponent from './CippFormComponent'
+import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
+import { getCippError } from '../../utils/get-cipp-error'
+import { useFormState } from 'react-hook-form'
+import { useEffect } from 'react'
 
 export const CippSettingsSideBar = (props) => {
-  const { formcontrol, initialUserType, ...others } = props;
-  const { isDirty, isValid } = useFormState({ control: formcontrol.control });
+  const { formcontrol, initialUserType, ...others } = props
+  const { isDirty, isValid } = useFormState({ control: formcontrol.control })
 
   const currentUser = ApiGetCall({
-    url: "/api/me",
-    queryKey: "authmecipp",
-  });
+    url: '/api/me',
+    queryKey: 'authmecipp',
+  })
 
   const saveSettingsPost = ApiPostCall({
-    url: "/api/ExecUserSettings",
-    relatedQueryKeys: "userSettings",
-  });
+    url: '/api/ExecUserSettings',
+    relatedQueryKeys: 'userSettings',
+  })
 
   // Set the correct default value once we have the initial user type and current user data
   useEffect(() => {
     if (initialUserType && currentUser.data?.clientPrincipal?.userDetails) {
       const defaultUserOption =
-        initialUserType === "currentUser"
+        initialUserType === 'currentUser'
           ? {
-              label: "Current User",
+              label: 'Current User',
               value: currentUser.data.clientPrincipal.userDetails,
             }
           : {
-              label: "All Users",
-              value: "allUsers",
-            };
+              label: 'All Users',
+              value: 'allUsers',
+            }
 
       // Only set if not already set to avoid infinite loops
-      const currentUserValue = formcontrol.getValues("user");
-      if (!currentUserValue || currentUserValue.value !== defaultUserOption.value) {
-        formcontrol.setValue("user", defaultUserOption);
+      const currentUserValue = formcontrol.getValues('user')
+      if (
+        !currentUserValue ||
+        currentUserValue.value !== defaultUserOption.value
+      ) {
+        formcontrol.setValue('user', defaultUserOption)
       }
     }
-  }, [initialUserType, currentUser.data?.clientPrincipal?.userDetails, formcontrol]);
+  }, [
+    initialUserType,
+    currentUser.data?.clientPrincipal?.userDetails,
+    formcontrol,
+  ])
 
   const handleSaveChanges = () => {
-    const formValues = formcontrol.getValues();
+    const formValues = formcontrol.getValues()
 
     // Only include the specific form fields from preferences.js to avoid unmapped data
     const currentSettings = {
@@ -94,7 +101,8 @@ export const CippSettingsSideBar = (props) => {
         RemoveGroups: formValues.offboardingDefaults?.RemoveGroups,
         HideFromGAL: formValues.offboardingDefaults?.HideFromGAL,
         RemoveLicenses: formValues.offboardingDefaults?.RemoveLicenses,
-        removeCalendarInvites: formValues.offboardingDefaults?.removeCalendarInvites,
+        removeCalendarInvites:
+          formValues.offboardingDefaults?.removeCalendarInvites,
         RevokeSessions: formValues.offboardingDefaults?.RevokeSessions,
         removePermissions: formValues.offboardingDefaults?.removePermissions,
         RemoveRules: formValues.offboardingDefaults?.RemoveRules,
@@ -104,10 +112,13 @@ export const CippSettingsSideBar = (props) => {
         RemoveMobile: formValues.offboardingDefaults?.RemoveMobile,
         DisableSignIn: formValues.offboardingDefaults?.DisableSignIn,
         RemoveMFADevices: formValues.offboardingDefaults?.RemoveMFADevices,
-        RemoveTeamsPhoneDID: formValues.offboardingDefaults?.RemoveTeamsPhoneDID,
+        RemoveTeamsPhoneDID:
+          formValues.offboardingDefaults?.RemoveTeamsPhoneDID,
         ClearImmutableId: formValues.offboardingDefaults?.ClearImmutableId,
-        removeCalendarPermissions: formValues.offboardingDefaults?.removeCalendarPermissions,
-        DisableOneDriveSharing: formValues.offboardingDefaults?.DisableOneDriveSharing,
+        removeCalendarPermissions:
+          formValues.offboardingDefaults?.removeCalendarPermissions,
+        DisableOneDriveSharing:
+          formValues.offboardingDefaults?.DisableOneDriveSharing,
         OOO: formValues.offboardingDefaults?.OOO,
         postExecution: {
           psa: formValues.offboardingDefaults?.postExecution?.psa,
@@ -115,32 +126,35 @@ export const CippSettingsSideBar = (props) => {
           webhook: formValues.offboardingDefaults?.postExecution?.webhook,
         },
       },
-    };
+    }
 
     const shippedValues = {
-      user: formcontrol.getValues("user").value,
+      user: formcontrol.getValues('user').value,
       currentSettings: currentSettings,
-    };
-    saveSettingsPost.mutate({ url: "/api/ExecUserSettings", data: shippedValues });
-  };
+    }
+    saveSettingsPost.mutate({
+      url: '/api/ExecUserSettings',
+      data: shippedValues,
+    })
+  }
 
   // Create user options based on current user data
   const getUserOptions = () => {
     if (!currentUser.data?.clientPrincipal?.userDetails) {
-      return [];
+      return []
     }
 
     return [
       {
-        label: "Current User",
+        label: 'Current User',
         value: currentUser.data.clientPrincipal.userDetails,
       },
       {
-        label: "All Users",
-        value: "allUsers",
+        label: 'All Users',
+        value: 'allUsers',
       },
-    ];
-  };
+    ]
+  }
 
   return (
     <>
@@ -150,8 +164,8 @@ export const CippSettingsSideBar = (props) => {
         <CardContent sx={{ mb: 0, pb: 0 }}>
           <Stack spacing={2}>
             <Typography variant="body2">
-              Settings on this page can be saved for the current user, or all users. Select the
-              desired option below.
+              Settings on this page can be saved for the current user, or all
+              users. Select the desired option below.
             </Typography>
             <CippFormComponent
               type="autoComplete"
@@ -163,7 +177,9 @@ export const CippSettingsSideBar = (props) => {
             />
 
             {saveSettingsPost.isError && (
-              <Alert severity="error">{getCippError(saveSettingsPost.error)}</Alert>
+              <Alert severity="error">
+                {getCippError(saveSettingsPost.error)}
+              </Alert>
             )}
             {saveSettingsPost.isSuccess && (
               <Alert severity="success">Settings saved successfully</Alert>
@@ -171,13 +187,19 @@ export const CippSettingsSideBar = (props) => {
           </Stack>
         </CardContent>
         <CardActions>
-          <Button variant="contained" disabled={!isValid} onClick={() => handleSaveChanges()}>
+          <Button
+            variant="contained"
+            disabled={!isValid}
+            onClick={() => handleSaveChanges()}
+          >
             Save Changes
-            {saveSettingsPost.isPending && <CircularProgress color="info" size={20} />}
+            {saveSettingsPost.isPending && (
+              <CircularProgress color="info" size={20} />
+            )}
           </Button>
         </CardActions>
         <Divider />
       </Card>
     </>
-  );
-};
+  )
+}

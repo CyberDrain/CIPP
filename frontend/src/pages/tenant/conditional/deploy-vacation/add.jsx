@@ -1,29 +1,32 @@
-import React from "react";
-import { Box, Divider, Stack, Typography } from "@mui/material";
-import { Grid } from "@mui/system";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useForm, useWatch } from "react-hook-form";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { CippFormUserSelector } from "../../../../components/CippComponents/CippFormUserSelector";
-import { CippFormTenantSelector } from "../../../../components/CippComponents/CippFormTenantSelector";
+import React from 'react'
+import { Box, Divider, Stack, Typography } from '@mui/material'
+import { Grid } from '@mui/system'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useForm, useWatch } from 'react-hook-form'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { CippFormUserSelector } from '../../../../components/CippComponents/CippFormUserSelector'
+import { CippFormTenantSelector } from '../../../../components/CippComponents/CippFormTenantSelector'
 
 const Page = () => {
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       vacation: true,
     },
-  });
+  })
 
   // Watch the selected tenant to update dependent fields
-  const selectedTenant = useWatch({ control: formControl.control, name: "tenantFilter" });
-  const tenantDomain = selectedTenant?.value || selectedTenant;
+  const selectedTenant = useWatch({
+    control: formControl.control,
+    name: 'tenantFilter',
+  })
+  const tenantDomain = selectedTenant?.value || selectedTenant
 
   return (
     <>
       <CippFormPage
-        queryKey={"CippFormPage"}
+        queryKey={'CippFormPage'}
         formControl={formControl}
         title="Add Vacation Mode"
         backButtonTitle="Vacation Modes"
@@ -36,14 +39,15 @@ const Page = () => {
             StartDate: values.startDate,
             EndDate: values.endDate,
             vacation: true,
-          };
-          return shippedValues;
+          }
+          return shippedValues
         }}
       >
         <Stack spacing={3} sx={{ my: 2 }}>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Vacation mode adds scheduled tasks to add and remove users from Conditional Access (CA)
-            exclusions for a specific period of time. Select the CA policy and the date range.
+            Vacation mode adds scheduled tasks to add and remove users from
+            Conditional Access (CA) exclusions for a specific period of time.
+            Select the CA policy and the date range.
           </Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12 }}>
@@ -63,15 +67,19 @@ const Page = () => {
             {/* User Selector */}
             <Grid size={{ xs: 12 }}>
               <CippFormUserSelector
-                label={tenantDomain ? `Users in ${tenantDomain}` : "Select a tenant first"}
+                label={
+                  tenantDomain
+                    ? `Users in ${tenantDomain}`
+                    : 'Select a tenant first'
+                }
                 formControl={formControl}
                 name="Users"
                 multiple={true}
                 addedField={{
-                  userPrincipalName: "userPrincipalName",
-                  displayName: "displayName",
+                  userPrincipalName: 'userPrincipalName',
+                  displayName: 'displayName',
                 }}
-                validators={{ required: "Picking a user is required" }}
+                validators={{ required: 'Picking a user is required' }}
                 required={true}
                 disabled={!tenantDomain}
                 showRefresh={true}
@@ -85,18 +93,18 @@ const Page = () => {
                 label={
                   tenantDomain
                     ? `Conditional Access Policies in ${tenantDomain}`
-                    : "Select a tenant first"
+                    : 'Select a tenant first'
                 }
                 name="PolicyId"
                 api={
                   tenantDomain
                     ? {
                         queryKey: `ListConditionalAccessPolicies-${tenantDomain}`,
-                        url: "/api/ListConditionalAccessPolicies",
+                        url: '/api/ListConditionalAccessPolicies',
                         data: { tenantFilter: tenantDomain },
-                        dataKey: "Results",
+                        dataKey: 'Results',
                         labelField: (option) => `${option.displayName}`,
-                        valueField: "id",
+                        valueField: 'id',
                         showRefresh: true,
                       }
                     : null
@@ -106,9 +114,9 @@ const Page = () => {
                 validators={{
                   validate: (option) => {
                     if (!option?.value) {
-                      return "Picking a policy is required";
+                      return 'Picking a policy is required'
                     }
-                    return true;
+                    return true
                   },
                 }}
                 required={true}
@@ -128,9 +136,9 @@ const Page = () => {
                 validators={{
                   validate: (value) => {
                     if (!value) {
-                      return "Start date is required";
+                      return 'Start date is required'
                     }
-                    return true;
+                    return true
                   },
                 }}
               />
@@ -147,14 +155,18 @@ const Page = () => {
                 required={true}
                 validators={{
                   validate: (value) => {
-                    const startDate = formControl.getValues("startDate");
+                    const startDate = formControl.getValues('startDate')
                     if (!value) {
-                      return "End date is required";
+                      return 'End date is required'
                     }
-                    if (startDate && value && new Date(value * 1000) < new Date(startDate * 1000)) {
-                      return "End date must be after start date";
+                    if (
+                      startDate &&
+                      value &&
+                      new Date(value * 1000) < new Date(startDate * 1000)
+                    ) {
+                      return 'End date must be after start date'
                     }
-                    return true;
+                    return true
                   },
                 }}
               />
@@ -163,9 +175,9 @@ const Page = () => {
         </Stack>
       </CippFormPage>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

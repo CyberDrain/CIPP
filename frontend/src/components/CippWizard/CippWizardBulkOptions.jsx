@@ -1,11 +1,12 @@
-import { Stack } from "@mui/material";
-import { Grid } from "@mui/system";
-import CippWizardStepButtons from "./CippWizardStepButtons";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import countryList from "../../data/countryList.json";
-import { CippFormLicenseSelector } from "../CippComponents/CippFormLicenseSelector";
+import { Stack } from '@mui/material'
+import { Grid } from '@mui/system'
+import CippWizardStepButtons from './CippWizardStepButtons'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import countryList from '../../data/countryList.json'
+import { CippFormLicenseSelector } from '../CippComponents/CippFormLicenseSelector'
 export const CippWizardBulkOptions = (props) => {
-  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } = props;
+  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep } =
+    props
 
   return (
     <Stack spacing={3}>
@@ -44,5 +45,5 @@ export const CippWizardBulkOptions = (props) => {
         formControl={formControl}
       />
     </Stack>
-  );
-};
+  )
+}

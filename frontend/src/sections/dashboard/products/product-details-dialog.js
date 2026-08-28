@@ -1,7 +1,7 @@
-import PropTypes from 'prop-types';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import toast from 'react-hot-toast';
+import PropTypes from 'prop-types'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import toast from 'react-hot-toast'
 import {
   Autocomplete,
   Button,
@@ -13,12 +13,12 @@ import {
   FormHelperText,
   Stack,
   TextField,
-  Typography
-} from '@mui/material';
+  Typography,
+} from '@mui/material'
 
-const compositionOptions = ['Leather', 'Metal', 'Plastic', 'Organic'];
+const compositionOptions = ['Leather', 'Metal', 'Plastic', 'Organic']
 
-const tagOptions = ['Watch', 'Style', 'New', 'Promo', 'Discount', 'Refurbished'];
+const tagOptions = ['Watch', 'Style', 'New', 'Promo', 'Discount', 'Refurbished']
 
 const getInitialValues = (product) => {
   return {
@@ -29,9 +29,9 @@ const getInitialValues = (product) => {
     composition: product?.composition || [],
     sku: product?.sku || '',
     submit: null,
-    tags: product?.tags || []
-  };
-};
+    tags: product?.tags || [],
+  }
+}
 
 const validationSchema = Yup.object({
   brand: Yup.string().max(255).required('Brand is required'),
@@ -40,11 +40,11 @@ const validationSchema = Yup.object({
   displayName: Yup.string().max(255).required('Display name is required'),
   composition: Yup.array(),
   sku: Yup.string().max(255).required('SKU is required'),
-  tags: Yup.array()
-});
+  tags: Yup.array(),
+})
 
 export const ProductDetailsDialog = (props) => {
-  const { open = false, onClose, product } = props;
+  const { open = false, onClose, product } = props
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: getInitialValues(product),
@@ -52,21 +52,21 @@ export const ProductDetailsDialog = (props) => {
     onSubmit: async (values, helpers) => {
       try {
         // Do API call
-        toast.success('Product updated');
-        helpers.setStatus({ success: true });
-        helpers.setSubmitting(false);
-        onClose?.();
+        toast.success('Product updated')
+        helpers.setStatus({ success: true })
+        helpers.setSubmitting(false)
+        onClose?.()
       } catch (err) {
-        console.error(err);
-        helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
-        helpers.setSubmitting(false);
+        console.error(err)
+        helpers.setStatus({ success: false })
+        helpers.setErrors({ submit: err.message })
+        helpers.setSubmitting(false)
       }
-    }
-  });
+    },
+  })
 
   if (!product) {
-    return null;
+    return null
   }
 
   return (
@@ -76,12 +76,10 @@ export const ProductDetailsDialog = (props) => {
       onClose={onClose}
       open={open}
       TransitionProps={{
-        onExited: () => formik.resetForm()
+        onExited: () => formik.resetForm(),
       }}
     >
-      <DialogTitle>
-        Edit Product
-      </DialogTitle>
+      <DialogTitle>Edit Product</DialogTitle>
       <DialogContent>
         <Stack spacing={3}>
           <Stack
@@ -89,8 +87,8 @@ export const ProductDetailsDialog = (props) => {
             spacing={3}
             sx={{
               '& > *': {
-                width: '50%'
-              }
+                width: '50%',
+              },
             }}
           >
             <TextField
@@ -129,7 +127,9 @@ export const ProductDetailsDialog = (props) => {
           <TextField
             error={!!(formik.touched.description && formik.errors.description)}
             fullWidth
-            helperText={formik.touched.description ? formik.errors.description : ''}
+            helperText={
+              formik.touched.description ? formik.errors.description : ''
+            }
             label="Description"
             multiline
             name="description"
@@ -141,22 +141,31 @@ export const ProductDetailsDialog = (props) => {
           <Autocomplete
             filterSelectedOptions
             multiple
-            onChange={(event, value) => { formik.setFieldValue('composition', value); }}
+            onChange={(event, value) => {
+              formik.setFieldValue('composition', value)
+            }}
             options={compositionOptions}
             renderInput={(inputProps) => (
               <TextField
-                error={!!(formik.touched.composition && formik.errors.composition)}
-                helperText={formik.touched.composition ? formik.errors.composition : ''}
+                error={
+                  !!(formik.touched.composition && formik.errors.composition)
+                }
+                helperText={
+                  formik.touched.composition ? formik.errors.composition : ''
+                }
                 label="Composition"
                 placeholder="Feature"
-                {...inputProps} />
+                {...inputProps}
+              />
             )}
             value={formik.values.composition}
           />
           <Autocomplete
             filterSelectedOptions
             multiple
-            onChange={(event, value) => { formik.setFieldValue('tags', value); }}
+            onChange={(event, value) => {
+              formik.setFieldValue('tags', value)
+            }}
             options={tagOptions}
             renderInput={(inputProps) => (
               <TextField
@@ -164,52 +173,46 @@ export const ProductDetailsDialog = (props) => {
                 helperText={formik.touched.tags ? formik.errors.tags : ''}
                 label="Tags"
                 placeholder="Tag"
-                {...inputProps} />
+                {...inputProps}
+              />
             )}
             value={formik.values.tags}
           />
-          <Stack
-            alignItems="center"
-            direction="row"
-          >
+          <Stack alignItems="center" direction="row">
             <Checkbox
               checked={formik.values.chargeTax}
-              onChange={(event) => { formik.setFieldValue('chargeTax', event.target.checked); }}
+              onChange={(event) => {
+                formik.setFieldValue('chargeTax', event.target.checked)
+              }}
             />
-            <Typography>
-              Charge tax on this product
-            </Typography>
+            <Typography>Charge tax on this product</Typography>
           </Stack>
         </Stack>
         {formik.errors.submit && (
-          <FormHelperText
-            error
-            sx={{ mt: 2 }}
-          >
+          <FormHelperText error sx={{ mt: 2 }}>
             {formik.errors.submit}
           </FormHelperText>
         )}
       </DialogContent>
       <DialogActions>
-        <Button
-          color="inherit"
-          onClick={onClose}
-        >
+        <Button color="inherit" onClick={onClose}>
           Cancel
         </Button>
         <Button
-          onClick={() => { formik.handleSubmit(); }}
+          onClick={() => {
+            formik.handleSubmit()
+          }}
           variant="contained"
         >
           Save Changes
         </Button>
       </DialogActions>
     </Dialog>
-  );
-};
+  )
+}
 
 ProductDetailsDialog.propTypes = {
   onClose: PropTypes.func,
   open: PropTypes.bool,
-  product: PropTypes.object
-};
+  product: PropTypes.object,
+}

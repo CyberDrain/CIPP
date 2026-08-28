@@ -8,48 +8,48 @@ import {
   Stack,
   SvgIcon,
   Typography,
-} from "@mui/material";
-import CippButtonCard from "../CippCards/CippButtonCard";
-import { ApiGetCall } from "../../api/ApiCall";
-import { useEffect, useState } from "react";
-import { CippPermissionResults } from "./CippPermissionResults";
-import { CippGDAPResults } from "./CippGDAPResults";
-import { Close, Sync } from "@mui/icons-material";
-import { CippTenantResults } from "./CippTenantResults";
-import { CippTimeAgo } from "../CippComponents/CippTimeAgo";
-import { Description } from "@mui/icons-material";
+} from '@mui/material'
+import CippButtonCard from '../CippCards/CippButtonCard'
+import { ApiGetCall } from '../../api/ApiCall'
+import { useEffect, useState } from 'react'
+import { CippPermissionResults } from './CippPermissionResults'
+import { CippGDAPResults } from './CippGDAPResults'
+import { Close, Sync } from '@mui/icons-material'
+import { CippTenantResults } from './CippTenantResults'
+import { CippTimeAgo } from '../CippComponents/CippTimeAgo'
+import { Description } from '@mui/icons-material'
 
 const CippPermissionCheck = (props) => {
-  const { type, importReport = false, variant } = props;
-  const [skipCache, setSkipCache] = useState(false);
-  const [cardIcon, setCardIcon] = useState(null);
-  const [offcanvasVisible, setOffcanvasVisible] = useState(false);
-  const [showAlertMessage, setShowAlertMessage] = useState(true);
-  var showDetails = true;
+  const { type, importReport = false, variant } = props
+  const [skipCache, setSkipCache] = useState(false)
+  const [cardIcon, setCardIcon] = useState(null)
+  const [offcanvasVisible, setOffcanvasVisible] = useState(false)
+  const [showAlertMessage, setShowAlertMessage] = useState(true)
+  var showDetails = true
 
-  if (type === "Tenants") {
-    showDetails = false;
+  if (type === 'Tenants') {
+    showDetails = false
   }
 
   const executeCheck = ApiGetCall({
-    url: "/api/ExecAccessChecks",
+    url: '/api/ExecAccessChecks',
     data: { Type: type, SkipCache: skipCache },
     waiting: importReport ? false : true,
     queryKey: `ExecAccessChecks-${type}`,
-  });
+  })
 
   const handlePermissionCheck = () => {
-    setSkipCache(true);
+    setSkipCache(true)
     if (skipCache) {
-      executeCheck.refetch();
+      executeCheck.refetch()
     }
-  };
+  }
 
   useEffect(() => {
     if (skipCache) {
-      executeCheck.refetch();
+      executeCheck.refetch()
     }
-  }, [skipCache]);
+  }, [skipCache])
 
   const CheckButton = () => {
     return (
@@ -59,8 +59,8 @@ const CippPermissionCheck = (props) => {
           spacing={3}
           display="flex"
           alignItems="center"
-          justifyContent={"space-between"}
-          width={"100%"}
+          justifyContent={'space-between'}
+          width={'100%'}
         >
           <Stack direction="row" spacing={1}>
             <Button
@@ -72,14 +72,18 @@ const CippPermissionCheck = (props) => {
                 </SvgIcon>
               }
               onClick={handlePermissionCheck}
-              disabled={executeCheck.isPending || executeCheck.isFetching || importReport}
+              disabled={
+                executeCheck.isPending ||
+                executeCheck.isFetching ||
+                importReport
+              }
             >
               Refresh
             </Button>
             {showDetails && (
               <Button
                 onClick={() => {
-                  setOffcanvasVisible(true);
+                  setOffcanvasVisible(true)
                 }}
                 variant="outlined"
                 color="primary"
@@ -96,7 +100,7 @@ const CippPermissionCheck = (props) => {
           <Box component={Typography} variant="caption">
             {executeCheck.isSuccess && (
               <>
-                Last run{" "}
+                Last run{' '}
                 <CippTimeAgo
                   data={
                     importReport?.[type]
@@ -109,19 +113,22 @@ const CippPermissionCheck = (props) => {
           </Box>
         </Stack>
       </>
-    );
-  };
+    )
+  }
 
-  const responseData = executeCheck?.error?.response?.data;
+  const responseData = executeCheck?.error?.response?.data
   const responseText =
-    typeof responseData === "string" ? responseData : responseData ? JSON.stringify(responseData) : "";
+    typeof responseData === 'string'
+      ? responseData
+      : responseData
+        ? JSON.stringify(responseData)
+        : ''
   const shouldShowApiResponse = responseText.includes(
-    "Access to this CIPP API endpoint is not allowed",
-  );
-  const checkErrorMessage =
-    shouldShowApiResponse
-      ? responseText
-      : `Failed to load ${type} check. Please try refreshing the page.`;
+    'Access to this CIPP API endpoint is not allowed'
+  )
+  const checkErrorMessage = shouldShowApiResponse
+    ? responseText
+    : `Failed to load ${type} check. Please try refreshing the page.`
 
   return (
     <>
@@ -131,22 +138,24 @@ const CippPermissionCheck = (props) => {
           <Stack
             direction="row"
             alignContent="center"
-            justifyContent={"space-between"}
+            justifyContent={'space-between'}
             sx={{ mb: 0 }}
           >
             <Box>{type} Check</Box>
             <Stack direction="row" spacing={2}>
-              {importReport?.[type] && <Chip size="small" label="Imported" variant="outlined" />}
+              {importReport?.[type] && (
+                <Chip size="small" label="Imported" variant="outlined" />
+              )}
               {cardIcon && <SvgIcon>{cardIcon}</SvgIcon>}
             </Stack>
           </Stack>
         }
         cardSx={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
           p: 0,
-          marginBottom: "auto",
+          marginBottom: 'auto',
         }}
         CardButton={<CheckButton />}
       >
@@ -160,7 +169,9 @@ const CippPermissionCheck = (props) => {
             {executeCheck.data?.Metadata?.AlertMessage && (
               <Collapse in={showAlertMessage} unmountOnExit>
                 <Alert
-                  severity={executeCheck?.data?.Metadata?.AlertSeverity ?? "info"}
+                  severity={
+                    executeCheck?.data?.Metadata?.AlertSeverity ?? 'info'
+                  }
                   sx={{ mb: 2 }}
                   action={
                     <IconButton
@@ -177,7 +188,7 @@ const CippPermissionCheck = (props) => {
                 </Alert>
               </Collapse>
             )}
-            {type === "Permissions" && (
+            {type === 'Permissions' && (
               <CippPermissionResults
                 executeCheck={executeCheck}
                 importReport={importReport?.[type]}
@@ -187,7 +198,7 @@ const CippPermissionCheck = (props) => {
                 setCardIcon={setCardIcon}
               />
             )}
-            {type === "GDAP" && (
+            {type === 'GDAP' && (
               <CippGDAPResults
                 executeCheck={executeCheck}
                 importReport={importReport?.[type]}
@@ -196,12 +207,14 @@ const CippPermissionCheck = (props) => {
                 setCardIcon={setCardIcon}
               />
             )}
-            {type === "Tenants" && <CippTenantResults importReport={importReport?.[type]} />}
+            {type === 'Tenants' && (
+              <CippTenantResults importReport={importReport?.[type]} />
+            )}
           </>
         )}
       </CippButtonCard>
     </>
-  );
-};
+  )
+}
 
-export default CippPermissionCheck;
+export default CippPermissionCheck

@@ -58,7 +58,11 @@ const CA_STATE_TONES = {
   enabledForReportingButNotEnforced: 'warn',
   disabled: 'fail',
 }
-const CA_CONTROL_LABELS = { mfa: 'MFA', block: 'Block', compliantDevice: 'Compliant Device' }
+const CA_CONTROL_LABELS = {
+  mfa: 'MFA',
+  block: 'Block',
+  compliantDevice: 'Compliant Device',
+}
 
 const caControlsText = (policy) => {
   const controls = Object.entries(CA_CONTROL_LABELS)
@@ -113,17 +117,23 @@ export const ExecutiveReportDocument = ({
   // Both arrive as an array on the happy path and as an error object or `undefined` when their
   // endpoint failed. The page-level guards below check that, but these run unconditionally, so
   // they have to check it too.
-  const caPolicies = Array.isArray(conditionalAccessData) ? conditionalAccessData : []
+  const caPolicies = Array.isArray(conditionalAccessData)
+    ? conditionalAccessData
+    : []
   const devices = Array.isArray(deviceData) ? deviceData : []
 
-  const caEnabledCount = caPolicies.filter((policy) => policy.state === 'enabled').length
+  const caEnabledCount = caPolicies.filter(
+    (policy) => policy.state === 'enabled'
+  ).length
   const caReportOnlyCount = caPolicies.filter(
     (policy) => policy.state === 'enabledForReportingButNotEnforced'
   ).length
 
   // Secure score history, oldest first, in the shape the shared trend chart takes. The API returns
   // newest first, which would draw the trend backwards.
-  const scoreTrendData = [...(secureScoreData?.secureScore?.data?.Results ?? [])]
+  const scoreTrendData = [
+    ...(secureScoreData?.secureScore?.data?.Results ?? []),
+  ]
     .reverse()
     .map((point) => ({
       label: new Date(point.createdDateTime).toLocaleDateString('en-US', {
@@ -151,9 +161,13 @@ export const ExecutiveReportDocument = ({
           // Process IntuneTemplate arrays
           if (Array.isArray(template.standards.IntuneTemplate)) {
             template.standards.IntuneTemplate.forEach((templateItem) => {
-              if (templateItem?.TemplateList?.value && templateItem?.TemplateList?.label) {
-                templateDisplayNameMap[templateItem.TemplateList.value.toLowerCase()] =
-                  templateItem.TemplateList.label
+              if (
+                templateItem?.TemplateList?.value &&
+                templateItem?.TemplateList?.label
+              ) {
+                templateDisplayNameMap[
+                  templateItem.TemplateList.value.toLowerCase()
+                ] = templateItem.TemplateList.label
               }
               // Handle TemplateList-Tags expansion
               const tagTemplates =
@@ -165,8 +179,9 @@ export const ExecutiveReportDocument = ({
                     expandedTemplate?.GUID &&
                     (expandedTemplate?.displayName || expandedTemplate?.name)
                   ) {
-                    templateDisplayNameMap[expandedTemplate.GUID.toLowerCase()] =
-                      expandedTemplate.displayName || expandedTemplate.name
+                    templateDisplayNameMap[
+                      expandedTemplate.GUID.toLowerCase()
+                    ] = expandedTemplate.displayName || expandedTemplate.name
                   }
                 })
               }
@@ -174,27 +189,34 @@ export const ExecutiveReportDocument = ({
           }
           // Process ConditionalAccessTemplate arrays
           if (Array.isArray(template.standards.ConditionalAccessTemplate)) {
-            template.standards.ConditionalAccessTemplate.forEach((templateItem) => {
-              if (templateItem?.TemplateList?.value && templateItem?.TemplateList?.label) {
-                templateDisplayNameMap[templateItem.TemplateList.value.toLowerCase()] =
-                  templateItem.TemplateList.label
+            template.standards.ConditionalAccessTemplate.forEach(
+              (templateItem) => {
+                if (
+                  templateItem?.TemplateList?.value &&
+                  templateItem?.TemplateList?.label
+                ) {
+                  templateDisplayNameMap[
+                    templateItem.TemplateList.value.toLowerCase()
+                  ] = templateItem.TemplateList.label
+                }
+                // Handle TemplateList-Tags expansion
+                const tagTemplates =
+                  templateItem?.['TemplateList-Tags']?.addedFields?.templates ||
+                  templateItem?.['TemplateList-Tags']?.rawData?.templates
+                if (tagTemplates && Array.isArray(tagTemplates)) {
+                  tagTemplates.forEach((expandedTemplate) => {
+                    if (
+                      expandedTemplate?.GUID &&
+                      (expandedTemplate?.displayName || expandedTemplate?.name)
+                    ) {
+                      templateDisplayNameMap[
+                        expandedTemplate.GUID.toLowerCase()
+                      ] = expandedTemplate.displayName || expandedTemplate.name
+                    }
+                  })
+                }
               }
-              // Handle TemplateList-Tags expansion
-              const tagTemplates =
-                templateItem?.['TemplateList-Tags']?.addedFields?.templates ||
-                templateItem?.['TemplateList-Tags']?.rawData?.templates
-              if (tagTemplates && Array.isArray(tagTemplates)) {
-                tagTemplates.forEach((expandedTemplate) => {
-                  if (
-                    expandedTemplate?.GUID &&
-                    (expandedTemplate?.displayName || expandedTemplate?.name)
-                  ) {
-                    templateDisplayNameMap[expandedTemplate.GUID.toLowerCase()] =
-                      expandedTemplate.displayName || expandedTemplate.name
-                  }
-                })
-              }
-            })
+            )
           }
         }
       })
@@ -208,7 +230,9 @@ export const ExecutiveReportDocument = ({
       if (key.startsWith('standards.') && key !== 'tenantFilter') {
         const standardKey = key
         const standardValue = tenantData[key]
-        const standardDef = standardsData?.find((std) => std.name === standardKey)
+        const standardDef = standardsData?.find(
+          (std) => std.name === standardKey
+        )
 
         if (standardDef) {
           // Determine compliance status using the same logic as applied-standards.js
@@ -221,7 +245,8 @@ export const ExecutiveReportDocument = ({
             standardValue?.ExpectedValue !== undefined
           ) {
             const sortedCurrent =
-              typeof standardValue.CurrentValue === 'object' && standardValue.CurrentValue !== null
+              typeof standardValue.CurrentValue === 'object' &&
+              standardValue.CurrentValue !== null
                 ? Object.keys(standardValue.CurrentValue)
                     .sort()
                     .reduce((obj, key) => {
@@ -239,7 +264,8 @@ export const ExecutiveReportDocument = ({
                       return obj
                     }, {})
                 : standardValue.ExpectedValue
-            isCompliant = JSON.stringify(sortedCurrent) === JSON.stringify(sortedExpected)
+            isCompliant =
+              JSON.stringify(sortedCurrent) === JSON.stringify(sortedExpected)
           }
           // SECOND: Check if Value is explicitly true
           else if (standardValue?.Value === true) {
@@ -250,13 +276,17 @@ export const ExecutiveReportDocument = ({
 
           // Get tags for display - fix the tags access
           const tags =
-            standardDef.tag && Array.isArray(standardDef.tag) && standardDef.tag.length > 0
+            standardDef.tag &&
+            Array.isArray(standardDef.tag) &&
+            standardDef.tag.length > 0
               ? standardDef.tag.slice(0, 2).join(', ') // Show first 2 tags
               : 'No tags'
           processedStandards.push({
             name: standardDef.label,
             description:
-              standardDef.executiveText || standardDef.helpText || 'No description available',
+              standardDef.executiveText ||
+              standardDef.helpText ||
+              'No description available',
             status: status,
             tags: tags,
           })
@@ -271,7 +301,8 @@ export const ExecutiveReportDocument = ({
             standardValue?.ExpectedValue !== undefined
           ) {
             const sortedCurrent =
-              typeof standardValue.CurrentValue === 'object' && standardValue.CurrentValue !== null
+              typeof standardValue.CurrentValue === 'object' &&
+              standardValue.CurrentValue !== null
                 ? Object.keys(standardValue.CurrentValue)
                     .sort()
                     .reduce((obj, key) => {
@@ -289,7 +320,8 @@ export const ExecutiveReportDocument = ({
                       return obj
                     }, {})
                 : standardValue.ExpectedValue
-            isCompliant = JSON.stringify(sortedCurrent) === JSON.stringify(sortedExpected)
+            isCompliant =
+              JSON.stringify(sortedCurrent) === JSON.stringify(sortedExpected)
           }
           // SECOND: Check if Value is explicitly true
           else if (standardValue?.Value === true) {
@@ -302,7 +334,9 @@ export const ExecutiveReportDocument = ({
           let displayName = ''
 
           // Check if this is an IntuneTemplate or ConditionalAccessTemplate
-          const intuneTemplateMatch = standardKey.match(/^standards\.IntuneTemplate\.([0-9a-f-]+)/i)
+          const intuneTemplateMatch = standardKey.match(
+            /^standards\.IntuneTemplate\.([0-9a-f-]+)/i
+          )
           const caTemplateMatch = standardKey.match(
             /^standards\.ConditionalAccessTemplate\.([0-9a-f-]+)/i
           )
@@ -311,7 +345,8 @@ export const ExecutiveReportDocument = ({
             // IntuneTemplate - look up display name from template configurations
             const guid = intuneTemplateMatch[1]
             const lookupName = templateDisplayNameMap[guid.toLowerCase()]
-            displayName = lookupName || `Intune Template - ${guid.substring(0, 8)}`
+            displayName =
+              lookupName || `Intune Template - ${guid.substring(0, 8)}`
           } else if (caTemplateMatch) {
             // ConditionalAccessTemplate - look up display name from template configurations
             const guid = caTemplateMatch[1]
@@ -386,28 +421,40 @@ export const ExecutiveReportDocument = ({
         acc.acceptedDeviationsCount += item.acceptedDeviationsCount || 0
         acc.currentDeviationsCount += item.currentDeviationsCount || 0
         acc.alignedCount += item.alignedCount || 0
-        acc.customerSpecificDeviationsCount += item.customerSpecificDeviationsCount || 0
+        acc.customerSpecificDeviationsCount +=
+          item.customerSpecificDeviationsCount || 0
         acc.deniedDeviationsCount += item.deniedDeviationsCount || 0
 
         // Collect deviations with pretty names
         if (item.currentDeviations && Array.isArray(item.currentDeviations)) {
           acc.currentDeviations.push(
-            ...processDeviations(item.currentDeviations.filter((dev) => dev !== null))
+            ...processDeviations(
+              item.currentDeviations.filter((dev) => dev !== null)
+            )
           )
         }
         if (item.acceptedDeviations && Array.isArray(item.acceptedDeviations)) {
           acc.acceptedDeviations.push(
-            ...processDeviations(item.acceptedDeviations.filter((dev) => dev !== null))
+            ...processDeviations(
+              item.acceptedDeviations.filter((dev) => dev !== null)
+            )
           )
         }
-        if (item.customerSpecificDeviations && Array.isArray(item.customerSpecificDeviations)) {
+        if (
+          item.customerSpecificDeviations &&
+          Array.isArray(item.customerSpecificDeviations)
+        ) {
           acc.customerSpecificDeviations.push(
-            ...processDeviations(item.customerSpecificDeviations.filter((dev) => dev !== null))
+            ...processDeviations(
+              item.customerSpecificDeviations.filter((dev) => dev !== null)
+            )
           )
         }
         if (item.deniedDeviations && Array.isArray(item.deniedDeviations)) {
           acc.deniedDeviations.push(
-            ...processDeviations(item.deniedDeviations.filter((dev) => dev !== null))
+            ...processDeviations(
+              item.deniedDeviations.filter((dev) => dev !== null)
+            )
           )
         }
 
@@ -441,13 +488,17 @@ export const ExecutiveReportDocument = ({
       Object.keys(tenantData).forEach((key) => {
         if (key.startsWith('standards.') && key !== 'tenantFilter') {
           const standardKey = key
-          const standardDef = standardsData.find((std) => std.name === standardKey)
+          const standardDef = standardsData.find(
+            (std) => std.name === standardKey
+          )
 
           if (standardDef) {
             appliedStandards.push({
               name: standardDef.label || standardKey,
               executiveDescription:
-                standardDef.executiveText || standardDef.helpText || 'No description available',
+                standardDef.executiveText ||
+                standardDef.helpText ||
+                'No description available',
               category: standardDef.cat || 'General',
             })
           }
@@ -460,8 +511,14 @@ export const ExecutiveReportDocument = ({
     return aggregatedData
   }
 
-  let securityControls = processStandardsData(standardsCompareData, standardTemplatesData)
-  let driftComplianceInfo = processDriftComplianceData(driftComplianceData, standardsCompareData)
+  let securityControls = processStandardsData(
+    standardsCompareData,
+    standardTemplatesData
+  )
+  let driftComplianceInfo = processDriftComplianceData(
+    driftComplianceData,
+    standardsCompareData
+  )
 
   // Compliance grade -> the shared status vocabulary.
   const badgeTone = (status) => {
@@ -511,10 +568,15 @@ export const ExecutiveReportDocument = ({
     },
   ].flatMap((bucket) =>
     (bucket.list ?? []).slice(0, bucket.take).map((deviation) => {
-      const standardDef = standardsCatalog?.find((std) => std.name === deviation.standardName)
+      const standardDef = standardsCatalog?.find(
+        (std) => std.name === deviation.standardName
+      )
       return {
         policy: deviation.prettyName || 'Unknown Policy',
-        description: standardDef?.executiveText || standardDef?.helpText || bucket.fallback,
+        description:
+          standardDef?.executiveText ||
+          standardDef?.helpText ||
+          bucket.fallback,
         status: bucket.status,
         tone: bucket.tone,
       }
@@ -523,7 +585,8 @@ export const ExecutiveReportDocument = ({
 
   // Compliance state arrives under either casing depending on which endpoint fed the report.
   const isCompliant = (device) =>
-    (device.complianceState || device.ComplianceState || '').toLowerCase() === 'compliant'
+    (device.complianceState || device.ComplianceState || '').toLowerCase() ===
+    'compliant'
   const compliantDevices = devices.filter(isCompliant)
 
   // Applied standards grouped under their category heading.
@@ -556,27 +619,39 @@ export const ExecutiveReportDocument = ({
         >
           <Section>
             <Paragraph>
-              This security assessment for <Bold>{tenantName || 'your organization'}</Bold> provides
-              a clear picture of your organization's cybersecurity posture and readiness against
-              modern threats. We've evaluated your current security measures against industry best
-              practices to identify strengths and opportunities for improvement.
+              This security assessment for{' '}
+              <Bold>{tenantName || 'your organization'}</Bold> provides a clear
+              picture of your organization's cybersecurity posture and readiness
+              against modern threats. We've evaluated your current security
+              measures against industry best practices to identify strengths and
+              opportunities for improvement.
             </Paragraph>
 
             <Paragraph>
-              Our assessment follows globally recognized security standards to ensure your
-              organization meets regulatory requirements and industry benchmarks. This approach
-              helps protect your business assets, maintain customer trust, and reduce operational
-              risks from cyber threats.
+              Our assessment follows globally recognized security standards to
+              ensure your organization meets regulatory requirements and
+              industry benchmarks. This approach helps protect your business
+              assets, maintain customer trust, and reduce operational risks from
+              cyber threats.
             </Paragraph>
           </Section>
 
           <Section title="Environment Overview">
             <StatRow
               stats={[
-                { value: userStats?.licensedUsers || '0', label: 'Licensed Users' },
-                { value: userStats?.unlicensedUsers || '0', label: 'Unlicensed Users' },
+                {
+                  value: userStats?.licensedUsers || '0',
+                  label: 'Licensed Users',
+                },
+                {
+                  value: userStats?.unlicensedUsers || '0',
+                  label: 'Unlicensed Users',
+                },
                 { value: userStats?.guests || '0', label: 'Guest Users' },
-                { value: userStats?.globalAdmins || '0', label: 'Global Admins' },
+                {
+                  value: userStats?.globalAdmins || '0',
+                  label: 'Global Admins',
+                },
               ]}
             />
           </Section>
@@ -617,10 +692,12 @@ export const ExecutiveReportDocument = ({
           >
             <Section>
               <Paragraph>
-                Your security standards have been carefully evaluated against industry best
-                practices to protect your business from cyber threats while ensuring smooth daily
-                operations. These standards help maintain business continuity, protect sensitive
-                data, and meet regulatory requirements that are essential for your industry.
+                Your security standards have been carefully evaluated against
+                industry best practices to protect your business from cyber
+                threats while ensuring smooth daily operations. These standards
+                help maintain business continuity, protect sensitive data, and
+                meet regulatory requirements that are essential for your
+                industry.
               </Paragraph>
             </Section>
 
@@ -637,7 +714,9 @@ export const ExecutiveReportDocument = ({
                     width: 1.5,
                     align: 'center',
                     render: (control) => (
-                      <StatusText tone={badgeTone(control.status)}>{control.status}</StatusText>
+                      <StatusText tone={badgeTone(control.status)}>
+                        {control.status}
+                      </StatusText>
                     ),
                   },
                 ]}
@@ -693,10 +772,11 @@ export const ExecutiveReportDocument = ({
             >
               <Section>
                 <Paragraph>
-                  Your drift compliance assessment shows how your current security policies compare
-                  to your organization's approved standards. This analysis helps identify where
-                  configurations have drifted from intended baselines and provides insights into
-                  policy compliance across your Microsoft 365 environment.
+                  Your drift compliance assessment shows how your current
+                  security policies compare to your organization's approved
+                  standards. This analysis helps identify where configurations
+                  have drifted from intended baselines and provides insights
+                  into policy compliance across your Microsoft 365 environment.
                 </Paragraph>
               </Section>
 
@@ -705,14 +785,27 @@ export const ExecutiveReportDocument = ({
                   title="Policy Deviation Distribution"
                   centreLabel="Total Policies"
                   data={[
-                    { label: 'Aligned', value: driftComplianceInfo.alignedCount },
-                    { label: 'Accepted', value: driftComplianceInfo.acceptedDeviationsCount },
+                    {
+                      label: 'Aligned',
+                      value: driftComplianceInfo.alignedCount,
+                    },
+                    {
+                      label: 'Accepted',
+                      value: driftComplianceInfo.acceptedDeviationsCount,
+                    },
                     {
                       label: 'Client Specific',
-                      value: driftComplianceInfo.customerSpecificDeviationsCount,
+                      value:
+                        driftComplianceInfo.customerSpecificDeviationsCount,
                     },
-                    { label: 'Current', value: driftComplianceInfo.currentDeviationsCount },
-                    { label: 'Denied', value: driftComplianceInfo.deniedDeviationsCount },
+                    {
+                      label: 'Current',
+                      value: driftComplianceInfo.currentDeviationsCount,
+                    },
+                    {
+                      label: 'Denied',
+                      value: driftComplianceInfo.deniedDeviationsCount,
+                    },
                   ].map((entry, index) => ({
                     ...entry,
                     // Compliance categories keep the semantic green-to-red scale rather than the
@@ -730,7 +823,8 @@ export const ExecutiveReportDocument = ({
                       label: 'Accepted Deviations',
                     },
                     {
-                      value: driftComplianceInfo.customerSpecificDeviationsCount,
+                      value:
+                        driftComplianceInfo.customerSpecificDeviationsCount,
                       label: 'Client Specific',
                     },
                     {
@@ -784,9 +878,10 @@ export const ExecutiveReportDocument = ({
               >
                 <Section>
                   <Paragraph>
-                    The following table shows all identified policy deviations, their current
-                    status, and executive descriptions of what each deviation means for your
-                    organization's security posture and compliance requirements.
+                    The following table shows all identified policy deviations,
+                    their current status, and executive descriptions of what
+                    each deviation means for your organization's security
+                    posture and compliance requirements.
                   </Paragraph>
                 </Section>
 
@@ -819,9 +914,10 @@ export const ExecutiveReportDocument = ({
               >
                 <Section>
                   <Paragraph>
-                    These are the security standards that have been applied to your Microsoft 365
-                    environment. Each standard represents a specific security control or policy
-                    designed to protect your organization's data and systems.
+                    These are the security standards that have been applied to
+                    your Microsoft 365 environment. Each standard represents a
+                    specific security control or policy designed to protect your
+                    organization's data and systems.
                   </Paragraph>
                 </Section>
 
@@ -838,12 +934,14 @@ export const ExecutiveReportDocument = ({
 
                 <Section title="Compliance Summary">
                   <InfoBox title="Overall Compliance Status">
-                    Your organization has {driftComplianceInfo.appliedStandards.length} security
-                    standards implemented with {driftComplianceInfo.alignedCount} policies fully
-                    aligned,{' '}
+                    Your organization has{' '}
+                    {driftComplianceInfo.appliedStandards.length} security
+                    standards implemented with{' '}
+                    {driftComplianceInfo.alignedCount} policies fully aligned,{' '}
                     {driftComplianceInfo.acceptedDeviationsCount +
                       driftComplianceInfo.customerSpecificDeviationsCount}{' '}
-                    approved deviations, and {driftComplianceInfo.currentDeviationsCount} deviations
+                    approved deviations, and{' '}
+                    {driftComplianceInfo.currentDeviationsCount} deviations
                     requiring attention.
                   </InfoBox>
                 </Section>
@@ -888,9 +986,10 @@ export const ExecutiveReportDocument = ({
           >
             <Section>
               <Paragraph>
-                Microsoft Secure Score measures how well your organization is protected against
-                cyber threats. This score reflects the effectiveness of your current security
-                measures and helps identify areas where additional protection could strengthen your
+                Microsoft Secure Score measures how well your organization is
+                protected against cyber threats. This score reflects the
+                effectiveness of your current security measures and helps
+                identify areas where additional protection could strengthen your
                 business resilience.
               </Paragraph>
             </Section>
@@ -899,7 +998,8 @@ export const ExecutiveReportDocument = ({
               <StatRow
                 stats={[
                   {
-                    value: secureScoreData?.translatedData?.currentScore || 'N/A',
+                    value:
+                      secureScoreData?.translatedData?.currentScore || 'N/A',
                     label: 'Current Score',
                   },
                   {
@@ -937,18 +1037,22 @@ export const ExecutiveReportDocument = ({
             </Section>
 
             <InfoBox title="What Your Score Means">
-              Your current score of {secureScoreData?.translatedData?.currentScore || 'N/A'}{' '}
-              represents {secureScoreData?.translatedData?.percentageCurrent || 'N/A'}% of the
-              maximum protection level available. This indicates how well your organization is
-              currently defended against common cyber threats and data breaches.
+              Your current score of{' '}
+              {secureScoreData?.translatedData?.currentScore || 'N/A'}{' '}
+              represents{' '}
+              {secureScoreData?.translatedData?.percentageCurrent || 'N/A'}% of
+              the maximum protection level available. This indicates how well
+              your organization is currently defended against common cyber
+              threats and data breaches.
             </InfoBox>
 
             <InfoBox title="Why Scores Change">
-              • Business growth and new employees may temporarily lower scores until security
-              measures are applied{'\n'}• Changes in software licenses can affect available security
-              features{'\n'}• New security threats require updated protections, which may impact
-              scores{'\n'}• Regular security improvements help maintain and increase your protection
-              level
+              • Business growth and new employees may temporarily lower scores
+              until security measures are applied{'\n'}• Changes in software
+              licenses can affect available security features{'\n'}• New
+              security threats require updated protections, which may impact
+              scores{'\n'}• Regular security improvements help maintain and
+              increase your protection level
             </InfoBox>
           </ContentPage>
         )}
@@ -986,9 +1090,10 @@ export const ExecutiveReportDocument = ({
             >
               <Section>
                 <Paragraph>
-                  Smart license management helps control costs while ensuring your team has the
-                  tools they need to be productive. This analysis shows how your current licenses
-                  are being used and identifies opportunities to optimize spending without
+                  Smart license management helps control costs while ensuring
+                  your team has the tools they need to be productive. This
+                  analysis shows how your current licenses are being used and
+                  identifies opportunities to optimize spending without
                   compromising business operations.
                 </Paragraph>
               </Section>
@@ -997,8 +1102,19 @@ export const ExecutiveReportDocument = ({
                 <DataTable
                   limit={licensingData.length}
                   columns={[
-                    { header: 'License Type', key: 'name', width: 5, bold: true },
-                    { header: 'Used', key: 'used', width: 1.5, align: 'center', bold: true },
+                    {
+                      header: 'License Type',
+                      key: 'name',
+                      width: 5,
+                      bold: true,
+                    },
+                    {
+                      header: 'Used',
+                      key: 'used',
+                      width: 1.5,
+                      align: 'center',
+                      bold: true,
+                    },
                     {
                       header: 'Available',
                       key: 'available',
@@ -1006,13 +1122,21 @@ export const ExecutiveReportDocument = ({
                       align: 'center',
                       bold: true,
                     },
-                    { header: 'Total', key: 'total', width: 1.5, align: 'center', bold: true },
+                    {
+                      header: 'Total',
+                      key: 'total',
+                      width: 1.5,
+                      align: 'center',
+                      bold: true,
+                    },
                   ]}
                   rows={licensingData.map((license) => ({
                     name: license.License || license.license || 'N/A',
                     used: license.CountUsed || license.countUsed || '0',
-                    available: license.CountAvailable || license.countAvailable || '0',
-                    total: license.TotalLicenses || license.totalLicenses || '0',
+                    available:
+                      license.CountAvailable || license.countAvailable || '0',
+                    total:
+                      license.TotalLicenses || license.totalLicenses || '0',
                   }))}
                 />
               </Section>
@@ -1075,10 +1199,11 @@ export const ExecutiveReportDocument = ({
             >
               <Section>
                 <Paragraph>
-                  Managing employee devices is essential for protecting your business data and
-                  maintaining productivity. This analysis shows which devices meet your security
-                  standards and identifies any that may need attention to prevent data breaches or
-                  operational disruptions.
+                  Managing employee devices is essential for protecting your
+                  business data and maintaining productivity. This analysis
+                  shows which devices meet your security standards and
+                  identifies any that may need attention to prevent data
+                  breaches or operational disruptions.
                 </Paragraph>
               </Section>
 
@@ -1103,7 +1228,12 @@ export const ExecutiveReportDocument = ({
                 <DataTable
                   limit={8}
                   columns={[
-                    { header: 'Device Name', key: 'name', width: 3, bold: true },
+                    {
+                      header: 'Device Name',
+                      key: 'name',
+                      width: 3,
+                      bold: true,
+                    },
                     { header: 'OS', key: 'os', width: 2, bold: true },
                     {
                       header: 'Compliance',
@@ -1115,12 +1245,20 @@ export const ExecutiveReportDocument = ({
                         </StatusText>
                       ),
                     },
-                    { header: 'Last Sync', key: 'lastSync', width: 2, bold: true },
+                    {
+                      header: 'Last Sync',
+                      key: 'lastSync',
+                      width: 2,
+                      bold: true,
+                    },
                   ]}
                   rows={deviceData.map((device) => ({
                     name: device.deviceName || 'N/A',
                     os: device.operatingSystem || 'N/A',
-                    compliance: device.complianceState || device.ComplianceState || 'Unknown',
+                    compliance:
+                      device.complianceState ||
+                      device.ComplianceState ||
+                      'Unknown',
                     compliant: isCompliant(device),
                     lastSync: device.lastSyncDateTime
                       ? new Date(device.lastSyncDateTime).toLocaleDateString()
@@ -1133,23 +1271,28 @@ export const ExecutiveReportDocument = ({
                 <StatRow
                   stats={[
                     {
-                      value: deviceData.filter((device) => device.operatingSystem === 'Windows')
-                        .length,
+                      value: deviceData.filter(
+                        (device) => device.operatingSystem === 'Windows'
+                      ).length,
                       label: 'Windows Devices',
                     },
                     {
-                      value: deviceData.filter((device) => device.operatingSystem === 'iOS').length,
+                      value: deviceData.filter(
+                        (device) => device.operatingSystem === 'iOS'
+                      ).length,
                       label: 'iOS Devices',
                     },
                     {
-                      value: deviceData.filter((device) => device.operatingSystem === 'Android')
-                        .length,
+                      value: deviceData.filter(
+                        (device) => device.operatingSystem === 'Android'
+                      ).length,
                       label: 'Android Devices',
                     },
                     {
                       // Cloud PCs never report BitLocker but are platform-encrypted by Azure.
                       value: deviceData.filter(
-                        (device) => device.isEncrypted === true || isCloudPcDevice(device),
+                        (device) =>
+                          device.isEncrypted === true || isCloudPcDevice(device)
                       ).length,
                       label: 'Encrypted',
                     },
@@ -1158,10 +1301,11 @@ export const ExecutiveReportDocument = ({
               </Section>
 
               <InfoBox title="Device Management Recommendations">
-                Keep devices updated and secure to protect business data. Regularly check that all
-                employee devices meet security standards and address any issues promptly. Consider
-                automated policies to maintain consistent security across all devices and conduct
-                regular reviews to identify potential risks.
+                Keep devices updated and secure to protect business data.
+                Regularly check that all employee devices meet security
+                standards and address any issues promptly. Consider automated
+                policies to maintain consistent security across all devices and
+                conduct regular reviews to identify potential risks.
               </InfoBox>
             </ContentPage>
           </>
@@ -1199,21 +1343,23 @@ export const ExecutiveReportDocument = ({
             >
               <Section>
                 <Paragraph>
-                  Access control policies help protect your business by ensuring only the right
-                  people can access sensitive information under appropriate circumstances. These
-                  smart security measures automatically evaluate each access request and apply
-                  additional verification when needed, balancing security with employee
-                  productivity.
+                  Access control policies help protect your business by ensuring
+                  only the right people can access sensitive information under
+                  appropriate circumstances. These smart security measures
+                  automatically evaluate each access request and apply
+                  additional verification when needed, balancing security with
+                  employee productivity.
                 </Paragraph>
               </Section>
 
               <Section title="How Access Controls Protect Your Business">
                 <Paragraph>
-                  These policies work like intelligent security guards, making decisions based on
-                  who is trying to access what, from where, and when. For example, accessing email
-                  from the office might be seamless, but accessing it from an unusual location might
-                  require additional verification. This approach protects your data while minimizing
-                  disruption to daily work.
+                  These policies work like intelligent security guards, making
+                  decisions based on who is trying to access what, from where,
+                  and when. For example, accessing email from the office might
+                  be seamless, but accessing it from an unusual location might
+                  require additional verification. This approach protects your
+                  data while minimizing disruption to daily work.
                 </Paragraph>
               </Section>
 
@@ -1221,7 +1367,12 @@ export const ExecutiveReportDocument = ({
                 <DataTable
                   limit={8}
                   columns={[
-                    { header: 'Policy Name', key: 'name', width: 4, bold: true },
+                    {
+                      header: 'Policy Name',
+                      key: 'name',
+                      width: 4,
+                      bold: true,
+                    },
                     {
                       header: 'State',
                       key: 'state',
@@ -1230,12 +1381,25 @@ export const ExecutiveReportDocument = ({
                         <StatusText tone={row.tone}>{row.state}</StatusText>
                       ),
                     },
-                    { header: 'Applications', key: 'applications', width: 2, bold: true },
-                    { header: 'Controls', key: 'controls', width: 3, bold: true },
+                    {
+                      header: 'Applications',
+                      key: 'applications',
+                      width: 2,
+                      bold: true,
+                    },
+                    {
+                      header: 'Controls',
+                      key: 'controls',
+                      width: 3,
+                      bold: true,
+                    },
                   ]}
                   rows={conditionalAccessData.map((policy) => ({
                     name: policy.displayName || 'N/A',
-                    state: CA_STATE_LABELS[policy.state] ?? policy.state ?? 'Unknown',
+                    state:
+                      CA_STATE_LABELS[policy.state] ??
+                      policy.state ??
+                      'Unknown',
                     tone: CA_STATE_TONES[policy.state] ?? null,
                     applications: policy.includeApplications || 'All',
                     controls: caControlsText(policy),
@@ -1246,7 +1410,10 @@ export const ExecutiveReportDocument = ({
               <Section title="Policy Overview">
                 <StatRow
                   stats={[
-                    { value: conditionalAccessData.length, label: 'Total Policies' },
+                    {
+                      value: conditionalAccessData.length,
+                      label: 'Total Policies',
+                    },
                     { value: caEnabledCount, label: 'Enabled' },
                     { value: caReportOnlyCount, label: 'Report Only' },
                     {
@@ -1286,9 +1453,10 @@ export const ExecutiveReportDocument = ({
                 {caReportOnlyCount > 0
                   ? `Consider activating ${caReportOnlyCount} policies currently in testing mode after ensuring they don't disrupt business operations. `
                   : 'Your access controls are properly configured. '}
-                Regularly review how these policies affect employee productivity and adjust as
-                needed. Consider additional location-based protections for enhanced security without
-                impacting daily operations.
+                Regularly review how these policies affect employee productivity
+                and adjust as needed. Consider additional location-based
+                protections for enhanced security without impacting daily
+                operations.
               </InfoBox>
             </ContentPage>
           </>
@@ -1326,7 +1494,8 @@ export const ExecutiveReportButton = (props) => {
   // Null until the operator picks one, so the branding setting for this report type keeps applying
   // as it changes. An explicit choice — including "Default" — wins from then on.
   const [presetOverride, setPresetOverride] = useState(null)
-  const brandingPresetId = presetOverride ?? defaultBranding?.reportDefaults?.executive ?? ''
+  const brandingPresetId =
+    presetOverride ?? defaultBranding?.reportDefaults?.executive ?? ''
 
   // Named branding sets a report can be rendered against instead of the default branding.
   const brandingPresets = ApiGetCall({
@@ -1341,20 +1510,27 @@ export const ExecutiveReportButton = (props) => {
       // Imported rather than restated: this option used to read "Global branding settings" here
       // while the branding page called the same thing "Default".
       DEFAULT_BRANDING_OPTION,
-      ...(Array.isArray(brandingPresets.data) ? brandingPresets.data : []).map((preset) => ({
-        label: preset.name,
-        value: preset.id,
-      })),
+      ...(Array.isArray(brandingPresets.data) ? brandingPresets.data : []).map(
+        (preset) => ({
+          label: preset.name,
+          value: preset.id,
+        })
+      ),
     ],
     [brandingPresets.data]
   )
 
   const brandingSettings = useMemo(() => {
     if (!brandingPresetId) return defaultBranding
-    const presets = Array.isArray(brandingPresets.data) ? brandingPresets.data : []
+    const presets = Array.isArray(brandingPresets.data)
+      ? brandingPresets.data
+      : []
     // A preset deleted since it was picked falls back to the default branding rather than
     // rendering unbranded.
-    return presets.find((preset) => preset.id === brandingPresetId) || defaultBranding
+    return (
+      presets.find((preset) => preset.id === brandingPresetId) ||
+      defaultBranding
+    )
   }, [brandingPresetId, brandingPresets.data, defaultBranding])
 
   const variables = useReportVariables()
@@ -1453,7 +1629,8 @@ export const ExecutiveReportButton = (props) => {
 
   // Shadow AI data for the optional Shadow AI section - only fetched when that section is
   // enabled. Requires a single tenant; the CIPPDb cache must have been synced for data to show.
-  const shadowAIEnabled = sectionConfig.shadowAI && settings.currentTenant !== 'AllTenants'
+  const shadowAIEnabled =
+    sectionConfig.shadowAI && settings.currentTenant !== 'AllTenants'
   const shadowAIData = ApiGetCall({
     url: '/api/ListShadowAI',
     data: { tenantFilter: settings.currentTenant },
@@ -1541,14 +1718,22 @@ export const ExecutiveReportButton = (props) => {
           licensingData={licenseData.isSuccess ? licenseData?.data : null}
           deviceData={deviceData.isSuccess ? deviceData?.data?.Results : null}
           conditionalAccessData={
-            conditionalAccessData.isSuccess ? conditionalAccessData?.data?.Results : null
+            conditionalAccessData.isSuccess
+              ? conditionalAccessData?.data?.Results
+              : null
           }
-          standardsCompareData={standardsCompareData.isSuccess ? standardsCompareData?.data : null}
-          driftComplianceData={driftComplianceData.isSuccess ? driftComplianceData?.data : null}
+          standardsCompareData={
+            standardsCompareData.isSuccess ? standardsCompareData?.data : null
+          }
+          driftComplianceData={
+            driftComplianceData.isSuccess ? driftComplianceData?.data : null
+          }
           standardTemplatesData={
             standardTemplatesData.isSuccess ? standardTemplatesData?.data : null
           }
-          shadowAIData={shadowAIEnabled && shadowAIData.isSuccess ? shadowAIData.data : null}
+          shadowAIData={
+            shadowAIEnabled && shadowAIData.isSuccess ? shadowAIData.data : null
+          }
           sectionConfig={sectionConfig}
         />
       )
@@ -1677,7 +1862,8 @@ export const ExecutiveReportButton = (props) => {
     {
       key: 'shadowAI',
       label: 'Shadow AI Report',
-      description: 'AI usage discovery and risk pages from the Shadow AI report',
+      description:
+        'AI usage discovery and risk pages from the Shadow AI report',
     },
   ]
 
@@ -1696,8 +1882,8 @@ export const ExecutiveReportButton = (props) => {
         </Typography>
       )}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Configure which sections to include in your executive report. Changes are reflected in
-        real-time.
+        Configure which sections to include in your executive report. Changes
+        are reflected in real-time.
       </Typography>
 
       <Box sx={{ mb: 3 }}>
@@ -1710,7 +1896,8 @@ export const ExecutiveReportButton = (props) => {
           isFetching={brandingPresets.isFetching}
           options={presetOptions}
           value={
-            presetOptions.find((option) => option.value === brandingPresetId) ?? presetOptions[0]
+            presetOptions.find((option) => option.value === brandingPresetId) ??
+            presetOptions[0]
           }
           onChange={(option) => setPresetOverride(option?.value ?? '')}
         />
@@ -1727,15 +1914,21 @@ export const ExecutiveReportButton = (props) => {
             sx={{
               p: 1.5,
               border: '1px solid',
-              borderColor: sectionConfig[option.key] ? 'primary.main' : 'divider',
-              bgcolor: sectionConfig[option.key] ? 'primary.50' : 'background.paper',
+              borderColor: sectionConfig[option.key]
+                ? 'primary.main'
+                : 'divider',
+              bgcolor: sectionConfig[option.key]
+                ? 'primary.50'
+                : 'background.paper',
               cursor: 'pointer',
               transition: 'all 0.2s ease-in-out',
               display: 'flex',
               alignItems: 'center',
               '&:hover': {
                 borderColor: 'primary.main',
-                bgcolor: sectionConfig[option.key] ? 'primary.100' : 'primary.25',
+                bgcolor: sectionConfig[option.key]
+                  ? 'primary.100'
+                  : 'primary.25',
               },
             }}
           >
@@ -1754,10 +1947,18 @@ export const ExecutiveReportButton = (props) => {
               }
             />
             <Box sx={{ ml: 1, flexGrow: 1, minWidth: 0 }}>
-              <Typography variant="subtitle2" fontWeight="bold" sx={{ fontSize: '0.875rem' }}>
+              <Typography
+                variant="subtitle2"
+                fontWeight="bold"
+                sx={{ fontSize: '0.875rem' }}
+              >
                 {option.label}
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: '0.75rem' }}
+              >
                 {option.description}
               </Typography>
             </Box>
@@ -1769,9 +1970,14 @@ export const ExecutiveReportButton = (props) => {
         <Typography variant="caption" color="primary.main" fontWeight="bold">
           💡 Pro Tip
         </Typography>
-        <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
-          Enable only the sections relevant to your audience to create focused, impactful reports.
-          At least one section must be enabled.
+        <Typography
+          variant="caption"
+          display="block"
+          color="text.secondary"
+          sx={{ mt: 0.5 }}
+        >
+          Enable only the sections relevant to your audience to create focused,
+          impactful reports. At least one section must be enabled.
         </Typography>
       </Box>
     </Box>
@@ -1795,7 +2001,10 @@ export const ExecutiveReportButton = (props) => {
         </MenuItem>
       ) : (
         <Tooltip title="Generate Executive Report with preview and configuration">
-          <Box component="span" sx={{ display: 'inline-flex', width: '100%', minWidth: 0 }}>
+          <Box
+            component="span"
+            sx={{ display: 'inline-flex', width: '100%', minWidth: 0 }}
+          >
             <Button
               variant="contained"
               startIcon={<PictureAsPdf />}
@@ -1878,7 +2087,11 @@ export const ExecutiveReportButton = (props) => {
             >
               <Settings />
             </IconButton>
-            <IconButton onClick={handleClose} size="small" aria-label="Close preview">
+            <IconButton
+              onClick={handleClose}
+              size="small"
+              aria-label="Close preview"
+            >
               <Close />
             </IconButton>
           </Stack>
@@ -1919,7 +2132,11 @@ export const ExecutiveReportButton = (props) => {
                 }}
               >
                 <Typography variant="h6">Loading Report Data...</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: '40ch' }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: '40ch' }}
+                >
                   Fetching additional data for comprehensive report generation
                 </Typography>
               </Box>
@@ -1969,7 +2186,8 @@ export const ExecutiveReportButton = (props) => {
         >
           <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="caption" color="text.secondary">
-              Sections enabled: {Object.values(sectionConfig).filter(Boolean).length} of{' '}
+              Sections enabled:{' '}
+              {Object.values(sectionConfig).filter(Boolean).length} of{' '}
               {sectionOptions.length}
             </Typography>
           </Box>
@@ -1991,19 +2209,31 @@ export const ExecutiveReportButton = (props) => {
                   brandingSettings={brandingSettings}
                   variables={variables}
                   secureScoreData={secureScore.isSuccess ? secureScore : null}
-                  licensingData={licenseData.isSuccess ? licenseData?.data : null}
-                  deviceData={deviceData.isSuccess ? deviceData?.data?.Results : null}
+                  licensingData={
+                    licenseData.isSuccess ? licenseData?.data : null
+                  }
+                  deviceData={
+                    deviceData.isSuccess ? deviceData?.data?.Results : null
+                  }
                   conditionalAccessData={
-                    conditionalAccessData.isSuccess ? conditionalAccessData?.data?.Results : null
+                    conditionalAccessData.isSuccess
+                      ? conditionalAccessData?.data?.Results
+                      : null
                   }
                   standardsCompareData={
-                    standardsCompareData.isSuccess ? standardsCompareData?.data : null
+                    standardsCompareData.isSuccess
+                      ? standardsCompareData?.data
+                      : null
                   }
                   driftComplianceData={
-                    driftComplianceData.isSuccess ? driftComplianceData?.data : null
+                    driftComplianceData.isSuccess
+                      ? driftComplianceData?.data
+                      : null
                   }
                   shadowAIData={
-                    shadowAIEnabled && shadowAIData.isSuccess ? shadowAIData.data : null
+                    shadowAIEnabled && shadowAIData.isSuccess
+                      ? shadowAIData.data
+                      : null
                   }
                   sectionConfig={sectionConfig}
                 />

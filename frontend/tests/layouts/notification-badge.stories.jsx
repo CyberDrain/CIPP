@@ -59,17 +59,20 @@ export const DotStaysWithTheBellOnAPhone = {
     if (!onAPhone) return
     const { bell, dot, avatar } = dotAndAvatar(canvasElement)
 
-    await step('the dot sits inside the bell, not over the gap to the avatar', async () => {
-      await waitFor(() => {
-        const d = dot.getBoundingClientRect()
-        const b = bell.getBoundingClientRect()
-        const a = avatar.getBoundingClientRect()
-        expect(d.right).toBeLessThanOrEqual(b.right + 0.5)
-        expect(d.top).toBeGreaterThanOrEqual(b.top - 0.5)
-        // and there is real space left between it and the avatar
-        expect(a.left - d.right).toBeGreaterThan(4)
-      })
-    })
+    await step(
+      'the dot sits inside the bell, not over the gap to the avatar',
+      async () => {
+        await waitFor(() => {
+          const d = dot.getBoundingClientRect()
+          const b = bell.getBoundingClientRect()
+          const a = avatar.getBoundingClientRect()
+          expect(d.right).toBeLessThanOrEqual(b.right + 0.5)
+          expect(d.top).toBeGreaterThanOrEqual(b.top - 0.5)
+          // and there is real space left between it and the avatar
+          expect(a.left - d.right).toBeGreaterThan(4)
+        })
+      }
+    )
   },
 }
 

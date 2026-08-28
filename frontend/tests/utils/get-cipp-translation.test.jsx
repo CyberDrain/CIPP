@@ -12,7 +12,9 @@ describe('getCippTranslation', () => {
   })
 
   it('splits camelCase fields not in the map', () => {
-    expect(getCippTranslation('customAttributeOne')).toBe('Custom Attribute One')
+    expect(getCippTranslation('customAttributeOne')).toBe(
+      'Custom Attribute One'
+    )
   })
 
   it('splits acronym boundaries', () => {
@@ -21,7 +23,9 @@ describe('getCippTranslation', () => {
 
   it('strips extension_ prefixes down to the final segment', () => {
     // extension_<appid>_<field> -> translate <field>
-    expect(getCippTranslation('extension_abc123_customAttr')).toBe('Custom Attr')
+    expect(getCippTranslation('extension_abc123_customAttr')).toBe(
+      'Custom Attr'
+    )
   })
 
   it('strips ext schema prefixes down to the final segment', () => {

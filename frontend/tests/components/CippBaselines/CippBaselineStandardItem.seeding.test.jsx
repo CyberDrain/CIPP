@@ -19,10 +19,26 @@ const mailContactsStandard = {
   compare: 'subset',
   prepare: 'Get-CIPPBaselineMailContactsState',
   variables: {
-    GeneralContact: { type: 'textField', label: 'General/privacy contact email', omitWhenBlank: true },
-    SecurityContact: { type: 'textField', label: 'Security contact email', omitWhenBlank: true },
-    MarketingContact: { type: 'textField', label: 'Marketing contact email', omitWhenBlank: true },
-    TechContact: { type: 'textField', label: 'Technical contact email', omitWhenBlank: true },
+    GeneralContact: {
+      type: 'textField',
+      label: 'General/privacy contact email',
+      omitWhenBlank: true,
+    },
+    SecurityContact: {
+      type: 'textField',
+      label: 'Security contact email',
+      omitWhenBlank: true,
+    },
+    MarketingContact: {
+      type: 'textField',
+      label: 'Marketing contact email',
+      omitWhenBlank: true,
+    },
+    TechContact: {
+      type: 'textField',
+      label: 'Technical contact email',
+      omitWhenBlank: true,
+    },
   },
 }
 
@@ -63,7 +79,9 @@ const Harness = ({ config, startExpanded = true }) => {
 const fieldValues = () => {
   const byLabel = {}
   for (const input of screen.queryAllByRole('textbox')) {
-    const label = input.closest('.MuiFormControl-root')?.querySelector('label')?.textContent
+    const label = input
+      .closest('.MuiFormControl-root')
+      ?.querySelector('label')?.textContent
     if (label) byLabel[label] = input.value
   }
   return byLabel

@@ -1,147 +1,151 @@
-import { useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
-import { Box, Card, CardHeader, Divider, Tab, Tabs } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { ActionsMenu } from '../../../components/actions-menu';
-import { Chart } from '../../../components/chart';
+import { useCallback, useState } from 'react'
+import PropTypes from 'prop-types'
+import { Box, Card, CardHeader, Divider, Tab, Tabs } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import { ActionsMenu } from '../../../components/actions-menu'
+import { Chart } from '../../../components/chart'
 
 const useChartOptions = (categories) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return {
     chart: {
       background: 'transparent',
       toolbar: {
-        show: false
-      }
+        show: false,
+      },
     },
-    colors: [
-      theme.palette.primary.main
-    ],
+    colors: [theme.palette.primary.main],
     dataLabels: {
-      enabled: false
+      enabled: false,
     },
     grid: {
       borderColor: theme.palette.divider,
       strokeDashArray: 2,
       xaxis: {
         lines: {
-          show: true
-        }
+          show: true,
+        },
       },
       yaxis: {
         lines: {
-          show: false
-        }
-      }
+          show: false,
+        },
+      },
     },
     legend: {
-      show: false
+      show: false,
     },
     plotOptions: {
       bar: {
         horizontal: true,
         barHeight: '45%',
-        distributed: true
-      }
+        distributed: true,
+      },
     },
     states: {
       active: {
         filter: {
-          type: 'none'
-        }
+          type: 'none',
+        },
       },
       hover: {
         filter: {
-          type: 'none'
-        }
-      }
+          type: 'none',
+        },
+      },
     },
     theme: {
-      mode: theme.palette.mode
+      mode: theme.palette.mode,
     },
     xaxis: {
       axisBorder: {
-        show: false
+        show: false,
       },
       axisTicks: {
-        show: false
+        show: false,
       },
       categories,
       labels: {
         style: {
-          colors: theme.palette.text.secondary
-        }
-      }
+          colors: theme.palette.text.secondary,
+        },
+      },
     },
     yaxis: {
       labels: {
         style: {
-          colors: theme.palette.text.secondary
-        }
-      }
-    }
-  };
-};
+          colors: theme.palette.text.secondary,
+        },
+      },
+    },
+  }
+}
 
 const tabOptions = [
   {
     label: 'Watches',
-    value: 'watches'
+    value: 'watches',
   },
   {
     label: 'Mouse Pads',
-    value: 'mouse_pads'
+    value: 'mouse_pads',
   },
   {
     label: 'Shoes',
-    value: 'shoes'
+    value: 'shoes',
   },
   {
     label: 'Cameras',
-    value: 'cameras'
+    value: 'cameras',
   },
   {
     label: 'Phones',
-    value: 'phones'
-  }
-];
+    value: 'phones',
+  },
+]
 
 export const SalesBreakdown = (props) => {
-  const { categories = [], chartSeries = [] } = props;
-  const chartOptions = useChartOptions(categories);
-  const [tab, setTab] = useState('watches');
-  const [range, setRange] = useState('Last 7 days');
+  const { categories = [], chartSeries = [] } = props
+  const chartOptions = useChartOptions(categories)
+  const [tab, setTab] = useState('watches')
+  const [range, setRange] = useState('Last 7 days')
 
   const handleTabChange = useCallback((value) => {
-    setTab(value);
-  }, []);
+    setTab(value)
+  }, [])
 
   return (
     <Card>
       <CardHeader
-        action={(
+        action={
           <ActionsMenu
             color="inherit"
             actions={[
               {
                 label: 'Last 7 days',
-                handler: () => { setRange('Last 7 days'); }
+                handler: () => {
+                  setRange('Last 7 days')
+                },
               },
               {
                 label: 'Last Month',
-                handler: () => { setRange('Last Month'); }
+                handler: () => {
+                  setRange('Last Month')
+                },
               },
               {
                 label: 'Last Year',
-                handler: () => { setRange('Last Year'); }
-              }
+                handler: () => {
+                  setRange('Last Year')
+                },
+              },
             ]}
             label={range}
             size="small"
             variant="text"
           />
-        )}
+        }
         title="Products Breakdown"
       />
       <Divider />
@@ -152,11 +156,7 @@ export const SalesBreakdown = (props) => {
           variant="scrollable"
         >
           {tabOptions.map((option) => (
-            <Tab
-              key={option.label}
-              label={option.label}
-              value={option.value}
-            />
+            <Tab key={option.label} label={option.label} value={option.value} />
           ))}
         </Tabs>
       </Box>
@@ -170,10 +170,10 @@ export const SalesBreakdown = (props) => {
         />
       </Box>
     </Card>
-  );
-};
+  )
+}
 
 SalesBreakdown.propTypes = {
   categories: PropTypes.array,
-  chartSeries: PropTypes.array
-};
+  chartSeries: PropTypes.array,
+}

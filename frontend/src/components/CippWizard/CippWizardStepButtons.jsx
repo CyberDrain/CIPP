@@ -1,10 +1,10 @@
-import { Button } from "@mui/material";
-import { useFormState } from "react-hook-form";
-import { createPortal } from "react-dom";
-import { ApiPostCall } from "../../api/ApiCall";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { useCippWizardDialog } from "./CippWizardDialogContext";
-import { CippWizardActionsRow } from "./CippWizardActionsRow";
+import { Button } from '@mui/material'
+import { useFormState } from 'react-hook-form'
+import { createPortal } from 'react-dom'
+import { ApiPostCall } from '../../api/ApiCall'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { useCippWizardDialog } from './CippWizardDialogContext'
+import { CippWizardActionsRow } from './CippWizardActionsRow'
 
 export const CippWizardStepButtons = (props) => {
   const {
@@ -20,9 +20,11 @@ export const CippWizardStepButtons = (props) => {
     replacementBehaviour,
     queryKeys,
     ...other
-  } = props;
-  const { isValid, isSubmitted, isSubmitting } = useFormState({ control: formControl.control });
-  const dialogContext = useCippWizardDialog();
+  } = props
+  const { isValid, isSubmitted, isSubmitting } = useFormState({
+    control: formControl.control,
+  })
+  const dialogContext = useCippWizardDialog()
   const mergedQueryKeys = [
     ...(Array.isArray(queryKeys) ? queryKeys : queryKeys ? [queryKeys] : []),
     ...(Array.isArray(dialogContext?.relatedQueryKeys)
@@ -30,22 +32,22 @@ export const CippWizardStepButtons = (props) => {
       : dialogContext?.relatedQueryKeys
         ? [dialogContext.relatedQueryKeys]
         : []),
-  ];
+  ]
   const sendForm = ApiPostCall({
     relatedQueryKeys: mergedQueryKeys.length ? mergedQueryKeys : undefined,
-  });
+  })
   const handleSubmit = () => {
-    const values = formControl.getValues();
-    const newData = {};
+    const values = formControl.getValues()
+    const newData = {}
     Object.keys(values).forEach((key) => {
-      const value = values[key];
+      const value = values[key]
       // Only add non-null values if removeNulls is specified
-      if (replacementBehaviour !== "removeNulls" || value !== null) {
-        newData[key] = value;
+      if (replacementBehaviour !== 'removeNulls' || value !== null) {
+        newData[key] = value
       }
-    });
-    sendForm.mutate({ url: postUrl, data: newData });
-  };
+    })
+    sendForm.mutate({ url: postUrl, data: newData })
+  }
 
   const buttonStack = (
     <CippWizardActionsRow sx={dialogContext?.actionsEl ? {} : { mt: 3 }}>
@@ -55,13 +57,18 @@ export const CippWizardStepButtons = (props) => {
           onClick={dialogContext.onClose}
           size="large"
           type="button"
-          sx={{ mr: { xs: 0, md: "auto" } }}
+          sx={{ mr: { xs: 0, md: 'auto' } }}
         >
           Close
         </Button>
       )}
       {currentStep > 0 && (
-        <Button color="inherit" onClick={onPreviousStep} size="large" type="button">
+        <Button
+          color="inherit"
+          onClick={onPreviousStep}
+          size="large"
+          type="button"
+        >
           Back
         </Button>
       )}
@@ -78,30 +85,39 @@ export const CippWizardStepButtons = (props) => {
       )}
       {!noSubmitButton && currentStep === lastStep && (
         <form onSubmit={formControl.handleSubmit(handleSubmit)}>
-          <Button size="large" type="submit" variant="contained" disabled={sendForm.isPending}>
-            {isSubmitted ? "Resubmit" : "Submit"}
+          <Button
+            size="large"
+            type="submit"
+            variant="contained"
+            disabled={sendForm.isPending}
+          >
+            {isSubmitted ? 'Resubmit' : 'Submit'}
           </Button>
         </form>
       )}
-      {dialogContext?.completionButton && currentStep === lastStep && sendForm.isSuccess && (
-        <Button
-          size="large"
-          variant="contained"
-          color="success"
-          onClick={dialogContext.completionButton.onClick}
-        >
-          {dialogContext.completionButton.label}
-        </Button>
-      )}
+      {dialogContext?.completionButton &&
+        currentStep === lastStep &&
+        sendForm.isSuccess && (
+          <Button
+            size="large"
+            variant="contained"
+            color="success"
+            onClick={dialogContext.completionButton.onClick}
+          >
+            {dialogContext.completionButton.label}
+          </Button>
+        )}
     </CippWizardActionsRow>
-  );
+  )
 
   return (
     <>
       <CippApiResults apiObject={sendForm} />
-      {dialogContext?.actionsEl ? createPortal(buttonStack, dialogContext.actionsEl) : buttonStack}
+      {dialogContext?.actionsEl
+        ? createPortal(buttonStack, dialogContext.actionsEl)
+        : buttonStack}
     </>
-  );
-};
+  )
+}
 
-export default CippWizardStepButtons;
+export default CippWizardStepButtons

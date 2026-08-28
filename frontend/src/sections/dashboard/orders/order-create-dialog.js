@@ -1,7 +1,7 @@
-import PropTypes from 'prop-types';
-import { useRouter } from 'next/navigation';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import PropTypes from 'prop-types'
+import { useRouter } from 'next/navigation'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
 import {
   Button,
   Dialog,
@@ -10,31 +10,27 @@ import {
   DialogTitle,
   FormHelperText,
   Stack,
-  TextField
-} from '@mui/material';
-import { paths } from '../../../paths';
+  TextField,
+} from '@mui/material'
+import { paths } from '../../../paths'
 
 const initialValues = {
   customerEmail: '',
   customerName: '',
-  submit: null
-};
+  submit: null,
+}
 
 const validationSchema = Yup.object({
-  customerEmail: Yup
-    .string()
+  customerEmail: Yup.string()
     .max(255)
     .email('Must be a valid email')
     .required('Customer email is required'),
-  customerName: Yup
-    .string()
-    .max(255)
-    .required('Customer name is required')
-});
+  customerName: Yup.string().max(255).required('Customer name is required'),
+})
 
 export const OrderCreateDialog = (props) => {
-  const { open = false, onClose, ...other } = props;
-  const router = useRouter();
+  const { open = false, onClose, ...other } = props
+  const router = useRouter()
   const formik = useFormik({
     initialValues,
     validationSchema,
@@ -42,22 +38,22 @@ export const OrderCreateDialog = (props) => {
       try {
         // Do API call
 
-        helpers.setStatus({ success: true });
-        helpers.setSubmitting(false);
-        helpers.resetForm();
+        helpers.setStatus({ success: true })
+        helpers.setSubmitting(false)
+        helpers.resetForm()
 
         // You might want to return the created order instead
         // and let the parent component handle the redirect or other post action.
 
-        router.push(paths.dashboard.orders.details);
+        router.push(paths.dashboard.orders.details)
       } catch (err) {
-        console.error(err);
-        helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
-        helpers.setSubmitting(false);
+        console.error(err)
+        helpers.setStatus({ success: false })
+        helpers.setErrors({ submit: err.message })
+        helpers.setSubmitting(false)
       }
-    }
-  });
+    },
+  })
 
   return (
     <Dialog
@@ -66,18 +62,21 @@ export const OrderCreateDialog = (props) => {
       onClose={onClose}
       open={open}
       TransitionProps={{
-        onExited: () => formik.resetForm()
+        onExited: () => formik.resetForm(),
       }}
-      {...other}>
-      <DialogTitle>
-        Create Order
-      </DialogTitle>
+      {...other}
+    >
+      <DialogTitle>Create Order</DialogTitle>
       <DialogContent>
         <Stack spacing={3}>
           <TextField
-            error={!!(formik.touched.customerName && formik.errors.customerName)}
+            error={
+              !!(formik.touched.customerName && formik.errors.customerName)
+            }
             fullWidth
-            helperText={formik.touched.customerName ? formik.errors.customerName : ''}
+            helperText={
+              formik.touched.customerName ? formik.errors.customerName : ''
+            }
             label="Customer Name"
             name="customerName"
             onBlur={formik.handleBlur}
@@ -85,9 +84,13 @@ export const OrderCreateDialog = (props) => {
             value={formik.values.customerName}
           />
           <TextField
-            error={!!(formik.touched.customerEmail && formik.errors.customerEmail)}
+            error={
+              !!(formik.touched.customerEmail && formik.errors.customerEmail)
+            }
             fullWidth
-            helperText={formik.touched.customerEmail ? formik.errors.customerEmail : ''}
+            helperText={
+              formik.touched.customerEmail ? formik.errors.customerEmail : ''
+            }
             label="Customer Email"
             name="customerEmail"
             onBlur={formik.handleBlur}
@@ -97,23 +100,19 @@ export const OrderCreateDialog = (props) => {
           />
         </Stack>
         {formik.errors.submit && (
-          <FormHelperText
-            error
-            sx={{ mt: 2 }}
-          >
+          <FormHelperText error sx={{ mt: 2 }}>
             {formik.errors.submit}
           </FormHelperText>
         )}
       </DialogContent>
       <DialogActions>
-        <Button
-          color="inherit"
-          onClick={onClose}
-        >
+        <Button color="inherit" onClick={onClose}>
           Cancel
         </Button>
         <Button
-          onClick={() => { formik.handleSubmit(); }}
+          onClick={() => {
+            formik.handleSubmit()
+          }}
           variant="contained"
           disabled={formik.isSubmitting}
         >
@@ -121,10 +120,10 @@ export const OrderCreateDialog = (props) => {
         </Button>
       </DialogActions>
     </Dialog>
-  );
-};
+  )
+}
 
 OrderCreateDialog.propTypes = {
   onClose: PropTypes.func,
-  open: PropTypes.bool
-};
+  open: PropTypes.bool,
+}

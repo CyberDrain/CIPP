@@ -15,7 +15,7 @@ import { CippApiResults } from '../CippComponents/CippApiResults'
 import { ApiPostCall } from '../../api/ApiCall'
 import { useWatch } from 'react-hook-form'
 import Link from 'next/link'
-import { CippWizardActionsRow } from "./CippWizardActionsRow";
+import { CippWizardActionsRow } from './CippWizardActionsRow'
 
 export const CippWizardVacationConfirmation = (props) => {
   const { formControl, onPreviousStep, currentStep, lastStep } = props
@@ -44,7 +44,9 @@ export const CippWizardVacationConfirmation = (props) => {
 
   const handleSubmit = () => {
     if (values.enableCAExclusion) {
-      const policies = Array.isArray(values.PolicyId) ? values.PolicyId : [values.PolicyId]
+      const policies = Array.isArray(values.PolicyId)
+        ? values.PolicyId
+        : [values.PolicyId]
       const createTravelPolicy =
         values.createTravelPolicy &&
         Array.isArray(values.travelCountries) &&
@@ -61,7 +63,10 @@ export const CippWizardVacationConfirmation = (props) => {
         // Only send the travel policy fields on the first request so the
         // temporary policy is scheduled once, not once per selected CA policy
         ...(index === 0 && createTravelPolicy
-          ? { CreateTravelPolicy: true, TravelCountries: values.travelCountries }
+          ? {
+              CreateTravelPolicy: true,
+              TravelCountries: values.travelCountries,
+            }
           : {}),
       }))
       caExclusion.mutate({
@@ -145,7 +150,8 @@ export const CippWizardVacationConfirmation = (props) => {
       // Calendar options — only include when truthy
       if (values.oooCreateOOFEvent) {
         oooData.CreateOOFEvent = true
-        if (values.oooOOFEventSubject) oooData.OOFEventSubject = values.oooOOFEventSubject
+        if (values.oooOOFEventSubject)
+          oooData.OOFEventSubject = values.oooOOFEventSubject
       }
       if (values.oooAutoDeclineFutureRequests) {
         oooData.AutoDeclineFutureRequestsWhenOOF = true
@@ -202,28 +208,36 @@ export const CippWizardVacationConfirmation = (props) => {
               <Typography variant="subtitle2" color="text.secondary">
                 Tenant
               </Typography>
-              <Typography variant="body1">{tenantFilter || 'Not selected'}</Typography>
+              <Typography variant="body1">
+                {tenantFilter || 'Not selected'}
+              </Typography>
             </Grid>
 
             <Grid size={{ xs: 12 }}>
               <Typography variant="subtitle2" color="text.secondary">
                 Users Going on Vacation
               </Typography>
-              <Typography variant="body1">{formatUsers(values.Users)}</Typography>
+              <Typography variant="body1">
+                {formatUsers(values.Users)}
+              </Typography>
             </Grid>
 
             <Grid size={{ md: 6, xs: 12 }}>
               <Typography variant="subtitle2" color="text.secondary">
                 Start Date
               </Typography>
-              <Typography variant="body1">{formatDate(values.startDate)}</Typography>
+              <Typography variant="body1">
+                {formatDate(values.startDate)}
+              </Typography>
             </Grid>
 
             <Grid size={{ md: 6, xs: 12 }}>
               <Typography variant="subtitle2" color="text.secondary">
                 End Date
               </Typography>
-              <Typography variant="body1">{formatDate(values.endDate)}</Typography>
+              <Typography variant="body1">
+                {formatDate(values.endDate)}
+              </Typography>
             </Grid>
 
             {values.reference && (
@@ -247,7 +261,14 @@ export const CippWizardVacationConfirmation = (props) => {
           values.enableForwarding,
           values.enableOOO,
         ].filter(Boolean).length
-        const mdSize = enabledCount >= 4 ? 3 : enabledCount === 3 ? 4 : enabledCount === 2 ? 6 : 12
+        const mdSize =
+          enabledCount >= 4
+            ? 3
+            : enabledCount === 3
+              ? 4
+              : enabledCount === 2
+                ? 6
+                : 12
         return (
           <Grid container spacing={3}>
             {values.enableCAExclusion && (
@@ -255,37 +276,49 @@ export const CippWizardVacationConfirmation = (props) => {
                 <Card variant="outlined" sx={{ height: '100%' }}>
                   <CardHeader
                     title="CA Policy Exclusion"
-                    action={<Chip label="Enabled" color="primary" size="small" />}
+                    action={
+                      <Chip label="Enabled" color="primary" size="small" />
+                    }
                   />
                   <Divider />
                   <CardContent>
                     <Stack spacing={1}>
                       <div>
                         <Typography variant="subtitle2" color="text.secondary">
-                          {Array.isArray(values.PolicyId) && values.PolicyId.length > 1
+                          {Array.isArray(values.PolicyId) &&
+                          values.PolicyId.length > 1
                             ? 'Policies'
                             : 'Policy'}
                         </Typography>
                         <Typography variant="body2">
-                          {Array.isArray(values.PolicyId) && values.PolicyId.length > 0
-                            ? values.PolicyId.map((p) => p.label || p.value).join(', ')
+                          {Array.isArray(values.PolicyId) &&
+                          values.PolicyId.length > 0
+                            ? values.PolicyId.map(
+                                (p) => p.label || p.value
+                              ).join(', ')
                             : 'Not selected'}
                         </Typography>
                       </div>
                       {values.createTravelPolicy && (
                         <div>
-                          <Typography variant="subtitle2" color="text.secondary">
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
                             Temporary Travel Policy
                           </Typography>
                           <Typography variant="body2">
                             Sign-ins restricted to:{' '}
                             {Array.isArray(values.travelCountries) &&
                             values.travelCountries.length > 0
-                              ? values.travelCountries.map((c) => c.label || c.value).join(', ')
+                              ? values.travelCountries
+                                  .map((c) => c.label || c.value)
+                                  .join(', ')
                               : 'Not set'}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            The policy and named location are deleted at the end date
+                            The policy and named location are deleted at the end
+                            date
                           </Typography>
                         </div>
                       )}
@@ -300,13 +333,15 @@ export const CippWizardVacationConfirmation = (props) => {
                 <Card variant="outlined" sx={{ height: '100%' }}>
                   <CardHeader
                     title="Location-Based Alerts"
-                    action={<Chip label="Enabled" color="primary" size="small" />}
+                    action={
+                      <Chip label="Enabled" color="primary" size="small" />
+                    }
                   />
                   <Divider />
                   <CardContent>
                     <Typography variant="body2">
-                      The users are excluded from location-based audit log alerts between the start
-                      and end date.
+                      The users are excluded from location-based audit log
+                      alerts between the start and end date.
                     </Typography>
                   </CardContent>
                 </Card>
@@ -318,7 +353,9 @@ export const CippWizardVacationConfirmation = (props) => {
                 <Card variant="outlined" sx={{ height: '100%' }}>
                   <CardHeader
                     title="Mailbox Permissions"
-                    action={<Chip label="Enabled" color="primary" size="small" />}
+                    action={
+                      <Chip label="Enabled" color="primary" size="small" />
+                    }
                   />
                   <Divider />
                   <CardContent>
@@ -327,7 +364,9 @@ export const CippWizardVacationConfirmation = (props) => {
                         <Typography variant="subtitle2" color="text.secondary">
                           Delegates
                         </Typography>
-                        <Typography variant="body2">{formatUsers(values.delegates)}</Typography>
+                        <Typography variant="body2">
+                          {formatUsers(values.delegates)}
+                        </Typography>
                       </div>
                       <div>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -341,12 +380,17 @@ export const CippWizardVacationConfirmation = (props) => {
                       </div>
                       {values.includeCalendar && (
                         <div>
-                          <Typography variant="subtitle2" color="text.secondary">
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
                             Calendar
                           </Typography>
                           <Typography variant="body2">
                             {values.calendarPermission?.label || 'Not set'}
-                            {values.canViewPrivateItems ? ' (Can view private items)' : ''}
+                            {values.canViewPrivateItems
+                              ? ' (Can view private items)'
+                              : ''}
                           </Typography>
                         </div>
                       )}
@@ -361,7 +405,9 @@ export const CippWizardVacationConfirmation = (props) => {
                 <Card variant="outlined" sx={{ height: '100%' }}>
                   <CardHeader
                     title="Mail Forwarding"
-                    action={<Chip label="Enabled" color="primary" size="small" />}
+                    action={
+                      <Chip label="Enabled" color="primary" size="small" />
+                    }
                   />
                   <Divider />
                   <CardContent>
@@ -370,7 +416,9 @@ export const CippWizardVacationConfirmation = (props) => {
                         <Typography variant="subtitle2" color="text.secondary">
                           Destination
                         </Typography>
-                        <Typography variant="body2">{formatForwardingTarget()}</Typography>
+                        <Typography variant="body2">
+                          {formatForwardingTarget()}
+                        </Typography>
                       </div>
                       <div>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -401,7 +449,9 @@ export const CippWizardVacationConfirmation = (props) => {
                 <Card variant="outlined" sx={{ height: '100%' }}>
                   <CardHeader
                     title="Out of Office"
-                    action={<Chip label="Enabled" color="primary" size="small" />}
+                    action={
+                      <Chip label="Enabled" color="primary" size="small" />
+                    }
                   />
                   <Divider />
                   <CardContent>
@@ -410,10 +460,18 @@ export const CippWizardVacationConfirmation = (props) => {
                         <Typography variant="subtitle2" color="text.secondary">
                           Internal Message
                         </Typography>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ whiteSpace: 'pre-wrap' }}
+                        >
                           {values.oooInternalMessage
-                            ? String(values.oooInternalMessage).replace(/[<>]/g, '').slice(0, 120) +
-                              (String(values.oooInternalMessage).replace(/[<>]/g, '').length > 120
+                            ? String(values.oooInternalMessage)
+                                .replace(/[<>]/g, '')
+                                .slice(0, 120) +
+                              (String(values.oooInternalMessage).replace(
+                                /[<>]/g,
+                                ''
+                              ).length > 120
                                 ? '…'
                                 : '')
                             : 'Not set'}
@@ -421,12 +479,23 @@ export const CippWizardVacationConfirmation = (props) => {
                       </div>
                       {values.oooExternalMessage && (
                         <div>
-                          <Typography variant="subtitle2" color="text.secondary">
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
                             External Message
                           </Typography>
-                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                            {String(values.oooExternalMessage).replace(/[<>]/g, '').slice(0, 120) +
-                              (String(values.oooExternalMessage).replace(/[<>]/g, '').length > 120
+                          <Typography
+                            variant="body2"
+                            sx={{ whiteSpace: 'pre-wrap' }}
+                          >
+                            {String(values.oooExternalMessage)
+                              .replace(/[<>]/g, '')
+                              .slice(0, 120) +
+                              (String(values.oooExternalMessage).replace(
+                                /[<>]/g,
+                                ''
+                              ).length > 120
                                 ? '…'
                                 : '')}
                           </Typography>
@@ -436,18 +505,38 @@ export const CippWizardVacationConfirmation = (props) => {
                         values.oooAutoDeclineFutureRequests ||
                         values.oooDeclineEvents) && (
                         <div>
-                          <Typography variant="subtitle2" color="text.secondary">
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
                             Calendar Options
                           </Typography>
-                          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            flexWrap="wrap"
+                            useFlexGap
+                          >
                             {values.oooCreateOOFEvent && (
-                              <Chip label="Block Calendar" size="small" color="info" />
+                              <Chip
+                                label="Block Calendar"
+                                size="small"
+                                color="info"
+                              />
                             )}
                             {values.oooAutoDeclineFutureRequests && (
-                              <Chip label="Decline New Invitations" size="small" color="info" />
+                              <Chip
+                                label="Decline New Invitations"
+                                size="small"
+                                color="info"
+                              />
                             )}
                             {values.oooDeclineEvents && (
-                              <Chip label="Decline & Cancel Meetings" size="small" color="info" />
+                              <Chip
+                                label="Decline & Cancel Meetings"
+                                size="small"
+                                color="info"
+                              />
                             )}
                           </Stack>
                         </div>
@@ -463,15 +552,26 @@ export const CippWizardVacationConfirmation = (props) => {
 
       {/* API Results */}
       {values.enableCAExclusion && <CippApiResults apiObject={caExclusion} />}
-      {values.excludeLocationAuditAlerts && <CippApiResults apiObject={auditExclusion} />}
-      {values.enableMailboxPermissions && <CippApiResults apiObject={mailboxVacation} />}
-      {values.enableForwarding && <CippApiResults apiObject={forwardingVacation} />}
+      {values.excludeLocationAuditAlerts && (
+        <CippApiResults apiObject={auditExclusion} />
+      )}
+      {values.enableMailboxPermissions && (
+        <CippApiResults apiObject={mailboxVacation} />
+      )}
+      {values.enableForwarding && (
+        <CippApiResults apiObject={forwardingVacation} />
+      )}
       {values.enableOOO && <CippApiResults apiObject={oooVacation} />}
 
       {/* Navigation + Custom Submit */}
       <CippWizardActionsRow sx={{ mt: 3 }}>
         {currentStep > 0 && (
-          <Button color="inherit" onClick={onPreviousStep} size="large" type="button">
+          <Button
+            color="inherit"
+            onClick={onPreviousStep}
+            size="large"
+            type="button"
+          >
             Back
           </Button>
         )}
@@ -485,7 +585,12 @@ export const CippWizardVacationConfirmation = (props) => {
             View Vacation Schedules
           </Button>
         ) : (
-          <Button variant="contained" size="large" onClick={handleSubmit} disabled={isSubmitting}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         )}

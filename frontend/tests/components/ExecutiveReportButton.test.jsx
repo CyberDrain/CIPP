@@ -13,7 +13,10 @@ vi.mock('../../src/api/ApiCall', () => ({
     isError: false,
   })),
   ApiPostCall: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
-  ApiGetCallWithPagination: vi.fn(() => ({ data: undefined, isFetching: false })),
+  ApiGetCallWithPagination: vi.fn(() => ({
+    data: undefined,
+    isFetching: false,
+  })),
 }))
 
 // jsdom can't run the real pdf renderer, passthrough stubs are enough for dialog assertions
@@ -54,7 +57,7 @@ describe('ExecutiveReportButton', () => {
     renderWithProviders(<ExecutiveReportButton disabled />)
 
     const tooltipWarnings = warnSpy.mock.calls.filter((args) =>
-      String(args[0]).includes('disabled `button` child'),
+      String(args[0]).includes('disabled `button` child')
     )
     expect(tooltipWarnings).toEqual([])
     warnSpy.mockRestore()
@@ -70,20 +73,24 @@ describe('ExecutiveReportButton', () => {
     expect(
       await screen.findByRole('tooltip', {
         name: 'Generate Executive Report with preview and configuration',
-      }),
+      })
     ).toBeInTheDocument()
   })
 
   it('disables the button when the disabled prop is set', () => {
     renderWithProviders(<ExecutiveReportButton disabled />)
 
-    expect(screen.getByRole('button', { name: /executive summary/i })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: /executive summary/i })
+    ).toBeDisabled()
   })
 
   it('opens the preview dialog on click', async () => {
     renderWithProviders(<ExecutiveReportButton />)
 
-    await userEvent.click(screen.getByRole('button', { name: /executive summary/i }))
+    await userEvent.click(
+      screen.getByRole('button', { name: /executive summary/i })
+    )
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
@@ -91,7 +98,9 @@ describe('ExecutiveReportButton', () => {
 
   it('renders the menuItem variant and opens the dialog from it', async () => {
     const onClick = vi.fn()
-    renderWithProviders(<ExecutiveReportButton variant="menuItem" onClick={onClick} />)
+    renderWithProviders(
+      <ExecutiveReportButton variant="menuItem" onClick={onClick} />
+    )
 
     const item = screen.getByRole('menuitem', { name: /executive summary/i })
     await userEvent.click(item)
@@ -106,9 +115,13 @@ describe('ExecutiveReportButton', () => {
   describe('section configuration on a phone', () => {
     const openSections = async () => {
       renderWithProviders(<ExecutiveReportButton />)
-      await userEvent.click(screen.getByRole('button', { name: /executive summary/i }))
+      await userEvent.click(
+        screen.getByRole('button', { name: /executive summary/i })
+      )
       await screen.findByRole('dialog')
-      await userEvent.click(screen.getByRole('button', { name: 'Report sections' }))
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Report sections' })
+      )
       // jsdom applies no media queries, so the desktop rail is in the document too — every
       // query here has to be scoped to the drawer or it matches both copies.
       return within(document.querySelector('.MuiDrawer-paper'))
@@ -125,7 +138,9 @@ describe('ExecutiveReportButton', () => {
     it('toggles a section from inside the drawer', async () => {
       const drawer = await openSections()
 
-      const deviceRow = drawer.getByText('Device Management').closest('.MuiPaper-root')
+      const deviceRow = drawer
+        .getByText('Device Management')
+        .closest('.MuiPaper-root')
       const toggle = within(deviceRow).getByRole('switch')
       expect(toggle).toBeChecked()
 

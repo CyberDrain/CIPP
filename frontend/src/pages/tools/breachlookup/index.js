@@ -8,40 +8,40 @@ import {
   Chip,
   Avatar,
   Alert,
-} from "@mui/material";
-import { Grid } from "@mui/system";
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import { useForm, useWatch } from "react-hook-form";
-import CippButtonCard from "../../../components/CippCards/CippButtonCard";
-import { Search } from "@mui/icons-material";
-import CippFormComponent from "../../../components/CippComponents/CippFormComponent";
-import { ApiGetCall } from "../../../api/ApiCall";
-import DOMPurify from "dompurify";
-import { getCippTranslation } from "../../../utils/get-cipp-translation";
-import { useRouter } from "next/router";
-import { useEffect } from "react";
-import CippCsvExportButton from "../../../components/CippComponents/CippCsvExportButton";
-import { CippCopyToClipBoard } from "../../../components/CippComponents/CippCopyToClipboard";
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import { useForm, useWatch } from 'react-hook-form'
+import CippButtonCard from '../../../components/CippCards/CippButtonCard'
+import { Search } from '@mui/icons-material'
+import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
+import { ApiGetCall } from '../../../api/ApiCall'
+import DOMPurify from 'dompurify'
+import { getCippTranslation } from '../../../utils/get-cipp-translation'
+import { useRouter } from 'next/router'
+import { useEffect } from 'react'
+import CippCsvExportButton from '../../../components/CippComponents/CippCsvExportButton'
+import { CippCopyToClipBoard } from '../../../components/CippComponents/CippCopyToClipboard'
 
 const Page = () => {
-  const formControl = useForm({ mode: "onBlur" });
-  const account = useWatch({ control: formControl.control, name: "account" });
+  const formControl = useForm({ mode: 'onBlur' })
+  const account = useWatch({ control: formControl.control, name: 'account' })
   const getGeoIP = ApiGetCall({
-    url: "/api/ListBreachesAccount",
+    url: '/api/ListBreachesAccount',
     data: { account: account },
     queryKey: `breaches-${account}`,
     waiting: false,
-  });
+  })
 
-  const router = useRouter();
+  const router = useRouter()
   useEffect(() => {
-    if (!router.query.account) return;
-    formControl.setValue("account", router.query.account);
+    if (!router.query.account) return
+    formControl.setValue('account', router.query.account)
     //sleep 200 ms to allow update
     setTimeout(() => {
-      getGeoIP.refetch();
-    }, 200);
-  }, [router.query.account]);
+      getGeoIP.refetch()
+    }, 200)
+  }, [router.query.account])
 
   return (
     <Box
@@ -99,7 +99,7 @@ const Page = () => {
               <CippButtonCard title="Fetching Results">
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12 }} textAlign="center">
-                    <Skeleton width={"100%"} />
+                    <Skeleton width={'100%'} />
                   </Grid>
                 </Grid>
               </CippButtonCard>
@@ -122,7 +122,11 @@ const Page = () => {
               {getGeoIP.data?.map((breach, index) => (
                 <Grid key={index} spacing={2} size={{ xs: 12, md: 3 }}>
                   <CippButtonCard
-                    cardSx={{ display: "flex", flexDirection: "column", height: "100%" }}
+                    cardSx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%',
+                    }}
                     title={<>{breach.Title}</>}
                     cardActions={
                       <Avatar
@@ -134,22 +138,33 @@ const Page = () => {
                   >
                     <Grid container spacing={2}>
                       <Grid size={{ xs: 12, md: 8 }}>
-                        <Typography variant="subtitle2" color="textSecondary" sx={{ mt: 2 }}>
+                        <Typography
+                          variant="subtitle2"
+                          color="textSecondary"
+                          sx={{ mt: 2 }}
+                        >
                           Partial Password Available
                         </Typography>
                         <Typography variant="body2" color="textPrimary">
                           {breach.password ? (
                             <>
                               Yes
-                              <CippCopyToClipBoard text={breach.password} type="password" />
+                              <CippCopyToClipBoard
+                                text={breach.password}
+                                type="password"
+                              />
                             </>
                           ) : (
-                            "No"
+                            'No'
                           )}
                         </Typography>
                       </Grid>
                       <Grid size={{ xs: 12 }}>
-                        <Typography variant="subtitle2" color="textSecondary" sx={{ mt: 2 }}>
+                        <Typography
+                          variant="subtitle2"
+                          color="textSecondary"
+                          sx={{ mt: 2 }}
+                        >
                           Description
                         </Typography>
                         <Typography
@@ -168,10 +183,14 @@ const Page = () => {
                         </Typography>
                       </Grid>
                       <Grid size={{ xs: 12 }}>
-                        <Typography variant="subtitle2" color="textSecondary" sx={{ mt: 2 }}>
+                        <Typography
+                          variant="subtitle2"
+                          color="textSecondary"
+                          sx={{ mt: 2 }}
+                        >
                           Leaked Data classes
                         </Typography>
-                        <Box sx={{ display: "flex", flexWrap: "wrap", mt: 1 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 1 }}>
                           {breach.DataClasses?.map((threat, idx) => (
                             <Chip
                               key={idx}
@@ -184,14 +203,21 @@ const Page = () => {
                         </Box>
                       </Grid>
                       <Grid size={{ xs: 12 }}>
-                        <Typography variant="subtitle2" color="textSecondary" sx={{ mt: 2 }}>
+                        <Typography
+                          variant="subtitle2"
+                          color="textSecondary"
+                          sx={{ mt: 2 }}
+                        >
                           Breach Information
                         </Typography>
                         <Typography variant="body1" color="textPrimary">
                           {
                             //make a chip for each item that is boolean and true in the breach object
                             Object.keys(breach).map((key) => {
-                              if (typeof breach[key] === "boolean" && breach[key]) {
+                              if (
+                                typeof breach[key] === 'boolean' &&
+                                breach[key]
+                              ) {
                                 return (
                                   <Chip
                                     key={key}
@@ -200,7 +226,7 @@ const Page = () => {
                                     color="info"
                                     sx={{ mr: 1, mt: 1 }}
                                   />
-                                );
+                                )
                               }
                             })
                           }
@@ -249,9 +275,9 @@ const Page = () => {
         </Grid>
       </Container>
     </Box>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

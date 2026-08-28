@@ -65,7 +65,8 @@ export const CippWizardAutopilotImport = (props) => {
             (field) =>
               header === field.propertyName ||
               header === field.friendlyName ||
-              (field.alternativePropertyNames && field.alternativePropertyNames.includes(header))
+              (field.alternativePropertyNames &&
+                field.alternativePropertyNames.includes(header))
           )
         })
 
@@ -100,7 +101,9 @@ export const CippWizardAutopilotImport = (props) => {
             const hasPropertyName = headers.includes(field.propertyName)
             const hasFriendlyName = headers.includes(field.friendlyName)
             const hasAlternativeName = field.alternativePropertyNames
-              ? field.alternativePropertyNames.some((altName) => headers.includes(altName))
+              ? field.alternativePropertyNames.some((altName) =>
+                  headers.includes(altName)
+                )
               : false
             return !hasPropertyName && !hasFriendlyName && !hasAlternativeName
           })
@@ -186,17 +189,25 @@ export const CippWizardAutopilotImport = (props) => {
 
     rows.forEach((row, index) => {
       const serialField = fields.find((f) => f.propertyName === 'SerialNumber')
-      const productKeyField = fields.find((f) => f.propertyName === 'productKey')
-      const manufacturerField = fields.find((f) => f.propertyName === 'oemManufacturerName')
+      const productKeyField = fields.find(
+        (f) => f.propertyName === 'productKey'
+      )
+      const manufacturerField = fields.find(
+        (f) => f.propertyName === 'oemManufacturerName'
+      )
       const modelField = fields.find((f) => f.propertyName === 'modelName')
-      const hardwareHashField = fields.find((f) => f.propertyName === 'hardwareHash')
+      const hardwareHashField = fields.find(
+        (f) => f.propertyName === 'hardwareHash'
+      )
 
       if (
         serialField &&
         row[serialField.propertyName] &&
         seenSerials.has(row[serialField.propertyName])
       ) {
-        errors.push(`Row ${index + 1}: Duplicate serial number "${row[serialField.propertyName]}"`)
+        errors.push(
+          `Row ${index + 1}: Duplicate serial number "${row[serialField.propertyName]}"`
+        )
       }
       if (serialField && row[serialField.propertyName]) {
         seenSerials.add(row[serialField.propertyName])
@@ -221,7 +232,9 @@ export const CippWizardAutopilotImport = (props) => {
         row[productKeyField.propertyName] &&
         row[productKeyField.propertyName].length !== 13
       ) {
-        errors.push(`Row ${index + 1}: Product ID must be exactly 13 characters long`)
+        errors.push(
+          `Row ${index + 1}: Product ID must be exactly 13 characters long`
+        )
       }
 
       // Validate Serial Number requirements: must have either Manufacturer+Model OR Hardware Hash
@@ -235,7 +248,9 @@ export const CippWizardAutopilotImport = (props) => {
           row[manufacturerField.propertyName] &&
           row[manufacturerField.propertyName].trim() !== ''
         const hasModel =
-          modelField && row[modelField.propertyName] && row[modelField.propertyName].trim() !== ''
+          modelField &&
+          row[modelField.propertyName] &&
+          row[modelField.propertyName].trim() !== ''
         const hasHardwareHash =
           hardwareHashField &&
           row[hardwareHashField.propertyName] &&
@@ -260,7 +275,9 @@ export const CippWizardAutopilotImport = (props) => {
 
   const handleManualAdd = () => {
     const newRows = manualInputs
-      .filter((row) => Object.values(row).some((value) => value && value.trim() !== ''))
+      .filter((row) =>
+        Object.values(row).some((value) => value && value.trim() !== '')
+      )
       .map((row) => {
         // Ensure all fields exist in the row
         return fields.reduce((obj, field) => {
@@ -303,7 +320,8 @@ export const CippWizardAutopilotImport = (props) => {
         setManualInputs((prev) => [...prev, {}])
         // Wait for the next render cycle to set focus
         setTimeout(() => {
-          const newInput = inputRefs.current[newRowIndex]?.[productKeyField.propertyName]
+          const newInput =
+            inputRefs.current[newRowIndex]?.[productKeyField.propertyName]
           if (newInput) {
             newInput.focus()
           }
@@ -373,14 +391,23 @@ export const CippWizardAutopilotImport = (props) => {
             >
               Import from CSV
             </Button>
-            <Button startIcon={<Add />} onClick={() => setManualDialogOpen(true)} size="small">
+            <Button
+              startIcon={<Add />}
+              onClick={() => setManualDialogOpen(true)}
+              size="small"
+            >
               Manual Import
             </Button>
           </Stack>
         }
       />
 
-      <Dialog open={manualDialogOpen} onClose={handleDialogClose} maxWidth="lg" fullWidth>
+      <Dialog
+        open={manualDialogOpen}
+        onClose={handleDialogClose}
+        maxWidth="lg"
+        fullWidth
+      >
         <DialogTitle>Manual Import</DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
@@ -425,10 +452,15 @@ export const CippWizardAutopilotImport = (props) => {
                     label={field.friendlyName}
                     value={row[field.propertyName] || ''}
                     onChange={(e) =>
-                      handleManualInputChange(rowIndex, field.propertyName, e.target.value)
+                      handleManualInputChange(
+                        rowIndex,
+                        field.propertyName,
+                        e.target.value
+                      )
                     }
                     onKeyDown={(e) =>
-                      field.propertyName === 'productKey' && handleKeyPress(e, rowIndex)
+                      field.propertyName === 'productKey' &&
+                      handleKeyPress(e, rowIndex)
                     }
                     fullWidth
                     size="small"
@@ -462,7 +494,12 @@ export const CippWizardAutopilotImport = (props) => {
               // full-screen dialog. Below md one row becomes one card instead.
               if (isMobile) {
                 return (
-                  <Paper key={rowIndex} variant="outlined" data-testid="manual-row" sx={{ p: 2 }}>
+                  <Paper
+                    key={rowIndex}
+                    variant="outlined"
+                    data-testid="manual-row"
+                    sx={{ p: 2 }}
+                  >
                     <Stack
                       direction="row"
                       spacing={1}
@@ -471,7 +508,11 @@ export const CippWizardAutopilotImport = (props) => {
                       useFlexGap
                     >
                       {rowNumber}
-                      <Typography variant="subtitle2" sx={{ flexGrow: 1, minWidth: 0 }} noWrap>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ flexGrow: 1, minWidth: 0 }}
+                        noWrap
+                      >
                         Device {rowIndex + 1}
                       </Typography>
                       <IconButton

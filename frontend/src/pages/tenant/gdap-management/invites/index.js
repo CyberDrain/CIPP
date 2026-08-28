@@ -1,58 +1,72 @@
-import { TabbedLayout } from "../../../../layouts/TabbedLayout";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import tabOptions from "../tabOptions";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
-import { Button } from "@mui/material";
-import { Add } from "@mui/icons-material";
-import Link from "next/link";
-import { TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { TabbedLayout } from '../../../../layouts/TabbedLayout'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import tabOptions from '../tabOptions'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
+import { Button } from '@mui/material'
+import { Add } from '@mui/icons-material'
+import Link from 'next/link'
+import { TrashIcon, PencilIcon } from '@heroicons/react/24/outline'
 
-const pageTitle = "GDAP Invites";
-const simpleColumns = ["Timestamp", "RowKey", "Reference", "Technician", "InviteUrl", "OnboardingUrl", "RoleMappings"];
-const apiUrl = "/api/ListGDAPInvite";
+const pageTitle = 'GDAP Invites'
+const simpleColumns = [
+  'Timestamp',
+  'RowKey',
+  'Reference',
+  'Technician',
+  'InviteUrl',
+  'OnboardingUrl',
+  'RoleMappings',
+]
+const apiUrl = '/api/ListGDAPInvite'
 
 const actions = [
   {
-    label: "Update Internal Reference",
-    url: "/api/ExecGDAPInvite",
-    type: "POST",
+    label: 'Update Internal Reference',
+    url: '/api/ExecGDAPInvite',
+    type: 'POST',
     icon: <PencilIcon />,
-    confirmText: "Are you sure you want to update the internal reference for this invite?",
+    confirmText:
+      'Are you sure you want to update the internal reference for this invite?',
     data: {
-      Action: "Update",
-      InviteId: "RowKey",
+      Action: 'Update',
+      InviteId: 'RowKey',
     },
     fields: [
       {
-        label: "Internal Reference",
-        name: "Reference",
-        type: "textField",
+        label: 'Internal Reference',
+        name: 'Reference',
+        type: 'textField',
         required: false,
-        helperText: "Enter an internal reference/note for this GDAP invite (e.g., client name, ticket number).",
+        helperText:
+          'Enter an internal reference/note for this GDAP invite (e.g., client name, ticket number).',
       },
     ],
-    relatedQueryKeys: ["ListGDAPInvite"],
+    relatedQueryKeys: ['ListGDAPInvite'],
   },
   {
-    label: "Delete Invite",
-    url: "/api/ExecGDAPInvite",
-    type: "POST",
+    label: 'Delete Invite',
+    url: '/api/ExecGDAPInvite',
+    type: 'POST',
     icon: <TrashIcon />,
     confirmText:
-      "Are you sure you want to delete this invite? This only removes the entry from the database, GDAP relationships cannot be terminated once they are in approval pending status.",
+      'Are you sure you want to delete this invite? This only removes the entry from the database, GDAP relationships cannot be terminated once they are in approval pending status.',
     data: {
-      Action: "Delete",
-      InviteId: "RowKey",
+      Action: 'Delete',
+      InviteId: 'RowKey',
     },
-    relatedQueryKeys: ["ListGDAPInvite"],
+    relatedQueryKeys: ['ListGDAPInvite'],
   },
-];
+]
 
 const Page = () => {
   return (
     <CippTablePage
       cardButton={
-        <Button component={Link} href="/tenant/gdap-management/invites/add" startIcon={<Add />}>
+        <Button
+          component={Link}
+          href="/tenant/gdap-management/invites/add"
+          startIcon={<Add />}
+        >
           New Invite
         </Button>
       }
@@ -64,13 +78,13 @@ const Page = () => {
       queryKey="ListGDAPInvite"
       maxHeightOffset="460px"
     />
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
+export default Page

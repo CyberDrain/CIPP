@@ -1,9 +1,9 @@
-import { alpha } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles'
 
 export const createShadows = (config) => {
-  const { palette } = config;
-  const layer1Color = palette.neutral[250] || alpha(palette.neutral[300], 0.7);
-  const layer2Color = alpha(palette.neutral[800], 0.06);
+  const { palette } = config
+  const layer1Color = palette.neutral[250] || alpha(palette.neutral[300], 0.7)
+  const layer2Color = alpha(palette.neutral[800], 0.06)
 
   return [
     'none',
@@ -30,6 +30,6 @@ export const createShadows = (config) => {
     `0px 0px 1px ${layer1Color}, 0px 10px 34px ${layer2Color}`,
     `0px 0px 1px ${layer1Color}, 0px 10px 36px ${layer2Color}`,
     `0px 0px 1px ${layer1Color}, 0px 10px 38px ${layer2Color}`,
-    `0px 0px 1px ${layer1Color}, 0px 10px 40px ${layer2Color}`
-  ];
-};
+    `0px 0px 1px ${layer1Color}, 0px 10px 40px ${layer2Color}`,
+  ]
+}

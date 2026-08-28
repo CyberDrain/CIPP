@@ -1,6 +1,6 @@
-import { CippFormComponent } from "./CippFormComponent";
-import { useWatch } from "react-hook-form";
-import { useSettings } from "../../hooks/use-settings";
+import { CippFormComponent } from './CippFormComponent'
+import { useWatch } from 'react-hook-form'
+import { useSettings } from '../../hooks/use-settings'
 
 export const CippFormGroupSelector = ({
   formControl,
@@ -8,14 +8,17 @@ export const CippFormGroupSelector = ({
   label,
   allTenants = false,
   multiple = false,
-  type = "multiple",
+  type = 'multiple',
   select,
   addedField,
   creatable = false,
   ...other
 }) => {
-  const currentTenant = useWatch({ control: formControl.control, name: "tenantFilter" });
-  const selectedTenant = useSettings().currentTenant;
+  const currentTenant = useWatch({
+    control: formControl.control,
+    name: 'tenantFilter',
+  })
+  const selectedTenant = useSettings().currentTenant
   return (
     <CippFormComponent
       name={name}
@@ -26,22 +29,22 @@ export const CippFormGroupSelector = ({
       api={{
         addedField: addedField,
         tenantFilter: currentTenant ? currentTenant.value : selectedTenant,
-        url: "/api/ListGraphRequest",
-        dataKey: "Results",
+        url: '/api/ListGraphRequest',
+        dataKey: 'Results',
         labelField: (option) => option.displayName,
-        valueField: "id",
+        valueField: 'id',
         queryKey: `ListGroups-${currentTenant?.value ? currentTenant.value : selectedTenant}`,
         data: {
-          Endpoint: "groups",
+          Endpoint: 'groups',
           manualPagination: true,
-          $select: select ? select : "id,displayName,description",
+          $select: select ? select : 'id,displayName,description',
           $count: true,
-          $orderby: "displayName",
+          $orderby: 'displayName',
           $top: 999,
         },
       }}
       creatable={creatable}
       {...other}
     />
-  );
-};
+  )
+}

@@ -1,6 +1,13 @@
 import PropTypes from 'prop-types'
 import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon'
-import { Button, Link, ListItemText, Menu, MenuItem, SvgIcon } from '@mui/material'
+import {
+  Button,
+  Link,
+  ListItemText,
+  Menu,
+  MenuItem,
+  SvgIcon,
+} from '@mui/material'
 import { usePopover } from '../hooks/use-popover'
 import { getIconByName } from '../utils/icon-registry'
 

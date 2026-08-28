@@ -5,7 +5,10 @@ import { CacheProvider } from '@emotion/react'
 import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { ReleaseNotesProvider } from '../contexts/release-notes-context'
-import { SettingsConsumer, SettingsProvider } from '../contexts/settings-context'
+import {
+  SettingsConsumer,
+  SettingsProvider,
+} from '../contexts/settings-context'
 import { RTL } from '../components/rtl'
 import { store } from '../store'
 import { createTheme } from '../theme'
@@ -69,9 +72,11 @@ import CippTutorialDialog from '../components/CippComponents/CippTutorialDialog'
 import CippSupportBundleDialog from '../components/CippComponents/CippSupportBundleDialog'
 
 const ReactQueryDevtoolsProduction = React.lazy(() =>
-  import('@tanstack/react-query-devtools/build/modern/production.js').then((d) => ({
-    default: d.ReactQueryDevtools,
-  }))
+  import('@tanstack/react-query-devtools/build/modern/production.js').then(
+    (d) => ({
+      default: d.ReactQueryDevtools,
+    })
+  )
 )
 TimeAgo.addDefaultLocale(en)
 
@@ -206,7 +211,13 @@ const App = (props) => {
   const helpLinkIcons = {
     'bug-report': <BugReportIcon />,
     'feature-request': <FeedbackIcon />,
-    discord: <img src="/discord-mark-blue.svg" alt="Discord" style={{ width: 24, height: 24 }} />,
+    discord: (
+      <img
+        src="/discord-mark-blue.svg"
+        alt="Discord"
+        style={{ width: 24, height: 24 }}
+      />
+    ),
     documentation: <AutoStories />,
   }
 
@@ -247,12 +258,18 @@ const App = (props) => {
     <CacheProvider value={emotionCache}>
       <Head>
         <title>CIPP</title>
-        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover" />
+        <meta
+          name="viewport"
+          content="initial-scale=1, width=device-width, viewport-fit=cover"
+        />
       </Head>
       <ReduxProvider store={store}>
         <QueryClientProvider client={queryClient}>
           <SettingsProvider>
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={dateLocale}>
+            <LocalizationProvider
+              dateAdapter={AdapterDateFns}
+              adapterLocale={dateLocale}
+            >
               <SettingsConsumer>
                 {(settings) => {
                   // Create theme even while initializing to avoid blank screen
@@ -302,7 +319,8 @@ const App = (props) => {
                                 // Pinned left of the speed dial FAB (46px wide + 12px gap),
                                 // which itself shifts left when devtools is enabled.
                                 right:
-                                  (settings.isInitialized && settings?.showDevtools === true
+                                  (settings.isInitialized &&
+                                  settings?.showDevtools === true
                                     ? 60
                                     : 12) + 58,
                                 zIndex: (muiTheme) => muiTheme.zIndex.speedDial,
@@ -315,12 +333,16 @@ const App = (props) => {
                             position={{
                               bottom: 12,
                               right:
-                                settings.isInitialized && settings?.showDevtools === true ? 60 : 12,
+                                settings.isInitialized &&
+                                settings?.showDevtools === true
+                                  ? 60
+                                  : 12,
                             }}
                           />
                         </RTL>
                       </ThemeProvider>
-                      {settings.isInitialized && settings?.showDevtools === true ? (
+                      {settings.isInitialized &&
+                      settings?.showDevtools === true ? (
                         <React.Suspense fallback={null}>
                           <ReactQueryDevtoolsProduction />
                         </React.Suspense>

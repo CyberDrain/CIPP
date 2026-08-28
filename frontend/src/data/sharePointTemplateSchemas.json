@@ -91,7 +91,10 @@
                 "type": "object",
                 "properties": {
                   "label": { "type": "string" },
-                  "value": { "type": "string", "enum": ["Team", "Communication"] }
+                  "value": {
+                    "type": "string",
+                    "enum": ["Team", "Communication"]
+                  }
                 }
               }
             ]

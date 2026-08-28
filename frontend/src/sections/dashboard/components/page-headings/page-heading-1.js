@@ -1,5 +1,5 @@
-import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
-import { Box, Button, Stack, SvgIcon, Typography } from '@mui/material';
+import PlusIcon from '@heroicons/react/24/outline/PlusIcon'
+import { Box, Button, Stack, SvgIcon, Typography } from '@mui/material'
 
 export const PageHeading1 = () => (
   <Box sx={{ p: 4 }}>
@@ -11,17 +11,15 @@ export const PageHeading1 = () => (
       justifyContent="space-between"
     >
       <div>
-        <Typography variant="h4">
-          Customers
-        </Typography>
+        <Typography variant="h4">Customers</Typography>
       </div>
       <div>
         <Button
-          startIcon={(
+          startIcon={
             <SvgIcon fontSize="small">
               <PlusIcon />
             </SvgIcon>
-          )}
+          }
           variant="contained"
           size="large"
         >
@@ -30,4 +28,4 @@ export const PageHeading1 = () => (
       </div>
     </Stack>
   </Box>
-);
+)

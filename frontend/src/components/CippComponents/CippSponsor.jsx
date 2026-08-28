@@ -1,71 +1,76 @@
-import { useMemo, useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
-import { Box, Divider, Tooltip, Typography } from "@mui/material";
-import { useSettings } from "../../hooks/use-settings";
-import sponsorsData from "../../data/sponsors.json";
+import { useMemo, useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import { Box, Divider, Tooltip, Typography } from '@mui/material'
+import { useSettings } from '../../hooks/use-settings'
+import sponsorsData from '../../data/sponsors.json'
 
 // Filter sponsors by date (runs once on module load)
 const getActiveSponsors = () => {
-  const now = new Date();
+  const now = new Date()
   return sponsorsData.filter((sponsor) => {
     if (!sponsor.startDate && !sponsor.endDate) {
-      return true;
+      return true
     }
-    const startDate = sponsor.startDate ? new Date(sponsor.startDate) : null;
-    const endDate = sponsor.endDate ? new Date(sponsor.endDate) : null;
-    const afterStart = !startDate || now >= startDate;
-    const beforeEnd = !endDate || now <= endDate;
-    return afterStart && beforeEnd;
-  });
-};
+    const startDate = sponsor.startDate ? new Date(sponsor.startDate) : null
+    const endDate = sponsor.endDate ? new Date(sponsor.endDate) : null
+    const afterStart = !startDate || now >= startDate
+    const beforeEnd = !endDate || now <= endDate
+    return afterStart && beforeEnd
+  })
+}
 
 // Select random sponsor based on priority (runs once on module load)
 const selectRandomSponsor = (sponsors) => {
-  if (sponsors.length === 0) return null;
+  if (sponsors.length === 0) return null
 
-  let totalPriority = 0;
+  let totalPriority = 0
   for (let i = 0; i < sponsors.length; i++) {
-    totalPriority += sponsors[i].priority;
+    totalPriority += sponsors[i].priority
   }
-  let random = Math.floor(Math.random() * totalPriority);
-  let runningTotal = 0;
+  let random = Math.floor(Math.random() * totalPriority)
+  let runningTotal = 0
   for (let i = 0; i < sponsors.length; i++) {
-    runningTotal += sponsors[i].priority;
+    runningTotal += sponsors[i].priority
     if (random < runningTotal) {
-      return sponsors[i];
+      return sponsors[i]
     }
   }
-  return null;
-};
+  return null
+}
 
-const activeSponsors = getActiveSponsors();
+const activeSponsors = getActiveSponsors()
 
 // `compact` trims the vertical footprint for the mobile nav drawer, where this sits pinned
 // below a scrolling menu and every pixel it takes is a pixel of navigation lost.
 export const CippSponsor = ({ compact = false }) => {
-  const pathname = usePathname();
-  const [selectedSponsor, setSelectedSponsor] = useState(() => selectRandomSponsor(activeSponsors));
-  const currentSettings = useSettings();
-  const theme = currentSettings?.currentTheme?.value;
+  const pathname = usePathname()
+  const [selectedSponsor, setSelectedSponsor] = useState(() =>
+    selectRandomSponsor(activeSponsors)
+  )
+  const currentSettings = useSettings()
+  const theme = currentSettings?.currentTheme?.value
 
   useEffect(() => {
-    setSelectedSponsor(selectRandomSponsor(activeSponsors));
-  }, [pathname]);
+    setSelectedSponsor(selectRandomSponsor(activeSponsors))
+  }, [pathname])
 
   // Get the appropriate image based on current theme
   const randomimg = useMemo(() => {
-    if (!selectedSponsor) return null;
+    if (!selectedSponsor) return null
     return {
       link: selectedSponsor.link,
-      imagesrc: theme === "light" ? selectedSponsor.imagesrcLight : selectedSponsor.imagesrcDark,
+      imagesrc:
+        theme === 'light'
+          ? selectedSponsor.imagesrcLight
+          : selectedSponsor.imagesrcDark,
       altText: selectedSponsor.altText,
       tooltip: selectedSponsor.tooltip,
-    };
-  }, [selectedSponsor, theme]);
+    }
+  }, [selectedSponsor, theme])
 
   // Don't render if no sponsors are available
   if (!randomimg) {
-    return null;
+    return null
   }
 
   return (
@@ -76,8 +81,8 @@ export const CippSponsor = ({ compact = false }) => {
         variant="caption"
         sx={{
           lineHeight: compact ? 1.6 : 2,
-          textAlign: "center",
-          display: "block",
+          textAlign: 'center',
+          display: 'block',
           mt: compact ? 0.75 : 2,
         }}
       >
@@ -85,10 +90,10 @@ export const CippSponsor = ({ compact = false }) => {
       </Typography>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: compact ? "38px" : "55px",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: compact ? '38px' : '55px',
           mb: compact ? 0.5 : 1,
         }}
       >
@@ -97,15 +102,15 @@ export const CippSponsor = ({ compact = false }) => {
             src={randomimg.imagesrc}
             alt={randomimg.altText}
             style={{
-              cursor: "pointer",
-              maxHeight: compact ? "34px" : "50px",
-              width: "auto",
-              maxWidth: compact ? "130px" : "150px",
+              cursor: 'pointer',
+              maxHeight: compact ? '34px' : '50px',
+              width: 'auto',
+              maxWidth: compact ? '130px' : '150px',
             }}
             onClick={() => window.open(randomimg.link)}
           />
         </Tooltip>
       </Box>
     </>
-  );
-};
+  )
+}

@@ -15,79 +15,81 @@
 // override any slot; ids not present in the visible columns are ignored.
 
 const NAME_FIELDS = [
-  "displayName",
-  "DisplayName",
-  "Name",
-  "name",
-  "Title",
-  "title",
-  "deviceName",
-  "hostname",
-  "TenantName",
-  "Tenant",
-  "subject",
-  "RowKey",
-];
+  'displayName',
+  'DisplayName',
+  'Name',
+  'name',
+  'Title',
+  'title',
+  'deviceName',
+  'hostname',
+  'TenantName',
+  'Tenant',
+  'subject',
+  'RowKey',
+]
 
 const IDENTIFIER_FIELDS = [
-  "userPrincipalName",
-  "UPN",
-  "mail",
-  "primarySmtpAddress",
-  "defaultDomainName",
-  "serialNumber",
-  "id",
-  "RowKey",
-];
+  'userPrincipalName',
+  'UPN',
+  'mail',
+  'primarySmtpAddress',
+  'defaultDomainName',
+  'serialNumber',
+  'id',
+  'RowKey',
+]
 
 // Known enum-ish ids that read as status even when their filter variant doesn't say so.
 // accountEnabled is here because get-cipp-filter-variant gives it an explicit select case
 // with alphanumeric sorting and no options — none of the generic signals fire for it.
 const STATUS_FIELDS = new Set(
   [
-    "severity",
-    "risk",
-    "result",
-    "status",
-    "state",
-    "compliancestate",
-    "risklevel",
-    "riskstate",
-    "usertype",
-    "outcome",
-    "healthstate",
-    "isenabled",
-    "enabled",
-    "accountenabled",
+    'severity',
+    'risk',
+    'result',
+    'status',
+    'state',
+    'compliancestate',
+    'risklevel',
+    'riskstate',
+    'usertype',
+    'outcome',
+    'healthstate',
+    'isenabled',
+    'enabled',
+    'accountenabled',
   ].map((f) => f.toLowerCase())
-);
+)
 
-const columnId = (col) => col?.id ?? col?.columnDef?.id ?? col?.accessorKey;
-const columnDef = (col) => col?.columnDef ?? col;
+const columnId = (col) => col?.id ?? col?.columnDef?.id ?? col?.accessorKey
+const columnDef = (col) => col?.columnDef ?? col
 
 export const isStatusLike = (col) => {
-  const def = columnDef(col);
-  if (def?.sortingFn === "boolean") return true;
-  const id = String(columnId(col) ?? "").toLowerCase();
-  if (STATUS_FIELDS.has(id)) return true;
+  const def = columnDef(col)
+  if (def?.sortingFn === 'boolean') return true
+  const id = String(columnId(col) ?? '').toLowerCase()
+  if (STATUS_FIELDS.has(id)) return true
   if (
-    def?.filterVariant === "select" &&
+    def?.filterVariant === 'select' &&
     Array.isArray(def?.filterSelectOptions) &&
     def.filterSelectOptions.length > 0 &&
     def.filterSelectOptions.length <= 6
   ) {
-    return true;
+    return true
   }
-  return false;
-};
+  return false
+}
 
 const firstMatch = (columns, priorityList, exclude = new Set()) => {
   for (const fieldName of priorityList) {
-    const match = columns.find((col) => columnId(col) === fieldName && !exclude.has(col));
-    if (match) return match;
+    const match = columns.find(
+      (col) => columnId(col) === fieldName && !exclude.has(col)
+    )
+    if (match) return match
   }
-  return null;
-};
+  return null
+}
 
 /**
  * @param {Array} visibleColumns columns from table.getVisibleLeafColumns() (or any array of
@@ -98,46 +100,57 @@ const firstMatch = (columns, priorityList, exclude = new Set()) => {
  */
 export const getMobileCardSlots = (visibleColumns, override = {}) => {
   const columns = (visibleColumns ?? []).filter(
-    (col) => !String(columnId(col) ?? "").startsWith("mrt-")
-  );
+    (col) => !String(columnId(col) ?? '').startsWith('mrt-')
+  )
 
   if (columns.length === 0) {
-    return { primary: null, secondary: null, chips: [], details: [], rest: [], restCount: 0 };
+    return {
+      primary: null,
+      secondary: null,
+      chips: [],
+      details: [],
+      rest: [],
+      restCount: 0,
+    }
   }
 
-  const byId = (id) => columns.find((col) => columnId(col) === id);
-  const used = new Set();
+  const byId = (id) => columns.find((col) => columnId(col) === id)
+  const used = new Set()
 
   const primary =
     (override.primary && byId(override.primary)) ||
     firstMatch(columns, NAME_FIELDS) ||
     columns.find((col) => !isStatusLike(col)) ||
-    columns[0];
-  used.add(primary);
+    columns[0]
+  used.add(primary)
 
   const secondary =
-    (override.secondary && override.secondary !== columnId(primary) && byId(override.secondary)) ||
+    (override.secondary &&
+      override.secondary !== columnId(primary) &&
+      byId(override.secondary)) ||
     firstMatch(columns, IDENTIFIER_FIELDS, used) ||
-    null;
-  if (secondary) used.add(secondary);
+    null
+  if (secondary) used.add(secondary)
 
-  let chips;
+  let chips
   if (Array.isArray(override.chips)) {
-    chips = override.chips.map(byId).filter((col) => col && !used.has(col));
+    chips = override.chips.map(byId).filter((col) => col && !used.has(col))
   } else {
-    chips = columns.filter((col) => !used.has(col) && isStatusLike(col)).slice(0, 3);
+    chips = columns
+      .filter((col) => !used.has(col) && isStatusLike(col))
+      .slice(0, 3)
   }
-  chips.forEach((col) => used.add(col));
+  chips.forEach((col) => used.add(col))
 
-  let details;
+  let details
   if (Array.isArray(override.details)) {
-    details = override.details.map(byId).filter((col) => col && !used.has(col));
+    details = override.details.map(byId).filter((col) => col && !used.has(col))
   } else {
-    details = columns.filter((col) => !used.has(col)).slice(0, 3);
+    details = columns.filter((col) => !used.has(col)).slice(0, 3)
   }
-  details.forEach((col) => used.add(col));
+  details.forEach((col) => used.add(col))
 
-  const rest = columns.filter((col) => !used.has(col));
+  const rest = columns.filter((col) => !used.has(col))
 
-  return { primary, secondary, chips, details, rest, restCount: rest.length };
-};
+  return { primary, secondary, chips, details, rest, restCount: rest.length }
+}

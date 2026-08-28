@@ -1,7 +1,7 @@
-import ArchiveBoxIcon from "@heroicons/react/24/outline/ArchiveBoxIcon";
-import CheckCircleIcon from "@heroicons/react/24/outline/CheckCircleIcon";
-import DocumentDuplicateIcon from "@heroicons/react/24/outline/DocumentDuplicateIcon";
-import ReceiptRefundIcon from "@heroicons/react/24/outline/ReceiptRefundIcon";
+import ArchiveBoxIcon from '@heroicons/react/24/outline/ArchiveBoxIcon'
+import CheckCircleIcon from '@heroicons/react/24/outline/CheckCircleIcon'
+import DocumentDuplicateIcon from '@heroicons/react/24/outline/DocumentDuplicateIcon'
+import ReceiptRefundIcon from '@heroicons/react/24/outline/ReceiptRefundIcon'
 import {
   Button,
   Card,
@@ -11,10 +11,10 @@ import {
   Select,
   Stack,
   SvgIcon,
-} from "@mui/material";
+} from '@mui/material'
 
-import { ActionList } from "../../../components/action-list";
-import { ActionListItem } from "../../../components/action-list-item";
+import { ActionList } from '../../../components/action-list'
+import { ActionListItem } from '../../../components/action-list-item'
 
 export const CippSettingSideMenu = (props) => {
   return (
@@ -28,8 +28,8 @@ export const CippSettingSideMenu = (props) => {
               fullWidth
               inputProps={{
                 sx: {
-                  alignItems: "center",
-                  display: "flex",
+                  alignItems: 'center',
+                  display: 'flex',
                 },
               }}
             ></Select>
@@ -78,5 +78,5 @@ export const CippSettingSideMenu = (props) => {
         </ActionList>
       </Card>
     </>
-  );
-};
+  )
+}

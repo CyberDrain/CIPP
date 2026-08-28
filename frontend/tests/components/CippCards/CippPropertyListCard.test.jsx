@@ -23,7 +23,11 @@ describe('CippPropertyListCard', () => {
 
   it('renders skeletons when isFetching', () => {
     const { container } = renderWithProviders(
-      <CippPropertyListCard title="Loading Card" propertyItems={sampleItems} isFetching={true} />
+      <CippPropertyListCard
+        title="Loading Card"
+        propertyItems={sampleItems}
+        isFetching={true}
+      />
     )
     const skeletons = container.querySelectorAll('.MuiSkeleton-root')
     expect(skeletons.length).toBeGreaterThan(0)
@@ -37,10 +41,16 @@ describe('CippPropertyListCard', () => {
       { label: 'Office', value: 'Seattle' },
     ]
     const { container } = renderWithProviders(
-      <CippPropertyListCard title="Dual Layout" propertyItems={fourItems} layout="dual" />
+      <CippPropertyListCard
+        title="Dual Layout"
+        propertyItems={fourItems}
+        layout="dual"
+      />
     )
     // scope to card content, the action list at the card bottom is also a MuiList
-    const lists = container.querySelectorAll('.MuiCardContent-root .MuiList-root')
+    const lists = container.querySelectorAll(
+      '.MuiCardContent-root .MuiList-root'
+    )
     expect(lists).toHaveLength(2)
     expect(within(lists[0]).getByText('Display Name')).toBeInTheDocument()
     expect(within(lists[0]).getByText('UPN')).toBeInTheDocument()
@@ -69,7 +79,9 @@ describe('CippPropertyListCard', () => {
         cardButton={<button>View All</button>}
       />
     )
-    expect(screen.getByRole('button', { name: /View All/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /View All/i })
+    ).toBeInTheDocument()
   })
 
   it('opens confirmation dialog when action item is clicked', async () => {

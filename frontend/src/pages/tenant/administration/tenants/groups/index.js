@@ -1,59 +1,59 @@
-import { Layout as DashboardLayout } from "../../../../../layouts/index.js";
-import { TabbedLayout } from "../../../../../layouts/TabbedLayout";
-import { CippTablePage } from "../../../../../components/CippComponents/CippTablePage.jsx";
-import tabOptions from "../tabOptions";
-import { Edit, PlayArrow, GroupAdd, ViewList } from "@mui/icons-material";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { CippAddTenantGroupDrawer } from "../../../../../components/CippComponents/CippAddTenantGroupDrawer";
-import { CippApiLogsDrawer } from "../../../../../components/CippComponents/CippApiLogsDrawer";
-import { CippTenantGroupOffCanvas } from "../../../../../components/CippComponents/CippTenantGroupOffCanvas";
-import { CippApiDialog } from "../../../../../components/CippComponents/CippApiDialog.jsx";
-import { Box, Button } from "@mui/material";
-import { useDialog } from "../../../../../hooks/use-dialog.js";
-import { useState } from "react"
+import { Layout as DashboardLayout } from '../../../../../layouts/index.js'
+import { TabbedLayout } from '../../../../../layouts/TabbedLayout'
+import { CippTablePage } from '../../../../../components/CippComponents/CippTablePage.jsx'
+import tabOptions from '../tabOptions'
+import { Edit, PlayArrow, GroupAdd, ViewList } from '@mui/icons-material'
+import { TrashIcon } from '@heroicons/react/24/outline'
+import { CippAddTenantGroupDrawer } from '../../../../../components/CippComponents/CippAddTenantGroupDrawer'
+import { CippApiLogsDrawer } from '../../../../../components/CippComponents/CippApiLogsDrawer'
+import { CippTenantGroupOffCanvas } from '../../../../../components/CippComponents/CippTenantGroupOffCanvas'
+import { CippApiDialog } from '../../../../../components/CippComponents/CippApiDialog.jsx'
+import { Box, Button } from '@mui/material'
+import { useDialog } from '../../../../../hooks/use-dialog.js'
+import { useState } from 'react'
 
 const Page = () => {
-  const pageTitle = "Tenant Groups";
-  const createDefaultGroupsDialog = useDialog();
-  const [showUsage, setShowUsage] = useState(false);
+  const pageTitle = 'Tenant Groups'
+  const createDefaultGroupsDialog = useDialog()
+  const [showUsage, setShowUsage] = useState(false)
 
   const simpleColumns = showUsage
-    ? ["Name", "Description", "GroupType", "Members", "Usage"]
-    : ["Name", "Description", "GroupType", "Members"];
+    ? ['Name', 'Description', 'GroupType', 'Members', 'Usage']
+    : ['Name', 'Description', 'GroupType', 'Members']
 
   const offcanvas = {
     children: (row) => {
-      return <CippTenantGroupOffCanvas data={row} />;
+      return <CippTenantGroupOffCanvas data={row} />
     },
-    size: "xl",
-  };
+    size: 'xl',
+  }
   const actions = [
     {
-      label: "Edit Group",
-      link: "/tenant/administration/tenants/groups/edit?id=[Id]",
+      label: 'Edit Group',
+      link: '/tenant/administration/tenants/groups/edit?id=[Id]',
       pinned: true,
       icon: <Edit />,
     },
     {
-      label: "Run Dynamic Rules",
+      label: 'Run Dynamic Rules',
       icon: <PlayArrow />,
-      url: "/api/ExecRunTenantGroupRule",
-      type: "POST",
-      data: { groupId: "Id" },
-      queryKey: "TenantGroupListPage",
-      confirmText: "Are you sure you want to run dynamic rules for [Name]?",
-      condition: (row) => row.GroupType === "dynamic",
+      url: '/api/ExecRunTenantGroupRule',
+      type: 'POST',
+      data: { groupId: 'Id' },
+      queryKey: 'TenantGroupListPage',
+      confirmText: 'Are you sure you want to run dynamic rules for [Name]?',
+      condition: (row) => row.GroupType === 'dynamic',
     },
     {
-      label: "Delete Group",
+      label: 'Delete Group',
       icon: <TrashIcon />,
-      url: "/api/ExecTenantGroup",
-      type: "POST",
-      data: { action: "Delete", groupId: "Id" },
-      queryKey: "TenantGroupListPage",
-      confirmText: "Are you sure you want to delete [Name]?",
+      url: '/api/ExecTenantGroup',
+      type: 'POST',
+      data: { action: 'Delete', groupId: 'Id' },
+      queryKey: 'TenantGroupListPage',
+      confirmText: 'Are you sure you want to delete [Name]?',
     },
-  ];
+  ]
 
   return (
     <>
@@ -63,16 +63,24 @@ const Page = () => {
         simpleColumns={simpleColumns}
         apiUrl="/api/ListTenantGroups"
         apiData={{ includeUsage: showUsage }}
-        queryKey={showUsage ? "TenantGroupListPage-usage" : "TenantGroupListPage"}
+        queryKey={
+          showUsage ? 'TenantGroupListPage-usage' : 'TenantGroupListPage'
+        }
         apiDataKey="Results"
         actions={actions}
         cardButton={
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
             <CippAddTenantGroupDrawer />
-            <Button onClick={() => setShowUsage(!showUsage)} startIcon={<ViewList />}>
-              {showUsage ? "Hide Usage" : "Show Usage"}
+            <Button
+              onClick={() => setShowUsage(!showUsage)}
+              startIcon={<ViewList />}
+            >
+              {showUsage ? 'Hide Usage' : 'Show Usage'}
             </Button>
-            <Button onClick={createDefaultGroupsDialog.handleOpen} startIcon={<GroupAdd />}>
+            <Button
+              onClick={createDefaultGroupsDialog.handleOpen}
+              startIcon={<GroupAdd />}
+            >
               Create Default Groups
             </Button>
             <CippApiLogsDrawer
@@ -88,22 +96,22 @@ const Page = () => {
         title="Create Default Groups"
         createDialog={createDefaultGroupsDialog}
         api={{
-          type: "POST",
-          url: "/api/ExecCreateDefaultGroups",
+          type: 'POST',
+          url: '/api/ExecCreateDefaultGroups',
           data: {},
           confirmText:
-            "Are you sure you want to create default tenant groups? This will create a selection of groups we recommend by default to use as templates.",
+            'Are you sure you want to create default tenant groups? This will create a selection of groups we recommend by default to use as templates.',
         }}
         queryKey="TenantGroupListPage"
       />
     </>
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
+export default Page

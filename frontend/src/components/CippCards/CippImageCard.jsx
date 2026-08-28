@@ -1,10 +1,18 @@
-import NextLink from "next/link";
-import ArrowRightIcon from "@heroicons/react/24/outline/ArrowRightIcon";
-import { Box, Button, LinearProgress, Skeleton, Stack, SvgIcon, Typography } from "@mui/material";
+import NextLink from 'next/link'
+import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon'
+import {
+  Box,
+  Button,
+  LinearProgress,
+  Skeleton,
+  Stack,
+  SvgIcon,
+  Typography,
+} from '@mui/material'
 
 export const CippImageCard = ({
   isFetching,
-  imageUrl = "/assets/illustration-reports.png",
+  imageUrl = '/assets/illustration-reports.png',
   title,
   text,
   step,
@@ -17,22 +25,26 @@ export const CippImageCard = ({
     alignItems="center"
     // Text beside the illustration only where both fit — a phone stacks them, and the text
     // column keeps minWidth: 0 so a headline can't force the pair wider than the card.
-    direction={{ xs: "column", md: "row" }}
+    direction={{ xs: 'column', md: 'row' }}
     spacing={3}
     sx={{
-      backgroundColor: "neutral.900",
+      backgroundColor: 'neutral.900',
       borderRadius: 1,
-      color: "common.white",
+      color: 'common.white',
       px: { xs: 2, md: 4 },
       py: 2,
     }}
   >
-    <Box sx={{ minWidth: 0, width: "100%" }}>
+    <Box sx={{ minWidth: 0, width: '100%' }}>
       <Typography color="inherit" variant="h4">
         {title}
       </Typography>
       <Typography color="inherit" sx={{ mt: 2 }}>
-        {isFetching ? <Skeleton width="500px" sx={{ height: 80, maxWidth: "100%" }} /> : text}
+        {isFetching ? (
+          <Skeleton width="500px" sx={{ height: 80, maxWidth: '100%' }} />
+        ) : (
+          text
+        )}
       </Typography>
       <Stack alignItems="center" direction="row" spacing={2} sx={{ my: 3 }}>
         {step && maxstep && (
@@ -44,7 +56,7 @@ export const CippImageCard = ({
               sx={{
                 borderRadius: 1,
                 flexGrow: 1,
-                height: "8px",
+                height: '8px',
               }}
               value={(step / maxstep) * 100}
               variant="determinate"
@@ -83,15 +95,15 @@ export const CippImageCard = ({
     <Box
       sx={{
         minWidth: 0,
-        maxWidth: "100%",
-        "& img": {
+        maxWidth: '100%',
+        '& img': {
           maxHeight: 350,
-          maxWidth: "100%",
-          width: "100%",
+          maxWidth: '100%',
+          width: '100%',
         },
       }}
     >
       <img src={imageUrl} />
     </Box>
   </Stack>
-);
+)

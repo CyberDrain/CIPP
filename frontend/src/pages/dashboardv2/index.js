@@ -110,20 +110,26 @@ const Page = () => {
             IdentityPassed: testsApi.data.TestCounts?.Identity?.Passed || 0,
             IdentityFailed: testsApi.data.TestCounts?.Identity?.Failed || 0,
             IdentitySkipped: testsApi.data.TestCounts?.Identity?.Skipped || 0,
-            IdentityInformational: testsApi.data.TestCounts?.Identity?.Informational || 0,
-            IdentityNeedsAttention: testsApi.data.TestCounts?.Identity?.NeedsAttention || 0,
+            IdentityInformational:
+              testsApi.data.TestCounts?.Identity?.Informational || 0,
+            IdentityNeedsAttention:
+              testsApi.data.TestCounts?.Identity?.NeedsAttention || 0,
             IdentityTotal: testsApi.data.TestCounts?.Identity?.Total || 0,
             DevicesPassed: testsApi.data.TestCounts?.Devices?.Passed || 0,
             DevicesFailed: testsApi.data.TestCounts?.Devices?.Failed || 0,
             DevicesSkipped: testsApi.data.TestCounts?.Devices?.Skipped || 0,
-            DevicesInformational: testsApi.data.TestCounts?.Devices?.Informational || 0,
-            DevicesNeedsAttention: testsApi.data.TestCounts?.Devices?.NeedsAttention || 0,
+            DevicesInformational:
+              testsApi.data.TestCounts?.Devices?.Informational || 0,
+            DevicesNeedsAttention:
+              testsApi.data.TestCounts?.Devices?.NeedsAttention || 0,
             DevicesTotal: testsApi.data.TestCounts?.Devices?.Total || 0,
             CustomPassed: testsApi.data.TestCounts?.Custom?.Passed || 0,
             CustomFailed: testsApi.data.TestCounts?.Custom?.Failed || 0,
             CustomSkipped: testsApi.data.TestCounts?.Custom?.Skipped || 0,
-            CustomInformational: testsApi.data.TestCounts?.Custom?.Informational || 0,
-            CustomNeedsAttention: testsApi.data.TestCounts?.Custom?.NeedsAttention || 0,
+            CustomInformational:
+              testsApi.data.TestCounts?.Custom?.Informational || 0,
+            CustomNeedsAttention:
+              testsApi.data.TestCounts?.Custom?.NeedsAttention || 0,
             CustomTotal: testsApi.data.TestCounts?.Custom?.Total || 0,
             DataPassed: 0,
             DataTotal: 0,
@@ -134,12 +140,15 @@ const Page = () => {
               UserCount: testsApi.data.TenantCounts.Users || 0,
               GuestCount: testsApi.data.TenantCounts.Guests || 0,
               GroupCount: testsApi.data.TenantCounts.Groups || 0,
-              ApplicationCount: testsApi.data.TenantCounts.ServicePrincipals || 0,
+              ApplicationCount:
+                testsApi.data.TenantCounts.ServicePrincipals || 0,
               DeviceCount: testsApi.data.TenantCounts.Devices || 0,
-              ManagedDeviceCount: testsApi.data.TenantCounts.ManagedDevices || 0,
+              ManagedDeviceCount:
+                testsApi.data.TenantCounts.ManagedDevices || 0,
             },
             MFAState: testsApi.data.MFAState,
-            OverviewCaDevicesAllUsers: dashboardDemoData.TenantInfo.OverviewCaDevicesAllUsers,
+            OverviewCaDevicesAllUsers:
+              dashboardDemoData.TenantInfo.OverviewCaDevicesAllUsers,
             OverviewAuthMethodsPrivilegedUsers:
               dashboardDemoData.TenantInfo.OverviewAuthMethodsPrivilegedUsers,
             DeviceOverview: dashboardDemoData.TenantInfo.DeviceOverview,
@@ -164,7 +173,10 @@ const Page = () => {
         link:
           portal.field && tenantLookup?.[portal.field]
             ? tenantLookup[portal.field]
-            : portal.url.replace(portal.variable, tenantLookup?.[portal.variable]),
+            : portal.url.replace(
+                portal.variable,
+                tenantLookup?.[portal.variable]
+              ),
         icon: portal.icon,
       }))
       setPortalMenuItems(menuItems)
@@ -204,130 +216,148 @@ const Page = () => {
       <Box sx={{ width: '100%', mx: 'auto' }}>
         {/* xs has a single item (the portals cell is desktop-only), so grid spacing would
             only pad the toolbar down away from the title. */}
-        <Grid container spacing={{ xs: 0, md: 2 }} alignItems="center" sx={{ mb: 2 }}>
+        <Grid
+          container
+          spacing={{ xs: 0, md: 2 }}
+          alignItems="center"
+          sx={{ mb: 2 }}
+        >
           {!isMobile && (
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Box
-              data-tutorial="dashboard-toolbar"
-              sx={{ display: 'flex', alignItems: 'stretch', gap: 1.5 }}
-            >
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box
-                data-tutorial="dashboard-portals"
-                sx={{
-                  flex: '0.7 1 0',
-                  minWidth: 0,
-                  display: 'flex',
-                  '& .MuiButtonBase-root': {
-                    width: '100%',
-                    minWidth: 0,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
-                }}
+                data-tutorial="dashboard-toolbar"
+                sx={{ display: 'flex', alignItems: 'stretch', gap: 1.5 }}
               >
-                <BulkActionsMenu
-                  buttonName="Portals"
-                  actions={portalMenuItems}
-                  disabled={!currentTenantInfo.isSuccess || portalMenuItems.length === 0}
-                />
-              </Box>
-              {isWide ? (
-                <>
-                  <Box
-                    sx={{
-                      flex: '1.15 1 0',
+                <Box
+                  data-tutorial="dashboard-portals"
+                  sx={{
+                    flex: '0.7 1 0',
+                    minWidth: 0,
+                    display: 'flex',
+                    '& .MuiButtonBase-root': {
+                      width: '100%',
                       minWidth: 0,
-                      display: 'flex',
-                      '& .MuiButtonBase-root': {
-                        width: '100%',
-                        minWidth: 0,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      },
-                    }}
-                  >
-                    <ExecutiveReportButton disabled={organization.isFetching} />
-                  </Box>
-                  <Box sx={{ flex: '1.15 1 0', minWidth: 0, display: 'flex' }}>
-                    <Button
-                      component={Link}
-                      href="/tools/report-builder/generated"
-                      variant="contained"
-                      startIcon={<AssessmentIcon />}
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    },
+                  }}
+                >
+                  <BulkActionsMenu
+                    buttonName="Portals"
+                    actions={portalMenuItems}
+                    disabled={
+                      !currentTenantInfo.isSuccess ||
+                      portalMenuItems.length === 0
+                    }
+                  />
+                </Box>
+                {isWide ? (
+                  <>
+                    <Box
                       sx={{
-                        width: '100%',
+                        flex: '1.15 1 0',
                         minWidth: 0,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        fontWeight: 'bold',
-                        textTransform: 'none',
-                        borderRadius: 2,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        transition: 'all 0.2s ease-in-out',
+                        display: 'flex',
+                        '& .MuiButtonBase-root': {
+                          width: '100%',
+                          minWidth: 0,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        },
                       }}
                     >
-                      <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        Report Builder
-                      </Box>
-                    </Button>
-                  </Box>
-                </>
-              ) : (
-                <>
-                  <Box sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
-                    <Button
-                      variant="contained"
-                      onClick={(e) => setReportsMenuAnchor(e.currentTarget)}
-                      startIcon={
-                        <SvgIcon fontSize="small">
-                          <ChevronDownIcon />
-                        </SvgIcon>
-                      }
-                      sx={{
-                        width: '100%',
-                        minWidth: 0,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
+                      <ExecutiveReportButton
+                        disabled={organization.isFetching}
+                      />
+                    </Box>
+                    <Box
+                      sx={{ flex: '1.15 1 0', minWidth: 0, display: 'flex' }}
                     >
-                      <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        Dashboard Reports
-                      </Box>
-                    </Button>
-                  </Box>
-                  <Menu
-                    keepMounted
-                    anchorEl={reportsMenuAnchor}
-                    open={Boolean(reportsMenuAnchor)}
-                    onClose={() => setReportsMenuAnchor(null)}
-                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                    MenuListProps={{ dense: true, sx: { p: 1 } }}
-                  >
-                    <ExecutiveReportButton
-                      variant="menuItem"
-                      disabled={organization.isFetching}
-                      onClick={() => setReportsMenuAnchor(null)}
-                    />
-                    <MenuItem
-                      component={Link}
-                      href="/tools/report-builder/generated"
-                      onClick={() => setReportsMenuAnchor(null)}
+                      <Button
+                        component={Link}
+                        href="/tools/report-builder/generated"
+                        variant="contained"
+                        startIcon={<AssessmentIcon />}
+                        sx={{
+                          width: '100%',
+                          minWidth: 0,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          fontWeight: 'bold',
+                          textTransform: 'none',
+                          borderRadius: 2,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                          transition: 'all 0.2s ease-in-out',
+                        }}
+                      >
+                        <Box
+                          component="span"
+                          sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                        >
+                          Report Builder
+                        </Box>
+                      </Button>
+                    </Box>
+                  </>
+                ) : (
+                  <>
+                    <Box sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
+                      <Button
+                        variant="contained"
+                        onClick={(e) => setReportsMenuAnchor(e.currentTarget)}
+                        startIcon={
+                          <SvgIcon fontSize="small">
+                            <ChevronDownIcon />
+                          </SvgIcon>
+                        }
+                        sx={{
+                          width: '100%',
+                          minWidth: 0,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        <Box
+                          component="span"
+                          sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                        >
+                          Dashboard Reports
+                        </Box>
+                      </Button>
+                    </Box>
+                    <Menu
+                      keepMounted
+                      anchorEl={reportsMenuAnchor}
+                      open={Boolean(reportsMenuAnchor)}
+                      onClose={() => setReportsMenuAnchor(null)}
+                      anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                      transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                      MenuListProps={{ dense: true, sx: { p: 1 } }}
                     >
-                      <ListItemIcon>
-                        <AssessmentIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText>Report Builder</ListItemText>
-                    </MenuItem>
-                  </Menu>
-                </>
-              )}
-            </Box>
-          </Grid>
+                      <ExecutiveReportButton
+                        variant="menuItem"
+                        disabled={organization.isFetching}
+                        onClick={() => setReportsMenuAnchor(null)}
+                      />
+                      <MenuItem
+                        component={Link}
+                        href="/tools/report-builder/generated"
+                        onClick={() => setReportsMenuAnchor(null)}
+                      >
+                        <ListItemIcon>
+                          <AssessmentIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Report Builder</ListItemText>
+                      </MenuItem>
+                    </Menu>
+                  </>
+                )}
+              </Box>
+            </Grid>
           )}
           <Grid size={{ xs: 12, md: 8 }} data-tutorial="dashboard-test-suite">
             <CippReportToolbar />
@@ -338,11 +368,17 @@ const Page = () => {
         <Grid container spacing={2} sx={{ mb: 2 }}>
           {/* Column 1: Tenant Information */}
           <Grid size={{ xs: 12, lg: 4 }} data-tutorial="dashboard-tenant-info">
-            <TenantInfoCard data={organizationRecord} isLoading={organization.isFetching} />
+            <TenantInfoCard
+              data={organizationRecord}
+              isLoading={organization.isFetching}
+            />
           </Grid>
 
           {/* Column 2: Tenant Metrics - 2x3 Grid */}
-          <Grid size={{ xs: 12, lg: 4 }} data-tutorial="dashboard-tenant-metrics">
+          <Grid
+            size={{ xs: 12, lg: 4 }}
+            data-tutorial="dashboard-tenant-metrics"
+          >
             <TenantMetricsGrid
               data={reportData.TenantInfo.TenantOverview}
               isLoading={testsApi.isFetching}
@@ -355,7 +391,9 @@ const Page = () => {
               data={reportData}
               isLoading={testsApi.isFetching}
               title={reports.find((r) => r.id === selectedReport)?.name}
-              description={reports.find((r) => r.id === selectedReport)?.description}
+              description={
+                reports.find((r) => r.id === selectedReport)?.description
+              }
             />
           </Grid>
         </Grid>
@@ -381,14 +419,20 @@ const Page = () => {
                 {/* The fixed height exists to keep the two lg columns level. Below lg this is
                     a single column, so it buys nothing and clips instead: the description wraps
                     to more lines on a narrow card and the stats row falls off the bottom edge. */}
-                <Box sx={{ height: { xs: 'auto', lg: 450 } }} data-tutorial="dashboard-secure-score">
+                <Box
+                  sx={{ height: { xs: 'auto', lg: 450 } }}
+                  data-tutorial="dashboard-secure-score"
+                >
                   <SecureScoreCard
                     data={testsApi.data?.SecureScore}
                     isLoading={testsApi.isFetching}
                     sx={{ height: '100%' }}
                   />
                 </Box>
-                <Box sx={{ height: { xs: 'auto', lg: 450 } }} data-tutorial="dashboard-auth-methods">
+                <Box
+                  sx={{ height: { xs: 'auto', lg: 450 } }}
+                  data-tutorial="dashboard-auth-methods"
+                >
                   <AuthMethodCard
                     data={testsApi.data?.MFAState}
                     isLoading={testsApi.isFetching}
@@ -408,14 +452,20 @@ const Page = () => {
                   height: '100%',
                 }}
               >
-                <Box sx={{ height: { xs: 'auto', lg: 450 } }} data-tutorial="dashboard-mfa">
+                <Box
+                  sx={{ height: { xs: 'auto', lg: 450 } }}
+                  data-tutorial="dashboard-mfa"
+                >
                   <MFACard
                     data={testsApi.data?.MFAState}
                     isLoading={testsApi.isFetching}
                     sx={{ height: '100%' }}
                   />
                 </Box>
-                <Box sx={{ height: { xs: 'auto', lg: 450 } }} data-tutorial="dashboard-licenses">
+                <Box
+                  sx={{ height: { xs: 'auto', lg: 450 } }}
+                  data-tutorial="dashboard-licenses"
+                >
                   <LicenseCard
                     data={testsApi.data?.LicenseData}
                     isLoading={testsApi.isFetching}
@@ -456,7 +506,9 @@ const Page = () => {
                     rel="noreferrer"
                     sx={{ minHeight: 48 }}
                   >
-                    <ListItemIcon sx={{ minWidth: 40 }}>{getIconByName(item.icon)}</ListItemIcon>
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      {getIconByName(item.icon)}
+                    </ListItemIcon>
                     <ListItemText primary={item.label} />
                   </ListItemButton>
                 ))}
@@ -472,7 +524,10 @@ const Page = () => {
               </ListSubheader>
             }
           >
-            <ExecutiveReportButton variant="menuItem" disabled={organization.isFetching} />
+            <ExecutiveReportButton
+              variant="menuItem"
+              disabled={organization.isFetching}
+            />
             <ListItemButton
               component={Link}
               href="/tools/report-builder/generated"

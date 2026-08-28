@@ -37,7 +37,9 @@ describe('matchPattern', () => {
   })
 
   it('is case-insensitive like -like', () => {
-    expect(matchPattern('identity.user.*', 'Identity.User.ReadWrite')).toBe(true)
+    expect(matchPattern('identity.user.*', 'Identity.User.ReadWrite')).toBe(
+      true
+    )
   })
 
   it('anchors the pattern to the whole string', () => {
@@ -69,7 +71,7 @@ describe('expandRules', () => {
   it('grants includes minus excludes, exclude wins', () => {
     const { matched, excludedBy } = expandRules(
       { Include: ['Identity.*'], Exclude: ['Identity.Device.*'] },
-      universe,
+      universe
     )
     expect(matched).toEqual(['Identity.User.Read', 'Identity.User.ReadWrite'])
     expect(excludedBy['Identity.Device.Read']).toBe('Identity.Device.*')
@@ -78,7 +80,7 @@ describe('expandRules', () => {
   it('reports per-pattern match counts for the live preview', () => {
     const { includeCounts, excludeCounts } = expandRules(
       { Include: ['*.Read', 'Identity.Uesr.*'], Exclude: ['CIPP.*'] },
-      universe,
+      universe
     )
     expect(includeCounts['*.Read']).toBe(4)
     // Typo'd pattern matches nothing — this is what powers the zero-match warning.
@@ -88,8 +90,11 @@ describe('expandRules', () => {
 
   it('accepts autocomplete option objects as rule entries', () => {
     const { matched } = expandRules(
-      { Include: [{ label: 'Identity.User.Read', value: 'Identity.User.Read' }], Exclude: [] },
-      universe,
+      {
+        Include: [{ label: 'Identity.User.Read', value: 'Identity.User.Read' }],
+        Exclude: [],
+      },
+      universe
     )
     expect(matched).toEqual(['Identity.User.Read'])
   })
@@ -97,20 +102,26 @@ describe('expandRules', () => {
 
 describe('rulesToFlatMap', () => {
   it('produces the editor grid map with ReadWrite beating Read', () => {
-    const flat = rulesToFlatMap({ Include: ['Identity.User.*'], Exclude: [] }, apiPermissions)
+    const flat = rulesToFlatMap(
+      { Include: ['Identity.User.*'], Exclude: [] },
+      apiPermissions
+    )
     expect(flat['IdentityUser']).toBe('Identity.User.ReadWrite')
     expect(flat['IdentityDevice']).toBe('Identity.Device.None')
   })
 
   it('floors CIPP.Core at Read so a saved snapshot never locks out sign-in', () => {
-    const flat = rulesToFlatMap({ Include: ['Exchange.*'], Exclude: [] }, apiPermissions)
+    const flat = rulesToFlatMap(
+      { Include: ['Exchange.*'], Exclude: [] },
+      apiPermissions
+    )
     expect(flat['CIPPCore']).toBe('CIPP.Core.Read')
   })
 
   it('honours excludes', () => {
     const flat = rulesToFlatMap(
       { Include: ['Identity.*'], Exclude: ['Identity.User.ReadWrite'] },
-      apiPermissions,
+      apiPermissions
     )
     expect(flat['IdentityUser']).toBe('Identity.User.Read')
   })
@@ -123,20 +134,31 @@ describe('flatMapToRules', () => {
         IdentityUser: 'Identity.User.ReadWrite',
         IdentityDevice: 'Identity.Device.None',
         CIPPCore: 'CIPP.Core.Read',
-      }),
-    ).toEqual({ Include: ['CIPP.Core.Read', 'Identity.User.ReadWrite'], Exclude: [] })
+      })
+    ).toEqual({
+      Include: ['CIPP.Core.Read', 'Identity.User.ReadWrite'],
+      Exclude: [],
+    })
   })
 })
 
 describe('validateRulePattern', () => {
-  it.each(['*', '*.Read', 'Identity.*', 'Identity.User.*', 'Identity.User.ReadWrite'])(
-    'accepts %s',
-    (pattern) => expect(validateRulePattern(pattern)).toBe(true),
-  )
+  it.each([
+    '*',
+    '*.Read',
+    'Identity.*',
+    'Identity.User.*',
+    'Identity.User.ReadWrite',
+  ])('accepts %s', (pattern) => expect(validateRulePattern(pattern)).toBe(true))
 
-  it.each(['', 'Identity.User.Read.Extra', 'Identity User', 'Identity..Read', 'a.b.c;drop'])(
-    'rejects %s',
-    (pattern) => expect(validateRulePattern(pattern)).toBe(false),
+  it.each([
+    '',
+    'Identity.User.Read.Extra',
+    'Identity User',
+    'Identity..Read',
+    'a.b.c;drop',
+  ])('rejects %s', (pattern) =>
+    expect(validateRulePattern(pattern)).toBe(false)
   )
 })
 

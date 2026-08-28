@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
-import PropTypes from 'prop-types';
-import { format } from 'date-fns';
+import { useCallback } from 'react'
+import PropTypes from 'prop-types'
+import { format } from 'date-fns'
 import {
   Button,
   ButtonGroup,
@@ -8,12 +8,12 @@ import {
   Stack,
   SvgIcon,
   Tooltip,
-  Typography
-} from '@mui/material';
-import ViewConfigIcon from '@mui/icons-material/ViewComfy';
-import ViewWeekIcon from '@mui/icons-material/ViewWeek';
-import ViewDayIcon from '@mui/icons-material/ViewDay';
-import ViewAgendaIcon from '@mui/icons-material/ViewAgenda';
+  Typography,
+} from '@mui/material'
+import ViewConfigIcon from '@mui/icons-material/ViewComfy'
+import ViewWeekIcon from '@mui/icons-material/ViewWeek'
+import ViewDayIcon from '@mui/icons-material/ViewDay'
+import ViewAgendaIcon from '@mui/icons-material/ViewAgenda'
 
 const viewOptions = [
   {
@@ -23,7 +23,7 @@ const viewOptions = [
       </SvgIcon>
     ),
     label: 'Month',
-    value: 'dayGridMonth'
+    value: 'dayGridMonth',
   },
   {
     icon: (
@@ -32,7 +32,7 @@ const viewOptions = [
       </SvgIcon>
     ),
     label: 'Week',
-    value: 'timeGridWeek'
+    value: 'timeGridWeek',
   },
   {
     icon: (
@@ -41,7 +41,7 @@ const viewOptions = [
       </SvgIcon>
     ),
     label: 'Day',
-    value: 'timeGridDay'
+    value: 'timeGridDay',
   },
   {
     icon: (
@@ -50,18 +50,29 @@ const viewOptions = [
       </SvgIcon>
     ),
     label: 'Agenda',
-    value: 'listWeek'
-  }
-];
+    value: 'listWeek',
+  },
+]
 
 export const CalendarToolbar = (props) => {
-  const { date, onDateNext, onDatePrev, onDateToday, onViewChange, view, ...other } = props;
+  const {
+    date,
+    onDateNext,
+    onDatePrev,
+    onDateToday,
+    onViewChange,
+    view,
+    ...other
+  } = props
 
-  const handleViewChange = useCallback((view) => {
-    onViewChange?.(view);
-  }, [onViewChange]);
+  const handleViewChange = useCallback(
+    (view) => {
+      onViewChange?.(view)
+    },
+    [onViewChange]
+  )
 
-  const today = format(date, 'MMMM y');
+  const today = format(date, 'MMMM y')
 
   return (
     <Stack
@@ -69,30 +80,20 @@ export const CalendarToolbar = (props) => {
       direction="row"
       justifyContent="space-between"
       spacing={3}
-      {...other}>
+      {...other}
+    >
       <ButtonGroup size="small">
-        <Button onClick={onDatePrev}>
-          Prev
-        </Button>
-        <Button onClick={onDateToday}>
-          Today
-        </Button>
-        <Button onClick={onDateNext}>
-          Next
-        </Button>
+        <Button onClick={onDatePrev}>Prev</Button>
+        <Button onClick={onDateToday}>Today</Button>
+        <Button onClick={onDateNext}>Next</Button>
       </ButtonGroup>
-      <Typography variant="h3">
-        {today}
-      </Typography>
+      <Typography variant="h3">{today}</Typography>
       <div>
         {viewOptions.map((option) => {
-          const isCurrent = option.value === view;
+          const isCurrent = option.value === view
 
           return (
-            <Tooltip
-              key={option.value}
-              title={option.label}
-            >
+            <Tooltip key={option.value} title={option.label}>
               <IconButton
                 color={isCurrent ? 'primary' : 'inherit'}
                 onClick={() => handleViewChange(option.value)}
@@ -100,12 +101,12 @@ export const CalendarToolbar = (props) => {
                 {option.icon}
               </IconButton>
             </Tooltip>
-          );
+          )
         })}
       </div>
     </Stack>
-  );
-};
+  )
+}
 
 CalendarToolbar.propTypes = {
   children: PropTypes.node,
@@ -119,6 +120,6 @@ CalendarToolbar.propTypes = {
     'dayGridMonth',
     'timeGridWeek',
     'timeGridDay',
-    'listWeek'
-  ]).isRequired
-};
+    'listWeek',
+  ]).isRequired,
+}

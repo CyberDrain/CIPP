@@ -34,7 +34,9 @@ const queue = {
   ],
 }
 
-const handlers = [http.get('*/api/ListCippQueue', () => HttpResponse.json([queue]))]
+const handlers = [
+  http.get('*/api/ListCippQueue', () => HttpResponse.json([queue])),
+]
 
 export default {
   title: 'Components/CippTable/CippQueueTracker',
@@ -53,7 +55,9 @@ export const PhoneWidth = {
     await step('the tracker opens the queue offcanvas', async () => {
       const trigger = await canvas.findByRole('button')
       await userEvent.click(trigger)
-      await waitFor(() => expect(body.getByText('Task Details')).toBeInTheDocument())
+      await waitFor(() =>
+        expect(body.getByText('Task Details')).toBeInTheDocument()
+      )
     })
 
     if (!onAPhone) return
@@ -61,27 +65,37 @@ export const PhoneWidth = {
     // scope to one task card — statuses repeat across cards and in the stats row
     const card = (name) => within(body.getByText(name).closest('.MuiBox-root'))
 
-    await step('a full tenant domain does not push its status pill off the card', async () => {
-      const paper = body.getByText('Task Details').closest('.MuiDrawer-paper')
-      const pill = card('cyberdraintesttenant024.onmicrosoft.com').getByText(/^completed$/i)
-      await waitFor(() => {
-        // the pill is intact inside the drawer, not clipped at its right edge
-        expect(pill.getBoundingClientRect().right).toBeLessThanOrEqual(
-          paper.getBoundingClientRect().right
+    await step(
+      'a full tenant domain does not push its status pill off the card',
+      async () => {
+        const paper = body.getByText('Task Details').closest('.MuiDrawer-paper')
+        const pill = card('cyberdraintesttenant024.onmicrosoft.com').getByText(
+          /^completed$/i
         )
-        expect(paper.scrollWidth).toBeLessThanOrEqual(paper.clientWidth)
-      })
-    })
+        await waitFor(() => {
+          // the pill is intact inside the drawer, not clipped at its right edge
+          expect(pill.getBoundingClientRect().right).toBeLessThanOrEqual(
+            paper.getBoundingClientRect().right
+          )
+          expect(paper.scrollWidth).toBeLessThanOrEqual(paper.clientWidth)
+        })
+      }
+    )
 
-    await step('and there is real space between the name and the pill', async () => {
-      const name = body.getByText('cyberdraintesttenant023.onmicrosoft.com')
-      const running = card('cyberdraintesttenant023.onmicrosoft.com').getByText(/^running$/i)
-      const nameBox = name.getBoundingClientRect()
-      const pillBox = running.getBoundingClientRect()
-      // either beside it with a gap, or wrapped below it — never overlapping
-      const besideWithGap = pillBox.left - nameBox.right >= 4
-      const below = pillBox.top >= nameBox.bottom - 1
-      await expect(besideWithGap || below).toBe(true)
-    })
+    await step(
+      'and there is real space between the name and the pill',
+      async () => {
+        const name = body.getByText('cyberdraintesttenant023.onmicrosoft.com')
+        const running = card(
+          'cyberdraintesttenant023.onmicrosoft.com'
+        ).getByText(/^running$/i)
+        const nameBox = name.getBoundingClientRect()
+        const pillBox = running.getBoundingClientRect()
+        // either beside it with a gap, or wrapped below it — never overlapping
+        const besideWithGap = pillBox.left - nameBox.right >= 4
+        const below = pillBox.top >= nameBox.bottom - 1
+        await expect(besideWithGap || below).toBe(true)
+      }
+    )
   },
 }

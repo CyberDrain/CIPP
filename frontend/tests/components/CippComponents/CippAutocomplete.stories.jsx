@@ -19,15 +19,30 @@ const OPTIONS = [
 ]
 
 export const SingleMode = {
-  args: { multiple: false, label: 'Pick one', options: OPTIONS, onChange: () => {} },
+  args: {
+    multiple: false,
+    label: 'Pick one',
+    options: OPTIONS,
+    onChange: () => {},
+  },
 }
 
 export const MultiMode = {
-  args: { multiple: true, label: 'Pick many', options: OPTIONS, onChange: () => {} },
+  args: {
+    multiple: true,
+    label: 'Pick many',
+    options: OPTIONS,
+    onChange: () => {},
+  },
 }
 
 export const Creatable = {
-  args: { multiple: false, label: 'Type to add', options: OPTIONS, onChange: () => {} },
+  args: {
+    multiple: false,
+    label: 'Type to add',
+    options: OPTIONS,
+    onChange: () => {},
+  },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
     await step('typing an unknown value offers an Add option', async () => {
@@ -35,7 +50,9 @@ export const Creatable = {
       // popup renders in a portal outside canvasElement
       const body = within(canvasElement.ownerDocument.body)
       await waitFor(async () => {
-        await expect(body.getByRole('option', { name: 'Add option: "zzz"' })).toBeVisible()
+        await expect(
+          body.getByRole('option', { name: 'Add option: "zzz"' })
+        ).toBeVisible()
       })
     })
   },
@@ -72,7 +89,13 @@ export const ApiDriven = {
     multiple: false,
     label: 'Users',
     onChange: () => {},
-    api: { url: '/api/ListUsers', labelField: 'displayName', valueField: 'id', dataKey: 'Results', queryKey: 'story-users' },
+    api: {
+      url: '/api/ListUsers',
+      labelField: 'displayName',
+      valueField: 'id',
+      dataKey: 'Results',
+      queryKey: 'story-users',
+    },
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
@@ -86,12 +109,20 @@ export const ApiDriven = {
       await userEvent.click(canvas.getByRole('combobox'))
       const body = within(canvasElement.ownerDocument.body)
       await waitFor(async () => {
-        await expect(body.getByRole('option', { name: 'Alice Example' })).toBeVisible()
+        await expect(
+          body.getByRole('option', { name: 'Alice Example' })
+        ).toBeVisible()
       })
     })
   },
 }
 
 export const Fetching = {
-  args: { multiple: false, label: 'Loading', isFetching: true, options: [], onChange: () => {} },
+  args: {
+    multiple: false,
+    label: 'Loading',
+    isFetching: true,
+    options: [],
+    onChange: () => {},
+  },
 }

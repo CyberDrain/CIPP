@@ -1,25 +1,24 @@
-import PropTypes from 'prop-types';
-import { useDropzone } from 'react-dropzone';
-import ArrowUpOnSquareIcon from '@heroicons/react/24/outline/ArrowUpOnSquareIcon';
-import { Avatar, Box, SvgIcon, Typography } from '@mui/material';
+import PropTypes from 'prop-types'
+import { useDropzone } from 'react-dropzone'
+import ArrowUpOnSquareIcon from '@heroicons/react/24/outline/ArrowUpOnSquareIcon'
+import { Avatar, Box, SvgIcon, Typography } from '@mui/material'
 
 export const FileDropzone = (props) => {
-  const { accept, caption, maxFiles, maxSize, minSize, onDrop, sx } = props;
+  const { accept, caption, maxFiles, maxSize, minSize, onDrop, sx } = props
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept,
     maxFiles,
     maxSize,
     minSize,
-    onDrop
-  });
+    onDrop,
+  })
 
   return (
     <Box
       sx={{
         alignItems: 'center',
-        borderColor: (theme) => theme.palette.mode === 'dark'
-          ? 'neutral.800'
-          : 'neutral.200',
+        borderColor: (theme) =>
+          theme.palette.mode === 'dark' ? 'neutral.800' : 'neutral.200',
         borderRadius: 1,
         borderStyle: 'dashed',
         borderWidth: 1,
@@ -33,21 +32,22 @@ export const FileDropzone = (props) => {
         py: 2,
         ...(isDragActive && {
           borderColor: 'primary.main',
-          backgroundColor: 'action.hover'
+          backgroundColor: 'action.hover',
         }),
         '&:hover': {
           borderColor: 'primary.main',
-          backgroundColor: 'action.hover'
+          backgroundColor: 'action.hover',
         },
-        ...sx
+        ...sx,
       }}
-      {...getRootProps()}>
+      {...getRootProps()}
+    >
       <Avatar
         sx={{
           backgroundColor: 'neutral.200',
           color: 'text.secondary',
           height: 42,
-          width: 42
+          width: 42,
         }}
       >
         <SvgIcon fontSize="small">
@@ -66,8 +66,8 @@ export const FileDropzone = (props) => {
       )}
       <input {...getInputProps()} />
     </Box>
-  );
-};
+  )
+}
 
 FileDropzone.propTypes = {
   accept: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)),
@@ -76,5 +76,5 @@ FileDropzone.propTypes = {
   maxSize: PropTypes.number,
   minSize: PropTypes.number,
   onDrop: PropTypes.func,
-  sx: PropTypes.object
-};
+  sx: PropTypes.object,
+}

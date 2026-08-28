@@ -1,27 +1,35 @@
-import { useRouter } from "next/router";
-import { Box, Container, Stack, Button, SvgIcon, Typography, Card } from "@mui/material";
-import ArrowLeftIcon from "@mui/icons-material/ArrowLeft";
-import { CippHead } from "../CippComponents/CippHead";
-import { useTitleClaimedByTabPicker } from "../../layouts/tab-navigation-context";
+import { useRouter } from 'next/router'
+import {
+  Box,
+  Container,
+  Stack,
+  Button,
+  SvgIcon,
+  Typography,
+  Card,
+} from '@mui/material'
+import ArrowLeftIcon from '@mui/icons-material/ArrowLeft'
+import { CippHead } from '../CippComponents/CippHead'
+import { useTitleClaimedByTabPicker } from '../../layouts/tab-navigation-context'
 const CippPageCard = (props) => {
   const {
     title,
-    backButtonTitle = "Back",
+    backButtonTitle = 'Back',
     children,
-    cardSize = "xl",
+    cardSize = 'xl',
     hideTitleText = false,
     hideBackButton = false,
     noTenantInHead = false,
     infoBar,
-  } = props;
-  const router = useRouter();
+  } = props
+  const router = useRouter()
   // On mobile the tab picker directly above already reads as this page's heading whenever
   // its current tab label is the same string — printing the h4 too said "CIPP Roles" twice.
-  const titleClaimed = useTitleClaimedByTabPicker(title);
+  const titleClaimed = useTitleClaimedByTabPicker(title)
 
   const handleBackClick = () => {
-    router.back(); // Navigate to the previous page when the button is clicked
-  };
+    router.back() // Navigate to the previous page when the button is clicked
+  }
 
   return (
     <>
@@ -51,7 +59,7 @@ const CippPageCard = (props) => {
         </Container>
       </Box>
     </>
-  );
-};
+  )
+}
 
-export default CippPageCard;
+export default CippPageCard

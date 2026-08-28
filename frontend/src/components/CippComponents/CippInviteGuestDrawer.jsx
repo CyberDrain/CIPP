@@ -1,86 +1,86 @@
-import { useState, useEffect } from "react";
-import { Button } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useFormState } from "react-hook-form";
-import { Send } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippApiResults } from "./CippApiResults";
-import { useSettings } from "../../hooks/use-settings";
-import { ApiPostCall } from "../../api/ApiCall";
-import { getCippValidator } from "../../utils/get-cipp-validator";
+import { useState, useEffect } from 'react'
+import { Button } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useFormState } from 'react-hook-form'
+import { Send } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippApiResults } from './CippApiResults'
+import { useSettings } from '../../hooks/use-settings'
+import { ApiPostCall } from '../../api/ApiCall'
+import { getCippValidator } from '../../utils/get-cipp-validator'
 
 export const CippInviteGuestDrawer = ({
-  buttonText = "Invite Guest",
+  buttonText = 'Invite Guest',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const userSettingsDefaults = useSettings();
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const userSettingsDefaults = useSettings()
 
   const formControl = useForm({
-    mode: "onBlur",
+    mode: 'onBlur',
     defaultValues: {
       tenantFilter: userSettingsDefaults.currentTenant,
-      displayName: "",
-      mail: "",
-      redirectUri: "",
-      message: "",
+      displayName: '',
+      mail: '',
+      redirectUri: '',
+      message: '',
       sendInvite: true,
     },
-  });
+  })
 
-  const { isValid } = useFormState({ control: formControl.control });
+  const { isValid } = useFormState({ control: formControl.control })
 
   const inviteGuest = ApiPostCall({
     urlFromData: true,
     relatedQueryKeys: [`Users-${userSettingsDefaults.currentTenant}`],
-  });
+  })
 
   // Reset form fields on successful invitation
   useEffect(() => {
     if (inviteGuest.isSuccess) {
-      formControl.reset();
+      formControl.reset()
     }
-  }, [inviteGuest.isSuccess, formControl]);
+  }, [inviteGuest.isSuccess, formControl])
 
   const handleSubmit = () => {
-    formControl.trigger();
+    formControl.trigger()
     // Check if the form is valid before proceeding
     if (!isValid) {
-      return;
+      return
     }
-    const formData = formControl.getValues();
+    const formData = formControl.getValues()
     inviteGuest.mutate({
-      url: "/api/AddGuest",
+      url: '/api/AddGuest',
       data: formData,
       relatedQueryKeys: [`Users-${userSettingsDefaults.currentTenant}`],
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
       tenantFilter: userSettingsDefaults.currentTenant,
-      displayName: "",
-      mail: "",
-      redirectUri: "",
-      message: "",
+      displayName: '',
+      mail: '',
+      redirectUri: '',
+      message: '',
       sendInvite: true,
-    });
-  };
+    })
+  }
 
   const handleOpenDrawer = () => {
     formControl.reset({
       tenantFilter: userSettingsDefaults.currentTenant,
-      displayName: "",
-      mail: "",
-      redirectUri: "",
-      message: "",
+      displayName: '',
+      mail: '',
+      redirectUri: '',
+      message: '',
       sendInvite: true,
-    });
-    setDrawerVisible(true);
-  };
+    })
+    setDrawerVisible(true)
+  }
 
   return (
     <>
@@ -97,7 +97,13 @@ export const CippInviteGuestDrawer = ({
         onClose={handleCloseDrawer}
         size="md"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -105,10 +111,10 @@ export const CippInviteGuestDrawer = ({
               disabled={inviteGuest.isLoading || !isValid}
             >
               {inviteGuest.isLoading
-                ? "Sending Invite..."
+                ? 'Sending Invite...'
                 : inviteGuest.isSuccess
-                  ? "Send Another Invite"
-                  : "Send Invite"}
+                  ? 'Send Another Invite'
+                  : 'Send Invite'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -124,7 +130,7 @@ export const CippInviteGuestDrawer = ({
               label="Display Name"
               name="displayName"
               formControl={formControl}
-              validators={{ required: "Display name is required" }}
+              validators={{ required: 'Display name is required' }}
             />
           </Grid>
           <Grid size={{ md: 6, xs: 12 }}>
@@ -135,8 +141,8 @@ export const CippInviteGuestDrawer = ({
               name="mail"
               formControl={formControl}
               validators={{
-                required: "Email address is required",
-                validate: (value) => !value || getCippValidator(value, "email"),
+                required: 'Email address is required',
+                validate: (value) => !value || getCippValidator(value, 'email'),
               }}
             />
           </Grid>
@@ -176,5 +182,5 @@ export const CippInviteGuestDrawer = ({
         </Grid>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

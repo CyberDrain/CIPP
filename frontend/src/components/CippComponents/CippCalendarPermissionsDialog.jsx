@@ -30,8 +30,15 @@ const CippCalendarPermissionsDialog = ({
   }, [formHook])
 
   // Only certain permission levels support sending a notification when calendar permissions are added
-  const notifyAllowed = ['AvailabilityOnly', 'LimitedDetails', 'Reviewer', 'Editor']
-  const isNotifyAllowed = notifyAllowed.includes(permissionLevel?.value ?? permissionLevel)
+  const notifyAllowed = [
+    'AvailabilityOnly',
+    'LimitedDetails',
+    'Reviewer',
+    'Editor',
+  ]
+  const isNotifyAllowed = notifyAllowed.includes(
+    permissionLevel?.value ?? permissionLevel
+  )
 
   return (
     <Stack spacing={3} sx={{ mt: 1 }}>
@@ -61,7 +68,9 @@ const CippCalendarPermissionsDialog = ({
             </li>
           )}
           creatable={false}
-          validators={{ required: 'Select a user or group to assign permissions to' }}
+          validators={{
+            required: 'Select a user or group to assign permissions to',
+          }}
           placeholder="Select a user or group to assign permissions to"
         />
       </Box>
@@ -71,7 +80,9 @@ const CippCalendarPermissionsDialog = ({
           label="Permission Level"
           name="Permissions"
           creatable={false}
-          validators={{ required: 'Select the permission level for the calendar' }}
+          validators={{
+            required: 'Select the permission level for the calendar',
+          }}
           options={[
             { value: 'Author', label: 'Author' },
             { value: 'Contributor', label: 'Contributor' },

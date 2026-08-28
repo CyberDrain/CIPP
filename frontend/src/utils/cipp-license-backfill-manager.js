@@ -3,23 +3,23 @@
  * Tracks missing licenses and triggers batch API calls to fetch them
  */
 
-import { getMissingFromCache, addLicensesToCache } from "./cipp-license-cache";
+import { getMissingFromCache, addLicensesToCache } from './cipp-license-cache'
 
 class LicenseBackfillManager {
   constructor() {
-    this.pendingSkuIds = new Set();
-    this.isBackfilling = false;
-    this.backfillTimeout = null;
-    this.callbacks = new Set();
-    this.BATCH_DELAY = 500; // Wait 500ms to batch multiple requests
+    this.pendingSkuIds = new Set()
+    this.isBackfilling = false
+    this.backfillTimeout = null
+    this.callbacks = new Set()
+    this.BATCH_DELAY = 500 // Wait 500ms to batch multiple requests
   }
 
   /**
    * Add a callback to be notified when backfill completes
    */
   addCallback(callback) {
-    this.callbacks.add(callback);
-    return () => this.callbacks.delete(callback);
+    this.callbacks.add(callback)
+    return () => this.callbacks.delete(callback)
   }
 
   /**
@@ -28,29 +28,29 @@ class LicenseBackfillManager {
   notifyCallbacks() {
     this.callbacks.forEach((callback) => {
       try {
-        callback();
+        callback()
       } catch (error) {
-        console.error("Error in backfill callback:", error);
+        console.error('Error in backfill callback:', error)
       }
-    });
+    })
   }
 
   /**
    * Add missing skuIds to the queue
    */
   addMissingSkuIds(skuIds) {
-    if (!Array.isArray(skuIds)) return;
+    if (!Array.isArray(skuIds)) return
 
-    let added = false;
+    let added = false
     skuIds.forEach((skuId) => {
       if (skuId && !this.pendingSkuIds.has(skuId)) {
-        this.pendingSkuIds.add(skuId);
-        added = true;
+        this.pendingSkuIds.add(skuId)
+        added = true
       }
-    });
+    })
 
     if (added && !this.isBackfilling) {
-      this.scheduleBatchBackfill();
+      this.scheduleBatchBackfill()
     }
   }
 
@@ -60,13 +60,13 @@ class LicenseBackfillManager {
   scheduleBatchBackfill() {
     // Clear existing timeout to debounce
     if (this.backfillTimeout) {
-      clearTimeout(this.backfillTimeout);
+      clearTimeout(this.backfillTimeout)
     }
 
     // Schedule new backfill
     this.backfillTimeout = setTimeout(() => {
-      this.executeBatchBackfill();
-    }, this.BATCH_DELAY);
+      this.executeBatchBackfill()
+    }, this.BATCH_DELAY)
   }
 
   /**
@@ -74,46 +74,50 @@ class LicenseBackfillManager {
    */
   async executeBatchBackfill() {
     if (this.isBackfilling || this.pendingSkuIds.size === 0) {
-      return;
+      return
     }
 
     // Get all pending skuIds
-    const skuIdsToFetch = Array.from(this.pendingSkuIds);
-    this.pendingSkuIds.clear();
-    this.isBackfilling = true;
+    const skuIdsToFetch = Array.from(this.pendingSkuIds)
+    this.pendingSkuIds.clear()
+    this.isBackfilling = true
 
     try {
       // Import axios dynamically to avoid circular dependencies
-      const axios = (await import("axios")).default;
-      const { buildVersionedHeaders } = await import("./cippVersion");
+      const axios = (await import('axios')).default
+      const { buildVersionedHeaders } = await import('./cippVersion')
 
-      console.log(`[License Backfill] Fetching ${skuIdsToFetch.length} licenses...`);
+      console.log(
+        `[License Backfill] Fetching ${skuIdsToFetch.length} licenses...`
+      )
 
       const response = await axios.post(
-        "/api/ExecLicenseSearch",
+        '/api/ExecLicenseSearch',
         { skuIds: skuIdsToFetch },
         { headers: await buildVersionedHeaders() }
-      );
+      )
 
       if (response.data && Array.isArray(response.data)) {
-        console.log(`[License Backfill] Received ${response.data.length} licenses`);
-        addLicensesToCache(response.data);
-        
+        console.log(
+          `[License Backfill] Received ${response.data.length} licenses`
+        )
+        addLicensesToCache(response.data)
+
         // Notify all callbacks that backfill completed
-        this.notifyCallbacks();
+        this.notifyCallbacks()
       }
     } catch (error) {
-      console.error("[License Backfill] Error fetching licenses:", error);
-      
+      console.error('[License Backfill] Error fetching licenses:', error)
+
       // Re-add failed skuIds back to pending if we want to retry
       // Commenting this out to avoid infinite retry loops
       // skuIdsToFetch.forEach(skuId => this.pendingSkuIds.add(skuId));
     } finally {
-      this.isBackfilling = false;
+      this.isBackfilling = false
 
       // If more skuIds were added during backfill, schedule another batch
       if (this.pendingSkuIds.size > 0) {
-        this.scheduleBatchBackfill();
+        this.scheduleBatchBackfill()
       }
     }
   }
@@ -122,12 +126,12 @@ class LicenseBackfillManager {
    * Check skuIds and add missing ones to backfill queue
    */
   checkAndQueueMissing(skuIds) {
-    const missing = getMissingFromCache(skuIds);
+    const missing = getMissingFromCache(skuIds)
     if (missing.length > 0) {
-      this.addMissingSkuIds(missing);
-      return true;
+      this.addMissingSkuIds(missing)
+      return true
     }
-    return false;
+    return false
   }
 
   /**
@@ -137,7 +141,7 @@ class LicenseBackfillManager {
     return {
       isBackfilling: this.isBackfilling,
       pendingCount: this.pendingSkuIds.size,
-    };
+    }
   }
 
   /**
@@ -145,16 +149,16 @@ class LicenseBackfillManager {
    */
   clear() {
     if (this.backfillTimeout) {
-      clearTimeout(this.backfillTimeout);
-      this.backfillTimeout = null;
+      clearTimeout(this.backfillTimeout)
+      this.backfillTimeout = null
     }
-    this.pendingSkuIds.clear();
-    this.isBackfilling = false;
-    this.callbacks.clear();
+    this.pendingSkuIds.clear()
+    this.isBackfilling = false
+    this.callbacks.clear()
   }
 }
 
 // Global singleton instance
-const licenseBackfillManager = new LicenseBackfillManager();
+const licenseBackfillManager = new LicenseBackfillManager()
 
-export default licenseBackfillManager;
+export default licenseBackfillManager

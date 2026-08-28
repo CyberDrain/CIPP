@@ -26,7 +26,11 @@ const MinimalErrorFallback = ({ error, resetErrorBoundary, outerError }) => (
         <Typography>Oh no! It seems something went wrong.</Typography>
         <Typography
           component="pre"
-          sx={{ fontSize: '0.85rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+          sx={{
+            fontSize: '0.85rem',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
         >
           {outerError?.message || error?.message}
         </Typography>

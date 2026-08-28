@@ -1,8 +1,16 @@
-import { getMobileCardSlots, isStatusLike } from '../../../src/components/CippTable/util-mobile-card-slots'
+import {
+  getMobileCardSlots,
+  isStatusLike,
+} from '../../../src/components/CippTable/util-mobile-card-slots'
 
 // Shorthand column factory mirroring what table.getVisibleLeafColumns() yields
 const col = (id, def = {}) => ({ id, columnDef: { id, ...def } })
-const bool = (id) => col(id, { sortingFn: 'boolean', filterVariant: 'select', filterSelectOptions: ['Yes', 'No'] })
+const bool = (id) =>
+  col(id, {
+    sortingFn: 'boolean',
+    filterVariant: 'select',
+    filterSelectOptions: ['Yes', 'No'],
+  })
 
 const ids = (cols) => cols.map((c) => c.id)
 
@@ -10,7 +18,11 @@ const ids = (cols) => cols.map((c) => c.id)
 // accountEnabled mirrors its explicit get-cipp-filter-variant case: select variant,
 // alphanumeric sorting, NO options — only the STATUS_FIELDS id match can catch it.
 const USERS_COLUMNS = [
-  col('accountEnabled', { filterVariant: 'select', sortingFn: 'alphanumeric', filterFn: 'equals' }),
+  col('accountEnabled', {
+    filterVariant: 'select',
+    sortingFn: 'alphanumeric',
+    filterFn: 'equals',
+  }),
   col('userPrincipalName'),
   col('displayName'),
   col('mail'),
@@ -18,7 +30,10 @@ const USERS_COLUMNS = [
   col('proxyAddresses'),
   col('assignedLicenses'),
   col('licenseAssignmentStates'),
-  col('userType', { filterVariant: 'select', filterSelectOptions: ['Member', 'Guest'] }),
+  col('userType', {
+    filterVariant: 'select',
+    filterSelectOptions: ['Member', 'Guest'],
+  }),
 ]
 
 describe('getMobileCardSlots', () => {
@@ -27,13 +42,24 @@ describe('getMobileCardSlots', () => {
     expect(slots.primary.id).toBe('displayName')
     expect(slots.secondary.id).toBe('userPrincipalName')
     expect(ids(slots.chips)).toEqual(['accountEnabled', 'userType'])
-    expect(ids(slots.details)).toEqual(['mail', 'businessPhones', 'proxyAddresses'])
-    expect(ids(slots.rest)).toEqual(['assignedLicenses', 'licenseAssignmentStates'])
+    expect(ids(slots.details)).toEqual([
+      'mail',
+      'businessPhones',
+      'proxyAddresses',
+    ])
+    expect(ids(slots.rest)).toEqual([
+      'assignedLicenses',
+      'licenseAssignmentStates',
+    ])
     expect(slots.restCount).toBe(2)
   })
 
   it('filters out mrt-* utility columns', () => {
-    const slots = getMobileCardSlots([col('mrt-row-select'), col('displayName'), col('mrt-row-actions')])
+    const slots = getMobileCardSlots([
+      col('mrt-row-select'),
+      col('displayName'),
+      col('mrt-row-actions'),
+    ])
     expect(slots.primary.id).toBe('displayName')
     expect(slots.secondary).toBeNull()
     expect(slots.restCount).toBe(0)
@@ -60,7 +86,11 @@ describe('getMobileCardSlots', () => {
   })
 
   it('falls back to first non-status textual column when nothing matches NAME_FIELDS', () => {
-    const slots = getMobileCardSlots([bool('isCompliant'), col('osVersion'), col('manufacturer')])
+    const slots = getMobileCardSlots([
+      bool('isCompliant'),
+      col('osVersion'),
+      col('manufacturer'),
+    ])
     expect(slots.primary.id).toBe('osVersion')
     expect(ids(slots.chips)).toEqual(['isCompliant'])
     expect(ids(slots.details)).toEqual(['manufacturer'])
@@ -75,8 +105,14 @@ describe('getMobileCardSlots', () => {
   it('caps chips at 3 and details at 3, remainder goes to rest', () => {
     const slots = getMobileCardSlots([
       col('displayName'),
-      bool('a'), bool('b'), bool('c'), bool('d'),
-      col('e'), col('f'), col('g'), col('h'),
+      bool('a'),
+      bool('b'),
+      bool('c'),
+      bool('d'),
+      col('e'),
+      col('f'),
+      col('g'),
+      col('h'),
     ])
     expect(ids(slots.chips)).toEqual(['a', 'b', 'c'])
     // 'd' overflowed the chip cap — it flows into details ("whatever remains"), not rest
@@ -106,7 +142,11 @@ describe('getMobileCardSlots', () => {
   })
 
   it('ignores override ids that are not visible and empty override arrays fall through to rest', () => {
-    const slots = getMobileCardSlots(USERS_COLUMNS, { primary: 'notAColumn', chips: [], details: [] })
+    const slots = getMobileCardSlots(USERS_COLUMNS, {
+      primary: 'notAColumn',
+      chips: [],
+      details: [],
+    })
     expect(slots.primary.id).toBe('displayName') // heuristic fallback
     expect(slots.chips).toEqual([])
     expect(slots.details).toEqual([])
@@ -135,9 +175,18 @@ describe('isStatusLike', () => {
     expect(isStatusLike(col('Result'))).toBe(true)
   })
   it('detects small select filters, rejects large ones', () => {
-    expect(isStatusLike(col('x', { filterVariant: 'select', filterSelectOptions: ['a', 'b'] }))).toBe(true)
     expect(
-      isStatusLike(col('x', { filterVariant: 'select', filterSelectOptions: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] }))
+      isStatusLike(
+        col('x', { filterVariant: 'select', filterSelectOptions: ['a', 'b'] })
+      )
+    ).toBe(true)
+    expect(
+      isStatusLike(
+        col('x', {
+          filterVariant: 'select',
+          filterSelectOptions: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+        })
+      )
     ).toBe(false)
   })
   it('rejects plain text columns', () => {

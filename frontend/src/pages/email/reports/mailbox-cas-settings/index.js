@@ -38,7 +38,9 @@ const Page = () => {
             { label: 'Enable', value: true },
             { label: 'Disable', value: false },
           ],
-          validators: { required: 'Please choose whether to enable or disable' },
+          validators: {
+            required: 'Please choose whether to enable or disable',
+          },
         },
         {
           type: 'autoComplete',
@@ -46,7 +48,10 @@ const Page = () => {
           label: 'Protocols',
           multiple: true,
           creatable: false,
-          options: Object.entries(casProtocols).map(([value, label]) => ({ label, value })),
+          options: Object.entries(casProtocols).map(([value, label]) => ({
+            label,
+            value,
+          })),
           validators: { required: 'Please select at least one protocol' },
         },
       ],
@@ -55,15 +60,21 @@ const Page = () => {
       customDataformatter: (rows, action, formData) => {
         const mailboxes = Array.isArray(rows) ? rows : [rows]
         const rawEnable =
-          typeof formData.enable === 'object' ? formData.enable?.value : formData.enable
+          typeof formData.enable === 'object'
+            ? formData.enable?.value
+            : formData.enable
         const enable = rawEnable === true || rawEnable === 'true'
-        const protocolFlags = (formData.protocols ?? []).reduce((flags, selection) => {
-          const param = typeof selection === 'object' ? selection.value : selection
-          // "*Disabled" params are inverted: enabling the protocol means setting them false.
-          // SMTP client auth is disable-only; the API rejects an enable attempt with a message.
-          flags[param] = param.endsWith('Disabled') ? !enable : enable
-          return flags
-        }, {})
+        const protocolFlags = (formData.protocols ?? []).reduce(
+          (flags, selection) => {
+            const param =
+              typeof selection === 'object' ? selection.value : selection
+            // "*Disabled" params are inverted: enabling the protocol means setting them false.
+            // SMTP client auth is disable-only; the API rejects an enable attempt with a message.
+            flags[param] = param.endsWith('Disabled') ? !enable : enable
+            return flags
+          },
+          {}
+        )
 
         return mailboxes.map((row) => ({
           tenantFilter,
@@ -97,6 +108,8 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+)
 
 export default Page

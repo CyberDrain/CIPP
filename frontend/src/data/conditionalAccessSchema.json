@@ -53,7 +53,14 @@
           "description": "Client application types included in the policy.",
           "items": {
             "type": "string",
-            "enum": ["all", "browser", "mobileAppsAndDesktopClients", "exchangeActiveSync", "easSupported", "other"]
+            "enum": [
+              "all",
+              "browser",
+              "mobileAppsAndDesktopClients",
+              "exchangeActiveSync",
+              "easSupported",
+              "other"
+            ]
           },
           "enumLabels": {
             "all": "All",
@@ -207,7 +214,15 @@
           "type": "string",
           "title": "Guest or External User Types",
           "description": "Multi-valued flags. Combine with commas.",
-          "flagEnum": ["none", "internalGuest", "b2bCollaborationGuest", "b2bCollaborationMember", "b2bDirectConnectUser", "otherExternalUser", "serviceProvider"],
+          "flagEnum": [
+            "none",
+            "internalGuest",
+            "b2bCollaborationGuest",
+            "b2bCollaborationMember",
+            "b2bDirectConnectUser",
+            "otherExternalUser",
+            "serviceProvider"
+          ],
           "flagEnumLabels": {
             "none": "None",
             "internalGuest": "Internal guest",
@@ -315,7 +330,15 @@
           "description": "Platforms the policy applies to.",
           "items": {
             "type": "string",
-            "enum": ["android", "iOS", "windows", "windowsPhone", "macOS", "linux", "all"]
+            "enum": [
+              "android",
+              "iOS",
+              "windows",
+              "windowsPhone",
+              "macOS",
+              "linux",
+              "all"
+            ]
           },
           "enumLabels": {
             "android": "Android",
@@ -333,7 +356,14 @@
           "description": "Platforms excluded from the policy.",
           "items": {
             "type": "string",
-            "enum": ["android", "iOS", "windows", "windowsPhone", "macOS", "linux"]
+            "enum": [
+              "android",
+              "iOS",
+              "windows",
+              "windowsPhone",
+              "macOS",
+              "linux"
+            ]
           },
           "enumLabels": {
             "android": "Android",
@@ -478,7 +508,16 @@
           "description": "Built-in grant controls required by the policy.",
           "items": {
             "type": "string",
-            "enum": ["block", "mfa", "compliantDevice", "domainJoinedDevice", "approvedApplication", "compliantApplication", "passwordChange", "riskRemediation"]
+            "enum": [
+              "block",
+              "mfa",
+              "compliantDevice",
+              "domainJoinedDevice",
+              "approvedApplication",
+              "compliantApplication",
+              "passwordChange",
+              "riskRemediation"
+            ]
           },
           "enumLabels": {
             "block": "Block access",
@@ -491,7 +530,18 @@
             "riskRemediation": "Require risk remediation"
           },
           "constraints": {
-            "mutuallyExclusive": [["block"], ["mfa", "compliantDevice", "domainJoinedDevice", "approvedApplication", "compliantApplication", "passwordChange", "riskRemediation"]],
+            "mutuallyExclusive": [
+              ["block"],
+              [
+                "mfa",
+                "compliantDevice",
+                "domainJoinedDevice",
+                "approvedApplication",
+                "compliantApplication",
+                "passwordChange",
+                "riskRemediation"
+              ]
+            ],
             "passwordChangeRequires": ["mfa"],
             "riskRemediationExcludes": ["passwordChange"]
           }
@@ -630,7 +680,10 @@
           "type": "string",
           "title": "Authentication Type",
           "description": "Which authentication types this applies to.",
-          "enum": ["primaryAndSecondaryAuthentication", "secondaryAuthentication"],
+          "enum": [
+            "primaryAndSecondaryAuthentication",
+            "secondaryAuthentication"
+          ],
           "enumLabels": {
             "primaryAndSecondaryAuthentication": "Primary and secondary authentication",
             "secondaryAuthentication": "Secondary authentication only"

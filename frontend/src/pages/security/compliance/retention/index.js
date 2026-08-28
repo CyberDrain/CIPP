@@ -19,7 +19,8 @@ const Page = () => {
       icon: <Book />,
       url: '/api/AddRetentionCompliancePolicyTemplate',
       data: { Identity: 'Name' },
-      confirmText: 'Are you sure you want to create a template based on this retention policy?',
+      confirmText:
+        'Are you sure you want to create a template based on this retention policy?',
       hideBulk: true,
     },
     {
@@ -110,5 +111,7 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+)
 export default Page

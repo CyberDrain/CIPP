@@ -38,7 +38,9 @@ describe('impersonation store', () => {
     expect(window.localStorage.getItem(KEY)).toBe('helpdesk')
     expect(queryClient.clear).toHaveBeenCalledTimes(1)
     expect(window.localStorage.getItem('REACT_QUERY_OFFLINE_CACHE')).toBeNull()
-    expect(window.localStorage.getItem('REACT_QUERY_OFFLINE_CACHE_extra')).toBeNull()
+    expect(
+      window.localStorage.getItem('REACT_QUERY_OFFLINE_CACHE_extra')
+    ).toBeNull()
     expect(window.localStorage.getItem('app.settings')).toBe('keep-me')
     expect(reloadSpy).toHaveBeenCalledTimes(1)
   })
@@ -96,18 +98,24 @@ describe('impersonation store', () => {
     expect(getImpersonatedRole()).toBeNull()
     expect(() => exitImpersonation({ clear: vi.fn() })).not.toThrow()
 
-    Object.defineProperty(window, 'localStorage', { value: original, configurable: true })
+    Object.defineProperty(window, 'localStorage', {
+      value: original,
+      configurable: true,
+    })
   })
 })
 
 describe('buildVersionedHeaders impersonation header', () => {
   beforeEach(() => {
     window.localStorage.clear()
-    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ version: '1.0' }) })
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ version: '1.0' }) })
   })
 
   it('adds x-cipp-impersonate-role only while impersonating', async () => {
-    const { buildVersionedHeaders } = await import('../../src/utils/cippVersion')
+    const { buildVersionedHeaders } =
+      await import('../../src/utils/cippVersion')
 
     const plain = await buildVersionedHeaders()
     expect(plain['x-cipp-impersonate-role']).toBeUndefined()

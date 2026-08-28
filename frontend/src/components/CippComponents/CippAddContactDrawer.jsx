@@ -1,83 +1,83 @@
-﻿import React, { useState, useEffect } from "react";
-import { Button, Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useFormState } from "react-hook-form";
-import { PersonAdd } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippApiResults } from "./CippApiResults";
-import { useSettings } from "../../hooks/use-settings";
-import { ApiPostCall } from "../../api/ApiCall";
+﻿import React, { useState, useEffect } from 'react'
+import { Button, Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useFormState } from 'react-hook-form'
+import { PersonAdd } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippApiResults } from './CippApiResults'
+import { useSettings } from '../../hooks/use-settings'
+import { ApiPostCall } from '../../api/ApiCall'
 
 export const CippAddContactDrawer = ({
-  buttonText = "Add Contact",
+  buttonText = 'Add Contact',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const tenantDomain = useSettings().currentTenant;
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const tenantDomain = useSettings().currentTenant
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      displayName: "",
-      firstName: "",
-      lastName: "",
-      email: "",
+      displayName: '',
+      firstName: '',
+      lastName: '',
+      email: '',
       hidefromGAL: false,
-      streetAddress: "",
-      postalCode: "",
-      city: "",
-      state: "",
-      country: "",
-      companyName: "",
-      mobilePhone: "",
-      businessPhone: "",
-      jobTitle: "",
-      website: "",
-      mailTip: "",
+      streetAddress: '',
+      postalCode: '',
+      city: '',
+      state: '',
+      country: '',
+      companyName: '',
+      mobilePhone: '',
+      businessPhone: '',
+      jobTitle: '',
+      website: '',
+      mailTip: '',
     },
-  });
+  })
 
-  const { isValid } = useFormState({ control: formControl.control });
+  const { isValid } = useFormState({ control: formControl.control })
 
   const addContact = ApiPostCall({
     urlFromData: true,
     relatedQueryKeys: [`Contacts-${tenantDomain}`],
-  });
+  })
 
   // Reset form fields on successful creation
   useEffect(() => {
     if (addContact.isSuccess) {
       formControl.reset({
-        displayName: "",
-        firstName: "",
-        lastName: "",
-        email: "",
+        displayName: '',
+        firstName: '',
+        lastName: '',
+        email: '',
         hidefromGAL: false,
-        streetAddress: "",
-        postalCode: "",
-        city: "",
-        state: "",
-        country: "",
-        companyName: "",
-        mobilePhone: "",
-        businessPhone: "",
-        jobTitle: "",
-        website: "",
-        mailTip: "",
-      });
+        streetAddress: '',
+        postalCode: '',
+        city: '',
+        state: '',
+        country: '',
+        companyName: '',
+        mobilePhone: '',
+        businessPhone: '',
+        jobTitle: '',
+        website: '',
+        mailTip: '',
+      })
     }
-  }, [addContact.isSuccess, formControl]);
+  }, [addContact.isSuccess, formControl])
 
   const handleSubmit = () => {
-    formControl.trigger();
+    formControl.trigger()
     // Check if the form is valid before proceeding
     if (!isValid) {
-      return;
+      return
     }
 
-    const formData = formControl.getValues();
+    const formData = formControl.getValues()
     const shippedValues = {
       tenantID: tenantDomain,
       DisplayName: formData.displayName,
@@ -96,36 +96,36 @@ export const CippAddContactDrawer = ({
       phone: formData.businessPhone,
       website: formData.website,
       mailTip: formData.mailTip,
-    };
+    }
 
     addContact.mutate({
-      url: "/api/AddContact",
+      url: '/api/AddContact',
       data: shippedValues,
       relatedQueryKeys: [`Contacts-${tenantDomain}`],
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
-      displayName: "",
-      firstName: "",
-      lastName: "",
-      email: "",
+      displayName: '',
+      firstName: '',
+      lastName: '',
+      email: '',
       hidefromGAL: false,
-      streetAddress: "",
-      postalCode: "",
-      city: "",
-      state: "",
-      country: "",
-      companyName: "",
-      mobilePhone: "",
-      businessPhone: "",
-      jobTitle: "",
-      website: "",
-      mailTip: "",
-    });
-  };
+      streetAddress: '',
+      postalCode: '',
+      city: '',
+      state: '',
+      country: '',
+      companyName: '',
+      mobilePhone: '',
+      businessPhone: '',
+      jobTitle: '',
+      website: '',
+      mailTip: '',
+    })
+  }
 
   return (
     <>
@@ -142,7 +142,13 @@ export const CippAddContactDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -150,10 +156,10 @@ export const CippAddContactDrawer = ({
               disabled={addContact.isLoading || !isValid}
             >
               {addContact.isLoading
-                ? "Creating..."
+                ? 'Creating...'
                 : addContact.isSuccess
-                ? "Create Another"
-                : "Create Contact"}
+                  ? 'Create Another'
+                  : 'Create Contact'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -169,7 +175,7 @@ export const CippAddContactDrawer = ({
               label="Display Name"
               name="displayName"
               formControl={formControl}
-              validators={{ required: "Display Name is required" }}
+              validators={{ required: 'Display Name is required' }}
             />
           </Grid>
 
@@ -191,7 +197,7 @@ export const CippAddContactDrawer = ({
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Email */}
           <Grid size={{ md: 8, xs: 12 }}>
@@ -201,10 +207,10 @@ export const CippAddContactDrawer = ({
               name="email"
               formControl={formControl}
               validators={{
-                required: "Email is required",
+                required: 'Email is required',
                 pattern: {
                   value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Please enter a valid email address",
+                  message: 'Please enter a valid email address',
                 },
               }}
             />
@@ -220,7 +226,7 @@ export const CippAddContactDrawer = ({
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Additional Contact Information */}
           <Grid size={{ md: 6, xs: 12 }}>
@@ -317,5 +323,5 @@ export const CippAddContactDrawer = ({
         </Grid>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

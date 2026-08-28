@@ -36,7 +36,12 @@ export const useReportVariables = (tenantFilter) => {
     for (const variable of results) {
       // Valueless variables (mostly system tokens, expanded on an endpoint) are left out, so the
       // token stays written in the footer rather than resolving to nothing.
-      if (variable?.Name && variable.Value !== null && variable.Value !== undefined && variable.Value !== '') {
+      if (
+        variable?.Name &&
+        variable.Value !== null &&
+        variable.Value !== undefined &&
+        variable.Value !== ''
+      ) {
         resolved[variable.Name] = variable.Value
       }
     }

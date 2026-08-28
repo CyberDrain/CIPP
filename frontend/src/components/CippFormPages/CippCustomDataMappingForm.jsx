@@ -1,60 +1,63 @@
-import { useWatch } from "react-hook-form";
-import { Box, Stack, Typography, Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import { CippFormComponent } from "../CippComponents/CippFormComponent";
-import { CippFormTenantSelector } from "../CippComponents/CippFormTenantSelector";
-import { CippFormCondition } from "../CippComponents/CippFormCondition";
-import { CippPropertyListCard } from "../CippCards/CippPropertyListCard";
-import { CippCopyToClipBoard } from "../CippComponents/CippCopyToClipboard";
-import extensionDataMapping from "../../data/extensionDataMapping";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
+import { useWatch } from 'react-hook-form'
+import { Box, Stack, Typography, Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import { CippFormComponent } from '../CippComponents/CippFormComponent'
+import { CippFormTenantSelector } from '../CippComponents/CippFormTenantSelector'
+import { CippFormCondition } from '../CippComponents/CippFormCondition'
+import { CippPropertyListCard } from '../CippCards/CippPropertyListCard'
+import { CippCopyToClipBoard } from '../CippComponents/CippCopyToClipboard'
+import extensionDataMapping from '../../data/extensionDataMapping'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
 
 const CippCustomDataMappingForm = ({ formControl }) => {
-  const selectedAttribute = useWatch({ control: formControl.control, name: "customDataAttribute" });
+  const selectedAttribute = useWatch({
+    control: formControl.control,
+    name: 'customDataAttribute',
+  })
 
   const selectedDirectoryObjectType = useWatch({
     control: formControl.control,
-    name: "directoryObjectType",
-  });
+    name: 'directoryObjectType',
+  })
   const selectedExtensionSyncDataset = useWatch({
     control: formControl.control,
-    name: "extensionSyncDataset",
-  });
+    name: 'extensionSyncDataset',
+  })
   const selectedSourceType = useWatch({
     control: formControl.control,
-    name: "sourceType",
-  });
+    name: 'sourceType',
+  })
   const selectedManualEntryFieldLabel = useWatch({
     control: formControl.control,
-    name: "manualEntryFieldLabel",
-  });
+    name: 'manualEntryFieldLabel',
+  })
 
-  console.log("Selected directory object type: ", selectedDirectoryObjectType);
+  console.log('Selected directory object type: ', selectedDirectoryObjectType)
 
-  const staticTargetTypes = [{ value: "user", label: "User" }];
+  const staticTargetTypes = [{ value: 'user', label: 'User' }]
 
   // Top-level source type selection
   const sourceTypeField = {
-    name: "sourceType",
-    label: "Source Type",
-    type: "autoComplete",
+    name: 'sourceType',
+    label: 'Source Type',
+    type: 'autoComplete',
     required: true,
     multiple: false,
-    placeholder: "Select a Source Type",
+    placeholder: 'Select a Source Type',
     options: [
-      { value: "reportingDb", label: "Reporting DB" },
-      { value: "manualEntry", label: "Manual Entry" },
+      { value: 'reportingDb', label: 'Reporting DB' },
+      { value: 'manualEntry', label: 'Manual Entry' },
     ],
-  };
+  }
 
   // Extension Sync specific fields
   const sourceFields = [
     {
-      name: "extensionSyncDataset",
-      label: "Extension Sync Dataset",
-      type: "autoComplete",
+      name: 'extensionSyncDataset',
+      label: 'Extension Sync Dataset',
+      type: 'autoComplete',
       required: true,
-      placeholder: "Select a Property",
+      placeholder: 'Select a Property',
       options: Object.keys(extensionDataMapping).map((key) => ({
         value: key,
         label: getCippTranslation(key),
@@ -63,140 +66,143 @@ const CippCustomDataMappingForm = ({ formControl }) => {
       multiple: false,
       creatable: false,
       condition: {
-        field: "sourceType",
-        compareType: "valueEq",
-        compareValue: "reportingDb",
+        field: 'sourceType',
+        compareType: 'valueEq',
+        compareValue: 'reportingDb',
       },
     },
     {
-      name: "extensionSyncProperty",
-      label: "Source Property",
-      type: "autoComplete",
+      name: 'extensionSyncProperty',
+      label: 'Source Property',
+      type: 'autoComplete',
       required: true,
-      placeholder: "Select a Property",
+      placeholder: 'Select a Property',
       options:
         selectedExtensionSyncDataset?.addedFields?.properties?.length > 0
-          ? selectedExtensionSyncDataset?.addedFields?.properties.map((property) => ({
-              value: property.name,
-              label: getCippTranslation(property.name),
-              addedFields: property,
-            }))
+          ? selectedExtensionSyncDataset?.addedFields?.properties.map(
+              (property) => ({
+                value: property.name,
+                label: getCippTranslation(property.name),
+                addedFields: property,
+              })
+            )
           : [],
       multiple: false,
       creatable: false,
       condition: {
-        field: "extensionSyncDataset",
-        propertyName: "addedFields.type",
-        compareType: "isNot",
-        compareValue: "array",
+        field: 'extensionSyncDataset',
+        propertyName: 'addedFields.type',
+        compareType: 'isNot',
+        compareValue: 'array',
       },
       sortOptions: true,
     },
-  ];
+  ]
 
   // Manual Entry specific fields
   const manualEntryFields = [
     {
-      name: "manualEntryFieldLabel",
-      label: "Field Label",
-      type: "textField",
+      name: 'manualEntryFieldLabel',
+      label: 'Field Label',
+      type: 'textField',
       required: true,
-      placeholder: "Enter field label (e.g., Employee ID, Department)",
+      placeholder: 'Enter field label (e.g., Employee ID, Department)',
       disableVariables: true,
     },
     {
-      name: "directoryObjectType",
-      label: "Directory Object Type",
-      type: "autoComplete",
+      name: 'directoryObjectType',
+      label: 'Directory Object Type',
+      type: 'autoComplete',
       required: true,
-      placeholder: "Select an Object Type",
+      placeholder: 'Select an Object Type',
       options: staticTargetTypes,
       multiple: false,
       creatable: false,
     },
     {
-      name: "customDataAttribute",
-      label: "Attribute",
-      type: "autoComplete",
+      name: 'customDataAttribute',
+      label: 'Attribute',
+      type: 'autoComplete',
       required: true,
-      placeholder: "Select an Attribute",
+      placeholder: 'Select an Attribute',
       api: {
-        url: "/api/ExecCustomData?Action=ListAvailableAttributes",
-        queryKey: "CustomAttributes",
-        dataKey: "Results",
+        url: '/api/ExecCustomData?Action=ListAvailableAttributes',
+        queryKey: 'CustomAttributes',
+        dataKey: 'Results',
         dataFilter: (options) => {
-          if (!selectedDirectoryObjectType?.value) return options;
+          if (!selectedDirectoryObjectType?.value) return options
           return options.filter(
             (option) =>
               option?.addedFields?.targetObject?.toLowerCase() ===
               selectedDirectoryObjectType?.value?.toLowerCase()
-          );
+          )
         },
-        valueField: "name",
-        labelField: "name",
+        valueField: 'name',
+        labelField: 'name',
         showRefresh: true,
         addedField: {
-          type: "type",
-          targetObject: "targetObject",
-          dataType: "dataType",
-          isMultiValued: "isMultiValued",
+          type: 'type',
+          targetObject: 'targetObject',
+          dataType: 'dataType',
+          isMultiValued: 'isMultiValued',
         },
       },
       multiple: false,
       sortOptions: true,
     },
-  ];
+  ]
 
   const destinationFields = [
     {
-      name: "directoryObjectType",
-      label: "Directory Object Type",
-      type: "autoComplete",
+      name: 'directoryObjectType',
+      label: 'Directory Object Type',
+      type: 'autoComplete',
       required: true,
-      placeholder: "Select an Object Type",
+      placeholder: 'Select an Object Type',
       options: staticTargetTypes,
       multiple: false,
       creatable: false,
     },
     {
-      name: "customDataAttribute",
-      label: "Destination Property",
-      type: "autoComplete",
+      name: 'customDataAttribute',
+      label: 'Destination Property',
+      type: 'autoComplete',
       required: true,
-      placeholder: "Select an Attribute",
+      placeholder: 'Select an Attribute',
       api: {
-        url: "/api/ExecCustomData?Action=ListAvailableAttributes",
-        queryKey: "CustomAttributes",
-        dataKey: "Results",
+        url: '/api/ExecCustomData?Action=ListAvailableAttributes',
+        queryKey: 'CustomAttributes',
+        dataKey: 'Results',
         dataFilter: (options) =>
           selectedDirectoryObjectType?.value
             ? options.filter(
                 (option) =>
                   (option?.addedFields?.isMultiValued === false &&
-                    selectedExtensionSyncDataset?.addedFields?.type === "object") ||
+                    selectedExtensionSyncDataset?.addedFields?.type ===
+                      'object') ||
                   (option?.addedFields?.isMultiValued === true &&
-                    selectedExtensionSyncDataset?.addedFields?.type === "array")
+                    selectedExtensionSyncDataset?.addedFields?.type === 'array')
               )
             : options,
-        valueField: "name",
-        labelField: "name",
+        valueField: 'name',
+        labelField: 'name',
         showRefresh: true,
         addedField: {
-          type: "type",
-          targetObject: "targetObject",
-          dataType: "dataType",
-          isMultiValued: "isMultiValued",
+          type: 'type',
+          targetObject: 'targetObject',
+          dataType: 'dataType',
+          isMultiValued: 'isMultiValued',
         },
       },
       multiple: false,
       sortOptions: true,
     },
-  ];
+  ]
 
   return (
     <Grid container spacing={2}>
       <Grid size={{ xl: 8, xs: 12 }}>
-        <Box sx={{ width: "100%" }}>
+        <Box sx={{ width: '100%' }}>
           <Stack spacing={2}>
             <Box>
               <Stack spacing={1}>
@@ -215,11 +221,14 @@ const CippCustomDataMappingForm = ({ formControl }) => {
               <Stack spacing={1}>
                 <Typography variant="h6">Source Type</Typography>
                 <Divider />
-                <CippFormComponent {...sourceTypeField} formControl={formControl} />
+                <CippFormComponent
+                  {...sourceTypeField}
+                  formControl={formControl}
+                />
               </Stack>
             </Box>
 
-            {selectedSourceType?.value === "reportingDb" && (
+            {selectedSourceType?.value === 'reportingDb' && (
               <>
                 <Box>
                   <Stack spacing={1}>
@@ -233,10 +242,17 @@ const CippCustomDataMappingForm = ({ formControl }) => {
                             {...field.condition}
                             formControl={formControl}
                           >
-                            <CippFormComponent {...field} formControl={formControl} />
+                            <CippFormComponent
+                              {...field}
+                              formControl={formControl}
+                            />
                           </CippFormCondition>
                         ) : (
-                          <CippFormComponent key={index} {...field} formControl={formControl} />
+                          <CippFormComponent
+                            key={index}
+                            {...field}
+                            formControl={formControl}
+                          />
                         )}
                       </>
                     ))}
@@ -254,10 +270,17 @@ const CippCustomDataMappingForm = ({ formControl }) => {
                             {...field.condition}
                             formControl={formControl}
                           >
-                            <CippFormComponent {...field} formControl={formControl} />
+                            <CippFormComponent
+                              {...field}
+                              formControl={formControl}
+                            />
                           </CippFormCondition>
                         ) : (
-                          <CippFormComponent key={index} {...field} formControl={formControl} />
+                          <CippFormComponent
+                            key={index}
+                            {...field}
+                            formControl={formControl}
+                          />
                         )}
                       </>
                     ))}
@@ -266,13 +289,19 @@ const CippCustomDataMappingForm = ({ formControl }) => {
               </>
             )}
 
-            {selectedSourceType?.value === "manualEntry" && (
+            {selectedSourceType?.value === 'manualEntry' && (
               <Box>
                 <Stack spacing={1}>
-                  <Typography variant="h6">Manual Entry Configuration</Typography>
+                  <Typography variant="h6">
+                    Manual Entry Configuration
+                  </Typography>
                   <Divider />
                   {manualEntryFields.map((field, index) => (
-                    <CippFormComponent key={index} {...field} formControl={formControl} />
+                    <CippFormComponent
+                      key={index}
+                      {...field}
+                      formControl={formControl}
+                    />
                   ))}
                 </Stack>
               </Box>
@@ -282,71 +311,87 @@ const CippCustomDataMappingForm = ({ formControl }) => {
       </Grid>
       <Grid size={{ xl: 4, xs: 12 }}>
         <Stack spacing={2}>
-          {selectedExtensionSyncDataset && selectedSourceType?.value === "reportingDb" && (
-            <CippPropertyListCard
-              title="Source"
-              propertyItems={[
-                {
-                  label: "Dataset Name",
-                  value: (
-                    <CippCopyToClipBoard text={selectedExtensionSyncDataset?.label} type="chip" />
-                  ),
-                },
-                {
-                  label: "Description",
-                  value: selectedExtensionSyncDataset?.addedFields?.description || "N/A",
-                },
-              ]}
-              variant="outlined"
-            />
-          )}
+          {selectedExtensionSyncDataset &&
+            selectedSourceType?.value === 'reportingDb' && (
+              <CippPropertyListCard
+                title="Source"
+                propertyItems={[
+                  {
+                    label: 'Dataset Name',
+                    value: (
+                      <CippCopyToClipBoard
+                        text={selectedExtensionSyncDataset?.label}
+                        type="chip"
+                      />
+                    ),
+                  },
+                  {
+                    label: 'Description',
+                    value:
+                      selectedExtensionSyncDataset?.addedFields?.description ||
+                      'N/A',
+                  },
+                ]}
+                variant="outlined"
+              />
+            )}
 
-          {selectedSourceType?.value === "manualEntry" && selectedManualEntryFieldLabel && (
-            <CippPropertyListCard
-              title="Configuration"
-              propertyItems={[
-                {
-                  label: "Field Label",
-                  value: selectedManualEntryFieldLabel,
-                },
-                {
-                  label: "Target Object Type",
-                  value: selectedDirectoryObjectType?.label || "Not selected",
-                },
-                {
-                  label: "Source Type",
-                  value: "Manual Entry Form Field",
-                },
-              ]}
-              variant="outlined"
-            />
-          )}
+          {selectedSourceType?.value === 'manualEntry' &&
+            selectedManualEntryFieldLabel && (
+              <CippPropertyListCard
+                title="Configuration"
+                propertyItems={[
+                  {
+                    label: 'Field Label',
+                    value: selectedManualEntryFieldLabel,
+                  },
+                  {
+                    label: 'Target Object Type',
+                    value: selectedDirectoryObjectType?.label || 'Not selected',
+                  },
+                  {
+                    label: 'Source Type',
+                    value: 'Manual Entry Form Field',
+                  },
+                ]}
+                variant="outlined"
+              />
+            )}
 
           {selectedAttribute && (
             <CippPropertyListCard
               title={
-                selectedSourceType?.value === "manualEntry" ? "Selected Attribute" : "Destination"
+                selectedSourceType?.value === 'manualEntry'
+                  ? 'Selected Attribute'
+                  : 'Destination'
               }
               propertyItems={[
                 {
-                  label: "Attribute Name",
-                  value: <CippCopyToClipBoard text={selectedAttribute?.value} type="chip" />,
+                  label: 'Attribute Name',
+                  value: (
+                    <CippCopyToClipBoard
+                      text={selectedAttribute?.value}
+                      type="chip"
+                    />
+                  ),
                 },
                 {
-                  label: "Custom Data Type",
+                  label: 'Custom Data Type',
                   value: selectedAttribute?.addedFields?.type,
                 },
                 {
-                  label: "Target Object",
+                  label: 'Target Object',
                   value: selectedAttribute?.addedFields?.targetObject,
                 },
                 {
-                  label: "Data Type",
+                  label: 'Data Type',
                   value: selectedAttribute?.addedFields?.dataType,
                 },
                 {
-                  label: "Is Multi-Valued",
-                  value: selectedAttribute?.addedFields?.isMultiValued ? "Yes" : "No",
+                  label: 'Is Multi-Valued',
+                  value: selectedAttribute?.addedFields?.isMultiValued
+                    ? 'Yes'
+                    : 'No',
                 },
               ]}
               variant="outlined"
@@ -355,7 +400,7 @@ const CippCustomDataMappingForm = ({ formControl }) => {
         </Stack>
       </Grid>
     </Grid>
-  );
-};
+  )
+}
 
-export default CippCustomDataMappingForm;
+export default CippCustomDataMappingForm

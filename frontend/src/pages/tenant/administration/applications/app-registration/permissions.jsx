@@ -39,7 +39,8 @@ const Page = () => {
       Endpoint: applicationClientId
         ? `applications(appId='${applicationClientId}')`
         : 'applications',
-      tenantFilter: router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
+      tenantFilter:
+        router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
     },
     queryKey: `Application-appId-${applicationClientId}-permissions`,
     waiting: waiting,
@@ -58,18 +59,25 @@ const Page = () => {
 
   const title = !appRequest.isSuccess
     ? 'Loading...'
-    : appData?.displayName || appData?.appId || applicationClientId || 'Application registration'
+    : appData?.displayName ||
+      appData?.appId ||
+      applicationClientId ||
+      'Application registration'
 
   const subtitle =
     appRequest.isSuccess && appData
       ? [
           {
             icon: <Badge />,
-            text: <CippCopyToClipBoard type="chip" text={appData?.appId || 'N/A'} />,
+            text: (
+              <CippCopyToClipBoard type="chip" text={appData?.appId || 'N/A'} />
+            ),
           },
           {
             icon: <Fingerprint />,
-            text: <CippCopyToClipBoard type="chip" text={appData?.id || 'N/A'} />,
+            text: (
+              <CippCopyToClipBoard type="chip" text={appData?.id || 'N/A'} />
+            ),
           },
           {
             icon: <CalendarIcon />,
@@ -106,7 +114,8 @@ const Page = () => {
     if (!appData) {
       return undefined
     }
-    const tenant = router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+    const tenant =
+      router.query.tenantFilter ?? userSettingsDefaults.currentTenant
     return { ...appData, Tenant: tenant }
   }, [appData, router.query.tenantFilter, userSettingsDefaults.currentTenant])
 
@@ -118,7 +127,9 @@ const Page = () => {
         <CippAppRegistrationSwitcher
           title={title}
           currentAppId={applicationClientId}
-          tenantFilter={router.query.tenantFilter ?? userSettingsDefaults.currentTenant}
+          tenantFilter={
+            router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+          }
         />
       }
       subtitle={subtitle}
@@ -137,7 +148,9 @@ const Page = () => {
       {appRequest.isSuccess && appData && (
         <Box sx={{ flexGrow: 1, py: 4 }}>
           <CippHead title={`${title} — API permissions`} />
-          <CippAppRegistrationPermissions requiredResourceAccess={appData.requiredResourceAccess} />
+          <CippAppRegistrationPermissions
+            requiredResourceAccess={appData.requiredResourceAccess}
+          />
         </Box>
       )}
     </HeaderedTabbedLayout>

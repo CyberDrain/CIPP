@@ -1,34 +1,35 @@
-import "leaflet/dist/leaflet.css";
-import "react-leaflet-markercluster/styles";
-import { useEffect, useRef } from "react";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import L from "leaflet";
-import MarkerClusterGroup from "react-leaflet-markercluster";
+import 'leaflet/dist/leaflet.css'
+import 'react-leaflet-markercluster/styles'
+import { useEffect, useRef } from 'react'
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
+import L from 'leaflet'
+import MarkerClusterGroup from 'react-leaflet-markercluster'
 
 // Fix leaflet icon paths for Turbopack/Next.js
-delete L.Icon.Default.prototype._getIconUrl;
+delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
+  iconRetinaUrl:
+    'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+})
 
 export default function CippMap({
   markers = [],
   zoom = 11,
   // maxWidth instead of a fixed width: a hard 600px canvas scrolled the page sideways in any
   // narrower cell (the View User sign-in map renders in an xs: 12 grid item on a phone).
-  mapSx = { height: "400px", width: "100%", maxWidth: "600px" },
+  mapSx = { height: '400px', width: '100%', maxWidth: '600px' },
   ...props
 }) {
-  const mapRef = useRef();
+  const mapRef = useRef()
 
   useEffect(() => {
     if (mapRef.current && markers.length > 1) {
-      const bounds = markers.map((marker) => marker.position);
-      mapRef.current.fitBounds(bounds, { padding: [25, 25] });
+      const bounds = markers.map((marker) => marker.position)
+      mapRef.current.fitBounds(bounds, { padding: [25, 25] })
     }
-  }, [markers]);
+  }, [markers])
 
   return (
     <MapContainer
@@ -51,5 +52,5 @@ export default function CippMap({
         ))}
       </MarkerClusterGroup>
     </MapContainer>
-  );
+  )
 }

@@ -4,7 +4,11 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, settingsWith } from '../../test-utils'
 import { CippAddUserDrawer } from '../../../src/components/CippComponents/CippAddUserDrawer'
-import { ApiGetCall, ApiPostCall, ApiGetCallWithPagination } from '../../../src/api/ApiCall'
+import {
+  ApiGetCall,
+  ApiPostCall,
+  ApiGetCallWithPagination,
+} from '../../../src/api/ApiCall'
 
 vi.mock('../../../src/api/ApiCall', () => ({
   ApiGetCall: vi.fn(),
@@ -19,10 +23,15 @@ vi.mock('../../../src/components/CippComponents/CippFormUserSelector', () => ({
   CippFormUserSelector: () => <div data-testid="CippFormUserSelector" />,
   default: () => <div data-testid="CippFormUserSelector" />,
 }))
-vi.mock('../../../src/components/CippComponents/CippFormLicenseSelector', () => ({
-  CippFormLicenseSelector: () => <div data-testid="CippFormLicenseSelector" />,
-  default: () => <div data-testid="CippFormLicenseSelector" />,
-}))
+vi.mock(
+  '../../../src/components/CippComponents/CippFormLicenseSelector',
+  () => ({
+    CippFormLicenseSelector: () => (
+      <div data-testid="CippFormLicenseSelector" />
+    ),
+    default: () => <div data-testid="CippFormLicenseSelector" />,
+  })
+)
 vi.mock('../../../src/components/CippComponents/CippApiResults', () => ({
   CippApiResults: () => null,
 }))
@@ -47,8 +56,12 @@ vi.mock('../../../src/components/CippComponents/CippOffCanvas', () => ({
       <div data-testid="CippOffCanvas">
         {/* MUI's Drawer invokes onClose with a reason for backdrop clicks and Escape;
             these stand in for those dismissal paths (the X button passes no reason) */}
-        <button onClick={(e) => onClose(e, 'backdropClick')}>backdrop-dismiss</button>
-        <button onClick={(e) => onClose(e, 'escapeKeyDown')}>escape-dismiss</button>
+        <button onClick={(e) => onClose(e, 'backdropClick')}>
+          backdrop-dismiss
+        </button>
+        <button onClick={(e) => onClose(e, 'escapeKeyDown')}>
+          escape-dismiss
+        </button>
         <button onClick={(e) => onClose(e)}>x-dismiss</button>
         {children}
         {footer}
@@ -56,8 +69,20 @@ vi.mock('../../../src/components/CippComponents/CippOffCanvas', () => ({
     ) : null,
 }))
 
-const idleGet = { isSuccess: false, isFetching: false, isError: false, data: undefined, refetch: vi.fn() }
-const okGet = (data) => ({ isSuccess: true, isFetching: false, isError: false, data, refetch: vi.fn() })
+const idleGet = {
+  isSuccess: false,
+  isFetching: false,
+  isError: false,
+  data: undefined,
+  refetch: vi.fn(),
+}
+const okGet = (data) => ({
+  isSuccess: true,
+  isFetching: false,
+  isError: false,
+  data,
+  refetch: vi.fn(),
+})
 
 // built once: CippAutoComplete's option mapping keys on data identity, a fresh literal per call never settles
 const userDefaults = okGet([])
@@ -73,8 +98,18 @@ const tenantDomains = {
     pages: [
       {
         Results: [
-          { id: 'testdomain.com', isDefault: true, isInitial: false, isVerified: true },
-          { id: 'other.com', isDefault: false, isInitial: false, isVerified: true },
+          {
+            id: 'testdomain.com',
+            isDefault: true,
+            isInitial: false,
+            isVerified: true,
+          },
+          {
+            id: 'other.com',
+            isDefault: false,
+            isInitial: false,
+            isVerified: true,
+          },
         ],
       },
     ],
@@ -136,10 +171,14 @@ const getDomainInput = () =>
   screen.getByLabelText(/Primary Domain name/i, { selector: 'input' })
 
 const fillRequiredFields = async (user, { displayName, username }) => {
-  const displayNameInput = screen.getByLabelText(/Display Name/i, { selector: 'input' })
+  const displayNameInput = screen.getByLabelText(/Display Name/i, {
+    selector: 'input',
+  })
   await user.clear(displayNameInput)
   await user.type(displayNameInput, displayName)
-  const usernameInput = screen.getByLabelText(/^Username/i, { selector: 'input' })
+  const usernameInput = screen.getByLabelText(/^Username/i, {
+    selector: 'input',
+  })
   await user.clear(usernameInput)
   await user.type(usernameInput, username)
 }
@@ -155,7 +194,9 @@ describe('CippAddUserDrawer - create another user without a page refresh (issue 
   it('re-enables the Create button for a second user after the first succeeds', async () => {
     const user = userEvent.setup()
     renderWithProviders(<Harness />, {
-      settings: settingsWith({ usageLocation: { value: 'US', label: 'United States' } }),
+      settings: settingsWith({
+        usageLocation: { value: 'US', label: 'United States' },
+      }),
     })
 
     await user.click(screen.getByRole('button', { name: 'Add User' }))
@@ -164,7 +205,10 @@ describe('CippAddUserDrawer - create another user without a page refresh (issue 
     await waitFor(() => {
       expect(getDomainInput()).toHaveValue('testdomain.com')
     })
-    await fillRequiredFields(user, { displayName: 'First User', username: 'first.user' })
+    await fillRequiredFields(user, {
+      displayName: 'First User',
+      username: 'first.user',
+    })
 
     const createButton = screen.getByRole('button', { name: 'Create User' })
     await waitFor(() => {
@@ -183,7 +227,9 @@ describe('CippAddUserDrawer - create another user without a page refresh (issue 
     await user.click(screen.getByRole('button', { name: 'flip-success' }))
 
     // The drawer resets the form for the next user
-    const anotherButton = await screen.findByRole('button', { name: 'Create Another User' })
+    const anotherButton = await screen.findByRole('button', {
+      name: 'Create Another User',
+    })
 
     // The remounted domain selector must auto-pick the default domain again; without it the
     // required primDomain stays silently empty and the button never re-enables (issue #309)
@@ -192,7 +238,10 @@ describe('CippAddUserDrawer - create another user without a page refresh (issue 
     })
 
     // Second user: complete all required fields again, exactly as the issue describes
-    await fillRequiredFields(user, { displayName: 'Second User', username: 'second.user' })
+    await fillRequiredFields(user, {
+      displayName: 'Second User',
+      username: 'second.user',
+    })
 
     await waitFor(() => {
       expect(anotherButton).toBeEnabled()
@@ -219,22 +268,27 @@ describe('CippAddUserDrawer - backdrop click must not wipe typed input (issue #3
   it('ignores backdrop and Escape dismissals; the X and Close buttons still close and reset', async () => {
     const user = userEvent.setup()
     renderWithProviders(<Harness />, {
-      settings: settingsWith({ usageLocation: { value: 'US', label: 'United States' } }),
+      settings: settingsWith({
+        usageLocation: { value: 'US', label: 'United States' },
+      }),
     })
 
     await user.click(screen.getByRole('button', { name: 'Add User' }))
     await waitFor(() => {
       expect(getDomainInput()).toHaveValue('testdomain.com')
     })
-    await fillRequiredFields(user, { displayName: 'Half Finished', username: 'half.finished' })
+    await fillRequiredFields(user, {
+      displayName: 'Half Finished',
+      username: 'half.finished',
+    })
 
     // Backdrop click and Escape leave the drawer open with the input intact
     await user.click(screen.getByRole('button', { name: 'backdrop-dismiss' }))
     await user.click(screen.getByRole('button', { name: 'escape-dismiss' }))
     expect(screen.getByTestId('CippOffCanvas')).toBeInTheDocument()
-    expect(screen.getByLabelText(/Display Name/i, { selector: 'input' })).toHaveValue(
-      'Half Finished'
-    )
+    expect(
+      screen.getByLabelText(/Display Name/i, { selector: 'input' })
+    ).toHaveValue('Half Finished')
 
     // The header X (no reason) closes the drawer
     await user.click(screen.getByRole('button', { name: 'x-dismiss' }))
@@ -245,7 +299,9 @@ describe('CippAddUserDrawer - backdrop click must not wipe typed input (issue #3
     await waitFor(() => {
       expect(getDomainInput()).toHaveValue('testdomain.com')
     })
-    expect(screen.getByLabelText(/Display Name/i, { selector: 'input' })).toHaveValue('')
+    expect(
+      screen.getByLabelText(/Display Name/i, { selector: 'input' })
+    ).toHaveValue('')
 
     // The footer Close button closes too
     await user.click(screen.getByRole('button', { name: 'Close' }))

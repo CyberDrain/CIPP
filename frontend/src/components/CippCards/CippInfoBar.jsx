@@ -1,6 +1,14 @@
 import React, { useState, Fragment } from 'react'
 import { useRouter } from 'next/router'
-import { Box, Card, Stack, SvgIcon, Typography, Skeleton, Tooltip } from '@mui/material'
+import {
+  Box,
+  Card,
+  Stack,
+  SvgIcon,
+  Typography,
+  Skeleton,
+  Tooltip,
+} from '@mui/material'
 import { Grid } from '@mui/system'
 import { CippOffCanvas } from '../CippComponents/CippOffCanvas'
 import { CippPropertyListCard } from './CippPropertyListCard'

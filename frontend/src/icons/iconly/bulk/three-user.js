@@ -5,7 +5,8 @@ const ThreeUser = (props) => (
     viewBox="0 0 24 24"
     width={24}
     xmlns="http://www.w3.org/2000/svg"
-    {...props}>
+    {...props}
+  >
     <path
       d="M11.9491 14.5399C8.49909 14.5399 5.58813 15.1037 5.58813 17.2794C5.58813 19.4561 8.51789 20 11.9491 20C15.3991 20 18.31 19.4362 18.31 17.2605C18.31 15.0839 15.3803 14.5399 11.9491 14.5399Z"
       fill="currentColor"
@@ -34,6 +35,6 @@ const ThreeUser = (props) => (
       fill="currentColor"
     />
   </svg>
-);
+)
 
-export default ThreeUser;
+export default ThreeUser

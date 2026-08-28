@@ -38,7 +38,9 @@ const extractAllResults = (data, extraIgnoreKeys = []) => {
 
   const getSeverity = (text) => {
     if (typeof text !== 'string') return 'success'
-    return /error|failed|exception|not found|invalid_grant/i.test(text) ? 'error' : 'success'
+    return /error|failed|exception|not found|invalid_grant/i.test(text)
+      ? 'error'
+      : 'success'
   }
 
   const processResultItem = (item) => {
@@ -54,7 +56,11 @@ const extractAllResults = (data, extraIgnoreKeys = []) => {
       const text = item.resultText || ''
       const copyField = item.copyField || ''
       const severity =
-        typeof item.state === 'string' ? item.state : getSeverity(item) ? 'error' : 'success'
+        typeof item.state === 'string'
+          ? item.state
+          : getSeverity(item)
+            ? 'error'
+            : 'success'
       const details = item.details || null
 
       if (text) {
@@ -89,7 +95,12 @@ const extractAllResults = (data, extraIgnoreKeys = []) => {
         results.push(processed)
       }
     } else {
-      const ignoreKeys = ['metadata', 'Metadata', 'severity', ...extraIgnoreKeys]
+      const ignoreKeys = [
+        'metadata',
+        'Metadata',
+        'severity',
+        ...extraIgnoreKeys,
+      ]
 
       if (typeof obj === 'object') {
         Object.keys(obj).forEach((key) => {
@@ -132,7 +143,9 @@ const extractAllResults = (data, extraIgnoreKeys = []) => {
 }
 
 const capitalize = (text) =>
-  typeof text === 'string' && text.length > 0 ? text.charAt(0).toUpperCase() + text.slice(1) : text
+  typeof text === 'string' && text.length > 0
+    ? text.charAt(0).toUpperCase() + text.slice(1)
+    : text
 
 const JOB_STATUS_CHIP_COLORS = {
   queued: 'default',
@@ -143,7 +156,8 @@ const JOB_STATUS_CHIP_COLORS = {
 
 // Status icon for a single job step.
 const JobStepIcon = ({ status }) => {
-  if (status === 'succeeded') return <CheckCircle fontSize="small" color="success" />
+  if (status === 'succeeded')
+    return <CheckCircle fontSize="small" color="success" />
   if (status === 'failed') return <ErrorIcon fontSize="small" color="error" />
   if (status === 'running') return <CircularProgress size={16} />
   return <RadioButtonUnchecked fontSize="small" color="disabled" />
@@ -155,7 +169,12 @@ const CippJobProgress = ({ rows }) => (
   <Stack spacing={2}>
     {rows.map((row, rowIndex) => (
       <Box key={row.Tenant ?? row.Name ?? rowIndex}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mb: 1 }}
+        >
           <Typography variant="subtitle2">{row.Tenant ?? row.Name}</Typography>
           <Chip
             size="small"
@@ -166,7 +185,12 @@ const CippJobProgress = ({ rows }) => (
         </Stack>
         <Stack spacing={1}>
           {(row.Steps || []).map((step, index) => (
-            <Stack direction="row" spacing={1} alignItems="flex-start" key={index}>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="flex-start"
+              key={index}
+            >
               <Box sx={{ pt: 0.25 }}>
                 <JobStepIcon status={step.Status} />
               </Box>
@@ -185,7 +209,12 @@ const CippJobProgress = ({ rows }) => (
 )
 
 export const CippApiResults = (props) => {
-  const { apiObject, errorsOnly = false, alertSx = {}, jobProgress = null } = props
+  const {
+    apiObject,
+    errorsOnly = false,
+    alertSx = {},
+    jobProgress = null,
+  } = props
 
   const [errorVisible, setErrorVisible] = useState(false)
   const [fetchingVisible, setFetchingVisible] = useState(false)
@@ -213,7 +242,13 @@ export const CippApiResults = (props) => {
       setJobId(id)
       setJobPollActive(true)
     }
-  }, [jobProgress, jobIdField, apiObject.isPending, apiObject.isSuccess, apiObject.data])
+  }, [
+    jobProgress,
+    jobIdField,
+    apiObject.isPending,
+    apiObject.isSuccess,
+    apiObject.data,
+  ])
 
   const jobStatus = ApiGetCall({
     url: jobProgress && jobId ? jobProgress.url(jobId) : null,
@@ -227,7 +262,9 @@ export const CippApiResults = (props) => {
     if (
       jobPollActive &&
       jobRows.length > 0 &&
-      jobRows.every((row) => row.Status === 'succeeded' || row.Status === 'failed')
+      jobRows.every(
+        (row) => row.Status === 'succeeded' || row.Status === 'failed'
+      )
     ) {
       setJobPollActive(false)
     }
@@ -241,7 +278,11 @@ export const CippApiResults = (props) => {
     if (dataData !== undefined && dataData !== null) {
       if (dataData?.Results) {
         return dataData.Results
-      } else if (typeof dataData === 'object' && dataData !== null && !('metadata' in dataData)) {
+      } else if (
+        typeof dataData === 'object' &&
+        dataData !== null &&
+        !('metadata' in dataData)
+      ) {
         return dataData
       } else if (typeof dataData === 'string') {
         return dataData
@@ -251,7 +292,11 @@ export const CippApiResults = (props) => {
     }
     if (data?.Results) {
       return data.Results
-    } else if (typeof data === 'object' && data !== null && !('metadata' in data)) {
+    } else if (
+      typeof data === 'object' &&
+      data !== null &&
+      !('metadata' in data)
+    ) {
       return data
     } else if (typeof data === 'string') {
       return data
@@ -261,7 +306,9 @@ export const CippApiResults = (props) => {
   }, [apiObject])
 
   const allResults = useMemo(() => {
-    const sourceItems = Array.isArray(correctResultObj) ? correctResultObj : [correctResultObj]
+    const sourceItems = Array.isArray(correctResultObj)
+      ? correctResultObj
+      : [correctResultObj]
     // Don't render the job id (e.g. DeploymentId) as a result alert of its own.
     const jobIgnoreKeys = jobProgress ? [jobIdField] : []
     const apiResults = sourceItems.flatMap((item, groupIndex) =>
@@ -300,17 +347,28 @@ export const CippApiResults = (props) => {
     }
 
     return apiResults
-  }, [correctResultObj, apiObject.isError, apiObject.error, jobProgress, jobIdField])
+  }, [
+    correctResultObj,
+    apiObject.isError,
+    apiObject.error,
+    jobProgress,
+    jobIdField,
+  ])
 
   useEffect(() => {
     setErrorVisible(!!apiObject.isError)
 
-    if (apiObject.isFetching || (apiObject.isIdle === false && apiObject.isPending === true)) {
+    if (
+      apiObject.isFetching ||
+      (apiObject.isIdle === false && apiObject.isPending === true)
+    ) {
       setFetchingVisible(true)
     } else {
       setFetchingVisible(false)
     }
-    const resultsToShow = errorsOnly ? allResults.filter((r) => r.severity === 'error') : allResults
+    const resultsToShow = errorsOnly
+      ? allResults.filter((r) => r.severity === 'error')
+      : allResults
 
     if (resultsToShow.length > 0) {
       setFinalResults(
@@ -336,7 +394,9 @@ export const CippApiResults = (props) => {
   ])
 
   const handleCloseResult = useCallback((id) => {
-    setFinalResults((prev) => prev.map((r) => (r.id === id ? { ...r, visible: false } : r)))
+    setFinalResults((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, visible: false } : r))
+    )
   }, [])
 
   const toggleDetails = useCallback((id) => {
@@ -365,10 +425,14 @@ export const CippApiResults = (props) => {
   }, [finalResults, apiObject])
 
   const hasVisibleResults = finalResults.some((r) => r.visible)
-  const actionGroups = [...new Set(finalResults.map((r) => r.groupIndex ?? r.id))]
+  const actionGroups = [
+    ...new Set(finalResults.map((r) => r.groupIndex ?? r.id)),
+  ]
   const actionCount = actionGroups.length
   const failedActionCount = actionGroups.filter((group) =>
-    finalResults.some((r) => (r.groupIndex ?? r.id) === group && r.severity === 'error')
+    finalResults.some(
+      (r) => (r.groupIndex ?? r.id) === group && r.severity === 'error'
+    )
   ).length
   const successActionCount = actionCount - failedActionCount
   return (
@@ -403,14 +467,20 @@ export const CippApiResults = (props) => {
           sx={alertSx}
           variant="outlined"
           severity={
-            failedActionCount === 0 ? 'success' : successActionCount === 0 ? 'error' : 'warning'
+            failedActionCount === 0
+              ? 'success'
+              : successActionCount === 0
+                ? 'error'
+                : 'warning'
           }
         >
           <Typography variant="body2">
             {failedActionCount === 0
               ? `All ${actionCount} actions completed successfully`
               : `${failedActionCount} of ${actionCount} actions failed${
-                  successActionCount > 0 ? `, ${successActionCount} succeeded` : ''
+                  successActionCount > 0
+                    ? `, ${successActionCount} succeeded`
+                    : ''
                 }`}
           </Typography>
         </Alert>
@@ -478,13 +548,21 @@ export const CippApiResults = (props) => {
 
                       {resultObj.details && (
                         <Tooltip
-                          title={showDetails[resultObj.id] ? 'Hide Details' : 'Show Details'}
+                          title={
+                            showDetails[resultObj.id]
+                              ? 'Hide Details'
+                              : 'Show Details'
+                          }
                         >
                           <IconButton
                             size="small"
                             color="inherit"
                             onClick={() => toggleDetails(resultObj.id)}
-                            aria-label={showDetails[resultObj.id] ? 'Hide Details' : 'Show Details'}
+                            aria-label={
+                              showDetails[resultObj.id]
+                                ? 'Hide Details'
+                                : 'Show Details'
+                            }
                           >
                             {showDetails[resultObj.id] ? (
                               <ExpandLess fontSize="inherit" />
@@ -517,7 +595,11 @@ export const CippApiResults = (props) => {
                                 ? resultObj.details
                                 : JSON.stringify(resultObj.details, null, 2)
                             }
-                            language={typeof resultObj.details === 'object' ? 'json' : 'text'}
+                            language={
+                              typeof resultObj.details === 'object'
+                                ? 'json'
+                                : 'text'
+                            }
                             showLineNumbers={false}
                             type="syntax"
                             readOnly={true}
@@ -554,7 +636,9 @@ export const CippApiResults = (props) => {
       {jobProgress && jobId && (
         <Box>
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-            <Typography variant="h6">{jobProgress.title ?? 'Progress'}</Typography>
+            <Typography variant="h6">
+              {jobProgress.title ?? 'Progress'}
+            </Typography>
             {jobPollActive && <CircularProgress size={16} />}
           </Stack>
           {jobRows.length === 0 ? (

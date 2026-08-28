@@ -28,7 +28,8 @@ const parseSitConfig = (xml) => {
 
     const regexMap = {}
     byLocal('Regex').forEach((n) => {
-      if (n.getAttribute('id')) regexMap[n.getAttribute('id')] = (n.textContent || '').trim()
+      if (n.getAttribute('id'))
+        regexMap[n.getAttribute('id')] = (n.textContent || '').trim()
     })
     const keywordMap = {}
     byLocal('Keyword').forEach((n) => {
@@ -45,8 +46,12 @@ const parseSitConfig = (xml) => {
       if (!idRef) return
       const kids = Array.from(res.children)
       resMap[idRef] = {
-        name: kids.find((c) => c.localName === 'Name')?.textContent?.trim() || '',
-        description: kids.find((c) => c.localName === 'Description')?.textContent?.trim() || '',
+        name:
+          kids.find((c) => c.localName === 'Name')?.textContent?.trim() || '',
+        description:
+          kids
+            .find((c) => c.localName === 'Description')
+            ?.textContent?.trim() || '',
       }
     })
 
@@ -57,14 +62,17 @@ const parseSitConfig = (xml) => {
         const eid = ent.getAttribute('id')
         const name = resMap[eid]?.name || eid
         const patterns = Array.from(ent.getElementsByTagName('*'))
-          .filter((p) => p.localName === 'Pattern' || p.localName === 'Evidence')
+          .filter(
+            (p) => p.localName === 'Pattern' || p.localName === 'Evidence'
+          )
           .map((p) => {
             const matches = Array.from(p.getElementsByTagName('*'))
               .filter((m) => m.getAttribute('idRef'))
               .map((m) => {
                 const ref = m.getAttribute('idRef')
                 if (regexMap[ref] !== undefined) return `regex:${regexMap[ref]}`
-                if (keywordMap[ref] !== undefined) return `keyword:${keywordMap[ref]}`
+                if (keywordMap[ref] !== undefined)
+                  return `keyword:${keywordMap[ref]}`
                 return `fingerprint:${ref}`
               })
               .sort()
@@ -72,8 +80,13 @@ const parseSitConfig = (xml) => {
           })
         config[name] = {
           confidence:
-            ent.getAttribute('recommendedConfidence') || ent.getAttribute('thresholdConfidenceLevel') || '',
-          proximity: ent.getAttribute('patternsProximity') || ent.getAttribute('evidencesProximity') || '',
+            ent.getAttribute('recommendedConfidence') ||
+            ent.getAttribute('thresholdConfidenceLevel') ||
+            '',
+          proximity:
+            ent.getAttribute('patternsProximity') ||
+            ent.getAttribute('evidencesProximity') ||
+            '',
           description: resMap[eid]?.description || '',
           patterns,
         }
@@ -109,7 +122,7 @@ export const CippSitTemplateDetails = ({ row }) => {
               Locale: row?.Locale,
             },
             null,
-            2,
+            2
           )}
           language="json"
           type="syntax"
@@ -119,14 +132,26 @@ export const CippSitTemplateDetails = ({ row }) => {
       {isAdvanced && config && Object.keys(config).length > 0 && (
         <>
           <Typography variant="subtitle2">Detection configuration</Typography>
-          <CippCodeBlock code={JSON.stringify(config, null, 2)} language="json" type="syntax" />
+          <CippCodeBlock
+            code={JSON.stringify(config, null, 2)}
+            language="json"
+            type="syntax"
+          />
         </>
       )}
 
       {isAdvanced && xml && (
         <>
-          <Typography variant="subtitle2">Rule pack XML (decoded from base64)</Typography>
-          <CippCodeBlock code={xml} language="xml" type="editor" readOnly editorHeight="450px" />
+          <Typography variant="subtitle2">
+            Rule pack XML (decoded from base64)
+          </Typography>
+          <CippCodeBlock
+            code={xml}
+            language="xml"
+            type="editor"
+            readOnly
+            editorHeight="450px"
+          />
         </>
       )}
 

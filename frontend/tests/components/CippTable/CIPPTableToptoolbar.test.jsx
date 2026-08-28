@@ -8,8 +8,15 @@ import { CippDataTable } from '../../../src/components/CippTable/CippDataTable'
 // save-preset invalidation refetches presetList in the background (data swap, no
 // isSuccess transition), the Filters dropdown must rebuild from the refetched list
 
-vi.mock('../../../src/api/ApiCall', async () => (await import('../../mocks/api-call')).apiCallMock())
-import { api, getResult, paginatedResult, postResult } from '../../mocks/api-call'
+vi.mock('../../../src/api/ApiCall', async () =>
+  (await import('../../mocks/api-call')).apiCallMock()
+)
+import {
+  api,
+  getResult,
+  paginatedResult,
+  postResult,
+} from '../../mocks/api-call'
 
 const refreshRows = [
   { displayName: 'Alice Smith', mail: 'alice@contoso.com' },
@@ -19,12 +26,24 @@ const refreshRows = [
 const rows = [
   { displayName: 'Alice Smith', mail: 'alice@contoso.com', department: 'IT' },
   { displayName: 'Bob Johnson', mail: 'bob@contoso.com', department: 'Sales' },
-  { displayName: 'Carol Williams', mail: 'carol@contoso.com', department: 'IT' },
+  {
+    displayName: 'Carol Williams',
+    mail: 'carol@contoso.com',
+    department: 'IT',
+  },
 ]
 
 const tablePresets = [
-  { filterName: 'IT only', value: [{ id: 'department', value: 'IT' }], type: 'column' },
-  { filterName: 'Sales only', value: [{ id: 'department', value: 'Sales' }], type: 'column' },
+  {
+    filterName: 'IT only',
+    value: [{ id: 'department', value: 'IT' }],
+    type: 'column',
+  },
+  {
+    filterName: 'Sales only',
+    value: [{ id: 'department', value: 'Sales' }],
+    type: 'column',
+  },
 ]
 
 // stable refs per phase, fresh literals per call loop the data-sync effects
@@ -32,7 +51,11 @@ const emptyPresets = getResult({ data: { Results: [] } })
 const graphPresetResult = getResult({
   data: {
     Results: [
-      { id: 'gp-1', name: 'Widget View', params: { endpoint: 'testWidgets', $filter: "state eq 'on'" } },
+      {
+        id: 'gp-1',
+        name: 'Widget View',
+        params: { endpoint: 'testWidgets', $filter: "state eq 'on'" },
+      },
     ],
   },
 })
@@ -41,9 +64,11 @@ const tableData = paginatedResult(refreshRows)
 const slotsTableData = paginatedResult(rows)
 
 let presetsResult = emptyPresets
-api.get = (opts) => (opts.url === '/api/ListGraphExplorerPresets' ? presetsResult : emptyGetResult)
+api.get = (opts) =>
+  opts.url === '/api/ListGraphExplorerPresets' ? presetsResult : emptyGetResult
 // route by queryKey: SlotsTest* gets the 3-row fixture (incl. graph-preset key swap), preset-refetch tests keep 2-row
-api.paginated = (opts) => (opts.queryKey?.startsWith('SlotsTest') ? slotsTableData : tableData)
+api.paginated = (opts) =>
+  opts.queryKey?.startsWith('SlotsTest') ? slotsTableData : tableData
 api.post = postResult()
 
 // swaps presetsResult with a fresh getResult() call, mimics the identity-change a background refetch produces
@@ -53,7 +78,11 @@ function swapGraphPresets(overrides) {
 
 const graphTable = (
   <CippDataTable
-    api={{ url: '/api/ListGraphRequest', dataKey: 'Results', data: { Endpoint: 'testWidgets' } }}
+    api={{
+      url: '/api/ListGraphRequest',
+      dataKey: 'Results',
+      data: { Endpoint: 'testWidgets' },
+    }}
     queryKey="PresetRefreshTest"
     simpleColumns={['displayName', 'mail']}
     filters={[]}
@@ -67,7 +96,11 @@ function renderGraphTable(extraProps = {}, options) {
   presetsResult = graphPresetResult
   return renderWithProviders(
     <CippDataTable
-      api={{ url: '/api/ListGraphRequest', dataKey: 'Results', data: { Endpoint: 'testWidgets' } }}
+      api={{
+        url: '/api/ListGraphRequest',
+        dataKey: 'Results',
+        data: { Endpoint: 'testWidgets' },
+      }}
       queryKey="SlotsTest"
       simpleColumns={['displayName', 'mail', 'department']}
       filters={tablePresets}
@@ -88,14 +121,24 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
     // preset not saved yet, menu opens without it
     await user.click(screen.getByRole('button', { name: 'Filters' }))
     await screen.findByRole('menuitem', { name: 'Reset all filters' })
-    expect(screen.queryByRole('menuitem', { name: 'My Saved Preset' })).toBeNull()
+    expect(
+      screen.queryByRole('menuitem', { name: 'My Saved Preset' })
+    ).toBeNull()
     await user.keyboard('{Escape}')
 
     // save-preset invalidation refetches: same isSuccess, new data identity.
     // reopening the menu re-renders the toolbar, which is all a background
     // refetch does, and matches the real repro (reopening doesn't help)
     swapGraphPresets({
-      data: { Results: [{ id: 'p1', name: 'My Saved Preset', params: { endpoint: 'testWidgets' } }] },
+      data: {
+        Results: [
+          {
+            id: 'p1',
+            name: 'My Saved Preset',
+            params: { endpoint: 'testWidgets' },
+          },
+        ],
+      },
     })
     await user.click(screen.getByRole('button', { name: 'Filters' }))
     await screen.findByRole('menuitem', { name: 'My Saved Preset' })
@@ -107,7 +150,9 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
     await screen.findByText('1-3 of 3')
 
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Widget View' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Widget View' })
+    )
     await user.click(screen.getByRole('button', { name: /Filters/ }))
     await user.click(await screen.findByRole('menuitem', { name: 'IT only' }))
 
@@ -131,7 +176,9 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
     })
 
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Widget View' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Widget View' })
+    )
     // same mocked rows come back under the swapped queryKey, column filter must survive
     await waitFor(() => {
       expect(screen.getByText('1-2 of 2')).toBeInTheDocument()
@@ -144,7 +191,9 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
     await screen.findByText('1-3 of 3')
 
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Widget View' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Widget View' })
+    )
     await user.click(screen.getByRole('button', { name: /Filters/ }))
     await user.click(await screen.findByRole('menuitem', { name: 'IT only' }))
     await waitFor(() => {
@@ -153,7 +202,9 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
 
     // second click on the active graph preset = toggle off, column filter survives on base data
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Widget View' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Widget View' })
+    )
     await user.click(screen.getByRole('button', { name: /Filters/ }))
     await waitFor(() => {
       // scope to the live accessible menu, same reason as the dual-slot pin above
@@ -199,11 +250,15 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
     await screen.findByText('1-3 of 3')
 
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Widget View' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Widget View' })
+    )
     await user.click(screen.getByRole('button', { name: /Filters/ }))
     await user.click(await screen.findByRole('menuitem', { name: 'IT only' }))
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Filters (2)' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: 'Filters (2)' })
+      ).toBeInTheDocument()
     })
   }, 30000)
 
@@ -214,7 +269,9 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
 
     await user.type(screen.getByPlaceholderText('Search...'), 'alice')
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Reset all filters' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Reset all filters' })
+    )
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Search...')).toHaveValue('')
     })
@@ -222,16 +279,23 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
 
   // pageName '' (jsdom router is '/') means no persistence, the slot tests name their key
   it('restores both persisted slots and discards garbage global values', async () => {
-    renderGraphTable({ persistenceKey: 'SlotsTest' }, {
-      settings: settingsWith({
-        persistFilters: true,
-        setLastUsedFilter: vi.fn(),
-        lastUsedFilters: {
-          // legacy single-slot shape with a non-string global value
-          SlotsTest: { type: 'global', value: [{ id: 'department', value: 'IT' }], name: 'Legacy Garbage' },
-        },
-      }),
-    })
+    renderGraphTable(
+      { persistenceKey: 'SlotsTest' },
+      {
+        settings: settingsWith({
+          persistFilters: true,
+          setLastUsedFilter: vi.fn(),
+          lastUsedFilters: {
+            // legacy single-slot shape with a non-string global value
+            SlotsTest: {
+              type: 'global',
+              value: [{ id: 'department', value: 'IT' }],
+              name: 'Legacy Garbage',
+            },
+          },
+        }),
+      }
+    )
     await screen.findByText('1-3 of 3')
     // cross the restore effect's setTimeout(100) window before asserting, otherwise
     // cleanup unmounts (and cancels the pending timer) before it ever runs
@@ -242,19 +306,27 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
   })
 
   it('restores both persisted slots and discards new-shape garbage global values', async () => {
-    renderGraphTable({ persistenceKey: 'SlotsTest' }, {
-      settings: settingsWith({
-        persistFilters: true,
-        setLastUsedFilter: vi.fn(),
-        lastUsedFilters: {
-          // new shape can carry the same non-string global garbage the legacy branch discards
-          SlotsTest: {
-            graph: null,
-            table: { id: 'Garbage', name: 'Garbage', type: 'global', value: [{ id: 'department', value: 'IT' }] },
+    renderGraphTable(
+      { persistenceKey: 'SlotsTest' },
+      {
+        settings: settingsWith({
+          persistFilters: true,
+          setLastUsedFilter: vi.fn(),
+          lastUsedFilters: {
+            // new shape can carry the same non-string global garbage the legacy branch discards
+            SlotsTest: {
+              graph: null,
+              table: {
+                id: 'Garbage',
+                name: 'Garbage',
+                type: 'global',
+                value: [{ id: 'department', value: 'IT' }],
+              },
+            },
           },
-        },
-      }),
-    })
+        }),
+      }
+    )
     await screen.findByText('1-3 of 3')
     // cross the restore effect's setTimeout(100) window before asserting, otherwise
     // cleanup unmounts (and cancels the pending timer) before it ever runs
@@ -265,19 +337,31 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
   })
 
   it('restores a legacy column filter into the table slot', async () => {
-    renderGraphTable({ persistenceKey: 'SlotsTest' }, {
-      settings: settingsWith({
-        persistFilters: true,
-        setLastUsedFilter: vi.fn(),
-        lastUsedFilters: {
-          SlotsTest: { type: 'column', value: [{ id: 'department', value: 'IT' }], name: 'IT only' },
-        },
-      }),
-    })
-    await waitFor(() => {
-      expect(screen.getByText('1-2 of 2')).toBeInTheDocument()
-    }, { timeout: 5000 })
-    expect(screen.getByRole('button', { name: 'Filters (1)' })).toBeInTheDocument()
+    renderGraphTable(
+      { persistenceKey: 'SlotsTest' },
+      {
+        settings: settingsWith({
+          persistFilters: true,
+          setLastUsedFilter: vi.fn(),
+          lastUsedFilters: {
+            SlotsTest: {
+              type: 'column',
+              value: [{ id: 'department', value: 'IT' }],
+              name: 'IT only',
+            },
+          },
+        }),
+      }
+    )
+    await waitFor(
+      () => {
+        expect(screen.getByText('1-2 of 2')).toBeInTheDocument()
+      },
+      { timeout: 5000 }
+    )
+    expect(
+      screen.getByRole('button', { name: 'Filters (1)' })
+    ).toBeInTheDocument()
   })
 
   // Regression: the restore effect used to key on getRequestData.isFetching, re-arming its
@@ -285,23 +369,35 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
   // overwriting whatever the user had just applied with the persisted filter.
   it('does not clobber a user filter applied after the persisted one was restored', async () => {
     const user = userEvent.setup()
-    renderGraphTable({ persistenceKey: 'SlotsTest' }, {
-      settings: settingsWith({
-        persistFilters: true,
-        setLastUsedFilter: vi.fn(),
-        lastUsedFilters: {
-          SlotsTest: { type: 'column', value: [{ id: 'department', value: 'IT' }], name: 'IT only' },
-        },
-      }),
-    })
+    renderGraphTable(
+      { persistenceKey: 'SlotsTest' },
+      {
+        settings: settingsWith({
+          persistFilters: true,
+          setLastUsedFilter: vi.fn(),
+          lastUsedFilters: {
+            SlotsTest: {
+              type: 'column',
+              value: [{ id: 'department', value: 'IT' }],
+              name: 'IT only',
+            },
+          },
+        }),
+      }
+    )
     // persisted "IT only" lands first
-    await waitFor(() => {
-      expect(screen.getByText('1-2 of 2')).toBeInTheDocument()
-    }, { timeout: 5000 })
+    await waitFor(
+      () => {
+        expect(screen.getByText('1-2 of 2')).toBeInTheDocument()
+      },
+      { timeout: 5000 }
+    )
 
     // user switches to the other preset
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Sales only' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Sales only' })
+    )
     await waitFor(() => {
       expect(screen.getByText('1-1 of 1')).toBeInTheDocument()
     })
@@ -319,14 +415,18 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
     await screen.findByText('1-3 of 3')
 
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Named Alice' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Named Alice' })
+    )
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Search...')).toHaveValue('alice')
     })
 
     // tapping the active preset again clears the slot — and the box with it
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Named Alice' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Named Alice' })
+    )
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Search...')).toHaveValue('')
     })
@@ -346,7 +446,11 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
             load filters
           </button>
           <CippDataTable
-            api={{ url: '/api/ListGraphRequest', dataKey: 'Results', data: { Endpoint: 'testWidgets' } }}
+            api={{
+              url: '/api/ListGraphRequest',
+              dataKey: 'Results',
+              data: { Endpoint: 'testWidgets' },
+            }}
             queryKey="SlotsTest"
             simpleColumns={['displayName', 'mail', 'department']}
             filters={filters}
@@ -365,9 +469,13 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
 
     await user.click(screen.getByRole('button', { name: 'load filters' }))
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    expect(await screen.findByRole('menuitem', { name: 'IT only' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('menuitem', { name: 'IT only' })
+    ).toBeInTheDocument()
     // the fetched graph preset is not lost when the prop-driven list arrives
-    expect(screen.getByRole('menuitem', { name: 'Widget View' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('menuitem', { name: 'Widget View' })
+    ).toBeInTheDocument()
   }, 30000)
 
   it('renaming an applied graph preset keeps it marked active', async () => {
@@ -376,14 +484,26 @@ describe('CIPPTableToptoolbar - preset list refresh', () => {
     await screen.findByText('1-3 of 3')
 
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Widget View' }))
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Widget View' })
+    )
 
     // rename lands via refetch, same id
     swapGraphPresets({
-      data: { Results: [{ id: 'gp-1', name: 'Widget View v2', params: { endpoint: 'testWidgets', $filter: "state eq 'on'" } }] },
+      data: {
+        Results: [
+          {
+            id: 'gp-1',
+            name: 'Widget View v2',
+            params: { endpoint: 'testWidgets', $filter: "state eq 'on'" },
+          },
+        ],
+      },
     })
     await user.click(screen.getByRole('button', { name: /Filters/ }))
-    const renamed = await screen.findByRole('menuitem', { name: 'Widget View v2' })
+    const renamed = await screen.findByRole('menuitem', {
+      name: 'Widget View v2',
+    })
     await waitFor(() => {
       expect(within(renamed).queryByTestId('CheckIcon')).not.toBeNull()
     })
@@ -405,9 +525,13 @@ describe('CIPPTableToptoolbar desktop export', () => {
 
     await user.click(screen.getByRole('button', { name: /Export/ }))
     await screen.findByRole('menuitem', { name: 'Export to CSV' })
-    expect(screen.getByRole('menuitem', { name: 'Export to PDF' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('menuitem', { name: 'Export to PDF' })
+    ).toBeInTheDocument()
 
-    await user.click(screen.getByRole('menuitem', { name: 'View API Response' }))
+    await user.click(
+      screen.getByRole('menuitem', { name: 'View API Response' })
+    )
     await screen.findByText('API Response')
   })
 })

@@ -125,7 +125,9 @@ export const CIPPTableToptoolbar = React.memo(
     const [actionMenuAnchor, setActionMenuAnchor] = useState(null)
     const [mobileFilterSheetOpen, setMobileFilterSheetOpen] = useState(false)
     // table branch's own handoff instance — the cards branch (CippMobileTableControls) owns a separate one
-    const mobileFilterSheet = useSheetHandoff(() => setMobileFilterSheetOpen(false))
+    const mobileFilterSheet = useSheetHandoff(() =>
+      setMobileFilterSheetOpen(false)
+    )
 
     const mdDown = useMediaQuery((theme) => theme.breakpoints.down('md'))
     const settings = useSettings()
@@ -147,7 +149,9 @@ export const CIPPTableToptoolbar = React.memo(
       useState(simpleColumns)
     const [filterCanvasVisible, setFilterCanvasVisible] = useState(false)
     const presetKey = (filter) => filter?.id ?? filter?.filterName
-    const pageName = persistenceKey ?? (isInDialog ? '' : router.pathname.split('/').slice(1).join('/'))
+    const pageName =
+      persistenceKey ??
+      (isInDialog ? '' : router.pathname.split('/').slice(1).join('/'))
     const [useCompactMode, setUseCompactMode] = useState(false)
     const toolbarRef = useRef(null)
     const leftContainerRef = useRef(null)
@@ -160,7 +164,10 @@ export const CIPPTableToptoolbar = React.memo(
         actions
           // customComponent actions are single-row dialogs; the bulk path renders CippApiDialog
           // unconditionally, so admitting one here produces an empty dialog with no API behind it.
-          ?.filter((action) => !action.link && !action?.hideBulk && !action?.customComponent)
+          ?.filter(
+            (action) =>
+              !action.link && !action?.hideBulk && !action?.customComponent
+          )
           ?.map((action) => ({
             ...action,
             // bulkFilterEligible actions run against the eligible subset of the selection:
@@ -168,8 +175,12 @@ export const CIPPTableToptoolbar = React.memo(
             // The default stays all-or-nothing (every selected row must qualify).
             disabled: action.condition
               ? action.bulkFilterEligible
-                ? !selectedRows.some((row) => action.condition(wrapActionRow(row.original)))
-                : !selectedRows.every((row) => action.condition(wrapActionRow(row.original)))
+                ? !selectedRows.some((row) =>
+                    action.condition(wrapActionRow(row.original))
+                  )
+                : !selectedRows.every((row) =>
+                    action.condition(wrapActionRow(row.original))
+                  )
               : false,
           })) || []
       )
@@ -232,9 +243,13 @@ export const CIPPTableToptoolbar = React.memo(
       const allSelectedRows = table.getSelectedRowModel().rows
       const eligibleRows =
         action.bulkFilterEligible && action.condition
-          ? allSelectedRows.filter((row) => action.condition(wrapActionRow(row.original)))
+          ? allSelectedRows.filter((row) =>
+              action.condition(wrapActionRow(row.original))
+            )
           : allSelectedRows
-      const selectedData = eligibleRows.map((row) => wrapActionRow(row.original))
+      const selectedData = eligibleRows.map((row) =>
+        wrapActionRow(row.original)
+      )
 
       if (typeof action.customBulkHandler === 'function') {
         action.customBulkHandler({
@@ -251,7 +266,13 @@ export const CIPPTableToptoolbar = React.memo(
       // api.noConfirm true, and its mount effect auto-submits into the same customFunction
       // being called here — every selected row's action fired twice.
       if (action?.noConfirm && action.customFunction) {
-        eligibleRows.forEach((row) => action.customFunction(wrapActionRow(row.original.original ?? row.original), action, {}))
+        eligibleRows.forEach((row) =>
+          action.customFunction(
+            wrapActionRow(row.original.original ?? row.original),
+            action,
+            {}
+          )
+        )
         // Deliberately no closeMenu() here — that matches the behaviour this branch had
         // before; the only thing being fixed is the duplicate invocation.
         return
@@ -649,7 +670,11 @@ export const CIPPTableToptoolbar = React.memo(
     }
 
     const persistFilterSlots = (updater) => {
-      if (!pageName || !settings.persistFilters || !settings.setLastUsedFilter) {
+      if (
+        !pageName ||
+        !settings.persistFilters ||
+        !settings.setLastUsedFilter
+      ) {
         return
       }
       const current = normalizePersistedFilters(
@@ -965,7 +990,9 @@ export const CIPPTableToptoolbar = React.memo(
     const handleViewApiResponse = () =>
       isInDialog ? setJsonDialogOpen(true) : setOffcanvasVisible(true)
     const handleEditGraphFilters =
-      api?.url === '/api/ListGraphRequest' ? () => setFilterCanvasVisible(true) : undefined
+      api?.url === '/api/ListGraphRequest'
+        ? () => setFilterCanvasVisible(true)
+        : undefined
     const handleResetFilters = () => setTableFilter('', 'reset', '')
     const mobileIsRefreshing = Boolean(
       getRequestData?.isFetching || refreshFunction?.isFetching
@@ -1015,128 +1042,363 @@ export const CIPPTableToptoolbar = React.memo(
             dataSourceControls={dataSourceControls}
           />
         ) : (
-        <>
-        <Box
-          ref={toolbarRef}
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            gap: { xs: 1, md: 2 },
-            px: 0.5,
-            pb: 2,
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', md: 'center' },
-            backgroundColor: 'background.paper',
-          }}
-        >
-          {/* Left side - Main controls */}
-          <Box
-            ref={leftContainerRef}
-            sx={{
-              display: 'flex',
-              gap: { xs: 1, md: 2 },
-              alignItems: 'center',
-              flex: 1,
-              flexWrap: { xs: 'nowrap', md: 'nowrap' },
-              minWidth: 0,
-            }}
-          >
-            {/* phones refresh from the options sheet instead */}
-            {!mdDown && (
-              <Tooltip
-                title={
-                  getRequestData?.isFetchNextPageError
-                    ? 'Could not retrieve all data. Click to try again.'
-                    : getRequestData?.isFetching
-                      ? 'Retrieving more data...'
-                      : 'Refresh data'
-                }
+          <>
+            <Box
+              ref={toolbarRef}
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: { xs: 1, md: 2 },
+                px: 0.5,
+                pb: 2,
+                justifyContent: 'space-between',
+                alignItems: { xs: 'stretch', md: 'center' },
+                backgroundColor: 'background.paper',
+              }}
+            >
+              {/* Left side - Main controls */}
+              <Box
+                ref={leftContainerRef}
+                sx={{
+                  display: 'flex',
+                  gap: { xs: 1, md: 2 },
+                  alignItems: 'center',
+                  flex: 1,
+                  flexWrap: { xs: 'nowrap', md: 'nowrap' },
+                  minWidth: 0,
+                }}
               >
-                <span>
-                  <RefreshButton
-                    onClick={handleRefresh}
-                    disabled={
-                      getRequestData?.isLoading ||
-                      getRequestData?.isFetching ||
-                      refreshFunction?.isFetching
+                {/* phones refresh from the options sheet instead */}
+                {!mdDown && (
+                  <Tooltip
+                    title={
+                      getRequestData?.isFetchNextPageError
+                        ? 'Could not retrieve all data. Click to try again.'
+                        : getRequestData?.isFetching
+                          ? 'Retrieving more data...'
+                          : 'Refresh data'
                     }
                   >
-                    <SvgIcon
-                      fontSize="small"
-                      sx={{
-                        animation:
+                    <span>
+                      <RefreshButton
+                        onClick={handleRefresh}
+                        disabled={
+                          getRequestData?.isLoading ||
                           getRequestData?.isFetching ||
                           refreshFunction?.isFetching
-                            ? 'spin 1s linear infinite'
-                            : 'none',
-                        '@keyframes spin': {
-                          '0%': { transform: 'rotate(0deg)' },
-                          '100%': { transform: 'rotate(-360deg)' },
+                        }
+                      >
+                        <SvgIcon
+                          fontSize="small"
+                          sx={{
+                            animation:
+                              getRequestData?.isFetching ||
+                              refreshFunction?.isFetching
+                                ? 'spin 1s linear infinite'
+                                : 'none',
+                            '@keyframes spin': {
+                              '0%': { transform: 'rotate(0deg)' },
+                              '100%': { transform: 'rotate(-360deg)' },
+                            },
+                          }}
+                        >
+                          {getRequestData?.isFetchNextPageError ? (
+                            <ExclamationCircleIcon color="red" />
+                          ) : (
+                            <Sync />
+                          )}
+                        </SvgIcon>
+                      </RefreshButton>
+                    </span>
+                  </Tooltip>
+                )}
+
+                {/* Search Input */}
+                <ModernSearchContainer elevation={0}>
+                  <SearchIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                  <ModernSearchInput
+                    placeholder="Search..."
+                    value={searchValue}
+                    onChange={handleSearchChange}
+                  />
+                </ModernSearchContainer>
+
+                {/* Desktop Buttons - always render for measurement, hide when in compact mode */}
+                {!mdDown && (
+                  <Box
+                    ref={actionsContainerRef}
+                    sx={{
+                      display: 'flex',
+                      gap: 2,
+                      flexShrink: 0,
+                      mt: 0.5,
+                      ...(useCompactMode && {
+                        position: 'absolute',
+                        visibility: 'hidden',
+                        pointerEvents: 'none',
+                      }),
+                    }}
+                  >
+                    {/* Filters Button */}
+                    <ModernButton
+                      startIcon={<FilterListIcon />}
+                      endIcon={<ArrowDownIcon />}
+                      onClick={(event) => setFiltersAnchor(event.currentTarget)}
+                      sx={{
+                        color:
+                          activeSlotCount > 0 ? 'primary.main' : 'text.primary',
+                        borderColor:
+                          activeSlotCount > 0 ? 'primary.main' : undefined,
+                      }}
+                    >
+                      {activeSlotCount > 0
+                        ? `Filters (${activeSlotCount})`
+                        : 'Filters'}
+                    </ModernButton>
+
+                    {/* Columns Button */}
+                    <ModernButton
+                      startIcon={<ViewColumnIcon />}
+                      endIcon={<ArrowDownIcon />}
+                      onClick={(event) => setColumnsAnchor(event.currentTarget)}
+                    >
+                      Columns
+                    </ModernButton>
+                    <Menu
+                      anchorEl={columnsAnchor}
+                      open={Boolean(columnsAnchor)}
+                      onClose={() => setColumnsAnchor(null)}
+                      PaperProps={{
+                        sx: {
+                          mt: 1,
+                          borderRadius: 2,
+                          minWidth: 250,
+                          maxHeight: 400,
                         },
                       }}
                     >
-                      {getRequestData?.isFetchNextPageError ? (
-                        <ExclamationCircleIcon color="red" />
-                      ) : (
-                        <Sync />
-                      )}
-                    </SvgIcon>
-                  </RefreshButton>
-                </span>
-              </Tooltip>
-            )}
+                      <MenuItem onClick={resetToPreferedVisibility}>
+                        <ListItemText primary="Reset to preferred columns" />
+                      </MenuItem>
+                      <MenuItem onClick={saveAsPreferedColumns}>
+                        <ListItemText primary="Save as preferred columns" />
+                      </MenuItem>
+                      <MenuItem onClick={resetToDefaultVisibility}>
+                        <ListItemText primary="Delete preferred columns" />
+                      </MenuItem>
+                      <Divider />
+                      {table
+                        .getAllColumns()
+                        .filter((column) => !column.id.startsWith('mrt-'))
+                        .map((column) => (
+                          <MenuItem
+                            key={column.id}
+                            onClick={() =>
+                              setColumnVisibility({
+                                ...columnVisibility,
+                                [column.id]: !column.getIsVisible(),
+                              })
+                            }
+                          >
+                            <Checkbox
+                              checked={Boolean(column.getIsVisible())}
+                              size="small"
+                            />
+                            <ListItemText
+                              primary={getCippTranslation(column.id)}
+                            />
+                          </MenuItem>
+                        ))}
+                    </Menu>
 
-            {/* Search Input */}
-            <ModernSearchContainer elevation={0}>
-              <SearchIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-              <ModernSearchInput
-                placeholder="Search..."
-                value={searchValue}
-                onChange={handleSearchChange}
-              />
-            </ModernSearchContainer>
+                    {/* Export Button */}
+                    {exportEnabled && (
+                      <ModernButton
+                        startIcon={<ExportIcon />}
+                        endIcon={<ArrowDownIcon />}
+                        onClick={(event) =>
+                          setExportAnchor(event.currentTarget)
+                        }
+                      >
+                        Export
+                      </ModernButton>
+                    )}
+                  </Box>
+                )}
 
-            {/* Desktop Buttons - always render for measurement, hide when in compact mode */}
-            {!mdDown && (
-              <Box
-                ref={actionsContainerRef}
-                sx={{
-                  display: 'flex',
-                  gap: 2,
-                  flexShrink: 0,
-                  mt: 0.5,
-                  ...(useCompactMode && {
-                    position: 'absolute',
-                    visibility: 'hidden',
-                    pointerEvents: 'none',
-                  }),
-                }}
-              >
-                {/* Filters Button */}
-                <ModernButton
-                  startIcon={<FilterListIcon />}
-                  endIcon={<ArrowDownIcon />}
-                  onClick={(event) => setFiltersAnchor(event.currentTarget)}
-                  sx={{
-                    color:
-                      activeSlotCount > 0 ? 'primary.main' : 'text.primary',
-                    borderColor:
-                      activeSlotCount > 0 ? 'primary.main' : undefined,
+                {/* Compact Action Button — desktop compact mode only, the phone table uses the filter sheet */}
+                {!mdDown && useCompactMode && !hasSelection && (
+                  <IconButton
+                    onClick={(event) =>
+                      setActionMenuAnchor(event.currentTarget)
+                    }
+                    sx={{ flexShrink: 0 }}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                )}
+
+                {/* phones keep the kebab open regardless of selection, the only route to the
+                sheet (refresh, export, rows-per-page) down there, not just filters */}
+                {(mdDown || (useCompactMode && !hasSelection)) && (
+                  <IconButton
+                    aria-label={mdDown ? 'Table options' : 'Filters'}
+                    onClick={(event) => {
+                      if (mdDown) {
+                        setMobileFilterSheetOpen(true)
+                        return
+                      }
+                      setFiltersAnchor(event.currentTarget)
+                    }}
+                    sx={{
+                      flexShrink: 0,
+                      ...(mdDown &&
+                        activeSlotCount > 0 && { color: 'primary.main' }),
+                    }}
+                  >
+                    {mdDown ? (
+                      <Badge badgeContent={activeSlotCount} color="primary">
+                        <MoreVertIcon />
+                      </Badge>
+                    ) : (
+                      <FilterListIcon />
+                    )}
+                  </IconButton>
+                )}
+
+                {/* way back to cards, far right to match the card bar's toggle position */}
+                {tableViewActive && showReturnToCards && (
+                  <Tooltip title="Return to card view">
+                    <RefreshButton
+                      onClick={onViewToggle}
+                      aria-label="Toggle table view"
+                      aria-pressed={true}
+                    >
+                      <SvgIcon fontSize="small">
+                        {/* destination icon: tapping here returns to cards */}
+                        <ViewAgenda />
+                      </SvgIcon>
+                    </RefreshButton>
+                  </Tooltip>
+                )}
+
+                {/* Compact Action Menu — desktop compact mode only */}
+                <Menu
+                  anchorEl={actionMenuAnchor}
+                  open={Boolean(actionMenuAnchor)}
+                  onClose={() => setActionMenuAnchor(null)}
+                  PaperProps={{
+                    sx: {
+                      mt: 1,
+                      borderRadius: 2,
+                      minWidth: 180,
+                    },
                   }}
                 >
-                  {activeSlotCount > 0
-                    ? `Filters (${activeSlotCount})`
-                    : 'Filters'}
-                </ModernButton>
+                  {/* Anchor the nested menus to the stable overflow IconButton — anchoring to
+                  event.currentTarget here targets a MenuItem inside a menu that closes in
+                  the same tick, which positions the next popover unpredictably. */}
+                  <MenuItem
+                    onClick={() => {
+                      setColumnsAnchor(actionMenuAnchor)
+                      setActionMenuAnchor(null)
+                    }}
+                  >
+                    <ListItemIcon>
+                      <ViewColumnIcon />
+                    </ListItemIcon>
+                    <ListItemText>Columns</ListItemText>
+                  </MenuItem>
+                  {exportEnabled && (
+                    <MenuItem
+                      onClick={() => {
+                        setExportAnchor(actionMenuAnchor)
+                        setActionMenuAnchor(null)
+                      }}
+                    >
+                      <ListItemIcon>
+                        <ExportIcon />
+                      </ListItemIcon>
+                      <ListItemText>Export</ListItemText>
+                    </MenuItem>
+                  )}
+                  <MenuItem
+                    onClick={() => {
+                      table.setIsFullScreen(!table.getState().isFullScreen)
+                      setActionMenuAnchor(null)
+                    }}
+                  >
+                    <ListItemIcon>
+                      <FullscreenIcon />
+                    </ListItemIcon>
+                    <ListItemText>
+                      {table.getState().isFullScreen
+                        ? 'Exit Fullscreen'
+                        : 'Fullscreen'}
+                    </ListItemText>
+                  </MenuItem>
+                </Menu>
 
-                {/* Columns Button */}
-                <ModernButton
-                  startIcon={<ViewColumnIcon />}
-                  endIcon={<ArrowDownIcon />}
-                  onClick={(event) => setColumnsAnchor(event.currentTarget)}
+                {/* Filters Menu */}
+                <Menu
+                  anchorEl={filtersAnchor}
+                  open={Boolean(filtersAnchor)}
+                  onClose={() => setFiltersAnchor(null)}
+                  PaperProps={{
+                    sx: {
+                      mt: 1,
+                      borderRadius: 2,
+                      minWidth: 200,
+                    },
+                  }}
                 >
-                  Columns
-                </ModernButton>
+                  <MenuItem
+                    onClick={() => {
+                      handleColumnFiltersToggle()
+                      setFiltersAnchor(null)
+                    }}
+                  >
+                    <ListItemText>
+                      {table.getState().showColumnFilters
+                        ? 'Hide Column Filters'
+                        : 'Show Column Filters'}
+                    </ListItemText>
+                  </MenuItem>
+                  <Divider />
+                  <MenuItem onClick={() => setTableFilter('', 'reset', '')}>
+                    <ListItemText primary="Reset all filters" />
+                  </MenuItem>
+                  {api?.url === '/api/ListGraphRequest' && (
+                    <MenuItem
+                      onClick={() => {
+                        setFiltersAnchor(null)
+                        setFilterCanvasVisible(true)
+                      }}
+                    >
+                      <ListItemText primary="Edit filters" />
+                    </MenuItem>
+                  )}
+                  {showFilterSections && (
+                    <ListSubheader disableSticky>Graph filters</ListSubheader>
+                  )}
+                  {!showFilterSections && graphPresetItems.length > 0 && (
+                    <Divider />
+                  )}
+                  {graphPresetItems.map((filter) =>
+                    renderPresetItem(filter, 'graph')
+                  )}
+                  {showFilterSections && (
+                    <ListSubheader disableSticky>Table filters</ListSubheader>
+                  )}
+                  {!showFilterSections && tablePresetItems.length > 0 && (
+                    <Divider />
+                  )}
+                  {tablePresetItems.map((filter) =>
+                    renderPresetItem(filter, 'table')
+                  )}
+                </Menu>
+
+                {/* Columns Menu */}
                 <Menu
                   anchorEl={columnsAnchor}
                   open={Boolean(columnsAnchor)}
@@ -1182,376 +1444,147 @@ export const CIPPTableToptoolbar = React.memo(
                     ))}
                 </Menu>
 
-                {/* Export Button */}
+                {/* Export Menu */}
                 {exportEnabled && (
-                  <ModernButton
-                    startIcon={<ExportIcon />}
-                    endIcon={<ArrowDownIcon />}
-                    onClick={(event) => setExportAnchor(event.currentTarget)}
+                  <Menu
+                    anchorEl={exportAnchor}
+                    open={Boolean(exportAnchor)}
+                    onClose={() => setExportAnchor(null)}
+                    PaperProps={{
+                      sx: {
+                        mt: 1,
+                        borderRadius: 2,
+                        minWidth: 180,
+                      },
+                    }}
                   >
-                    Export
-                  </ModernButton>
-                )}
-              </Box>
-            )}
-
-            {/* Compact Action Button — desktop compact mode only, the phone table uses the filter sheet */}
-            {!mdDown && useCompactMode && !hasSelection && (
-              <IconButton
-                onClick={(event) => setActionMenuAnchor(event.currentTarget)}
-                sx={{ flexShrink: 0 }}
-              >
-                <MoreVertIcon />
-              </IconButton>
-            )}
-
-            {/* phones keep the kebab open regardless of selection, the only route to the
-                sheet (refresh, export, rows-per-page) down there, not just filters */}
-            {(mdDown || (useCompactMode && !hasSelection)) && (
-              <IconButton
-                aria-label={mdDown ? 'Table options' : 'Filters'}
-                onClick={(event) => {
-                  if (mdDown) {
-                    setMobileFilterSheetOpen(true)
-                    return
-                  }
-                  setFiltersAnchor(event.currentTarget)
-                }}
-                sx={{
-                  flexShrink: 0,
-                  ...(mdDown && activeSlotCount > 0 && { color: 'primary.main' }),
-                }}
-              >
-                {mdDown ? (
-                  <Badge badgeContent={activeSlotCount} color="primary">
-                    <MoreVertIcon />
-                  </Badge>
-                ) : (
-                  <FilterListIcon />
-                )}
-              </IconButton>
-            )}
-
-            {/* way back to cards, far right to match the card bar's toggle position */}
-            {tableViewActive && showReturnToCards && (
-              <Tooltip title="Return to card view">
-                <RefreshButton
-                  onClick={onViewToggle}
-                  aria-label="Toggle table view"
-                  aria-pressed={true}
-                >
-                  <SvgIcon fontSize="small">
-                    {/* destination icon: tapping here returns to cards */}
-                    <ViewAgenda />
-                  </SvgIcon>
-                </RefreshButton>
-              </Tooltip>
-            )}
-
-            {/* Compact Action Menu — desktop compact mode only */}
-            <Menu
-              anchorEl={actionMenuAnchor}
-              open={Boolean(actionMenuAnchor)}
-              onClose={() => setActionMenuAnchor(null)}
-              PaperProps={{
-                sx: {
-                  mt: 1,
-                  borderRadius: 2,
-                  minWidth: 180,
-                },
-              }}
-            >
-              {/* Anchor the nested menus to the stable overflow IconButton — anchoring to
-                  event.currentTarget here targets a MenuItem inside a menu that closes in
-                  the same tick, which positions the next popover unpredictably. */}
-              <MenuItem
-                onClick={() => {
-                  setColumnsAnchor(actionMenuAnchor)
-                  setActionMenuAnchor(null)
-                }}
-              >
-                <ListItemIcon>
-                  <ViewColumnIcon />
-                </ListItemIcon>
-                <ListItemText>Columns</ListItemText>
-              </MenuItem>
-              {exportEnabled && (
-                <MenuItem
-                  onClick={() => {
-                    setExportAnchor(actionMenuAnchor)
-                    setActionMenuAnchor(null)
-                  }}
-                >
-                  <ListItemIcon>
-                    <ExportIcon />
-                  </ListItemIcon>
-                  <ListItemText>Export</ListItemText>
-                </MenuItem>
-              )}
-              <MenuItem
-                onClick={() => {
-                  table.setIsFullScreen(!table.getState().isFullScreen)
-                  setActionMenuAnchor(null)
-                }}
-              >
-                <ListItemIcon>
-                  <FullscreenIcon />
-                </ListItemIcon>
-                <ListItemText>
-                  {table.getState().isFullScreen
-                    ? 'Exit Fullscreen'
-                    : 'Fullscreen'}
-                </ListItemText>
-              </MenuItem>
-            </Menu>
-
-            {/* Filters Menu */}
-            <Menu
-              anchorEl={filtersAnchor}
-              open={Boolean(filtersAnchor)}
-              onClose={() => setFiltersAnchor(null)}
-              PaperProps={{
-                sx: {
-                  mt: 1,
-                  borderRadius: 2,
-                  minWidth: 200,
-                },
-              }}
-            >
-              <MenuItem
-                onClick={() => {
-                  handleColumnFiltersToggle()
-                  setFiltersAnchor(null)
-                }}
-              >
-                <ListItemText>
-                  {table.getState().showColumnFilters
-                    ? 'Hide Column Filters'
-                    : 'Show Column Filters'}
-                </ListItemText>
-              </MenuItem>
-              <Divider />
-              <MenuItem onClick={() => setTableFilter('', 'reset', '')}>
-                <ListItemText primary="Reset all filters" />
-              </MenuItem>
-              {api?.url === '/api/ListGraphRequest' && (
-                <MenuItem
-                  onClick={() => {
-                    setFiltersAnchor(null)
-                    setFilterCanvasVisible(true)
-                  }}
-                >
-                  <ListItemText primary="Edit filters" />
-                </MenuItem>
-              )}
-              {showFilterSections && (
-                <ListSubheader disableSticky>Graph filters</ListSubheader>
-              )}
-              {!showFilterSections && graphPresetItems.length > 0 && (
-                <Divider />
-              )}
-              {graphPresetItems.map((filter) =>
-                renderPresetItem(filter, 'graph')
-              )}
-              {showFilterSections && (
-                <ListSubheader disableSticky>Table filters</ListSubheader>
-              )}
-              {!showFilterSections && tablePresetItems.length > 0 && (
-                <Divider />
-              )}
-              {tablePresetItems.map((filter) =>
-                renderPresetItem(filter, 'table')
-              )}
-            </Menu>
-
-            {/* Columns Menu */}
-            <Menu
-              anchorEl={columnsAnchor}
-              open={Boolean(columnsAnchor)}
-              onClose={() => setColumnsAnchor(null)}
-              PaperProps={{
-                sx: {
-                  mt: 1,
-                  borderRadius: 2,
-                  minWidth: 250,
-                  maxHeight: 400,
-                },
-              }}
-            >
-              <MenuItem onClick={resetToPreferedVisibility}>
-                <ListItemText primary="Reset to preferred columns" />
-              </MenuItem>
-              <MenuItem onClick={saveAsPreferedColumns}>
-                <ListItemText primary="Save as preferred columns" />
-              </MenuItem>
-              <MenuItem onClick={resetToDefaultVisibility}>
-                <ListItemText primary="Delete preferred columns" />
-              </MenuItem>
-              <Divider />
-              {table
-                .getAllColumns()
-                .filter((column) => !column.id.startsWith('mrt-'))
-                .map((column) => (
-                  <MenuItem
-                    key={column.id}
-                    onClick={() =>
-                      setColumnVisibility({
-                        ...columnVisibility,
-                        [column.id]: !column.getIsVisible(),
-                      })
-                    }
-                  >
-                    <Checkbox
-                      checked={Boolean(column.getIsVisible())}
-                      size="small"
-                    />
-                    <ListItemText primary={getCippTranslation(column.id)} />
-                  </MenuItem>
-                ))}
-            </Menu>
-
-            {/* Export Menu */}
-            {exportEnabled && (
-              <Menu
-                anchorEl={exportAnchor}
-                open={Boolean(exportAnchor)}
-                onClose={() => setExportAnchor(null)}
-                PaperProps={{
-                  sx: {
-                    mt: 1,
-                    borderRadius: 2,
-                    minWidth: 180,
-                  },
-                }}
-              >
-                <MenuItem
-                  onClick={() => {
-                    // Trigger CSV export
-                    const csvButton = document.querySelector(
-                      `[data-csv-export="${title}"]`
-                    )
-                    if (csvButton) csvButton.click()
-                    setExportAnchor(null)
-                  }}
-                >
-                  <ListItemIcon>
-                    <CsvIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Export to CSV" />
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    // Trigger PDF export
-                    const pdfButton = document.querySelector(
-                      `[data-pdf-export="${title}"]`
-                    )
-                    if (pdfButton) pdfButton.click()
-                    setExportAnchor(null)
-                  }}
-                >
-                  <ListItemIcon>
-                    <PdfIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Export to PDF" />
-                </MenuItem>
-                {builtInBulkExportAvailable && (
-                  <>
-                    <Divider sx={{ my: 0.5 }} />
                     <MenuItem
                       onClick={() => {
-                        handleExportSelectedToCsv()
+                        // Trigger CSV export
+                        const csvButton = document.querySelector(
+                          `[data-csv-export="${title}"]`
+                        )
+                        if (csvButton) csvButton.click()
                         setExportAnchor(null)
                       }}
                     >
                       <ListItemIcon>
                         <CsvIcon />
                       </ListItemIcon>
-                      <ListItemText primary="Export Selected to CSV" />
+                      <ListItemText primary="Export to CSV" />
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        handleExportSelectedToPdf()
+                        // Trigger PDF export
+                        const pdfButton = document.querySelector(
+                          `[data-pdf-export="${title}"]`
+                        )
+                        if (pdfButton) pdfButton.click()
                         setExportAnchor(null)
                       }}
                     >
                       <ListItemIcon>
                         <PdfIcon />
                       </ListItemIcon>
-                      <ListItemText primary="Export Selected to PDF" />
+                      <ListItemText primary="Export to PDF" />
                     </MenuItem>
-                  </>
+                    {builtInBulkExportAvailable && (
+                      <>
+                        <Divider sx={{ my: 0.5 }} />
+                        <MenuItem
+                          onClick={() => {
+                            handleExportSelectedToCsv()
+                            setExportAnchor(null)
+                          }}
+                        >
+                          <ListItemIcon>
+                            <CsvIcon />
+                          </ListItemIcon>
+                          <ListItemText primary="Export Selected to CSV" />
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => {
+                            handleExportSelectedToPdf()
+                            setExportAnchor(null)
+                          }}
+                        >
+                          <ListItemIcon>
+                            <PdfIcon />
+                          </ListItemIcon>
+                          <ListItemText primary="Export Selected to PDF" />
+                        </MenuItem>
+                      </>
+                    )}
+                    <Divider sx={{ my: 0.5 }} />
+                    <MenuItem
+                      onClick={() => {
+                        if (isInDialog) {
+                          setJsonDialogOpen(true)
+                        } else {
+                          setOffcanvasVisible(true)
+                        }
+                        setExportAnchor(null)
+                      }}
+                    >
+                      <ListItemIcon>
+                        <CodeIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="View API Response" />
+                    </MenuItem>
+                  </Menu>
                 )}
-                <Divider sx={{ my: 0.5 }} />
-                <MenuItem
-                  onClick={() => {
-                    if (isInDialog) {
-                      setJsonDialogOpen(true)
-                    } else {
-                      setOffcanvasVisible(true)
-                    }
-                    setExportAnchor(null)
-                  }}
-                >
-                  <ListItemIcon>
-                    <CodeIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="View API Response" />
-                </MenuItem>
-              </Menu>
-            )}
-          </Box>
+              </Box>
 
-          {/* Right side - Additional controls */}
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-              alignItems: 'center',
-              flexShrink: 0,
-              flexWrap: 'nowrap',
-              justifyContent: { xs: 'space-between', md: 'flex-end' },
-              width: { xs: '100%', md: 'auto' },
-              mt: { xs: 1, md: 0 },
-            }}
-          >
-            {/* Selected rows indicator + Bulk Actions - inline, unless portaled into the header */}
-            {!bulkActionsSlot && bulkActionsContent}
+              {/* Right side - Additional controls */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 1,
+                  alignItems: 'center',
+                  flexShrink: 0,
+                  flexWrap: 'nowrap',
+                  justifyContent: { xs: 'space-between', md: 'flex-end' },
+                  width: { xs: '100%', md: 'auto' },
+                  mt: { xs: 1, md: 0 },
+                }}
+              >
+                {/* Selected rows indicator + Bulk Actions - inline, unless portaled into the header */}
+                {!bulkActionsSlot && bulkActionsContent}
 
-            {/* Queue tracker */}
-            <CippQueueTracker
-              queueId={queueMetadata?.QueueId}
-              queryKey={currentEffectiveQueryKey}
-              title={title}
+                {/* Queue tracker */}
+                <CippQueueTracker
+                  queueId={queueMetadata?.QueueId}
+                  queryKey={currentEffectiveQueryKey}
+                  title={title}
+                />
+              </Box>
+            </Box>
+            <CippTableFilterSheet
+              open={mobileFilterSheetOpen}
+              onClose={mobileFilterSheet.cancel}
+              onExited={mobileFilterSheet.handleExited}
+              run={mobileFilterSheet.run}
+              tablePresetItems={tablePresetItems}
+              graphPresetItems={graphPresetItems}
+              activeFilters={activeFilters}
+              presetKey={presetKey}
+              onPresetClick={handlePresetClick}
+              columnItems={mobileColumnItems}
+              onToggleColumn={handleToggleColumn}
+              onResetFilters={handleResetFilters}
+              onEditGraphFilters={handleEditGraphFilters}
+              exportEnabled={exportEnabled}
+              onExportCsv={handleExportCsvClick}
+              onExportPdf={handleExportPdfClick}
+              onViewApiResponse={handleViewApiResponse}
+              onRefresh={handleRefresh}
+              isRefreshing={mobileIsRefreshing}
+              pageSize={table.getState().pagination.pageSize}
+              onPageSizeChange={(size) => table.setPageSize(size)}
+              pageSizeOptions={[25, 50, 100, 250, 500]}
+              dataSourceControls={dataSourceControls}
             />
-          </Box>
-
-        </Box>
-        <CippTableFilterSheet
-          open={mobileFilterSheetOpen}
-          onClose={mobileFilterSheet.cancel}
-          onExited={mobileFilterSheet.handleExited}
-          run={mobileFilterSheet.run}
-          tablePresetItems={tablePresetItems}
-          graphPresetItems={graphPresetItems}
-          activeFilters={activeFilters}
-          presetKey={presetKey}
-          onPresetClick={handlePresetClick}
-          columnItems={mobileColumnItems}
-          onToggleColumn={handleToggleColumn}
-          onResetFilters={handleResetFilters}
-          onEditGraphFilters={handleEditGraphFilters}
-          exportEnabled={exportEnabled}
-          onExportCsv={handleExportCsvClick}
-          onExportPdf={handleExportPdfClick}
-          onViewApiResponse={handleViewApiResponse}
-          onRefresh={handleRefresh}
-          isRefreshing={mobileIsRefreshing}
-          pageSize={table.getState().pagination.pageSize}
-          onPageSizeChange={(size) => table.setPageSize(size)}
-          pageSizeOptions={[25, 50, 100, 250, 500]}
-          dataSourceControls={dataSourceControls}
-        />
-        </>
+          </>
         )}
 
         {bulkActionsSlot && createPortal(bulkActionsContent, bulkActionsSlot)}

@@ -11,7 +11,14 @@ import { PermissionsReportButton } from '../../../components/CippPdf/Permissions
 import { useDialog } from '../../../hooks/use-dialog'
 import { ApiGetCall } from '../../../api/ApiCall'
 import { useSettings } from '../../../hooks/use-settings'
-import { Alert, Button, Container, Stack, SvgIcon, Typography } from '@mui/material'
+import {
+  Alert,
+  Button,
+  Container,
+  Stack,
+  SvgIcon,
+  Typography,
+} from '@mui/material'
 import { Grid } from '@mui/system'
 import { CippExpandableAlert } from '../../../components/CippComponents/CippExpandableAlert'
 import {
@@ -124,7 +131,10 @@ const Page = () => {
                     relatedQueryKeys={[queryKey]}
                     label="Permission scan"
                   />
-                  <PermissionsReportButton permissionsData={data} tenantName={currentTenant} />
+                  <PermissionsReportButton
+                    permissionsData={data}
+                    tenantName={currentTenant}
+                  />
                   <Button
                     size="small"
                     variant="outlined"
@@ -144,16 +154,18 @@ const Page = () => {
               </Stack>
               {needsSync && (
                 <Alert severity="info" sx={{ mb: 1 }}>
-                  No cached permission data found for this tenant yet. Click "Sync data" to read
-                  site and document library permissions. This scan reads permissions per library
-                  rather than per file, so it is far quicker than the sharing link scan.
+                  No cached permission data found for this tenant yet. Click
+                  "Sync data" to read site and document library permissions.
+                  This scan reads permissions per library rather than per file,
+                  so it is far quicker than the sharing link scan.
                 </Alert>
               )}
               {skippedSites.length > 0 && (
                 <Alert severity="warning" sx={{ mb: 1 }}>
-                  {skippedSites.length} site(s) could not be read during the last scan. Results from
-                  an earlier successful scan are kept where they exist, so those rows may be out of
-                  date; sites never read successfully contribute nothing at all.
+                  {skippedSites.length} site(s) could not be read during the
+                  last scan. Results from an earlier successful scan are kept
+                  where they exist, so those rows may be out of date; sites
+                  never read successfully contribute nothing at all.
                 </Alert>
               )}
             </Grid>
@@ -246,7 +258,9 @@ const Page = () => {
                     isFetching={permissions.isFetching}
                     chartType="bar"
                     labels={topSitesByUniqueLibraries.map((item) => item.site)}
-                    chartSeries={topSitesByUniqueLibraries.map((item) => item.libraries)}
+                    chartSeries={topSitesByUniqueLibraries.map(
+                      (item) => item.libraries
+                    )}
                     totalLabel="Libraries"
                   />
                 </Grid>
@@ -255,13 +269,15 @@ const Page = () => {
 
             <Grid size={{ md: 12, xs: 12 }}>
               <CippExpandableAlert severity="info" sx={{ mb: 2 }}>
-                <strong>Applies To</strong> shows how far each permission reaches.{' '}
-                <em>Whole site</em> is a permission on the site itself, which every library that
-                still inherits also gets. <em>This library only</em> means that library was detached
-                and keeps its own permissions, so site-level changes no longer reach it. Libraries
-                that still inherit are not listed — their permissions are the site&apos;s, so
-                everything here is either the site&apos;s own permissions or a deliberate exception
-                to them.
+                <strong>Applies To</strong> shows how far each permission
+                reaches. <em>Whole site</em> is a permission on the site itself,
+                which every library that still inherits also gets.{' '}
+                <em>This library only</em> means that library was detached and
+                keeps its own permissions, so site-level changes no longer reach
+                it. Libraries that still inherit are not listed — their
+                permissions are the site&apos;s, so everything here is either
+                the site&apos;s own permissions or a deliberate exception to
+                them.
               </CippExpandableAlert>
               <CippDataTable
                 title="Library Permissions"
@@ -306,7 +322,9 @@ const Page = () => {
                     return
                   }
                   setSyncQueueIds((previous) =>
-                    previous.includes(queueId) ? previous : [...previous, queueId]
+                    previous.includes(queueId)
+                      ? previous
+                      : [...previous, queueId]
                   )
                 },
               }}

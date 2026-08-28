@@ -1,11 +1,11 @@
-import { useCallback } from 'react';
-import PropTypes from 'prop-types';
-import { Box, Button, Divider, Stack, SvgIcon, Tab, Tabs } from '@mui/material';
-import AdjustmentsHorizontalIcon from '@heroicons/react/24/outline/AdjustmentsHorizontalIcon';
-import { BulkActionsMenu } from '../../../components/bulk-actions-menu';
-import { FilterDialog } from '../../../components/filter-dialog';
-import { QueryField } from '../../../components/query-field';
-import { useDialog } from '../../../hooks/use-dialog';
+import { useCallback } from 'react'
+import PropTypes from 'prop-types'
+import { Box, Button, Divider, Stack, SvgIcon, Tab, Tabs } from '@mui/material'
+import AdjustmentsHorizontalIcon from '@heroicons/react/24/outline/AdjustmentsHorizontalIcon'
+import { BulkActionsMenu } from '../../../components/bulk-actions-menu'
+import { FilterDialog } from '../../../components/filter-dialog'
+import { QueryField } from '../../../components/query-field'
+import { useDialog } from '../../../hooks/use-dialog'
 import {
   containsOperator,
   endsWithOperator,
@@ -18,27 +18,27 @@ import {
   lessThanOperator,
   notContainsOperator,
   notEqualOperator,
-  startsWithOperator
-} from '../../../utils/filter-operators';
+  startsWithOperator,
+} from '../../../utils/filter-operators'
 
 const viewOptions = [
   {
     label: 'All',
-    value: 'all'
+    value: 'all',
   },
   {
     label: 'Published',
-    value: 'published'
+    value: 'published',
   },
   {
     label: 'Draft',
-    value: 'draft'
+    value: 'draft',
   },
   {
     label: 'Archived',
-    value: 'archived'
-  }
-];
+    value: 'archived',
+  },
+]
 
 const filterProperties = [
   {
@@ -51,8 +51,8 @@ const filterProperties = [
       'notContains',
       'startsWith',
       'isBlank',
-      'isPresent'
-    ]
+      'isPresent',
+    ],
   },
   {
     label: 'Status',
@@ -64,15 +64,15 @@ const filterProperties = [
       'notContains',
       'startsWith',
       'isBlank',
-      'isPresent'
-    ]
+      'isPresent',
+    ],
   },
   {
     label: 'Created',
     name: 'createdAt',
-    operators: ['isAfter', 'isBefore', 'isBlank', 'isPresent']
-  }
-];
+    operators: ['isAfter', 'isBefore', 'isBlank', 'isPresent'],
+  },
+]
 
 const filterOperators = [
   containsOperator,
@@ -86,8 +86,8 @@ const filterOperators = [
   lessThanOperator,
   notContainsOperator,
   notEqualOperator,
-  startsWithOperator
-];
+  startsWithOperator,
+]
 
 export const ProductsSearch = (props) => {
   const {
@@ -99,22 +99,25 @@ export const ProductsSearch = (props) => {
     onViewChange,
     query = '',
     selected = [],
-    view = 'all'
-  } = props;
-  const filterDialog = useDialog();
+    view = 'all',
+  } = props
+  const filterDialog = useDialog()
 
-  const handleFiltersApply = useCallback((filters) => {
-    filterDialog.handleClose();
-    onFiltersApply?.(filters);
-  }, [filterDialog, onFiltersApply]);
+  const handleFiltersApply = useCallback(
+    (filters) => {
+      filterDialog.handleClose()
+      onFiltersApply?.(filters)
+    },
+    [filterDialog, onFiltersApply]
+  )
 
   const handleFiltersClear = useCallback(() => {
-    filterDialog.handleClose();
-    onFiltersClear?.();
-  }, [filterDialog, onFiltersClear]);
+    filterDialog.handleClose()
+    onFiltersClear?.()
+  }, [filterDialog, onFiltersClear])
 
-  const hasSelection = selected.length > 0;
-  const hasFilters = filters.length > 0;
+  const hasSelection = selected.length > 0
+  const hasFilters = filters.length > 0
 
   return (
     <>
@@ -122,8 +125,8 @@ export const ProductsSearch = (props) => {
         <Box
           sx={{
             px: {
-              sm: 3
-            }
+              sm: 3,
+            },
           }}
         >
           <Tabs
@@ -156,8 +159,8 @@ export const ProductsSearch = (props) => {
               sx={{
                 order: {
                   xs: 3,
-                  sm: 1
-                }
+                  sm: 1,
+                },
               }}
             />
           )}
@@ -169,8 +172,8 @@ export const ProductsSearch = (props) => {
               flexGrow: 1,
               order: {
                 xs: 1,
-                sm: 2
-              }
+                sm: 2,
+              },
             }}
             value={query}
           />
@@ -178,11 +181,11 @@ export const ProductsSearch = (props) => {
             disabled={disabled}
             onClick={filterDialog.handleOpen}
             size="large"
-            startIcon={(
+            startIcon={
               <SvgIcon fontSize="small">
                 <AdjustmentsHorizontalIcon />
               </SvgIcon>
-            )}
+            }
             sx={{ order: 2 }}
             variant={hasFilters ? 'contained' : 'text'}
           >
@@ -200,8 +203,8 @@ export const ProductsSearch = (props) => {
         properties={filterProperties}
       />
     </>
-  );
-};
+  )
+}
 
 ProductsSearch.propTypes = {
   disabled: PropTypes.bool,
@@ -212,5 +215,5 @@ ProductsSearch.propTypes = {
   onViewChange: PropTypes.func,
   query: PropTypes.string,
   selected: PropTypes.array,
-  view: PropTypes.oneOf(['all', 'published', 'draft', 'archived'])
-};
+  view: PropTypes.oneOf(['all', 'published', 'draft', 'archived']),
+}

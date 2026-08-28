@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
-import { Button } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import { Add, Edit } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import AppApprovalTemplateForm from "./AppApprovalTemplateForm";
-import { ApiGetCall, ApiPostCall } from "../../api/ApiCall";
-import { CippApiResults } from "./CippApiResults";
+import { useState, useEffect } from 'react'
+import { Button } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import { Add, Edit } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import AppApprovalTemplateForm from './AppApprovalTemplateForm'
+import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
+import { CippApiResults } from './CippApiResults'
 
 export const CippAppApprovalTemplateDrawer = ({
-  buttonText = "Add App Approval Template",
+  buttonText = 'Add App Approval Template',
   isEditMode = false,
   templateId = null,
   templateName = null,
@@ -20,17 +20,19 @@ export const CippAppApprovalTemplateDrawer = ({
   drawerVisible: externalDrawerVisible,
   setDrawerVisible: externalSetDrawerVisible,
 }) => {
-  const [internalDrawerVisible, setInternalDrawerVisible] = useState(false);
-  const [refetchKey, setRefetchKey] = useState(0);
+  const [internalDrawerVisible, setInternalDrawerVisible] = useState(false)
+  const [refetchKey, setRefetchKey] = useState(0)
 
   // Use external drawer state if provided, otherwise use internal state
   const drawerVisible =
-    externalDrawerVisible !== undefined ? externalDrawerVisible : internalDrawerVisible;
-  const setDrawerVisible = externalSetDrawerVisible || setInternalDrawerVisible;
+    externalDrawerVisible !== undefined
+      ? externalDrawerVisible
+      : internalDrawerVisible
+  const setDrawerVisible = externalSetDrawerVisible || setInternalDrawerVisible
 
   const formControl = useForm({
-    mode: "onBlur",
-  });
+    mode: 'onBlur',
+  })
 
   // Get the specified template if template ID is provided
   const { data: templateData, isLoading: templateLoading } = ApiGetCall({
@@ -40,89 +42,89 @@ export const CippAppApprovalTemplateDrawer = ({
         : null,
     queryKey:
       (isEditMode || isCopy) && templateId
-        ? ["ExecAppApprovalTemplate", templateId, refetchKey]
+        ? ['ExecAppApprovalTemplate', templateId, refetchKey]
         : null,
     waiting: !!((isEditMode || isCopy) && templateId),
-  });
+  })
 
   const updatePermissions = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["ListAppApprovalTemplates", "ExecAppApprovalTemplate"],
-  });
+    relatedQueryKeys: ['ListAppApprovalTemplates', 'ExecAppApprovalTemplate'],
+  })
 
   const handleSubmit = (payload) => {
     // If editing, include the template ID
     if (isEditMode && !isCopy && templateId) {
-      payload.TemplateId = templateId;
+      payload.TemplateId = templateId
     }
 
     updatePermissions.mutate(
       {
-        url: "/api/ExecAppApprovalTemplate?Action=Save",
+        url: '/api/ExecAppApprovalTemplate?Action=Save',
         data: payload,
-        queryKey: "ExecAppApprovalTemplate",
+        queryKey: 'ExecAppApprovalTemplate',
       },
       {
         onSuccess: (data) => {
           // Refresh the data
-          setRefetchKey((prev) => prev + 1);
+          setRefetchKey((prev) => prev + 1)
 
           // Call the onSuccess callback if provided
           if (onSuccess) {
-            onSuccess(data);
+            onSuccess(data)
           }
 
           // If adding or copying, reset the form for next entry
           if (!isEditMode || isCopy) {
             formControl.reset({
-              templateName: "",
-              appType: "EnterpriseApp",
+              templateName: '',
+              appType: 'EnterpriseApp',
               appId: null,
               galleryTemplateId: null,
               permissionSetId: null,
-              applicationManifest: "",
-            });
+              applicationManifest: '',
+            })
           }
         },
       }
-    );
-  };
+    )
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
-      templateName: "",
-      appType: "EnterpriseApp",
+      templateName: '',
+      appType: 'EnterpriseApp',
       appId: null,
       galleryTemplateId: null,
       permissionSetId: null,
-      applicationManifest: "",
-    });
-  };
+      applicationManifest: '',
+    })
+  }
 
   // Reset form when drawer is opened for a new template
   useEffect(() => {
     if (drawerVisible && !isEditMode && !isCopy) {
       formControl.reset({
-        templateName: "New App Deployment Template",
-        appType: "EnterpriseApp",
+        templateName: 'New App Deployment Template',
+        appType: 'EnterpriseApp',
         appId: null,
         galleryTemplateId: null,
         permissionSetId: null,
-        applicationManifest: "",
-      });
+        applicationManifest: '',
+      })
     }
-  }, [drawerVisible, isEditMode, isCopy]);
+  }, [drawerVisible, isEditMode, isCopy])
 
   const getDrawerTitle = () => {
     if (isCopy) {
-      return `Copy App Approval Template${templateName ? `: ${templateName}` : ""}`;
+      return `Copy App Approval Template${templateName ? `: ${templateName}` : ''}`
     } else if (isEditMode) {
-      return `Edit App Approval Template${templateName ? `: ${templateName}` : ""}`;
+      return `Edit App Approval Template${templateName ? `: ${templateName}` : ''}`
     } else {
-      return "Add App Approval Template";
+      return 'Add App Approval Template'
     }
-  };
+  }
 
   return (
     <>
@@ -139,24 +141,32 @@ export const CippAppApprovalTemplateDrawer = ({
         onClose={handleCloseDrawer}
         size="xl"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
               onClick={formControl.handleSubmit(handleSubmit)}
-              disabled={updatePermissions.isPending || !formControl.formState.isValid}
+              disabled={
+                updatePermissions.isPending || !formControl.formState.isValid
+              }
             >
               {updatePermissions.isPending
                 ? isEditMode
-                  ? "Updating..."
-                  : "Creating..."
+                  ? 'Updating...'
+                  : 'Creating...'
                 : updatePermissions.isSuccess
-                ? isEditMode
-                  ? "Update Another"
-                  : "Create Another"
-                : isEditMode
-                ? "Update Template"
-                : "Create Template"}
+                  ? isEditMode
+                    ? 'Update Another'
+                    : 'Create Another'
+                  : isEditMode
+                    ? 'Update Template'
+                    : 'Create Template'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -184,5 +194,5 @@ export const CippAppApprovalTemplateDrawer = ({
         </Grid>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

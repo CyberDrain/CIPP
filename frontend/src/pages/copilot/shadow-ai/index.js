@@ -82,9 +82,20 @@ const AiToolDetail = ({ row }) => {
 
   return (
     <Stack spacing={2} sx={{ p: 2 }}>
-      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        flexWrap="wrap"
+        useFlexGap
+      >
         <Typography variant="h6">{row.aiTool}</Typography>
-        <Chip size="small" variant="outlined" label={row.risk} color={riskChipColor(row.risk)} />
+        <Chip
+          size="small"
+          variant="outlined"
+          label={row.risk}
+          color={riskChipColor(row.risk)}
+        />
         <Chip
           size="small"
           variant="outlined"
@@ -121,20 +132,26 @@ const AiToolDetail = ({ row }) => {
       )}
       {row.status === 'Sanctioned' ? (
         <Alert severity="success">
-          This tool is marked as company sanctioned for this tenant, so it reports the Informational
-          risk level. Use the Remove Company Sanctioned Status action to restore its catalog risk
-          level.
+          This tool is marked as company sanctioned for this tenant, so it
+          reports the Informational risk level. Use the Remove Company
+          Sanctioned Status action to restore its catalog risk level.
         </Alert>
       ) : (
         <Alert severity="info">
-          This tool is not company sanctioned. If your customer approves its use, mark it as company
-          sanctioned via the row actions to set its risk level to Informational.
+          This tool is not company sanctioned. If your customer approves its
+          use, mark it as company sanctioned via the row actions to set its risk
+          level to Informational.
         </Alert>
       )}
       <Divider />
       <Grid container spacing={2}>
         {properties
-          .filter((prop) => prop.value !== undefined && prop.value !== null && prop.value !== '')
+          .filter(
+            (prop) =>
+              prop.value !== undefined &&
+              prop.value !== null &&
+              prop.value !== ''
+          )
           .map((prop) => (
             <Grid size={{ md: 4, xs: 12 }} key={prop.label}>
               <Typography variant="subtitle2" color="text.secondary">
@@ -154,7 +171,12 @@ const AiToolDetail = ({ row }) => {
             </Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               {row.approvedPermissions.map((permission) => (
-                <Chip key={permission} size="small" variant="outlined" label={permission} />
+                <Chip
+                  key={permission}
+                  size="small"
+                  variant="outlined"
+                  label={permission}
+                />
               ))}
             </Stack>
           </>
@@ -165,14 +187,24 @@ const AiToolDetail = ({ row }) => {
           noCard={true}
           title="Installed Devices"
           data={row.managedDevices ?? []}
-          simpleColumns={['deviceName', 'userPrincipalName', 'platform', 'osVersion']}
+          simpleColumns={[
+            'deviceName',
+            'userPrincipalName',
+            'platform',
+            'osVersion',
+          ]}
         />
       ) : (
         <CippDataTable
           noCard={true}
           title="Application Users (last 7 days)"
           data={row.applicationUsers ?? []}
-          simpleColumns={['userPrincipalName', 'userDisplayName', 'signIns', 'lastSignInDateTime']}
+          simpleColumns={[
+            'userPrincipalName',
+            'userDisplayName',
+            'signIns',
+            'lastSignInDateTime',
+          ]}
         />
       )}
     </Stack>
@@ -191,7 +223,12 @@ const ApplicationUsersDrawer = ({ row, drawerVisible, setDrawerVisible }) => (
       noCard={true}
       title="Application Users (last 7 days)"
       data={row?.applicationUsers ?? []}
-      simpleColumns={['userPrincipalName', 'userDisplayName', 'signIns', 'lastSignInDateTime']}
+      simpleColumns={[
+        'userPrincipalName',
+        'userDisplayName',
+        'signIns',
+        'lastSignInDateTime',
+      ]}
     />
   </CippOffCanvas>
 )
@@ -221,7 +258,8 @@ const Page = () => {
   const byCategory = data.byCategory ?? []
   const byRisk = data.byRisk ?? []
   const topTools = data.topTools ?? []
-  const needsSync = shadowAi.isSuccess && !summary.intuneSynced && !summary.entraSynced
+  const needsSync =
+    shadowAi.isSuccess && !summary.intuneSynced && !summary.entraSynced
   const showCharts = shadowAi.isFetching || byCategory.length > 0
 
   const topToolsMetric = topToolsMode === 'users' ? 'users' : 'devices'
@@ -334,8 +372,9 @@ const Page = () => {
               </Stack>
               {needsSync && (
                 <Alert severity="info" sx={{ mb: 1 }}>
-                  No cached data found for this tenant yet. Click "Sync data" to collect the Intune
-                  and Entra datasets; the report populates once the sync completes.
+                  No cached data found for this tenant yet. Click "Sync data" to
+                  collect the Intune and Entra datasets; the report populates
+                  once the sync completes.
                 </Alert>
               )}
             </Grid>
@@ -386,18 +425,26 @@ const Page = () => {
                     isFetching={shadowAi.isFetching}
                     chartType="bar"
                     labels={topToolsSorted.map((item) => item.tool)}
-                    chartSeries={topToolsSorted.map((item) => item[topToolsMetric] ?? 0)}
+                    chartSeries={topToolsSorted.map(
+                      (item) => item[topToolsMetric] ?? 0
+                    )}
                     totalLabel={
-                      topToolsMode === 'users' ? 'Active Users (7 Days)' : 'Device Installs'
+                      topToolsMode === 'users'
+                        ? 'Active Users (7 Days)'
+                        : 'Device Installs'
                     }
                     headerAction={
                       <ToggleButtonGroup
                         size="small"
                         exclusive
                         value={topToolsMode}
-                        onChange={(event, value) => value && setTopToolsMode(value)}
+                        onChange={(event, value) =>
+                          value && setTopToolsMode(value)
+                        }
                       >
-                        <ToggleButton value="installations">By installations</ToggleButton>
+                        <ToggleButton value="installations">
+                          By installations
+                        </ToggleButton>
                         <ToggleButton value="users">By users</ToggleButton>
                       </ToggleButtonGroup>
                     }
@@ -447,7 +494,10 @@ const Page = () => {
                   {
                     label: 'Application Users',
                     icon: <UserGroupIcon />,
-                    customComponent: (row, { drawerVisible, setDrawerVisible }) => (
+                    customComponent: (
+                      row,
+                      { drawerVisible, setDrawerVisible }
+                    ) => (
                       <ApplicationUsersDrawer
                         row={row}
                         drawerVisible={drawerVisible}
@@ -498,4 +548,3 @@ const Page = () => {
 Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
 export default Page
-

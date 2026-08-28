@@ -1,25 +1,25 @@
-import React, { useState } from "react";
-import { Divider, Button } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useFormState } from "react-hook-form";
-import { PostAdd } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormTenantSelector } from "./CippFormTenantSelector";
-import { CippApiResults } from "./CippApiResults";
-import { ApiPostCall } from "../../api/ApiCall";
+import React, { useState } from 'react'
+import { Divider, Button } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useFormState } from 'react-hook-form'
+import { PostAdd } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippFormTenantSelector } from './CippFormTenantSelector'
+import { CippApiResults } from './CippApiResults'
+import { ApiPostCall } from '../../api/ApiCall'
 
 export const CippAutopilotStatusPageDrawer = ({
-  buttonText = "Add Status Page",
+  buttonText = 'Add Status Page',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false)
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      TimeOutInMinutes: "",
-      ErrorMessage: "",
+      TimeOutInMinutes: '',
+      ErrorMessage: '',
       ShowProgress: true,
       EnableLog: true,
       OBEEOnly: false,
@@ -28,29 +28,29 @@ export const CippAutopilotStatusPageDrawer = ({
       AllowFail: false,
       InstallWindowsUpdates: true,
     },
-  });
+  })
 
   // Get form state for validation
-  const { isValid } = useFormState({ control: formControl.control });
+  const { isValid } = useFormState({ control: formControl.control })
 
   const createStatusPage = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["Autopilot Status Pages"],
-  });
+    relatedQueryKeys: ['Autopilot Status Pages'],
+  })
 
   const handleSubmit = () => {
-    const formData = formControl.getValues();
+    const formData = formControl.getValues()
     createStatusPage.mutate({
-      url: "/api/AddEnrollment",
+      url: '/api/AddEnrollment',
       data: formData,
-      relatedQueryKeys: ["Autopilot Status Pages"],
-    });
-  };
+      relatedQueryKeys: ['Autopilot Status Pages'],
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
-    formControl.reset();
-  };
+    setDrawerVisible(false)
+    formControl.reset()
+  }
 
   return (
     <>
@@ -67,7 +67,13 @@ export const CippAutopilotStatusPageDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -75,10 +81,10 @@ export const CippAutopilotStatusPageDrawer = ({
               disabled={!isValid || createStatusPage.isLoading}
             >
               {createStatusPage.isLoading
-                ? "Creating..."
+                ? 'Creating...'
                 : createStatusPage.isSuccess
-                ? "Create Another"
-                : "Create Status Page"}
+                  ? 'Create Another'
+                  : 'Create Status Page'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -96,7 +102,7 @@ export const CippAutopilotStatusPageDrawer = ({
               type="multiple"
               allTenants={true}
               preselectedEnabled={true}
-              validators={{ required: "At least one tenant must be selected" }}
+              validators={{ required: 'At least one tenant must be selected' }}
             />
           </Grid>
 
@@ -112,7 +118,7 @@ export const CippAutopilotStatusPageDrawer = ({
               name="TimeOutInMinutes"
               formControl={formControl}
               placeholder="60"
-              validators={{ required: "Timeout is required" }}
+              validators={{ required: 'Timeout is required' }}
             />
           </Grid>
 
@@ -176,5 +182,5 @@ export const CippAutopilotStatusPageDrawer = ({
         </Grid>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

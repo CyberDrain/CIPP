@@ -55,10 +55,13 @@ export const DEFAULT_REPORT_SETTINGS = {
  * overrides on top; those are gone, and a stored template that still carries them is rendered by
  * its preset alone.
  */
-export const resolveReportBranding = (brandingSettings) => ({ ...brandingSettings })
+export const resolveReportBranding = (brandingSettings) => ({
+  ...brandingSettings,
+})
 
 /** The same, as a theme. `ReportDocument` takes the branding and builds the theme itself. */
-export const resolveReportTheme = (brandingSettings) => createReportTheme(brandingSettings)
+export const resolveReportTheme = (brandingSettings) =>
+  createReportTheme(brandingSettings)
 
 /* ── Text helpers ────────────────────────────────────────── */
 
@@ -79,7 +82,8 @@ const inlineStyles = StyleSheet.create({
  */
 const renderInlineNodes = (nodes, keyPrefix, transform) =>
   nodes.map((node, index) => {
-    if (node.type === 'text') return transform ? transform(node.value) : node.value
+    if (node.type === 'text')
+      return transform ? transform(node.value) : node.value
     const key = `${keyPrefix}-${index}`
     return (
       <Text key={key} style={inlineStyles[node.type]}>
@@ -132,7 +136,9 @@ const renderTable = (
   // Columns are equal width here, so each gets its share of the table's usable width. A value wider
   // than that is given a real line break rather than left to hyphenate — see measureText.js.
   const columnPoints =
-    (contentWidth(pageSize, orientation) - TABLE_ROW_PADDING * 2) / columnCount - CELL_GUTTER
+    (contentWidth(pageSize, orientation) - TABLE_ROW_PADDING * 2) /
+      columnCount -
+    CELL_GUTTER
   const wrapCell = (bold) => (text) =>
     wrapLongTokens(text, columnPoints, s.tableCell.fontSize, bold)
 
@@ -149,7 +155,11 @@ const renderTable = (
         /* `fixed` repeats the header at the top of every page the table spills onto —
            without it, continued rows sat under no heading at all. */
         <View style={s.tableHeader} fixed>
-          {cells(headerRow, () => s.tableHeaderCell, () => true)}
+          {cells(
+            headerRow,
+            () => s.tableHeaderCell,
+            () => true
+          )}
         </View>
       )}
       {bodyRows.map((row, ri) => (
@@ -244,14 +254,15 @@ const htmlToElements = (html, s, page) => {
           // TipTap emits header cells as <th> inside <tbody> — it never writes a <thead> —
           // so a first row of <th> counts as a header just as a <thead> does. Without this
           // an editor-authored table loses its header styling and its repeat across pages.
-          const hasHeader = /<thead/i.test(tableHtml) || rowIsAllHeaderCells[0] === true
+          const hasHeader =
+            /<thead/i.test(tableHtml) || rowIsAllHeaderCells[0] === true
           elements.push(
             renderTable(allRows, s, key++, {
-          hasHeader,
-          renderCell: processInlineHtml,
-          pageSize: page?.size,
-          orientation: page?.orientation,
-        })
+              hasHeader,
+              renderCell: processInlineHtml,
+              pageSize: page?.size,
+              orientation: page?.orientation,
+            })
           )
         }
         continue
@@ -292,7 +303,9 @@ const htmlToElements = (html, s, page) => {
       elements.push(
         <Text key={key++} style={s.codeBlock}>
           {/* A code block is literal text — read it flat, marks and all. */}
-          {htmlToPlainText(cleaned.replace(/<pre[^>]*>/, '').replace(/<code[^>]*>/, ''))}
+          {htmlToPlainText(
+            cleaned.replace(/<pre[^>]*>/, '').replace(/<code[^>]*>/, '')
+          )}
         </Text>
       )
     } else {
@@ -409,7 +422,9 @@ const markdownToElements = (markdown, s, page) => {
       elements.push(
         <View key={key++} style={s.bulletItem}>
           <Text style={s.bulletPoint}>{'•'}</Text>
-          <Text style={s.bulletText}>{processInline(line.trim().replace(/^[-*+]\s/, ''))}</Text>
+          <Text style={s.bulletText}>
+            {processInline(line.trim().replace(/^[-*+]\s/, ''))}
+          </Text>
         </View>
       )
     } else if (line.trim().match(/^\d+\.\s/)) {
@@ -417,7 +432,9 @@ const markdownToElements = (markdown, s, page) => {
       elements.push(
         <View key={key++} style={s.bulletItem}>
           <Text style={s.orderedBullet}>{num + '.'}</Text>
-          <Text style={s.bulletText}>{processInline(line.trim().replace(/^\d+\.\s/, ''))}</Text>
+          <Text style={s.bulletText}>
+            {processInline(line.trim().replace(/^\d+\.\s/, ''))}
+          </Text>
         </View>
       )
     } else {
@@ -443,7 +460,9 @@ const markdownToElements = (markdown, s, page) => {
 
 /** A compliance test outcome, in the shared status vocabulary. */
 const statusToneFor = (status) =>
-  ({ Passed: 'pass', Failed: 'fail', Investigate: 'warn', Skipped: 'muted' })[status] ?? null
+  ({ Passed: 'pass', Failed: 'fail', Investigate: 'warn', Skipped: 'muted' })[
+    status
+  ] ?? null
 
 /**
  * The body of one block.
@@ -503,7 +522,9 @@ const ReportSection = ({ block, ...props }) => {
   return (
     <Section title={block.title || undefined}>
       {block.type === 'test' && block.status ? (
-        <StatusText tone={statusToneFor(block.status)}>Status: {block.status}</StatusText>
+        <StatusText tone={statusToneFor(block.status)}>
+          Status: {block.status}
+        </StatusText>
       ) : null}
       <BlockBody block={block} styles={s} page={page} />
     </Section>
@@ -576,8 +597,10 @@ export const ReportBuilderDocument = ({
   const pageGroups = buildPageGroups(safeBlocks)
 
   // Dynamic cover title: shrink font for long names, truncate beyond 50 chars
-  const coverTitle = reportName.length > 50 ? `${reportName.slice(0, 47)}...` : reportName
-  const coverTitleFontSize = coverTitle.length <= 20 ? 48 : coverTitle.length <= 35 ? 36 : 28
+  const coverTitle =
+    reportName.length > 50 ? `${reportName.slice(0, 47)}...` : reportName
+  const coverTitleFontSize =
+    coverTitle.length <= 20 ? 48 : coverTitle.length <= 35 ? 36 : 28
   const { lead, accent } = splitAccentTitle(coverTitle)
 
   return (
@@ -608,9 +631,16 @@ export const ReportBuilderDocument = ({
             footerText={group.block.heroFooterText}
           />
         ) : (
-          <ContentPage key={`content-${groupIndex}`} title={reportName} subtitle={currentDate}>
+          <ContentPage
+            key={`content-${groupIndex}`}
+            title={reportName}
+            subtitle={currentDate}
+          >
             {group.blocks.map((block, blockIndex) => (
-              <ReportSection key={block?.id || `${groupIndex}-${blockIndex}`} block={block} />
+              <ReportSection
+                key={block?.id || `${groupIndex}-${blockIndex}`}
+                block={block}
+              />
             ))}
           </ContentPage>
         )
@@ -646,7 +676,15 @@ export const ReportBuilderPDF = ({
         variables={variables}
       />
     ),
-    [blocks, tenantName, templateName, brandingSettings, reportSettings, generatedDate, variables]
+    [
+      blocks,
+      tenantName,
+      templateName,
+      brandingSettings,
+      reportSettings,
+      generatedDate,
+      variables,
+    ]
   )
 
   if (mode === 'preview') {

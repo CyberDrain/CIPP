@@ -17,7 +17,9 @@ const membersSub = {
 
 describe('util-subTables', () => {
   it('selects a subTable only when its id is in simpleColumns', () => {
-    expect(subTableIsSelected(membersSub, ['displayName', 'members'])).toBe(true)
+    expect(subTableIsSelected(membersSub, ['displayName', 'members'])).toBe(
+      true
+    )
     expect(subTableIsSelected(membersSub, ['displayName'])).toBe(false)
     expect(subTableIsSelected(membersSub, [])).toBe(true)
   })
@@ -25,7 +27,9 @@ describe('util-subTables', () => {
   it('uses the cached column when that field is present on the data', () => {
     const cached = [{ id: '1', membersCsv: 'Jane, Bob' }]
     const live = [{ id: '1', displayName: 'Finance' }]
-    const liveWithEmptyCsv = [{ id: '1', displayName: 'Finance', membersCsv: '' }]
+    const liveWithEmptyCsv = [
+      { id: '1', displayName: 'Finance', membersCsv: '' },
+    ]
 
     expect(dataHasPopulatedColumn(cached, 'membersCsv')).toBe(true)
     expect(dataHasPopulatedColumn(liveWithEmptyCsv, 'membersCsv')).toBe(false)
@@ -33,10 +37,18 @@ describe('util-subTables', () => {
     expect(subTableShowsCachedColumn(membersSub, live)).toBe(false)
     expect(subTableShowsCachedColumn(membersSub, liveWithEmptyCsv)).toBe(false)
     expect(
-      resolveSubTableSimpleColumns(['displayName', 'members'], [membersSub], cached)
+      resolveSubTableSimpleColumns(
+        ['displayName', 'members'],
+        [membersSub],
+        cached
+      )
     ).toEqual(['displayName', 'membersCsv'])
     expect(
-      resolveSubTableSimpleColumns(['displayName', 'members'], [membersSub], live)
+      resolveSubTableSimpleColumns(
+        ['displayName', 'members'],
+        [membersSub],
+        live
+      )
     ).toEqual(['displayName', 'members'])
   })
 
@@ -45,39 +57,71 @@ describe('util-subTables', () => {
     const live = [{ id: '1', displayName: 'Finance' }]
 
     expect(
-      getSubTableDisplayColumnIds([membersSub], ['displayName', 'members'], cached)
+      getSubTableDisplayColumnIds(
+        [membersSub],
+        ['displayName', 'members'],
+        cached
+      )
     ).toEqual(['membersCsv'])
     expect(
-      getSubTableDisplayColumnIds([membersSub], ['displayName', 'members'], live)
+      getSubTableDisplayColumnIds(
+        [membersSub],
+        ['displayName', 'members'],
+        live
+      )
     ).toEqual(['members'])
   })
 
   it('excludes the inactive half of each subTable column pair', () => {
-    const cached = [{ id: '1', membersCsv: 'Jane, Bob', members: [{ id: 'u1' }] }]
+    const cached = [
+      { id: '1', membersCsv: 'Jane, Bob', members: [{ id: 'u1' }] },
+    ]
     const live = [{ id: '1', displayName: 'Finance', membersCsv: '' }]
 
     expect(
-      getInactiveSubTableColumnIds([membersSub], ['displayName', 'members'], cached)
+      getInactiveSubTableColumnIds(
+        [membersSub],
+        ['displayName', 'members'],
+        cached
+      )
     ).toEqual(['members'])
     expect(
-      getInactiveSubTableColumnIds([membersSub], ['displayName', 'members'], live)
+      getInactiveSubTableColumnIds(
+        [membersSub],
+        ['displayName', 'members'],
+        live
+      )
     ).toEqual(['membersCsv'])
   })
 
   it('detects stale column order ids that are not on the table', () => {
-    expect(columnOrderHasStaleIds(['displayName', 'members'], ['displayName', 'membersCsv'])).toBe(
-      true
-    )
     expect(
-      columnOrderHasStaleIds(['displayName', 'membersCsv'], ['displayName', 'membersCsv'])
+      columnOrderHasStaleIds(
+        ['displayName', 'members'],
+        ['displayName', 'membersCsv']
+      )
+    ).toBe(true)
+    expect(
+      columnOrderHasStaleIds(
+        ['displayName', 'membersCsv'],
+        ['displayName', 'membersCsv']
+      )
     ).toBe(false)
-    expect(columnOrderHasStaleIds(['mrt-row-select', 'displayName'], ['displayName'])).toBe(false)
+    expect(
+      columnOrderHasStaleIds(['mrt-row-select', 'displayName'], ['displayName'])
+    ).toBe(false)
   })
 
   it('sanitizes stale column order in the same pass (cache→live membersCsv swap)', () => {
     expect(
       sanitizeColumnOrder(
-        ['mrt-row-select', 'CacheTimestamp', 'displayName', 'membersCsv', 'mrt-row-actions'],
+        [
+          'mrt-row-select',
+          'CacheTimestamp',
+          'displayName',
+          'membersCsv',
+          'mrt-row-actions',
+        ],
         ['displayName', 'members'],
         ['displayName', 'members']
       )
@@ -85,9 +129,18 @@ describe('util-subTables', () => {
   })
 
   it('leaves a valid column order untouched', () => {
-    const order = ['mrt-row-select', 'displayName', 'membersCsv', 'mrt-row-actions']
-    expect(sanitizeColumnOrder(order, ['displayName', 'membersCsv'], ['displayName', 'membersCsv'])).toBe(
-      order
-    )
+    const order = [
+      'mrt-row-select',
+      'displayName',
+      'membersCsv',
+      'mrt-row-actions',
+    ]
+    expect(
+      sanitizeColumnOrder(
+        order,
+        ['displayName', 'membersCsv'],
+        ['displayName', 'membersCsv']
+      )
+    ).toBe(order)
   })
 })

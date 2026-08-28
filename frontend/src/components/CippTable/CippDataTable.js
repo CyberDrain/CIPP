@@ -35,7 +35,10 @@ import { useSettings } from '../../hooks/use-settings'
 import { parseCippDate } from '../../utils/parse-cipp-date'
 import { isEqual } from 'lodash' // Import lodash for deep comparison
 import { useLicenseBackfill } from '../../hooks/use-license-backfill'
-import { useTableViewMode, useIsNarrowForTables } from '../../hooks/use-breakpoint'
+import {
+  useTableViewMode,
+  useIsNarrowForTables,
+} from '../../hooks/use-breakpoint'
 import { CippMobileCardList } from './CippMobileCardList'
 import { CippPageActionsFab } from '../CippComponents/CippPageActionsFab'
 import CippDataTableButton from './CippDataTableButton'
@@ -48,7 +51,10 @@ import {
   getInactiveSubTableColumnIds,
   sanitizeColumnOrder,
 } from './util-subTables'
-import { attachParentRow, getRowTenant } from '../../utils/resolve-row-templates'
+import {
+  attachParentRow,
+  getRowTenant,
+} from '../../utils/resolve-row-templates'
 import {
   dispatchRowOpen,
   partitionRowMenuActions,
@@ -124,7 +130,8 @@ const scrollNodeToScrollableAncestorTop = (node) => {
   while (ancestor && ancestor !== document.body) {
     const overflowY = window.getComputedStyle(ancestor).overflowY
     if (overflowY === 'auto' || overflowY === 'scroll') {
-      ancestor.scrollTop += node.getBoundingClientRect().top - ancestor.getBoundingClientRect().top
+      ancestor.scrollTop +=
+        node.getBoundingClientRect().top - ancestor.getBoundingClientRect().top
       return
     }
     ancestor = ancestor.parentElement
@@ -596,7 +603,10 @@ export const CippDataTable = (props) => {
   // The cards branch and the renderTopToolbar branch are two alternating CIPPTableToptoolbar
   // instances (only one is ever mounted), so state that must survive the cards<->table flip
   // lives here and is passed down as props to both.
-  const [activeFilters, setActiveFilters] = useState({ graph: null, table: null })
+  const [activeFilters, setActiveFilters] = useState({
+    graph: null,
+    table: null,
+  })
   const [searchValue, setSearchValue] = useState('')
   const restoredFiltersRef = useRef(new Set())
 
@@ -621,13 +631,16 @@ export const CippDataTable = (props) => {
 
   // transient cards<->table override, session-only, never persisted
   const [viewOverride, setViewOverride] = useState(null)
-  const effectiveViewMode = toggleAllowed ? (viewOverride ?? resolvedViewMode) : resolvedViewMode
+  const effectiveViewMode = toggleAllowed
+    ? (viewOverride ?? resolvedViewMode)
+    : resolvedViewMode
   const isCardView = effectiveViewMode === 'cards'
   const tableViewActive = effectiveViewMode === 'table'
   const CardViewSurface = noCard ? Box : Card
   const [narrowTableMaxHeight, setNarrowTableMaxHeight] = useState(null)
   // way back button: table is only up because of the override, phone default is still cards
-  const showReturnToCards = toggleAllowed && tableViewActive && resolvedViewMode === 'cards'
+  const showReturnToCards =
+    toggleAllowed && tableViewActive && resolvedViewMode === 'cards'
 
   // Hook to trigger re-render when license backfill completes
   const { updateTrigger } = useLicenseBackfill()
@@ -774,10 +787,7 @@ export const CippDataTable = (props) => {
     } else if (configuredSimpleColumns.length > 0) {
       // Resolve any variables in the simple columns before checking visibility
       const resolvedSimpleColumns = resolveSubTableSimpleColumns(
-        resolveSimpleColumnVariables(
-          configuredSimpleColumns,
-          usedData
-        ),
+        resolveSimpleColumnVariables(configuredSimpleColumns, usedData),
         subTables,
         usedData
       )
@@ -989,9 +999,10 @@ export const CippDataTable = (props) => {
     const injectedById = new Map(injected.map((col) => [col.id, col]))
     const replaced = columns.map((col) => injectedById.get(col.id) ?? col)
     const existing = new Set(columns.map((col) => col.id))
-    return [...replaced, ...injected.filter((col) => !existing.has(col.id))].filter(
-      (col) => !excludedIds.has(col.id)
-    )
+    return [
+      ...replaced,
+      ...injected.filter((col) => !existing.has(col.id)),
+    ].filter((col) => !excludedIds.has(col.id))
   }, [usedColumns, usedData, subTables, configuredSimpleColumns])
 
   const displayColumnIds = useMemo(
@@ -1003,7 +1014,10 @@ export const CippDataTable = (props) => {
   // column virtualizer memoizes pinned indexes without depending on column count;
   // without a remount, TableHeadRow maps a sparse virtual item and reads `.index`
   // on undefined.
-  const mrtColumnSetKey = useMemo(() => displayColumnIds.join('|'), [displayColumnIds])
+  const mrtColumnSetKey = useMemo(
+    () => displayColumnIds.join('|'),
+    [displayColumnIds]
+  )
 
   const preferredColumnOrderIds = useMemo(
     () =>
@@ -1021,7 +1035,11 @@ export const CippDataTable = (props) => {
   // index, e is undefined" in Firefox). A useEffect setColumnOrder runs too late.
   const safeColumnOrder = useMemo(
     () =>
-      sanitizeColumnOrder(columnOrder, displayColumnIds, preferredColumnOrderIds),
+      sanitizeColumnOrder(
+        columnOrder,
+        displayColumnIds,
+        preferredColumnOrderIds
+      ),
     [columnOrder, displayColumnIds, preferredColumnOrderIds]
   )
 
@@ -1055,13 +1073,16 @@ export const CippDataTable = (props) => {
     })
   }, [subTables, configuredSimpleColumns, usedData])
 
-  const handleActionDisabled = useCallback((row, action) => {
-    const actionRow = attachParentRow(row, parentRow)
-    if (action?.condition) {
-      return !action.condition(actionRow)
-    }
-    return false
-  }, [parentRow])
+  const handleActionDisabled = useCallback(
+    (row, action) => {
+      const actionRow = attachParentRow(row, parentRow)
+      if (action?.condition) {
+        return !action.condition(actionRow)
+      }
+      return false
+    },
+    [parentRow]
+  )
 
   const getActionRow = useCallback(
     (rowOriginal) => attachParentRow(rowOriginal, parentRow),
@@ -1132,7 +1153,13 @@ export const CippDataTable = (props) => {
       columnFilters,
       showSkeletons,
     }),
-    [sanitizedColumnVisibility, safeColumnOrder, sorting, columnFilters, showSkeletons]
+    [
+      sanitizedColumnVisibility,
+      safeColumnOrder,
+      sorting,
+      columnFilters,
+      showSkeletons,
+    ]
   )
 
   // Single row-action dispatch used by BOTH the desktop row menu and the mobile action
@@ -1142,8 +1169,15 @@ export const CippDataTable = (props) => {
   const dispatchRowAction = useCallback(
     (action, rowOriginal, closeMenu = () => {}) => {
       const scopeToRowTenant = () => {
-        const tenant = getRowTenant(getActionRow(rowOriginal), settings.currentTenant)
-        if (settings.currentTenant === 'AllTenants' && tenant && tenant !== 'AllTenants') {
+        const tenant = getRowTenant(
+          getActionRow(rowOriginal),
+          settings.currentTenant
+        )
+        if (
+          settings.currentTenant === 'AllTenants' &&
+          tenant &&
+          tenant !== 'AllTenants'
+        ) {
           settings.handleUpdate({
             currentTenant: tenant,
           })
@@ -1160,7 +1194,10 @@ export const CippDataTable = (props) => {
       // Handle custom component differently
       if (typeof action.customComponent === 'function') {
         scopeToRowTenant()
-        setCustomComponentData({ data: getActionRow(rowOriginal), action: action })
+        setCustomComponentData({
+          data: getActionRow(rowOriginal),
+          action: action,
+        })
         setCustomComponentVisible(true)
         closeMenu()
         return
@@ -1206,8 +1243,7 @@ export const CippDataTable = (props) => {
         return
       }
       const tenant = getRowTenant(actionRow, settings.currentTenant)
-      const rowTenant =
-        tenant && tenant !== 'AllTenants' ? tenant : undefined
+      const rowTenant = tenant && tenant !== 'AllTenants' ? tenant : undefined
       if (settings.currentTenant === 'AllTenants' && rowTenant) {
         settings.handleUpdate({
           currentTenant: rowTenant,
@@ -1225,8 +1261,7 @@ export const CippDataTable = (props) => {
     (rowOriginal) => {
       const actionRow = getActionRow(rowOriginal)
       const tenant = getRowTenant(actionRow, settings.currentTenant)
-      const rowTenant =
-        tenant && tenant !== 'AllTenants' ? tenant : undefined
+      const rowTenant = tenant && tenant !== 'AllTenants' ? tenant : undefined
       const dispatchOptions = {
         fallbackTenant: rowTenant,
         currentTenant: settings.currentTenant,
@@ -1248,8 +1283,7 @@ export const CippDataTable = (props) => {
     (rowOriginal) => {
       const actionRow = getActionRow(rowOriginal)
       const tenant = getRowTenant(actionRow, settings.currentTenant)
-      const rowTenant =
-        tenant && tenant !== 'AllTenants' ? tenant : undefined
+      const rowTenant = tenant && tenant !== 'AllTenants' ? tenant : undefined
       return {
         actionRow,
         rowTenant,
@@ -1597,7 +1631,9 @@ export const CippDataTable = (props) => {
               onViewToggle={toggleAllowed ? handleViewToggle : undefined}
               tableViewActive={toggleAllowed ? tableViewActive : undefined}
               showReturnToCards={showReturnToCards}
-              bulkActionsSlot={isNarrowViewport && !isInDialog ? headerBulkSlot : null}
+              bulkActionsSlot={
+                isNarrowViewport && !isInDialog ? headerBulkSlot : null
+              }
               dataSourceControls={dataSourceControls}
               activeFilters={activeFilters}
               setActiveFilters={setActiveFilters}
@@ -1676,7 +1712,9 @@ export const CippDataTable = (props) => {
           ...modeInfo.muiTableContainerProps,
           sx: {
             ...modeInfo.muiTableContainerProps?.sx,
-            maxHeight: narrowTableMaxHeight ? `${narrowTableMaxHeight}px` : 'none',
+            maxHeight: narrowTableMaxHeight
+              ? `${narrowTableMaxHeight}px`
+              : 'none',
           },
         },
       }),
@@ -1722,7 +1760,10 @@ export const CippDataTable = (props) => {
       // viewport-relative, the toggle handler aligns the card surface with the scroll
       // viewport top first so this reads a deterministic position
       const top = container.getBoundingClientRect().top
-      let next = Math.max(240, Math.floor(window.innerHeight - top - footer - BELOW_PAPER_PX))
+      let next = Math.max(
+        240,
+        Math.floor(window.innerHeight - top - footer - BELOW_PAPER_PX)
+      )
       // 120 = minimal chrome allowance, keeps the table from claiming the full viewport
       next = Math.min(next, window.innerHeight - 120)
       setNarrowTableMaxHeight((prev) => {
@@ -1850,7 +1891,8 @@ export const CippDataTable = (props) => {
   ) : undefined
 
   // below md, table-in-Card branch: the actions FAB carries cardButton
-  const headerAction = isNarrowViewport && !isInDialog ? undefined : resolvedCardButton
+  const headerAction =
+    isNarrowViewport && !isInDialog ? undefined : resolvedCardButton
 
   return (
     <>
@@ -1861,7 +1903,10 @@ export const CippDataTable = (props) => {
           data-testid="cipp-card-view"
           {...(noCard
             ? {}
-            : { sx: { width: '100%', overflow: 'visible' }, ...props.cardProps })}
+            : {
+                sx: { width: '100%', overflow: 'visible' },
+                ...props.cardProps,
+              })}
         >
           {!hideTitle && (
             <Box
@@ -1971,7 +2016,9 @@ export const CippDataTable = (props) => {
             <>
               {(getRequestData.isSuccess ||
                 getRequestData.data?.pages.length >= 0 ||
-                data) && <MaterialReactTable key={mrtColumnSetKey} table={table} />}
+                data) && (
+                <MaterialReactTable key={mrtColumnSetKey} table={table} />
+              )}
             </>
           )}
           {getRequestData.isError && !getRequestData.isFetchNextPageError && (
@@ -1996,7 +2043,7 @@ export const CippDataTable = (props) => {
                       />
                       {/* narrow viewports carry these in the Table options sheet */}
                       {dataSourceControls && !isNarrowViewport ? (
-                        <Stack direction='row' spacing={1} alignItems='center'>
+                        <Stack direction="row" spacing={1} alignItems="center">
                           {dataSourceControls}
                           {headerAction}
                         </Stack>
@@ -2035,7 +2082,9 @@ export const CippDataTable = (props) => {
             </CardContent>
           </Card>
           {isNarrowViewport && !isInDialog && resolvedCardButton && (
-            <CippPageActionsFab title="Actions">{resolvedCardButton}</CippPageActionsFab>
+            <CippPageActionsFab title="Actions">
+              {resolvedCardButton}
+            </CippPageActionsFab>
           )}
         </>
       )}

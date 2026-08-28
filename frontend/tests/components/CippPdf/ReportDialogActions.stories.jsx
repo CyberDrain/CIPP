@@ -27,7 +27,11 @@ const ActionsRow = () => (
           Sections enabled: 7 of 9
         </Typography>
       </Box>
-      <Button variant="contained" startIcon={<Download />} sx={{ minWidth: 140 }}>
+      <Button
+        variant="contained"
+        startIcon={<Download />}
+        sx={{ minWidth: 140 }}
+      >
         Download PDF
       </Button>
       <Button variant="outlined">Close</Button>
@@ -51,15 +55,18 @@ export const StackedAtPhoneWidth = {
     const primary = canvas.getByRole('button', { name: /download pdf/i })
     const secondary = canvas.getByRole('button', { name: /^close$/i })
 
-    await step('the two buttons share one width and one left edge', async () => {
-      await waitFor(() => {
-        const a = primary.getBoundingClientRect()
-        const b = secondary.getBoundingClientRect()
-        expect(Math.abs(a.width - b.width)).toBeLessThanOrEqual(1)
-        expect(Math.abs(a.left - b.left)).toBeLessThanOrEqual(1)
-        expect(Math.abs(a.right - b.right)).toBeLessThanOrEqual(1)
-      })
-    })
+    await step(
+      'the two buttons share one width and one left edge',
+      async () => {
+        await waitFor(() => {
+          const a = primary.getBoundingClientRect()
+          const b = secondary.getBoundingClientRect()
+          expect(Math.abs(a.width - b.width)).toBeLessThanOrEqual(1)
+          expect(Math.abs(a.left - b.left)).toBeLessThanOrEqual(1)
+          expect(Math.abs(a.right - b.right)).toBeLessThanOrEqual(1)
+        })
+      }
+    )
 
     await step('and nothing pushes the row wider than the screen', async () => {
       await expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth)

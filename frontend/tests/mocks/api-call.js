@@ -48,8 +48,12 @@ export const api = {
 }
 
 export const apiCallMock = () => ({
-  ApiGetCall: vi.fn((opts) => (typeof api.get === 'function' ? api.get(opts) : api.get)),
-  ApiPostCall: vi.fn((opts) => (typeof api.post === 'function' ? api.post(opts) : api.post)),
+  ApiGetCall: vi.fn((opts) =>
+    typeof api.get === 'function' ? api.get(opts) : api.get
+  ),
+  ApiPostCall: vi.fn((opts) =>
+    typeof api.post === 'function' ? api.post(opts) : api.post
+  ),
   ApiGetCallWithPagination: vi.fn((opts) =>
     typeof api.paginated === 'function' ? api.paginated(opts) : api.paginated
   ),

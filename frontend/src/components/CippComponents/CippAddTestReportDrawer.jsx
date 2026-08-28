@@ -52,8 +52,10 @@ export const CippAddTestReportDrawer = ({
   const { isValid } = useFormState({ control: formControl.control })
   const selectedIdentityTests =
     useWatch({ control: formControl.control, name: 'IdentityTests' }) || []
-  const selectedDeviceTests = useWatch({ control: formControl.control, name: 'DevicesTests' }) || []
-  const selectedCustomTests = useWatch({ control: formControl.control, name: 'CustomTests' }) || []
+  const selectedDeviceTests =
+    useWatch({ control: formControl.control, name: 'DevicesTests' }) || []
+  const selectedCustomTests =
+    useWatch({ control: formControl.control, name: 'CustomTests' }) || []
 
   const createReport = ApiPostCall({
     urlFromData: true,
@@ -155,7 +157,9 @@ export const CippAddTestReportDrawer = ({
         { shouldValidate: true }
       )
     } else {
-      formControl.setValue(fieldName, [...currentTests, testId], { shouldValidate: true })
+      formControl.setValue(fieldName, [...currentTests, testId], {
+        shouldValidate: true,
+      })
     }
   }
 
@@ -185,7 +189,8 @@ export const CippAddTestReportDrawer = ({
         ? filterTests(availableTests.DevicesTests || [])
         : filterTests(availableTests.CustomTests || [])
 
-  const currentTestType = activeTab === 0 ? 'Identity' : activeTab === 1 ? 'Devices' : 'Custom'
+  const currentTestType =
+    activeTab === 0 ? 'Identity' : activeTab === 1 ? 'Devices' : 'Custom'
 
   return (
     <>
@@ -227,9 +232,17 @@ export const CippAddTestReportDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+          >
             <CippApiResults apiObject={createReport} />
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                justifyContent: 'flex-start',
+              }}
+            >
               <Button
                 variant="contained"
                 color="primary"
@@ -262,7 +275,12 @@ export const CippAddTestReportDrawer = ({
         >
           {/* Test Suite Details Section */}
           <Grid size={12}>
-            <Paper sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'background.default' }}>
+            <Paper
+              sx={{
+                p: { xs: 2, md: 3 },
+                backgroundColor: 'background.default',
+              }}
+            >
               <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
                 Test Suite Details
               </Typography>
@@ -275,7 +293,10 @@ export const CippAddTestReportDrawer = ({
                     formControl={formControl}
                     validators={{
                       required: 'Name is required',
-                      maxLength: { value: 256, message: 'Name must be 256 characters or fewer' },
+                      maxLength: {
+                        value: 256,
+                        message: 'Name must be 256 characters or fewer',
+                      },
                     }}
                   />
                 </Grid>
@@ -353,30 +374,48 @@ export const CippAddTestReportDrawer = ({
                 >
                   <Tab
                     label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
                         <span>Identity Tests</span>
                         {selectedIdentityTests.length > 0 && (
-                          <Chip size="small" label={selectedIdentityTests.length} color="primary" />
+                          <Chip
+                            size="small"
+                            label={selectedIdentityTests.length}
+                            color="primary"
+                          />
                         )}
                       </Box>
                     }
                   />
                   <Tab
                     label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
                         <span>Device Tests</span>
                         {selectedDeviceTests.length > 0 && (
-                          <Chip size="small" label={selectedDeviceTests.length} color="secondary" />
+                          <Chip
+                            size="small"
+                            label={selectedDeviceTests.length}
+                            color="secondary"
+                          />
                         )}
                       </Box>
                     }
                   />
                   <Tab
                     label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
                         <span>Custom Tests</span>
                         {selectedCustomTests.length > 0 && (
-                          <Chip size="small" label={selectedCustomTests.length} color="info" />
+                          <Chip
+                            size="small"
+                            label={selectedCustomTests.length}
+                            color="info"
+                          />
                         )}
                       </Box>
                     }
@@ -406,18 +445,25 @@ export const CippAddTestReportDrawer = ({
               >
                 {availableTestsApi.isFetching ? (
                   <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography color="text.secondary">Loading tests...</Typography>
+                    <Typography color="text.secondary">
+                      Loading tests...
+                    </Typography>
                   </Box>
                 ) : currentTests.length === 0 ? (
                   <Box sx={{ textAlign: 'center', py: 4 }}>
                     <Typography color="text.secondary">
-                      {searchTerm ? 'No tests found matching your search' : 'No tests available'}
+                      {searchTerm
+                        ? 'No tests found matching your search'
+                        : 'No tests available'}
                     </Typography>
                   </Box>
                 ) : (
                   <Grid container spacing={1}>
                     {currentTests.map((test) => {
-                      const isSelected = isTestSelected(test.id, currentTestType)
+                      const isSelected = isTestSelected(
+                        test.id,
+                        currentTestType
+                      )
                       return (
                         <Grid size={12} key={test.id}>
                           <Card
@@ -425,8 +471,12 @@ export const CippAddTestReportDrawer = ({
                               cursor: 'pointer',
                               transition: 'all 0.2s',
                               border: 1,
-                              borderColor: isSelected ? 'primary.main' : 'divider',
-                              backgroundColor: isSelected ? 'primary.50' : 'background.paper',
+                              borderColor: isSelected
+                                ? 'primary.main'
+                                : 'divider',
+                              backgroundColor: isSelected
+                                ? 'primary.50'
+                                : 'background.paper',
                               '&:hover': {
                                 borderColor: 'primary.main',
                                 boxShadow: 2,
@@ -434,8 +484,16 @@ export const CippAddTestReportDrawer = ({
                             }}
                             onClick={() => toggleTest(test.id, currentTestType)}
                           >
-                            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <CardContent
+                              sx={{ p: 2, '&:last-child': { pb: 2 } }}
+                            >
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1.5,
+                                }}
+                              >
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                   <Box
                                     sx={{
@@ -449,13 +507,18 @@ export const CippAddTestReportDrawer = ({
                                       label={test.id}
                                       size="small"
                                       color={isSelected ? 'primary' : 'default'}
-                                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                                      sx={{
+                                        fontFamily: 'monospace',
+                                        fontSize: '0.75rem',
+                                      }}
                                     />
                                     <Typography
                                       variant="body2"
                                       sx={{
                                         fontWeight: isSelected ? 600 : 400,
-                                        color: isSelected ? 'primary.main' : 'text.primary',
+                                        color: isSelected
+                                          ? 'primary.main'
+                                          : 'text.primary',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',

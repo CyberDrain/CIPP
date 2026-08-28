@@ -9,7 +9,14 @@ import { ApiGetCall } from '../../../src/api/ApiCall'
 
 vi.mock('../../../src/api/ApiCall', () => ({
   ApiGetCall: vi.fn(),
-  ApiPostCall: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isSuccess: false, isError: false, data: undefined, error: null })),
+  ApiPostCall: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+    isSuccess: false,
+    isError: false,
+    data: undefined,
+    error: null,
+  })),
   ApiGetCallWithPagination: vi.fn(() => ({
     isSuccess: false,
     isFetching: false,
@@ -43,12 +50,19 @@ function drawerApplyButton() {
 describe('CippGraphExplorerSimpleFilter', { timeout: 15000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    ApiGetCall.mockReturnValue({ isSuccess: false, isFetching: false, data: undefined, refetch: vi.fn() })
+    ApiGetCall.mockReturnValue({
+      isSuccess: false,
+      isFetching: false,
+      data: undefined,
+      refetch: vi.fn(),
+    })
   })
 
   it('Run is disabled until a preset is picked', async () => {
     const user = userEvent.setup()
-    renderWithProviders(<CippGraphExplorerSimpleFilter onSubmitFilter={vi.fn()} />)
+    renderWithProviders(
+      <CippGraphExplorerSimpleFilter onSubmitFilter={vi.fn()} />
+    )
     expect(screen.getByRole('button', { name: 'Run' })).toBeDisabled()
     await pickBarPreset(user, BUILTIN.name)
     expect(screen.getByRole('button', { name: 'Run' })).toBeEnabled()
@@ -57,7 +71,9 @@ describe('CippGraphExplorerSimpleFilter', { timeout: 15000 }, () => {
   it('Run converts built-in preset params for the API', async () => {
     const onSubmitFilter = vi.fn()
     const user = userEvent.setup()
-    renderWithProviders(<CippGraphExplorerSimpleFilter onSubmitFilter={onSubmitFilter} />)
+    renderWithProviders(
+      <CippGraphExplorerSimpleFilter onSubmitFilter={onSubmitFilter} />
+    )
     await pickBarPreset(user, BUILTIN.name)
     await user.click(screen.getByRole('button', { name: 'Run' }))
     expect(onSubmitFilter).toHaveBeenCalledTimes(1)
@@ -67,14 +83,23 @@ describe('CippGraphExplorerSimpleFilter', { timeout: 15000 }, () => {
   it('Run reports the preset title via onPresetChange', async () => {
     const onPresetChange = vi.fn()
     const user = userEvent.setup()
-    renderWithProviders(<CippGraphExplorerSimpleFilter onSubmitFilter={vi.fn()} onPresetChange={onPresetChange} />)
+    renderWithProviders(
+      <CippGraphExplorerSimpleFilter
+        onSubmitFilter={vi.fn()}
+        onPresetChange={onPresetChange}
+      />
+    )
     await pickBarPreset(user, BUILTIN.name)
     await user.click(screen.getByRole('button', { name: 'Run' }))
-    expect(onPresetChange).toHaveBeenCalledWith(`Graph Explorer - ${BUILTIN.name}`)
+    expect(onPresetChange).toHaveBeenCalledWith(
+      `Graph Explorer - ${BUILTIN.name}`
+    )
   })
 
   it('keepMounted drawer content exists before first open', () => {
-    renderWithProviders(<CippGraphExplorerSimpleFilter onSubmitFilter={vi.fn()} />)
+    renderWithProviders(
+      <CippGraphExplorerSimpleFilter onSubmitFilter={vi.fn()} />
+    )
     expect(drawerApplyButton()).toBeInTheDocument()
     expect(drawerApplyButton()).not.toBeVisible()
   })
@@ -82,17 +107,24 @@ describe('CippGraphExplorerSimpleFilter', { timeout: 15000 }, () => {
   it('drawer submit fires onSubmitFilter and closes the drawer', async () => {
     const onSubmitFilter = vi.fn()
     const user = userEvent.setup()
-    renderWithProviders(<CippGraphExplorerSimpleFilter onSubmitFilter={onSubmitFilter} />)
+    renderWithProviders(
+      <CippGraphExplorerSimpleFilter onSubmitFilter={onSubmitFilter} />
+    )
     await user.click(screen.getByRole('button', { name: 'Edit Query' }))
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Apply Filter' })).toBeVisible()
     })
-    await user.type(screen.getByRole('textbox', { name: 'Endpoint' }), '/groups')
+    await user.type(
+      screen.getByRole('textbox', { name: 'Endpoint' }),
+      '/groups'
+    )
     await user.click(screen.getByRole('button', { name: 'Apply Filter' }))
     await waitFor(() => {
       expect(onSubmitFilter).toHaveBeenCalledTimes(1)
     })
-    expect(onSubmitFilter.mock.calls[0][0]).toMatchObject({ endpoint: '/groups' })
+    expect(onSubmitFilter.mock.calls[0][0]).toMatchObject({
+      endpoint: '/groups',
+    })
     await waitFor(() => {
       expect(drawerApplyButton()).not.toBeVisible()
     })
@@ -101,25 +133,37 @@ describe('CippGraphExplorerSimpleFilter', { timeout: 15000 }, () => {
   it('Run re-fires the last drawer edits instead of preset params', async () => {
     const onSubmitFilter = vi.fn()
     const user = userEvent.setup()
-    renderWithProviders(<CippGraphExplorerSimpleFilter onSubmitFilter={onSubmitFilter} />)
+    renderWithProviders(
+      <CippGraphExplorerSimpleFilter onSubmitFilter={onSubmitFilter} />
+    )
     await user.click(screen.getByRole('button', { name: 'Edit Query' }))
-    await user.type(screen.getByRole('textbox', { name: 'Endpoint' }), '/groups')
+    await user.type(
+      screen.getByRole('textbox', { name: 'Endpoint' }),
+      '/groups'
+    )
     await user.click(screen.getByRole('button', { name: 'Apply Filter' }))
     await waitFor(() => {
       expect(onSubmitFilter).toHaveBeenCalledTimes(1)
     })
     await user.click(screen.getByRole('button', { name: 'Run' }))
     expect(onSubmitFilter).toHaveBeenCalledTimes(2)
-    expect(onSubmitFilter.mock.calls[1][0]).toEqual(onSubmitFilter.mock.calls[0][0])
+    expect(onSubmitFilter.mock.calls[1][0]).toEqual(
+      onSubmitFilter.mock.calls[0][0]
+    )
   })
 
   it('picking a preset in the bar discards drawer edits', async () => {
     const onSubmitFilter = vi.fn()
     const user = userEvent.setup()
-    renderWithProviders(<CippGraphExplorerSimpleFilter onSubmitFilter={onSubmitFilter} />)
+    renderWithProviders(
+      <CippGraphExplorerSimpleFilter onSubmitFilter={onSubmitFilter} />
+    )
     // drawer edit first
     await user.click(screen.getByRole('button', { name: 'Edit Query' }))
-    await user.type(screen.getByRole('textbox', { name: 'Endpoint' }), '/groups')
+    await user.type(
+      screen.getByRole('textbox', { name: 'Endpoint' }),
+      '/groups'
+    )
     await user.click(screen.getByRole('button', { name: 'Apply Filter' }))
     await waitFor(() => {
       expect(onSubmitFilter).toHaveBeenCalledTimes(1)
@@ -135,14 +179,24 @@ describe('CippGraphExplorerSimpleFilter', { timeout: 15000 }, () => {
     const onViewModeChange = vi.fn()
     const user = userEvent.setup()
     const { unmount } = renderWithProviders(
-      <CippGraphExplorerSimpleFilter onSubmitFilter={vi.fn()} viewMode="table" onViewModeChange={onViewModeChange} />
+      <CippGraphExplorerSimpleFilter
+        onSubmitFilter={vi.fn()}
+        viewMode="table"
+        onViewModeChange={onViewModeChange}
+      />
     )
     await user.click(screen.getByRole('button', { name: 'View JSON' }))
     expect(onViewModeChange).toHaveBeenCalledWith('json')
     unmount()
     renderWithProviders(
-      <CippGraphExplorerSimpleFilter onSubmitFilter={vi.fn()} viewMode="json" onViewModeChange={onViewModeChange} />
+      <CippGraphExplorerSimpleFilter
+        onSubmitFilter={vi.fn()}
+        viewMode="json"
+        onViewModeChange={onViewModeChange}
+      />
     )
-    expect(screen.getByRole('button', { name: 'View Table' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'View Table' })
+    ).toBeInTheDocument()
   })
 })

@@ -42,8 +42,13 @@ const EXECUTIVE_SECTIONS = {
  * Build the report document for a given type. Pure, and exported so it can be rendered to a real
  * PDF in tests without mounting the viewer.
  */
-export const buildPreviewDocument = (reportType, brandingSettings, variables) => {
-  const sample = SAMPLE_DATA_BY_REPORT[reportType] ?? SAMPLE_DATA_BY_REPORT.executive
+export const buildPreviewDocument = (
+  reportType,
+  brandingSettings,
+  variables
+) => {
+  const sample =
+    SAMPLE_DATA_BY_REPORT[reportType] ?? SAMPLE_DATA_BY_REPORT.executive
   const shared = { brandingSettings, tenantName: SAMPLE_TENANT_NAME, variables }
 
   switch (reportType) {
@@ -66,17 +71,31 @@ export const buildPreviewDocument = (reportType, brandingSettings, variables) =>
         />
       )
     case 'sharing':
-      return <SharingReportDocument {...shared} sharingData={sample.sharingData} />
+      return (
+        <SharingReportDocument {...shared} sharingData={sample.sharingData} />
+      )
     case 'permissions':
-      return <PermissionsReportDocument {...shared} permissionsData={sample.permissionsData} />
+      return (
+        <PermissionsReportDocument
+          {...shared}
+          permissionsData={sample.permissionsData}
+        />
+      )
     default:
       return (
-        <ExecutiveReportDocument {...shared} {...sample} sectionConfig={EXECUTIVE_SECTIONS} />
+        <ExecutiveReportDocument
+          {...shared}
+          {...sample}
+          sectionConfig={EXECUTIVE_SECTIONS}
+        />
       )
   }
 }
 
-const CippBrandingReportPreview = ({ reportType = 'executive', brandingSettings }) => {
+const CippBrandingReportPreview = ({
+  reportType = 'executive',
+  brandingSettings,
+}) => {
   // Resolved against the selected tenant, so a footer being written with %cippurl% or a custom
   // variable previews the value it will actually print rather than the token.
   const variables = useReportVariables()

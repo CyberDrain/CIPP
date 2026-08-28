@@ -51,12 +51,20 @@ export const Desktop = {
 
     await step('every suite action is an inline button', async () => {
       await waitFor(() =>
-        expect(canvas.getByRole('button', { name: 'Refresh' })).toBeInTheDocument()
+        expect(
+          canvas.getByRole('button', { name: 'Refresh' })
+        ).toBeInTheDocument()
       )
       expect(canvas.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
-      expect(canvas.getByRole('button', { name: 'Create Suite' })).toBeInTheDocument()
-      expect(canvas.getByRole('button', { name: 'Refresh test suites' })).toBeInTheDocument()
-      expect(canvas.queryByRole('button', { name: 'Test suite actions' })).toBeNull()
+      expect(
+        canvas.getByRole('button', { name: 'Create Suite' })
+      ).toBeInTheDocument()
+      expect(
+        canvas.getByRole('button', { name: 'Refresh test suites' })
+      ).toBeInTheDocument()
+      expect(
+        canvas.queryByRole('button', { name: 'Test suite actions' })
+      ).toBeNull()
     })
   },
 }
@@ -74,13 +82,18 @@ export const NarrowDesktopKeepsButtonsInView = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
 
-    await step('the last button is not pushed past the container edge', async () => {
-      const deleteButton = await waitFor(() => canvas.getByRole('button', { name: 'Delete' }))
-      const row = deleteButton.closest('div[class*="MuiBox"]').parentElement
-      expect(deleteButton.getBoundingClientRect().right).toBeLessThanOrEqual(
-        Math.ceil(row.getBoundingClientRect().right) + 1
-      )
-    })
+    await step(
+      'the last button is not pushed past the container edge',
+      async () => {
+        const deleteButton = await waitFor(() =>
+          canvas.getByRole('button', { name: 'Delete' })
+        )
+        const row = deleteButton.closest('div[class*="MuiBox"]').parentElement
+        expect(deleteButton.getBoundingClientRect().right).toBeLessThanOrEqual(
+          Math.ceil(row.getBoundingClientRect().right) + 1
+        )
+      }
+    )
   },
 }
 
@@ -88,12 +101,17 @@ export const SuiteSelection = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
 
-    await step('the default suite is selected once the list loads', async () => {
-      // Opening the popper is left to CippAutocomplete's own stories — driving it from here
-      // crashes the browser tab in this harness.
-      await waitFor(() =>
-        expect(canvas.getByRole('combobox')).toHaveValue('Zero Trust Network Access Tests')
-      )
-    })
+    await step(
+      'the default suite is selected once the list loads',
+      async () => {
+        // Opening the popper is left to CippAutocomplete's own stories — driving it from here
+        // crashes the browser tab in this harness.
+        await waitFor(() =>
+          expect(canvas.getByRole('combobox')).toHaveValue(
+            'Zero Trust Network Access Tests'
+          )
+        )
+      }
+    )
   },
 }

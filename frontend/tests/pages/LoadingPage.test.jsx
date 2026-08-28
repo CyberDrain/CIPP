@@ -12,7 +12,9 @@ describe('LoadingPage', () => {
     renderWithTheme(<LoadingPage />)
 
     expect(screen.getByText('Logging into CIPP')).toBeInTheDocument()
-    expect(screen.getByText('Please wait while we log you in...')).toBeInTheDocument()
+    expect(
+      screen.getByText('Please wait while we log you in...')
+    ).toBeInTheDocument()
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
@@ -28,7 +30,9 @@ describe('LoadingPage', () => {
 
       expect(screen.queryByText(/cold start/i)).not.toBeInTheDocument()
       expect(screen.queryByText(/function app/i)).not.toBeInTheDocument()
-      expect(screen.getByText('Please wait while we log you in...')).toBeInTheDocument()
+      expect(
+        screen.getByText('Please wait while we log you in...')
+      ).toBeInTheDocument()
     } finally {
       vi.useRealTimers()
     }

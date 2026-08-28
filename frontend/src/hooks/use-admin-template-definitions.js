@@ -4,9 +4,16 @@
 import { useMemo } from 'react'
 import { ApiGetCall } from '../api/ApiCall'
 import { useSettings } from './use-settings'
-import { definitionBindPattern, extractBindGuid } from '../utils/intune-bind-helpers'
+import {
+  definitionBindPattern,
+  extractBindGuid,
+} from '../utils/intune-bind-helpers'
 
-export const useAdminTemplateDefinitions = ({ added = [], manualTenant = null, waiting = true } = {}) => {
+export const useAdminTemplateDefinitions = ({
+  added = [],
+  manualTenant = null,
+  waiting = true,
+} = {}) => {
   const tenantFilter = useSettings().currentTenant
   const activeTenant = manualTenant || tenantFilter
 
@@ -17,7 +24,10 @@ export const useAdminTemplateDefinitions = ({ added = [], manualTenant = null, w
 
     const ids = new Set()
     added.forEach((item) => {
-      const definitionId = extractBindGuid(item?.['definition@odata.bind'], definitionBindPattern)
+      const definitionId = extractBindGuid(
+        item?.['definition@odata.bind'],
+        definitionBindPattern
+      )
       if (definitionId) {
         ids.add(definitionId)
       }
@@ -27,7 +37,10 @@ export const useAdminTemplateDefinitions = ({ added = [], manualTenant = null, w
   }, [added])
 
   const canResolveDefinitions =
-    waiting && Boolean(activeTenant) && activeTenant !== 'AllTenants' && definitionIds.length > 0
+    waiting &&
+    Boolean(activeTenant) &&
+    activeTenant !== 'AllTenants' &&
+    definitionIds.length > 0
 
   const definitionsRequest = ApiGetCall({
     url: '/api/ListIntunePolicy',
@@ -76,7 +89,8 @@ export const useAdminTemplateDefinitions = ({ added = [], manualTenant = null, w
   return {
     definitionsMap,
     isLoadingDefinitions:
-      canResolveDefinitions && (definitionsRequest.isLoading || definitionsRequest.isFetching),
+      canResolveDefinitions &&
+      (definitionsRequest.isLoading || definitionsRequest.isFetching),
     isDefinitionsError: canResolveDefinitions && definitionsRequest.isError,
   }
 }

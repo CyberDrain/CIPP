@@ -1,11 +1,11 @@
-import { useState, useMemo, useCallback } from "react";
-import { Button, Chip, SvgIcon, Tooltip } from "@mui/material";
-import { Stack } from "@mui/system";
-import { Sync, CloudDone, Bolt } from "@mui/icons-material";
-import { useSettings } from "../../hooks/use-settings";
-import { useDialog } from "../../hooks/use-dialog";
-import { CippApiDialog } from "./CippApiDialog";
-import { CippQueueTracker } from "../CippTable/CippQueueTracker";
+import { useState, useMemo, useCallback } from 'react'
+import { Button, Chip, SvgIcon, Tooltip } from '@mui/material'
+import { Stack } from '@mui/system'
+import { Sync, CloudDone, Bolt } from '@mui/icons-material'
+import { useSettings } from '../../hooks/use-settings'
+import { useDialog } from '../../hooks/use-dialog'
+import { CippApiDialog } from './CippApiDialog'
+import { CippQueueTracker } from '../CippTable/CippQueueTracker'
 
 /**
  * Hook + UI component that encapsulates all CIPP Reporting DB cache/live mode logic.
@@ -51,28 +51,34 @@ export function useCippReportDB(config) {
     apiData: extraApiData,
   } = config
 
-  const currentTenant = useSettings().currentTenant;
-  const isAllTenants = currentTenant === "AllTenants";
-  const dialog = useDialog();
-  const [syncQueueId, setSyncQueueId] = useState(null);
-  const [cacheOverride, setCacheOverride] = useState({ tenant: null, value: null });
+  const currentTenant = useSettings().currentTenant
+  const isAllTenants = currentTenant === 'AllTenants'
+  const dialog = useDialog()
+  const [syncQueueId, setSyncQueueId] = useState(null)
+  const [cacheOverride, setCacheOverride] = useState({
+    tenant: null,
+    value: null,
+  })
   const useReportDB = isAllTenants
     ? true
     : cacheOverride.tenant === currentTenant
       ? cacheOverride.value
-      : defaultCached;
+      : defaultCached
   const setUseReportDB = useCallback(
     (valueOrUpdater) => {
       setCacheOverride((prev) => {
-        const previousValue = prev.tenant === currentTenant ? prev.value : defaultCached;
+        const previousValue =
+          prev.tenant === currentTenant ? prev.value : defaultCached
         const nextValue =
-          typeof valueOrUpdater === "function" ? valueOrUpdater(previousValue) : valueOrUpdater;
+          typeof valueOrUpdater === 'function'
+            ? valueOrUpdater(previousValue)
+            : valueOrUpdater
 
-        return { tenant: currentTenant, value: nextValue };
-      });
+        return { tenant: currentTenant, value: nextValue }
+      })
     },
-    [currentTenant, defaultCached],
-  );
+    [currentTenant, defaultCached]
+  )
 
   // Whether the toggle is actually clickable
   const canToggle = allowToggle && !isAllTenants
@@ -133,7 +139,11 @@ export function useCippReportDB(config) {
     <Stack direction="row" spacing={1} alignItems="center">
       {useReportDB && (
         <>
-          <CippQueueTracker queueId={syncQueueId} queryKey={resolvedQueryKey} title={syncTitle} />
+          <CippQueueTracker
+            queueId={syncQueueId}
+            queryKey={resolvedQueryKey}
+            title={syncTitle}
+          />
           <Button
             startIcon={
               <SvgIcon fontSize="small">
@@ -155,7 +165,9 @@ export function useCippReportDB(config) {
             label={useReportDB ? 'Cached' : 'Live'}
             color="primary"
             size="small"
-            onClick={canToggle ? () => setUseReportDB((prev) => !prev) : undefined}
+            onClick={
+              canToggle ? () => setUseReportDB((prev) => !prev) : undefined
+            }
             clickable={canToggle}
             disabled={!canToggle}
             variant="outlined"
@@ -178,7 +190,7 @@ export function useCippReportDB(config) {
         relatedQueryKeys: [`${queryKey}-${currentTenant}-true`],
         data: {
           Name: cacheName,
-          ...(cacheName === "Mailboxes" ? { Types: "None" } : {}),
+          ...(cacheName === 'Mailboxes' ? { Types: 'None' } : {}),
           ...(syncData || {}),
         },
         onSuccess: handleSyncSuccess,

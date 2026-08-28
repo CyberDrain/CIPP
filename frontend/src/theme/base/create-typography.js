@@ -1,6 +1,6 @@
 export const createTypography = () => {
   return {
-    fontFamily: "Inter, sans-serif",
+    fontFamily: 'Inter, sans-serif',
     h1: {
       fontSize: 48,
       fontWeight: 600,
@@ -69,7 +69,7 @@ export const createTypography = () => {
     },
     button: {
       fontWeight: 500,
-      textTransform: "none",
+      textTransform: 'none',
     },
-  };
-};
+  }
+}

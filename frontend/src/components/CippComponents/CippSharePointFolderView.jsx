@@ -150,18 +150,50 @@ const formatFileCount = (value) => {
 }
 
 const COLUMNS = [
-  { id: 'name', label: 'Name', align: 'left', width: undefined, defaultDir: 'asc' },
+  {
+    id: 'name',
+    label: 'Name',
+    align: 'left',
+    width: undefined,
+    defaultDir: 'asc',
+  },
   { id: 'webUrl', label: 'URL', align: 'center', width: 72, defaultDir: 'asc' },
-  { id: 'siteType', label: 'Type', align: 'left', width: '14%', defaultDir: 'asc' },
-  { id: 'fileCount', label: 'Files', align: 'right', width: '10%', defaultDir: 'desc' },
-  { id: 'size', label: 'Size (GB)', align: 'right', width: '10%', defaultDir: 'desc' },
-  { id: 'created', label: 'Created', align: 'left', width: '16%', defaultDir: 'desc' },
+  {
+    id: 'siteType',
+    label: 'Type',
+    align: 'left',
+    width: '14%',
+    defaultDir: 'asc',
+  },
+  {
+    id: 'fileCount',
+    label: 'Files',
+    align: 'right',
+    width: '10%',
+    defaultDir: 'desc',
+  },
+  {
+    id: 'size',
+    label: 'Size (GB)',
+    align: 'right',
+    width: '10%',
+    defaultDir: 'desc',
+  },
+  {
+    id: 'created',
+    label: 'Created',
+    align: 'left',
+    width: '16%',
+    defaultDir: 'desc',
+  },
 ]
 
 const getSortValue = (item, columnId) => {
   switch (columnId) {
     case 'name':
-      return (item.displayName ?? item.name ?? '').toString().toLocaleLowerCase()
+      return (item.displayName ?? item.name ?? '')
+        .toString()
+        .toLocaleLowerCase()
     case 'webUrl':
       return (item.webUrl ?? '').toString().toLocaleLowerCase()
     case 'siteType':
@@ -197,7 +229,9 @@ const compareItems = (a, b, columnId, direction) => {
   if (typeof aVal === 'number' && typeof bVal === 'number') {
     result = aVal - bVal
   } else {
-    result = String(aVal).localeCompare(String(bVal), undefined, { sensitivity: 'base' })
+    result = String(aVal).localeCompare(String(bVal), undefined, {
+      sensitivity: 'base',
+    })
   }
 
   return direction === 'asc' ? result : -result
@@ -239,7 +273,8 @@ const matchesFilters = (item, { types, minSizeBytes }) => {
 }
 
 const sizeFilterLabel = (minSizeBytes) =>
-  SIZE_FILTERS.find((option) => option.value === minSizeBytes)?.label ?? 'Any size'
+  SIZE_FILTERS.find((option) => option.value === minSizeBytes)?.label ??
+  'Any size'
 
 /**
  * Explorer-style details list for the SharePoint site browser.
@@ -266,7 +301,9 @@ export const CippSharePointFolderView = ({
   const [minSizeBytes, setMinSizeBytes] = useState(0)
   const [filterAnchor, setFilterAnchor] = useState(null)
 
-  const pathKey = path.map((crumb) => crumb?.id ?? crumb?.webUrl ?? '').join('/')
+  const pathKey = path
+    .map((crumb) => crumb?.id ?? crumb?.webUrl ?? '')
+    .join('/')
   useEffect(() => {
     setSearchQuery('')
     setFilterTypes([])
@@ -308,7 +345,9 @@ export const CippSharePointFolderView = ({
     }
     return [...counts.entries()]
       .map(([label, count]) => ({ label, count }))
-      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }))
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, { sensitivity: 'base' })
+      )
   }, [items])
 
   const filtersActive = filterTypes.length > 0 || minSizeBytes > 0
@@ -325,16 +364,21 @@ export const CippSharePointFolderView = ({
   )
 
   const sortedItems = useMemo(() => {
-    return [...filteredItems].sort((a, b) => compareItems(a, b, sortBy, sortDir))
+    return [...filteredItems].sort((a, b) =>
+      compareItems(a, b, sortBy, sortDir)
+    )
   }, [filteredItems, sortBy, sortDir])
 
   const checkedIdSet = useMemo(() => new Set(checkedIds), [checkedIds])
   const allChecked =
-    sortedItems.length > 0 && sortedItems.every((item) => checkedIdSet.has(item.id))
+    sortedItems.length > 0 &&
+    sortedItems.every((item) => checkedIdSet.has(item.id))
   const someChecked = sortedItems.some((item) => checkedIdSet.has(item.id))
   const searchActive = searchQuery.trim().length > 0
   const noMatches =
-    (searchActive || filtersActive) && items.length > 0 && sortedItems.length === 0
+    (searchActive || filtersActive) &&
+    items.length > 0 &&
+    sortedItems.length === 0
   const searchPlaceholder = canGoUp ? 'Search libraries…' : 'Search sites…'
 
   const clearFilters = () => {
@@ -344,7 +388,9 @@ export const CippSharePointFolderView = ({
 
   const toggleType = (label) => {
     setFilterTypes((prev) =>
-      prev.includes(label) ? prev.filter((value) => value !== label) : [...prev, label]
+      prev.includes(label)
+        ? prev.filter((value) => value !== label)
+        : [...prev, label]
     )
   }
 
@@ -394,7 +440,10 @@ export const CippSharePointFolderView = ({
           alignItems={{ sm: 'center' }}
           justifyContent="space-between"
         >
-          <Breadcrumbs aria-label="SharePoint browser path" sx={{ flex: 1, minWidth: 0 }}>
+          <Breadcrumbs
+            aria-label="SharePoint browser path"
+            sx={{ flex: 1, minWidth: 0 }}
+          >
             <Link
               component="button"
               type="button"
@@ -476,7 +525,11 @@ export const CippSharePointFolderView = ({
                 ) : null,
               }}
             />
-            <Badge color="primary" badgeContent={activeFilterCount || null} overlap="circular">
+            <Badge
+              color="primary"
+              badgeContent={activeFilterCount || null}
+              overlap="circular"
+            >
               <Button
                 size="small"
                 variant={filtersActive ? 'contained' : 'outlined'}
@@ -503,7 +556,11 @@ export const CippSharePointFolderView = ({
               slotProps={{ paper: { sx: { width: 300, p: 2 } } }}
             >
               <Stack spacing={1.5}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
                   <Typography variant="subtitle2">Filters</Typography>
                   <Button
                     size="small"
@@ -515,7 +572,11 @@ export const CippSharePointFolderView = ({
                 </Stack>
 
                 <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 0.5 }}
+                  >
                     Type
                   </Typography>
                   {availableTypes.length === 0 ? (
@@ -537,7 +598,11 @@ export const CippSharePointFolderView = ({
                           label={
                             <Typography variant="body2">
                               {label}{' '}
-                              <Typography component="span" variant="caption" color="text.secondary">
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 ({count})
                               </Typography>
                             </Typography>
@@ -552,19 +617,29 @@ export const CippSharePointFolderView = ({
                 <Divider />
 
                 <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 0.5 }}
+                  >
                     Minimum size
                   </Typography>
                   <RadioGroup
                     value={String(minSizeBytes)}
-                    onChange={(event) => setMinSizeBytes(Number(event.target.value))}
+                    onChange={(event) =>
+                      setMinSizeBytes(Number(event.target.value))
+                    }
                   >
                     {SIZE_FILTERS.map((option) => (
                       <FormControlLabel
                         key={option.value}
                         value={String(option.value)}
                         control={<Radio size="small" />}
-                        label={<Typography variant="body2">{option.label}</Typography>}
+                        label={
+                          <Typography variant="body2">
+                            {option.label}
+                          </Typography>
+                        }
                         sx={{ mr: 0, ml: 0 }}
                       />
                     ))}
@@ -576,7 +651,13 @@ export const CippSharePointFolderView = ({
         </Stack>
 
         {filtersActive ? (
-          <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" alignItems="center">
+          <Stack
+            direction="row"
+            spacing={0.75}
+            useFlexGap
+            flexWrap="wrap"
+            alignItems="center"
+          >
             {filterTypes.map((label) => (
               <Chip
                 key={label}
@@ -592,14 +673,20 @@ export const CippSharePointFolderView = ({
                 onDelete={() => setMinSizeBytes(0)}
               />
             ) : null}
-            <Button size="small" onClick={clearFilters} sx={{ minWidth: 0, px: 1 }}>
+            <Button
+              size="small"
+              onClick={clearFilters}
+              sx={{ minWidth: 0, px: 1 }}
+            >
               Clear filters
             </Button>
           </Stack>
         ) : null}
 
         {error ? (
-          <Alert severity="error">{typeof error === 'string' ? error : 'Failed to load items.'}</Alert>
+          <Alert severity="error">
+            {typeof error === 'string' ? error : 'Failed to load items.'}
+          </Alert>
         ) : null}
 
         {isFetching ? (
@@ -607,7 +694,10 @@ export const CippSharePointFolderView = ({
             <CircularProgress size={32} />
           </Box>
         ) : !showTable ? (
-          <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+          <Typography
+            color="text.secondary"
+            sx={{ py: 4, textAlign: 'center' }}
+          >
             {emptyMessage}
           </Typography>
         ) : (
@@ -655,7 +745,9 @@ export const CippSharePointFolderView = ({
                     >
                       <TableSortLabel
                         active={sortBy === column.id}
-                        direction={sortBy === column.id ? sortDir : column.defaultDir}
+                        direction={
+                          sortBy === column.id ? sortDir : column.defaultDir
+                        }
                         onClick={() => handleSort(column.id)}
                         sx={
                           column.align === 'right'
@@ -689,7 +781,12 @@ export const CippSharePointFolderView = ({
                   >
                     <TableCell padding="checkbox" />
                     <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        sx={{ minWidth: 0 }}
+                      >
                         <ArrowUpward
                           fontSize="small"
                           sx={{ color: 'text.secondary', flexShrink: 0 }}
@@ -697,7 +794,11 @@ export const CippSharePointFolderView = ({
                         <Typography variant="body2" color="text.secondary">
                           ..
                         </Typography>
-                        <Typography variant="body2" color="text.disabled" noWrap>
+                        <Typography
+                          variant="body2"
+                          color="text.disabled"
+                          noWrap
+                        >
                           Go up
                         </Typography>
                       </Stack>
@@ -733,7 +834,10 @@ export const CippSharePointFolderView = ({
                 {noMatches ? (
                   <TableRow>
                     <TableCell colSpan={8}>
-                      <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                      <Typography
+                        color="text.secondary"
+                        sx={{ py: 2, textAlign: 'center' }}
+                      >
                         {searchActive && filtersActive
                           ? `No matches for “${searchQuery.trim()}” with the current filters.`
                           : searchActive
@@ -743,10 +847,16 @@ export const CippSharePointFolderView = ({
                     </TableCell>
                   </TableRow>
                 ) : null}
-                {sortedItems.length === 0 && canGoUp && !searchActive && !filtersActive ? (
+                {sortedItems.length === 0 &&
+                canGoUp &&
+                !searchActive &&
+                !filtersActive ? (
                   <TableRow>
                     <TableCell colSpan={8}>
-                      <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                      <Typography
+                        color="text.secondary"
+                        sx={{ py: 2, textAlign: 'center' }}
+                      >
                         {emptyMessage}
                       </Typography>
                     </TableCell>
@@ -754,9 +864,12 @@ export const CippSharePointFolderView = ({
                 ) : null}
                 {sortedItems.map((item) => {
                   const checked = checkedIdSet.has(item.id)
-                  const isSite =
-                    item.type === 'site' || item.canOpen
-                  const Icon = isSite ? (checked ? FolderOpen : Folder) : FolderShared
+                  const isSite = item.type === 'site' || item.canOpen
+                  const Icon = isSite
+                    ? checked
+                      ? FolderOpen
+                      : Folder
+                    : FolderShared
 
                   return (
                     <TableRow
@@ -816,7 +929,12 @@ export const CippSharePointFolderView = ({
                         />
                       </TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                          sx={{ minWidth: 0 }}
+                        >
                           <Icon
                             fontSize="small"
                             sx={{
@@ -824,12 +942,19 @@ export const CippSharePointFolderView = ({
                               flexShrink: 0,
                             }}
                           />
-                          <Typography variant="body2" noWrap title={item.displayName ?? item.name}>
+                          <Typography
+                            variant="body2"
+                            noWrap
+                            title={item.displayName ?? item.name}
+                          >
                             {item.displayName ?? item.name}
                           </Typography>
                         </Stack>
                       </TableCell>
-                      <TableCell align="center" onClick={(event) => event.stopPropagation()}>
+                      <TableCell
+                        align="center"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         {item.webUrl ? (
                           <Tooltip title="Open in SharePoint">
                             <IconButton
@@ -850,18 +975,28 @@ export const CippSharePointFolderView = ({
                         )}
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" noWrap title={item.siteType}>
+                        <Typography
+                          variant="body2"
+                          noWrap
+                          title={item.siteType}
+                        >
                           {item.siteType || '—'}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Typography variant="body2" noWrap color="text.secondary">
+                        <Typography
+                          variant="body2"
+                          noWrap
+                          color="text.secondary"
+                        >
                           {formatFileCount(item.fileCount)}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
                         {formatSizeMbTooltip(item.storageUsedInBytes) ? (
-                          <Tooltip title={formatSizeMbTooltip(item.storageUsedInBytes)}>
+                          <Tooltip
+                            title={formatSizeMbTooltip(item.storageUsedInBytes)}
+                          >
                             <Typography
                               variant="body2"
                               noWrap
@@ -872,13 +1007,21 @@ export const CippSharePointFolderView = ({
                             </Typography>
                           </Tooltip>
                         ) : (
-                          <Typography variant="body2" noWrap color="text.secondary">
+                          <Typography
+                            variant="body2"
+                            noWrap
+                            color="text.secondary"
+                          >
                             —
                           </Typography>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" noWrap color="text.secondary">
+                        <Typography
+                          variant="body2"
+                          noWrap
+                          color="text.secondary"
+                        >
                           {formatDate(item.createdDateTime)}
                         </Typography>
                       </TableCell>

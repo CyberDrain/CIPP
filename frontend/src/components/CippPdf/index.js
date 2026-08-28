@@ -72,7 +72,14 @@ export {
 export { ReportDocument } from './ReportDocument'
 export { ReportProvider, useReport, useReportStyles } from './reportContext'
 
-export { BarChart, CHART_KINDS, DonutChart, ReportChart, TrendChart, normaliseChartData } from './charts'
+export {
+  BarChart,
+  CHART_KINDS,
+  DonutChart,
+  ReportChart,
+  TrendChart,
+  normaliseChartData,
+} from './charts'
 
 export {
   COVER_IMAGE_NOT_FOUND,

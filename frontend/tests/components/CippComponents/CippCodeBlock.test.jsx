@@ -5,7 +5,9 @@ import { CippCodeBlock } from '../../../src/components/CippComponents/CippCodeBl
 
 vi.mock('@monaco-editor/react', () => ({
   Editor: ({ value, language }) => (
-    <div data-testid="monaco-editor" data-language={language}>{value}</div>
+    <div data-testid="monaco-editor" data-language={language}>
+      {value}
+    </div>
   ),
 }))
 
@@ -15,7 +17,9 @@ describe('CippCodeBlock', () => {
       <CippCodeBlock code="const x = 1;" language="javascript" />
     )
     // highlighter is next/dynamic-loaded, wait for the lazy chunk to resolve
-    await waitFor(() => expect(container.querySelector('pre')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(container.querySelector('pre')).toBeInTheDocument()
+    )
     // SyntaxHighlighter splits tokens across spans, so check the pre/code element contains all text
     const codeEl = container.querySelector('pre')
     expect(codeEl.textContent).toContain('const')
@@ -34,18 +38,31 @@ describe('CippCodeBlock', () => {
 
   it('renders line numbers in syntax mode when showLineNumbers is set', async () => {
     const { container } = renderWithProviders(
-      <CippCodeBlock code={'const a = 1;\nconst b = 2;'} language="javascript" showLineNumbers />
+      <CippCodeBlock
+        code={'const a = 1;\nconst b = 2;'}
+        language="javascript"
+        showLineNumbers
+      />
     )
-    await waitFor(() => expect(container.querySelector('pre')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(container.querySelector('pre')).toBeInTheDocument()
+    )
     // react-syntax-highlighter tags each line number span with .linenumber
-    expect(container.querySelectorAll('.linenumber').length).toBeGreaterThanOrEqual(2)
+    expect(
+      container.querySelectorAll('.linenumber').length
+    ).toBeGreaterThanOrEqual(2)
   })
 
   it('omits line numbers in syntax mode by default', async () => {
     const { container } = renderWithProviders(
-      <CippCodeBlock code={'const a = 1;\nconst b = 2;'} language="javascript" />
+      <CippCodeBlock
+        code={'const a = 1;\nconst b = 2;'}
+        language="javascript"
+      />
     )
-    await waitFor(() => expect(container.querySelector('pre')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(container.querySelector('pre')).toBeInTheDocument()
+    )
     expect(container.querySelector('.linenumber')).not.toBeInTheDocument()
   })
 

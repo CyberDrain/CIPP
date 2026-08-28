@@ -17,9 +17,13 @@ const savedPreset = {
 }
 
 const handlers = [
-  http.get('/api/ListGraphExplorerPresets', () => HttpResponse.json({ Results: [savedPreset] })),
+  http.get('/api/ListGraphExplorerPresets', () =>
+    HttpResponse.json({ Results: [savedPreset] })
+  ),
   http.get('/api/ListGraphRequest', () =>
-    HttpResponse.json({ Results: ['id', 'displayName', 'userPrincipalName', 'mail'] })
+    HttpResponse.json({
+      Results: ['id', 'displayName', 'userPrincipalName', 'mail'],
+    })
   ),
 ]
 
@@ -55,12 +59,16 @@ export const PresetSelected = {
       })
       await userEvent.click(combo)
       const body = within(canvasElement.ownerDocument.body)
-      await userEvent.click(await body.findByRole('option', { name: 'Devices by name' }))
+      await userEvent.click(
+        await body.findByRole('option', { name: 'Devices by name' })
+      )
     })
 
     await step('preset params hydrate the Endpoint field', async () => {
       await waitFor(async () => {
-        await expect(canvas.getByRole('textbox', { name: 'Endpoint' })).toHaveValue('/devices')
+        await expect(
+          canvas.getByRole('textbox', { name: 'Endpoint' })
+        ).toHaveValue('/devices')
       })
     })
   },
@@ -70,14 +78,24 @@ export const ToolbarPresetShape = {
   args: {
     component: 'card',
     onSubmitFilter: () => {},
-    selectedPreset: { id: 'saved-1', filterName: 'Devices by name', value: savedPreset.params, type: 'graph' },
+    selectedPreset: {
+      id: 'saved-1',
+      filterName: 'Devices by name',
+      value: savedPreset.params,
+      type: 'graph',
+    },
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
-    await step('toolbar-shaped selectedPreset hydrates the Endpoint field', async () => {
-      await waitFor(async () => {
-        await expect(canvas.getByRole('textbox', { name: 'Endpoint' })).toHaveValue('/devices')
-      })
-    })
+    await step(
+      'toolbar-shaped selectedPreset hydrates the Endpoint field',
+      async () => {
+        await waitFor(async () => {
+          await expect(
+            canvas.getByRole('textbox', { name: 'Endpoint' })
+          ).toHaveValue('/devices')
+        })
+      }
+    )
   },
 }

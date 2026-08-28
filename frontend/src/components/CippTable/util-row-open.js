@@ -1,8 +1,14 @@
-import { resolveRowTemplates, getRowTenant } from '../../utils/resolve-row-templates'
+import {
+  resolveRowTemplates,
+  getRowTenant,
+} from '../../utils/resolve-row-templates'
 
 const UNRESOLVED = /\[([^\]]+)\]/
 
-const resolveEffectiveTenant = (row, { fallbackTenant, currentTenant } = {}) => {
+const resolveEffectiveTenant = (
+  row,
+  { fallbackTenant, currentTenant } = {}
+) => {
   if (fallbackTenant && fallbackTenant !== 'AllTenants') {
     return fallbackTenant
   }
@@ -24,9 +30,7 @@ const applyTenantFallback = (link, row, options) => {
   if (!tenant) {
     return link
   }
-  return link
-    .replace(/\[Tenant\]/g, tenant)
-    .replace(/\[tenantId\]/g, tenant)
+  return link.replace(/\[Tenant\]/g, tenant).replace(/\[tenantId\]/g, tenant)
 }
 
 export const rowOpenEnabled = (rowOpen, row) => {
@@ -89,13 +93,19 @@ export const filterVisibleRowActions = (actions, row) =>
       typeof action.hideCondition !== 'function' || !action.hideCondition(row)
   )
 
-export const findRowOpenMatchingAction = (actions, rowOpen, row, options = {}) => {
+export const findRowOpenMatchingAction = (
+  actions,
+  rowOpen,
+  row,
+  options = {}
+) => {
   if (!Array.isArray(actions) || !rowOpen?.link) {
     return null
   }
   return (
-    actions.find((action) => actionMatchesRowOpen(action, rowOpen, row, options)) ??
-    null
+    actions.find((action) =>
+      actionMatchesRowOpen(action, rowOpen, row, options)
+    ) ?? null
   )
 }
 

@@ -6,19 +6,37 @@ import { renderWithProviders } from '../../test-utils'
 import { CippDataTable } from '../../../src/components/CippTable/CippDataTable'
 import { resetOverlayHistory } from '../../../src/utils/overlay-history'
 
-vi.mock('../../../src/api/ApiCall', async () => (await import('../../mocks/api-call')).apiCallMock())
+vi.mock('../../../src/api/ApiCall', async () =>
+  (await import('../../mocks/api-call')).apiCallMock()
+)
 import { api, paginatedResult } from '../../mocks/api-call'
 
 // idle keeps static-data tables on their data prop; the nested result is re-wrapped per call like react-query's tracked copy, the memo'd toolbar needs it to see selection
 const nestedRows = [{ id: 'child-1', displayName: 'Jane Doe' }]
 const nestedResult = paginatedResult(nestedRows)
 const idlePaginated = paginatedResult([], { isSuccess: false })
-api.paginated = (opts) => (opts?.url === '/api/TestRelated' ? { ...nestedResult } : idlePaginated)
+api.paginated = (opts) =>
+  opts?.url === '/api/TestRelated' ? { ...nestedResult } : idlePaginated
 
 const basicData = [
-  { displayName: 'Alice Smith', mail: 'alice@contoso.com', department: 'IT', accountEnabled: true },
-  { displayName: 'Bob Johnson', mail: 'bob@contoso.com', department: 'Sales', accountEnabled: true },
-  { displayName: 'Carol Williams', mail: 'carol@contoso.com', department: 'HR', accountEnabled: false },
+  {
+    displayName: 'Alice Smith',
+    mail: 'alice@contoso.com',
+    department: 'IT',
+    accountEnabled: true,
+  },
+  {
+    displayName: 'Bob Johnson',
+    mail: 'bob@contoso.com',
+    department: 'Sales',
+    accountEnabled: true,
+  },
+  {
+    displayName: 'Carol Williams',
+    mail: 'carol@contoso.com',
+    department: 'HR',
+    accountEnabled: false,
+  },
 ]
 
 describe('CippDataTable', () => {
@@ -92,7 +110,9 @@ describe('CippDataTable', () => {
       <CippDataTable
         data={basicData}
         simpleColumns={['displayName', 'mail', 'department']}
-        actions={[{ label: 'View User', noConfirm: true, customFunction: mockFn }]}
+        actions={[
+          { label: 'View User', noConfirm: true, customFunction: mockFn },
+        ]}
         maxHeightOffset="100px"
       />
     )
@@ -130,7 +150,9 @@ describe('CippDataTable', () => {
       />
     )
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Add User' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: 'Add User' })
+      ).toBeInTheDocument()
     })
   })
 
@@ -277,8 +299,15 @@ describe('CippDataTable', () => {
         simpleColumns={['displayName', 'department']}
         filters={[
           // untyped preset = legacy shape, lands its column array in the GLOBAL filter slot
-          { filterName: 'Legacy IT', value: [{ id: 'department', value: 'IT' }] },
-          { filterName: 'IT only', value: [{ id: 'department', value: 'IT' }], type: 'column' },
+          {
+            filterName: 'Legacy IT',
+            value: [{ id: 'department', value: 'IT' }],
+          },
+          {
+            filterName: 'IT only',
+            value: [{ id: 'department', value: 'IT' }],
+            type: 'column',
+          },
         ]}
         maxHeightOffset="100px"
       />
@@ -336,19 +365,35 @@ describe('CippDataTable card view without an offCanvas', () => {
       accountEnabled: true,
     },
   ]
-  const columns = ['displayName', 'mail', 'department', 'jobTitle', 'city', 'country']
+  const columns = [
+    'displayName',
+    'mail',
+    'department',
+    'jobTitle',
+    'city',
+    'country',
+  ]
 
   it('opens an extended-info drawer from a card tap showing every shown column', async () => {
     const user = userEvent.setup()
     renderWithProviders(
-      <CippDataTable viewMode="cards" data={wideData} simpleColumns={columns} title="Users" />
+      <CippDataTable
+        viewMode="cards"
+        data={wideData}
+        simpleColumns={columns}
+        title="Users"
+      />
     )
 
-    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+    )
     await user.click(screen.getByText('Alice Smith'))
 
     // fields that never fit on the card are present in the drawer
-    await waitFor(() => expect(screen.getAllByText(/Engineer/).length).toBeGreaterThan(0))
+    await waitFor(() =>
+      expect(screen.getAllByText(/Engineer/).length).toBeGreaterThan(0)
+    )
     expect(screen.getAllByText(/Seattle/).length).toBeGreaterThan(0)
   })
 
@@ -360,7 +405,13 @@ describe('CippDataTable card view without an offCanvas', () => {
     renderWithProviders(
       <CippDataTable
         viewMode="cards"
-        data={[{ Name: 'Applications do not have client secrets configured', Risk: 'High', Status: 'Failed' }]}
+        data={[
+          {
+            Name: 'Applications do not have client secrets configured',
+            Risk: 'High',
+            Status: 'Failed',
+          },
+        ]}
         simpleColumns={['Name', 'Risk', 'Status']}
         title="Identity Tests"
         offCanvas={{
@@ -371,9 +422,13 @@ describe('CippDataTable card view without an offCanvas', () => {
     )
 
     await waitFor(() =>
-      expect(screen.getByText('Applications do not have client secrets configured')).toBeInTheDocument()
+      expect(
+        screen.getByText('Applications do not have client secrets configured')
+      ).toBeInTheDocument()
     )
-    await user.click(screen.getByText('Applications do not have client secrets configured'))
+    await user.click(
+      screen.getByText('Applications do not have client secrets configured')
+    )
 
     // scope to the drawer that holds the body — the toolbar's Edit Filters offcanvas is
     // also a mounted .MuiDrawer-paper and sorts first in the DOM
@@ -397,16 +452,22 @@ describe('CippDataTable card view without an offCanvas', () => {
         title="Users"
         offCanvas={{
           extendedInfoFields: ['displayName', 'mail'],
-          actions: [{ label: 'View User', link: '/identity/administration/users/user' }],
+          actions: [
+            { label: 'View User', link: '/identity/administration/users/user' },
+          ],
         }}
       />
     )
 
-    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+    )
     await user.click(screen.getByText('Alice Smith'))
 
     // drawer is open (property list rendered) but the actions block is gone
-    await waitFor(() => expect(screen.getAllByText(/alice@contoso.com/).length).toBeGreaterThan(0))
+    await waitFor(() =>
+      expect(screen.getAllByText(/alice@contoso.com/).length).toBeGreaterThan(0)
+    )
     expect(screen.queryByText('View User')).not.toBeInTheDocument()
   })
 
@@ -415,18 +476,28 @@ describe('CippDataTable card view without an offCanvas', () => {
     renderWithProviders(
       <CippDataTable
         viewMode="cards"
-        data={[{ displayName: 'Alice Smith', defaultDomainName: 'contoso.com', accountEnabled: true }]}
+        data={[
+          {
+            displayName: 'Alice Smith',
+            defaultDomainName: 'contoso.com',
+            accountEnabled: true,
+          },
+        ]}
         simpleColumns={['displayName', 'defaultDomainName', 'accountEnabled']}
         title="Tenants"
       />
     )
 
-    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+    )
     await user.click(screen.getByText('Alice Smith'))
 
     // 'text' mode would flatten the boolean to the string "Yes"; the cell renderer uses an icon.
     // Anchored: unanchored, this would also pass on "notcontoso.com" — and CodeQL flags it.
-    await waitFor(() => expect(screen.getAllByText(/^contoso\.com$/).length).toBeGreaterThan(0))
+    await waitFor(() =>
+      expect(screen.getAllByText(/^contoso\.com$/).length).toBeGreaterThan(0)
+    )
     expect(screen.queryByText('Yes')).toBeNull()
   })
 
@@ -450,7 +521,10 @@ describe('CippDataTable card view without an offCanvas', () => {
     await user.click(screen.getByText('Contoso'))
 
     const link = await screen.findByRole('link', { name: /open portal/i })
-    expect(link).toHaveAttribute('href', 'https://admin.cloud.microsoft/?delegatedOrg=contoso')
+    expect(link).toHaveAttribute(
+      'href',
+      'https://admin.cloud.microsoft/?delegatedOrg=contoso'
+    )
     expect(link).toHaveAttribute('target', '_blank')
   })
 
@@ -484,16 +558,25 @@ describe('CippDataTable card view without an offCanvas', () => {
         simpleColumns={columns}
         title="Users"
         // curated list omits jobTitle and city, which the table would still show on desktop
-        offCanvas={{ title: 'User Details', extendedInfoFields: ['mail', 'department'] }}
+        offCanvas={{
+          title: 'User Details',
+          extendedInfoFields: ['mail', 'department'],
+        }}
       />
     )
 
-    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+    )
     await user.click(screen.getByText('Alice Smith'))
-    await waitFor(() => expect(screen.getByText('User Details')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('User Details')).toBeInTheDocument()
+    )
 
     // curated fields present, and the ones it left out are appended rather than dropped
-    expect(screen.getAllByText(/^alice@contoso\.com$/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/^alice@contoso\.com$/).length).toBeGreaterThan(
+      0
+    )
     expect(screen.getAllByText(/Engineer/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Seattle/).length).toBeGreaterThan(0)
   })
@@ -506,13 +589,20 @@ describe('CippDataTable card view without an offCanvas', () => {
         data={[{ displayName: 'Alice Smith', department: 'Engineering' }]}
         simpleColumns={['displayName', 'department']}
         title="Users"
-        offCanvas={{ title: 'User Details', extendedInfoFields: ['department', 'department'] }}
+        offCanvas={{
+          title: 'User Details',
+          extendedInfoFields: ['department', 'department'],
+        }}
       />
     )
 
-    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+    )
     await user.click(screen.getByText('Alice Smith'))
-    await waitFor(() => expect(screen.getByText('User Details')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('User Details')).toBeInTheDocument()
+    )
 
     // scoped to the drawer — the card behind it renders its own Department row
     const drawer = screen.getByText('User Details').closest('.MuiDrawer-paper')
@@ -532,11 +622,15 @@ describe('CippDataTable card view without an offCanvas', () => {
       />
     )
 
-    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+    )
     await user.click(screen.getByText('Alice Smith'))
 
     // the page's own drawer opens — the fallback never substitutes for a configured one
-    await waitFor(() => expect(screen.getByText('User Details')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('User Details')).toBeInTheDocument()
+    )
     expect(screen.getAllByText(/Seattle/).length).toBeGreaterThan(0)
   })
 })
@@ -607,7 +701,9 @@ describe('CippDataTable offcanvas row navigation', () => {
     renderWithProviders(<AsyncTable />)
 
     await user.click(screen.getByRole('button', { name: 'Load rows' }))
-    await waitFor(() => expect(screen.getByText('Carol Williams')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Carol Williams')).toBeInTheDocument()
+    )
     await user.click(screen.getByText('Carol Williams'))
 
     expect(await screen.findByText('1 of 3')).toBeInTheDocument()
@@ -618,11 +714,16 @@ describe('CippDataTable offcanvas row navigation', () => {
   it('numbers rows in the order they are shown, not the order they arrived', async () => {
     const user = userEvent.setup()
     renderWithProviders(
-      <Table data={people} defaultSorting={[{ id: 'displayName', desc: false }]} />
+      <Table
+        data={people}
+        defaultSorting={[{ id: 'displayName', desc: false }]}
+      />
     )
 
     // Sorted, Carol is last on screen — so she is the last row, with nowhere to go next.
-    await waitFor(() => expect(screen.getByText('Carol Williams')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Carol Williams')).toBeInTheDocument()
+    )
     await user.click(screen.getByText('Carol Williams'))
 
     expect(await screen.findByText('3 of 3')).toBeInTheDocument()
@@ -636,12 +737,19 @@ describe('CippDataTable offcanvas row navigation', () => {
       { displayName: 'Bob Marley', mail: 'bob.marley@contoso.com' },
     ]
     renderWithProviders(
-      <Table data={withTwoBobs} defaultSorting={[{ id: 'displayName', desc: false }]} />
+      <Table
+        data={withTwoBobs}
+        defaultSorting={[{ id: 'displayName', desc: false }]}
+      />
     )
 
-    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+    )
     await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'bob')
-    await waitFor(() => expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument()
+    )
 
     await user.click(screen.getByText('Bob Marley'))
 
@@ -655,10 +763,15 @@ describe('CippDataTable offcanvas row navigation', () => {
   it('steps to the next row as displayed', async () => {
     const user = userEvent.setup()
     renderWithProviders(
-      <Table data={people} defaultSorting={[{ id: 'displayName', desc: false }]} />
+      <Table
+        data={people}
+        defaultSorting={[{ id: 'displayName', desc: false }]}
+      />
     )
 
-    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+    )
     await user.click(screen.getByText('Alice Smith'))
     expect(await screen.findByText('1 of 3')).toBeInTheDocument()
 
@@ -706,10 +819,16 @@ describe('CippDataTable cards->table toggle scroll', () => {
     const user = userEvent.setup()
     renderWithProviders(
       <div data-testid="scroller" style={{ overflowY: 'auto' }}>
-        <CippDataTable data={basicData} simpleColumns={['displayName', 'mail']} title="Users" />
+        <CippDataTable
+          data={basicData}
+          simpleColumns={['displayName', 'mail']}
+          title="Users"
+        />
       </div>
     )
-    await waitFor(() => expect(screen.getByTestId('cipp-card-view')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByTestId('cipp-card-view')).toBeInTheDocument()
+    )
 
     // surface sits below the scroller's viewport top, page already scrolled
     const scroller = screen.getByTestId('scroller')
@@ -759,7 +878,9 @@ describe('CippDataTable subTables', () => {
 
     const dialog = await screen.findByRole('dialog')
     await waitFor(() => {
-      expect(within(dialog).getByText('Related for Finance')).toBeInTheDocument()
+      expect(
+        within(dialog).getByText('Related for Finance')
+      ).toBeInTheDocument()
     })
     await waitFor(() => {
       expect(within(dialog).getByText('Jane Doe')).toBeInTheDocument()
@@ -799,9 +920,13 @@ describe('CippDataTable subTables', () => {
     await user.click(screen.getByRole('button', { name: 'View' }))
 
     const dialog = await screen.findByRole('dialog')
-    await waitFor(() => expect(within(dialog).getByText('Jane Doe')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(within(dialog).getByText('Jane Doe')).toBeInTheDocument()
+    )
 
-    await user.click(within(dialog).getByRole('button', { name: 'Row actions' }))
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Row actions' })
+    )
     await user.click(await screen.findByText('Remove'))
 
     // the row sheet hands the action off to its exit transition
@@ -810,7 +935,10 @@ describe('CippDataTable subTables', () => {
         expect.objectContaining({
           id: 'child-1',
           displayName: 'Jane Doe',
-          parent: expect.objectContaining({ id: 'parent-1', displayName: 'Finance' }),
+          parent: expect.objectContaining({
+            id: 'parent-1',
+            displayName: 'Finance',
+          }),
         }),
         expect.anything(),
         expect.anything()
@@ -819,7 +947,9 @@ describe('CippDataTable subTables', () => {
 
     rowFn.mockClear()
     await user.click(within(dialog).getByRole('button', { name: 'Select' }))
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Select Jane Doe' }))
+    await user.click(
+      within(dialog).getByRole('checkbox', { name: 'Select Jane Doe' })
+    )
     await user.click(within(dialog).getByRole('button', { name: 'Actions' }))
     await user.click(await screen.findByText('Remove'))
 
@@ -840,7 +970,13 @@ describe('CippDataTable subTables', () => {
     renderWithProviders(
       <CippDataTable
         viewMode="cards"
-        data={[{ id: 'parent-1', displayName: 'Finance', related: [{ id: 'stale' }] }]}
+        data={[
+          {
+            id: 'parent-1',
+            displayName: 'Finance',
+            related: [{ id: 'stale' }],
+          },
+        ]}
         simpleColumns={['displayName', 'related']}
         title="Groups"
         subTables={[
@@ -883,14 +1019,18 @@ describe('CippDataTable subTables', () => {
     )
 
     await waitFor(() => expect(screen.getByText('Finance')).toBeInTheDocument())
-    expect(screen.queryByRole('button', { name: 'View' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'View' })
+    ).not.toBeInTheDocument()
   })
 
   it('shows cachedColumn instead of the nested table button when that field is on the data', async () => {
     renderWithProviders(
       <CippDataTable
         viewMode="cards"
-        data={[{ id: 'parent-1', displayName: 'Finance', membersCsv: 'Jane, Bob' }]}
+        data={[
+          { id: 'parent-1', displayName: 'Finance', membersCsv: 'Jane, Bob' },
+        ]}
         simpleColumns={['displayName', 'members']}
         title="Groups"
         subTables={[
@@ -906,7 +1046,9 @@ describe('CippDataTable subTables', () => {
     )
 
     await waitFor(() => expect(screen.getByText('Finance')).toBeInTheDocument())
-    expect(screen.queryByRole('button', { name: 'View members' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'View members' })
+    ).not.toBeInTheDocument()
     expect(screen.getByText('Jane, Bob')).toBeInTheDocument()
   })
 
@@ -930,14 +1072,23 @@ describe('CippDataTable subTables', () => {
     )
 
     await waitFor(() => expect(screen.getByText('Finance')).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: 'View members' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'View members' })
+    ).toBeInTheDocument()
   })
 
   it('shows the nested table button when cachedColumn exists but is empty (live API shape)', async () => {
     renderWithProviders(
       <CippDataTable
         viewMode="cards"
-        data={[{ id: 'parent-1', displayName: 'Finance', membersCsv: '', ownersCsv: '' }]}
+        data={[
+          {
+            id: 'parent-1',
+            displayName: 'Finance',
+            membersCsv: '',
+            ownersCsv: '',
+          },
+        ]}
         simpleColumns={['displayName', 'members']}
         title="Groups"
         subTables={[
@@ -953,7 +1104,9 @@ describe('CippDataTable subTables', () => {
     )
 
     await waitFor(() => expect(screen.getByText('Finance')).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: 'View members' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'View members' })
+    ).toBeInTheDocument()
   })
 
   it('renders a declarative nested cardButton from table config', async () => {
@@ -989,9 +1142,13 @@ describe('CippDataTable subTables', () => {
     await user.click(screen.getByRole('button', { name: 'View' }))
 
     const nested = await screen.findByRole('dialog')
-    const addButton = await within(nested).findByRole('button', { name: 'Add Members' })
+    const addButton = await within(nested).findByRole('button', {
+      name: 'Add Members',
+    })
     await user.click(addButton)
 
-    expect(await screen.findByText('Add Members for Finance?')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Add Members for Finance?')
+    ).toBeInTheDocument()
   })
 })

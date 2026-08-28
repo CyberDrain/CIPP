@@ -15,7 +15,12 @@ vi.mock('../../../src/hooks/use-breakpoint', () => ({
 // branch renders and what it hands the user. Stable identities — a fresh object per call
 // re-renders forever.
 const pdfState = vi.hoisted(() => ({
-  instance: { loading: false, error: null, url: 'blob:http://localhost/report-1', blob: { size: 1_572_864 } },
+  instance: {
+    loading: false,
+    error: null,
+    url: 'blob:http://localhost/report-1',
+    blob: { size: 1_572_864 },
+  },
   viewerProps: null,
 }))
 vi.mock('@react-pdf/renderer', () => ({
@@ -32,7 +37,11 @@ const doc = <div data-testid="report-doc">document</div>
 
 const render = (props = {}) =>
   renderWithProviders(
-    <CippPdfPreview title="Executive Report - Contoso" fileName="Executive_Report.pdf" {...props}>
+    <CippPdfPreview
+      title="Executive Report - Contoso"
+      fileName="Executive_Report.pdf"
+      {...props}
+    >
       {doc}
     </CippPdfPreview>
   )
@@ -53,7 +62,9 @@ describe('CippPdfPreview', () => {
     render()
     expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument()
     expect(screen.getByTestId('report-doc')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /open report/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /open report/i })
+    ).not.toBeInTheDocument()
   })
 
   // title/fileName/viewerKey are ours, not react-pdf's — forwarding them would land unknown
@@ -88,7 +99,9 @@ describe('CippPdfPreview', () => {
     layoutState.isMobile = true
     render()
 
-    expect(screen.queryByRole('link', { name: /download/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /download/i })
+    ).not.toBeInTheDocument()
   })
 
   it('offers a download named after the report where the host has none', () => {
@@ -114,7 +127,9 @@ describe('CippPdfPreview', () => {
     render()
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /open report/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /open report/i })
+    ).not.toBeInTheDocument()
   })
 
   it('surfaces a generation failure rather than an empty frame', () => {
@@ -123,6 +138,8 @@ describe('CippPdfPreview', () => {
     render()
 
     expect(screen.getByText(/could not be generated/i)).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /open report/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /open report/i })
+    ).not.toBeInTheDocument()
   })
 })

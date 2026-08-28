@@ -57,12 +57,15 @@ const Page = () => {
       let defaultAttributes = {}
       if (userSettingsDefaults.userAttributes) {
         userSettingsDefaults.userAttributes.forEach((attribute) => {
-          defaultAttributes[attribute.label] = { Value: user?.[attribute.label] }
+          defaultAttributes[attribute.label] = {
+            Value: user?.[attribute.label],
+          }
         })
       }
 
       // Use fallback for usageLocation if user's usageLocation is null/undefined
-      const usageLocation = user?.usageLocation || userSettingsDefaults?.usageLocation || null
+      const usageLocation =
+        user?.usageLocation || userSettingsDefaults?.usageLocation || null
 
       formControl.reset({
         ...user,
@@ -114,23 +117,33 @@ const Page = () => {
   }
 
   // Set the title and subtitle for the layout
-  const title = userRequest.isSuccess ? userRequest.data?.[0]?.displayName : 'Loading...'
+  const title = userRequest.isSuccess
+    ? userRequest.data?.[0]?.displayName
+    : 'Loading...'
 
   const subtitle = userRequest.isSuccess
     ? [
         {
           icon: <Mail />,
-          text: <CippCopyToClipBoard type="chip" text={userRequest.data?.[0]?.userPrincipalName} />,
+          text: (
+            <CippCopyToClipBoard
+              type="chip"
+              text={userRequest.data?.[0]?.userPrincipalName}
+            />
+          ),
         },
         {
           icon: <Fingerprint />,
-          text: <CippCopyToClipBoard type="chip" text={userRequest.data?.[0]?.id} />,
+          text: (
+            <CippCopyToClipBoard type="chip" text={userRequest.data?.[0]?.id} />
+          ),
         },
         {
           icon: <CalendarIcon />,
           text: (
             <>
-              Created: <CippTimeAgo data={userRequest.data?.[0]?.createdDateTime} />
+              Created:{' '}
+              <CippTimeAgo data={userRequest.data?.[0]?.createdDateTime} />
             </>
           ),
         },
@@ -166,14 +179,18 @@ const Page = () => {
       subtitle={subtitle}
       isFetching={userRequest.isLoading}
     >
-      {userRequest.isSuccess && userRequest.data?.[0]?.onPremisesSyncEnabled && (
-        <Alert severity="error" sx={{ mb: 1 }}>
-          This user is synced from on-premises Active Directory. Changes should be made in the
-          on-premises environment instead.
-        </Alert>
-      )}
+      {userRequest.isSuccess &&
+        userRequest.data?.[0]?.onPremisesSyncEnabled && (
+          <Alert severity="error" sx={{ mb: 1 }}>
+            This user is synced from on-premises Active Directory. Changes
+            should be made in the on-premises environment instead.
+          </Alert>
+        )}
       <CippFormPage
-        queryKey={[`ListUsers-${userId}`, `Licenses-${userSettingsDefaults.currentTenant}`]}
+        queryKey={[
+          `ListUsers-${userId}`,
+          `Licenses-${userSettingsDefaults.currentTenant}`,
+        ]}
         formControl={formControl}
         title={title}
         hideBackButton={true}
@@ -182,7 +199,9 @@ const Page = () => {
         postUrl="/api/EditUser"
         customDataformatter={formatEditUser}
       >
-        {userRequest.isFetching && <CippFormSkeleton layout={[2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 3]} />}
+        {userRequest.isFetching && (
+          <CippFormSkeleton layout={[2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 3]} />
+        )}
         {!userRequest.isFetching && userRequest.isSuccess && (
           <Box sx={{ my: 2 }}>
             <CippAddEditUser

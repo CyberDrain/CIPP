@@ -1,31 +1,32 @@
-import { useEffect } from "react";
-import { Stack, Typography } from "@mui/material";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { CippWizardStepButtons } from "./CippWizardStepButtons";
-import { CIPPDeploymentUpdateTokens } from "./CIPPDeploymentUpdateTokens";
+import { useEffect } from 'react'
+import { Stack, Typography } from '@mui/material'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { CippWizardStepButtons } from './CippWizardStepButtons'
+import { CIPPDeploymentUpdateTokens } from './CIPPDeploymentUpdateTokens'
 
 export const CippDeploymentStep = (props) => {
-  const { formControl, onPreviousStep, onNextStep, currentStep } = props;
-  const values = formControl.getValues();
-  
+  const { formControl, onPreviousStep, onNextStep, currentStep } = props
+  const values = formControl.getValues()
+
   // Use useEffect to set form values instead of doing it during render
   useEffect(() => {
-    if (values.selectedOption === "Manual") {
-      formControl.setValue("setKeys", true);
+    if (values.selectedOption === 'Manual') {
+      formControl.setValue('setKeys', true)
     }
-  }, [values.selectedOption, formControl]);
-  
+  }, [values.selectedOption, formControl])
+
   return (
     <Stack spacing={3}>
       <Stack spacing={2}>
-        {values.selectedOption === "UpdateTokens" && (
+        {values.selectedOption === 'UpdateTokens' && (
           <CIPPDeploymentUpdateTokens formControl={formControl} />
         )}
 
-        {values.selectedOption === "Manual" && (
+        {values.selectedOption === 'Manual' && (
           <>
             <Typography variant="body1">
-              You may enter your secrets below. Leave fields blank to retain existing values.
+              You may enter your secrets below. Leave fields blank to retain
+              existing values.
             </Typography>
             <CippFormComponent
               formControl={formControl}
@@ -36,8 +37,10 @@ export const CippDeploymentStep = (props) => {
               validators={{
                 validate: (value) => {
                   const guidRegex =
-                    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-                  return value === "" || guidRegex.test(value) || "Invalid Tenant ID";
+                    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+                  return (
+                    value === '' || guidRegex.test(value) || 'Invalid Tenant ID'
+                  )
                 },
               }}
             />
@@ -50,8 +53,12 @@ export const CippDeploymentStep = (props) => {
               validators={{
                 validate: (value) => {
                   const guidRegex =
-                    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-                  return value === "" || guidRegex.test(value) || "Invalid Application ID";
+                    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+                  return (
+                    value === '' ||
+                    guidRegex.test(value) ||
+                    'Invalid Application ID'
+                  )
                 },
               }}
             />
@@ -64,12 +71,12 @@ export const CippDeploymentStep = (props) => {
               validators={{
                 validate: (value) => {
                   const secretRegex =
-                    /^(?!^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$)[A-Za-z0-9-_~.]{20,}$/;
+                    /^(?!^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$)[A-Za-z0-9-_~.]{20,}$/
                   return (
-                    value === "" ||
+                    value === '' ||
                     secretRegex.test(value) ||
-                    "This should be the secret value, not the secret ID"
-                  );
+                    'This should be the secret value, not the secret ID'
+                  )
                 },
               }}
             />
@@ -81,8 +88,13 @@ export const CippDeploymentStep = (props) => {
               placeholder="Enter the refresh token. Leave blank to retain previous key."
               validators={{
                 validate: (value) => {
-                  const jwtRegex = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/;
-                  return value === "" || jwtRegex.test(value) || "Invalid Refresh Token";
+                  const jwtRegex =
+                    /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/
+                  return (
+                    value === '' ||
+                    jwtRegex.test(value) ||
+                    'Invalid Refresh Token'
+                  )
                 },
               }}
             />
@@ -97,5 +109,5 @@ export const CippDeploymentStep = (props) => {
         noSubmitButton={true}
       />
     </Stack>
-  );
-};
+  )
+}

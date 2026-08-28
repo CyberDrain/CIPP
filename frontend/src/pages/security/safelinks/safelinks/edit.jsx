@@ -1,43 +1,49 @@
-import { Box } from "@mui/material";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useForm, useWatch } from "react-hook-form";
-import { useSettings } from "../../../../hooks/use-settings";
-import { useEffect } from "react";
-import { SafeLinksForm, safeLinksDataUtils } from "../../../../components/CippFormPages/CippSafeLinksPolicyRuleForm";
-import { useRouter } from "next/router";
-import { ApiGetCall } from "../../../../api/ApiCall";
+import { Box } from '@mui/material'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useForm, useWatch } from 'react-hook-form'
+import { useSettings } from '../../../../hooks/use-settings'
+import { useEffect } from 'react'
+import {
+  SafeLinksForm,
+  safeLinksDataUtils,
+} from '../../../../components/CippFormPages/CippSafeLinksPolicyRuleForm'
+import { useRouter } from 'next/router'
+import { ApiGetCall } from '../../../../api/ApiCall'
 
 const Page = () => {
-  const router = useRouter();
-  const { PolicyName, RuleName } = router.query;
-  const userSettingsDefaults = useSettings();
+  const router = useRouter()
+  const { PolicyName, RuleName } = router.query
+  const userSettingsDefaults = useSettings()
 
   // Main form for policy configuration
   const formControl = useForm({
-    mode: "onBlur",
+    mode: 'onBlur',
     defaultValues: {
       tenantFilter: userSettingsDefaults.currentTenant,
       PolicyName: PolicyName,
     },
-  });
+  })
 
   // Watch policy name for rule synchronization
-  const watchPolicyName = useWatch({ control: formControl.control, name: "PolicyName" });
+  const watchPolicyName = useWatch({
+    control: formControl.control,
+    name: 'PolicyName',
+  })
 
   // Get existing policy and rule data
   const policyData = ApiGetCall({
     url: `/api/ListSafeLinksPolicyDetails?PolicyName=${PolicyName}&RuleName=${RuleName}&tenantFilter=${userSettingsDefaults.currentTenant}`,
     queryKey: `SafeLinksPolicy-${PolicyName}`,
     enabled: !!PolicyName,
-  });
+  })
 
   // Populate forms with existing data when available
   useEffect(() => {
     if (policyData.isSuccess && policyData.data?.Results) {
-      const results = policyData.data.Results;
-      const policy = results.Policy || {};
-      const rule = results.Rule || {};
+      const results = policyData.data.Results
+      const policy = results.Policy || {}
+      const rule = results.Rule || {}
 
       // Combine policy and rule data
       const combinedData = {
@@ -46,15 +52,30 @@ const Page = () => {
         RuleName: rule.RuleName || RuleName,
         SafeLinksPolicy: policy.PolicyName || PolicyName,
         State: rule.State,
-      };
+      }
 
       // Use utility to populate form
-      safeLinksDataUtils.populateFormData(formControl, combinedData, userSettingsDefaults, 'edit');
+      safeLinksDataUtils.populateFormData(
+        formControl,
+        combinedData,
+        userSettingsDefaults,
+        'edit'
+      )
     }
-  }, [policyData.isSuccess, policyData.data, PolicyName, RuleName, formControl, userSettingsDefaults]);
+  }, [
+    policyData.isSuccess,
+    policyData.data,
+    PolicyName,
+    RuleName,
+    formControl,
+    userSettingsDefaults,
+  ])
 
   // Use the utility to create the data formatter
-  const customDataFormatter = safeLinksDataUtils.createDataFormatter(formControl, 'edit');
+  const customDataFormatter = safeLinksDataUtils.createDataFormatter(
+    formControl,
+    'edit'
+  )
 
   return (
     <>
@@ -73,16 +94,16 @@ const Page = () => {
           <Box sx={{ mb: 4 }}>
             <SafeLinksForm
               formControl={formControl}
-              PolicyName={watchPolicyName} 
-              formType="edit" 
+              PolicyName={watchPolicyName}
+              formType="edit"
             />
           </Box>
         </Box>
       </CippFormPage>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

@@ -1,6 +1,6 @@
-import PropTypes from 'prop-types';
-import ExclamationCircleIcon from '@heroicons/react/24/outline/ExclamationCircleIcon';
-import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
+import PropTypes from 'prop-types'
+import ExclamationCircleIcon from '@heroicons/react/24/outline/ExclamationCircleIcon'
+import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon'
 import {
   Button,
   CircularProgress,
@@ -10,35 +10,26 @@ import {
   DialogTitle,
   Stack,
   SvgIcon,
-  Typography
-} from '@mui/material';
+  Typography,
+} from '@mui/material'
 
 const iconMap = {
   error: (
-    <SvgIcon
-      color="error"
-      fontSize="large"
-    >
+    <SvgIcon color="error" fontSize="large">
       <ExclamationCircleIcon />
     </SvgIcon>
   ),
   warning: (
-    <SvgIcon
-      color="warning"
-      fontSize="large"
-    >
+    <SvgIcon color="warning" fontSize="large">
       <ExclamationTriangleIcon />
     </SvgIcon>
   ),
   info: (
-    <SvgIcon
-      color="info"
-      fontSize="large"
-    >
+    <SvgIcon color="info" fontSize="large">
       <ExclamationCircleIcon />
     </SvgIcon>
-  )
-};
+  ),
+}
 
 export const ConfirmationDialog = (props) => {
   const {
@@ -50,18 +41,18 @@ export const ConfirmationDialog = (props) => {
     variant = 'info',
     confirmLoading = false,
     ...other
-  } = props;
+  } = props
 
-  const icon = iconMap[variant];
+  const icon = iconMap[variant]
 
   const handleDialogClose = (event, reason) => {
     if (confirmLoading) {
-      return;
+      return
     }
     if (onCancel) {
-      onCancel(event);
+      onCancel(event)
     }
-  };
+  }
 
   return (
     <Dialog
@@ -69,30 +60,19 @@ export const ConfirmationDialog = (props) => {
       fullWidth
       onClose={handleDialogClose}
       open={open}
-      {...other}>
+      {...other}
+    >
       <DialogTitle>
-        <Stack
-          alignItems="center"
-          direction="row"
-          spacing={2}
-        >
+        <Stack alignItems="center" direction="row" spacing={2}>
           {icon}
-          <Typography variant="inherit">
-            {title}
-          </Typography>
+          <Typography variant="inherit">{title}</Typography>
         </Stack>
       </DialogTitle>
       <DialogContent>
-        <Typography>
-          {message}
-        </Typography>
+        <Typography>{message}</Typography>
       </DialogContent>
       <DialogActions>
-        <Button
-          color="inherit"
-          disabled={confirmLoading}
-          onClick={onCancel}
-        >
+        <Button color="inherit" disabled={confirmLoading} onClick={onCancel}>
           Cancel
         </Button>
         <Button
@@ -108,8 +88,8 @@ export const ConfirmationDialog = (props) => {
         </Button>
       </DialogActions>
     </Dialog>
-  );
-};
+  )
+}
 
 ConfirmationDialog.propTypes = {
   message: PropTypes.string,
@@ -118,5 +98,5 @@ ConfirmationDialog.propTypes = {
   open: PropTypes.bool,
   title: PropTypes.string,
   variant: PropTypes.oneOf(['error', 'warning', 'info']),
-  confirmLoading: PropTypes.bool
-};
+  confirmLoading: PropTypes.bool,
+}

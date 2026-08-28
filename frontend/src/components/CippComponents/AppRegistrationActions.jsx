@@ -1,4 +1,12 @@
-import { Launch, Delete, Key, Security, ContentCopy, Visibility, Edit } from '@mui/icons-material'
+import {
+  Launch,
+  Delete,
+  Key,
+  Security,
+  ContentCopy,
+  Visibility,
+  Edit,
+} from '@mui/icons-material'
 import isEqual from 'lodash/isEqual'
 import { CippFormComponent } from './CippFormComponent.jsx'
 import { CertificateCredentialRemovalForm } from './CertificateCredentialRemovalForm.jsx'
@@ -74,11 +82,17 @@ export const ADD_CLIENT_SECRET_FIELDS = [
     name: 'ExpiryDate',
     label: 'Custom expiry date',
     dateTimeType: 'date',
-    condition: { field: 'ExpiryMonths', compareType: 'valueEq', compareValue: 'custom' },
+    condition: {
+      field: 'ExpiryMonths',
+      compareType: 'valueEq',
+      compareValue: 'custom',
+    },
   },
 ]
 
-export const getAppRegistrationPostAndDestructiveActions = (canWriteApplication) => [
+export const getAppRegistrationPostAndDestructiveActions = (
+  canWriteApplication
+) => [
   {
     icon: <ContentCopy />,
     label: 'Create Enterprise App Template (Multi-Tenant)',
@@ -157,7 +171,9 @@ export const getAppRegistrationPostAndDestructiveActions = (canWriteApplication)
     confirmText:
       "'[displayName]' is a single-tenant app, so a single-tenant Application Manifest template will be created. This captures the app manifest into a reusable template that can be deployed to any tenant.",
     condition: (row) =>
-      canWriteApplication && row.signInAudience === 'AzureADMyOrg' && !row?.applicationTemplateId,
+      canWriteApplication &&
+      row.signInAudience === 'AzureADMyOrg' &&
+      !row?.applicationTemplateId,
   },
   {
     icon: <Key />,
@@ -199,7 +215,9 @@ export const getAppRegistrationPostAndDestructiveActions = (canWriteApplication)
           label="Select Password Credentials to Remove"
           multiple
           creatable={false}
-          validators={{ required: 'Please select at least one password credential' }}
+          validators={{
+            required: 'Please select at least one password credential',
+          }}
           options={
             row?.passwordCredentials?.map((cred) => ({
               label: `${cred.displayName || 'Unnamed'} (Expiration: ${new Date(
@@ -211,8 +229,10 @@ export const getAppRegistrationPostAndDestructiveActions = (canWriteApplication)
         />
       )
     },
-    confirmText: 'Are you sure you want to remove the selected password credentials?',
-    condition: (row) => canWriteApplication && row?.passwordCredentials?.length > 0,
+    confirmText:
+      'Are you sure you want to remove the selected password credentials?',
+    condition: (row) =>
+      canWriteApplication && row?.passwordCredentials?.length > 0,
   },
   {
     icon: <Security />,
@@ -229,7 +249,8 @@ export const getAppRegistrationPostAndDestructiveActions = (canWriteApplication)
     children: ({ formHook, row }) => {
       return <CertificateCredentialRemovalForm formHook={formHook} row={row} />
     },
-    confirmText: 'Are you sure you want to remove the selected certificate credentials?',
+    confirmText:
+      'Are you sure you want to remove the selected certificate credentials?',
     condition: (row) => canWriteApplication && row?.keyCredentials?.length > 0,
   },
   {
@@ -252,20 +273,32 @@ export const getAppRegistrationPostAndDestructiveActions = (canWriteApplication)
 
 const SIGN_IN_AUDIENCE_OPTIONS = [
   { label: 'This organization only (AzureADMyOrg)', value: 'AzureADMyOrg' },
-  { label: 'Any Entra ID directory - multitenant (AzureADMultipleOrgs)', value: 'AzureADMultipleOrgs' },
   {
-    label: 'Any Entra ID directory + personal Microsoft accounts (AzureADandPersonalMicrosoftAccount)',
+    label: 'Any Entra ID directory - multitenant (AzureADMultipleOrgs)',
+    value: 'AzureADMultipleOrgs',
+  },
+  {
+    label:
+      'Any Entra ID directory + personal Microsoft accounts (AzureADandPersonalMicrosoftAccount)',
     value: 'AzureADandPersonalMicrosoftAccount',
   },
-  { label: 'Personal Microsoft accounts only (PersonalMicrosoftAccount)', value: 'PersonalMicrosoftAccount' },
+  {
+    label: 'Personal Microsoft accounts only (PersonalMicrosoftAccount)',
+    value: 'PersonalMicrosoftAccount',
+  },
 ]
 
 // Audiences that include personal Microsoft accounts only accept v2 access tokens, so
 // api.requestedAccessTokenVersion must be 2 or Graph rejects the signInAudience change.
-const AUDIENCES_REQUIRING_V2_TOKENS = ['AzureADandPersonalMicrosoftAccount', 'PersonalMicrosoftAccount']
+const AUDIENCES_REQUIRING_V2_TOKENS = [
+  'AzureADandPersonalMicrosoftAccount',
+  'PersonalMicrosoftAccount',
+]
 
 const redirectUrisFromForm = (value) =>
-  Array.isArray(value) ? value.map((item) => item?.value ?? item).filter(Boolean) : []
+  Array.isArray(value)
+    ? value.map((item) => item?.value ?? item).filter(Boolean)
+    : []
 
 // customDataformatter builds the payload directly (bypassing the dialog's auto tenantFilter), so it
 // must include tenantFilter from the detail page's actionsData.Tenant.
@@ -323,7 +356,8 @@ export const getAppRegistrationEditActions = (canWriteApplication) => [
       // Only send what actually changed, so audience and URI edits stay independent.
       const Payload = {}
 
-      const signInAudience = formData?.signInAudience?.value ?? formData?.signInAudience
+      const signInAudience =
+        formData?.signInAudience?.value ?? formData?.signInAudience
       if (signInAudience && signInAudience !== row.signInAudience) {
         Payload.signInAudience = signInAudience
         // Personal-account audiences require v2 access tokens; bump it in the same PATCH (merging the
@@ -338,16 +372,23 @@ export const getAppRegistrationEditActions = (canWriteApplication) => [
 
       // redirectUris and redirectUriSettings can't be sent together, so a changed platform sends the
       // existing object minus redirectUriSettings, with only redirectUris replaced.
-      ;[['web', row.web], ['spa', row.spa], ['publicClient', row.publicClient]].forEach(
-        ([key, existing]) => {
-          const newUris = redirectUrisFromForm(formData?.[key]?.redirectUris)
-          if (!isEqual([...newUris].sort(), [...(existing?.redirectUris || [])].sort())) {
-            const base = { ...(existing || {}) }
-            delete base.redirectUriSettings
-            Payload[key] = { ...base, redirectUris: newUris }
-          }
+      ;[
+        ['web', row.web],
+        ['spa', row.spa],
+        ['publicClient', row.publicClient],
+      ].forEach(([key, existing]) => {
+        const newUris = redirectUrisFromForm(formData?.[key]?.redirectUris)
+        if (
+          !isEqual(
+            [...newUris].sort(),
+            [...(existing?.redirectUris || [])].sort()
+          )
+        ) {
+          const base = { ...(existing || {}) }
+          delete base.redirectUriSettings
+          Payload[key] = { ...base, redirectUris: newUris }
         }
-      )
+      })
 
       return {
         tenantFilter: row.Tenant,

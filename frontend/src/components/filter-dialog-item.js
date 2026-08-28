@@ -1,8 +1,16 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
-import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
-import { Button, FilledInput, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers';
+import { useMemo } from 'react'
+import PropTypes from 'prop-types'
+import PlusIcon from '@heroicons/react/24/outline/PlusIcon'
+import {
+  Button,
+  FilledInput,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+import { DatePicker } from '@mui/x-date-pickers'
 
 export const FilterDialogItem = (props) => {
   const {
@@ -16,44 +24,35 @@ export const FilterDialogItem = (props) => {
     onRemoveFilter,
     onValueChange,
     operators = [],
-    properties = []
-  } = props;
+    properties = [],
+  } = props
 
   const property = useMemo(() => {
-    return properties.find((property) => property.name === filter.property);
-  }, [filter, properties]);
+    return properties.find((property) => property.name === filter.property)
+  }, [filter, properties])
 
   const operator = useMemo(() => {
-    return operators.find((operator) => operator.name === filter.operator);
-  }, [filter, operators]);
+    return operators.find((operator) => operator.name === filter.operator)
+  }, [filter, operators])
 
   const operatorOptions = useMemo(() => {
     return (property?.operators || [])
       .map((name) => operators.find((operator) => operator.name === name))
-      .filter((operator) => !!operator);
-  }, [property, operators]);
+      .filter((operator) => !!operator)
+  }, [property, operators])
 
   return (
     <Stack spacing={1}>
-      <Typography variant="caption">
-        Where
-      </Typography>
+      <Typography variant="caption">Where</Typography>
       <Stack spacing={2}>
-        <Stack
-          alignItems="center"
-          direction="row"
-          spacing={2}
-        >
+        <Stack alignItems="center" direction="row" spacing={2}>
           <Select
             fullWidth
             onChange={(event) => onPropertyChange?.(index, event.target.value)}
             value={filter.property || ''}
           >
             {properties.map((property) => (
-              <MenuItem
-                key={property.name}
-                value={property.name}
-              >
+              <MenuItem key={property.name} value={property.name}>
                 {property.label}
               </MenuItem>
             ))}
@@ -65,10 +64,7 @@ export const FilterDialogItem = (props) => {
             value={operator?.name || ''}
           >
             {operatorOptions.map((operator) => (
-              <MenuItem
-                key={operator.name}
-                value={operator.name}
-              >
+              <MenuItem key={operator.name} value={operator.name}>
                 {operator.label}
               </MenuItem>
             ))}
@@ -78,13 +74,11 @@ export const FilterDialogItem = (props) => {
           <DatePicker
             onChange={(date) => {
               if (date) {
-                onValueChange?.(index, date);
+                onValueChange?.(index, date)
               }
             }}
             renderInput={(inputProps) => (
-              <TextField
-                fullWidth
-                {...inputProps} />
+              <TextField fullWidth {...inputProps} />
             )}
             value={filter.value || null}
           />
@@ -130,8 +124,8 @@ export const FilterDialogItem = (props) => {
         </Button>
       </Stack>
     </Stack>
-  );
-};
+  )
+}
 
 FilterDialogItem.propTypes = {
   disableAdd: PropTypes.bool,
@@ -144,5 +138,5 @@ FilterDialogItem.propTypes = {
   onRemoveFilter: PropTypes.func,
   onValueChange: PropTypes.func,
   operators: PropTypes.array,
-  properties: PropTypes.array
-};
+  properties: PropTypes.array,
+}

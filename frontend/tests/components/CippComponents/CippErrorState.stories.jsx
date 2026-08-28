@@ -20,7 +20,9 @@ export const NotFound = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(canvas.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+    await expect(
+      canvas.getByRole('heading', { name: 'Page not found' })
+    ).toBeInTheDocument()
   },
 }
 
@@ -35,7 +37,8 @@ export const ServerError = {
     title: 'Something went wrong',
     description:
       'Head back to the dashboard — and if it keeps happening, clearing the cached data usually shakes it loose.',
-    detail: "TypeError: Cannot read properties of undefined (reading 'clientPrincipal')",
+    detail:
+      "TypeError: Cannot read properties of undefined (reading 'clientPrincipal')",
     imageUrl: '/cippy-500.png',
     actionText: 'Return to Home',
     actionHref: '/',
@@ -44,8 +47,12 @@ export const ServerError = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(canvas.getByRole('link', { name: 'Return to Home' })).toBeInTheDocument()
-    await expect(canvas.getByRole('button', { name: 'Clear cache & reload' })).toBeInTheDocument()
+    await expect(
+      canvas.getByRole('link', { name: 'Return to Home' })
+    ).toBeInTheDocument()
+    await expect(
+      canvas.getByRole('button', { name: 'Clear cache & reload' })
+    ).toBeInTheDocument()
   },
 }
 

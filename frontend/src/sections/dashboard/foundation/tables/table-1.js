@@ -1,4 +1,4 @@
-import EllipsisVerticalIcon from '@heroicons/react/24/outline/EllipsisVerticalIcon';
+import EllipsisVerticalIcon from '@heroicons/react/24/outline/EllipsisVerticalIcon'
 import {
   Box,
   Checkbox,
@@ -13,10 +13,10 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
-  Typography
-} from '@mui/material';
-import { Pagination } from '../../../../components/pagination';
-import { Scrollbar } from '../../../../components/scrollbar';
+  Typography,
+} from '@mui/material'
+import { Pagination } from '../../../../components/pagination'
+import { Scrollbar } from '../../../../components/scrollbar'
 
 export const Table1 = () => (
   <>
@@ -28,34 +28,22 @@ export const Table1 = () => (
               <Checkbox />
             </TableCell>
             <TableCell>
-              <TableSortLabel>
-                Order
-              </TableSortLabel>
+              <TableSortLabel>Order</TableSortLabel>
             </TableCell>
             <TableCell>
-              <TableSortLabel>
-                Invoice date
-              </TableSortLabel>
+              <TableSortLabel>Invoice date</TableSortLabel>
             </TableCell>
             <TableCell>
-              <TableSortLabel>
-                Due date
-              </TableSortLabel>
+              <TableSortLabel>Due date</TableSortLabel>
             </TableCell>
             <TableCell>
-              <TableSortLabel>
-                Total
-              </TableSortLabel>
+              <TableSortLabel>Total</TableSortLabel>
             </TableCell>
             <TableCell>
-              <TableSortLabel>
-                Payment method
-              </TableSortLabel>
+              <TableSortLabel>Payment method</TableSortLabel>
             </TableCell>
             <TableCell>
-              <TableSortLabel>
-                Status
-              </TableSortLabel>
+              <TableSortLabel>Status</TableSortLabel>
             </TableCell>
             <TableCell />
           </TableRow>
@@ -75,36 +63,21 @@ export const Table1 = () => (
                 #DEV5437
               </Link>
             </TableCell>
+            <TableCell>02 Jun 2021</TableCell>
+            <TableCell>02 Jun 2021</TableCell>
+            <TableCell>$100.00</TableCell>
+            <TableCell>Credit Card</TableCell>
             <TableCell>
-              02 Jun 2021
-            </TableCell>
-            <TableCell>
-              02 Jun 2021
-            </TableCell>
-            <TableCell>
-              $100.00
-            </TableCell>
-            <TableCell>
-              Credit Card
-            </TableCell>
-            <TableCell>
-              <Stack
-                alignItems="center"
-                direction="row"
-                spacing={1}
-              >
+              <Stack alignItems="center" direction="row" spacing={1}>
                 <Box
                   sx={{
                     backgroundColor: 'info.main',
                     borderRadius: '50%',
                     height: 8,
-                    width: 8
+                    width: 8,
                   }}
                 />
-                <Typography
-                  color="info.main"
-                  variant="body2"
-                >
+                <Typography color="info.main" variant="body2">
                   Ongoing
                 </Typography>
               </Stack>
@@ -121,10 +94,6 @@ export const Table1 = () => (
       </Table>
     </Scrollbar>
     <Divider />
-    <Pagination
-      rowsCount={1}
-      page={0}
-      rowsPerPage={10}
-    />
+    <Pagination rowsCount={1} page={0} rowsPerPage={10} />
   </>
-);
+)

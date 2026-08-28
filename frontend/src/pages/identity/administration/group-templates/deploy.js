@@ -1,31 +1,31 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { CippWizardConfirmation } from "../../../../components/CippWizard/CippWizardConfirmation";
-import CippWizardPage from "../../../../components/CippWizard/CippWizardPage.jsx";
-import { CippTenantStep } from "../../../../components/CippWizard/CippTenantStep.jsx";
-import { CippWizardGroupTemplates } from "../../../../components/CippWizard/CippWizardGroupTemplates";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { CippWizardConfirmation } from '../../../../components/CippWizard/CippWizardConfirmation'
+import CippWizardPage from '../../../../components/CippWizard/CippWizardPage.jsx'
+import { CippTenantStep } from '../../../../components/CippWizard/CippTenantStep.jsx'
+import { CippWizardGroupTemplates } from '../../../../components/CippWizard/CippWizardGroupTemplates'
 
 const Page = () => {
   const steps = [
     {
-      title: "Step 1",
-      description: "Tenant Selection",
+      title: 'Step 1',
+      description: 'Tenant Selection',
       component: CippTenantStep,
       componentProps: {
         allTenants: false,
-        type: "multiple",
+        type: 'multiple',
       },
     },
     {
-      title: "Step 2",
-      description: "Choose Template",
+      title: 'Step 2',
+      description: 'Choose Template',
       component: CippWizardGroupTemplates,
     },
     {
-      title: "Step 3",
-      description: "Confirmation",
+      title: 'Step 3',
+      description: 'Confirmation',
       component: CippWizardConfirmation,
     },
-  ];
+  ]
 
   return (
     <>
@@ -35,9 +35,9 @@ const Page = () => {
         wizardTitle="Group Template Deployment"
       />
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

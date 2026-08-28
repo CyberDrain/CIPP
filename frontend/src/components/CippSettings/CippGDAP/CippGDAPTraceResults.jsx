@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react'
 import {
   Box,
   Card,
@@ -15,7 +15,7 @@ import {
   LinearProgress,
   Tooltip,
   IconButton,
-} from "@mui/material";
+} from '@mui/material'
 import {
   ExpandMore,
   CheckCircle,
@@ -25,24 +25,24 @@ import {
   Group,
   AccountTree,
   InfoOutlined,
-} from "@mui/icons-material";
-import { CippCodeBlock } from "../../CippComponents/CippCodeBlock";
-import { CippPathVisualization } from "./CippPathVisualization";
-import { getCippRoleTranslation } from "../../../utils/get-cipp-role-translation";
+} from '@mui/icons-material'
+import { CippCodeBlock } from '../../CippComponents/CippCodeBlock'
+import { CippPathVisualization } from './CippPathVisualization'
+import { getCippRoleTranslation } from '../../../utils/get-cipp-role-translation'
 
 export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
-  const [expandedRoles, setExpandedRoles] = useState({});
-  const [expandedRelationships, setExpandedRelationships] = useState({});
+  const [expandedRoles, setExpandedRoles] = useState({})
+  const [expandedRelationships, setExpandedRelationships] = useState({})
 
   if (isLoading) {
     return (
-      <Box sx={{ width: "100%", mt: 2 }}>
+      <Box sx={{ width: '100%', mt: 2 }}>
         <LinearProgress />
-        <Typography variant="body2" sx={{ mt: 2, textAlign: "center" }}>
+        <Typography variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
           Tracing GDAP access path...
         </Typography>
       </Box>
-    );
+    )
   }
 
   if (error) {
@@ -51,7 +51,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
         <Typography variant="h6">Error</Typography>
         <Typography variant="body2">{error}</Typography>
       </Alert>
-    );
+    )
   }
 
   if (!data) {
@@ -59,24 +59,32 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
       <Alert severity="info" sx={{ mt: 2 }}>
         No data available. Please run the trace first.
       </Alert>
-    );
+    )
   }
 
   const handleRoleExpand = (roleId) => {
     setExpandedRoles((prev) => ({
       ...prev,
       [roleId]: !prev[roleId],
-    }));
-  };
+    }))
+  }
 
   const handleRelationshipExpand = (relationshipId) => {
     setExpandedRelationships((prev) => ({
       ...prev,
       [relationshipId]: !prev[relationshipId],
-    }));
-  };
+    }))
+  }
 
-  const { tenantName, userUPN, userDisplayName, roles, relationships, summary, error: dataError } = data;
+  const {
+    tenantName,
+    userUPN,
+    userDisplayName,
+    roles,
+    relationships,
+    summary,
+    error: dataError,
+  } = data
 
   if (dataError) {
     return (
@@ -84,32 +92,60 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
         <Typography variant="h6">Trace completed with issues</Typography>
         <Typography variant="body2">{dataError}</Typography>
       </Alert>
-    );
+    )
   }
 
   const getRoleStatusChip = (role) => {
     if (role.isUserHasAccess) {
-      return <Chip icon={<CheckCircle />} label="Has Access" color="success" size="small" />;
+      return (
+        <Chip
+          icon={<CheckCircle />}
+          label="Has Access"
+          color="success"
+          size="small"
+        />
+      )
     } else if (role.isAssigned) {
-      return <Chip icon={<Warning />} label="Assigned but No Access" color="warning" size="small" />;
+      return (
+        <Chip
+          icon={<Warning />}
+          label="Assigned but No Access"
+          color="warning"
+          size="small"
+        />
+      )
     } else if (role.roleExistsInRelationship) {
-      return <Chip icon={<Warning />} label="In Relationship but Not Assigned" color="info" size="small" />;
+      return (
+        <Chip
+          icon={<Warning />}
+          label="In Relationship but Not Assigned"
+          color="info"
+          size="small"
+        />
+      )
     } else {
-      return <Chip icon={<Cancel />} label="Not In Any Relationship" color="default" size="small" />;
+      return (
+        <Chip
+          icon={<Cancel />}
+          label="Not In Any Relationship"
+          color="default"
+          size="small"
+        />
+      )
     }
-  };
+  }
 
   const renderMembershipPath = (path) => {
-    if (!path || path.length === 0) return null;
+    if (!path || path.length === 0) return null
 
     const sortedPath = [...path].sort((a, b) => {
       if (a.sequence !== undefined && b.sequence !== undefined) {
-        return a.sequence - b.sequence;
+        return a.sequence - b.sequence
       }
-      return 0;
-    });
+      return 0
+    })
 
-    const hasMultipleGroups = sortedPath.length > 1;
+    const hasMultipleGroups = sortedPath.length > 1
 
     return (
       <Stack spacing={1} sx={{ mt: 1 }}>
@@ -124,7 +160,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                   sx={{ minWidth: 60 }}
                 />
               )}
-              {step.membershipType === "direct" && (
+              {step.membershipType === 'direct' && (
                 <Chip
                   icon={<Group />}
                   label="Direct"
@@ -133,7 +169,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                   variant="outlined"
                 />
               )}
-              {step.membershipType === "nested" && (
+              {step.membershipType === 'nested' && (
                 <Chip
                   icon={<AccountTree />}
                   label="Nested"
@@ -142,7 +178,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                   variant="outlined"
                 />
               )}
-              {step.membershipType === "not_member" && (
+              {step.membershipType === 'not_member' && (
                 <Chip
                   icon={<Cancel />}
                   label="Not Member"
@@ -151,7 +187,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                   variant="outlined"
                 />
               )}
-              <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+              <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                 {step.groupName || step.groupId}
               </Typography>
             </Stack>
@@ -165,8 +201,8 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
           </Box>
         ))}
       </Stack>
-    );
-  };
+    )
+  }
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -182,7 +218,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
               <Typography variant="body2" color="text.secondary">
                 Tenant
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                 {tenantName}
               </Typography>
             </Grid>
@@ -190,7 +226,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
               <Typography variant="body2" color="text.secondary">
                 User
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                 {userDisplayName || userUPN}
               </Typography>
             </Grid>
@@ -198,7 +234,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
               <Typography variant="body2" color="text.secondary">
                 Total Relationships
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                 {summary?.totalRelationships || 0}
               </Typography>
             </Grid>
@@ -206,7 +242,10 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
               <Typography variant="body2" color="text.secondary">
                 Roles with Access
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: "medium", color: "success.main" }}>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 'medium', color: 'success.main' }}
+              >
                 {summary?.rolesWithAccess || 0} / {summary?.totalRoles || 15}
               </Typography>
             </Grid>
@@ -225,7 +264,10 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                   </IconButton>
                 </Tooltip>
               </Stack>
-              <Typography variant="body1" sx={{ fontWeight: "medium", color: "warning.main" }}>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 'medium', color: 'warning.main' }}
+              >
                 {summary?.rolesAssignedButNoAccess || 0}
               </Typography>
             </Grid>
@@ -244,7 +286,10 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                   </IconButton>
                 </Tooltip>
               </Stack>
-              <Typography variant="body1" sx={{ fontWeight: "medium", color: "info.main" }}>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 'medium', color: 'info.main' }}
+              >
                 {summary?.rolesInRelationshipButNotAssigned || 0}
               </Typography>
             </Grid>
@@ -263,7 +308,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                   </IconButton>
                 </Tooltip>
               </Stack>
-              <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                 {summary?.rolesNotInAnyRelationship || 0}
               </Typography>
             </Grid>
@@ -275,7 +320,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            <Security sx={{ verticalAlign: "middle", mr: 1 }} />
+            <Security sx={{ verticalAlign: 'middle', mr: 1 }} />
             GDAP Roles Access
           </Typography>
           <Divider sx={{ mb: 2 }} />
@@ -289,10 +334,20 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                   onChange={() => handleRoleExpand(role.roleId)}
                 >
                   <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Box sx={{ display: "flex", alignItems: "center", width: "100%", gap: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        gap: 2,
+                      }}
+                    >
                       {getRoleStatusChip(role)}
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 'medium' }}
+                        >
                           {role.roleName}
                         </Typography>
                         {role.roleDescription && (
@@ -305,9 +360,15 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                   </AccordionSummary>
                   <AccordionDetails>
                     <Stack spacing={2}>
-                      {role.isUserHasAccess && role.accessPaths && role.accessPaths.length > 0 ? (
+                      {role.isUserHasAccess &&
+                      role.accessPaths &&
+                      role.accessPaths.length > 0 ? (
                         <>
-                          <Typography variant="subtitle2" color="success.main" sx={{ mb: 2 }}>
+                          <Typography
+                            variant="subtitle2"
+                            color="success.main"
+                            sx={{ mb: 2 }}
+                          >
                             Access Paths ({role.accessPaths.length}):
                           </Typography>
                           {role.accessPaths.map((path, pathIndex) => (
@@ -328,58 +389,77 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                       ) : role.isAssigned ? (
                         <>
                           <Alert severity="warning" sx={{ mb: 2 }}>
-                            Role is assigned but user does not have access through any group.
+                            Role is assigned but user does not have access
+                            through any group.
                           </Alert>
-                          {role.relationshipsWithRole && role.relationshipsWithRole.length > 0 && (
-                            <>
-                              <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                                Assigned Groups ({role.relationshipsWithRole.length}):
-                              </Typography>
-                              {role.relationshipsWithRole.map((rel, relIndex) => (
-                                <Box key={relIndex} sx={{ mb: 2 }}>
-                                  <CippPathVisualization
-                                    userDisplayName={userDisplayName}
-                                    userUPN={userUPN}
-                                    membershipPath={rel.membershipPath}
-                                    groupName={rel.groupName}
-                                    roleName={role.roleName}
-                                    relationshipName={rel.relationshipName}
-                                    isMember={rel.isUserMember}
-                                  />
-                                </Box>
-                              ))}
-                            </>
-                          )}
+                          {role.relationshipsWithRole &&
+                            role.relationshipsWithRole.length > 0 && (
+                              <>
+                                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                                  Assigned Groups (
+                                  {role.relationshipsWithRole.length}):
+                                </Typography>
+                                {role.relationshipsWithRole.map(
+                                  (rel, relIndex) => (
+                                    <Box key={relIndex} sx={{ mb: 2 }}>
+                                      <CippPathVisualization
+                                        userDisplayName={userDisplayName}
+                                        userUPN={userUPN}
+                                        membershipPath={rel.membershipPath}
+                                        groupName={rel.groupName}
+                                        roleName={role.roleName}
+                                        relationshipName={rel.relationshipName}
+                                        isMember={rel.isUserMember}
+                                      />
+                                    </Box>
+                                  )
+                                )}
+                              </>
+                            )}
                         </>
                       ) : role.roleExistsInRelationship ? (
                         <>
                           <Alert severity="info">
-                            This role exists in at least one GDAP relationship but is not assigned to any groups.
+                            This role exists in at least one GDAP relationship
+                            but is not assigned to any groups.
                           </Alert>
-                          {role.relationshipsWithRoleAvailable && role.relationshipsWithRoleAvailable.length > 0 && (
-                            <>
-                              <Typography variant="subtitle2">Available in relationships:</Typography>
-                              {role.relationshipsWithRoleAvailable.map((rel, relIndex) => (
-                                <Box key={relIndex} sx={{ pl: 2 }}>
-                                  <Typography variant="body2">
-                                    • {rel.relationshipName} ({rel.relationshipStatus})
-                                  </Typography>
-                                </Box>
-                              ))}
-                            </>
-                          )}
+                          {role.relationshipsWithRoleAvailable &&
+                            role.relationshipsWithRoleAvailable.length > 0 && (
+                              <>
+                                <Typography variant="subtitle2">
+                                  Available in relationships:
+                                </Typography>
+                                {role.relationshipsWithRoleAvailable.map(
+                                  (rel, relIndex) => (
+                                    <Box key={relIndex} sx={{ pl: 2 }}>
+                                      <Typography variant="body2">
+                                        • {rel.relationshipName} (
+                                        {rel.relationshipStatus})
+                                      </Typography>
+                                    </Box>
+                                  )
+                                )}
+                              </>
+                            )}
                         </>
                       ) : (
-                        <Alert severity="info">This role is not available in any GDAP relationship.</Alert>
+                        <Alert severity="info">
+                          This role is not available in any GDAP relationship.
+                        </Alert>
                       )}
 
-                      {role.relationshipsWithRole && role.relationshipsWithRole.length > 0 && (
-                        <Box sx={{ mt: 2 }}>
-                          <Typography variant="caption" color="text.secondary">
-                            All relationships with this role: {role.relationshipsWithRole.length}
-                          </Typography>
-                        </Box>
-                      )}
+                      {role.relationshipsWithRole &&
+                        role.relationshipsWithRole.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              All relationships with this role:{' '}
+                              {role.relationshipsWithRole.length}
+                            </Typography>
+                          </Box>
+                        )}
                     </Stack>
                   </AccordionDetails>
                 </Accordion>
@@ -396,7 +476,7 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              <AccountTree sx={{ verticalAlign: "middle", mr: 1 }} />
+              <AccountTree sx={{ verticalAlign: 'middle', mr: 1 }} />
               GDAP Relationships
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -404,20 +484,42 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
               {relationships.map((relationship) => (
                 <Accordion
                   key={relationship.relationshipId}
-                  expanded={expandedRelationships[relationship.relationshipId] || false}
-                  onChange={() => handleRelationshipExpand(relationship.relationshipId)}
+                  expanded={
+                    expandedRelationships[relationship.relationshipId] || false
+                  }
+                  onChange={() =>
+                    handleRelationshipExpand(relationship.relationshipId)
+                  }
                 >
                   <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Box sx={{ display: "flex", alignItems: "center", width: "100%", gap: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        gap: 2,
+                      }}
+                    >
                       <Chip
                         label={relationship.relationshipStatus}
-                        color={relationship.relationshipStatus === "active" ? "success" : "default"}
+                        color={
+                          relationship.relationshipStatus === 'active'
+                            ? 'success'
+                            : 'default'
+                        }
                         size="small"
                       />
-                      <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontWeight: 'medium' }}
+                      >
                         {relationship.relationshipName}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: "auto" }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ ml: 'auto' }}
+                      >
                         {relationship.groups?.length || 0} groups
                       </Typography>
                     </Box>
@@ -426,7 +528,9 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                     <Stack spacing={2}>
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          Customer Tenant: {relationship.customerTenantName || relationship.customerTenantId}
+                          Customer Tenant:{' '}
+                          {relationship.customerTenantName ||
+                            relationship.customerTenantId}
                         </Typography>
                       </Box>
                       {relationship.groups && relationship.groups.length > 0 ? (
@@ -436,16 +540,20 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                           </Typography>
                           {relationship.groups.map((group, groupIndex) => {
                             const groupRole = roles?.find((r) =>
-                              r.relationshipsWithRole?.some((rel) => rel.groupId === group.groupId)
-                            );
-                            const firstRoleDef = group.roles?.[0];
+                              r.relationshipsWithRole?.some(
+                                (rel) => rel.groupId === group.groupId
+                              )
+                            )
+                            const firstRoleDef = group.roles?.[0]
                             const roleName =
                               groupRole?.roleName ||
                               firstRoleDef?.displayName ||
                               (firstRoleDef?.roleDefinitionId
-                                ? getCippRoleTranslation(firstRoleDef.roleDefinitionId)
+                                ? getCippRoleTranslation(
+                                    firstRoleDef.roleDefinitionId
+                                  )
                                 : null) ||
-                              "Role";
+                              'Role'
 
                             return (
                               <Box key={groupIndex} sx={{ mb: 3 }}>
@@ -455,8 +563,12 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                                   membershipPath={group.membershipPath}
                                   groupName={group.groupName}
                                   roleName={roleName}
-                                  relationshipName={relationship.relationshipName}
-                                  customerTenantName={relationship.customerTenantName}
+                                  relationshipName={
+                                    relationship.relationshipName
+                                  }
+                                  customerTenantName={
+                                    relationship.customerTenantName
+                                  }
                                   isMember={group.isMember}
                                 />
                                 {group.roles && group.roles.length > 1 && (
@@ -464,34 +576,45 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
                                     <Typography
                                       variant="caption"
                                       color="text.secondary"
-                                      sx={{ display: "block", mb: 0.5 }}
+                                      sx={{ display: 'block', mb: 0.5 }}
                                     >
                                       Additional Roles:
                                     </Typography>
-                                    <Stack useFlexGap direction="row" flexWrap="wrap" gap={0.5}>
-                                      {group.roles.slice(1).map((role, roleIndex) => (
-                                        <Chip
-                                          key={roleIndex}
-                                          label={
-                                            role.displayName ||
-                                            (role.roleDefinitionId
-                                              ? getCippRoleTranslation(role.roleDefinitionId)
-                                              : null) ||
-                                            role.roleDefinitionId
-                                          }
-                                          size="small"
-                                          variant="outlined"
-                                        />
-                                      ))}
+                                    <Stack
+                                      useFlexGap
+                                      direction="row"
+                                      flexWrap="wrap"
+                                      gap={0.5}
+                                    >
+                                      {group.roles
+                                        .slice(1)
+                                        .map((role, roleIndex) => (
+                                          <Chip
+                                            key={roleIndex}
+                                            label={
+                                              role.displayName ||
+                                              (role.roleDefinitionId
+                                                ? getCippRoleTranslation(
+                                                    role.roleDefinitionId
+                                                  )
+                                                : null) ||
+                                              role.roleDefinitionId
+                                            }
+                                            size="small"
+                                            variant="outlined"
+                                          />
+                                        ))}
                                     </Stack>
                                   </Box>
                                 )}
                               </Box>
-                            );
+                            )
                           })}
                         </>
                       ) : (
-                        <Alert severity="info">No groups found in this relationship.</Alert>
+                        <Alert severity="info">
+                          No groups found in this relationship.
+                        </Alert>
                       )}
                     </Stack>
                   </AccordionDetails>
@@ -521,5 +644,5 @@ export const CippGDAPTraceResults = ({ data, isLoading, error }) => {
         </CardContent>
       </Card>
     </Box>
-  );
-};
+  )
+}

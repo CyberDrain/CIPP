@@ -7,8 +7,15 @@ import { renderWithProviders } from '../../test-utils'
 import CippStandardAccordion from '../../../src/components/CippStandards/CippStandardAccordion'
 import standardsData from '../../../src/data/standards.json'
 
-vi.mock('../../../src/api/ApiCall', async () => (await import('../../mocks/api-call')).apiCallMock())
-import { api, getResult, paginatedResult, postResult } from '../../mocks/api-call'
+vi.mock('../../../src/api/ApiCall', async () =>
+  (await import('../../mocks/api-call')).apiCallMock()
+)
+import {
+  api,
+  getResult,
+  paginatedResult,
+  postResult,
+} from '../../mocks/api-call'
 
 api.get = getResult({ isSuccess: false })
 api.post = postResult()
@@ -37,7 +44,9 @@ const Harness = ({ selected, defaultValues, editMode = false }) => {
       standards={standardsData}
       selectedStandards={selected}
       expanded={expanded}
-      handleAccordionToggle={(name) => setExpanded((prev) => (prev === name ? null : name))}
+      handleAccordionToggle={(name) =>
+        setExpanded((prev) => (prev === name ? null : name))
+      }
       handleRemoveStandard={() => {}}
       handleAddMultipleStandard={() => {}}
       formControl={formControl}
@@ -52,9 +61,13 @@ const applyBulkActions = async (user, labels) => {
   for (const label of labels) {
     await user.click(await screen.findByRole('menuitem', { name: label }))
   }
-  await user.click(screen.getByRole('menuitem', { name: 'Apply to all standards' }))
+  await user.click(
+    screen.getByRole('menuitem', { name: 'Apply to all standards' })
+  )
   await waitFor(() => {
-    expect(screen.queryByRole('menuitem', { name: 'Apply to all standards' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('menuitem', { name: 'Apply to all standards' })
+    ).not.toBeInTheDocument()
   })
 }
 
@@ -62,26 +75,45 @@ describe('CippStandardAccordion Set All Actions', () => {
   it('bulk apply intersects picked actions with each standard availability, Remediate never lands on a remediate-disabled standard', async () => {
     const user = userEvent.setup()
     renderWithProviders(
-      <Harness selected={{ 'standards.AddDMARCToMOERA': true, 'standards.AuditLog': true }} />,
+      <Harness
+        selected={{
+          'standards.AddDMARCToMOERA': true,
+          'standards.AuditLog': true,
+        }}
+      />
     )
 
     await applyBulkActions(user, ['Report', 'Remediate'])
 
-    expect(capturedForm.getValues('standards.AuditLog.action')).toEqual([REPORT, REMEDIATE])
+    expect(capturedForm.getValues('standards.AuditLog.action')).toEqual([
+      REPORT,
+      REMEDIATE,
+    ])
     // disabledFeatures.remediate strips Remediate for this standard
-    expect(capturedForm.getValues('standards.AddDMARCToMOERA.action')).toEqual([REPORT])
+    expect(capturedForm.getValues('standards.AddDMARCToMOERA.action')).toEqual([
+      REPORT,
+    ])
   })
 
   it('bulk apply skips a standard entirely when no picked action is available, no empty action written', async () => {
     const user = userEvent.setup()
     renderWithProviders(
-      <Harness selected={{ 'standards.AddDMARCToMOERA': true, 'standards.AuditLog': true }} />,
+      <Harness
+        selected={{
+          'standards.AddDMARCToMOERA': true,
+          'standards.AuditLog': true,
+        }}
+      />
     )
 
     await applyBulkActions(user, ['Remediate'])
 
-    expect(capturedForm.getValues('standards.AuditLog.action')).toEqual([REMEDIATE])
-    expect(capturedForm.getValues('standards.AddDMARCToMOERA.action')).toBeUndefined()
+    expect(capturedForm.getValues('standards.AuditLog.action')).toEqual([
+      REMEDIATE,
+    ])
+    expect(
+      capturedForm.getValues('standards.AddDMARCToMOERA.action')
+    ).toBeUndefined()
   })
 
   it('bulk apply never writes actions onto deprecated or unknown standards', async () => {
@@ -93,14 +125,20 @@ describe('CippStandardAccordion Set All Actions', () => {
           'standards.GhostStandardRemovedFromCatalog': true,
           'standards.AuditLog': true,
         }}
-      />,
+      />
     )
 
     await applyBulkActions(user, ['Report'])
 
-    expect(capturedForm.getValues('standards.AuditLog.action')).toEqual([REPORT])
-    expect(capturedForm.getValues('standards.SPDirectSharing.action')).toBeUndefined()
-    expect(capturedForm.getValues('standards.GhostStandardRemovedFromCatalog.action')).toBeUndefined()
+    expect(capturedForm.getValues('standards.AuditLog.action')).toEqual([
+      REPORT,
+    ])
+    expect(
+      capturedForm.getValues('standards.SPDirectSharing.action')
+    ).toBeUndefined()
+    expect(
+      capturedForm.getValues('standards.GhostStandardRemovedFromCatalog.action')
+    ).toBeUndefined()
   })
 
   it('bulk apply keeps previously saved fields, configured standard stays configured', async () => {
@@ -113,11 +151,15 @@ describe('CippStandardAccordion Set All Actions', () => {
           standards: {
             CustomBannedPasswordList: {
               action: [{ label: 'Alert', value: 'warn' }],
-              standards: { CustomBannedPasswordList: { BannedWords: 'hunter2;correcthorse' } },
+              standards: {
+                CustomBannedPasswordList: {
+                  BannedWords: 'hunter2;correcthorse',
+                },
+              },
             },
           },
         }}
-      />,
+      />
     )
 
     // edit-mode init derives configured state from the loaded template
@@ -125,7 +167,9 @@ describe('CippStandardAccordion Set All Actions', () => {
 
     await applyBulkActions(user, ['Report'])
 
-    expect(capturedForm.getValues('standards.CustomBannedPasswordList.action')).toEqual([REPORT])
+    expect(
+      capturedForm.getValues('standards.CustomBannedPasswordList.action')
+    ).toEqual([REPORT])
     // bulk apply only touches .action, the saved required field survives in form and savedValues
     expect(capturedForm.getValues(BANNED_PATH)).toBe('hunter2;correcthorse')
     expect(screen.getByText('Configured')).toBeInTheDocument()
@@ -142,32 +186,49 @@ describe('CippStandardAccordion Set All Actions', () => {
           standards: {
             CustomBannedPasswordList: {
               action: [{ label: 'Alert', value: 'warn' }],
-              standards: { CustomBannedPasswordList: { BannedWords: 'hunter2;correcthorse' } },
+              standards: {
+                CustomBannedPasswordList: {
+                  BannedWords: 'hunter2;correcthorse',
+                },
+              },
             },
           },
         }}
-      />,
+      />
     )
     expect(await screen.findByText('Configured')).toBeInTheDocument()
 
     // expand toggle is the unnamed icon button after the tooltip-labeled remove button
-    const expandBtn = screen.getByRole('button', { name: 'Remove Standard' }).nextElementSibling
+    const expandBtn = screen.getByRole('button', {
+      name: 'Remove Standard',
+    }).nextElementSibling
     await user.click(expandBtn)
-    await user.type(screen.getByRole('textbox', { name: 'Banned Words' }), ';extra')
-    expect(capturedForm.getValues(BANNED_PATH)).toBe('hunter2;correcthorse;extra')
+    await user.type(
+      screen.getByRole('textbox', { name: 'Banned Words' }),
+      ';extra'
+    )
+    expect(capturedForm.getValues(BANNED_PATH)).toBe(
+      'hunter2;correcthorse;extra'
+    )
 
     await applyBulkActions(user, ['Report'])
 
     // apply collapsed the accordion but the unsaved edit stays in the form
     await waitFor(() => {
-      expect(screen.queryByRole('textbox', { name: 'Banned Words' })).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('textbox', { name: 'Banned Words' })
+      ).not.toBeInTheDocument()
     })
-    expect(capturedForm.getValues(BANNED_PATH)).toBe('hunter2;correcthorse;extra')
+    expect(capturedForm.getValues(BANNED_PATH)).toBe(
+      'hunter2;correcthorse;extra'
+    )
 
     // cancel reverts to savedValues: original field, bulk-applied action
     await user.click(expandBtn)
     await user.click(await screen.findByRole('button', { name: 'Cancel' }))
     expect(capturedForm.getValues(BANNED_PATH)).toBe('hunter2;correcthorse')
-    expect(capturedForm.getValues('standards.CustomBannedPasswordList.action')).toEqual([REPORT])
+    expect(
+      capturedForm.getValues('standards.CustomBannedPasswordList.action')
+    ).toEqual([REPORT])
   })
 })

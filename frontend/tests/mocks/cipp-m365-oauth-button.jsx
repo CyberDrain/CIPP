@@ -33,7 +33,8 @@ const MOCK_TOKENS = {
 }
 
 // same heuristic the real button warns on: "service" or "cipp" in the username
-const looksLikeServiceAccount = (username) => /service|cipp/i.test(username || '')
+const looksLikeServiceAccount = (username) =>
+  /service|cipp/i.test(username || '')
 
 export const CIPPM365OAuthButton = ({
   onAuthSuccess,
@@ -47,7 +48,7 @@ export const CIPPM365OAuthButton = ({
   const [authError, setAuthError] = useState(null)
   // auto-start "retrieves" the code immediately; without it the first click does
   const [deviceCode, setDeviceCode] = useState(
-    useDeviceCode && autoStartDeviceLogon ? FAKE_DEVICE_CODE : null,
+    useDeviceCode && autoStartDeviceLogon ? FAKE_DEVICE_CODE : null
   )
 
   const handleClick = () => {
@@ -64,7 +65,8 @@ export const CIPPM365OAuthButton = ({
       const error = {
         errorCode: config.errorCode || 'access_denied',
         errorMessage:
-          config.errorMessage || 'The user cancelled the authentication flow (storybook mock).',
+          config.errorMessage ||
+          'The user cancelled the authentication flow (storybook mock).',
         timestamp: new Date().toISOString(),
       }
       setUsername(null)
@@ -95,14 +97,15 @@ export const CIPPM365OAuthButton = ({
         <Alert severity="info">
           <Typography variant="subtitle2">Application Creation</Typography>
           <Typography component="div" variant="body2" gutterBottom>
-            Click the button below to authenticate. When asked to log onto an account, please use a{' '}
-            <strong>CIPP Service Account</strong>. You will need to enter this code:{' '}
+            Click the button below to authenticate. When asked to log onto an
+            account, please use a <strong>CIPP Service Account</strong>. You
+            will need to enter this code:{' '}
             <Chip size="small" label={deviceCode} />
           </Typography>
           <Typography variant="body2" gutterBottom>
             When you click the button below, a popup would open to{' '}
-            <strong>microsoft.com/devicelogin</strong> where you'd enter this code. Storybook mock:
-            no popup opens, the outcome is simulated.
+            <strong>microsoft.com/devicelogin</strong> where you'd enter this
+            code. Storybook mock: no popup opens, the outcome is simulated.
           </Typography>
           <Typography variant="caption" color="text.secondary">
             Code expires in 15 minutes
@@ -110,23 +113,29 @@ export const CIPPM365OAuthButton = ({
         </Alert>
       )}
       {username && showSuccessAlert && (
-        <Alert severity="success">Authentication successful (storybook mock)</Alert>
+        <Alert severity="success">
+          Authentication successful (storybook mock)
+        </Alert>
       )}
       {username && !looksLikeServiceAccount(username) && (
         <Alert severity="warning">
           <Typography variant="subtitle2">Service Account Required</Typography>
           <Typography variant="body2">
-            CIPP requires a service account for authentication. The account you're using (
-            <strong>{username}</strong>) does not appear to be a service account.
+            CIPP requires a service account for authentication. The account
+            you're using (<strong>{username}</strong>) does not appear to be a
+            service account.
           </Typography>
           <Typography variant="body2">
-            Please redo authentication using an account with "service" or "cipp" in the username.
+            Please redo authentication using an account with "service" or "cipp"
+            in the username.
           </Typography>
         </Alert>
       )}
       {authError && (
         <Alert severity="error">
-          <Typography variant="subtitle2">Authentication Error: {authError.errorCode}</Typography>
+          <Typography variant="subtitle2">
+            Authentication Error: {authError.errorCode}
+          </Typography>
           <Typography variant="body2">{authError.errorMessage}</Typography>
           <Box mt={1}>
             <Button
@@ -140,7 +149,11 @@ export const CIPPM365OAuthButton = ({
           </Box>
         </Alert>
       )}
-      <Button variant="contained" onClick={handleClick} sx={{ alignSelf: 'flex-start' }}>
+      <Button
+        variant="contained"
+        onClick={handleClick}
+        sx={{ alignSelf: 'flex-start' }}
+      >
         {useDeviceCode && deviceCode ? 'Authenticate with Code' : buttonText}
       </Button>
     </Stack>

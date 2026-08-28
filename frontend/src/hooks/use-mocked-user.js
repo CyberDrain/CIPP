@@ -5,6 +5,6 @@ export const useMockedUser = () => {
     id: '5e86809283e28b96d2d38537',
     avatar: '/assets/avatars/avatar-chen-simmons.jpg',
     name: 'Chen Simmons',
-    email: 'chen.simmons@devias.io'
-  };
-};
+    email: 'chen.simmons@devias.io',
+  }
+}

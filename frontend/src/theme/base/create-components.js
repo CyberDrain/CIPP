@@ -1,4 +1,4 @@
-import XCircleIcon from "@heroicons/react/24/outline/XCircleIcon";
+import XCircleIcon from '@heroicons/react/24/outline/XCircleIcon'
 import {
   createTheme,
   filledInputClasses,
@@ -6,10 +6,10 @@ import {
   SvgIcon,
   switchClasses,
   tableCellClasses,
-} from "@mui/material";
+} from '@mui/material'
 
 // Used only to create transitions
-const muiTheme = createTheme();
+const muiTheme = createTheme()
 
 export const createComponents = () => {
   return {
@@ -22,7 +22,7 @@ export const createComponents = () => {
           },
         },
         inputRoot: {
-          minHeight: "42px",
+          minHeight: '42px',
           paddingTop: 6,
           paddingBottom: 6,
         },
@@ -77,7 +77,7 @@ export const createComponents = () => {
         // and its own content usually adds a third layer. Halve the horizontal padding on a
         // phone so the innermost text is not reading through 70px of chrome.
         root: {
-          "@media (max-width: 899.95px)": {
+          '@media (max-width: 899.95px)': {
             paddingLeft: 8,
             paddingRight: 8,
           },
@@ -87,7 +87,7 @@ export const createComponents = () => {
     MuiAccordionSummary: {
       styleOverrides: {
         root: {
-          "@media (max-width: 899.95px)": {
+          '@media (max-width: 899.95px)': {
             paddingLeft: 8,
             paddingRight: 8,
           },
@@ -101,7 +101,7 @@ export const createComponents = () => {
           paddingLeft: 24,
           paddingRight: 24,
           paddingTop: 16,
-          "@media (max-width: 899.95px)": {
+          '@media (max-width: 899.95px)': {
             paddingLeft: 16,
             paddingRight: 16,
           },
@@ -118,7 +118,7 @@ export const createComponents = () => {
           // 48px of the 390 a phone has is 12% of the screen spent on one card's gutters,
           // and cards nest — a card inside an accordion inside a page card pays it three
           // times over. Vertical padding is left alone; it isn't what runs out.
-          "@media (max-width: 899.95px)": {
+          '@media (max-width: 899.95px)': {
             paddingLeft: 16,
             paddingRight: 16,
           },
@@ -133,7 +133,7 @@ export const createComponents = () => {
           paddingRight: 24,
           paddingTop: 16,
           // Matches MuiCardContent, or the header would sit inset from its own card body.
-          "@media (max-width: 899.95px)": {
+          '@media (max-width: 899.95px)': {
             paddingLeft: 16,
             paddingRight: 16,
           },
@@ -149,8 +149,8 @@ export const createComponents = () => {
     MuiCheckbox: {
       styleOverrides: {
         root: {
-          "&:hover": {
-            backgroundColor: "transparent",
+          '&:hover': {
+            backgroundColor: 'transparent',
           },
         },
       },
@@ -176,41 +176,41 @@ export const createComponents = () => {
     },
     MuiCssBaseline: {
       styleOverrides: {
-        "*": {
-          boxSizing: "border-box",
+        '*': {
+          boxSizing: 'border-box',
         },
         html: {
-          MozOsxFontSmoothing: "grayscale",
-          WebkitFontSmoothing: "antialiased",
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100%",
-          width: "100%",
+          MozOsxFontSmoothing: 'grayscale',
+          WebkitFontSmoothing: 'antialiased',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100%',
+          width: '100%',
         },
         body: {
-          display: "flex",
-          flex: "1 1 auto",
-          flexDirection: "column",
-          minHeight: "100%",
-          width: "100%",
+          display: 'flex',
+          flex: '1 1 auto',
+          flexDirection: 'column',
+          minHeight: '100%',
+          width: '100%',
         },
-        "#__next": {
-          display: "flex",
-          flex: "1 1 auto",
-          flexDirection: "column",
-          height: "100%",
-          width: "100%",
+        '#__next': {
+          display: 'flex',
+          flex: '1 1 auto',
+          flexDirection: 'column',
+          height: '100%',
+          width: '100%',
         },
-        "#nprogress": {
-          pointerEvents: "none",
+        '#nprogress': {
+          pointerEvents: 'none',
         },
-        "#nprogress .bar": {
-          backgroundColor: "#12B76A",
+        '#nprogress .bar': {
+          backgroundColor: '#12B76A',
           height: 3,
           left: 0,
-          position: "fixed",
+          position: 'fixed',
           top: 0,
-          width: "100%",
+          width: '100%',
           zIndex: 2000,
         },
       },
@@ -223,11 +223,11 @@ export const createComponents = () => {
           // the full width and the full available height here rather than per call site.
           // Height stays content-driven, so a two-line confirmation doesn't become an
           // empty full screen. Dialogs that already pass fullScreen are unaffected.
-          "@media (max-width: 899.95px)": {
+          '@media (max-width: 899.95px)': {
             margin: 0,
-            width: "100%",
-            maxWidth: "100%",
-            maxHeight: "100%",
+            width: '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
             borderRadius: 0,
           },
         },
@@ -240,10 +240,10 @@ export const createComponents = () => {
           paddingLeft: 32,
           paddingRight: 32,
           paddingTop: 24,
-          "&>:not(:first-of-type)": {
+          '&>:not(:first-of-type)': {
             marginLeft: 16,
           },
-          "@media (max-width: 899.95px)": {
+          '@media (max-width: 899.95px)': {
             // 32px of side padding is a lot of a 390px screen.
             paddingBottom: 16,
             paddingLeft: 16,
@@ -254,7 +254,7 @@ export const createComponents = () => {
             // the second 16px — invisible in a row, but once the row stacks on a phone the two
             // buttons sit at different left edges and different widths. gap works either way.
             gap: 8,
-            "&>:not(:first-of-type)": {
+            '&>:not(:first-of-type)': {
               marginLeft: 0,
             },
           },
@@ -306,13 +306,13 @@ export const createComponents = () => {
           padding: 8,
           // Touch devices get 44px hit targets without changing desktop density —
           // pointer:coarse only matches touch-primary input.
-          "@media (pointer: coarse)": {
+          '@media (pointer: coarse)': {
             padding: 10,
           },
         },
         sizeSmall: {
           padding: 4,
-          "@media (pointer: coarse)": {
+          '@media (pointer: coarse)': {
             padding: 8,
           },
         },
@@ -323,9 +323,9 @@ export const createComponents = () => {
         root: {
           [`&.${inputAdornmentClasses.positionStart}`]: {
             marginRight: 8, // Adjust spacing between the input and adornment
-            height: "100%", // Ensure adornment height matches the input
-            display: "flex",
-            alignItems: "center", // Center the adornment vertically
+            height: '100%', // Ensure adornment height matches the input
+            display: 'flex',
+            alignItems: 'center', // Center the adornment vertically
           },
         },
       },
@@ -336,17 +336,17 @@ export const createComponents = () => {
           fontSize: 14,
           // iOS Safari zooms the viewport when a focused input's text is under 16px, and
           // never zooms back out. Touch devices get 16px; pointer devices keep 14.
-          "@media (pointer: coarse)": {
+          '@media (pointer: coarse)': {
             fontSize: 16,
           },
-          height: "40px", // Apply height only to single-line inputs
-          "&.MuiInputBase-inputMultiline": {
-            height: "unset", // Allow textareas to be flexible
+          height: '40px', // Apply height only to single-line inputs
+          '&.MuiInputBase-inputMultiline': {
+            height: 'unset', // Allow textareas to be flexible
           },
-          "&.MuiAutocomplete-input": {
-            height: "unset", // Allow autocomplete to be flexible
+          '&.MuiAutocomplete-input': {
+            height: 'unset', // Allow autocomplete to be flexible
           },
-          "&.MuiOutlinedInput-input": {
+          '&.MuiOutlinedInput-input': {
             padding: 0, // remove extra padding on outlined input
           },
         },
@@ -356,34 +356,37 @@ export const createComponents = () => {
       styleOverrides: {
         root: {
           borderRadius: 6,
-          borderStyle: "solid",
+          borderStyle: 'solid',
           borderWidth: 1,
-          borderColor: "rgba(0, 0, 0, 0.23)",
-          overflow: "hidden",
-          transition: muiTheme.transitions.create(["border-color", "box-shadow"]),
-          "&:before": {
-            display: "none",
+          borderColor: 'rgba(0, 0, 0, 0.23)',
+          overflow: 'hidden',
+          transition: muiTheme.transitions.create([
+            'border-color',
+            'box-shadow',
+          ]),
+          '&:before': {
+            display: 'none',
           },
-          "&:after": {
-            display: "none",
+          '&:after': {
+            display: 'none',
           },
-          "&.Mui-focused": {
-            borderColor: "#1976d2",
-            boxShadow: "0px 0px 0px 2px rgba(25, 118, 210, 0.25)",
+          '&.Mui-focused': {
+            borderColor: '#1976d2',
+            boxShadow: '0px 0px 0px 2px rgba(25, 118, 210, 0.25)',
           },
           // Remove height here entirely to prevent forcing it on multiline
         },
         input: {
-          padding: "0 12px", // Adds padding to the left and right of the text
+          padding: '0 12px', // Adds padding to the left and right of the text
           fontSize: 14,
           // iOS Safari zooms the viewport when a focused input's text is under 16px, and
           // never zooms back out. Touch devices get 16px; pointer devices keep 14.
-          "@media (pointer: coarse)": {
+          '@media (pointer: coarse)': {
             fontSize: 16,
           },
-          height: "40px", // Height for single-line input fields only
-          "&.MuiInputBase-inputMultiline": {
-            height: "unset", // Exclude multiline inputs (textareas) from fixed height
+          height: '40px', // Height for single-line input fields only
+          '&.MuiInputBase-inputMultiline': {
+            height: 'unset', // Exclude multiline inputs (textareas) from fixed height
           },
           fontWeight: 500,
           lineHeight: 1.6,
@@ -401,36 +404,36 @@ export const createComponents = () => {
     MuiListItemIcon: {
       styleOverrides: {
         root: {
-          marginRight: "16px",
-          minWidth: "unset",
+          marginRight: '16px',
+          minWidth: 'unset',
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundImage: "none",
+          backgroundImage: 'none',
         },
       },
     },
     MuiRadio: {
       styleOverrides: {
         root: {
-          transition: "color 250ms",
-          "&:hover": {
-            backgroundColor: "transparent",
+          transition: 'color 250ms',
+          '&:hover': {
+            backgroundColor: 'transparent',
           },
         },
       },
     },
     MuiSelect: {
       defaultProps: {
-        variant: "filled",
+        variant: 'filled',
       },
       styleOverrides: {
         filled: {
-          "&:focus": {
-            backgroundColor: "transparent",
+          '&:focus': {
+            backgroundColor: 'transparent',
           },
         },
       },
@@ -463,8 +466,8 @@ export const createComponents = () => {
         },
         switchBase: {
           padding: 4,
-          "&:hover": {
-            backgroundColor: "transparent",
+          '&:hover': {
+            backgroundColor: 'transparent',
           },
           [`&.${switchClasses.checked}+.${switchClasses.track}`]: {
             opacity: 1,
@@ -472,9 +475,10 @@ export const createComponents = () => {
           [`&.${switchClasses.disabled}+.${switchClasses.track}`]: {
             opacity: 1,
           },
-          [`&.${switchClasses.checked}.${switchClasses.disabled}+.${switchClasses.track}`]: {
-            opacity: 0.5,
-          },
+          [`&.${switchClasses.checked}.${switchClasses.disabled}+.${switchClasses.track}`]:
+            {
+              opacity: 0.5,
+            },
         },
         track: {
           opacity: 1,
@@ -503,7 +507,7 @@ export const createComponents = () => {
           [`&.${tableCellClasses.root}`]: {
             fontSize: 11,
             fontWeight: 600,
-            textTransform: "uppercase",
+            textTransform: 'uppercase',
           },
         },
       },
@@ -530,16 +534,16 @@ export const createComponents = () => {
     },
     MuiTextField: {
       defaultProps: {
-        variant: "filled",
+        variant: 'filled',
       },
       styleOverrides: {
         root: {
           // Remove height settings from root, handled in input styles
-          "& .MuiInputBase-inputMultiline": {
-            height: "unset", // Exclude textareas from fixed height settings
+          '& .MuiInputBase-inputMultiline': {
+            height: 'unset', // Exclude textareas from fixed height settings
           },
         },
       },
     },
-  };
-};
+  }
+}

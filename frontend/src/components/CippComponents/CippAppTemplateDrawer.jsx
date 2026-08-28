@@ -82,7 +82,10 @@ export const CippAppTemplateDrawer = ({
       const loadedApps = appsArray.map((app) => ({
         appType: app.appType,
         appName: app.appName,
-        config: typeof app.config === 'string' ? app.config : JSON.stringify(app.config),
+        config:
+          typeof app.config === 'string'
+            ? app.config
+            : JSON.stringify(app.config),
       }))
       setApps(loadedApps)
       setDrawerVisible(true)
@@ -102,11 +105,23 @@ export const CippAppTemplateDrawer = ({
   const updateSearchSelection = useCallback(
     (searchQuerySelection) => {
       if (searchQuerySelection) {
-        formControl.setValue('packagename', searchQuerySelection.value.packagename)
-        formControl.setValue('applicationName', searchQuerySelection.value.applicationName)
-        formControl.setValue('description', searchQuerySelection.value.description)
+        formControl.setValue(
+          'packagename',
+          searchQuerySelection.value.packagename
+        )
+        formControl.setValue(
+          'applicationName',
+          searchQuerySelection.value.applicationName
+        )
+        formControl.setValue(
+          'description',
+          searchQuerySelection.value.description
+        )
         if (searchQuerySelection.value.customRepo) {
-          formControl.setValue('customRepo', searchQuerySelection.value.customRepo)
+          formControl.setValue(
+            'customRepo',
+            searchQuerySelection.value.customRepo
+          )
         }
       }
     },
@@ -144,7 +159,8 @@ export const CippAppTemplateDrawer = ({
 
   const getAppName = (formData) => {
     const type = formData.appType?.value
-    if (type === 'mspApp') return formData.displayName || formData.rmmname?.label || 'MSP App'
+    if (type === 'mspApp')
+      return formData.displayName || formData.rmmname?.label || 'MSP App'
     if (type === 'officeApp') return 'Microsoft 365 Apps'
     return formData.applicationName || formData.packagename || 'Unnamed App'
   }
@@ -192,7 +208,8 @@ export const CippAppTemplateDrawer = ({
     if (config.IntuneBody) {
       const body = config.IntuneBody
       if (!config.applicationName) {
-        config.applicationName = config.ApplicationName || body.displayName || ''
+        config.applicationName =
+          config.ApplicationName || body.displayName || ''
       }
       delete config.ApplicationName
       if (!config.description) config.description = body.description || ''
@@ -287,7 +304,9 @@ export const CippAppTemplateDrawer = ({
         </Button>
       )}
       <CippOffCanvas
-        title={editGUID ? 'Edit Application Template' : 'Create Application Template'}
+        title={
+          editGUID ? 'Edit Application Template' : 'Create Application Template'
+        }
         visible={drawerVisible}
         onClose={handleClose}
         size="xl"
@@ -352,10 +371,17 @@ export const CippAppTemplateDrawer = ({
                     />
                     <ListItemText primary={app.appName} />
                     <ListItemSecondaryAction>
-                      <IconButton onClick={() => handleEditApp(index)} size="small">
+                      <IconButton
+                        onClick={() => handleEditApp(index)}
+                        size="small"
+                      >
                         <Edit fontSize="small" />
                       </IconButton>
-                      <IconButton edge="end" onClick={() => handleRemoveApp(index)} size="small">
+                      <IconButton
+                        edge="end"
+                        onClick={() => handleRemoveApp(index)}
+                        size="small"
+                      >
                         <Delete fontSize="small" />
                       </IconButton>
                     </ListItemSecondaryAction>
@@ -423,11 +449,12 @@ export const CippAppTemplateDrawer = ({
             </Grid>
             <Grid size={{ xs: 12, md: 5 }}>
               <Alert severity="info">
-                Enter tenant-specific parameters (keys, URLs, IDs) below. You can enter a literal
-                value that is the same for every tenant, or reference a CIPP custom variable like{' '}
-                <code>%DattoSiteID%</code> (type <code>%</code> to browse). Variables are resolved
-                per tenant at deployment, so define the value once per tenant in your CIPP custom
-                variables and reuse this template everywhere.
+                Enter tenant-specific parameters (keys, URLs, IDs) below. You
+                can enter a literal value that is the same for every tenant, or
+                reference a CIPP custom variable like <code>%DattoSiteID%</code>{' '}
+                (type <code>%</code> to browse). Variables are resolved per
+                tenant at deployment, so define the value once per tenant in
+                your CIPP custom variables and reuse this template everywhere.
               </Alert>
             </Grid>
 
@@ -566,7 +593,9 @@ export const CippAppTemplateDrawer = ({
             </Grid>
             <Grid size={{ xs: 12 }}>
               <Button
-                onClick={() => searchApp(formControl.getValues('searchQuery'), 'StoreApp')}
+                onClick={() =>
+                  searchApp(formControl.getValues('searchQuery'), 'StoreApp')
+                }
                 disabled={winGetSearchResults.isPending}
               >
                 Search
@@ -641,7 +670,9 @@ export const CippAppTemplateDrawer = ({
             </Grid>
             <Grid size={{ xs: 12 }}>
               <Button
-                onClick={() => searchApp(formControl.getValues('searchQuery'), 'choco')}
+                onClick={() =>
+                  searchApp(formControl.getValues('searchQuery'), 'choco')
+                }
                 disabled={ChocosearchResults.isPending}
               >
                 Search
@@ -767,7 +798,10 @@ export const CippAppTemplateDrawer = ({
                   { value: 'firstReleaseCurrent', label: 'Current (Preview)' },
                   { value: 'monthlyEnterprise', label: 'Monthly Enterprise' },
                   { value: 'deferred', label: 'Semi-Annual Enterprise' },
-                  { value: 'firstReleaseDeferred', label: 'Semi-Annual Enterprise (Preview)' },
+                  {
+                    value: 'firstReleaseDeferred',
+                    label: 'Semi-Annual Enterprise (Preview)',
+                  },
                 ]}
                 multiple={false}
                 formControl={formControl}
@@ -835,12 +869,19 @@ export const CippAppTemplateDrawer = ({
                   formControl={formControl}
                   multiline
                   rows={10}
-                  validators={{ required: 'Please provide custom XML configuration' }}
+                  validators={{
+                    required: 'Please provide custom XML configuration',
+                  }}
                 />
                 <Alert severity="info" sx={{ mt: 1 }}>
-                  Provide a custom Office Configuration XML. When using custom XML, all other Office
-                  configuration options above will be ignored. See{' '}
-                  <a href="https://config.office.com/" target="_blank" rel="noopener noreferrer">
+                  Provide a custom Office Configuration XML. When using custom
+                  XML, all other Office configuration options above will be
+                  ignored. See{' '}
+                  <a
+                    href="https://config.office.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Office Customization Tool
                   </a>{' '}
                   to generate XML.
@@ -923,7 +964,8 @@ export const CippAppTemplateDrawer = ({
                   multiline
                   rows={6}
                   validators={{
-                    required: 'Detection script is required when using script detection',
+                    required:
+                      'Detection script is required when using script detection',
                   }}
                 />
               </Grid>
@@ -998,7 +1040,10 @@ export const CippAppTemplateDrawer = ({
                   { label: 'Do not assign', value: 'On' },
                   { label: 'Assign to all users', value: 'allLicensedUsers' },
                   { label: 'Assign to all devices', value: 'AllDevices' },
-                  { label: 'Assign to all users and devices', value: 'AllDevicesAndUsers' },
+                  {
+                    label: 'Assign to all users and devices',
+                    value: 'AllDevicesAndUsers',
+                  },
                   { label: 'Assign to Custom Group', value: 'customGroup' },
                 ]}
                 formControl={formControl}
@@ -1040,7 +1085,11 @@ export const CippAppTemplateDrawer = ({
           {/* Add App Button */}
           {applicationType?.value && (
             <Grid size={{ xs: 12 }}>
-              <Button variant="outlined" onClick={handleAddApp} startIcon={<Add />}>
+              <Button
+                variant="outlined"
+                onClick={handleAddApp}
+                startIcon={<Add />}
+              >
                 Add App to Template
               </Button>
             </Grid>

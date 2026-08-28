@@ -1,4 +1,4 @@
-import { differenceInDays } from "date-fns";
+import { differenceInDays } from 'date-fns'
 import {
   Dialog,
   DialogActions,
@@ -28,8 +28,8 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-} from "@mui/material";
-import { Grid } from "@mui/system";
+} from '@mui/material'
+import { Grid } from '@mui/system'
 import {
   Add,
   Sort,
@@ -39,11 +39,11 @@ import {
   ExpandLess,
   ViewModule,
   ViewList,
-} from "@mui/icons-material";
-import { useState, useCallback, useMemo, memo, useEffect } from "react";
-import { debounce } from "lodash";
-import { Virtuoso } from "react-virtuoso";
-import ReactMarkdown from "react-markdown";
+} from '@mui/icons-material'
+import { useState, useCallback, useMemo, memo, useEffect } from 'react'
+import { debounce } from 'lodash'
+import { Virtuoso } from 'react-virtuoso'
+import ReactMarkdown from 'react-markdown'
 
 // Memoized Standard Card component to prevent unnecessary re-renders
 const StandardCard = memo(
@@ -56,52 +56,54 @@ const StandardCard = memo(
     isButtonDisabled,
   }) => {
     const isNewStandard = (dateAdded) => {
-      const currentDate = new Date();
-      const addedDate = new Date(dateAdded);
-      return differenceInDays(currentDate, addedDate) <= 30;
-    };
+      const currentDate = new Date()
+      const addedDate = new Date(dateAdded)
+      return differenceInDays(currentDate, addedDate) <= 30
+    }
 
     // Create a memoized handler for this specific standard to avoid recreation on each render
     const handleToggle = useCallback(() => {
-      handleToggleSingleStandard(standard.name);
-    }, [handleToggleSingleStandard, standard.name]);
+      handleToggleSingleStandard(standard.name)
+    }, [handleToggleSingleStandard, standard.name])
 
     // Check if this standard is selected - memoize for better performance
     const isSelected = useMemo(() => {
-      return !!selectedStandards[standard.name];
-    }, [selectedStandards, standard.name]);
+      return !!selectedStandards[standard.name]
+    }, [selectedStandards, standard.name])
 
     // Lazily render complex parts of the card only when visible
-    const [expanded, setExpanded] = useState(false);
+    const [expanded, setExpanded] = useState(false)
 
     // Use intersection observer to detect when card is visible
     useEffect(() => {
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
-            setExpanded(true);
-            observer.disconnect();
+            setExpanded(true)
+            observer.disconnect()
           }
         },
-        { threshold: 0.1 },
-      );
+        { threshold: 0.1 }
+      )
 
-      const currentRef = document.getElementById(`standard-card-${standard.name}`);
+      const currentRef = document.getElementById(
+        `standard-card-${standard.name}`
+      )
       if (currentRef) {
-        observer.observe(currentRef);
+        observer.observe(currentRef)
       }
 
-      return () => observer.disconnect();
-    }, [standard.name]);
+      return () => observer.disconnect()
+    }, [standard.name])
 
     return (
       <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }} key={standard.name}>
         <Box
           sx={{
-            position: "relative",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
+            position: 'relative',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {isNewStandard(standard.addedDate) && (
@@ -110,13 +112,13 @@ const StandardCard = memo(
               size="small"
               color="success"
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 top: -10,
                 left: 12,
                 zIndex: 1,
-                fontSize: "0.7rem",
+                fontSize: '0.7rem',
                 height: 20,
-                fontWeight: "bold",
+                fontWeight: 'bold',
               }}
             />
           )}
@@ -126,33 +128,33 @@ const StandardCard = memo(
               size="small"
               color="error"
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 top: -10,
                 right: 12,
                 zIndex: 1,
-                fontSize: "0.7rem",
+                fontSize: '0.7rem',
                 height: 20,
-                fontWeight: "bold",
+                fontWeight: 'bold',
               }}
             />
           )}
           <Card
             id={`standard-card-${standard.name}`}
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              height: "100%",
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
               flex: 1,
-              position: "relative",
+              position: 'relative',
               ...(standard.deprecated && {
-                border: "2px solid",
-                borderColor: "error.main",
+                border: '2px solid',
+                borderColor: 'error.main',
                 opacity: 0.7,
               }),
               ...(isNewStandard(standard.addedDate) &&
                 !standard.deprecated && {
-                  border: "2px solid",
-                  borderColor: "success.main",
+                  border: '2px solid',
+                  borderColor: 'success.main',
                 }),
             }}
           >
@@ -168,15 +170,15 @@ const StandardCard = memo(
                   <Box
                     sx={{
                       // Style markdown links to match CIPP theme
-                      "& a": {
+                      '& a': {
                         color: (theme) => theme.palette.primary.main,
-                        textDecoration: "underline",
-                        "&:hover": {
-                          textDecoration: "none",
+                        textDecoration: 'underline',
+                        '&:hover': {
+                          textDecoration: 'none',
                         },
                       },
-                      color: "text.secondary",
-                      fontSize: "0.875rem",
+                      color: 'text.secondary',
+                      fontSize: '0.875rem',
                       lineHeight: 1.43,
                       mb: 2,
                     }}
@@ -185,7 +187,12 @@ const StandardCard = memo(
                       components={{
                         // Make links open in new tab with security attributes
                         a: ({ href, children, ...props }) => (
-                          <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            {...props}
+                          >
                             {children}
                           </a>
                         ),
@@ -201,16 +208,23 @@ const StandardCard = memo(
               <Typography variant="subtitle2" sx={{ mt: 2 }}>
                 Category:
               </Typography>
-              <Chip label={category} size="small" color="primary" sx={{ mt: 1, mb: 2 }} />
+              <Chip
+                label={category}
+                size="small"
+                color="primary"
+                sx={{ mt: 1, mb: 2 }}
+              />
               {expanded &&
-                standard.tag?.filter((tag) => !tag.toLowerCase().includes("impact")).length > 0 && (
+                standard.tag?.filter(
+                  (tag) => !tag.toLowerCase().includes('impact')
+                ).length > 0 && (
                   <>
                     <Typography variant="subtitle2" sx={{ mt: 2 }}>
                       Tags:
                     </Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", mb: 2 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 2 }}>
                       {standard.tag
-                        .filter((tag) => !tag.toLowerCase().includes("impact"))
+                        .filter((tag) => !tag.toLowerCase().includes('impact'))
                         .map((tag, idx) => (
                           <Chip
                             key={idx}
@@ -230,11 +244,11 @@ const StandardCard = memo(
                 label={standard.impact}
                 size="small"
                 color={
-                  standard.impact === "High Impact"
-                    ? "error"
-                    : standard.impact === "Medium Impact"
-                      ? "warning"
-                      : "info"
+                  standard.impact === 'High Impact'
+                    ? 'error'
+                    : standard.impact === 'Medium Impact'
+                      ? 'warning'
+                      : 'info'
                 }
               />
               {expanded && standard.recommendedBy?.length > 0 && (
@@ -243,7 +257,7 @@ const StandardCard = memo(
                     Recommended By:
                   </Typography>
                   <Typography variant="body2" color="textSecondary" paragraph>
-                    {standard.recommendedBy.join(", ")}
+                    {standard.recommendedBy.join(', ')}
                   </Typography>
                 </>
               )}
@@ -252,7 +266,7 @@ const StandardCard = memo(
                   <Typography variant="subtitle2" sx={{ mt: 2 }}>
                     Date Added:
                   </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography variant="body2" color="textSecondary">
                       {standard.addedDate}
                     </Typography>
@@ -278,14 +292,14 @@ const StandardCard = memo(
                     }
                     label={
                       isSelected
-                        ? "Remove this standard from the template"
-                        : "This standard is deprecated"
+                        ? 'Remove this standard from the template'
+                        : 'This standard is deprecated'
                     }
                   />
                   {!isSelected && (
                     <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-                      This standard is deprecated and cannot be added. Please use an alternative
-                      standard if available.
+                      This standard is deprecated and cannot be added. Please
+                      use an alternative standard if available.
                     </Typography>
                   )}
                 </Box>
@@ -319,72 +333,78 @@ const StandardCard = memo(
           </Card>
         </Box>
       </Grid>
-    );
+    )
   },
   // Custom equality function to prevent unnecessary re-renders
   (prevProps, nextProps) => {
     // Only re-render if one of these props changed
-    if (prevProps.isButtonDisabled !== nextProps.isButtonDisabled) return false;
-    if (prevProps.standard.name !== nextProps.standard.name) return false;
+    if (prevProps.isButtonDisabled !== nextProps.isButtonDisabled) return false
+    if (prevProps.standard.name !== nextProps.standard.name) return false
 
     // Only check selected state for this specific standard
-    const prevSelected = !!prevProps.selectedStandards[prevProps.standard.name];
-    const nextSelected = !!nextProps.selectedStandards[nextProps.standard.name];
-    if (prevSelected !== nextSelected) return false;
+    const prevSelected = !!prevProps.selectedStandards[prevProps.standard.name]
+    const nextSelected = !!nextProps.selectedStandards[nextProps.standard.name]
+    if (prevSelected !== nextSelected) return false
 
     // If we get here, nothing important changed, skip re-render
-    return true;
-  },
-);
+    return true
+  }
+)
 
-StandardCard.displayName = "StandardCard";
+StandardCard.displayName = 'StandardCard'
 
 // Virtualized grid to handle large numbers of standards efficiently
 const VirtualizedStandardGrid = memo(({ items, renderItem }) => {
   const [itemsPerRow, setItemsPerRow] = useState(() =>
-    window.innerWidth > 960 ? 4 : window.innerWidth > 600 ? 2 : 1,
-  );
+    window.innerWidth > 960 ? 4 : window.innerWidth > 600 ? 2 : 1
+  )
 
   // Handle window resize for responsive grid
   useEffect(() => {
     const handleResize = () => {
-      const newItemsPerRow = window.innerWidth > 960 ? 4 : window.innerWidth > 600 ? 2 : 1;
-      setItemsPerRow(newItemsPerRow);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const rows = useMemo(() => {
-    const rowCount = Math.ceil(items.length / itemsPerRow);
-    const rowsData = [];
-
-    for (let i = 0; i < rowCount; i++) {
-      const startIdx = i * itemsPerRow;
-      const rowItems = items.slice(startIdx, startIdx + itemsPerRow);
-      rowsData.push(rowItems);
+      const newItemsPerRow =
+        window.innerWidth > 960 ? 4 : window.innerWidth > 600 ? 2 : 1
+      setItemsPerRow(newItemsPerRow)
     }
 
-    return rowsData;
-  }, [items, itemsPerRow]);
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const rows = useMemo(() => {
+    const rowCount = Math.ceil(items.length / itemsPerRow)
+    const rowsData = []
+
+    for (let i = 0; i < rowCount; i++) {
+      const startIdx = i * itemsPerRow
+      const rowItems = items.slice(startIdx, startIdx + itemsPerRow)
+      rowsData.push(rowItems)
+    }
+
+    return rowsData
+  }, [items, itemsPerRow])
 
   return (
     <Virtuoso
-      style={{ height: "100%", width: "100%" }}
+      style={{ height: '100%', width: '100%' }}
       totalCount={rows.length}
       overscan={5}
       defaultItemHeight={320} // Provide estimated row height for better virtualization
       itemContent={(index) => (
-        <Box sx={{ pt: index === 0 ? 1.2 : 2, pb: index === rows.length - 1 ? 3 : 0 }}>
+        <Box
+          sx={{
+            pt: index === 0 ? 1.2 : 2,
+            pb: index === rows.length - 1 ? 3 : 0,
+          }}
+        >
           <Grid
             container
             spacing={2}
             sx={{
-              width: "100%",
+              width: '100%',
               m: 0,
-              display: "flex",
-              alignItems: "stretch", // This ensures all items in the row have equal height
+              display: 'flex',
+              alignItems: 'stretch', // This ensures all items in the row have equal height
             }}
           >
             {rows[index].map(renderItem)}
@@ -392,58 +412,74 @@ const VirtualizedStandardGrid = memo(({ items, renderItem }) => {
         </Box>
       )}
     />
-  );
-});
+  )
+})
 
-VirtualizedStandardGrid.displayName = "VirtualizedStandardGrid";
+VirtualizedStandardGrid.displayName = 'VirtualizedStandardGrid'
 
 // Compact List View component for standards
 const CompactStandardList = memo(
-  ({ items, selectedStandards, handleToggleSingleStandard, handleAddClick, isButtonDisabled }) => {
+  ({
+    items,
+    selectedStandards,
+    handleToggleSingleStandard,
+    handleAddClick,
+    isButtonDisabled,
+  }) => {
     return (
-      <List sx={{ width: "98%", bgcolor: "background.paper", pb: 3 }}>
+      <List sx={{ width: '98%', bgcolor: 'background.paper', pb: 3 }}>
         {items.map(({ standard, category }) => {
-          const isSelected = !!selectedStandards[standard.name];
+          const isSelected = !!selectedStandards[standard.name]
 
           const isNewStandard = (dateAdded) => {
-            if (!dateAdded) return false;
-            const currentDate = new Date();
-            const addedDate = new Date(dateAdded);
-            return differenceInDays(currentDate, addedDate) <= 30;
-          };
+            if (!dateAdded) return false
+            const currentDate = new Date()
+            const addedDate = new Date(dateAdded)
+            return differenceInDays(currentDate, addedDate) <= 30
+          }
 
           const handleToggle = () => {
-            handleToggleSingleStandard(standard.name);
-          };
+            handleToggleSingleStandard(standard.name)
+          }
 
           return (
             <ListItem
               key={standard.name}
               sx={{
-                border: "1px solid",
-                borderColor: "divider",
+                border: '1px solid',
+                borderColor: 'divider',
                 borderRadius: 1,
                 mb: 1,
-                bgcolor: "background.paper",
-                "&:hover": {
-                  bgcolor: "action.hover",
+                bgcolor: 'background.paper',
+                '&:hover': {
+                  bgcolor: 'action.hover',
                 },
                 ...(standard.deprecated && {
-                  borderColor: "error.main",
-                  borderWidth: "2px",
+                  borderColor: 'error.main',
+                  borderWidth: '2px',
                   opacity: 0.7,
                 }),
                 ...(isNewStandard(standard.addedDate) &&
                   !standard.deprecated && {
-                    borderColor: "success.main",
-                    borderWidth: "2px",
+                    borderColor: 'success.main',
+                    borderWidth: '2px',
                   }),
               }}
             >
               <ListItemText
                 primary={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      mb: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 'medium' }}
+                    >
                       {standard.label}
                     </Typography>
                     {standard.deprecated && (
@@ -451,7 +487,11 @@ const CompactStandardList = memo(
                         label="Deprecated"
                         size="small"
                         color="error"
-                        sx={{ fontSize: "0.7rem", height: 20, fontWeight: "bold" }}
+                        sx={{
+                          fontSize: '0.7rem',
+                          height: 20,
+                          fontWeight: 'bold',
+                        }}
                       />
                     )}
                     {isNewStandard(standard.addedDate) && (
@@ -459,7 +499,11 @@ const CompactStandardList = memo(
                         label="New"
                         size="small"
                         color="success"
-                        sx={{ fontSize: "0.7rem", height: 20, fontWeight: "bold" }}
+                        sx={{
+                          fontSize: '0.7rem',
+                          height: 20,
+                          fontWeight: 'bold',
+                        }}
                       />
                     )}
                     <Chip label={category} size="small" color="primary" />
@@ -467,11 +511,11 @@ const CompactStandardList = memo(
                       label={standard.impact}
                       size="small"
                       color={
-                        standard.impact === "High Impact"
-                          ? "error"
-                          : standard.impact === "Medium Impact"
-                            ? "warning"
-                            : "info"
+                        standard.impact === 'High Impact'
+                          ? 'error'
+                          : standard.impact === 'Medium Impact'
+                            ? 'warning'
+                            : 'info'
                       }
                     />
                   </Box>
@@ -482,22 +526,27 @@ const CompactStandardList = memo(
                       <Box
                         sx={{
                           mb: 1,
-                          "& a": {
+                          '& a': {
                             color: (theme) => theme.palette.primary.main,
-                            textDecoration: "underline",
-                            "&:hover": {
-                              textDecoration: "none",
+                            textDecoration: 'underline',
+                            '&:hover': {
+                              textDecoration: 'none',
                             },
                           },
-                          color: "text.secondary",
-                          fontSize: "0.875rem",
+                          color: 'text.secondary',
+                          fontSize: '0.875rem',
                           lineHeight: 1.43,
                         }}
                       >
                         <ReactMarkdown
                           components={{
                             a: ({ href, children, ...props }) => (
-                              <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                {...props}
+                              >
                                 {children}
                               </a>
                             ),
@@ -506,11 +555,11 @@ const CompactStandardList = memo(
                                 variant="body2"
                                 color="text.secondary"
                                 sx={{
-                                  display: "-webkit-box",
+                                  display: '-webkit-box',
                                   WebkitLineClamp: 2,
-                                  WebkitBoxOrient: "vertical",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
                                   mb: 0,
                                 }}
                               >
@@ -523,12 +572,24 @@ const CompactStandardList = memo(
                         </ReactMarkdown>
                       </Box>
                     )}
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
-                      {standard.tag?.filter((tag) => !tag.toLowerCase().includes("impact")).length >
-                        0 && (
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                        alignItems: 'center',
+                      }}
+                    >
+                      {standard.tag?.filter(
+                        (tag) => !tag.toLowerCase().includes('impact')
+                      ).length > 0 && (
+                        <Box
+                          sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}
+                        >
                           {standard.tag
-                            .filter((tag) => !tag.toLowerCase().includes("impact"))
+                            .filter(
+                              (tag) => !tag.toLowerCase().includes('impact')
+                            )
                             .slice(0, 3) // Show only first 3 tags to save space
                             .map((tag, idx) => (
                               <Chip
@@ -537,15 +598,20 @@ const CompactStandardList = memo(
                                 size="small"
                                 color="info"
                                 variant="outlined"
-                                sx={{ fontSize: "0.7rem", height: 20 }}
+                                sx={{ fontSize: '0.7rem', height: 20 }}
                               />
                             ))}
-                          {standard.tag.filter((tag) => !tag.toLowerCase().includes("impact"))
-                            .length > 3 && (
-                            <Typography variant="caption" color="text.secondary">
+                          {standard.tag.filter(
+                            (tag) => !tag.toLowerCase().includes('impact')
+                          ).length > 3 && (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               +
-                              {standard.tag.filter((tag) => !tag.toLowerCase().includes("impact"))
-                                .length - 3}{" "}
+                              {standard.tag.filter(
+                                (tag) => !tag.toLowerCase().includes('impact')
+                              ).length - 3}{' '}
                               more
                             </Typography>
                           )}
@@ -553,7 +619,7 @@ const CompactStandardList = memo(
                       )}
                       {standard.recommendedBy?.length > 0 && (
                         <Typography variant="caption" color="text.secondary">
-                          • Recommended by: {standard.recommendedBy.join(", ")}
+                          • Recommended by: {standard.recommendedBy.join(', ')}
                         </Typography>
                       )}
                       {standard.addedDate && (
@@ -584,7 +650,7 @@ const CompactStandardList = memo(
                     <Typography
                       variant="caption"
                       color="error"
-                      sx={{ maxWidth: 200, textAlign: "right", mr: 1 }}
+                      sx={{ maxWidth: 200, textAlign: 'right', mr: 1 }}
                     >
                       Deprecated - Cannot be added
                     </Typography>
@@ -614,14 +680,14 @@ const CompactStandardList = memo(
                 )}
               </ListItemSecondaryAction>
             </ListItem>
-          );
+          )
         })}
       </List>
-    );
-  },
-);
+    )
+  }
+)
 
-CompactStandardList.displayName = "CompactStandardList";
+CompactStandardList.displayName = 'CompactStandardList'
 
 const CippStandardDialog = ({
   dialogOpen,
@@ -633,125 +699,126 @@ const CippStandardDialog = ({
   handleToggleSingleStandard,
   handleAddMultipleStandard,
 }) => {
-  const [isButtonDisabled, setButtonDisabled] = useState(false);
-  const [localSearchQuery, setLocalSearchQuery] = useState("");
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("card"); // "card" or "list"
+  const [isButtonDisabled, setButtonDisabled] = useState(false)
+  const [localSearchQuery, setLocalSearchQuery] = useState('')
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [viewMode, setViewMode] = useState('card') // "card" or "list"
 
   // Enhanced filtering and sorting state
-  const [sortBy, setSortBy] = useState("addedDate"); // Default sort by date added
-  const [sortOrder, setSortOrder] = useState("desc"); // desc to show newest first
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedImpacts, setSelectedImpacts] = useState([]);
-  const [selectedRecommendedBy, setSelectedRecommendedBy] = useState([]);
-  const [selectedTagFrameworks, setSelectedTagFrameworks] = useState([]);
-  const [showOnlyNew, setShowOnlyNew] = useState(false); // Show only standards added in last 30 days
-  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "enabled" | "disabled"
-  const [filtersExpanded, setFiltersExpanded] = useState(false); // Control filter section collapse/expand
+  const [sortBy, setSortBy] = useState('addedDate') // Default sort by date added
+  const [sortOrder, setSortOrder] = useState('desc') // desc to show newest first
+  const [selectedCategories, setSelectedCategories] = useState([])
+  const [selectedImpacts, setSelectedImpacts] = useState([])
+  const [selectedRecommendedBy, setSelectedRecommendedBy] = useState([])
+  const [selectedTagFrameworks, setSelectedTagFrameworks] = useState([])
+  const [showOnlyNew, setShowOnlyNew] = useState(false) // Show only standards added in last 30 days
+  const [statusFilter, setStatusFilter] = useState('all') // "all" | "enabled" | "disabled"
+  const [filtersExpanded, setFiltersExpanded] = useState(false) // Control filter section collapse/expand
 
   // Auto-adjust sort order when sort type changes
   useEffect(() => {
-    if (sortBy === "label") {
-      setSortOrder("asc"); // Names: A-Z
-    } else if (sortBy === "addedDate") {
-      setSortOrder("desc"); // Dates: Newest first
-    } else if (sortBy === "impact") {
-      setSortOrder("desc"); // Impact: High to Low
+    if (sortBy === 'label') {
+      setSortOrder('asc') // Names: A-Z
+    } else if (sortBy === 'addedDate') {
+      setSortOrder('desc') // Dates: Newest first
+    } else if (sortBy === 'impact') {
+      setSortOrder('desc') // Impact: High to Low
     }
-  }, [sortBy]);
+  }, [sortBy])
 
   // Get all unique values for filters
-  const { allCategories, allImpacts, allRecommendedBy, allTagFrameworks } = useMemo(() => {
-    const categorySet = new Set();
-    const impactSet = new Set();
-    const recommendedBySet = new Set();
-    const tagFrameworkSet = new Set();
+  const { allCategories, allImpacts, allRecommendedBy, allTagFrameworks } =
+    useMemo(() => {
+      const categorySet = new Set()
+      const impactSet = new Set()
+      const recommendedBySet = new Set()
+      const tagFrameworkSet = new Set()
 
-    // Function to extract base framework from tag
-    const extractTagFramework = (tag) => {
-      // Compliance Frameworks - extract version dynamically
-      if (tag.startsWith("CIS M365")) {
-        const versionMatch = tag.match(/CIS M365 (\d+\.\d+)/);
-        return versionMatch ? `CIS M365 ${versionMatch[1]}` : "CIS M365";
-      }
-      if (tag.startsWith("CISA ")) return "CISA";
-      if (tag.startsWith("EIDSCA.")) return "EIDSCA";
-      if (tag.startsWith("Essential 8")) return "Essential 8";
-      if (tag.startsWith("NIST CSF")) {
-        const versionMatch = tag.match(/NIST CSF (\d+\.\d+)/);
-        return versionMatch ? `NIST CSF ${versionMatch[1]}` : "NIST CSF";
-      }
-
-      // Microsoft Secure Score Categories
-      if (tag.startsWith("exo_")) return "Secure Score - Exchange";
-      if (tag.startsWith("mdo_")) return "Secure Score - Defender";
-      if (tag.startsWith("spo_")) return "Secure Score - SharePoint";
-      if (tag.startsWith("mip_")) return "Secure Score - Purview";
-
-      // For any other tags, return null to exclude them
-      return null;
-    };
-
-    Object.keys(categories).forEach((category) => {
-      categorySet.add(category);
-      categories[category].forEach((standard) => {
-        if (standard.impact) impactSet.add(standard.impact);
-        if (standard.recommendedBy && Array.isArray(standard.recommendedBy)) {
-          standard.recommendedBy.forEach((rec) => recommendedBySet.add(rec));
+      // Function to extract base framework from tag
+      const extractTagFramework = (tag) => {
+        // Compliance Frameworks - extract version dynamically
+        if (tag.startsWith('CIS M365')) {
+          const versionMatch = tag.match(/CIS M365 (\d+\.\d+)/)
+          return versionMatch ? `CIS M365 ${versionMatch[1]}` : 'CIS M365'
         }
-        // Process tags to extract frameworks
-        if (standard.tag && Array.isArray(standard.tag)) {
-          standard.tag.forEach((tag) => {
-            const framework = extractTagFramework(tag);
-            if (framework) {
-              // Only add non-null frameworks
-              tagFrameworkSet.add(framework);
-            }
-          });
+        if (tag.startsWith('CISA ')) return 'CISA'
+        if (tag.startsWith('EIDSCA.')) return 'EIDSCA'
+        if (tag.startsWith('Essential 8')) return 'Essential 8'
+        if (tag.startsWith('NIST CSF')) {
+          const versionMatch = tag.match(/NIST CSF (\d+\.\d+)/)
+          return versionMatch ? `NIST CSF ${versionMatch[1]}` : 'NIST CSF'
         }
-      });
-    });
 
-    // Custom sort order for impacts: Low -> Medium -> High
-    const impactOrder = ["Low Impact", "Medium Impact", "High Impact"];
-    const sortedImpacts = Array.from(impactSet).sort((a, b) => {
-      const aIndex = impactOrder.indexOf(a);
-      const bIndex = impactOrder.indexOf(b);
-      return aIndex - bIndex;
-    });
+        // Microsoft Secure Score Categories
+        if (tag.startsWith('exo_')) return 'Secure Score - Exchange'
+        if (tag.startsWith('mdo_')) return 'Secure Score - Defender'
+        if (tag.startsWith('spo_')) return 'Secure Score - SharePoint'
+        if (tag.startsWith('mip_')) return 'Secure Score - Purview'
 
-    // Sort tag frameworks with compliance frameworks first, then service categories
-    const sortedTagFrameworks = Array.from(tagFrameworkSet).sort((a, b) => {
-      // Define priority groups
-      const getFrameworkPriority = (framework) => {
-        if (framework.startsWith("CIS M365")) return 1;
-        if (framework === "CISA") return 2;
-        if (framework === "EIDSCA") return 3;
-        if (framework === "Essential 8") return 4;
-        if (framework.startsWith("NIST CSF")) return 5;
-        if (framework.startsWith("Secure Score -")) return 6;
-        return 999; // Other tags go last
-      };
-
-      const aPriority = getFrameworkPriority(a);
-      const bPriority = getFrameworkPriority(b);
-
-      // If different priorities, sort by priority
-      if (aPriority !== bPriority) {
-        return aPriority - bPriority;
+        // For any other tags, return null to exclude them
+        return null
       }
 
-      // If same priority, sort alphabetically
-      return a.localeCompare(b);
-    });
+      Object.keys(categories).forEach((category) => {
+        categorySet.add(category)
+        categories[category].forEach((standard) => {
+          if (standard.impact) impactSet.add(standard.impact)
+          if (standard.recommendedBy && Array.isArray(standard.recommendedBy)) {
+            standard.recommendedBy.forEach((rec) => recommendedBySet.add(rec))
+          }
+          // Process tags to extract frameworks
+          if (standard.tag && Array.isArray(standard.tag)) {
+            standard.tag.forEach((tag) => {
+              const framework = extractTagFramework(tag)
+              if (framework) {
+                // Only add non-null frameworks
+                tagFrameworkSet.add(framework)
+              }
+            })
+          }
+        })
+      })
 
-    return {
-      allCategories: Array.from(categorySet).sort(),
-      allImpacts: sortedImpacts,
-      allRecommendedBy: Array.from(recommendedBySet).sort(),
-      allTagFrameworks: sortedTagFrameworks,
-    };
-  }, [categories]);
+      // Custom sort order for impacts: Low -> Medium -> High
+      const impactOrder = ['Low Impact', 'Medium Impact', 'High Impact']
+      const sortedImpacts = Array.from(impactSet).sort((a, b) => {
+        const aIndex = impactOrder.indexOf(a)
+        const bIndex = impactOrder.indexOf(b)
+        return aIndex - bIndex
+      })
+
+      // Sort tag frameworks with compliance frameworks first, then service categories
+      const sortedTagFrameworks = Array.from(tagFrameworkSet).sort((a, b) => {
+        // Define priority groups
+        const getFrameworkPriority = (framework) => {
+          if (framework.startsWith('CIS M365')) return 1
+          if (framework === 'CISA') return 2
+          if (framework === 'EIDSCA') return 3
+          if (framework === 'Essential 8') return 4
+          if (framework.startsWith('NIST CSF')) return 5
+          if (framework.startsWith('Secure Score -')) return 6
+          return 999 // Other tags go last
+        }
+
+        const aPriority = getFrameworkPriority(a)
+        const bPriority = getFrameworkPriority(b)
+
+        // If different priorities, sort by priority
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority
+        }
+
+        // If same priority, sort alphabetically
+        return a.localeCompare(b)
+      })
+
+      return {
+        allCategories: Array.from(categorySet).sort(),
+        allImpacts: sortedImpacts,
+        allRecommendedBy: Array.from(recommendedBySet).sort(),
+        allTagFrameworks: sortedTagFrameworks,
+      }
+    }, [categories])
 
   // Enhanced filter function
   const enhancedFilterStandards = useCallback(
@@ -759,55 +826,65 @@ const CippStandardDialog = ({
       // Function to extract base framework from tag (same as in useMemo)
       const extractTagFramework = (tag) => {
         // Compliance Frameworks - extract version dynamically
-        if (tag.startsWith("CIS M365")) {
-          const versionMatch = tag.match(/CIS M365 (\d+\.\d+)/);
-          return versionMatch ? `CIS M365 ${versionMatch[1]}` : "CIS M365";
+        if (tag.startsWith('CIS M365')) {
+          const versionMatch = tag.match(/CIS M365 (\d+\.\d+)/)
+          return versionMatch ? `CIS M365 ${versionMatch[1]}` : 'CIS M365'
         }
-        if (tag.startsWith("CISA ")) return "CISA";
-        if (tag.startsWith("EIDSCA.")) return "EIDSCA";
-        if (tag.startsWith("Essential 8")) return "Essential 8";
-        if (tag.startsWith("NIST CSF")) {
-          const versionMatch = tag.match(/NIST CSF (\d+\.\d+)/);
-          return versionMatch ? `NIST CSF ${versionMatch[1]}` : "NIST CSF";
+        if (tag.startsWith('CISA ')) return 'CISA'
+        if (tag.startsWith('EIDSCA.')) return 'EIDSCA'
+        if (tag.startsWith('Essential 8')) return 'Essential 8'
+        if (tag.startsWith('NIST CSF')) {
+          const versionMatch = tag.match(/NIST CSF (\d+\.\d+)/)
+          return versionMatch ? `NIST CSF ${versionMatch[1]}` : 'NIST CSF'
         }
 
         // Microsoft Secure Score Categories
-        if (tag.startsWith("exo_")) return "Secure Score - Exchange";
-        if (tag.startsWith("mdo_")) return "Secure Score - Defender";
-        if (tag.startsWith("spo_")) return "Secure Score - SharePoint";
-        if (tag.startsWith("mip_")) return "Secure Score - Purview";
+        if (tag.startsWith('exo_')) return 'Secure Score - Exchange'
+        if (tag.startsWith('mdo_')) return 'Secure Score - Defender'
+        if (tag.startsWith('spo_')) return 'Secure Score - SharePoint'
+        if (tag.startsWith('mip_')) return 'Secure Score - Purview'
 
         // For any other tags, return null to exclude them
-        return null;
-      };
+        return null
+      }
 
       return standardsList.filter((standard) => {
         // Original text search
         const matchesSearch =
           !localSearchQuery ||
-          standard.label.toLowerCase().includes(localSearchQuery.toLowerCase()) ||
-          standard.helpText.toLowerCase().includes(localSearchQuery.toLowerCase()) ||
+          standard.label
+            .toLowerCase()
+            .includes(localSearchQuery.toLowerCase()) ||
+          standard.helpText
+            .toLowerCase()
+            .includes(localSearchQuery.toLowerCase()) ||
           (standard.tag &&
-            standard.tag.some((tag) => tag.toLowerCase().includes(localSearchQuery.toLowerCase()))) ||
+            standard.tag.some((tag) =>
+              tag.toLowerCase().includes(localSearchQuery.toLowerCase())
+            )) ||
           (standard.appliesToTest &&
             standard.appliesToTest.some((testId) =>
               testId.toLowerCase().includes(localSearchQuery.toLowerCase())
-            ));
+            ))
 
         // Category filter
         const matchesCategory =
-          selectedCategories.length === 0 || selectedCategories.includes(standard.cat);
+          selectedCategories.length === 0 ||
+          selectedCategories.includes(standard.cat)
 
         // Impact filter
         const matchesImpact =
-          selectedImpacts.length === 0 || selectedImpacts.includes(standard.impact);
+          selectedImpacts.length === 0 ||
+          selectedImpacts.includes(standard.impact)
 
         // Recommended by filter
         const matchesRecommendedBy =
           selectedRecommendedBy.length === 0 ||
           (standard.recommendedBy &&
             Array.isArray(standard.recommendedBy) &&
-            standard.recommendedBy.some((rec) => selectedRecommendedBy.includes(rec)));
+            standard.recommendedBy.some((rec) =>
+              selectedRecommendedBy.includes(rec)
+            ))
 
         // Tag framework filter
         const matchesTagFramework =
@@ -815,25 +892,26 @@ const CippStandardDialog = ({
           (standard.tag &&
             Array.isArray(standard.tag) &&
             standard.tag.some((tag) => {
-              const framework = extractTagFramework(tag);
-              return framework && selectedTagFrameworks.includes(framework);
-            }));
+              const framework = extractTagFramework(tag)
+              return framework && selectedTagFrameworks.includes(framework)
+            }))
 
         // New standards filter (last 30 days)
         const isNewStandard = (dateAdded) => {
-          if (!dateAdded) return false;
-          const currentDate = new Date();
-          const addedDate = new Date(dateAdded);
-          return differenceInDays(currentDate, addedDate) <= 30;
-        };
-        const matchesNewFilter = !showOnlyNew || isNewStandard(standard.addedDate);
+          if (!dateAdded) return false
+          const currentDate = new Date()
+          const addedDate = new Date(dateAdded)
+          return differenceInDays(currentDate, addedDate) <= 30
+        }
+        const matchesNewFilter =
+          !showOnlyNew || isNewStandard(standard.addedDate)
 
         // Status filter: enabled = already in selectedStandards, disabled = not yet added
-        const isEnabled = !!selectedStandards[standard.name];
+        const isEnabled = !!selectedStandards[standard.name]
         const matchesStatusFilter =
-          statusFilter === "all" ||
-          (statusFilter === "enabled" && isEnabled) ||
-          (statusFilter === "disabled" && !isEnabled);
+          statusFilter === 'all' ||
+          (statusFilter === 'enabled' && isEnabled) ||
+          (statusFilter === 'disabled' && !isEnabled)
 
         return (
           matchesSearch &&
@@ -843,8 +921,8 @@ const CippStandardDialog = ({
           matchesTagFramework &&
           matchesNewFilter &&
           matchesStatusFilter
-        );
-      });
+        )
+      })
     },
     [
       localSearchQuery,
@@ -855,121 +933,125 @@ const CippStandardDialog = ({
       showOnlyNew,
       statusFilter,
       selectedStandards,
-    ],
-  );
+    ]
+  )
 
   // Enhanced sort function
   const sortStandards = useCallback(
     (standardsList) => {
       return [...standardsList].sort((a, b) => {
-        let aValue, bValue;
+        let aValue, bValue
 
         switch (sortBy) {
-          case "label":
-            aValue = a.label.toLowerCase();
-            bValue = b.label.toLowerCase();
-            break;
-          case "addedDate":
-            aValue = new Date(a.addedDate || "1900-01-01");
-            bValue = new Date(b.addedDate || "1900-01-01");
-            break;
-          case "category":
-            aValue = a.cat?.toLowerCase() || "";
-            bValue = b.cat?.toLowerCase() || "";
-            break;
-          case "impact":
+          case 'label':
+            aValue = a.label.toLowerCase()
+            bValue = b.label.toLowerCase()
+            break
+          case 'addedDate':
+            aValue = new Date(a.addedDate || '1900-01-01')
+            bValue = new Date(b.addedDate || '1900-01-01')
+            break
+          case 'category':
+            aValue = a.cat?.toLowerCase() || ''
+            bValue = b.cat?.toLowerCase() || ''
+            break
+          case 'impact':
             // Sort by impact priority: High > Medium > Low
-            const impactOrder = { "High Impact": 3, "Medium Impact": 2, "Low Impact": 1 };
-            aValue = impactOrder[a.impact] || 0;
-            bValue = impactOrder[b.impact] || 0;
-            break;
-          case "recommendedBy":
+            const impactOrder = {
+              'High Impact': 3,
+              'Medium Impact': 2,
+              'Low Impact': 1,
+            }
+            aValue = impactOrder[a.impact] || 0
+            bValue = impactOrder[b.impact] || 0
+            break
+          case 'recommendedBy':
             aValue =
               a.recommendedBy && a.recommendedBy.length > 0
-                ? a.recommendedBy.join(", ").toLowerCase()
-                : "";
+                ? a.recommendedBy.join(', ').toLowerCase()
+                : ''
             bValue =
               b.recommendedBy && b.recommendedBy.length > 0
-                ? b.recommendedBy.join(", ").toLowerCase()
-                : "";
-            break;
+                ? b.recommendedBy.join(', ').toLowerCase()
+                : ''
+            break
           default:
-            aValue = a.label.toLowerCase();
-            bValue = b.label.toLowerCase();
+            aValue = a.label.toLowerCase()
+            bValue = b.label.toLowerCase()
         }
 
-        if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
-        if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
-        return 0;
-      });
+        if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1
+        if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1
+        return 0
+      })
     },
-    [sortBy, sortOrder],
-  );
+    [sortBy, sortOrder]
+  )
 
   // Optimize handleAddClick to be more performant
   const handleAddClick = useCallback(
     (standardName) => {
-      setButtonDisabled(true);
-      handleAddMultipleStandard(standardName);
+      setButtonDisabled(true)
+      handleAddMultipleStandard(standardName)
       // Use requestAnimationFrame for smoother UI updates
       requestAnimationFrame(() => {
         setTimeout(() => {
-          setButtonDisabled(false);
-        }, 100);
-      });
+          setButtonDisabled(false)
+        }, 100)
+      })
     },
-    [handleAddMultipleStandard],
-  );
+    [handleAddMultipleStandard]
+  )
 
   // Optimize search debounce with a higher timeout for better performance
   const handleSearchQueryChange = useCallback(
     debounce((query) => {
-      setSearchQuery(query.trim());
+      setSearchQuery(query.trim())
     }, 350), // Increased debounce time for better performance
-    [setSearchQuery],
-  );
+    [setSearchQuery]
+  )
 
   // Only process visible categories on demand to improve performance
-  const [processedItems, setProcessedItems] = useState([]);
+  const [processedItems, setProcessedItems] = useState([])
 
   // Handle search input change locally
   const handleLocalSearchChange = useCallback(
     (e) => {
-      const value = e.target.value;
-      setLocalSearchQuery(value);
-      handleSearchQueryChange(value);
+      const value = e.target.value
+      setLocalSearchQuery(value)
+      handleSearchQueryChange(value)
     },
-    [handleSearchQueryChange],
-  );
+    [handleSearchQueryChange]
+  )
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
-    setLocalSearchQuery("");
-    setSelectedCategories([]);
-    setSelectedImpacts([]);
-    setSelectedRecommendedBy([]);
-    setSelectedTagFrameworks([]);
-    setShowOnlyNew(false);
-    setStatusFilter("all");
-    setSortBy("addedDate");
-    setSortOrder("desc");
-    setViewMode("card"); // Reset to card view
-    handleSearchQueryChange("");
-  }, [handleSearchQueryChange]);
+    setLocalSearchQuery('')
+    setSelectedCategories([])
+    setSelectedImpacts([])
+    setSelectedRecommendedBy([])
+    setSelectedTagFrameworks([])
+    setShowOnlyNew(false)
+    setStatusFilter('all')
+    setSortBy('addedDate')
+    setSortOrder('desc')
+    setViewMode('card') // Reset to card view
+    handleSearchQueryChange('')
+  }, [handleSearchQueryChange])
 
   // Clear dialog state on close
   const handleClose = useCallback(() => {
-    setLocalSearchQuery(""); // Clear local search state
-    setSelectedCategories([]);
-    setSelectedImpacts([]);
-    setSelectedRecommendedBy([]);
-    setSelectedTagFrameworks([]);
-    setShowOnlyNew(false);
-    setStatusFilter("all");
-    setViewMode("card"); // Reset to card view
-    handleSearchQueryChange(""); // Clear parent search state
-    handleCloseDialog();
-  }, [handleCloseDialog, handleSearchQueryChange]);
+    setLocalSearchQuery('') // Clear local search state
+    setSelectedCategories([])
+    setSelectedImpacts([])
+    setSelectedRecommendedBy([])
+    setSelectedTagFrameworks([])
+    setShowOnlyNew(false)
+    setStatusFilter('all')
+    setViewMode('card') // Reset to card view
+    handleSearchQueryChange('') // Clear parent search state
+    handleCloseDialog()
+  }, [handleCloseDialog, handleSearchQueryChange])
 
   // Process standards data only when dialog is opened, to improve performance
   useEffect(() => {
@@ -977,47 +1059,49 @@ const CippStandardDialog = ({
       // Use requestIdleCallback if available, or setTimeout as fallback
       const processStandards = () => {
         // Create a flattened list of all standards for virtualized rendering
-        const allItems = [];
+        const allItems = []
 
         Object.keys(categories).forEach((category) => {
-          const categoryStandards = categories[category];
-          const filteredStandards = enhancedFilterStandards(categoryStandards);
+          const categoryStandards = categories[category]
+          const filteredStandards = enhancedFilterStandards(categoryStandards)
 
           filteredStandards.forEach((standard) => {
             allItems.push({
               standard,
               category,
-            });
-          });
-        });
+            })
+          })
+        })
 
         // Apply sorting to the final combined array instead of per-category
-        const sortedAllItems = sortStandards(allItems.map((item) => item.standard)).map(
-          (standard) => {
-            const item = allItems.find((item) => item.standard.name === standard.name);
-            return item;
-          },
-        );
+        const sortedAllItems = sortStandards(
+          allItems.map((item) => item.standard)
+        ).map((standard) => {
+          const item = allItems.find(
+            (item) => item.standard.name === standard.name
+          )
+          return item
+        })
 
-        setProcessedItems(sortedAllItems);
-        setIsInitialLoading(false);
-      };
+        setProcessedItems(sortedAllItems)
+        setIsInitialLoading(false)
+      }
 
       if (window.requestIdleCallback) {
-        window.requestIdleCallback(processStandards, { timeout: 500 });
+        window.requestIdleCallback(processStandards, { timeout: 500 })
       } else {
-        setTimeout(processStandards, 100);
+        setTimeout(processStandards, 100)
       }
 
       return () => {
         if (window.cancelIdleCallback) {
-          window.cancelIdleCallback(processStandards);
+          window.cancelIdleCallback(processStandards)
         }
-      };
+      }
     } else {
-      setIsInitialLoading(true);
+      setIsInitialLoading(true)
     }
-  }, [dialogOpen, categories, enhancedFilterStandards, sortStandards]);
+  }, [dialogOpen, categories, enhancedFilterStandards, sortStandards])
 
   // Render individual standard card
   const renderStandardCard = useCallback(
@@ -1032,8 +1116,13 @@ const CippStandardDialog = ({
         isButtonDisabled={isButtonDisabled}
       />
     ),
-    [selectedStandards, handleToggleSingleStandard, handleAddClick, isButtonDisabled],
-  );
+    [
+      selectedStandards,
+      handleToggleSingleStandard,
+      handleAddClick,
+      isButtonDisabled,
+    ]
+  )
 
   // Count active filters
   const activeFiltersCount =
@@ -1042,7 +1131,7 @@ const CippStandardDialog = ({
     selectedRecommendedBy.length +
     selectedTagFrameworks.length +
     (showOnlyNew ? 1 : 0) +
-    (statusFilter !== "all" ? 1 : 0);
+    (statusFilter !== 'all' ? 1 : 0)
 
   // Don't render dialog contents until it's actually open (improves performance)
   return (
@@ -1056,25 +1145,25 @@ const CippStandardDialog = ({
       TransitionProps={{
         onExited: () => {
           // Clear processed items on dialog close to free up memory
-          setProcessedItems([]);
+          setProcessedItems([])
         },
       }}
       PaperProps={{
         sx: {
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
         },
       }}
     >
       <DialogTitle sx={{ p: 2 }}>Select a Standard to Add</DialogTitle>
       <DialogContent
         sx={{
-          backgroundColor: "background.default",
+          backgroundColor: 'background.default',
           pb: 0,
           flex: 1,
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {/* Search and Filter Controls */}
@@ -1096,34 +1185,44 @@ const CippStandardDialog = ({
             <Box
               onClick={() => setFiltersExpanded(!filtersExpanded)}
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 py: 0.75,
                 px: 1,
-                borderRadius: filtersExpanded ? "4px 4px 0 0" : 1,
-                cursor: "pointer",
-                bgcolor: "action.hover",
-                border: "1px solid",
-                borderColor: "divider",
-                borderBottom: filtersExpanded ? "none" : "none",
-                "&:hover": {
-                  bgcolor: "action.selected",
+                borderRadius: filtersExpanded ? '4px 4px 0 0' : 1,
+                cursor: 'pointer',
+                bgcolor: 'action.hover',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderBottom: filtersExpanded ? 'none' : 'none',
+                '&:hover': {
+                  bgcolor: 'action.selected',
                 },
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <FilterList sx={{ color: "text.secondary", fontSize: "1.1rem" }} />
-                <Typography variant="body2" sx={{ color: "text.primary", fontWeight: "medium" }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FilterList
+                  sx={{ color: 'text.secondary', fontSize: '1.1rem' }}
+                />
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.primary', fontWeight: 'medium' }}
+                >
                   View, Sort & Filter Options
                 </Typography>
                 {!filtersExpanded && (
-                  <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                    ({viewMode === "card" ? "Card" : "List"} •{" "}
-                    {sortBy === "addedDate" ? "Date" : "Name"} {sortOrder === "desc" ? "↓" : "↑"}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ ml: 1 }}
+                  >
+                    ({viewMode === 'card' ? 'Card' : 'List'} •{' '}
+                    {sortBy === 'addedDate' ? 'Date' : 'Name'}{' '}
+                    {sortOrder === 'desc' ? '↓' : '↑'}
                     {activeFiltersCount > 0
-                      ? ` • ${activeFiltersCount} filter${activeFiltersCount !== 1 ? "s" : ""}`
-                      : ""}
+                      ? ` • ${activeFiltersCount} filter${activeFiltersCount !== 1 ? 's' : ''}`
+                      : ''}
                     )
                   </Typography>
                 )}
@@ -1135,16 +1234,16 @@ const CippStandardDialog = ({
             <Collapse in={filtersExpanded}>
               <Box
                 sx={{
-                  display: "flex",
+                  display: 'flex',
                   gap: 2,
-                  alignItems: "center",
+                  alignItems: 'center',
                   p: 2,
-                  bgcolor: "background.paper",
-                  borderRadius: "0 0 4px 4px",
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderTop: "none",
-                  flexWrap: "wrap",
+                  bgcolor: 'background.paper',
+                  borderRadius: '0 0 4px 4px',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderTop: 'none',
+                  flexWrap: 'wrap',
                 }}
               >
                 {/* View Mode */}
@@ -1153,7 +1252,7 @@ const CippStandardDialog = ({
                   exclusive
                   onChange={(e, newViewMode) => {
                     if (newViewMode !== null) {
-                      setViewMode(newViewMode);
+                      setViewMode(newViewMode)
                     }
                   }}
                 >
@@ -1204,7 +1303,9 @@ const CippStandardDialog = ({
                     onChange={(e) => setSelectedCategories(e.target.value)}
                     sx={{ height: 45 }}
                     renderValue={(selected) =>
-                      selected.length === 0 ? "All Categories" : `${selected.length} selected`
+                      selected.length === 0
+                        ? 'All Categories'
+                        : `${selected.length} selected`
                     }
                   >
                     {allCategories.map((category) => (
@@ -1224,7 +1325,9 @@ const CippStandardDialog = ({
                     onChange={(e) => setSelectedImpacts(e.target.value)}
                     sx={{ height: 45 }}
                     renderValue={(selected) =>
-                      selected.length === 0 ? "All Impacts" : `${selected.length} selected`
+                      selected.length === 0
+                        ? 'All Impacts'
+                        : `${selected.length} selected`
                     }
                   >
                     {allImpacts.map((impact) => (
@@ -1244,7 +1347,9 @@ const CippStandardDialog = ({
                     onChange={(e) => setSelectedRecommendedBy(e.target.value)}
                     sx={{ height: 45 }}
                     renderValue={(selected) =>
-                      selected.length === 0 ? "All Recommendations" : `${selected.length} selected`
+                      selected.length === 0
+                        ? 'All Recommendations'
+                        : `${selected.length} selected`
                     }
                   >
                     {allRecommendedBy.map((rec) => (
@@ -1264,7 +1369,9 @@ const CippStandardDialog = ({
                     onChange={(e) => setSelectedTagFrameworks(e.target.value)}
                     sx={{ height: 45 }}
                     renderValue={(selected) =>
-                      selected.length === 0 ? "All Tags" : `${selected.length} selected`
+                      selected.length === 0
+                        ? 'All Tags'
+                        : `${selected.length} selected`
                     }
                   >
                     {allTagFrameworks.map((framework) => (
@@ -1292,7 +1399,7 @@ const CippStandardDialog = ({
                   value={statusFilter}
                   exclusive
                   onChange={(e, newValue) => {
-                    if (newValue !== null) setStatusFilter(newValue);
+                    if (newValue !== null) setStatusFilter(newValue)
                   }}
                   size="small"
                   sx={{ height: 45 }}
@@ -1308,7 +1415,7 @@ const CippStandardDialog = ({
                     variant="outlined"
                     startIcon={<Clear />}
                     onClick={clearAllFilters}
-                    sx={{ ml: "auto", height: 45 }}
+                    sx={{ ml: 'auto', height: 45 }}
                   >
                     Clear All ({activeFiltersCount})
                   </Button>
@@ -1327,7 +1434,9 @@ const CippStandardDialog = ({
                     label={category}
                     size="small"
                     onDelete={() =>
-                      setSelectedCategories((prev) => prev.filter((c) => c !== category))
+                      setSelectedCategories((prev) =>
+                        prev.filter((c) => c !== category)
+                      )
                     }
                     color="primary"
                     variant="outlined"
@@ -1338,7 +1447,11 @@ const CippStandardDialog = ({
                     key={impact}
                     label={impact}
                     size="small"
-                    onDelete={() => setSelectedImpacts((prev) => prev.filter((i) => i !== impact))}
+                    onDelete={() =>
+                      setSelectedImpacts((prev) =>
+                        prev.filter((i) => i !== impact)
+                      )
+                    }
                     color="secondary"
                     variant="outlined"
                   />
@@ -1349,7 +1462,9 @@ const CippStandardDialog = ({
                     label={rec}
                     size="small"
                     onDelete={() =>
-                      setSelectedRecommendedBy((prev) => prev.filter((r) => r !== rec))
+                      setSelectedRecommendedBy((prev) =>
+                        prev.filter((r) => r !== rec)
+                      )
                     }
                     color="success"
                     variant="outlined"
@@ -1361,7 +1476,9 @@ const CippStandardDialog = ({
                     label={framework}
                     size="small"
                     onDelete={() =>
-                      setSelectedTagFrameworks((prev) => prev.filter((f) => f !== framework))
+                      setSelectedTagFrameworks((prev) =>
+                        prev.filter((f) => f !== framework)
+                      )
                     }
                     color="warning"
                     variant="outlined"
@@ -1376,11 +1493,15 @@ const CippStandardDialog = ({
                     variant="outlined"
                   />
                 )}
-                {statusFilter !== "all" && (
+                {statusFilter !== 'all' && (
                   <Chip
-                    label={statusFilter === "enabled" ? "Enabled Only" : "Disabled Only"}
+                    label={
+                      statusFilter === 'enabled'
+                        ? 'Enabled Only'
+                        : 'Disabled Only'
+                    }
                     size="small"
-                    onDelete={() => setStatusFilter("all")}
+                    onDelete={() => setStatusFilter('all')}
                     color="default"
                     variant="outlined"
                   />
@@ -1394,11 +1515,11 @@ const CippStandardDialog = ({
 
         {/* Results */}
         {isInitialLoading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
           </Box>
         ) : processedItems.length === 0 ? (
-          <Box sx={{ textAlign: "center", p: 4 }}>
+          <Box sx={{ textAlign: 'center', p: 4 }}>
             <Typography variant="h6" color="textSecondary">
               No standards match your search and filter criteria
             </Typography>
@@ -1407,16 +1528,31 @@ const CippStandardDialog = ({
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 2, flexShrink: 0 }}>
-              Showing {processedItems.length} standard{processedItems.length !== 1 ? "s" : ""}
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}
+          >
+            <Typography
+              variant="body2"
+              color="textSecondary"
+              sx={{ mb: 2, flexShrink: 0 }}
+            >
+              Showing {processedItems.length} standard
+              {processedItems.length !== 1 ? 's' : ''}
             </Typography>
-            {viewMode === "card" ? (
-              <Box sx={{ flex: 1, minHeight: 0, height: "100%", pb: 1 }}>
-                <VirtualizedStandardGrid items={processedItems} renderItem={renderStandardCard} />
+            {viewMode === 'card' ? (
+              <Box sx={{ flex: 1, minHeight: 0, height: '100%', pb: 1 }}>
+                <VirtualizedStandardGrid
+                  items={processedItems}
+                  renderItem={renderStandardCard}
+                />
               </Box>
             ) : (
-              <Box sx={{ flex: 1, overflow: "auto", minHeight: 0, pb: 1 }}>
+              <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0, pb: 1 }}>
                 <CompactStandardList
                   items={processedItems}
                   selectedStandards={selectedStandards}
@@ -1433,9 +1569,9 @@ const CippStandardDialog = ({
         sx={{
           px: 3,
           py: 2,
-          borderTop: "1px solid",
-          borderColor: "divider",
-          backgroundColor: "background.paper",
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper',
           flexShrink: 0,
         }}
       >
@@ -1444,7 +1580,7 @@ const CippStandardDialog = ({
         </Button>
       </DialogActions>
     </Dialog>
-  );
-};
+  )
+}
 
-export default CippStandardDialog;
+export default CippStandardDialog

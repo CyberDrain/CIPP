@@ -1,14 +1,17 @@
-import { createTheme as createMuiTheme, responsiveFontSizes } from "@mui/material/styles";
-import { createOptions as createBaseOptions } from "./base/create-options";
-import { createOptions as createDarkOptions } from "./dark/create-options";
-import { createOptions as createLightOptions } from "./light/create-options";
+import {
+  createTheme as createMuiTheme,
+  responsiveFontSizes,
+} from '@mui/material/styles'
+import { createOptions as createBaseOptions } from './base/create-options'
+import { createOptions as createDarkOptions } from './dark/create-options'
+import { createOptions as createLightOptions } from './light/create-options'
 
 export const createTheme = (config) => {
   let theme = createMuiTheme(
     createBaseOptions({
       direction: config.direction,
     }),
-    config.paletteMode === "dark"
+    config.paletteMode === 'dark'
       ? createDarkOptions({
           colorPreset: config.colorPreset,
           contrast: config.contrast,
@@ -23,41 +26,41 @@ export const createTheme = (config) => {
           styleOverrides: {
             // Set global custom scrollbar variables
             html: {
-              "--sb-track-color": "#232E33",
-              "--sb-thumb-color": "#6BAF8D",
-              "--sb-size": "7px",
+              '--sb-track-color': '#232E33',
+              '--sb-thumb-color': '#6BAF8D',
+              '--sb-size': '7px',
             },
             // Apply global scrollbar styles to every element. Below `lg` (same pivot as
             // useIsMobileLayout) drop the branded gutter — forced ::-webkit-scrollbar
             // width kills overlay auto-hide in Chromium, and phones don't need a
             // permanent track advertising that a page can scroll.
-            "html, body, *": {
-              "&::-webkit-scrollbar": {
-                width: "var(--sb-size)",
-                height: "var(--sb-size)",
+            'html, body, *': {
+              '&::-webkit-scrollbar': {
+                width: 'var(--sb-size)',
+                height: 'var(--sb-size)',
               },
-              "&::-webkit-scrollbar-track": {
-                backgroundColor: "var(--sb-track-color)",
-                borderRadius: "4px",
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: 'var(--sb-track-color)',
+                borderRadius: '4px',
               },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "var(--sb-thumb-color)",
-                borderRadius: "4px",
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'var(--sb-thumb-color)',
+                borderRadius: '4px',
               },
-              "&::-webkit-scrollbar:horizontal": {
-                height: "var(--sb-size)",
+              '&::-webkit-scrollbar:horizontal': {
+                height: 'var(--sb-size)',
               },
-              "@supports not selector(::-webkit-scrollbar)": {
-                scrollbarColor: "var(--sb-thumb-color) var(--sb-track-color)",
+              '@supports not selector(::-webkit-scrollbar)': {
+                scrollbarColor: 'var(--sb-thumb-color) var(--sb-track-color)',
               },
-              "@media (max-width:1199.95px)": {
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": {
+              '@media (max-width:1199.95px)': {
+                scrollbarWidth: 'none',
+                '&::-webkit-scrollbar': {
                   width: 0,
                   height: 0,
                 },
-                "@supports not selector(::-webkit-scrollbar)": {
-                  scrollbarColor: "transparent transparent",
+                '@supports not selector(::-webkit-scrollbar)': {
+                  scrollbarColor: 'transparent transparent',
                 },
               },
             },
@@ -65,11 +68,11 @@ export const createTheme = (config) => {
         },
       },
     }
-  );
+  )
 
   if (config.responsiveFontSizes) {
-    theme = responsiveFontSizes(theme);
+    theme = responsiveFontSizes(theme)
   }
 
-  return theme;
-};
+  return theme
+}

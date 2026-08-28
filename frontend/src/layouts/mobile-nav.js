@@ -1,21 +1,29 @@
-import { useMemo, useState } from "react";
-import NextLink from "next/link";
-import { usePathname } from "next/navigation";
-import PropTypes from "prop-types";
-import { Box, Divider, InputAdornment, OutlinedInput, Stack, SwipeableDrawer, Typography } from "@mui/material";
-import { Search } from "@mui/icons-material";
-import { Logo } from "../components/logo";
-import { CippSponsor } from "../components/CippComponents/CippSponsor";
-import { Scrollbar } from "../components/scrollbar";
-import { paths } from "../paths";
-import { MobileNavItem } from "./mobile-nav-item";
-import { SideNavBookmarks } from "./side-nav-bookmarks";
-import { useSettings } from "../hooks/use-settings";
-import { useSwipeCloseTransition } from "../hooks/use-swipe-close-transition";
+import { useMemo, useState } from 'react'
+import NextLink from 'next/link'
+import { usePathname } from 'next/navigation'
+import PropTypes from 'prop-types'
+import {
+  Box,
+  Divider,
+  InputAdornment,
+  OutlinedInput,
+  Stack,
+  SwipeableDrawer,
+  Typography,
+} from '@mui/material'
+import { Search } from '@mui/icons-material'
+import { Logo } from '../components/logo'
+import { CippSponsor } from '../components/CippComponents/CippSponsor'
+import { Scrollbar } from '../components/scrollbar'
+import { paths } from '../paths'
+import { MobileNavItem } from './mobile-nav-item'
+import { SideNavBookmarks } from './side-nav-bookmarks'
+import { useSettings } from '../hooks/use-settings'
+import { useSwipeCloseTransition } from '../hooks/use-swipe-close-transition'
 
 // 80% of the viewport truncated third-level labels at 320px (256px) and was absurd at
 // 899px (719px). Cap it like a real nav drawer.
-const MOBILE_NAV_WIDTH = "min(360px, 88vw)";
+const MOBILE_NAV_WIDTH = 'min(360px, 88vw)'
 
 const renderItems = ({ depth = 0, items, pathname, forceOpen = false }) =>
   items.reduce(
@@ -28,13 +36,14 @@ const renderItems = ({ depth = 0, items, pathname, forceOpen = false }) =>
         forceOpen,
       }),
     []
-  );
+  )
 
 const reduceChildRoutes = ({ acc, depth, item, pathname, forceOpen }) => {
-  const checkPath = !!(item.path && pathname);
+  const checkPath = !!(item.path && pathname)
   // Special handling for root path "/" to avoid matching all paths
-  const partialMatch = checkPath && item.path !== "/" ? pathname.includes(item.path) : false;
-  const exactMatch = checkPath ? pathname === item.path : false;
+  const partialMatch =
+    checkPath && item.path !== '/' ? pathname.includes(item.path) : false
+  const exactMatch = checkPath ? pathname === item.path : false
 
   if (item.items) {
     acc.push(
@@ -44,7 +53,7 @@ const reduceChildRoutes = ({ acc, depth, item, pathname, forceOpen }) => {
         external={item.external}
         icon={item.icon}
         // Search results re-render with a different key so collapse state resets open
-        key={`${item.title}-${forceOpen ? "open" : "closed"}`}
+        key={`${item.title}-${forceOpen ? 'open' : 'closed'}`}
         openImmediately={forceOpen || partialMatch}
         path={item.path}
         scope={item.scope}
@@ -54,7 +63,7 @@ const reduceChildRoutes = ({ acc, depth, item, pathname, forceOpen }) => {
           component="ul"
           spacing={0.5}
           sx={{
-            listStyle: "none",
+            listStyle: 'none',
             m: 0,
             p: 0,
           }}
@@ -67,7 +76,7 @@ const reduceChildRoutes = ({ acc, depth, item, pathname, forceOpen }) => {
           })}
         </Stack>
       </MobileNavItem>
-    );
+    )
   } else {
     acc.push(
       <MobileNavItem
@@ -80,47 +89,47 @@ const reduceChildRoutes = ({ acc, depth, item, pathname, forceOpen }) => {
         scope={item.scope}
         title={item.title}
       />
-    );
+    )
   }
 
-  return acc;
-};
+  return acc
+}
 
 // Prune the nav tree to items whose title matches the query, keeping ancestors of matches.
 // A matching branch keeps its whole subtree so its children stay reachable.
 const filterNavItems = (items, query) =>
   items.reduce((acc, item) => {
-    const selfMatch = item.title?.toLowerCase().includes(query);
+    const selfMatch = item.title?.toLowerCase().includes(query)
     if (item.items) {
       if (selfMatch) {
-        acc.push(item);
-        return acc;
+        acc.push(item)
+        return acc
       }
-      const filteredChildren = filterNavItems(item.items, query);
+      const filteredChildren = filterNavItems(item.items, query)
       if (filteredChildren.length > 0) {
-        acc.push({ ...item, items: filteredChildren });
+        acc.push({ ...item, items: filteredChildren })
       }
-      return acc;
+      return acc
     }
     if (selfMatch) {
-      acc.push(item);
+      acc.push(item)
     }
-    return acc;
-  }, []);
+    return acc
+  }, [])
 
 export const MobileNav = (props) => {
-  const { open, onClose, onOpen, items } = props;
-  const pathname = usePathname();
-  const settings = useSettings();
-  const swipeClose = useSwipeCloseTransition(open, onClose);
-  const [search, setSearch] = useState("");
-  const showSidebarBookmarks = settings.bookmarkSidebar !== false;
+  const { open, onClose, onOpen, items } = props
+  const pathname = usePathname()
+  const settings = useSettings()
+  const swipeClose = useSwipeCloseTransition(open, onClose)
+  const [search, setSearch] = useState('')
+  const showSidebarBookmarks = settings.bookmarkSidebar !== false
 
-  const query = search.trim().toLowerCase();
+  const query = search.trim().toLowerCase()
   const visibleItems = useMemo(
     () => (query ? filterNavItems(items ?? [], query) : (items ?? [])),
     [items, query]
-  );
+  )
 
   return (
     <SwipeableDrawer
@@ -137,12 +146,12 @@ export const MobileNav = (props) => {
       PaperProps={{
         sx: {
           // desktop side-nav renders on background.default, keep the drawer on the same surface
-          backgroundColor: "background.default",
+          backgroundColor: 'background.default',
           width: MOBILE_NAV_WIDTH,
           // Column layout so the sponsor footer pins to the bottom and the menu scrolls
           // between it and the sticky header, rather than the footer riding the list.
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
         },
       }}
       variant="temporary"
@@ -154,7 +163,7 @@ export const MobileNav = (props) => {
           href={paths.index}
           onClick={onClose}
           sx={{
-            display: "inline-flex",
+            display: 'inline-flex',
             height: 24,
             width: 24,
             mb: 1.5,
@@ -169,7 +178,10 @@ export const MobileNav = (props) => {
           placeholder="Search navigation…"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          inputProps={{ enterKeyHint: "search", "aria-label": "Search navigation" }}
+          inputProps={{
+            enterKeyHint: 'search',
+            'aria-label': 'Search navigation',
+          }}
           startAdornment={
             <InputAdornment position="start">
               <Search fontSize="small" />
@@ -184,20 +196,20 @@ export const MobileNav = (props) => {
           minHeight: 0,
           // wrapper is height:inherit, auto under flex-grow, and the escaped list height
           // scrolls the drawer paper itself
-          "& .simplebar-wrapper": {
-            height: "100%",
+          '& .simplebar-wrapper': {
+            height: '100%',
           },
-          "& .simplebar-content": {
-            height: "100%",
+          '& .simplebar-content': {
+            height: '100%',
           },
         }}
       >
         <Box
           component="nav"
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            height: "100%",
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
             px: 2,
             pb: 1,
           }}
@@ -206,7 +218,7 @@ export const MobileNav = (props) => {
             component="ul"
             sx={{
               flexGrow: 1,
-              listStyle: "none",
+              listStyle: 'none',
               m: 0,
               p: 0,
             }}
@@ -226,7 +238,11 @@ export const MobileNav = (props) => {
               forceOpen: Boolean(query),
             })}
             {query && visibleItems.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 2 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ px: 1, py: 2 }}
+              >
                 No pages match “{search}”.
               </Typography>
             )}
@@ -240,17 +256,17 @@ export const MobileNav = (props) => {
         sx={{
           flexShrink: 0,
           px: 2,
-          pb: "calc(env(safe-area-inset-bottom) + 8px)",
+          pb: 'calc(env(safe-area-inset-bottom) + 8px)',
         }}
       >
         <CippSponsor compact />
       </Box>
     </SwipeableDrawer>
-  );
-};
+  )
+}
 
 MobileNav.propTypes = {
   onClose: PropTypes.func,
   onOpen: PropTypes.func,
   open: PropTypes.bool,
-};
+}

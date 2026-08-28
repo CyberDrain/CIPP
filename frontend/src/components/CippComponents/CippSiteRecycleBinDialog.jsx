@@ -1,4 +1,10 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from '@mui/material'
 import { RestoreFromTrash } from '@mui/icons-material'
 import { CippDataTable } from '../CippTable/CippDataTable'
 import { usePermissions } from '../../hooks/use-permissions'
@@ -38,7 +44,12 @@ export const CippSiteRecycleBinDialog = ({
   ]
 
   return (
-    <Dialog fullWidth maxWidth="lg" open={!!drawerVisible} onClose={() => setDrawerVisible(false)}>
+    <Dialog
+      fullWidth
+      maxWidth="lg"
+      open={!!drawerVisible}
+      onClose={() => setDrawerVisible(false)}
+    >
       <DialogTitle>
         Recycle Bin{siteRow?.displayName ? ` — ${siteRow.displayName}` : ''}
       </DialogTitle>

@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId } from 'react'
 
 /**
  * SharePoint product mark — shapes from the Microsoft SharePoint logo,
@@ -6,17 +6,24 @@ import { useId } from "react";
  * Accepts MUI-like fontSize / sx for drop-in use next to @mui/icons-material icons.
  */
 const sizeFromFontSize = (fontSize) => {
-  if (fontSize == null || fontSize === "inherit") return "1em";
-  if (typeof fontSize === "number") return fontSize;
-  if (fontSize === "small") return 20;
-  if (fontSize === "medium") return 24;
-  if (fontSize === "large") return 35;
-  return fontSize;
-};
+  if (fontSize == null || fontSize === 'inherit') return '1em'
+  if (typeof fontSize === 'number') return fontSize
+  if (fontSize === 'small') return 20
+  if (fontSize === 'medium') return 24
+  if (fontSize === 'large') return 35
+  return fontSize
+}
 
-const SharePoint = ({ fontSize = "inherit", sx, width, height, style, ...props }) => {
-  const gradientId = useId().replace(/:/g, "");
-  const resolved = width ?? height ?? sizeFromFontSize(sx?.fontSize ?? fontSize);
+const SharePoint = ({
+  fontSize = 'inherit',
+  sx,
+  width,
+  height,
+  style,
+  ...props
+}) => {
+  const gradientId = useId().replace(/:/g, '')
+  const resolved = width ?? height ?? sizeFromFontSize(sx?.fontSize ?? fontSize)
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -25,7 +32,12 @@ const SharePoint = ({ fontSize = "inherit", sx, width, height, style, ...props }
       height={resolved}
       fill="none"
       aria-hidden
-      style={{ display: "inline-block", flexShrink: 0, verticalAlign: "middle", ...style }}
+      style={{
+        display: 'inline-block',
+        flexShrink: 0,
+        verticalAlign: 'middle',
+        ...style,
+      }}
       {...props}
     >
       <circle fill="#003049" cx="1019.333" cy="556" r="556" />
@@ -75,7 +87,7 @@ const SharePoint = ({ fontSize = "inherit", sx, width, height, style, ...props }
         d="M379.331,962.621c-19.903-13.202-36.528-30.777-48.604-51.384c-11.701-21.542-17.533-45.781-16.912-70.288c-1.042-33.181,10.155-65.586,31.46-91.045c22.388-25.49,51.326-44.366,83.678-54.581c36.871-12.136,75.49-18.116,114.304-17.699c51.043-1.865,102.015,5.272,150.583,21.082v106.567c-21.103-12.784-44.088-22.166-68.11-27.8c-26.065-6.392-52.81-9.597-79.647-9.545c-28.3-1.039-56.419,4.913-81.871,17.329c-19.65,8.475-32.392,27.807-32.433,49.206c-0.08,12.981,4.907,25.481,13.9,34.843c10.622,11.037,23.187,20.021,37.067,26.503c15.444,7.691,38.611,17.916,69.5,30.673c3.401,1.075,6.716,2.407,9.915,3.985c30.401,11.881,59.729,26.344,87.663,43.229c21.154,13.043,38.908,30.924,51.801,52.171c13.218,24.085,19.625,51.315,18.533,78.767c1.509,34.066-8.913,67.591-29.468,94.798c-20.488,25.012-47.88,43.446-78.767,53.005c-36.329,11.387-74.245,16.892-112.312,16.309c-34.154,0.155-68.258-2.635-101.933-8.34c-28.434-4.653-56.182-12.807-82.612-24.279v-112.358c25.264,18.043,53.489,31.529,83.4,39.847c29.81,9.289,60.798,14.251,92.018,14.734c28.895,1.83,57.739-4.291,83.4-17.699c17.976-10.144,28.909-29.358,28.449-49.994c0.12-14.359-5.56-28.158-15.753-38.271c-12.676-12.444-27.352-22.671-43.414-30.256c-18.533-9.267-45.824-21.483-81.871-36.65C432.618,993.951,405.161,979.594,379.331,962.621z"
       />
     </svg>
-  );
-};
+  )
+}
 
-export default SharePoint;
+export default SharePoint

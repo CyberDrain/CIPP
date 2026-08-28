@@ -1,12 +1,17 @@
-import { Stack, Button } from "@mui/material";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormCondition } from "./CippFormCondition";
-import { Grid } from "@mui/system";
-import { CippApiResults } from "./CippApiResults";
-import { getCippValidator } from "../../utils/get-cipp-validator";
+import { Stack, Button } from '@mui/material'
+import CippFormComponent from './CippFormComponent'
+import { CippFormCondition } from './CippFormCondition'
+import { Grid } from '@mui/system'
+import { CippApiResults } from './CippApiResults'
+import { getCippValidator } from '../../utils/get-cipp-validator'
 
-const CippForwardingSection = ({ formControl, usersList, contactsList, postRequest, handleSubmit }) => {
-
+const CippForwardingSection = ({
+  formControl,
+  usersList,
+  contactsList,
+  postRequest,
+  handleSubmit,
+}) => {
   const internalAddressOptions = [
     // Add users
     ...(usersList?.data?.Results?.map((user) => ({
@@ -17,8 +22,8 @@ const CippForwardingSection = ({ formControl, usersList, contactsList, postReque
     ...(contactsList?.data?.Results?.map((contact) => ({
       value: contact.mail || contact.emailAddress,
       label: `${contact.displayName} (${contact.mail || contact.emailAddress}) - Contact`,
-    })) || [])
-  ];
+    })) || []),
+  ]
 
   return (
     <Stack spacing={2}>
@@ -27,12 +32,12 @@ const CippForwardingSection = ({ formControl, usersList, contactsList, postReque
         name="forwarding.forwardOption"
         formControl={formControl}
         options={[
-          { label: "Forward to Internal Address", value: "internalAddress" },
+          { label: 'Forward to Internal Address', value: 'internalAddress' },
           {
-            label: "Forward to External Address (Tenant must allow this)",
-            value: "ExternalAddress",
+            label: 'Forward to External Address (Tenant must allow this)',
+            value: 'ExternalAddress',
           },
-          { label: "Disable Email Forwarding", value: "disabled" },
+          { label: 'Disable Email Forwarding', value: 'disabled' },
         ]}
       />
 
@@ -65,8 +70,8 @@ const CippForwardingSection = ({ formControl, usersList, contactsList, postReque
           name="forwarding.ForwardExternal"
           formControl={formControl}
           validators={{
-            required: "Email is required",
-            validate: (value) => getCippValidator(value, "email"),
+            required: 'Email is required',
+            validate: (value) => getCippValidator(value, 'email'),
           }}
         />
       </CippFormCondition>
@@ -77,14 +82,14 @@ const CippForwardingSection = ({ formControl, usersList, contactsList, postReque
         name="forwarding.KeepCopy"
         formControl={formControl}
       />
-      
+
       <Grid size={12}>
         <CippApiResults apiObject={postRequest} />
       </Grid>
-      
+
       <Grid>
         <Button
-          onClick={() => handleSubmit("forwarding")}
+          onClick={() => handleSubmit('forwarding')}
           variant="contained"
           disabled={!formControl.formState.isValid || postRequest.isPending}
         >
@@ -92,7 +97,7 @@ const CippForwardingSection = ({ formControl, usersList, contactsList, postReque
         </Button>
       </Grid>
     </Stack>
-  );
-};
+  )
+}
 
-export default CippForwardingSection;
+export default CippForwardingSection

@@ -22,8 +22,15 @@ const CippContactPermissionsDialog = ({
   }, [formHook])
 
   // Only certain permission levels support sending a notification when contact permissions are added
-  const notifyAllowed = ['AvailabilityOnly', 'LimitedDetails', 'Reviewer', 'Editor']
-  const isNotifyAllowed = notifyAllowed.includes(permissionLevel?.value ?? permissionLevel)
+  const notifyAllowed = [
+    'AvailabilityOnly',
+    'LimitedDetails',
+    'Reviewer',
+    'Editor',
+  ]
+  const isNotifyAllowed = notifyAllowed.includes(
+    permissionLevel?.value ?? permissionLevel
+  )
 
   return (
     <Stack spacing={3} sx={{ mt: 1 }}>
@@ -53,7 +60,9 @@ const CippContactPermissionsDialog = ({
             </li>
           )}
           creatable={false}
-          validators={{ required: 'Select a user or group to assign permissions to' }}
+          validators={{
+            required: 'Select a user or group to assign permissions to',
+          }}
           placeholder="Select a user or group to assign permissions to"
         />
       </Box>
@@ -64,7 +73,8 @@ const CippContactPermissionsDialog = ({
           name="Permissions"
           creatable={false}
           validators={{
-            validate: (value) => (value ? true : 'Select the permission level for the contact'),
+            validate: (value) =>
+              value ? true : 'Select the permission level for the contact',
           }}
           options={[
             { value: 'Author', label: 'Author' },

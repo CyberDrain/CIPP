@@ -64,7 +64,8 @@ describe('toReportSettings', () => {
 
   it('unwraps a chosen preset', () => {
     expect(
-      toReportSettings({ brandingPresetId: { label: 'Client', value: 'p1' } }).brandingPresetId
+      toReportSettings({ brandingPresetId: { label: 'Client', value: 'p1' } })
+        .brandingPresetId
     ).toBe('p1')
   })
 })
@@ -75,14 +76,24 @@ describe('fromReportSettings', () => {
   })
 
   it('round-trips through toReportSettings without drift', () => {
-    const original = { size: 'LETTER', orientation: 'landscape', brandingPresetId: 'p1' }
+    const original = {
+      size: 'LETTER',
+      orientation: 'landscape',
+      brandingPresetId: 'p1',
+    }
     const presets = [{ id: 'p1', name: 'Client Facing' }]
 
-    expect(toReportSettings(fromReportSettings(original, presets))).toEqual(original)
+    expect(toReportSettings(fromReportSettings(original, presets))).toEqual(
+      original
+    )
   })
 
   it('round-trips a template using the default branding', () => {
-    const original = { size: 'A4', orientation: 'portrait', brandingPresetId: '' }
+    const original = {
+      size: 'A4',
+      orientation: 'portrait',
+      brandingPresetId: '',
+    }
     expect(toReportSettings(fromReportSettings(original))).toEqual(original)
   })
 
@@ -100,14 +111,25 @@ describe('fromReportSettings', () => {
       watermarkText: 'DRAFT',
       watermarkEnabled: true,
     }
-    expect(toReportSettings(fromReportSettings(stored, [{ id: 'p1', name: 'Client Facing' }]))).toEqual(
-      { size: 'LETTER', orientation: 'landscape', brandingPresetId: 'p1' }
-    )
+    expect(
+      toReportSettings(
+        fromReportSettings(stored, [{ id: 'p1', name: 'Client Facing' }])
+      )
+    ).toEqual({
+      size: 'LETTER',
+      orientation: 'landscape',
+      brandingPresetId: 'p1',
+    })
   })
 
   it('shows a chosen preset by name', () => {
-    const form = fromReportSettings({ brandingPresetId: 'p1' }, [{ id: 'p1', name: 'Client Facing' }])
-    expect(form.brandingPresetId).toEqual({ label: 'Client Facing', value: 'p1' })
+    const form = fromReportSettings({ brandingPresetId: 'p1' }, [
+      { id: 'p1', name: 'Client Facing' },
+    ])
+    expect(form.brandingPresetId).toEqual({
+      label: 'Client Facing',
+      value: 'p1',
+    })
   })
 
   it('keeps a deleted preset id so saving does not silently drop it', () => {
@@ -153,10 +175,14 @@ describe('resolveBranding', () => {
 })
 
 describe('resolvePresetId', () => {
-  const branding = { reportDefaults: { executive: 'p-exec', reportBuilder: 'p-builder' } }
+  const branding = {
+    reportDefaults: { executive: 'p-exec', reportBuilder: 'p-builder' },
+  }
 
   it("lets the template's own choice win over the per-report default", () => {
-    expect(resolvePresetId('p-template', branding, 'reportBuilder')).toBe('p-template')
+    expect(resolvePresetId('p-template', branding, 'reportBuilder')).toBe(
+      'p-template'
+    )
   })
 
   it('falls back to the per-report default when the template chose nothing', () => {
@@ -182,9 +208,8 @@ describe('what the not-a-preset option is called', () => {
     // The branding page labels this scope "Default". The report dropdowns called the same thing
     // "Global branding settings", so whether an operator met it on the settings page or in a
     // report decided what it was named. One constant now, and both read it.
-    const { DEFAULT_BRANDING_OPTION } = await import(
-      '../../../src/components/ReportBuilder/reportSettings'
-    )
+    const { DEFAULT_BRANDING_OPTION } =
+      await import('../../../src/components/ReportBuilder/reportSettings')
     expect(DEFAULT_BRANDING_OPTION).toEqual({ label: 'Default', value: '' })
   })
 
@@ -197,9 +222,10 @@ describe('what the not-a-preset option is called', () => {
       'src/components/CippSettings/CippBrandingSettings.jsx',
     ]) {
       const source = readFileSync(file, 'utf8').replace(/\/\/[^\n]*/g, '')
-      expect(source, `${file} names the default branding option itself`).not.toMatch(
-        /label:\s*['"]Global branding/i
-      )
+      expect(
+        source,
+        `${file} names the default branding option itself`
+      ).not.toMatch(/label:\s*['"]Global branding/i)
     }
   })
 })
@@ -219,10 +245,16 @@ describe('serialiseBlock', () => {
   })
 
   it('keeps scorecard and progress rows', () => {
-    expect(serialiseBlock({ type: 'scorecard', stats: [{ label: 'Users', value: '5' }] }).stats)
-      .toHaveLength(1)
-    expect(serialiseBlock({ type: 'progress', items: [{ label: 'MFA', value: 90 }] }).items)
-      .toHaveLength(1)
+    expect(
+      serialiseBlock({
+        type: 'scorecard',
+        stats: [{ label: 'Users', value: '5' }],
+      }).stats
+    ).toHaveLength(1)
+    expect(
+      serialiseBlock({ type: 'progress', items: [{ label: 'MFA', value: 90 }] })
+        .items
+    ).toHaveLength(1)
   })
 
   it('keeps hero fields', () => {
@@ -237,16 +269,24 @@ describe('serialiseBlock', () => {
   })
 
   it('drops the content of a live test block so it refreshes on the next render', () => {
-    expect(serialiseBlock({ type: 'test', static: false, content: 'stale' }).content).toBeNull()
+    expect(
+      serialiseBlock({ type: 'test', static: false, content: 'stale' }).content
+    ).toBeNull()
   })
 
   it('keeps the content of an edited test block', () => {
-    expect(serialiseBlock({ type: 'test', static: true, content: 'edited' }).content).toBe('edited')
+    expect(
+      serialiseBlock({ type: 'test', static: true, content: 'edited' }).content
+    ).toBe('edited')
   })
 
   it('marks custom and database blocks static, since their content is not re-fetched', () => {
-    expect(serialiseBlock({ type: 'blank', content: '<p>x</p>' }).static).toBe(true)
-    expect(serialiseBlock({ type: 'database', content: '|a|' }).static).toBe(true)
+    expect(serialiseBlock({ type: 'blank', content: '<p>x</p>' }).static).toBe(
+      true
+    )
+    expect(serialiseBlock({ type: 'database', content: '|a|' }).static).toBe(
+      true
+    )
   })
 
   it('does not carry chart fields on a block that has none', () => {

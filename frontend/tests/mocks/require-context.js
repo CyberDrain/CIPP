@@ -53,7 +53,8 @@ requireShim.context = createContext
 
 // amd loaders (monaco) assign their own window.require after setup runs, trap the
 // assignment and keep .context attached to whatever gets installed
-let currentRequire = typeof globalThis.require === 'undefined' ? requireShim : globalThis.require
+let currentRequire =
+  typeof globalThis.require === 'undefined' ? requireShim : globalThis.require
 if (typeof currentRequire.context === 'undefined') {
   currentRequire.context = createContext
 }

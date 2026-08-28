@@ -1,12 +1,20 @@
-import { Button, Link, Stack, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
-import { Grid } from "@mui/system";
-import { CippWizardStepButtons } from "./CippWizardStepButtons";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { CippDataTable } from "../CippTable/CippDataTable";
-import { useWatch } from "react-hook-form";
-import { Delete } from "@mui/icons-material";
-import { useEffect, useState } from "react";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
+import {
+  Button,
+  Link,
+  Stack,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import { CippWizardStepButtons } from './CippWizardStepButtons'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { CippDataTable } from '../CippTable/CippDataTable'
+import { useWatch } from 'react-hook-form'
+import { Delete } from '@mui/icons-material'
+import { useEffect, useState } from 'react'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
 
 export const CippWizardCSVImport = (props) => {
   const {
@@ -18,55 +26,57 @@ export const CippWizardCSVImport = (props) => {
     name,
     manualFields = false,
     nameToCSVMapping,
-    fileName = "BulkUser",
-  } = props;
-  const tableData = useWatch({ control: formControl.control, name: name });
-  const [newTableData, setTableData] = useState([]);
-  const [open, setOpen] = useState(false);
+    fileName = 'BulkUser',
+  } = props
+  const tableData = useWatch({ control: formControl.control, name: name })
+  const [newTableData, setTableData] = useState([])
+  const [open, setOpen] = useState(false)
 
   // Register form field with validation
   formControl.register(name, {
     validate: (value) => Array.isArray(value) && value.length > 0,
-  });
+  })
 
   const handleRemoveItem = (row) => {
-    if (row === undefined) return false;
-    const rowKey = JSON.stringify(row);
-    const index = tableData?.findIndex((item) => JSON.stringify(item) === rowKey);
-    if (index === -1) return false;
-    const newTableData = [...tableData];
-    newTableData.splice(index, 1);
-    setTableData(newTableData);
-  };
+    if (row === undefined) return false
+    const rowKey = JSON.stringify(row)
+    const index = tableData?.findIndex(
+      (item) => JSON.stringify(item) === rowKey
+    )
+    if (index === -1) return false
+    const newTableData = [...tableData]
+    newTableData.splice(index, 1)
+    setTableData(newTableData)
+  }
 
   const handleAddItem = () => {
-    const newRowData = formControl.getValues("addrow");
-    if (newRowData === undefined) return false;
-    const newTableData = [...tableData, newRowData];
-    setTableData(newTableData);
-    setOpen(false);
-  };
+    const newRowData = formControl.getValues('addrow')
+    if (newRowData === undefined) return false
+    const newTableData = [...tableData, newRowData]
+    setTableData(newTableData)
+    setOpen(false)
+  }
 
   useEffect(() => {
     formControl.setValue(name, newTableData, {
       shouldValidate: true,
-    });
-  }, [newTableData]);
+    })
+  }, [newTableData])
 
   const actions = [
     {
       icon: <Delete />,
-      label: "Delete Row",
-      confirmText: "Are you sure you want to delete this row?",
+      label: 'Delete Row',
+      confirmText: 'Are you sure you want to delete this row?',
       customFunction: handleRemoveItem,
       noConfirm: true,
     },
-  ];
+  ]
 
   return (
     <Stack spacing={3}>
       <Link
-        href={`data:text/csv;charset=utf-8,%EF%BB%BF${encodeURIComponent(fields.join(",") + "\n")}`}
+        href={`data:text/csv;charset=utf-8,%EF%BB%BF${encodeURIComponent(fields.join(',') + '\n')}`}
         download={`${fileName}.csv`}
       >
         Download Example CSV
@@ -88,12 +98,12 @@ export const CippWizardCSVImport = (props) => {
                   type="textField"
                   formControl={formControl}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      if (e.target.value === "") return false;
-                      handleAddItem();
+                    if (e.key === 'Enter') {
+                      if (e.target.value === '') return false
+                      handleAddItem()
                       setTimeout(() => {
-                        formControl.setValue(`addrow.${field}`, "");
-                      }, 500);
+                        formControl.setValue(`addrow.${field}`, '')
+                      }, 500)
                     }
                   }}
                 />
@@ -159,5 +169,5 @@ export const CippWizardCSVImport = (props) => {
         formControl={formControl}
       />
     </Stack>
-  );
-};
+  )
+}

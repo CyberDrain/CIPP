@@ -16,7 +16,9 @@ describe('CippImageCard', () => {
       />
     )
     expect(screen.getByText('Reports Illustration')).toBeInTheDocument()
-    expect(screen.getByText('This is a card showing reports and analytics.')).toBeInTheDocument()
+    expect(
+      screen.getByText('This is a card showing reports and analytics.')
+    ).toBeInTheDocument()
     const link = screen.getByRole('link', { name: /View Reports/i })
     expect(link).toHaveAttribute('href', '/reports')
   })
@@ -35,7 +37,10 @@ describe('CippImageCard', () => {
     )
     expect(screen.getByText('2/5')).toBeInTheDocument()
     // 2/5 -> 40
-    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '40')
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuenow',
+      '40'
+    )
   })
 
   it('calls onButtonClick when custom button is clicked', async () => {

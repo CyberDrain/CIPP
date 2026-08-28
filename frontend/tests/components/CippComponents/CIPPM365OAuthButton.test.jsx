@@ -3,7 +3,9 @@ import { screen, fireEvent, act } from '@testing-library/react'
 import { renderWithTheme } from '../../test-utils'
 import { CIPPM365OAuthButton } from '../../../src/components/CippComponents/CIPPM365OAuthButton'
 
-vi.mock('../../../src/api/ApiCall', async () => (await import('../../mocks/api-call')).apiCallMock())
+vi.mock('../../../src/api/ApiCall', async () =>
+  (await import('../../mocks/api-call')).apiCallMock()
+)
 import { api, getResult } from '../../mocks/api-call'
 
 // only rendered for promptBeforeAuth / device-code paths, cut their import trees
@@ -31,7 +33,8 @@ class MockBroadcastChannel {
 
 const lastChannel = () => MockBroadcastChannel.instances.at(-1)
 
-const authButton = () => screen.getByRole('button', { name: /Login with Microsoft|Authenticating/ })
+const authButton = () =>
+  screen.getByRole('button', { name: /Login with Microsoft|Authenticating/ })
 
 describe('CIPPM365OAuthButton popup flow', () => {
   let openSpy
@@ -45,7 +48,9 @@ describe('CIPPM365OAuthButton popup flow', () => {
     // The PKCE S256 challenge awaits a real digest, which settles on the event loop
     // rather than the microtask queue and so cannot be flushed under fake timers.
     // A resolved stub keeps the popup setup that follows it deterministic.
-    vi.spyOn(globalThis.crypto.subtle, 'digest').mockResolvedValue(new Uint8Array(32).buffer)
+    vi.spyOn(globalThis.crypto.subtle, 'digest').mockResolvedValue(
+      new Uint8Array(32).buffer
+    )
   })
 
   // Everything after the digest - the BroadcastChannel and the popup watcher - is set up
@@ -61,24 +66,34 @@ describe('CIPPM365OAuthButton popup flow', () => {
   it('fails fast with a clear error when the browser blocks the popup', () => {
     openSpy.mockReturnValue(null)
     const onAuthError = vi.fn()
-    renderWithTheme(<CIPPM365OAuthButton applicationId={APP_ID} onAuthError={onAuthError} />)
+    renderWithTheme(
+      <CIPPM365OAuthButton applicationId={APP_ID} onAuthError={onAuthError} />
+    )
 
     fireEvent.click(authButton())
 
     expect(screen.getByText(/blocked by the browser/)).toBeInTheDocument()
-    expect(onAuthError).toHaveBeenCalledWith(expect.objectContaining({ errorCode: 'popup_blocked' }))
+    expect(onAuthError).toHaveBeenCalledWith(
+      expect.objectContaining({ errorCode: 'popup_blocked' })
+    )
     // not stuck on "Authenticating..." - immediately retryable
-    expect(screen.getByRole('button', { name: 'Login with Microsoft' })).toBeEnabled()
+    expect(
+      screen.getByRole('button', { name: 'Login with Microsoft' })
+    ).toBeEnabled()
   })
 
   it('re-enables the button shortly after the sign-in window is closed without a result', async () => {
     const popup = { closed: false, close: vi.fn() }
     openSpy.mockReturnValue(popup)
     const onAuthError = vi.fn()
-    renderWithTheme(<CIPPM365OAuthButton applicationId={APP_ID} onAuthError={onAuthError} />)
+    renderWithTheme(
+      <CIPPM365OAuthButton applicationId={APP_ID} onAuthError={onAuthError} />
+    )
 
     fireEvent.click(authButton())
-    expect(screen.getByRole('button', { name: /Authenticating/ })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: /Authenticating/ })
+    ).toBeDisabled()
     await settleAuthStart()
 
     popup.closed = true
@@ -91,8 +106,12 @@ describe('CIPPM365OAuthButton popup flow', () => {
     })
 
     expect(screen.getByText(/sign-in window was closed/)).toBeInTheDocument()
-    expect(onAuthError).toHaveBeenCalledWith(expect.objectContaining({ errorCode: 'popup_closed' }))
-    expect(screen.getByRole('button', { name: 'Login with Microsoft' })).toBeEnabled()
+    expect(onAuthError).toHaveBeenCalledWith(
+      expect.objectContaining({ errorCode: 'popup_closed' })
+    )
+    expect(
+      screen.getByRole('button', { name: 'Login with Microsoft' })
+    ).toBeEnabled()
   })
 
   it('does not report a cancellation when a result arrived before the popup closed', async () => {
@@ -119,9 +138,15 @@ describe('CIPPM365OAuthButton popup flow', () => {
     })
 
     // the real result is shown, never overridden by the popup-closed cancellation
-    expect(screen.getByText(/Authentication Error: access_denied/)).toBeInTheDocument()
-    expect(screen.queryByText(/sign-in window was closed/)).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Login with Microsoft' })).toBeEnabled()
+    expect(
+      screen.getByText(/Authentication Error: access_denied/)
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/sign-in window was closed/)
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Login with Microsoft' })
+    ).toBeEnabled()
   })
 
   it('cleans up the popup watcher when a result arrives', async () => {
@@ -133,7 +158,11 @@ describe('CIPPM365OAuthButton popup flow', () => {
     await settleAuthStart()
     act(() => {
       lastChannel().onmessage({
-        data: { type: 'auth_error', error: 'access_denied', errorDescription: 'cancelled' },
+        data: {
+          type: 'auth_error',
+          error: 'access_denied',
+          errorDescription: 'cancelled',
+        },
       })
     })
 
@@ -158,7 +187,11 @@ describe('CIPPM365OAuthButton popup flow', () => {
     // ...and the result lands inside that window
     act(() => {
       lastChannel().onmessage({
-        data: { type: 'auth_error', error: 'access_denied', errorDescription: 'cancelled' },
+        data: {
+          type: 'auth_error',
+          error: 'access_denied',
+          errorDescription: 'cancelled',
+        },
       })
     })
 
@@ -168,8 +201,12 @@ describe('CIPPM365OAuthButton popup flow', () => {
     act(() => {
       vi.advanceTimersByTime(5000)
     })
-    expect(screen.getByText(/Authentication Error: access_denied/)).toBeInTheDocument()
-    expect(screen.queryByText(/sign-in window was closed/)).not.toBeInTheDocument()
+    expect(
+      screen.getByText(/Authentication Error: access_denied/)
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/sign-in window was closed/)
+    ).not.toBeInTheDocument()
   })
 })
 
@@ -185,7 +222,10 @@ describe('CIPPM365OAuthButton device code flow', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ status: 'pending', error: 'authorization_pending' }),
+        json: async () => ({
+          status: 'pending',
+          error: 'authorization_pending',
+        }),
       })
     )
   })
@@ -214,19 +254,29 @@ describe('CIPPM365OAuthButton device code flow', () => {
   it('offers a fresh code instead of locking up when the sign-in window is closed', async () => {
     const popup = { closed: false, close: vi.fn() }
     openSpy.mockReturnValue(popup)
-    global.fetch = vi.fn().mockResolvedValue(codeResponse('FHA953X4X', 'dev-code-1'))
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(codeResponse('FHA953X4X', 'dev-code-1'))
 
-    renderWithTheme(<CIPPM365OAuthButton applicationId={APP_ID} useDeviceCode />)
+    renderWithTheme(
+      <CIPPM365OAuthButton applicationId={APP_ID} useDeviceCode />
+    )
 
     // first click retrieves the device code
-    fireEvent.click(screen.getByRole('button', { name: /Login with Microsoft/ }))
+    fireEvent.click(
+      screen.getByRole('button', { name: /Login with Microsoft/ })
+    )
     await act(async () => {})
 
     // second click opens the popup and starts polling
     global.fetch = vi.fn().mockResolvedValue(pendingResponse)
-    fireEvent.click(screen.getByRole('button', { name: /Authenticate with Code/ }))
+    fireEvent.click(
+      screen.getByRole('button', { name: /Authenticate with Code/ })
+    )
     await act(async () => {})
-    expect(screen.getByRole('button', { name: /Authenticating/ })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: /Authenticating/ })
+    ).toBeDisabled()
 
     // the user closes the sign-in window
     popup.closed = true
@@ -234,13 +284,17 @@ describe('CIPPM365OAuthButton device code flow', () => {
       vi.advanceTimersByTime(1000)
     })
 
-    const restart = screen.getByRole('button', { name: /Start over with a new code/ })
+    const restart = screen.getByRole('button', {
+      name: /Start over with a new code/,
+    })
     expect(restart).toBeEnabled()
     // the copy must not promise that the old code can be reused - it is consumed once entered
     expect(screen.getByText(/cannot be used again/)).toBeInTheDocument()
 
     // starting over requests a new code and retires the old poll
-    global.fetch = vi.fn().mockResolvedValue(codeResponse('NEWCODE99', 'dev-code-2'))
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(codeResponse('NEWCODE99', 'dev-code-2'))
     fireEvent.click(restart)
     await act(async () => {})
 

@@ -16,7 +16,9 @@ import { ApiGetCall } from '../../api/ApiCall'
 
 // Terminal states, i.e. nothing more will happen to this queue.
 const isFinished = (status) =>
-  ['Completed', 'Failed', 'Completed (with errors)', 'Not found'].includes(status)
+  ['Completed', 'Failed', 'Completed (with errors)', 'Not found'].includes(
+    status
+  )
 
 const statusColour = (status) => {
   if (status === 'Completed') return 'success.main'
@@ -35,7 +37,11 @@ const statusColour = (status) => {
  * invalidated once, so the page showing the data refreshes itself rather than leaving the admin
  * looking at pre-sync numbers.
  */
-export const CippMultiQueueTracker = ({ queueIds = [], relatedQueryKeys = [], label = 'Sync' }) => {
+export const CippMultiQueueTracker = ({
+  queueIds = [],
+  relatedQueryKeys = [],
+  label = 'Sync',
+}) => {
   const queryClient = useQueryClient()
   const [canvasVisible, setCanvasVisible] = useState(false)
   const [hasInvalidated, setHasInvalidated] = useState(false)
@@ -51,7 +57,8 @@ export const CippMultiQueueTracker = ({ queueIds = [], relatedQueryKeys = [], la
     // TanStack Query v5 hands this callback the Query object, not the data. Reading the data
     // off query.state is what makes the interval actually return false on completion - with
     // the v4 (data) signature the status is never found and the poll runs forever.
-    refetchInterval: (query) => (isFinished(query?.state?.data?.Summary?.Status) ? false : 3000),
+    refetchInterval: (query) =>
+      isFinished(query?.state?.data?.Summary?.Status) ? false : 3000,
     refetchOnWindowFocus: false,
     staleTime: 0,
   })
@@ -85,7 +92,11 @@ export const CippMultiQueueTracker = ({ queueIds = [], relatedQueryKeys = [], la
     <>
       <Tooltip title={tooltip}>
         <Badge
-          badgeContent={<Circle sx={{ fontSize: 8, color: statusColour(summary?.Status) }} />}
+          badgeContent={
+            <Circle
+              sx={{ fontSize: 8, color: statusColour(summary?.Status) }}
+            />
+          }
           overlap="circular"
           anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
@@ -126,10 +137,12 @@ export const CippMultiQueueTracker = ({ queueIds = [], relatedQueryKeys = [], la
 
           <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap>
             <Typography variant="body2">
-              <strong>Caches:</strong> {summary?.FoundQueues ?? 0} of {summary?.TotalQueues ?? 0}
+              <strong>Caches:</strong> {summary?.FoundQueues ?? 0} of{' '}
+              {summary?.TotalQueues ?? 0}
             </Typography>
             <Typography variant="body2">
-              <strong>Tasks:</strong> {summary?.CompletedTasks ?? 0} / {summary?.TotalTasks ?? 0}
+              <strong>Tasks:</strong> {summary?.CompletedTasks ?? 0} /{' '}
+              {summary?.TotalTasks ?? 0}
             </Typography>
             <Typography variant="body2">
               <strong>Running:</strong> {summary?.RunningTasks ?? 0}
@@ -144,9 +157,18 @@ export const CippMultiQueueTracker = ({ queueIds = [], relatedQueryKeys = [], la
             {queues.map((queue) => (
               <Box
                 key={queue.RowKey}
-                sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}
+                sx={{
+                  p: 2,
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                }}
               >
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
                   <Typography variant="body2" fontWeight="medium">
                     {queue.Name}
                   </Typography>
@@ -167,7 +189,9 @@ export const CippMultiQueueTracker = ({ queueIds = [], relatedQueryKeys = [], la
                 </Stack>
                 <Typography variant="caption" color="text.secondary">
                   {queue.CompletedTasks ?? 0} of {queue.TotalTasks ?? 0} tasks
-                  {queue.FailedTasks > 0 ? ` — ${queue.FailedTasks} failed` : ''}
+                  {queue.FailedTasks > 0
+                    ? ` — ${queue.FailedTasks} failed`
+                    : ''}
                 </Typography>
                 <LinearProgress
                   variant="determinate"
@@ -178,15 +202,18 @@ export const CippMultiQueueTracker = ({ queueIds = [], relatedQueryKeys = [], la
             ))}
             {queues.length === 0 && (
               <Typography variant="body2" color="text.secondary">
-                {polling.isFetching ? 'Loading queue status…' : 'No queue data available yet.'}
+                {polling.isFetching
+                  ? 'Loading queue status…'
+                  : 'No queue data available yet.'}
               </Typography>
             )}
           </Stack>
 
           {summary?.TotalQueues > summary?.FoundQueues && (
             <Typography variant="caption" color="text.secondary">
-              {summary.TotalQueues - summary.FoundQueues} queue(s) could not be found. They may have
-              finished and aged out of the queue history, or failed to start.
+              {summary.TotalQueues - summary.FoundQueues} queue(s) could not be
+              found. They may have finished and aged out of the queue history,
+              or failed to start.
             </Typography>
           )}
         </Stack>

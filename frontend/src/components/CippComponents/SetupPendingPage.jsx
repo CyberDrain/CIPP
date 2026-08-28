@@ -15,7 +15,9 @@ const SetupPendingPage = () => {
       title="CIPP is being set up"
       description="This CIPP instance has not finished its initial setup. Access is limited to administrators until setup is complete. This page checks automatically and will let you in as soon as setup finishes."
       actionText="Sign out"
-      actionHref={'/.auth/logout?post_logout_redirect_uri=' + encodeURIComponent('/')}
+      actionHref={
+        '/.auth/logout?post_logout_redirect_uri=' + encodeURIComponent('/')
+      }
       busy
     />
   )

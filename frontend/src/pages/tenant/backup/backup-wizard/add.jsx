@@ -1,20 +1,20 @@
-import React from "react";
-import { Typography } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import { omit } from "lodash";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { useSettings } from "../../../../hooks/use-settings";
-import { CippFormTenantSelector } from "../../../../components/CippComponents/CippFormTenantSelector";
+import React from 'react'
+import { Typography } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import { omit } from 'lodash'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { useSettings } from '../../../../hooks/use-settings'
+import { CippFormTenantSelector } from '../../../../components/CippComponents/CippFormTenantSelector'
 
 const CreateBackup = () => {
-  const userSettingsDefaults = useSettings();
-  const tenantDomain = userSettingsDefaults.currentTenant || "";
+  const userSettingsDefaults = useSettings()
+  const tenantDomain = userSettingsDefaults.currentTenant || ''
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       tenantFilter: tenantDomain,
       users: true,
@@ -28,7 +28,7 @@ const CreateBackup = () => {
       CippWebhookAlerts: true,
       CippScriptedAlerts: true,
     },
-  });
+  })
 
   return (
     <CippFormPage
@@ -37,26 +37,30 @@ const CreateBackup = () => {
       queryKey={`Backup Tasks`}
       postUrl="/api/AddScheduledItem?hidden=true&DisallowDuplicateName=true"
       customDataformatter={(values) => {
-        const startDate = new Date();
-        startDate.setHours(0, 0, 0, 0);
-        const unixTime = Math.floor(startDate.getTime() / 1000) - 45;
-        const tenantFilter = values.tenantFilter || tenantDomain;
+        const startDate = new Date()
+        startDate.setHours(0, 0, 0, 0)
+        const unixTime = Math.floor(startDate.getTime() / 1000) - 45
+        const tenantFilter = values.tenantFilter || tenantDomain
         const shippedValues = {
           TenantFilter: tenantFilter,
           Name: `CIPP Backup - ${tenantFilter}`,
           Command: { value: `New-CIPPBackup` },
-          Parameters: { backupType: "Scheduled", ScheduledBackupValues: { ...omit(values, ['tenantFilter']) } },
+          Parameters: {
+            backupType: 'Scheduled',
+            ScheduledBackupValues: { ...omit(values, ['tenantFilter']) },
+          },
           ScheduledTime: unixTime,
-          Recurrence: { value: "1d" },
-        };
-        return shippedValues;
+          Recurrence: { value: '1d' },
+        }
+        return shippedValues
       }}
       backButtonTitle="Backup Tasks"
       allowResubmit={true}
     >
       <Typography variant="body1">
-        Backups are stored in CIPP's storage and can be restored using the CIPP Restore Backup
-        Wizard. Backups run daily or on demand by clicking the backup now button.
+        Backups are stored in CIPP's storage and can be restored using the CIPP
+        Restore Backup Wizard. Backups run daily or on demand by clicking the
+        backup now button.
       </Typography>
       <Grid container spacing={2} sx={{ my: 2 }}>
         <Grid size={{ xs: 12 }}>
@@ -82,7 +86,12 @@ const CreateBackup = () => {
           />
         </Grid>
         <Grid size={{ md: 6, xs: 12 }}>
-          <CippFormComponent type="switch" label="Groups" name="groups" formControl={formControl} />
+          <CippFormComponent
+            type="switch"
+            label="Groups"
+            name="groups"
+            formControl={formControl}
+          />
         </Grid>
 
         <Grid size={{ xs: 12 }}>
@@ -172,9 +181,9 @@ const CreateBackup = () => {
         <Grid size={{ md: 6, xs: 12 }}></Grid>
       </Grid>
     </CippFormPage>
-  );
-};
+  )
+}
 
-CreateBackup.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+CreateBackup.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default CreateBackup;
+export default CreateBackup

@@ -1,10 +1,26 @@
-import { Box, Button, Container, Stack, Typography, SvgIcon, Skeleton } from '@mui/material'
+import {
+  Box,
+  Button,
+  Container,
+  Stack,
+  Typography,
+  SvgIcon,
+  Skeleton,
+} from '@mui/material'
 import { Grid } from '@mui/system'
 import { Layout as DashboardLayout } from '../../../../layouts/index.js'
 import { useForm, useWatch } from 'react-hook-form'
 import { useRouter } from 'next/router'
 import { Add, SaveRounded } from '@mui/icons-material'
-import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  lazy,
+  Suspense,
+} from 'react'
 import standards from '../../../../data/standards'
 import CippStandardAccordion from '../../../../components/CippStandards/CippStandardAccordion'
 // Lazy load the dialog to improve initial page load performance
@@ -71,7 +87,10 @@ const Page = () => {
           const standardValues = get(watchForm, standardName, {})
           // Always require an action value which should be an array with at least one element
           const actionValue = get(standardValues, 'action')
-          return actionValue && (!Array.isArray(actionValue) || actionValue.length > 0)
+          return (
+            actionValue &&
+            (!Array.isArray(actionValue) || actionValue.length > 0)
+          )
         }),
     }
 
@@ -100,7 +119,8 @@ const Page = () => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges) {
         e.preventDefault()
-        e.returnValue = 'You have unsaved changes. Are you sure you want to leave this page?'
+        e.returnValue =
+          'You have unsaved changes. Are you sure you want to leave this page?'
         return e.returnValue
       }
     }
@@ -124,7 +144,8 @@ const Page = () => {
 
     if (
       formState.isDirty ||
-      JSON.stringify(selectedStandards) !== JSON.stringify(initialStandardsRef.current)
+      JSON.stringify(selectedStandards) !==
+        JSON.stringify(initialStandardsRef.current)
     ) {
       setHasUnsavedChanges(true)
     } else {
@@ -207,7 +228,9 @@ const Page = () => {
         standard.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
         standard.helpText.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (standard.tag &&
-          standard.tag.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))) ||
+          standard.tag.some((tag) =>
+            tag.toLowerCase().includes(searchQuery.toLowerCase())
+          )) ||
         (standard.appliesToTest &&
           standard.appliesToTest.some((testId) =>
             testId.toLowerCase().includes(searchQuery.toLowerCase())
@@ -230,7 +253,9 @@ const Page = () => {
     }
 
     setSelectedStandards((prev) => {
-      const existingInstances = Object.keys(prev).filter((name) => name.startsWith(standardName))
+      const existingInstances = Object.keys(prev).filter((name) =>
+        name.startsWith(standardName)
+      )
       const newIndex = existingInstances.length
       return {
         ...prev,
@@ -315,8 +340,12 @@ const Page = () => {
       templateId: router.query.id,
       onRefresh: () => {},
       currentTenant: currentTenant,
-      templateTenants: Array.isArray(watchForm?.tenantFilter) ? watchForm.tenantFilter : [],
-      excludedTenants: Array.isArray(watchForm?.excludedTenants) ? watchForm.excludedTenants : [],
+      templateTenants: Array.isArray(watchForm?.tenantFilter)
+        ? watchForm.tenantFilter
+        : [],
+      excludedTenants: Array.isArray(watchForm?.excludedTenants)
+        ? watchForm.excludedTenants
+        : [],
     })
 
     // Filter out the refresh action
@@ -409,18 +438,34 @@ const Page = () => {
             {driftActions.length > 0 && (
               <ActionsMenu
                 actions={driftActions}
-                data={{ templateId: router.query.id, tenantFilter: currentTenant }}
+                data={{
+                  templateId: router.query.id,
+                  tenantFilter: currentTenant,
+                }}
               />
             )}
           </Stack>
         </Stack>
 
-        <Box sx={{ flexGrow: 1, height: 'calc(100vh - 240px)', overflow: 'hidden' }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            height: 'calc(100vh - 240px)',
+            overflow: 'hidden',
+          }}
+        >
           <Grid container spacing={3} sx={{ height: '100%' }}>
             {/* Left Column for Accordions */}
-            <Grid size={{ xs: 12, lg: 4 }} sx={{ height: '100%', overflow: 'auto', pr: 1 }}>
+            <Grid
+              size={{ xs: 12, lg: 4 }}
+              sx={{ height: '100%', overflow: 'auto', pr: 1 }}
+            >
               <CippStandardsSideBar
-                title={isDriftMode ? 'Drift Template Setup' : 'Standard Template Setup'}
+                title={
+                  isDriftMode
+                    ? 'Drift Template Setup'
+                    : 'Standard Template Setup'
+                }
                 subtitle="Follow the steps to configure the Standard"
                 createDialog={createDialog}
                 steps={steps}
@@ -439,7 +484,10 @@ const Page = () => {
                 }}
               />
             </Grid>
-            <Grid size={{ xs: 12, lg: 8 }} sx={{ height: '100%', overflow: 'auto', pr: 1 }}>
+            <Grid
+              size={{ xs: 12, lg: 8 }}
+              sx={{ height: '100%', overflow: 'auto', pr: 1 }}
+            >
               <Stack spacing={2}>
                 {/* Show accordions based on selectedStandards (which is populated by API when editing) */}
                 {existingTemplate.isLoading ? (

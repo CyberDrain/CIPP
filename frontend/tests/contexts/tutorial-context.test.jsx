@@ -1,5 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import { TutorialProvider, useTutorials } from '../../src/contexts/tutorial-context'
+import {
+  TutorialProvider,
+  useTutorials,
+} from '../../src/contexts/tutorial-context'
 
 // TutorialProvider loads its tours through webpack's require.context, which vite has no
 // equivalent for. tests/mocks/require-context.js maps it onto import.meta.glob, so this
@@ -9,7 +12,11 @@ const TutorialProbe = () => {
   return (
     <>
       <div data-testid="ids">{tutorials.map((t) => t.id).join(',')}</div>
-      <div data-testid="home">{getTutorialsForPage('/').map((t) => t.id).join(',')}</div>
+      <div data-testid="home">
+        {getTutorialsForPage('/')
+          .map((t) => t.id)
+          .join(',')}
+      </div>
     </>
   )
 }
@@ -24,7 +31,11 @@ describe('TutorialProvider', () => {
 
     const ids = screen.getByTestId('ids').textContent.split(',')
     expect(ids).toEqual(
-      expect.arrayContaining(['getting-started', 'dashboard-overview', 'tenant-management'])
+      expect.arrayContaining([
+        'getting-started',
+        'dashboard-overview',
+        'tenant-management',
+      ])
     )
   })
 

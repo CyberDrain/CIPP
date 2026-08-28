@@ -67,7 +67,8 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
           },
           queryKey: 'ListUsersAutoComplete',
           dataKey: 'Results',
-          labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+          labelField: (user) =>
+            `${user.displayName} (${user.userPrincipalName})`,
           valueField: 'id',
           addedField: {
             userPrincipalName: 'userPrincipalName',
@@ -97,7 +98,9 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
       }))
 
       // Handle multiple groups - return an array of requests (one per group)
-      const selectedGroups = Array.isArray(formData.groupId) ? formData.groupId : [formData.groupId]
+      const selectedGroups = Array.isArray(formData.groupId)
+        ? formData.groupId
+        : [formData.groupId]
 
       return selectedGroups.map((group) => ({
         AddDevice: addDevice,
@@ -129,7 +132,8 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
         },
       },
     ],
-    confirmText: 'Are you sure you want to add [deviceName] to the selected groups?',
+    confirmText:
+      'Are you sure you want to add [deviceName] to the selected groups?',
     multiPost: false,
     allowResubmit: true,
   },
@@ -194,7 +198,8 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
       GUID: 'azureADDeviceId',
     },
     hideCondition: (row) => row.operatingSystem !== 'Windows',
-    confirmText: 'Are you sure you want to retrieve the local admin password for [deviceName]?',
+    confirmText:
+      'Are you sure you want to retrieve the local admin password for [deviceName]?',
   },
   {
     label: 'Rotate Local Admin Password',
@@ -206,7 +211,8 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
       Action: 'RotateLocalAdminPassword',
     },
     hideCondition: (row) => row.operatingSystem !== 'Windows',
-    confirmText: 'Are you sure you want to rotate the password for [deviceName]?',
+    confirmText:
+      'Are you sure you want to rotate the password for [deviceName]?',
   },
   {
     label: 'Retrieve BIOS Password',
@@ -219,7 +225,8 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
       RecoveryKeyType: '!BiosPassword',
     },
     hideCondition: (row) => row.operatingSystem !== 'Windows',
-    confirmText: 'Are you sure you want to retrieve the BIOS password for [deviceName]?',
+    confirmText:
+      'Are you sure you want to retrieve the BIOS password for [deviceName]?',
   },
   {
     label: 'Retrieve BitLocker Keys',
@@ -231,7 +238,8 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
       RecoveryKeyType: '!BitLocker',
     },
     hideCondition: (row) => row.operatingSystem !== 'Windows',
-    confirmText: 'Are you sure you want to retrieve the BitLocker keys for [deviceName]?',
+    confirmText:
+      'Are you sure you want to retrieve the BitLocker keys for [deviceName]?',
   },
   {
     label: 'Retrieve FileVault Key',
@@ -243,7 +251,8 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
       RecoveryKeyType: '!FileVault',
     },
     hideCondition: (row) => row.operatingSystem !== 'macOS',
-    confirmText: 'Are you sure you want to retrieve the FileVault key for [deviceName]?',
+    confirmText:
+      'Are you sure you want to retrieve the FileVault key for [deviceName]?',
   },
   {
     label: 'Reset Passcode',
@@ -281,7 +290,8 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
       Action: 'WindowsDefenderScan',
       quickScan: false,
     },
-    confirmText: 'Are you sure you want to perform a full scan on [deviceName]?',
+    confirmText:
+      'Are you sure you want to perform a full scan on [deviceName]?',
   },
   {
     label: 'Windows Defender Quick Scan',
@@ -293,7 +303,8 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
       Action: 'WindowsDefenderScan',
       quickScan: true,
     },
-    confirmText: 'Are you sure you want to perform a quick scan on [deviceName]?',
+    confirmText:
+      'Are you sure you want to perform a quick scan on [deviceName]?',
   },
   {
     label: 'Update Windows Defender',

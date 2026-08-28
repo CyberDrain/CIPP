@@ -1,28 +1,28 @@
-import { Layout as DashboardLayout } from "../../../../../layouts/index.js";
-import { useRouter } from "next/router";
-import { ApiGetCall } from "../../../../../api/ApiCall";
-import { HeaderedTabbedLayout } from "../../../../../layouts/HeaderedTabbedLayout";
-import { CippGdapRelationshipSwitcher } from "../../../../../components/CippComponents/CippGdapRelationshipSwitcher";
-import tabOptions from "./tabOptions.json";
-import { CippTimeAgo } from "../../../../../components/CippComponents/CippTimeAgo";
-import { CippDataTable } from "../../../../../components/CippTable/CippDataTable";
-import { Schedule } from "@mui/icons-material";
+import { Layout as DashboardLayout } from '../../../../../layouts/index.js'
+import { useRouter } from 'next/router'
+import { ApiGetCall } from '../../../../../api/ApiCall'
+import { HeaderedTabbedLayout } from '../../../../../layouts/HeaderedTabbedLayout'
+import { CippGdapRelationshipSwitcher } from '../../../../../components/CippComponents/CippGdapRelationshipSwitcher'
+import tabOptions from './tabOptions.json'
+import { CippTimeAgo } from '../../../../../components/CippComponents/CippTimeAgo'
+import { CippDataTable } from '../../../../../components/CippTable/CippDataTable'
+import { Schedule } from '@mui/icons-material'
 
 const Page = () => {
-  const router = useRouter();
-  const { id } = router.query;
+  const router = useRouter()
+  const { id } = router.query
 
   const relationshipRequest = ApiGetCall({
     url: `/api/ListGDAPRelationships?id=${id}`,
     queryKey: `ListRelationships-${id}`,
-  });
+  })
 
   // Set the title and subtitle for the layout
   const title = relationshipRequest.isSuccess
     ? relationshipRequest.data?.Results?.[0]?.customer?.displayName +
-      " - " +
+      ' - ' +
       relationshipRequest.data?.Results?.[0]?.displayName
-    : "Loading...";
+    : 'Loading...'
 
   const subtitle = relationshipRequest.isSuccess
     ? [
@@ -30,23 +30,32 @@ const Page = () => {
           icon: <Schedule />,
           text: (
             <>
-              Created{" "}
+              Created{' '}
               <CippTimeAgo
-                data={new Date(relationshipRequest.data?.Results?.[0]?.createdDateTime)}
-              />{" "}
+                data={
+                  new Date(
+                    relationshipRequest.data?.Results?.[0]?.createdDateTime
+                  )
+                }
+              />{' '}
             </>
           ),
         },
       ]
-    : [];
+    : []
 
-  const data = relationshipRequest?.data?.Results?.[0];
+  const data = relationshipRequest?.data?.Results?.[0]
 
   return (
     <HeaderedTabbedLayout
       tabOptions={tabOptions}
       title={title}
-      titleControl={<CippGdapRelationshipSwitcher title={title} currentRelationshipId={id} />}
+      titleControl={
+        <CippGdapRelationshipSwitcher
+          title={title}
+          currentRelationshipId={id}
+        />
+      }
       subtitle={subtitle}
       isFetching={relationshipRequest.isLoading}
       backUrl="/tenant/gdap-management/relationships"
@@ -57,17 +66,23 @@ const Page = () => {
           api={{
             url: `/api/ListGDAPAccessAssignments`,
             data: { id },
-            dataKey: "Results",
+            dataKey: 'Results',
           }}
-          simpleColumns={["group.displayName", "status", "createdDateTime", "roles", "members"]}
+          simpleColumns={[
+            'group.displayName',
+            'status',
+            'createdDateTime',
+            'roles',
+            'members',
+          ]}
           queryKey={`AccessAssignments-${id}`}
           maxHeightOffset="550px"
         />
       )}
     </HeaderedTabbedLayout>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

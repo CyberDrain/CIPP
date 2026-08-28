@@ -1,19 +1,19 @@
-import { Stack } from "@mui/material";
-import { CippWizardStepButtons } from "./CippWizardStepButtons";
-import { CippFormTenantSelector } from "../CippComponents/CippFormTenantSelector";
+import { Stack } from '@mui/material'
+import { CippWizardStepButtons } from './CippWizardStepButtons'
+import { CippFormTenantSelector } from '../CippComponents/CippFormTenantSelector'
 
 export const CippTenantStep = (props) => {
   const {
     allTenants,
-    type = "single",
-    valueField = "defaultDomainName",
+    type = 'single',
+    valueField = 'defaultDomainName',
     onNextStep,
     formControl,
     currentStep,
     onPreviousStep,
     preText,
     includeOffboardingDefaults = false,
-  } = props;
+  } = props
 
   return (
     <Stack spacing={3}>
@@ -34,5 +34,5 @@ export const CippTenantStep = (props) => {
         formControl={formControl}
       />
     </Stack>
-  );
-};
+  )
+}

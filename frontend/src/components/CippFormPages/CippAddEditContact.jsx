@@ -1,15 +1,15 @@
-import { Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { getCippValidator } from "../../utils/get-cipp-validator";
-import countryList from "../../data/countryList.json";
+import { Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { getCippValidator } from '../../utils/get-cipp-validator'
+import countryList from '../../data/countryList.json'
 
 const countryOptions = countryList.map(({ Code, Name }) => ({
   label: Name,
   value: Code,
-}));
+}))
 
-const ContactFormLayout = ({ formControl, formType = "add" }) => {
+const ContactFormLayout = ({ formControl, formType = 'add' }) => {
   return (
     <Grid container spacing={2}>
       {/* Display Name */}
@@ -18,9 +18,9 @@ const ContactFormLayout = ({ formControl, formType = "add" }) => {
           type="textField"
           label="Display Name *"
           name="displayName"
-          disabled={formType === "edit"}
+          disabled={formType === 'edit'}
           formControl={formControl}
-          validators={{ required: "Display Name is required" }}
+          validators={{ required: 'Display Name is required' }}
         />
       </Grid>
 
@@ -42,7 +42,7 @@ const ContactFormLayout = ({ formControl, formType = "add" }) => {
         />
       </Grid>
 
-      <Divider sx={{ my: 2, width: "100%" }} />
+      <Divider sx={{ my: 2, width: '100%' }} />
 
       {/* Email */}
       <Grid size={{ md: 8, xs: 12 }}>
@@ -52,8 +52,8 @@ const ContactFormLayout = ({ formControl, formType = "add" }) => {
           name="email"
           formControl={formControl}
           validators={{
-            required: "Email is required",
-            validate: (value) => getCippValidator(value, "email"),
+            required: 'Email is required',
+            validate: (value) => getCippValidator(value, 'email'),
           }}
         />
       </Grid>
@@ -68,7 +68,7 @@ const ContactFormLayout = ({ formControl, formType = "add" }) => {
         />
       </Grid>
 
-      <Divider sx={{ my: 2, width: "100%" }} />
+      <Divider sx={{ my: 2, width: '100%' }} />
 
       {/* Company Information */}
       <Grid size={{ md: 6, xs: 12 }}>
@@ -96,12 +96,12 @@ const ContactFormLayout = ({ formControl, formType = "add" }) => {
           name="website"
           formControl={formControl}
           validators={{
-            validate: (value) => !value || getCippValidator(value, "url"),
+            validate: (value) => !value || getCippValidator(value, 'url'),
           }}
         />
       </Grid>
 
-      <Divider sx={{ my: 2, width: "100%" }} />
+      <Divider sx={{ my: 2, width: '100%' }} />
 
       {/* Address Information */}
       <Grid size={{ md: 12, xs: 12 }}>
@@ -113,11 +113,11 @@ const ContactFormLayout = ({ formControl, formType = "add" }) => {
         />
       </Grid>
       <Grid size={{ md: 3, xs: 12 }}>
-        <CippFormComponent 
-          type="textField" 
-          label="City" 
-          name="city" 
-          formControl={formControl} 
+        <CippFormComponent
+          type="textField"
+          label="City"
+          name="city"
+          formControl={formControl}
         />
       </Grid>
       <Grid size={{ md: 3, xs: 12 }}>
@@ -148,7 +148,7 @@ const ContactFormLayout = ({ formControl, formType = "add" }) => {
         />
       </Grid>
 
-      <Divider sx={{ my: 2, width: "100%" }} />
+      <Divider sx={{ my: 2, width: '100%' }} />
 
       {/* Phone Numbers */}
       <Grid size={{ md: 6, xs: 12 }}>
@@ -168,7 +168,7 @@ const ContactFormLayout = ({ formControl, formType = "add" }) => {
         />
       </Grid>
 
-      <Divider sx={{ my: 2, width: "100%" }} />
+      <Divider sx={{ my: 2, width: '100%' }} />
 
       {/* Mail Tip */}
       <Grid size={{ md: 12, xs: 12 }}>
@@ -182,13 +182,13 @@ const ContactFormLayout = ({ formControl, formType = "add" }) => {
           validators={{
             maxLength: {
               value: 175,
-              message: "Mail tip cannot exceed 175 characters",
+              message: 'Mail tip cannot exceed 175 characters',
             },
           }}
         />
       </Grid>
     </Grid>
-  );
-};
+  )
+}
 
-export default ContactFormLayout;
+export default ContactFormLayout

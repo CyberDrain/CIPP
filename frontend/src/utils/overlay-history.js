@@ -20,104 +20,108 @@
  * must close the deepest open overlay, whoever rendered it.
  */
 
-const MARKER = "__cippOverlay";
+const MARKER = '__cippOverlay'
 
 // Entries mirror the history entries we pushed, deepest last.
-let stack = [];
+let stack = []
 // The marker depth of the entry the browser is currently sitting on. Tracked here because
 // beforePopState runs after window.history has already moved, so the previous depth is
 // otherwise unknowable.
-let depth = 0;
+let depth = 0
 // history.back() calls WE made. The resulting popstate must not be mistaken for the user's.
-let selfPops = 0;
-let installed = false;
+let selfPops = 0
+let installed = false
 
-const hasWindow = () => typeof window !== "undefined" && typeof window.history !== "undefined";
+const hasWindow = () =>
+  typeof window !== 'undefined' && typeof window.history !== 'undefined'
 
 const readDepth = () => {
-  if (!hasWindow()) return 0;
-  const value = window.history.state?.[MARKER];
-  return typeof value === "number" ? value : 0;
-};
+  if (!hasWindow()) return 0
+  const value = window.history.state?.[MARKER]
+  return typeof value === 'number' ? value : 0
+}
 
 const handlePopState = () => {
-  const next = readDepth();
-  const wasSelfPop = selfPops > 0;
-  if (wasSelfPop) selfPops -= 1;
-  depth = next;
+  const next = readDepth()
+  const wasSelfPop = selfPops > 0
+  if (wasSelfPop) selfPops -= 1
+  depth = next
 
   // Pop deepest-first: closing bottom-up would briefly leave an overlay covering one that
   // is still open. Entries released by their own component are already gone from the stack,
   // so a self-pop normally finds nothing here.
-  const dismissed = [];
+  const dismissed = []
   while (stack.length > 0 && stack[stack.length - 1].depth > next) {
-    dismissed.push(stack.pop());
+    dismissed.push(stack.pop())
   }
   dismissed.forEach((entry) => {
-    if (entry.released) return;
-    entry.released = true;
-    entry.close?.();
-  });
-};
+    if (entry.released) return
+    entry.released = true
+    entry.close?.()
+  })
+}
 
 /**
  * Next calls this from its own popstate listener, before ours. Returning false means "the
  * app handled this" and Next skips the route change entirely.
  */
 const shouldNextHandle = (state) => {
-  if (selfPops > 0) return false;
-  if (stack.length === 0) return true;
+  if (selfPops > 0) return false
+  if (stack.length === 0) return true
   // Not a pop out of an overlay entry — a forward move or an unrelated traversal.
-  if (readDepth() >= depth) return true;
+  if (readDepth() >= depth) return true
   // A real navigation that happens to jump past our entries still belongs to Next.
-  const top = stack[stack.length - 1];
-  if (state?.as && top.as && state.as !== top.as) return true;
-  return false;
-};
+  const top = stack[stack.length - 1]
+  if (state?.as && top.as && state.as !== top.as) return true
+  return false
+}
 
 export const installOverlayHistory = (router) => {
-  if (installed || !hasWindow()) return;
-  installed = true;
-  depth = readDepth();
-  window.addEventListener("popstate", handlePopState);
-  router?.beforePopState?.(shouldNextHandle);
-};
+  if (installed || !hasWindow()) return
+  installed = true
+  depth = readDepth()
+  window.addEventListener('popstate', handlePopState)
+  router?.beforePopState?.(shouldNextHandle)
+}
 
 export const pushOverlayEntry = (close) => {
-  if (!hasWindow()) return null;
+  if (!hasWindow()) return null
   const entry = {
     depth: readDepth() + 1,
     as: window.history.state?.as,
     close,
     released: false,
-  };
-  stack.push(entry);
-  depth = entry.depth;
-  window.history.pushState({ ...window.history.state, [MARKER]: entry.depth }, "");
-  return entry;
-};
+  }
+  stack.push(entry)
+  depth = entry.depth
+  window.history.pushState(
+    { ...window.history.state, [MARKER]: entry.depth },
+    ''
+  )
+  return entry
+}
 
 export const releaseOverlayEntry = (entry) => {
-  if (!entry || entry.released) return;
-  entry.released = true;
-  const index = stack.indexOf(entry);
-  if (index === -1) return;
-  const isTop = index === stack.length - 1;
-  stack.splice(index, 1);
+  if (!entry || entry.released) return
+  entry.released = true
+  const index = stack.indexOf(entry)
+  if (index === -1) return
+  const isTop = index === stack.length - 1
+  stack.splice(index, 1)
   // Only the entry the browser is actually sitting on can be popped. If something was
   // pushed over ours — another overlay, or a route change while we were open — ours is
   // buried: drop it and leave history alone rather than yanking the user backwards.
-  if (!isTop || !hasWindow() || readDepth() !== entry.depth) return;
-  selfPops += 1;
-  depth = entry.depth - 1;
-  window.history.back();
-};
+  if (!isTop || !hasWindow() || readDepth() !== entry.depth) return
+  selfPops += 1
+  depth = entry.depth - 1
+  window.history.back()
+}
 
 // Module state outlives a render tree, so tests need a way back to zero.
 export const resetOverlayHistory = () => {
-  if (hasWindow()) window.removeEventListener("popstate", handlePopState);
-  stack = [];
-  depth = 0;
-  selfPops = 0;
-  installed = false;
-};
+  if (hasWindow()) window.removeEventListener('popstate', handlePopState)
+  stack = []
+  depth = 0
+  selfPops = 0
+  installed = false
+}

@@ -29,7 +29,10 @@ const principal = (userRoles) => ({
   clientPrincipal: { userDetails: 'john@contoso.com', userRoles },
 })
 
-const meResponse = (userRoles, { complete = false, samAppPresent = false } = {}) => ({
+const meResponse = (
+  userRoles,
+  { complete = false, samAppPresent = false } = {}
+) => ({
   ...principal(userRoles),
   permissions: ['CIPP.AppSettings.ReadWrite'],
   initialSetupComplete: complete,
@@ -70,30 +73,35 @@ const makeSandbox = () => ({ partnerConnected: false, setupDone: false })
 
 const sandboxHandlers = (sandbox, { liveMe = false } = {}) => [
   http.get('*/.auth/me', () =>
-    HttpResponse.json(principal(['anonymous', 'authenticated', 'admin'])),
+    HttpResponse.json(principal(['anonymous', 'authenticated', 'admin']))
   ),
   http.get('*/api/me', () =>
     HttpResponse.json(
       meResponse(['anonymous', 'authenticated', 'admin'], {
         complete: liveMe ? sandbox.setupDone : false,
         samAppPresent: liveMe ? sandbox.setupDone : false,
-      }),
-    ),
+      })
+    )
   ),
   http.get('*/api/ExecListAppId', () =>
-    HttpResponse.json(sandbox.partnerConnected ? connectedAppId : freshAppId),
+    HttpResponse.json(sandbox.partnerConnected ? connectedAppId : freshAppId)
   ),
   http.post('*/api/ExecCreateSamApp', () =>
-    HttpResponse.json({ severity: 'success', message: 'SAM application created (mocked)' }),
+    HttpResponse.json({
+      severity: 'success',
+      message: 'SAM application created (mocked)',
+    })
   ),
   http.post('*/api/ExecUpdateRefreshToken', () => {
     sandbox.partnerConnected = true
     return HttpResponse.json({ Results: 'Refresh token updated (mocked)' })
   }),
   http.post('*/api/ExecAddTenant', () =>
-    HttpResponse.json({ Results: 'Tenant added (mocked)' }),
+    HttpResponse.json({ Results: 'Tenant added (mocked)' })
   ),
-  http.get('*/api/ListCommunityRepos', () => HttpResponse.json({ Results: [] })),
+  http.get('*/api/ListCommunityRepos', () =>
+    HttpResponse.json({ Results: [] })
+  ),
   http.post('*/api/ExecCombinedSetup', () => {
     sandbox.setupDone = true
     return HttpResponse.json(combinedSetupSuccess)
@@ -109,8 +117,8 @@ const renderGate = () => (
       <Alert severity="success">
         <Typography variant="subtitle2">app content</Typography>
         <Typography variant="body2">
-          The setup gate has lifted - this placeholder stands in for the real CIPP app, which is
-          now accessible.
+          The setup gate has lifted - this placeholder stands in for the real
+          CIPP app, which is now accessible.
         </Typography>
       </Alert>
     </Box>
@@ -133,7 +141,9 @@ const gateStory = (walk, { mockAuth = null, extraHandlers = [] } = {}) => {
         return {}
       },
     ],
-    parameters: { msw: { handlers: [...extraHandlers, ...sandboxHandlers(sandbox)] } },
+    parameters: {
+      msw: { handlers: [...extraHandlers, ...sandboxHandlers(sandbox)] },
+    },
     play: async ({ canvasElement, step }) => {
       await walk(within(canvasElement), step)
     },
@@ -163,12 +173,16 @@ const toApplicationPage = async (canvas) => {
   // the button label, exactly like the real first-run
   await waitFor(() => {
     expect(canvas.getByText('STORYBOOK1')).toBeInTheDocument()
-    expect(canvas.getByRole('button', { name: 'Authenticate with Code' })).toBeEnabled()
+    expect(
+      canvas.getByRole('button', { name: 'Authenticate with Code' })
+    ).toBeEnabled()
   })
 }
 
 const authenticateOnApplicationPage = async (canvas) => {
-  await userEvent.click(canvas.getByRole('button', { name: 'Authenticate with Code' }))
+  await userEvent.click(
+    canvas.getByRole('button', { name: 'Authenticate with Code' })
+  )
 }
 
 const toTenantsPage = async (canvas) => {
@@ -181,14 +195,16 @@ const toTenantsPage = async (canvas) => {
 }
 
 const connectPartnerTenant = async (canvas) => {
-  await userEvent.click(canvas.getByRole('button', { name: 'Connect to Partner Tenant' }))
+  await userEvent.click(
+    canvas.getByRole('button', { name: 'Connect to Partner Tenant' })
+  )
   // ApiPostCall invalidates listAppId ~1s after success; the refetch flips the
   // stateful mock to the connected shape
   await waitFor(
     () => {
       expect(canvas.getByText('Contoso Partner')).toBeInTheDocument()
     },
-    { timeout: 5000 },
+    { timeout: 5000 }
   )
 }
 
@@ -203,7 +219,9 @@ const toBaselinesPage = async (canvas) => {
 
 const toNotificationsPage = async (canvas) => {
   await toBaselinesPage(canvas)
-  await userEvent.click(canvas.getByText('No Baselines - I want to create my own templates'))
+  await userEvent.click(
+    canvas.getByText('No Baselines - I want to create my own templates')
+  )
   await clickNext(canvas)
   await waitFor(() => {
     expect(canvas.getByText('Notification Settings')).toBeInTheDocument()
@@ -221,14 +239,17 @@ const toFinalStepsPage = async (canvas) => {
 // ---- one story per page ----
 
 export const FreshInstall = gateStory(async (canvas, step) => {
-  await step('admin lands on the full-screen wizard, app content blocked', async () => {
-    await atOptionsPage(canvas)
-    expect(canvas.queryByText('app content')).not.toBeInTheDocument()
-  })
+  await step(
+    'admin lands on the full-screen wizard, app content blocked',
+    async () => {
+      await atOptionsPage(canvas)
+      expect(canvas.queryByText('app content')).not.toBeInTheDocument()
+    }
+  )
   await step('fresh install offers First Setup and Manual only', async () => {
     expect(canvas.getByText('Manually enter credentials')).toBeInTheDocument()
     expect(
-      canvas.queryByText('Refresh Tokens for existing application registration'),
+      canvas.queryByText('Refresh Tokens for existing application registration')
     ).not.toBeInTheDocument()
     expect(canvas.queryByText('Add a tenant')).not.toBeInTheDocument()
   })
@@ -241,26 +262,45 @@ export const StepApplication = gateStory(async (canvas, step) => {
 })
 
 export const StepTenants = gateStory(async (canvas, step) => {
-  await step('mock auth creates the SAM app and advances to Tenants', async () => {
-    await toTenantsPage(canvas)
-  })
-  await step('first run prompts to CONNECT the partner tenant, not change it', async () => {
-    // the warning renders once the ExecListAppId fetch settles with no org info
-    await waitFor(() => {
-      expect(canvas.getByText(/No partner tenant connected/)).toBeInTheDocument()
-    })
-    expect(canvas.getByRole('button', { name: 'Connect to Partner Tenant' })).toBeInTheDocument()
-    expect(canvas.queryByText('Change Partner Tenant')).not.toBeInTheDocument()
-  })
+  await step(
+    'mock auth creates the SAM app and advances to Tenants',
+    async () => {
+      await toTenantsPage(canvas)
+    }
+  )
+  await step(
+    'first run prompts to CONNECT the partner tenant, not change it',
+    async () => {
+      // the warning renders once the ExecListAppId fetch settles with no org info
+      await waitFor(() => {
+        expect(
+          canvas.getByText(/No partner tenant connected/)
+        ).toBeInTheDocument()
+      })
+      expect(
+        canvas.getByRole('button', { name: 'Connect to Partner Tenant' })
+      ).toBeInTheDocument()
+      expect(
+        canvas.queryByText('Change Partner Tenant')
+      ).not.toBeInTheDocument()
+    }
+  )
 })
 
 export const StepTenantsConnected = gateStory(async (canvas, step) => {
   await toTenantsPage(canvas)
-  await step('connecting fills the partner card and unblocks Next', async () => {
-    await connectPartnerTenant(canvas)
-    expect(canvas.getByRole('button', { name: 'Change Partner Tenant' })).toBeInTheDocument()
-    await waitFor(() => expect(canvas.getByRole('button', { name: 'Next Step' })).toBeEnabled())
-  })
+  await step(
+    'connecting fills the partner card and unblocks Next',
+    async () => {
+      await connectPartnerTenant(canvas)
+      expect(
+        canvas.getByRole('button', { name: 'Change Partner Tenant' })
+      ).toBeInTheDocument()
+      await waitFor(() =>
+        expect(canvas.getByRole('button', { name: 'Next Step' })).toBeEnabled()
+      )
+    }
+  )
 })
 
 export const StepBaselines = gateStory(async (canvas, step) => {
@@ -286,23 +326,33 @@ export const StepFinalSteps = gateStory(async (canvas, step) => {
 export const StepApplicationAuthError = gateStory(
   async (canvas, step) => {
     await toApplicationPage(canvas)
-    await step('failed auth surfaces the error and keeps the step blocked', async () => {
-      await authenticateOnApplicationPage(canvas)
-      await waitFor(() => {
-        expect(canvas.getByText(/Authentication Error: expired_token/)).toBeInTheDocument()
-      })
-      // shown twice by design parity with the real flow: the button's own error
-      // alert plus the step's authStatus alert
-      expect(canvas.getAllByText(/device code has expired/).length).toBeGreaterThan(0)
-      expect(canvas.getByRole('button', { name: 'Next Step' })).toBeDisabled()
-    })
-    await step('the admin is not dead-ended: dismiss + retry and Back both exist', async () => {
-      // device code card stays up (like the real poll-failure path) so retry is
-      // one click away, and Back reaches the options page to pick Manual instead
-      expect(canvas.getByText('STORYBOOK1')).toBeInTheDocument()
-      expect(canvas.getByRole('button', { name: 'Dismiss' })).toBeEnabled()
-      expect(canvas.getByRole('button', { name: 'Back' })).toBeEnabled()
-    })
+    await step(
+      'failed auth surfaces the error and keeps the step blocked',
+      async () => {
+        await authenticateOnApplicationPage(canvas)
+        await waitFor(() => {
+          expect(
+            canvas.getByText(/Authentication Error: expired_token/)
+          ).toBeInTheDocument()
+        })
+        // shown twice by design parity with the real flow: the button's own error
+        // alert plus the step's authStatus alert
+        expect(
+          canvas.getAllByText(/device code has expired/).length
+        ).toBeGreaterThan(0)
+        expect(canvas.getByRole('button', { name: 'Next Step' })).toBeDisabled()
+      }
+    )
+    await step(
+      'the admin is not dead-ended: dismiss + retry and Back both exist',
+      async () => {
+        // device code card stays up (like the real poll-failure path) so retry is
+        // one click away, and Back reaches the options page to pick Manual instead
+        expect(canvas.getByText('STORYBOOK1')).toBeInTheDocument()
+        expect(canvas.getByRole('button', { name: 'Dismiss' })).toBeEnabled()
+        expect(canvas.getByRole('button', { name: 'Back' })).toBeEnabled()
+      }
+    )
   },
   {
     mockAuth: {
@@ -311,7 +361,7 @@ export const StepApplicationAuthError = gateStory(
       errorMessage:
         'AADSTS70020: The provided device code has expired. Please restart the sign-in flow.',
     },
-  },
+  }
 )
 
 export const StepApplicationWrongAccount = gateStory(
@@ -324,28 +374,38 @@ export const StepApplicationWrongAccount = gateStory(
       })
       expect(canvas.getByText('john.admin@contoso.com')).toBeInTheDocument()
     })
-    await step('current product behavior: auth still counts and Next unblocks', async () => {
-      // the real button fires onAuthSuccess even for a non service account - the
-      // warning is advisory only, SAM creation proceeds and the step completes
-      await waitFor(() => {
-        expect(canvas.getByRole('button', { name: 'Next Step' })).toBeEnabled()
-      })
-    })
+    await step(
+      'current product behavior: auth still counts and Next unblocks',
+      async () => {
+        // the real button fires onAuthSuccess even for a non service account - the
+        // warning is advisory only, SAM creation proceeds and the step completes
+        await waitFor(() => {
+          expect(
+            canvas.getByRole('button', { name: 'Next Step' })
+          ).toBeEnabled()
+        })
+      }
+    )
   },
-  { mockAuth: { outcome: 'nonServiceAccount' } },
+  { mockAuth: { outcome: 'nonServiceAccount' } }
 )
 
 export const StepApplicationSamCreateError = gateStory(
   async (canvas, step) => {
     await toApplicationPage(canvas)
-    await step('valid token but SAM app creation fails backend-side', async () => {
-      await authenticateOnApplicationPage(canvas)
-      await waitFor(() => {
-        expect(canvas.getAllByText(/app management policy/).length).toBeGreaterThan(0)
-      })
-      expect(canvas.getByRole('button', { name: 'Next Step' })).toBeDisabled()
-      expect(canvas.getByRole('button', { name: 'Back' })).toBeEnabled()
-    })
+    await step(
+      'valid token but SAM app creation fails backend-side',
+      async () => {
+        await authenticateOnApplicationPage(canvas)
+        await waitFor(() => {
+          expect(
+            canvas.getAllByText(/app management policy/).length
+          ).toBeGreaterThan(0)
+        })
+        expect(canvas.getByRole('button', { name: 'Next Step' })).toBeDisabled()
+        expect(canvas.getByRole('button', { name: 'Back' })).toBeEnabled()
+      }
+    )
   },
   {
     extraHandlers: [
@@ -354,27 +414,34 @@ export const StepApplicationSamCreateError = gateStory(
           severity: 'error',
           message:
             'Failed to add a password to the CIPP-SAM application: an app management policy in your tenant blocks password addition (AADSTS7000112). Exempt CIPP from the policy or switch to certificate authentication.',
-        }),
+        })
       ),
     ],
-  },
+  }
 )
 
 export const StepTenantsConnectError = gateStory(
   async (canvas, step) => {
     await toTenantsPage(canvas)
-    await step('partner tenant connect fails and the step stays blocked', async () => {
-      await userEvent.click(canvas.getByRole('button', { name: 'Connect to Partner Tenant' }))
-      await waitFor(
-        () => {
-          expect(canvas.getByText(/AADSTS70008/)).toBeInTheDocument()
-        },
-        { timeout: 5000 },
-      )
-      expect(canvas.getByRole('button', { name: 'Next Step' })).toBeDisabled()
-      // still on the unconnected state, retry available
-      expect(canvas.getByRole('button', { name: 'Connect to Partner Tenant' })).toBeEnabled()
-    })
+    await step(
+      'partner tenant connect fails and the step stays blocked',
+      async () => {
+        await userEvent.click(
+          canvas.getByRole('button', { name: 'Connect to Partner Tenant' })
+        )
+        await waitFor(
+          () => {
+            expect(canvas.getByText(/AADSTS70008/)).toBeInTheDocument()
+          },
+          { timeout: 5000 }
+        )
+        expect(canvas.getByRole('button', { name: 'Next Step' })).toBeDisabled()
+        // still on the unconnected state, retry available
+        expect(
+          canvas.getByRole('button', { name: 'Connect to Partner Tenant' })
+        ).toBeEnabled()
+      }
+    )
   },
   {
     extraHandlers: [
@@ -384,11 +451,11 @@ export const StepTenantsConnectError = gateStory(
             Results:
               'Failed to update refresh token: AADSTS70008: The provided authorization code or refresh token has expired.',
           },
-          { status: 500 },
-        ),
+          { status: 500 }
+        )
       ),
     ],
-  },
+  }
 )
 
 export const AppExistsTokensMissing = {
@@ -397,28 +464,39 @@ export const AppExistsTokensMissing = {
     msw: {
       handlers: [
         http.get('*/.auth/me', () =>
-          HttpResponse.json(principal(['anonymous', 'authenticated', 'admin'])),
+          HttpResponse.json(principal(['anonymous', 'authenticated', 'admin']))
         ),
         http.get('*/api/me', () =>
           HttpResponse.json(
-            meResponse(['anonymous', 'authenticated', 'admin'], { samAppPresent: true }),
-          ),
+            meResponse(['anonymous', 'authenticated', 'admin'], {
+              samAppPresent: true,
+            })
+          )
         ),
-        http.get('*/api/ExecListAppId', () => HttpResponse.json(connectedAppId)),
+        http.get('*/api/ExecListAppId', () =>
+          HttpResponse.json(connectedAppId)
+        ),
       ],
     },
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
-    await step('existing app registration adds the token-reset option', async () => {
-      await waitFor(() => {
+    await step(
+      'existing app registration adds the token-reset option',
+      async () => {
+        await waitFor(() => {
+          expect(
+            canvas.getByText(
+              'Refresh Tokens for existing application registration'
+            )
+          ).toBeInTheDocument()
+        })
+        expect(canvas.getByText('First Setup')).toBeInTheDocument()
         expect(
-          canvas.getByText('Refresh Tokens for existing application registration'),
+          canvas.getByText('Manually enter credentials')
         ).toBeInTheDocument()
-      })
-      expect(canvas.getByText('First Setup')).toBeInTheDocument()
-      expect(canvas.getByText('Manually enter credentials')).toBeInTheDocument()
-    })
+      }
+    )
   },
 }
 
@@ -428,24 +506,29 @@ export const NonAdminHold = {
     msw: {
       handlers: [
         http.get('*/.auth/me', () =>
-          HttpResponse.json(principal(['anonymous', 'authenticated', 'editor'])),
+          HttpResponse.json(principal(['anonymous', 'authenticated', 'editor']))
         ),
         http.get('*/api/me', () =>
-          HttpResponse.json(meResponse(['anonymous', 'authenticated', 'editor'])),
+          HttpResponse.json(
+            meResponse(['anonymous', 'authenticated', 'editor'])
+          )
         ),
       ],
     },
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
-    await step('non-admins are held out with sign-out as the only action', async () => {
-      await waitFor(() => {
-        expect(canvas.getByText('CIPP is being set up')).toBeInTheDocument()
-      })
-      expect(canvas.getByText('Sign out')).toBeInTheDocument()
-      expect(canvas.queryByText('Welcome to CIPP')).not.toBeInTheDocument()
-      expect(canvas.queryByText('app content')).not.toBeInTheDocument()
-    })
+    await step(
+      'non-admins are held out with sign-out as the only action',
+      async () => {
+        await waitFor(() => {
+          expect(canvas.getByText('CIPP is being set up')).toBeInTheDocument()
+        })
+        expect(canvas.getByText('Sign out')).toBeInTheDocument()
+        expect(canvas.queryByText('Welcome to CIPP')).not.toBeInTheDocument()
+        expect(canvas.queryByText('app content')).not.toBeInTheDocument()
+      }
+    )
   },
 }
 
@@ -471,20 +554,25 @@ export const WizardCompletionFlow = {
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement)
-    await step('walks the entire First Setup path to the confirmation step', async () => {
-      await toFinalStepsPage(canvas)
-      await clickNext(canvas)
-      await waitFor(() => {
-        expect(canvas.getByRole('button', { name: 'Submit' })).toBeEnabled()
-      })
-    })
+    await step(
+      'walks the entire First Setup path to the confirmation step',
+      async () => {
+        await toFinalStepsPage(canvas)
+        await clickNext(canvas)
+        await waitFor(() => {
+          expect(canvas.getByRole('button', { name: 'Submit' })).toBeEnabled()
+        })
+      }
+    )
     await step('submitting completes setup and offers Enter CIPP', async () => {
       await userEvent.click(canvas.getByRole('button', { name: 'Submit' }))
       await waitFor(
         () => {
-          expect(canvas.getByRole('button', { name: 'Enter CIPP' })).toBeEnabled()
+          expect(
+            canvas.getByRole('button', { name: 'Enter CIPP' })
+          ).toBeEnabled()
         },
-        { timeout: 5000 },
+        { timeout: 5000 }
       )
     })
     await step('Enter CIPP lifts the gate into the app', async () => {
@@ -493,7 +581,7 @@ export const WizardCompletionFlow = {
         () => {
           expect(canvas.getByText('app content')).toBeInTheDocument()
         },
-        { timeout: 5000 },
+        { timeout: 5000 }
       )
       expect(canvas.queryByText('Welcome to CIPP')).not.toBeInTheDocument()
     })

@@ -1,8 +1,8 @@
-import PropTypes from "prop-types";
-import ArrowRightIcon from "@heroicons/react/24/outline/ArrowRightIcon";
-import CubeIcon from "@heroicons/react/24/outline/CubeIcon";
-import UsersIcon from "@heroicons/react/24/outline/UsersIcon";
-import CurrencyDollarIcon from "@heroicons/react/24/outline/CurrencyDollarIcon";
+import PropTypes from 'prop-types'
+import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon'
+import CubeIcon from '@heroicons/react/24/outline/CubeIcon'
+import UsersIcon from '@heroicons/react/24/outline/UsersIcon'
+import CurrencyDollarIcon from '@heroicons/react/24/outline/CurrencyDollarIcon'
 import {
   Box,
   Button,
@@ -17,11 +17,11 @@ import {
   ListItemText,
   SvgIcon,
   Typography,
-} from "@mui/material";
+} from '@mui/material'
 
 const getContent = (notification) => {
   switch (notification.type) {
-    case "pendingOrders":
+    case 'pendingOrders':
       return (
         <>
           <ListItemIcon>
@@ -32,9 +32,13 @@ const getContent = (notification) => {
           <ListItemText
             primary={
               <Typography color="inherit" variant="body2">
-                <Typography color="inherit" component="span" variant="subtitle2">
+                <Typography
+                  color="inherit"
+                  component="span"
+                  variant="subtitle2"
+                >
                   {notification.orders} pending orders
-                </Typography>{" "}
+                </Typography>{' '}
                 needs your attention.
               </Typography>
             }
@@ -47,9 +51,9 @@ const getContent = (notification) => {
             </IconButton>
           </ListItemSecondaryAction>
         </>
-      );
+      )
 
-    case "pendingTransactions":
+    case 'pendingTransactions':
       return (
         <>
           <ListItemIcon>
@@ -60,9 +64,13 @@ const getContent = (notification) => {
           <ListItemText
             primary={
               <Typography color="inherit" variant="body2">
-                <Typography color="inherit" component="span" variant="subtitle2">
+                <Typography
+                  color="inherit"
+                  component="span"
+                  variant="subtitle2"
+                >
                   {notification.transactions} pending transactions
-                </Typography>{" "}
+                </Typography>{' '}
                 needs your attention.
               </Typography>
             }
@@ -75,9 +83,9 @@ const getContent = (notification) => {
             </IconButton>
           </ListItemSecondaryAction>
         </>
-      );
+      )
 
-    case "teamNotes":
+    case 'teamNotes':
       return (
         <>
           <ListItemIcon>
@@ -88,11 +96,19 @@ const getContent = (notification) => {
           <ListItemText
             primary={
               <Typography color="inherit" variant="body2">
-                <Typography color="inherit" component="span" variant="subtitle2">
+                <Typography
+                  color="inherit"
+                  component="span"
+                  variant="subtitle2"
+                >
                   {notification.notes} team notes
-                </Typography>{" "}
-                at the{" "}
-                <Typography color="inherit" component="span" variant="subtitle2">
+                </Typography>{' '}
+                at the{' '}
+                <Typography
+                  color="inherit"
+                  component="span"
+                  variant="subtitle2"
+                >
                   {notification.subject}.
                 </Typography>
               </Typography>
@@ -106,30 +122,29 @@ const getContent = (notification) => {
             </IconButton>
           </ListItemSecondaryAction>
         </>
-      );
+      )
 
     default:
-      return null;
+      return null
   }
-};
+}
 
 export const OverviewNotifications = (props) => {
-  const { notifications = [] } = props;
+  const { notifications = [] } = props
 
   return (
-    <Card style={{ width: "100%" }}>
+    <Card style={{ width: '100%' }}>
       <CardHeader title="Notifications" />
       <Divider />
       <List>
         {notifications.map((notification, index) => {
-          const hasDivider = notifications.length > index + 1;
+          const hasDivider = notifications.length > index + 1
 
-          
           return (
             <ListItem key={notification.id} divider={hasDivider}>
               {getContent(notification)}
             </ListItem>
-          );
+          )
         })}
       </List>
       <Divider />
@@ -151,9 +166,9 @@ export const OverviewNotifications = (props) => {
         </Button>
       </Box>
     </Card>
-  );
-};
+  )
+}
 
 OverviewNotifications.propTypes = {
   notifications: PropTypes.array,
-};
+}

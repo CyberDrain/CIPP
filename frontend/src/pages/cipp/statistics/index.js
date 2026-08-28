@@ -1,17 +1,16 @@
-
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
 
 const Page = () => {
-  const pageTitle = "Statistics";
+  const pageTitle = 'Statistics'
 
   return (
     <div>
       <h1>{pageTitle}</h1>
       <p>This is a placeholder page for the statistics section.</p>
     </div>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

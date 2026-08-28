@@ -1,16 +1,19 @@
-import { useEffect, useState } from "react";
-import { CippFormComponent } from "./CippFormComponent";
-import { useSettings } from "../../hooks/use-settings";
-import { GroupHeader, GroupItems } from "../CippComponents/CippAutocompleteGrouping";
-import { ApiGetCall } from "../../api/ApiCall";
+import { useEffect, useState } from 'react'
+import { CippFormComponent } from './CippFormComponent'
+import { useSettings } from '../../hooks/use-settings'
+import {
+  GroupHeader,
+  GroupItems,
+} from '../CippComponents/CippAutocompleteGrouping'
+import { ApiGetCall } from '../../api/ApiCall'
 
 export const CippFormTenantSelector = ({
   formControl,
-  componentType = "autoComplete",
+  componentType = 'autoComplete',
   allTenants = false,
-  type = "multiple",
-  name = "tenantFilter",
-  valueField = "defaultDomainName",
+  type = 'multiple',
+  name = 'tenantFilter',
+  valueField = 'defaultDomainName',
   required = true,
   disableClearable = true,
   preselectedEnabled = false,
@@ -22,48 +25,50 @@ export const CippFormTenantSelector = ({
   const validators = () => {
     if (required) {
       return {
-        required: { value: true, message: "This field is required" },
-      };
+        required: { value: true, message: 'This field is required' },
+      }
     }
-    return {};
-  };
-  const currentTenant = useSettings()?.currentTenant;
+    return {}
+  }
+  const currentTenant = useSettings()?.currentTenant
 
   // Build the API URL with query parameters to support tenant specific offboarding config
   const buildApiUrl = () => {
-    const baseUrl = allTenants ? "/api/ListTenants?AllTenantSelector=true" : "/api/ListTenants";
-    const params = new URLSearchParams();
+    const baseUrl = allTenants
+      ? '/api/ListTenants?AllTenantSelector=true'
+      : '/api/ListTenants'
+    const params = new URLSearchParams()
 
     if (allTenants) {
-      params.append("AllTenantSelector", "true");
+      params.append('AllTenantSelector', 'true')
     }
 
     if (includeOffboardingDefaults) {
-      params.append("IncludeOffboardingDefaults", "true");
+      params.append('IncludeOffboardingDefaults', 'true')
     }
 
     return params.toString()
-      ? `${baseUrl.split("?")[0]}?${params.toString()}`
-      : baseUrl.split("?")[0];
-  };
+      ? `${baseUrl.split('?')[0]}?${params.toString()}`
+      : baseUrl.split('?')[0]
+  }
 
   // Fetch tenant list
   const tenantList = ApiGetCall({
     url: buildApiUrl(),
     queryKey: allTenants
-      ? `ListTenants-FormAllTenantSelector${includeOffboardingDefaults ? "-WithOffboarding" : ""}`
-      : `ListTenants-FormnotAllTenants${includeOffboardingDefaults ? "-WithOffboarding" : ""}`,
-  });
+      ? `ListTenants-FormAllTenantSelector${includeOffboardingDefaults ? '-WithOffboarding' : ''}`
+      : `ListTenants-FormnotAllTenants${includeOffboardingDefaults ? '-WithOffboarding' : ''}`,
+  })
 
   // Fetch tenant group list if includeGroups is true
   const tenantGroupList = ApiGetCall({
-    url: "/api/ListTenantGroups",
+    url: '/api/ListTenantGroups',
     data: { AllTenantSelector: true },
-    queryKey: "TenantGroupSelector",
+    queryKey: 'TenantGroupSelector',
     waiting: includeGroups,
-  });
+  })
 
-  const [options, setOptions] = useState([]);
+  const [options, setOptions] = useState([])
 
   useEffect(() => {
     if (tenantList.isSuccess && (!includeGroups || tenantGroupList.isSuccess)) {
@@ -71,7 +76,7 @@ export const CippFormTenantSelector = ({
         ? tenantList.data.map((tenant) => ({
             value: tenant[valueField],
             label: `${tenant.displayName} (${tenant.defaultDomainName})`,
-            type: "Tenant",
+            type: 'Tenant',
             addedFields: {
               defaultDomainName: tenant.defaultDomainName,
               displayName: tenant.displayName,
@@ -81,30 +86,37 @@ export const CippFormTenantSelector = ({
               }),
             },
           }))
-        : [];
+        : []
 
       const groupData =
         includeGroups && Array.isArray(tenantGroupList?.data?.Results)
           ? tenantGroupList.data.Results.map((group) => ({
               value: group.Id,
               label: group.Name,
-              type: "Group",
+              type: 'Group',
             }))
-          : [];
+          : []
 
-      setOptions([...tenantData, ...groupData]);
+      setOptions([...tenantData, ...groupData])
     }
-  }, [tenantList.isSuccess, tenantGroupList.isSuccess, includeGroups, includeOffboardingDefaults]);
+  }, [
+    tenantList.isSuccess,
+    tenantGroupList.isSuccess,
+    includeGroups,
+    includeOffboardingDefaults,
+  ])
 
   return (
     <CippFormComponent
       type={componentType}
       name={name}
       formControl={formControl}
-      preselectedValue={preselectedEnabled ?? currentTenant ? currentTenant : null}
+      preselectedValue={
+        (preselectedEnabled ?? currentTenant) ? currentTenant : null
+      }
       label="Select a tenant"
       creatable={false}
-      multiple={type === "single" ? false : true}
+      multiple={type === 'single' ? false : true}
       disableClearable={disableClearable}
       validators={validators}
       removeOptions={removeOptions}
@@ -113,11 +125,15 @@ export const CippFormTenantSelector = ({
       renderGroup={(params) => (
         <li key={params.key}>
           {includeGroups && <GroupHeader>{params.group}</GroupHeader>}
-          {includeGroups ? <GroupItems>{params.children}</GroupItems> : params.children}
+          {includeGroups ? (
+            <GroupItems>{params.children}</GroupItems>
+          ) : (
+            params.children
+          )}
         </li>
       )}
       isFetching={tenantList.isFetching || tenantGroupList.isFetching}
       {...other}
     />
-  );
-};
+  )
+}

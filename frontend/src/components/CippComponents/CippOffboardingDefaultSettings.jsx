@@ -4,7 +4,11 @@ import { Box, Chip, Typography } from '@mui/material'
 import { Grid } from '@mui/system'
 
 export const CippOffboardingDefaultSettings = (props) => {
-  const { formControl, defaultsSource = null, title = 'Offboarding Default Settings' } = props
+  const {
+    formControl,
+    defaultsSource = null,
+    title = 'Offboarding Default Settings',
+  } = props
 
   const getSourceChip = () => {
     // Only show the chip if defaultsSource is explicitly provided (for wizard/preferences, not tenant config)
@@ -225,9 +229,14 @@ export const CippOffboardingDefaultSettings = (props) => {
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               Out of Office Message
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-              Leave blank to not set. CIPP %variable% tokens (for example %tenantname%) are resolved
-              when the offboarding job runs. %username% is not the offboarded user.
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', mb: 1.5 }}
+            >
+              Leave blank to not set. CIPP %variable% tokens (for example
+              %tenantname%) are resolved when the offboarding job runs.
+              %username% is not the offboarded user.
             </Typography>
             <CippFormComponent
               type="richText"

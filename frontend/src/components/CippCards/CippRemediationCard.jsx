@@ -6,7 +6,13 @@ import { Sync } from '@mui/icons-material'
 import { ShieldCheckIcon } from '@heroicons/react/24/outline'
 
 export default function CippRemediationCard(props) {
-  const { userPrincipalName, isFetching, userId, tenantFilter, restartProcess } = props
+  const {
+    userPrincipalName,
+    isFetching,
+    userId,
+    tenantFilter,
+    restartProcess,
+  } = props
   const createDialog = useDialog()
   return (
     <CippButtonCard
@@ -47,8 +53,9 @@ export default function CippRemediationCard(props) {
       isFetching={isFetching}
     >
       <Typography>
-        Use this information as a guide to check if a tenant or e-mail address might have been
-        compromised. All data is retrieved from the last 7 days of logs.
+        Use this information as a guide to check if a tenant or e-mail address
+        might have been compromised. All data is retrieved from the last 7 days
+        of logs.
       </Typography>
 
       <Typography color="text.secondary">
@@ -70,7 +77,11 @@ export default function CippRemediationCard(props) {
           confirmText:
             'This will remediate this user, blocking their signin, resetting their password, disconnecting their sessions, and disabling all their inbox rules. Are you sure you want to continue?',
           type: 'POST',
-          data: { tenantFilter: tenantFilter, userId: 'userId', username: 'userPrincipalName' },
+          data: {
+            tenantFilter: tenantFilter,
+            userId: 'userId',
+            username: 'userPrincipalName',
+          },
           replacementBehaviour: 'removeNulls',
         }}
         row={props}

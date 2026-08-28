@@ -64,7 +64,9 @@ describe('CippApiResults', () => {
       error: null,
     }
     renderWithProviders(<CippApiResults apiObject={apiObject} />)
-    expect(screen.getByText('Operation completed successfully')).toBeInTheDocument()
+    expect(
+      screen.getByText('Operation completed successfully')
+    ).toBeInTheDocument()
   })
 
   it('renders success result from nested data.data.Results string', () => {
@@ -90,7 +92,9 @@ describe('CippApiResults', () => {
     renderWithProviders(<CippApiResults apiObject={apiObject} />)
     const alert = screen.getByRole('alert')
     expect(alert).toBeInTheDocument()
-    expect(screen.getByText('Operation failed: access denied')).toBeInTheDocument()
+    expect(
+      screen.getByText('Operation failed: access denied')
+    ).toBeInTheDocument()
     // Error alerts render a "Get Help" button
     expect(screen.getByText('Get Help')).toBeInTheDocument()
   })
@@ -119,8 +123,16 @@ describe('CippApiResults', () => {
     const apiObject = {
       data: {
         Results: [
-          { resultText: 'User created', copyField: 'user@example.com', state: 'success' },
-          { resultText: 'License assignment failed', copyField: 'license-error', state: 'error' },
+          {
+            resultText: 'User created',
+            copyField: 'user@example.com',
+            state: 'success',
+          },
+          {
+            resultText: 'License assignment failed',
+            copyField: 'license-error',
+            state: 'error',
+          },
         ],
       },
       isFetching: false,
@@ -136,10 +148,7 @@ describe('CippApiResults', () => {
   it('shows warning summary rollup for a mixed Results array', () => {
     const apiObject = {
       data: {
-        Results: [
-          'User created',
-          'License assignment failed',
-        ],
+        Results: ['User created', 'License assignment failed'],
       },
       isFetching: false,
       isSuccess: true,
@@ -148,7 +157,9 @@ describe('CippApiResults', () => {
     }
     renderWithProviders(<CippApiResults apiObject={apiObject} />)
     // 2 groups, 1 failed -> "N of M actions failed, X succeeded" rollup
-    expect(screen.getByText('1 of 2 actions failed, 1 succeeded')).toBeInTheDocument()
+    expect(
+      screen.getByText('1 of 2 actions failed, 1 succeeded')
+    ).toBeInTheDocument()
   })
 
   it('shows all-success summary rollup and success severity on result alerts', () => {
@@ -156,8 +167,16 @@ describe('CippApiResults', () => {
     const apiObject = {
       data: {
         Results: [
-          { resultText: 'User created', copyField: 'user@example.com', state: 'success' },
-          { resultText: 'Mailbox converted', copyField: 'mbx', state: 'success' },
+          {
+            resultText: 'User created',
+            copyField: 'user@example.com',
+            state: 'success',
+          },
+          {
+            resultText: 'Mailbox converted',
+            copyField: 'mbx',
+            state: 'success',
+          },
         ],
       },
       isFetching: false,
@@ -166,7 +185,9 @@ describe('CippApiResults', () => {
       error: null,
     }
     renderWithProviders(<CippApiResults apiObject={apiObject} />)
-    expect(screen.getByText('All 2 actions completed successfully')).toBeInTheDocument()
+    expect(
+      screen.getByText('All 2 actions completed successfully')
+    ).toBeInTheDocument()
     // individual alerts are variant="filled" with success severity
     const alert = screen.getByText('User created').closest('.MuiAlert-root')
     expect(alert).toHaveClass('MuiAlert-filledSuccess')

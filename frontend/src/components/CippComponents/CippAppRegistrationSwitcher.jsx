@@ -1,24 +1,28 @@
-import { CippEntitySwitcher } from "./CippEntitySwitcher";
+import { CippEntitySwitcher } from './CippEntitySwitcher'
 
 /**
  * The app registration pages' title-as-switcher: CippEntitySwitcher preset over the
  * tenant's applications, swapping appId (the client ID, matching the table links) so the
  * current tab (Overview, API permissions) is preserved.
  */
-export const CippAppRegistrationSwitcher = ({ title, currentAppId, tenantFilter }) => (
+export const CippAppRegistrationSwitcher = ({
+  title,
+  currentAppId,
+  tenantFilter,
+}) => (
   <CippEntitySwitcher
     title={title}
     currentId={currentAppId}
     queryParamKey="appId"
     entityName="application"
     api={{
-      url: "/api/ListGraphRequest",
+      url: '/api/ListGraphRequest',
       data: {
-        Endpoint: "applications",
+        Endpoint: 'applications',
         tenantFilter: tenantFilter,
-        $select: "id,appId,displayName",
+        $select: 'id,appId,displayName',
         $count: true,
-        $orderby: "displayName",
+        $orderby: 'displayName',
         $top: 999,
       },
       queryKey: `AppRegistrationSwitcher-${tenantFilter}`,
@@ -26,4 +30,4 @@ export const CippAppRegistrationSwitcher = ({ title, currentAppId, tenantFilter 
     getId={(app) => app.appId}
     getSecondary={(app) => app.appId}
   />
-);
+)

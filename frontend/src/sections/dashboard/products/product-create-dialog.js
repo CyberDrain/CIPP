@@ -1,7 +1,7 @@
-import PropTypes from 'prop-types';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import toast from 'react-hot-toast';
+import PropTypes from 'prop-types'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import toast from 'react-hot-toast'
 import {
   Button,
   Dialog,
@@ -10,40 +10,40 @@ import {
   DialogTitle,
   FormHelperText,
   Stack,
-  TextField
-} from '@mui/material';
+  TextField,
+} from '@mui/material'
 
 const initialValues = {
   description: '',
   name: '',
-  submit: null
-};
+  submit: null,
+}
 
 const validationSchema = Yup.object({
   description: Yup.string().max(500).required('Description is required'),
-  name: Yup.string().max(255).required('Name is required')
-});
+  name: Yup.string().max(255).required('Name is required'),
+})
 
 export const ProductCreateDialog = (props) => {
-  const { open = false, onClose, ...other } = props;
+  const { open = false, onClose, ...other } = props
   const formik = useFormik({
     initialValues,
     validationSchema,
     onSubmit: async (values, helpers) => {
       try {
-        toast.success('Product created');
-        helpers.setStatus({ success: true });
-        helpers.setSubmitting(false);
-        helpers.resetForm();
-        onClose?.();
+        toast.success('Product created')
+        helpers.setStatus({ success: true })
+        helpers.setSubmitting(false)
+        helpers.resetForm()
+        onClose?.()
       } catch (err) {
-        console.error(err);
-        helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
-        helpers.setSubmitting(false);
+        console.error(err)
+        helpers.setStatus({ success: false })
+        helpers.setErrors({ submit: err.message })
+        helpers.setSubmitting(false)
       }
-    }
-  });
+    },
+  })
 
   return (
     <Dialog
@@ -52,12 +52,11 @@ export const ProductCreateDialog = (props) => {
       onClose={onClose}
       open={open}
       TransitionProps={{
-        onExited: () => formik.resetForm()
+        onExited: () => formik.resetForm(),
       }}
-      {...other}>
-      <DialogTitle>
-        Create Product
-      </DialogTitle>
+      {...other}
+    >
+      <DialogTitle>Create Product</DialogTitle>
       <DialogContent>
         <Stack spacing={3}>
           <TextField
@@ -84,34 +83,30 @@ export const ProductCreateDialog = (props) => {
           />
         </Stack>
         {formik.errors.submit && (
-          <FormHelperText
-            error
-            sx={{ mt: 2 }}
-          >
+          <FormHelperText error sx={{ mt: 2 }}>
             {formik.errors.submit}
           </FormHelperText>
         )}
       </DialogContent>
       <DialogActions>
-        <Button
-          color="inherit"
-          onClick={onClose}
-        >
+        <Button color="inherit" onClick={onClose}>
           Cancel
         </Button>
         <Button
           disabled={formik.isSubmitting}
-          onClick={() => { formik.handleSubmit(); }}
+          onClick={() => {
+            formik.handleSubmit()
+          }}
           variant="contained"
         >
           Create Product
         </Button>
       </DialogActions>
     </Dialog>
-  );
-};
+  )
+}
 
 ProductCreateDialog.propTypes = {
   onClose: PropTypes.func,
-  open: PropTypes.bool
-};
+  open: PropTypes.bool,
+}

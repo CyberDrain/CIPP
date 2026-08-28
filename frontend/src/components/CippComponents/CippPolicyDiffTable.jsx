@@ -32,9 +32,15 @@ const diffStatusColors = {
 }
 
 const diffRowColors = {
-  different: { dark: 'rgba(244, 67, 54, 0.08)', light: 'rgba(244, 67, 54, 0.04)' },
+  different: {
+    dark: 'rgba(244, 67, 54, 0.08)',
+    light: 'rgba(244, 67, 54, 0.04)',
+  },
   onlyA: { dark: 'rgba(255, 152, 0, 0.08)', light: 'rgba(255, 152, 0, 0.04)' },
-  onlyB: { dark: 'rgba(33, 150, 243, 0.08)', light: 'rgba(33, 150, 243, 0.04)' },
+  onlyB: {
+    dark: 'rgba(33, 150, 243, 0.08)',
+    light: 'rgba(33, 150, 243, 0.04)',
+  },
   equal: { dark: 'transparent', light: 'transparent' },
 }
 
@@ -44,12 +50,18 @@ const getRowColor = (row, theme) => {
 }
 
 export const formatDiffValue = (val) => {
-  if (val === null || val === undefined) return <Typography color="text.disabled">N/A</Typography>
+  if (val === null || val === undefined)
+    return <Typography color="text.disabled">N/A</Typography>
   if (typeof val === 'object') {
     return (
       <Box
         component="pre"
-        sx={{ m: 0, fontSize: '0.8rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+        sx={{
+          m: 0,
+          fontSize: '0.8rem',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}
       >
         {JSON.stringify(val, null, 2)}
       </Box>
@@ -65,7 +77,11 @@ export const formatDiffValue = (val) => {
  * table reads correctly whether it is comparing two arbitrary sources or a tenant against its
  * baseline template.
  */
-export const CippPolicyDiffTable = ({ rows = [], labelA = 'Source A', labelB = 'Source B' }) => {
+export const CippPolicyDiffTable = ({
+  rows = [],
+  labelA = 'Source A',
+  labelB = 'Source B',
+}) => {
   const diffChipLabels = {
     different: 'Different',
     onlyA: `Only in ${labelA}`,
@@ -81,14 +97,19 @@ export const CippPolicyDiffTable = ({ rows = [], labelA = 'Source A', labelB = '
             <TableCell sx={{ fontWeight: 'bold' }}>Property</TableCell>
             <TableCell sx={{ fontWeight: 'bold' }}>{labelA}</TableCell>
             <TableCell sx={{ fontWeight: 'bold' }}>{labelB}</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', width: 140 }}>Status</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', width: 140 }}>
+              Status
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {rows.map((row, index) => {
             const status = getDiffStatus(row)
             return (
-              <TableRow key={index} sx={(theme) => ({ backgroundColor: getRowColor(row, theme) })}>
+              <TableRow
+                key={index}
+                sx={(theme) => ({ backgroundColor: getRowColor(row, theme) })}
+              >
                 <TableCell sx={{ fontWeight: 500 }}>{row.Property}</TableCell>
                 <TableCell>{formatDiffValue(row.ExpectedValue)}</TableCell>
                 <TableCell>{formatDiffValue(row.ReceivedValue)}</TableCell>

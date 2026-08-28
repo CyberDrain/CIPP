@@ -1,46 +1,48 @@
-import { Button, ButtonGroup, SvgIcon, Typography } from "@mui/material";
-import CippButtonCard from "../CippCards/CippButtonCard";
-import { ApiGetCall, ApiPostCall } from "../../api/ApiCall";
-import { Dns } from "@mui/icons-material";
+import { Button, ButtonGroup, SvgIcon, Typography } from '@mui/material'
+import CippButtonCard from '../CippCards/CippButtonCard'
+import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
+import { Dns } from '@mui/icons-material'
 
 const CippDnsSettings = () => {
   const dnsSetting = ApiGetCall({
-    url: "/api/ExecDnsConfig?Action=GetConfig",
-    queryKey: "DNSSettings",
-  });
+    url: '/api/ExecDnsConfig?Action=GetConfig',
+    queryKey: 'DNSSettings',
+  })
 
   const resolverChange = ApiPostCall({
     datafromUrl: true,
-    relatedQueryKeys: "DNSSettings",
-  });
+    relatedQueryKeys: 'DNSSettings',
+  })
 
   const handleResolverChange = (resolver) => {
     resolverChange.mutate({
-      url: "/api/ExecDnsConfig?Action=SetConfig",
+      url: '/api/ExecDnsConfig?Action=SetConfig',
       data: { Resolver: resolver },
-      queryKey: "DNSResolverPost",
-    });
-  };
+      queryKey: 'DNSResolverPost',
+    })
+  }
 
   const DnsButtons = () => {
-    const resolvers = ["Google", "Cloudflare"];
+    const resolvers = ['Google', 'Cloudflare']
     return resolvers.map((resolver, index) => (
       <Button
         key={resolver}
-        variant={dnsSetting?.data?.Resolver === resolver ? "contained" : "outlined"}
+        variant={
+          dnsSetting?.data?.Resolver === resolver ? 'contained' : 'outlined'
+        }
         color="primary"
         disabled={resolverChange.isPending || dnsSetting.isLoading}
         onClick={() => handleResolverChange(resolver)}
       >
         {resolver}
       </Button>
-    ));
-  };
+    ))
+  }
 
   return (
     <CippButtonCard
       title="DNS Resolver"
-      cardSx={{ display: "flex", flexDirection: "column", height: "100%" }}
+      cardSx={{ display: 'flex', flexDirection: 'column', height: '100%' }}
       CardButton={
         <>
           <ButtonGroup
@@ -48,16 +50,16 @@ const CippDnsSettings = () => {
             variant="contained"
             size="small"
             sx={{
-              "& .MuiButtonGroup-grouped": {
+              '& .MuiButtonGroup-grouped': {
                 borderRadius: 0,
               },
-              "& .MuiButtonGroup-grouped:first-of-type": {
-                borderTopLeftRadius: "4px",
-                borderBottomLeftRadius: "4px",
+              '& .MuiButtonGroup-grouped:first-of-type': {
+                borderTopLeftRadius: '4px',
+                borderBottomLeftRadius: '4px',
               },
-              "& .MuiButtonGroup-grouped:last-of-type": {
-                borderTopRightRadius: "4px",
-                borderBottomRightRadius: "4px",
+              '& .MuiButtonGroup-grouped:last-of-type': {
+                borderTopRightRadius: '4px',
+                borderBottomRightRadius: '4px',
               },
             }}
           >
@@ -72,11 +74,12 @@ const CippDnsSettings = () => {
       }
     >
       <Typography variant="body2">
-        Select your DNS Resolver. The DNS resolver is used for the domain analyser and the
-        individual domain check only, not for generic DNS resolution.
+        Select your DNS Resolver. The DNS resolver is used for the domain
+        analyser and the individual domain check only, not for generic DNS
+        resolution.
       </Typography>
     </CippButtonCard>
-  );
-};
+  )
+}
 
-export default CippDnsSettings;
+export default CippDnsSettings

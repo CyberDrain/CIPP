@@ -57,7 +57,9 @@ export const Basic = {
     const canvas = within(canvasElement)
     await step('rows render with text and status labels', async () => {
       await expect(canvas.getByText('Password Expiration Policy')).toBeVisible()
-      await expect(canvas.getByText('Conditional Access - Require MFA')).toBeVisible()
+      await expect(
+        canvas.getByText('Conditional Access - Require MFA')
+      ).toBeVisible()
       await expect(canvas.getByText('Enabled')).toBeVisible()
       await expect(canvas.getByText('Report Only')).toBeVisible()
       await expect(canvas.getByText('Disabled')).toBeVisible()

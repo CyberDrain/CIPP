@@ -42,7 +42,8 @@ export const SsoMigrationDialog = ({ meData }) => {
     // hide a migration that later fails.
     const dismissKey = status === 'error' ? ERROR_DISMISS_KEY : DISMISS_KEY
     const dismissedAt = localStorage.getItem(dismissKey)
-    if (dismissedAt && Date.now() - Number(dismissedAt) < 24 * 60 * 60 * 1000) return
+    if (dismissedAt && Date.now() - Number(dismissedAt) < 24 * 60 * 60 * 1000)
+      return
 
     setOpen(true)
   }, [meData, ssoMigration, status])
@@ -59,7 +60,10 @@ export const SsoMigrationDialog = ({ meData }) => {
   }, [multiTenant, ssoSetup])
 
   const handleDismiss = useCallback(() => {
-    localStorage.setItem(isErrorState ? ERROR_DISMISS_KEY : DISMISS_KEY, String(Date.now()))
+    localStorage.setItem(
+      isErrorState ? ERROR_DISMISS_KEY : DISMISS_KEY,
+      String(Date.now())
+    )
     setOpen(false)
   }, [isErrorState])
 
@@ -80,18 +84,19 @@ export const SsoMigrationDialog = ({ meData }) => {
         <DialogTitle>CIPP Single Sign-On Setup Incomplete</DialogTitle>
         <DialogContent>
           <Alert severity="error" sx={{ mb: 2 }}>
-            The CIPP-SSO app registration could not be set up automatically, so the migration is
-            incomplete.
+            The CIPP-SSO app registration could not be set up automatically, so
+            the migration is incomplete.
           </Alert>
           <Typography sx={{ mb: 2 }}>
-            The SSO settings page shows the specific error and lets you finish setup manually. In
-            most cases <strong>Repair</strong> picks up from where it stopped, so the existing app
-            registration is reused rather than recreated.
+            The SSO settings page shows the specific error and lets you finish
+            setup manually. In most cases <strong>Repair</strong> picks up from
+            where it stopped, so the existing app registration is reused rather
+            than recreated.
           </Typography>
           {!hasPermission && (
             <Alert severity="info">
-              Only users with App Settings permissions can complete the SSO setup. Please ask an
-              administrator to finish this step.
+              Only users with App Settings permissions can complete the SSO
+              setup. Please ask an administrator to finish this step.
             </Alert>
           )}
         </DialogContent>
@@ -100,7 +105,11 @@ export const SsoMigrationDialog = ({ meData }) => {
             Remind Me Later
           </Button>
           {hasPermission && (
-            <Button onClick={handleGoToSsoSettings} variant="contained" color="primary">
+            <Button
+              onClick={handleGoToSsoSettings}
+              variant="contained"
+              color="primary"
+            >
               Go to SSO Settings
             </Button>
           )}
@@ -112,7 +121,10 @@ export const SsoMigrationDialog = ({ meData }) => {
   const result = ssoSetup.data?.data?.Results ?? ssoSetup.data?.Results
   const isSuccess = result?.severity === 'success'
   const isPartial = result?.severity === 'warning' && result?.canRepair
-  const isError = ssoSetup.isError || result?.severity === 'failed' || (result?.severity === 'warning' && !result?.canRepair)
+  const isError =
+    ssoSetup.isError ||
+    result?.severity === 'failed' ||
+    (result?.severity === 'warning' && !result?.canRepair)
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -121,32 +133,36 @@ export const SsoMigrationDialog = ({ meData }) => {
         {!submitted ? (
           <>
             <Typography sx={{ mb: 2 }}>
-              CIPP will soon be moving to a dedicated Single Sign-On model, giving you full control
-              over Conditional Access policies, MFA requirements, and session management for your
-              CIPP users.
+              CIPP will soon be moving to a dedicated Single Sign-On model,
+              giving you full control over Conditional Access policies, MFA
+              requirements, and session management for your CIPP users.
             </Typography>
             <Typography sx={{ mb: 2 }}>
-              To get ready, CIPP needs to create an app registration in your tenant called
-              <strong> CIPP-SSO </strong> with minimal permissions (OpenID, Profile, Email only).
-              This won&apos;t change how you log in today — it just prepares your tenant for when
-              the update rolls out.
+              To get ready, CIPP needs to create an app registration in your
+              tenant called
+              <strong> CIPP-SSO </strong> with minimal permissions (OpenID,
+              Profile, Email only). This won&apos;t change how you log in today
+              — it just prepares your tenant for when the update rolls out.
             </Typography>
             <Typography sx={{ mb: 3 }}>
-              Review the options below and click &quot;Create App Registration&quot; to get set up
-              ahead of time.
+              Review the options below and click &quot;Create App
+              Registration&quot; to get set up ahead of time.
             </Typography>
 
             {!hasPermission && (
               <Alert severity="info" sx={{ mb: 2 }}>
-                Only users with App Settings permissions can create the SSO app registration.
-                Please ask an administrator to complete this step.
+                Only users with App Settings permissions can create the SSO app
+                registration. Please ask an administrator to complete this step.
               </Alert>
             )}
 
             <FormControlLabel
               disabled={!hasPermission}
               control={
-                <Switch checked={multiTenant} onChange={(e) => setMultiTenant(e.target.checked)} />
+                <Switch
+                  checked={multiTenant}
+                  onChange={(e) => setMultiTenant(e.target.checked)}
+                />
               }
               label="Multi-tenant mode (allow users from multiple Entra ID tenants to log in)"
               sx={{ mb: 1 }}
@@ -154,8 +170,13 @@ export const SsoMigrationDialog = ({ meData }) => {
           </>
         ) : ssoSetup.isPending ? (
           <>
-            <CircularProgress size={24} sx={{ mr: 1, display: 'inline-flex' }} />
-            <Typography component="span">Creating CIPP-SSO app registration...</Typography>
+            <CircularProgress
+              size={24}
+              sx={{ mr: 1, display: 'inline-flex' }}
+            />
+            <Typography component="span">
+              Creating CIPP-SSO app registration...
+            </Typography>
           </>
         ) : isSuccess ? (
           <Alert severity="success" sx={{ mb: 1 }}>
@@ -167,17 +188,20 @@ export const SsoMigrationDialog = ({ meData }) => {
               App created — secret creation failed
             </Typography>
             <Typography variant="body2" sx={{ mb: 1 }}>
-              The CIPP-SSO app registration ({result.appId}) was created successfully, but the
-              client secret could not be generated. The app ID is saved.
+              The CIPP-SSO app registration ({result.appId}) was created
+              successfully, but the client secret could not be generated. The
+              app ID is saved.
             </Typography>
             <Typography variant="body2">
-              Open <strong>Advanced &rarr; Super Admin &rarr; SSO</strong> and click{' '}
-              <strong>Repair</strong> to finish setup.
+              Open <strong>Advanced &rarr; Super Admin &rarr; SSO</strong> and
+              click <strong>Repair</strong> to finish setup.
             </Typography>
           </Alert>
         ) : isError ? (
           <Alert severity="error" sx={{ mb: 1 }}>
-            {result?.message || ssoSetup.error?.message || 'SSO setup failed. It will be retried automatically.'}
+            {result?.message ||
+              ssoSetup.error?.message ||
+              'SSO setup failed. It will be retried automatically.'}
           </Alert>
         ) : null}
       </DialogContent>
@@ -187,7 +211,12 @@ export const SsoMigrationDialog = ({ meData }) => {
             <Button onClick={handleDismiss} color="inherit">
               Remind Me Later
             </Button>
-            <Button onClick={handleApprove} variant="contained" color="primary" disabled={!hasPermission}>
+            <Button
+              onClick={handleApprove}
+              variant="contained"
+              color="primary"
+              disabled={!hasPermission}
+            >
               Create App Registration
             </Button>
           </>

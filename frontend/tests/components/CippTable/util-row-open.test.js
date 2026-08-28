@@ -209,7 +209,10 @@ describe('actionMatchesRowOpen', () => {
   it('does not match different destinations', () => {
     expect(
       actionMatchesRowOpen(
-        { label: 'Edit User', link: '/identity/administration/users/user/edit?userId=[id]' },
+        {
+          label: 'Edit User',
+          link: '/identity/administration/users/user/edit?userId=[id]',
+        },
         rowOpen,
         row
       )
@@ -220,7 +223,10 @@ describe('actionMatchesRowOpen', () => {
 describe('partitionRowMenuActions', () => {
   it('splits pinned actions from the scrollable menu list', () => {
     const actions = [
-      { label: 'View User', link: '/identity/administration/users/user?userId=[id]' },
+      {
+        label: 'View User',
+        link: '/identity/administration/users/user?userId=[id]',
+      },
       {
         label: 'Edit User',
         pinned: true,
@@ -258,7 +264,10 @@ describe('partitionRowMenuActions', () => {
         pinned: true,
         link: '/identity/administration/users/user?userId=[id]',
       },
-      { label: 'Edit User', link: '/identity/administration/users/user/edit?userId=[id]' },
+      {
+        label: 'Edit User',
+        link: '/identity/administration/users/user/edit?userId=[id]',
+      },
     ]
 
     const { pinnedActions, menuActions } = partitionRowMenuActions(actions)
@@ -287,6 +296,9 @@ describe('partitionRowMenuActions', () => {
       'View in Intune',
       'Edit Device',
     ])
-    expect(menuActions.map((action) => action.label)).toEqual(['Sync', 'Retire'])
+    expect(menuActions.map((action) => action.label)).toEqual([
+      'Sync',
+      'Retire',
+    ])
   })
 })

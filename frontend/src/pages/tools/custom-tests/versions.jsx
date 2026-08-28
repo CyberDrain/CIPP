@@ -1,5 +1,5 @@
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import { CippTablePage } from "../../../components/CippComponents/CippTablePage.jsx";
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import { CippTablePage } from '../../../components/CippComponents/CippTablePage.jsx'
 import {
   Alert,
   Typography,
@@ -11,47 +11,50 @@ import {
   IconButton,
   CircularProgress,
   Box,
-} from "@mui/material";
-import { useRouter } from "next/router";
-import { ArrowPathIcon, DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { Close } from "@mui/icons-material";
-import { useState } from "react";
-import { CippScriptDiff } from "../../../components/CippComponents/CippScriptDiff.jsx";
-import { ApiGetCall } from "../../../api/ApiCall";
+} from '@mui/material'
+import { useRouter } from 'next/router'
+import {
+  ArrowPathIcon,
+  DocumentMagnifyingGlassIcon,
+} from '@heroicons/react/24/outline'
+import { Close } from '@mui/icons-material'
+import { useState } from 'react'
+import { CippScriptDiff } from '../../../components/CippComponents/CippScriptDiff.jsx'
+import { ApiGetCall } from '../../../api/ApiCall'
 
 const Page = () => {
-  const router = useRouter();
-  const { ScriptGuid } = router.query;
-  const pageTitle = "Script Version History";
-  const [compareOpen, setCompareOpen] = useState(false);
-  const [compareVersion, setCompareVersion] = useState(null);
+  const router = useRouter()
+  const { ScriptGuid } = router.query
+  const pageTitle = 'Script Version History'
+  const [compareOpen, setCompareOpen] = useState(false)
+  const [compareVersion, setCompareVersion] = useState(null)
 
   const allVersions = ApiGetCall({
     url: `/api/ListCustomScripts?ScriptGuid=${ScriptGuid}&IncludeAllVersions=true`,
     queryKey: `CustomTest-Versions-${ScriptGuid}`,
     waiting: !!ScriptGuid,
-  });
+  })
 
-  const latestVersion = allVersions.data?.[0];
+  const latestVersion = allVersions.data?.[0]
   const compareLabel = compareVersion
-    ? `Version ${compareVersion.Version} - ${compareVersion.CreatedBy || "Unknown"}`
-    : "Selected Version";
+    ? `Version ${compareVersion.Version} - ${compareVersion.CreatedBy || 'Unknown'}`
+    : 'Selected Version'
   const latestLabel = latestVersion
-    ? `Version ${latestVersion.Version} (Latest) - ${latestVersion.CreatedBy || "Unknown"}`
-    : "Latest Version";
+    ? `Version ${latestVersion.Version} (Latest) - ${latestVersion.CreatedBy || 'Unknown'}`
+    : 'Latest Version'
 
   const simpleColumns = [
-    "Version",
-    "ScriptName",
-    "Description",
-    "Enabled",
-    "AlertOnFailure",
-    "ReturnType",
-    "Category",
-    "Risk",
-    "CreatedBy",
-    "CreatedDate",
-  ];
+    'Version',
+    'ScriptName',
+    'Description',
+    'Enabled',
+    'AlertOnFailure',
+    'ReturnType',
+    'Category',
+    'Risk',
+    'CreatedBy',
+    'CreatedDate',
+  ]
 
   return (
     <>
@@ -60,9 +63,9 @@ const Page = () => {
         tableFilter={
           <Alert severity="info">
             <Typography variant="body2">
-              View all versions of this custom test. You can restore to any previous version, but
-              note that restoring will permanently delete all versions newer than the selected
-              version.
+              View all versions of this custom test. You can restore to any
+              previous version, but note that restoring will permanently delete
+              all versions newer than the selected version.
             </Typography>
           </Alert>
         }
@@ -72,29 +75,26 @@ const Page = () => {
         queryKey={`CustomTest-Versions-List-${ScriptGuid}`}
         actions={[
           {
-            label: "Restore to This Version",
-            type: "POST",
-            url: "/api/AddCustomScript",
+            label: 'Restore to This Version',
+            type: 'POST',
+            url: '/api/AddCustomScript',
             icon: <ArrowPathIcon />,
-            relatedQueryKeys: [
-              "Custom PowerShell Tests",
-              "CustomTest*",
-            ],
+            relatedQueryKeys: ['Custom PowerShell Tests', 'CustomTest*'],
             data: {
-              ScriptGuid: "ScriptGuid",
-              RestoreToVersion: "Version",
+              ScriptGuid: 'ScriptGuid',
+              RestoreToVersion: 'Version',
             },
             confirmText:
               "Are you sure you want to restore '[ScriptName]' to version [Version]? All versions newer than [Version] will be permanently deleted.",
-            color: "warning",
+            color: 'warning',
           },
           {
-            label: "Compare to Latest",
+            label: 'Compare to Latest',
             icon: <DocumentMagnifyingGlassIcon />,
             noConfirm: true,
             customFunction: (row) => {
-              setCompareVersion(row);
-              setCompareOpen(true);
+              setCompareVersion(row)
+              setCompareOpen(true)
             },
             condition: (row) => row.Version != latestVersion?.Version,
           },
@@ -107,7 +107,13 @@ const Page = () => {
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           Compare Test Versions
           <IconButton
             aria-label="close"
@@ -119,31 +125,39 @@ const Page = () => {
         </DialogTitle>
         <DialogContent dividers>
           {!compareVersion || !latestVersion ? (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 4 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                py: 4,
+              }}
+            >
               <CircularProgress />
             </Box>
           ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box>
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>
                   Test Content Diff
                 </Typography>
                 <CippScriptDiff
-                  oldScript={compareVersion.ScriptContent || ""}
-                  newScript={latestVersion.ScriptContent || ""}
+                  oldScript={compareVersion.ScriptContent || ''}
+                  newScript={latestVersion.ScriptContent || ''}
                   oldLabel={compareLabel}
                   newLabel={latestLabel}
                 />
               </Box>
 
-              {(compareVersion.MarkdownTemplate || latestVersion.MarkdownTemplate) && (
+              {(compareVersion.MarkdownTemplate ||
+                latestVersion.MarkdownTemplate) && (
                 <Box>
                   <Typography variant="subtitle1" sx={{ mb: 1 }}>
                     Markdown Template Diff
                   </Typography>
                   <CippScriptDiff
-                    oldScript={compareVersion.MarkdownTemplate || ""}
-                    newScript={latestVersion.MarkdownTemplate || ""}
+                    oldScript={compareVersion.MarkdownTemplate || ''}
+                    newScript={latestVersion.MarkdownTemplate || ''}
                     oldLabel={compareLabel}
                     newLabel={latestLabel}
                   />
@@ -157,7 +171,8 @@ const Page = () => {
         </DialogActions>
       </Dialog>
     </>
-  );
-};Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+  )
+}
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

@@ -1,7 +1,7 @@
-import { Layout as DashboardLayout } from "../../../../../layouts/index.js";
-import CippPageCard from "../../../../../components/CippCards/CippPageCard";
-import { CippRoleAddEdit } from "../../../../../components/CippSettings/CippRoleAddEdit";
-import { CardContent, Stack, Alert } from "@mui/material";
+import { Layout as DashboardLayout } from '../../../../../layouts/index.js'
+import CippPageCard from '../../../../../components/CippCards/CippPageCard'
+import { CippRoleAddEdit } from '../../../../../components/CippSettings/CippRoleAddEdit'
+import { CardContent, Stack, Alert } from '@mui/material'
 
 const AddRolePage = () => {
   return (
@@ -15,9 +15,9 @@ const AddRolePage = () => {
         </Stack>
       </CardContent>
     </CippPageCard>
-  );
-};
+  )
+}
 
-AddRolePage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+AddRolePage.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default AddRolePage;
+export default AddRolePage

@@ -21,6 +21,6 @@ const Intune = (props) => (
       </g>
     </symbol>
   </svg>
-);
+)
 
-export default Intune;
+export default Intune

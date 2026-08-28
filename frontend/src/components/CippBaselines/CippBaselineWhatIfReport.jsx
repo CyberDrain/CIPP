@@ -12,13 +12,7 @@ import {
   Typography,
 } from '@mui/material'
 import { Download, PictureAsPdf } from '@mui/icons-material'
-import {
-  Document,
-  Page,
-  StyleSheet,
-  Text,
-  View,
-} from '@react-pdf/renderer'
+import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import { CippPdfPreview } from '../CippPdf/CippPdfPreview'
 import { parseCippDate } from '../../utils/parse-cipp-date'
 

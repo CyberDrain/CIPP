@@ -14,7 +14,13 @@ import { Box, Stack } from '@mui/system'
 import { Grid } from '@mui/system'
 import CippRemediationCard from '../../../../../components/CippCards/CippRemediationCard'
 import CippButtonCard from '../../../../../components/CippCards/CippButtonCard'
-import { Chip, SvgIcon, Typography, CircularProgress, Button } from '@mui/material'
+import {
+  Chip,
+  SvgIcon,
+  Typography,
+  CircularProgress,
+  Button,
+} from '@mui/material'
 import { PropertyList } from '../../../../../components/property-list'
 import { PropertyListItem } from '../../../../../components/property-list-item'
 import { CippHead } from '../../../../../components/CippComponents/CippHead'
@@ -38,7 +44,11 @@ const BecCheckCard = ({ title, count, children }) => (
       >
         <Box>{title}</Box>
         {typeof count === 'number' && (
-          <Chip size="small" label={count} color={count > 0 ? 'warning' : 'default'} />
+          <Chip
+            size="small"
+            label={count}
+            color={count > 0 ? 'warning' : 'default'}
+          />
         )}
       </Stack>
     }
@@ -110,7 +120,12 @@ const Page = () => {
     // The !restart guard keeps a refresh from being cancelled: between clicking Refresh Data
     // and the overwrite call resolving, the polling cache still holds the previous run, which
     // would otherwise read as "done" and stop the loading state.
-    if (!restart && becPollingCall.isSuccess && becPollingCall.data && !becPollingCall.data?.Waiting) {
+    if (
+      !restart &&
+      becPollingCall.isSuccess &&
+      becPollingCall.data &&
+      !becPollingCall.data?.Waiting
+    ) {
       setIsLoading(false)
     }
   }, [becPollingCall.dataUpdatedAt, becInitialCall])
@@ -132,12 +147,18 @@ const Page = () => {
 
   // Combine loading states
   const isFetching =
-    userRequest.isLoading || becInitialCall.isLoading || becPollingCall.isLoading || isLoading
+    userRequest.isLoading ||
+    becInitialCall.isLoading ||
+    becPollingCall.isLoading ||
+    isLoading
 
   // Helper functions to determine messages
   const getRuleMessage = () => {
     if (!becPollingCall.data) return null
-    if (becPollingCall.data.NewRules && becPollingCall.data.NewRules.length > 0) {
+    if (
+      becPollingCall.data.NewRules &&
+      becPollingCall.data.NewRules.length > 0
+    ) {
       // Example condition to check for potential breach
       const hasPotentialBreach = becPollingCall.data.NewRules.some((rule) =>
         rule.MoveToFolder?.includes('RSS')
@@ -145,13 +166,18 @@ const Page = () => {
       if (hasPotentialBreach) {
         return 'Potential Breach found. The rules for this user contain classic signs of a breach.'
       }
-      const recentCount = becPollingCall.data.NewRules.filter((rule) => rule.RecentlyChanged).length
+      const recentCount = becPollingCall.data.NewRules.filter(
+        (rule) => rule.RecentlyChanged
+      ).length
       if (recentCount > 0) {
         return `Rules have been found, ${recentCount} of which were created or changed in the last 7 days. Please review the list below and take action as needed.`
       }
       return 'Rules have been found. Please review the list below and take action as needed.'
     }
-    if (becPollingCall.data.InboxRuleChanges && becPollingCall.data.InboxRuleChanges.length > 0) {
+    if (
+      becPollingCall.data.InboxRuleChanges &&
+      becPollingCall.data.InboxRuleChanges.length > 0
+    ) {
       return 'No rules currently exist on the mailbox, but rules were created, changed or removed in the last 7 days. Please review the changes below.'
     }
     return 'No new rules found.'
@@ -159,7 +185,10 @@ const Page = () => {
 
   const getUserMessage = () => {
     if (!becPollingCall.data) return null
-    if (becPollingCall.data.NewUsers && becPollingCall.data.NewUsers.length > 0) {
+    if (
+      becPollingCall.data.NewUsers &&
+      becPollingCall.data.NewUsers.length > 0
+    ) {
       return 'New users have been found in the last 7 days. Please review the list below and take action as needed.'
     }
     return 'No new users found.'
@@ -176,7 +205,10 @@ const Page = () => {
         maliciousAddedCount + maliciousPresentCount
       } application(s) in this tenant match the CIPP known-malicious application catalog. Consent-based access survives a password reset, so remove these applications unless their presence is explained.`
     }
-    if (becPollingCall.data.AddedApps && becPollingCall.data.AddedApps.length > 0) {
+    if (
+      becPollingCall.data.AddedApps &&
+      becPollingCall.data.AddedApps.length > 0
+    ) {
       return 'New applications have been found. Please review the list below and take action as needed.'
     }
     return 'No new applications found.'
@@ -197,7 +229,10 @@ const Page = () => {
 
   const getSentMessagesMessage = () => {
     if (!becPollingCall.data) return null
-    if (becPollingCall.data.SentMessages && becPollingCall.data.SentMessages.length > 0) {
+    if (
+      becPollingCall.data.SentMessages &&
+      becPollingCall.data.SentMessages.length > 0
+    ) {
       const analysis = becPollingCall.data.SentMessageAnalysis
       const parts = [
         `${analysis?.TotalMessages ?? becPollingCall.data.SentMessages.length} message(s) to ${
@@ -214,7 +249,8 @@ const Page = () => {
           `${analysis.Bursts.length} short burst(s) of high-volume sending were detected`
         )
       }
-      const foreignCount = becPollingCall.data.LocationAnalysis?.ForeignSentMessageCount || 0
+      const foreignCount =
+        becPollingCall.data.LocationAnalysis?.ForeignSentMessageCount || 0
       if (foreignCount > 0) {
         parts.push(
           `${foreignCount} message(s) were sent from an IP outside the user's assigned usage location`
@@ -244,14 +280,22 @@ const Page = () => {
 
   const formatSafelistValue = (value) => {
     if (!value) return 'unchanged'
-    return Array.isArray(value) ? value.join(', ') || 'unchanged' : String(value)
+    return Array.isArray(value)
+      ? value.join(', ') || 'unchanged'
+      : String(value)
   }
 
   // ponytail: stable identity matters — a new array each render would loop CippDataTable's data-sync effect
   const senderRows = useMemo(
     () => [
-      ...(becPollingCall.data?.TrustedSenders || []).map((s) => ({ Sender: s, Type: 'Trusted' })),
-      ...(becPollingCall.data?.BlockedSenders || []).map((s) => ({ Sender: s, Type: 'Blocked' })),
+      ...(becPollingCall.data?.TrustedSenders || []).map((s) => ({
+        Sender: s,
+        Type: 'Trusted',
+      })),
+      ...(becPollingCall.data?.BlockedSenders || []).map((s) => ({
+        Sender: s,
+        Type: 'Blocked',
+      })),
     ],
     [becPollingCall.data]
   )
@@ -294,8 +338,12 @@ const Page = () => {
   const intuneDevices = useMemo(() => {
     const devices = [...(becPollingCall.data?.IntuneDevices || [])]
     devices.sort((a, b) => {
-      const aTime = a?.enrolledDateTime ? new Date(a.enrolledDateTime).getTime() : 0
-      const bTime = b?.enrolledDateTime ? new Date(b.enrolledDateTime).getTime() : 0
+      const aTime = a?.enrolledDateTime
+        ? new Date(a.enrolledDateTime).getTime()
+        : 0
+      const bTime = b?.enrolledDateTime
+        ? new Date(b.enrolledDateTime).getTime()
+        : 0
       return bTime - aTime
     })
     return devices
@@ -313,7 +361,10 @@ const Page = () => {
   )
 
   const intuneDeviceActions = useMemo(
-    () => getBecIntuneDeviceActions({ tenantFilter: userSettingsDefaults.currentTenant }),
+    () =>
+      getBecIntuneDeviceActions({
+        tenantFilter: userSettingsDefaults.currentTenant,
+      }),
     [userSettingsDefaults.currentTenant]
   )
 
@@ -357,13 +408,19 @@ const Page = () => {
       )
     }
     if (analysis.ForeignRuleChangeCount > 0) {
-      foreignParts.push(`${analysis.ForeignRuleChangeCount} inbox rule change(s)`)
+      foreignParts.push(
+        `${analysis.ForeignRuleChangeCount} inbox rule change(s)`
+      )
     }
     if (analysis.ForeignSafelistChangeCount > 0) {
-      foreignParts.push(`${analysis.ForeignSafelistChangeCount} safelist change(s)`)
+      foreignParts.push(
+        `${analysis.ForeignSafelistChangeCount} safelist change(s)`
+      )
     }
     if (analysis.ForeignSharingChangeCount > 0) {
-      foreignParts.push(`${analysis.ForeignSharingChangeCount} sharing change(s)`)
+      foreignParts.push(
+        `${analysis.ForeignSharingChangeCount} sharing change(s)`
+      )
     }
     if (analysis.ForeignSentMessageCount > 0) {
       foreignParts.push(`${analysis.ForeignSentMessageCount} sent message(s)`)
@@ -386,16 +443,23 @@ const Page = () => {
     if (changes.length === 0) {
       return 'No sharing links were created or changed by this account in the last 7 days.'
     }
-    const anonymousCount = changes.filter((c) => c?.Operation?.startsWith('AnonymousLink')).length
-    const foreignCount = becPollingCall.data.LocationAnalysis?.ForeignSharingChangeCount || 0
+    const anonymousCount = changes.filter((c) =>
+      c?.Operation?.startsWith('AnonymousLink')
+    ).length
+    const foreignCount =
+      becPollingCall.data.LocationAnalysis?.ForeignSharingChangeCount || 0
     const parts = [
       `${changes.length} OneDrive/SharePoint sharing change(s) found in the last 7 days`,
     ]
     if (anonymousCount > 0) {
-      parts.push(`${anonymousCount} involve anonymous links, which anyone with the URL can open`)
+      parts.push(
+        `${anonymousCount} involve anonymous links, which anyone with the URL can open`
+      )
     }
     if (foreignCount > 0) {
-      parts.push(`${foreignCount} were made from outside the user's usage location`)
+      parts.push(
+        `${foreignCount} were made from outside the user's usage location`
+      )
     }
     return `${parts.join(
       '. '
@@ -420,17 +484,27 @@ const Page = () => {
     ? [
         {
           icon: <Mail />,
-          text: <CippCopyToClipBoard type="chip" text={userRequest.data?.[0]?.userPrincipalName} />,
+          text: (
+            <CippCopyToClipBoard
+              type="chip"
+              text={userRequest.data?.[0]?.userPrincipalName}
+            />
+          ),
         },
         {
           icon: <Fingerprint />,
-          text: <CippCopyToClipBoard type="chip" text={userRequest.data?.[0]?.id} />,
+          text: (
+            <CippCopyToClipBoard type="chip" text={userRequest.data?.[0]?.id} />
+          ),
         },
         {
           icon: <CalendarIcon />,
           text: (
             <>
-              Created: <ReactTimeAgo date={new Date(userRequest.data?.[0]?.createdDateTime)} />
+              Created:{' '}
+              <ReactTimeAgo
+                date={new Date(userRequest.data?.[0]?.createdDateTime)}
+              />
             </>
           ),
         },
@@ -458,7 +532,9 @@ const Page = () => {
       title={userRequest.isSuccess ? userRequest.data?.[0]?.displayName : ''}
       titleControl={
         <CippUserSwitcher
-          title={userRequest.isSuccess ? userRequest.data?.[0]?.displayName : ''}
+          title={
+            userRequest.isSuccess ? userRequest.data?.[0]?.displayName : ''
+          }
           currentUserId={userId}
           tenantFilter={userSettingsDefaults.currentTenant}
         />
@@ -499,8 +575,8 @@ const Page = () => {
                 }
               >
                 <Typography variant="body2" gutterBottom>
-                  This Analysis can take up to 10 minutes to complete depending on the amount of
-                  logs. Please wait for the process to finish.
+                  This Analysis can take up to 10 minutes to complete depending
+                  on the amount of logs. Please wait for the process to finish.
                 </Typography>
               </CippButtonCard>
             </Grid>
@@ -532,9 +608,13 @@ const Page = () => {
               <Stack spacing={3}>
                 <BecCheckCard title="Log information">
                   <Typography variant="body2" gutterBottom>
-                    {becPollingCall.data?.ExtractResult}. The data of this log was extracted at{' '}
-                    {new Date(becPollingCall.data?.ExtractedAt).toLocaleString()}. This data might
-                    be cached. To get the latest version of the data, click the Refresh Data button.
+                    {becPollingCall.data?.ExtractResult}. The data of this log
+                    was extracted at{' '}
+                    {new Date(
+                      becPollingCall.data?.ExtractedAt
+                    ).toLocaleString()}
+                    . This data might be cached. To get the latest version of
+                    the data, click the Refresh Data button.
                   </Typography>
                 </BecCheckCard>
                 {/* Check 1: Recently added rules */}
@@ -553,7 +633,9 @@ const Page = () => {
                       <PropertyList>
                         {[...becPollingCall.data.NewRules]
                           .sort(
-                            (a, b) => (b?.RecentlyChanged === true) - (a?.RecentlyChanged === true)
+                            (a, b) =>
+                              (b?.RecentlyChanged === true) -
+                              (a?.RecentlyChanged === true)
                           )
                           .map((rule, index) => (
                             <PropertyListItem
@@ -577,22 +659,28 @@ const Page = () => {
                       </Typography>
                       <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
                         <PropertyList>
-                          {becPollingCall.data.InboxRuleChanges.map((change, index) => (
-                            <PropertyListItem
-                              key={index}
-                              sx={checkItemSx}
-                              label={`${change?.Operation} - ${change?.RuleName}${
-                                change?.ForeignLocation === true ? ' - outside usage location' : ''
-                              }`}
-                              value={`${change?.Date} by ${change?.UserKey}${
-                                change?.ClientIP
-                                  ? ` from ${change.ClientIP}${
-                                      change?.Country ? ` (${change.Country})` : ''
-                                    }`
-                                  : ''
-                              }${change?.Parameters ? ` | ${change.Parameters}` : ''}`}
-                            />
-                          ))}
+                          {becPollingCall.data.InboxRuleChanges.map(
+                            (change, index) => (
+                              <PropertyListItem
+                                key={index}
+                                sx={checkItemSx}
+                                label={`${change?.Operation} - ${change?.RuleName}${
+                                  change?.ForeignLocation === true
+                                    ? ' - outside usage location'
+                                    : ''
+                                }`}
+                                value={`${change?.Date} by ${change?.UserKey}${
+                                  change?.ClientIP
+                                    ? ` from ${change.ClientIP}${
+                                        change?.Country
+                                          ? ` (${change.Country})`
+                                          : ''
+                                      }`
+                                    : ''
+                                }${change?.Parameters ? ` | ${change.Parameters}` : ''}`}
+                              />
+                            )
+                          )}
                         </PropertyList>
                       </Box>
                     </Box>
@@ -639,7 +727,9 @@ const Page = () => {
                     <Box mt={2} sx={{ maxHeight: 300, overflowY: 'auto' }}>
                       <PropertyList>
                         {[...becPollingCall.data.AddedApps]
-                          .sort((a, b) => !!b?.MaliciousMatch - !!a?.MaliciousMatch)
+                          .sort(
+                            (a, b) => !!b?.MaliciousMatch - !!a?.MaliciousMatch
+                          )
                           .map((app, index) => (
                             <PropertyListItem
                               key={index}
@@ -662,20 +752,25 @@ const Page = () => {
                   {becPollingCall.data?.MaliciousSPs?.length > 0 && (
                     <Box mt={2}>
                       <Typography variant="subtitle2" gutterBottom>
-                        Known-malicious applications present in the tenant (any age)
+                        Known-malicious applications present in the tenant (any
+                        age)
                       </Typography>
                       <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
                         <PropertyList>
-                          {becPollingCall.data.MaliciousSPs.map((app, index) => (
-                            <PropertyListItem
-                              key={index}
-                              sx={checkItemSx}
-                              label={`${app?.displayName} - ${app?.appId}`}
-                              value={`Catalog: ${app?.CatalogName}${
-                                app?.Categories?.length ? ` (${app.Categories.join(', ')})` : ''
-                              } | Enabled: ${app?.accountEnabled} | Added: ${app?.createdDateTime}`}
-                            />
-                          ))}
+                          {becPollingCall.data.MaliciousSPs.map(
+                            (app, index) => (
+                              <PropertyListItem
+                                key={index}
+                                sx={checkItemSx}
+                                label={`${app?.displayName} - ${app?.appId}`}
+                                value={`Catalog: ${app?.CatalogName}${
+                                  app?.Categories?.length
+                                    ? ` (${app.Categories.join(', ')})`
+                                    : ''
+                                } | Enabled: ${app?.accountEnabled} | Added: ${app?.createdDateTime}`}
+                              />
+                            )
+                          )}
                         </PropertyList>
                       </Box>
                     </Box>
@@ -685,16 +780,23 @@ const Page = () => {
                 {/* Check 4: Mailbox permission changes */}
                 <BecCheckCard
                   title="Check 4: Mailbox permission changes"
-                  count={becPollingCall.data?.MailboxPermissionChanges?.length || 0}
+                  count={
+                    becPollingCall.data?.MailboxPermissionChanges?.length || 0
+                  }
                 >
                   <Typography variant="body2" gutterBottom>
                     {getMailboxPermissionMessage()}
                   </Typography>
-                  {becPollingCall.data?.MailboxPermissionChanges?.length > 0 && (
+                  {becPollingCall.data?.MailboxPermissionChanges?.length >
+                    0 && (
                     <Box mt={2} sx={{ maxHeight: 300, overflowY: 'auto' }}>
                       <PropertyList>
                         {[...becPollingCall.data.MailboxPermissionChanges]
-                          .sort((a, b) => (b?.TargetsSuspect === true) - (a?.TargetsSuspect === true))
+                          .sort(
+                            (a, b) =>
+                              (b?.TargetsSuspect === true) -
+                              (a?.TargetsSuspect === true)
+                          )
                           .map((permission, index) => (
                             <PropertyListItem
                               key={index}
@@ -720,7 +822,8 @@ const Page = () => {
                   <Typography variant="body2" gutterBottom>
                     {getSentMessagesMessage()}
                   </Typography>
-                  {becPollingCall.data?.SentMessageAnalysis?.RepeatedSubjects?.length > 0 && (
+                  {becPollingCall.data?.SentMessageAnalysis?.RepeatedSubjects
+                    ?.length > 0 && (
                     <Box mt={2}>
                       <Typography variant="subtitle2" gutterBottom>
                         Repeated subjects
@@ -745,23 +848,28 @@ const Page = () => {
                       </Box>
                     </Box>
                   )}
-                  {becPollingCall.data?.SentMessageAnalysis?.Bursts?.length > 0 && (
+                  {becPollingCall.data?.SentMessageAnalysis?.Bursts?.length >
+                    0 && (
                     <Box mt={2}>
                       <Typography variant="subtitle2" gutterBottom>
                         Send bursts
                       </Typography>
                       <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
                         <PropertyList>
-                          {becPollingCall.data.SentMessageAnalysis.Bursts.map((burst, index) => (
-                            <PropertyListItem
-                              key={index}
-                              sx={checkItemSx}
-                              label={`${burst?.MessageCount} message(s) to ${burst?.RecipientCount} recipient(s) within ${burst?.WindowMinutes} minutes`}
-                              value={`Starting ${burst?.WindowStart}${
-                                burst?.TopSubject ? ` | Most common subject: ${burst.TopSubject}` : ''
-                              }`}
-                            />
-                          ))}
+                          {becPollingCall.data.SentMessageAnalysis.Bursts.map(
+                            (burst, index) => (
+                              <PropertyListItem
+                                key={index}
+                                sx={checkItemSx}
+                                label={`${burst?.MessageCount} message(s) to ${burst?.RecipientCount} recipient(s) within ${burst?.WindowMinutes} minutes`}
+                                value={`Starting ${burst?.WindowStart}${
+                                  burst?.TopSubject
+                                    ? ` | Most common subject: ${burst.TopSubject}`
+                                    : ''
+                                }`}
+                              />
+                            )
+                          )}
                         </PropertyList>
                       </Box>
                     </Box>
@@ -799,12 +907,14 @@ const Page = () => {
                         {[...becPollingCall.data.MFADevices]
                           .sort(
                             (a, b) =>
-                              new Date(b?.createdDateTime || 0) - new Date(a?.createdDateTime || 0)
+                              new Date(b?.createdDateTime || 0) -
+                              new Date(a?.createdDateTime || 0)
                           )
                           .map((method, index) => {
                             const isRecent =
                               method?.createdDateTime &&
-                              new Date(method.createdDateTime) >= analysisWindowStart
+                              new Date(method.createdDateTime) >=
+                                analysisWindowStart
                             return (
                               <PropertyListItem
                                 key={index}
@@ -834,15 +944,17 @@ const Page = () => {
                   {becPollingCall.data?.ChangedPasswords?.length > 0 && (
                     <Box mt={2} sx={{ maxHeight: 300, overflowY: 'auto' }}>
                       <PropertyList>
-                        {becPollingCall.data.ChangedPasswords.map((permission, index) => (
-                          <PropertyListItem
-                            key={index}
-                            sx={checkItemSx}
-                            align="horizontal"
-                            label={permission?.displayName}
-                            value={`${permission?.lastPasswordChangeDateTime}`}
-                          />
-                        ))}
+                        {becPollingCall.data.ChangedPasswords.map(
+                          (permission, index) => (
+                            <PropertyListItem
+                              key={index}
+                              sx={checkItemSx}
+                              align="horizontal"
+                              label={permission?.displayName}
+                              value={`${permission?.lastPasswordChangeDateTime}`}
+                            />
+                          )
+                        )}
                       </PropertyList>
                     </Box>
                   )}
@@ -862,7 +974,9 @@ const Page = () => {
                   <Typography
                     variant="body2"
                     gutterBottom
-                    color={becPollingCall.data?.SafelistError ? 'error' : 'inherit'}
+                    color={
+                      becPollingCall.data?.SafelistError ? 'error' : 'inherit'
+                    }
                   >
                     {getSafelistMessage()}
                   </Typography>
@@ -884,24 +998,30 @@ const Page = () => {
                       </Typography>
                       <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
                         <PropertyList>
-                          {becPollingCall.data.SafelistChanges.map((change, index) => (
-                            <PropertyListItem
-                              key={index}
-                              sx={checkItemSx}
-                              label={`${change?.Operation} by ${change?.UserKey}${
-                                change?.ForeignLocation === true ? ' - outside usage location' : ''
-                              }`}
-                              value={`${change?.Date}${
-                                change?.ClientIP
-                                  ? ` from ${change.ClientIP}${
-                                      change?.Country ? ` (${change.Country})` : ''
-                                    }`
-                                  : ''
-                              } | Trusted: ${formatSafelistValue(
-                                change?.Trusted
-                              )} | Blocked: ${formatSafelistValue(change?.Blocked)}`}
-                            />
-                          ))}
+                          {becPollingCall.data.SafelistChanges.map(
+                            (change, index) => (
+                              <PropertyListItem
+                                key={index}
+                                sx={checkItemSx}
+                                label={`${change?.Operation} by ${change?.UserKey}${
+                                  change?.ForeignLocation === true
+                                    ? ' - outside usage location'
+                                    : ''
+                                }`}
+                                value={`${change?.Date}${
+                                  change?.ClientIP
+                                    ? ` from ${change.ClientIP}${
+                                        change?.Country
+                                          ? ` (${change.Country})`
+                                          : ''
+                                      }`
+                                    : ''
+                                } | Trusted: ${formatSafelistValue(
+                                  change?.Trusted
+                                )} | Blocked: ${formatSafelistValue(change?.Blocked)}`}
+                              />
+                            )
+                          )}
                         </PropertyList>
                       </Box>
                     </Box>
@@ -911,13 +1031,19 @@ const Page = () => {
                 <BecCheckCard
                   title="Check 9: Intune Devices"
                   count={
-                    becPollingCall.data?.IntuneDevicesError ? undefined : recentIntuneDeviceCount
+                    becPollingCall.data?.IntuneDevicesError
+                      ? undefined
+                      : recentIntuneDeviceCount
                   }
                 >
                   <Typography
                     variant="body2"
                     gutterBottom
-                    color={becPollingCall.data?.IntuneDevicesError ? 'error' : 'inherit'}
+                    color={
+                      becPollingCall.data?.IntuneDevicesError
+                        ? 'error'
+                        : 'inherit'
+                    }
                   >
                     {getIntuneDevicesMessage()}
                   </Typography>
@@ -948,13 +1074,19 @@ const Page = () => {
                 <BecCheckCard
                   title="Check 10: Sign-in Locations"
                   count={
-                    becPollingCall.data?.SuspectUserSignInsError ? undefined : foreignActivityCount
+                    becPollingCall.data?.SuspectUserSignInsError
+                      ? undefined
+                      : foreignActivityCount
                   }
                 >
                   <Typography
                     variant="body2"
                     gutterBottom
-                    color={becPollingCall.data?.SuspectUserSignInsError ? 'error' : 'inherit'}
+                    color={
+                      becPollingCall.data?.SuspectUserSignInsError
+                        ? 'error'
+                        : 'inherit'
+                    }
                   >
                     {getSignInLocationMessage()}
                   </Typography>
@@ -1012,9 +1144,10 @@ const Page = () => {
                 {/* Report Data */}
                 <BecCheckCard title="Report">
                   <Typography variant="body2" gutterBottom>
-                    Generate a comprehensive PDF report for documentation, compliance, or end-user
-                    review. The report includes detailed explanations suitable for non-technical
-                    users, managers, and compliance requirements (ISO/CMMC/SOC).
+                    Generate a comprehensive PDF report for documentation,
+                    compliance, or end-user review. The report includes detailed
+                    explanations suitable for non-technical users, managers, and
+                    compliance requirements (ISO/CMMC/SOC).
                   </Typography>
                   {/* Implement download functionality */}
                   {becPollingCall.data && (
@@ -1027,9 +1160,12 @@ const Page = () => {
                         />
                         <Button
                           onClick={() => {
-                            const blob = new Blob([JSON.stringify(becPollingCall.data, null, 2)], {
-                              type: 'application/json',
-                            })
+                            const blob = new Blob(
+                              [JSON.stringify(becPollingCall.data, null, 2)],
+                              {
+                                type: 'application/json',
+                              }
+                            )
                             const url = URL.createObjectURL(blob)
                             const link = document.createElement('a')
                             link.href = url

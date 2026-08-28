@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect } from 'react'
 import {
   Alert,
   Stack,
@@ -10,31 +10,37 @@ import {
   SvgIcon,
   IconButton,
   Tooltip,
-} from "@mui/material";
-import { Person, Apartment, Sync } from "@mui/icons-material";
-import { CIPPM365OAuthButton } from "../CippComponents/CIPPM365OAuthButton";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { ApiPostCall, ApiGetCall } from "../../api/ApiCall";
-import { CippWizardStepButtons } from "./CippWizardStepButtons";
-import { CippTenantTable } from "./CippTenantTable";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
+} from '@mui/material'
+import { Person, Apartment, Sync } from '@mui/icons-material'
+import { CIPPM365OAuthButton } from '../CippComponents/CIPPM365OAuthButton'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { ApiPostCall, ApiGetCall } from '../../api/ApiCall'
+import { CippWizardStepButtons } from './CippWizardStepButtons'
+import { CippTenantTable } from './CippTenantTable'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
 
 export const CippTenantModeDeploy = (props) => {
-  const { formControl, currentStep, onPreviousStep, onNextStep } = props;
+  const { formControl, currentStep, onPreviousStep, onNextStep } = props
 
-  formControl.register("GDAPAuth", {
+  formControl.register('GDAPAuth', {
     required: true,
-  });
+  })
 
-  const updateRefreshToken = ApiPostCall({ urlfromdata: true, relatedQueryKeys: ["listAppId"] });
-  const addTenant = ApiPostCall({ urlfromdata: true, relatedQueryKeys: ["tenants-table"] });
+  const updateRefreshToken = ApiPostCall({
+    urlfromdata: true,
+    relatedQueryKeys: ['listAppId'],
+  })
+  const addTenant = ApiPostCall({
+    urlfromdata: true,
+    relatedQueryKeys: ['tenants-table'],
+  })
 
   // Get partner tenant info using the same API call as CIPPM365OAuthButton
   const partnerTenantInfo = ApiGetCall({
     url: `/api/ExecListAppId`,
-    queryKey: "listAppId",
+    queryKey: 'listAppId',
     waiting: true,
-  });
+  })
 
   // The application step mints a client secret and this step uses it moments later, but Entra
   // can take minutes to activate a new secret. Poll until it is usable so the wait happens
@@ -42,51 +48,55 @@ export const CippTenantModeDeploy = (props) => {
   // with an "invalid client secret" that looks like the app was created wrong.
   const samSecret = ApiGetCall({
     url: `/api/ExecSamSecretStatus`,
-    queryKey: "samSecretStatus",
+    queryKey: 'samSecretStatus',
     waiting: true,
     staleTime: 0,
-  });
-  const samSecretReady = samSecret.data?.ready === true;
-  const samSecretPropagating = samSecret.data?.reason === "propagating";
+  })
+  const samSecretReady = samSecret.data?.ready === true
+  const samSecretPropagating = samSecret.data?.reason === 'propagating'
   const {
     isSuccess: samSecretLoaded,
     dataUpdatedAt: samSecretUpdatedAt,
     refetch: refetchSamSecret,
-  } = samSecret;
+  } = samSecret
 
   // Re-check on a timer rather than a fixed refetchInterval so polling stops once the secret
   // is usable - there is nothing left to wait for at that point.
   useEffect(() => {
     if (samSecretLoaded && !samSecretReady) {
-      const timer = setTimeout(() => refetchSamSecret(), 15000);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => refetchSamSecret(), 15000)
+      return () => clearTimeout(timer)
     }
-  }, [samSecretLoaded, samSecretUpdatedAt, samSecretReady, refetchSamSecret]);
+  }, [samSecretLoaded, samSecretUpdatedAt, samSecretReady, refetchSamSecret])
 
   useEffect(() => {
     if (updateRefreshToken.isSuccess) {
-      formControl.setValue("GDAPAuth", true);
-      formControl.trigger("GDAPAuth");
+      formControl.setValue('GDAPAuth', true)
+      formControl.trigger('GDAPAuth')
     }
     if (addTenant.isSuccess) {
       // Reset the form control for the next tenant addition
-      formControl.setValue("GDAPAuth", true);
-      formControl.trigger("GDAPAuth");
+      formControl.setValue('GDAPAuth', true)
+      formControl.trigger('GDAPAuth')
     }
-  }, [updateRefreshToken.isSuccess, formControl, addTenant.isSuccess]);
+  }, [updateRefreshToken.isSuccess, formControl, addTenant.isSuccess])
 
   useEffect(() => {
     if (partnerTenantInfo?.data?.authenticatedUserPrincipalName) {
-      formControl.setValue("GDAPAuth", true);
-      formControl.trigger("GDAPAuth");
+      formControl.setValue('GDAPAuth', true)
+      formControl.trigger('GDAPAuth')
     }
-  }, [partnerTenantInfo?.data?.authenticatedUserPrincipalName, formControl]);
+  }, [partnerTenantInfo?.data?.authenticatedUserPrincipalName, formControl])
 
   return (
     <Stack spacing={2}>
       {/* Partner Tenant (GDAP) */}
       <Box>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <Typography variant="h6" gutterBottom>
             Partner Tenant
           </Typography>
@@ -103,16 +113,17 @@ export const CippTenantModeDeploy = (props) => {
           </Tooltip>
         </Stack>
         <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
-          CIPP uses the partner center to automatically retrieve your tenants, however you can also
-          authenticate to individual tenants.
+          CIPP uses the partner center to automatically retrieve your tenants,
+          however you can also authenticate to individual tenants.
         </Typography>
         <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
-          Please logon to your partner tenant. Not a Microsoft Partner? No problem, simply enter
-          your primary tenant information. Once that's done you can add more tenants using the
-          button below.
+          Please logon to your partner tenant. Not a Microsoft Partner? No
+          problem, simply enter your primary tenant information. Once that's
+          done you can add more tenants using the button below.
         </Typography>
         <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
-          Please remember to log onto a service account dedicated for CIPP. More info? Check out the{" "}
+          Please remember to log onto a service account dedicated for CIPP. More
+          info? Check out the{' '}
           <Link
             href="https://docs.cipp.app/setup/installation/creating-the-cipp-service-account-gdap-ready"
             target="_blank"
@@ -128,13 +139,18 @@ export const CippTenantModeDeploy = (props) => {
             <Box
               sx={{
                 p: 2,
-                bgcolor: "background.paper",
+                bgcolor: 'background.paper',
                 borderRadius: 1,
-                border: "1px solid",
-                borderColor: "divider",
+                border: '1px solid',
+                borderColor: 'divider',
               }}
             >
-              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+              <Stack
+                direction="row"
+                spacing={2}
+                alignItems="center"
+                justifyContent="space-between"
+              >
                 <Stack direction="column" spacing={1} sx={{ flex: 1 }}>
                   <Skeleton variant="text" width="60%" height={24} />
                   <Skeleton variant="text" width="80%" height={20} />
@@ -152,10 +168,10 @@ export const CippTenantModeDeploy = (props) => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: "background.paper",
+                  bgcolor: 'background.paper',
                   borderRadius: 1,
-                  border: "1px solid",
-                  borderColor: "divider",
+                  border: '1px solid',
+                  borderColor: 'divider',
                 }}
               >
                 <Stack
@@ -185,7 +201,10 @@ export const CippTenantModeDeploy = (props) => {
                           {partnerTenantInfo.data.authenticatedUserDisplayName}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {partnerTenantInfo.data.authenticatedUserPrincipalName}
+                          {
+                            partnerTenantInfo.data
+                              .authenticatedUserPrincipalName
+                          }
                         </Typography>
                       </Stack>
                     )}
@@ -193,7 +212,9 @@ export const CippTenantModeDeploy = (props) => {
                   <Stack direction="row" spacing={1} alignItems="center">
                     {partnerTenantInfo.data.isPartnerTenant ? (
                       <Chip
-                        label={getCippTranslation(partnerTenantInfo.data.partnerTenantType)}
+                        label={getCippTranslation(
+                          partnerTenantInfo.data.partnerTenantType
+                        )}
                         size="small"
                         color="info"
                       />
@@ -213,16 +234,16 @@ export const CippTenantModeDeploy = (props) => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: "background.paper",
+                  bgcolor: 'background.paper',
                   borderRadius: 1,
-                  border: "1px solid",
-                  borderColor: "warning.main",
+                  border: '1px solid',
+                  borderColor: 'warning.main',
                 }}
               >
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Typography variant="body2" color="warning.main">
-                    No partner tenant connected. Click the button below to authenticate with your
-                    partner tenant.
+                    No partner tenant connected. Click the button below to
+                    authenticate with your partner tenant.
                   </Typography>
                 </Stack>
               </Box>
@@ -230,13 +251,17 @@ export const CippTenantModeDeploy = (props) => {
           )}
 
         {samSecretLoaded && !samSecretReady && (
-          <Alert severity={samSecretPropagating ? "info" : "warning"} sx={{ mb: 2 }}>
+          <Alert
+            severity={samSecretPropagating ? 'info' : 'warning'}
+            sx={{ mb: 2 }}
+          >
             {samSecretPropagating ? (
               <>
-                Waiting for Microsoft to activate the application secret created in the previous
-                step. Signing in before it is active fails with an invalid client secret error, so
-                this step unlocks on its own once it is ready - usually within a few minutes.
-                Nothing needs to be recreated.
+                Waiting for Microsoft to activate the application secret created
+                in the previous step. Signing in before it is active fails with
+                an invalid client secret error, so this step unlocks on its own
+                once it is ready - usually within a few minutes. Nothing needs
+                to be recreated.
               </>
             ) : (
               samSecret.data?.message
@@ -244,23 +269,23 @@ export const CippTenantModeDeploy = (props) => {
           </Alert>
         )}
 
-        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
           <CIPPM365OAuthButton
             disabled={samSecretLoaded && !samSecretReady}
             onAuthSuccess={(tokenData) => {
               const updatedTokenData = {
                 ...tokenData,
-                tenantMode: "GDAP",
-              };
+                tenantMode: 'GDAP',
+              }
               updateRefreshToken.mutate({
-                url: "/api/ExecUpdateRefreshToken",
+                url: '/api/ExecUpdateRefreshToken',
                 data: updatedTokenData,
-              });
+              })
             }}
             buttonText={
               partnerTenantInfo?.data?.orgName
-                ? "Change Partner Tenant"
-                : "Connect to Partner Tenant"
+                ? 'Change Partner Tenant'
+                : 'Connect to Partner Tenant'
             }
             showSuccessAlert={false}
             promptBeforeAuth={
@@ -281,51 +306,56 @@ export const CippTenantModeDeploy = (props) => {
           Direct Tenant Authentication
         </Typography>
         <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
-          Click the button below to connect to individual tenants that are not in your partner
-          center, or any <strong>extra</strong> tenants you want to add if you're not a Microsoft
-          Partner.
+          Click the button below to connect to individual tenants that are not
+          in your partner center, or any <strong>extra</strong> tenants you want
+          to add if you're not a Microsoft Partner.
         </Typography>
         <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
-          You can authenticate to multiple tenants by repeating this step for each tenant you want
-          to add.
+          You can authenticate to multiple tenants by repeating this step for
+          each tenant you want to add.
         </Typography>
 
         {!partnerTenantInfo?.data?.orgName && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="body2" color="warning.main">
-              Please connect to your partner tenant first before adding separate tenants.
+              Please connect to your partner tenant first before adding separate
+              tenants.
             </Typography>
           </Box>
         )}
 
-        <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 2, mb: 2 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'flex-start', mt: 2, mb: 2 }}
+        >
           <Stack direction="row" spacing={2} alignItems="center">
-            <Box sx={{ position: "relative" }}>
+            <Box sx={{ position: 'relative' }}>
               {!partnerTenantInfo?.data?.orgName && (
                 <Box
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
                     zIndex: 1,
-                    cursor: "not-allowed",
+                    cursor: 'not-allowed',
                   }}
                 />
               )}
-              <Box sx={{ opacity: !partnerTenantInfo?.data?.orgName ? 0.5 : 1 }}>
+              <Box
+                sx={{ opacity: !partnerTenantInfo?.data?.orgName ? 0.5 : 1 }}
+              >
                 <CIPPM365OAuthButton
                   onAuthSuccess={(tokenData) => {
-                    if (!partnerTenantInfo?.data?.orgName) return;
+                    if (!partnerTenantInfo?.data?.orgName) return
                     const updatedTokenData = {
                       ...tokenData,
-                      tenantMode: "perTenant",
-                    };
+                      tenantMode: 'perTenant',
+                    }
                     addTenant.mutate({
-                      url: "/api/ExecAddTenant",
+                      url: '/api/ExecAddTenant',
                       data: updatedTokenData,
-                    });
+                    })
                   }}
                   buttonText="Connect to Separate Tenants"
                   showSuccessAlert={false}
@@ -347,7 +377,7 @@ export const CippTenantModeDeploy = (props) => {
         noSubmitButton={true}
       />
     </Stack>
-  );
-};
+  )
+}
 
-export default CippTenantModeDeploy;
+export default CippTenantModeDeploy

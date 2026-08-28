@@ -3,13 +3,23 @@ import { expect, userEvent, waitFor, within } from 'storybook/test'
 import Page from '../../src/pages/tenant/tools/graph-explorer/index.js'
 
 const handlers = [
-  http.get('/api/ListGraphExplorerPresets', () => HttpResponse.json({ Results: [] })),
+  http.get('/api/ListGraphExplorerPresets', () =>
+    HttpResponse.json({ Results: [] })
+  ),
   http.get('/api/ListEmptyResults', () => HttpResponse.json({ Results: [] })),
   http.get('/api/ListGraphRequest', () =>
     HttpResponse.json({
       Results: [
-        { userPrincipalName: 'a@x.com', mail: 'a@x.com', proxyAddresses: 'SMTP:a@x.com' },
-        { userPrincipalName: 'b@x.com', mail: 'b@x.com', proxyAddresses: 'SMTP:b@x.com' },
+        {
+          userPrincipalName: 'a@x.com',
+          mail: 'a@x.com',
+          proxyAddresses: 'SMTP:a@x.com',
+        },
+        {
+          userPrincipalName: 'b@x.com',
+          mail: 'b@x.com',
+          proxyAddresses: 'SMTP:b@x.com',
+        },
       ],
       Metadata: {},
     })
@@ -37,7 +47,11 @@ export const PresetRun = {
       })
       await userEvent.click(combo)
       const body = within(canvasElement.ownerDocument.body)
-      await userEvent.click(await body.findByRole('option', { name: 'All users with email addresses' }))
+      await userEvent.click(
+        await body.findByRole('option', {
+          name: 'All users with email addresses',
+        })
+      )
       await userEvent.click(canvas.getByRole('button', { name: 'Run' }))
     })
 

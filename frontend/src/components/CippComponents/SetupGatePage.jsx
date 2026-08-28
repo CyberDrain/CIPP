@@ -4,9 +4,12 @@ import { Alert, Box, Container, Stack, Typography } from '@mui/material'
 import { useQueryClient } from '@tanstack/react-query'
 import { ApiGetCall } from '../../api/ApiCall'
 
-const OnboardingWizardPage = dynamic(() => import('../CippWizard/OnboardingWizardPage.jsx'), {
-  ssr: false,
-})
+const OnboardingWizardPage = dynamic(
+  () => import('../CippWizard/OnboardingWizardPage.jsx'),
+  {
+    ssr: false,
+  }
+)
 
 // The persister in _app.js keeps listAppId/TenantSelector/AllTenantsDashboard-Tenants
 // for 24h in localStorage; everything cached before setup completed is junk, so the
@@ -14,7 +17,8 @@ const OnboardingWizardPage = dynamic(() => import('../CippWizard/OnboardingWizar
 const purgePersistedCache = () => {
   if (typeof window === 'undefined') return
   Object.keys(localStorage).forEach((key) => {
-    if (key.startsWith('REACT_QUERY_OFFLINE_CACHE')) localStorage.removeItem(key)
+    if (key.startsWith('REACT_QUERY_OFFLINE_CACHE'))
+      localStorage.removeItem(key)
   })
 }
 
@@ -31,7 +35,9 @@ const SetupGatePage = () => {
     // auth queries the gate itself depends on.
     queryClient.removeQueries({
       predicate: (query) =>
-        !['authmecipp', 'authmeswa'].includes(String(query.queryKey?.[0] ?? '')),
+        !['authmecipp', 'authmeswa'].includes(
+          String(query.queryKey?.[0] ?? '')
+        ),
     })
   }, [queryClient])
 
@@ -52,12 +58,18 @@ const SetupGatePage = () => {
       <Container maxWidth="xl">
         <Stack spacing={3}>
           <Stack direction="row" spacing={2} alignItems="center">
-            <Box component="img" src="/logo.png" alt="CIPP" sx={{ display: 'block', height: 40 }} />
+            <Box
+              component="img"
+              src="/logo.png"
+              alt="CIPP"
+              sx={{ display: 'block', height: 40 }}
+            />
             <Typography variant="h4">Welcome to CIPP</Typography>
           </Stack>
           <Alert severity="info">
-            CIPP needs to be connected to your Microsoft tenants before it can be used. Complete
-            this setup wizard to unlock the rest of the application.
+            CIPP needs to be connected to your Microsoft tenants before it can
+            be used. Complete this setup wizard to unlock the rest of the
+            application.
           </Alert>
           <OnboardingWizardPage
             mode="setupGate"

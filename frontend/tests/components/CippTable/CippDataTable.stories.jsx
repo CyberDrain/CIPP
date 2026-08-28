@@ -3,28 +3,94 @@ import { http, HttpResponse } from 'msw'
 import { fn, within, expect, userEvent, waitFor } from 'storybook/test'
 import { CippDataTable } from '../../../src/components/CippTable/CippDataTable'
 import { SettingsProvider } from '../../../src/contexts/settings-context'
-import { Delete, Edit, Visibility, Block, CheckCircle } from '@mui/icons-material'
+import {
+  Delete,
+  Edit,
+  Visibility,
+  Block,
+  CheckCircle,
+} from '@mui/icons-material'
 
 const generateLargeDataset = (count = 10000) => {
   const firstNames = [
-    'Alice', 'Bob', 'Carol', 'Dave', 'Eve',
-    'Frank', 'Grace', 'Hank', 'Ivy', 'Jack',
-    'Karen', 'Leo', 'Mia', 'Noah', 'Olivia',
-    'Paul', 'Quinn', 'Rachel', 'Sam', 'Tina',
+    'Alice',
+    'Bob',
+    'Carol',
+    'Dave',
+    'Eve',
+    'Frank',
+    'Grace',
+    'Hank',
+    'Ivy',
+    'Jack',
+    'Karen',
+    'Leo',
+    'Mia',
+    'Noah',
+    'Olivia',
+    'Paul',
+    'Quinn',
+    'Rachel',
+    'Sam',
+    'Tina',
   ]
   const lastNames = [
-    'Smith', 'Johnson', 'Williams', 'Brown', 'Jones',
-    'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
-    'Anderson', 'Taylor', 'Thomas', 'Moore', 'Jackson',
+    'Smith',
+    'Johnson',
+    'Williams',
+    'Brown',
+    'Jones',
+    'Garcia',
+    'Miller',
+    'Davis',
+    'Rodriguez',
+    'Martinez',
+    'Anderson',
+    'Taylor',
+    'Thomas',
+    'Moore',
+    'Jackson',
   ]
-  const domains = ['contoso.com', 'fabrikam.com', 'northwind.com', 'adventure-works.com']
-  const departments = ['IT', 'Sales', 'Marketing', 'Engineering', 'HR', 'Finance', 'Legal', 'Operations']
-  const jobTitles = ['Manager', 'Developer', 'Analyst', 'Director', 'Coordinator', 'Specialist', 'Administrator', 'Engineer']
+  const domains = [
+    'contoso.com',
+    'fabrikam.com',
+    'northwind.com',
+    'adventure-works.com',
+  ]
+  const departments = [
+    'IT',
+    'Sales',
+    'Marketing',
+    'Engineering',
+    'HR',
+    'Finance',
+    'Legal',
+    'Operations',
+  ]
+  const jobTitles = [
+    'Manager',
+    'Developer',
+    'Analyst',
+    'Director',
+    'Coordinator',
+    'Specialist',
+    'Administrator',
+    'Engineer',
+  ]
   const severities = ['High', 'Medium', 'Low', 'Informational']
-  const statuses = ['Success', 'Failed', 'In Progress', 'Not Started', 'Warning']
+  const statuses = [
+    'Success',
+    'Failed',
+    'In Progress',
+    'Not Started',
+    'Warning',
+  ]
   const riskLevels = ['none', 'low', 'medium', 'high', 'hidden']
   const states = ['enabled', 'disabled', 'enabledForReportingButNotEnforced']
-  const delegationStatuses = ['directTenant', 'granularDelegatedAdminPrivileges']
+  const delegationStatuses = [
+    'directTenant',
+    'granularDelegatedAdminPrivileges',
+  ]
   const licenseGuids = [
     '05e9a617-0261-4cee-bb44-138d3ef5d965',
     '06ebc4ee-1bb5-47dd-8120-11324bc54e06',
@@ -69,14 +135,15 @@ const generateLargeDataset = (count = 10000) => {
       info: {
         displayName: `${first} ${last} (Info)`,
       },
-      businessPhones: Math.random() > 0.3
-        ? [
-            `+1-555-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-            ...(Math.random() > 0.5
-              ? [`+1-555-${String(Math.floor(Math.random() * 9000) + 1000)}`]
-              : []),
-          ]
-        : [],
+      businessPhones:
+        Math.random() > 0.3
+          ? [
+              `+1-555-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+              ...(Math.random() > 0.5
+                ? [`+1-555-${String(Math.floor(Math.random() * 9000) + 1000)}`]
+                : []),
+            ]
+          : [],
       delegatedPrivilegeStatus: pick(delegationStatuses),
       jobTitle: pick(jobTitles),
       department: pick(departments),
@@ -86,7 +153,6 @@ const generateLargeDataset = (count = 10000) => {
 
 // Rich dataset (500 rows), all formatter fields for thorough coverage
 const richDataset = generateLargeDataset(500)
-
 
 const basicData = [
   {
@@ -206,7 +272,12 @@ export const WithActions = {
   args: {
     title: 'Users with Actions',
     data: richDataset.slice(0, 25),
-    simpleColumns: ['displayName', 'userPrincipalName', 'accountEnabled', 'Status'],
+    simpleColumns: [
+      'displayName',
+      'userPrincipalName',
+      'accountEnabled',
+      'Status',
+    ],
     actions: [
       {
         label: 'View User',
@@ -241,10 +312,14 @@ export const WithActions = {
 
     await step('open the first row action menu', async () => {
       await waitFor(() => {
-        const icons = canvasElement.querySelectorAll('[data-testid="MoreHorizIcon"]')
+        const icons = canvasElement.querySelectorAll(
+          '[data-testid="MoreHorizIcon"]'
+        )
         expect(icons.length).toBeGreaterThan(0)
       })
-      const actionButton = canvasElement.querySelectorAll('[data-testid="MoreHorizIcon"]')[0].closest('button')
+      const actionButton = canvasElement
+        .querySelectorAll('[data-testid="MoreHorizIcon"]')[0]
+        .closest('button')
       await userEvent.click(actionButton)
     })
 
@@ -266,7 +341,12 @@ export const WithOffCanvas = {
   args: {
     title: 'Users with Off Canvas',
     data: richDataset.slice(0, 50),
-    simpleColumns: ['displayName', 'userPrincipalName', 'department', 'accountEnabled'],
+    simpleColumns: [
+      'displayName',
+      'userPrincipalName',
+      'department',
+      'accountEnabled',
+    ],
     offCanvas: {
       title: 'User Details',
       extendedInfoFields: [
@@ -286,7 +366,12 @@ export const WithActionsAndOffCanvas = {
   args: {
     title: 'Users with Actions + Off Canvas',
     data: richDataset.slice(0, 25),
-    simpleColumns: ['displayName', 'userPrincipalName', 'Status', 'accountEnabled'],
+    simpleColumns: [
+      'displayName',
+      'userPrincipalName',
+      'Status',
+      'accountEnabled',
+    ],
     actions: [
       {
         label: 'Edit User',
@@ -297,7 +382,12 @@ export const WithActionsAndOffCanvas = {
     ],
     offCanvas: {
       title: 'User Details',
-      extendedInfoFields: ['displayName', 'userPrincipalName', 'mail', 'department'],
+      extendedInfoFields: [
+        'displayName',
+        'userPrincipalName',
+        'mail',
+        'department',
+      ],
     },
   },
 }
@@ -419,24 +509,41 @@ export const WithConditionalActions = {
 
     await step('open the first row action menu', async () => {
       await waitFor(() => {
-        const icons = canvasElement.querySelectorAll('[data-testid="MoreHorizIcon"]')
+        const icons = canvasElement.querySelectorAll(
+          '[data-testid="MoreHorizIcon"]'
+        )
         expect(icons.length).toBeGreaterThan(0)
       })
-      const actionButton = canvasElement.querySelectorAll('[data-testid="MoreHorizIcon"]')[0].closest('button')
+      const actionButton = canvasElement
+        .querySelectorAll('[data-testid="MoreHorizIcon"]')[0]
+        .closest('button')
       await userEvent.click(actionButton)
     })
 
-    await step('failed condition renders the action disabled, not hidden', async () => {
-      // no sorting -> first menu button belongs to args.data[0]
-      const firstRow = args.data[0]
-      const enabledLabel = firstRow.accountEnabled ? 'Block Sign-in' : 'Enable Account'
-      const disabledLabel = firstRow.accountEnabled ? 'Enable Account' : 'Block Sign-in'
-      await waitFor(() => {
-        expect(root.getByRole('menuitem', { name: enabledLabel })).toBeVisible()
-      })
-      await expect(root.getByRole('menuitem', { name: enabledLabel })).not.toHaveAttribute('aria-disabled')
-      await expect(root.getByRole('menuitem', { name: disabledLabel })).toHaveAttribute('aria-disabled', 'true')
-    })
+    await step(
+      'failed condition renders the action disabled, not hidden',
+      async () => {
+        // no sorting -> first menu button belongs to args.data[0]
+        const firstRow = args.data[0]
+        const enabledLabel = firstRow.accountEnabled
+          ? 'Block Sign-in'
+          : 'Enable Account'
+        const disabledLabel = firstRow.accountEnabled
+          ? 'Enable Account'
+          : 'Block Sign-in'
+        await waitFor(() => {
+          expect(
+            root.getByRole('menuitem', { name: enabledLabel })
+          ).toBeVisible()
+        })
+        await expect(
+          root.getByRole('menuitem', { name: enabledLabel })
+        ).not.toHaveAttribute('aria-disabled')
+        await expect(
+          root.getByRole('menuitem', { name: disabledLabel })
+        ).toHaveAttribute('aria-disabled', 'true')
+      }
+    )
   },
 }
 
@@ -450,7 +557,9 @@ export const GraphBackedEditFilters = {
           Metadata: {},
         })
       ),
-      http.get('/api/ListGraphExplorerPresets', () => HttpResponse.json({ Results: [] }))
+      http.get('/api/ListGraphExplorerPresets', () =>
+        HttpResponse.json({ Results: [] })
+      )
     )
   },
   args: {
@@ -469,12 +578,18 @@ export const GraphBackedEditFilters = {
 
     await step('Filters menu opens the edit-filters drawer', async () => {
       // desktop toolbar's own "Filters" button (ModernButton, plain text, no Tooltip) - exact match avoids catching an MRT-native filter toggle if one is added
-      const filterButton = await canvas.findByRole('button', { name: 'Filters' })
+      const filterButton = await canvas.findByRole('button', {
+        name: 'Filters',
+      })
       await userEvent.click(filterButton)
       const body = within(canvasElement.ownerDocument.body)
-      await userEvent.click(await body.findByRole('menuitem', { name: 'Edit filters' }))
+      await userEvent.click(
+        await body.findByRole('menuitem', { name: 'Edit filters' })
+      )
       await waitFor(async () => {
-        await expect(body.getByRole('button', { name: 'Apply Filter' })).toBeVisible()
+        await expect(
+          body.getByRole('button', { name: 'Apply Filter' })
+        ).toBeVisible()
       })
     })
   },
@@ -505,15 +620,21 @@ export const CachedReportColumns = {
 
     await step('cached csv column takes the subTable header', async () => {
       await waitFor(() => {
-        expect(canvas.getByRole('columnheader', { name: /Members/ })).toBeVisible()
+        expect(
+          canvas.getByRole('columnheader', { name: /Members/ })
+        ).toBeVisible()
       })
       expect(canvas.queryByRole('columnheader', { name: /csv/i })).toBeNull()
     })
 
-    await step('cell shows the cached value, no nested table button', async () => {
-      await expect(canvas.getByText('Jane, Bob')).toBeVisible()
-      expect(canvas.queryByRole('button', { name: 'View members' })).toBeNull()
-    })
+    await step(
+      'cell shows the cached value, no nested table button',
+      async () => {
+        await expect(canvas.getByText('Jane, Bob')).toBeVisible()
+        expect(
+          canvas.queryByRole('button', { name: 'View members' })
+        ).toBeNull()
+      }
+    )
   },
 }
-

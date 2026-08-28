@@ -1,75 +1,75 @@
-import { useEffect } from "react";
-import { Button, Box } from "@mui/material";
-import { Grid } from "@mui/system";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormCondition } from "./CippFormCondition";
-import { ApiGetCall } from "../../api/ApiCall";
-import { useDialog } from "../../hooks/use-dialog";
-import { CippApiDialog } from "./CippApiDialog";
-import { useFormState } from "react-hook-form";
-import { useSettings } from "../../hooks/use-settings";
+import { useEffect } from 'react'
+import { Button, Box } from '@mui/material'
+import { Grid } from '@mui/system'
+import CippFormComponent from './CippFormComponent'
+import { CippFormCondition } from './CippFormCondition'
+import { ApiGetCall } from '../../api/ApiCall'
+import { useDialog } from '../../hooks/use-dialog'
+import { CippApiDialog } from './CippApiDialog'
+import { useFormState } from 'react-hook-form'
+import { useSettings } from '../../hooks/use-settings'
 
 export const CippNotificationForm = ({
   formControl,
   showTestButton = true,
 }) => {
-  const notificationDialog = useDialog();
-  const settings = useSettings();
-  const currentTenant = settings.currentTenant;
+  const notificationDialog = useDialog()
+  const settings = useSettings()
+  const currentTenant = settings.currentTenant
 
   // API call to get notification configuration
   const listNotificationConfig = ApiGetCall({
-    url: "/api/ListNotificationConfig",
-    queryKey: "ListNotificationConfig",
-  });
+    url: '/api/ListNotificationConfig',
+    queryKey: 'ListNotificationConfig',
+  })
 
-  const formState = useFormState({ control: formControl.control });
+  const formState = useFormState({ control: formControl.control })
 
   // Define log types and severity types
   const logTypes = [
-    { label: "Updates Status", value: "Updates" },
-    { label: "All Standards", value: "Standards" },
-    { label: "Token Events", value: "TokensUpdater" },
-    { label: "Changing DNS Settings", value: "ExecDnsConfig" },
-    { label: "Adding excluded licenses", value: "ExecExcludeLicenses" },
-    { label: "Adding excluded tenants", value: "ExecExcludeTenant" },
-    { label: "Editing a user", value: "EditUser" },
-    { label: "Adding or deploying applications", value: "ChocoApp" },
-    { label: "Adding autopilot devices", value: "AddAPDevice" },
-    { label: "Editing a tenant", value: "EditTenant" },
-    { label: "Adding an MSP app", value: "AddMSPApp" },
-    { label: "Adding a user", value: "AddUser" },
-    { label: "Adding a group", value: "AddGroup" },
-    { label: "Adding a tenant", value: "NewTenant" },
-    { label: "Executing the offboard wizard", value: "ExecOffboardUser" },
-  ];
+    { label: 'Updates Status', value: 'Updates' },
+    { label: 'All Standards', value: 'Standards' },
+    { label: 'Token Events', value: 'TokensUpdater' },
+    { label: 'Changing DNS Settings', value: 'ExecDnsConfig' },
+    { label: 'Adding excluded licenses', value: 'ExecExcludeLicenses' },
+    { label: 'Adding excluded tenants', value: 'ExecExcludeTenant' },
+    { label: 'Editing a user', value: 'EditUser' },
+    { label: 'Adding or deploying applications', value: 'ChocoApp' },
+    { label: 'Adding autopilot devices', value: 'AddAPDevice' },
+    { label: 'Editing a tenant', value: 'EditTenant' },
+    { label: 'Adding an MSP app', value: 'AddMSPApp' },
+    { label: 'Adding a user', value: 'AddUser' },
+    { label: 'Adding a group', value: 'AddGroup' },
+    { label: 'Adding a tenant', value: 'NewTenant' },
+    { label: 'Executing the offboard wizard', value: 'ExecOffboardUser' },
+  ]
 
   const severityTypes = [
-    { label: "Alert", value: "Alert" },
-    { label: "Error", value: "Error" },
-    { label: "Info", value: "Info" },
-    { label: "Warning", value: "Warning" },
-    { label: "Critical", value: "Critical" },
-  ];
+    { label: 'Alert', value: 'Alert' },
+    { label: 'Error', value: 'Error' },
+    { label: 'Info', value: 'Info' },
+    { label: 'Warning', value: 'Warning' },
+    { label: 'Critical', value: 'Critical' },
+  ]
 
   const webhookAuthTypes = [
-    { label: "None", value: "None" },
-    { label: "Bearer Token", value: "Bearer" },
-    { label: "Basic Auth", value: "Basic" },
-    { label: "API Key Header", value: "ApiKey" },
-    { label: "Custom Headers (JSON)", value: "CustomHeaders" },
-  ];
+    { label: 'None', value: 'None' },
+    { label: 'Bearer Token', value: 'Bearer' },
+    { label: 'Basic Auth', value: 'Basic' },
+    { label: 'API Key Header', value: 'ApiKey' },
+    { label: 'Custom Headers (JSON)', value: 'CustomHeaders' },
+  ]
 
   // Load notification config data into form
   useEffect(() => {
     if (listNotificationConfig.isSuccess) {
       const logsToInclude = listNotificationConfig.data?.logsToInclude
         ?.map((log) => logTypes.find((logType) => logType.value === log))
-        .filter(Boolean);
+        .filter(Boolean)
 
       const Severity = listNotificationConfig.data?.Severity?.map((sev) =>
-        severityTypes.find((stype) => stype.value === sev),
-      ).filter(Boolean);
+        severityTypes.find((stype) => stype.value === sev)
+      ).filter(Boolean)
 
       formControl.reset({
         ...formControl.getValues(),
@@ -80,19 +80,24 @@ export const CippNotificationForm = ({
         onePerTenant: listNotificationConfig.data?.onePerTenant,
         sendtoIntegration: listNotificationConfig.data?.sendtoIntegration,
         includeTenantId: listNotificationConfig.data?.includeTenantId,
-        UseStandardizedSchema: listNotificationConfig.data?.UseStandardizedSchema || false,
-        webhookAuthType: webhookAuthTypes.find(
-          (type) => type.value === listNotificationConfig.data?.webhookAuthType,
-        ) || webhookAuthTypes[0],
+        UseStandardizedSchema:
+          listNotificationConfig.data?.UseStandardizedSchema || false,
+        webhookAuthType:
+          webhookAuthTypes.find(
+            (type) =>
+              type.value === listNotificationConfig.data?.webhookAuthType
+          ) || webhookAuthTypes[0],
         webhookAuthToken: listNotificationConfig.data?.webhookAuthToken,
         webhookAuthUsername: listNotificationConfig.data?.webhookAuthUsername,
         webhookAuthPassword: listNotificationConfig.data?.webhookAuthPassword,
-        webhookAuthHeaderName: listNotificationConfig.data?.webhookAuthHeaderName,
-        webhookAuthHeaderValue: listNotificationConfig.data?.webhookAuthHeaderValue,
+        webhookAuthHeaderName:
+          listNotificationConfig.data?.webhookAuthHeaderName,
+        webhookAuthHeaderValue:
+          listNotificationConfig.data?.webhookAuthHeaderValue,
         webhookAuthHeaders: listNotificationConfig.data?.webhookAuthHeaders,
-      });
+      })
     }
-  }, [listNotificationConfig.isSuccess, listNotificationConfig.dataUpdatedAt]);
+  }, [listNotificationConfig.isSuccess, listNotificationConfig.dataUpdatedAt])
 
   return (
     <>
@@ -226,7 +231,9 @@ export const CippNotificationForm = ({
                 label="Webhook Custom Headers JSON"
                 name="webhookAuthHeaders"
                 formControl={formControl}
-                helperText={'Used when auth type is Custom Headers. Example: {"Authorization":"Bearer token","x-api-key":"value"}'}
+                helperText={
+                  'Used when auth type is Custom Headers. Example: {"Authorization":"Bearer token","x-api-key":"value"}'
+                }
               />
             </Grid>
           </CippFormCondition>
@@ -298,42 +305,42 @@ export const CippNotificationForm = ({
           createDialog={notificationDialog}
           fields={[
             {
-              type: "switch",
-              name: "writeLog",
-              label: "Write Alert to Logbook (Notifications are sent hourly)",
+              type: 'switch',
+              name: 'writeLog',
+              label: 'Write Alert to Logbook (Notifications are sent hourly)',
             },
             {
-              type: "switch",
-              name: "sendEmailNow",
-              label: "Send Email Now",
+              type: 'switch',
+              name: 'sendEmailNow',
+              label: 'Send Email Now',
             },
             {
-              type: "switch",
-              name: "sendWebhookNow",
-              label: "Send Webhook Now",
+              type: 'switch',
+              name: 'sendWebhookNow',
+              label: 'Send Webhook Now',
             },
             {
-              type: "switch",
-              name: "sendPsaNow",
-              label: "Send to PSA Now",
+              type: 'switch',
+              name: 'sendPsaNow',
+              label: 'Send to PSA Now',
             },
           ]}
           api={{
             confirmText:
-              "Are you sure you want to send a test alert to the email address(es) and webhook URL configured?",
-            url: "/api/ExecAddAlert",
-            type: "POST",
+              'Are you sure you want to send a test alert to the email address(es) and webhook URL configured?',
+            url: '/api/ExecAddAlert',
+            type: 'POST',
             dataFunction: (row) => ({
               ...row,
               tenantFilter: currentTenant,
-              text: "This is a test from Notification Settings",
+              text: 'This is a test from Notification Settings',
             }),
           }}
           allowResubmit={true}
         />
       )}
     </>
-  );
-};
+  )
+}
 
-export default CippNotificationForm;
+export default CippNotificationForm

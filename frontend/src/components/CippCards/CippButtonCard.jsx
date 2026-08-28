@@ -61,7 +61,11 @@ export default function CippButtonCard({
             expandIcon={<ExpandMoreIcon />}
             onClick={() => setCardExpanded(!cardExpanded)}
           >
-            <CardHeader action={cardActions} title={title} sx={{ pl: 1, py: 0, flexGrow: 1 }} />
+            <CardHeader
+              action={cardActions}
+              title={title}
+              sx={{ pl: 1, py: 0, flexGrow: 1 }}
+            />
           </AccordionSummary>
           <AccordionDetails sx={{ p: 0 }}>
             <CardContent style={{ marginBottom: 'auto' }}>

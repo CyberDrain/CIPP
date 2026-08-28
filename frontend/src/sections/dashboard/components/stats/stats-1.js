@@ -1,7 +1,7 @@
-import ArrowRightIcon from "@heroicons/react/24/outline/ArrowRightIcon";
-import LockClosedIcon from "@heroicons/react/24/outline/LockClosedIcon";
-import ReceiptPercentIcon from "@heroicons/react/24/outline/ReceiptPercentIcon";
-import UsersIcon from "@heroicons/react/24/outline/UsersIcon";
+import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon'
+import LockClosedIcon from '@heroicons/react/24/outline/LockClosedIcon'
+import ReceiptPercentIcon from '@heroicons/react/24/outline/ReceiptPercentIcon'
+import UsersIcon from '@heroicons/react/24/outline/UsersIcon'
 import {
   Avatar,
   Box,
@@ -12,8 +12,8 @@ import {
   Stack,
   SvgIcon,
   Typography,
-} from "@mui/material";
-import { Grid } from "@mui/system";
+} from '@mui/material'
+import { Grid } from '@mui/system'
 const data = [
   {
     icon: (
@@ -21,8 +21,8 @@ const data = [
         <UsersIcon />
       </SvgIcon>
     ),
-    label: "Users",
-    linkLabel: "Reports",
+    label: 'Users',
+    linkLabel: 'Reports',
     value: 3450,
   },
   {
@@ -31,8 +31,8 @@ const data = [
         <LockClosedIcon />
       </SvgIcon>
     ),
-    label: "Logins",
-    linkLabel: "Analytics",
+    label: 'Logins',
+    linkLabel: 'Analytics',
     value: 68,
   },
   {
@@ -41,11 +41,11 @@ const data = [
         <ReceiptPercentIcon />
       </SvgIcon>
     ),
-    label: "Invoices",
-    linkLabel: "Transactions",
+    label: 'Invoices',
+    linkLabel: 'Transactions',
     value: 3120,
   },
-];
+]
 
 export const Stats1 = () => (
   <Box sx={{ p: 3 }}>
@@ -53,12 +53,17 @@ export const Stats1 = () => (
       {data.map((item) => {
         return (
           <Grid size={{ md: 4, xs: 12 }} key={item.label}>
-            <Card sx={{ height: "100%" }}>
-              <Stack alignItems="center" direction="row" spacing={2} sx={{ p: 2 }}>
+            <Card sx={{ height: '100%' }}>
+              <Stack
+                alignItems="center"
+                direction="row"
+                spacing={2}
+                sx={{ p: 2 }}
+              >
                 <Avatar
                   sx={{
-                    backgroundColor: "primary.main",
-                    color: "primary.contrastText",
+                    backgroundColor: 'primary.main',
+                    color: 'primary.contrastText',
                     height: 56,
                     width: 56,
                   }}
@@ -92,8 +97,8 @@ export const Stats1 = () => (
               </CardActions>
             </Card>
           </Grid>
-        );
+        )
       })}
     </Grid>
   </Box>
-);
+)

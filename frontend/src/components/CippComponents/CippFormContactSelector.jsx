@@ -1,6 +1,6 @@
-import { CippFormComponent } from "./CippFormComponent";
-import { useWatch } from "react-hook-form";
-import { useSettings } from "../../hooks/use-settings";
+import { CippFormComponent } from './CippFormComponent'
+import { useWatch } from 'react-hook-form'
+import { useSettings } from '../../hooks/use-settings'
 
 export const CippFormContactSelector = ({
   formControl,
@@ -8,15 +8,18 @@ export const CippFormContactSelector = ({
   label,
   allTenants = false,
   multiple = false,
-  type = "multiple",
+  type = 'multiple',
   select,
   addedField,
   valueField,
   dataFilter = null,
   ...other
 }) => {
-  const currentTenant = useWatch({ control: formControl.control, name: "tenantFilter" });
-  const selectedTenant = useSettings().currentTenant;
+  const currentTenant = useWatch({
+    control: formControl.control,
+    name: 'tenantFilter',
+  })
+  const selectedTenant = useSettings().currentTenant
   return (
     <CippFormComponent
       name={name}
@@ -27,22 +30,22 @@ export const CippFormContactSelector = ({
       api={{
         addedField: addedField,
         tenantFilter: currentTenant ? currentTenant.value : selectedTenant,
-        url: "/api/ListContacts",
+        url: '/api/ListContacts',
         labelField: (option) =>
           `${option.displayName || option.DisplayName} (${
             option.mail || option.WindowsEmailAddress
           })`,
-        valueField: valueField ? valueField : "WindowsEmailAddress" || "mail",
+        valueField: valueField ? valueField : 'WindowsEmailAddress' || 'mail',
         queryKey: `listcontacts-${currentTenant?.value ? currentTenant.value : selectedTenant}`,
         dataFilter: (options) => {
           if (dataFilter) {
-            return options.filter(dataFilter);
+            return options.filter(dataFilter)
           }
-          return options;
+          return options
         },
       }}
       creatable={false}
       {...other}
     />
-  );
-};
+  )
+}

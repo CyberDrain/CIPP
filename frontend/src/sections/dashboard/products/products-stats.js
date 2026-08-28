@@ -1,32 +1,32 @@
-import CheckCircleIcon from "@heroicons/react/24/outline/CheckCircleIcon";
-import CurrencyDollarIcon from "@heroicons/react/24/outline/CurrencyDollarIcon";
-import ShoppingCartIcon from "@heroicons/react/24/outline/ShoppingCartIcon";
-import XCircleIcon from "@heroicons/react/24/outline/XCircleIcon";
-import { Card, Stack, Typography } from "@mui/material";
-import { Grid } from "@mui/system";
+import CheckCircleIcon from '@heroicons/react/24/outline/CheckCircleIcon'
+import CurrencyDollarIcon from '@heroicons/react/24/outline/CurrencyDollarIcon'
+import ShoppingCartIcon from '@heroicons/react/24/outline/ShoppingCartIcon'
+import XCircleIcon from '@heroicons/react/24/outline/XCircleIcon'
+import { Card, Stack, Typography } from '@mui/material'
+import { Grid } from '@mui/system'
 
 const stats = [
   {
     icon: <CheckCircleIcon />,
-    data: "5,000",
-    name: "Total Devices",
+    data: '5,000',
+    name: 'Total Devices',
   },
   {
     icon: <XCircleIcon />,
-    data: "15",
-    name: "Total Clients",
+    data: '15',
+    name: 'Total Clients',
   },
   {
     icon: <CurrencyDollarIcon />,
-    data: "2345",
-    name: "Active Devices",
+    data: '2345',
+    name: 'Active Devices',
   },
   {
     icon: <ShoppingCartIcon />,
-    data: "300",
-    name: "Expired Devices",
+    data: '300',
+    name: 'Expired Devices',
   },
-];
+]
 
 export const ProductsStats = () => (
   <Card>
@@ -38,19 +38,19 @@ export const ProductsStats = () => (
           sx={{
             borderBottom: (theme) => ({
               xs: `1px solid ${theme.palette.divider}`,
-              md: "none",
+              md: 'none',
             }),
             borderRight: (theme) => ({
               md: `1px solid ${theme.palette.divider}`,
             }),
-            "&:nth-of-type(3)": {
+            '&:nth-of-type(3)': {
               borderBottom: (theme) => ({
                 xs: `1px solid ${theme.palette.divider}`,
-                sm: "none",
+                sm: 'none',
               }),
             },
-            "&:nth-of-type(4)": {
-              borderBottom: "none",
+            '&:nth-of-type(4)': {
+              borderBottom: 'none',
             },
           }}
         >
@@ -67,4 +67,4 @@ export const ProductsStats = () => (
       ))}
     </Grid>
   </Card>
-);
+)

@@ -1,23 +1,23 @@
-import React from "react";
-import { Typography } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { CippFormTenantSelector } from "../../../../components/CippComponents/CippFormTenantSelector";
-import { CippFormCondition } from "../../../../components/CippComponents/CippFormCondition";
-import countryList from "../../../../data/countryList.json";
+import React from 'react'
+import { Typography } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { CippFormTenantSelector } from '../../../../components/CippComponents/CippFormTenantSelector'
+import { CippFormCondition } from '../../../../components/CippComponents/CippFormCondition'
+import countryList from '../../../../data/countryList.json'
 
 const DeployNamedLocationForm = () => {
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      Type: "Countries",
+      Type: 'Countries',
       Trusted: false,
       includeUnknownCountriesAndRegions: false,
     },
-  });
+  })
 
   return (
     <CippFormPage
@@ -39,7 +39,7 @@ const DeployNamedLocationForm = () => {
             name="selectedTenants"
             type="multiple"
             preselectedEnabled={true}
-            validators={{ required: "At least one tenant must be selected" }}
+            validators={{ required: 'At least one tenant must be selected' }}
             allTenants={true}
           />
         </Grid>
@@ -50,7 +50,7 @@ const DeployNamedLocationForm = () => {
             label="Named Location Name"
             name="policyname"
             formControl={formControl}
-            validators={{ required: "Policy name is required" }}
+            validators={{ required: 'Policy name is required' }}
           />
         </Grid>
 
@@ -61,11 +61,11 @@ const DeployNamedLocationForm = () => {
             name="Type"
             row
             options={[
-              { label: "Countries Location", value: "Countries" },
-              { label: "IP Location", value: "IPLocation" },
+              { label: 'Countries Location', value: 'Countries' },
+              { label: 'IP Location', value: 'IPLocation' },
             ]}
             formControl={formControl}
-            validators={{ required: "Type is required" }}
+            validators={{ required: 'Type is required' }}
           />
         </Grid>
 
@@ -85,7 +85,7 @@ const DeployNamedLocationForm = () => {
               multiline
               rows={4}
               placeholder="Enter the IPs to add to this named location, one per line, in CIDR format e.g.: 111.111.111.111/24"
-              validators={{ required: "IPs are required" }}
+              validators={{ required: 'IPs are required' }}
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
@@ -116,7 +116,7 @@ const DeployNamedLocationForm = () => {
                 label: Name,
               }))}
               formControl={formControl}
-              validators={{ required: "At least one country must be selected" }}
+              validators={{ required: 'At least one country must be selected' }}
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
@@ -130,9 +130,11 @@ const DeployNamedLocationForm = () => {
         </CippFormCondition>
       </Grid>
     </CippFormPage>
-  );
-};
+  )
+}
 
-DeployNamedLocationForm.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+DeployNamedLocationForm.getLayout = (page) => (
+  <DashboardLayout>{page}</DashboardLayout>
+)
 
-export default DeployNamedLocationForm;
+export default DeployNamedLocationForm

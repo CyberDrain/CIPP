@@ -106,7 +106,8 @@ const Page = () => {
               $count: true,
             },
             dataKey: 'Results',
-            labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+            labelField: (user) =>
+              `${user.displayName} (${user.userPrincipalName})`,
             valueField: 'id',
             addedField: {
               userPrincipalName: 'userPrincipalName',
@@ -118,7 +119,8 @@ const Page = () => {
           validators: {
             validate: (value, formValues) =>
               (Array.isArray(value) && value.length > 0) ||
-              (Array.isArray(formValues.bulkMember) && formValues.bulkMember.length > 0) ||
+              (Array.isArray(formValues.bulkMember) &&
+                formValues.bulkMember.length > 0) ||
               'Select at least one user or upload a CSV',
           },
         },
@@ -130,7 +132,8 @@ const Page = () => {
       confirmText:
         'Select the users to add as members to [displayName], or drop a CSV file with a userPrincipalName column to bulk add members.',
       // Manual member adds are rejected on dynamic and on-prem synced groups
-      condition: (row) => !row?.membershipRule && row?.onPremisesSyncEnabled !== true,
+      condition: (row) =>
+        !row?.membershipRule && row?.onPremisesSyncEnabled !== true,
       multiPost: false,
       allowResubmit: true,
     },
@@ -202,7 +205,9 @@ const Page = () => {
       defaultvalues: (row) => {
         const states = [
           ...new Set(
-            (Array.isArray(row) ? row : [row]).map((r) => r?.onPremisesSyncEnabled === true)
+            (Array.isArray(row) ? row : [row]).map(
+              (r) => r?.onPremisesSyncEnabled === true
+            )
           ),
         ]
         return states.length === 1 ? { isCloudManaged: String(!states[0]) } : {}
@@ -221,7 +226,9 @@ const Page = () => {
             validate: (value, formValues, row) => {
               const states = [
                 ...new Set(
-                  (Array.isArray(row) ? row : [row]).map((r) => r?.onPremisesSyncEnabled === true)
+                  (Array.isArray(row) ? row : [row]).map(
+                    (r) => r?.onPremisesSyncEnabled === true
+                  )
                 ),
               ]
               if (states.length === 1 && String(value) === String(!states[0])) {
@@ -253,7 +260,8 @@ const Page = () => {
         allowExternal: 'allowExternal',
         username: 'mailNickname',
       },
-      confirmText: 'Are you sure you want to create a template based on this group?',
+      confirmText:
+        'Are you sure you want to create a template based on this group?',
       multiPost: false,
     },
     {
@@ -444,7 +452,9 @@ const Page = () => {
         apiUrl={reportDB.resolvedApiUrl}
         apiData={reportDB.useReportDB ? undefined : {}}
         queryKey={
-          reportDB.useReportDB ? reportDB.resolvedQueryKey : `groups-${currentTenant}`
+          reportDB.useReportDB
+            ? reportDB.resolvedQueryKey
+            : `groups-${currentTenant}`
         }
         actions={actions}
         offCanvas={offCanvas}
@@ -481,10 +491,19 @@ const Page = () => {
               queryKey: 'group-members-[id]',
               api: {
                 url: '/api/ListGroups',
-                data: { groupID: '[id]', members: true, groupType: '[groupType]' },
+                data: {
+                  groupID: '[id]',
+                  members: true,
+                  groupType: '[groupType]',
+                },
                 dataKey: 'members',
               },
-              simpleColumns: ['displayName', 'userPrincipalName', 'mail', '@odata.type'],
+              simpleColumns: [
+                'displayName',
+                'userPrincipalName',
+                'mail',
+                '@odata.type',
+              ],
               actions: [
                 {
                   label: 'View User',
@@ -493,7 +512,8 @@ const Page = () => {
                   color: 'info',
                   icon: <EyeIcon />,
                   condition: (row) =>
-                    !row?.['@odata.type'] || row['@odata.type'] === '#microsoft.graph.user',
+                    !row?.['@odata.type'] ||
+                    row['@odata.type'] === '#microsoft.graph.user',
                 },
                 {
                   label: 'View Group',
@@ -501,17 +521,24 @@ const Page = () => {
                   pinned: true,
                   color: 'info',
                   icon: <EyeIcon />,
-                  condition: (row) => row?.['@odata.type'] === '#microsoft.graph.group',
+                  condition: (row) =>
+                    row?.['@odata.type'] === '#microsoft.graph.group',
                 },
                 {
                   label: 'Remove Member',
                   type: 'POST',
                   url: '/api/ExecGroupMembers',
                   icon: <PersonRemove />,
-                  data: { action: '!removeMember', groupId: 'parent.id', users: 'id' },
-                  confirmText: 'Remove [displayName] from [parent.displayName]?',
+                  data: {
+                    action: '!removeMember',
+                    groupId: 'parent.id',
+                    users: 'id',
+                  },
+                  confirmText:
+                    'Remove [displayName] from [parent.displayName]?',
                   condition: (row) =>
-                    !row?.parent?.dynamicGroupBool && !row?.parent?.membershipRule,
+                    !row?.parent?.dynamicGroupBool &&
+                    !row?.parent?.membershipRule,
                 },
               ],
               cardButton: {
@@ -521,7 +548,8 @@ const Page = () => {
                 allowResubmit: true,
                 relatedQueryKeys: 'group-members-[id]',
                 confirmText: 'Add members to [displayName]?',
-                condition: (row) => !row?.dynamicGroupBool && !row?.membershipRule,
+                condition: (row) =>
+                  !row?.dynamicGroupBool && !row?.membershipRule,
                 data: { action: '!addMember', groupId: 'id' },
                 fields: [
                   {
@@ -553,7 +581,11 @@ const Page = () => {
               queryKey: 'group-owners-[id]',
               api: {
                 url: '/api/ListGroups',
-                data: { groupID: '[id]', owners: true, groupType: '[groupType]' },
+                data: {
+                  groupID: '[id]',
+                  owners: true,
+                  groupType: '[groupType]',
+                },
                 dataKey: 'owners',
               },
               simpleColumns: ['displayName', 'userPrincipalName', 'mail'],
@@ -565,15 +597,21 @@ const Page = () => {
                   color: 'info',
                   icon: <EyeIcon />,
                   condition: (row) =>
-                    !row?.['@odata.type'] || row['@odata.type'] === '#microsoft.graph.user',
+                    !row?.['@odata.type'] ||
+                    row['@odata.type'] === '#microsoft.graph.user',
                 },
                 {
                   label: 'Remove Owner',
                   type: 'POST',
                   url: '/api/ExecGroupMembers',
                   icon: <PersonRemove />,
-                  data: { action: '!removeOwner', groupId: 'parent.id', users: 'id' },
-                  confirmText: 'Remove [displayName] as owner of [parent.displayName]?',
+                  data: {
+                    action: '!removeOwner',
+                    groupId: 'parent.id',
+                    users: 'id',
+                  },
+                  confirmText:
+                    'Remove [displayName] as owner of [parent.displayName]?',
                 },
               ],
               cardButton: {

@@ -10,7 +10,14 @@ import {
   Typography,
 } from '@mui/material'
 import Link from 'next/link'
-import { useEffect, useState, useMemo, useCallback, useRef, useImperativeHandle } from 'react'
+import {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useImperativeHandle,
+} from 'react'
 import { useSettings } from '../../hooks/use-settings'
 import { getCippError } from '../../utils/get-cipp-error'
 import { ApiGetCallWithPagination } from '../../api/ApiCall'
@@ -94,7 +101,11 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
   } = props
 
   const [usedOptions, setUsedOptions] = useState(options)
-  const [getRequestInfo, setGetRequestInfo] = useState({ url: '', waiting: false, queryKey: '' })
+  const [getRequestInfo, setGetRequestInfo] = useState({
+    url: '',
+    waiting: false,
+    queryKey: '',
+  })
   const hasPreselectedRef = useRef(false)
   const autocompleteRef = useRef(null) // Ref for focusing input after selection
 
@@ -122,13 +133,21 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
 
   // Sync internalValue when external value or defaultValue prop changes (e.g., when editing a form)
   useEffect(() => {
-    const currentValue = value !== undefined && value !== null ? value : defaultValue
+    const currentValue =
+      value !== undefined && value !== null ? value : defaultValue
     if (currentValue !== undefined && currentValue !== null) {
       setInternalValue((prev) => {
         // Compare by value to avoid infinite re-render loops when the parent
         // passes an object with the same contents but a new reference.
-        if (prev && typeof prev === 'object' && typeof currentValue === 'object') {
-          if (prev.value === currentValue.value && prev.label === currentValue.label) {
+        if (
+          prev &&
+          typeof prev === 'object' &&
+          typeof currentValue === 'object'
+        ) {
+          if (
+            prev.value === currentValue.value &&
+            prev.label === currentValue.label
+          ) {
             return prev
           }
         }
@@ -140,7 +159,8 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
 
   // Controlled value wins; otherwise use the onChange-tracked selection (FormComponent
   // often drives via defaultValue + onChange rather than a controlled value prop).
-  const currentSelection = value !== undefined && value !== null ? value : internalValue
+  const currentSelection =
+    value !== undefined && value !== null ? value : internalValue
   const hasSelection = multiple
     ? Array.isArray(currentSelection) && currentSelection.length > 0
     : currentSelection != null && currentSelection !== ''
@@ -150,19 +170,27 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
     ...getRequestInfo,
   })
 
-  const currentTenant = api?.tenantFilter ? api.tenantFilter : useSettings().currentTenant
+  const currentTenant = api?.tenantFilter
+    ? api.tenantFilter
+    : useSettings().currentTenant
   useEffect(() => {
     if (actionGetRequest.isSuccess && !actionGetRequest.isFetching) {
       // Guard against a non-paginated cache shape (e.g. when a queryKey is accidentally shared
       // with a useQuery/ApiGetCall consumer that stores a plain array instead of { pages }).
       const pages = actionGetRequest.data?.pages
-      const lastPage = Array.isArray(pages) ? pages[pages.length - 1] : undefined
+      const lastPage = Array.isArray(pages)
+        ? pages[pages.length - 1]
+        : undefined
       const nextLinkExists = lastPage?.Metadata?.nextLink
       if (nextLinkExists) {
         actionGetRequest.fetchNextPage()
       }
     }
-  }, [actionGetRequest.data?.pages?.length, actionGetRequest.isFetching, api?.queryKey])
+  }, [
+    actionGetRequest.data?.pages?.length,
+    actionGetRequest.isFetching,
+    api?.queryKey,
+  ])
 
   const apiRef = useRef(api)
   apiRef.current = api
@@ -230,36 +258,36 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
         const convertedOptions = combinedResults
           .filter((option) => option !== null && option !== undefined)
           .map((option) => {
-          const addedFields = {}
-          if (currentApi?.addedField) {
-            Object.keys(currentApi.addedField).forEach((key) => {
-              addedFields[key] = option[currentApi.addedField[key]]
-            })
-          }
+            const addedFields = {}
+            if (currentApi?.addedField) {
+              Object.keys(currentApi.addedField).forEach((key) => {
+                addedFields[key] = option[currentApi.addedField[key]]
+              })
+            }
 
-          return {
-            label:
-              typeof currentApi?.labelField === 'function'
-                ? currentApi.labelField(option)
-                : option[currentApi?.labelField]
-                  ? option[currentApi?.labelField]
-                  : option[currentApi?.altLabelField] ||
-                    option[currentApi?.valueField] ||
-                    'No label found - Are you missing a labelField?',
-            value:
-              typeof currentApi?.valueField === 'function'
-                ? currentApi.valueField(option)
-                : option[currentApi?.valueField],
-            description:
-              typeof currentApi?.descriptionField === 'function'
-                ? currentApi.descriptionField(option)
-                : currentApi?.descriptionField
-                  ? option[currentApi?.descriptionField]
-                  : undefined,
-            addedFields,
-            rawData: option, // Store the full original object
-          }
-        })
+            return {
+              label:
+                typeof currentApi?.labelField === 'function'
+                  ? currentApi.labelField(option)
+                  : option[currentApi?.labelField]
+                    ? option[currentApi?.labelField]
+                    : option[currentApi?.altLabelField] ||
+                      option[currentApi?.valueField] ||
+                      'No label found - Are you missing a labelField?',
+              value:
+                typeof currentApi?.valueField === 'function'
+                  ? currentApi.valueField(option)
+                  : option[currentApi?.valueField],
+              description:
+                typeof currentApi?.descriptionField === 'function'
+                  ? currentApi.descriptionField(option)
+                  : currentApi?.descriptionField
+                    ? option[currentApi?.descriptionField]
+                    : undefined,
+              addedFields,
+              rawData: option, // Store the full original object
+            }
+          })
 
         if (currentApi?.dataFilter) {
           setUsedOptions(currentApi.dataFilter(convertedOptions))
@@ -270,17 +298,29 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
     }
 
     if (actionGetRequest.isError) {
-      setUsedOptions([{ label: getCippError(actionGetRequest.error), value: 'error' }])
+      setUsedOptions([
+        { label: getCippError(actionGetRequest.error), value: 'error' },
+      ])
     }
-  }, [actionGetRequest.data, actionGetRequest.isSuccess, actionGetRequest.isError, actionGetRequest.error, apiRef])
+  }, [
+    actionGetRequest.data,
+    actionGetRequest.isSuccess,
+    actionGetRequest.isError,
+    actionGetRequest.error,
+    apiRef,
+  ])
 
   const memoizedOptions = useMemo(() => {
     let finalOptions = api ? usedOptions : options
     if (removeOptions && removeOptions.length) {
-      finalOptions = finalOptions.filter((o) => !removeOptions.includes(o.value))
+      finalOptions = finalOptions.filter(
+        (o) => !removeOptions.includes(o.value)
+      )
     }
     if (sortOptions) {
-      finalOptions.sort((a, b) => String(a.label ?? "").localeCompare(String(b.label ?? "")))
+      finalOptions.sort((a, b) =>
+        String(a.label ?? '').localeCompare(String(b.label ?? ''))
+      )
     }
     return finalOptions
   }, [api, usedOptions, options, removeOptions, sortOptions])
@@ -290,7 +330,8 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
     if (memoizedOptions.length > 0 && !hasPreselectedRef.current) {
       // Check if we should skip preselection due to existing defaultValue
       const hasDefaultValue =
-        defaultValue && (Array.isArray(defaultValue) ? defaultValue.length > 0 : true)
+        defaultValue &&
+        (Array.isArray(defaultValue) ? defaultValue.length > 0 : true)
 
       if (!hasDefaultValue) {
         // For multiple mode, check if value is empty array or null/undefined
@@ -304,7 +345,9 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
 
           // Handle explicit preselected value
           if (preselectedValue) {
-            preselectedOption = memoizedOptions.find((option) => option.value === preselectedValue)
+            preselectedOption = memoizedOptions.find(
+              (option) => option.value === preselectedValue
+            )
           }
           // Handle auto-select first item from API
           else if (api?.autoSelectFirstItem && memoizedOptions.length > 0) {
@@ -345,11 +388,16 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
     ) {
       return defaultValue
     }
-    const valueMatches = memoizedOptions.filter((option) => option.value === defaultValue.value)
+    const valueMatches = memoizedOptions.filter(
+      (option) => option.value === defaultValue.value
+    )
     if (valueMatches.length === 1) {
       return valueMatches[0]
     }
-    return valueMatches.find((option) => option.label === defaultValue.label) ?? defaultValue
+    return (
+      valueMatches.find((option) => option.label === defaultValue.label) ??
+      defaultValue
+    )
   }, [defaultValue, multiple, memoizedOptions])
 
   // Create a stable key that only changes when necessary inputs change
@@ -373,7 +421,9 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
 
   const lookupOptionByValue = useCallback(
     (value) => {
-      const foundOption = memoizedOptions.find((option) => option.value === value)
+      const foundOption = memoizedOptions.find(
+        (option) => option.value === value
+      )
       return foundOption || { label: value, value: value }
     },
     [memoizedOptions]
@@ -405,7 +455,11 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
         onOpen={() => setOpen(true)}
         onClose={(event, reason) => {
           // Keep open if Tab was used in multiple mode
-          if (reason === 'selectOption' && multiple && event?.type === 'click') {
+          if (
+            reason === 'selectOption' &&
+            multiple &&
+            event?.type === 'click'
+          ) {
             return
           }
           setOpen(false)
@@ -430,7 +484,9 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
           const isExisting =
             options?.length > 0 &&
             options.some(
-              (option) => params.inputValue === option.value || params.inputValue === option.label
+              (option) =>
+                params.inputValue === option.value ||
+                params.inputValue === option.label
             )
           if (params.inputValue !== '' && creatable && !isExisting) {
             const newOption = {
@@ -486,7 +542,12 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
                 newValue = onCreateOption(newValue, newValue?.addedFields)
               }
             }
-            if (newValue?.value === null || newValue?.value === undefined || newValue?.value === '' || newValue.value === 'error') {
+            if (
+              newValue?.value === null ||
+              newValue?.value === undefined ||
+              newValue?.value === '' ||
+              newValue.value === 'error'
+            ) {
               newValue = null
             }
           }
@@ -526,10 +587,18 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
             // blank; the debug hint only shows when a real value is missing its label.
             if (api) {
               if (option.label === null || option.label === '') return ''
-              if (option.label === undefined && (option.value === undefined || option.value === null || option.value === '')) {
+              if (
+                option.label === undefined &&
+                (option.value === undefined ||
+                  option.value === null ||
+                  option.value === '')
+              ) {
                 return ''
               }
-              return option.label || 'Label not found - Are you missing a labelField?'
+              return (
+                option.label ||
+                'Label not found - Are you missing a labelField?'
+              )
             }
             // Fallback for any edge cases (e.g. preset filter objects with filterName)
             return (
@@ -546,7 +615,9 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
           if (event.key === 'Tab' && !event.shiftKey) {
             // Check if there's a highlighted option
             const listbox = document.querySelector('[role="listbox"]')
-            const highlightedOption = listbox?.querySelector('[data-focus="true"], .Mui-focused')
+            const highlightedOption = listbox?.querySelector(
+              '[data-focus="true"], .Mui-focused'
+            )
 
             if (highlightedOption && listbox?.style.display !== 'none') {
               event.preventDefault()
@@ -577,7 +648,11 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
                   endAdornment: (
                     <>
                       {customAction && (
-                        <Tooltip title={customAction.tooltip || ''} placement="bottom" arrow>
+                        <Tooltip
+                          title={customAction.tooltip || ''}
+                          placement="bottom"
+                          arrow
+                        >
                           <IconButton
                             component={customAction.link ? Link : 'button'}
                             href={customAction.link || undefined}
@@ -646,7 +721,9 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
                 </Tooltip>
               )}
               {api?.templateView && (
-                <Tooltip title={`View ${api?.templateView.title}` || 'View details'}>
+                <Tooltip
+                  title={`View ${api?.templateView.title}` || 'View details'}
+                >
                   <IconButton
                     size="small"
                     onClick={() => {
@@ -659,20 +736,26 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
                         const fullObjects = currentValue
                           .map((v) => {
                             const valueToFind = v?.value || v
-                            const found = usedOptions.find((opt) => opt.value === valueToFind)
+                            const found = usedOptions.find(
+                              (opt) => opt.value === valueToFind
+                            )
                             let rawData = found?.rawData
 
                             // If property is specified, extract and parse JSON from that property
                             if (rawData && api?.templateView?.property) {
                               try {
-                                const propertyValue = rawData[api.templateView.property]
+                                const propertyValue =
+                                  rawData[api.templateView.property]
                                 if (typeof propertyValue === 'string') {
                                   rawData = JSON.parse(propertyValue)
                                 } else {
                                   rawData = propertyValue
                                 }
                               } catch (e) {
-                                console.error('Failed to parse JSON from property:', e)
+                                console.error(
+                                  'Failed to parse JSON from property:',
+                                  e
+                                )
                                 // Keep original rawData if parsing fails
                               }
                             }
@@ -684,20 +767,26 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
                       } else {
                         // For single selection, get the full object
                         const valueToFind = currentValue?.value || currentValue
-                        const selectedOption = usedOptions.find((opt) => opt.value === valueToFind)
+                        const selectedOption = usedOptions.find(
+                          (opt) => opt.value === valueToFind
+                        )
                         let rawData = selectedOption?.rawData || null
 
                         // If property is specified, extract and parse JSON from that property
                         if (rawData && api?.templateView?.property) {
                           try {
-                            const propertyValue = rawData[api.templateView.property]
+                            const propertyValue =
+                              rawData[api.templateView.property]
                             if (typeof propertyValue === 'string') {
                               rawData = JSON.parse(propertyValue)
                             } else {
                               rawData = propertyValue
                             }
                           } catch (e) {
-                            console.error('Failed to parse JSON from property:', e)
+                            console.error(
+                              'Failed to parse JSON from property:',
+                              e
+                            )
                             // Keep original rawData if parsing fails
                           }
                         }
@@ -713,7 +802,11 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
                 </Tooltip>
               )}
               {customAction && customAction.position === 'outside' && (
-                <Tooltip title={customAction.tooltip || ''} placement="bottom" arrow>
+                <Tooltip
+                  title={customAction.tooltip || ''}
+                  placement="bottom"
+                  arrow
+                >
                   <IconButton
                     size="small"
                     onClick={(e) => {
@@ -746,11 +839,19 @@ export const CippAutoComplete = React.forwardRef((props, ref) => {
         renderOption={(props, option, { index }) => {
           const { key, ...optionProps } = props
           return (
-            <Box component="li" key={`${option.value}-${index}`} {...optionProps}>
+            <Box
+              component="li"
+              key={`${option.value}-${index}`}
+              {...optionProps}
+            >
               <Box>
                 <Typography variant="body1">{option.label}</Typography>
                 {option.description && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block' }}
+                  >
                     {option.description}
                   </Typography>
                 )}

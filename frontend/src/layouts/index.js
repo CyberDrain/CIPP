@@ -150,7 +150,11 @@ export const Layout = (props) => {
         return items
           .map((item) => {
             // Check if page is hidden by feature flag
-            if (item.path && hiddenPages.length > 0 && hiddenPages.includes(item.path)) {
+            if (
+              item.path &&
+              hiddenPages.length > 0 &&
+              hiddenPages.includes(item.path)
+            ) {
               return null
             }
 
@@ -184,7 +188,9 @@ export const Layout = (props) => {
             }
             // check sub-items
             if (item.items && item.items.length > 0) {
-              const filteredSubItems = filterItemsByRole(item.items).filter(Boolean)
+              const filteredSubItems = filterItemsByRole(item.items).filter(
+                Boolean
+              )
               if (filteredSubItems.length === 0) return null
               return { ...item, items: filteredSubItems }
             }
@@ -234,7 +240,8 @@ export const Layout = (props) => {
       // Only update if the data has actually changed (using dataUpdatedAt as a proxy)
       const dataUpdatedAt = userSettingsAPI.dataUpdatedAt
       if (dataUpdatedAt && dataUpdatedAt !== lastUserSettingsUpdate.current) {
-        const { bookmarks: _bookmarks, ...serverSettings } = userSettingsAPI.data || {}
+        const { bookmarks: _bookmarks, ...serverSettings } =
+          userSettingsAPI.data || {}
         //if userSettingsAPI.data contains offboardingDefaults.user, delete that specific key.
         if (serverSettings.offboardingDefaults?.user) {
           delete serverSettings.offboardingDefaults.user
@@ -334,7 +341,13 @@ export const Layout = (props) => {
               open={mobileNav.open}
             />
           )}
-          {!navCollapsed && <SideNav items={menuItems} onPin={handleNavPin} pinned={!!settings.pinNav} />}
+          {!navCollapsed && (
+            <SideNav
+              items={menuItems}
+              onPin={handleNavPin}
+              pinned={!!settings.pinNav}
+            />
+          )}
         </>
       )}
       <LayoutRoot
@@ -349,10 +362,13 @@ export const Layout = (props) => {
           <SubscriptionEndedDialog
             hostedSubscriptionEnded={currentRole.data?.hostedSubscriptionEnded}
           />
-          <FailedPaymentDialog hostedFailedPayments={currentRole.data?.hostedFailedPayments} />
+          <FailedPaymentDialog
+            hostedFailedPayments={currentRole.data?.hostedFailedPayments}
+          />
           <SsoMigrationDialog meData={currentRole.data} />
           <ForcedSsoMigrationDialog />
-          {(currentTenant === 'AllTenants' || !currentTenant) && !allTenantsSupport ? (
+          {(currentTenant === 'AllTenants' || !currentTenant) &&
+          !allTenantsSupport ? (
             <Box sx={{ flexGrow: 1, py: 3 }}>
               <Container maxWidth={false}>
                 <CippBreadcrumbNav mode="hierarchical" />

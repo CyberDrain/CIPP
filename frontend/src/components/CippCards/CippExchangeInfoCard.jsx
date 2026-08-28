@@ -13,12 +13,22 @@ import {
 import { PropertyList } from '../property-list'
 import { PropertyListItem } from '../property-list-item'
 import { getCippFormatting } from '../../utils/get-cipp-formatting'
-import { Check as CheckIcon, Close as CloseIcon, Sync } from '@mui/icons-material'
+import {
+  Check as CheckIcon,
+  Close as CloseIcon,
+  Sync,
+} from '@mui/icons-material'
 import { LinearProgressWithLabel } from '../linearProgressWithLabel'
 import { Stack, Grid } from '@mui/system'
 
 export const CippExchangeInfoCard = (props) => {
-  const { exchangeData, isLoading = false, isFetching = false, handleRefresh, ...other } = props
+  const {
+    exchangeData,
+    isLoading = false,
+    isFetching = false,
+    handleRefresh,
+    ...other
+  } = props
 
   // Define the protocols array
   const protocols = [
@@ -50,8 +60,14 @@ export const CippExchangeInfoCard = (props) => {
     { name: 'Litigation Hold', enabled: exchangeData?.LitigationHold },
     { name: 'In-Place Hold', enabled: exchangeData?.InPlaceHold },
     { name: 'eDiscovery Hold', enabled: exchangeData?.EDiscoveryHold },
-    { name: 'Purview Retention Hold', enabled: exchangeData?.PurviewRetentionHold },
-    { name: 'Excluded from Org-Wide Hold', enabled: exchangeData?.ExcludedFromOrgWideHold },
+    {
+      name: 'Purview Retention Hold',
+      enabled: exchangeData?.PurviewRetentionHold,
+    },
+    {
+      name: 'Excluded from Org-Wide Hold',
+      enabled: exchangeData?.ExcludedFromOrgWideHold,
+    },
   ]
 
   return (
@@ -60,7 +76,11 @@ export const CippExchangeInfoCard = (props) => {
         title={
           <Stack
             direction="row"
-            sx={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between' }}
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
           >
             <Typography variant="h6">Exchange Information</Typography>
             {isFetching ? (
@@ -88,7 +108,11 @@ export const CippExchangeInfoCard = (props) => {
             ) : (
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <Typography variant="inherit" color="text.primary" gutterBottom>
+                  <Typography
+                    variant="inherit"
+                    color="text.primary"
+                    gutterBottom
+                  >
                     Mailbox Type:
                   </Typography>
                   <Typography variant="inherit">
@@ -96,7 +120,11 @@ export const CippExchangeInfoCard = (props) => {
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <Typography variant="inherit" color="text.primary" gutterBottom>
+                  <Typography
+                    variant="inherit"
+                    color="text.primary"
+                    gutterBottom
+                  >
                     Hidden from GAL:
                   </Typography>
                   <Typography variant="inherit">
@@ -107,19 +135,33 @@ export const CippExchangeInfoCard = (props) => {
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <Typography variant="inherit" color="text.primary" gutterBottom>
+                  <Typography
+                    variant="inherit"
+                    color="text.primary"
+                    gutterBottom
+                  >
                     Blocked For Spam:
                   </Typography>
                   <Typography variant="inherit">
-                    {getCippFormatting(exchangeData?.BlockedForSpam, 'BlockedForSpam')}
+                    {getCippFormatting(
+                      exchangeData?.BlockedForSpam,
+                      'BlockedForSpam'
+                    )}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 12 }}>
-                  <Typography variant="inherit" color="text.primary" gutterBottom>
+                  <Typography
+                    variant="inherit"
+                    color="text.primary"
+                    gutterBottom
+                  >
                     Retention Policy:
                   </Typography>
                   <Typography variant="inherit">
-                    {getCippFormatting(exchangeData?.RetentionPolicy, 'RetentionPolicy')}
+                    {getCippFormatting(
+                      exchangeData?.RetentionPolicy,
+                      'RetentionPolicy'
+                    )}
                   </Typography>
                 </Grid>
               </Grid>
@@ -141,7 +183,8 @@ export const CippExchangeInfoCard = (props) => {
                 )}GB)`}
                 value={
                   Math.round(
-                    (exchangeData?.TotalItemSize / exchangeData?.ProhibitSendReceiveQuota) *
+                    (exchangeData?.TotalItemSize /
+                      exchangeData?.ProhibitSendReceiveQuota) *
                       100 *
                       100
                   ) / 100
@@ -171,13 +214,16 @@ export const CippExchangeInfoCard = (props) => {
                   if (Array.isArray(forwardingAddress)) {
                     cleanAddress = forwardingAddress
                       .map((addr) =>
-                        typeof addr === 'string' ? addr.replace(/^smtp:/i, '') : String(addr)
+                        typeof addr === 'string'
+                          ? addr.replace(/^smtp:/i, '')
+                          : String(addr)
                       )
                       .join(', ')
                     // Check if any address has smtp: prefix (external) or contains @ (external email)
                     forwardingType = forwardingAddress.some(
                       (addr) =>
-                        (typeof addr === 'string' && addr.toLowerCase().startsWith('smtp:')) ||
+                        (typeof addr === 'string' &&
+                          addr.toLowerCase().startsWith('smtp:')) ||
                         (typeof addr === 'string' && addr.includes('@'))
                     )
                       ? 'External'
@@ -206,7 +252,11 @@ export const CippExchangeInfoCard = (props) => {
                 return (
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <Typography variant="inherit" color="text.primary" gutterBottom>
+                      <Typography
+                        variant="inherit"
+                        color="text.primary"
+                        gutterBottom
+                      >
                         Forwarding Status:
                       </Typography>
                       <Typography variant="inherit">
@@ -218,18 +268,31 @@ export const CippExchangeInfoCard = (props) => {
                     {forwardingType !== 'None' && (
                       <>
                         <Grid size={{ xs: 12, md: 6 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Keep Copy in Mailbox:
                           </Typography>
                           <Typography variant="inherit">
-                            {getCippFormatting(forwardAndDeliver, 'ForwardAndDeliver')}
+                            {getCippFormatting(
+                              forwardAndDeliver,
+                              'ForwardAndDeliver'
+                            )}
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12, md: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Forwarding Address:
                           </Typography>
-                          <Typography variant="inherit">{cleanAddress}</Typography>
+                          <Typography variant="inherit">
+                            {cleanAddress}
+                          </Typography>
                         </Grid>
                       </>
                     )}
@@ -249,18 +312,30 @@ export const CippExchangeInfoCard = (props) => {
             ) : (
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant="inherit" color="text.primary" gutterBottom>
+                  <Typography
+                    variant="inherit"
+                    color="text.primary"
+                    gutterBottom
+                  >
                     Archive Mailbox Enabled:
                   </Typography>
                   <Typography variant="inherit">
-                    {getCippFormatting(exchangeData?.ArchiveMailBox, 'ArchiveMailBox')}
+                    {getCippFormatting(
+                      exchangeData?.ArchiveMailBox,
+                      'ArchiveMailBox'
+                    )}
                   </Typography>
                 </Grid>
                 {exchangeData?.ArchiveMailBox && (
                   <>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <Typography variant="inherit" color="text.primary" gutterBottom>
-                        {exchangeData?.AutoExpandingArchiveScope === 'Organization'
+                      <Typography
+                        variant="inherit"
+                        color="text.primary"
+                        gutterBottom
+                      >
+                        {exchangeData?.AutoExpandingArchiveScope ===
+                        'Organization'
                           ? 'Auto Expanding Archive: (org)'
                           : 'Auto Expanding Archive:'}
                       </Typography>
@@ -272,7 +347,11 @@ export const CippExchangeInfoCard = (props) => {
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <Typography variant="inherit" color="text.primary" gutterBottom>
+                      <Typography
+                        variant="inherit"
+                        color="text.primary"
+                        gutterBottom
+                      >
                         Total Archive Item Size:
                       </Typography>
                       <Typography variant="inherit">
@@ -282,7 +361,11 @@ export const CippExchangeInfoCard = (props) => {
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <Typography variant="inherit" color="text.primary" gutterBottom>
+                      <Typography
+                        variant="inherit"
+                        color="text.primary"
+                        gutterBottom
+                      >
                         Total Archive Item Count:
                       </Typography>
                       <Typography variant="inherit">
@@ -332,12 +415,20 @@ export const CippExchangeInfoCard = (props) => {
                 {protocols.map((protocol) => {
                   // For normal protocols, enabled = good (green). SMTP is inverted:
                   // enabled = risk (red), disabled = good (green). Unknown stays neutral.
-                  const isGood = protocol.riskWhenEnabled ? !protocol.enabled : protocol.enabled
+                  const isGood = protocol.riskWhenEnabled
+                    ? !protocol.enabled
+                    : protocol.enabled
                   return (
                     <Chip
                       key={protocol.name}
                       label={protocol.name}
-                      icon={protocol.unknown ? undefined : isGood ? <CheckIcon /> : <CloseIcon />}
+                      icon={
+                        protocol.unknown ? undefined : isGood ? (
+                          <CheckIcon />
+                        ) : (
+                          <CloseIcon />
+                        )
+                      }
                       color={
                         protocol.unknown
                           ? 'default'

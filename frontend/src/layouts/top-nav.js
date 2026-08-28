@@ -47,7 +47,11 @@ import { CippUniversalSearchV2 } from '../components/CippCards/CippUniversalSear
 import { CippOffCanvas } from '../components/CippComponents/CippOffCanvas'
 import { CippLicenseDetailsDrawer } from '../components/CippComponents/CippLicenseDetailsDrawer'
 
-import { BANNER_HEIGHT_VAR, SAFE_AREA_TOP_OFFSET, TOP_NAV_HEIGHT } from './constants'
+import {
+  BANNER_HEIGHT_VAR,
+  SAFE_AREA_TOP_OFFSET,
+  TOP_NAV_HEIGHT,
+} from './constants'
 
 export const TopNav = (props) => {
   const universalSearchDialog = useDialog()
@@ -74,7 +78,9 @@ export const TopNav = (props) => {
   }, [settings, effectivePaletteMode])
 
   const [anchorEl, setAnchorEl] = useState(null)
-  const [sortOrder, setSortOrder] = useState(settings.bookmarkSortOrder || 'custom')
+  const [sortOrder, setSortOrder] = useState(
+    settings.bookmarkSortOrder || 'custom'
+  )
   const [dragIndex, setDragIndex] = useState(null)
   const [dragOverIndex, setDragOverIndex] = useState(null)
   const [animatingPair, setAnimatingPair] = useState(null)
@@ -83,7 +89,8 @@ export const TopNav = (props) => {
   const [universalSearchKey, setUniversalSearchKey] = useState(0)
   const [licenseDrawerVisible, setLicenseDrawerVisible] = useState(false)
   const [licenseDrawerData, setLicenseDrawerData] = useState(null)
-  const [universalSearchDefaultType, setUniversalSearchDefaultType] = useState('Users')
+  const [universalSearchDefaultType, setUniversalSearchDefaultType] =
+    useState('Users')
   const itemRefs = useRef({})
   const touchDragRef = useRef({ startIdx: null, overIdx: null })
   const tenantSelectorRef = useRef(null)
@@ -174,8 +181,14 @@ export const TopNav = (props) => {
       moveBookmarkUp(index)
       return
     }
-    const distance = el1.getBoundingClientRect().top - el2.getBoundingClientRect().top
-    setAnimatingPair({ idx1: index, idx2: index - 1, offset1: -distance, offset2: distance })
+    const distance =
+      el1.getBoundingClientRect().top - el2.getBoundingClientRect().top
+    setAnimatingPair({
+      idx1: index,
+      idx2: index - 1,
+      offset1: -distance,
+      offset2: distance,
+    })
     setTimeout(() => {
       moveBookmarkUp(index)
       setAnimatingPair(null)
@@ -190,8 +203,14 @@ export const TopNav = (props) => {
       moveBookmarkDown(index)
       return
     }
-    const distance = el2.getBoundingClientRect().top - el1.getBoundingClientRect().top
-    setAnimatingPair({ idx1: index, idx2: index + 1, offset1: distance, offset2: -distance })
+    const distance =
+      el2.getBoundingClientRect().top - el1.getBoundingClientRect().top
+    setAnimatingPair({
+      idx1: index,
+      idx2: index + 1,
+      offset1: distance,
+      offset2: -distance,
+    })
     setTimeout(() => {
       moveBookmarkDown(index)
       setAnimatingPair(null)
@@ -199,7 +218,8 @@ export const TopNav = (props) => {
   }
 
   const handleSortCycle = () => {
-    const next = sortOrder === 'custom' ? 'asc' : sortOrder === 'asc' ? 'desc' : 'custom'
+    const next =
+      sortOrder === 'custom' ? 'asc' : sortOrder === 'asc' ? 'desc' : 'custom'
     setSortOrder(next)
     settings.handleUpdate({ bookmarkSortOrder: next })
   }
@@ -229,10 +249,18 @@ export const TopNav = (props) => {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if ((event.metaKey || event.ctrlKey) && event.altKey && event.key === 'k') {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.altKey &&
+        event.key === 'k'
+      ) {
         event.preventDefault()
         tenantSelectorRef.current?.focus()
-      } else if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'F') {
+      } else if (
+        (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
+        event.key === 'F'
+      ) {
         event.preventDefault()
         openUniversalSearch('Users')
       } else if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
@@ -327,13 +355,20 @@ export const TopNav = (props) => {
             </IconButton>
           )}
           {navCollapsed && (
-            <Box data-tutorial="tenant-selector" sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
+            <Box
+              data-tutorial="tenant-selector"
+              sx={{ flex: 1, minWidth: 0, display: 'flex' }}
+            >
               <CippMobileTenantPicker />
             </Box>
           )}
         </Stack>
         {/* 0.5 left the notification dot and the account avatar sharing the same few pixels */}
-        <Stack alignItems="center" direction="row" spacing={navCollapsed ? 1 : 1.5}>
+        <Stack
+          alignItems="center"
+          direction="row"
+          spacing={navCollapsed ? 1 : 1.5}
+        >
           {!navCollapsed && (
             <Tooltip title="Search users & entities (Ctrl/Cmd+Shift+F)">
               <IconButton
@@ -400,29 +435,48 @@ export const TopNav = (props) => {
                           animation: 'lockFlash 600ms ease-in-out',
                           '@keyframes lockFlash': {
                             '0%': { transform: 'scale(1)' },
-                            '25%': { transform: 'scale(1.5)', color: '#ff9800' },
+                            '25%': {
+                              transform: 'scale(1.5)',
+                              color: '#ff9800',
+                            },
                             '50%': { transform: 'scale(1)' },
-                            '75%': { transform: 'scale(1.3)', color: '#ff9800' },
+                            '75%': {
+                              transform: 'scale(1.3)',
+                              color: '#ff9800',
+                            },
                             '100%': { transform: 'scale(1)' },
                           },
                         }),
                       }}
                       title={locked ? 'Unlock bookmarks' : 'Lock bookmarks'}
                     >
-                      {locked ? <LockIcon fontSize="small" /> : <LockOpenIcon fontSize="small" />}
+                      {locked ? (
+                        <LockIcon fontSize="small" />
+                      ) : (
+                        <LockOpenIcon fontSize="small" />
+                      )}
                     </IconButton>
                     <IconButton
                       size="small"
                       onClick={handleSortCycle}
                       sx={{
-                        color: sortOrder === 'custom' ? 'neutral.500' : 'primary.main',
+                        color:
+                          sortOrder === 'custom'
+                            ? 'neutral.500'
+                            : 'primary.main',
                         ...(flashSort && {
                           animation: 'sortFlash 600ms ease-in-out',
                           '@keyframes sortFlash': {
                             '0%': { transform: 'scale(1)' },
-                            '25%': { transform: 'scale(1.5)', color: '#ff9800' },
+                            '25%': {
+                              transform: 'scale(1.5)',
+                              color: '#ff9800',
+                            },
                             '50%': { transform: 'scale(1)' },
-                            '75%': { transform: 'scale(1.3)', color: '#ff9800' },
+                            '75%': {
+                              transform: 'scale(1.3)',
+                              color: '#ff9800',
+                            },
                             '100%': { transform: 'scale(1)' },
                           },
                         }),
@@ -435,9 +489,15 @@ export const TopNav = (props) => {
                             : 'Z > A'
                       }
                     >
-                      {sortOrder === 'custom' && <SwapVertIcon fontSize="small" />}
-                      {sortOrder === 'asc' && <ArrowUpwardIcon fontSize="small" />}
-                      {sortOrder === 'desc' && <ArrowDownwardIcon fontSize="small" />}
+                      {sortOrder === 'custom' && (
+                        <SwapVertIcon fontSize="small" />
+                      )}
+                      {sortOrder === 'asc' && (
+                        <ArrowUpwardIcon fontSize="small" />
+                      )}
+                      {sortOrder === 'desc' && (
+                        <ArrowDownwardIcon fontSize="small" />
+                      )}
                     </IconButton>
                     <Typography
                       variant="body2"
@@ -454,7 +514,11 @@ export const TopNav = (props) => {
                   {displayBookmarks.length === 0 ? (
                     <ListItem>
                       <ListItemText
-                        primary={<Typography variant="body2">No bookmarks added yet</Typography>}
+                        primary={
+                          <Typography variant="body2">
+                            No bookmarks added yet
+                          </Typography>
+                        }
                       />
                     </ListItem>
                   ) : (
@@ -465,7 +529,11 @@ export const TopNav = (props) => {
                           itemRefs.current[idx] = el
                         }}
                         data-bookmark-index={idx}
-                        draggable={reorderMode === 'drag' && sortOrder === 'custom' && !locked}
+                        draggable={
+                          reorderMode === 'drag' &&
+                          sortOrder === 'custom' &&
+                          !locked
+                        }
                         {...(reorderMode === 'drag'
                           ? {
                               onDragStart: (e) => {
@@ -510,7 +578,8 @@ export const TopNav = (props) => {
                               borderColor: 'primary.main',
                             }),
                           ...(animatingPair &&
-                            (animatingPair.idx1 === idx || animatingPair.idx2 === idx) && {
+                            (animatingPair.idx1 === idx ||
+                              animatingPair.idx2 === idx) && {
                               transform: `translateY(${animatingPair.idx1 === idx ? animatingPair.offset1 : animatingPair.offset2}px)`,
                               transition: 'transform 250ms ease-in-out',
                               position: 'relative',
@@ -531,14 +600,26 @@ export const TopNav = (props) => {
                             onTouchMove={(e) => {
                               if (touchDragRef.current.startIdx === null) return
                               const touch = e.touches[0]
-                              const draggedLi = itemRefs.current[touchDragRef.current.startIdx]
-                              if (draggedLi) draggedLi.style.pointerEvents = 'none'
-                              const el = document.elementFromPoint(touch.clientX, touch.clientY)
+                              const draggedLi =
+                                itemRefs.current[touchDragRef.current.startIdx]
+                              if (draggedLi)
+                                draggedLi.style.pointerEvents = 'none'
+                              const el = document.elementFromPoint(
+                                touch.clientX,
+                                touch.clientY
+                              )
                               if (draggedLi) draggedLi.style.pointerEvents = ''
                               const li = el?.closest('[data-bookmark-index]')
                               if (li) {
-                                const overIdx = parseInt(li.dataset.bookmarkIndex, 10)
-                                if (!isNaN(overIdx) && overIdx >= 0 && overIdx < bookmarks.length) {
+                                const overIdx = parseInt(
+                                  li.dataset.bookmarkIndex,
+                                  10
+                                )
+                                if (
+                                  !isNaN(overIdx) &&
+                                  overIdx >= 0 &&
+                                  overIdx < bookmarks.length
+                                ) {
                                   touchDragRef.current.overIdx = overIdx
                                   setDragOverIndex(overIdx)
                                 }
@@ -546,13 +627,20 @@ export const TopNav = (props) => {
                             }}
                             onTouchEnd={() => {
                               const { startIdx, overIdx } = touchDragRef.current
-                              if (startIdx !== null && overIdx !== null && startIdx !== overIdx) {
+                              if (
+                                startIdx !== null &&
+                                overIdx !== null &&
+                                startIdx !== overIdx
+                              ) {
                                 const items = [...bookmarks]
                                 const [reordered] = items.splice(startIdx, 1)
                                 items.splice(overIdx, 0, reordered)
                                 setBookmarks(items)
                               }
-                              touchDragRef.current = { startIdx: null, overIdx: null }
+                              touchDragRef.current = {
+                                startIdx: null,
+                                overIdx: null,
+                              }
                               setDragIndex(null)
                               setDragOverIndex(null)
                             }}
@@ -561,7 +649,8 @@ export const TopNav = (props) => {
                               display: 'flex',
                               alignItems: 'center',
                               color: 'neutral.500',
-                              cursor: sortOrder === 'custom' ? 'grab' : 'default',
+                              cursor:
+                                sortOrder === 'custom' ? 'grab' : 'default',
                               mr: 1,
                             }}
                           >
@@ -579,7 +668,9 @@ export const TopNav = (props) => {
                             marginRight: 2,
                           }}
                         >
-                          <Typography variant="body2">{bookmark.label}</Typography>
+                          <Typography variant="body2">
+                            {bookmark.label}
+                          </Typography>
                         </Box>
                         <Stack
                           className="bookmark-controls"
@@ -603,10 +694,15 @@ export const TopNav = (props) => {
                                     triggerLockFlash()
                                     return
                                   }
-                                  sortOrder === 'custom' ? animatedMoveUp(idx) : triggerSortFlash()
+                                  sortOrder === 'custom'
+                                    ? animatedMoveUp(idx)
+                                    : triggerSortFlash()
                                 }}
                                 disabled={sortOrder === 'custom' && idx === 0}
-                                sx={{ opacity: sortOrder !== 'custom' || locked ? 0.4 : 1 }}
+                                sx={{
+                                  opacity:
+                                    sortOrder !== 'custom' || locked ? 0.4 : 1,
+                                }}
                               >
                                 <KeyboardArrowUpIcon fontSize="small" />
                               </IconButton>
@@ -623,9 +719,13 @@ export const TopNav = (props) => {
                                     : triggerSortFlash()
                                 }}
                                 disabled={
-                                  sortOrder === 'custom' && idx === displayBookmarks.length - 1
+                                  sortOrder === 'custom' &&
+                                  idx === displayBookmarks.length - 1
                                 }
-                                sx={{ opacity: sortOrder !== 'custom' || locked ? 0.4 : 1 }}
+                                sx={{
+                                  opacity:
+                                    sortOrder !== 'custom' || locked ? 0.4 : 1,
+                                }}
                               >
                                 <KeyboardArrowDownIcon fontSize="small" />
                               </IconButton>
@@ -689,7 +789,8 @@ export const TopNav = (props) => {
                 </Stack>
                 {!navCollapsed && (
                   <Typography variant="caption" color="text.secondary">
-                    Pages: Ctrl/Cmd+K · Users: Ctrl/Cmd+Shift+F · Tenant: Ctrl/Cmd+Alt+K
+                    Pages: Ctrl/Cmd+K · Users: Ctrl/Cmd+Shift+F · Tenant:
+                    Ctrl/Cmd+Alt+K
                   </Typography>
                 )}
               </Stack>

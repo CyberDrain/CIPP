@@ -1,10 +1,10 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useForm, useWatch } from "react-hook-form";
-import { ApiPostCall } from "../../../../api/ApiCall";
-import { CippFormComponent } from "../../../../components/CippComponents/CippFormComponent";
-import { CippFormCondition } from "../../../../components/CippComponents/CippFormCondition";
-import { CippFormTenantSelector } from "../../../../components/CippComponents/CippFormTenantSelector";
-import CippJsonView from "../../../../components/CippFormPages/CippJSONView";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useForm, useWatch } from 'react-hook-form'
+import { ApiPostCall } from '../../../../api/ApiCall'
+import { CippFormComponent } from '../../../../components/CippComponents/CippFormComponent'
+import { CippFormCondition } from '../../../../components/CippComponents/CippFormCondition'
+import { CippFormTenantSelector } from '../../../../components/CippComponents/CippFormTenantSelector'
+import CippJsonView from '../../../../components/CippFormPages/CippJSONView'
 import {
   Box,
   Button,
@@ -14,47 +14,56 @@ import {
   Alert,
   Stack,
   Skeleton,
-} from "@mui/material";
-import { CippPolicyDiffTable } from "../../../../components/CippComponents/CippPolicyDiffTable";
+} from '@mui/material'
+import { CippPolicyDiffTable } from '../../../../components/CippComponents/CippPolicyDiffTable'
 import {
   CompareArrows as CompareArrowsIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
-} from "@mui/icons-material";
-import { useEffect, useMemo } from "react";
-import { Grid } from "@mui/system";
-import CippPageCard from "../../../../components/CippCards/CippPageCard";
+} from '@mui/icons-material'
+import { useEffect, useMemo } from 'react'
+import { Grid } from '@mui/system'
+import CippPageCard from '../../../../components/CippCards/CippPageCard'
 
 const sourceTypeOptions = [
-  { label: "CIPP Template", value: "template" },
-  { label: "Tenant Policy", value: "tenantPolicy" },
-  { label: "Community Repository", value: "communityRepo" },
-];
+  { label: 'CIPP Template', value: 'template' },
+  { label: 'Tenant Policy', value: 'tenantPolicy' },
+  { label: 'Community Repository', value: 'communityRepo' },
+]
 
 const SourceSelector = ({ prefix, formControl, label }) => {
-  const tenantValue = useWatch({ control: formControl.control, name: `${prefix}.tenantFilter` });
-  const repoValue = useWatch({ control: formControl.control, name: `${prefix}.repo` });
-  const branchValue = useWatch({ control: formControl.control, name: `${prefix}.branch` });
+  const tenantValue = useWatch({
+    control: formControl.control,
+    name: `${prefix}.tenantFilter`,
+  })
+  const repoValue = useWatch({
+    control: formControl.control,
+    name: `${prefix}.repo`,
+  })
+  const branchValue = useWatch({
+    control: formControl.control,
+    name: `${prefix}.branch`,
+  })
 
   useEffect(() => {
     if (repoValue?.addedFields?.defaultBranch) {
       formControl.setValue(`${prefix}.branch`, {
         label: repoValue.addedFields.defaultBranch,
         value: repoValue.addedFields.defaultBranch,
-      });
+      })
     } else {
-      formControl.setValue(`${prefix}.branch`, null);
+      formControl.setValue(`${prefix}.branch`, null)
     }
-    formControl.setValue(`${prefix}.repoFile`, null);
-  }, [repoValue?.value]);
+    formControl.setValue(`${prefix}.repoFile`, null)
+  }, [repoValue?.value])
 
   useEffect(() => {
-    formControl.setValue(`${prefix}.repoFile`, null);
-  }, [branchValue?.value]);
+    formControl.setValue(`${prefix}.repoFile`, null)
+  }, [branchValue?.value])
 
   return (
-    <Card variant="outlined" sx={{ height: "100%" }}>
-      <CardHeader title={label} titleTypographyProps={{ variant: "h6" }} />
+    <Card variant="outlined" sx={{ height: '100%' }}>
+      <CardHeader title={label} titleTypographyProps={{ variant: 'h6' }} />
       <CardContent>
         <Stack spacing={2}>
           <CippFormComponent
@@ -80,14 +89,16 @@ const SourceSelector = ({ prefix, formControl, label }) => {
               multiple={false}
               creatable={false}
               api={{
-                url: "/api/ListIntuneTemplates",
+                url: '/api/ListIntuneTemplates',
                 queryKey: `ListIntuneTemplates-${prefix}`,
                 labelField: (item) =>
-                  `${item.Displayname || item.displayName}${item.Type ? ` (${item.Type})` : ""}`,
-                valueField: "GUID",
-                addedField: { type: "Type" },
+                  `${item.Displayname || item.displayName}${item.Type ? ` (${item.Type})` : ''}`,
+                valueField: 'GUID',
+                addedField: { type: 'Type' },
               }}
-              validators={{ required: { value: true, message: "Template is required" } }}
+              validators={{
+                required: { value: true, message: 'Template is required' },
+              }}
             />
           </CippFormCondition>
 
@@ -118,20 +129,23 @@ const SourceSelector = ({ prefix, formControl, label }) => {
                 api={
                   tenantValue
                     ? {
-                        url: "/api/ListIntunePolicy",
+                        url: '/api/ListIntunePolicy',
                         queryKey: `ListIntunePolicy-${prefix}-${tenantValue?.value}`,
                         tenantFilter: tenantValue?.value,
                         labelField: (item) => {
-                          const name = item.displayName || item.name || "Unnamed Policy";
-                          const type = item.PolicyTypeName || item.URLName || "";
-                          return type ? `${name} (${type})` : name;
+                          const name =
+                            item.displayName || item.name || 'Unnamed Policy'
+                          const type = item.PolicyTypeName || item.URLName || ''
+                          return type ? `${name} (${type})` : name
                         },
-                        valueField: "id",
-                        addedField: { urlName: "URLName" },
+                        valueField: 'id',
+                        addedField: { urlName: 'URLName' },
                       }
                     : undefined
                 }
-                validators={{ required: { value: true, message: "Policy is required" } }}
+                validators={{
+                  required: { value: true, message: 'Policy is required' },
+                }}
               />
             </Stack>
           </CippFormCondition>
@@ -151,14 +165,16 @@ const SourceSelector = ({ prefix, formControl, label }) => {
                 multiple={false}
                 creatable={false}
                 api={{
-                  url: "/api/ListCommunityRepos",
+                  url: '/api/ListCommunityRepos',
                   queryKey: `ListCommunityRepos-${prefix}`,
-                  dataKey: "Results",
-                  labelField: "FullName",
-                  valueField: "FullName",
-                  addedField: { defaultBranch: "DefaultBranch" },
+                  dataKey: 'Results',
+                  labelField: 'FullName',
+                  valueField: 'FullName',
+                  addedField: { defaultBranch: 'DefaultBranch' },
                 }}
-                validators={{ required: { value: true, message: "Repository is required" } }}
+                validators={{
+                  required: { value: true, message: 'Repository is required' },
+                }}
               />
 
               <CippFormComponent
@@ -172,16 +188,21 @@ const SourceSelector = ({ prefix, formControl, label }) => {
                 api={
                   repoValue?.value
                     ? {
-                        url: "/api/ExecGitHubAction",
+                        url: '/api/ExecGitHubAction',
                         queryKey: `GetBranches-${prefix}-${repoValue.value}`,
-                        dataKey: "Results",
-                        data: { Action: "GetBranches", FullName: repoValue.value },
-                        labelField: "name",
-                        valueField: "name",
+                        dataKey: 'Results',
+                        data: {
+                          Action: 'GetBranches',
+                          FullName: repoValue.value,
+                        },
+                        labelField: 'name',
+                        valueField: 'name',
                       }
                     : undefined
                 }
-                validators={{ required: { value: true, message: "Branch is required" } }}
+                validators={{
+                  required: { value: true, message: 'Branch is required' },
+                }}
               />
 
               <CippFormComponent
@@ -195,128 +216,173 @@ const SourceSelector = ({ prefix, formControl, label }) => {
                 api={
                   repoValue?.value && branchValue?.value
                     ? {
-                        url: "/api/ExecGitHubAction",
+                        url: '/api/ExecGitHubAction',
                         queryKey: `GetFileTree-${prefix}-${repoValue.value}-${branchValue.value}`,
-                        dataKey: "Results",
+                        dataKey: 'Results',
                         data: {
-                          Action: "GetFileTree",
+                          Action: 'GetFileTree',
                           FullName: repoValue.value,
                           Branch: branchValue.value,
                         },
-                        labelField: "path",
-                        valueField: "path",
+                        labelField: 'path',
+                        valueField: 'path',
                       }
                     : undefined
                 }
-                validators={{ required: { value: true, message: "Template file is required" } }}
+                validators={{
+                  required: {
+                    value: true,
+                    message: 'Template file is required',
+                  },
+                }}
               />
             </Stack>
           </CippFormCondition>
         </Stack>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
 const Page = () => {
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      sourceA: { type: "template" },
-      sourceB: { type: "template" },
+      sourceA: { type: 'template' },
+      sourceB: { type: 'template' },
     },
-  });
+  })
 
-  const compareApi = ApiPostCall({ relatedQueryKeys: [] });
+  const compareApi = ApiPostCall({ relatedQueryKeys: [] })
 
-  const sourceAType = useWatch({ control: formControl.control, name: "sourceA.type" });
-  const sourceBType = useWatch({ control: formControl.control, name: "sourceB.type" });
-  const sourceATemplate = useWatch({ control: formControl.control, name: "sourceA.template" });
-  const sourceBTemplate = useWatch({ control: formControl.control, name: "sourceB.template" });
-  const sourceAPolicy = useWatch({ control: formControl.control, name: "sourceA.policy" });
-  const sourceBPolicy = useWatch({ control: formControl.control, name: "sourceB.policy" });
-  const sourceARepoFile = useWatch({ control: formControl.control, name: "sourceA.repoFile" });
-  const sourceBRepoFile = useWatch({ control: formControl.control, name: "sourceB.repoFile" });
+  const sourceAType = useWatch({
+    control: formControl.control,
+    name: 'sourceA.type',
+  })
+  const sourceBType = useWatch({
+    control: formControl.control,
+    name: 'sourceB.type',
+  })
+  const sourceATemplate = useWatch({
+    control: formControl.control,
+    name: 'sourceA.template',
+  })
+  const sourceBTemplate = useWatch({
+    control: formControl.control,
+    name: 'sourceB.template',
+  })
+  const sourceAPolicy = useWatch({
+    control: formControl.control,
+    name: 'sourceA.policy',
+  })
+  const sourceBPolicy = useWatch({
+    control: formControl.control,
+    name: 'sourceB.policy',
+  })
+  const sourceARepoFile = useWatch({
+    control: formControl.control,
+    name: 'sourceA.repoFile',
+  })
+  const sourceBRepoFile = useWatch({
+    control: formControl.control,
+    name: 'sourceB.repoFile',
+  })
 
   const isSourceReady = (type, template, policy, repoFile) =>
-    type === "template"
+    type === 'template'
       ? !!template?.value
-      : type === "tenantPolicy"
+      : type === 'tenantPolicy'
         ? !!policy?.value
-        : type === "communityRepo"
+        : type === 'communityRepo'
           ? !!repoFile?.value
-          : false;
+          : false
 
   const canCompare =
-    isSourceReady(sourceAType, sourceATemplate, sourceAPolicy, sourceARepoFile) &&
-    isSourceReady(sourceBType, sourceBTemplate, sourceBPolicy, sourceBRepoFile);
+    isSourceReady(
+      sourceAType,
+      sourceATemplate,
+      sourceAPolicy,
+      sourceARepoFile
+    ) &&
+    isSourceReady(sourceBType, sourceBTemplate, sourceBPolicy, sourceBRepoFile)
 
   const handleCompare = () => {
-    const values = formControl.getValues();
+    const values = formControl.getValues()
 
     const buildPayload = (source) => {
-      if (source.type === "template") {
+      if (source.type === 'template') {
         return {
-          type: "template",
+          type: 'template',
           templateGuid: source.template?.value,
-        };
+        }
       }
-      if (source.type === "communityRepo") {
+      if (source.type === 'communityRepo') {
         return {
-          type: "communityRepo",
+          type: 'communityRepo',
           fullName: source.repo?.value,
           branch: source.branch?.value,
           path: source.repoFile?.value,
-        };
+        }
       }
       return {
-        type: "tenantPolicy",
+        type: 'tenantPolicy',
         tenantFilter: source.tenantFilter?.value,
         policyId: source.policy?.value,
         urlName: source.policy?.addedFields?.urlName,
-      };
-    };
+      }
+    }
 
     compareApi.mutate({
-      url: "/api/ExecCompareIntunePolicy",
+      url: '/api/ExecCompareIntunePolicy',
       data: {
         sourceA: buildPayload(values.sourceA),
         sourceB: buildPayload(values.sourceB),
       },
-    });
-  };
+    })
+  }
 
   const results = useMemo(() => {
-    if (!compareApi.isSuccess) return null;
-    return compareApi.data?.data || compareApi.data;
-  }, [compareApi.isSuccess, compareApi.data]);
+    if (!compareApi.isSuccess) return null
+    return compareApi.data?.data || compareApi.data
+  }, [compareApi.isSuccess, compareApi.data])
 
   const errorMessage = useMemo(() => {
-    if (!compareApi.isError) return null;
-    const errData = compareApi.error?.response?.data;
-    return errData?.Results || compareApi.error?.message || "An error occurred";
-  }, [compareApi.isError, compareApi.error]);
+    if (!compareApi.isError) return null
+    const errData = compareApi.error?.response?.data
+    return errData?.Results || compareApi.error?.message || 'An error occurred'
+  }, [compareApi.isError, compareApi.error])
 
   const comparisonRows = useMemo(() => {
-    const raw = results?.Results;
-    const rows = Array.isArray(raw) ? raw : raw ? [raw] : [];
-    return rows.filter((row) => row && typeof row === "object");
-  }, [results?.Results]);
+    const raw = results?.Results
+    const rows = Array.isArray(raw) ? raw : raw ? [raw] : []
+    return rows.filter((row) => row && typeof row === 'object')
+  }, [results?.Results])
 
   return (
-    <CippPageCard title="Compare Intune Policies" backButtonTitle="Back to Policies">
+    <CippPageCard
+      title="Compare Intune Policies"
+      backButtonTitle="Back to Policies"
+    >
       <CardContent>
         <Stack spacing={3}>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <SourceSelector prefix="sourceA" formControl={formControl} label="Source A" />
+              <SourceSelector
+                prefix="sourceA"
+                formControl={formControl}
+                label="Source A"
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <SourceSelector prefix="sourceB" formControl={formControl} label="Source B" />
+              <SourceSelector
+                prefix="sourceB"
+                formControl={formControl}
+                label="Source B"
+              />
             </Grid>
           </Grid>
 
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
             <Button
               variant="contained"
               size="large"
@@ -324,7 +390,7 @@ const Page = () => {
               onClick={handleCompare}
               disabled={!canCompare || compareApi.isPending}
             >
-              {compareApi.isPending ? "Comparing..." : "Compare"}
+              {compareApi.isPending ? 'Comparing...' : 'Compare'}
             </Button>
           </Box>
 
@@ -348,15 +414,21 @@ const Page = () => {
           {results && (
             <Stack spacing={3}>
               <Alert
-                severity={results.identical ? "success" : "warning"}
-                icon={results.identical ? <CheckCircleIcon /> : <CompareArrowsIcon />}
+                severity={results.identical ? 'success' : 'warning'}
+                icon={
+                  results.identical ? (
+                    <CheckCircleIcon />
+                  ) : (
+                    <CompareArrowsIcon />
+                  )
+                }
               >
                 {results.identical
-                  ? "Policies are identical - no differences found."
-                  : `${comparisonRows.length} difference${comparisonRows.length === 1 ? "" : "s"} found between policies.`}
-                <Box component="span" sx={{ display: "block", mt: 0.5 }}>
-                  <strong>A:</strong> {results.sourceALabel} &mdash; <strong>B:</strong>{" "}
-                  {results.sourceBLabel}
+                  ? 'Policies are identical - no differences found.'
+                  : `${comparisonRows.length} difference${comparisonRows.length === 1 ? '' : 's'} found between policies.`}
+                <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
+                  <strong>A:</strong> {results.sourceALabel} &mdash;{' '}
+                  <strong>B:</strong> {results.sourceBLabel}
                 </Box>
               </Alert>
 
@@ -380,9 +452,9 @@ const Page = () => {
         </Stack>
       </CardContent>
     </CippPageCard>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

@@ -1,92 +1,101 @@
-import { Box, Button, Stack, SvgIcon } from "@mui/material";
-import { CippPropertyListCard } from "../CippCards/CippPropertyListCard";
-import { CheckCircle, ContentCopy, SystemUpdateAlt, Warning } from "@mui/icons-material";
-import { ApiGetCall } from "../../api/ApiCall";
-import { useEffect, useState } from "react";
+import { Box, Button, Stack, SvgIcon } from '@mui/material'
+import { CippPropertyListCard } from '../CippCards/CippPropertyListCard'
+import {
+  CheckCircle,
+  ContentCopy,
+  SystemUpdateAlt,
+  Warning,
+} from '@mui/icons-material'
+import { ApiGetCall } from '../../api/ApiCall'
+import { useEffect, useState } from 'react'
 
 const formatUtc = (value) => {
-  if (!value) return null;
-  const date = new Date(value);
-  if (isNaN(date.getTime())) return value;
-  return `${date.toISOString().slice(0, 16).replace("T", " ")} UTC`;
-};
+  if (!value) return null
+  const date = new Date(value)
+  if (isNaN(date.getTime())) return value
+  return `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`
+}
 
 const CippVersionProperties = () => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false)
 
   const version = ApiGetCall({
-    url: "/version.json",
-    queryKey: "LocalVersion",
-  });
+    url: '/version.json',
+    queryKey: 'LocalVersion',
+  })
 
   const cippVersion = ApiGetCall({
-    url: `/api/GetVersion?LocalVersion=${encodeURIComponent(version?.data?.version ?? "")}`,
-    queryKey: "CippVersion",
+    url: `/api/GetVersion?LocalVersion=${encodeURIComponent(version?.data?.version ?? '')}`,
+    queryKey: 'CippVersion',
     waiting: false,
-  });
+  })
 
   useEffect(() => {
     if (version.isFetched && !cippVersion.isFetched) {
-      cippVersion.waiting = true;
-      cippVersion.refetch();
+      cippVersion.waiting = true
+      cippVersion.refetch()
     }
-  }, [version, cippVersion]);
+  }, [version, cippVersion])
 
   const CippVersionComponent = (version, availableVersion, outOfDate) => {
     return (
       <Box>
         <SvgIcon fontSize="inherit" style={{ marginRight: 3 }}>
-          {outOfDate === true ? <Warning color="warning" /> : <CheckCircle color="success" />}
+          {outOfDate === true ? (
+            <Warning color="warning" />
+          ) : (
+            <CheckCircle color="success" />
+          )}
         </SvgIcon>
-        <span style={{ marginRight: 10 }}>v{version}</span>{" "}
-        {outOfDate === true ? `(v${availableVersion} is available)` : ""}
+        <span style={{ marginRight: 10 }}>v{version}</span>{' '}
+        {outOfDate === true ? `(v${availableVersion} is available)` : ''}
       </Box>
-    );
-  };
+    )
+  }
 
-  const hosting = cippVersion?.data?.Hosting;
-  const lastUpdate = cippVersion?.data?.LastUpdate;
+  const hosting = cippVersion?.data?.Hosting
+  const lastUpdate = cippVersion?.data?.LastUpdate
   const lastUpdateText = lastUpdate
     ? `v${lastUpdate.PreviousVersion} → v${lastUpdate.NewVersion} (${formatUtc(
         lastUpdate.RecordedAt
       )})`
-    : "No update recorded yet";
+    : 'No update recorded yet'
 
   const handleCopy = async () => {
     const versionLine = (label, local, remote, outOfDate) =>
-      `${label}: v${local ?? "Unknown"}${outOfDate === true ? ` (v${remote} available)` : ""}`;
+      `${label}: v${local ?? 'Unknown'}${outOfDate === true ? ` (v${remote} available)` : ''}`
     const text = [
       versionLine(
-        "Frontend",
+        'Frontend',
         version?.data?.version,
         cippVersion?.data?.RemoteCIPPVersion,
         cippVersion?.data?.OutOfDateCIPP
       ),
       versionLine(
-        "Backend",
+        'Backend',
         cippVersion?.data?.LocalCIPPAPIVersion,
         cippVersion?.data?.RemoteCIPPAPIVersion,
         cippVersion?.data?.OutOfDateCIPPAPI
       ),
-      `Hosting: ${hosting?.HostingType ?? "Unknown"}`,
-      `SKU: ${hosting?.SKU ?? "Unknown"}`,
-      `Runtime: ${hosting?.RuntimeStack ?? "Unknown"}`,
+      `Hosting: ${hosting?.HostingType ?? 'Unknown'}`,
+      `SKU: ${hosting?.SKU ?? 'Unknown'}`,
+      `Runtime: ${hosting?.RuntimeStack ?? 'Unknown'}`,
       `Last update: ${
         lastUpdate
           ? `v${lastUpdate.PreviousVersion} → v${lastUpdate.NewVersion} (${formatUtc(
               lastUpdate.RecordedAt
             )})`
-          : "none recorded"
+          : 'none recorded'
       }`,
-    ].join("\n");
+    ].join('\n')
     try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error("Failed to copy version info: ", err);
+      console.error('Failed to copy version info: ', err)
     }
-  };
+  }
 
   return (
     <CippPropertyListCard
@@ -98,15 +107,15 @@ const CippVersionProperties = () => {
             <SvgIcon fontSize="small" style={{ marginRight: 4 }}>
               <ContentCopy />
             </SvgIcon>
-            {copied ? "Copied!" : "Copy for Ticket"}
+            {copied ? 'Copied!' : 'Copy for Ticket'}
           </Button>
           <Button
             variant="contained"
             color="primary"
             size="small"
             onClick={() => {
-              version.refetch();
-              cippVersion.refetch();
+              version.refetch()
+              cippVersion.refetch()
             }}
           >
             <SvgIcon fontSize="small" style={{ marginRight: 4 }}>
@@ -118,10 +127,15 @@ const CippVersionProperties = () => {
       }
       title="Version"
       isFetching={cippVersion.isFetching}
-      cardSx={{ display: "flex", flexDirection: "column", height: "100%", width: "100%" }}
+      cardSx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        width: '100%',
+      }}
       propertyItems={[
         {
-          label: "Frontend",
+          label: 'Frontend',
           value: CippVersionComponent(
             version?.data?.version,
             cippVersion?.data?.RemoteCIPPVersion,
@@ -129,7 +143,7 @@ const CippVersionProperties = () => {
           ),
         },
         {
-          label: "Backend",
+          label: 'Backend',
           value: CippVersionComponent(
             cippVersion?.data?.LocalCIPPAPIVersion,
             cippVersion?.data?.RemoteCIPPAPIVersion,
@@ -137,24 +151,24 @@ const CippVersionProperties = () => {
           ),
         },
         {
-          label: "Hosting",
-          value: hosting?.HostingType ?? "Unknown",
+          label: 'Hosting',
+          value: hosting?.HostingType ?? 'Unknown',
         },
         {
-          label: "App Service SKU",
-          value: hosting?.SKU ?? "Unknown",
+          label: 'App Service SKU',
+          value: hosting?.SKU ?? 'Unknown',
         },
         {
-          label: "Runtime Stack",
-          value: hosting?.RuntimeStack ?? "Unknown",
+          label: 'Runtime Stack',
+          value: hosting?.RuntimeStack ?? 'Unknown',
         },
         {
-          label: "Last Updated",
+          label: 'Last Updated',
           value: lastUpdateText,
         },
       ].map((item) => ({ ...item, sx: { py: 0.5, px: { xs: 2, md: 3 } } }))}
     />
-  );
-};
+  )
+}
 
-export default CippVersionProperties;
+export default CippVersionProperties

@@ -57,7 +57,9 @@ const Page = () => {
     const selected = formControl.getValues('selectedGroup')
     if (!selected) return
     if (groupTableData.find((g) => g.Id === selected.value)) return
-    const full = (allGroups.data?.Results || []).find((g) => g.Id === selected.value)
+    const full = (allGroups.data?.Results || []).find(
+      (g) => g.Id === selected.value
+    )
     setGroupTableData([
       ...groupTableData,
       {
@@ -92,7 +94,9 @@ const Page = () => {
     relatedQueryKeys: [`TenantProperties_${currentTenant}`, 'CustomVariables*'],
   })
 
-  const { isValid: isFormValid } = useFormState({ control: formControl.control })
+  const { isValid: isFormValid } = useFormState({
+    control: formControl.control,
+  })
   const { isValid: isOffboardingFormValid } = useFormState({
     control: offboardingFormControl.control,
   })
@@ -103,11 +107,17 @@ const Page = () => {
         ? `/api/ListTenantDetails?tenantFilter=${currentTenant}`
         : null,
     queryKey:
-      currentTenant && currentTenant !== 'AllTenants' ? `TenantProperties_${currentTenant}` : null,
+      currentTenant && currentTenant !== 'AllTenants'
+        ? `TenantProperties_${currentTenant}`
+        : null,
   })
 
   useEffect(() => {
-    if (tenantDetails.isSuccess && tenantDetails.data && currentTenant !== 'AllTenants') {
+    if (
+      tenantDetails.isSuccess &&
+      tenantDetails.data &&
+      currentTenant !== 'AllTenants'
+    ) {
       formControl.reset({
         customerId: currentTenant,
         Alias: tenantDetails?.data?.customProperties?.Alias ?? '',
@@ -129,7 +139,8 @@ const Page = () => {
       )
 
       // Set up offboarding defaults with default values
-      const tenantOffboardingDefaults = tenantDetails.data?.customProperties?.OffboardingDefaults
+      const tenantOffboardingDefaults =
+        tenantDetails.data?.customProperties?.OffboardingDefaults
       const defaultOffboardingValues = {
         ConvertToShared: false,
         RemoveGroups: false,
@@ -161,7 +172,9 @@ const Page = () => {
             offboardingDefaults: { ...defaultOffboardingValues, ...parsed },
           }
         } catch {
-          offboardingDefaults = { offboardingDefaults: defaultOffboardingValues }
+          offboardingDefaults = {
+            offboardingDefaults: defaultOffboardingValues,
+          }
         }
       } else {
         offboardingDefaults = { offboardingDefaults: defaultOffboardingValues }
@@ -169,7 +182,12 @@ const Page = () => {
 
       offboardingFormControl.reset(offboardingDefaults)
     }
-  }, [tenantDetails.isSuccess, tenantDetails.data, allGroups.data, currentTenant])
+  }, [
+    tenantDetails.isSuccess,
+    tenantDetails.data,
+    allGroups.data,
+    currentTenant,
+  ])
 
   const handleResetOffboardingDefaults = () => {
     const defaultOffboardingValues = {
@@ -194,13 +212,16 @@ const Page = () => {
       OOO: '',
     }
 
-    offboardingFormControl.reset({ offboardingDefaults: defaultOffboardingValues })
+    offboardingFormControl.reset({
+      offboardingDefaults: defaultOffboardingValues,
+    })
 
     updateOffboardingDefaults.mutate({
       url: '/api/EditTenantOffboardingDefaults',
       data: {
         customerId: tenantDetails.data?.id || currentTenant,
-        defaultDomainName: tenantDetails.data?.defaultDomainName || currentTenant,
+        defaultDomainName:
+          tenantDetails.data?.defaultDomainName || currentTenant,
         offboardingDefaults: null,
       },
     })
@@ -223,13 +244,16 @@ const Page = () => {
           <Card>
             <CardContent>
               <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Business sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Business
+                  sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }}
+                />
                 <Typography variant="h5" gutterBottom>
                   Select a Specific Tenant
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                  Tenant editing is not available when "All Tenants" is selected. Please select a
-                  specific tenant to edit its configuration.
+                  Tenant editing is not available when "All Tenants" is
+                  selected. Please select a specific tenant to edit its
+                  configuration.
                 </Typography>
               </Box>
             </CardContent>
@@ -271,7 +295,10 @@ const Page = () => {
                 </Tooltip>
               }
               propertyItems={[
-                { label: 'Display Name', value: tenantDetails.data?.displayName },
+                {
+                  label: 'Display Name',
+                  value: tenantDetails.data?.displayName,
+                },
                 {
                   label: 'Tenant ID',
                   value: getCippFormatting(tenantDetails.data?.id, 'Tenant'),
@@ -282,7 +309,10 @@ const Page = () => {
                 },
                 {
                   label: 'Created',
-                  value: getCippFormatting(tenantDetails.data?.createdDateTime, 'datetime'),
+                  value: getCippFormatting(
+                    tenantDetails.data?.createdDateTime,
+                    'datetime'
+                  ),
                 },
                 {
                   label: 'Address',
@@ -297,7 +327,10 @@ const Page = () => {
                       .filter(Boolean)
                       .join(', ') || undefined,
                 },
-                { label: 'Business Phone', value: tenantDetails.data?.businessPhones },
+                {
+                  label: 'Business Phone',
+                  value: tenantDetails.data?.businessPhones,
+                },
                 {
                   label: 'Technical Contact',
                   value: tenantDetails.data?.technicalNotificationMails,
@@ -305,11 +338,17 @@ const Page = () => {
                 {
                   label: 'On-Premises Sync',
                   value: tenantDetails.data?.onPremisesSyncEnabled
-                    ? getCippFormatting(tenantDetails.data?.onPremisesLastSyncDateTime, 'datetime')
+                    ? getCippFormatting(
+                        tenantDetails.data?.onPremisesLastSyncDateTime,
+                        'datetime'
+                      )
                     : 'Disabled',
                 },
               ].filter(
-                (item) => item.value !== undefined && item.value !== null && item.value !== ''
+                (item) =>
+                  item.value !== undefined &&
+                  item.value !== null &&
+                  item.value !== ''
               )}
               showDivider={false}
               isFetching={tenantDetails.isFetching}
@@ -338,7 +377,11 @@ const Page = () => {
                       data: formattedValues,
                     })
                   })}
-                  disabled={updateTenant.isPending || !isFormValid || tenantDetails.isFetching}
+                  disabled={
+                    updateTenant.isPending ||
+                    !isFormValid ||
+                    tenantDetails.isFetching
+                  }
                 >
                   {updateTenant.isPending ? 'Saving...' : 'Save Changes'}
                 </Button>
@@ -359,7 +402,11 @@ const Page = () => {
                   <Typography variant="subtitle1" sx={{ mb: 2 }}>
                     Tenant Groups
                   </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mb: 2, alignItems: 'flex-end' }}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ mb: 2, alignItems: 'flex-end' }}
+                  >
                     <Box sx={{ flex: 1 }}>
                       <CippFormComponent
                         type="autoComplete"
@@ -399,7 +446,9 @@ const Page = () => {
                     data={groupTableData}
                     simple={false}
                     simpleColumns={['Name', 'Description', 'GroupType']}
-                    isFetching={allGroups.isFetching || tenantDetails.isFetching}
+                    isFetching={
+                      allGroups.isFetching || tenantDetails.isFetching
+                    }
                     actions={[
                       {
                         label: 'Remove',
@@ -426,10 +475,12 @@ const Page = () => {
                   color="primary"
                   startIcon={<Save />}
                   onClick={offboardingFormControl.handleSubmit((values) => {
-                    const offboardingSettings = values.offboardingDefaults || values
+                    const offboardingSettings =
+                      values.offboardingDefaults || values
                     const formattedValues = {
                       customerId: tenantDetails.data?.id || currentTenant,
-                      defaultDomainName: tenantDetails.data?.defaultDomainName || currentTenant,
+                      defaultDomainName:
+                        tenantDetails.data?.defaultDomainName || currentTenant,
                       offboardingDefaults: offboardingSettings,
                     }
                     updateOffboardingDefaults.mutate({
@@ -443,15 +494,18 @@ const Page = () => {
                     tenantDetails.isFetching
                   }
                 >
-                  {updateOffboardingDefaults.isPending ? 'Saving...' : 'Save Changes'}
+                  {updateOffboardingDefaults.isPending
+                    ? 'Saving...'
+                    : 'Save Changes'}
                 </Button>
               }
               isFetching={tenantDetails.isFetching}
             >
               <Stack spacing={2}>
                 <Typography variant="body2" color="text.secondary">
-                  Configure default offboarding settings specifically for this tenant. These
-                  settings will override user defaults when offboarding users in this tenant.
+                  Configure default offboarding settings specifically for this
+                  tenant. These settings will override user defaults when
+                  offboarding users in this tenant.
                 </Typography>
 
                 <CippOffboardingDefaultSettings
@@ -463,14 +517,21 @@ const Page = () => {
                   <Button
                     variant="outlined"
                     onClick={handleResetOffboardingDefaults}
-                    disabled={updateOffboardingDefaults.isPending || tenantDetails.isFetching}
+                    disabled={
+                      updateOffboardingDefaults.isPending ||
+                      tenantDetails.isFetching
+                    }
                     sx={{ mr: 2 }}
                   >
                     Reset All to Off
                   </Button>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Click "Reset All to Off" to turn off all options, then click "Save" to clear
-                    tenant defaults.
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                  >
+                    Click "Reset All to Off" to turn off all options, then click
+                    "Save" to clear tenant defaults.
                   </Typography>
                 </Box>
 

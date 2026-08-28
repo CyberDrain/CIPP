@@ -17,7 +17,8 @@ const formatVersionPolicy = (props) => {
       ? null
       : Number(props.MajorVersionLimit)
   const days =
-    props.ExpireVersionsAfterDays === null || props.ExpireVersionsAfterDays === undefined
+    props.ExpireVersionsAfterDays === null ||
+    props.ExpireVersionsAfterDays === undefined
       ? null
       : Number(props.ExpireVersionsAfterDays)
 
@@ -86,7 +87,8 @@ export const CippSharePointBrowserProperties = ({
       : null
   const versionsLabel = formatVersionPolicy(siteAdminProps)
   const versionsFetching = Boolean(
-    (siteUrl || siteId) && (sitePropsApi.isPending || (!siteAdminProps && !sitePropsApi.isError))
+    (siteUrl || siteId) &&
+    (sitePropsApi.isPending || (!siteAdminProps && !sitePropsApi.isError))
   )
 
   const propertyItems = (() => {
@@ -104,19 +106,35 @@ export const CippSharePointBrowserProperties = ({
         },
         {
           label: 'Site ID',
-          value: item.siteId ? <CippCopyToClipBoard text={item.siteId} type="chip" /> : '—',
+          value: item.siteId ? (
+            <CippCopyToClipBoard text={item.siteId} type="chip" />
+          ) : (
+            '—'
+          ),
         },
         {
           label: 'Graph ID',
-          value: item.id ? <CippCopyToClipBoard text={item.id} type="chip" /> : '—',
+          value: item.id ? (
+            <CippCopyToClipBoard text={item.id} type="chip" />
+          ) : (
+            '—'
+          ),
         },
         {
           label: 'Web ID',
-          value: item.webId ? <CippCopyToClipBoard text={item.webId} type="chip" /> : '—',
+          value: item.webId ? (
+            <CippCopyToClipBoard text={item.webId} type="chip" />
+          ) : (
+            '—'
+          ),
         },
         {
           label: 'URL',
-          value: item.webUrl ? <CippCopyToClipBoard text={item.webUrl} type="chip" /> : '—',
+          value: item.webUrl ? (
+            <CippCopyToClipBoard text={item.webUrl} type="chip" />
+          ) : (
+            '—'
+          ),
         },
       ]
     }
@@ -125,15 +143,27 @@ export const CippSharePointBrowserProperties = ({
       { label: 'Template', value: item.template || '—' },
       {
         label: 'List ID',
-        value: item.id ? <CippCopyToClipBoard text={item.id} type="chip" /> : '—',
+        value: item.id ? (
+          <CippCopyToClipBoard text={item.id} type="chip" />
+        ) : (
+          '—'
+        ),
       },
       {
         label: 'Site ID',
-        value: item.siteId ? <CippCopyToClipBoard text={item.siteId} type="chip" /> : '—',
+        value: item.siteId ? (
+          <CippCopyToClipBoard text={item.siteId} type="chip" />
+        ) : (
+          '—'
+        ),
       },
       {
         label: 'URL',
-        value: item.webUrl ? <CippCopyToClipBoard text={item.webUrl} type="chip" /> : '—',
+        value: item.webUrl ? (
+          <CippCopyToClipBoard text={item.webUrl} type="chip" />
+        ) : (
+          '—'
+        ),
       },
     ]
   })()

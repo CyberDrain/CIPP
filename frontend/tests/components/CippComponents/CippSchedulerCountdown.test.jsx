@@ -14,16 +14,22 @@ import {
 
 // The component subscribes to the table's React Query cache entry. Standing in for that hook keeps
 // these tests off the network and lets each one state exactly what the table has loaded.
-const apiMock = vi.hoisted(() => ({ result: { isSuccess: false, data: undefined } }))
+const apiMock = vi.hoisted(() => ({
+  result: { isSuccess: false, data: undefined },
+}))
 vi.mock('../../../src/api/ApiCall', () => ({
   ApiGetCallWithPagination: () => apiMock.result,
 }))
 
 // Local-time constructor, so the quarter-hour maths is exercised in whatever timezone the
 // test runner happens to be in.
-const at = (hours, minutes, seconds, ms = 0) => new Date(2026, 0, 15, hours, minutes, seconds, ms)
+const at = (hours, minutes, seconds, ms = 0) =>
+  new Date(2026, 0, 15, hours, minutes, seconds, ms)
 
-const plannedAt = (date) => ({ TaskState: 'Planned', ScheduledTime: date.toISOString() })
+const plannedAt = (date) => ({
+  TaskState: 'Planned',
+  ScheduledTime: date.toISOString(),
+})
 
 // Rows reach the component as pages of the paginated query.
 const loaded = (rows) => ({ isSuccess: true, data: { pages: [rows] } })
@@ -76,7 +82,9 @@ describe('countDueTasks', () => {
   const nextRun = at(14, 15, 0)
 
   it('counts planned tasks whose time falls before the run', () => {
-    expect(countDueTasks([plannedAt(at(14, 0, 0)), plannedAt(at(13, 0, 0))], nextRun)).toBe(2)
+    expect(
+      countDueTasks([plannedAt(at(14, 0, 0)), plannedAt(at(13, 0, 0))], nextRun)
+    ).toBe(2)
   })
 
   it('counts a task scheduled exactly on the boundary', () => {
@@ -95,7 +103,9 @@ describe('countDueTasks', () => {
   it.each(['Completed', 'Failed', 'Running', 'Pending', 'Processing'])(
     'skips %s tasks',
     (TaskState) => {
-      expect(countDueTasks([{ ...plannedAt(at(14, 0, 0)), TaskState }], nextRun)).toBe(0)
+      expect(
+        countDueTasks([{ ...plannedAt(at(14, 0, 0)), TaskState }], nextRun)
+      ).toBe(0)
     }
   )
 
@@ -108,7 +118,9 @@ describe('countDueTasks', () => {
 
   it('accepts a scheduled time stored as epoch seconds', () => {
     const epoch = String(Math.floor(at(14, 0, 0).getTime() / 1000))
-    expect(countDueTasks([{ TaskState: 'Planned', ScheduledTime: epoch }], nextRun)).toBe(1)
+    expect(
+      countDueTasks([{ TaskState: 'Planned', ScheduledTime: epoch }], nextRun)
+    ).toBe(1)
   })
 
   it('skips rows with an unusable scheduled time', () => {
@@ -130,9 +142,12 @@ describe('formatDueLabel', () => {
 })
 
 describe('countInFlightTasks', () => {
-  it.each(['Pending', 'Running', 'Processing'])('counts %s tasks', (TaskState) => {
-    expect(countInFlightTasks([{ TaskState }])).toBe(1)
-  })
+  it.each(['Pending', 'Running', 'Processing'])(
+    'counts %s tasks',
+    (TaskState) => {
+      expect(countInFlightTasks([{ TaskState }])).toBe(1)
+    }
+  )
 
   it.each(['Planned', 'Failed - Planned', 'Completed', 'Failed'])(
     'does not count %s tasks',
@@ -142,7 +157,9 @@ describe('countInFlightTasks', () => {
   )
 
   it('counts a task disabled mid-run, since disabling does not stop it', () => {
-    expect(countInFlightTasks([{ TaskState: 'Running', Disabled: true }])).toBe(1)
+    expect(countInFlightTasks([{ TaskState: 'Running', Disabled: true }])).toBe(
+      1
+    )
   })
 
   it('does not double-count against the due total', () => {
@@ -169,7 +186,10 @@ describe('CippSchedulerCountdown', () => {
     vi.useFakeTimers()
     vi.setSystemTime(now)
     return renderWithTheme(
-      <CippSchedulerCountdown apiUrl="/api/ListScheduledItems" queryKey="ListScheduledItems-test" />
+      <CippSchedulerCountdown
+        apiUrl="/api/ListScheduledItems"
+        queryKey="ListScheduledItems-test"
+      />
     )
   }
 
@@ -186,9 +206,9 @@ describe('CippSchedulerCountdown', () => {
       hour: '2-digit',
       minute: '2-digit',
     })
-    expect(screen.getByRole('group', { name: /next scheduler run/i })).toHaveTextContent(
-      expectedTime
-    )
+    expect(
+      screen.getByRole('group', { name: /next scheduler run/i })
+    ).toHaveTextContent(expectedTime)
 
     act(() => {
       vi.advanceTimersByTime(1000)
@@ -208,9 +228,9 @@ describe('CippSchedulerCountdown', () => {
 
   it('is not a live region, so it is not announced on every tick', () => {
     renderAt(at(14, 10, 28))
-    expect(screen.getByRole('group', { name: /next scheduler run/i })).not.toHaveAttribute(
-      'aria-live'
-    )
+    expect(
+      screen.getByRole('group', { name: /next scheduler run/i })
+    ).not.toHaveAttribute('aria-live')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
@@ -236,7 +256,9 @@ describe('CippSchedulerCountdown', () => {
   // The case that prompted this: a task already claimed by an off-cycle run sits in Pending, so
   // nothing is due for the next run, but the row on screen is plainly not idle.
   it('reports a claimed task as in progress rather than as nothing at all', () => {
-    apiMock.result = loaded([{ TaskState: 'Pending', ScheduledTime: at(14, 9, 41).toISOString() }])
+    apiMock.result = loaded([
+      { TaskState: 'Pending', ScheduledTime: at(14, 9, 41).toISOString() },
+    ])
     renderAt(at(14, 10, 28))
 
     expect(screen.getByText('No tasks due')).toBeInTheDocument()

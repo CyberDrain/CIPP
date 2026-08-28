@@ -25,7 +25,10 @@ import { getCippError } from '../../utils/get-cipp-error'
 import { useDialog } from '../../hooks/use-dialog'
 import { CippAlertSnoozeDialog } from './CippAlertSnoozeDialog'
 import { CippApiDialog } from './CippApiDialog'
-import { describeAlertItem, humanizeCmdlet } from '../../utils/format-alert-item'
+import {
+  describeAlertItem,
+  humanizeCmdlet,
+} from '../../utils/format-alert-item'
 
 const ACTIVE_SNOOZE_STATUSES = ['Active', 'Forever']
 const rowSx = {
@@ -41,7 +44,8 @@ const describeSnooze = (snooze) => {
   if (snooze.Status === 'Expired') return 'Snooze expired'
   const until = Number(snooze.SnoozeUntil)
   const parts = []
-  if (typeof snooze.RemainingDays === 'number') parts.push(`${snooze.RemainingDays}d left`)
+  if (typeof snooze.RemainingDays === 'number')
+    parts.push(`${snooze.RemainingDays}d left`)
   if (Number.isFinite(until) && until > 0) {
     const untilDate = new Date(until * 1000).toLocaleDateString(undefined, {
       year: 'numeric',
@@ -55,7 +59,14 @@ const describeSnooze = (snooze) => {
 
 const SnoozeStatusChip = ({ snooze }) => {
   if (snooze.Status === 'Forever') {
-    return <Chip size="small" variant="outlined" icon={<SnoozeIcon />} label="Forever" />
+    return (
+      <Chip
+        size="small"
+        variant="outlined"
+        icon={<SnoozeIcon />}
+        label="Forever"
+      />
+    )
   }
   if (snooze.Status === 'Expired') {
     return <Chip size="small" variant="outlined" label="Expired" />
@@ -79,7 +90,11 @@ export const AlertsOverviewCard = ({ tenantFilter, sx }) => {
   // Alerts CippDataTable, which fetches it as an infinite query ({ pages }). A plain
   // useQuery here under the same key would clobber that cache entry and crash the table.
   const snoozeQueryKey = 'ListSnoozedAlerts-DashboardCard'
-  const relatedQueryKeys = ['ListSnoozedAlerts', snoozeQueryKey, resultsQueryKey]
+  const relatedQueryKeys = [
+    'ListSnoozedAlerts',
+    snoozeQueryKey,
+    resultsQueryKey,
+  ]
 
   const resultsApi = ApiGetCall({
     url: '/api/ListAlertResults',
@@ -87,7 +102,10 @@ export const AlertsOverviewCard = ({ tenantFilter, sx }) => {
     data: { tenantFilter },
     waiting: !!tenantFilter,
   })
-  const snoozeApi = ApiGetCall({ url: '/api/ListSnoozedAlerts', queryKey: snoozeQueryKey })
+  const snoozeApi = ApiGetCall({
+    url: '/api/ListSnoozedAlerts',
+    queryKey: snoozeQueryKey,
+  })
 
   const tenantSnoozes = useMemo(
     () =>
@@ -102,7 +120,10 @@ export const AlertsOverviewCard = ({ tenantFilter, sx }) => {
   const activeSnoozeHashes = useMemo(() => {
     const set = new Set()
     tenantSnoozes.forEach((snooze) => {
-      if (ACTIVE_SNOOZE_STATUSES.includes(snooze.Status) && snooze.ContentHash) {
+      if (
+        ACTIVE_SNOOZE_STATUSES.includes(snooze.Status) &&
+        snooze.ContentHash
+      ) {
         set.add(snooze.ContentHash)
       }
     })
@@ -147,7 +168,11 @@ export const AlertsOverviewCard = ({ tenantFilter, sx }) => {
 
     if (hasError) {
       return (
-        <Typography variant="body2" color="error" sx={{ py: 2, textAlign: 'center' }}>
+        <Typography
+          variant="body2"
+          color="error"
+          sx={{ py: 2, textAlign: 'center' }}
+        >
           {getCippError(resultsApi.error || snoozeApi.error)}
         </Typography>
       )
@@ -155,7 +180,11 @@ export const AlertsOverviewCard = ({ tenantFilter, sx }) => {
 
     return (
       <>
-        <Stack useFlexGap direction="row" sx={{ mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+        <Stack
+          useFlexGap
+          direction="row"
+          sx={{ mb: 1.5, flexWrap: 'wrap', gap: 1 }}
+        >
           <Chip
             size="small"
             color={activeItems.length ? 'error' : 'success'}
@@ -176,21 +205,41 @@ export const AlertsOverviewCard = ({ tenantFilter, sx }) => {
           {activeItems.length > 0 ? (
             <Stack divider={<Divider flexItem />}>
               {activeItems.map((item, index) => {
-                const { title, detail } = describeAlertItem(item.AlertItem, item.ContentPreview)
-                const label = item.AlertComment?.trim() || humanizeCmdlet(item.CmdletName)
+                const { title, detail } = describeAlertItem(
+                  item.AlertItem,
+                  item.ContentPreview
+                )
+                const label =
+                  item.AlertComment?.trim() || humanizeCmdlet(item.CmdletName)
                 const secondary = detail ? `${label} · ${detail}` : label
                 return (
-                  <Box key={`active-${item.CmdletName}-${item.ContentHash}-${index}`} sx={rowSx}>
+                  <Box
+                    key={`active-${item.CmdletName}-${item.ContentHash}-${index}`}
+                    sx={rowSx}
+                  >
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="body2" fontWeight={500} noWrap title={title}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={500}
+                        noWrap
+                        title={title}
+                      >
                         {title}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" noWrap title={secondary}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        noWrap
+                        title={secondary}
+                      >
                         {secondary}
                       </Typography>
                     </Box>
                     <Tooltip title="Snooze this alert">
-                      <IconButton size="small" onClick={() => setSnoozeTarget(item)}>
+                      <IconButton
+                        size="small"
+                        onClick={() => setSnoozeTarget(item)}
+                      >
                         <SnoozeIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -199,7 +248,11 @@ export const AlertsOverviewCard = ({ tenantFilter, sx }) => {
               })}
             </Stack>
           ) : (
-            <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ py: 2, textAlign: 'center' }}
+            >
               No active alerts for this tenant.
             </Typography>
           )}
@@ -211,7 +264,10 @@ export const AlertsOverviewCard = ({ tenantFilter, sx }) => {
               </Typography>
               <Stack divider={<Divider flexItem />}>
                 {sortedSnoozes.map((snooze) => {
-                  const { title } = describeAlertItem(null, snooze.ContentPreview)
+                  const { title } = describeAlertItem(
+                    null,
+                    snooze.ContentPreview
+                  )
                   const status = describeSnooze(snooze)
                   const by = snooze.SnoozedBy ? ` · by ${snooze.SnoozedBy}` : ''
                   const secondary = `${humanizeCmdlet(snooze.CmdletName)} · ${status}${by}`
@@ -241,7 +297,10 @@ export const AlertsOverviewCard = ({ tenantFilter, sx }) => {
                       >
                         <SnoozeStatusChip snooze={snooze} />
                         <Tooltip title="Remove snooze">
-                          <IconButton size="small" onClick={() => removeDialog.handleOpen(snooze)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => removeDialog.handleOpen(snooze)}
+                          >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>

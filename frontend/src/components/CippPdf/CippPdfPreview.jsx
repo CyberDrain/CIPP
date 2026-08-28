@@ -23,7 +23,12 @@ const MobileHandoff = ({ document, fileName, title, showDownload }) => {
 
   if (instance.loading) {
     return (
-      <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ height: '100%', p: 3 }}>
+      <Stack
+        alignItems="center"
+        justifyContent="center"
+        spacing={2}
+        sx={{ height: '100%', p: 3 }}
+      >
         <CircularProgress />
         <Typography variant="body2" color="text.secondary">
           Building report…
@@ -34,10 +39,19 @@ const MobileHandoff = ({ document, fileName, title, showDownload }) => {
 
   if (instance.error || !instance.url) {
     return (
-      <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: '100%', p: 3 }}>
-        <Typography variant="subtitle1">Report could not be generated</Typography>
+      <Stack
+        alignItems="center"
+        justifyContent="center"
+        spacing={1}
+        sx={{ height: '100%', p: 3 }}
+      >
+        <Typography variant="subtitle1">
+          Report could not be generated
+        </Typography>
         <Typography variant="body2" color="text.secondary" align="center">
-          {instance.error ? String(instance.error) : 'No document was produced.'}
+          {instance.error
+            ? String(instance.error)
+            : 'No document was produced.'}
         </Typography>
       </Stack>
     )
@@ -116,7 +130,14 @@ const MobileHandoff = ({ document, fileName, title, showDownload }) => {
  * react-pdf error, and doing that on mobile would rebuild the blob every render.
  */
 export const CippPdfPreview = (props) => {
-  const { children, fileName, title, viewerKey, showDownload = false, ...viewerProps } = props
+  const {
+    children,
+    fileName,
+    title,
+    viewerKey,
+    showDownload = false,
+    ...viewerProps
+  } = props
   const isMobile = useIsMobileLayout()
 
   if (isMobile) {

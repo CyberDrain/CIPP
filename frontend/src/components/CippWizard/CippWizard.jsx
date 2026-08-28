@@ -1,38 +1,41 @@
-import { useCallback, useMemo, useState } from "react";
-import { Card, CardContent, Container, Stack } from "@mui/material";
-import { Grid } from "@mui/system";
-import { WizardSteps } from "./wizard-steps";
-import { useForm, useWatch } from "react-hook-form";
+import { useCallback, useMemo, useState } from 'react'
+import { Card, CardContent, Container, Stack } from '@mui/material'
+import { Grid } from '@mui/system'
+import { WizardSteps } from './wizard-steps'
+import { useForm, useWatch } from 'react-hook-form'
 
 export const CippWizard = (props) => {
-  const { 
-    postUrl, 
-    orientation = "horizontal", 
+  const {
+    postUrl,
+    orientation = 'horizontal',
     steps,
-    contentMaxWidth = "md",
-  } = props;
-  
-  const formControl = useForm({ mode: "onChange", defaultValues: props.initialState });
+    contentMaxWidth = 'md',
+  } = props
+
+  const formControl = useForm({
+    mode: 'onChange',
+    defaultValues: props.initialState,
+  })
   const formWatcher = useWatch({
     control: formControl.control,
-  });
+  })
 
   const stepsWithVisibility = useMemo(() => {
     return steps.filter((step) => {
       if (step.hideStepWhen) {
-        return !step.hideStepWhen(formWatcher);
+        return !step.hideStepWhen(formWatcher)
       }
       if (step.showStepWhen) {
-        return step.showStepWhen(formWatcher);
+        return step.showStepWhen(formWatcher)
       }
-      return true;
-    });
-  }, [steps, formWatcher]);
+      return true
+    })
+  }, [steps, formWatcher])
 
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(0)
   const handleBack = useCallback(() => {
-    setActiveStep((prevState) => (prevState > 0 ? prevState - 1 : prevState));
-  }, []);
+    setActiveStep((prevState) => (prevState > 0 ? prevState - 1 : prevState))
+  }, [])
 
   // Counts against the VISIBLE steps. `steps` is the unfiltered prop — the onboarding
   // wizard passes 14 and shows 3-7 — so clamping against it let activeStep run past the
@@ -40,12 +43,12 @@ export const CippWizard = (props) => {
   const handleNext = useCallback(() => {
     setActiveStep((prevState) =>
       prevState < stepsWithVisibility.length - 1 ? prevState + 1 : prevState
-    );
-  }, [stepsWithVisibility.length]);
+    )
+  }, [stepsWithVisibility.length])
 
   const content = useMemo(() => {
-    const currentStep = stepsWithVisibility[activeStep];
-    const StepComponent = currentStep.component;
+    const currentStep = stepsWithVisibility[activeStep]
+    const StepComponent = currentStep.component
 
     return (
       <StepComponent
@@ -61,18 +64,25 @@ export const CippWizard = (props) => {
         valuesKey={currentStep.componentProps?.valuesKey}
         {...currentStep.componentProps}
       />
-    );
-  }, [activeStep, handleNext, handleBack, stepsWithVisibility, formControl, postUrl]);
+    )
+  }, [
+    activeStep,
+    handleNext,
+    handleBack,
+    stepsWithVisibility,
+    formControl,
+    postUrl,
+  ])
 
   // Get the maxWidth for the current step, fallback to global setting
   const currentStepMaxWidth = useMemo(() => {
-    const currentStep = stepsWithVisibility[activeStep];
-    return currentStep.maxWidth ?? contentMaxWidth;
-  }, [activeStep, stepsWithVisibility, contentMaxWidth]);
+    const currentStep = stepsWithVisibility[activeStep]
+    return currentStep.maxWidth ?? contentMaxWidth
+  }, [activeStep, stepsWithVisibility, contentMaxWidth])
 
   return (
     <Card>
-      {orientation === "vertical" ? (
+      {orientation === 'vertical' ? (
         <CardContent>
           <Grid container spacing={3}>
             <Grid size={{ md: 4, xs: 12 }}>
@@ -83,9 +93,7 @@ export const CippWizard = (props) => {
                 steps={stepsWithVisibility}
               />
             </Grid>
-            <Grid size={{ md: 8, xs: 12 }}>
-              {content}
-            </Grid>
+            <Grid size={{ md: 8, xs: 12 }}>{content}</Grid>
           </Grid>
         </CardContent>
       ) : (
@@ -115,5 +123,5 @@ export const CippWizard = (props) => {
         </CardContent>
       )}
     </Card>
-  );
-};
+  )
+}

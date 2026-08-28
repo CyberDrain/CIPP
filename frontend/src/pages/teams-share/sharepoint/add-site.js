@@ -1,19 +1,19 @@
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import CippFormComponent from "../../../components/CippComponents/CippFormComponent";
-import CippFormPage from "../../../components/CippFormPages/CippFormPage";
-import { useSettings } from "../../../hooks/use-settings";
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
+import CippFormPage from '../../../components/CippFormPages/CippFormPage'
+import { useSettings } from '../../../hooks/use-settings'
 
 const AddSiteForm = () => {
-  const userSettingsDefaults = useSettings();
+  const userSettingsDefaults = useSettings()
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       tenantFilter: userSettingsDefaults.currentTenant,
     },
-  });
+  })
 
   return (
     <CippFormPage
@@ -24,7 +24,12 @@ const AddSiteForm = () => {
     >
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid size={{ xs: 12 }}>
-          <CippFormComponent name="siteName" label="Site Name" formControl={formControl} required />
+          <CippFormComponent
+            name="siteName"
+            label="Site Name"
+            formControl={formControl}
+            required
+          />
         </Grid>
         <Grid size={{ xs: 12 }}>
           <CippFormComponent
@@ -43,31 +48,32 @@ const AddSiteForm = () => {
             multiple={false}
             type="autoComplete"
             api={{
-              url: "/api/ListGraphRequest",
+              url: '/api/ListGraphRequest',
               // CippAutocomplete appends the current tenant to this key, so switching
               // tenants refetches the list.
-              queryKey: "AddSiteOwner",
+              queryKey: 'AddSiteOwner',
               data: {
-                Endpoint: "users",
-                $filter: "accountEnabled eq true",
+                Endpoint: 'users',
+                $filter: 'accountEnabled eq true',
                 $top: 999,
                 $count: true,
-                $orderby: "displayName",
-                $select: "id,displayName,userPrincipalName",
+                $orderby: 'displayName',
+                $select: 'id,displayName,userPrincipalName',
               },
-              dataKey: "Results",
-              labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
-              valueField: "userPrincipalName",
+              dataKey: 'Results',
+              labelField: (user) =>
+                `${user.displayName} (${user.userPrincipalName})`,
+              valueField: 'userPrincipalName',
               addedField: {
-                id: "id",
+                id: 'id',
               },
             }}
             validators={{
               validate: (value) => {
                 if (!value) {
-                  return "Required";
+                  return 'Required'
                 }
-                return true;
+                return true
               },
             }}
           />
@@ -81,15 +87,15 @@ const AddSiteForm = () => {
             type="autoComplete"
             multiple={false}
             options={[
-              { label: "Team (No Microsoft365 Group)", value: "team" },
-              { label: "Communication", value: "communication" },
+              { label: 'Team (No Microsoft365 Group)', value: 'team' },
+              { label: 'Communication', value: 'communication' },
             ]}
             validators={{
               validate: (value) => {
                 if (!value) {
-                  return "Required";
+                  return 'Required'
                 }
-                return true;
+                return true
               },
             }}
           />
@@ -103,29 +109,29 @@ const AddSiteForm = () => {
             type="autoComplete"
             multiple={false}
             options={[
-              { label: "Blank", value: "blank" },
-              { label: "Showcase", value: "Showcase" },
-              { label: "Topic", value: "Topic" },
+              { label: 'Blank', value: 'blank' },
+              { label: 'Showcase', value: 'Showcase' },
+              { label: 'Topic', value: 'Topic' },
             ]}
             validators={{
               validate: (value) => {
                 if (!value) {
-                  return "Required";
+                  return 'Required'
                 }
-                return true;
+                return true
               },
             }}
           />
         </Grid>
       </Grid>
     </CippFormPage>
-  );
-};
+  )
+}
 
 const Page = () => {
-  return <AddSiteForm />;
-};
+  return <AddSiteForm />
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

@@ -6,4 +6,8 @@
 // flattened to `location.city` / `location.countryOrRegion` while the column id
 // stays `location`, so the export looks up `location`, finds nothing, and writes
 // "No data" for every row (GitHub issue #6237).
-export const SKIP_RECURSION_KEYS = ['location', 'ScheduledBackupValues', 'Tenant']
+export const SKIP_RECURSION_KEYS = [
+  'location',
+  'ScheduledBackupValues',
+  'Tenant',
+]

@@ -26,7 +26,7 @@ const sampleJson = JSON.stringify(
     accountEnabled: true,
   },
   null,
-  2,
+  2
 )
 
 const multilineJson = JSON.stringify(
@@ -43,7 +43,7 @@ const multilineJson = JSON.stringify(
     ],
   },
   null,
-  2,
+  2
 )
 
 export const JsonSyntax = {

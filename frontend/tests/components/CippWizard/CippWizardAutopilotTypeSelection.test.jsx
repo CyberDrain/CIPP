@@ -41,11 +41,16 @@ describe('CippWizardAutopilotTypeSelection', () => {
     renderWithProviders(
       <Harness
         onForm={(f) => (form = f)}
-        defaultValues={{ autopilotData: [{ SerialNumber: 'SN1' }], GroupName: 'group' }}
+        defaultValues={{
+          autopilotData: [{ SerialNumber: 'SN1' }],
+          GroupName: 'group',
+        }}
       />
     )
 
-    await user.click(screen.getByText('Device Preparation (Corporate Identifiers)'))
+    await user.click(
+      screen.getByText('Device Preparation (Corporate Identifiers)')
+    )
 
     expect(form.getValues('deploymentType')).toBe('devicePrep')
     expect(form.getValues('autopilotData')).toBeUndefined()
@@ -60,7 +65,9 @@ describe('CippWizardAutopilotTypeSelection', () => {
         onForm={(f) => (form = f)}
         defaultValues={{
           deploymentType: 'devicePrep',
-          devicePrepData: [{ manufacturer: 'Dell', model: 'XPS', serialNumber: 'SN1' }],
+          devicePrepData: [
+            { manufacturer: 'Dell', model: 'XPS', serialNumber: 'SN1' },
+          ],
           overwriteExisting: true,
         }}
       />

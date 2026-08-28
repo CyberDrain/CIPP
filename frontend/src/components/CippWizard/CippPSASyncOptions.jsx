@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react'
 import {
   Autocomplete,
   Button,
@@ -11,66 +11,66 @@ import {
   Switch,
   TextField,
   Typography,
-} from "@mui/material";
-import { CippWizardActionsRow } from "./CippWizardActionsRow";
+} from '@mui/material'
+import { CippWizardActionsRow } from './CippWizardActionsRow'
 
 const options = [
   {
-    label: "Sync Completed",
-    value: "syncComplete",
+    label: 'Sync Completed',
+    value: 'syncComplete',
   },
   {
-    label: "Sync Failed",
-    value: "SyncFailed",
+    label: 'Sync Failed',
+    value: 'SyncFailed',
   },
   {
-    label: "Warranties Updated",
-    value: "WarrantyUpdated",
+    label: 'Warranties Updated',
+    value: 'WarrantyUpdated',
   },
-];
+]
 
 export const CippPSASyncOptions = (props) => {
-  const { values: initialValues, onNextStep, onPreviousStep } = props;
-  const [values, setValues] = useState(initialValues);
+  const { values: initialValues, onNextStep, onPreviousStep } = props
+  const [values, setValues] = useState(initialValues)
 
   useEffect(() => {
-    setValues(initialValues);
-  }, [initialValues]);
+    setValues(initialValues)
+  }, [initialValues])
 
   const handleChange = useCallback((event) => {
     if (event.target.checked) {
       setValues((prevState) => ({
         ...prevState,
         [event.target.name]: true,
-      }));
+      }))
     } else {
       setValues((prevState) => ({
         ...prevState,
         [event.target.name]: false,
-      }));
+      }))
     }
-  }, []);
+  }, [])
 
   const handleSubmit = useCallback(
     (event) => {
-      event.preventDefault();
+      event.preventDefault()
       const newValues = Object.keys(values).reduce((acc, key) => {
-        if (key.includes(".")) {
-          const [parentKey, childKey] = key.split(".");
+        if (key.includes('.')) {
+          const [parentKey, childKey] = key.split('.')
           if (!acc[parentKey]) {
-            acc[parentKey] = {};
+            acc[parentKey] = {}
           }
-          acc[parentKey][childKey] = values[key];
+          acc[parentKey][childKey] = values[key]
         } else {
-          acc[key] = values[key];
+          acc[key] = values[key]
         }
-        return acc;
-      }, {});
+        return acc
+      }, {})
 
-      onNextStep?.(newValues);
+      onNextStep?.(newValues)
     },
     [values, onNextStep]
-  );
+  )
 
   return (
     <form onSubmit={handleSubmit}>
@@ -79,11 +79,14 @@ export const CippPSASyncOptions = (props) => {
           <Typography variant="h6">Step 3. Select your Sync Options</Typography>
         </div>
         <Card variant="outlined">
-          <CardHeader subheader="Manage your e-mail alerts" title="Email Notifications" />
+          <CardHeader
+            subheader="Manage your e-mail alerts"
+            title="Email Notifications"
+          />
           <Divider />
           <List disablePadding>
             {options.map((option, index) => {
-              const hasDivider = options.length > index + 1;
+              const hasDivider = options.length > index + 1
               return (
                 <ListItem divider={hasDivider} key={option.value}>
                   <Typography sx={{ flexGrow: 1 }} variant="body2">
@@ -91,14 +94,17 @@ export const CippPSASyncOptions = (props) => {
                   </Typography>
                   <Switch name={option.value} onChange={handleChange} />
                 </ListItem>
-              );
+              )
             })}
           </List>
         </Card>
-        {values.SyncTool !== "CSV" && (
+        {values.SyncTool !== 'CSV' && (
           <>
             <Card variant="outlined">
-              <CardHeader subheader="Select which device types to sync" title="Device Types Sync" />
+              <CardHeader
+                subheader="Select which device types to sync"
+                title="Device Types Sync"
+              />
               <Divider />
               <List disablePadding>
                 {values.DeviceTypes &&
@@ -107,13 +113,19 @@ export const CippPSASyncOptions = (props) => {
                       <Typography sx={{ flexGrow: 1 }} variant="body2">
                         {deviceType.name}
                       </Typography>
-                      <Switch name={`syncTypes.${deviceType.id}`} onChange={handleChange} />
+                      <Switch
+                        name={`syncTypes.${deviceType.id}`}
+                        onChange={handleChange}
+                      />
                     </ListItem>
                   ))}
               </List>
             </Card>
             <Card variant="outlined">
-              <CardHeader subheader="Select which clients to sync" title="Client Sync" />
+              <CardHeader
+                subheader="Select which clients to sync"
+                title="Client Sync"
+              />
               <Divider />
               <List disablePadding>
                 <ListItem>
@@ -149,7 +161,12 @@ export const CippPSASyncOptions = (props) => {
           </>
         )}
         <CippWizardActionsRow>
-          <Button color="inherit" onClick={onPreviousStep} size="large" type="button">
+          <Button
+            color="inherit"
+            onClick={onPreviousStep}
+            size="large"
+            type="button"
+          >
             Back
           </Button>
           <Button size="large" type="submit" variant="contained">
@@ -158,5 +175,5 @@ export const CippPSASyncOptions = (props) => {
         </CippWizardActionsRow>
       </Stack>
     </form>
-  );
-};
+  )
+}

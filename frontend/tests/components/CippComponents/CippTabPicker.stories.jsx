@@ -9,8 +9,16 @@ import { shrinkToPhoneViewport } from '../../viewport'
 const TABS = [
   { label: 'Edit Tenant', path: '/tenant/manage/edit', icon: 'Settings' },
   { label: 'Manage Drift', path: '/tenant/manage/drift', icon: 'Sync' },
-  { label: 'Configuration Backup', path: '/tenant/manage/backup', icon: 'Backup' },
-  { label: 'Applied Standards Report', path: '/tenant/manage/standards', icon: 'Assessment' },
+  {
+    label: 'Configuration Backup',
+    path: '/tenant/manage/backup',
+    icon: 'Backup',
+  },
+  {
+    label: 'Applied Standards Report',
+    path: '/tenant/manage/standards',
+    icon: 'Assessment',
+  },
   {
     label: 'Policies and Settings Deployed',
     path: '/tenant/manage/policies',
@@ -58,29 +66,47 @@ export const BlockAtPhoneWidth = {
     const picker = canvas.getByRole('button', { name: /switch view/i })
 
     await step('the trigger names the current view', async () => {
-      await expect(picker).toHaveAccessibleName('Policies and Settings Deployed switch view')
+      await expect(picker).toHaveAccessibleName(
+        'Policies and Settings Deployed switch view'
+      )
     })
 
     if (!onAPhone) return
 
-    await step('the longest label in the app fits without widening the page', async () => {
-      const host = canvasElement.querySelector('[data-testid="block-host"]')
-      await waitFor(() => expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth))
-      // full width of the gutter box, so the control is unmistakably a control
-      const style = getComputedStyle(host)
-      const content =
-        host.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
-      await expect(picker.getBoundingClientRect().width).toBeGreaterThan(content - 1)
-    })
+    await step(
+      'the longest label in the app fits without widening the page',
+      async () => {
+        const host = canvasElement.querySelector('[data-testid="block-host"]')
+        await waitFor(() =>
+          expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth)
+        )
+        // full width of the gutter box, so the control is unmistakably a control
+        const style = getComputedStyle(host)
+        const content =
+          host.clientWidth -
+          parseFloat(style.paddingLeft) -
+          parseFloat(style.paddingRight)
+        await expect(picker.getBoundingClientRect().width).toBeGreaterThan(
+          content - 1
+        )
+      }
+    )
 
     // Heading clothes: the chevron rides beside the text like a title's disclosure
     // affordance, not pinned to the far edge like a form field's.
-    await step('the chevron sits beside the label, not at the far edge', async () => {
-      const chevron = picker.querySelector('svg:last-of-type')
-      const labelEl = within(picker).getByText('Policies and Settings Deployed')
-      const gapToLabel = chevron.getBoundingClientRect().left - labelEl.getBoundingClientRect().right
-      await expect(gapToLabel).toBeLessThan(24)
-    })
+    await step(
+      'the chevron sits beside the label, not at the far edge',
+      async () => {
+        const chevron = picker.querySelector('svg:last-of-type')
+        const labelEl = within(picker).getByText(
+          'Policies and Settings Deployed'
+        )
+        const gapToLabel =
+          chevron.getBoundingClientRect().left -
+          labelEl.getBoundingClientRect().right
+        await expect(gapToLabel).toBeLessThan(24)
+      }
+    )
   },
 }
 
@@ -90,7 +116,12 @@ export const CompactInTitleRow = {
   decorators: [withTabs()],
   render: () => (
     <Box data-testid="title-row-host" sx={{ px: 2 }}>
-      <Stack alignItems="center" direction="row" justifyContent="space-between" spacing={1}>
+      <Stack
+        alignItems="center"
+        direction="row"
+        justifyContent="space-between"
+        spacing={1}
+      >
         <Stack spacing={1} sx={{ minWidth: 0 }}>
           <Typography variant="h6" noWrap>
             Contoso Manufacturing Holdings GmbH
@@ -106,14 +137,21 @@ export const CompactInTitleRow = {
     const canvas = within(canvasElement)
     const picker = canvas.getByRole('button', { name: /switch view/i })
 
-    await step('a 30-char label beside a long title does not widen the row', async () => {
-      const host = canvasElement.querySelector('[data-testid="title-row-host"]')
-      await waitFor(() => expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth))
-      // and it stays a control rather than eating the heading's half of the row
-      await expect(picker.getBoundingClientRect().width).toBeLessThanOrEqual(
-        host.clientWidth / 2 + 1
-      )
-    })
+    await step(
+      'a 30-char label beside a long title does not widen the row',
+      async () => {
+        const host = canvasElement.querySelector(
+          '[data-testid="title-row-host"]'
+        )
+        await waitFor(() =>
+          expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth)
+        )
+        // and it stays a control rather than eating the heading's half of the row
+        await expect(picker.getBoundingClientRect().width).toBeLessThanOrEqual(
+          host.clientWidth / 2 + 1
+        )
+      }
+    )
   },
 }
 
@@ -127,7 +165,9 @@ export const SingleTabRendersNothing = {
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(canvas.queryByRole('button', { name: /switch view/i })).toBeNull()
+    await expect(
+      canvas.queryByRole('button', { name: /switch view/i })
+    ).toBeNull()
   },
 }
 
@@ -145,14 +185,23 @@ export const OpensTheSheet = {
     // sheet, or every current-tab query matches twice.
     let sheet
 
-    await step('every destination is a full-width row, none scrolled off an edge', async () => {
-      await userEvent.click(canvas.getByRole('button', { name: /switch view/i }))
-      const body = within(document.body)
-      await waitFor(() => expect(body.getByText('Views')).toBeInTheDocument())
-      sheet = within(body.getByText('Views').closest('.MuiDrawer-paper'))
-      await expect(sheet.getByText('Configuration Backup')).toBeInTheDocument()
-      await expect(sheet.getByText('Policies and Settings Deployed')).toBeInTheDocument()
-    })
+    await step(
+      'every destination is a full-width row, none scrolled off an edge',
+      async () => {
+        await userEvent.click(
+          canvas.getByRole('button', { name: /switch view/i })
+        )
+        const body = within(document.body)
+        await waitFor(() => expect(body.getByText('Views')).toBeInTheDocument())
+        sheet = within(body.getByText('Views').closest('.MuiDrawer-paper'))
+        await expect(
+          sheet.getByText('Configuration Backup')
+        ).toBeInTheDocument()
+        await expect(
+          sheet.getByText('Policies and Settings Deployed')
+        ).toBeInTheDocument()
+      }
+    )
 
     await step('the current view is checked', async () => {
       const current = sheet.getByText('Edit Tenant').closest('[role="button"]')

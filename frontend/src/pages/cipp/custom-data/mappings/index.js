@@ -1,43 +1,44 @@
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { TabbedLayout } from "../../../../layouts/TabbedLayout";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
-import { Alert, Button, SvgIcon, Typography } from "@mui/material";
-import { Add } from "@mui/icons-material";
-import tabOptions from "../tabOptions";
-import NextLink from "next/link";
-import { TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { TabbedLayout } from '../../../../layouts/TabbedLayout'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
+import { Alert, Button, SvgIcon, Typography } from '@mui/material'
+import { Add } from '@mui/icons-material'
+import tabOptions from '../tabOptions'
+import NextLink from 'next/link'
+import { TrashIcon, PencilIcon } from '@heroicons/react/24/outline'
 
 const Page = () => {
-  const pageTitle = "Custom Data Mappings";
+  const pageTitle = 'Custom Data Mappings'
 
   // Columns for the table
   const columns = [
-    "tenant",
-    "sourceType",
-    "dataset",
-    "syncProperty",
-    "directoryObject",
-    "customDataAttribute",
-  ];
+    'tenant',
+    'sourceType',
+    'dataset',
+    'syncProperty',
+    'directoryObject',
+    'customDataAttribute',
+  ]
 
   const actions = [
     {
-      label: "Edit Mapping",
+      label: 'Edit Mapping',
       pinned: true,
       icon: <PencilIcon />,
-      link: "/cipp/custom-data/mappings/edit?id=[id]",
+      link: '/cipp/custom-data/mappings/edit?id=[id]',
     },
     {
-      label: "Delete Mapping",
+      label: 'Delete Mapping',
       icon: <TrashIcon />,
-      url: "/api/ExecCustomData?Action=DeleteMapping",
-      type: "POST",
+      url: '/api/ExecCustomData?Action=DeleteMapping',
+      type: 'POST',
       data: {
-        id: "id",
+        id: 'id',
       },
-      confirmText: "Are you sure you want to delete the mapping with ID '[id]'?",
+      confirmText:
+        "Are you sure you want to delete the mapping with ID '[id]'?",
     },
-  ];
+  ]
 
   return (
     <>
@@ -46,8 +47,8 @@ const Page = () => {
         tableFilter={
           <Alert severity="info">
             <Typography variant="body2">
-              Custom data mappings are used to synchronize custom data to directory objects. You can
-              add, edit, or delete mappings here.
+              Custom data mappings are used to synchronize custom data to
+              directory objects. You can add, edit, or delete mappings here.
             </Typography>
           </Alert>
         }
@@ -73,13 +74,13 @@ const Page = () => {
         actions={actions}
       />
     </>
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
+export default Page

@@ -1,15 +1,23 @@
-import { Stack, Typography } from "@mui/material";
-import { Grid } from "@mui/system";
-import CippWizardStepButtons from "./CippWizardStepButtons";
-import CippFormComponent from "../CippComponents/CippFormComponent";
+import { Stack, Typography } from '@mui/material'
+import { Grid } from '@mui/system'
+import CippWizardStepButtons from './CippWizardStepButtons'
+import CippFormComponent from '../CippComponents/CippFormComponent'
 
 export const CippWizardVacationSchedule = (props) => {
-  const { postUrl, formControl, onPreviousStep, onNextStep, currentStep, lastStep } = props;
+  const {
+    postUrl,
+    formControl,
+    onPreviousStep,
+    onNextStep,
+    currentStep,
+    lastStep,
+  } = props
 
   return (
     <Stack spacing={3}>
       <Typography variant="subtitle1">
-        Set the date range for the vacation period and optional notification settings.
+        Set the date range for the vacation period and optional notification
+        settings.
       </Typography>
 
       <Grid container spacing={2}>
@@ -25,9 +33,9 @@ export const CippWizardVacationSchedule = (props) => {
             validators={{
               validate: (value) => {
                 if (!value) {
-                  return "Start date is required";
+                  return 'Start date is required'
                 }
-                return true;
+                return true
               },
             }}
           />
@@ -44,14 +52,18 @@ export const CippWizardVacationSchedule = (props) => {
             required={true}
             validators={{
               validate: (value) => {
-                const startDate = formControl.getValues("startDate");
+                const startDate = formControl.getValues('startDate')
                 if (!value) {
-                  return "End date is required";
+                  return 'End date is required'
                 }
-                if (startDate && value && new Date(value * 1000) < new Date(startDate * 1000)) {
-                  return "End date must be after start date";
+                if (
+                  startDate &&
+                  value &&
+                  new Date(value * 1000) < new Date(startDate * 1000)
+                ) {
+                  return 'End date must be after start date'
                 }
-                return true;
+                return true
               },
             }}
           />
@@ -67,9 +79,9 @@ export const CippWizardVacationSchedule = (props) => {
             multiple
             creatable={false}
             options={[
-              { label: "Webhook", value: "Webhook" },
-              { label: "Email", value: "Email" },
-              { label: "PSA", value: "PSA" },
+              { label: 'Webhook', value: 'Webhook' },
+              { label: 'Email', value: 'Email' },
+              { label: 'PSA', value: 'PSA' },
             ]}
           />
         </Grid>
@@ -94,5 +106,5 @@ export const CippWizardVacationSchedule = (props) => {
         formControl={formControl}
       />
     </Stack>
-  );
-};
+  )
+}

@@ -1,15 +1,15 @@
-import { Button, SvgIcon, Typography } from "@mui/material";
-import CippButtonCard from "../CippCards/CippButtonCard";
-import { ApiPostCall } from "../../api/ApiCall";
-import { useDialog } from "../../hooks/use-dialog";
-import { SettingsBackupRestore } from "@mui/icons-material";
-import Link from "next/link";
+import { Button, SvgIcon, Typography } from '@mui/material'
+import CippButtonCard from '../CippCards/CippButtonCard'
+import { ApiPostCall } from '../../api/ApiCall'
+import { useDialog } from '../../hooks/use-dialog'
+import { SettingsBackupRestore } from '@mui/icons-material'
+import Link from 'next/link'
 
 const CippBackupSettings = () => {
-  const createDialog = useDialog();
+  const createDialog = useDialog()
   const backupAction = ApiPostCall({
     datafromUrl: true,
-  });
+  })
 
   const BackupButtons = () => {
     return (
@@ -27,20 +27,24 @@ const CippBackupSettings = () => {
           Manage Backups
         </Button>
       </>
-    );
-  };
+    )
+  }
 
   return (
     <>
-      <CippButtonCard title="Backup" cardSx={{ display: "flex", flexDirection: "column", height: "100%" }} CardButton={<BackupButtons />}>
+      <CippButtonCard
+        title="Backup"
+        cardSx={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+        CardButton={<BackupButtons />}
+      >
         <Typography variant="body2">
-          Manage the system configuration backups for CIPP. This will not include authentication
-          information or extension configuration. You can also set an automated daily backup
-          schedule.
+          Manage the system configuration backups for CIPP. This will not
+          include authentication information or extension configuration. You can
+          also set an automated daily backup schedule.
         </Typography>
       </CippButtonCard>
     </>
-  );
-};
+  )
+}
 
-export default CippBackupSettings;
+export default CippBackupSettings

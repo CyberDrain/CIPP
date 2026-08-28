@@ -1,35 +1,35 @@
-﻿import React, { useState, useEffect } from "react";
-import { Button, Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useFormState } from "react-hook-form";
-import { RocketLaunch } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormTenantSelector } from "./CippFormTenantSelector";
-import { CippApiResults } from "./CippApiResults";
-import { ApiPostCall } from "../../api/ApiCall";
+﻿import React, { useState, useEffect } from 'react'
+import { Button, Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useFormState } from 'react-hook-form'
+import { RocketLaunch } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippFormTenantSelector } from './CippFormTenantSelector'
+import { CippApiResults } from './CippApiResults'
+import { ApiPostCall } from '../../api/ApiCall'
 
 export const CippDeployContactTemplateDrawer = ({
-  buttonText = "Deploy Contact Template",
+  buttonText = 'Deploy Contact Template',
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false)
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       selectedTenants: [],
       TemplateList: [],
     },
-  });
+  })
 
-  const { isValid } = useFormState({ control: formControl.control });
+  const { isValid } = useFormState({ control: formControl.control })
 
   const deployTemplate = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["DeployContactTemplates"],
-  });
+    relatedQueryKeys: ['DeployContactTemplates'],
+  })
 
   // Reset form fields on successful creation
   useEffect(() => {
@@ -37,33 +37,33 @@ export const CippDeployContactTemplateDrawer = ({
       formControl.reset({
         selectedTenants: [],
         TemplateList: [],
-      });
+      })
     }
-  }, [deployTemplate.isSuccess, formControl]);
+  }, [deployTemplate.isSuccess, formControl])
 
   const handleSubmit = () => {
-    formControl.trigger();
+    formControl.trigger()
     // Check if the form is valid before proceeding
     if (!isValid) {
-      return;
+      return
     }
 
-    const formData = formControl.getValues();
+    const formData = formControl.getValues()
 
     deployTemplate.mutate({
-      url: "/api/DeployContactTemplates",
+      url: '/api/DeployContactTemplates',
       data: formData,
-      relatedQueryKeys: ["DeployContactTemplates"],
-    });
-  };
+      relatedQueryKeys: ['DeployContactTemplates'],
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
       selectedTenants: [],
       TemplateList: [],
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -80,7 +80,13 @@ export const CippDeployContactTemplateDrawer = ({
         onClose={handleCloseDrawer}
         size="md"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-start',
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -88,10 +94,10 @@ export const CippDeployContactTemplateDrawer = ({
               disabled={deployTemplate.isLoading || !isValid}
             >
               {deployTemplate.isLoading
-                ? "Deploying..."
+                ? 'Deploying...'
                 : deployTemplate.isSuccess
-                ? "Deploy Another"
-                : "Deploy Templates"}
+                  ? 'Deploy Another'
+                  : 'Deploy Templates'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -108,11 +114,11 @@ export const CippDeployContactTemplateDrawer = ({
               type="multiple"
               allTenants={true}
               preselectedEnabled={true}
-              validators={{ required: "At least one tenant must be selected" }}
+              validators={{ required: 'At least one tenant must be selected' }}
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* TemplateList */}
           <Grid size={{ md: 12, xs: 12 }}>
@@ -122,12 +128,14 @@ export const CippDeployContactTemplateDrawer = ({
               name="TemplateList"
               formControl={formControl}
               multiple={true}
-              validators={{ required: "At least one template must be selected" }}
+              validators={{
+                required: 'At least one template must be selected',
+              }}
               api={{
                 queryKey: `TemplateListConnectors`,
-                labelField: "name",
+                labelField: 'name',
                 valueField: (option) => option,
-                url: "/api/ListContactTemplates",
+                url: '/api/ListContactTemplates',
               }}
               placeholder="Select a template or enter PowerShell JSON manually"
             />
@@ -137,5 +145,5 @@ export const CippDeployContactTemplateDrawer = ({
         </Grid>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

@@ -1,7 +1,12 @@
 import { Layout as DashboardLayout } from '../../../../layouts/index.js'
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 import { CippApiDialog } from '../../../../components/CippComponents/CippApiDialog.jsx'
-import { GlobeAltIcon, TrashIcon, UserIcon, UserGroupIcon } from '@heroicons/react/24/outline'
+import {
+  GlobeAltIcon,
+  TrashIcon,
+  UserIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline'
 import { LaptopMac, Sync, BookmarkAdd } from '@mui/icons-material'
 import { CippApplicationDeployDrawer } from '../../../../components/CippComponents/CippApplicationDeployDrawer'
 import { Button } from '@mui/material'
@@ -13,7 +18,10 @@ import { useCippReportDB } from '../../../../components/CippComponents/CippRepor
 const assignmentIntentOptions = [
   { label: 'Required', value: 'Required' },
   { label: 'Available', value: 'Available' },
-  { label: 'Available without enrollment', value: 'AvailableWithoutEnrollment' },
+  {
+    label: 'Available without enrollment',
+    value: 'AvailableWithoutEnrollment',
+  },
   { label: 'Uninstall', value: 'Uninstall' },
 ]
 
@@ -83,8 +91,13 @@ const Page = () => {
       label: 'Assignment Filter Mode',
       options: assignmentFilterTypeOptions,
       defaultValue: 'include',
-      helperText: 'Choose whether to include or exclude devices matching the filter.',
-      condition: { field: 'assignmentFilter', compareType: 'hasValue', clearOnHide: false },
+      helperText:
+        'Choose whether to include or exclude devices matching the filter.',
+      condition: {
+        field: 'assignmentFilter',
+        compareType: 'hasValue',
+        clearOnHide: false,
+      },
     },
   ]
 
@@ -101,7 +114,9 @@ const Page = () => {
         AssignmentFilterType: formData?.assignmentFilter?.value
           ? formData?.assignmentFilterType || 'include'
           : null,
-        ExcludeGroupIds: (formData?.excludeGroupTargets || []).map((g) => g.value).filter(Boolean),
+        ExcludeGroupIds: (formData?.excludeGroupTargets || [])
+          .map((g) => g.value)
+          .filter(Boolean),
         ExcludeGroupNames: (formData?.excludeGroupTargets || [])
           .map((g) => g.label)
           .filter(Boolean),
@@ -119,12 +134,15 @@ const Page = () => {
     multiple: true,
     creatable: false,
     allowResubmit: true,
-    ...(required && { validators: { required: 'Please select at least one group' } }),
+    ...(required && {
+      validators: { required: 'Please select at least one group' },
+    }),
     api: {
       url: '/api/ListGraphRequest',
       dataKey: 'Results',
       queryKey: `ListAppAssignmentGroups-${tenant}`,
-      labelField: (group) => (group.id ? `${group.displayName} (${group.id})` : group.displayName),
+      labelField: (group) =>
+        group.id ? `${group.displayName} (${group.id})` : group.displayName,
       valueField: 'id',
       addedField: {
         description: 'description',
@@ -179,7 +197,8 @@ const Page = () => {
         Intent: formData?.Intent || 'Required',
         assignmentMode: formData?.assignmentMode || 'append',
       })),
-      confirmText: 'Are you sure you want to assign "[displayName]" to all users?',
+      confirmText:
+        'Are you sure you want to assign "[displayName]" to all users?',
       icon: <UserIcon />,
       color: 'info',
     },
@@ -194,7 +213,8 @@ const Page = () => {
         Intent: formData?.Intent || 'Required',
         assignmentMode: formData?.assignmentMode || 'append',
       })),
-      confirmText: 'Are you sure you want to assign "[displayName]" to all devices?',
+      confirmText:
+        'Are you sure you want to assign "[displayName]" to all devices?',
       icon: <LaptopMac />,
       color: 'info',
     },
@@ -209,7 +229,8 @@ const Page = () => {
         Intent: formData?.Intent || 'Required',
         assignmentMode: formData?.assignmentMode || 'append',
       })),
-      confirmText: 'Are you sure you want to assign "[displayName]" to all users and devices?',
+      confirmText:
+        'Are you sure you want to assign "[displayName]" to all users and devices?',
       icon: <GlobeAltIcon />,
       color: 'info',
     },
@@ -237,7 +258,8 @@ const Page = () => {
                 return true
               }
               return (
-                (Array.isArray(value) && value.length > 0) || 'Please select at least one group'
+                (Array.isArray(value) && value.length > 0) ||
+                'Please select at least one group'
               )
             },
           },
@@ -279,7 +301,9 @@ const Page = () => {
         ...getAssignmentFilterFields(),
       ],
       customDataformatter: makeAssignFormatter((_singleRow, formData) => {
-        const selectedGroups = Array.isArray(formData?.groupTargets) ? formData.groupTargets : []
+        const selectedGroups = Array.isArray(formData?.groupTargets)
+          ? formData.groupTargets
+          : []
         const isExclude = formData?.assignmentDirection === 'exclude'
         const ids = selectedGroups.map((group) => group.value).filter(Boolean)
         const names = selectedGroups.map((group) => group.label).filter(Boolean)
@@ -405,5 +429,7 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>
+)
 export default Page

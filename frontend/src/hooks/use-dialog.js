@@ -1,28 +1,28 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react'
 
 export function useDialog() {
   const [state, setState] = useState({
     open: false,
-    data: undefined
-  });
+    data: undefined,
+  })
 
   const handleOpen = useCallback((data) => {
     setState({
       open: true,
-      data
-    });
-  }, []);
+      data,
+    })
+  }, [])
 
   const handleClose = useCallback(() => {
     setState({
-      open: false
-    });
-  }, []);
+      open: false,
+    })
+  }, [])
 
   return {
     data: state.data,
     handleClose,
     handleOpen,
-    open: state.open
-  };
+    open: state.open,
+  }
 }

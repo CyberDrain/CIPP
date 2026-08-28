@@ -39,7 +39,10 @@ export const BRANDING_GALLERY_QUERY_KEY = 'BrandingSettings-gallery'
  * Read the report branding. Replaces `useSettings().customBranding`, which carried inline images
  * on every page load and kept report and settings state in the same mutable blob.
  */
-export const useBrandingSettings = ({ waiting = true, includeGallery = false } = {}) => {
+export const useBrandingSettings = ({
+  waiting = true,
+  includeGallery = false,
+} = {}) => {
   const branding = ApiGetCall({
     url: '/api/ListBrandingSettings',
     // Only the settings page needs the galleries; the selected logo and cover come back either way.
@@ -51,7 +54,8 @@ export const useBrandingSettings = ({ waiting = true, includeGallery = false } =
   return useMemo(() => {
     const data = branding.data
     // The endpoint answers 200 with no body when branding cannot be read.
-    if (!data || typeof data !== 'object' || Array.isArray(data)) return DEFAULT_BRANDING
+    if (!data || typeof data !== 'object' || Array.isArray(data))
+      return DEFAULT_BRANDING
     return data
   }, [branding.data])
 }

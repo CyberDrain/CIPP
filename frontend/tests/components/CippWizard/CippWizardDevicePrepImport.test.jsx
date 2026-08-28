@@ -14,9 +14,16 @@ vi.mock('../../../src/hooks/use-breakpoint', async (importOriginal) => ({
 }))
 
 vi.mock('../../../src/api/ApiCall', () => ({
-  ApiGetCall: vi.fn(() => ({ data: undefined, isFetching: false, isSuccess: false })),
+  ApiGetCall: vi.fn(() => ({
+    data: undefined,
+    isFetching: false,
+    isSuccess: false,
+  })),
   ApiPostCall: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
-  ApiGetCallWithPagination: vi.fn(() => ({ data: undefined, isFetching: false })),
+  ApiGetCallWithPagination: vi.fn(() => ({
+    data: undefined,
+    isFetching: false,
+  })),
 }))
 
 // The three the device prep wizard passes — a corporate identifier is exactly this triplet.
@@ -27,7 +34,10 @@ const fields = [
 ]
 
 const Harness = () => {
-  const formControl = useForm({ mode: 'onChange', defaultValues: { devicePrepData: [] } })
+  const formControl = useForm({
+    mode: 'onChange',
+    defaultValues: { devicePrepData: [] },
+  })
   return (
     <CippWizardDevicePrepImport
       formControl={formControl}
@@ -44,7 +54,9 @@ const Harness = () => {
 const openManualImport = async () => {
   const user = userEvent.setup()
   renderWithProviders(<Harness />)
-  await user.click(await screen.findByRole('button', { name: /manual import/i }))
+  await user.click(
+    await screen.findByRole('button', { name: /manual import/i })
+  )
   return { user, dialog: within(await screen.findByRole('dialog')) }
 }
 
@@ -54,7 +66,9 @@ describe('CippWizardDevicePrepImport manual entry', () => {
 
     await user.type(dialog.getByLabelText('Manufacturer'), 'Dell')
 
-    expect(await dialog.findByText(/Model, Serial Number are required/)).toBeInTheDocument()
+    expect(
+      await dialog.findByText(/Model, Serial Number are required/)
+    ).toBeInTheDocument()
     expect(dialog.getByRole('button', { name: 'Add' })).toBeDisabled()
   }, 20000)
 
@@ -65,7 +79,9 @@ describe('CippWizardDevicePrepImport manual entry', () => {
     await user.type(dialog.getByLabelText('Model'), 'XPS 13')
     await user.type(dialog.getByLabelText('Serial Number'), 'SN001')
 
-    expect(await dialog.findByText(/Manufacturer may not contain a comma/)).toBeInTheDocument()
+    expect(
+      await dialog.findByText(/Manufacturer may not contain a comma/)
+    ).toBeInTheDocument()
     expect(dialog.getByRole('button', { name: 'Add' })).toBeDisabled()
   }, 20000)
 
@@ -82,7 +98,9 @@ describe('CippWizardDevicePrepImport manual entry', () => {
     })
     // MRT virtualizes rows and jsdom has no layout engine, so cells are not
     // rendered; the pagination summary is the observable proof the row landed.
-    expect(await screen.findByText('1-1 of 1', {}, { timeout: 10000 })).toBeInTheDocument()
+    expect(
+      await screen.findByText('1-1 of 1', {}, { timeout: 10000 })
+    ).toBeInTheDocument()
   }, 20000)
 })
 
@@ -98,13 +116,17 @@ describe('CippWizardDevicePrepImport CSV import', () => {
   it('imports a headerless CSV in the Intune portal order', async () => {
     await uploadCsv('Dell,XPS 13,SN001\nHP,EliteBook,SN002\n')
 
-    expect(await screen.findByText('1-2 of 2', {}, { timeout: 10000 })).toBeInTheDocument()
+    expect(
+      await screen.findByText('1-2 of 2', {}, { timeout: 10000 })
+    ).toBeInTheDocument()
   }, 20000)
 
   it('imports a CSV with headers', async () => {
     await uploadCsv('manufacturer,model,serialNumber\nDell,XPS 13,SN001\n')
 
-    expect(await screen.findByText('1-1 of 1', {}, { timeout: 10000 })).toBeInTheDocument()
+    expect(
+      await screen.findByText('1-1 of 1', {}, { timeout: 10000 })
+    ).toBeInTheDocument()
   }, 20000)
 
   it('rejects rows with missing values instead of importing them', async () => {

@@ -1,6 +1,6 @@
-import ArrowRightIcon from "@heroicons/react/24/outline/ArrowRightIcon";
-import CubeIcon from "@heroicons/react/24/outline/CubeIcon";
-import UsersIcon from "@heroicons/react/24/outline/UsersIcon";
+import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon'
+import CubeIcon from '@heroicons/react/24/outline/CubeIcon'
+import UsersIcon from '@heroicons/react/24/outline/UsersIcon'
 import {
   Box,
   Button,
@@ -16,13 +16,15 @@ import {
   Skeleton,
   SvgIcon,
   Typography,
-} from "@mui/material";
+} from '@mui/material'
 
 const getContent = (notification, textKey) => {
   return (
     <>
       <ListItemIcon>
-        <SvgIcon fontSize="small">{notification.icon ? notification.icon : <CubeIcon />}</SvgIcon>
+        <SvgIcon fontSize="small">
+          {notification.icon ? notification.icon : <CubeIcon />}
+        </SvgIcon>
       </ListItemIcon>
       <ListItemText
         primary={
@@ -41,8 +43,8 @@ const getContent = (notification, textKey) => {
         </IconButton>
       </ListItemSecondaryAction>
     </>
-  );
-};
+  )
+}
 
 export const CippListItemCard = ({
   isFetching,
@@ -56,14 +58,14 @@ export const CippListItemCard = ({
   if (!listitems || listitems.length === 0) {
     listitems = [
       {
-        id: "no-messages",
+        id: 'no-messages',
         icon: <UsersIcon />,
         [textKey]: "No messages found. You're good to go!",
       },
-    ];
+    ]
   }
   return (
-    <Card style={{ width: "100%" }}>
+    <Card style={{ width: '100%' }}>
       <CardHeader title={title} />
       <Divider />
       <List>
@@ -90,12 +92,12 @@ export const CippListItemCard = ({
               </ListItem>
             ))
           : listitems.map((notification, index) => {
-              const hasDivider = listitems.length > index + 1;
+              const hasDivider = listitems.length > index + 1
               return (
                 <ListItem key={`listitem-${index}`} divider={hasDivider}>
                   {getContent(notification, textKey)}
                 </ListItem>
-              );
+              )
             })}
       </List>
       <Divider />
@@ -120,5 +122,5 @@ export const CippListItemCard = ({
         )}
       </Box>
     </Card>
-  );
-};
+  )
+}

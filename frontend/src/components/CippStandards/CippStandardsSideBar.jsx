@@ -1,4 +1,4 @@
-import PropTypes from "prop-types";
+import PropTypes from 'prop-types'
 import {
   Box,
   Card,
@@ -10,10 +10,10 @@ import {
   SvgIcon,
   Tooltip,
   Typography,
-} from "@mui/material";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { styled } from "@mui/material/styles";
-import { CippOffCanvas } from "../CippComponents/CippOffCanvas";
+} from '@mui/material'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import { styled } from '@mui/material/styles'
+import { CippOffCanvas } from '../CippComponents/CippOffCanvas'
 import {
   Timeline,
   TimelineConnector,
@@ -22,53 +22,57 @@ import {
   TimelineItem,
   timelineItemClasses,
   TimelineSeparator,
-} from "@mui/lab";
-import { ActionList } from "../action-list";
-import { ActionListItem } from "../action-list-item";
-import CheckIcon from "@heroicons/react/24/outline/CheckIcon";
-import CloseIcon from "@mui/icons-material/Close";
-import { useWatch } from "react-hook-form";
-import { useEffect, useState } from "react";
-import { get } from "lodash";
-import CippFormComponent from "../CippComponents/CippFormComponent";
-import { CippFormTenantSelector } from "../CippComponents/CippFormTenantSelector";
-import { CippApiDialog } from "../CippComponents/CippApiDialog";
-import ReactTimeAgo from "react-time-ago";
-import { Alert } from "@mui/material";
-import { ApiGetCall } from "../../api/ApiCall";
+} from '@mui/lab'
+import { ActionList } from '../action-list'
+import { ActionListItem } from '../action-list-item'
+import CheckIcon from '@heroicons/react/24/outline/CheckIcon'
+import CloseIcon from '@mui/icons-material/Close'
+import { useWatch } from 'react-hook-form'
+import { useEffect, useState } from 'react'
+import { get } from 'lodash'
+import CippFormComponent from '../CippComponents/CippFormComponent'
+import { CippFormTenantSelector } from '../CippComponents/CippFormTenantSelector'
+import { CippApiDialog } from '../CippComponents/CippApiDialog'
+import ReactTimeAgo from 'react-time-ago'
+import { Alert } from '@mui/material'
+import { ApiGetCall } from '../../api/ApiCall'
 
 const StyledTimelineDot = (props) => {
-  const { complete } = props;
+  const { complete } = props
 
   return (
     <TimelineDot
       sx={{
-        alignSelf: "center",
-        boxShadow: "none",
+        alignSelf: 'center',
+        boxShadow: 'none',
         flexShrink: 0,
         height: 36,
-        justifyContent: "center",
+        justifyContent: 'center',
         width: 36,
-        backgroundColor: complete ? "success.main" : "error.main",
-        borderColor: complete ? "success.main" : "error.main",
-        color: complete ? "success.contrastText" : "error.contrastText",
+        backgroundColor: complete ? 'success.main' : 'error.main',
+        borderColor: complete ? 'success.main' : 'error.main',
+        color: complete ? 'success.contrastText' : 'error.contrastText',
       }}
     >
-      <SvgIcon fontSize="small">{complete ? <CheckIcon /> : <CloseIcon />}</SvgIcon>
+      <SvgIcon fontSize="small">
+        {complete ? <CheckIcon /> : <CloseIcon />}
+      </SvgIcon>
     </TimelineDot>
-  );
-};
+  )
+}
 
 const StyledTimelineConnector = styled(TimelineConnector)(({ theme }) => ({
   backgroundColor:
-    theme.palette.mode === "dark" ? theme.palette.neutral[800] : theme.palette.neutral[200],
+    theme.palette.mode === 'dark'
+      ? theme.palette.neutral[800]
+      : theme.palette.neutral[200],
   height: 24,
-}));
+}))
 
 const StyledTimelineContent = styled(TimelineContent)(({ theme }) => ({
-  padding: "14px 16px",
+  padding: '14px 16px',
   ...theme.typography.overline,
-}));
+}))
 
 const CippStandardsSideBar = ({
   title,
@@ -83,224 +87,237 @@ const CippStandardsSideBar = ({
   onDriftConflictChange,
   isDriftMode = false,
 }) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [savedItem, setSavedItem] = useState(null);
-  const [driftError, setDriftError] = useState("");
-  const [aboutOpen, setAboutOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0)
+  const [savedItem, setSavedItem] = useState(null)
+  const [driftError, setDriftError] = useState('')
+  const [aboutOpen, setAboutOpen] = useState(false)
 
   const dialogAfterEffect = (id) => {
-    setSavedItem(id);
+    setSavedItem(id)
 
     // Reset form's dirty state to prevent unsaved changes warning
     if (formControl && formControl.reset) {
       // Get current values and reset the form with them to clear dirty state
-      const currentValues = formControl.getValues();
-      formControl.reset(currentValues);
+      const currentValues = formControl.getValues()
+      formControl.reset(currentValues)
     }
 
     // Call the onSaveSuccess callback if provided
-    if (typeof onSaveSuccess === "function") {
-      onSaveSuccess();
+    if (typeof onSaveSuccess === 'function') {
+      onSaveSuccess()
     }
-  };
+  }
 
-  const watchForm = useWatch({ control: formControl.control });
+  const watchForm = useWatch({ control: formControl.control })
 
   // Use proper CIPP ApiGetCall for drift validation
   const driftValidationApi = ApiGetCall({
-    url: "/api/ListTenantAlignment",
-    queryKey: "ListTenantAlignment-drift-validation",
-  });
+    url: '/api/ListTenantAlignment',
+    queryKey: 'ListTenantAlignment-drift-validation',
+  })
 
   // Get tenant groups for group membership validation
   const tenantGroupsApi = ApiGetCall({
-    url: "/api/ListTenantGroups",
-    queryKey: "ListTenantGroups-drift-validation",
-  });
+    url: '/api/ListTenantGroups',
+    queryKey: 'ListTenantGroups-drift-validation',
+  })
 
   // Helper function to expand groups to their member tenants
   const expandGroupsToTenants = (tenants, groups) => {
-    const expandedTenants = [];
+    const expandedTenants = []
 
     tenants.forEach((tenant) => {
-      const tenantValue = typeof tenant === "object" ? tenant.value : tenant;
-      const tenantType = typeof tenant === "object" ? tenant.type : null;
+      const tenantValue = typeof tenant === 'object' ? tenant.value : tenant
+      const tenantType = typeof tenant === 'object' ? tenant.type : null
 
-      if (tenantType === "Group") {
+      if (tenantType === 'Group') {
         // Find the group and add all its members
-        const group = groups?.find((g) => g.Id === tenantValue);
+        const group = groups?.find((g) => g.Id === tenantValue)
         if (group && group.Members) {
           group.Members.forEach((member) => {
-            expandedTenants.push(member.defaultDomainName);
-          });
+            expandedTenants.push(member.defaultDomainName)
+          })
         }
       } else {
         // Regular tenant
-        expandedTenants.push(tenantValue);
+        expandedTenants.push(tenantValue)
       }
-    });
+    })
 
-    return expandedTenants;
-  };
+    return expandedTenants
+  }
 
   // Enhanced drift validation using CIPP patterns with group support
   const validateDrift = async (tenants, excludedTenants) => {
     if (!isDriftMode || !tenants || tenants.length === 0) {
-      setDriftError("");
-      onDriftConflictChange?.(false);
-      return;
+      setDriftError('')
+      onDriftConflictChange?.(false)
+      return
     }
 
     try {
       // Wait for both APIs to load
       if (!driftValidationApi.data || !tenantGroupsApi.data) {
-        return;
+        return
       }
 
       // Filter out current template if editing
       const existingTemplates = driftValidationApi.data.filter((template) => {
         const shouldInclude =
-          edit && watchForm.GUID ? template.standardId !== watchForm.GUID : true;
-        return shouldInclude;
-      });
+          edit && watchForm.GUID ? template.standardId !== watchForm.GUID : true
+        return shouldInclude
+      })
 
       // Get tenant groups data
-      const groups = tenantGroupsApi.data?.Results || [];
+      const groups = tenantGroupsApi.data?.Results || []
 
       // Expand selected tenants (including group members)
-      const selectedTenantList = expandGroupsToTenants(tenants, groups);
+      const selectedTenantList = expandGroupsToTenants(tenants, groups)
 
       // Expand excluded tenants the same way; a tenant excluded here can never overlap
-      const excludedTenantSet = new Set(expandGroupsToTenants(excludedTenants || [], groups));
+      const excludedTenantSet = new Set(
+        expandGroupsToTenants(excludedTenants || [], groups)
+      )
 
       // Simple conflict check
-      const conflicts = [];
+      const conflicts = []
 
       // Filter for drift templates only and group by standardId
       const driftTemplates = existingTemplates.filter(
-        (template) => template.standardType === "drift",
-      );
-      const uniqueTemplates = {};
+        (template) => template.standardType === 'drift'
+      )
+      const uniqueTemplates = {}
 
       driftTemplates.forEach((template) => {
         if (!uniqueTemplates[template.standardId]) {
           uniqueTemplates[template.standardId] = {
             standardName: template.standardName,
             tenants: [],
-          };
+          }
         }
-        uniqueTemplates[template.standardId].tenants.push(template.tenantFilter);
-      });
+        uniqueTemplates[template.standardId].tenants.push(template.tenantFilter)
+      })
 
       // Check for conflicts with unique templates
       for (const templateId in uniqueTemplates) {
-        const template = uniqueTemplates[templateId];
-        const templateTenants = template.tenants;
+        const template = uniqueTemplates[templateId]
+        const templateTenants = template.tenants
 
         // Template tenants come from ListTenantAlignment rows, which already have that
         // template's own exclusions applied — only this form's exclusions need subtracting
-        const selectedHasAllTenants = selectedTenantList.includes("AllTenants");
+        const selectedHasAllTenants = selectedTenantList.includes('AllTenants')
         const hasConflict = templateTenants.some(
           (templateTenant) =>
             !excludedTenantSet.has(templateTenant) &&
             (selectedHasAllTenants ||
-              templateTenant === "AllTenants" ||
+              templateTenant === 'AllTenants' ||
               selectedTenantList.some(
                 (selectedTenant) =>
-                  selectedTenant !== "AllTenants" &&
+                  selectedTenant !== 'AllTenants' &&
                   !excludedTenantSet.has(selectedTenant) &&
-                  selectedTenant === templateTenant,
-              )),
-        );
+                  selectedTenant === templateTenant
+              ))
+        )
 
         if (hasConflict) {
-          conflicts.push(template.standardName || "Unknown Template");
+          conflicts.push(template.standardName || 'Unknown Template')
         }
       }
 
       if (conflicts.length > 0) {
         setDriftError(
           `This template has tenants that are assigned to another Drift Template. You can only assign one Drift Template to each tenant. Please check the ${conflicts.join(
-            ", ",
-          )} template.`,
-        );
-        onDriftConflictChange?.(true);
+            ', '
+          )} template.`
+        )
+        onDriftConflictChange?.(true)
       } else {
-        setDriftError("");
-        onDriftConflictChange?.(false);
+        setDriftError('')
+        onDriftConflictChange?.(false)
       }
     } catch (error) {
-      setDriftError("Error checking for conflicts" + (error.message ? `: ${error.message}` : ""));
-      onDriftConflictChange?.(true);
+      setDriftError(
+        'Error checking for conflicts' +
+          (error.message ? `: ${error.message}` : '')
+      )
+      onDriftConflictChange?.(true)
     }
-  };
+  }
 
   // Watch tenant changes
   useEffect(() => {
-    if (!isDriftMode) return;
+    if (!isDriftMode) return
 
     const timeoutId = setTimeout(() => {
-      validateDrift(watchForm.tenantFilter, watchForm.excludedTenants);
-    }, 500);
+      validateDrift(watchForm.tenantFilter, watchForm.excludedTenants)
+    }, 500)
 
-    return () => clearTimeout(timeoutId);
+    return () => clearTimeout(timeoutId)
   }, [
     watchForm.tenantFilter,
     watchForm.excludedTenants,
     isDriftMode,
     driftValidationApi.data,
     tenantGroupsApi.data,
-  ]);
+  ])
 
   useEffect(() => {
     const stepsStatus = {
-      step1: !!get(watchForm, "templateName"),
-      step2: get(watchForm, "tenantFilter", []).length > 0,
+      step1: !!get(watchForm, 'templateName'),
+      step2: get(watchForm, 'tenantFilter', []).length > 0,
       step3: Object.keys(selectedStandards).length > 0,
       step4:
-        get(watchForm, "standards") &&
+        get(watchForm, 'standards') &&
         Object.keys(selectedStandards).length > 0 &&
         Object.keys(selectedStandards).every((standardName) => {
-          const standardValues = get(watchForm, `${standardName}`, {});
-          const standard = selectedStandards[standardName];
+          const standardValues = get(watchForm, `${standardName}`, {})
+          const standard = selectedStandards[standardName]
           // Check if this standard requires an action
           const hasRequiredComponents =
             standard?.addedComponent &&
             standard.addedComponent.some(
-              (comp) => comp.type !== "switch" && comp.required !== false,
-            );
-          const actionRequired = standard?.disabledFeatures !== undefined || hasRequiredComponents;
+              (comp) => comp.type !== 'switch' && comp.required !== false
+            )
+          const actionRequired =
+            standard?.disabledFeatures !== undefined || hasRequiredComponents
           // Always require an action value which should be an array with at least one element
-          const actionValue = get(standardValues, "action");
-          return actionValue && (!Array.isArray(actionValue) || actionValue.length > 0);
+          const actionValue = get(standardValues, 'action')
+          return (
+            actionValue &&
+            (!Array.isArray(actionValue) || actionValue.length > 0)
+          )
         }),
-    };
+    }
 
-    const completedSteps = Object.values(stepsStatus).filter(Boolean).length;
-    setCurrentStep(completedSteps);
-  }, [selectedStandards, watchForm]);
+    const completedSteps = Object.values(stepsStatus).filter(Boolean).length
+    setCurrentStep(completedSteps)
+  }, [selectedStandards, watchForm])
 
   // Create a local reference to the stepsStatus from the latest effect run
   const stepsStatus = {
-    step1: !!get(watchForm, "templateName"),
-    step2: get(watchForm, "tenantFilter", []).length > 0,
+    step1: !!get(watchForm, 'templateName'),
+    step2: get(watchForm, 'tenantFilter', []).length > 0,
     step3: Object.keys(selectedStandards).length > 0,
     step4:
-      get(watchForm, "standards") &&
+      get(watchForm, 'standards') &&
       Object.keys(selectedStandards).length > 0 &&
       Object.keys(selectedStandards).every((standardName) => {
-        const standardValues = get(watchForm, `${standardName}`, {});
-        const standard = selectedStandards[standardName];
+        const standardValues = get(watchForm, `${standardName}`, {})
+        const standard = selectedStandards[standardName]
         // Always require an action for all standards (must be an array with at least one element)
-        const actionValue = get(standardValues, "action");
-        return actionValue && (!Array.isArray(actionValue) || actionValue.length > 0);
+        const actionValue = get(standardValues, 'action')
+        return (
+          actionValue && (!Array.isArray(actionValue) || actionValue.length > 0)
+        )
       }),
-  };
+  }
 
   return (
     <>
       <CippOffCanvas
-        title={isDriftMode ? "About Drift Templates" : "About Standard Templates"}
+        title={
+          isDriftMode ? 'About Drift Templates' : 'About Standard Templates'
+        }
         visible={aboutOpen}
         onClose={() => setAboutOpen(false)}
         size="sm"
@@ -309,24 +326,26 @@ const CippStandardsSideBar = ({
           {isDriftMode ? (
             <Stack spacing={2}>
               <Typography variant="body2" color="text.secondary">
-                Drift templates provide continuous monitoring of tenant configurations to detect
-                unauthorized changes. Each tenant can only have one drift template applied at a
-                time.
+                Drift templates provide continuous monitoring of tenant
+                configurations to detect unauthorized changes. Each tenant can
+                only have one drift template applied at a time.
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 <strong>Remediation Options:</strong>
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                • <strong>Automatic Remediation:</strong> Immediately reverts unauthorized changes
-                back to the template configuration
-                <br />• <strong>Manual Remediation:</strong> Sends email notifications for review,
-                allowing you to accept or deny detected changes
+                • <strong>Automatic Remediation:</strong> Immediately reverts
+                unauthorized changes back to the template configuration
+                <br />• <strong>Manual Remediation:</strong> Sends email
+                notifications for review, allowing you to accept or deny
+                detected changes
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 <strong>Key Features:</strong>
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                • Monitors all security standards, Conditional Access policies, and Intune policies
+                • Monitors all security standards, Conditional Access policies,
+                and Intune policies
                 <br />
                 • Detects changes made outside of CIPP
                 <br />
@@ -337,31 +356,37 @@ const CippStandardsSideBar = ({
           ) : (
             <Stack spacing={2}>
               <Typography variant="body2" color="text.secondary">
-                Standard templates can be applied to multiple tenants and allow overlapping
-                configurations with intelligent merging based on specificity and timing.
+                Standard templates can be applied to multiple tenants and allow
+                overlapping configurations with intelligent merging based on
+                specificity and timing.
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 <strong>Merge Priority (Specificity):</strong>
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                1. <strong>Individual Tenant</strong> - Highest priority, overrides all others
+                1. <strong>Individual Tenant</strong> - Highest priority,
+                overrides all others
                 <br />
-                2. <strong>Tenant Group</strong> - Overrides "All Tenants" settings
+                2. <strong>Tenant Group</strong> - Overrides "All Tenants"
+                settings
                 <br />
-                3. <strong>All Tenants</strong> - Lowest priority, default baseline
+                3. <strong>All Tenants</strong> - Lowest priority, default
+                baseline
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 <strong>Conflict Resolution:</strong>
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                When multiple standards target the same scope (e.g., two tenant-specific templates),
-                the most recently created template takes precedence.
+                When multiple standards target the same scope (e.g., two
+                tenant-specific templates), the most recently created template
+                takes precedence.
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                <strong>Example:</strong> An "All Tenants" template enables audit log retention for
-                90 days, but you need 365 days for one specific tenant. Create a tenant-specific
-                template with 365-day retention - it will override the global setting for that
-                tenant only.
+                <strong>Example:</strong> An "All Tenants" template enables
+                audit log retention for 90 days, but you need 365 days for one
+                specific tenant. Create a tenant-specific template with 365-day
+                retention - it will override the global setting for that tenant
+                only.
               </Typography>
             </Stack>
           )}
@@ -372,7 +397,11 @@ const CippStandardsSideBar = ({
           title={title}
           action={
             <Tooltip
-              title={isDriftMode ? "About Drift Templates" : "About Standard Templates"}
+              title={
+                isDriftMode
+                  ? 'About Drift Templates'
+                  : 'About Standard Templates'
+              }
               arrow
             >
               <IconButton onClick={() => setAboutOpen(true)} color="primary">
@@ -420,12 +449,16 @@ const CippStandardsSideBar = ({
             />
 
             {/* Show drift error */}
-            {isDriftMode && driftError && <Alert severity="error">{driftError}</Alert>}
+            {isDriftMode && driftError && (
+              <Alert severity="error">{driftError}</Alert>
+            )}
 
             {(watchForm.tenantFilter?.some(
-              (tenant) => tenant.value === "AllTenants" || tenant.type === "Group",
+              (tenant) =>
+                tenant.value === 'AllTenants' || tenant.type === 'Group'
             ) ||
-              (watchForm.excludedTenants && watchForm.excludedTenants.length > 0)) && (
+              (watchForm.excludedTenants &&
+                watchForm.excludedTenants.length > 0)) && (
               <>
                 <Divider />
                 <CippFormTenantSelector
@@ -466,12 +499,12 @@ const CippStandardsSideBar = ({
                 />
                 <Typography
                   sx={{
-                    color: "text.secondary",
+                    color: 'text.secondary',
                   }}
                   variant="caption"
                 >
-                  When enabled, all drift alert notifications (email, webhook, and PSA) will be
-                  disabled.
+                  When enabled, all drift alert notifications (email, webhook,
+                  and PSA) will be disabled.
                 </Typography>
               </>
             )}
@@ -482,12 +515,13 @@ const CippStandardsSideBar = ({
                   <>
                     <Typography
                       sx={{
-                        color: "text.secondary",
-                        display: "block",
+                        color: 'text.secondary',
+                        display: 'block',
                       }}
                       variant="caption"
                     >
-                      Last Updated <ReactTimeAgo date={updatedAt?.date} /> by {updatedAt?.user}
+                      Last Updated <ReactTimeAgo date={updatedAt?.date} /> by{' '}
+                      {updatedAt?.user}
                     </Typography>
                   </>
                 )}
@@ -501,12 +535,12 @@ const CippStandardsSideBar = ({
                 />
                 <Typography
                   sx={{
-                    color: "text.secondary",
+                    color: 'text.secondary',
                   }}
                   variant="caption"
                 >
-                  This setting allows you to create this template and run it only by using "Run
-                  Now".
+                  This setting allows you to create this template and run it
+                  only by using "Run Now".
                 </Typography>
               </>
             )}
@@ -528,7 +562,9 @@ const CippStandardsSideBar = ({
                 {steps.map((step, index) => (
                   <TimelineItem key={index}>
                     <TimelineSeparator>
-                      <StyledTimelineDot complete={stepsStatus[`step${index + 1}`]} />
+                      <StyledTimelineDot
+                        complete={stepsStatus[`step${index + 1}`]}
+                      />
                       {index < steps.length - 1 && <StyledTimelineConnector />}
                     </TimelineSeparator>
                     <StyledTimelineContent>{step}</StyledTimelineContent>
@@ -547,7 +583,9 @@ const CippStandardsSideBar = ({
               label={action.label}
               onClick={action.handler}
               disabled={
-                !(watchForm.tenantFilter && watchForm.tenantFilter.length > 0) ||
+                !(
+                  watchForm.tenantFilter && watchForm.tenantFilter.length > 0
+                ) ||
                 currentStep < 3 ||
                 (isDriftMode && driftError)
               }
@@ -561,29 +599,29 @@ const CippStandardsSideBar = ({
           title="Add Standard"
           api={{
             confirmText: isDriftMode
-              ? "This template will run automatically every 12 hours to detect drift. Are you sure you want to apply this Drift Template?"
+              ? 'This template will run automatically every 12 hours to detect drift. Are you sure you want to apply this Drift Template?'
               : watchForm.runManually
-                ? "Are you sure you want to apply this standard? This template has been set to never run on a schedule. After saving the template you will have to run it manually."
-                : "Are you sure you want to apply this standard? This will apply the template and run every 12 hours.",
-            url: "/api/AddStandardsTemplate",
-            type: "POST",
-            replacementBehaviour: "removeNulls",
+                ? 'Are you sure you want to apply this standard? This template has been set to never run on a schedule. After saving the template you will have to run it manually.'
+                : 'Are you sure you want to apply this standard? This will apply the template and run every 12 hours.',
+            url: '/api/AddStandardsTemplate',
+            type: 'POST',
+            replacementBehaviour: 'removeNulls',
             data: {
-              tenantFilter: "tenantFilter",
-              excludedTenants: "excludedTenants",
-              description: "description",
-              templateName: "templateName",
-              standards: "standards",
-              ...(edit ? { GUID: "GUID" } : {}),
+              tenantFilter: 'tenantFilter',
+              excludedTenants: 'excludedTenants',
+              description: 'description',
+              templateName: 'templateName',
+              standards: 'standards',
+              ...(edit ? { GUID: 'GUID' } : {}),
               ...(savedItem ? { GUID: savedItem } : {}),
-              runManually: isDriftMode ? false : "runManually",
-              isDriftTemplate: "isDriftTemplate",
+              runManually: isDriftMode ? false : 'runManually',
+              isDriftTemplate: 'isDriftTemplate',
               ...(isDriftMode
                 ? {
-                    type: "drift",
-                    driftAlertWebhook: "driftAlertWebhook",
-                    driftAlertEmail: "driftAlertEmail",
-                    driftAlertDisableEmail: "driftAlertDisableEmail",
+                    type: 'drift',
+                    driftAlertWebhook: 'driftAlertWebhook',
+                    driftAlertEmail: 'driftAlertEmail',
+                    driftAlertDisableEmail: 'driftAlertDisableEmail',
                   }
                 : {}),
             },
@@ -591,17 +629,17 @@ const CippStandardsSideBar = ({
           row={formControl.getValues()}
           formControl={formControl}
           relatedQueryKeys={[
-            "listStandardTemplates",
-            "listStandards",
+            'listStandardTemplates',
+            'listStandards',
             `listStandardTemplates-${watchForm.GUID}`,
-            "ListTenantAlignment-drift-validation",
-            "ListTenantGroups-drift-validation",
+            'ListTenantAlignment-drift-validation',
+            'ListTenantGroups-drift-validation',
           ]}
         />
       </Card>
     </>
-  );
-};
+  )
+}
 
 CippStandardsSideBar.propTypes = {
   title: PropTypes.string.isRequired,
@@ -612,12 +650,12 @@ CippStandardsSideBar.propTypes = {
       label: PropTypes.string.isRequired,
       handler: PropTypes.func.isRequired,
       icon: PropTypes.element.isRequired,
-    }),
+    })
   ).isRequired,
   updatedAt: PropTypes.string,
   formControl: PropTypes.object.isRequired,
   onSaveSuccess: PropTypes.func,
   onDriftConflictChange: PropTypes.func,
-};
+}
 
-export default CippStandardsSideBar;
+export default CippStandardsSideBar

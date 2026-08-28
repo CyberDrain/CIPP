@@ -1,108 +1,124 @@
-import React, { useMemo } from "react";
-import { Typography, Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import CippFormComponent from "./CippFormComponent";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
-import { useIntuneDefinitions } from "../../hooks/use-intune-collection";
-import { collectSettingDefinitionIds } from "../../utils/intune-setting-definition-ids";
+import React, { useMemo } from 'react'
+import { Typography, Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import CippFormComponent from './CippFormComponent'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
+import { useIntuneDefinitions } from '../../hooks/use-intune-collection'
+import { collectSettingDefinitionIds } from '../../utils/intune-setting-definition-ids'
 
 // One shared reference for the nothing-to-resolve case, so the hook below is not handed a fresh
 // array on every render.
-const EMPTY_IDS = [];
+const EMPTY_IDS = []
 
 const CippTemplateFieldRenderer = ({
   templateData,
   formControl,
-  templateType = "conditionalAccess",
+  templateType = 'conditionalAccess',
 }) => {
   // Only the setting definition ids this template references are requested. Keyed on the raw JSON
   // string so the walk runs once per template rather than once per render.
-  const intuneRawJson = templateType === "intune" ? templateData?.RAWJson : undefined;
+  const intuneRawJson =
+    templateType === 'intune' ? templateData?.RAWJson : undefined
   const intuneDefinitionIds = useMemo(() => {
-    if (!intuneRawJson) return EMPTY_IDS;
+    if (!intuneRawJson) return EMPTY_IDS
     try {
-      return Array.from(collectSettingDefinitionIds(JSON.parse(intuneRawJson)));
+      return Array.from(collectSettingDefinitionIds(JSON.parse(intuneRawJson)))
     } catch {
-      return EMPTY_IDS;
+      return EMPTY_IDS
     }
-  }, [intuneRawJson]);
+  }, [intuneRawJson])
 
-  const { getDefinition: getIntuneDefinition } = useIntuneDefinitions(intuneDefinitionIds, {
-    enabled: templateType === "intune",
-  });
+  const { getDefinition: getIntuneDefinition } = useIntuneDefinitions(
+    intuneDefinitionIds,
+    {
+      enabled: templateType === 'intune',
+    }
+  )
   // Default blacklisted fields with wildcard support
   const defaultBlacklistedFields = [
-    "id",
-    "isAssigned",
-    "createdDateTime",
-    "modifiedDateTime",
-    "@odata.*",
-    "GUID",
-    "Type",
-    "times",
-    "tenantFilter",
-    "*Id",
-    "*DateTime",
-  ];
+    'id',
+    'isAssigned',
+    'createdDateTime',
+    'modifiedDateTime',
+    '@odata.*',
+    'GUID',
+    'Type',
+    'times',
+    'tenantFilter',
+    '*Id',
+    '*DateTime',
+  ]
 
   // Template-specific configurations
   const templateConfigs = {
     conditionalAccess: {
       blacklistedFields: [
         ...defaultBlacklistedFields,
-        "membershipKind",
-        "countryLookupMethod",
-        "applicationFilter",
-        "includeAuthenticationContextClassReferences",
+        'membershipKind',
+        'countryLookupMethod',
+        'applicationFilter',
+        'includeAuthenticationContextClassReferences',
       ],
-      priorityFields: ["displayName", "state", "DisplayName", "Name", "displayname"],
-      complexArrayFields: ["locationinfo", "groupinfo"],
+      priorityFields: [
+        'displayName',
+        'state',
+        'DisplayName',
+        'Name',
+        'displayname',
+      ],
+      complexArrayFields: ['locationinfo', 'groupinfo'],
       schemaFields: {
         operator: {
           multiple: false,
           options: [
-            { label: "OR", value: "OR" },
-            { label: "AND", value: "AND" },
+            { label: 'OR', value: 'OR' },
+            { label: 'AND', value: 'AND' },
           ],
         },
         builtincontrols: {
           multiple: true,
           options: [
-            { label: "Block", value: "block" },
-            { label: "Multi-factor Authentication", value: "mfa" },
-            { label: "Compliant Device", value: "compliantDevice" },
-            { label: "Domain Joined Device", value: "domainJoinedDevice" },
-            { label: "Approved Application", value: "approvedApplication" },
-            { label: "Compliant Application", value: "compliantApplication" },
-            { label: "Password Change", value: "passwordChange" },
-            { label: "Unknown Future Value", value: "unknownFutureValue" },
+            { label: 'Block', value: 'block' },
+            { label: 'Multi-factor Authentication', value: 'mfa' },
+            { label: 'Compliant Device', value: 'compliantDevice' },
+            { label: 'Domain Joined Device', value: 'domainJoinedDevice' },
+            { label: 'Approved Application', value: 'approvedApplication' },
+            { label: 'Compliant Application', value: 'compliantApplication' },
+            { label: 'Password Change', value: 'passwordChange' },
+            { label: 'Unknown Future Value', value: 'unknownFutureValue' },
           ],
         },
         authenticationtype: {
           multiple: false,
           options: [
             {
-              label: "Primary and Secondary Authentication",
-              value: "primaryAndSecondaryAuthentication",
+              label: 'Primary and Secondary Authentication',
+              value: 'primaryAndSecondaryAuthentication',
             },
-            { label: "Secondary Authentication", value: "secondaryAuthentication" },
-            { label: "Unknown Future Value", value: "unknownFutureValue" },
+            {
+              label: 'Secondary Authentication',
+              value: 'secondaryAuthentication',
+            },
+            { label: 'Unknown Future Value', value: 'unknownFutureValue' },
           ],
         },
         frequencyinterval: {
           multiple: false,
           options: [
-            { label: "Time Based", value: "timeBased" },
-            { label: "Every Time", value: "everyTime" },
-            { label: "Unknown Future Value", value: "unknownFutureValue" },
+            { label: 'Time Based', value: 'timeBased' },
+            { label: 'Every Time', value: 'everyTime' },
+            { label: 'Unknown Future Value', value: 'unknownFutureValue' },
           ],
         },
         state: {
           multiple: false,
           options: [
-            { label: "Enabled", value: "enabled" },
-            { label: "Disabled", value: "disabled" },
-            { label: "Enabled for Reporting", value: "enabledForReportingButNotEnforced" },
+            { label: 'Enabled', value: 'enabled' },
+            { label: 'Disabled', value: 'disabled' },
+            {
+              label: 'Enabled for Reporting',
+              value: 'enabledForReportingButNotEnforced',
+            },
           ],
         },
       },
@@ -110,94 +126,106 @@ const CippTemplateFieldRenderer = ({
     intune: {
       blacklistedFields: [
         ...defaultBlacklistedFields,
-        "deviceManagementApplicabilityRuleOsEdition",
-        "deviceManagementApplicabilityRuleOsVersion",
-        "deviceManagementApplicabilityRuleDeviceMode",
-        "roleScopeTagIds",
-        "supportsScopeTags",
-        "deviceSettingStateSummaries",
-        "RAWJson", // Handle RAWJson specially
+        'deviceManagementApplicabilityRuleOsEdition',
+        'deviceManagementApplicabilityRuleOsVersion',
+        'deviceManagementApplicabilityRuleDeviceMode',
+        'roleScopeTagIds',
+        'supportsScopeTags',
+        'deviceSettingStateSummaries',
+        'RAWJson', // Handle RAWJson specially
       ],
-      priorityFields: ["displayName", "description", "DisplayName", "Name", "displayname"],
-      complexArrayFields: ["assignments", "devicestatusoverview"],
+      priorityFields: [
+        'displayName',
+        'description',
+        'DisplayName',
+        'Name',
+        'displayname',
+      ],
+      complexArrayFields: ['assignments', 'devicestatusoverview'],
       schemaFields: {
         devicecompliancepolicystate: {
           multiple: false,
           options: [
-            { label: "Unknown", value: "unknown" },
-            { label: "Compliant", value: "compliant" },
-            { label: "Noncompliant", value: "noncompliant" },
-            { label: "Conflict", value: "conflict" },
-            { label: "Error", value: "error" },
-            { label: "In Grace Period", value: "inGracePeriod" },
-            { label: "Config Manager", value: "configManager" },
+            { label: 'Unknown', value: 'unknown' },
+            { label: 'Compliant', value: 'compliant' },
+            { label: 'Noncompliant', value: 'noncompliant' },
+            { label: 'Conflict', value: 'conflict' },
+            { label: 'Error', value: 'error' },
+            { label: 'In Grace Period', value: 'inGracePeriod' },
+            { label: 'Config Manager', value: 'configManager' },
           ],
         },
         // Common device policy enum values
         applicationguardenabledoptions: {
           multiple: false,
           options: [
-            { label: "Not Configured", value: "notConfigured" },
-            { label: "Enabled for Edge", value: "enabledForEdge" },
-            { label: "Enabled for Office", value: "enabledForOffice" },
-            { label: "Enabled for Edge and Office", value: "enabledForEdgeAndOffice" },
+            { label: 'Not Configured', value: 'notConfigured' },
+            { label: 'Enabled for Edge', value: 'enabledForEdge' },
+            { label: 'Enabled for Office', value: 'enabledForOffice' },
+            {
+              label: 'Enabled for Edge and Office',
+              value: 'enabledForEdgeAndOffice',
+            },
           ],
         },
         firewallcertificaterevocationlistcheckmethod: {
           multiple: false,
           options: [
-            { label: "Device Default", value: "deviceDefault" },
-            { label: "None", value: "none" },
-            { label: "Attempt", value: "attempt" },
-            { label: "Require", value: "require" },
+            { label: 'Device Default', value: 'deviceDefault' },
+            { label: 'None', value: 'none' },
+            { label: 'Attempt', value: 'attempt' },
+            { label: 'Require', value: 'require' },
           ],
         },
         firewallpacketqueueingmethod: {
           multiple: false,
           options: [
-            { label: "Device Default", value: "deviceDefault" },
-            { label: "Disabled", value: "disabled" },
-            { label: "Queue Inbound", value: "queueInbound" },
-            { label: "Queue Outbound", value: "queueOutbound" },
-            { label: "Queue Both", value: "queueBoth" },
+            { label: 'Device Default', value: 'deviceDefault' },
+            { label: 'Disabled', value: 'disabled' },
+            { label: 'Queue Inbound', value: 'queueInbound' },
+            { label: 'Queue Outbound', value: 'queueOutbound' },
+            { label: 'Queue Both', value: 'queueBoth' },
           ],
         },
         startupmode: {
           multiple: false,
           options: [
-            { label: "Manual", value: "manual" },
-            { label: "Automatic", value: "automatic" },
-            { label: "Disabled", value: "disabled" },
+            { label: 'Manual', value: 'manual' },
+            { label: 'Automatic', value: 'automatic' },
+            { label: 'Disabled', value: 'disabled' },
           ],
         },
         applicationguardblockclipboardsharing: {
           multiple: false,
           options: [
-            { label: "Not Configured", value: "notConfigured" },
-            { label: "Block Both", value: "blockBoth" },
-            { label: "Block Host to Container", value: "blockHostToContainer" },
-            { label: "Block Container to Host", value: "blockContainerToHost" },
-            { label: "Block None", value: "blockNone" },
+            { label: 'Not Configured', value: 'notConfigured' },
+            { label: 'Block Both', value: 'blockBoth' },
+            { label: 'Block Host to Container', value: 'blockHostToContainer' },
+            { label: 'Block Container to Host', value: 'blockContainerToHost' },
+            { label: 'Block None', value: 'blockNone' },
           ],
         },
         bitlockerrecoverypasswordrotation: {
           multiple: false,
           options: [
-            { label: "Not Configured", value: "notConfigured" },
-            { label: "Disabled", value: "disabled" },
-            { label: "Enabled for Microsoft Entra Joined", value: "enabledForAzureAd" },
+            { label: 'Not Configured', value: 'notConfigured' },
+            { label: 'Disabled', value: 'disabled' },
             {
-              label: "Enabled for Microsoft Entra and Hybrid Joined",
-              value: "enabledForAzureAdAndHybrid",
+              label: 'Enabled for Microsoft Entra Joined',
+              value: 'enabledForAzureAd',
+            },
+            {
+              label: 'Enabled for Microsoft Entra and Hybrid Joined',
+              value: 'enabledForAzureAdAndHybrid',
             },
           ],
         },
         bitlockerprebootrecoverymsgurloption: {
           multiple: false,
           options: [
-            { label: "Default", value: "default" },
-            { label: "Use Custom", value: "useCustom" },
-            { label: "No URL", value: "noUrl" },
+            { label: 'Default', value: 'default' },
+            { label: 'Use Custom', value: 'useCustom' },
+            { label: 'No URL', value: 'noUrl' },
           ],
         },
       },
@@ -205,114 +233,120 @@ const CippTemplateFieldRenderer = ({
     exchange: {
       blacklistedFields: [
         ...defaultBlacklistedFields,
-        "ExchangeVersion",
-        "DistinguishedName",
-        "ObjectCategory",
-        "WhenChanged",
-        "WhenCreated",
+        'ExchangeVersion',
+        'DistinguishedName',
+        'ObjectCategory',
+        'WhenChanged',
+        'WhenCreated',
       ],
-      priorityFields: ["Name", "Identity"],
-      complexArrayFields: ["accepteddomains", "remotedomain"],
+      priorityFields: ['Name', 'Identity'],
+      complexArrayFields: ['accepteddomains', 'remotedomain'],
       schemaFields: {},
     },
-  };
+  }
 
   // Get configuration for the current template type
-  const config = templateConfigs[templateType] || templateConfigs.conditionalAccess;
-  const { blacklistedFields, priorityFields, complexArrayFields, schemaFields } = config;
+  const config =
+    templateConfigs[templateType] || templateConfigs.conditionalAccess
+  const {
+    blacklistedFields,
+    priorityFields,
+    complexArrayFields,
+    schemaFields,
+  } = config
 
   // Function to check if a field matches any blacklisted pattern (including wildcards)
   const isFieldBlacklisted = (fieldName) => {
     return blacklistedFields.some((pattern) => {
-      if (pattern.includes("*")) {
+      if (pattern.includes('*')) {
         // Convert wildcard pattern to regex
-        const regexPattern = pattern.replace(/\*/g, ".*").replace(/\./g, "\\.");
-        const regex = new RegExp(`^${regexPattern}$`, "i");
-        return regex.test(fieldName);
+        const regexPattern = pattern.replace(/\*/g, '.*').replace(/\./g, '\\.')
+        const regex = new RegExp(`^${regexPattern}$`, 'i')
+        return regex.test(fieldName)
       }
-      return pattern === fieldName;
-    });
-  };
+      return pattern === fieldName
+    })
+  }
 
   // Parse RAWJson for Intune templates
   const parseIntuneRawJson = (templateData) => {
-    if (templateType === "intune" && templateData.RAWJson) {
+    if (templateType === 'intune' && templateData.RAWJson) {
       try {
-        const parsedJson = JSON.parse(templateData.RAWJson);
+        const parsedJson = JSON.parse(templateData.RAWJson)
         return {
           ...templateData,
           parsedRAWJson: parsedJson,
-        };
+        }
       } catch (error) {
-        console.warn("Failed to parse RAWJson:", error);
-        return templateData;
+        console.warn('Failed to parse RAWJson:', error)
+        return templateData
       }
     }
-    return templateData;
-  };
+    return templateData
+  }
 
   // Reset form with filtered values when templateData changes
   React.useEffect(() => {
     if (templateData && formControl) {
-      const processedData = parseIntuneRawJson(templateData);
+      const processedData = parseIntuneRawJson(templateData)
 
       // Recursively strip null values, empty arrays, empty strings,
       // and @odata / Graph metadata keys so they don't create blank
       // form fields or phantom sections in the builder.
       const stripEmpty = (obj) => {
-        if (obj === null || obj === undefined) return undefined;
-        if (typeof obj === "string" && obj.trim() === "") return undefined;
+        if (obj === null || obj === undefined) return undefined
+        if (typeof obj === 'string' && obj.trim() === '') return undefined
         if (Array.isArray(obj)) {
           const filtered = obj
             .map(stripEmpty)
-            .filter((v) => v !== undefined && v !== null);
-          return filtered.length > 0 ? filtered : undefined;
+            .filter((v) => v !== undefined && v !== null)
+          return filtered.length > 0 ? filtered : undefined
         }
-        if (typeof obj === "object") {
-          const result = {};
-          let hasContent = false;
+        if (typeof obj === 'object') {
+          const result = {}
+          let hasContent = false
           for (const [k, v] of Object.entries(obj)) {
             // Drop @odata annotations and Graph metadata
-            if (k.includes("@odata") || k.startsWith("#")) continue;
-            const cleaned = stripEmpty(v);
+            if (k.includes('@odata') || k.startsWith('#')) continue
+            const cleaned = stripEmpty(v)
             if (cleaned !== undefined) {
-              result[k] = cleaned;
-              hasContent = true;
+              result[k] = cleaned
+              hasContent = true
             }
           }
-          return hasContent ? result : undefined;
+          return hasContent ? result : undefined
         }
-        return obj;
-      };
+        return obj
+      }
 
-      const formValues = {};
+      const formValues = {}
       Object.keys(processedData).forEach((key) => {
         if (!isFieldBlacklisted(key)) {
-          const cleaned = stripEmpty(processedData[key]);
+          const cleaned = stripEmpty(processedData[key])
           if (cleaned !== undefined) {
-            formValues[key] = cleaned;
+            formValues[key] = cleaned
           }
         }
-      });
-      formControl.reset(formValues);
+      })
+      formControl.reset(formValues)
     }
-  }, [templateData]);
+  }, [templateData])
 
-  const renderFormField = (key, value, path = "") => {
-    const fieldPath = path ? `${path}.${key}` : key;
+  const renderFormField = (key, value, path = '') => {
+    const fieldPath = path ? `${path}.${key}` : key
 
     // Skip null/undefined values and @odata / metadata keys
-    if (value === null || value === undefined) return null;
-    if (key.includes("@odata") || key.startsWith("#")) return null;
+    if (value === null || value === undefined) return null
+    if (key.includes('@odata') || key.startsWith('#')) return null
 
     if (isFieldBlacklisted(key)) {
-      return null;
+      return null
     }
 
     // Render Intune group setting collections with child-friendly fields instead of raw [object Object]
     if (
-      templateType === "intune" &&
-      key.toLowerCase() === "groupsettingcollectionvalue" &&
+      templateType === 'intune' &&
+      key.toLowerCase() === 'groupsettingcollectionvalue' &&
       Array.isArray(value)
     ) {
       return (
@@ -329,12 +363,14 @@ const CippTemplateFieldRenderer = ({
                 </Typography>
                 <Grid container spacing={2}>
                   {(groupEntry?.children || []).map((child, childIndex) => {
-                    const childPath = `${fieldPath}.${groupIndex}.children.${childIndex}`;
-                    const intuneDefinition = getIntuneDefinition(child?.settingDefinitionId);
+                    const childPath = `${fieldPath}.${groupIndex}.children.${childIndex}`
+                    const intuneDefinition = getIntuneDefinition(
+                      child?.settingDefinitionId
+                    )
                     const childLabel =
-                      intuneDefinition?.displayName || child?.settingDefinitionId || `Child ${
-                        childIndex + 1
-                      }`;
+                      intuneDefinition?.displayName ||
+                      child?.settingDefinitionId ||
+                      `Child ${childIndex + 1}`
 
                     if (child?.simpleSettingValue) {
                       return (
@@ -348,7 +384,7 @@ const CippTemplateFieldRenderer = ({
                             helperText={child?.settingDefinitionId}
                           />
                         </Grid>
-                      );
+                      )
                     }
 
                     if (child?.choiceSettingValue) {
@@ -356,7 +392,7 @@ const CippTemplateFieldRenderer = ({
                         intuneDefinition?.options?.map((option) => ({
                           label: option.displayName || option.id,
                           value: option.id,
-                        })) || [];
+                        })) || []
 
                       return (
                         <Grid size={{ xs: 12, md: 6 }} key={childPath}>
@@ -370,27 +406,31 @@ const CippTemplateFieldRenderer = ({
                             helperText={child?.settingDefinitionId}
                           />
                         </Grid>
-                      );
+                      )
                     }
 
                     return (
                       <Grid size={{ xs: 12, md: 6 }} key={childPath}>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontStyle: 'italic' }}
+                        >
                           Unsupported group entry type — edit in JSON if needed.
                         </Typography>
                       </Grid>
-                    );
+                    )
                   })}
                 </Grid>
               </Grid>
             ))}
           </Grid>
         </Grid>
-      );
+      )
     }
 
     // Check for custom schema handling
-    const schemaField = schemaFields[key.toLowerCase()];
+    const schemaField = schemaFields[key.toLowerCase()]
     if (schemaField) {
       return (
         <Grid size={{ xs: 12, md: 6 }} key={fieldPath}>
@@ -403,20 +443,21 @@ const CippTemplateFieldRenderer = ({
             options={schemaField.options}
           />
         </Grid>
-      );
+      )
     }
 
     // Special handling for Intune RAWJson structure
-    if (templateType === "intune" && key === "parsedRAWJson" && value) {
+    if (templateType === 'intune' && key === 'parsedRAWJson' && value) {
       // Check if this is a classic policy (has 'added' array) - these are not editable
       if (value.added) {
         return (
           <Grid size={{ xs: 12 }} key={fieldPath}>
-            <Typography variant="body1" sx={{ fontStyle: "italic" }}>
-              This is a legacy policy and the settings cannot be edited through the form interface.
+            <Typography variant="body1" sx={{ fontStyle: 'italic' }}>
+              This is a legacy policy and the settings cannot be edited through
+              the form interface.
             </Typography>
           </Grid>
-        );
+        )
       }
 
       // Handle modern policies with settings array
@@ -429,20 +470,22 @@ const CippTemplateFieldRenderer = ({
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
               {value.settings.map((setting, index) => {
-                const settingInstance = setting.settingInstance;
-                if (!settingInstance) return null;
+                const settingInstance = setting.settingInstance
+                if (!settingInstance) return null
 
                 // Handle different setting types
                 if (settingInstance.choiceSettingValue) {
                   // Find the setting definition in the intune collection
-                  const intuneObj = getIntuneDefinition(settingInstance.settingDefinitionId);
+                  const intuneObj = getIntuneDefinition(
+                    settingInstance.settingDefinitionId
+                  )
 
-                  const label = intuneObj?.displayName || `Setting ${index + 1}`;
+                  const label = intuneObj?.displayName || `Setting ${index + 1}`
                   const options =
                     intuneObj?.options?.map((option) => ({
                       label: option.displayName || option.id,
                       value: option.id,
-                    })) || [];
+                    })) || []
 
                   return (
                     <Grid size={{ xs: 12, md: 6 }} key={`setting-${index}`}>
@@ -456,14 +499,16 @@ const CippTemplateFieldRenderer = ({
                         helperText={`Definition ID: ${settingInstance.settingDefinitionId}`}
                       />
                     </Grid>
-                  );
+                  )
                 }
 
                 if (settingInstance.simpleSettingValue) {
                   // Find the setting definition in the intune collection
-                  const intuneObj = getIntuneDefinition(settingInstance.settingDefinitionId);
+                  const intuneObj = getIntuneDefinition(
+                    settingInstance.settingDefinitionId
+                  )
 
-                  const label = intuneObj?.displayName || `Setting ${index + 1}`;
+                  const label = intuneObj?.displayName || `Setting ${index + 1}`
 
                   return (
                     <Grid size={{ xs: 12, md: 6 }} key={`setting-${index}`}>
@@ -476,15 +521,19 @@ const CippTemplateFieldRenderer = ({
                         includeSystemVariables={true}
                       />
                     </Grid>
-                  );
+                  )
                 }
 
                 // Handle group setting collections
                 if (settingInstance.groupSettingCollectionValue) {
                   // Find the setting definition in the intune collection
-                  const intuneObj = getIntuneDefinition(settingInstance.settingDefinitionId);
+                  const intuneObj = getIntuneDefinition(
+                    settingInstance.settingDefinitionId
+                  )
 
-                  const label = intuneObj?.displayName || `Group Setting Collection ${index + 1}`;
+                  const label =
+                    intuneObj?.displayName ||
+                    `Group Setting Collection ${index + 1}`
 
                   return (
                     <Grid size={{ xs: 12 }} key={`setting-${index}`}>
@@ -494,7 +543,7 @@ const CippTemplateFieldRenderer = ({
                       <Typography
                         variant="caption"
                         color="text.secondary"
-                        sx={{ display: "block", mb: 1 }}
+                        sx={{ display: 'block', mb: 1 }}
                       >
                         Definition ID: {settingInstance.settingDefinitionId}
                       </Typography>
@@ -502,19 +551,20 @@ const CippTemplateFieldRenderer = ({
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ fontStyle: "italic" }}
+                        sx={{ fontStyle: 'italic' }}
                       >
-                        Complex group setting collection - view in JSON mode for details
+                        Complex group setting collection - view in JSON mode for
+                        details
                       </Typography>
                     </Grid>
-                  );
+                  )
                 }
 
-                return null;
+                return null
               })}
             </Grid>
           </Grid>
-        );
+        )
       }
 
       // Handle OMA settings
@@ -555,7 +605,7 @@ const CippTemplateFieldRenderer = ({
               ))}
             </Grid>
           </Grid>
-        );
+        )
       }
 
       // Handle device policies (direct configuration properties)
@@ -574,7 +624,7 @@ const CippTemplateFieldRenderer = ({
                 )}
             </Grid>
           </Grid>
-        );
+        )
       }
 
       // Fallback for other RAWJson structures
@@ -584,15 +634,23 @@ const CippTemplateFieldRenderer = ({
             Policy Configuration
           </Typography>
           <Divider sx={{ mb: 2 }} />
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontStyle: 'italic' }}
+          >
             This policy structure is not supported for editing.
           </Typography>
         </Grid>
-      );
+      )
     }
 
     // Special handling for complex array fields
-    if (complexArrayFields.some((pattern) => key.toLowerCase().includes(pattern.toLowerCase()))) {
+    if (
+      complexArrayFields.some((pattern) =>
+        key.toLowerCase().includes(pattern.toLowerCase())
+      )
+    ) {
       // Don't render if value is null, undefined, empty array, or contains only null/empty items
       if (
         !value ||
@@ -602,11 +660,13 @@ const CippTemplateFieldRenderer = ({
             (item) =>
               item === null ||
               item === undefined ||
-              (typeof item === "string" && item.trim() === "") ||
-              (typeof item === "object" && item !== null && Object.keys(item).length === 0)
+              (typeof item === 'string' && item.trim() === '') ||
+              (typeof item === 'object' &&
+                item !== null &&
+                Object.keys(item).length === 0)
           ))
       ) {
-        return null;
+        return null
       }
 
       return (
@@ -622,8 +682,12 @@ const CippTemplateFieldRenderer = ({
                   (item) =>
                     item !== null &&
                     item !== undefined &&
-                    !(typeof item === "string" && item.trim() === "") &&
-                    !(typeof item === "object" && item !== null && Object.keys(item).length === 0)
+                    !(typeof item === 'string' && item.trim() === '') &&
+                    !(
+                      typeof item === 'object' &&
+                      item !== null &&
+                      Object.keys(item).length === 0
+                    )
                 )
                 .map((item, index) => (
                   <Grid size={{ xs: 12 }} key={`${fieldPath}.${index}`}>
@@ -631,9 +695,13 @@ const CippTemplateFieldRenderer = ({
                       {getCippTranslation(key)} {index + 1}
                     </Typography>
                     <Grid container spacing={2}>
-                      {typeof item === "object" && item !== null ? (
+                      {typeof item === 'object' && item !== null ? (
                         Object.entries(item).map(([subKey, subValue]) =>
-                          renderFormField(subKey, subValue, `${fieldPath}.${index}`)
+                          renderFormField(
+                            subKey,
+                            subValue,
+                            `${fieldPath}.${index}`
+                          )
                         )
                       ) : (
                         <Grid size={{ xs: 12, md: 6 }}>
@@ -658,11 +726,11 @@ const CippTemplateFieldRenderer = ({
             )}
           </Grid>
         </Grid>
-      );
+      )
     }
 
     // Generic field type handling
-    if (typeof value === "boolean") {
+    if (typeof value === 'boolean') {
       return (
         <Grid size={{ xs: 12, md: 6 }} key={fieldPath}>
           <CippFormComponent
@@ -671,68 +739,68 @@ const CippTemplateFieldRenderer = ({
             name={fieldPath}
             formControl={formControl}
             options={[
-              { label: "True", value: true },
-              { label: "False", value: false },
+              { label: 'True', value: true },
+              { label: 'False', value: false },
             ]}
             multiple={false}
           />
         </Grid>
-      );
+      )
     }
 
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       const alwaysTextFields = [
-        "displayname",
-        "displayName",
-        "name",
-        "description",
-        "identity",
-        "title",
-      ];
+        'displayname',
+        'displayName',
+        'name',
+        'description',
+        'identity',
+        'title',
+      ]
 
       const isAlwaysTextField = alwaysTextFields.some(
         (field) => key.toLowerCase() === field.toLowerCase()
-      );
+      )
 
       // Check if this looks like an enum value (common patterns in device policies)
       const enumPatterns = [
-        "notConfigured",
-        "deviceDefault",
-        "manual",
-        "automatic",
-        "disabled",
-        "enabled",
-        "blocked",
-        "allowed",
-        "required",
-        "none",
-        "lockWorkstation",
-      ];
+        'notConfigured',
+        'deviceDefault',
+        'manual',
+        'automatic',
+        'disabled',
+        'enabled',
+        'blocked',
+        'allowed',
+        'required',
+        'none',
+        'lockWorkstation',
+      ]
 
       const looksLikeEnum = enumPatterns.some((pattern) =>
         value.toLowerCase().includes(pattern.toLowerCase())
-      );
+      )
 
       if (!isAlwaysTextField && looksLikeEnum) {
         // Create basic options based on common patterns
         const commonOptions = [
-          { label: "Not Configured", value: "notConfigured" },
-          { label: "Device Default", value: "deviceDefault" },
-          { label: "Manual", value: "manual" },
-          { label: "Automatic", value: "automatic" },
-          { label: "Disabled", value: "disabled" },
-          { label: "Enabled", value: "enabled" },
-          { label: "Blocked", value: "blocked" },
-          { label: "Allowed", value: "allowed" },
-          { label: "Required", value: "required" },
-          { label: "None", value: "none" },
+          { label: 'Not Configured', value: 'notConfigured' },
+          { label: 'Device Default', value: 'deviceDefault' },
+          { label: 'Manual', value: 'manual' },
+          { label: 'Automatic', value: 'automatic' },
+          { label: 'Disabled', value: 'disabled' },
+          { label: 'Enabled', value: 'enabled' },
+          { label: 'Blocked', value: 'blocked' },
+          { label: 'Allowed', value: 'allowed' },
+          { label: 'Required', value: 'required' },
+          { label: 'None', value: 'none' },
         ].filter(
           (option) =>
             // Only include options that make sense for this field
             option.value === value ||
             key.toLowerCase().includes(option.value.toLowerCase()) ||
-            option.value === "notConfigured" // Always include notConfigured
-        );
+            option.value === 'notConfigured' // Always include notConfigured
+        )
 
         return (
           <Grid size={{ xs: 12, md: 6 }} key={fieldPath}>
@@ -746,7 +814,7 @@ const CippTemplateFieldRenderer = ({
               creatable={true}
             />
           </Grid>
-        );
+        )
       }
 
       return (
@@ -759,10 +827,13 @@ const CippTemplateFieldRenderer = ({
             includeSystemVariables={true}
           />
         </Grid>
-      );
+      )
     }
 
-    if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
+    if (
+      Array.isArray(value) &&
+      value.every((item) => typeof item === 'string')
+    ) {
       return (
         <Grid size={{ xs: 12, md: 6 }} key={fieldPath}>
           <CippFormComponent
@@ -775,10 +846,10 @@ const CippTemplateFieldRenderer = ({
             options={value.map((item) => ({ label: item, value: item }))}
           />
         </Grid>
-      );
+      )
     }
 
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       return (
         <Grid size={{ xs: 12 }} key={fieldPath}>
           <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
@@ -791,7 +862,7 @@ const CippTemplateFieldRenderer = ({
             )}
           </Grid>
         </Grid>
-      );
+      )
     }
 
     // For other types (numbers, complex arrays, etc.), render as text field
@@ -805,15 +876,15 @@ const CippTemplateFieldRenderer = ({
           includeSystemVariables={true}
         />
       </Grid>
-    );
-  };
+    )
+  }
 
   if (!templateData) {
-    return null;
+    return null
   }
 
   // Process template data (parse RAWJson for Intune templates)
-  const processedData = parseIntuneRawJson(templateData);
+  const processedData = parseIntuneRawJson(templateData)
 
   return (
     <Grid container spacing={2}>
@@ -829,11 +900,13 @@ const CippTemplateFieldRenderer = ({
       {Object.entries(processedData)
         .filter(
           ([key, value]) =>
-            !priorityFields.includes(key) && value !== null && value !== undefined
+            !priorityFields.includes(key) &&
+            value !== null &&
+            value !== undefined
         )
         .map(([key, value]) => renderFormField(key, value))}
     </Grid>
-  );
-};
+  )
+}
 
-export default CippTemplateFieldRenderer;
+export default CippTemplateFieldRenderer

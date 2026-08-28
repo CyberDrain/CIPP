@@ -1,231 +1,268 @@
-import { Box, Card, CardHeader, CardContent, Typography, Skeleton } from "@mui/material";
-import { People as UsersIcon } from "@mui/icons-material";
-import { CippSankey } from "./CippSankey";
-import { useRouter } from "next/router";
+import {
+  Box,
+  Card,
+  CardHeader,
+  CardContent,
+  Typography,
+  Skeleton,
+} from '@mui/material'
+import { People as UsersIcon } from '@mui/icons-material'
+import { CippSankey } from './CippSankey'
+import { useRouter } from 'next/router'
 
 export const AuthMethodCard = ({ data, isLoading }) => {
-  const router = useRouter();
+  const router = useRouter()
 
   const processData = () => {
     if (!data || !Array.isArray(data) || data.length === 0) {
-      return null;
+      return null
     }
 
-    const enabledUsers = data.filter((user) => user.AccountEnabled === true);
+    const enabledUsers = data.filter((user) => user.AccountEnabled === true)
     if (enabledUsers.length === 0) {
-      return null;
+      return null
     }
 
     const phishableMethods = [
-      "mobilePhone",
-      "alternateMobilePhone",
-      "officePhone",
-      "email",
-      "microsoftAuthenticatorPush",
-      "softwareOneTimePasscode",
-      "hardwareOneTimePasscode",
-    ];
+      'mobilePhone',
+      'alternateMobilePhone',
+      'officePhone',
+      'email',
+      'microsoftAuthenticatorPush',
+      'softwareOneTimePasscode',
+      'hardwareOneTimePasscode',
+    ]
     const passkeyMethods = [
-      "fido2SecurityKey",
-      "passKeyDeviceBound",
-      "passKeyDeviceBoundAuthenticator",
-      "passKeyDeviceBoundWindowsHello",
-      "x509Certificate",
-    ];
-    const phishResistantMethods = [...passkeyMethods, "windowsHelloForBusiness"];
+      'fido2SecurityKey',
+      'passKeyDeviceBound',
+      'passKeyDeviceBoundAuthenticator',
+      'passKeyDeviceBoundWindowsHello',
+      'x509Certificate',
+    ]
+    const phishResistantMethods = [...passkeyMethods, 'windowsHelloForBusiness']
 
-    let singleFactor = 0;
-    let phishableCount = 0;
-    let phishResistantCount = 0;
-    let perUserMFA = 0;
-    let phoneCount = 0;
-    let authenticatorCount = 0;
-    let passkeyCount = 0;
-    let whfbCount = 0;
+    let singleFactor = 0
+    let phishableCount = 0
+    let phishResistantCount = 0
+    let perUserMFA = 0
+    let phoneCount = 0
+    let authenticatorCount = 0
+    let passkeyCount = 0
+    let whfbCount = 0
 
     enabledUsers.forEach((user) => {
-      const methods = Array.isArray(user.MFAMethods) ? user.MFAMethods : [];
-      const perUser = user.PerUser === "enforced" || user.PerUser === "enabled";
-      const hasRegistered = user.MFARegistration === true;
+      const methods = Array.isArray(user.MFAMethods) ? user.MFAMethods : []
+      const perUser = user.PerUser === 'enforced' || user.PerUser === 'enabled'
+      const hasRegistered = user.MFARegistration === true
 
       if (perUser && !hasRegistered && methods.length === 0) {
-        perUserMFA++;
-        return;
+        perUserMFA++
+        return
       }
 
       if (!hasRegistered || methods.length === 0) {
-        singleFactor++;
-        return;
+        singleFactor++
+        return
       }
 
-      const hasPhishResistant = methods.some((m) => phishResistantMethods.includes(m));
-      const hasPhishable = methods.some((m) => phishableMethods.includes(m));
+      const hasPhishResistant = methods.some((m) =>
+        phishResistantMethods.includes(m)
+      )
+      const hasPhishable = methods.some((m) => phishableMethods.includes(m))
 
       if (hasPhishResistant) {
-        phishResistantCount++;
+        phishResistantCount++
         if (methods.some((m) => passkeyMethods.includes(m))) {
-          passkeyCount++;
+          passkeyCount++
         }
-        if (methods.includes("windowsHelloForBusiness")) {
-          whfbCount++;
+        if (methods.includes('windowsHelloForBusiness')) {
+          whfbCount++
         }
       } else if (hasPhishable) {
-        phishableCount++;
+        phishableCount++
         if (
-          methods.includes("mobilePhone") ||
-          methods.includes("alternateMobilePhone") ||
-          methods.includes("officePhone") ||
-          methods.includes("email")
+          methods.includes('mobilePhone') ||
+          methods.includes('alternateMobilePhone') ||
+          methods.includes('officePhone') ||
+          methods.includes('email')
         ) {
-          phoneCount++;
+          phoneCount++
         }
         if (
-          methods.includes("microsoftAuthenticatorPush") ||
-          methods.includes("softwareOneTimePasscode") ||
-          methods.includes("hardwareOneTimePasscode")
+          methods.includes('microsoftAuthenticatorPush') ||
+          methods.includes('softwareOneTimePasscode') ||
+          methods.includes('hardwareOneTimePasscode')
         ) {
-          authenticatorCount++;
+          authenticatorCount++
         }
       } else {
-        phishableCount++;
-        authenticatorCount++;
+        phishableCount++
+        authenticatorCount++
       }
-    });
+    })
 
     const mfaPercentage = (
-      ((phishableCount + phishResistantCount + perUserMFA) / enabledUsers.length) *
+      ((phishableCount + phishResistantCount + perUserMFA) /
+        enabledUsers.length) *
       100
-    ).toFixed(1);
-    const phishResistantPercentage = ((phishResistantCount / enabledUsers.length) * 100).toFixed(1);
+    ).toFixed(1)
+    const phishResistantPercentage = (
+      (phishResistantCount / enabledUsers.length) *
+      100
+    ).toFixed(1)
 
     const links = [
-      { source: "Users", target: "Single factor", value: singleFactor },
-      { source: "Users", target: "Multi factor", value: perUserMFA },
-      { source: "Users", target: "Phishable", value: phishableCount },
-      { source: "Users", target: "Phish resistant", value: phishResistantCount },
-    ];
+      { source: 'Users', target: 'Single factor', value: singleFactor },
+      { source: 'Users', target: 'Multi factor', value: perUserMFA },
+      { source: 'Users', target: 'Phishable', value: phishableCount },
+      {
+        source: 'Users',
+        target: 'Phish resistant',
+        value: phishResistantCount,
+      },
+    ]
 
-    if (phoneCount > 0) links.push({ source: "Phishable", target: "Phone", value: phoneCount });
+    if (phoneCount > 0)
+      links.push({ source: 'Phishable', target: 'Phone', value: phoneCount })
     if (authenticatorCount > 0)
-      links.push({ source: "Phishable", target: "Authenticator", value: authenticatorCount });
+      links.push({
+        source: 'Phishable',
+        target: 'Authenticator',
+        value: authenticatorCount,
+      })
 
     if (passkeyCount > 0)
-      links.push({ source: "Phish resistant", target: "Passkey", value: passkeyCount });
-    if (whfbCount > 0) links.push({ source: "Phish resistant", target: "WHfB", value: whfbCount });
+      links.push({
+        source: 'Phish resistant',
+        target: 'Passkey',
+        value: passkeyCount,
+      })
+    if (whfbCount > 0)
+      links.push({
+        source: 'Phish resistant',
+        target: 'WHfB',
+        value: whfbCount,
+      })
 
-    const description = `${mfaPercentage}% of enabled users have MFA configured. ${phishResistantPercentage}% use phish-resistant authentication methods.`;
+    const description = `${mfaPercentage}% of enabled users have MFA configured. ${phishResistantPercentage}% use phish-resistant authentication methods.`
 
     return {
       nodes: [
-        { id: "Users", nodeColor: "hsl(28, 100%, 53%)" },
-        { id: "Single factor", nodeColor: "hsl(0, 100%, 50%)" },
-        { id: "Multi factor", nodeColor: "hsl(200, 70%, 50%)" },
-        { id: "Phishable", nodeColor: "hsl(39, 100%, 50%)" },
-        { id: "Phone", nodeColor: "hsl(39, 100%, 45%)" },
-        { id: "Authenticator", nodeColor: "hsl(39, 100%, 55%)" },
-        { id: "Phish resistant", nodeColor: "hsl(99, 70%, 50%)" },
-        { id: "Passkey", nodeColor: "hsl(140, 70%, 50%)" },
-        { id: "WHfB", nodeColor: "hsl(160, 70%, 50%)" },
+        { id: 'Users', nodeColor: 'hsl(28, 100%, 53%)' },
+        { id: 'Single factor', nodeColor: 'hsl(0, 100%, 50%)' },
+        { id: 'Multi factor', nodeColor: 'hsl(200, 70%, 50%)' },
+        { id: 'Phishable', nodeColor: 'hsl(39, 100%, 50%)' },
+        { id: 'Phone', nodeColor: 'hsl(39, 100%, 45%)' },
+        { id: 'Authenticator', nodeColor: 'hsl(39, 100%, 55%)' },
+        { id: 'Phish resistant', nodeColor: 'hsl(99, 70%, 50%)' },
+        { id: 'Passkey', nodeColor: 'hsl(140, 70%, 50%)' },
+        { id: 'WHfB', nodeColor: 'hsl(160, 70%, 50%)' },
       ],
       links,
       description,
-    };
-  };
+    }
+  }
 
-  const processedData = processData();
+  const processedData = processData()
 
   const handleNodeClick = (node) => {
-    let filters = [];
+    let filters = []
 
     switch (node.id) {
-      case "Users":
-        filters = [{ id: "AccountEnabled", value: "Yes" }];
-        break;
-      case "Single factor":
+      case 'Users':
+        filters = [{ id: 'AccountEnabled', value: 'Yes' }]
+        break
+      case 'Single factor':
         filters = [
-          { id: "AccountEnabled", value: "Yes" },
-          { id: "MFARegistration", value: "No" },
-        ];
-        break;
-      case "Multi factor":
+          { id: 'AccountEnabled', value: 'Yes' },
+          { id: 'MFARegistration', value: 'No' },
+        ]
+        break
+      case 'Multi factor':
         // Per-user MFA enabled/enforced
-        filters = [{ id: "AccountEnabled", value: "Yes" }];
-        break;
-      case "Phishable":
+        filters = [{ id: 'AccountEnabled', value: 'Yes' }]
+        break
+      case 'Phishable':
         filters = [
-          { id: "AccountEnabled", value: "Yes" },
-          { id: "MFARegistration", value: "Yes" },
-        ];
-        break;
-      case "Phish resistant":
+          { id: 'AccountEnabled', value: 'Yes' },
+          { id: 'MFARegistration', value: 'Yes' },
+        ]
+        break
+      case 'Phish resistant':
         filters = [
-          { id: "AccountEnabled", value: "Yes" },
-          { id: "MFARegistration", value: "Yes" },
-        ];
-        break;
+          { id: 'AccountEnabled', value: 'Yes' },
+          { id: 'MFARegistration', value: 'Yes' },
+        ]
+        break
       default:
-        return;
+        return
     }
 
     router.push({
-      pathname: "/identity/reports/mfa-report",
+      pathname: '/identity/reports/mfa-report',
       query: { filters: JSON.stringify(filters) },
-    });
-  };
+    })
+  }
 
   const handleLinkClick = (link) => {
-    let filters = [];
+    let filters = []
 
-    if (link.source.id === "Users" && link.target.id === "Single factor") {
+    if (link.source.id === 'Users' && link.target.id === 'Single factor') {
       filters = [
-        { id: "AccountEnabled", value: "Yes" },
-        { id: "MFARegistration", value: "No" },
-      ];
-    } else if (link.source.id === "Users" && link.target.id === "Multi factor") {
-      filters = [{ id: "AccountEnabled", value: "Yes" }];
-    } else if (link.source.id === "Users" && link.target.id === "Phishable") {
+        { id: 'AccountEnabled', value: 'Yes' },
+        { id: 'MFARegistration', value: 'No' },
+      ]
+    } else if (
+      link.source.id === 'Users' &&
+      link.target.id === 'Multi factor'
+    ) {
+      filters = [{ id: 'AccountEnabled', value: 'Yes' }]
+    } else if (link.source.id === 'Users' && link.target.id === 'Phishable') {
       filters = [
-        { id: "AccountEnabled", value: "Yes" },
-        { id: "MFARegistration", value: "Yes" },
-      ];
-    } else if (link.source.id === "Users" && link.target.id === "Phish resistant") {
+        { id: 'AccountEnabled', value: 'Yes' },
+        { id: 'MFARegistration', value: 'Yes' },
+      ]
+    } else if (
+      link.source.id === 'Users' &&
+      link.target.id === 'Phish resistant'
+    ) {
       filters = [
-        { id: "AccountEnabled", value: "Yes" },
-        { id: "MFARegistration", value: "Yes" },
-      ];
-    } else if (link.source.id === "Phishable") {
+        { id: 'AccountEnabled', value: 'Yes' },
+        { id: 'MFARegistration', value: 'Yes' },
+      ]
+    } else if (link.source.id === 'Phishable') {
       filters = [
-        { id: "AccountEnabled", value: "Yes" },
-        { id: "MFARegistration", value: "Yes" },
-      ];
-    } else if (link.source.id === "Phish resistant") {
+        { id: 'AccountEnabled', value: 'Yes' },
+        { id: 'MFARegistration', value: 'Yes' },
+      ]
+    } else if (link.source.id === 'Phish resistant') {
       filters = [
-        { id: "AccountEnabled", value: "Yes" },
-        { id: "MFARegistration", value: "Yes" },
-      ];
+        { id: 'AccountEnabled', value: 'Yes' },
+        { id: 'MFARegistration', value: 'Yes' },
+      ]
     }
 
     if (filters.length > 0) {
       router.push({
-        pathname: "/identity/reports/mfa-report",
+        pathname: '/identity/reports/mfa-report',
         query: { filters: JSON.stringify(filters) },
-      });
+      })
     }
-  };
+  }
 
   return (
-    <Card sx={{ flex: 1, height: "100%" }}>
+    <Card sx={{ flex: 1, height: '100%' }}>
       <CardHeader
         title={
           <Box
-            onClick={() => router.push("/identity/reports/mfa-report")}
+            onClick={() => router.push('/identity/reports/mfa-report')}
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              cursor: "pointer",
-              width: "fit-content",
-              "&:hover": { textDecoration: "underline" },
+              cursor: 'pointer',
+              width: 'fit-content',
+              '&:hover': { textDecoration: 'underline' },
             }}
           >
             <UsersIcon sx={{ fontSize: 24 }} />
@@ -247,11 +284,11 @@ export const AuthMethodCard = ({ data, isLoading }) => {
           ) : (
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                width: "100%",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                width: '100%',
               }}
             >
               <Typography variant="body2" color="text.secondary">
@@ -269,5 +306,5 @@ export const AuthMethodCard = ({ data, isLoading }) => {
         </CardContent>
       )}
     </Card>
-  );
-};
+  )
+}

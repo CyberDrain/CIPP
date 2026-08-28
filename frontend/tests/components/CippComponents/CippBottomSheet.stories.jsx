@@ -14,25 +14,35 @@ import { shrinkToPhoneViewport } from '../../viewport'
 
 // The mobile stand-in for a desktop Menu: every place the app opens a Menu on a pointer
 // device opens one of these below md instead.
-const SheetHarness = ({ children, triggerLabel = 'Open sheet', ...sheetProps }) => {
+const SheetHarness = ({
+  children,
+  triggerLabel = 'Open sheet',
+  ...sheetProps
+}) => {
   const [open, setOpen] = React.useState(false)
   return (
     <>
       <Button variant="contained" onClick={() => setOpen(true)}>
         {triggerLabel}
       </Button>
-      <CippBottomSheet open={open} onClose={() => setOpen(false)} {...sheetProps}>
+      <CippBottomSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        {...sheetProps}
+      >
         {children}
       </CippBottomSheet>
     </>
   )
 }
 
-const actionRows = ['Edit user', 'Reset password', 'Block sign-in'].map((label) => (
-  <ListItemButton key={label} sx={{ minHeight: 48 }}>
-    <ListItemText primary={label} />
-  </ListItemButton>
-))
+const actionRows = ['Edit user', 'Reset password', 'Block sign-in'].map(
+  (label) => (
+    <ListItemButton key={label} sx={{ minHeight: 48 }}>
+      <ListItemText primary={label} />
+    </ListItemButton>
+  )
+)
 
 export default {
   title: 'Components/CippComponents/CippBottomSheet',
@@ -52,13 +62,17 @@ export const WithTitle = {
 
     await step('opens on tap and shows its rows', async () => {
       await userEvent.click(canvas.getByRole('button', { name: 'Open sheet' }))
-      await waitFor(() => expect(body.getByText('Row actions')).toBeInTheDocument())
+      await waitFor(() =>
+        expect(body.getByText('Row actions')).toBeInTheDocument()
+      )
       expect(body.getByText('Reset password')).toBeInTheDocument()
     })
 
     await step('closes on backdrop tap', async () => {
       await userEvent.click(document.querySelector('.MuiBackdrop-root'))
-      await waitFor(() => expect(body.queryByText('Row actions')).not.toBeInTheDocument())
+      await waitFor(() =>
+        expect(body.queryByText('Row actions')).not.toBeInTheDocument()
+      )
     })
   },
 }
@@ -102,10 +116,15 @@ export const OverADialog = {
         <Button variant="outlined" onClick={() => setDialogOpen(true)}>
           Reopen dialog
         </Button>
-        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth>
+        <Dialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          fullWidth
+        >
           <DialogContent>
             <Typography variant="body2" sx={{ mb: 2 }}>
-              A popout table lives here. Its filter sheet must layer above this dialog.
+              A popout table lives here. Its filter sheet must layer above this
+              dialog.
             </Typography>
             <SheetHarness title="Filters" triggerLabel="Open filters">
               <List sx={{ py: 0 }}>{actionRows}</List>
@@ -185,7 +204,8 @@ export const DragHandleDismisses = {
       fire('touchmove', from + dy)
       await tick()
     }
-    const draggedTo = new DOMMatrixReadOnly(getComputedStyle(paper).transform).m42
+    const draggedTo = new DOMMatrixReadOnly(getComputedStyle(paper).transform)
+      .m42
     expect(draggedTo).toBeGreaterThan(100)
     fire('touchend', from + 260)
 
@@ -202,6 +222,8 @@ export const DragHandleDismisses = {
     })
     expect(firstExitFrame).toBeGreaterThan(draggedTo * 0.6)
 
-    await waitFor(() => expect(body.queryByText('Reset password')).not.toBeInTheDocument())
+    await waitFor(() =>
+      expect(body.queryByText('Reset password')).not.toBeInTheDocument()
+    )
   },
 }

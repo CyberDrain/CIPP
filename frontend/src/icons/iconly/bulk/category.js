@@ -5,7 +5,8 @@ const Category = (props) => (
     viewBox="0 0 24 24"
     width={24}
     xmlns="http://www.w3.org/2000/svg"
-    {...props}>
+    {...props}
+  >
     <path
       d="M16.0755 2H19.4615C20.8637 2 22 3.14585 22 4.55996V7.97452C22 9.38864 20.8637 10.5345 19.4615 10.5345H16.0755C14.6732 10.5345 13.537 9.38864 13.537 7.97452V4.55996C13.537 3.14585 14.6732 2 16.0755 2Z"
       fill="currentColor"
@@ -16,6 +17,6 @@ const Category = (props) => (
       fill="currentColor"
     />
   </svg>
-);
+)
 
-export default Category;
+export default Category

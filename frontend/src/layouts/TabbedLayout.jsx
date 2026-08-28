@@ -6,7 +6,10 @@ import { ApiGetCall } from '../api/ApiCall'
 import { getIconByName } from '../utils/icon-registry'
 import { useSettings } from '../hooks/use-settings'
 import { useIsMobileLayout } from '../hooks/use-breakpoint'
-import { TabNavigationContext, useTabNavigationValue } from './tab-navigation-context'
+import {
+  TabNavigationContext,
+  useTabNavigationValue,
+} from './tab-navigation-context'
 import { CippTabPicker } from '../components/CippComponents/CippTabPicker'
 
 export const TabbedLayout = (props) => {
@@ -26,9 +29,12 @@ export const TabbedLayout = (props) => {
   const visibleTabs = useMemo(() => {
     // Per-user gate: tabs marked { advanced: true } are hidden unless the user enabled Advanced
     // Views in preferences (Developer Options). Keeps diagnostic pages out of day-to-day use.
-    let tabs = showAdvanced ? tabOptions : tabOptions.filter((option) => !option.advanced)
+    let tabs = showAdvanced
+      ? tabOptions
+      : tabOptions.filter((option) => !option.advanced)
 
-    if (!featureFlags.isSuccess || !Array.isArray(featureFlags.data)) return tabs
+    if (!featureFlags.isSuccess || !Array.isArray(featureFlags.data))
+      return tabs
 
     // A DISABLED flag hides its Pages; an ENABLED flag hides its HidesPages (the
     // pages it replaces - e.g. Baselines supersedes the classic Standards tabs).
@@ -106,7 +112,8 @@ export const TabbedLayout = (props) => {
                 {visibleTabs.map((option) => {
                   const icon = getIconByName(option.icon, { fontSize: 'small' })
                   const iconPosition = option.iconPosition ?? 'start'
-                  const compactIcon = icon && ['end', 'start'].includes(iconPosition)
+                  const compactIcon =
+                    icon && ['end', 'start'].includes(iconPosition)
 
                   return (
                     <Tab

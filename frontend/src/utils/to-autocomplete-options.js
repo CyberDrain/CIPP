@@ -11,9 +11,20 @@ export const toAutoCompleteOptions = (value, options = []) => {
       if (typeof item === 'object') {
         if (item.label !== undefined && item.value !== undefined) return item
         const resolved = options.find((option) => option.value === item.value)
-        return resolved ?? { ...item, label: item.label ?? item.value, value: item.value }
+        return (
+          resolved ?? {
+            ...item,
+            label: item.label ?? item.value,
+            value: item.value,
+          }
+        )
       }
-      return options.find((option) => option.value === item) ?? { label: item, value: item }
+      return (
+        options.find((option) => option.value === item) ?? {
+          label: item,
+          value: item,
+        }
+      )
     })
     .filter((item) => item.value !== undefined)
 }

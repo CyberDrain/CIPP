@@ -46,6 +46,6 @@ const Defender = (props) => (
       />
     </g>
   </svg>
-);
+)
 
-export default Defender;
+export default Defender

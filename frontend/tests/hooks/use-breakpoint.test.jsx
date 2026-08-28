@@ -1,14 +1,20 @@
 import React from 'react'
 import { screen } from '@testing-library/react'
 import { renderWithProviders, settingsWith } from '../test-utils'
-import { useIsMobileLayout, useTableViewMode } from '../../src/hooks/use-breakpoint'
+import {
+  useIsMobileLayout,
+  useTableViewMode,
+} from '../../src/hooks/use-breakpoint'
 
 // jsdom has no width-based matchMedia, so useIsMobileLayout is always false here —
 // which is exactly why the explicit settings/prop path must exist and is what we test.
 const Probe = (props) => <div data-testid="mode">{useTableViewMode(props)}</div>
 
 const renderMode = (props, settings) =>
-  renderWithProviders(<Probe {...props} />, settings ? { settings: settingsWith(settings) } : undefined)
+  renderWithProviders(
+    <Probe {...props} />,
+    settings ? { settings: settingsWith(settings) } : undefined
+  )
 
 describe('useTableViewMode', () => {
   it("defaults to 'table' on desktop-width (auto + not mobile)", () => {
@@ -51,7 +57,9 @@ const atWidth = (width) => {
       const max = /max-width:\s*([\d.]+)px/.exec(query)
       const min = /min-width:\s*([\d.]+)px/.exec(query)
       cache.set(query, {
-        matches: (!max || width <= parseFloat(max[1])) && (!min || width >= parseFloat(min[1])),
+        matches:
+          (!max || width <= parseFloat(max[1])) &&
+          (!min || width >= parseFloat(min[1])),
         media: query,
         onchange: null,
         addListener: () => {},

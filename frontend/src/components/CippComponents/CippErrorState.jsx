@@ -65,7 +65,10 @@ export const CippErrorState = ({
 
           <Box sx={{ minWidth: 0, textAlign: { xs: 'center', md: 'left' } }}>
             {code && (
-              <Typography variant="overline" sx={{ color: 'text.secondary', display: 'block' }}>
+              <Typography
+                variant="overline"
+                sx={{ color: 'text.secondary', display: 'block' }}
+              >
                 Error {code}
               </Typography>
             )}
@@ -75,7 +78,9 @@ export const CippErrorState = ({
             </Typography>
 
             {description && (
-              <Typography sx={{ color: 'text.secondary', mt: 1.5 }}>{description}</Typography>
+              <Typography sx={{ color: 'text.secondary', mt: 1.5 }}>
+                {description}
+              </Typography>
             )}
 
             {detail && (
@@ -138,7 +143,11 @@ export const CippErrorState = ({
               >
                 {hasPrimary &&
                   (actionHref ? (
-                    <Button component={NextLink} href={actionHref} variant="contained">
+                    <Button
+                      component={NextLink}
+                      href={actionHref}
+                      variant="contained"
+                    >
                       {actionText}
                     </Button>
                   ) : (

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useState, useEffect, useMemo } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import {
   Box,
   Button,
@@ -13,111 +13,114 @@ import {
   AlertTitle,
   Tab,
   Tabs,
-} from "@mui/material";
-import { ExpandMore, Search, Refresh, PlayArrow } from "@mui/icons-material";
-import { CippFormComponent } from "../../../../components/CippComponents/CippFormComponent";
-import { Grid } from "@mui/system";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { TabbedLayout } from "../../../../layouts/TabbedLayout";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage";
-import { ApiGetCall } from "../../../../api/ApiCall";
-import defaultPresets from "../../../../data/ContainerLogPresets.json";
-import tabOptions from "./tabOptions";
-import { CippExpandableAlert } from "../../../../components/CippComponents/CippExpandableAlert";
+} from '@mui/material'
+import { ExpandMore, Search, Refresh, PlayArrow } from '@mui/icons-material'
+import { CippFormComponent } from '../../../../components/CippComponents/CippFormComponent'
+import { Grid } from '@mui/system'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { TabbedLayout } from '../../../../layouts/TabbedLayout'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage'
+import { ApiGetCall } from '../../../../api/ApiCall'
+import defaultPresets from '../../../../data/ContainerLogPresets.json'
+import tabOptions from './tabOptions'
+import { CippExpandableAlert } from '../../../../components/CippComponents/CippExpandableAlert'
 
 const levelOptions = [
-  { label: "All Levels", value: "" },
-  { label: "Debug", value: "DBG" },
-  { label: "Information", value: "INF" },
-  { label: "Warning", value: "WRN" },
-  { label: "Error", value: "ERR" },
-  { label: "Critical", value: "CRT" },
-];
+  { label: 'All Levels', value: '' },
+  { label: 'Debug', value: 'DBG' },
+  { label: 'Information', value: 'INF' },
+  { label: 'Warning', value: 'WRN' },
+  { label: 'Error', value: 'ERR' },
+  { label: 'Critical', value: 'CRT' },
+]
 
 const timeRangeOptions = [
-  { label: "Last 15 minutes", value: "15" },
-  { label: "Last 30 minutes", value: "30" },
-  { label: "Last 1 hour", value: "60" },
-  { label: "Last 3 hours", value: "180" },
-  { label: "Last 6 hours", value: "360" },
-  { label: "Last 12 hours", value: "720" },
-  { label: "Last 24 hours", value: "1440" },
-  { label: "Custom Range", value: "custom" },
-  { label: "No Time Filter", value: "" },
-];
+  { label: 'Last 15 minutes', value: '15' },
+  { label: 'Last 30 minutes', value: '30' },
+  { label: 'Last 1 hour', value: '60' },
+  { label: 'Last 3 hours', value: '180' },
+  { label: 'Last 6 hours', value: '360' },
+  { label: 'Last 12 hours', value: '720' },
+  { label: 'Last 24 hours', value: '1440' },
+  { label: 'Custom Range', value: 'custom' },
+  { label: 'No Time Filter', value: '' },
+]
 
 const getLevelColor = (level) => {
   switch (level) {
-    case "CRT":
-      return "error";
-    case "ERR":
-      return "error";
-    case "WRN":
-      return "warning";
-    case "INF":
-      return "info";
-    case "DBG":
-      return "default";
+    case 'CRT':
+      return 'error'
+    case 'ERR':
+      return 'error'
+    case 'WRN':
+      return 'warning'
+    case 'INF':
+      return 'info'
+    case 'DBG':
+      return 'default'
     default:
-      return "default";
+      return 'default'
   }
-};
+}
 
 const getLevelLabel = (level) => {
   switch (level) {
-    case "CRT":
-      return "Critical";
-    case "ERR":
-      return "Error";
-    case "WRN":
-      return "Warning";
-    case "INF":
-      return "Info";
-    case "DBG":
-      return "Debug";
-    case "TRC":
-      return "Trace";
+    case 'CRT':
+      return 'Critical'
+    case 'ERR':
+      return 'Error'
+    case 'WRN':
+      return 'Warning'
+    case 'INF':
+      return 'Info'
+    case 'DBG':
+      return 'Debug'
+    case 'TRC':
+      return 'Trace'
     default:
-      return level || "Unknown";
+      return level || 'Unknown'
   }
-};
+}
 
 const ContainerLogsFilter = ({ onSubmitFilter }) => {
-  const [expanded, setExpanded] = useState(true);
-  const [tabValue, setTabValue] = useState(0); // 0 = Query, 1 = Guided
-  const [selectedPreset, setSelectedPreset] = useState(null);
+  const [expanded, setExpanded] = useState(true)
+  const [tabValue, setTabValue] = useState(0) // 0 = Query, 1 = Guided
+  const [selectedPreset, setSelectedPreset] = useState(null)
 
   // Query mode form
   const queryForm = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       queryPreset: null,
       query: 'where Timestamp > ago(1h)\n| take 500\n| sort by Timestamp desc',
     },
-  });
+  })
 
-  const queryValue = useWatch({ control: queryForm.control, name: "query" });
-  const queryPreset = useWatch({ control: queryForm.control, name: "queryPreset" });
+  const queryValue = useWatch({ control: queryForm.control, name: 'query' })
+  const queryPreset = useWatch({
+    control: queryForm.control,
+    name: 'queryPreset',
+  })
 
   // Guided mode form
   const guidedForm = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      timeRange: "60",
-      level: "",
-      search: "",
-      exclude: "",
-      regex: "",
-      file: "",
-      tail: "500",
+      timeRange: '60',
+      level: '',
+      search: '',
+      exclude: '',
+      regex: '',
+      file: '',
+      tail: '500',
       searchAll: false,
       sortDesc: true,
-      fromDate: "",
-      toDate: "",
+      fromDate: '',
+      toDate: '',
     },
-  });
+  })
 
-  const timeRange = useWatch({ control: guidedForm.control, name: "timeRange" });
+  const timeRange = useWatch({ control: guidedForm.control, name: 'timeRange' })
 
   // Preset options (built-in only — no API save/load for container log presets)
   const presetOptions = useMemo(
@@ -129,106 +132,110 @@ const ContainerLogsFilter = ({ onSubmitFilter }) => {
         isBuiltin: true,
       })),
     []
-  );
+  )
 
   // Load preset when selected
   useEffect(() => {
     if (queryPreset) {
-      const preset = Array.isArray(queryPreset) ? queryPreset[0] : queryPreset;
+      const preset = Array.isArray(queryPreset) ? queryPreset[0] : queryPreset
       if (preset?.query) {
-        queryForm.setValue("query", preset.query);
-        setSelectedPreset(preset);
-        queryForm.setValue("queryPreset", null);
+        queryForm.setValue('query', preset.query)
+        setSelectedPreset(preset)
+        queryForm.setValue('queryPreset', null)
       }
     }
-  }, [queryPreset, queryForm]);
+  }, [queryPreset, queryForm])
 
   const fileListQuery = ApiGetCall({
-    url: "/api/ListContainerLogs",
-    data: { Action: "ListFiles" },
-    queryKey: "ContainerLogFiles",
-  });
+    url: '/api/ListContainerLogs',
+    data: { Action: 'ListFiles' },
+    queryKey: 'ContainerLogFiles',
+  })
 
   const fileOptions = useMemo(() => {
-    const opts = [{ label: "Current Log", value: "" }];
+    const opts = [{ label: 'Current Log', value: '' }]
     if (fileListQuery.isSuccess && fileListQuery.data?.Results) {
       fileListQuery.data.Results.forEach((f) => {
         if (!f.IsCurrent) {
           opts.push({
             label: `${f.Name} (${f.SizeFormatted})`,
             value: f.Name,
-          });
+          })
         }
-      });
+      })
     }
-    return opts;
-  }, [fileListQuery.isSuccess, fileListQuery.data]);
+    return opts
+  }, [fileListQuery.isSuccess, fileListQuery.data])
 
   // Submit query mode
   const handleQuerySubmit = queryForm.handleSubmit((values) => {
     if (values.query && values.query.trim()) {
       onSubmitFilter({
-        Action: "Query",
+        Action: 'Query',
         Query: values.query.trim(),
-      });
-      setExpanded(false);
+      })
+      setExpanded(false)
     }
-  });
+  })
 
   // Submit guided mode
   const handleGuidedSubmit = guidedForm.handleSubmit((values) => {
     const params = {
-      Action: values.searchAll ? "SearchAll" : "ReadLog",
-      Tail: values.tail || "500",
-    };
+      Action: values.searchAll ? 'SearchAll' : 'ReadLog',
+      Tail: values.tail || '500',
+    }
 
-    if (values.sortDesc) params.SortDesc = "true";
+    if (values.sortDesc) params.SortDesc = 'true'
 
     // Level filter
-    const levelVal = Array.isArray(values.level) ? values.level[0]?.value : values.level;
-    if (levelVal) params.Level = levelVal;
+    const levelVal = Array.isArray(values.level)
+      ? values.level[0]?.value
+      : values.level
+    if (levelVal) params.Level = levelVal
 
     // Search text
-    if (values.search) params.Search = values.search;
+    if (values.search) params.Search = values.search
 
     // Exclude text
-    if (values.exclude) params.Exclude = values.exclude;
+    if (values.exclude) params.Exclude = values.exclude
 
     // Regex pattern
-    if (values.regex) params.Regex = values.regex;
+    if (values.regex) params.Regex = values.regex
 
     // File selection
-    const fileVal = Array.isArray(values.file) ? values.file[0]?.value : values.file;
-    if (fileVal && !values.searchAll) params.File = fileVal;
+    const fileVal = Array.isArray(values.file)
+      ? values.file[0]?.value
+      : values.file
+    if (fileVal && !values.searchAll) params.File = fileVal
 
     // Time range
     const rangeVal = Array.isArray(values.timeRange)
       ? values.timeRange[0]?.value
-      : values.timeRange;
-    if (rangeVal === "custom") {
-      if (values.fromDate) params.From = new Date(values.fromDate).toISOString();
-      if (values.toDate) params.To = new Date(values.toDate).toISOString();
-    } else if (rangeVal && rangeVal !== "") {
-      const minutes = parseInt(rangeVal, 10);
+      : values.timeRange
+    if (rangeVal === 'custom') {
+      if (values.fromDate) params.From = new Date(values.fromDate).toISOString()
+      if (values.toDate) params.To = new Date(values.toDate).toISOString()
+    } else if (rangeVal && rangeVal !== '') {
+      const minutes = parseInt(rangeVal, 10)
       if (!isNaN(minutes)) {
-        params.From = new Date(Date.now() - minutes * 60 * 1000).toISOString();
+        params.From = new Date(Date.now() - minutes * 60 * 1000).toISOString()
       }
     }
 
-    onSubmitFilter(params);
-    setExpanded(false);
-  });
+    onSubmitFilter(params)
+    setExpanded(false)
+  })
 
   const handleClear = () => {
     if (tabValue === 0) {
-      queryForm.reset();
-      setSelectedPreset(null);
+      queryForm.reset()
+      setSelectedPreset(null)
     } else {
-      guidedForm.reset();
+      guidedForm.reset()
     }
-    onSubmitFilter(null);
-    setExpanded(true);
-  };
+    onSubmitFilter(null)
+    setExpanded(true)
+  }
 
   return (
     <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
@@ -240,7 +247,7 @@ const ContainerLogsFilter = ({ onSubmitFilter }) => {
           <Tabs
             value={tabValue}
             onChange={(_, v) => setTabValue(v)}
-            sx={{ borderBottom: 1, borderColor: "divider" }}
+            sx={{ borderBottom: 1, borderColor: 'divider' }}
           >
             <Tab label="Query Editor" />
             <Tab label="Guided Filter" />
@@ -253,26 +260,39 @@ const ContainerLogsFilter = ({ onSubmitFilter }) => {
                 <CippExpandableAlert severity="info">
                   <AlertTitle>Query Syntax</AlertTitle>
                   <Typography variant="body2">
-                    Use a KQL-inspired pipe syntax to filter container logs. Separate clauses with{" "}
-                    <code>|</code>. Supported operators:
+                    Use a KQL-inspired pipe syntax to filter container logs.
+                    Separate clauses with <code>|</code>. Supported operators:
                   </Typography>
                   <Typography variant="body2" component="div" sx={{ mt: 1 }}>
-                    <code>where Level == &quot;ERR&quot;</code> &mdash; exact level
+                    <code>where Level == &quot;ERR&quot;</code> &mdash; exact
+                    level
                     <br />
-                    <code>where Level in (&quot;ERR&quot;, &quot;CRT&quot;)</code> &mdash; multiple
-                    levels
+                    <code>
+                      where Level in (&quot;ERR&quot;, &quot;CRT&quot;)
+                    </code>{' '}
+                    &mdash; multiple levels
                     <br />
-                    <code>where Level != &quot;DBG&quot;</code> &mdash; exclude level
+                    <code>where Level != &quot;DBG&quot;</code> &mdash; exclude
+                    level
                     <br />
-                    <code>where Message contains &quot;text&quot;</code> &mdash; search
+                    <code>where Message contains &quot;text&quot;</code> &mdash;
+                    search
                     <br />
-                    <code>where Message !contains &quot;text&quot;</code> &mdash; exclude
+                    <code>where Message !contains &quot;text&quot;</code>{' '}
+                    &mdash; exclude
                     <br />
-                    <code>where Message matches regex &quot;err|fail&quot;</code> &mdash; regex
+                    <code>
+                      where Message matches regex &quot;err|fail&quot;
+                    </code>{' '}
+                    &mdash; regex
                     <br />
-                    <code>where Timestamp &gt; ago(1h)</code> &mdash; relative time (s/m/h/d/w)
+                    <code>where Timestamp &gt; ago(1h)</code> &mdash; relative
+                    time (s/m/h/d/w)
                     <br />
-                    <code>where Timestamp between (ago(2h) .. ago(1h))</code> &mdash; range
+                    <code>
+                      where Timestamp between (ago(2h) .. ago(1h))
+                    </code>{' '}
+                    &mdash; range
                     <br />
                     <code>take 500</code> &mdash; limit results
                     <br />
@@ -304,9 +324,9 @@ const ContainerLogsFilter = ({ onSubmitFilter }) => {
                   rows={6}
                   placeholder={`where Level in ("ERR", "CRT")\n| where Timestamp > ago(1h)\n| take 500\n| sort by Timestamp desc`}
                   sx={{
-                    "& textarea": {
-                      fontFamily: "monospace",
-                      fontSize: "0.875rem",
+                    '& textarea': {
+                      fontFamily: 'monospace',
+                      fontSize: '0.875rem',
                     },
                   }}
                 />
@@ -333,9 +353,9 @@ const ContainerLogsFilter = ({ onSubmitFilter }) => {
             <Box component="form" onSubmit={handleGuidedSubmit}>
               <Stack spacing={2}>
                 <Alert severity="info">
-                  Search the local container log files directly. Logs are rotated by size and
-                  retained on disk. Use &ldquo;Search All Files&rdquo; to search across rotated log
-                  files.
+                  Search the local container log files directly. Logs are
+                  rotated by size and retained on disk. Use &ldquo;Search All
+                  Files&rdquo; to search across rotated log files.
                 </Alert>
 
                 <Grid container spacing={2}>
@@ -408,7 +428,9 @@ const ContainerLogsFilter = ({ onSubmitFilter }) => {
                   </Grid>
                 </Grid>
 
-                {(Array.isArray(timeRange) ? timeRange[0]?.value : timeRange) === "custom" && (
+                {(Array.isArray(timeRange)
+                  ? timeRange[0]?.value
+                  : timeRange) === 'custom' && (
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <CippFormComponent
@@ -456,7 +478,11 @@ const ContainerLogsFilter = ({ onSubmitFilter }) => {
                 </Grid>
 
                 <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-                  <Button type="submit" variant="contained" startIcon={<Search />}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    startIcon={<Search />}
+                  >
                     Search Logs
                   </Button>
                   <Button variant="outlined" onClick={handleClear}>
@@ -469,12 +495,12 @@ const ContainerLogsFilter = ({ onSubmitFilter }) => {
         </Stack>
       </AccordionDetails>
     </Accordion>
-  );
-};
+  )
+}
 
 const Page = () => {
-  const [apiFilter, setApiFilter] = useState(null);
-  const queryKey = JSON.stringify(apiFilter);
+  const [apiFilter, setApiFilter] = useState(null)
+  const queryKey = JSON.stringify(apiFilter)
 
   return (
     <CippTablePage
@@ -487,14 +513,19 @@ const Page = () => {
       }
       clearOnError={true}
       offCanvas={{
-        size: "lg",
+        size: 'lg',
         children: (row) => {
-          const levelColor = getLevelColor(row.Level);
+          const levelColor = getLevelColor(row.Level)
           return (
             <Box sx={{ p: 3 }}>
               <Stack spacing={3}>
                 <Box>
-                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    sx={{ mb: 2 }}
+                  >
                     <Chip
                       label={getLevelLabel(row.Level)}
                       color={levelColor}
@@ -512,20 +543,20 @@ const Page = () => {
                   <Box
                     sx={{
                       p: 2,
-                      bgcolor: "background.default",
+                      bgcolor: 'background.default',
                       borderRadius: 1,
-                      border: "1px solid",
-                      borderColor: "divider",
+                      border: '1px solid',
+                      borderColor: 'divider',
                     }}
                   >
                     <Typography
                       variant="body1"
                       component="pre"
                       sx={{
-                        fontFamily: "monospace",
-                        fontSize: "0.875rem",
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
+                        fontFamily: 'monospace',
+                        fontSize: '0.875rem',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
                         m: 0,
                       }}
                     >
@@ -541,20 +572,20 @@ const Page = () => {
                     <Box
                       sx={{
                         p: 2,
-                        bgcolor: "background.default",
+                        bgcolor: 'background.default',
                         borderRadius: 1,
-                        border: "1px solid",
-                        borderColor: "divider",
+                        border: '1px solid',
+                        borderColor: 'divider',
                       }}
                     >
                       <Typography
                         variant="body1"
                         component="pre"
                         sx={{
-                          fontFamily: "monospace",
-                          fontSize: "0.75rem",
-                          whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
+                          fontFamily: 'monospace',
+                          fontSize: '0.75rem',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
                           m: 0,
                         }}
                       >
@@ -565,26 +596,25 @@ const Page = () => {
                 )}
               </Stack>
             </Box>
-          );
+          )
         },
       }}
       title="Container Logs"
       tenantInTitle={false}
       apiDataKey="Results"
-      apiUrl={apiFilter ? "/api/ListContainerLogs" : "/api/ListEmptyResults"}
+      apiUrl={apiFilter ? '/api/ListContainerLogs' : '/api/ListEmptyResults'}
       apiData={apiFilter}
       queryKey={queryKey}
-      simpleColumns={["Timestamp", "Level", "Message"]}
+      simpleColumns={['Timestamp', 'Level', 'Message']}
       actions={[]}
     />
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
-
+export default Page

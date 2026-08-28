@@ -85,7 +85,9 @@ describe('CippTenantSelector', () => {
     await waitFor(() => {
       expect(screen.getByRole('combobox')).toHaveValue('Contoso (contoso.com)')
     })
-    expect(settings.handleUpdate).toHaveBeenCalledWith({ currentTenant: 'contoso.com' })
+    expect(settings.handleUpdate).toHaveBeenCalledWith({
+      currentTenant: 'contoso.com',
+    })
   })
 
   it('normalizes a customerId hotlink to the default domain in the url', async () => {
@@ -122,12 +124,16 @@ describe('CippTenantSelector', () => {
 
     const combobox = screen.getByRole('combobox')
     expect(combobox).toBeDisabled()
-    expect(combobox.getAttribute('placeholder')).toMatch(/Error loading Tenants/)
+    expect(combobox.getAttribute('placeholder')).toMatch(
+      /Error loading Tenants/
+    )
   })
 
   it('refetches the tenant list from the refresh button', async () => {
     const user = userEvent.setup()
-    renderWithProviders(<CippTenantSelector refreshButton />, { settings: makeSettings() })
+    renderWithProviders(<CippTenantSelector refreshButton />, {
+      settings: makeSettings(),
+    })
 
     await user.click(screen.getByRole('button', { name: 'refresh' }))
     expect(apiState.tenants.refetch).toHaveBeenCalledTimes(1)

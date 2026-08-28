@@ -1,22 +1,25 @@
-import React, { useEffect, useState } from "react";
-import { Button, Divider, Stack } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useFormState, useWatch } from "react-hook-form";
-import { RocketLaunch } from "@mui/icons-material";
-import { CippOffCanvas } from "./CippOffCanvas";
-import CippFormComponent from "./CippFormComponent";
-import { CippFormTenantSelector } from "./CippFormTenantSelector";
-import { CippApiResults } from "./CippApiResults";
-import { ApiPostCall } from "../../api/ApiCall";
+import React, { useEffect, useState } from 'react'
+import { Button, Divider, Stack } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useFormState, useWatch } from 'react-hook-form'
+import { RocketLaunch } from '@mui/icons-material'
+import { CippOffCanvas } from './CippOffCanvas'
+import CippFormComponent from './CippFormComponent'
+import { CippFormTenantSelector } from './CippFormTenantSelector'
+import { CippApiResults } from './CippApiResults'
+import { ApiPostCall } from '../../api/ApiCall'
 
 const MODE_CONFIG = {
   DlpCompliancePolicy: {
-    title: "Deploy DLP Compliance Policy",
-    buttonLabel: "Deploy DLP Policy",
-    postUrl: "/api/AddDlpCompliancePolicy",
-    listTemplatesUrl: "/api/ListDlpCompliancePolicyTemplates",
-    templateQueryKey: "TemplateListDlpCompliancePolicy",
-    relatedQueryKeys: ["ListDlpCompliancePolicy", "ListDlpCompliancePolicyTemplates"],
+    title: 'Deploy DLP Compliance Policy',
+    buttonLabel: 'Deploy DLP Policy',
+    postUrl: '/api/AddDlpCompliancePolicy',
+    listTemplatesUrl: '/api/ListDlpCompliancePolicyTemplates',
+    templateQueryKey: 'TemplateListDlpCompliancePolicy',
+    relatedQueryKeys: [
+      'ListDlpCompliancePolicy',
+      'ListDlpCompliancePolicyTemplates',
+    ],
     placeholder: `{
   "Name": "Block Credit Card data",
   "Comment": "Blocks documents containing credit card numbers",
@@ -32,14 +35,14 @@ const MODE_CONFIG = {
 }`,
   },
   RetentionCompliancePolicy: {
-    title: "Deploy Retention Compliance Policy",
-    buttonLabel: "Deploy Retention Policy",
-    postUrl: "/api/AddRetentionCompliancePolicy",
-    listTemplatesUrl: "/api/ListRetentionCompliancePolicyTemplates",
-    templateQueryKey: "TemplateListRetentionCompliancePolicy",
+    title: 'Deploy Retention Compliance Policy',
+    buttonLabel: 'Deploy Retention Policy',
+    postUrl: '/api/AddRetentionCompliancePolicy',
+    listTemplatesUrl: '/api/ListRetentionCompliancePolicyTemplates',
+    templateQueryKey: 'TemplateListRetentionCompliancePolicy',
     relatedQueryKeys: [
-      "ListRetentionCompliancePolicy",
-      "ListRetentionCompliancePolicyTemplates",
+      'ListRetentionCompliancePolicy',
+      'ListRetentionCompliancePolicyTemplates',
     ],
     placeholder: `{
   "Name": "7-year Email Retention",
@@ -55,16 +58,17 @@ const MODE_CONFIG = {
 }`,
   },
   SensitivityLabel: {
-    title: "Deploy Sensitivity Label",
-    buttonLabel: "Deploy Sensitivity Label",
-    postUrl: "/api/AddSensitivityLabel",
-    listTemplatesUrl: "/api/ListSensitivityLabelTemplates",
-    templateQueryKey: "TemplateListSensitivityLabel",
-    relatedQueryKeys: ["ListSensitivityLabel", "ListSensitivityLabelTemplates"],
+    title: 'Deploy Sensitivity Label',
+    buttonLabel: 'Deploy Sensitivity Label',
+    postUrl: '/api/AddSensitivityLabel',
+    listTemplatesUrl: '/api/ListSensitivityLabelTemplates',
+    templateQueryKey: 'TemplateListSensitivityLabel',
+    relatedQueryKeys: ['ListSensitivityLabel', 'ListSensitivityLabelTemplates'],
     supportsLabelColor: true,
     // Sensitivity label templates store DisplayName/Name (Purview casing); the other template
     // types store a lowercase 'name', which is the default label field below.
-    templateLabelField: (option) => option.DisplayName ?? option.Name ?? option.name,
+    templateLabelField: (option) =>
+      option.DisplayName ?? option.Name ?? option.name,
     placeholder: `{
   "Name": "Confidential",
   "DisplayName": "Confidential",
@@ -90,12 +94,15 @@ const MODE_CONFIG = {
 }`,
   },
   SensitiveInfoType: {
-    title: "Deploy Sensitive Information Type",
-    buttonLabel: "Deploy SIT",
-    postUrl: "/api/AddSensitiveInfoType",
-    listTemplatesUrl: "/api/ListSensitiveInfoTypeTemplates",
-    templateQueryKey: "TemplateListSensitiveInfoType",
-    relatedQueryKeys: ["ListSensitiveInfoType", "ListSensitiveInfoTypeTemplates"],
+    title: 'Deploy Sensitive Information Type',
+    buttonLabel: 'Deploy SIT',
+    postUrl: '/api/AddSensitiveInfoType',
+    listTemplatesUrl: '/api/ListSensitiveInfoTypeTemplates',
+    templateQueryKey: 'TemplateListSensitiveInfoType',
+    relatedQueryKeys: [
+      'ListSensitiveInfoType',
+      'ListSensitiveInfoTypeTemplates',
+    ],
     placeholder: `// Simple mode — backend wraps the regex in a rule pack for you
 {
   "Name": "Acme Employee ID",
@@ -113,23 +120,23 @@ const MODE_CONFIG = {
 //   "FileDataBase64": "<base64 of the rule pack XML>"
 // }`,
   },
-};
+}
 
 // A sensitivity label's custom color lives in the 'color' advanced setting. On stored templates it is
 // either an explicit AdvancedSettings object or, for templates captured from Get-Label, an entry in the
 // read-only Settings array ({Key, Value} object or the serialized string '[color, #RRGGBB]').
 const extractLabelColor = (template) => {
-  if (!template) return "";
-  if (template.AdvancedSettings?.color) return template.AdvancedSettings.color;
+  if (!template) return ''
+  if (template.AdvancedSettings?.color) return template.AdvancedSettings.color
   for (const entry of template.Settings || []) {
-    if (entry?.Key?.toLowerCase?.() === "color") return entry.Value || "";
-    if (typeof entry === "string") {
-      const match = entry.match(/^\[\s*color\s*,\s*(.*?)\s*\]$/i);
-      if (match) return match[1];
+    if (entry?.Key?.toLowerCase?.() === 'color') return entry.Value || ''
+    if (typeof entry === 'string') {
+      const match = entry.match(/^\[\s*color\s*,\s*(.*?)\s*\]$/i)
+      if (match) return match[1]
     }
   }
-  return "";
-};
+  return ''
+}
 
 export const CippDeployCompliancePolicyDrawer = ({
   mode,
@@ -137,64 +144,76 @@ export const CippDeployCompliancePolicyDrawer = ({
   requiredPermissions = [],
   PermissionButton = Button,
 }) => {
-  const config = MODE_CONFIG[mode];
+  const config = MODE_CONFIG[mode]
 
-  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false)
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       selectedTenants: [],
       TemplateList: null,
-      PowerShellCommand: "",
-      labelColor: "",
+      PowerShellCommand: '',
+      labelColor: '',
     },
-  });
+  })
 
-  const { isValid } = useFormState({ control: formControl.control });
+  const { isValid } = useFormState({ control: formControl.control })
 
-  const templateListVal = useWatch({ control: formControl.control, name: "TemplateList" });
+  const templateListVal = useWatch({
+    control: formControl.control,
+    name: 'TemplateList',
+  })
 
   useEffect(() => {
     if (templateListVal?.value) {
-      formControl.setValue("PowerShellCommand", JSON.stringify(templateListVal.value));
+      formControl.setValue(
+        'PowerShellCommand',
+        JSON.stringify(templateListVal.value)
+      )
       if (config?.supportsLabelColor) {
-        formControl.setValue("labelColor", extractLabelColor(templateListVal.value));
+        formControl.setValue(
+          'labelColor',
+          extractLabelColor(templateListVal.value)
+        )
       }
     }
-  }, [templateListVal, formControl, config?.supportsLabelColor]);
+  }, [templateListVal, formControl, config?.supportsLabelColor])
 
   const deployPolicy = ApiPostCall({
     urlFromData: true,
     relatedQueryKeys: config?.relatedQueryKeys ?? [],
-  });
+  })
 
   useEffect(() => {
     if (deployPolicy.isSuccess) {
       formControl.reset({
         selectedTenants: [],
         TemplateList: null,
-        PowerShellCommand: "",
-        labelColor: "",
-      });
+        PowerShellCommand: '',
+        labelColor: '',
+      })
     }
-  }, [deployPolicy.isSuccess, formControl]);
+  }, [deployPolicy.isSuccess, formControl])
 
   if (!config) {
-    return null;
+    return null
   }
 
   const handleSubmit = () => {
-    formControl.trigger();
-    if (!isValid) return;
-    const { labelColor, ...values } = formControl.getValues();
+    formControl.trigger()
+    if (!isValid) return
+    const { labelColor, ...values } = formControl.getValues()
     if (config.supportsLabelColor && labelColor) {
       // Merge the picked color into the JSON as the 'color' advanced setting; an explicit color
       // already typed into the JSON is overridden by the picker since it is the visible control.
       try {
-        const parsed = JSON.parse(values.PowerShellCommand);
-        parsed.AdvancedSettings = { ...(parsed.AdvancedSettings || {}), color: labelColor };
-        values.PowerShellCommand = JSON.stringify(parsed, null, 2);
+        const parsed = JSON.parse(values.PowerShellCommand)
+        parsed.AdvancedSettings = {
+          ...(parsed.AdvancedSettings || {}),
+          color: labelColor,
+        }
+        values.PowerShellCommand = JSON.stringify(parsed, null, 2)
       } catch {
         // Invalid JSON in the textarea - submit unchanged and let the backend report the parse error.
       }
@@ -202,18 +221,18 @@ export const CippDeployCompliancePolicyDrawer = ({
     deployPolicy.mutate({
       url: config.postUrl,
       data: values,
-    });
-  };
+    })
+  }
 
   const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+    setDrawerVisible(false)
     formControl.reset({
       selectedTenants: [],
       TemplateList: null,
-      PowerShellCommand: "",
-      labelColor: "",
-    });
-  };
+      PowerShellCommand: '',
+      labelColor: '',
+    })
+  }
 
   return (
     <>
@@ -238,10 +257,10 @@ export const CippDeployCompliancePolicyDrawer = ({
               disabled={deployPolicy.isLoading || !isValid}
             >
               {deployPolicy.isLoading
-                ? "Deploying..."
+                ? 'Deploying...'
                 : deployPolicy.isSuccess
-                ? "Deploy Another"
-                : "Deploy"}
+                  ? 'Deploy Another'
+                  : 'Deploy'}
             </Button>
             <Button variant="outlined" onClick={handleCloseDrawer}>
               Close
@@ -258,11 +277,11 @@ export const CippDeployCompliancePolicyDrawer = ({
               type="multiple"
               allTenants={true}
               preselectedEnabled={true}
-              validators={{ required: "At least one tenant must be selected" }}
+              validators={{ required: 'At least one tenant must be selected' }}
             />
           </Grid>
 
-          <Divider sx={{ my: 1, width: "100%" }} />
+          <Divider sx={{ my: 1, width: '100%' }} />
 
           <Grid size={{ xs: 12 }}>
             <CippFormComponent
@@ -273,7 +292,7 @@ export const CippDeployCompliancePolicyDrawer = ({
               multiple={false}
               api={{
                 queryKey: config.templateQueryKey,
-                labelField: config.templateLabelField ?? "name",
+                labelField: config.templateLabelField ?? 'name',
                 valueField: (option) => option,
                 url: config.listTemplatesUrl,
               }}
@@ -281,7 +300,7 @@ export const CippDeployCompliancePolicyDrawer = ({
             />
           </Grid>
 
-          <Divider sx={{ my: 1, width: "100%" }} />
+          <Divider sx={{ my: 1, width: '100%' }} />
 
           {config.supportsLabelColor && (
             <Grid size={{ xs: 12 }}>
@@ -303,7 +322,9 @@ export const CippDeployCompliancePolicyDrawer = ({
               formControl={formControl}
               multiline
               rows={12}
-              validators={{ required: "Please enter the PowerShell parameters as JSON." }}
+              validators={{
+                required: 'Please enter the PowerShell parameters as JSON.',
+              }}
               placeholder={config.placeholder}
             />
           </Grid>
@@ -312,5 +333,5 @@ export const CippDeployCompliancePolicyDrawer = ({
         </Grid>
       </CippOffCanvas>
     </>
-  );
-};
+  )
+}

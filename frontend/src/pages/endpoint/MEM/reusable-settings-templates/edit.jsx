@@ -10,178 +10,187 @@ import {
   TableRow,
   Typography,
   Divider,
-} from "@mui/material";
-import { useForm, useFieldArray } from "react-hook-form";
-import { useRouter } from "next/router";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormSkeleton from "../../../../components/CippFormPages/CippFormSkeleton";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { ApiGetCall } from "../../../../api/ApiCall";
-import { useSettings } from "../../../../hooks/use-settings";
-import { useEffect, useMemo } from "react";
+} from '@mui/material'
+import { useForm, useFieldArray } from 'react-hook-form'
+import { useRouter } from 'next/router'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormSkeleton from '../../../../components/CippFormPages/CippFormSkeleton'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { ApiGetCall } from '../../../../api/ApiCall'
+import { useSettings } from '../../../../hooks/use-settings'
+import { useEffect, useMemo } from 'react'
 
 // Structured clone helper for older runtimes
-const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+const deepClone = (obj) => JSON.parse(JSON.stringify(obj))
 
 const generateGuid = () => {
-  const wrap = (val) => `{${val}}`;
-  if (typeof crypto !== "undefined" && crypto.randomUUID) return wrap(crypto.randomUUID());
+  const wrap = (val) => `{${val}}`
+  if (typeof crypto !== 'undefined' && crypto.randomUUID)
+    return wrap(crypto.randomUUID())
   const s4 = () =>
     Math.floor((1 + Math.random()) * 0x10000)
       .toString(16)
-      .substring(1);
-  return wrap(`${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`);
-};
+      .substring(1)
+  return wrap(`${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`)
+}
 
 const buildGroupEntryFromDefinitions = ({
   idDef,
   autoresolveDef,
   keywordDef,
-  idValue = "",
-  autoresolveValue = "",
-  keywordValue = "",
+  idValue = '',
+  autoresolveValue = '',
+  keywordValue = '',
 } = {}) => {
-  const children = [];
+  const children = []
 
   if (idDef) {
     children.push({
-      "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+      '@odata.type':
+        '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance',
       settingDefinitionId: idDef,
       simpleSettingValue: {
-        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+        '@odata.type':
+          '#microsoft.graph.deviceManagementConfigurationStringSettingValue',
         value: idValue,
       },
-    });
+    })
   }
 
   if (autoresolveDef) {
     children.push({
-      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+      '@odata.type':
+        '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance',
       settingDefinitionId: autoresolveDef,
       choiceSettingValue: { value: autoresolveValue, children: [] },
-    });
+    })
   }
 
   if (keywordDef) {
     children.push({
-      "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+      '@odata.type':
+        '#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance',
       settingDefinitionId: keywordDef,
       simpleSettingValue: {
-        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+        '@odata.type':
+          '#microsoft.graph.deviceManagementConfigurationStringSettingValue',
         value: keywordValue,
       },
-    });
+    })
   }
 
-  return { children };
-};
+  return { children }
+}
 
 const normalizeCollection = (collection) => {
-  if (!collection) return [];
-  return Array.isArray(collection) ? collection : [collection];
-};
+  if (!collection) return []
+  return Array.isArray(collection) ? collection : [collection]
+}
 
 const EditReusableSettingsTemplate = () => {
-  const router = useRouter();
-  const { id: rawId } = router.query;
-  const { currentTenant } = useSettings();
+  const router = useRouter()
+  const { id: rawId } = router.query
+  const { currentTenant } = useSettings()
 
   const normalizedId = useMemo(() => {
-    if (typeof rawId === "string") return rawId;
-    if (Array.isArray(rawId) && rawId.length > 0) return rawId[0];
-    return undefined;
-  }, [rawId]);
+    if (typeof rawId === 'string') return rawId
+    if (Array.isArray(rawId) && rawId.length > 0) return rawId[0]
+    return undefined
+  }, [rawId])
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       tenantFilter: currentTenant,
       GUID: normalizedId,
     },
-  });
+  })
 
   const templateQuery = ApiGetCall({
-    url: "/api/ListIntuneReusableSettingTemplates",
+    url: '/api/ListIntuneReusableSettingTemplates',
     data: normalizedId ? { id: normalizedId } : undefined,
     queryKey: `ReusableSettingTemplate-${normalizedId}`,
     waiting: !!normalizedId,
-  });
+  })
 
   const templateData = Array.isArray(templateQuery.data)
     ? templateQuery.data[0]
-    : templateQuery.data;
+    : templateQuery.data
 
   const normalizedTemplate = useMemo(() => {
-    if (!templateData) return null;
+    if (!templateData) return null
     return {
       ...templateData,
       // Normalize all known casing variants to the canonical RawJSON property
-      RawJSON: templateData.RawJSON ?? templateData.RAWJson ?? templateData.rawJSON,
-    };
-  }, [templateData]);
+      RawJSON:
+        templateData.RawJSON ?? templateData.RAWJson ?? templateData.rawJSON,
+    }
+  }, [templateData])
 
   const parsedRaw = useMemo(() => {
-    if (!normalizedTemplate?.RawJSON) return null;
+    if (!normalizedTemplate?.RawJSON) return null
     try {
-      return JSON.parse(normalizedTemplate.RawJSON);
+      return JSON.parse(normalizedTemplate.RawJSON)
     } catch (e) {
-      return null;
+      return null
     }
-  }, [normalizedTemplate]);
+  }, [normalizedTemplate])
 
   // Strip the group collection out of the parsed RAW for cleaner form state
   const sanitizedParsedRaw = useMemo(() => {
-    if (!parsedRaw) return null;
-    const clone = deepClone(parsedRaw);
+    if (!parsedRaw) return null
+    const clone = deepClone(parsedRaw)
     if (clone?.settingInstance?.groupSettingCollectionValue) {
-      delete clone.settingInstance.groupSettingCollectionValue;
+      delete clone.settingInstance.groupSettingCollectionValue
     }
-    return clone;
-  }, [parsedRaw]);
+    return clone
+  }, [parsedRaw])
 
   const groupCollection = useMemo(() => {
     const source =
       parsedRaw?.settingInstance?.groupSettingCollectionValue ||
       templateData?.settingInstance?.groupSettingCollectionValue ||
-      [];
-    return normalizeCollection(source);
-  }, [parsedRaw, templateData]);
+      []
+    return normalizeCollection(source)
+  }, [parsedRaw, templateData])
 
   const groupChildDefinitions = useMemo(() => {
-    const first = groupCollection?.[0]?.children || [];
+    const first = groupCollection?.[0]?.children || []
     return {
-      idDef: first.find((c) => c.settingDefinitionId?.toLowerCase().includes("_id"))
-        ?.settingDefinitionId,
-      autoresolveDef: first.find((c) =>
-        c.settingDefinitionId?.toLowerCase().includes("_autoresolve"),
+      idDef: first.find((c) =>
+        c.settingDefinitionId?.toLowerCase().includes('_id')
       )?.settingDefinitionId,
-      keywordDef: first.find((c) => c.settingDefinitionId?.toLowerCase().includes("_keyword"))
-        ?.settingDefinitionId,
-    };
-  }, [groupCollection]);
+      autoresolveDef: first.find((c) =>
+        c.settingDefinitionId?.toLowerCase().includes('_autoresolve')
+      )?.settingDefinitionId,
+      keywordDef: first.find((c) =>
+        c.settingDefinitionId?.toLowerCase().includes('_keyword')
+      )?.settingDefinitionId,
+    }
+  }, [groupCollection])
 
   useEffect(() => {
     if (groupCollection) {
-      formControl.setValue("groupSettingCollectionValue", groupCollection);
+      formControl.setValue('groupSettingCollectionValue', groupCollection)
       if (sanitizedParsedRaw) {
-        formControl.setValue("parsedRAWJson", sanitizedParsedRaw);
+        formControl.setValue('parsedRAWJson', sanitizedParsedRaw)
       }
     }
-  }, [groupCollection, sanitizedParsedRaw, formControl]);
+  }, [groupCollection, sanitizedParsedRaw, formControl])
 
   useEffect(() => {
     if (normalizedTemplate) {
       formControl.setValue(
-        "displayName",
-        normalizedTemplate.displayName || normalizedTemplate.name,
-      );
+        'displayName',
+        normalizedTemplate.displayName || normalizedTemplate.name
+      )
       formControl.setValue(
-        "description",
-        normalizedTemplate.description || normalizedTemplate.Description,
-      );
+        'description',
+        normalizedTemplate.description || normalizedTemplate.Description
+      )
     }
-  }, [normalizedTemplate, formControl]);
+  }, [normalizedTemplate, formControl])
 
   /**
    * Convert RHF form values into the API payload while preserving Graph @odata fields.
@@ -192,70 +201,75 @@ const EditReusableSettingsTemplate = () => {
    */
   const customDataFormatter = useMemo(() => {
     const getOriginalValueByPath = (obj, path) => {
-      if (!obj) return undefined;
-      const keys = path.split(".");
-      let current = obj;
+      if (!obj) return undefined
+      const keys = path.split('.')
+      let current = obj
       for (const key of keys) {
-        if (current && typeof current === "object" && key in current) {
-          current = current[key];
+        if (current && typeof current === 'object' && key in current) {
+          current = current[key]
         } else {
-          return undefined;
+          return undefined
         }
       }
-      return current;
-    };
+      return current
+    }
 
     const extractValues = (obj) => {
-      if (obj === null || obj === undefined) return obj;
+      if (obj === null || obj === undefined) return obj
 
       if (
         obj &&
-        typeof obj === "object" &&
-        obj.hasOwnProperty("value") &&
-        obj.hasOwnProperty("label")
+        typeof obj === 'object' &&
+        obj.hasOwnProperty('value') &&
+        obj.hasOwnProperty('label')
       ) {
-        return obj.value;
+        return obj.value
       }
 
       if (Array.isArray(obj)) {
-        return obj.map((item) => extractValues(item));
+        return obj.map((item) => extractValues(item))
       }
 
-      if (typeof obj === "object") {
-        const result = {};
+      if (typeof obj === 'object') {
+        const result = {}
         Object.keys(obj).forEach((key) => {
-          const value = extractValues(obj[key]);
+          const value = extractValues(obj[key])
 
-          if (key.endsWith("@odata") && value && typeof value === "object") {
+          if (key.endsWith('@odata') && value && typeof value === 'object') {
             // Restore @odata.* keys from the original template to avoid RHF dot-notation artifacts
             Object.keys(value).forEach((odataKey) => {
-              const baseKey = key.replace("@odata", "");
-              const originalKey = `${baseKey}@odata.${odataKey}`;
-              const originalValue = getOriginalValueByPath(normalizedTemplate, originalKey);
+              const baseKey = key.replace('@odata', '')
+              const originalKey = `${baseKey}@odata.${odataKey}`
+              const originalValue = getOriginalValueByPath(
+                normalizedTemplate,
+                originalKey
+              )
               if (originalValue !== undefined) {
-                result[originalKey] = originalValue;
+                result[originalKey] = originalValue
               }
-            });
+            })
           } else {
-            result[key] = value;
+            result[key] = value
           }
-        });
-        return result;
+        })
+        return result
       }
 
-      return obj;
-    };
+      return obj
+    }
 
     return (values) => {
-      const processedValues = extractValues(values) || {};
+      const processedValues = extractValues(values) || {}
 
       // Sync template/policy name & description into parsed RAW JSON, and merge edited group collection
       if (processedValues.parsedRAWJson) {
         if (processedValues.displayName) {
-          processedValues.parsedRAWJson.displayName = processedValues.displayName;
+          processedValues.parsedRAWJson.displayName =
+            processedValues.displayName
         }
         if (processedValues.description) {
-          processedValues.parsedRAWJson.description = processedValues.description;
+          processedValues.parsedRAWJson.description =
+            processedValues.description
         }
 
         if (
@@ -263,7 +277,7 @@ const EditReusableSettingsTemplate = () => {
           processedValues.parsedRAWJson.settingInstance
         ) {
           processedValues.parsedRAWJson.settingInstance.groupSettingCollectionValue =
-            processedValues.groupSettingCollectionValue;
+            processedValues.groupSettingCollectionValue
         }
       }
 
@@ -272,23 +286,27 @@ const EditReusableSettingsTemplate = () => {
         displayName: processedValues.displayName,
         description: processedValues.description,
         package: processedValues.package,
-        rawJSON: JSON.stringify(processedValues.parsedRAWJson || processedValues, null, 2),
+        rawJSON: JSON.stringify(
+          processedValues.parsedRAWJson || processedValues,
+          null,
+          2
+        ),
         tenantFilter: processedValues.tenantFilter || currentTenant,
-      };
-    };
-  }, [currentTenant, normalizedId, normalizedTemplate]);
+      }
+    }
+  }, [currentTenant, normalizedId, normalizedTemplate])
 
   const { fields, append, remove } = useFieldArray({
     control: formControl.control,
-    name: "groupSettingCollectionValue",
-  });
+    name: 'groupSettingCollectionValue',
+  })
 
   const createEmptyEntry = () => {
     return buildGroupEntryFromDefinitions({
       ...groupChildDefinitions,
       idValue: generateGuid(),
-    });
-  };
+    })
+  }
 
   return (
     <CippFormPage
@@ -296,10 +314,13 @@ const EditReusableSettingsTemplate = () => {
         normalizedTemplate?.displayName ||
         normalizedTemplate?.name ||
         normalizedTemplate?.Displayname ||
-        "Reusable Settings Template"
+        'Reusable Settings Template'
       }
       formControl={formControl}
-      queryKey={[`ReusableSettingTemplate-${normalizedId}`, "ListIntuneReusableSettingTemplates"]}
+      queryKey={[
+        `ReusableSettingTemplate-${normalizedId}`,
+        'ListIntuneReusableSettingTemplates',
+      ]}
       backButtonTitle="Reusable Settings Templates"
       postUrl="/api/AddIntuneReusableSettingTemplate"
       backUrl="/endpoint/MEM/reusable-settings-templates"
@@ -311,7 +332,9 @@ const EditReusableSettingsTemplate = () => {
         {templateQuery.isLoading ? (
           <CippFormSkeleton layout={[2, 1, 2, 2]} />
         ) : templateQuery.isError || !normalizedTemplate ? (
-          <Alert severity="error">Error loading reusable settings template.</Alert>
+          <Alert severity="error">
+            Error loading reusable settings template.
+          </Alert>
         ) : (
           <>
             <Stack spacing={2} sx={{ mb: 3 }}>
@@ -342,7 +365,7 @@ const EditReusableSettingsTemplate = () => {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ display: "none" }}>ID</TableCell>
+                      <TableCell sx={{ display: 'none' }}>ID</TableCell>
                       <TableCell>Autoresolve</TableCell>
                       <TableCell>Keyword</TableCell>
                       <TableCell align="right">Actions</TableCell>
@@ -350,17 +373,18 @@ const EditReusableSettingsTemplate = () => {
                   </TableHead>
                   <TableBody>
                     {fields.map((field, index) => {
-                      const idPath = `groupSettingCollectionValue.${index}.children.0.simpleSettingValue.value`;
-                      const autoresolvePath = `groupSettingCollectionValue.${index}.children.1.choiceSettingValue.value`;
-                      const keywordPath = `groupSettingCollectionValue.${index}.children.2.simpleSettingValue.value`;
+                      const idPath = `groupSettingCollectionValue.${index}.children.0.simpleSettingValue.value`
+                      const autoresolvePath = `groupSettingCollectionValue.${index}.children.1.choiceSettingValue.value`
+                      const keywordPath = `groupSettingCollectionValue.${index}.children.2.simpleSettingValue.value`
 
-                      const autoresolveBase = groupChildDefinitions.autoresolveDef || "autoresolve";
-                      const autoresolveTrue = `${autoresolveBase}_true`;
-                      const autoresolveFalse = `${autoresolveBase}_false`;
+                      const autoresolveBase =
+                        groupChildDefinitions.autoresolveDef || 'autoresolve'
+                      const autoresolveTrue = `${autoresolveBase}_true`
+                      const autoresolveFalse = `${autoresolveBase}_false`
 
                       return (
                         <TableRow key={field.id || index}>
-                          <TableCell sx={{ display: "none" }}>
+                          <TableCell sx={{ display: 'none' }}>
                             <CippFormComponent
                               type="textField"
                               name={idPath}
@@ -368,7 +392,7 @@ const EditReusableSettingsTemplate = () => {
                               formControl={formControl}
                             />
                           </TableCell>
-                          <TableCell sx={{ width: "25%" }}>
+                          <TableCell sx={{ width: '25%' }}>
                             <CippFormComponent
                               type="autoComplete"
                               name={autoresolvePath}
@@ -376,13 +400,13 @@ const EditReusableSettingsTemplate = () => {
                               formControl={formControl}
                               multiple={false}
                               options={[
-                                { label: "True", value: autoresolveTrue },
-                                { label: "False", value: autoresolveFalse },
+                                { label: 'True', value: autoresolveTrue },
+                                { label: 'False', value: autoresolveFalse },
                               ]}
                               creatable
                             />
                           </TableCell>
-                          <TableCell sx={{ width: "35%" }}>
+                          <TableCell sx={{ width: '35%' }}>
                             <CippFormComponent
                               type="textField"
                               name={keywordPath}
@@ -392,12 +416,16 @@ const EditReusableSettingsTemplate = () => {
                             />
                           </TableCell>
                           <TableCell align="right">
-                            <Button size="small" color="error" onClick={() => remove(index)}>
+                            <Button
+                              size="small"
+                              color="error"
+                              onClick={() => remove(index)}
+                            >
                               Remove
                             </Button>
                           </TableCell>
                         </TableRow>
-                      );
+                      )
                     })}
                   </TableBody>
                 </Table>
@@ -416,9 +444,11 @@ const EditReusableSettingsTemplate = () => {
         )}
       </Box>
     </CippFormPage>
-  );
-};
+  )
+}
 
-EditReusableSettingsTemplate.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+EditReusableSettingsTemplate.getLayout = (page) => (
+  <DashboardLayout>{page}</DashboardLayout>
+)
 
-export default EditReusableSettingsTemplate;
+export default EditReusableSettingsTemplate

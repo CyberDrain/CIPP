@@ -3,7 +3,10 @@
     "value": "New-InboxRule",
     "name": "A new Inbox rule is created",
     "template": {
-      "preset": { "value": "New-InboxRule", "label": "A new Inbox rule is created" },
+      "preset": {
+        "value": "New-InboxRule",
+        "label": "A new Inbox rule is created"
+      },
       "logbook": { "value": "Audit.Exchange", "label": "Exchange" },
       "conditions": [
         {
@@ -99,7 +102,10 @@
     "value": "Set-InboxRule",
     "name": "A existing Inbox rule is edited",
     "template": {
-      "preset": { "value": "Set-InboxRule", "label": "A existing Inbox rule is edited" },
+      "preset": {
+        "value": "Set-InboxRule",
+        "label": "A existing Inbox rule is edited"
+      },
       "logbook": { "value": "Audit.Exchange", "label": "Exchange" },
       "conditions": [
         {
@@ -315,7 +321,11 @@
           }
         },
         {
-          "Property": { "value": "List:countryList", "label": "CIPPGeoLocation", "multi": true },
+          "Property": {
+            "value": "List:countryList",
+            "label": "CIPPGeoLocation",
+            "multi": true
+          },
           "Operator": { "value": "NotIn", "label": "Not In" }
         }
       ]

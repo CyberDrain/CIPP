@@ -1,25 +1,28 @@
-import { useEffect } from "react";
-import { Stack, Box, Typography, Link } from "@mui/material";
-import { CIPPM365OAuthButton } from "../CippComponents/CIPPM365OAuthButton";
-import { CippApiResults } from "../CippComponents/CippApiResults";
-import { ApiPostCall } from "../../api/ApiCall";
-import { CippWizardStepButtons } from "./CippWizardStepButtons";
+import { useEffect } from 'react'
+import { Stack, Box, Typography, Link } from '@mui/material'
+import { CIPPM365OAuthButton } from '../CippComponents/CIPPM365OAuthButton'
+import { CippApiResults } from '../CippComponents/CippApiResults'
+import { ApiPostCall } from '../../api/ApiCall'
+import { CippWizardStepButtons } from './CippWizardStepButtons'
 
 export const CippDirectTenantDeploy = (props) => {
-  const { formControl, currentStep, onPreviousStep, onNextStep } = props;
+  const { formControl, currentStep, onPreviousStep, onNextStep } = props
 
-  formControl.register("DirectTenantAuth", {
+  formControl.register('DirectTenantAuth', {
     required: true,
-  });
+  })
 
-  const addTenant = ApiPostCall({ urlfromdata: true, relatedQueryKeys: ["tenants-table"] });
+  const addTenant = ApiPostCall({
+    urlfromdata: true,
+    relatedQueryKeys: ['tenants-table'],
+  })
 
   useEffect(() => {
     if (addTenant.isSuccess) {
-      formControl.setValue("DirectTenantAuth", true);
-      formControl.trigger("DirectTenantAuth");
+      formControl.setValue('DirectTenantAuth', true)
+      formControl.trigger('DirectTenantAuth')
     }
-  }, [addTenant.isSuccess, formControl]);
+  }, [addTenant.isSuccess, formControl])
 
   return (
     <Stack spacing={2}>
@@ -28,12 +31,14 @@ export const CippDirectTenantDeploy = (props) => {
           Per-Tenant Authentication
         </Typography>
         <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
-          Click the button below to connect to individual tenants. This option allows you to
-          authenticate directly to a tenant without using GDAP or Partner Center relationships.
+          Click the button below to connect to individual tenants. This option
+          allows you to authenticate directly to a tenant without using GDAP or
+          Partner Center relationships.
         </Typography>
         <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
-          You can authenticate to multiple tenants by repeating this step for each tenant you want
-          to add. More information about per-tenant authentication can be found in the{" "}
+          You can authenticate to multiple tenants by repeating this step for
+          each tenant you want to add. More information about per-tenant
+          authentication can be found in the{' '}
           <Link
             href="https://docs.cipp.app/setup/installation/gdap-invite-wizard#wizard-steps-for-direct-tenants"
             target="_blank"
@@ -44,18 +49,20 @@ export const CippDirectTenantDeploy = (props) => {
           .
         </Typography>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 2, mb: 2 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'flex-start', mt: 2, mb: 2 }}
+        >
           <Stack direction="row" spacing={2} alignItems="center">
             <CIPPM365OAuthButton
               onAuthSuccess={(tokenData) => {
                 const updatedTokenData = {
                   ...tokenData,
-                  tenantMode: "perTenant",
-                };
+                  tenantMode: 'perTenant',
+                }
                 addTenant.mutate({
-                  url: "/api/ExecAddTenant",
+                  url: '/api/ExecAddTenant',
                   data: updatedTokenData,
-                });
+                })
               }}
               buttonText="Connect to Tenant"
               showSuccessAlert={false}
@@ -75,7 +82,7 @@ export const CippDirectTenantDeploy = (props) => {
         noSubmitButton={true}
       />
     </Stack>
-  );
-};
+  )
+}
 
-export default CippDirectTenantDeploy;
+export default CippDirectTenantDeploy

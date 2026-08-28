@@ -27,22 +27,58 @@ const RELATIVE_TIME_CHARS = 20
 
 // Known datetime accessor names and pattern — must stay in sync with get-cipp-formatting.js
 const TIME_AGO_NAMES = new Set([
-  'ExecutedTime', 'ScheduledTime', 'Timestamp', 'timestamp', 'DateTime', 'LastRun',
-  'LastRefresh', 'createdDateTime', 'activatedDateTime', 'lastModifiedDateTime',
-  'endDateTime', 'ReceivedTime', 'Expires', 'updatedAt', 'createdAt', 'Received',
-  'Date', 'WhenCreated', 'WhenChanged', 'CreationTime', 'renewalDate',
-  'commitmentTerm.renewalConfiguration.renewalDate', 'purchaseDate', 'NextOccurrence',
-  'LastOccurrence', 'NotBefore', 'NotAfter', 'latestDataCollection',
-  'requestDate', 'reviewedDate', 'GeneratedAt', 'RecordedAt',
+  'ExecutedTime',
+  'ScheduledTime',
+  'Timestamp',
+  'timestamp',
+  'DateTime',
+  'LastRun',
+  'LastRefresh',
+  'createdDateTime',
+  'activatedDateTime',
+  'lastModifiedDateTime',
+  'endDateTime',
+  'ReceivedTime',
+  'Expires',
+  'updatedAt',
+  'createdAt',
+  'Received',
+  'Date',
+  'WhenCreated',
+  'WhenChanged',
+  'CreationTime',
+  'renewalDate',
+  'commitmentTerm.renewalConfiguration.renewalDate',
+  'purchaseDate',
+  'NextOccurrence',
+  'LastOccurrence',
+  'NotBefore',
+  'NotAfter',
+  'latestDataCollection',
+  'requestDate',
+  'reviewedDate',
+  'GeneratedAt',
+  'RecordedAt',
 ])
-const MATCH_DATE_TIME = /([dD]ate[tT]ime|[Ee]xpiration|[Tt]imestamp|[sS]tart[Dd]ate)/
+const MATCH_DATE_TIME =
+  /([dD]ate[tT]ime|[Ee]xpiration|[Tt]imestamp|[sS]tart[Dd]ate)/
 const ABSOLUTE_DATE_NAMES = new Set([
-  'WindowStart', 'WindowEnd', 'CreatedUtc', 'DownloadedUtc', 'ProcessedUtc',
-  'NextAttemptUtc', 'LastErrorUtc', 'LastPolledUtc',
-  'QueuedUtc', 'StartedUtc', 'CompletedUtc',
+  'WindowStart',
+  'WindowEnd',
+  'CreatedUtc',
+  'DownloadedUtc',
+  'ProcessedUtc',
+  'NextAttemptUtc',
+  'LastErrorUtc',
+  'LastPolledUtc',
+  'QueuedUtc',
+  'StartedUtc',
+  'CompletedUtc',
 ])
 const isDateTimeColumn = (key) =>
-  TIME_AGO_NAMES.has(key) || ABSOLUTE_DATE_NAMES.has(key) || MATCH_DATE_TIME.test(key)
+  TIME_AGO_NAMES.has(key) ||
+  ABSOLUTE_DATE_NAMES.has(key) ||
+  MATCH_DATE_TIME.test(key)
 
 // Measure the pixel width a column needs based on its header and sampled cell values.
 // rawValues are the original data values (before formatting) — if they contain arrays or
@@ -50,7 +86,9 @@ const isDateTimeColumn = (key) =>
 // Returns { size, minSize } where minSize is always header-width + chrome safe space.
 const measureColumnSize = (header, valuesForColumn, rawValues, accessorKey) => {
   const headerLen = header ? header.length : 6
-  const headerPx = Math.round(headerLen * CHAR_WIDTH + CELL_PADDING + HEADER_CHROME_PX)
+  const headerPx = Math.round(
+    headerLen * CHAR_WIDTH + CELL_PADDING + HEADER_CHROME_PX
+  )
   const minSize = Math.max(MIN_COL_SIZE, headerPx)
 
   // If any raw value is an array or complex object, the cell renders as either:
@@ -66,7 +104,11 @@ const measureColumnSize = (header, valuesForColumn, rawValues, accessorKey) => {
       // "X items" button (CippDataTableButton), so size to the button width.
       const allObjectLike = rawValues.every((v) => {
         if (v === null || v === undefined) return true // nulls are fine, they show "No items"
-        if (Array.isArray(v)) return v.length === 0 || v.some((el) => typeof el === 'object' && el !== null)
+        if (Array.isArray(v))
+          return (
+            v.length === 0 ||
+            v.some((el) => typeof el === 'object' && el !== null)
+          )
         return typeof v === 'object'
       })
       if (allObjectLike) {
@@ -74,10 +116,13 @@ const measureColumnSize = (header, valuesForColumn, rawValues, accessorKey) => {
         // - JSON strings (starts with [ or {) → CippDataTableButton ("X items"), compact
         // - Comma-separated text → chips/inline content, needs real measurement
         const looksLikeButton = valuesForColumn.every((t) => {
-          if (t === null || t === undefined || t === '' || t === 'No data') return true
+          if (t === null || t === undefined || t === '' || t === 'No data')
+            return true
           if (Array.isArray(t)) return true // handler returned a raw array (e.g. [])
           const s = typeof t === 'string' ? t.trim() : ''
-          return s.startsWith('[') || s.startsWith('{') || s === 'Password hidden'
+          return (
+            s.startsWith('[') || s.startsWith('{') || s === 'Password hidden'
+          )
         })
         if (looksLikeButton) {
           return { size: minSize, minSize }
@@ -93,7 +138,12 @@ const measureColumnSize = (header, valuesForColumn, rawValues, accessorKey) => {
             if (len > longestObjItem) longestObjItem = len
           }
         }
-        const objChipPx = Math.round(longestObjItem * CHAR_WIDTH + CELL_PADDING + CHIP_CHROME_PX + HEADER_CHROME_PX)
+        const objChipPx = Math.round(
+          longestObjItem * CHAR_WIDTH +
+            CELL_PADDING +
+            CHIP_CHROME_PX +
+            HEADER_CHROME_PX
+        )
         const objSize = Math.max(minSize, Math.min(MAX_COL_SIZE, objChipPx))
         return { size: objSize, minSize }
       }
@@ -110,7 +160,12 @@ const measureColumnSize = (header, valuesForColumn, rawValues, accessorKey) => {
           }
         }
       }
-      const chipPx = Math.round(longestItem * CHAR_WIDTH + CELL_PADDING + CHIP_CHROME_PX + HEADER_CHROME_PX)
+      const chipPx = Math.round(
+        longestItem * CHAR_WIDTH +
+          CELL_PADDING +
+          CHIP_CHROME_PX +
+          HEADER_CHROME_PX
+      )
       const size = Math.max(minSize, Math.min(MAX_COL_SIZE, chipPx))
       return { size, minSize }
     }
@@ -154,7 +209,9 @@ const measureColumnSize = (header, valuesForColumn, rawValues, accessorKey) => {
 const variableReplacements = {
   cippuserschema: (dataSample) => {
     // Find the first property that contains "_cippUser"
-    const cippUserProp = Object.keys(dataSample).find((key) => key.includes('_cippUser'))
+    const cippUserProp = Object.keys(dataSample).find((key) =>
+      key.includes('_cippUser')
+    )
     return cippUserProp || 'cippuserschema' // fallback to original if not found
   },
 }
@@ -189,7 +246,9 @@ const MAX_MERGE_SAMPLE = 50
 
 const mergeKeys = (dataArray) => {
   const sample =
-    dataArray.length > MAX_MERGE_SAMPLE ? dataArray.slice(0, MAX_MERGE_SAMPLE) : dataArray
+    dataArray.length > MAX_MERGE_SAMPLE
+      ? dataArray.slice(0, MAX_MERGE_SAMPLE)
+      : dataArray
   return sample.reduce((acc, item) => {
     const mergeRecursive = (obj, base = {}) => {
       // Add null/undefined check before calling Object.keys
@@ -204,11 +263,15 @@ const mergeKeys = (dataArray) => {
           !skipRecursion.includes(key)
         ) {
           if (typeof base[key] === 'boolean') return // don't merge into a boolean
-          if (typeof base[key] !== 'object' || Array.isArray(base[key])) base[key] = {}
+          if (typeof base[key] !== 'object' || Array.isArray(base[key]))
+            base[key] = {}
           base[key] = mergeRecursive(obj[key], base[key])
         } else if (typeof obj[key] === 'boolean') {
           base[key] = obj[key]
-        } else if (typeof obj[key] === 'string' && obj[key].toUpperCase() === 'FAILED') {
+        } else if (
+          typeof obj[key] === 'string' &&
+          obj[key].toUpperCase() === 'FAILED'
+        ) {
           // keep existing value if it's 'FAILED'
           base[key] = base[key]
         } else if (obj[key] !== undefined && obj[key] !== null) {
@@ -240,7 +303,9 @@ export const utilColumnsFromAPI = (dataArray) => {
 
   // Use a small sample for filter heuristics instead of scanning every row.
   const filterSample =
-    dataArray.length > MAX_FILTER_SAMPLE ? dataArray.slice(0, MAX_FILTER_SAMPLE) : dataArray
+    dataArray.length > MAX_FILTER_SAMPLE
+      ? dataArray.slice(0, MAX_FILTER_SAMPLE)
+      : dataArray
 
   const generateColumns = (obj, parentKey = '') => {
     return Object.keys(obj)
@@ -258,19 +323,30 @@ export const utilColumnsFromAPI = (dataArray) => {
 
         // Build a value resolver usable by both accessorFn/Cell and the filter util
         const resolveValue = (rowLike) =>
-          accessorKey.includes('@odata') ? rowLike?.[accessorKey] : getAtPath(rowLike, accessorKey)
+          accessorKey.includes('@odata')
+            ? rowLike?.[accessorKey]
+            : getAtPath(rowLike, accessorKey)
 
         // Sample a small subset for filter heuristics instead of the full dataset.
         const valuesForColumn = filterSample
           .map((r) => resolveValue(r))
           .filter((v) => v !== undefined && v !== null)
 
-        const sampleValue = valuesForColumn.length ? valuesForColumn[0] : undefined
+        const sampleValue = valuesForColumn.length
+          ? valuesForColumn[0]
+          : undefined
 
         // Measure content width from formatted text values for this column.
-        const textValues = valuesForColumn.map((v) => getCippFormatting(v, accessorKey, 'text'))
+        const textValues = valuesForColumn.map((v) =>
+          getCippFormatting(v, accessorKey, 'text')
+        )
         const header = getCippTranslation(accessorKey)
-        const measuredSize = measureColumnSize(header, textValues, valuesForColumn, accessorKey)
+        const measuredSize = measureColumnSize(
+          header,
+          textValues,
+          valuesForColumn,
+          accessorKey
+        )
 
         // Allow per-column size overrides for columns whose rendered output
         // doesn't match text width (icons, progress bars, etc.).

@@ -5,7 +5,9 @@ import { CippBreadcrumbNav } from '../../../src/components/CippComponents/CippBr
 // second require.context consumer, this one globs every pages/**/tabOptions.json. covers the
 // subdirectory + regex arms of the polyfill that the tutorial glob (flat, no subdirs) doesn't.
 // 'Groups' only reaches the trail through src/pages/tenant/administration/tenants/tabOptions.json
-const routerState = vi.hoisted(() => ({ pathname: '/tenant/administration/tenants/groups' }))
+const routerState = vi.hoisted(() => ({
+  pathname: '/tenant/administration/tenants/groups',
+}))
 const layoutState = vi.hoisted(() => ({ isMobile: false }))
 vi.mock('../../../src/hooks/use-breakpoint', async (importOriginal) => ({
   ...(await importOriginal()),

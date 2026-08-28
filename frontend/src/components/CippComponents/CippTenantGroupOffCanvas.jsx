@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react'
 import {
   Box,
   Typography,
@@ -9,27 +9,28 @@ import {
   AlertTitle,
   useTheme,
   Stack,
-} from "@mui/material";
-import { Groups, Business, Rule, Info } from "@mui/icons-material";
-import { CippDataTable } from "../CippTable/CippDataTable";
+} from '@mui/material'
+import { Groups, Business, Rule, Info } from '@mui/icons-material'
+import { CippDataTable } from '../CippTable/CippDataTable'
 
 export const CippTenantGroupOffCanvas = ({ data }) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   if (!data) {
     return (
       <Box sx={{ p: 2 }}>
         <Typography>No group data available</Typography>
       </Box>
-    );
+    )
   }
 
-  const isDynamic = data.GroupType === "dynamic";
-  const hasMembers = data.Members && data.Members.length > 0;
+  const isDynamic = data.GroupType === 'dynamic'
+  const hasMembers = data.Members && data.Members.length > 0
   const hasDynamicRules =
     data.DynamicRules &&
     ((Array.isArray(data.DynamicRules) && data.DynamicRules.length > 0) ||
-      (!Array.isArray(data.DynamicRules) && Object.keys(data.DynamicRules).length > 0));
+      (!Array.isArray(data.DynamicRules) &&
+        Object.keys(data.DynamicRules).length > 0))
 
   const renderDynamicRules = () => {
     if (!hasDynamicRules) {
@@ -38,50 +39,56 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
           <AlertTitle>No Dynamic Rules</AlertTitle>
           This dynamic group has no rules configured.
         </Alert>
-      );
+      )
     }
 
     const operatorDisplay = {
-      eq: "equals",
-      ne: "not equals",
-      in: "in",
-      notIn: "not in",
-      notin: "not in",
-      like: "contains",
-      notlike: "does not contain",
-      contains: "contains",
-      startsWith: "starts with",
-      endsWith: "ends with",
-    };
+      eq: 'equals',
+      ne: 'not equals',
+      in: 'in',
+      notIn: 'not in',
+      notin: 'not in',
+      like: 'contains',
+      notlike: 'does not contain',
+      contains: 'contains',
+      startsWith: 'starts with',
+      endsWith: 'ends with',
+    }
 
     // Handle both single rule object and array of rules
-    const rules = Array.isArray(data.DynamicRules) ? data.DynamicRules : [data.DynamicRules];
+    const rules = Array.isArray(data.DynamicRules)
+      ? data.DynamicRules
+      : [data.DynamicRules]
 
     // Resolve a value that may be a string, a {label, value} option, or a raw object
     const resolveOptionLabel = (item) => {
-      if (item === null || item === undefined) return "";
-      if (typeof item === "object") return item.label ?? item.value ?? JSON.stringify(item);
-      return item;
-    };
+      if (item === null || item === undefined) return ''
+      if (typeof item === 'object')
+        return item.label ?? item.value ?? JSON.stringify(item)
+      return item
+    }
 
     const renderRuleValue = (rule) => {
       // Custom Variable rules store a nested { variableName, value } object
-      if (rule.property === "customVariable" || rule.value?.variableName !== undefined) {
-        const variableName = resolveOptionLabel(rule.value?.variableName);
-        const expectedValue = resolveOptionLabel(rule.value?.value);
+      if (
+        rule.property === 'customVariable' ||
+        rule.value?.variableName !== undefined
+      ) {
+        const variableName = resolveOptionLabel(rule.value?.variableName)
+        const expectedValue = resolveOptionLabel(rule.value?.value)
         return (
           <Chip
-            label={`${variableName || "Variable"} = ${expectedValue}`}
+            label={`${variableName || 'Variable'} = ${expectedValue}`}
             size="small"
             variant="outlined"
             color="primary"
           />
-        );
+        )
       }
 
       if (Array.isArray(rule.value)) {
         return (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {rule.value.map((item, valueIndex) => (
               <Chip
                 key={valueIndex}
@@ -92,7 +99,7 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
               />
             ))}
           </Box>
-        );
+        )
       }
 
       return (
@@ -102,56 +109,57 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
           variant="outlined"
           color="primary"
         />
-      );
-    };
+      )
+    }
 
     const renderRule = (rule, index) => (
       <Box
         key={index}
         sx={{
           p: 2,
-          bgcolor: theme.palette.mode === "dark" ? "grey.800" : "grey.50",
+          bgcolor: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50',
           borderRadius: 1,
         }}
       >
         <Typography variant="body2" color="text.secondary" gutterBottom>
-          Rule {rules.length > 1 ? `${index + 1}:` : "Configuration:"}
+          Rule {rules.length > 1 ? `${index + 1}:` : 'Configuration:'}
         </Typography>
         <Typography variant="body1">
           <strong>Property:</strong> {rule.property}
         </Typography>
         <Typography variant="body1">
-          <strong>Operator:</strong> {operatorDisplay[rule.operator] || rule.operator}
+          <strong>Operator:</strong>{' '}
+          {operatorDisplay[rule.operator] || rule.operator}
         </Typography>
         <Typography variant="body1" sx={{ mb: 1 }}>
           <strong>Value(s):</strong>
         </Typography>
         {renderRuleValue(rule)}
       </Box>
-    );
+    )
 
     const renderRulesWithLogic = () => {
       if (rules.length === 1) {
-        return renderRule(rules[0], 0);
+        return renderRule(rules[0], 0)
       }
 
       return rules.map((rule, index) => (
         <React.Fragment key={index}>
           {renderRule(rule, index)}
           {index < rules.length - 1 && (
-            <Box sx={{ display: "flex", justifyContent: "center", my: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 1 }}>
               <Chip
-                label={data.RuleLogic?.toUpperCase() || "AND"}
+                label={data.RuleLogic?.toUpperCase() || 'AND'}
                 size="small"
                 color="primary"
                 variant="filled"
-                sx={{ fontWeight: "bold" }}
+                sx={{ fontWeight: 'bold' }}
               />
             </Box>
           )}
         </React.Fragment>
-      ));
-    };
+      ))
+    }
 
     return (
       <Card variant="outlined">
@@ -159,7 +167,7 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
           <Typography
             variant="h6"
             gutterBottom
-            sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Rule color="primary" />
             Dynamic Rules
@@ -175,22 +183,22 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
           {renderRulesWithLogic()}
         </CardContent>
       </Card>
-    );
-  };
+    )
+  }
 
   const renderMembers = () => {
     if (!hasMembers) {
       return (
-        <Alert severity={isDynamic ? "info" : "warning"}>
+        <Alert severity={isDynamic ? 'info' : 'warning'}>
           <AlertTitle>No Members</AlertTitle>
           {isDynamic
-            ? "This dynamic group has no members that match the current rules."
-            : "This static group has no members assigned."}
+            ? 'This dynamic group has no members that match the current rules.'
+            : 'This static group has no members assigned.'}
         </Alert>
-      );
+      )
     }
 
-    const memberColumns = ["displayName", "defaultDomainName", "customerId"];
+    const memberColumns = ['displayName', 'defaultDomainName', 'customerId']
 
     return (
       <Box>
@@ -198,31 +206,31 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
           data={data.Members}
           simpleColumns={memberColumns}
           cardProps={{
-            variant: "outlined",
+            variant: 'outlined',
           }}
-          title={"Members"}
+          title={'Members'}
           cardHeaderProps={{
             avatar: <Business color="primary" />,
           }}
         />
       </Box>
-    );
-  };
+    )
+  }
 
   return (
     <Box sx={{ px: 1 }}>
       {/* Header Section */}
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <Groups color="primary" fontSize="large" />
           <Box>
             <Typography variant="h4" gutterBottom>
               {data.Name}
             </Typography>
-            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
               <Chip
-                label={data.GroupType?.toUpperCase() || "UNKNOWN"}
-                color={isDynamic ? "primary" : "secondary"}
+                label={data.GroupType?.toUpperCase() || 'UNKNOWN'}
+                color={isDynamic ? 'primary' : 'secondary'}
                 variant="filled"
               />
               <Typography variant="body2" color="text.secondary">
@@ -254,15 +262,15 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
             <Typography
               variant="h6"
               gutterBottom
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <Info color="primary" />
               Additional Information
             </Typography>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(4, 1fr)' },
                 gap: 2,
               }}
             >
@@ -270,14 +278,17 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
                 <Typography variant="body2" color="text.secondary">
                   Group Type
                 </Typography>
-                <Typography variant="body1">{isDynamic ? "Dynamic" : "Static"}</Typography>
+                <Typography variant="body1">
+                  {isDynamic ? 'Dynamic' : 'Static'}
+                </Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">
                   Member Count
                 </Typography>
                 <Typography variant="body1">
-                  {data.Members?.length || 0} tenant{(data.Members?.length || 0) !== 1 ? "s" : ""}
+                  {data.Members?.length || 0} tenant
+                  {(data.Members?.length || 0) !== 1 ? 's' : ''}
                 </Typography>
               </Box>
               {isDynamic && (
@@ -287,14 +298,16 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
                       Rule Logic
                     </Typography>
                     <Typography variant="body1">
-                      {data.RuleLogic?.toUpperCase() || "AND"}
+                      {data.RuleLogic?.toUpperCase() || 'AND'}
                     </Typography>
                   </Box>
                   <Box>
                     <Typography variant="body2" color="text.secondary">
                       Has Rules
                     </Typography>
-                    <Typography variant="body1">{hasDynamicRules ? "Yes" : "No"}</Typography>
+                    <Typography variant="body1">
+                      {hasDynamicRules ? 'Yes' : 'No'}
+                    </Typography>
                   </Box>
                 </>
               )}
@@ -303,5 +316,5 @@ export const CippTenantGroupOffCanvas = ({ data }) => {
         </Card>
       </Stack>
     </Box>
-  );
-};
+  )
+}

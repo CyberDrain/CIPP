@@ -34,7 +34,9 @@ const items = [{ title: 'Dashboard', path: '/' }]
 const touch = (el, type, x = 5, y = 200) => {
   const event = new Event(type, { bubbles: true, cancelable: true })
   const point = { pageX: x, pageY: y, clientX: x, clientY: y }
-  Object.defineProperty(event, 'touches', { value: type === 'touchend' ? [] : [point] })
+  Object.defineProperty(event, 'touches', {
+    value: type === 'touchend' ? [] : [point],
+  })
   Object.defineProperty(event, 'changedTouches', { value: [point] })
   act(() => {
     el.dispatchEvent(event)
@@ -45,7 +47,13 @@ const renderNav = (props = {}) => {
   const onOpen = vi.fn()
   const onClose = vi.fn()
   renderWithProviders(
-    <MobileNav items={items} open={false} onOpen={onOpen} onClose={onClose} {...props} />,
+    <MobileNav
+      items={items}
+      open={false}
+      onOpen={onOpen}
+      onClose={onClose}
+      {...props}
+    />,
     { settings: settingsWith({ bookmarkSidebar: false }) }
   )
   return { onOpen, onClose }
@@ -62,7 +70,8 @@ describe('MobileNav', () => {
   // animates in and straight back out with the app's open state untouched.
   it('leaves the drawer closed on a left-edge tap', () => {
     const { onOpen, onClose } = renderNav()
-    const target = document.querySelector('.PrivateSwipeArea-root') ?? document.body
+    const target =
+      document.querySelector('.PrivateSwipeArea-root') ?? document.body
     const drawer = document.querySelector('.MuiDrawer-root')
     expect(drawer.getAttribute('aria-hidden')).toBe('true')
 

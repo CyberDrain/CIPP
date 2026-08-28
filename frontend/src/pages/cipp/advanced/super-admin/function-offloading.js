@@ -1,71 +1,80 @@
-import { TabbedLayout } from "../../../../layouts/TabbedLayout";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import tabOptions from "./tabOptions";
-import CippTablePage from "../../../../components/CippComponents/CippTablePage";
-import { Alert, Button, FormControlLabel, Link, Stack, Switch, Typography } from "@mui/material";
-import { Grid } from "@mui/system";
-import { ApiGetCall, ApiPostCall } from "../../../../api/ApiCall";
-import { useEffect, useState } from "react";
-import NextLink from "next/link";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { CippApiResults } from "../../../../components/CippComponents/CippApiResults";
+import { TabbedLayout } from '../../../../layouts/TabbedLayout'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import tabOptions from './tabOptions'
+import CippTablePage from '../../../../components/CippComponents/CippTablePage'
+import {
+  Alert,
+  Button,
+  FormControlLabel,
+  Link,
+  Stack,
+  Switch,
+  Typography,
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import { ApiGetCall, ApiPostCall } from '../../../../api/ApiCall'
+import { useEffect, useState } from 'react'
+import NextLink from 'next/link'
+import { TrashIcon } from '@heroicons/react/24/outline'
+import { CippApiResults } from '../../../../components/CippComponents/CippApiResults'
 
 const Page = () => {
-  const pageTitle = "Function Offloading";
-  const [offloadFunctions, setOffloadFunctions] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
+  const pageTitle = 'Function Offloading'
+  const [offloadFunctions, setOffloadFunctions] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
 
   const execOffloadFunctions = ApiGetCall({
-    url: "/api/ExecOffloadFunctions?Action=ListCurrent",
-    queryKey: "execOffloadFunctionsSettings",
-  });
+    url: '/api/ExecOffloadFunctions?Action=ListCurrent',
+    queryKey: 'execOffloadFunctionsSettings',
+  })
 
   const updateOffloadFunctions = ApiPostCall({
-    relatedQueryKeys: ["execOffloadFunctions", "execOffloadFunctionsSettings"],
-  });
+    relatedQueryKeys: ['execOffloadFunctions', 'execOffloadFunctionsSettings'],
+  })
 
   const deleteOffloadEntry = ApiPostCall({
     urlFromData: true,
-    relatedQueryKeys: ["execOffloadFunctions", "execOffloadFunctionsSettings"],
-  });
+    relatedQueryKeys: ['execOffloadFunctions', 'execOffloadFunctionsSettings'],
+  })
 
   const handleDeleteOffloadEntry = (row) => {
     const entity = {
       RowKey: row.Name,
-      PartitionKey: "Version",
-    };
+      PartitionKey: 'Version',
+    }
 
     deleteOffloadEntry.mutate({
-      url: "/api/ExecAzBobbyTables",
+      url: '/api/ExecAzBobbyTables',
       data: {
-        FunctionName: "Remove-AzDataTableEntity",
-        TableName: "Version",
+        FunctionName: 'Remove-AzDataTableEntity',
+        TableName: 'Version',
         Parameters: {
           Entity: entity,
           Force: true,
         },
       },
-    });
-  };
+    })
+  }
 
   useEffect(() => {
     if (execOffloadFunctions.isSuccess) {
-      setOffloadFunctions(Boolean(execOffloadFunctions.data?.OffloadFunctions));
-      setIsDirty(false);
+      setOffloadFunctions(Boolean(execOffloadFunctions.data?.OffloadFunctions))
+      setIsDirty(false)
     }
-  }, [execOffloadFunctions.isSuccess, execOffloadFunctions.data]);
+  }, [execOffloadFunctions.isSuccess, execOffloadFunctions.data])
 
   const handleSave = () => {
     updateOffloadFunctions.mutate({
-      url: "/api/ExecOffloadFunctions",
+      url: '/api/ExecOffloadFunctions',
       data: {
         OffloadFunctions: offloadFunctions,
       },
-    });
-  };
+    })
+  }
 
   const canEnable =
-    execOffloadFunctions?.data?.OffloadFunctions || execOffloadFunctions?.data?.CanEnable;
+    execOffloadFunctions?.data?.OffloadFunctions ||
+    execOffloadFunctions?.data?.CanEnable
 
   return (
     <CippTablePage
@@ -76,8 +85,8 @@ const Page = () => {
               <Switch
                 checked={offloadFunctions}
                 onChange={(event) => {
-                  setOffloadFunctions(event.target.checked);
-                  setIsDirty(true);
+                  setOffloadFunctions(event.target.checked)
+                  setIsDirty(true)
                 }}
                 disabled={execOffloadFunctions.isFetching || !canEnable}
               />
@@ -87,7 +96,11 @@ const Page = () => {
           <Button
             variant="contained"
             onClick={handleSave}
-            disabled={!isDirty || updateOffloadFunctions.isPending || execOffloadFunctions.isFetching}
+            disabled={
+              !isDirty ||
+              updateOffloadFunctions.isPending ||
+              execOffloadFunctions.isFetching
+            }
           >
             Submit
           </Button>
@@ -98,16 +111,16 @@ const Page = () => {
       apiUrl="/api/ExecOffloadFunctions?Action=ListCurrent"
       apiDataKey="Version"
       queryKey="execOffloadFunctions"
-      simpleColumns={["Name", "Version", "Default"]}
+      simpleColumns={['Name', 'Version', 'Default']}
       actions={[
         {
-          label: "Delete Offloading Entry",
+          label: 'Delete Offloading Entry',
           icon: <TrashIcon />,
-          url: "/api/ExecAzBobbyTables",
-          type: "POST",
+          url: '/api/ExecAzBobbyTables',
+          type: 'POST',
           customFunction: handleDeleteOffloadEntry,
           confirmText:
-            "Are you sure you want to delete the offloaded function entry for [Name]? This does not delete the function app from Azure, this must be done first or it will register again.",
+            'Are you sure you want to delete the offloaded function entry for [Name]? This does not delete the function app from Azure, this must be done first or it will register again.',
           condition: (row) => row.Default !== true,
           hideBulk: true,
         },
@@ -116,9 +129,10 @@ const Page = () => {
         <Grid container spacing={2} sx={{ mb: 1 }}>
           <Grid size={12}>
             <Typography variant="body2">
-              This mode enables offloading some of the more processor intensive functions to a
-              separate function app. This can be useful in environments where the CIPP server is
-              under heavy load. Please review{" "}
+              This mode enables offloading some of the more processor intensive
+              functions to a separate function app. This can be useful in
+              environments where the CIPP server is under heavy load. Please
+              review{' '}
               <Link
                 component={NextLink}
                 href="https://docs.cipp.app/user-documentation/cipp/advanced/super-admin/function-offloading"
@@ -126,14 +140,16 @@ const Page = () => {
                 rel="noreferrer"
               >
                 our documentation
-              </Link>{" "}
-              for more information on how to configure this for your environment.
+              </Link>{' '}
+              for more information on how to configure this for your
+              environment.
             </Typography>
           </Grid>
           <Grid size={12}>
             <Alert severity="info">
-              If you are self-hosted, you must deploy the additional function app(s) to your CIPP
-              resource group and enable CI/CD or all background tasks will fail.
+              If you are self-hosted, you must deploy the additional function
+              app(s) to your CIPP resource group and enable CI/CD or all
+              background tasks will fail.
             </Alert>
           </Grid>
           {execOffloadFunctions.data?.Alerts?.length > 0 && (
@@ -151,15 +167,14 @@ const Page = () => {
           </Grid>
         </Grid>
       }
-    >
-    </CippTablePage>
-  );
-};
+    ></CippTablePage>
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
+export default Page

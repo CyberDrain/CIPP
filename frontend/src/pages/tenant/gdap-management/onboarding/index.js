@@ -1,43 +1,43 @@
-import { TabbedLayout } from "../../../../layouts/TabbedLayout";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import tabOptions from "../tabOptions";
-import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
-import { Button } from "@mui/material";
-import Link from "next/link";
-import { Cancel, PlayArrow, Replay } from "@mui/icons-material";
+import { TabbedLayout } from '../../../../layouts/TabbedLayout'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import tabOptions from '../tabOptions'
+import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
+import { Button } from '@mui/material'
+import Link from 'next/link'
+import { Cancel, PlayArrow, Replay } from '@mui/icons-material'
 
-const pageTitle = "Tenant Onboarding";
+const pageTitle = 'Tenant Onboarding'
 
 const actions = [
   {
-    label: "Cancel Onboarding",
-    type: "POST",
-    url: "/api/ExecOnboardTenant",
-    data: { id: "RowKey", Cancel: true },
-    confirmText: "Are you sure you want to cancel these onboardings?",
+    label: 'Cancel Onboarding',
+    type: 'POST',
+    url: '/api/ExecOnboardTenant',
+    data: { id: 'RowKey', Cancel: true },
+    confirmText: 'Are you sure you want to cancel these onboardings?',
     multiPost: false,
     icon: <Cancel />,
   },
   {
-    label: "Retry Onboarding",
-    type: "POST",
-    url: "/api/ExecOnboardTenant",
-    data: { id: "RowKey", Retry: true },
-    confirmText: "Are you sure you want to retry these onboardings?",
+    label: 'Retry Onboarding',
+    type: 'POST',
+    url: '/api/ExecOnboardTenant',
+    data: { id: 'RowKey', Retry: true },
+    confirmText: 'Are you sure you want to retry these onboardings?',
     multiPost: false,
     icon: <Replay />,
   },
-];
+]
 
 const simpleColumns = [
-  "Timestamp",
-  "Relationship.customer.displayName",
-  "Status",
-  "OnboardingSteps",
-  "Logs",
-];
+  'Timestamp',
+  'Relationship.customer.displayName',
+  'Status',
+  'OnboardingSteps',
+  'Logs',
+]
 
-const apiUrl = "/api/ListTenantOnboarding";
+const apiUrl = '/api/ListTenantOnboarding'
 
 const Page = () => {
   return (
@@ -59,13 +59,13 @@ const Page = () => {
       }
       maxHeightOffset="460px"
     />
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
+export default Page

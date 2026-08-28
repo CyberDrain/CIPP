@@ -44,7 +44,12 @@ export const GuestUpnDoesNotSpill = {
   render: () => (
     <Box data-testid="header-host" sx={{ px: 2, overflowX: 'visible' }}>
       <Stack spacing={1}>
-        <Stack alignItems="center" direction="row" justifyContent="space-between" spacing={1}>
+        <Stack
+          alignItems="center"
+          direction="row"
+          justifyContent="space-between"
+          spacing={1}
+        >
           <Stack spacing={1} sx={{ minWidth: 0 }}>
             <Typography variant="h6" noWrap>
               jduprey
@@ -62,9 +67,14 @@ export const GuestUpnDoesNotSpill = {
             <CippCopyToClipBoard type="chip" text={GUEST_UPN} />
           </SubtitleItem>
           <SubtitleItem icon={<Fingerprint />}>
-            <CippCopyToClipBoard type="chip" text="c9bcc4d2-87c0-4c14-a614-920a1b233fc6" />
+            <CippCopyToClipBoard
+              type="chip"
+              text="c9bcc4d2-87c0-4c14-a614-920a1b233fc6"
+            />
           </SubtitleItem>
-          <SubtitleItem icon={<CalendarToday />}>Created: 1 month ago</SubtitleItem>
+          <SubtitleItem icon={<CalendarToday />}>
+            Created: 1 month ago
+          </SubtitleItem>
         </Stack>
       </Stack>
     </Box>
@@ -74,17 +84,25 @@ export const GuestUpnDoesNotSpill = {
     if (!onAPhone) return
     const canvas = within(canvasElement)
 
-    await step('the guest UPN chip truncates instead of widening the page', async () => {
-      const host = canvasElement.querySelector('[data-testid="header-host"]')
-      await waitFor(() => expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth))
-      await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(
-        document.documentElement.clientWidth
-      )
-    })
+    await step(
+      'the guest UPN chip truncates instead of widening the page',
+      async () => {
+        const host = canvasElement.querySelector('[data-testid="header-host"]')
+        await waitFor(() =>
+          expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth)
+        )
+        await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(
+          document.documentElement.clientWidth
+        )
+      }
+    )
 
-    await step('and it is still the full value on the clipboard, not a truncated one', async () => {
-      // the label is elided in CSS only — the text node keeps the whole UPN
-      await expect(canvas.getByText(GUEST_UPN)).toBeInTheDocument()
-    })
+    await step(
+      'and it is still the full value on the clipboard, not a truncated one',
+      async () => {
+        // the label is elided in CSS only — the text node keeps the whole UPN
+        await expect(canvas.getByText(GUEST_UPN)).toBeInTheDocument()
+      }
+    )
   },
 }

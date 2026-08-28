@@ -7,9 +7,16 @@ import { CippAuthShell } from '../../../src/components/CippComponents/CippAuthSh
 
 describe('CippAuthShell', () => {
   it('renders the title and a string description', () => {
-    renderWithTheme(<CippAuthShell title="Sign in to CIPP" description="Session has expired." />)
+    renderWithTheme(
+      <CippAuthShell
+        title="Sign in to CIPP"
+        description="Session has expired."
+      />
+    )
 
-    expect(screen.getByRole('heading', { name: 'Sign in to CIPP' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Sign in to CIPP' })
+    ).toBeInTheDocument()
     expect(screen.getByText('Session has expired.')).toBeInTheDocument()
   })
 
@@ -26,16 +33,25 @@ describe('CippAuthShell', () => {
       />
     )
 
-    expect(screen.getByText('The CIPP API appears to be offline.')).toBeInTheDocument()
+    expect(
+      screen.getByText('The CIPP API appears to be offline.')
+    ).toBeInTheDocument()
     expect(screen.getByText('Check the Function App.')).toBeInTheDocument()
   })
 
   it('renders a link when given actionHref', () => {
     renderWithTheme(
-      <CippAuthShell title="Access Denied" actionText="Login" actionHref="/.auth/login/aad" />
+      <CippAuthShell
+        title="Access Denied"
+        actionText="Login"
+        actionHref="/.auth/login/aad"
+      />
     )
 
-    expect(screen.getByRole('link', { name: /Login/i })).toHaveAttribute('href', '/.auth/login/aad')
+    expect(screen.getByRole('link', { name: /Login/i })).toHaveAttribute(
+      'href',
+      '/.auth/login/aad'
+    )
   })
 
   it('renders a button that fires onActionClick', async () => {
@@ -48,7 +64,9 @@ describe('CippAuthShell', () => {
       />
     )
 
-    await userEvent.click(screen.getByRole('button', { name: 'Test API Connection' }))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Test API Connection' })
+    )
     expect(onActionClick).toHaveBeenCalledTimes(1)
   })
 
@@ -63,7 +81,9 @@ describe('CippAuthShell', () => {
     )
 
     expect(screen.getByRole('link', { name: /Login/i })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Login/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Login/i })
+    ).not.toBeInTheDocument()
   })
 
   it('renders both actions when a secondary is given', () => {
@@ -80,11 +100,15 @@ describe('CippAuthShell', () => {
     expect(
       screen.getByRole('link', { name: 'Sign in with a different account' })
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Return to Home' })).toHaveAttribute('href', '/')
+    expect(
+      screen.getByRole('link', { name: 'Return to Home' })
+    ).toHaveAttribute('href', '/')
   })
 
   it('renders no controls when no action props are given', () => {
-    renderWithTheme(<CippAuthShell title="Logging into CIPP" description="Please wait..." />)
+    renderWithTheme(
+      <CippAuthShell title="Logging into CIPP" description="Please wait..." />
+    )
 
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -93,7 +117,9 @@ describe('CippAuthShell', () => {
   // separate renders rather than rerender: renderWithTheme's rerender would
   // replace the ThemeProvider wrapper along with the subject
   it('shows a progress bar only while busy', () => {
-    const { unmount } = renderWithTheme(<CippAuthShell title="Logging into CIPP" busy />)
+    const { unmount } = renderWithTheme(
+      <CippAuthShell title="Logging into CIPP" busy />
+    )
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
     unmount()
 
@@ -114,8 +140,13 @@ describe('CippAuthShell', () => {
   it('renders the brand lockup and tagline, with no link in the panel', () => {
     renderWithTheme(<CippAuthShell title="Access Denied" />)
 
-    expect(screen.getByRole('img', { name: 'CIPP' })).toHaveAttribute('src', '/logo.png')
-    expect(screen.getByText('CyberDrain Improved Partner Portal')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'CIPP' })).toHaveAttribute(
+      'src',
+      '/logo.png'
+    )
+    expect(
+      screen.getByText('CyberDrain Improved Partner Portal')
+    ).toBeInTheDocument()
     // the panel must stay link-free: unauthenticated.js asserts no Login link
     // survives in the return-to-home case
     expect(screen.queryByRole('link')).not.toBeInTheDocument()

@@ -1,7 +1,7 @@
-import { Fragment } from 'react';
-import PropTypes from 'prop-types';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import { Fragment } from 'react'
+import PropTypes from 'prop-types'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
 import {
   Button,
   Card,
@@ -16,64 +16,58 @@ import {
   RadioGroup,
   Stack,
   TextField,
-  Typography
-} from '@mui/material';
-import { wait } from '../../../utils/wait';
+  Typography,
+} from '@mui/material'
+import { wait } from '../../../utils/wait'
 
 const roleOptions = [
   {
     description: 'Edit access',
     label: 'Editor',
-    value: 'editor'
+    value: 'editor',
   },
   {
     description: 'Full access & billing',
     label: 'Administrator',
-    value: 'administrator'
-  }
-];
+    value: 'administrator',
+  },
+]
 
 const initialValues = {
   email: '',
   name: '',
   role: 'editor',
-  submit: null
-};
+  submit: null,
+}
 
 const validationSchema = Yup.object({
-  email: Yup
-    .string()
+  email: Yup.string()
     .max(255)
     .email('Must be a valid email')
     .required('Email is required'),
-  name: Yup
-    .string()
-    .max(255)
-    .required('Name is required'),
-  role: Yup
-    .mixed()
-    .oneOf(roleOptions.map((option) => option.value))
-});
+  name: Yup.string().max(255).required('Name is required'),
+  role: Yup.mixed().oneOf(roleOptions.map((option) => option.value)),
+})
 
 export const OrganizationInviteDialog = (props) => {
-  const { open = false, onClose, ...other } = props;
+  const { open = false, onClose, ...other } = props
   const formik = useFormik({
     initialValues,
     validationSchema,
     onSubmit: async (values, helpers) => {
       try {
-        await wait(250);
-        helpers.setStatus({ success: true });
-        helpers.setSubmitting(false);
-        onClose?.();
+        await wait(250)
+        helpers.setStatus({ success: true })
+        helpers.setSubmitting(false)
+        onClose?.()
       } catch (err) {
-        console.error(err);
-        helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
-        helpers.setSubmitting(false);
+        console.error(err)
+        helpers.setStatus({ success: false })
+        helpers.setErrors({ submit: err.message })
+        helpers.setSubmitting(false)
       }
-    }
-  });
+    },
+  })
 
   return (
     <Dialog
@@ -82,13 +76,12 @@ export const OrganizationInviteDialog = (props) => {
       onClose={onClose}
       open={open}
       TransitionProps={{
-        onExited: () => formik.resetForm()
+        onExited: () => formik.resetForm(),
       }}
-      {...other}>
+      {...other}
+    >
       <form onSubmit={formik.handleSubmit}>
-        <DialogTitle>
-          Invite a member
-        </DialogTitle>
+        <DialogTitle>Invite a member</DialogTitle>
         <DialogContent>
           <Stack spacing={3}>
             <TextField
@@ -113,9 +106,7 @@ export const OrganizationInviteDialog = (props) => {
               value={formik.values.email}
             />
             <Stack spacing={2}>
-              <Typography variant="subtitle2">
-                Role
-              </Typography>
+              <Typography variant="subtitle2">Role</Typography>
               <Card variant="outlined">
                 <RadioGroup
                   name="role"
@@ -124,18 +115,16 @@ export const OrganizationInviteDialog = (props) => {
                   value={formik.values.role}
                 >
                   {roleOptions.map((option, index) => {
-                    const hasDivider = roleOptions.length > index + 1;
+                    const hasDivider = roleOptions.length > index + 1
 
                     return (
                       <Fragment key={option.value}>
                         <FormControlLabel
                           disableTypography
                           control={<Radio />}
-                          label={(
+                          label={
                             <div>
-                              <Typography>
-                                {option.label}
-                              </Typography>
+                              <Typography>{option.label}</Typography>
                               <Typography
                                 color="text.secondary"
                                 variant="caption"
@@ -143,38 +132,29 @@ export const OrganizationInviteDialog = (props) => {
                                 {option.description}
                               </Typography>
                             </div>
-                          )}
+                          }
                           sx={{ p: 1.5 }}
                           value={option.value}
                         />
                         {hasDivider && <Divider />}
                       </Fragment>
-                    );
+                    )
                   })}
                 </RadioGroup>
               </Card>
               {formik.touched.role && formik.errors.role && (
-                <FormHelperText error>
-                  {formik.errors.role}
-                </FormHelperText>
+                <FormHelperText error>{formik.errors.role}</FormHelperText>
               )}
             </Stack>
           </Stack>
           {formik.errors.submit && (
-            <FormHelperText
-              error
-              sx={{ mt: 2 }}
-            >
+            <FormHelperText error sx={{ mt: 2 }}>
               {formik.errors.submit}
             </FormHelperText>
           )}
         </DialogContent>
         <DialogActions>
-          <Button
-            color="inherit"
-            onClick={onClose}
-            type="button"
-          >
+          <Button color="inherit" onClick={onClose} type="button">
             Cancel
           </Button>
           <Button
@@ -187,10 +167,10 @@ export const OrganizationInviteDialog = (props) => {
         </DialogActions>
       </form>
     </Dialog>
-  );
-};
+  )
+}
 
 OrganizationInviteDialog.propTypes = {
   onClose: PropTypes.func,
-  open: PropTypes.bool
-};
+  open: PropTypes.bool,
+}

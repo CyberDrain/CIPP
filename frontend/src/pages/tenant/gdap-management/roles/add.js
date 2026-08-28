@@ -1,56 +1,63 @@
-import React, { useState } from "react";
-import { Alert, Button, SvgIcon, Typography, Tooltip, Link } from "@mui/material";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useForm, useWatch } from "react-hook-form";
-import { CippFormComponent } from "../../../../components/CippComponents/CippFormComponent";
-import { CippFormCondition } from "../../../../components/CippComponents/CippFormCondition";
-import GDAPRoles from "../../../../data/GDAPRoles";
-import { Box, Stack, Grid } from "@mui/system";
-import { ShieldCheckIcon, PlusSmallIcon } from "@heroicons/react/24/outline";
-import { CippPropertyList } from "../../../../components/CippComponents/CippPropertyList";
-import cippDefaults from "../../../../data/CIPPDefaultGDAPRoles";
-import { ApiGetCall } from "../../../../api/ApiCall";
-import { Settings, SyncAlt } from "@mui/icons-material";
-import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
-import { CippExpandableAlert } from "../../../../components/CippComponents/CippExpandableAlert";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import React, { useState } from 'react'
+import {
+  Alert,
+  Button,
+  SvgIcon,
+  Typography,
+  Tooltip,
+  Link,
+} from '@mui/material'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useForm, useWatch } from 'react-hook-form'
+import { CippFormComponent } from '../../../../components/CippComponents/CippFormComponent'
+import { CippFormCondition } from '../../../../components/CippComponents/CippFormCondition'
+import GDAPRoles from '../../../../data/GDAPRoles'
+import { Box, Stack, Grid } from '@mui/system'
+import { ShieldCheckIcon, PlusSmallIcon } from '@heroicons/react/24/outline'
+import { CippPropertyList } from '../../../../components/CippComponents/CippPropertyList'
+import cippDefaults from '../../../../data/CIPPDefaultGDAPRoles'
+import { ApiGetCall } from '../../../../api/ApiCall'
+import { Settings, SyncAlt } from '@mui/icons-material'
+import { CippDataTable } from '../../../../components/CippTable/CippDataTable'
+import { CippExpandableAlert } from '../../../../components/CippComponents/CippExpandableAlert'
+import { TrashIcon } from '@heroicons/react/24/outline'
 
 const Page = () => {
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       advancedMode: false,
     },
-  });
+  })
 
   const selectedGdapRoles = useWatch({
     control: formControl.control,
-    name: "gdapRoles",
-  });
+    name: 'gdapRoles',
+  })
 
   const customSuffix = useWatch({
     control: formControl.control,
-    name: "customSuffix",
-  });
-  const [advancedMappings, setAdvancedMappings] = useState([]);
+    name: 'customSuffix',
+  })
+  const [advancedMappings, setAdvancedMappings] = useState([])
 
   const handleDefaults = () => {
-    formControl.setValue("gdapRoles", cippDefaults, { shouldDirty: true });
-    formControl.trigger();
-  };
+    formControl.setValue('gdapRoles', cippDefaults, { shouldDirty: true })
+    formControl.trigger()
+  }
 
   const groupList = ApiGetCall({
-    url: "/api/ExecAddGDAPRole?Action=ListGroups",
-    queryKey: "ListGroups",
-  });
+    url: '/api/ExecAddGDAPRole?Action=ListGroups',
+    queryKey: 'ListGroups',
+  })
 
   const handleAddMapping = () => {
-    const selectedGroup = formControl.getValues("selectedGroup");
-    const selectedRole = formControl.getValues("selectedRole");
+    const selectedGroup = formControl.getValues('selectedGroup')
+    const selectedRole = formControl.getValues('selectedRole')
 
     if (!selectedGroup || !selectedRole) {
-      return;
+      return
     }
 
     const newMapping = {
@@ -58,7 +65,7 @@ const Page = () => {
       groupId: selectedGroup.value,
       roleName: selectedRole.label,
       roleDefinitionId: selectedRole.value,
-    };
+    }
 
     if (
       advancedMappings.some(
@@ -67,22 +74,22 @@ const Page = () => {
           mapping.roleDefinitionId === newMapping.roleDefinitionId
       )
     ) {
-      return;
+      return
     }
 
-    setAdvancedMappings([...advancedMappings, newMapping]);
-    formControl.setValue("selectedGroup", null); // Clear the selected group
-    formControl.setValue("selectedRole", null); // Clear the selected role
-  };
+    setAdvancedMappings([...advancedMappings, newMapping])
+    formControl.setValue('selectedGroup', null) // Clear the selected group
+    formControl.setValue('selectedRole', null) // Clear the selected role
+  }
 
   const handleRemoveMapping = (mappingToRemove) => {
     const updatedMappings = advancedMappings.filter(
       (mapping) =>
         mapping.groupId !== mappingToRemove.groupId ||
         mapping.roleDefinitionId !== mappingToRemove.roleDefinitionId
-    );
-    setAdvancedMappings(updatedMappings);
-  };
+    )
+    setAdvancedMappings(updatedMappings)
+  }
 
   return (
     <>
@@ -95,15 +102,21 @@ const Page = () => {
         customDataformatter={(values) => {
           if (values.advancedMode) {
             return {
-              Action: "AddRoleAdvanced",
+              Action: 'AddRoleAdvanced',
               Mappings: advancedMappings,
-            };
+            }
           } else {
-            return values;
+            return values
           }
         }}
       >
-        <Box display="flex" width="100%" justifyContent="space-between" alignItems="center" mb={2}>
+        <Box
+          display="flex"
+          width="100%"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
           <Typography variant="h5" width="100%">
             GDAP Roles
           </Typography>
@@ -112,7 +125,11 @@ const Page = () => {
               <SvgIcon fontSize="small">
                 <Settings />
               </SvgIcon>
-              <CippFormComponent formControl={formControl} name="advancedMode" type="switch" />
+              <CippFormComponent
+                formControl={formControl}
+                name="advancedMode"
+                type="switch"
+              />
             </Stack>
           </Tooltip>
         </Box>
@@ -125,18 +142,19 @@ const Page = () => {
           >
             <Alert severity="info">
               <Typography variant="subtitle">
-                For each role you select a new group will be created inside of your partner tenant
-                called "M365 GDAP RoleName". Add your users to these new groups to set their GDAP
-                permissions. If you need to segment your groups for different teams or to define
-                custom permissions, use the Custom Suffix to create additional group mappings per
-                role.
+                For each role you select a new group will be created inside of
+                your partner tenant called "M365 GDAP RoleName". Add your users
+                to these new groups to set their GDAP permissions. If you need
+                to segment your groups for different teams or to define custom
+                permissions, use the Custom Suffix to create additional group
+                mappings per role.
               </Typography>
             </Alert>
             <Alert severity="warning">
-              <b>Certain roles may not be compatible with GDAP</b>. See the{" "}
+              <b>Certain roles may not be compatible with GDAP</b>. See the{' '}
               <Link href="https://learn.microsoft.com/en-us/partner-center/customers/gdap-least-privileged-roles-by-task">
                 Microsoft Documentation
-              </Link>{" "}
+              </Link>{' '}
               on GDAP Role Guidance.
             </Alert>
             <Box>
@@ -166,8 +184,8 @@ const Page = () => {
               type="autoComplete"
               options={GDAPRoles.filter(
                 (role) =>
-                  role.ObjectId !== "7495fdc4-34c4-4d15-a289-98788ce399fd" &&
-                  role.ObjectId !== "aaf43236-0c0d-4d5f-883a-6955382ac081"
+                  role.ObjectId !== '7495fdc4-34c4-4d15-a289-98788ce399fd' &&
+                  role.ObjectId !== 'aaf43236-0c0d-4d5f-883a-6955382ac081'
               ).map((role) => ({ label: role.Name, value: role.ObjectId }))}
               multiple={true}
               creatable={false}
@@ -175,9 +193,9 @@ const Page = () => {
               validators={{
                 validate: (value) => {
                   if (!value || value.length === 0) {
-                    return "Please select at least one GDAP Role";
+                    return 'Please select at least one GDAP Role'
                   }
-                  return true;
+                  return true
                 },
               }}
               sortOptions={true}
@@ -189,13 +207,14 @@ const Page = () => {
               compareValue={1}
             >
               <Alert severity="info">
-                The following groups will be created in your partner tenant if they do not already
-                exist:
+                The following groups will be created in your partner tenant if
+                they do not already exist:
               </Alert>
               <CippPropertyList
                 propertyItems={selectedGdapRoles?.map((role) => ({
-                  label: `M365 GDAP ${role.label}${customSuffix ? ` - ${customSuffix}` : ""}`,
-                  value: GDAPRoles.find((r) => r.ObjectId === role.value).Description,
+                  label: `M365 GDAP ${role.label}${customSuffix ? ` - ${customSuffix}` : ''}`,
+                  value: GDAPRoles.find((r) => r.ObjectId === role.value)
+                    .Description,
                 }))}
               />
             </CippFormCondition>
@@ -206,8 +225,9 @@ const Page = () => {
               compareValue="62e90394-69f5-4237-9190-012177145e10"
             >
               <Alert severity="warning">
-                The Global Administrator role is a highly privileged role that should be used with
-                caution. GDAP Relationships with this role will not be eligible for auto-extend.
+                The Global Administrator role is a highly privileged role that
+                should be used with caution. GDAP Relationships with this role
+                will not be eligible for auto-extend.
               </Alert>
             </CippFormCondition>
           </CippFormCondition>
@@ -220,28 +240,30 @@ const Page = () => {
           >
             <CippExpandableAlert severity="warning">
               <Typography variant="subtitle">
-                In Advanced Mode, you can manually map existing groups to GDAP roles. This
-                functionality is designed to help map existing groups to GDAP roles that do not
-                match the default naming convention. Use extreme caution when mapping roles in this
-                mode.
+                In Advanced Mode, you can manually map existing groups to GDAP
+                roles. This functionality is designed to help map existing
+                groups to GDAP roles that do not match the default naming
+                convention. Use extreme caution when mapping roles in this mode.
               </Typography>
               <Typography variant="h6" sx={{ mt: 2 }}>
                 Limitations
               </Typography>
-              <ul style={{ paddingLeft: "15px" }}>
+              <ul style={{ paddingLeft: '15px' }}>
                 <li>
-                  <b>Reserved groups and roles are unavailable for mapping</b>, this is to prevent
-                  misconfigurations due to permission overlap.
+                  <b>Reserved groups and roles are unavailable for mapping</b>,
+                  this is to prevent misconfigurations due to permission
+                  overlap.
                 </li>
                 <li>
-                  <b>Only one role can be mapped per group</b>. If your current configuration maps
-                  more than one, use the Reset Role Mapping action on the Relationship.
+                  <b>Only one role can be mapped per group</b>. If your current
+                  configuration maps more than one, use the Reset Role Mapping
+                  action on the Relationship.
                 </li>
                 <li>
-                  <b>Certain roles may not be compatible with GDAP</b>. See the{" "}
+                  <b>Certain roles may not be compatible with GDAP</b>. See the{' '}
                   <Link href="https://learn.microsoft.com/en-us/partner-center/customers/gdap-least-privileged-roles-by-task">
                     Microsoft Documentation
-                  </Link>{" "}
+                  </Link>{' '}
                   on GDAP Role Guidance.
                 </li>
               </ul>
@@ -265,7 +287,7 @@ const Page = () => {
                 />
               </Grid>
               <Grid>
-                <Box sx={{ my: "auto" }}>
+                <Box sx={{ my: 'auto' }}>
                   <SvgIcon>
                     <SyncAlt />
                   </SvgIcon>
@@ -279,8 +301,9 @@ const Page = () => {
                   type="autoComplete"
                   options={GDAPRoles.filter(
                     (role) =>
-                      role.ObjectId !== "62e90394-69f5-4237-9190-012177145e10" && // Partner Tier 1
-                      role.ObjectId !== "17315797-102d-40b4-93e0-432062caca18" // Partner Tier 2
+                      role.ObjectId !==
+                        '62e90394-69f5-4237-9190-012177145e10' && // Partner Tier 1
+                      role.ObjectId !== '17315797-102d-40b4-93e0-432062caca18' // Partner Tier 2
                   ).map((role) => ({ label: role.Name, value: role.ObjectId }))}
                   multiple={false}
                   required={true}
@@ -290,7 +313,11 @@ const Page = () => {
               </Grid>
               <Grid size={{ md: 1, xs: 12 }}>
                 <Tooltip title="Add Mapping">
-                  <Button size="small" onClick={handleAddMapping} variant="contained">
+                  <Button
+                    size="small"
+                    onClick={handleAddMapping}
+                    variant="contained"
+                  >
                     <SvgIcon fontSize="small">
                       <PlusSmallIcon />
                     </SvgIcon>
@@ -301,11 +328,11 @@ const Page = () => {
             <CippDataTable
               title="Role Mappings"
               data={advancedMappings ?? []}
-              simpleColumns={["groupName", "roleName"]}
-              cardProps={{ variant: "outlined" }}
+              simpleColumns={['groupName', 'roleName']}
+              cardProps={{ variant: 'outlined' }}
               actions={[
                 {
-                  label: "Remove",
+                  label: 'Remove',
                   icon: (
                     <SvgIcon fontSize="small">
                       <TrashIcon />
@@ -320,9 +347,9 @@ const Page = () => {
         </Stack>
       </CippFormPage>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useRouter } from 'next/router'
 
 const STORAGE_KEY = 'cipp.tutorials.completed'
@@ -76,13 +84,17 @@ export const TutorialProvider = ({ children }) => {
     // If the tutorial has a target page and we're not on it, navigate there first
     const targetPage = match.pages?.[0]
     if (targetPage && router.pathname !== targetPage) {
-      router.replace({ pathname: targetPage, query: rest }, undefined).then(() => {
-        setTimeout(() => runDriver(match), 600)
-      })
+      router
+        .replace({ pathname: targetPage, query: rest }, undefined)
+        .then(() => {
+          setTimeout(() => runDriver(match), 600)
+        })
       return
     }
 
-    router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
+    router.replace({ pathname: router.pathname, query: rest }, undefined, {
+      shallow: true,
+    })
 
     // Delay to let the page fully render
     setTimeout(() => runDriver(match), 600)
@@ -156,7 +168,9 @@ export const TutorialProvider = ({ children }) => {
 
   const getTutorialsForPage = useCallback(
     (pathname) => {
-      return tutorials.filter((t) => !t.pages || t.pages.length === 0 || t.pages.includes(pathname))
+      return tutorials.filter(
+        (t) => !t.pages || t.pages.length === 0 || t.pages.includes(pathname)
+      )
     },
     [tutorials]
   )
@@ -170,10 +184,21 @@ export const TutorialProvider = ({ children }) => {
       resetProgress,
       getTutorialsForPage,
     }),
-    [tutorials, activeTutorial, completedIds, startTutorial, resetProgress, getTutorialsForPage]
+    [
+      tutorials,
+      activeTutorial,
+      completedIds,
+      startTutorial,
+      resetProgress,
+      getTutorialsForPage,
+    ]
   )
 
-  return <TutorialContext.Provider value={value}>{children}</TutorialContext.Provider>
+  return (
+    <TutorialContext.Provider value={value}>
+      {children}
+    </TutorialContext.Provider>
+  )
 }
 
 export const useTutorials = () => useContext(TutorialContext)

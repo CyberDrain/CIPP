@@ -1,112 +1,120 @@
-import { useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/router";
-import { useForm } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormSkeleton from "../../../../components/CippFormPages/CippFormSkeleton";
-import { useSettings } from "../../../../hooks/use-settings";
-import { ApiGetCall } from "../../../../api/ApiCall";
-import countryList from "../../../../data/countryList.json";
-import { Grid } from "@mui/system";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { Divider } from "@mui/material";
+import { useEffect, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/router'
+import { useForm } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormSkeleton from '../../../../components/CippFormPages/CippFormSkeleton'
+import { useSettings } from '../../../../hooks/use-settings'
+import { ApiGetCall } from '../../../../api/ApiCall'
+import countryList from '../../../../data/countryList.json'
+import { Grid } from '@mui/system'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { Divider } from '@mui/material'
 
-const countryLookup = new Map(countryList.map((country) => [country.Name, country.Code]));
+const countryLookup = new Map(
+  countryList.map((country) => [country.Name, country.Code])
+)
 
 const EditContact = () => {
-  const tenantDomain = useSettings().currentTenant;
-  const router = useRouter();
-  const { id } = router.query;
+  const tenantDomain = useSettings().currentTenant
+  const router = useRouter()
+  const { id } = router.query
 
   const contactInfo = ApiGetCall({
     url: `/api/ListContacts?tenantFilter=${tenantDomain}&id=${id}`,
     queryKey: `ListContacts-${id}`,
     waiting: !!id,
-  });
+  })
 
   const defaultFormValues = useMemo(
     () => ({
-      displayName: "",
-      firstName: "",
-      lastName: "",
-      email: "",
+      displayName: '',
+      firstName: '',
+      lastName: '',
+      email: '',
       hidefromGAL: false,
-      streetAddress: "",
-      postalCode: "",
-      city: "",
-      state: "",
-      country: "",
-      companyName: "",
-      mobilePhone: "",
-      businessPhone: "",
-      jobTitle: "",
-      website: "",
-      mailTip: "",
+      streetAddress: '',
+      postalCode: '',
+      city: '',
+      state: '',
+      country: '',
+      companyName: '',
+      mobilePhone: '',
+      businessPhone: '',
+      jobTitle: '',
+      website: '',
+      mailTip: '',
     }),
     []
-  );
+  )
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: defaultFormValues,
-  });
+  })
 
   // Memoize processed contact data
   const processedContactData = useMemo(() => {
     if (!contactInfo.isSuccess || !contactInfo.data) {
-      return null;
+      return null
     }
 
-    const contact = Array.isArray(contactInfo.data) ? contactInfo.data[0] : contactInfo.data;
+    const contact = Array.isArray(contactInfo.data)
+      ? contactInfo.data[0]
+      : contactInfo.data
     if (!contact) {
-      return null;
+      return null
     }
-    const address = contact.addresses?.[0] || {};
+    const address = contact.addresses?.[0] || {}
     // A single phone may be serialized as a bare object rather than an array
     const phones = Array.isArray(contact.phones)
       ? contact.phones
       : contact.phones
         ? [contact.phones]
-        : [];
+        : []
 
     // Use Map for O(1) phone lookup
-    const phoneMap = new Map(phones.map((p) => [p.type, p.number]));
+    const phoneMap = new Map(phones.map((p) => [p.type, p.number]))
 
     return {
-      displayName: contact.displayName || "",
-      firstName: contact.givenName || "",
-      lastName: contact.surname || "",
-      email: contact.mail || "",
+      displayName: contact.displayName || '',
+      firstName: contact.givenName || '',
+      lastName: contact.surname || '',
+      email: contact.mail || '',
       hidefromGAL: contact.hidefromGAL || false,
-      streetAddress: address.street || "",
-      postalCode: address.postalCode || "",
-      city: address.city || "",
-      state: address.state || "",
-      country: address.countryOrRegion ? countryLookup.get(address.countryOrRegion) || "" : "",
-      companyName: contact.companyName || "",
-      mobilePhone: phoneMap.get("mobile") || "",
-      businessPhone: phoneMap.get("business") || "",
-      jobTitle: contact.jobTitle || "",
-      website: contact.website || "",
-      mailTip: contact.mailTip || "",
-    };
-  }, [contactInfo.isSuccess, contactInfo.data]);
+      streetAddress: address.street || '',
+      postalCode: address.postalCode || '',
+      city: address.city || '',
+      state: address.state || '',
+      country: address.countryOrRegion
+        ? countryLookup.get(address.countryOrRegion) || ''
+        : '',
+      companyName: contact.companyName || '',
+      mobilePhone: phoneMap.get('mobile') || '',
+      businessPhone: phoneMap.get('business') || '',
+      jobTitle: contact.jobTitle || '',
+      website: contact.website || '',
+      mailTip: contact.mailTip || '',
+    }
+  }, [contactInfo.isSuccess, contactInfo.data])
 
   // Use callback to prevent unnecessary re-renders
   const resetForm = useCallback(() => {
     if (processedContactData) {
-      formControl.reset(processedContactData);
+      formControl.reset(processedContactData)
     }
-  }, [processedContactData, formControl]);
+  }, [processedContactData, formControl])
 
   useEffect(() => {
-    resetForm();
-  }, [resetForm]);
+    resetForm()
+  }, [resetForm])
 
   // Memoize custom data formatter
   const customDataFormatter = useCallback(
     (values) => {
-      const contact = Array.isArray(contactInfo.data) ? contactInfo.data[0] : contactInfo.data;
+      const contact = Array.isArray(contactInfo.data)
+        ? contactInfo.data[0]
+        : contactInfo.data
       return {
         tenantID: tenantDomain,
         ContactID: contact?.id,
@@ -126,18 +134,20 @@ const EditContact = () => {
         phone: values.businessPhone || null,
         website: values.website,
         mailTip: values.mailTip,
-      };
+      }
     },
     [tenantDomain, contactInfo.data]
-  );
+  )
 
-  const contact = Array.isArray(contactInfo.data) ? contactInfo.data[0] : contactInfo.data;
+  const contact = Array.isArray(contactInfo.data)
+    ? contactInfo.data[0]
+    : contactInfo.data
 
   return (
     <CippFormPage
       formControl={formControl}
       queryKey={`ListContacts-${id}`}
-      title={`Contact: ${contact?.displayName || ""}`}
+      title={`Contact: ${contact?.displayName || ''}`}
       backButtonTitle="Contacts Overview"
       formPageType="Edit"
       postUrl="/api/EditContact"
@@ -145,7 +155,9 @@ const EditContact = () => {
       customDataformatter={customDataFormatter}
       preserveNullValues
     >
-      {contactInfo.isLoading && <CippFormSkeleton layout={[2, 2, 1, 2, 1, 2, 2, 2, 4]} />}
+      {contactInfo.isLoading && (
+        <CippFormSkeleton layout={[2, 2, 1, 2, 1, 2, 2, 2, 4]} />
+      )}
       {!contactInfo.isLoading && (
         <Grid container spacing={2}>
           {/* Display Name */}
@@ -155,7 +167,7 @@ const EditContact = () => {
               label="Display Name"
               name="displayName"
               formControl={formControl}
-              validators={{ required: "Display Name is required" }}
+              validators={{ required: 'Display Name is required' }}
             />
           </Grid>
 
@@ -177,7 +189,7 @@ const EditContact = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Email */}
           <Grid size={{ md: 8, xs: 12 }}>
@@ -187,10 +199,10 @@ const EditContact = () => {
               name="email"
               formControl={formControl}
               validators={{
-                required: "Email is required",
+                required: 'Email is required',
                 pattern: {
                   value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Please enter a valid email address",
+                  message: 'Please enter a valid email address',
                 },
               }}
             />
@@ -206,7 +218,7 @@ const EditContact = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Company Information */}
           <Grid size={{ md: 6, xs: 12 }}>
@@ -226,7 +238,7 @@ const EditContact = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Address Information */}
           <Grid size={{ md: 12, xs: 12 }}>
@@ -268,7 +280,7 @@ const EditContact = () => {
             />
           </Grid>
 
-          <Divider sx={{ my: 2, width: "100%" }} />
+          <Divider sx={{ my: 2, width: '100%' }} />
 
           {/* Phone Numbers */}
           <Grid size={{ md: 6, xs: 12 }}>
@@ -290,9 +302,9 @@ const EditContact = () => {
         </Grid>
       )}
     </CippFormPage>
-  );
-};
+  )
+}
 
-EditContact.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+EditContact.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default EditContact;
+export default EditContact

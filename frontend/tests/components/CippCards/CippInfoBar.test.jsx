@@ -21,7 +21,9 @@ describe('CippInfoBar', () => {
   })
 
   it('renders skeletons when isFetching', () => {
-    const { container } = renderWithTheme(<CippInfoBar data={sampleData} isFetching={true} />)
+    const { container } = renderWithTheme(
+      <CippInfoBar data={sampleData} isFetching={true} />
+    )
     const skeletons = container.querySelectorAll('.MuiSkeleton-root')
     expect(skeletons.length).toBe(sampleData.length)
   })

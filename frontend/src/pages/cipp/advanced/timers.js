@@ -1,49 +1,52 @@
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import { SvgIcon, Button } from "@mui/material";
-import { Refresh, PlayArrow } from "@mui/icons-material";
-import { ApiPostCall } from "../../../api/ApiCall";
-import { useEffect, useState } from "react";
-import { CippTablePage } from "../../../components/CippComponents/CippTablePage";
-import { useDialog } from "../../../hooks/use-dialog";
-import { CippApiDialog } from "../../../components/CippComponents/CippApiDialog";
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import { SvgIcon, Button } from '@mui/material'
+import { Refresh, PlayArrow } from '@mui/icons-material'
+import { ApiPostCall } from '../../../api/ApiCall'
+import { useEffect, useState } from 'react'
+import { CippTablePage } from '../../../components/CippComponents/CippTablePage'
+import { useDialog } from '../../../hooks/use-dialog'
+import { CippApiDialog } from '../../../components/CippComponents/CippApiDialog'
 
 const Page = () => {
-  const pageTitle = "Timers";
-  const apiUrl = "/api/ExecCippFunction";
-  const apiData = { FunctionName: "Get-CIPPTimerFunctions", Parameters: { ListAllTasks: true } };
-  const [data, setData] = useState([]);
-  const createDialog = useDialog();
+  const pageTitle = 'Timers'
+  const apiUrl = '/api/ExecCippFunction'
+  const apiData = {
+    FunctionName: 'Get-CIPPTimerFunctions',
+    Parameters: { ListAllTasks: true },
+  }
+  const [data, setData] = useState([])
+  const createDialog = useDialog()
   const simpleColumns = [
-    "Priority",
-    "Command",
-    "Parameters",
-    "Cron",
-    "NextOccurrence",
-    "LastOccurrence",
-    "Status",
-    "PreferredProcessor",
-    "ErrorMsg",
-  ];
+    'Priority',
+    'Command',
+    'Parameters',
+    'Cron',
+    'NextOccurrence',
+    'LastOccurrence',
+    'Status',
+    'PreferredProcessor',
+    'ErrorMsg',
+  ]
 
   const offCanvas = {
     extendedInfoFields: simpleColumns,
     actions: [],
-  };
+  }
 
   const fetchData = ApiPostCall({
-    relatedQueryKeys: ["CippTimers"],
+    relatedQueryKeys: ['CippTimers'],
     onResult: (result) => setData(result),
-  });
+  })
 
   const handleRefresh = () => {
-    fetchData.mutate({ url: apiUrl, data: apiData });
-  };
+    fetchData.mutate({ url: apiUrl, data: apiData })
+  }
 
   useEffect(() => {
     if (!fetchData.isSuccess) {
-      handleRefresh();
+      handleRefresh()
     }
-  }, [fetchData.isSuccess]);
+  }, [fetchData.isSuccess])
 
   const ResetToDefaultButton = () => {
     return (
@@ -59,8 +62,8 @@ const Page = () => {
       >
         Reset to Default
       </Button>
-    );
-  };
+    )
+  }
 
   return (
     <>
@@ -75,11 +78,11 @@ const Page = () => {
         offCanvas={offCanvas}
         actions={[
           {
-            label: "Run Now",
-            type: "POST",
+            label: 'Run Now',
+            type: 'POST',
             url: apiUrl,
-            data: { FunctionName: "Command", Parameters: "Parameters" },
-            confirmText: "Do you want to run this task now?",
+            data: { FunctionName: 'Command', Parameters: 'Parameters' },
+            confirmText: 'Do you want to run this task now?',
             allowResubmit: true,
             icon: <PlayArrow />,
           },
@@ -91,16 +94,19 @@ const Page = () => {
         fields={[]}
         api={{
           url: apiUrl,
-          confirmText: "Do you want to reset all timers to default?",
-          type: "POST",
-          data: { FunctionName: "!Get-CIPPTimerFunctions", Parameters: { ResetToDefault: true } },
-          relatedQueryKeys: ["CippTimers"],
+          confirmText: 'Do you want to reset all timers to default?',
+          type: 'POST',
+          data: {
+            FunctionName: '!Get-CIPPTimerFunctions',
+            Parameters: { ResetToDefault: true },
+          },
+          relatedQueryKeys: ['CippTimers'],
         }}
       />
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

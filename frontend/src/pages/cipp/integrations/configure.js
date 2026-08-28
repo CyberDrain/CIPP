@@ -9,127 +9,148 @@ import {
   Tab,
   Tabs,
   Typography,
-} from "@mui/material";
-import CippIntegrationSettings from "../../../components/CippIntegrations/CippIntegrationSettings";
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import { useForm } from "react-hook-form";
-import { useSettings } from "../../../hooks/use-settings";
-import { ApiGetCall, ApiPostCall } from "../../../api/ApiCall";
-import { useRouter } from "next/router";
-import extensions from "../../../data/Extensions.json";
-import { useEffect } from "react";
-import { ArrowPathIcon, ArrowTopRightOnSquareIcon, BeakerIcon } from "@heroicons/react/24/outline";
-import { SvgIcon } from "@mui/material";
-import { useState } from "react";
-import { CippApiResults } from "../../../components/CippComponents/CippApiResults";
-import CippPageCard from "../../../components/CippCards/CippPageCard";
-import CippIntegrationTenantMapping from "../../../components/CippIntegrations/CippIntegrationTenantMapping";
-import CippIntegrationFieldMapping from "../../../components/CippIntegrations/CippIntegrationFieldMapping";
-import { CippCardTabPanel } from "../../../components/CippComponents/CippCardTabPanel";
-import CippApiClientManagement from "../../../components/CippIntegrations/CippApiClientManagement";
-import CippApiDocumentation from "../../../components/CippIntegrations/CippApiDocumentation";
+} from '@mui/material'
+import CippIntegrationSettings from '../../../components/CippIntegrations/CippIntegrationSettings'
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import { useForm } from 'react-hook-form'
+import { useSettings } from '../../../hooks/use-settings'
+import { ApiGetCall, ApiPostCall } from '../../../api/ApiCall'
+import { useRouter } from 'next/router'
+import extensions from '../../../data/Extensions.json'
+import { useEffect } from 'react'
+import {
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
+  BeakerIcon,
+} from '@heroicons/react/24/outline'
+import { SvgIcon } from '@mui/material'
+import { useState } from 'react'
+import { CippApiResults } from '../../../components/CippComponents/CippApiResults'
+import CippPageCard from '../../../components/CippCards/CippPageCard'
+import CippIntegrationTenantMapping from '../../../components/CippIntegrations/CippIntegrationTenantMapping'
+import CippIntegrationFieldMapping from '../../../components/CippIntegrations/CippIntegrationFieldMapping'
+import { CippCardTabPanel } from '../../../components/CippComponents/CippCardTabPanel'
+import CippApiClientManagement from '../../../components/CippIntegrations/CippApiClientManagement'
+import CippApiDocumentation from '../../../components/CippIntegrations/CippApiDocumentation'
 
 function tabProps(index) {
   return {
     id: `simple-tab-${index}`,
-    "aria-controls": `simple-tabpanel-${index}`,
-  };
+    'aria-controls': `simple-tabpanel-${index}`,
+  }
 }
 
 const Page = () => {
-  const router = useRouter();
-  const settings = useSettings();
-  const preferredTheme = settings.currentTheme?.value;
-  const [value, setValue] = useState(0);
+  const router = useRouter()
+  const settings = useSettings()
+  const preferredTheme = settings.currentTheme?.value
+  const [value, setValue] = useState(0)
 
   const integrations = ApiGetCall({
-    url: "/api/ListExtensionsConfig",
-    queryKey: "Integrations",
+    url: '/api/ListExtensionsConfig',
+    queryKey: 'Integrations',
     refetchOnMount: false,
     refetchOnReconnect: false,
-  });
+  })
 
-  const [testQuery, setTestQuery] = useState({ url: "", waiting: false, queryKey: "" });
+  const [testQuery, setTestQuery] = useState({
+    url: '',
+    waiting: false,
+    queryKey: '',
+  })
   const actionTestResults = ApiGetCall({
     ...testQuery,
-  });
+  })
 
   const handleTabChange = (event, newValue) => {
-    setValue(newValue);
-  };
+    setValue(newValue)
+  }
 
   const handleIntegrationTest = () => {
     if (testQuery.waiting) {
-      actionTestResults.refetch();
+      actionTestResults.refetch()
     }
     setTestQuery({
-      url: "/api/ExecExtensionTest",
+      url: '/api/ExecExtensionTest',
       data: {
         extensionName: router.query.id,
       },
       waiting: true,
       queryKey: `ExecExtensionTest-${router.query.id}`,
-    });
-  };
+    })
+  }
 
-  const [syncQuery, setSyncQuery] = useState({ url: "", waiting: false, queryKey: "" });
+  const [syncQuery, setSyncQuery] = useState({
+    url: '',
+    waiting: false,
+    queryKey: '',
+  })
   const actionSyncResults = ApiGetCall({
     ...syncQuery,
-  });
+  })
 
-  const [haloTestTicketQuery, setHaloTestTicketQuery] = useState({ url: "", waiting: false, queryKey: "" });
+  const [haloTestTicketQuery, setHaloTestTicketQuery] = useState({
+    url: '',
+    waiting: false,
+    queryKey: '',
+  })
   const actionHaloTestTicketResults = ApiGetCall({
     ...haloTestTicketQuery,
-  });
+  })
   const handleHaloTestTicket = () => {
     if (haloTestTicketQuery.waiting) {
-      actionHaloTestTicketResults.refetch();
+      actionHaloTestTicketResults.refetch()
     }
     setHaloTestTicketQuery({
-      url: "/api/ExecHaloPSATestTicket",
+      url: '/api/ExecHaloPSATestTicket',
       waiting: true,
       queryKey: `ExecHaloPSATestTicket-${router.query.id}`,
-    });
-  };
+    })
+  }
   const clearHIBPKey = ApiPostCall({
-    relatedQueryKeys: ["Integrations"],
-  });
+    relatedQueryKeys: ['Integrations'],
+  })
   const handleIntegrationSync = () => {
     setSyncQuery({
-      url: "/api/ExecExtensionSync",
+      url: '/api/ExecExtensionSync',
       data: {
         Extension: router.query.id,
       },
       waiting: true,
       queryKey: `ExecExtensionSync-${router.query.id}`,
-    });
-  };
+    })
+  }
 
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: integrations?.data,
-  });
+  })
 
-  const extension = extensions.find((extension) => extension.id === router.query.id) || {};
+  const extension =
+    extensions.find((extension) => extension.id === router.query.id) || {}
 
-  var logo = extension?.logo;
-  if (preferredTheme === "dark" && extension?.logoDark) {
-    logo = extension.logoDark;
+  var logo = extension?.logo
+  if (preferredTheme === 'dark' && extension?.logoDark) {
+    logo = extension.logoDark
   }
 
   useEffect(() => {
     if (integrations.isSuccess) {
       formControl.reset({
         ...integrations.data,
-      });
-      formControl.trigger();
+      })
+      formControl.trigger()
     }
-  }, [integrations.isSuccess]);
+  }, [integrations.isSuccess])
 
   return (
     <>
       {integrations.isLoading && (
-        <CippPageCard title="Integrations" headerText={extension.headerText} hideTitleText={true}>
+        <CippPageCard
+          title="Integrations"
+          headerText={extension.headerText}
+          hideTitleText={true}
+        >
           <CardContent>
             <Stack spacing={2}>
               <Skeleton variant="rectangular" height={150} />
@@ -153,10 +174,10 @@ const Page = () => {
                 component="img"
                 src={logo}
                 alt={extension.name}
-                sx={{ maxWidth: "50%", mx: "auto", maxHeight: "125px" }}
+                sx={{ maxWidth: '50%', mx: 'auto', maxHeight: '125px' }}
               />
             )}
-            <Typography variant="body2" paragraph style={{ marginTop: "1em" }}>
+            <Typography variant="body2" paragraph style={{ marginTop: '1em' }}>
               {extension.helpText}
             </Typography>
             {extension?.alertText && (
@@ -167,7 +188,7 @@ const Page = () => {
             <Stack
               direction="row"
               spacing={2}
-              sx={{ mb: 2, display: "flex", alignItems: "center" }}
+              sx={{ mb: 2, display: 'flex', alignItems: 'center' }}
             >
               {extension?.hideTestButton !== true && (
                 <Box>
@@ -183,7 +204,7 @@ const Page = () => {
                         integrations?.data?.[extension.id]?.Enabled !== true)
                     }
                   >
-                    <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
+                    <SvgIcon fontSize="small" style={{ marginRight: '8' }}>
                       <BeakerIcon />
                     </SvgIcon>
                     Test
@@ -204,14 +225,14 @@ const Page = () => {
                         integrations?.data?.[extension.id]?.Enabled !== true)
                     }
                   >
-                    <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
+                    <SvgIcon fontSize="small" style={{ marginRight: '8' }}>
                       <ArrowPathIcon />
                     </SvgIcon>
                     Force Sync
                   </Button>
                 </Box>
               )}
-              {extension?.id === "HaloPSA" && (
+              {extension?.id === 'HaloPSA' && (
                 <Box>
                   <Button
                     variant="outlined"
@@ -222,21 +243,21 @@ const Page = () => {
                       integrations?.data?.HaloPSA?.Enabled !== true
                     }
                   >
-                    <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
+                    <SvgIcon fontSize="small" style={{ marginRight: '8' }}>
                       <BeakerIcon />
                     </SvgIcon>
                     Create Test Ticket
                   </Button>
                 </Box>
               )}
-              {extension?.id === "HIBP" && (
+              {extension?.id === 'HIBP' && (
                 <Box>
                   <Button
                     variant="outlined"
                     color="warning"
                     onClick={() =>
                       clearHIBPKey.mutate({
-                        url: "/api/ExecExtensionClearHIBPKey",
+                        url: '/api/ExecExtensionClearHIBPKey',
                         data: {},
                       })
                     }
@@ -250,8 +271,13 @@ const Page = () => {
                 <>
                   {extension.links.map((link, index) => (
                     <Box key={index}>
-                      <Button href={link.url} target="_blank" rel="noreferrer" color="inherit">
-                        <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
+                      <Button
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        color="inherit"
+                      >
+                        <SvgIcon fontSize="small" style={{ marginRight: '8' }}>
                           <ArrowTopRightOnSquareIcon />
                         </SvgIcon>
                         {link.name}
@@ -266,9 +292,20 @@ const Page = () => {
             <CippApiResults apiObject={actionHaloTestTicketResults} />
             <CippApiResults apiObject={clearHIBPKey} />
           </CardContent>
-          <Box sx={{ width: "100%" }}>
-            <Box sx={{ borderBottom: 1, borderColor: "divider", px: "24px", m: "auto" }}>
-              <Tabs value={value} onChange={handleTabChange} aria-label="Integration settings">
+          <Box sx={{ width: '100%' }}>
+            <Box
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                px: '24px',
+                m: 'auto',
+              }}
+            >
+              <Tabs
+                value={value}
+                onChange={handleTabChange}
+                aria-label="Integration settings"
+              >
                 <Tab label="Settings" {...tabProps(0)} />
                 {extension?.mappingRequired && (
                   <Tab
@@ -295,13 +332,13 @@ const Page = () => {
                 {/* An explicit value is required: MUI falls back to the child index when a
                     Tab has none, and the Tenant Mapping / Field Mapping tabs are absent for
                     cippapi, so this would otherwise be tab 1 while its panel waits on 3. */}
-                {extension?.id === "cippapi" && (
+                {extension?.id === 'cippapi' && (
                   <Tab label="API Documentation" value={3} {...tabProps(3)} />
                 )}
               </Tabs>
             </Box>
             <CippCardTabPanel value={value} index={0}>
-              {extension?.id === "cippapi" ? (
+              {extension?.id === 'cippapi' ? (
                 <CippApiClientManagement />
               ) : (
                 <CippIntegrationSettings />
@@ -318,7 +355,7 @@ const Page = () => {
                 <CippIntegrationFieldMapping />
               </CippCardTabPanel>
             )}
-            {extension?.id === "cippapi" && (
+            {extension?.id === 'cippapi' && (
               <CippCardTabPanel value={value} index={3}>
                 <CippApiDocumentation />
               </CippCardTabPanel>
@@ -327,9 +364,9 @@ const Page = () => {
         </CippPageCard>
       )}
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

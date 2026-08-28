@@ -19,7 +19,11 @@ import { TabNavigationContext } from '../../../src/layouts/tab-navigation-contex
 const TABS = [
   { label: 'Edit Tenant', path: '/tenant/manage/edit', icon: 'Settings' },
   { label: 'Manage Drift', path: '/tenant/manage/drift', icon: 'Sync' },
-  { label: 'Configuration Backup', path: '/tenant/manage/backup', icon: 'Backup' },
+  {
+    label: 'Configuration Backup',
+    path: '/tenant/manage/backup',
+    icon: 'Backup',
+  },
 ]
 
 const LAYOUT_ACTIONS = [{ label: 'Reset Password', onClick: () => {} }]
@@ -52,8 +56,9 @@ export default {
     (Story) => (
       <Box sx={{ minHeight: 320, position: 'relative' }}>
         <Typography variant="body2" color="text.secondary">
-          Page content. The FAB is fixed to the viewport's bottom-right corner — below md
-          that corner belongs to page actions (CippSpeedDial hides itself there).
+          Page content. The FAB is fixed to the viewport's bottom-right corner —
+          below md that corner belongs to page actions (CippSpeedDial hides
+          itself there).
         </Typography>
         <Story />
       </Box>
@@ -85,7 +90,9 @@ export const RestackedCardButton = {
 
     await step('children are restacked to full width', async () => {
       const addButton = body.getByRole('button', { name: 'Add User' })
-      expect(window.getComputedStyle(addButton).justifyContent).toBe('flex-start')
+      expect(window.getComputedStyle(addButton).justifyContent).toBe(
+        'flex-start'
+      )
     })
 
     await step('tapping an action closes the sheet', async () => {
@@ -162,18 +169,27 @@ export const DashboardSections = {
 
     await step('sections render under their subheaders', async () => {
       await userEvent.click(body.getByRole('button', { name: 'Page actions' }))
-      await waitFor(() => expect(body.getByText('Dashboard actions')).toBeInTheDocument())
+      await waitFor(() =>
+        expect(body.getByText('Dashboard actions')).toBeInTheDocument()
+      )
       expect(body.getByText('Portals')).toBeInTheDocument()
       expect(body.getByText('Reports')).toBeInTheDocument()
     })
 
-    await step('a MenuItem child fires its handler and closes the sheet', async () => {
-      await userEvent.click(body.getByRole('menuitem', { name: 'Executive Summary' }))
-      expect(args.onExecutiveSummary).toHaveBeenCalled()
-      // keepMounted leaves the sheet in the DOM (so ExecutiveReportButton's own preview
-      // Dialog survives) — closed means hidden here, not unmounted.
-      await waitFor(() => expect(body.getByText('Dashboard actions')).not.toBeVisible())
-    })
+    await step(
+      'a MenuItem child fires its handler and closes the sheet',
+      async () => {
+        await userEvent.click(
+          body.getByRole('menuitem', { name: 'Executive Summary' })
+        )
+        expect(args.onExecutiveSummary).toHaveBeenCalled()
+        // keepMounted leaves the sheet in the DOM (so ExecutiveReportButton's own preview
+        // Dialog survives) — closed means hidden here, not unmounted.
+        await waitFor(() =>
+          expect(body.getByText('Dashboard actions')).not.toBeVisible()
+        )
+      }
+    )
   },
 }
 
@@ -201,7 +217,9 @@ export const PageAndLayoutActions = {
     await step('one sheet holds both kinds of action', async () => {
       await userEvent.click(body.getByRole('button', { name: 'Page actions' }))
       await waitFor(() => expect(body.getByText('Actions')).toBeInTheDocument())
-      expect(body.getByRole('button', { name: 'Add Variable' })).toBeInTheDocument()
+      expect(
+        body.getByRole('button', { name: 'Add Variable' })
+      ).toBeInTheDocument()
       expect(body.getByText('Reset Password')).toBeInTheDocument()
     })
 

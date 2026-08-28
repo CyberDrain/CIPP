@@ -1,4 +1,4 @@
-import { useSettings } from "../../hooks/use-settings";
+import { useSettings } from '../../hooks/use-settings'
 import {
   Button,
   Card,
@@ -8,23 +8,23 @@ import {
   Stack,
   SvgIcon,
   Typography,
-} from "@mui/material";
-import { CodeBracketIcon, BeakerIcon } from "@heroicons/react/24/outline";
+} from '@mui/material'
+import { CodeBracketIcon, BeakerIcon } from '@heroicons/react/24/outline'
 
 export const CippDevOptions = () => {
-  const settings = useSettings();
+  const settings = useSettings()
 
   const handleDevToolsToggle = () => {
     settings.handleUpdate({
       showDevtools: !settings.showDevtools,
-    });
-  };
+    })
+  }
 
   const handleAdvancedToggle = () => {
     settings.handleUpdate({
       showAdvancedTools: !settings.showAdvancedTools,
-    });
-  };
+    })
+  }
 
   return (
     <Card>
@@ -41,7 +41,7 @@ export const CippDevOptions = () => {
               </SvgIcon>
             }
           >
-            {settings.showDevtools ? "Disable" : "Enable"} TanStack Query Tools
+            {settings.showDevtools ? 'Disable' : 'Enable'} TanStack Query Tools
           </Button>
           <Button
             color="inherit"
@@ -52,16 +52,21 @@ export const CippDevOptions = () => {
               </SvgIcon>
             }
           >
-            {settings.showAdvancedTools ? "Disable" : "Enable"} Advanced Views
+            {settings.showAdvancedTools ? 'Disable' : 'Enable'} Advanced Views
           </Button>
         </Stack>
-        <Typography color="text.secondary" variant="caption" sx={{ display: "block", mt: 1 }}>
-          Advanced Views reveal diagnostic pages (such as audit-log Search Coverage) that are hidden
-          from day-to-day operations. This preference is per-user, stored in this browser.
+        <Typography
+          color="text.secondary"
+          variant="caption"
+          sx={{ display: 'block', mt: 1 }}
+        >
+          Advanced Views reveal diagnostic pages (such as audit-log Search
+          Coverage) that are hidden from day-to-day operations. This preference
+          is per-user, stored in this browser.
         </Typography>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
-export default CippDevOptions;
+export default CippDevOptions

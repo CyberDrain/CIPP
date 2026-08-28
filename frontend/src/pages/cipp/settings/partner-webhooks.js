@@ -1,8 +1,8 @@
-import { TabbedLayout } from "../../../layouts/TabbedLayout";
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import tabOptions from "./tabOptions";
-import CippFormPage from "../../../components/CippFormPages/CippFormPage";
-import { useForm } from "react-hook-form";
+import { TabbedLayout } from '../../../layouts/TabbedLayout'
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import tabOptions from './tabOptions'
+import CippFormPage from '../../../components/CippFormPages/CippFormPage'
+import { useForm } from 'react-hook-form'
 import {
   Alert,
   Box,
@@ -16,119 +16,124 @@ import {
   CardContent,
   IconButton,
   SvgIcon,
-} from "@mui/material";
-import { Grid } from "@mui/system";
-import CippFormComponent from "../../../components/CippComponents/CippFormComponent";
-import { ApiGetCall, ApiPostCall } from "../../../api/ApiCall";
-import { useEffect } from "react";
-import { CippPropertyList } from "../../../components/CippComponents/CippPropertyList";
-import { CippCodeBlock } from "../../../components/CippComponents/CippCodeBlock";
-import { CippTimeAgo } from "../../../components/CippComponents/CippTimeAgo";
-import { useState } from "react";
-import { Close } from "@mui/icons-material";
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
+import { ApiGetCall, ApiPostCall } from '../../../api/ApiCall'
+import { useEffect } from 'react'
+import { CippPropertyList } from '../../../components/CippComponents/CippPropertyList'
+import { CippCodeBlock } from '../../../components/CippComponents/CippCodeBlock'
+import { CippTimeAgo } from '../../../components/CippComponents/CippTimeAgo'
+import { useState } from 'react'
+import { Close } from '@mui/icons-material'
 
 const Page = () => {
-  const pageTitle = "Automated Onboarding";
-  const [testRunning, setTestRunning] = useState(false);
-  const [correlationId, setCorrelationId] = useState(null);
-  const [validateRunning, setValidateRunning] = useState(false);
+  const pageTitle = 'Automated Onboarding'
+  const [testRunning, setTestRunning] = useState(false)
+  const [correlationId, setCorrelationId] = useState(null)
+  const [validateRunning, setValidateRunning] = useState(false)
 
   const formControl = useForm({
-    mode: "onChange",
-  });
+    mode: 'onChange',
+  })
 
   const listSubscription = ApiGetCall({
-    url: "/api/ExecPartnerWebhook",
-    data: { Action: "ListSubscription" },
-    queryKey: "listSubscription",
-  });
+    url: '/api/ExecPartnerWebhook',
+    data: { Action: 'ListSubscription' },
+    queryKey: 'listSubscription',
+  })
 
-  const subscription = listSubscription?.data?.Results;
-  const expectedWebhookUrl = subscription?.expectedWebhookUrl;
+  const subscription = listSubscription?.data?.Results
+  const expectedWebhookUrl = subscription?.expectedWebhookUrl
   // The backend resolves the expected URL from the custom domain bound to the instance, not from
   // the host this page was loaded on, so surface which one it picked when there is more than one.
-  const customDomains = subscription?.customDomains ?? [];
-  const hasMultipleCustomDomains = customDomains.length > 1;
+  const customDomains = subscription?.customDomains ?? []
+  const hasMultipleCustomDomains = customDomains.length > 1
   // Compared case-insensitively to match the backend, which uses PowerShell's -ne
   const webhookUrlIsStale =
     !!expectedWebhookUrl &&
     !!subscription?.webhookUrl &&
-    subscription.webhookUrl !== "None" &&
-    subscription.webhookUrl.toLowerCase() !== expectedWebhookUrl.toLowerCase();
+    subscription.webhookUrl !== 'None' &&
+    subscription.webhookUrl.toLowerCase() !== expectedWebhookUrl.toLowerCase()
 
   const listEventTypes = ApiGetCall({
-    url: "/api/ExecPartnerWebhook",
-    data: { Action: "ListEventTypes" },
-    queryKey: "listEventTypes",
-  });
+    url: '/api/ExecPartnerWebhook',
+    data: { Action: 'ListEventTypes' },
+    queryKey: 'listEventTypes',
+  })
 
   const sendTest = ApiPostCall({
     urlFromData: true,
-  });
+  })
 
   const validateTest = ApiGetCall({
     url: `/api/ExecPartnerWebhook`,
-    data: { Action: "ValidateTest", CorrelationId: correlationId },
+    data: { Action: 'ValidateTest', CorrelationId: correlationId },
     waiting: validateRunning,
-  });
+  })
 
   const handleStartTest = () => {
-    setTestRunning(true);
+    setTestRunning(true)
     sendTest.mutate(
       {
-        url: "/api/ExecPartnerWebhook?Action=SendTest",
+        url: '/api/ExecPartnerWebhook?Action=SendTest',
         data: {},
       },
       {
         onSuccess: (data) => {
           if (data?.data?.Results?.correlationId) {
             setTimeout(() => {
-              setCorrelationId(data?.data?.Results?.correlationId);
-              setValidateRunning(true);
-              validateTest.refetch();
-            }, 1000);
+              setCorrelationId(data?.data?.Results?.correlationId)
+              setValidateRunning(true)
+              validateTest.refetch()
+            }, 1000)
           }
         },
       }
-    );
-  };
+    )
+  }
 
   useEffect(() => {
     if (
       correlationId &&
       validateRunning &&
       validateTest.isSuccess &&
-      validateTest?.data?.Results?.status === "Submitted"
+      validateTest?.data?.Results?.status === 'Submitted'
     ) {
       setTimeout(() => {
-        validateTest.refetch();
-      }, 1000);
+        validateTest.refetch()
+      }, 1000)
     } else if (
       validateTest.isSuccess &&
-      (validateTest?.data?.Results?.status === "completed" ||
-        validateTest?.data?.Results?.status === "failed")
+      (validateTest?.data?.Results?.status === 'completed' ||
+        validateTest?.data?.Results?.status === 'failed')
     ) {
-      setValidateRunning(false);
-      setCorrelationId(null);
+      setValidateRunning(false)
+      setCorrelationId(null)
     } else {
       setTimeout(() => {
-        validateTest.refetch();
-      }, 1000);
+        validateTest.refetch()
+      }, 1000)
     }
-  }, [validateTest.isSuccess, validateTest?.data?.Results, validateRunning]);
+  }, [validateTest.isSuccess, validateTest?.data?.Results, validateRunning])
 
   useEffect(() => {
     if (listSubscription.isSuccess && listEventTypes.isSuccess) {
       formControl.reset({
         enabled: listSubscription?.data?.Results?.enabled ?? false,
-        EventType: listSubscription?.data?.Results?.webhookEvents?.map((eventType) => {
-          var event = listEventTypes?.data?.Results?.find((event) => event === eventType);
-          return { label: event, value: event };
-        }),
-        standardsExcludeAllTenants: listSubscription?.data?.Results?.standardsExcludeAllTenants,
-      });
+        EventType: listSubscription?.data?.Results?.webhookEvents?.map(
+          (eventType) => {
+            var event = listEventTypes?.data?.Results?.find(
+              (event) => event === eventType
+            )
+            return { label: event, value: event }
+          }
+        ),
+        standardsExcludeAllTenants:
+          listSubscription?.data?.Results?.standardsExcludeAllTenants,
+      })
     }
-  }, [listSubscription.isSuccess, listEventTypes.isSuccess]);
+  }, [listSubscription.isSuccess, listEventTypes.isSuccess])
 
   return (
     <CippFormPage
@@ -140,7 +145,7 @@ const Page = () => {
       formControl={formControl}
       resetForm={false}
       postUrl="/api/ExecPartnerWebhook?Action=CreateSubscription"
-      queryKey={["listSubscription", "listEventTypes"]}
+      queryKey={['listSubscription', 'listEventTypes']}
       addedButtons={
         <Button variant="outlined" onClick={handleStartTest}>
           Test Webhook
@@ -150,16 +155,17 @@ const Page = () => {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ md: 12, xs: 12 }}>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Subscribe to Microsoft Partner center webhooks to enable automatic tenant onboarding and
-            alerting. Updating the settings will replace any existing webhook subscription with one
-            pointing to CIPP. Refer to the{" "}
+            Subscribe to Microsoft Partner center webhooks to enable automatic
+            tenant onboarding and alerting. Updating the settings will replace
+            any existing webhook subscription with one pointing to CIPP. Refer
+            to the{' '}
             <Link
               href="https://learn.microsoft.com/en-us/partner-center/developer/partner-center-webhooks"
               target="_blank"
               rel="noreferrer"
             >
               Microsoft Partner Center documentation
-            </Link>{" "}
+            </Link>{' '}
             for more information on the webhook types.
           </Typography>
         </Grid>
@@ -169,32 +175,41 @@ const Page = () => {
             isFetching={listSubscription.isFetching}
             propertyItems={[
               {
-                label: "Status",
+                label: 'Status',
                 value: (
                   <Chip
-                    color={listSubscription?.data?.Results?.enabled ? "success" : "default"}
-                    label={listSubscription?.data?.Results?.enabled ? "Enabled" : "Disabled"}
+                    color={
+                      listSubscription?.data?.Results?.enabled
+                        ? 'success'
+                        : 'default'
+                    }
+                    label={
+                      listSubscription?.data?.Results?.enabled
+                        ? 'Enabled'
+                        : 'Disabled'
+                    }
                   />
                 ),
               },
               {
-                label: "Webhook URL",
+                label: 'Webhook URL',
                 value: (
                   <Stack spacing={1}>
                     <CippCodeBlock code={subscription?.webhookUrl} />
                     {webhookUrlIsStale && (
                       <Alert severity="warning">
-                        This subscription points at a different URL than the one this instance is
-                        published on. Save the settings below to re-register it against{" "}
+                        This subscription points at a different URL than the one
+                        this instance is published on. Save the settings below
+                        to re-register it against{' '}
                         <strong>{expectedWebhookUrl}</strong>.
                       </Alert>
                     )}
                     {hasMultipleCustomDomains && (
                       <Alert severity="info">
-                        This instance has {customDomains.length} custom domains bound (
-                        {customDomains.join(", ")}). CIPP uses the first one,{" "}
-                        <strong>{subscription?.instanceHostname}</strong>, for webhook registrations
-                        and notification links.
+                        This instance has {customDomains.length} custom domains
+                        bound ({customDomains.join(', ')}). CIPP uses the first
+                        one, <strong>{subscription?.instanceHostname}</strong>,
+                        for webhook registrations and notification links.
                       </Alert>
                     )}
                   </Stack>
@@ -202,9 +217,13 @@ const Page = () => {
                 sx: { pl: 0 },
               },
               {
-                label: "Last Updated",
+                label: 'Last Updated',
                 value: (
-                  <CippTimeAgo data={listSubscription?.data?.Results?.lastModifiedTimestamp} />
+                  <CippTimeAgo
+                    data={
+                      listSubscription?.data?.Results?.lastModifiedTimestamp
+                    }
+                  />
                 ),
               },
             ]}
@@ -228,7 +247,7 @@ const Page = () => {
             name="EventType"
             isFetching={listEventTypes.isFetching}
             options={listEventTypes?.data?.Results?.map((eventType) => {
-              return { label: eventType, value: eventType };
+              return { label: eventType, value: eventType }
             })}
             formControl={formControl}
           />
@@ -248,12 +267,15 @@ const Page = () => {
                 title={
                   <Stack
                     direction="row"
-                    sx={{ display: "flex" }}
+                    sx={{ display: 'flex' }}
                     justifyContent="space-between"
                     alignItems="center"
                   >
                     <Box>Test Results</Box>
-                    <IconButton variant="outlined" onClick={() => setTestRunning(false)}>
+                    <IconButton
+                      variant="outlined"
+                      onClick={() => setTestRunning(false)}
+                    >
                       <SvgIcon fontSize="small">
                         <Close />
                       </SvgIcon>
@@ -268,34 +290,44 @@ const Page = () => {
                   isFetching={validateTest.isFetching}
                   propertyItems={[
                     {
-                      label: "Response Code",
+                      label: 'Response Code',
                       value: (
                         <Chip
                           color={
-                            !validateTest?.data?.Results?.results?.[0].responseCode
-                              ? "info"
-                              : validateTest?.data?.Results?.results?.[0].responseCode === "200"
-                              ? "success"
-                              : "error"
+                            !validateTest?.data?.Results?.results?.[0]
+                              .responseCode
+                              ? 'info'
+                              : validateTest?.data?.Results?.results?.[0]
+                                    .responseCode === '200'
+                                ? 'success'
+                                : 'error'
                           }
-                          label={validateTest?.data?.Results?.results?.[0]?.responseCode}
+                          label={
+                            validateTest?.data?.Results?.results?.[0]
+                              ?.responseCode
+                          }
                         />
                       ),
                     },
                     {
-                      label: "Status",
+                      label: 'Status',
                       value: validateTest?.data?.Results?.status,
                     },
                     {
-                      label: "Response Message",
-                      value: validateTest?.data?.Results?.results?.[0]?.responseMessage,
+                      label: 'Response Message',
+                      value:
+                        validateTest?.data?.Results?.results?.[0]
+                          ?.responseMessage,
                     },
 
                     {
-                      label: "Last Run",
+                      label: 'Last Run',
                       value: (
                         <CippTimeAgo
-                          data={validateTest?.data?.Results?.results?.[0]?.dateTimeUtc + "Z"}
+                          data={
+                            validateTest?.data?.Results?.results?.[0]
+                              ?.dateTimeUtc + 'Z'
+                          }
                         />
                       ),
                     },
@@ -309,13 +341,13 @@ const Page = () => {
         )}
       </Grid>
     </CippFormPage>
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
+export default Page

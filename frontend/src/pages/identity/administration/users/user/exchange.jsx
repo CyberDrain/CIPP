@@ -30,7 +30,13 @@ import { CippExchangeInfoCard } from '../../../../../components/CippCards/CippEx
 import { useEffect, useState, useMemo } from 'react'
 import CippExchangeSettingsForm from '../../../../../components/CippFormPages/CippExchangeSettingsForm'
 import { useForm } from 'react-hook-form'
-import { Alert, Button, Collapse, CircularProgress, Typography } from '@mui/material'
+import {
+  Alert,
+  Button,
+  Collapse,
+  CircularProgress,
+  Typography,
+} from '@mui/material'
 import { CippApiResults } from '../../../../../components/CippComponents/CippApiResults'
 import { CippPropertyListCard } from '../../../../../components/CippCards/CippPropertyListCard'
 import { getCippTranslation } from '../../../../../utils/get-cipp-translation'
@@ -52,8 +58,8 @@ const permissionOptionGroupOrder = {
 const sortPermissionOptions = (options) =>
   options.sort(
     (a, b) =>
-      permissionOptionGroupOrder[a.group] - permissionOptionGroupOrder[b.group] ||
-      a.label.localeCompare(b.label)
+      permissionOptionGroupOrder[a.group] -
+        permissionOptionGroupOrder[b.group] || a.label.localeCompare(b.label)
   )
 
 const Page = () => {
@@ -233,7 +239,8 @@ const Page = () => {
     customDataformatter: (row, action, data) => {
       const permissions = []
       const { permissions: permissionValues } = data
-      const autoMap = permissionValues.AutoMap === undefined ? true : permissionValues.AutoMap
+      const autoMap =
+        permissionValues.AutoMap === undefined ? true : permissionValues.AutoMap
 
       // Build permissions array based on form values
       if (permissionValues?.AddFullAccess) {
@@ -339,12 +346,22 @@ const Page = () => {
     ) {
       setIncludeSecurityGroups(false)
     }
-  }, [permissionsDialog.open, calendarPermissionsDialog.open, contactPermissionsDialog.open])
+  }, [
+    permissionsDialog.open,
+    calendarPermissionsDialog.open,
+    contactPermissionsDialog.open,
+  ])
 
   useEffect(() => {
     if (oooRequest.isSuccess) {
-      formControl.setValue('ooo.ExternalMessage', oooRequest.data?.ExternalMessage)
-      formControl.setValue('ooo.InternalMessage', oooRequest.data?.InternalMessage)
+      formControl.setValue(
+        'ooo.ExternalMessage',
+        oooRequest.data?.ExternalMessage
+      )
+      formControl.setValue(
+        'ooo.InternalMessage',
+        oooRequest.data?.InternalMessage
+      )
       formControl.setValue('ooo.AutoReplyState', {
         value: oooRequest.data?.AutoReplyState,
         label: oooRequest.data?.AutoReplyState,
@@ -371,7 +388,8 @@ const Page = () => {
     if (userRequest.isSuccess && userRequest.data?.[0]) {
       const currentSettings = userRequest.data[0]
       let forwardingAddress = currentSettings.ForwardingAddress
-      const forwardingSmtpAddress = currentSettings.MailboxActionsData?.ForwardingSmtpAddress
+      const forwardingSmtpAddress =
+        currentSettings.MailboxActionsData?.ForwardingSmtpAddress
       const forwardAndDeliver = currentSettings.ForwardAndDeliver
 
       // Handle ForwardingAddress being an array or string
@@ -409,7 +427,9 @@ const Page = () => {
     }
   }, [userRequest.isSuccess, userRequest.dataUpdatedAt, formControl])
 
-  const title = graphUserRequest.isSuccess ? graphUserRequest.data?.[0]?.displayName : 'Loading...'
+  const title = graphUserRequest.isSuccess
+    ? graphUserRequest.data?.[0]?.displayName
+    : 'Loading...'
 
   // Create options array for mailbox permissions (no system users)
   const mailboxPermissionOptions = useMemo(() => {
@@ -440,7 +460,11 @@ const Page = () => {
     }
 
     return sortPermissionOptions(options)
-  }, [usersList?.data?.Results, groupsList?.data?.Results, includeSecurityGroups])
+  }, [
+    usersList?.data?.Results,
+    groupsList?.data?.Results,
+    includeSecurityGroups,
+  ])
 
   // Create options array for calendar permissions (includes system users)
   const calendarPermissionOptions = useMemo(() => {
@@ -479,7 +503,11 @@ const Page = () => {
     }
 
     return sortPermissionOptions(options)
-  }, [usersList?.data?.Results, groupsList?.data?.Results, includeSecurityGroups])
+  }, [
+    usersList?.data?.Results,
+    groupsList?.data?.Results,
+    includeSecurityGroups,
+  ])
 
   const contactPermissionOptions = useMemo(() => {
     const options = []
@@ -517,7 +545,11 @@ const Page = () => {
     }
 
     return sortPermissionOptions(options)
-  }, [usersList?.data?.Results, groupsList?.data?.Results, includeSecurityGroups])
+  }, [
+    usersList?.data?.Results,
+    groupsList?.data?.Results,
+    includeSecurityGroups,
+  ])
 
   const isUserGroupLoading =
     usersList.isFetching || (includeSecurityGroups && groupsList.isFetching)
@@ -527,18 +559,27 @@ const Page = () => {
         {
           icon: <Mail />,
           text: (
-            <CippCopyToClipBoard type="chip" text={graphUserRequest.data?.[0]?.userPrincipalName} />
+            <CippCopyToClipBoard
+              type="chip"
+              text={graphUserRequest.data?.[0]?.userPrincipalName}
+            />
           ),
         },
         {
           icon: <Fingerprint />,
-          text: <CippCopyToClipBoard type="chip" text={graphUserRequest.data?.[0]?.id} />,
+          text: (
+            <CippCopyToClipBoard
+              type="chip"
+              text={graphUserRequest.data?.[0]?.id}
+            />
+          ),
         },
         {
           icon: <CalendarIcon />,
           text: (
             <>
-              Created: <CippTimeAgo data={graphUserRequest.data?.[0]?.createdDateTime} />
+              Created:{' '}
+              <CippTimeAgo data={graphUserRequest.data?.[0]?.createdDateTime} />
             </>
           ),
         },
@@ -643,7 +684,10 @@ const Page = () => {
         data:
           userRequest.data?.[0]?.Permissions?.map((permission) => {
             const userIdentifier = permission?.User
-            const permissionInfo = getPermissionInfo(permission.User, groupsList)
+            const permissionInfo = getPermissionInfo(
+              permission.User,
+              groupsList
+            )
             return {
               User: permissionInfo.displayName, // Show clean name
               AccessRights: permission.AccessRights,
@@ -708,7 +752,8 @@ const Page = () => {
           tenantFilter: userSettingsDefaults.currentTenant,
         }
       },
-      confirmText: "Are you sure you want to remove this user's access to the selected mailboxes?",
+      confirmText:
+        "Are you sure you want to remove this user's access to the selected mailboxes?",
       multiPost: false,
       relatedQueryKeys: [`MailboxAccess-${userId}`],
     },
@@ -783,7 +828,10 @@ const Page = () => {
         data:
           calPermissions.data?.map((permission) => {
             const userIdentifier = permission?.User
-            const permissionInfo = getPermissionInfo(permission.User, groupsList)
+            const permissionInfo = getPermissionInfo(
+              permission.User,
+              groupsList
+            )
             return {
               User: permissionInfo.displayName,
               AccessRights: permission?.AccessRights?.join(', ') || 'Unknown',
@@ -818,10 +866,12 @@ const Page = () => {
                 permissions: permissions,
               }
             },
-            confirmText: 'Are you sure you want to remove this calendar permission?',
+            confirmText:
+              'Are you sure you want to remove this calendar permission?',
             multiPost: false,
             relatedQueryKeys: `CalendarPermissions-${userId}`,
-            condition: (row) => row.User !== 'Default' && row.User !== 'Anonymous',
+            condition: (row) =>
+              row.User !== 'Default' && row.User !== 'Anonymous',
           },
         ],
         offCanvas: {
@@ -869,7 +919,8 @@ const Page = () => {
                         },
                       ],
                     },
-                    confirmText: 'Are you sure you want to remove this calendar permission?',
+                    confirmText:
+                      'Are you sure you want to remove this calendar permission?',
                     multiPost: false,
                     relatedQueryKeys: `CalendarPermissions-${userId}`,
                   },
@@ -917,7 +968,10 @@ const Page = () => {
         data:
           contactPermissions.data?.map((permission) => {
             const userIdentifier = permission?.User
-            const permissionInfo = getPermissionInfo(permission.User, groupsList)
+            const permissionInfo = getPermissionInfo(
+              permission.User,
+              groupsList
+            )
             return {
               User: permissionInfo.displayName,
               AccessRights: permission?.AccessRights?.join(', ') || 'Unknown',
@@ -952,10 +1006,12 @@ const Page = () => {
                 permissions: permissions,
               }
             },
-            confirmText: 'Are you sure you want to remove this contact permission?',
+            confirmText:
+              'Are you sure you want to remove this contact permission?',
             multiPost: false,
             relatedQueryKeys: `ContactPermissions-${userId}`,
-            condition: (row) => row.User !== 'Default' && row.User !== 'Anonymous',
+            condition: (row) =>
+              row.User !== 'Default' && row.User !== 'Anonymous',
           },
         ],
         offCanvas: {
@@ -1003,7 +1059,8 @@ const Page = () => {
                         },
                       ],
                     },
-                    confirmText: 'Are you sure you want to remove this contact permission?',
+                    confirmText:
+                      'Are you sure you want to remove this contact permission?',
                     multiPost: false,
                     relatedQueryKeys: `ContactPermissions-${userId}`,
                   },
@@ -1130,12 +1187,14 @@ const Page = () => {
                     url: '/api/ExecSetMailboxRule',
                     data: {
                       ruleId: data?.Identity,
-                      userPrincipalName: graphUserRequest.data?.[0]?.userPrincipalName,
+                      userPrincipalName:
+                        graphUserRequest.data?.[0]?.userPrincipalName,
                       ruleName: data?.Name,
                       Enable: true,
                       tenantFilter: userSettingsDefaults.currentTenant,
                     },
-                    confirmText: 'Are you sure you want to enable this mailbox rule?',
+                    confirmText:
+                      'Are you sure you want to enable this mailbox rule?',
                     multiPost: false,
                   },
                   {
@@ -1145,12 +1204,14 @@ const Page = () => {
                     url: '/api/ExecSetMailboxRule',
                     data: {
                       ruleId: data?.Identity,
-                      userPrincipalName: graphUserRequest.data?.[0]?.userPrincipalName,
+                      userPrincipalName:
+                        graphUserRequest.data?.[0]?.userPrincipalName,
                       ruleName: data?.Name,
                       Disable: true,
                       tenantFilter: userSettingsDefaults.currentTenant,
                     },
-                    confirmText: 'Are you sure you want to disable this mailbox rule?',
+                    confirmText:
+                      'Are you sure you want to disable this mailbox rule?',
                     multiPost: false,
                   },
                   {
@@ -1161,10 +1222,12 @@ const Page = () => {
                     data: {
                       ruleId: data?.Identity,
                       ruleName: data?.Name,
-                      userPrincipalName: graphUserRequest.data?.[0]?.userPrincipalName,
+                      userPrincipalName:
+                        graphUserRequest.data?.[0]?.userPrincipalName,
                       tenantFilter: userSettingsDefaults.currentTenant,
                     },
-                    confirmText: 'Are you sure you want to remove this mailbox rule?',
+                    confirmText:
+                      'Are you sure you want to remove this mailbox rule?',
                     multiPost: false,
                     relatedQueryKeys: `MailboxRules-${userId}`,
                   },
@@ -1263,7 +1326,8 @@ const Page = () => {
         tenantFilter: userSettingsDefaults.currentTenant,
         MakePrimary: 'Address',
       },
-      confirmText: 'Are you sure you want to make this the primary proxy address?',
+      confirmText:
+        'Are you sure you want to make this the primary proxy address?',
       multiPost: false,
       relatedQueryKeys: [`ListUsers-${userId}`, `Mailbox-${userId}`],
       condition: (row) => row && row.Type === 'Alias',
@@ -1287,16 +1351,17 @@ const Page = () => {
 
   // Merge Entra ID proxyAddresses (fast, primary source) with the mailbox EmailAddresses
   // from Exchange so forward-sync drift between the two directories is visible.
-  const graphProxyAddresses = (graphUserRequest.data?.[0]?.proxyAddresses || []).filter(
-    (address) => typeof address === 'string'
-  )
+  const graphProxyAddresses = (
+    graphUserRequest.data?.[0]?.proxyAddresses || []
+  ).filter((address) => typeof address === 'string')
   // Mailbox serializes as an array with one element
   const mailboxDetails = [].concat(userRequest.data?.[0]?.Mailbox || [])[0]
   const exchangeProxyAddresses = []
     .concat(mailboxDetails?.EmailAddresses || [])
     .filter((address) => typeof address === 'string')
   // Only assess sync when Exchange returned addresses; a mailbox always has at least a primary
-  const exchangeAddressesLoaded = userRequest.isSuccess && exchangeProxyAddresses.length > 0
+  const exchangeAddressesLoaded =
+    userRequest.isSuccess && exchangeProxyAddresses.length > 0
   const proxyAddressType = (address) =>
     address.startsWith('SMTP:')
       ? 'Primary'
@@ -1306,14 +1371,22 @@ const Page = () => {
   const proxyAddressRows = (() => {
     const rows = new Map()
     graphProxyAddresses.forEach((address) => {
-      rows.set(address.toLowerCase(), { Address: address, inGraph: true, inExchange: false })
+      rows.set(address.toLowerCase(), {
+        Address: address,
+        inGraph: true,
+        inExchange: false,
+      })
     })
     exchangeProxyAddresses.forEach((address) => {
       const existing = rows.get(address.toLowerCase())
       if (existing) {
         existing.inExchange = true
       } else {
-        rows.set(address.toLowerCase(), { Address: address, inGraph: false, inExchange: true })
+        rows.set(address.toLowerCase(), {
+          Address: address,
+          inGraph: false,
+          inExchange: true,
+        })
       }
     })
     return [...rows.values()].map((row) => ({
@@ -1450,7 +1523,9 @@ const Page = () => {
                     </Button>
                   </Box>
                   <Collapse in={showDetails}>
-                    <Box mt={2}>{userRequest?.data?.[0]?.Mailbox?.[0]?.error}</Box>
+                    <Box mt={2}>
+                      {userRequest?.data?.[0]?.Mailbox?.[0]?.error}
+                    </Box>
                   </Collapse>
                 </Alert>
               </Grid>

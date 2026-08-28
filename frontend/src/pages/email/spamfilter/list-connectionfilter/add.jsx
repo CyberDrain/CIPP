@@ -1,29 +1,35 @@
-import React, { useEffect } from "react";
-import { Divider } from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm, useWatch } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import { CippFormTenantSelector } from "../../../../components/CippComponents/CippFormTenantSelector";
+import React, { useEffect } from 'react'
+import { Divider } from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm, useWatch } from 'react-hook-form'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import { CippFormTenantSelector } from '../../../../components/CippComponents/CippFormTenantSelector'
 
 const AddPolicy = () => {
   const formControl = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
       selectedTenants: [],
       TemplateList: null,
-      PowerShellCommand: "",
+      PowerShellCommand: '',
     },
-  });
+  })
 
-  const templateListVal = useWatch({ control: formControl.control, name: "TemplateList" });
+  const templateListVal = useWatch({
+    control: formControl.control,
+    name: 'TemplateList',
+  })
 
   useEffect(() => {
     if (templateListVal?.value) {
-      formControl.setValue("PowerShellCommand", JSON.stringify(templateListVal?.value));
+      formControl.setValue(
+        'PowerShellCommand',
+        JSON.stringify(templateListVal?.value)
+      )
     }
-  }, [templateListVal, formControl]);
+  }, [templateListVal, formControl])
 
   return (
     <CippFormPage
@@ -42,11 +48,11 @@ const AddPolicy = () => {
             type="multiple"
             allTenants={true}
             preselectedEnabled={true}
-            validators={{ required: "At least one tenant must be selected" }}
+            validators={{ required: 'At least one tenant must be selected' }}
           />
         </Grid>
 
-        <Divider sx={{ my: 2, width: "100%" }} />
+        <Divider sx={{ my: 2, width: '100%' }} />
 
         {/* TemplateList */}
         <Grid size={{ md: 12, xs: 12 }}>
@@ -58,15 +64,15 @@ const AddPolicy = () => {
             multiple={false}
             api={{
               queryKey: `TemplateListConnectionFilter`,
-              labelField: "name",
+              labelField: 'name',
               valueField: (option) => option,
-              url: "/api/ListConnectionFilterTemplates",
+              url: '/api/ListConnectionFilterTemplates',
             }}
             placeholder="Select a template or enter PowerShell JSON manually"
           />
         </Grid>
 
-        <Divider sx={{ my: 2, width: "100%" }} />
+        <Divider sx={{ my: 2, width: '100%' }} />
 
         <Grid size={{ xs: 12 }}>
           <CippFormComponent
@@ -76,14 +82,16 @@ const AddPolicy = () => {
             formControl={formControl}
             multiline
             rows={6}
-            validators={{ required: "Please enter the PowerShell parameters as JSON." }}
+            validators={{
+              required: 'Please enter the PowerShell parameters as JSON.',
+            }}
           />
         </Grid>
       </Grid>
     </CippFormPage>
-  );
-};
+  )
+}
 
-AddPolicy.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+AddPolicy.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default AddPolicy;
+export default AddPolicy

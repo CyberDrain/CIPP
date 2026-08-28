@@ -1,18 +1,21 @@
 // Legacy redirect: this page moved to /cipp/advanced/authentication/sam-app-permissions when the
 // Super Admin area was split into Super Admin / Container Management / Authentication.
 // Safe to delete once bookmarks and docs links have aged out.
-import { useEffect } from "react";
-import { useRouter } from "next/router";
+import { useEffect } from 'react'
+import { useRouter } from 'next/router'
 
 const Page = () => {
-  const router = useRouter();
+  const router = useRouter()
 
   useEffect(() => {
-    if (!router.isReady) return;
-    router.replace({ pathname: "/cipp/advanced/authentication/sam-app-permissions", query: router.query });
-  }, [router.isReady]);
+    if (!router.isReady) return
+    router.replace({
+      pathname: '/cipp/advanced/authentication/sam-app-permissions',
+      query: router.query,
+    })
+  }, [router.isReady])
 
-  return null;
-};
+  return null
+}
 
-export default Page;
+export default Page

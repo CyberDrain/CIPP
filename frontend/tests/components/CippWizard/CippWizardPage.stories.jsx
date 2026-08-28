@@ -29,7 +29,11 @@ export default {
   parameters: { msw: { handlers: [] } },
 }
 
-const args = { postUrl: '/api/AddVacationMode', wizardTitle: 'Vacation Mode', steps }
+const args = {
+  postUrl: '/api/AddVacationMode',
+  wizardTitle: 'Vacation Mode',
+  steps,
+}
 
 // jsdom has no layout engine, so overflow and stacking order are invisible to the unit
 // tests. This is the only place they can be measured.
@@ -52,12 +56,16 @@ export const PhoneWidth = {
 
     // advancing moves the bar
     await userEvent.click(canvas.getByRole('button', { name: /next step/i }))
-    await waitFor(() => expect(canvas.getByText('Step 2 of 5')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(canvas.getByText('Step 2 of 5')).toBeInTheDocument()
+    )
 
     // column-reverse: the primary action sits above Back, and both span the card
     const next = canvas.getByRole('button', { name: /next step/i })
     const back = canvas.getByRole('button', { name: /^back$/i })
-    expect(back.getBoundingClientRect().top).toBeGreaterThan(next.getBoundingClientRect().top)
+    expect(back.getBoundingClientRect().top).toBeGreaterThan(
+      next.getBoundingClientRect().top
+    )
     expect(next.getBoundingClientRect().width).toBeGreaterThan(
       card.getBoundingClientRect().width * 0.7
     )
@@ -73,7 +81,9 @@ export const DesktopWidth = {
     const canvas = within(canvasElement)
     await canvas.findByText('Step content')
 
-    await waitFor(() => expect(canvasElement.querySelector('.MuiStepper-root')).not.toBeNull())
+    await waitFor(() =>
+      expect(canvasElement.querySelector('.MuiStepper-root')).not.toBeNull()
+    )
     expect(canvas.queryByRole('progressbar')).toBeNull()
     expect(canvas.queryByText('Step 1 of 5')).toBeNull()
 

@@ -32,7 +32,8 @@ const Page = () => {
       type: 'POST',
       url: '/api/ExecModifyMBPerms',
       icon: <Delete />,
-      confirmText: 'Remove the selected permissions from the selected mailboxes?',
+      confirmText:
+        'Remove the selected permissions from the selected mailboxes?',
       multiPost: false,
       relatedQueryKeys,
       fields: [
@@ -52,7 +53,10 @@ const Page = () => {
                 const key = `${p.User}|${p.AccessRights}`
                 if (!seen.has(key)) {
                   seen.add(key)
-                  options.push({ label: `${p.User} — ${p.AccessRights}`, value: key })
+                  options.push({
+                    label: `${p.User} — ${p.AccessRights}`,
+                    value: key,
+                  })
                 }
               })
             )
@@ -62,7 +66,9 @@ const Page = () => {
       ],
       customDataformatter: (rows, action, formData) => {
         const rowArray = Array.isArray(rows) ? rows : [rows]
-        const selected = new Set((formData.permissionsToRemove ?? []).map((o) => o.value))
+        const selected = new Set(
+          (formData.permissionsToRemove ?? []).map((o) => o.value)
+        )
         // Group per tenant; only remove grants each mailbox actually has
         const byTenant = {}
         rowArray.forEach((mailbox) => {
@@ -74,13 +80,18 @@ const Page = () => {
               Modification: 'Remove',
             }))
           if (!permissions.length) return
-          ;(byTenant[mailbox.Tenant] ??= []).push({ userID: mailbox.MailboxUPN, permissions })
+          ;(byTenant[mailbox.Tenant] ??= []).push({
+            userID: mailbox.MailboxUPN,
+            permissions,
+          })
         })
         // Array return => one POST per tenant, so AllTenants selections work
-        return Object.entries(byTenant).map(([tenantFilter, mailboxRequests]) => ({
-          mailboxRequests,
-          tenantFilter,
-        }))
+        return Object.entries(byTenant).map(
+          ([tenantFilter, mailboxRequests]) => ({
+            mailboxRequests,
+            tenantFilter,
+          })
+        )
       },
     },
   ]
@@ -91,7 +102,8 @@ const Page = () => {
       type: 'POST',
       url: '/api/ExecModifyMBPerms',
       icon: <Delete />,
-      confirmText: "Remove the selected users' permissions from the selected mailboxes?",
+      confirmText:
+        "Remove the selected users' permissions from the selected mailboxes?",
       multiPost: false,
       relatedQueryKeys,
       fields: [
@@ -111,7 +123,10 @@ const Page = () => {
                 const key = `${p.MailboxUPN}|${p.AccessRights}`
                 if (!seen.has(key)) {
                   seen.add(key)
-                  options.push({ label: `${p.MailboxUPN} — ${p.AccessRights}`, value: key })
+                  options.push({
+                    label: `${p.MailboxUPN} — ${p.AccessRights}`,
+                    value: key,
+                  })
                 }
               })
             )
@@ -121,7 +136,9 @@ const Page = () => {
       ],
       customDataformatter: (rows, action, formData) => {
         const rowArray = Array.isArray(rows) ? rows : [rows]
-        const selected = new Set((formData.permissionsToRemove ?? []).map((o) => o.value))
+        const selected = new Set(
+          (formData.permissionsToRemove ?? []).map((o) => o.value)
+        )
         // Group per tenant; strip each selected user from the chosen mailboxes only
         const byTenant = {}
         rowArray.forEach((user) => {
@@ -131,16 +148,22 @@ const Page = () => {
               ;(byTenant[user.Tenant] ??= []).push({
                 userID: p.MailboxUPN,
                 permissions: [
-                  { UserID: user.User, PermissionLevel: p.AccessRights, Modification: 'Remove' },
+                  {
+                    UserID: user.User,
+                    PermissionLevel: p.AccessRights,
+                    Modification: 'Remove',
+                  },
                 ],
               })
             })
         })
         // Array return => one POST per tenant, so AllTenants selections work
-        return Object.entries(byTenant).map(([tenantFilter, mailboxRequests]) => ({
-          mailboxRequests,
-          tenantFilter,
-        }))
+        return Object.entries(byTenant).map(
+          ([tenantFilter, mailboxRequests]) => ({
+            mailboxRequests,
+            tenantFilter,
+          })
+        )
       },
     },
   ]

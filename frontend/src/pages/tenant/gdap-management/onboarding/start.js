@@ -7,86 +7,97 @@ import {
   CardActions,
   CardContent,
   Typography,
-} from "@mui/material";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
-import { useForm, useWatch } from "react-hook-form";
-import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
-import GDAPRoles from "../../../../data/GDAPRoles";
-import { Box, Stack } from "@mui/system";
-import { Grid } from "@mui/system";
-import { CippPropertyList } from "../../../../components/CippComponents/CippPropertyList";
-import { ApiGetCall, ApiGetCallWithPagination, ApiPostCall } from "../../../../api/ApiCall";
-import { useEffect, useState } from "react";
-import { getCippFormatting } from "../../../../utils/get-cipp-formatting";
-import { router } from "next/router";
-import cippDefaults from "../../../../data/CIPPDefaultGDAPRoles";
-import { WizardSteps } from "../../../../components/CippWizard/wizard-steps";
-import { ExpandMore, PlayArrow, Replay } from "@mui/icons-material";
-import CippPageCard from "../../../../components/CippCards/CippPageCard";
-import { getCippTranslation } from "../../../../utils/get-cipp-translation";
-import CippDataTableButton from "../../../../components/CippTable/CippDataTableButton";
+} from '@mui/material'
+import { Layout as DashboardLayout } from '../../../../layouts/index.js'
+import { useForm, useWatch } from 'react-hook-form'
+import CippFormComponent from '../../../../components/CippComponents/CippFormComponent'
+import GDAPRoles from '../../../../data/GDAPRoles'
+import { Box, Stack } from '@mui/system'
+import { Grid } from '@mui/system'
+import { CippPropertyList } from '../../../../components/CippComponents/CippPropertyList'
+import {
+  ApiGetCall,
+  ApiGetCallWithPagination,
+  ApiPostCall,
+} from '../../../../api/ApiCall'
+import { useEffect, useState } from 'react'
+import { getCippFormatting } from '../../../../utils/get-cipp-formatting'
+import { router } from 'next/router'
+import cippDefaults from '../../../../data/CIPPDefaultGDAPRoles'
+import { WizardSteps } from '../../../../components/CippWizard/wizard-steps'
+import { ExpandMore, PlayArrow, Replay } from '@mui/icons-material'
+import CippPageCard from '../../../../components/CippCards/CippPageCard'
+import { getCippTranslation } from '../../../../utils/get-cipp-translation'
+import CippDataTableButton from '../../../../components/CippTable/CippDataTableButton'
 
 const Page = () => {
-  const [currentRelationship, setCurrentRelationship] = useState(null);
-  const [currentInvite, setCurrentInvite] = useState(null);
-  const [rolesMissingFromMapping, setRolesMissingFromMapping] = useState([]);
-  const [rolesMissingFromRelationship, setRolesMissingFromRelationship] = useState([]);
-  const [missingDefaults, setMissingDefaults] = useState(false);
-  const [currentOnboarding, setCurrentOnboarding] = useState(null);
-  const [activeStep, setActiveStep] = useState(0);
-  const [pollOnboarding, setPollOnboarding] = useState(false);
-  const [showOnboardingStatus, setShowOnboardingStatus] = useState(false);
-  const [invalidRelationship, setInvalidRelationship] = useState(false);
+  const [currentRelationship, setCurrentRelationship] = useState(null)
+  const [currentInvite, setCurrentInvite] = useState(null)
+  const [rolesMissingFromMapping, setRolesMissingFromMapping] = useState([])
+  const [rolesMissingFromRelationship, setRolesMissingFromRelationship] =
+    useState([])
+  const [missingDefaults, setMissingDefaults] = useState(false)
+  const [currentOnboarding, setCurrentOnboarding] = useState(null)
+  const [activeStep, setActiveStep] = useState(0)
+  const [pollOnboarding, setPollOnboarding] = useState(false)
+  const [showOnboardingStatus, setShowOnboardingStatus] = useState(false)
+  const [invalidRelationship, setInvalidRelationship] = useState(false)
 
-  const queryId = router.query.id;
+  const queryId = router.query.id
   const formControl = useForm({
-    mode: "onChange",
-  });
+    mode: 'onChange',
+  })
 
   const currentInvites = ApiGetCallWithPagination({
-    url: "/api/ListGDAPInvite",
-    queryKey: "ListGDAPInvite",
-  });
+    url: '/api/ListGDAPInvite',
+    queryKey: 'ListGDAPInvite',
+  })
 
   const relationshipList = ApiGetCall({
-    url: "/api/ListGDAPRelationships",
-    queryKey: "GDAPRelationshipOnboarding",
-  });
+    url: '/api/ListGDAPRelationships',
+    queryKey: 'GDAPRelationshipOnboarding',
+  })
   const onboardingList = ApiGetCallWithPagination({
-    url: "/api/ListTenantOnboarding",
-    queryKey: "ListTenantOnboarding",
-  });
+    url: '/api/ListTenantOnboarding',
+    queryKey: 'ListTenantOnboarding',
+  })
 
   const startOnboarding = ApiPostCall({
     urlFromData: true,
     onResult: (data) => {
-      setCurrentOnboarding(data);
-      var stepCount = 0;
+      setCurrentOnboarding(data)
+      var stepCount = 0
       data.OnboardingSteps.map((step) => {
-        if (step.Status !== "pending" && step.Status !== "running" && step.Status !== "failed") {
-          stepCount++;
+        if (
+          step.Status !== 'pending' &&
+          step.Status !== 'running' &&
+          step.Status !== 'failed'
+        ) {
+          stepCount++
         }
-      });
-      setActiveStep(stepCount);
+      })
+      setActiveStep(stepCount)
 
-      if (data?.Status === "succeeded" || data?.Status === "failed") {
-        var runningSteps = data.OnboardingSteps?.find((step) => step.Status === "running");
+      if (data?.Status === 'succeeded' || data?.Status === 'failed') {
+        var runningSteps = data.OnboardingSteps?.find(
+          (step) => step.Status === 'running'
+        )
         if (!runningSteps) {
-          setPollOnboarding(false);
+          setPollOnboarding(false)
         }
       }
     },
-  });
+  })
 
   const selectedRelationship = useWatch({
     control: formControl.control,
-    name: "id",
-  });
+    name: 'id',
+  })
 
   const selectedRole = useWatch({
     control: formControl.control,
-    name: "gdapRoles",
-  });
+    name: 'gdapRoles',
+  })
 
   useEffect(() => {
     if (
@@ -95,23 +106,24 @@ const Page = () => {
       onboardingList.isSuccess &&
       selectedRelationship !== currentRelationship
     ) {
-      var formValue = selectedRelationship;
+      var formValue = selectedRelationship
       if (!selectedRelationship?.value && queryId) {
         var relationship = relationshipList?.data?.Results?.find(
           (relationship) => relationship?.id === queryId
-        );
+        )
 
         if (
           relationship &&
-          (relationship?.status === "active" || relationship?.status === "approvalPending") &&
-          !relationship?.customer?.displayName.startsWith("MLT_")
+          (relationship?.status === 'active' ||
+            relationship?.status === 'approvalPending') &&
+          !relationship?.customer?.displayName.startsWith('MLT_')
         ) {
           formValue = {
             label:
-              (relationship?.customer?.displayName ?? "Pending Invite") +
-              " - (" +
+              (relationship?.customer?.displayName ?? 'Pending Invite') +
+              ' - (' +
               relationship?.id +
-              ")",
+              ')',
             value: relationship?.id,
             addedFields: {
               customer: relationship?.customer,
@@ -122,46 +134,50 @@ const Page = () => {
               autoExtendDuration: relationship?.autoExtendDuration,
               lastModifiedDateTime: relationship?.lastModifiedDateTime,
             },
-          };
-          formControl.setValue("id", formValue);
-          formControl.trigger();
-          setInvalidRelationship(false);
+          }
+          formControl.setValue('id', formValue)
+          formControl.trigger()
+          setInvalidRelationship(false)
         } else {
-          setInvalidRelationship(true);
+          setInvalidRelationship(true)
         }
       }
       const invite =
-        currentInvites?.data?.pages?.[0] && Array.isArray(currentInvites.data.pages[0])
-          ? currentInvites.data.pages[0].find((invite) => invite?.RowKey === formValue?.value)
-          : null;
+        currentInvites?.data?.pages?.[0] &&
+        Array.isArray(currentInvites.data.pages[0])
+          ? currentInvites.data.pages[0].find(
+              (invite) => invite?.RowKey === formValue?.value
+            )
+          : null
 
       const onboarding =
-        onboardingList.data?.pages?.[0] && Array.isArray(onboardingList.data.pages[0])
+        onboardingList.data?.pages?.[0] &&
+        Array.isArray(onboardingList.data.pages[0])
           ? onboardingList.data.pages[0].find(
               (onboarding) => onboarding?.RowKey === formValue?.value
             )
-          : null;
+          : null
       if (onboarding) {
-        setCurrentOnboarding(onboarding);
-        var stepCount = 0;
+        setCurrentOnboarding(onboarding)
+        var stepCount = 0
         onboarding?.OnboardingSteps?.map((step) => {
           if (
-            step?.Status !== "pending" &&
-            step?.Status !== "running" &&
-            step?.Status !== "failed"
+            step?.Status !== 'pending' &&
+            step?.Status !== 'running' &&
+            step?.Status !== 'failed'
           ) {
-            stepCount++;
+            stepCount++
           }
-        });
-        setShowOnboardingStatus(true);
-        setActiveStep(stepCount);
+        })
+        setShowOnboardingStatus(true)
+        setActiveStep(stepCount)
       } else if (currentOnboarding !== null) {
-        setShowOnboardingStatus(false);
-        setCurrentOnboarding(null);
-        setActiveStep(0);
+        setShowOnboardingStatus(false)
+        setCurrentOnboarding(null)
+        setActiveStep(0)
       }
-      setCurrentRelationship(formValue);
-      setCurrentInvite(invite ?? null);
+      setCurrentRelationship(formValue)
+      setCurrentInvite(invite ?? null)
     }
   }, [
     relationshipList.isSuccess,
@@ -169,142 +185,159 @@ const Page = () => {
     onboardingList.isSuccess,
     selectedRelationship,
     queryId,
-  ]);
+  ])
 
   useEffect(() => {
     if (currentRelationship?.value) {
-      var currentRoles = [];
+      var currentRoles = []
       if (currentInvite?.RoleMappings) {
-        currentRoles = currentInvite?.RoleMappings;
+        currentRoles = currentInvite?.RoleMappings
       } else {
-        currentRoles = selectedRole?.value;
+        currentRoles = selectedRole?.value
       }
-      var relationshipRoles = currentRelationship.addedFields.accessDetails.unifiedRoles;
-      var missingRoles = [];
-      var missingRolesRelationship = [];
+      var relationshipRoles =
+        currentRelationship.addedFields.accessDetails.unifiedRoles
+      var missingRoles = []
+      var missingRolesRelationship = []
 
       currentRoles?.forEach((role) => {
         if (
           !relationshipRoles?.find(
-            (relationshipRole) => relationshipRole.roleDefinitionId === role.roleDefinitionId
+            (relationshipRole) =>
+              relationshipRole.roleDefinitionId === role.roleDefinitionId
           )
         ) {
-          missingRoles.push(role);
+          missingRoles.push(role)
         }
-      });
+      })
 
       relationshipRoles?.forEach((role) => {
         if (
           !currentRoles?.find(
-            (currentRole) => currentRole.roleDefinitionId === role.roleDefinitionId
+            (currentRole) =>
+              currentRole.roleDefinitionId === role.roleDefinitionId
           )
         ) {
           // lookup role from GDAPRoles
-          var role = GDAPRoles?.find((gdapRole) => gdapRole.ObjectId === role.roleDefinitionId);
-          missingRolesRelationship.push(role);
+          var role = GDAPRoles?.find(
+            (gdapRole) => gdapRole.ObjectId === role.roleDefinitionId
+          )
+          missingRolesRelationship.push(role)
         }
-      });
+      })
 
-      var missingDefaults = [];
+      var missingDefaults = []
       cippDefaults.forEach((defaultRole) => {
-        if (!relationshipRoles?.find((role) => defaultRole?.value === role?.roleDefinitionId)) {
-          missingDefaults.push(defaultRole);
+        if (
+          !relationshipRoles?.find(
+            (role) => defaultRole?.value === role?.roleDefinitionId
+          )
+        ) {
+          missingDefaults.push(defaultRole)
         }
-      });
-      setMissingDefaults(missingDefaults.length > 0);
-      setRolesMissingFromMapping(missingRoles);
-      setRolesMissingFromRelationship(missingRolesRelationship);
-      setInvalidRelationship(false);
+      })
+      setMissingDefaults(missingDefaults.length > 0)
+      setRolesMissingFromMapping(missingRoles)
+      setRolesMissingFromRelationship(missingRolesRelationship)
+      setInvalidRelationship(false)
     }
-  }, [selectedRole, currentInvite, currentRelationship]);
+  }, [selectedRole, currentInvite, currentRelationship])
 
   useEffect(() => {
     // poll onboarding status
     if (pollOnboarding && startOnboarding.isSuccess) {
       const interval = setInterval(() => {
         startOnboarding.mutate({
-          url: "/api/ExecOnboardTenant",
+          url: '/api/ExecOnboardTenant',
           data: {
             id: currentRelationship?.value,
           },
-        });
-      }, 5000);
-      return () => clearInterval(interval);
+        })
+      }, 5000)
+      return () => clearInterval(interval)
     }
-  }, [pollOnboarding, startOnboarding.isSuccess, startOnboarding?.data?.data]);
+  }, [pollOnboarding, startOnboarding.isSuccess, startOnboarding?.data?.data])
 
   const handleSubmit = () => {
     if (formControl.formState.errors.id) {
-      return;
+      return
     }
     var data = {
       id: currentRelationship?.value,
-    };
+    }
     if (!currentInvite) {
-      data.autoMapRoles = true;
-      data.gdapRoles = selectedRole?.value;
+      data.autoMapRoles = true
+      data.gdapRoles = selectedRole?.value
     }
-    if (formControl.getValues("ignoreMissingRoles")) {
-      data.ignoreMissingRoles = Boolean(formControl.getValues("ignoreMissingRoles"));
+    if (formControl.getValues('ignoreMissingRoles')) {
+      data.ignoreMissingRoles = Boolean(
+        formControl.getValues('ignoreMissingRoles')
+      )
     }
-    if (formControl.getValues("standardsExcludeAllTenants")) {
+    if (formControl.getValues('standardsExcludeAllTenants')) {
       data.standardsExcludeAllTenants = Boolean(
-        formControl.getValues("standardsExcludeAllTenants")
-      );
+        formControl.getValues('standardsExcludeAllTenants')
+      )
     }
 
     startOnboarding.mutate({
-      url: "/api/ExecOnboardTenant",
+      url: '/api/ExecOnboardTenant',
       data: data,
-    });
-    setPollOnboarding(true);
-    setShowOnboardingStatus(true);
-  };
+    })
+    setPollOnboarding(true)
+    setShowOnboardingStatus(true)
+  }
 
   const handleRetry = () => {
     if (formControl.formState.errors.id) {
-      return;
+      return
     }
     var data = {
       id: currentRelationship?.value,
       retry: true,
-    };
+    }
     if (!currentInvite) {
-      data.autoMapRoles = true;
-      data.gdapRoles = selectedRole?.value;
+      data.autoMapRoles = true
+      data.gdapRoles = selectedRole?.value
     }
-    if (formControl.getValues("ignoreMissingRoles")) {
-      data.IgnoreMissingRoles = Boolean(formControl.getValues("ignoreMissingRoles"));
+    if (formControl.getValues('ignoreMissingRoles')) {
+      data.IgnoreMissingRoles = Boolean(
+        formControl.getValues('ignoreMissingRoles')
+      )
     }
-    if (formControl.getValues("standardsExcludeAllTenants")) {
+    if (formControl.getValues('standardsExcludeAllTenants')) {
       data.standardsExcludeAllTenants = Boolean(
-        formControl.getValues("standardsExcludeAllTenants")
-      );
+        formControl.getValues('standardsExcludeAllTenants')
+      )
     }
 
     startOnboarding.mutate({
-      url: "/api/ExecOnboardTenant",
+      url: '/api/ExecOnboardTenant',
       data: data,
-    });
-    setPollOnboarding(true);
-  };
+    })
+    setPollOnboarding(true)
+  }
 
   return (
     <>
-      <CippPageCard title="Start Tenant Onboarding" backButtonTitle="Tenant Onboarding">
+      <CippPageCard
+        title="Start Tenant Onboarding"
+        backButtonTitle="Tenant Onboarding"
+      >
         <CardContent>
           <Grid container spacing={4}>
             <Grid size={{ sm: 12, md: 6 }}>
               <Stack spacing={2}>
                 <Alert severity="info">
-                  This page will allow you to start the onboarding process for a tenant. To proceed,
-                  select a GDAP Relationship from the dropdown below. If the relationship has not
-                  been mapped, you will be prompted to select a GDAP Role Template.
+                  This page will allow you to start the onboarding process for a
+                  tenant. To proceed, select a GDAP Relationship from the
+                  dropdown below. If the relationship has not been mapped, you
+                  will be prompted to select a GDAP Role Template.
                 </Alert>
                 {invalidRelationship && (
                   <Alert severity="error">
-                    The selected relationship ({queryId}) is not eligible for onboarding. Please
-                    select a different relationship.
+                    The selected relationship ({queryId}) is not eligible for
+                    onboarding. Please select a different relationship.
                   </Alert>
                 )}
                 <CippFormComponent
@@ -313,33 +346,36 @@ const Page = () => {
                   label="Select GDAP Relationship"
                   type="autoComplete"
                   api={{
-                    url: "/api/ListGDAPRelationships",
+                    url: '/api/ListGDAPRelationships',
                     excludeTenantFilter: true,
-                    queryKey: "GDAPRelationships",
-                    dataKey: "Results",
+                    queryKey: 'GDAPRelationships',
+                    dataKey: 'Results',
                     labelField: (option) =>
-                      (option?.customer?.displayName ?? "Pending Invite") +
-                      " - (" +
+                      (option?.customer?.displayName ?? 'Pending Invite') +
+                      ' - (' +
                       option?.id +
-                      ")",
-                    valueField: "id",
+                      ')',
+                    valueField: 'id',
                     addedField: {
-                      customer: "customer",
-                      id: "id",
-                      displayName: "displayName",
-                      createdDateTime: "createdDateTime",
-                      accessDetails: "accessDetails",
-                      status: "status",
-                      autoExtendDuration: "autoExtendDuration",
-                      lastModifiedDateTime: "lastModifiedDateTime",
+                      customer: 'customer',
+                      id: 'id',
+                      displayName: 'displayName',
+                      createdDateTime: 'createdDateTime',
+                      accessDetails: 'accessDetails',
+                      status: 'status',
+                      autoExtendDuration: 'autoExtendDuration',
+                      lastModifiedDateTime: 'lastModifiedDateTime',
                     },
                     dataFilter: (data) => {
                       return data?.filter(
                         (relationship) =>
-                          (relationship?.addedFields?.status === "active" ||
-                            relationship?.addedFields?.status === "approvalPending") &&
-                          !relationship?.addedFields?.displayName?.startsWith("MLT_")
-                      );
+                          (relationship?.addedFields?.status === 'active' ||
+                            relationship?.addedFields?.status ===
+                              'approvalPending') &&
+                          !relationship?.addedFields?.displayName?.startsWith(
+                            'MLT_'
+                          )
+                      )
                     },
                     showRefresh: true,
                   }}
@@ -349,9 +385,9 @@ const Page = () => {
                   validators={{
                     validate: (value) => {
                       if (!value) {
-                        return "Please select a GDAP Relationship";
+                        return 'Please select a GDAP Relationship'
                       }
-                      return true;
+                      return true
                     },
                   }}
                 />
@@ -369,19 +405,19 @@ const Page = () => {
                       label="Assign a GDAP Role Template"
                       type="autoComplete"
                       api={{
-                        url: "/api/ExecGDAPRoleTemplate",
-                        queryKey: "GDAPTemplates",
-                        dataKey: "Results",
+                        url: '/api/ExecGDAPRoleTemplate',
+                        queryKey: 'GDAPTemplates',
+                        dataKey: 'Results',
                         labelField: (option) => option?.TemplateId,
-                        valueField: "RoleMappings",
+                        valueField: 'RoleMappings',
                       }}
                       required={true}
                       validators={{
                         validate: (value) => {
                           if (!value) {
-                            return "Please select a GDAP Role Template";
+                            return 'Please select a GDAP Role Template'
                           }
-                          return true;
+                          return true
                         },
                       }}
                       multiple={false}
@@ -392,9 +428,10 @@ const Page = () => {
                 {missingDefaults && (
                   <>
                     <Alert severity="warning">
-                      The selected relationship does not contain all the default roles. CIPP may not
-                      function correctly if this is the only relationship with the tenant.
-                      Onboarding will fail unless you ignore the missing default roles.
+                      The selected relationship does not contain all the default
+                      roles. CIPP may not function correctly if this is the only
+                      relationship with the tenant. Onboarding will fail unless
+                      you ignore the missing default roles.
                     </Alert>
                     <CippFormComponent
                       formControl={formControl}
@@ -415,37 +452,49 @@ const Page = () => {
                 {currentRelationship?.value && (
                   <>
                     {currentRelationship?.addedFields?.accessDetails?.unifiedRoles.some(
-                      (role) => role.roleDefinitionId === "62e90394-69f5-4237-9190-012177145e10"
+                      (role) =>
+                        role.roleDefinitionId ===
+                        '62e90394-69f5-4237-9190-012177145e10'
                     ) && (
                       <Alert severity="warning">
-                        The Global Administrator role is a highly privileged role that should be
-                        used with caution. GDAP Relationships with this role will not be eligible
-                        for auto-extend.
-                      </Alert>
-                    )}
-                    {(currentInvite || selectedRole) && rolesMissingFromMapping.length > 0 && (
-                      <Alert severity="warning">
-                        The following roles are not available in the selected relationship and will
-                        not be mapped:{" "}
-                        {rolesMissingFromMapping.map((role) => role.RoleName).join(", ")}
-                      </Alert>
-                    )}
-                    {(currentInvite || selectedRole) && rolesMissingFromRelationship.length > 0 && (
-                      <Alert severity="warning">
-                        The following roles are not mapped with the current template:{" "}
-                        {rolesMissingFromRelationship
-                          .map((role) => role?.Name ?? "Unknown Role")
-                          .join(", ")}
+                        The Global Administrator role is a highly privileged
+                        role that should be used with caution. GDAP
+                        Relationships with this role will not be eligible for
+                        auto-extend.
                       </Alert>
                     )}
                     {(currentInvite || selectedRole) &&
+                      rolesMissingFromMapping.length > 0 && (
+                        <Alert severity="warning">
+                          The following roles are not available in the selected
+                          relationship and will not be mapped:{' '}
+                          {rolesMissingFromMapping
+                            .map((role) => role.RoleName)
+                            .join(', ')}
+                        </Alert>
+                      )}
+                    {(currentInvite || selectedRole) &&
+                      rolesMissingFromRelationship.length > 0 && (
+                        <Alert severity="warning">
+                          The following roles are not mapped with the current
+                          template:{' '}
+                          {rolesMissingFromRelationship
+                            .map((role) => role?.Name ?? 'Unknown Role')
+                            .join(', ')}
+                        </Alert>
+                      )}
+                    {(currentInvite || selectedRole) &&
                       rolesMissingFromMapping.length === 0 &&
                       rolesMissingFromRelationship.length === 0 && (
-                        <Alert severity="success">All roles are mapped correctly</Alert>
+                        <Alert severity="success">
+                          All roles are mapped correctly
+                        </Alert>
                       )}
                     <Accordion variant="outlined" defaultExpanded={true}>
                       <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography variant="h6">Current Relationship Details</Typography>
+                        <Typography variant="h6">
+                          Current Relationship Details
+                        </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
                         <CippPropertyList
@@ -453,67 +502,72 @@ const Page = () => {
                           showDivider={false}
                           propertyItems={[
                             {
-                              label: "Customer",
+                              label: 'Customer',
                               value:
-                                currentRelationship?.addedFields?.customer?.displayName ??
-                                "Pending Invite",
+                                currentRelationship?.addedFields?.customer
+                                  ?.displayName ?? 'Pending Invite',
                             },
                             {
-                              label: "Status",
+                              label: 'Status',
                               value: getCippFormatting(
                                 currentRelationship?.addedFields?.status,
-                                "status",
-                                "text"
+                                'status',
+                                'text'
                               ),
                             },
                             {
-                              label: "Auto Extend Duration",
+                              label: 'Auto Extend Duration',
                               value:
-                                currentRelationship?.addedFields?.autoExtendDuration == "PT0S"
-                                  ? "Not eligible for auto-extend"
+                                currentRelationship?.addedFields
+                                  ?.autoExtendDuration == 'PT0S'
+                                  ? 'Not eligible for auto-extend'
                                   : getCippFormatting(
-                                      currentRelationship?.addedFields?.autoExtendDuration,
-                                      "autoExtendDuration",
-                                      "text"
+                                      currentRelationship?.addedFields
+                                        ?.autoExtendDuration,
+                                      'autoExtendDuration',
+                                      'text'
                                     ),
                             },
                             {
-                              label: "Pending Invite",
-                              value: currentInvite?.RowKey ? "Yes" : "No",
+                              label: 'Pending Invite',
+                              value: currentInvite?.RowKey ? 'Yes' : 'No',
                             },
                             {
-                              label: "Created Date",
+                              label: 'Created Date',
                               value: getCippFormatting(
-                                currentRelationship?.addedFields?.createdDateTime,
-                                "createdDateTime",
-                                "date"
+                                currentRelationship?.addedFields
+                                  ?.createdDateTime,
+                                'createdDateTime',
+                                'date'
                               ),
                             },
                             {
-                              label: "Last Modified Date",
+                              label: 'Last Modified Date',
                               value: getCippFormatting(
-                                currentRelationship?.addedFields?.lastModifiedDateTime,
-                                "lastModifiedDateTime",
-                                "date"
+                                currentRelationship?.addedFields
+                                  ?.lastModifiedDateTime,
+                                'lastModifiedDateTime',
+                                'date'
                               ),
                             },
                             {
-                              label: "Invite URL",
+                              label: 'Invite URL',
                               value: getCippFormatting(
-                                "https://admin.cloud.microsoft/?#/partners/invitation/granularAdminRelationships/" +
+                                'https://admin.cloud.microsoft/?#/partners/invitation/granularAdminRelationships/' +
                                   currentRelationship.value,
-                                "InviteUrl",
-                                "url"
+                                'InviteUrl',
+                                'url'
                               ),
                             },
                             {
-                              label: "Access Details",
+                              label: 'Access Details',
                               value: getCippFormatting(
                                 currentInvite
                                   ? currentInvite.RoleMappings
-                                  : currentRelationship?.addedFields?.accessDetails?.unifiedRoles,
-                                "unifiedRoles",
-                                "object"
+                                  : currentRelationship?.addedFields
+                                      ?.accessDetails?.unifiedRoles,
+                                'unifiedRoles',
+                                'object'
                               ),
                             },
                           ]}
@@ -529,14 +583,23 @@ const Page = () => {
                 <Stack spacing={2}>
                   <Box>
                     <Typography variant="h4">
-                      Onboarding Status: {getCippTranslation(currentOnboarding?.Status)}
+                      Onboarding Status:{' '}
+                      {getCippTranslation(currentOnboarding?.Status)}
                     </Typography>
                     <Typography variant="subtitle2" color="textSecondary">
-                      Updated {getCippFormatting(currentOnboarding?.Timestamp, "Timestamp", "date")}
+                      Updated{' '}
+                      {getCippFormatting(
+                        currentOnboarding?.Timestamp,
+                        'Timestamp',
+                        'date'
+                      )}
                     </Typography>
                   </Box>
                   <Box>
-                    <CippDataTableButton data={currentOnboarding?.Logs} title="Logs:" />
+                    <CippDataTableButton
+                      data={currentOnboarding?.Logs}
+                      title="Logs:"
+                    />
                   </Box>
                   <WizardSteps
                     activeStep={activeStep}
@@ -545,7 +608,7 @@ const Page = () => {
                       currentOnboarding?.OnboardingSteps.map((step) => ({
                         title: step.Title,
                         description: step.Message,
-                        error: step.Status === "failed",
+                        error: step.Status === 'failed',
                       })) ?? []
                     }
                   />
@@ -554,17 +617,20 @@ const Page = () => {
             )}
           </Grid>
         </CardContent>
-        <CardActions sx={{ justifyContent: "flex-end" }}>
+        <CardActions sx={{ justifyContent: 'flex-end' }}>
           <Stack spacing={1} direction="row">
             {currentOnboarding && (
               <Button
                 variant="outlined"
                 onClick={() => {
-                  formControl.trigger();
-                  handleRetry();
+                  formControl.trigger()
+                  handleRetry()
                 }}
                 startIcon={<Replay />}
-                disabled={!formControl.formState.isValid || currentOnboarding?.Status === "running"}
+                disabled={
+                  !formControl.formState.isValid ||
+                  currentOnboarding?.Status === 'running'
+                }
               >
                 Retry
               </Button>
@@ -572,16 +638,16 @@ const Page = () => {
             <Button
               variant="contained"
               onClick={() => {
-                formControl.trigger();
-                handleSubmit();
+                formControl.trigger()
+                handleSubmit()
               }}
               startIcon={<PlayArrow />}
               disabled={
                 !formControl.formState.isValid ||
-                currentOnboarding?.Status === "succeeded" ||
-                currentOnboarding?.Status === "failed" ||
-                currentOnboarding?.Status === "queued" ||
-                currentOnboarding?.Status === "running"
+                currentOnboarding?.Status === 'succeeded' ||
+                currentOnboarding?.Status === 'failed' ||
+                currentOnboarding?.Status === 'queued' ||
+                currentOnboarding?.Status === 'running'
               }
             >
               Start
@@ -590,9 +656,9 @@ const Page = () => {
         </CardActions>
       </CippPageCard>
     </>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

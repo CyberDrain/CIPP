@@ -4,7 +4,13 @@ import { Layout as DashboardLayout } from '../../../layouts/index.js'
 import { CippTablePage } from '../../../components/CippComponents/CippTablePage.jsx'
 import { Button, SvgIcon, Stack, Box } from '@mui/material'
 import { TrashIcon } from '@heroicons/react/24/outline'
-import { Add, RestartAlt, NotificationsOff, Visibility, VisibilityOff } from '@mui/icons-material'
+import {
+  Add,
+  RestartAlt,
+  NotificationsOff,
+  Visibility,
+  VisibilityOff,
+} from '@mui/icons-material'
 import { CippApiDialog } from '../../../components/CippComponents/CippApiDialog'
 import { useDialog } from '../../../hooks/use-dialog'
 import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
@@ -17,7 +23,12 @@ const Page = () => {
   const apiUrl = '/api/ListExcludedLicenses'
   const createDialog = useDialog()
   const resetDialog = useDialog()
-  const simpleColumns = ['Product_Display_Name', 'GUID', 'ExclusionType', 'ShowInLicenseDropdown']
+  const simpleColumns = [
+    'Product_Display_Name',
+    'GUID',
+    'ExclusionType',
+    'ShowInLicenseDropdown',
+  ]
 
   const allLicenseOptions = useMemo(() => {
     const allLicenses = getM365Licenses()
@@ -42,7 +53,9 @@ const Page = () => {
 
     return options
       .map((opt) =>
-        nameCounts[opt.label] > 1 ? { ...opt, label: `${opt.label} (${opt.value})` } : opt
+        nameCounts[opt.label] > 1
+          ? { ...opt, label: `${opt.label} (${opt.value})` }
+          : opt
       )
       .sort((a, b) => a.label.localeCompare(b.label))
   }, [])
@@ -52,7 +65,11 @@ const Page = () => {
       label: 'Only Exclude from Alerts',
       type: 'POST',
       url: '/api/ExecExcludeLicenses',
-      data: { Action: '!AlertOnly', GUID: 'GUID', SKUName: 'Product_Display_Name' },
+      data: {
+        Action: '!AlertOnly',
+        GUID: 'GUID',
+        SKUName: 'Product_Display_Name',
+      },
       confirmText:
         'This license will remain visible in CIPP but will be excluded from alerts. Continue?',
       icon: <NotificationsOff fontSize="small" />,
@@ -67,7 +84,8 @@ const Page = () => {
         SKUName: 'Product_Display_Name',
         ShowInDropdown: true,
       },
-      confirmText: '[Product_Display_Name] will be available in license dropdowns. Continue?',
+      confirmText:
+        '[Product_Display_Name] will be available in license dropdowns. Continue?',
       icon: <Visibility fontSize="small" />,
       condition: (row) => row.ShowInLicenseDropdown !== true,
     },
@@ -81,7 +99,8 @@ const Page = () => {
         SKUName: 'Product_Display_Name',
         ShowInDropdown: false,
       },
-      confirmText: '[Product_Display_Name] will be hidden from license dropdowns. Continue?',
+      confirmText:
+        '[Product_Display_Name] will be hidden from license dropdowns. Continue?',
       icon: <VisibilityOff fontSize="small" />,
       condition: (row) => row.ShowInLicenseDropdown === true,
     },
@@ -130,7 +149,12 @@ const Page = () => {
   }
 
   const offCanvas = {
-    extendedInfoFields: ['Product_Display_Name', 'GUID', 'ExclusionType', 'ShowInLicenseDropdown'],
+    extendedInfoFields: [
+      'Product_Display_Name',
+      'GUID',
+      'ExclusionType',
+      'ShowInLicenseDropdown',
+    ],
     actions: actions,
   }
 
@@ -240,7 +264,8 @@ const Page = () => {
           {
             type: 'switch',
             name: 'FullReset',
-            label: 'Full Reset (clear all entries including manually added ones)',
+            label:
+              'Full Reset (clear all entries including manually added ones)',
           },
         ]}
         api={{

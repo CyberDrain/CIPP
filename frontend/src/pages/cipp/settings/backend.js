@@ -1,71 +1,71 @@
-import { Container } from "@mui/material";
-import { Grid } from "@mui/system";
-import { TabbedLayout } from "../../../layouts/TabbedLayout";
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
-import tabOptions from "./tabOptions";
-import { ApiGetCall } from "../../../api/ApiCall.jsx";
-import { CippBackendCard } from "../../../components/CippSettings/CippBackendCard";
-import { CippCodeBlock } from "../../../components/CippComponents/CippCodeBlock";
-import { CommandLineIcon } from "@heroicons/react/24/outline";
+import { Container } from '@mui/material'
+import { Grid } from '@mui/system'
+import { TabbedLayout } from '../../../layouts/TabbedLayout'
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import tabOptions from './tabOptions'
+import { ApiGetCall } from '../../../api/ApiCall.jsx'
+import { CippBackendCard } from '../../../components/CippSettings/CippBackendCard'
+import { CippCodeBlock } from '../../../components/CippComponents/CippCodeBlock'
+import { CommandLineIcon } from '@heroicons/react/24/outline'
 
 const Page = () => {
   const backendComponents = ApiGetCall({
-    url: "/api/ExecBackendURLs",
-    queryKey: "ExecBackendURLs",
-  });
+    url: '/api/ExecBackendURLs',
+    queryKey: 'ExecBackendURLs',
+  })
   const backendInfo = [
     {
-      id: "ResourceGroup",
-      name: "Resource Group",
+      id: 'ResourceGroup',
+      name: 'Resource Group',
       description:
-        "The Resource group contains all the CIPP resources in your tenant, except the SAM Application",
+        'The Resource group contains all the CIPP resources in your tenant, except the SAM Application',
     },
     {
-      id: "KeyVault",
-      name: "Key Vault",
+      id: 'KeyVault',
+      name: 'Key Vault',
       description:
-        "The key vault allows you to retrieve saved authentication details. By default you do not have access.",
+        'The key vault allows you to retrieve saved authentication details. By default you do not have access.',
     },
     {
-      id: "SWARoles",
-      name: "Static Web App (Role Management)",
+      id: 'SWARoles',
+      name: 'Static Web App (Role Management)',
       description:
-        "The Static Web App Role Management allows you to invite other users to the application and manage their permissions.",
+        'The Static Web App Role Management allows you to invite other users to the application and manage their permissions.',
     },
     {
-      id: "FunctionDeployment",
-      name: "Function App (Deployment Center)",
+      id: 'FunctionDeployment',
+      name: 'Function App (Deployment Center)',
       description:
-        "The Function App Deployment Center allows you to monitor your deployment history and connect to GitHub for CI/CD.",
+        'The Function App Deployment Center allows you to monitor your deployment history and connect to GitHub for CI/CD.',
     },
     {
-      id: "FunctionConfig",
-      name: "Function App (Configuration)",
+      id: 'FunctionConfig',
+      name: 'Function App (Configuration)',
       description:
-        "The Function App Configuration allows you to configure your function app settings.",
+        'The Function App Configuration allows you to configure your function app settings.',
     },
     {
-      id: "FunctionApp",
-      name: "Function App (Overview)",
+      id: 'FunctionApp',
+      name: 'Function App (Overview)',
       description:
         "The Function App Overview allows you to monitor your function app's performance and usage. You can also stop and start the function app here.",
     },
     {
-      id: "CloudShell",
-      name: "Cloud Shell",
-      description: "Launch an Azure Cloud Shell Window",
+      id: 'CloudShell',
+      name: 'Cloud Shell',
+      description: 'Launch an Azure Cloud Shell Window',
       linkProps: {
         onClick: (e) => {
-          e.preventDefault();
+          e.preventDefault()
           window.open(
-            "https://shell.azure.com/powershell",
-            "_blank",
-            "toolbar=no,scrollbars=yes,resizable=yes,menubar=no,location=no,status=no"
-          );
+            'https://shell.azure.com/powershell',
+            '_blank',
+            'toolbar=no,scrollbars=yes,resizable=yes,menubar=no,location=no,status=no'
+          )
         },
       },
       offcanvas: true,
-      offcanvasTitle: "Command Reference",
+      offcanvasTitle: 'Command Reference',
       offcanvasIcon: <CommandLineIcon />,
       offcanvasData: {
         FunctionAppConfig: (
@@ -100,9 +100,12 @@ const Page = () => {
         ),
       },
     },
-  ];
+  ]
   return (
-    <Container sx={{ pt: { xs: 0, md: 3 }, px: { xs: 1.5, md: 3 } }} maxWidth="xl">
+    <Container
+      sx={{ pt: { xs: 0, md: 3 }, px: { xs: 1.5, md: 3 } }}
+      maxWidth="xl"
+    >
       <Grid container spacing={2}>
         {backendInfo.map((item) => (
           <Grid size={{ lg: 4, md: 6, sm: 12, xs: 12 }} key={item.id}>
@@ -115,13 +118,13 @@ const Page = () => {
         ))}
       </Grid>
     </Container>
-  );
-};
+  )
+}
 
 Page.getLayout = (page) => (
   <DashboardLayout>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
-);
+)
 
-export default Page;
+export default Page

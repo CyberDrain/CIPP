@@ -4,14 +4,29 @@ import { useRouter } from 'next/router'
 import { ApiGetCall, ApiPostCall } from '../../../../../api/ApiCall'
 import CippFormSkeleton from '../../../../../components/CippFormPages/CippFormSkeleton'
 import CalendarIcon from '@heroicons/react/24/outline/CalendarIcon'
-import { Fingerprint, Launch, Apps, Group, CheckCircle, Warning, Badge } from '@mui/icons-material'
+import {
+  Fingerprint,
+  Launch,
+  Apps,
+  Group,
+  CheckCircle,
+  Warning,
+  Badge,
+} from '@mui/icons-material'
 import { HeaderedTabbedLayout } from '../../../../../layouts/HeaderedTabbedLayout'
 import { CippEnterpriseAppSwitcher } from '../../../../../components/CippComponents/CippEnterpriseAppSwitcher'
 import tabOptions from './tabOptions'
 import { CippCopyToClipBoard } from '../../../../../components/CippComponents/CippCopyToClipboard'
 import { Box, Stack } from '@mui/system'
 import { Grid } from '@mui/system'
-import { Typography, Card, CardHeader, Divider, Button, SvgIcon } from '@mui/material'
+import {
+  Typography,
+  Card,
+  CardHeader,
+  Divider,
+  Button,
+  SvgIcon,
+} from '@mui/material'
 import { CippBannerListCard } from '../../../../../components/CippCards/CippBannerListCard'
 import { CippTimeAgo } from '../../../../../components/CippComponents/CippTimeAgo'
 import { useEffect, useMemo, useState } from 'react'
@@ -34,7 +49,9 @@ const getLatestCredentialExpiry = (credentials = []) => {
     .map((cred) => cred?.endDateTime)
     .filter(Boolean)
     .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
-  return validDates.length > 0 ? new Date(validDates[0]).toLocaleString() : 'N/A'
+  return validDates.length > 0
+    ? new Date(validDates[0]).toLocaleString()
+    : 'N/A'
 }
 
 const Page = () => {
@@ -55,9 +72,12 @@ const Page = () => {
   const spRequest = ApiGetCall({
     url: '/api/ListGraphRequest',
     data: {
-      Endpoint: spObjectId ? `servicePrincipals/${spObjectId}` : 'servicePrincipals',
+      Endpoint: spObjectId
+        ? `servicePrincipals/${spObjectId}`
+        : 'servicePrincipals',
       $select: spSelect,
-      tenantFilter: router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
+      tenantFilter:
+        router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
     },
     queryKey: `EnterpriseApp-spId-${spObjectId}`,
     waiting: waiting,
@@ -119,7 +139,10 @@ const Page = () => {
 
   const title = !spRequest.isSuccess
     ? 'Loading...'
-    : spData?.displayName || spData?.appId || spObjectId || 'Enterprise application'
+    : spData?.displayName ||
+      spData?.appId ||
+      spObjectId ||
+      'Enterprise application'
 
   const data = spData
 
@@ -128,11 +151,15 @@ const Page = () => {
       ? [
           {
             icon: <Badge />,
-            text: <CippCopyToClipBoard type="chip" text={spData?.appId || 'N/A'} />,
+            text: (
+              <CippCopyToClipBoard type="chip" text={spData?.appId || 'N/A'} />
+            ),
           },
           {
             icon: <Fingerprint />,
-            text: <CippCopyToClipBoard type="chip" text={spData?.id || 'N/A'} />,
+            text: (
+              <CippCopyToClipBoard type="chip" text={spData?.id || 'N/A'} />
+            ),
           },
           {
             icon: <CalendarIcon />,
@@ -169,7 +196,8 @@ const Page = () => {
     if (!spData) {
       return undefined
     }
-    const tenant = router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+    const tenant =
+      router.query.tenantFilter ?? userSettingsDefaults.currentTenant
     return { ...spData, Tenant: tenant }
   }, [spData, router.query.tenantFilter, userSettingsDefaults.currentTenant])
 
@@ -190,20 +218,28 @@ const Page = () => {
               hideTitle: true,
               data: owners,
               refreshFunction: refreshFunction,
-              simpleColumns: ['displayName', 'userPrincipalName', 'mail', '@odata.type'],
+              simpleColumns: [
+                'displayName',
+                'userPrincipalName',
+                'mail',
+                '@odata.type',
+              ],
               actions: [
                 {
                   icon: <EyeIcon />,
                   label: 'View User',
                   link: `/identity/administration/users/user?userId=[id]&tenantFilter=${userSettingsDefaults.currentTenant}`,
                   pinned: true,
-                  condition: (row) => row?.['@odata.type'] === '#microsoft.graph.user',
+                  condition: (row) =>
+                    row?.['@odata.type'] === '#microsoft.graph.user',
                 },
               ],
             },
           },
         ]
-      : ownersData != null && typeof ownersData.status === 'number' && ownersData.status !== 200
+      : ownersData != null &&
+          typeof ownersData.status === 'number' &&
+          ownersData.status !== 200
         ? [
             {
               id: 1,
@@ -220,28 +256,35 @@ const Page = () => {
               id: 1,
               cardLabelBox: '-',
               text: 'No owners',
-              subtext: 'No owners were returned for this enterprise application.',
+              subtext:
+                'No owners were returned for this enterprise application.',
               statusColor: 'warning.main',
               statusText: 'No Owners',
               propertyItems: [],
             },
           ]
 
-  const tenantForApi = router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+  const tenantForApi =
+    router.query.tenantFilter ?? userSettingsDefaults.currentTenant
 
   const credentialsItems = [
     {
       id: 1,
       cardLabelBox: {
-        cardLabelBoxHeader: data?.passwordCredentials?.length > 0 ? <CheckCircle /> : <Warning />,
+        cardLabelBoxHeader:
+          data?.passwordCredentials?.length > 0 ? <CheckCircle /> : <Warning />,
       },
       text: 'Password Credentials',
       subtext: `${data?.passwordCredentials?.length || 0} secret(s)`,
-      statusColor: data?.passwordCredentials?.length > 0 ? 'info.main' : 'warning.main',
+      statusColor:
+        data?.passwordCredentials?.length > 0 ? 'info.main' : 'warning.main',
       statusText: data?.passwordCredentials?.length > 0 ? 'Configured' : 'None',
       propertyItems: [
         { label: 'Count', value: data?.passwordCredentials?.length || 0 },
-        { label: 'Next Expiry', value: getLatestCredentialExpiry(data?.passwordCredentials) },
+        {
+          label: 'Next Expiry',
+          value: getLatestCredentialExpiry(data?.passwordCredentials),
+        },
       ],
       children: (
         <CippCredentialExpandList
@@ -258,15 +301,20 @@ const Page = () => {
     {
       id: 2,
       cardLabelBox: {
-        cardLabelBoxHeader: data?.keyCredentials?.length > 0 ? <CheckCircle /> : <Warning />,
+        cardLabelBoxHeader:
+          data?.keyCredentials?.length > 0 ? <CheckCircle /> : <Warning />,
       },
       text: 'Certificate Credentials',
       subtext: `${data?.keyCredentials?.length || 0} certificate(s)`,
-      statusColor: data?.keyCredentials?.length > 0 ? 'info.main' : 'warning.main',
+      statusColor:
+        data?.keyCredentials?.length > 0 ? 'info.main' : 'warning.main',
       statusText: data?.keyCredentials?.length > 0 ? 'Configured' : 'None',
       propertyItems: [
         { label: 'Count', value: data?.keyCredentials?.length || 0 },
-        { label: 'Next Expiry', value: getLatestCredentialExpiry(data?.keyCredentials) },
+        {
+          label: 'Next Expiry',
+          value: getLatestCredentialExpiry(data?.keyCredentials),
+        },
       ],
       children: (
         <CippCredentialExpandList
@@ -294,7 +342,9 @@ const Page = () => {
         <CippEnterpriseAppSwitcher
           title={title}
           currentSpId={spObjectId}
-          tenantFilter={router.query.tenantFilter ?? userSettingsDefaults.currentTenant}
+          tenantFilter={
+            router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+          }
         />
       }
       subtitle={subtitle}
@@ -326,9 +376,13 @@ const Page = () => {
                         <SvgIcon sx={{ fontSize: 64 }}>
                           <Apps />
                         </SvgIcon>
-                        <Typography variant="h6">{data?.displayName || 'N/A'}</Typography>
+                        <Typography variant="h6">
+                          {data?.displayName || 'N/A'}
+                        </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {data?.accountEnabled === false ? 'Disabled' : 'Enabled'}
+                          {data?.accountEnabled === false
+                            ? 'Disabled'
+                            : 'Enabled'}
                         </Typography>
                       </Stack>
                     }
@@ -339,43 +393,83 @@ const Page = () => {
                     value={
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Display name:
                           </Typography>
-                          <Typography variant="inherit">{data?.displayName || 'N/A'}</Typography>
+                          <Typography variant="inherit">
+                            {data?.displayName || 'N/A'}
+                          </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Application (client) ID:
                           </Typography>
-                          <Typography variant="inherit">{data?.appId || 'N/A'}</Typography>
+                          <Typography variant="inherit">
+                            {data?.appId || 'N/A'}
+                          </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Object ID:
                           </Typography>
-                          <Typography variant="inherit">{data?.id || 'N/A'}</Typography>
+                          <Typography variant="inherit">
+                            {data?.id || 'N/A'}
+                          </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Sign-in audience:
                           </Typography>
-                          <Typography variant="inherit">{data?.signInAudience || 'N/A'}</Typography>
+                          <Typography variant="inherit">
+                            {data?.signInAudience || 'N/A'}
+                          </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Publisher:
                           </Typography>
-                          <Typography variant="inherit">{data?.publisherName || 'N/A'}</Typography>
+                          <Typography variant="inherit">
+                            {data?.publisherName || 'N/A'}
+                          </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Homepage:
                           </Typography>
-                          <Typography variant="inherit">{data?.homepage || 'N/A'}</Typography>
+                          <Typography variant="inherit">
+                            {data?.homepage || 'N/A'}
+                          </Typography>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="inherit" color="text.primary" gutterBottom>
+                          <Typography
+                            variant="inherit"
+                            color="text.primary"
+                            gutterBottom
+                          >
                             Created:
                           </Typography>
                           <Typography variant="inherit">

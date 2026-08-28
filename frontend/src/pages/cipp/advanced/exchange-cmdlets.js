@@ -1,4 +1,4 @@
-import { Layout as DashboardLayout } from "../../../layouts/index.js";
+import { Layout as DashboardLayout } from '../../../layouts/index.js'
 import {
   Alert,
   Button,
@@ -9,51 +9,51 @@ import {
   DialogContent,
   IconButton,
   Skeleton,
-} from "@mui/material";
-import { Grid } from "@mui/system";
-import { useForm } from "react-hook-form";
-import CippFormComponent from "../../../components/CippComponents/CippFormComponent";
-import { ApiPostCall } from "../../../api/ApiCall";
-import CippButtonCard from "../../../components/CippCards/CippButtonCard";
-import { CippDataTable } from "../../../components/CippTable/CippDataTable";
-import { useState, useEffect } from "react";
-import { Search, Close } from "@mui/icons-material";
-import { CippFormTenantSelector } from "../../../components/CippComponents/CippFormTenantSelector";
-import { CippHead } from "../../../components/CippComponents/CippHead";
+} from '@mui/material'
+import { Grid } from '@mui/system'
+import { useForm } from 'react-hook-form'
+import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
+import { ApiPostCall } from '../../../api/ApiCall'
+import CippButtonCard from '../../../components/CippCards/CippButtonCard'
+import { CippDataTable } from '../../../components/CippTable/CippDataTable'
+import { useState, useEffect } from 'react'
+import { Search, Close } from '@mui/icons-material'
+import { CippFormTenantSelector } from '../../../components/CippComponents/CippFormTenantSelector'
+import { CippHead } from '../../../components/CippComponents/CippHead'
 
-const simpleColumns = ["Cmdlet"];
-const roleColumns = ["Error", "Name", "Description"];
-const apiUrl = "/api/ListExoRequest";
-const pageTitle = "Exchange Cmdlets";
+const simpleColumns = ['Cmdlet']
+const roleColumns = ['Error', 'Name', 'Description']
+const apiUrl = '/api/ListExoRequest'
+const pageTitle = 'Exchange Cmdlets'
 
 const Page = () => {
   const formControl = useForm({
-    mode: "onChange",
-  });
+    mode: 'onChange',
+  })
 
-  const [searchResults, setSearchResults] = useState([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [roleDetails, setRoleDetails] = useState([]);
-  const [selectedCmdlet, setSelectedCmdlet] = useState(null);
+  const [searchResults, setSearchResults] = useState([])
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [roleDetails, setRoleDetails] = useState([])
+  const [selectedCmdlet, setSelectedCmdlet] = useState(null)
 
   const exchangeCmdlets = ApiPostCall({
     urlFromData: true,
-    queryKey: "ExchangeCmdlets",
+    queryKey: 'ExchangeCmdlets',
     onResult: (result) => {
-      setSearchResults(result);
+      setSearchResults(result)
     },
-  });
+  })
 
   const managementRole = ApiPostCall({
     urlFromData: true,
-    queryKey: "ManagementRole",
+    queryKey: 'ManagementRole',
     onResult: (result) => {
-      setRoleDetails(result);
+      setRoleDetails(result)
     },
-  });
+  })
 
   const onSubmit = () => {
-    const formData = formControl.getValues();
+    const formData = formControl.getValues()
     exchangeCmdlets.mutate({
       url: apiUrl,
       data: {
@@ -62,54 +62,63 @@ const Page = () => {
         compliance: formData.compliance,
         asApp: formData.asApp,
       },
-    });
-  };
+    })
+  }
 
   const checkCmdletRoles = (row) => {
-    setSelectedCmdlet(row.Cmdlet);
+    setSelectedCmdlet(row.Cmdlet)
     managementRole.mutate({
-      url: "/api/ListExoRequest",
+      url: '/api/ListExoRequest',
       data: {
-        cmdlet: "Get-ManagementRole",
+        cmdlet: 'Get-ManagementRole',
         cmdParams: {
           cmdlet: row.Cmdlet,
         },
         compliance: formControl.getValues().compliance,
         tenantFilter: formControl.getValues().tenant.value,
       },
-    });
-    setDialogOpen(true);
-  };
+    })
+    setDialogOpen(true)
+  }
 
   useEffect(() => {
     if (managementRole.isSuccess) {
-      setRoleDetails(managementRole.data);
+      setRoleDetails(managementRole.data)
     }
-  }, [managementRole.isSuccess]);
+  }, [managementRole.isSuccess])
 
   const actions = [
     {
-      label: "Check Roles",
+      label: 'Check Roles',
       noConfirm: true,
       customFunction: checkCmdletRoles,
     },
-  ];
+  ]
 
   return (
     <Container>
       <CippHead title={pageTitle} />
       <Stack spacing={2} sx={{ mt: 1 }}>
         <Alert severity="info">
-          This tool allows you to search for Exchange cmdlets available in your environment based on
-          tenant, compliance, and application context. You can also check which management roles are
-          permitted to use specific cmdlets. Cmdlet availability may vary depending on the tenant
+          This tool allows you to search for Exchange cmdlets available in your
+          environment based on tenant, compliance, and application context. You
+          can also check which management roles are permitted to use specific
+          cmdlets. Cmdlet availability may vary depending on the tenant
           licensing and configuration.
         </Alert>
-        <CippButtonCard component="accordion" title="Cmdlet Search" accordionExpanded={true}>
+        <CippButtonCard
+          component="accordion"
+          title="Cmdlet Search"
+          accordionExpanded={true}
+        >
           <Grid container spacing={2}>
             {/* Tenant Filter */}
             <Grid size={{ md: 4, xs: 12 }}>
-              <CippFormTenantSelector formControl={formControl} name="tenant" multiple={false} />
+              <CippFormTenantSelector
+                formControl={formControl}
+                name="tenant"
+                multiple={false}
+              />
             </Grid>
             {/* Compliance Filter */}
             <Grid size={{ md: 4, xs: 12 }}>
@@ -131,7 +140,12 @@ const Page = () => {
             </Grid>
             {/* Submit Button */}
             <Grid size={{ xs: 12 }}>
-              <Button onClick={onSubmit} variant="contained" color="primary" startIcon={<Search />}>
+              <Button
+                onClick={onSubmit}
+                variant="contained"
+                color="primary"
+                startIcon={<Search />}
+              >
                 Search
               </Button>
             </Grid>
@@ -146,13 +160,18 @@ const Page = () => {
           actions={actions}
         />
       </Stack>
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="lg" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
         <DialogTitle sx={{ py: 2 }}>
           Permitted Roles for {selectedCmdlet}
           <IconButton
             aria-label="close"
             onClick={() => setDialogOpen(false)}
-            sx={{ position: "absolute", right: 8, top: 8 }}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
           >
             <Close />
           </IconButton>
@@ -172,9 +191,9 @@ const Page = () => {
         </DialogContent>
       </Dialog>
     </Container>
-  );
-};
+  )
+}
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
 
-export default Page;
+export default Page

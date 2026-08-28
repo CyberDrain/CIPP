@@ -9,7 +9,7 @@ import {
   ListItemText,
   ListSubheader,
   Stack,
-} from "@mui/material";
+} from '@mui/material'
 import {
   Check,
   DataObject,
@@ -18,9 +18,9 @@ import {
   PictureAsPdf,
   RestartAlt,
   Sync,
-} from "@mui/icons-material";
-import { getCippTranslation } from "../../utils/get-cipp-translation";
-import { CippBottomSheet } from "../CippComponents/CippBottomSheet";
+} from '@mui/icons-material'
+import { getCippTranslation } from '../../utils/get-cipp-translation'
+import { CippBottomSheet } from '../CippComponents/CippBottomSheet'
 
 // Shared filter bottom sheet — presets, then the table utilities (refresh, export, reset),
 // then field visibility. Used by the mobile card list and the mobile/compact table toolbar,
@@ -51,27 +51,33 @@ export const CippTableFilterSheet = (props) => {
     onPageSizeChange,
     pageSizeOptions = [],
     dataSourceControls,
-  } = props;
+  } = props
 
   const renderPresetChips = (items, layer) => (
-    <Stack direction="row" useFlexGap flexWrap="wrap" spacing={1} sx={{ px: 2.25, py: 1 }}>
+    <Stack
+      direction="row"
+      useFlexGap
+      flexWrap="wrap"
+      spacing={1}
+      sx={{ px: 2.25, py: 1 }}
+    >
       {items.map((filter) => {
-        const key = presetKey(filter);
-        const active = activeFilters[layer]?.id === key;
+        const key = presetKey(filter)
+        const active = activeFilters[layer]?.id === key
         return (
           <Chip
             key={key}
             label={filter.filterName}
-            color={active ? "primary" : "default"}
-            variant={active ? "filled" : "outlined"}
+            color={active ? 'primary' : 'default'}
+            variant={active ? 'filled' : 'outlined'}
             icon={active ? <Check /> : undefined}
             onClick={() => onPresetClick(filter)}
             sx={{ height: 36, borderRadius: 999 }}
           />
-        );
+        )
       })}
     </Stack>
-  );
+  )
 
   return (
     <CippBottomSheet
@@ -80,14 +86,19 @@ export const CippTableFilterSheet = (props) => {
       onExited={onExited}
       title="Filters"
       footer={
-        <Button fullWidth variant="contained" sx={{ minHeight: 44 }} onClick={onClose}>
+        <Button
+          fullWidth
+          variant="contained"
+          sx={{ minHeight: 44 }}
+          onClick={onClose}
+        >
           Done
         </Button>
       }
     >
       {dataSourceControls && (
         <>
-          <ListSubheader disableSticky sx={{ bgcolor: "transparent" }}>
+          <ListSubheader disableSticky sx={{ bgcolor: 'transparent' }}>
             Data source
           </ListSubheader>
           <Box sx={{ px: 2.25, py: 1 }}>{dataSourceControls}</Box>
@@ -95,18 +106,18 @@ export const CippTableFilterSheet = (props) => {
       )}
       {tablePresetItems.length > 0 && (
         <>
-          <ListSubheader disableSticky sx={{ bgcolor: "transparent" }}>
+          <ListSubheader disableSticky sx={{ bgcolor: 'transparent' }}>
             Presets
           </ListSubheader>
-          {renderPresetChips(tablePresetItems, "table")}
+          {renderPresetChips(tablePresetItems, 'table')}
         </>
       )}
       {graphPresetItems.length > 0 && (
         <>
-          <ListSubheader disableSticky sx={{ bgcolor: "transparent" }}>
+          <ListSubheader disableSticky sx={{ bgcolor: 'transparent' }}>
             Graph filters
           </ListSubheader>
-          {renderPresetChips(graphPresetItems, "graph")}
+          {renderPresetChips(graphPresetItems, 'graph')}
         </>
       )}
       {/* Utilities above the field list: "Fields shown" is a checkbox per column — a dozen
@@ -115,8 +126,8 @@ export const CippTableFilterSheet = (props) => {
       <Divider sx={{ my: 1 }} />
       <ListItemButton
         onClick={() => {
-          onResetFilters();
-          onClose();
+          onResetFilters()
+          onClose()
         }}
         sx={{ minHeight: 48 }}
       >
@@ -126,7 +137,10 @@ export const CippTableFilterSheet = (props) => {
         <ListItemText primary="Reset all filters" />
       </ListItemButton>
       {onEditGraphFilters && (
-        <ListItemButton onClick={() => run(onEditGraphFilters)} sx={{ minHeight: 48 }}>
+        <ListItemButton
+          onClick={() => run(onEditGraphFilters)}
+          sx={{ minHeight: 48 }}
+        >
           <ListItemIcon sx={{ minWidth: 40 }}>
             <FilterList fontSize="small" />
           </ListItemIcon>
@@ -149,7 +163,10 @@ export const CippTableFilterSheet = (props) => {
           </ListItemButton>
         </>
       )}
-      <ListItemButton onClick={() => run(onViewApiResponse)} sx={{ minHeight: 48 }}>
+      <ListItemButton
+        onClick={() => run(onViewApiResponse)}
+        sx={{ minHeight: 48 }}
+      >
         <ListItemIcon sx={{ minWidth: 40 }}>
           <DataObject fontSize="small" />
         </ListItemIcon>
@@ -158,20 +175,20 @@ export const CippTableFilterSheet = (props) => {
       <ListItemButton
         disabled={isRefreshing}
         onClick={() => {
-          onRefresh();
-          onClose();
+          onRefresh()
+          onClose()
         }}
         sx={{ minHeight: 48 }}
       >
         <ListItemIcon sx={{ minWidth: 40 }}>
           <Sync fontSize="small" />
         </ListItemIcon>
-        <ListItemText primary={isRefreshing ? "Refreshing…" : "Refresh data"} />
+        <ListItemText primary={isRefreshing ? 'Refreshing…' : 'Refresh data'} />
       </ListItemButton>
       {columnItems.length > 0 && (
         <>
           <Divider sx={{ my: 1 }} />
-          <ListSubheader disableSticky sx={{ bgcolor: "transparent" }}>
+          <ListSubheader disableSticky sx={{ bgcolor: 'transparent' }}>
             Fields shown
           </ListSubheader>
           {columnItems.map((column) => (
@@ -181,7 +198,12 @@ export const CippTableFilterSheet = (props) => {
               onClick={() => onToggleColumn(column.id, column.visible)}
               sx={{ minHeight: 44, py: 0 }}
             >
-              <Checkbox checked={column.visible} size="small" sx={{ mr: 1 }} tabIndex={-1} />
+              <Checkbox
+                checked={column.visible}
+                size="small"
+                sx={{ mr: 1 }}
+                tabIndex={-1}
+              />
               <ListItemText primary={getCippTranslation(column.id)} />
             </ListItemButton>
           ))}
@@ -189,27 +211,33 @@ export const CippTableFilterSheet = (props) => {
       )}
       {onPageSizeChange && pageSizeOptions.length > 0 && (
         <>
-          <ListSubheader disableSticky sx={{ bgcolor: "transparent" }}>
+          <ListSubheader disableSticky sx={{ bgcolor: 'transparent' }}>
             Rows per page
           </ListSubheader>
-          <Stack direction="row" useFlexGap flexWrap="wrap" spacing={1} sx={{ px: 2.25, py: 1 }}>
+          <Stack
+            direction="row"
+            useFlexGap
+            flexWrap="wrap"
+            spacing={1}
+            sx={{ px: 2.25, py: 1 }}
+          >
             {pageSizeOptions.map((option) => {
-              const active = option === pageSize;
+              const active = option === pageSize
               return (
                 <Chip
                   key={option}
                   label={String(option)}
-                  color={active ? "primary" : "default"}
-                  variant={active ? "filled" : "outlined"}
+                  color={active ? 'primary' : 'default'}
+                  variant={active ? 'filled' : 'outlined'}
                   icon={active ? <Check /> : undefined}
                   onClick={() => onPageSizeChange(option)}
                   sx={{ height: 36, borderRadius: 999 }}
                 />
-              );
+              )
             })}
           </Stack>
         </>
       )}
     </CippBottomSheet>
-  );
-};
+  )
+}

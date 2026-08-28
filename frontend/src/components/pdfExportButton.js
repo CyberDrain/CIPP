@@ -58,7 +58,12 @@ export const exportRowsToPdf = async ({
     const formattedRow = {}
     exportColumns.forEach((col) => {
       const key = col.dataKey
-      formattedRow[key] = getCippFormatting(key in row ? row[key] : null, key, 'text', false)
+      formattedRow[key] = getCippFormatting(
+        key in row ? row[key] : null,
+        key,
+        'text',
+        false
+      )
     })
     return formattedRow
   })
@@ -69,7 +74,14 @@ export const exportRowsToPdf = async ({
       const logoSize = 60
       const logoX = 40
       const logoY = 30
-      doc.addImage(brandingSettings.logo, 'PNG', logoX, logoY, logoSize, logoSize)
+      doc.addImage(
+        brandingSettings.logo,
+        'PNG',
+        logoX,
+        logoY,
+        logoSize,
+        logoSize
+      )
       logoHeight = logoSize + 20
     } catch (error) {
       console.warn('Failed to add logo to PDF:', error)
@@ -91,7 +103,10 @@ export const exportRowsToPdf = async ({
     return Math.min(estimatedWidth, (availableWidth / columnCount) * 1.5)
   })
 
-  const totalEstimatedWidth = columnWidths.reduce((sum, width) => sum + width, 0)
+  const totalEstimatedWidth = columnWidths.reduce(
+    (sum, width) => sum + width,
+    0
+  )
   const normalizedWidths = columnWidths.map(
     (width) => (width / totalEstimatedWidth) * availableWidth
   )
@@ -111,7 +126,9 @@ export const exportRowsToPdf = async ({
   const content = {
     startY: 100 + logoHeight,
     head: [exportColumns.map((col) => col.header)],
-    body: formattedData.map((row) => exportColumns.map((col) => String(row[col.dataKey] || ''))),
+    body: formattedData.map((row) =>
+      exportColumns.map((col) => String(row[col.dataKey] || ''))
+    ),
     theme: 'striped',
     headStyles: {
       fillColor: getHeaderColor(),
@@ -157,7 +174,13 @@ export const exportRowsToPdf = async ({
 }
 
 export const PDFExportButton = (props) => {
-  const { rows = [], columns = [], reportName, columnVisibility = {}, ...other } = props
+  const {
+    rows = [],
+    columns = [],
+    reportName,
+    columnVisibility = {},
+    ...other
+  } = props
   const brandingSettings = useBrandingSettings()
 
   return (

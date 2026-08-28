@@ -42,13 +42,17 @@ const Page = ({ reason = 'session' }) => {
   // Use useMemo to derive userRoles directly
   const userRoles = useMemo(() => {
     if (orgData.isSuccess && orgData.data?.clientPrincipal?.userRoles) {
-      return orgData.data.clientPrincipal.userRoles.filter((role) => !blockedRoles.includes(role))
+      return orgData.data.clientPrincipal.userRoles.filter(
+        (role) => !blockedRoles.includes(role)
+      )
     }
     return []
   }, [orgData.isSuccess, orgData.data?.clientPrincipal?.userRoles])
 
   const canReturnHome =
-    swaStatus.isSuccess && !!swaStatus?.data?.clientPrincipal && userRoles.length > 0
+    swaStatus.isSuccess &&
+    !!swaStatus?.data?.clientPrincipal &&
+    userRoles.length > 0
   const signedInAs = swaStatus?.data?.clientPrincipal?.userDetails
 
   // Server-side re-check of Entra group membership, for roles granted through a PIM-activated
@@ -67,7 +71,10 @@ const Page = ({ reason = 'session' }) => {
     setRefreshResult(null)
     refreshAccess.mutate(
       { url: '/api/ExecRefreshMyAccess', data: {} },
-      { onError: (error) => setRefreshResult({ severity: 'warning', text: getCippError(error) }) }
+      {
+        onError: (error) =>
+          setRefreshResult({ severity: 'warning', text: getCippError(error) }),
+      }
     )
   }
 
@@ -76,7 +83,8 @@ const Page = ({ reason = 'session' }) => {
   // instead of the generic sign-in prompt, whatever reason the caller guessed. Without a
   // SWA identity there is nobody to deny, so a stale message must not hide the sign-in.
   const hasIdentity = Boolean(swaStatus?.data?.clientPrincipal)
-  const isSessionEnded = reason === 'session' && !(hasIdentity && orgData?.data?.message)
+  const isSessionEnded =
+    reason === 'session' && !(hasIdentity && orgData?.data?.message)
 
   const sessionProps = {
     title: 'Sign in to CIPP',
@@ -98,7 +106,8 @@ const Page = ({ reason = 'session' }) => {
     description: (
       <>
         <Typography variant="body1">
-          {orgData?.data?.message || "Your account doesn't have permission to view this page."}
+          {orgData?.data?.message ||
+            "Your account doesn't have permission to view this page."}
         </Typography>
         {signedInAs && (
           <Stack
@@ -141,7 +150,9 @@ const Page = ({ reason = 'session' }) => {
     // to admin) this affordance exists for
     children: (
       <Stack spacing={1.5}>
-        {refreshResult && <Alert severity={refreshResult.severity}>{refreshResult.text}</Alert>}
+        {refreshResult && (
+          <Alert severity={refreshResult.severity}>{refreshResult.text}</Alert>
+        )}
         <Stack
           direction="row"
           spacing={1.5}
@@ -169,17 +180,20 @@ const Page = ({ reason = 'session' }) => {
   return (
     <>
       <Head>
-        <title>{isSessionEnded ? 'Sign in - CIPP' : '401 - Access Denied'}</title>
+        <title>
+          {isSessionEnded ? 'Sign in - CIPP' : '401 - Access Denied'}
+        </title>
       </Head>
       {/* If an impersonated role can't load /me, this page is what renders — the exit
           affordance must exist here or the user is stuck until they clear localStorage. */}
       <CippImpersonationBanner />
-      {(orgData.isSuccess || swaStatus.isSuccess) && Array.isArray(userRoles) && (
-        <CippAuthShell
-          version={version?.data?.version}
-          {...(isSessionEnded ? sessionProps : permissionProps)}
-        />
-      )}
+      {(orgData.isSuccess || swaStatus.isSuccess) &&
+        Array.isArray(userRoles) && (
+          <CippAuthShell
+            version={version?.data?.version}
+            {...(isSessionEnded ? sessionProps : permissionProps)}
+          />
+        )}
     </>
   )
 }

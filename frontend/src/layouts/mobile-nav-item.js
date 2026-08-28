@@ -1,11 +1,11 @@
-import { useCallback, useState } from 'react';
-import NextLink from 'next/link';
-import PropTypes from 'prop-types';
-import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
-import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon';
-import { Box, ButtonBase, Collapse, SvgIcon } from '@mui/material';
-import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon';
-import LanguageIcon from '@mui/icons-material/Language';
+import { useCallback, useState } from 'react'
+import NextLink from 'next/link'
+import PropTypes from 'prop-types'
+import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon'
+import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon'
+import { Box, ButtonBase, Collapse, SvgIcon } from '@mui/material'
+import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon'
+import LanguageIcon from '@mui/icons-material/Language'
 
 export const MobileNavItem = (props) => {
   const {
@@ -18,18 +18,18 @@ export const MobileNavItem = (props) => {
     openImmediately = false,
     path,
     scope,
-    title
-  } = props;
+    title,
+  } = props
 
-  const isGlobal = scope === "global";
-  const [open, setOpen] = useState(openImmediately);
+  const isGlobal = scope === 'global'
+  const [open, setOpen] = useState(openImmediately)
 
   // same step as side-nav-item, nesting reads the same in both navs
-  const indent = depth > 0 ? depth * 1.5 : 1;
+  const indent = depth > 0 ? depth * 1.5 : 1
 
   const handleToggle = useCallback(() => {
-    setOpen((prevOpen) => !prevOpen);
-  }, []);
+    setOpen((prevOpen) => !prevOpen)
+  }, [])
 
   // Branch
 
@@ -50,7 +50,7 @@ export const MobileNavItem = (props) => {
             py: '12px',
             textAlign: 'left',
             whiteSpace: 'nowrap',
-            width: '100%'
+            width: '100%',
           }}
         >
           <Box
@@ -63,7 +63,7 @@ export const MobileNavItem = (props) => {
               flexShrink: 0,
               height: 24,
               justifyContent: 'center',
-              width: 24
+              width: 24,
             }}
           >
             {icon}
@@ -76,8 +76,8 @@ export const MobileNavItem = (props) => {
               fontSize: 14,
               mx: '12px',
               ...(active && {
-                color: 'primary.main'
-              })
+                color: 'primary.main',
+              }),
             }}
           >
             {title}
@@ -86,14 +86,11 @@ export const MobileNavItem = (props) => {
             {open ? <ChevronDownIcon /> : <ChevronRightIcon />}
           </SvgIcon>
         </ButtonBase>
-        <Collapse
-          in={open}
-          sx={{ mt: 0.5 }}
-        >
+        <Collapse in={open} sx={{ mt: 0.5 }}>
           {children}
         </Collapse>
       </li>
-    );
+    )
   }
 
   // Leaf
@@ -101,15 +98,15 @@ export const MobileNavItem = (props) => {
   const linkProps = path
     ? external
       ? {
-        component: 'a',
-        href: path,
-        target: '_blank'
-      }
+          component: 'a',
+          href: path,
+          target: '_blank',
+        }
       : {
-        component: NextLink,
-        href: path
-      }
-    : {};
+          component: NextLink,
+          href: path,
+        }
+    : {}
 
   return (
     <li>
@@ -126,9 +123,10 @@ export const MobileNavItem = (props) => {
           py: '12px',
           textAlign: 'left',
           whiteSpace: 'nowrap',
-          width: '100%'
+          width: '100%',
         }}
-        {...linkProps}>
+        {...linkProps}
+      >
         <Box
           component="span"
           sx={{
@@ -139,7 +137,7 @@ export const MobileNavItem = (props) => {
             flexShrink: 0,
             height: 24,
             justifyContent: 'center',
-            width: 24
+            width: 24,
           }}
         >
           {icon}
@@ -151,8 +149,8 @@ export const MobileNavItem = (props) => {
             flexGrow: 1,
             mx: '12px',
             ...(active && {
-              color: 'primary.main'
-            })
+              color: 'primary.main',
+            }),
           }}
         >
           {title}
@@ -162,13 +160,13 @@ export const MobileNavItem = (props) => {
             component="span"
             title="Global - not tied to selected tenant"
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
+              display: 'inline-flex',
+              alignItems: 'center',
               flexShrink: 0,
               ml: 0.5,
             }}
           >
-            <SvgIcon sx={{ color: "neutral.400", fontSize: 14 }}>
+            <SvgIcon sx={{ color: 'neutral.400', fontSize: 14 }}>
               <LanguageIcon />
             </SvgIcon>
           </Box>
@@ -180,8 +178,8 @@ export const MobileNavItem = (props) => {
         )}
       </ButtonBase>
     </li>
-  );
-};
+  )
+}
 
 MobileNavItem.propTypes = {
   active: PropTypes.bool,
@@ -193,5 +191,5 @@ MobileNavItem.propTypes = {
   openImmediately: PropTypes.bool,
   path: PropTypes.string,
   scope: PropTypes.string,
-  title: PropTypes.string.isRequired
-};
+  title: PropTypes.string.isRequired,
+}

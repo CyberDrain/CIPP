@@ -5,12 +5,16 @@ import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
 import { renderWithProviders } from '../../test-utils'
 
-vi.mock('../../../src/api/ApiCall', async () => (await import('../../mocks/api-call')).apiCallMock())
+vi.mock('../../../src/api/ApiCall', async () =>
+  (await import('../../mocks/api-call')).apiCallMock()
+)
 import { api, getResult, postResult } from '../../mocks/api-call'
 
 import { CippSettingsSideBar } from '../../../src/components/CippComponents/CippSettingsSideBar'
 
-const meResult = getResult({ data: { clientPrincipal: { userDetails: 'admin@contoso.com' } } })
+const meResult = getResult({
+  data: { clientPrincipal: { userDetails: 'admin@contoso.com' } },
+})
 api.get = meResult
 
 // handleSaveChanges posts an explicit field allowlist, a preference missing from it saves
@@ -32,7 +36,9 @@ describe('CippSettingsSideBar save allowlist', () => {
     api.post = postResult()
     renderWithProviders(<Harness />)
 
-    await user.click(await screen.findByRole('button', { name: /save changes/i }))
+    await user.click(
+      await screen.findByRole('button', { name: /save changes/i })
+    )
 
     await waitFor(() => expect(api.post.mutate).toHaveBeenCalled())
     const payload = api.post.mutate.mock.calls[0][0]
@@ -41,6 +47,9 @@ describe('CippSettingsSideBar save allowlist', () => {
       value: 'table',
       label: 'Always classic table',
     })
-    expect(payload.data.currentSettings.tablePageSize).toEqual({ value: '50', label: '50' })
+    expect(payload.data.currentSettings.tablePageSize).toEqual({
+      value: '50',
+      label: '50',
+    })
   })
 })

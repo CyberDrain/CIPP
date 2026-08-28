@@ -1,7 +1,7 @@
-import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
-import ChatBubbleBottomCenterIcon from '@heroicons/react/24/outline/ChatBubbleBottomCenterIcon';
-import CurrencyDollarIcon from '@heroicons/react/24/outline/CurrencyDollarIcon';
-import ShoppingCartIcon from '@heroicons/react/24/outline/ShoppingCartIcon';
+import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon'
+import ChatBubbleBottomCenterIcon from '@heroicons/react/24/outline/ChatBubbleBottomCenterIcon'
+import CurrencyDollarIcon from '@heroicons/react/24/outline/CurrencyDollarIcon'
+import ShoppingCartIcon from '@heroicons/react/24/outline/ShoppingCartIcon'
 import {
   IconButton,
   List,
@@ -9,8 +9,8 @@ import {
   ListItemIcon,
   ListItemSecondaryAction,
   ListItemText,
-  SvgIcon
-} from '@mui/material';
+  SvgIcon,
+} from '@mui/material'
 
 export const List2 = () => (
   <List>
@@ -60,4 +60,4 @@ export const List2 = () => (
       </ListItemSecondaryAction>
     </ListItem>
   </List>
-);
+)

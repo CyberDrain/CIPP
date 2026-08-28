@@ -22,7 +22,8 @@ const hoursSince = (value) => {
   return (Date.now() - then.getTime()) / 3600000
 }
 
-const percent = (part, total) => (total > 0 ? Math.round((part / total) * 100) : 0)
+const percent = (part, total) =>
+  total > 0 ? Math.round((part / total) * 100) : 0
 
 /**
  * Latest-score summary plus portfolio trend from ListSecureScoreReport rows. Pure so the dashboard
@@ -30,7 +31,10 @@ const percent = (part, total) => (total > 0 ? Math.round((part / total) * 100) :
  * `displayNameByDomain` is only a fallback — the endpoint already resolves TenantName for tenants
  * it still knows about.
  */
-export const deriveSecureScoreSummary = (rows, displayNameByDomain = new Map()) => {
+export const deriveSecureScoreSummary = (
+  rows,
+  displayNameByDomain = new Map()
+) => {
   const empty = {
     average: 0,
     best: null,
@@ -74,16 +78,21 @@ export const deriveSecureScoreSummary = (rows, displayNameByDomain = new Map()) 
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, value]) => ({
       date,
-      percent: value.count ? Math.round((value.total / value.count) * 10) / 10 : 0,
+      percent: value.count
+        ? Math.round((value.total / value.count) * 10) / 10
+        : 0,
     }))
 
   const delta =
     trend.length > 1
-      ? Math.round((trend[trend.length - 1].percent - trend[0].percent) * 10) / 10
+      ? Math.round((trend[trend.length - 1].percent - trend[0].percent) * 10) /
+        10
       : null
 
   return {
-    average: Math.round(withNames.reduce((sum, row) => sum + row.percent, 0) / withNames.length),
+    average: Math.round(
+      withNames.reduce((sum, row) => sum + row.percent, 0) / withNames.length
+    ),
     worst: sorted[0],
     best: sorted[sorted.length - 1],
     scored: withNames.length,
@@ -164,7 +173,9 @@ export const deriveCacheSummary = (rows, tenants) => {
   const scale = SCALE_TYPES.map(({ type, label }) => ({
     label,
     value: totals.get(type) ?? 0,
-    average: tenantCount ? Math.round((totals.get(type) ?? 0) / tenantCount) : 0,
+    average: tenantCount
+      ? Math.round((totals.get(type) ?? 0) / tenantCount)
+      : 0,
   }))
 
   let fresh = 0
@@ -220,7 +231,8 @@ export const deriveCacheSummary = (rows, tenants) => {
   // Worst first: never cached, then oldest. The list scrolls rather than truncating at five, so this
   // order is the triage order.
   staleTenants.sort((a, b) => {
-    if ((a.ageHours === null) !== (b.ageHours === null)) return a.ageHours === null ? -1 : 1
+    if ((a.ageHours === null) !== (b.ageHours === null))
+      return a.ageHours === null ? -1 : 1
     return (b.ageHours ?? 0) - (a.ageHours ?? 0)
   })
 
@@ -300,7 +312,10 @@ export const useAllTenantsDashboard = () => {
   })
 
   const tenants = useMemo(
-    () => asArray(tenantsApi.data).filter((tenant) => tenant?.customerId !== 'AllTenants'),
+    () =>
+      asArray(tenantsApi.data).filter(
+        (tenant) => tenant?.customerId !== 'AllTenants'
+      ),
     [tenantsApi.data]
   )
 
@@ -310,7 +325,10 @@ export const useAllTenantsDashboard = () => {
     const map = new Map()
     tenants.forEach((tenant) => {
       if (tenant?.defaultDomainName) {
-        map.set(tenant.defaultDomainName, tenant.displayName || tenant.defaultDomainName)
+        map.set(
+          tenant.defaultDomainName,
+          tenant.displayName || tenant.defaultDomainName
+        )
       }
     })
     return map
@@ -387,13 +405,16 @@ export const useAllTenantsDashboard = () => {
     const counts = failedTestsApi.data?.Counts ?? {}
     const byTestType = counts.ByTestType ?? {}
     // The facet is keyed by the TestType as stored ('Identity'); match without assuming casing.
-    const identityKey = Object.keys(byTestType).find((key) => key.toLowerCase() === 'identity')
+    const identityKey = Object.keys(byTestType).find(
+      (key) => key.toLowerCase() === 'identity'
+    )
     const identity = (identityKey ? byTestType[identityKey] : null) ?? {}
 
     return {
-      identityRows: (identity.TopChecks ?? [])
-        .slice(0, 4)
-        .map((check) => ({ label: check.Name, tenantCount: check.TenantCount })),
+      identityRows: (identity.TopChecks ?? []).slice(0, 4).map((check) => ({
+        label: check.Name,
+        tenantCount: check.TenantCount,
+      })),
       identityTenantCount: identity.Tenants ?? 0,
       high: counts.HighRiskFailed ?? 0,
       highRiskTenantCount: counts.HighRiskTenants ?? 0,
@@ -410,7 +431,9 @@ export const useAllTenantsDashboard = () => {
     const spf = rows.filter((row) => row?.SPFPassAll).length
     const dkim = rows.filter((row) => row?.DKIMEnabled).length
     const dmarc = rows.filter((row) =>
-      ['quarantine', 'reject'].includes(String(row?.DMARCActionPolicy ?? '').toLowerCase())
+      ['quarantine', 'reject'].includes(
+        String(row?.DMARCActionPolicy ?? '').toLowerCase()
+      )
     ).length
     const dnssec = rows.filter((row) => row?.DNSSECPresent).length
 
@@ -445,7 +468,11 @@ export const useAllTenantsDashboard = () => {
   /* ------------------------------------------------------------ secure score */
 
   const secureScore = useMemo(
-    () => deriveSecureScoreSummary(asArray(secureScoreApi.data), displayNameByDomain),
+    () =>
+      deriveSecureScoreSummary(
+        asArray(secureScoreApi.data),
+        displayNameByDomain
+      ),
     [secureScoreApi.data, displayNameByDomain]
   )
 
@@ -485,7 +512,9 @@ export const useAllTenantsDashboard = () => {
 
     tenants.forEach((tenant) => {
       const name = tenant?.displayName || tenant?.defaultDomainName
-      const status = String(tenant?.delegatedPrivilegeStatus ?? '').toLowerCase()
+      const status = String(
+        tenant?.delegatedPrivilegeStatus ?? ''
+      ).toLowerCase()
       if (status && !status.includes('delegatedadminprivileges')) {
         rows.push({
           key: `${tenant.customerId}-delegation`,

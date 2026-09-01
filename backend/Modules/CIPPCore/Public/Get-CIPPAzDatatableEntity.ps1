@@ -35,6 +35,28 @@ function Get-CIPPAzDataTableEntity {
     $null = $Parameters.Remove('ErrorAction')
     $null = $Parameters.Remove('ErrorVariable')
 
+    # A projection must always carry the row-level split metadata. Reassembly groups an entity's
+    # rows by OriginalEntityId, identifies the master row by PartIndex and checks the set against
+    # PartCount, so a caller that selects none of them leaves the module unable to tell a complete
+    # entity from a truncated one - it reports every split entity as incomplete ("the first row of
+    # the entity (PartIndex 0) was not returned") even though every row is present, and skips it.
+    # Callers cannot act on entities they never see: Add-CIPPDbItem's orphan cleanup projects five
+    # columns, so it never received the stale rows it exists to delete, and one uncollectable
+    # generation accumulated per run.
+    #
+    # SplitOverProps is deliberately NOT added. It is the manifest for properties chunked across
+    # Data_PartN columns, and JoinSplitProperties returns early when it is absent. Adding it makes
+    # the module attempt the join, which throws IncompleteEntityException the moment a chunk column
+    # is missing - and a projection that wants identity, not payload, never selects those columns.
+    # That trades the row-level failure for a property-level one and skips the entity just the same.
+    # A caller that needs the joined value must select the chunk columns, or project nothing at all.
+    #
+    # Requesting a property a row does not carry is harmless, so this is added unconditionally.
+    if ($Parameters.ContainsKey('Property') -and $Parameters['Property']) {
+        $SplitMetadata = @('PartIndex', 'PartCount', 'OriginalEntityId')
+        $Parameters['Property'] = @(@($Parameters['Property']) + $SplitMetadata | Select-Object -Unique)
+    }
+
     $Results = Get-AzDataTableLargeEntity @Parameters -ErrorAction SilentlyContinue -ErrorVariable TableErrors
 
     # Do not pipe $null/$empty into Where-Object - PowerShell invokes the block once with $_ = $null.

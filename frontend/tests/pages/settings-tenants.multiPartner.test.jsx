@@ -1,6 +1,6 @@
 import React from 'react'
 import { renderWithProviders } from '../test-utils'
-import Page from '../../src/pages/cipp/settings/tenants.js'
+import Page from '../../src/pages/cipp/settings/tenants.jsx'
 
 vi.mock('../../src/api/ApiCall.jsx', async () => (await import('../mocks/api-call')).apiCallMock())
 import { api, getResult } from '../mocks/api-call'

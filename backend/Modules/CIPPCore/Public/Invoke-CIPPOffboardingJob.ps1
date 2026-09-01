@@ -31,6 +31,11 @@ function Invoke-CIPPOffboardingJob {
         # Build dynamic batch of offboarding tasks based on selected options
         $Batch = [System.Collections.Generic.List[object]]::new()
 
+        # When the user is being deleted, only user removal and OneDrive access grants remain valid; every other task is skipped regardless of its flag
+        $DeleteUserSelected = $Options.DeleteUser -eq $true
+        $AllowedCmdletsWhenDeletingUser = @('Remove-CIPPUser', 'Set-CIPPSharePointPerms')
+        $SkippedForDeleteUser = [System.Collections.Generic.List[string]]::new()
+
         # Build list of tasks in execution order with their cmdlets
         $TaskOrder = @(
             @{
@@ -326,13 +331,26 @@ function Invoke-CIPPOffboardingJob {
 
         # Build batch from selected tasks
         foreach ($Task in $TaskOrder) {
-            if (& $Task.Condition) {
-                $Batch.Add(@{
-                        FunctionName = 'CIPPOffboardingTask'
-                        Cmdlet       = $Task.Cmdlet
-                        Parameters   = $Task.Parameters
-                    })
+            if (-not (& $Task.Condition)) {
+                continue
             }
+
+            if ($DeleteUserSelected -and $Task.Cmdlet -notin $AllowedCmdletsWhenDeletingUser) {
+                $SkippedForDeleteUser.Add($Task.Cmdlet)
+                continue
+            }
+
+            $Batch.Add(@{
+                    FunctionName = 'CIPPOffboardingTask'
+                    Cmdlet       = $Task.Cmdlet
+                    Parameters   = $Task.Parameters
+                })
+        }
+
+        if ($SkippedForDeleteUser.Count -gt 0) {
+            $SkippedMessage = "Delete user selected for $Username. Skipped tasks: $($SkippedForDeleteUser -join ', ')"
+            Write-Information $SkippedMessage
+            Write-LogMessage -API $APIName -tenant $TenantFilter -message $SkippedMessage -sev Info
         }
 
         if ($Batch.Count -eq 0) {

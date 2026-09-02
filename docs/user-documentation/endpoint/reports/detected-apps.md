@@ -2,6 +2,15 @@
 
 Lists the applications Intune has detected across the enrolled devices in the selected tenant, with how many devices each one is installed on. This is a software inventory rather than a list of what CIPP or Intune has deployed, so applications installed outside Intune appear here too. Filter buttons narrow the list to Windows, macOS, iOS or Android applications.
 
+## Filters
+
+| Filter       | Shows                                     |
+| ------------ | ----------------------------------------- |
+| Windows Apps | Applications detected on Windows devices. |
+| macOS Apps   | Applications detected on macOS devices.   |
+| iOS Apps     | Applications detected on iOS devices.     |
+| Android Apps | Applications detected on Android devices. |
+
 ## Table Details
 
 The properties returned are for the Graph resource type `detectedApp`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/intune-devices-detectedapp?view=graph-rest-beta#properties).

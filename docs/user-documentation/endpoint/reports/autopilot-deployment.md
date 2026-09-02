@@ -2,6 +2,13 @@
 
 Reports each Autopilot deployment event recorded in the selected tenant, newest first, with how long each stage took and why a deployment failed. The **Failed Deployments** and **Successful Deployments** filters narrow the table to those outcomes.
 
+## Filters
+
+| Filter                 | Shows                                              |
+| ---------------------- | -------------------------------------------------- |
+| Failed Deployments     | Autopilot deployments that failed.                 |
+| Successful Deployments | Autopilot deployments that completed successfully. |
+
 ## Table Details
 
 The properties returned are for the Graph resource type `deviceManagementAutopilotEvent`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/intune-troubleshooting-devicemanagementautopilotevent?view=graph-rest-beta#properties).

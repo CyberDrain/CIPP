@@ -35,6 +35,14 @@ Opens the Run Domain Analysis dialog. Pick a single tenant or all tenants and qu
 
 </details>
 
+## Filters
+
+| Filter                             | Shows                                                                            |
+| ---------------------------------- | -------------------------------------------------------------------------------- |
+| Mail Provider is not Microsoft 365 | Domains whose detected mail provider is not Microsoft 365.                       |
+| onmicrosoft.com Domains            | Domains whose domain name includes onmicrosoft.com, the tenant's default domain. |
+| All Except onmicrosoft.com Domains | Domains other than the tenant's default onmicrosoft.com domains.                 |
+
 ## Table Details
 
 The table shows results for all domains in the tenant or tenants selected in the tenant-select.md dropdown.

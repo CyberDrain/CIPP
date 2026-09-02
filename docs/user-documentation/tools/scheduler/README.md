@@ -80,6 +80,15 @@ Each section shows a one-line summary of its current settings in its header, so 
 
 </details>
 
+## Filters
+
+| Filter    | Shows                                                |
+| --------- | ---------------------------------------------------- |
+| Running   | Tasks that are currently running.                    |
+| Planned   | Tasks that are waiting for their next scheduled run. |
+| Failed    | Tasks whose most recent run failed.                  |
+| Completed | Tasks whose most recent run completed successfully.  |
+
 ## Table Details
 
 Preset filters above the table narrow the list to tasks that are **Running**, **Planned**, **Failed**, or **Completed**.

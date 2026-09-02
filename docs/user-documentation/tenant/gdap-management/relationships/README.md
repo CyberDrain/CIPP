@@ -2,6 +2,15 @@
 
 This page lists every delegated admin relationship attached to your Microsoft partner tenant. It shows the status of each relationship, the customer it belongs to, when it was created and activated, when it expires, and the roles it grants. Preset filters are available for the **Active**, **Approval Pending**, **Terminating**, and **Terminated** statuses.
 
+## Filters
+
+| Filter           | Shows                                                                     |
+| ---------------- | ------------------------------------------------------------------------- |
+| Active           | Relationships that are currently active.                                  |
+| Approval Pending | Relationships awaiting the customer's approval before they become active. |
+| Terminating      | Relationships that are in the process of being terminated.                |
+| Terminated       | Relationships that have already been terminated.                          |
+
 ## Table Details
 
 The properties returned are for the Graph resource type `delegatedAdminRelationship`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/delegatedadminrelationship?view=graph-rest-beta).

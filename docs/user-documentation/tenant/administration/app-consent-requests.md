@@ -20,6 +20,14 @@ The page opens with the filter already set to Pending, on the basis that outstan
 
 The table's own filter menu additionally offers Pending requests, Expired requests and Completed requests, which filter the rows already retrieved rather than fetching afresh.
 
+## Filters
+
+| Filter             | Shows                                                                        |
+| ------------------ | ---------------------------------------------------------------------------- |
+| Pending requests   | Shows only requests that are still awaiting a decision.                      |
+| Expired requests   | Shows only requests that expired before being approved or denied.            |
+| Completed requests | Shows only requests that an administrator has already reviewed and resolved. |
+
 ## Table Details
 
 | Column                 | Description                                                                                                                                             |

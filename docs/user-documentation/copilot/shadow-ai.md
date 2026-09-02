@@ -83,6 +83,14 @@ Lists the AI software found on the tenant's Intune-managed devices, which is the
 
 Preset filters are available from the **Filters** button for **Sanctioned**, **Unsanctioned**, and **High Risk** rows. Clicking a row (or using the More Info action) opens a detail panel for the matched tool, showing its description, an explanation of why it carries its catalogue risk rating, its sanction status, its key properties, and the list of devices it is installed on.
 
+### Filters
+
+| Filter       | Shows                                                                      |
+| ------------ | -------------------------------------------------------------------------- |
+| Sanctioned   | Shows only tools marked as company sanctioned for the tenant.              |
+| Unsanctioned | Shows only tools that are not marked as company sanctioned for the tenant. |
+| High Risk    | Shows only tools rated High risk.                                          |
+
 ### Table Details
 
 | Column      | Description                                                                                                                                                                                      |
@@ -110,6 +118,14 @@ The sign-in columns need Entra ID P1 and read `0` without it.
 {% endhint %}
 
 Preset filters are available from the **Filters** button for **Sanctioned**, **Unsanctioned**, and **High Risk** rows. Clicking a row (or using the More Info action) opens a detail panel for the matched tool, showing its description, an explanation of why it carries its catalogue risk rating, its sanction status, its key properties, the OAuth permissions granted, and the per-user sign-in activity from the last 7 days.
+
+### Filters
+
+| Filter       | Shows                                                                      |
+| ------------ | -------------------------------------------------------------------------- |
+| Sanctioned   | Shows only tools marked as company sanctioned for the tenant.              |
+| Unsanctioned | Shows only tools that are not marked as company sanctioned for the tenant. |
+| High Risk    | Shows only tools rated High risk.                                          |
 
 ### Table Details
 

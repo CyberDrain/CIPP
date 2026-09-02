@@ -18,6 +18,13 @@ Opens a drawer for adding templates to CIPP, with two sources to choose between.
 
 {% @storylane/embed subdomain="app" url="https://app.storylane.io/share/939rpjvy23oy" linkValue="939rpjvy23oy" %}
 
+## Filters
+
+| Filter           | Shows                                                      |
+| ---------------- | ---------------------------------------------------------- |
+| Synced Templates | Templates that are still linked to a community repository. |
+| Custom Templates | Templates that are not linked to a community repository.   |
+
 ## Table Details
 
 | Column       | Description                                                                                                                                                                     |

@@ -6,6 +6,15 @@ description: Centralised Tenant Management and Oversight
 
 The Tenants page lists every tenant CIPP knows about and controls how CIPP connects to each one. From here you can exclude tenants from processing, refresh or reset the permissions CIPP holds in a tenant, re-authenticate a direct tenant whose credentials have lapsed, refresh cached data, and remove a tenant altogether. Tenants are reached either through a Partner Center GDAP relationship or added directly with their own service account, and the actions available on a row depend on which of the two applies.
 
+## Filters
+
+| Filter           | Shows                                                                          |
+| ---------------- | ------------------------------------------------------------------------------ |
+| Included tenants | Tenants that are not excluded from CIPP processing.                            |
+| Excluded tenants | Tenants that are excluded from CIPP processing.                                |
+| Direct tenants   | Tenants that connect to CIPP directly rather than through a GDAP relationship. |
+| GDAP tenants     | Tenants that connect to CIPP through a GDAP relationship.                      |
+
 ## Table Details
 
 | Column                     | Description                                                                    |

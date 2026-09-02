@@ -18,6 +18,13 @@ This page gives you a snapshot of how your tenants measure up against your Stand
 
 One row per tenant and template pairing, showing how closely that tenant matches that template overall.
 
+### Filters
+
+| Filter            | Shows                                                     |
+| ----------------- | --------------------------------------------------------- |
+| Drift Templates   | Shows only rows for templates that are Drift Standards.   |
+| Classic Templates | Shows only rows for templates that are Classic Standards. |
+
 ### Table Details
 
 | Column                     | Description                                                                                                                                                    |
@@ -40,6 +47,16 @@ Filters are available for **Drift Templates** and **Classic Templates**.
 ## Per Standard View
 
 One row per tenant per standard, so you can filter down to a single standard and see exactly which tenants are failing it.
+
+### Filters
+
+| Filter             | Shows                                                                                                              |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Non-Compliant      | Shows only rows where the tenant does not match the standard.                                                     |
+| Compliant          | Shows only rows where the tenant matches the standard.                                                            |
+| Accepted Deviation | Shows only rows where the tenant differs from the standard but the difference has been reviewed and accepted.     |
+| Customer Specific  | Shows only rows where the tenant has a deliberate customer-specific value in place of the template's.             |
+| License Missing    | Shows only rows where the tenant is not licensed for the setting, so the standard was skipped rather than failed. |
 
 ### Table Details
 
@@ -72,6 +89,15 @@ Filters are available for **Non-Compliant**, **Compliant**, **Accepted Deviation
 ## By Standard View
 
 One row per standard, aggregated across every tenant it applies to. Use this to find the standards that are failing widely rather than the tenants that are failing.
+
+### Filters
+
+| Filter             | Shows                                                                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Fully Compliant    | Shows only standards where every applicable tenant is aligned, whether compliant, on an accepted deviation, or set to a customer-specific value. |
+| Has Non-Compliant  | Shows only standards where at least one tenant is non-compliant.                                                                                 |
+| License Missing    | Shows only standards where at least one tenant is missing the licence needed for it.                                                             |
+| Accepted Deviation | Shows only standards where at least one tenant has an accepted deviation from it.                                                                |
 
 ### Table Details
 

@@ -1,7 +1,6 @@
 import { Layout as DashboardLayout } from '../../../layouts/index'
 import { HeaderedTabbedLayout } from '../../../layouts/HeaderedTabbedLayout'
-import { useForm, useWatch } from 'react-hook-form'
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import {
   Box,
@@ -18,30 +17,26 @@ import {
   SvgIcon,
   Autocomplete,
   TextField,
+  Chip,
+  Divider,
 } from '@mui/material'
 import { Grid } from '@mui/system'
-import { ApiGetCall, ApiPostCall } from '../../../api/ApiCall'
+import { ApiGetCall } from '../../../api/ApiCall'
 import { useSettings } from '../../../hooks/use-settings'
 import CippButtonCard from '../../../components/CippCards/CippButtonCard'
-import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
-import { CippFormCondition } from '../../../components/CippComponents/CippFormCondition'
-import { CippApiResults } from '../../../components/CippComponents/CippApiResults'
 import { CippHead } from '../../../components/CippComponents/CippHead'
 import { CippDataTable } from '../../../components/CippTable/CippDataTable'
 import { CippIcons } from '../../../utils/icon-registry'
 import tabOptions from './tabOptions.json'
 import timezoneList from '../../../data/timezoneList'
+import { configStandardsMap } from '../../../data/configStandardsMap'
 
-const splitList = (value) =>
-  (value || '')
-    .split(',')
-    .map((v) => v.trim())
-    .filter(Boolean)
+// This page is deliberately read-only. Configuration is changed through Standards or Baselines
+// so the change is reapplied on schedule and drift is detected - a value set by hand here would
+// be neither. Every leaf is one live read of one Microsoft 365 area; nothing writes.
 
-const timezoneOptions = timezoneList.map((tz) => ({
-  label: tz.timezone,
-  value: tz.timezone,
-}))
+const findOption = (options, value) =>
+  options.find((o) => o.value === value) || null
 
 const sharingCapabilityOptions = [
   {
@@ -72,516 +67,6 @@ const retentionOptions = [
   value: String(days),
 }))
 
-const findOption = (options, value) =>
-  options.find((o) => o.value === value) || null
-
-// Every section reads live (staleTime 0) so config is never stale, and only the opened
-// section's area of Microsoft 365 is queried. Saves do not invalidate the read, so the form
-// keeps the values just submitted rather than briefly showing the pre-replication value.
-const liveRead = (url, tenant, queryKey) => {
-  const sep = url.includes('?') ? '&' : '?'
-  return ApiGetCall({
-    url: `${url}${sep}tenantFilter=${tenant}`,
-    queryKey: `${queryKey}_${tenant}`,
-    staleTime: 0,
-  })
-}
-
-const SaveButton = ({ save, settings, onClick }) => (
-  <Button
-    variant="contained"
-    startIcon={
-      <SvgIcon fontSize="small">
-        <CippIcons.Save />
-      </SvgIcon>
-    }
-    onClick={onClick}
-    disabled={save.isPending || settings.isFetching || settings.isError}
-  >
-    {save.isPending ? 'Saving...' : 'Save Changes'}
-  </Button>
-)
-
-// A boolean setting that may only move toward its secure state: locked (read-only) once secure,
-// one-way when not. The note points to the standard that can enforce it continuously. The
-// backend also refuses insecure values for these, so this is defence in depth, not the only gate.
-const SecuredSwitch = ({ field, formControl }) => {
-  const value = useWatch({ control: formControl.control, name: field.name })
-  const atSecure = !!value === field.secured.value
-  return (
-    <Box>
-      <CippFormComponent
-        type="switch"
-        name={field.name}
-        label={field.label}
-        formControl={formControl}
-        disabled={atSecure}
-      />
-      <Typography
-        variant="caption"
-        sx={{ color: 'text.secondary', display: 'block', ml: 1 }}
-      >
-        {atSecure
-          ? 'Secured — locked at its secure state.'
-          : 'Secured — can only be set to its secure state.'}
-        {field.secured.standard
-          ? ` Enforce continuously with the “${field.secured.standard}” standard.`
-          : ''}
-      </Typography>
-    </Box>
-  )
-}
-
-const SharePointSection = ({ tenant }) => {
-  const formControl = useForm({ mode: 'onChange' })
-  const settings = liveRead(
-    '/api/ListSharepointSettings',
-    tenant,
-    'SharepointSettings'
-  )
-  const save = ApiPostCall({})
-
-  useEffect(() => {
-    const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
-    if (!settings.isSuccess || !d) return
-    const mode = d.sharingDomainRestrictionMode || 'none'
-    formControl.reset({
-      tenantDefaultTimezone: d.tenantDefaultTimezone
-        ? { label: d.tenantDefaultTimezone, value: d.tenantDefaultTimezone }
-        : null,
-      sharingCapability: findOption(
-        sharingCapabilityOptions,
-        d.sharingCapability
-      ),
-      sharingDomainRestrictionMode: findOption(domainModeOptions, mode),
-      domains: (mode === 'allowList'
-        ? d.sharingAllowedDomainList
-        : mode === 'blockList'
-          ? d.sharingBlockedDomainList
-          : []
-      )?.join(', '),
-      isResharingByExternalUsersEnabled: !!d.isResharingByExternalUsersEnabled,
-      isLegacyAuthProtocolsEnabled: !!d.isLegacyAuthProtocolsEnabled,
-      isSiteCreationEnabled: !!d.isSiteCreationEnabled,
-      isMacSyncAppEnabled: !!d.isMacSyncAppEnabled,
-      excludedFileExtensionsForSyncApp: (
-        d.excludedFileExtensionsForSyncApp || []
-      ).join(', '),
-      deletedUserPersonalSiteRetentionPeriodInDays: findOption(
-        retentionOptions,
-        String(d.deletedUserPersonalSiteRetentionPeriodInDays)
-      ),
-    })
-  }, [settings.isSuccess, settings.data])
-
-  const onSave = (v) => {
-    const mode = v.sharingDomainRestrictionMode?.value
-    const s = {
-      tenantDefaultTimezone: v.tenantDefaultTimezone?.value,
-      sharingCapability: v.sharingCapability?.value,
-      sharingDomainRestrictionMode: mode,
-      isResharingByExternalUsersEnabled: v.isResharingByExternalUsersEnabled,
-      isLegacyAuthProtocolsEnabled: v.isLegacyAuthProtocolsEnabled,
-      isSiteCreationEnabled: v.isSiteCreationEnabled,
-      isSiteCreationUIEnabled: v.isSiteCreationEnabled,
-      isMacSyncAppEnabled: v.isMacSyncAppEnabled,
-      excludedFileExtensionsForSyncApp: splitList(
-        v.excludedFileExtensionsForSyncApp
-      ),
-      deletedUserPersonalSiteRetentionPeriodInDays: v
-        .deletedUserPersonalSiteRetentionPeriodInDays?.value
-        ? Number(v.deletedUserPersonalSiteRetentionPeriodInDays.value)
-        : undefined,
-    }
-    if (mode === 'allowList') s.sharingAllowedDomainList = splitList(v.domains)
-    if (mode === 'blockList') s.sharingBlockedDomainList = splitList(v.domains)
-    save.mutate({
-      url: '/api/ExecSetSharepointSettings',
-      data: { tenantFilter: tenant, settings: s },
-    })
-  }
-
-  if (settings.isError) {
-    return (
-      <Alert severity="warning">
-        Could not load SharePoint settings for this tenant. This usually means
-        the tenant has no SharePoint/OneDrive licence.
-      </Alert>
-    )
-  }
-
-  return (
-    <CippButtonCard
-      title="SharePoint & OneDrive"
-      CardButton={
-        <SaveButton
-          save={save}
-          settings={settings}
-          onClick={formControl.handleSubmit(onSave)}
-        />
-      }
-      isFetching={settings.isFetching}
-    >
-      <Stack spacing={2}>
-        <CippFormComponent
-          type="autoComplete"
-          name="tenantDefaultTimezone"
-          label="Default timezone"
-          formControl={formControl}
-          options={timezoneOptions}
-          multiple={false}
-          creatable={false}
-        />
-        <CippFormComponent
-          type="autoComplete"
-          name="sharingCapability"
-          label="External sharing level"
-          formControl={formControl}
-          options={sharingCapabilityOptions}
-          multiple={false}
-          creatable={false}
-        />
-        <CippFormComponent
-          type="autoComplete"
-          name="sharingDomainRestrictionMode"
-          label="Limit external sharing by domain"
-          formControl={formControl}
-          options={domainModeOptions}
-          multiple={false}
-          creatable={false}
-        />
-        <CippFormCondition
-          field="sharingDomainRestrictionMode"
-          compareType="valueNotEq"
-          compareValue="none"
-          formControl={formControl}
-        >
-          <CippFormComponent
-            type="textField"
-            name="domains"
-            label="Domains (comma separated)"
-            formControl={formControl}
-          />
-        </CippFormCondition>
-        <CippFormComponent
-          type="autoComplete"
-          name="deletedUserPersonalSiteRetentionPeriodInDays"
-          label="Deleted user OneDrive retention"
-          formControl={formControl}
-          options={retentionOptions}
-          multiple={false}
-          creatable={false}
-        />
-        <CippFormComponent
-          type="textField"
-          name="excludedFileExtensionsForSyncApp"
-          label="Sync app excluded file extensions (comma separated)"
-          formControl={formControl}
-        />
-        <CippFormComponent
-          type="switch"
-          name="isResharingByExternalUsersEnabled"
-          label="Allow external users to reshare"
-          formControl={formControl}
-        />
-        <SecuredSwitch
-          field={{
-            name: 'isLegacyAuthProtocolsEnabled',
-            label: 'Allow legacy authentication protocols',
-            secured: {
-              value: false,
-              standard: 'Disable SharePoint Legacy Authentication',
-            },
-          }}
-          formControl={formControl}
-        />
-        <CippFormComponent
-          type="switch"
-          name="isSiteCreationEnabled"
-          label="Allow users to create sites"
-          formControl={formControl}
-        />
-        <CippFormComponent
-          type="switch"
-          name="isMacSyncAppEnabled"
-          label="Allow OneDrive sync on macOS"
-          formControl={formControl}
-        />
-        <CippApiResults apiObject={save} />
-      </Stack>
-    </CippButtonCard>
-  )
-}
-
-// Shared section for a single tenant-level boolean setting.
-const BooleanSection = ({
-  tenant,
-  title,
-  label,
-  description,
-  name,
-  readUrl,
-  saveUrl,
-  queryKey,
-  secured,
-}) => {
-  const formControl = useForm({ mode: 'onChange' })
-  const settings = liveRead(readUrl, tenant, queryKey)
-  const save = ApiPostCall({})
-
-  useEffect(() => {
-    const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
-    if (!settings.isSuccess || !d) return
-    formControl.reset({ [name]: !!d[name] })
-  }, [settings.isSuccess, settings.data])
-
-  const onSave = (v) => {
-    save.mutate({
-      url: saveUrl,
-      data: { tenantFilter: tenant, [name]: !!v[name] },
-    })
-  }
-
-  if (settings.isError) {
-    return (
-      <Alert severity="warning">
-        Could not load this setting for the selected tenant.
-      </Alert>
-    )
-  }
-
-  return (
-    <CippButtonCard
-      title={title}
-      CardButton={
-        <SaveButton
-          save={save}
-          settings={settings}
-          onClick={formControl.handleSubmit(onSave)}
-        />
-      }
-      isFetching={settings.isFetching}
-    >
-      <Stack spacing={2}>
-        {description && (
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {description}
-          </Typography>
-        )}
-        {secured ? (
-          <SecuredSwitch
-            field={{ name, label, secured }}
-            formControl={formControl}
-          />
-        ) : (
-          <CippFormComponent
-            type="switch"
-            name={name}
-            label={label}
-            formControl={formControl}
-          />
-        )}
-        <CippApiResults apiObject={save} />
-      </Stack>
-    </CippButtonCard>
-  )
-}
-
-// Section rendering a set of tenant-level boolean toggles that POST as { tenantFilter, settings }.
-// A field may set invert:true to display the opposite sense of the stored property (e.g. Exchange
-// AuditDisabled is shown as "Mailbox auditing enabled").
-const SwitchesSection = ({
-  tenant,
-  title,
-  readUrl,
-  saveUrl,
-  queryKey,
-  fields,
-  description,
-  saveExtra,
-}) => {
-  const formControl = useForm({ mode: 'onChange' })
-  const settings = liveRead(readUrl, tenant, queryKey)
-  const save = ApiPostCall({})
-
-  useEffect(() => {
-    const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
-    if (!settings.isSuccess || !d) return
-    const values = {}
-    fields.forEach((f) => {
-      values[f.name] = f.invert ? !d[f.name] : !!d[f.name]
-    })
-    formControl.reset(values)
-  }, [settings.isSuccess, settings.data])
-
-  const onSave = (v) => {
-    const s = {}
-    fields.forEach((f) => {
-      s[f.name] = f.invert ? !v[f.name] : !!v[f.name]
-    })
-    save.mutate({
-      url: saveUrl,
-      data: { tenantFilter: tenant, settings: s, ...(saveExtra || {}) },
-    })
-  }
-
-  if (settings.isError) {
-    return (
-      <Alert severity="warning">
-        Could not load these settings for the selected tenant.
-      </Alert>
-    )
-  }
-
-  return (
-    <CippButtonCard
-      title={title}
-      CardButton={
-        <SaveButton
-          save={save}
-          settings={settings}
-          onClick={formControl.handleSubmit(onSave)}
-        />
-      }
-      isFetching={settings.isFetching}
-    >
-      <Stack spacing={2}>
-        {description && (
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {description}
-          </Typography>
-        )}
-        {fields.map((f) =>
-          f.secured ? (
-            <SecuredSwitch key={f.name} field={f} formControl={formControl} />
-          ) : (
-            <CippFormComponent
-              key={f.name}
-              type="switch"
-              name={f.name}
-              label={f.label}
-              formControl={formControl}
-            />
-          )
-        )}
-        <CippApiResults apiObject={save} />
-      </Stack>
-    </CippButtonCard>
-  )
-}
-
-const EXCHANGE_FIELDS = [
-  { name: 'BookingsEnabled', label: 'Allow Microsoft Bookings' },
-  { name: 'MessageRecallEnabled', label: 'Allow cloud-based message recall' },
-  { name: 'FocusedInboxOn', label: 'Focused Inbox on by default' },
-  {
-    name: 'SendFromAliasEnabled',
-    label: 'Allow users to send from their aliases',
-  },
-  {
-    name: 'OnlineMeetingsByDefaultEnabled',
-    label: 'New meetings are Teams meetings by default',
-  },
-  {
-    name: 'TwoClickMailPreviewEnabled',
-    label: 'Require two-click preview for protected mail',
-  },
-  {
-    name: 'EwsEnabled',
-    label: 'Allow Exchange Web Services (EWS)',
-    secured: { value: false, standard: 'Disable Exchange Web Services' },
-  },
-  {
-    name: 'AuditDisabled',
-    label: 'Mailbox auditing enabled',
-    invert: true,
-    secured: { value: true, standard: 'Enable Mailbox Auditing' },
-  },
-  {
-    name: 'CustomerLockboxEnabled',
-    label: 'Require approval for Microsoft support access (Customer Lockbox)',
-  },
-  {
-    name: 'AppsForOfficeEnabled',
-    label: 'Allow Outlook add-ins (apps for Office)',
-  },
-  {
-    name: 'OAuth2ClientProfileEnabled',
-    label: 'Enable modern authentication (OAuth2) for OWA/EAS',
-    secured: { value: true, standard: 'Enable Modern Authentication' },
-  },
-  {
-    name: 'ConnectorsEnabled',
-    label: 'Allow connected apps (connectors) in Outlook/Groups',
-  },
-  {
-    name: 'LinkPreviewEnabled',
-    label: 'Show link previews in Outlook on the web',
-  },
-  {
-    name: 'ReadTrackingEnabled',
-    label: 'Allow read receipts / message tracking',
-  },
-  {
-    name: 'PublicComputersDetectionEnabled',
-    label: 'Detect public computers in OWA',
-  },
-  {
-    name: 'SmtpActionableMessagesEnabled',
-    label: 'Allow actionable messages in email',
-  },
-  { name: 'OutlookPayEnabled', label: 'Allow Microsoft Pay in Outlook' },
-]
-
-const ExchangeOrgSection = ({ tenant }) => (
-  <SwitchesSection
-    tenant={tenant}
-    title="Exchange Online — Organization settings"
-    readUrl="/api/ListExchangeOrgConfig"
-    saveUrl="/api/ExecSetExchangeOrgConfig"
-    queryKey="ExchangeOrgConfig"
-    fields={EXCHANGE_FIELDS}
-  />
-)
-
-const SPO_CSOM_FIELDS = [
-  {
-    name: 'DisableAddToOneDrive',
-    label: 'Disable "Add shortcut to OneDrive" button',
-  },
-  {
-    name: 'EnableAzureADB2BIntegration',
-    label: 'Enable SharePoint/OneDrive B2B integration',
-  },
-  { name: 'CustomScriptsRestrictMode', label: 'Block custom scripts' },
-  {
-    name: 'DisableSharePointStoreAccess',
-    label: 'Disable SharePoint Store app access',
-  },
-  {
-    name: 'DisallowInfectedFileDownload',
-    label: 'Block downloading malware-infected files',
-    secured: { value: true, standard: 'Disallow Infected File Download' },
-  },
-  {
-    name: 'ShowPeoplePickerSuggestionsForGuestUsers',
-    label: 'Show guests in the People Picker',
-  },
-  { name: 'HideSyncButtonOnDocLib', label: 'Hide the SharePoint Sync button' },
-]
-
-const SpoSharingSection = ({ tenant }) => (
-  <SwitchesSection
-    tenant={tenant}
-    title="SharePoint — Sharing & sync"
-    readUrl="/api/ListSpoTenantSettings"
-    saveUrl="/api/ExecSetSpoTenantSettings"
-    queryKey="SpoTenantSettings"
-    fields={SPO_CSOM_FIELDS}
-    description="Set through the SharePoint admin (CSOM) API. Requires SharePoint app-only consent for the tenant."
-  />
-)
-
 const guestInviteOptions = [
   { label: 'Anyone in the organization can invite guests', value: 'everyone' },
   {
@@ -607,15 +92,388 @@ const guestRoleOptions = [
   },
 ]
 
+// Every section reads live (staleTime 0) so config is never stale, and only the opened section's
+// area of Microsoft 365 is queried.
+const liveRead = (url, tenant, queryKey) => {
+  const sep = url.includes('?') ? '&' : '?'
+  return ApiGetCall({
+    url: `${url}${sep}tenantFilter=${tenant}`,
+    queryKey: `${queryKey}_${tenant}`,
+    staleTime: 0,
+  })
+}
+
+const boolText = (v) => (v ? 'Enabled' : 'Disabled')
+
+// Management state is supplied through context so only rows whose field maps to a Standard (see
+// configStandardsMap) render a chip. `resolve` returns one of: none (no governing standard),
+// pending (data not in yet), managed (a Standard/Baseline governs this tenant), available (a
+// standard exists but nothing manages it here).
+const ManagementContext = createContext(null)
+
+const MgmtChip = ({ status, label, onManage }) => {
+  if (!status || status.state === 'none' || status.state === 'pending') {
+    return null
+  }
+  const chip =
+    status.state === 'managed'
+      ? status.compliant === false
+        ? { color: 'warning', text: 'Drift from standard' }
+        : { color: 'success', text: 'Managed' }
+      : { color: 'default', text: `Not enforced · add to ${label}` }
+  return (
+    <Chip
+      size="small"
+      variant="outlined"
+      color={chip.color}
+      label={chip.text}
+      onClick={onManage}
+      clickable
+      sx={{ mt: 0.5, height: 22 }}
+    />
+  )
+}
+
+// One label/value line. The value is a neutral chip (booleans) or right-aligned text; a separate
+// management chip under the label carries the "good vs bad" meaning where a standard governs it.
+const Row = ({ label, value, chip, name }) => {
+  const mgmt = useContext(ManagementContext)
+  const status = mgmt && name ? mgmt.resolve(name) : null
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 2,
+        py: 1.25,
+      }}
+    >
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="body2">{label}</Typography>
+        <MgmtChip
+          status={status}
+          label={mgmt?.label}
+          onManage={mgmt?.onManage}
+        />
+      </Box>
+      {chip ? (
+        <Chip
+          size="small"
+          variant="outlined"
+          label={value}
+          sx={{ flexShrink: 0 }}
+        />
+      ) : (
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', textAlign: 'right', flexShrink: 0 }}
+        >
+          {value || '—'}
+        </Typography>
+      )}
+    </Box>
+  )
+}
+
+// Reads the live management system (whichever the Baselines flag selects) once for the tenant and
+// resolves each mapped setting to managed / available. Degrades to no chip until the data is in.
+const useConfigManagement = ({ tenant, baselinesActive, flagsReady }) => {
+  const single = !!tenant && tenant !== 'AllTenants'
+  const stdCompare = ApiGetCall({
+    url: `/api/ListStandardsCompare?tenantFilter=${tenant}`,
+    queryKey: `CfgStdCompare_${tenant}`,
+    waiting: single && flagsReady && !baselinesActive,
+    staleTime: 300000,
+  })
+  const baseAlign = ApiGetCall({
+    url: `/api/ListBaselineAlignment?tenantFilter=${tenant}&byStandard=true`,
+    queryKey: `CfgBaseAlign_${tenant}`,
+    waiting: single && flagsReady && baselinesActive,
+    staleTime: 300000,
+  })
+
+  // apiName -> { compliant }. Standards key their per-tenant object as "standards.<Name>";
+  // baselines return per-standard rows keyed by a bare "<Name>" (optionally "<Name>#instance").
+  const managedMap = useMemo(() => {
+    const m = {}
+    if (baselinesActive) {
+      const data = baseAlign.data
+      const rows = Array.isArray(data)
+        ? data
+        : data?.standards || data?.rows || data?.Results || []
+      rows.forEach((r) => {
+        const nm = r?.standardName || r?.StandardName
+        if (!nm) return
+        m[String(nm).split('#')[0]] = {
+          compliant: r.compliant === true || r.status === 'Compliant',
+        }
+      })
+    } else {
+      const obj = Array.isArray(stdCompare.data)
+        ? stdCompare.data.find((o) => o?.tenantFilter === tenant) ||
+          stdCompare.data[0]
+        : null
+      if (obj) {
+        Object.entries(obj).forEach(([k, v]) => {
+          if (!k.startsWith('standards.')) return
+          const api = k.slice('standards.'.length)
+          if (api.includes('.')) return
+          m[api] = {
+            compliant:
+              v?.Value === true ||
+              (v?.CurrentValue != null &&
+                JSON.stringify(v.CurrentValue) ===
+                  JSON.stringify(v.ExpectedValue)),
+          }
+        })
+      }
+    }
+    return m
+  }, [baselinesActive, stdCompare.data, baseAlign.data, tenant])
+
+  const ready = baselinesActive ? baseAlign.isSuccess : stdCompare.isSuccess
+
+  return (fieldName) => {
+    const api = configStandardsMap[fieldName]
+    if (!api) return { state: 'none' }
+    if (!ready) return { state: 'pending' }
+    return managedMap[api]
+      ? { state: 'managed', compliant: managedMap[api].compliant }
+      : { state: 'available' }
+  }
+}
+
+const Readout = ({ title, isFetching, error, errorText, children }) =>
+  error ? (
+    <Alert severity="warning">{errorText}</Alert>
+  ) : (
+    <CippButtonCard title={title} isFetching={isFetching}>
+      <Stack divider={<Divider flexItem />} spacing={0}>
+        {children}
+      </Stack>
+    </CippButtonCard>
+  )
+
+// Read-only render of a set of tenant-level boolean toggles. A field may set invert:true to show
+// the opposite sense of the stored property (e.g. Exchange AuditDisabled shows as "Mailbox
+// auditing enabled").
+const SwitchesReadout = ({
+  tenant,
+  title,
+  readUrl,
+  queryKey,
+  fields,
+  description,
+  errorText,
+}) => {
+  const settings = liveRead(readUrl, tenant, queryKey)
+  const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
+  const known = settings.isSuccess && !!d
+  return (
+    <Readout
+      title={title}
+      isFetching={settings.isFetching}
+      error={settings.isError}
+      errorText={
+        errorText || 'Could not load these settings for the selected tenant.'
+      }
+    >
+      {description && (
+        <Typography variant="body2" sx={{ color: 'text.secondary', pt: 1 }}>
+          {description}
+        </Typography>
+      )}
+      {fields.map((f) => {
+        const v = known ? (f.invert ? !d[f.name] : !!d[f.name]) : null
+        return (
+          <Row
+            key={f.name}
+            label={f.label}
+            value={v === null ? '—' : boolText(v)}
+            chip={v !== null}
+            name={f.name}
+          />
+        )
+      })}
+    </Readout>
+  )
+}
+
+const SharePointSection = ({ tenant }) => {
+  const settings = liveRead(
+    '/api/ListSharepointSettings',
+    tenant,
+    'SharepointSettings'
+  )
+  const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
+  const known = settings.isSuccess && !!d
+  const mode = d?.sharingDomainRestrictionMode || 'none'
+  const domains = (
+    mode === 'allowList'
+      ? d?.sharingAllowedDomainList
+      : mode === 'blockList'
+        ? d?.sharingBlockedDomainList
+        : []
+  )?.join(', ')
+  return (
+    <Readout
+      title="SharePoint & OneDrive"
+      isFetching={settings.isFetching}
+      error={settings.isError}
+      errorText="Could not load SharePoint settings for this tenant. This usually means the tenant has no SharePoint/OneDrive licence."
+    >
+      <Row label="Default timezone" value={d?.tenantDefaultTimezone} />
+      <Row
+        label="External sharing level"
+        value={
+          findOption(sharingCapabilityOptions, d?.sharingCapability)?.label
+        }
+      />
+      <Row
+        label="Limit external sharing by domain"
+        value={findOption(domainModeOptions, mode)?.label}
+      />
+      {mode !== 'none' && <Row label="Domains" value={domains} />}
+      <Row
+        label="Deleted user OneDrive retention"
+        value={
+          findOption(
+            retentionOptions,
+            String(d?.deletedUserPersonalSiteRetentionPeriodInDays)
+          )?.label
+        }
+        name="deletedUserPersonalSiteRetentionPeriodInDays"
+      />
+      <Row
+        label="Sync app excluded file extensions"
+        value={(d?.excludedFileExtensionsForSyncApp || []).join(', ')}
+      />
+      <Row
+        label="Allow external users to reshare"
+        value={known ? boolText(!!d.isResharingByExternalUsersEnabled) : '—'}
+        chip={known}
+        name="isResharingByExternalUsersEnabled"
+      />
+      <Row
+        label="Allow legacy authentication protocols"
+        value={known ? boolText(!!d.isLegacyAuthProtocolsEnabled) : '—'}
+        chip={known}
+        name="isLegacyAuthProtocolsEnabled"
+      />
+      <Row
+        label="Allow users to create sites"
+        value={known ? boolText(!!d.isSiteCreationEnabled) : '—'}
+        chip={known}
+      />
+      <Row
+        label="Allow OneDrive sync on macOS"
+        value={known ? boolText(!!d.isMacSyncAppEnabled) : '—'}
+        chip={known}
+      />
+    </Readout>
+  )
+}
+
+const EXCHANGE_FIELDS = [
+  { name: 'BookingsEnabled', label: 'Allow Microsoft Bookings' },
+  { name: 'MessageRecallEnabled', label: 'Allow cloud-based message recall' },
+  { name: 'FocusedInboxOn', label: 'Focused Inbox on by default' },
+  {
+    name: 'SendFromAliasEnabled',
+    label: 'Allow users to send from their aliases',
+  },
+  {
+    name: 'OnlineMeetingsByDefaultEnabled',
+    label: 'New meetings are Teams meetings by default',
+  },
+  {
+    name: 'TwoClickMailPreviewEnabled',
+    label: 'Require two-click preview for protected mail',
+  },
+  { name: 'EwsEnabled', label: 'Allow Exchange Web Services (EWS)' },
+  { name: 'AuditDisabled', label: 'Mailbox auditing enabled', invert: true },
+  {
+    name: 'CustomerLockboxEnabled',
+    label: 'Require approval for Microsoft support access (Customer Lockbox)',
+  },
+  {
+    name: 'AppsForOfficeEnabled',
+    label: 'Allow Outlook add-ins (apps for Office)',
+  },
+  {
+    name: 'ConnectorsEnabled',
+    label: 'Allow connected apps (connectors) in Outlook/Groups',
+  },
+  {
+    name: 'LinkPreviewEnabled',
+    label: 'Show link previews in Outlook on the web',
+  },
+  {
+    name: 'ReadTrackingEnabled',
+    label: 'Allow read receipts / message tracking',
+  },
+  {
+    name: 'PublicComputersDetectionEnabled',
+    label: 'Detect public computers in OWA',
+  },
+  {
+    name: 'SmtpActionableMessagesEnabled',
+    label: 'Allow actionable messages in email',
+  },
+  { name: 'OutlookPayEnabled', label: 'Allow Microsoft Pay in Outlook' },
+]
+
+const ExchangeOrgSection = ({ tenant }) => (
+  <SwitchesReadout
+    tenant={tenant}
+    title="Exchange Online — Organization settings"
+    readUrl="/api/ListExchangeOrgConfig"
+    queryKey="ExchangeOrgConfig"
+    fields={EXCHANGE_FIELDS}
+  />
+)
+
+const SPO_CSOM_FIELDS = [
+  {
+    name: 'DisableAddToOneDrive',
+    label: 'Disable "Add shortcut to OneDrive" button',
+  },
+  {
+    name: 'EnableAzureADB2BIntegration',
+    label: 'Enable SharePoint/OneDrive B2B integration',
+  },
+  { name: 'CustomScriptsRestrictMode', label: 'Block custom scripts' },
+  {
+    name: 'DisableSharePointStoreAccess',
+    label: 'Disable SharePoint Store app access',
+  },
+  {
+    name: 'DisallowInfectedFileDownload',
+    label: 'Block downloading malware-infected files',
+  },
+  {
+    name: 'ShowPeoplePickerSuggestionsForGuestUsers',
+    label: 'Show guests in the People Picker',
+  },
+  { name: 'HideSyncButtonOnDocLib', label: 'Hide the SharePoint Sync button' },
+]
+
+const SpoSharingSection = ({ tenant }) => (
+  <SwitchesReadout
+    tenant={tenant}
+    title="SharePoint — Sharing & sync"
+    readUrl="/api/ListSpoTenantSettings"
+    queryKey="SpoTenantSettings"
+    fields={SPO_CSOM_FIELDS}
+    description="Read from the SharePoint admin (CSOM) API. Requires SharePoint app-only consent for the tenant."
+  />
+)
+
 const ENTRA_SWITCHES = [
   {
     name: 'allowedToUseSSPR',
     label: 'Admins can use Self-Service Password Reset',
-  },
-  {
-    name: 'blockMsolPowerShell',
-    label: 'Block legacy MSOnline PowerShell access',
-    secured: { value: true, standard: null },
   },
   { name: 'allowedToCreateApps', label: 'Users can register applications' },
   {
@@ -634,92 +492,40 @@ const ENTRA_SWITCHES = [
 ]
 
 const EntraAuthSection = ({ tenant }) => {
-  const formControl = useForm({ mode: 'onChange' })
   const settings = liveRead(
     '/api/ListEntraAuthPolicy',
     tenant,
     'EntraAuthPolicy'
   )
-  const save = ApiPostCall({})
-
-  useEffect(() => {
-    const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
-    if (!settings.isSuccess || !d) return
-    const values = {
-      allowInvitesFrom: findOption(guestInviteOptions, d.allowInvitesFrom),
-      guestUserRoleId: findOption(guestRoleOptions, d.guestUserRoleId),
-    }
-    ENTRA_SWITCHES.forEach((f) => {
-      values[f.name] = !!d[f.name]
-    })
-    formControl.reset(values)
-  }, [settings.isSuccess, settings.data])
-
-  const onSave = (v) => {
-    const s = {
-      allowInvitesFrom: v.allowInvitesFrom?.value,
-      guestUserRoleId: v.guestUserRoleId?.value,
-    }
-    ENTRA_SWITCHES.forEach((f) => {
-      s[f.name] = !!v[f.name]
-    })
-    save.mutate({
-      url: '/api/ExecSetEntraAuthPolicy',
-      data: { tenantFilter: tenant, settings: s },
-    })
-  }
-
-  if (settings.isError) {
-    return (
-      <Alert severity="warning">
-        Could not load the authorization policy for this tenant.
-      </Alert>
-    )
-  }
-
+  const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
+  const known = settings.isSuccess && !!d
   return (
-    <CippButtonCard
+    <Readout
       title="Entra — Authorization policy"
-      CardButton={
-        <SaveButton
-          save={save}
-          settings={settings}
-          onClick={formControl.handleSubmit(onSave)}
-        />
-      }
       isFetching={settings.isFetching}
+      error={settings.isError}
+      errorText="Could not load the authorization policy for this tenant."
     >
-      <Stack spacing={2}>
-        <CippFormComponent
-          type="autoComplete"
-          name="allowInvitesFrom"
-          label="Who can invite guests"
-          formControl={formControl}
-          options={guestInviteOptions}
-          multiple={false}
-          creatable={false}
+      <Row
+        label="Who can invite guests"
+        value={findOption(guestInviteOptions, d?.allowInvitesFrom)?.label}
+        name="allowInvitesFrom"
+      />
+      <Row
+        label="Guest access level in the directory"
+        value={findOption(guestRoleOptions, d?.guestUserRoleId)?.label}
+        name="guestUserRoleId"
+      />
+      {ENTRA_SWITCHES.map((f) => (
+        <Row
+          key={f.name}
+          label={f.label}
+          value={known ? boolText(!!d[f.name]) : '—'}
+          chip={known}
+          name={f.name}
         />
-        <CippFormComponent
-          type="autoComplete"
-          name="guestUserRoleId"
-          label="Guest access level in the directory"
-          formControl={formControl}
-          options={guestRoleOptions}
-          multiple={false}
-          creatable={false}
-        />
-        {ENTRA_SWITCHES.map((f) => (
-          <CippFormComponent
-            key={f.name}
-            type="switch"
-            name={f.name}
-            label={f.label}
-            formControl={formControl}
-          />
-        ))}
-        <CippApiResults apiObject={save} />
-      </Stack>
-    </CippButtonCard>
+      ))}
+    </Readout>
   )
 }
 
@@ -780,16 +586,14 @@ const TEAMS_EXTERNAL_FIELDS = [
   },
 ]
 
-// Factory for a Teams Global-policy leaf (each is one policy type = one read + one write).
+// Factory for a Teams Global-policy leaf (each is one policy type = one read).
 const teamsLeaf = (title, policyType, fields) =>
   function TeamsSection({ tenant }) {
     return (
-      <SwitchesSection
+      <SwitchesReadout
         tenant={tenant}
         title={`Teams — ${title}`}
         readUrl={`/api/ListTeamsConfig?policyType=${policyType}`}
-        saveUrl="/api/ExecSetTeamsConfig"
-        saveExtra={{ policyType }}
         queryKey={`Teams_${policyType}`}
         fields={fields}
       />
@@ -830,14 +634,13 @@ const XTAP_FIELDS = [
 ]
 
 const CrossTenantAccessSection = ({ tenant }) => (
-  <SwitchesSection
+  <SwitchesReadout
     tenant={tenant}
     title="Entra — Cross-tenant access (inbound trust)"
     readUrl="/api/ListCrossTenantAccess"
-    saveUrl="/api/ExecSetCrossTenantAccess"
     queryKey="CrossTenantAccess"
     fields={XTAP_FIELDS}
-    description="Trust MFA and device-compliance claims from a guest's home tenant so your Conditional Access can honour them."
+    description="Whether your Conditional Access honours MFA and device-compliance claims from a guest's home tenant."
   />
 )
 
@@ -857,11 +660,10 @@ const OWA_FIELDS = [
 ]
 
 const OwaMailboxSection = ({ tenant }) => (
-  <SwitchesSection
+  <SwitchesReadout
     tenant={tenant}
     title="Exchange Online — OWA mailbox policy"
     readUrl="/api/ListOwaMailboxPolicy"
-    saveUrl="/api/ExecSetOwaMailboxPolicy"
     queryKey="OwaMailboxPolicy"
     fields={OWA_FIELDS}
   />
@@ -870,193 +672,105 @@ const OwaMailboxSection = ({ tenant }) => (
 const ORG_CONTACT_FIELDS = [
   {
     name: 'technicalNotificationMails',
-    label: 'Technical notification emails (comma separated)',
+    label: 'Technical notification emails',
   },
   {
     name: 'securityComplianceNotificationMails',
-    label: 'Security & compliance notification emails (comma separated)',
+    label: 'Security & compliance notification emails',
   },
   {
     name: 'marketingNotificationEmails',
-    label: 'Marketing notification emails (comma separated)',
+    label: 'Marketing notification emails',
   },
 ]
 
 const OrgContactsSection = ({ tenant }) => {
-  const formControl = useForm({ mode: 'onChange' })
   const settings = liveRead('/api/ListOrgContacts', tenant, 'OrgContacts')
-  const save = ApiPostCall({})
-
-  useEffect(() => {
-    const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
-    if (!settings.isSuccess || !d) return
-    formControl.reset({
-      technicalNotificationMails: (d.technicalNotificationMails || []).join(
-        ', '
-      ),
-      securityComplianceNotificationMails: (
-        d.securityComplianceNotificationMails || []
-      ).join(', '),
-      marketingNotificationEmails: (d.marketingNotificationEmails || []).join(
-        ', '
-      ),
-    })
-  }, [settings.isSuccess, settings.data])
-
-  const onSave = (v) => {
-    save.mutate({
-      url: '/api/ExecSetOrgContacts',
-      data: {
-        tenantFilter: tenant,
-        settings: {
-          technicalNotificationMails: splitList(v.technicalNotificationMails),
-          securityComplianceNotificationMails: splitList(
-            v.securityComplianceNotificationMails
-          ),
-          marketingNotificationEmails: splitList(v.marketingNotificationEmails),
-        },
-      },
-    })
-  }
-
-  if (settings.isError) {
-    return (
-      <Alert severity="warning">
-        Could not load organization contacts for this tenant.
-      </Alert>
-    )
-  }
-
+  const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
   return (
-    <CippButtonCard
+    <Readout
       title="Organization — Notification contacts"
-      CardButton={
-        <SaveButton
-          save={save}
-          settings={settings}
-          onClick={formControl.handleSubmit(onSave)}
-        />
-      }
       isFetching={settings.isFetching}
+      error={settings.isError}
+      errorText="Could not load organization contacts for this tenant."
     >
-      <Stack spacing={2}>
-        {ORG_CONTACT_FIELDS.map((f) => (
-          <CippFormComponent
-            key={f.name}
-            type="textField"
-            name={f.name}
-            label={f.label}
-            formControl={formControl}
-          />
-        ))}
-        <CippApiResults apiObject={save} />
-      </Stack>
-    </CippButtonCard>
+      {ORG_CONTACT_FIELDS.map((f) => (
+        <Row
+          key={f.name}
+          label={f.label}
+          value={(d?.[f.name] || []).join(', ')}
+        />
+      ))}
+    </Readout>
   )
 }
 
 const DeviceRegSection = ({ tenant }) => {
-  const formControl = useForm({ mode: 'onChange' })
   const settings = liveRead(
     '/api/ListDeviceRegistrationPolicy',
     tenant,
     'DeviceRegPolicy'
   )
-  const save = ApiPostCall({})
-
-  useEffect(() => {
-    const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
-    if (!settings.isSuccess || !d) return
-    formControl.reset({
-      lapsEnabled: !!d.lapsEnabled,
-      userDeviceQuota: d.userDeviceQuota,
-    })
-  }, [settings.isSuccess, settings.data])
-
-  const onSave = (v) => {
-    save.mutate({
-      url: '/api/ExecSetDeviceRegistrationPolicy',
-      data: {
-        tenantFilter: tenant,
-        settings: {
-          lapsEnabled: !!v.lapsEnabled,
-          userDeviceQuota:
-            v.userDeviceQuota !== '' && v.userDeviceQuota != null
-              ? Number(v.userDeviceQuota)
-              : undefined,
-        },
-      },
-    })
-  }
-
-  if (settings.isError) {
-    return (
-      <Alert severity="warning">
-        Could not load the device registration policy.
-      </Alert>
-    )
-  }
-
+  const d = Array.isArray(settings.data) ? settings.data[0] : settings.data
+  const known = settings.isSuccess && !!d
   return (
-    <CippButtonCard
+    <Readout
       title="Entra — Device registration"
-      CardButton={
-        <SaveButton
-          save={save}
-          settings={settings}
-          onClick={formControl.handleSubmit(onSave)}
-        />
-      }
       isFetching={settings.isFetching}
+      error={settings.isError}
+      errorText="Could not load the device registration policy."
     >
-      <Stack spacing={2}>
-        <CippFormComponent
-          type="switch"
-          name="lapsEnabled"
-          label="Enable Windows LAPS"
-          formControl={formControl}
-        />
-        <CippFormComponent
-          type="number"
-          name="userDeviceQuota"
-          label="Maximum devices per user"
-          formControl={formControl}
-        />
-        <CippApiResults apiObject={save} />
-      </Stack>
-    </CippButtonCard>
+      <Row
+        label="Enable Windows LAPS"
+        value={known ? boolText(!!d.lapsEnabled) : '—'}
+        chip={known}
+      />
+      <Row
+        label="Maximum devices per user"
+        value={
+          d?.userDeviceQuota != null ? String(d.userDeviceQuota) : undefined
+        }
+      />
+    </Readout>
   )
 }
 
 const AuditLogSection = ({ tenant }) => (
-  <BooleanSection
+  <SwitchesReadout
     tenant={tenant}
     title="Audit Log"
-    label="Enable the Unified Audit Log"
-    description="Enables the Unified Audit Log for tracking and auditing activity across the tenant."
-    name="UnifiedAuditLogIngestionEnabled"
     readUrl="/api/ListAdminAuditLogConfig"
-    saveUrl="/api/ExecSetAdminAuditLogConfig"
     queryKey="AdminAuditLogConfig"
-    secured={{ value: true, standard: 'Enable the Unified Audit Log' }}
+    description="Whether the Unified Audit Log is ingesting activity across the tenant."
+    fields={[
+      {
+        name: 'UnifiedAuditLogIngestionEnabled',
+        label: 'Unified Audit Log enabled',
+      },
+    ]}
+    errorText="Could not load the audit log configuration for this tenant."
   />
 )
 
 const UsageReportsSection = ({ tenant }) => (
-  <BooleanSection
+  <SwitchesReadout
     tenant={tenant}
     title="Usage Reports"
-    label="Conceal user, group, and site names in usage reports"
-    description="When enabled, Microsoft 365 usage reports show de-identified names instead of real user, group, and site names."
-    name="displayConcealedNames"
     readUrl="/api/ListAdminReportSettings"
-    saveUrl="/api/ExecSetAdminReportSettings"
     queryKey="AdminReportSettings"
+    description="When enabled, Microsoft 365 usage reports show de-identified names instead of real user, group, and site names."
+    fields={[
+      {
+        name: 'displayConcealedNames',
+        label: 'Conceal names in usage reports',
+      },
+    ]}
+    errorText="Could not load the usage report settings for this tenant."
   />
 )
 
-// Each leaf = one Microsoft 365 resource = one live read + one write (single-tenant) and one
-// cached fleet type (all-tenants). Leaves are grouped into categories for the nav tree.
+// Each leaf = one Microsoft 365 resource = one live read (single-tenant) and one cached fleet
+// type (all-tenants). Leaves are grouped into categories for the nav tree.
 const SECTIONS = [
   {
     key: 'sharepoint',
@@ -1077,7 +791,6 @@ const SECTIONS = [
     title: 'Sharing & sync',
     icon: <CippIcons.Share />,
     Component: SpoSharingSection,
-    // CSOM values are cached in a separate table, not the reporting DB, so no fleet view yet.
     cacheType: null,
     columns: [],
   },
@@ -1244,8 +957,8 @@ const FleetTable = ({ section }) => {
       isFetching={fleet.isFetching}
     >
       <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-        Cached values across all tenants. Select a specific tenant to change a
-        value live.
+        Cached values across all tenants. Select a specific tenant to view it
+        live.
       </Typography>
       <CippDataTable
         noCard={true}
@@ -1262,6 +975,38 @@ const Page = () => {
   const settings = useSettings()
   const currentTenant = router.query.tenantFilter || settings.currentTenant
   const title = 'Manage Tenant'
+
+  // Baselines and classic Standards are mutually exclusive - the Baselines feature flag switches
+  // the estate from one to the other. Point the "manage this properly" call-to-action at whichever
+  // one is live.
+  const featureFlags = ApiGetCall({
+    url: '/api/ListFeatureFlags',
+    queryKey: 'featureFlags',
+    staleTime: 600000,
+  })
+  const baselinesActive =
+    Array.isArray(featureFlags.data) &&
+    featureFlags.data.some(
+      (f) =>
+        (f.Id === 'Baselines' || f.Name === 'Baselines') &&
+        (f.Enabled === true || f.enabled === true)
+    )
+  const mgmtLabel = baselinesActive ? 'Baselines' : 'Standards'
+  const mgmtNoun = baselinesActive ? 'Baseline' : 'Standard'
+  const mgmtPath = baselinesActive
+    ? '/tenant/baselines/templates'
+    : '/tenant/standards/templates'
+
+  const resolveManagement = useConfigManagement({
+    tenant: currentTenant,
+    baselinesActive,
+    flagsReady: featureFlags.isSuccess,
+  })
+  const mgmt = {
+    resolve: resolveManagement,
+    label: mgmtLabel,
+    onManage: () => router.push(mgmtPath),
+  }
 
   // The selected leaf lives in the URL (?section=) so sections are deep-linkable.
   const sectionKey =
@@ -1294,102 +1039,128 @@ const Page = () => {
         {!currentTenant ? (
           <Box sx={{ py: 4 }}>
             <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-              Select a tenant to view and set its configuration, or choose All
-              Tenants for a fleet overview.
+              Select a tenant to view its configuration, or choose All Tenants
+              for a fleet overview.
             </Typography>
           </Box>
         ) : (
-          <Grid container spacing={3}>
-            {/* Left: search + category tree. Right: single-tenant live config, or all-tenants fleet table. */}
-            <Grid size={{ md: 3, xs: 12 }}>
-              <Autocomplete
-                size="small"
-                sx={{ mb: 2 }}
-                options={SEARCH_INDEX}
-                getOptionLabel={(o) => o.label}
-                onChange={(e, value) => value && goToSection(value.key)}
-                renderInput={(params) => (
-                  <TextField {...params} label="Search settings" />
-                )}
-                isOptionEqualToValue={(o, v) => o.label === v.label}
-                clearOnBlur
-                blurOnSelect
-              />
-              <Card variant="outlined">
-                <List disablePadding>
-                  {CATEGORIES.map((category) => {
-                    const leaves = SECTIONS.filter(
-                      (s) => s.category === category
-                    )
-                    const open = openCategory === category
-                    return (
-                      <Box key={category}>
-                        <ListItemButton
-                          onClick={() =>
-                            setOpenCategory(open ? null : category)
-                          }
-                        >
-                          <ListItemText primary={category} />
-                          <SvgIcon
-                            fontSize="small"
-                            sx={{
-                              transition: 'transform 0.2s',
-                              transform: open ? 'rotate(90deg)' : 'none',
-                            }}
-                          >
-                            <CippIcons.ChevronRightIcon />
-                          </SvgIcon>
-                        </ListItemButton>
-                        <Collapse in={open} unmountOnExit>
-                          <List disablePadding>
-                            {leaves.map((section) => (
-                              <ListItemButton
-                                key={section.key}
-                                selected={section.key === sectionKey}
-                                sx={{ pl: 4 }}
-                                onClick={() => goToSection(section.key)}
-                              >
-                                <ListItemIcon sx={{ minWidth: 36 }}>
-                                  <SvgIcon fontSize="small">
-                                    {section.icon}
-                                  </SvgIcon>
-                                </ListItemIcon>
-                                <ListItemText primary={section.title} />
-                              </ListItemButton>
-                            ))}
-                          </List>
-                        </Collapse>
-                      </Box>
-                    )
-                  })}
-                </List>
-              </Card>
-            </Grid>
-            <Grid size={{ md: 9, xs: 12 }}>
-              {isAllTenants ? (
-                activeSection.cacheType ? (
-                  <FleetTable
-                    key={`fleet-${activeSection.key}`}
-                    section={activeSection}
-                  />
-                ) : (
-                  <CippButtonCard
-                    title={`${activeSection.title} — All Tenants`}
-                  >
-                    <Alert severity="info">
-                      A fleet overview is not available for this area yet.
-                      Select a specific tenant to view and change its settings.
-                    </Alert>
-                  </CippButtonCard>
-                )
-              ) : (
-                <ActiveComponent
-                  key={activeSection.key}
-                  tenant={currentTenant}
+          <>
+            <Alert
+              severity="info"
+              icon={
+                <SvgIcon fontSize="inherit">
+                  <CippIcons.ShieldCheckIcon />
+                </SvgIcon>
+              }
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => router.push(mgmtPath)}
+                >
+                  Open {mgmtLabel} templates
+                </Button>
+              }
+              sx={{ mb: 2 }}
+            >
+              This is a read-only view of tenant configuration. To change any of
+              these settings, enforce it through a {mgmtNoun} so it stays
+              applied and configuration drift is detected.
+            </Alert>
+            <Grid container spacing={3}>
+              {/* Left: search + category tree. Right: single-tenant live config, or all-tenants fleet table. */}
+              <Grid size={{ md: 3, xs: 12 }}>
+                <Autocomplete
+                  size="small"
+                  sx={{ mb: 2 }}
+                  options={SEARCH_INDEX}
+                  getOptionLabel={(o) => o.label}
+                  onChange={(e, value) => value && goToSection(value.key)}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Search settings" />
+                  )}
+                  isOptionEqualToValue={(o, v) => o.label === v.label}
+                  clearOnBlur
+                  blurOnSelect
                 />
-              )}
+                <Card variant="outlined">
+                  <List disablePadding>
+                    {CATEGORIES.map((category) => {
+                      const leaves = SECTIONS.filter(
+                        (s) => s.category === category
+                      )
+                      const open = openCategory === category
+                      return (
+                        <Box key={category}>
+                          <ListItemButton
+                            onClick={() =>
+                              setOpenCategory(open ? null : category)
+                            }
+                          >
+                            <ListItemText primary={category} />
+                            <SvgIcon
+                              fontSize="small"
+                              sx={{
+                                transition: 'transform 0.2s',
+                                transform: open ? 'rotate(90deg)' : 'none',
+                              }}
+                            >
+                              <CippIcons.ChevronRightIcon />
+                            </SvgIcon>
+                          </ListItemButton>
+                          <Collapse in={open} unmountOnExit>
+                            <List disablePadding>
+                              {leaves.map((section) => (
+                                <ListItemButton
+                                  key={section.key}
+                                  selected={section.key === sectionKey}
+                                  sx={{ pl: 4 }}
+                                  onClick={() => goToSection(section.key)}
+                                >
+                                  <ListItemIcon sx={{ minWidth: 36 }}>
+                                    <SvgIcon fontSize="small">
+                                      {section.icon}
+                                    </SvgIcon>
+                                  </ListItemIcon>
+                                  <ListItemText primary={section.title} />
+                                </ListItemButton>
+                              ))}
+                            </List>
+                          </Collapse>
+                        </Box>
+                      )
+                    })}
+                  </List>
+                </Card>
+              </Grid>
+              <Grid size={{ md: 9, xs: 12 }}>
+                {isAllTenants ? (
+                  activeSection.cacheType ? (
+                    <FleetTable
+                      key={`fleet-${activeSection.key}`}
+                      section={activeSection}
+                    />
+                  ) : (
+                    <CippButtonCard
+                      title={`${activeSection.title} — All Tenants`}
+                    >
+                      <Alert severity="info">
+                        A fleet overview is not available for this area yet.
+                        Select a specific tenant to view its settings.
+                      </Alert>
+                    </CippButtonCard>
+                  )
+                ) : (
+                  <ManagementContext.Provider value={mgmt}>
+                    <ActiveComponent
+                      key={activeSection.key}
+                      tenant={currentTenant}
+                    />
+                  </ManagementContext.Provider>
+                )}
+              </Grid>
             </Grid>
-          </Grid>
+          </>
         )}
       </Box>
     </HeaderedTabbedLayout>

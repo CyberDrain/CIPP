@@ -38424,7 +38424,7 @@
         "tags": [
           "Tenant > Administration > Configuration"
         ],
-        "description": "Returns the tenant's Exchange Online admin audit log configuration (notably whether the\nUnified Audit Log is enabled). Read live from Exchange Online so the value is always current.",
+        "description": "Returns the tenant's Exchange Online admin audit log configuration (notably whether the\nUnified Audit Log is enabled). Served from the CIPP reporting cache, populated on a miss.",
         "parameters": [
           {
             "$ref": "#/components/parameters/tenantFilter"

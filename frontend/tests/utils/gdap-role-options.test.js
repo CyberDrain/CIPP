@@ -6,6 +6,7 @@ import {
   buildGdapTemplateSelection,
   classifyGdapGroupName,
   gdapPreviewStatus,
+  gdapTemplatePartnerOption,
   resolveGdapSelections,
   selectGdapDefaultOptions,
 } from "../../src/utils/gdap-role-options";
@@ -431,5 +432,31 @@ describe("buildGdapRepairPlan", () => {
   it("returns an empty plan for no rows", () => {
     expect(buildGdapRepairPlan()).toEqual({ changes: [], validCount: 0, unknown: false });
     expect(buildGdapRepairPlan([])).toEqual({ changes: [], validCount: 0, unknown: false });
+  });
+});
+
+describe("gdapTemplatePartnerOption", () => {
+  it("preselects the partner of a single-partner template", () => {
+    expect(
+      gdapTemplatePartnerOption({ partnerTenantId: "partner-a", partnerDisplayName: "Partner A" })
+    ).toEqual({ label: "Partner A", value: "partner-a" });
+  });
+
+  it("falls back to the id when the name is missing", () => {
+    expect(gdapTemplatePartnerOption({ partnerTenantId: "partner-a" })).toEqual({
+      label: "partner-a",
+      value: "partner-a",
+    });
+  });
+
+  it("leaves the picker empty for mixed-partner or legacy templates", () => {
+    expect(
+      gdapTemplatePartnerOption({
+        partnerTenantId: "partner-a,partner-b",
+        partnerDisplayName: "Partner A, Partner B",
+      })
+    ).toBeNull();
+    expect(gdapTemplatePartnerOption({})).toBeNull();
+    expect(gdapTemplatePartnerOption(undefined)).toBeNull();
   });
 });

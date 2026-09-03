@@ -167,6 +167,15 @@ export const buildGdapTemplatePayload = (values, mappings = [], originalTemplate
  * cannot reproduce (a custom name, a second suffix, an unsuffixed group alongside a suffixed one)
  * is pinned to its own group so saving cannot silently re-target it.
  */
+// A template row carries the partner(s) owning its groups as comma-joined ids and names.
+// Only an unambiguous single-partner template can preselect the picker.
+export const gdapTemplatePartnerOption = (template) => {
+  const ids = String(template?.partnerTenantId ?? "").split(",").filter(Boolean);
+  if (ids.length !== 1) return null;
+  const names = String(template?.partnerDisplayName ?? "").split(",").map((n) => n.trim());
+  return { label: names[0] || ids[0], value: ids[0] };
+};
+
 export const buildGdapTemplateSelection = (templateMappings = [], catalog = [], mappings = []) => {
   const roleOptions = buildGdapRoleOptions(catalog, mappings).filter(
     (option) => option.kind === "role"

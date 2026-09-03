@@ -221,6 +221,42 @@ describe("buildGdapTemplatePayload", () => {
     expect(payload.NewRoles).toEqual([{ label: "Intune Administrator", value: "role-intune" }]);
     expect(payload).not.toHaveProperty("OriginalTemplateId");
   });
+
+  it("scopes reuse to the selected partner and sends its id", () => {
+    const otherPartnerMapping = { ...plainMapping, partnerTenantId: "partner-b" };
+    const legacyMapping = customMapping; // no partnerTenantId: belongs to the primary
+    const mappings = [otherPartnerMapping, legacyMapping];
+    const options = buildGdapRoleOptions(catalog, mappings);
+    const payload = buildGdapTemplatePayload(
+      {
+        templateId: "Helpdesk",
+        partnerTenant: { label: "Partner A", value: "partner-a" },
+        roleMappings: [
+          roleOption(options, "User Administrator"),
+          options.find((option) => option.kind === "group"),
+        ],
+      },
+      mappings
+    );
+
+    // partner-b's group must not be reused for partner-a, so the role is created fresh there
+    expect(payload.partnerTenantId).toBe("partner-a");
+    expect(payload.NewRoles).toEqual([{ label: "User Administrator", value: "role-user-admin" }]);
+    expect(payload.RoleMappings).toEqual([legacyMapping]);
+  });
+
+  it("omits partnerTenantId and reuses every mapping when no partner is chosen", () => {
+    const mappings = [{ ...plainMapping, partnerTenantId: "partner-b" }];
+    const options = buildGdapRoleOptions(catalog, mappings);
+    const payload = buildGdapTemplatePayload(
+      { templateId: "Helpdesk", roleMappings: [roleOption(options, "User Administrator")] },
+      mappings
+    );
+
+    expect(payload).not.toHaveProperty("partnerTenantId");
+    expect(payload.RoleMappings.map((mapping) => mapping.GroupId)).toEqual(["group-user-admin"]);
+    expect(payload.NewRoles).toEqual([]);
+  });
 });
 
 describe("buildGdapTemplateSelection", () => {

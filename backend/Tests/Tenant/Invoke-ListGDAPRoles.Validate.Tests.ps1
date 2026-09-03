@@ -20,6 +20,8 @@ BeforeAll {
     function Test-CIPPGDAPGroupMappings { param($RoleMappings, $PartnerGroups, $APIName, $Headers) }
     function Write-LogMessage { param($headers, $API, $tenant, $message, $Sev, $LogData) }
     function Get-CippException { param($Exception) @{ NormalizedError = $Exception.Exception.Message } }
+    # Returns nothing: no additional partners configured, so rows attribute to the primary.
+    function Get-CIPPPartnerTenantList { }
 
     . $FunctionPath
 
@@ -70,7 +72,7 @@ Describe 'Invoke-ListGDAPRoles' {
         Should -Invoke Test-CIPPGDAPGroupMappings -Times 0
         Should -Invoke New-GraphGetRequest -Times 0
         $Response.Body.Count | Should -Be 2
-        $Response.Body[0].PSObject.Properties.Name | Should -Be @('GroupName', 'GroupId', 'RoleName', 'roleDefinitionId')
+        $Response.Body[0].PSObject.Properties.Name | Should -Be @('GroupName', 'GroupId', 'RoleName', 'roleDefinitionId', 'partnerTenantId', 'partnerDisplayName')
     }
 
     It 'annotates each mapping with its group status when asked' {

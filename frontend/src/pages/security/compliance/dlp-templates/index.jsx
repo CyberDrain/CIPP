@@ -1,4 +1,6 @@
 import { Layout as DashboardLayout } from "../../../../layouts/index";
+import { TabbedLayout } from "../../../../layouts/TabbedLayout";
+import tabOptions from "../dlp/tabOptions.json";
 import { CippIcons } from "../../../../utils/icon-registry"
 import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
 import { ApiGetCall } from "../../../../api/ApiCall";
@@ -103,5 +105,9 @@ const Page = () => {
   );
 };
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => (
+  <DashboardLayout>
+    <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
+  </DashboardLayout>
+);
 export default Page;

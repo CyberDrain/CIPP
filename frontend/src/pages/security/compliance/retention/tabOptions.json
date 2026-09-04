@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Retention Policies",
+    "path": "/security/compliance/retention",
+    "icon": "Schedule"
+  },
+  {
+    "label": "Retention Policy Templates",
+    "path": "/security/compliance/retention-templates",
+    "icon": "Description"
+  }
+]

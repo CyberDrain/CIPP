@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { CippIcons } from "../../../utils/icon-registry"
+import { CippIcons } from "../../../../utils/icon-registry"
 import { useRouter } from "next/router";
 import NextLink from "next/link";
-import { Layout as DashboardLayout } from "../../../layouts/index";
+import { Layout as DashboardLayout } from "../../../../layouts/index";
 import {
   Box,
   Button,
@@ -29,13 +29,13 @@ import { Grid } from "@mui/system";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import { useForm, FormProvider } from "react-hook-form";
-import { ApiGetCall, ApiPostCall } from "../../../api/ApiCall";
-import { CippHead } from "../../../components/CippComponents/CippHead";
-import { CippApiResults } from "../../../components/CippComponents/CippApiResults";
-import CippFormComponent from "../../../components/CippComponents/CippFormComponent";
-import { CippFormCondition } from "../../../components/CippComponents/CippFormCondition";
-import { CippAutoComplete } from "../../../components/CippComponents/CippAutocomplete";
-import { getTemplateTypeLabel } from "../../../components/CippComponents/CippTemplateCatalog";
+import { ApiGetCall, ApiPostCall } from "../../../../api/ApiCall";
+import { CippHead } from "../../../../components/CippComponents/CippHead";
+import { CippApiResults } from "../../../../components/CippComponents/CippApiResults";
+import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
+import { CippFormCondition } from "../../../../components/CippComponents/CippFormCondition";
+import { CippAutoComplete } from "../../../../components/CippComponents/CippAutocomplete";
+import { getTemplateTypeLabel } from "../../../../components/CippComponents/CippTemplateCatalog";
 
 const typeOptions = [
   { label: "Intune Policy", value: "IntuneTemplate" },
@@ -147,7 +147,7 @@ const Page = () => {
   };
 
   const handleOpenRepo = (repo) => {
-    router.push(`/tools/community-repos/catalog?Repo=${encodeURIComponent(repo.FullName)}`);
+    router.push(`/tools/template-tools/community-repos/catalog?Repo=${encodeURIComponent(repo.FullName)}`);
   };
 
   const handleAddRepo = () => {
@@ -206,7 +206,7 @@ const Page = () => {
                 variant="outlined"
                 startIcon={<CippIcons.MagnifyingGlassIcon />}
                 component={NextLink}
-                href="/tools/community-repos/catalog"
+                href="/tools/template-tools/community-repos/catalog"
               >
                 Browse All Templates
               </Button>

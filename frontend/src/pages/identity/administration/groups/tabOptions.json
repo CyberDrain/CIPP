@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Groups",
+    "path": "/identity/administration/groups",
+    "icon": "Groups"
+  },
+  {
+    "label": "Group Templates",
+    "path": "/identity/administration/group-templates",
+    "icon": "Description"
+  }
+]

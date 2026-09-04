@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Configuration Policies",
+    "path": "/endpoint/MEM/list-policies",
+    "icon": "Settings"
+  },
+  {
+    "label": "Policy Templates",
+    "path": "/endpoint/MEM/list-templates",
+    "icon": "Description"
+  }
+]

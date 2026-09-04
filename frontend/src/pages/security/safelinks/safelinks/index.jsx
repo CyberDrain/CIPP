@@ -1,4 +1,6 @@
 import { Layout as DashboardLayout } from "../../../../layouts/index";
+import { TabbedLayout } from "../../../../layouts/TabbedLayout";
+import tabOptions from "./tabOptions.json";
 import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
 import { CippIcons } from "../../../../utils/icon-registry"
 import { Button } from "@mui/material";
@@ -179,5 +181,9 @@ const Page = () => {
   );
 };
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>;
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>
+    <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
+  </DashboardLayout>
+);
 export default Page;

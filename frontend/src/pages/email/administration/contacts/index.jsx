@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { CippIcons } from "../../../../utils/icon-registry"
 import { Layout as DashboardLayout } from "../../../../layouts/index";
+import { TabbedLayout } from "../../../../layouts/TabbedLayout";
+import tabOptions from "./tabOptions.json";
 import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
 import { CippAddContactDrawer } from "../../../../components/CippComponents/CippAddContactDrawer";
 import { CippDeployContactTemplateDrawer } from "../../../../components/CippComponents/CippDeployContactTemplateDrawer";
@@ -106,5 +108,9 @@ const Page = () => {
   );
 };
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>;
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>
+    <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
+  </DashboardLayout>
+);
 export default Page;

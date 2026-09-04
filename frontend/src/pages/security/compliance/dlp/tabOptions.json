@@ -1,0 +1,12 @@
+[
+  {
+    "label": "DLP Policies",
+    "path": "/security/compliance/dlp",
+    "icon": "Policy"
+  },
+  {
+    "label": "DLP Policy Templates",
+    "path": "/security/compliance/dlp-templates",
+    "icon": "Description"
+  }
+]

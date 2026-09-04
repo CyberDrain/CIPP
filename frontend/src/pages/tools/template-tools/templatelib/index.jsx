@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { Divider, Typography, Alert, Chip } from "@mui/material";
 import { useForm, useWatch } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../layouts/index";
-import CippFormPage from "../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../components/CippComponents/CippFormComponent";
-import { useSettings } from "../../../hooks/use-settings";
-import { CippFormTenantSelector } from "../../../components/CippComponents/CippFormTenantSelector";
+import { Layout as DashboardLayout } from "../../../../layouts/index";
+import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
+import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
+import { useSettings } from "../../../../hooks/use-settings";
+import { CippFormTenantSelector } from "../../../../components/CippComponents/CippFormTenantSelector";
 import { Grid } from "@mui/system";
-import { CippFormCondition } from "../../../components/CippComponents/CippFormCondition";
+import { CippFormCondition } from "../../../../components/CippComponents/CippFormCondition";
 
 const TemplateLibrary = () => {
   const currentTenant = useSettings().currentTenant;

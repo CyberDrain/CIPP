@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Transport Rules",
+    "path": "/email/transport/list-rules",
+    "icon": "Mail"
+  },
+  {
+    "label": "Transport Templates",
+    "path": "/email/transport/list-templates",
+    "icon": "Description"
+  }
+]

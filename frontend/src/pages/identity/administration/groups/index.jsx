@@ -26,6 +26,9 @@ const Page = () => {
     allowAllTenantSync: true,
     cacheColumns: ['CacheTimestamp'],
     serverPagination: true,
+    // Adds hasOwner to the live list in a single Graph $expand, so the Has Owner
+    // column works without switching to cached ReportDB data.
+    apiData: { expandOwners: true },
   })
 
   const actions = [
@@ -501,6 +504,7 @@ const Page = () => {
           'onPremisesSyncEnabled',
           'members',
           'owners',
+          'hasOwner',
         ]}
         subTables={[
           {

@@ -84,6 +84,10 @@ function Set-CIPPDBCacheGroups {
                 if ($Group.owners) {
                     $NoteProperties['ownersCsv'] = ($Group.owners.userPrincipalName -join ',')
                 }
+                # Set unconditionally (unlike ownersCsv above) so a genuinely owner-less group
+                # still gets an explicit false baked into the blob - the AsRawJson paged read
+                # streams this stored blob verbatim and never recomputes it.
+                $NoteProperties['hasOwner'] = [bool]($Group.owners -and $Group.owners.Count -gt 0)
                 $NoteProperties['primDomain'] = ($Group.mail -split '@' | Select-Object -Last 1)
                 $NoteProperties['teamsEnabled'] = ($Group.resourceProvisioningOptions -contains 'Team')
                 $NoteProperties['dynamicGroupBool'] = ($Group.groupTypes -contains 'DynamicMembership')

@@ -69,8 +69,8 @@
   },
   {
     "Id": "MultiPartner",
-    "Name": "Multiple Partner Tenants (Beta)",
-    "Description": "BETA - this feature is under active development and not yet officially supported; enable at your own risk. Manage customer tenants across multiple partner (CSP) tenants from a single CIPP instance. Each customer tenant is owned by a partner tenant whose credentials are used for token acquisition.",
+    "Name": "Multiple Partner Tenants",
+    "Description": "This is pre-alpha do not enable in production. Manage customer tenants across multiple partner (CSP) tenants from a single CIPP instance. Each customer tenant is owned by a partner tenant whose credentials are used for token acquisition.",
     "Enabled": false,
     "AllowUserToggle": true,
     "Timers": [],

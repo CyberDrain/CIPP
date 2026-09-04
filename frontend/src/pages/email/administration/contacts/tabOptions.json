@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Contacts",
+    "path": "/email/administration/contacts",
+    "icon": "People"
+  },
+  {
+    "label": "Contact Templates",
+    "path": "/email/administration/contacts-template",
+    "icon": "Description"
+  }
+]

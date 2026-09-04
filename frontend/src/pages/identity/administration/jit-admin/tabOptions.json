@@ -1,0 +1,17 @@
+[
+  {
+    "label": "JIT Admin",
+    "path": "/identity/administration/jit-admin",
+    "icon": "AdminPanelSettings"
+  },
+  {
+    "label": "JIT Admin Templates",
+    "path": "/identity/administration/jit-admin-templates",
+    "icon": "Description"
+  },
+  {
+    "label": "JIT Role Templates",
+    "path": "/identity/administration/jit-role-templates",
+    "icon": "Description"
+  }
+]

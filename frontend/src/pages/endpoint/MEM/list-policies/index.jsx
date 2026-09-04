@@ -1,4 +1,6 @@
 import { Layout as DashboardLayout } from '../../../../layouts/index'
+import { TabbedLayout } from '../../../../layouts/TabbedLayout'
+import tabOptions from './tabOptions.json'
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 import { PermissionButton } from '../../../../utils/permissions'
 import { CippPolicyDeployDrawer } from '../../../../components/CippComponents/CippPolicyDeployDrawer.jsx'
@@ -80,5 +82,9 @@ const Page = () => {
   );
 }
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout>
+    <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
+  </DashboardLayout>
+)
 export default Page

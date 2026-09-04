@@ -33,6 +33,19 @@ export const routeRedirects = {
   // User Templates moved from Manage Tenant tabs to the Users tabbed layout.
   '/tenant/manage/user-defaults':
     '/identity/administration/users/user-defaults',
+  // The SharePoint/OneDrive Sharing and Permissions reports moved under a Reports group
+  // in the Teams & SharePoint section.
+  '/teams-share/sharing-report': '/teams-share/reports/sharing-report',
+  '/teams-share/permissions-report':
+    '/teams-share/reports/permissions-report',
+  // Template Library, Catalog and Template Package Manager moved under a Template Tools
+  // group in the Tools section.
+  '/tools/templatelib': '/tools/template-tools/templatelib',
+  '/tools/community-repos': '/tools/template-tools/community-repos',
+  '/tools/community-repos/catalog':
+    '/tools/template-tools/community-repos/catalog',
+  '/tools/community-repos/repo': '/tools/template-tools/community-repos/repo',
+  '/tools/template-packages': '/tools/template-tools/template-packages',
 }
 
 export const getRedirectTarget = (pathname) => {

@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Reusable Settings",
+    "path": "/endpoint/MEM/reusable-settings",
+    "icon": "Tune"
+  },
+  {
+    "label": "Reusable Settings Templates",
+    "path": "/endpoint/MEM/reusable-settings-templates",
+    "icon": "Description"
+  }
+]

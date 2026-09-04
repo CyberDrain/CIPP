@@ -3,6 +3,8 @@ import { CippIcons } from "../../../../utils/icon-registry"
 import { CippReusableSettingsDeployDrawer } from "../../../../components/CippComponents/CippReusableSettingsDeployDrawer.jsx";
 import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
 import { Layout as DashboardLayout } from "../../../../layouts/index";
+import { TabbedLayout } from "../../../../layouts/TabbedLayout";
+import tabOptions from "./tabOptions.json";
 import { useSettings } from "../../../../hooks/use-settings";
 import CippJsonView from "../../../../components/CippFormPages/CippJSONView";
 import { Stack } from "@mui/system";
@@ -93,6 +95,10 @@ const Page = () => {
   );
 };
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => (
+  <DashboardLayout>
+    <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
+  </DashboardLayout>
+);
 
 export default Page;

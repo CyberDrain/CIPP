@@ -12,8 +12,6 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { PDFDownloadLink } from '@react-pdf/renderer'
-import { CippPdfPreview } from './CippPdfPreview'
 import {
   AlertBox,
   Bold,
@@ -30,8 +28,7 @@ import {
   StatRow,
   severityColour,
 } from './index'
-import { useReportVariables } from './useReportVariables'
-import { useBrandingSettings } from './useBrandingSettings'
+import { useSettings } from '../../hooks/use-settings'
 
 const nz = (value) => Number(value ?? 0)
 const plural = (count, singular, pluralForm) =>
@@ -418,29 +415,53 @@ export const PermissionsReportDocument = ({
   )
 }
 
+// The report PDF is now rendered server-side (ExecGetPermissionsReportPdf) via the shared CIPPSharp
+// component kit. The button fetches the finished PDF as a blob for preview + download; the react-pdf
+// PermissionsReportDocument above is retained for the branding-settings live preview.
 export const PermissionsReportButton = ({ permissionsData, tenantName }) => {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [generatedOn, setGeneratedOn] = useState('')
-  const brandingSettings = useBrandingSettings()
-  const variables = useReportVariables()
+  const [pdfUrl, setPdfUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+  const tenantFilter = useSettings().currentTenant
   const hasData = !!permissionsData?.summary
 
   const handleOpen = () => {
-    setGeneratedOn(
-      new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    )
     setDialogOpen(true)
+    setLoading(true)
+    setError(false)
+    setPdfUrl('')
+    fetch(`/api/ExecGetPermissionsReportPdf?tenantFilter=${encodeURIComponent(tenantFilter)}`, {
+      credentials: 'same-origin',
+    })
+      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error('Failed to render report'))))
+      .then((blob) => {
+        setPdfUrl(URL.createObjectURL(blob))
+        setLoading(false)
+      })
+      .catch(() => {
+        setError(true)
+        setLoading(false)
+      })
   }
 
-  const documentNode = (
-    <PermissionsReportDocument
-      permissionsData={permissionsData}
-      brandingSettings={brandingSettings}
-      tenantName={tenantName}
-      generatedOn={generatedOn}
-      variables={variables}
-    />
-  )
+  const handleClose = () => {
+    setDialogOpen(false)
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl)
+      setPdfUrl('')
+    }
+  }
+
+  const handleDownload = () => {
+    if (!pdfUrl) return
+    const link = document.createElement('a')
+    link.href = pdfUrl
+    link.download = `Permissions_Report_${(tenantName || 'report').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <>
@@ -460,7 +481,7 @@ export const PermissionsReportButton = ({ permissionsData, tenantName }) => {
 
       <Dialog
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={handleClose}
         maxWidth="lg"
         fullWidth
         slotProps={{
@@ -477,40 +498,43 @@ export const PermissionsReportButton = ({ permissionsData, tenantName }) => {
             <Typography variant="h6" component="div">
               Permissions Report Preview
             </Typography>
-            <IconButton onClick={() => setDialogOpen(false)} size="small">
+            <IconButton onClick={handleClose} size="small">
               <CippIcons.Close />
             </IconButton>
           </Box>
         </DialogTitle>
         <DialogContent dividers sx={{ p: 0 }}>
-          {dialogOpen && (
-            <CippPdfPreview
-              width="100%"
-              height="100%"
+          {loading && (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2">Generating report…</Typography>
+            </Box>
+          )}
+          {error && (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', p: 4 }}>
+              <Typography variant="body2" color="error">
+                The report could not be generated. Ensure the permissions data has been synced for this tenant.
+              </Typography>
+            </Box>
+          )}
+          {pdfUrl && !loading && !error && (
+            <iframe
+              src={pdfUrl}
               title={`Permissions Report - ${tenantName}`}
-              fileName={`Permissions_Report_${tenantName}.pdf`}
-            >
-              {documentNode}
-            </CippPdfPreview>
+              style={{ width: '100%', height: '100%', border: 'none' }}
+            />
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Close</Button>
-          <PDFDownloadLink
-            document={documentNode}
-            fileName={`Permissions_Report_${tenantName}_${new Date().toISOString().split('T')[0]}.pdf`}
-            style={{ textDecoration: 'none' }}
+          <Button onClick={handleClose}>Close</Button>
+          <Button
+            variant="contained"
+            startIcon={<CippIcons.Download />}
+            onClick={handleDownload}
+            disabled={!pdfUrl || loading}
           >
-            {({ loading }) => (
-              <Button
-                variant="contained"
-                startIcon={loading ? <CircularProgress size={20} /> : <CippIcons.Download />}
-                disabled={loading}
-              >
-                {loading ? 'Generating…' : 'Download PDF'}
-              </Button>
-            )}
-          </PDFDownloadLink>
+            Download PDF
+          </Button>
         </DialogActions>
       </Dialog>
     </>

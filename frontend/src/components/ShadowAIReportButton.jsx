@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CippIcons } from '../utils/icon-registry'
 import {
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,10 +16,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { CippPdfPreview } from './CippPdf/CippPdfPreview'
 import { CippOffCanvas } from './CippComponents/CippOffCanvas'
-import { useReportVariables } from './CippPdf/useReportVariables'
-import { useBrandingSettings } from './CippPdf/useBrandingSettings'
+import { useSettings } from '../hooks/use-settings'
 import {
   Bold,
   BulletList,
@@ -574,8 +573,10 @@ const sectionOptions = [
 ]
 
 export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
-  const brandingSettings = useBrandingSettings()
-  const variables = useReportVariables()
+  const tenantFilter = useSettings().currentTenant
+  const [pdfUrl, setPdfUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [pdfError, setPdfError] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   // Below md the 320px config rail would leave the preview about 70px wide, so it moves into
   // a drawer and the preview takes the whole dialog. Same treatment as the executive report.
@@ -601,6 +602,50 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
       }
       return { ...prev, [sectionKey]: !prev[sectionKey] }
     })
+  }
+
+  // The PDF is rendered server-side (ExecGetShadowAIReportPdf) via the shared CIPPSharp kit. Re-fetch
+  // whenever the dialog is open and the selected sections change, so the preview tracks the toggles.
+  useEffect(() => {
+    if (!previewOpen) return undefined
+    let objectUrl
+    let cancelled = false
+    setLoading(true)
+    setPdfError(false)
+    fetch('/api/ExecGetShadowAIReportPdf', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenantFilter, sectionConfig }),
+    })
+      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error('Failed to render report'))))
+      .then((blob) => {
+        if (cancelled) return
+        objectUrl = URL.createObjectURL(blob)
+        setPdfUrl(objectUrl)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPdfError(true)
+          setLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewOpen, tenantFilter, JSON.stringify(sectionConfig)])
+
+  const handleDownload = () => {
+    if (!pdfUrl) return
+    const link = document.createElement('a')
+    link.href = pdfUrl
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   const fileName = `Shadow_AI_Report_${String(tenantName).replace(/[^a-zA-Z0-9]/g, '_')}_${
@@ -689,19 +734,6 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
     </Box>
   )
 
-  const reportDocument = useMemo(() => {
-    if (!previewOpen) return null
-    return (
-      <ShadowAIReportDocument
-        tenantName={tenantName}
-        data={data}
-        brandingSettings={brandingSettings}
-        variables={variables}
-        sectionConfig={sectionConfig}
-      />
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewOpen, tenantName, data, brandingSettings, variables, JSON.stringify(sectionConfig)])
 
   return (
     <>
@@ -786,18 +818,27 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
             {sectionPanel()}
           </Paper>
 
-          {/* Right Panel - PDF Preview */}
+          {/* Right Panel - PDF Preview (server-rendered) */}
           <Box sx={{ flex: 1, height: '100%', minWidth: 0 }}>
-            {reportDocument && (
-              <CippPdfPreview
-                viewerKey={`shadow-ai-pdf-viewer-${Date.now()}`}
+            {loading && (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 }}>
+                <CircularProgress size={24} />
+                <Typography variant="body2">Generating report…</Typography>
+              </Box>
+            )}
+            {pdfError && (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', p: 4 }}>
+                <Typography variant="body2" color="error">
+                  The report could not be generated. Ensure the Shadow AI data has been synced for this tenant.
+                </Typography>
+              </Box>
+            )}
+            {pdfUrl && !loading && !pdfError && (
+              <iframe
+                src={pdfUrl}
                 title={`Shadow AI Report - ${tenantName}`}
-                fileName={`Shadow_AI_Report_${tenantName}.pdf`}
                 style={{ width: '100%', height: '100%', border: 'none' }}
-                showToolbar={true}
-              >
-                {reportDocument}
-              </CippPdfPreview>
+              />
             )}
           </Box>
         </DialogContent>
@@ -826,34 +867,8 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
           <Button
             variant="contained"
             startIcon={<CippIcons.Download />}
-            onClick={() => {
-              const downloadDocument = (
-                <ShadowAIReportDocument
-                  tenantName={tenantName}
-                  data={data}
-                  brandingSettings={brandingSettings}
-                  variables={variables}
-                  sectionConfig={sectionConfig}
-                />
-              )
-              import('@react-pdf/renderer').then(({ pdf }) => {
-                pdf(downloadDocument)
-                  .toBlob()
-                  .then((blob) => {
-                    const url = URL.createObjectURL(blob)
-                    const link = document.createElement('a')
-                    link.href = url
-                    link.download = fileName
-                    document.body.appendChild(link)
-                    link.click()
-                    document.body.removeChild(link)
-                    URL.revokeObjectURL(url)
-                  })
-                  .catch((error) => {
-                    console.error('Error generating Shadow AI PDF:', error)
-                  })
-              })
-            }}
+            onClick={handleDownload}
+            disabled={!pdfUrl || loading}
           >
             Download PDF
           </Button>

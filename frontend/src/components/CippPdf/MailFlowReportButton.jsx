@@ -12,8 +12,6 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { PDFDownloadLink } from '@react-pdf/renderer'
-import { CippPdfPreview } from './CippPdfPreview'
 import {
   AlertBox,
   Bold,
@@ -32,8 +30,7 @@ import {
   TrendChart,
   severityColour,
 } from './index'
-import { useReportVariables } from './useReportVariables'
-import { useBrandingSettings } from './useBrandingSettings'
+import { useSettings } from '../../hooks/use-settings'
 
 const nz = (value) => Number(value ?? 0)
 const num = (value) => nz(value).toLocaleString()
@@ -352,29 +349,55 @@ export const MailFlowReportDocument = ({
   )
 }
 
+// The report PDF is now rendered server-side (ExecGetMailFlowReportPdf) via the shared CIPPSharp
+// component kit, which re-gathers and aggregates the mail flow data. The button fetches the finished PDF
+// as a blob for preview + download; the react-pdf MailFlowReportDocument above is retained for the
+// branding-settings live preview.
 export const MailFlowReportButton = ({ mailFlowData, tenantName, disabled = false }) => {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [generatedOn, setGeneratedOn] = useState('')
-  const brandingSettings = useBrandingSettings()
-  const variables = useReportVariables()
+  const [pdfUrl, setPdfUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+  const tenantFilter = useSettings().currentTenant
+  const days = Number(mailFlowData?.days) || 14
   const hasData = Object.keys(mailFlowData?.totals ?? {}).length > 0
 
   const handleOpen = () => {
-    setGeneratedOn(
-      new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    )
     setDialogOpen(true)
+    setLoading(true)
+    setError(false)
+    setPdfUrl('')
+    fetch(`/api/ExecGetMailFlowReportPdf?tenantFilter=${encodeURIComponent(tenantFilter)}&days=${days}`, {
+      credentials: 'same-origin',
+    })
+      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error('Failed to render report'))))
+      .then((blob) => {
+        setPdfUrl(URL.createObjectURL(blob))
+        setLoading(false)
+      })
+      .catch(() => {
+        setError(true)
+        setLoading(false)
+      })
   }
 
-  const documentNode = (
-    <MailFlowReportDocument
-      mailFlowData={mailFlowData}
-      brandingSettings={brandingSettings}
-      tenantName={tenantName}
-      generatedOn={generatedOn}
-      variables={variables}
-    />
-  )
+  const handleClose = () => {
+    setDialogOpen(false)
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl)
+      setPdfUrl('')
+    }
+  }
+
+  const handleDownload = () => {
+    if (!pdfUrl) return
+    const link = document.createElement('a')
+    link.href = pdfUrl
+    link.download = `Mail_Flow_Report_${(tenantName || 'report').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <>
@@ -394,7 +417,7 @@ export const MailFlowReportButton = ({ mailFlowData, tenantName, disabled = fals
 
       <Dialog
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={handleClose}
         maxWidth="lg"
         fullWidth
         slotProps={{
@@ -411,40 +434,43 @@ export const MailFlowReportButton = ({ mailFlowData, tenantName, disabled = fals
             <Typography variant="h6" component="div">
               Mail Flow Report Preview
             </Typography>
-            <IconButton onClick={() => setDialogOpen(false)} size="small">
+            <IconButton onClick={handleClose} size="small">
               <CippIcons.Close />
             </IconButton>
           </Box>
         </DialogTitle>
         <DialogContent dividers sx={{ p: 0 }}>
-          {dialogOpen && (
-            <CippPdfPreview
-              width="100%"
-              height="100%"
+          {loading && (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2">Generating report…</Typography>
+            </Box>
+          )}
+          {error && (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', p: 4 }}>
+              <Typography variant="body2" color="error">
+                The report could not be generated. Mail flow data is read live from Exchange Online for this tenant.
+              </Typography>
+            </Box>
+          )}
+          {pdfUrl && !loading && !error && (
+            <iframe
+              src={pdfUrl}
               title={`Mail Flow Report - ${tenantName}`}
-              fileName={`Mail_Flow_Report_${tenantName}.pdf`}
-            >
-              {documentNode}
-            </CippPdfPreview>
+              style={{ width: '100%', height: '100%', border: 'none' }}
+            />
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Close</Button>
-          <PDFDownloadLink
-            document={documentNode}
-            fileName={`Mail_Flow_Report_${tenantName}_${new Date().toISOString().split('T')[0]}.pdf`}
-            style={{ textDecoration: 'none' }}
+          <Button onClick={handleClose}>Close</Button>
+          <Button
+            variant="contained"
+            startIcon={<CippIcons.Download />}
+            onClick={handleDownload}
+            disabled={!pdfUrl || loading}
           >
-            {({ loading }) => (
-              <Button
-                variant="contained"
-                startIcon={loading ? <CircularProgress size={20} /> : <CippIcons.Download />}
-                disabled={loading}
-              >
-                {loading ? 'Generating…' : 'Download PDF'}
-              </Button>
-            )}
-          </PDFDownloadLink>
+            Download PDF
+          </Button>
         </DialogActions>
       </Dialog>
     </>

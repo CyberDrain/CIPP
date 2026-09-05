@@ -53,8 +53,12 @@ function Invoke-ExecGenerateReportBuilderReport {
             $GenerateResult = Push-ExecGenerateReportBuilderReport @GenerateParams
             Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Generated report builder report '$TemplateName'" -Sev 'Info'
 
+            # Push-* returns either the plain result string, or an envelope carrying base64 email
+            # attachments for the scheduled path. The interactive HTTP response only needs the message -
+            # the finished PDF is fetched from ExecGetReportBuilderPdf, not echoed here as base64.
+            $ResultText = if ($GenerateResult -is [System.Collections.IDictionary] -and $GenerateResult['Results']) { $GenerateResult['Results'] } else { $GenerateResult }
             $Result = @{
-                Results = $GenerateResult
+                Results = $ResultText
             }
             $StatusCode = [HttpStatusCode]::OK
 

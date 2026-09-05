@@ -13,7 +13,10 @@ function Push-ExecGenerateReportBuilderReport {
         $Blocks,
         $TemplateGUID,
         $IncludeRawAttachments,
-        $Settings
+        $Settings,
+        # Render and return the PDF without persisting a generated-report row - powers the builder's
+        # live preview/download from the current unsaved state.
+        [switch]$PreviewOnly
     )
 
     try {
@@ -181,18 +184,60 @@ function Push-ExecGenerateReportBuilderReport {
                 $Block
             })
 
+        # -- Render the PDF server-side via the shared CIPPSharp component kit --
+        # A render failure must not lose the report: the enriched blocks are still stored so the report
+        # exists and can be re-rendered, and the failure is logged rather than thrown.
+        $PdfBase64 = ''
+        try {
+            # Branding: the template's chosen preset wins, else the tenant/global branding settings.
+            $BrandingForPdf = $null
+            if ($ParsedSettings -and $ParsedSettings.brandingPresetId) {
+                try { $BrandingForPdf = Get-CIPPBrandingPreset -PresetId $ParsedSettings.brandingPresetId } catch { $BrandingForPdf = $null }
+            }
+            if (-not $BrandingForPdf) {
+                try { $BrandingForPdf = Get-CIPPBrandingSettings } catch { $BrandingForPdf = @{} }
+            }
+
+            # Client display name for the cover; fall back to the tenant filter if it can't be resolved.
+            $TenantDisplayName = $TenantFilter
+            try {
+                $TenantInfo = Get-Tenants -TenantFilter $TenantFilter
+                if ($TenantInfo.displayName) { $TenantDisplayName = [string]$TenantInfo.displayName }
+            } catch { $TenantDisplayName = $TenantFilter }
+
+            $PageSizePref = if ($ParsedSettings -and $ParsedSettings.size) { [string]$ParsedSettings.size } else { 'A4' }
+            $IsLandscape = ($ParsedSettings -and "$($ParsedSettings.orientation)" -eq 'landscape')
+
+            $PdfBytes = ConvertTo-CippReportPdf -Blocks $EnrichedBlocks -Branding $BrandingForPdf `
+                -TenantName $TenantDisplayName -ReportName ($TemplateName ?? 'Report') `
+                -GeneratedOn ((Get-Date).ToString('MMMM d, yyyy')) -PageSize $PageSizePref -Landscape:$IsLandscape
+            if ($PdfBytes) { $PdfBase64 = [Convert]::ToBase64String($PdfBytes) }
+        } catch {
+            $PdfError = Get-CippException -Exception $_
+            Write-LogMessage -API 'ReportBuilder' -tenant $TenantFilter -message "PDF render failed, storing report without a PDF: $($PdfError.NormalizedError)" -Sev 'Warning' -LogData $PdfError
+        }
+
+        # Preview: hand the freshly rendered bytes straight back without persisting a report row.
+        if ($PreviewOnly) {
+            return @{ PdfBase64 = $PdfBase64 }
+        }
+
         # Store the generated report
         $ReportGUID = (New-Guid).GUID
         $ReportTable = Get-CippTable -tablename 'ReportBuilderReports'
         $ReportEntity = @{
-            PartitionKey = $TenantFilter
-            RowKey       = [string]$ReportGUID
-            TemplateName = [string]($TemplateName ?? 'Scheduled Report')
-            TenantFilter = [string]$TenantFilter
-            Blocks       = [string](ConvertTo-Json -InputObject @($EnrichedBlocks) -Depth 20 -Compress)
-            GeneratedAt  = [string](Get-Date).ToString('o')
-            Status       = 'Completed'
-            Settings     = if ($ParsedSettings) { [string](ConvertTo-Json -InputObject $ParsedSettings -Depth 10 -Compress) } else { '' }
+            PartitionKey   = $TenantFilter
+            RowKey         = [string]$ReportGUID
+            TemplateName   = [string]($TemplateName ?? 'Scheduled Report')
+            TenantFilter   = [string]$TenantFilter
+            Blocks         = [string](ConvertTo-Json -InputObject @($EnrichedBlocks) -Depth 20 -Compress)
+            GeneratedAt    = [string](Get-Date).ToString('o')
+            Status         = 'Completed'
+            Settings       = if ($ParsedSettings) { [string](ConvertTo-Json -InputObject $ParsedSettings -Depth 10 -Compress) } else { '' }
+            # The finished PDF as base64. Add-CIPPAzDataTableEntity auto-splits the oversized property
+            # across part rows, so a multi-MB report survives the Azure Table 64KB/property limit.
+            Pdf            = [string]$PdfBase64
+            PdfContentType = 'application/pdf'
         }
 
         Add-CIPPAzDataTableEntity @ReportTable -Entity $ReportEntity -Force
@@ -209,9 +254,21 @@ function Push-ExecGenerateReportBuilderReport {
             $ResultMessage += ". View report: $ReportLink"
         }
 
-        # Build file attachments for database blocks if requested
+        # Attachments for the scheduled-email path (Send-CIPPScheduledTaskAlert forwards TaskAttachments).
+        # The rendered PDF always attaches - that is the whole point of rendering server-side; the raw
+        # CSV/JSON data files stay behind the IncludeRawAttachments toggle.
+        $TaskAttachments = [System.Collections.Generic.List[object]]::new()
+
+        if ($PdfBase64) {
+            $PdfFileName = ("$($TemplateName ?? 'Report')_$TenantFilter" -replace '[^a-zA-Z0-9_\-]', '_') + '.pdf'
+            $TaskAttachments.Add(@{
+                    Name         = $PdfFileName
+                    ContentType  = 'application/pdf'
+                    ContentBytes = $PdfBase64
+                })
+        }
+
         if ($IncludeRawAttachments -eq 'true') {
-            $TaskAttachments = @()
             foreach ($Block in $EnrichedBlocks) {
                 if ($Block.type -ne 'database' -or -not $Block.dbType) { continue }
                 $Format = if ($Block.format) { $Block.format } else { 'csv' }
@@ -251,18 +308,18 @@ function Push-ExecGenerateReportBuilderReport {
                     }
                 }
                 $Bytes = [System.Text.Encoding]::UTF8.GetBytes($FileContent)
-                $Base64 = [Convert]::ToBase64String($Bytes)
-                $TaskAttachments += @{
-                    Name        = $FileName
-                    ContentType = $ContentType
-                    ContentBytes = $Base64
-                }
+                $TaskAttachments.Add(@{
+                        Name         = $FileName
+                        ContentType  = $ContentType
+                        ContentBytes = [Convert]::ToBase64String($Bytes)
+                    })
             }
-            if ($TaskAttachments.Count -gt 0) {
-                return @{
-                    TaskAttachments = $TaskAttachments
-                    Results         = $ResultMessage
-                }
+        }
+
+        if ($TaskAttachments.Count -gt 0) {
+            return @{
+                TaskAttachments = @($TaskAttachments)
+                Results         = $ResultMessage
             }
         }
 

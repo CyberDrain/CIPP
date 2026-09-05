@@ -22524,6 +22524,13 @@
                     "PartitionKey": {
                       "x-cipp-field-source": "storage"
                     },
+                    "Pdf": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "PdfContentType": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "RowKey": {
                       "type": "string",
                       "x-cipp-field-source": "storage"
@@ -22630,6 +22637,255 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/ExecGetBecReportPdf": {
+      "post": {
+        "summary": "ExecGetBecReportPdf",
+        "operationId": "ExecGetBecReportPdf",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "description": "Server-renders the BEC (Business Email Compromise) analysis report as application/pdf bytes. Reads\nthe cached BEC run for the user (the cachebec table, populated by execBECCheck / Push-BECRun) and\ncomposes it through the shared CIPPSharp component kit (Build-CippBecReportTree) - the server-side\nreplacement for the client react-pdf BECRemediationReportButton. The BEC check must have completed\nfor the user first (the report reads its cached result, it does not trigger a new run).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantFilter": {
+                    "type": "string"
+                  },
+                  "userDisplayName": {
+                    "type": "string"
+                  },
+                  "userId": {
+                    "type": "string"
+                  },
+                  "userName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "GUID",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          },
+          {
+            "name": "userDisplayName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                  "properties": {
+                    "ETag": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "PartitionKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Results": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "RowKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Status": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Timestamp": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "UserId": {
+                      "x-cipp-field-source": "storage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.User.Read"
+      }
+    },
+    "/api/ExecGetExecutiveReportPdf": {
+      "post": {
+        "summary": "ExecGetExecutiveReportPdf",
+        "operationId": "ExecGetExecutiveReportPdf",
+        "tags": [
+          "Tenant > Standards"
+        ],
+        "description": "Server-renders the Executive Summary report as application/pdf bytes. Every figure is read from the\nnightly Reporting DB cache via New-CIPPDbRequest (Users/Guests/Roles for the environment overview,\nLicenseOverview, ManagedDevices, ConditionalAccessPolicies and SecureScore) plus the standards\ncomparison from the CippStandardsReports table resolved against the standards catalog - the same\ncached data the rest of CIPP reports from, with no live Graph or cross-endpoint HTTP calls. The\nshaped data is composed through the shared CIPPSharp component kit (Build-CippExecutiveReportTree),\nthe server-side replacement for the client react-pdf ExecutiveReportButton. Each source is gathered\ndefensively: a source with no cached data simply drops its section.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "brandingPresetId": {
+                    "type": "string"
+                  },
+                  "sectionConfig": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "brandingPresetId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                  "properties": {
+                    "CurrentValue": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ETag": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ExpectedValue": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "LicenseAvailable": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "PartitionKey": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "RowKey": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "TemplateId": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Timestamp": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Value": {
+                      "x-cipp-field-source": "storage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Standards.Read"
+      }
+    },
     "/api/ExecGetLocalAdminPassword": {
       "post": {
         "summary": "ExecGetLocalAdminPassword",
@@ -22689,6 +22945,142 @@
           }
         ],
         "x-cipp-role": "Endpoint.Device.Read"
+      }
+    },
+    "/api/ExecGetMailFlowReportPdf": {
+      "post": {
+        "summary": "ExecGetMailFlowReportPdf",
+        "operationId": "ExecGetMailFlowReportPdf",
+        "tags": [
+          "Email-Exchange > Reports"
+        ],
+        "description": "Server-renders the Exchange mail flow report as application/pdf bytes. Gathers the same three mail\nflow datasets the Mail Flow page uses (ListMailFlowReports: MailFlowStatus, TopMailSender,\nTopSpamRecipient), aggregates the daily disposition rows the way the page does, and composes them\nthrough the shared CIPPSharp kit (Build-CippMailFlowReportTree) - the server-side replacement for the\nclient react-pdf MailFlowReportButton.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Exchange.Mailbox.Read"
+      }
+    },
+    "/api/ExecGetPermissionsReportPdf": {
+      "post": {
+        "summary": "ExecGetPermissionsReportPdf",
+        "operationId": "ExecGetPermissionsReportPdf",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Server-renders the SharePoint Permissions report as application/pdf bytes. Gathers the same shaped\ndata the Permissions page uses (ListSharePointPermissions, from the CIPP reporting cache), composes\nit through the shared CIPPSharp component kit (Build-CippPermissionsReportTree) and returns the\nfinished PDF - the server-side replacement for the client react-pdf PermissionsReportButton.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.Read"
       }
     },
     "/api/ExecGetRecoveryKey": {
@@ -22769,6 +23161,249 @@
           }
         ],
         "x-cipp-role": "Endpoint.Device.Read"
+      }
+    },
+    "/api/ExecGetReportBuilderPdf": {
+      "get": {
+        "summary": "ExecGetReportBuilderPdf",
+        "operationId": "ExecGetReportBuilderPdf",
+        "tags": [
+          "Tools > Report-Builder"
+        ],
+        "description": "Returns the server-rendered PDF for a generated Report Builder report as application/pdf bytes.\nBacks both the in-app preview (shown in an iframe) and the download button on the view and\ngenerated-reports pages.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ReportGUID",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                  "properties": {
+                    "Blocks": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ETag": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "GeneratedAt": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "PartitionKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Pdf": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "PdfContentType": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "RowKey": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Settings": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Status": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "TemplateName": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "TenantFilter": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Timestamp": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.Core.Read",
+        "x-cipp-any-tenant": true
+      }
+    },
+    "/api/ExecGetShadowAIReportPdf": {
+      "post": {
+        "summary": "ExecGetShadowAIReportPdf",
+        "operationId": "ExecGetShadowAIReportPdf",
+        "tags": [
+          "Tenant > Standards"
+        ],
+        "description": "Server-renders the Shadow AI report as application/pdf bytes. Gathers the same shaped data the\nShadow AI page uses (ListShadowAI) and composes it through the shared CIPPSharp component kit\n(Build-CippShadowAIReportTree) - the server-side replacement for the client react-pdf\nShadowAIReportButton.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sectionConfig": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Standards.Read"
+      }
+    },
+    "/api/ExecGetSharingReportPdf": {
+      "post": {
+        "summary": "ExecGetSharingReportPdf",
+        "operationId": "ExecGetSharingReportPdf",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Server-renders the SharePoint & OneDrive Sharing report as application/pdf bytes. Gathers the same\nshaped data the Sharing page uses (ListSharePointSharing, from the CIPP reporting cache), composes\nit through the shared CIPPSharp component kit (Build-CippSharingReportTree) and returns the finished\nPDF - the server-side replacement for the client react-pdf SharingReportButton.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.Read"
       }
     },
     "/api/ExecGitHubAction": {
@@ -29125,6 +29760,79 @@
           }
         ],
         "x-cipp-role": "Identity.Role.ReadWrite"
+      }
+    },
+    "/api/ExecPreviewReportBuilderPdf": {
+      "post": {
+        "summary": "ExecPreviewReportBuilderPdf",
+        "operationId": "ExecPreviewReportBuilderPdf",
+        "tags": [
+          "Tools > Report-Builder"
+        ],
+        "description": "Renders the current (unsaved) Report Builder state to a PDF and returns it as application/pdf\nbytes without persisting a generated-report row. Powers the builder's live preview and download.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Blocks": {
+                    "type": "string"
+                  },
+                  "Settings": {
+                    "type": "string"
+                  },
+                  "TemplateGUID": {
+                    "type": "string"
+                  },
+                  "TemplateName": {
+                    "type": "string"
+                  },
+                  "TenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "TenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.Core.ReadWrite"
       }
     },
     "/api/ExecQuarantineManagement": {
@@ -47067,6 +47775,13 @@
                         "x-cipp-field-source": "storage,frontend"
                       },
                       "PartitionKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Pdf": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PdfContentType": {
                         "x-cipp-field-source": "storage"
                       },
                       "RowKey": {

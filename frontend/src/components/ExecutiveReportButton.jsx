@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { CippIcons } from '../utils/icon-registry'
 import {
   Button,
@@ -16,18 +16,14 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  TextField,
+  CircularProgress,
 } from '@mui/material'
 import { CippAutoComplete } from './CippComponents/CippAutocomplete'
 import { CippOffCanvas } from './CippComponents/CippOffCanvas'
-import { Document, Page, Text, View, Image } from '@react-pdf/renderer'
-import { CippPdfPreview } from './CippPdf/CippPdfPreview'
 import { useSettings } from '../hooks/use-settings'
-import { useSecureScore } from '../hooks/use-securescore'
 import { ApiGetCall } from '../api/ApiCall'
 import { ShadowAIReportPages } from './ShadowAIReportButton'
 import { DEFAULT_BRANDING_OPTION } from './ReportBuilder/reportSettings'
-import { useReportVariables } from './CippPdf/useReportVariables'
 import { useBrandingSettings } from './CippPdf/useBrandingSettings'
 import { isCloudPcDevice } from '../utils/is-cloud-pc-device'
 import {
@@ -1326,20 +1322,26 @@ export const ExecutiveReportDocument = ({
 export const ExecutiveReportButton = (props) => {
   const { variant: buttonVariant, onClick: onClickProp, ...other } = props
   const settings = useSettings()
+  const tenantFilter = settings.currentTenant
   const defaultBranding = useBrandingSettings()
 
   // Preview state
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [pdfError, setPdfError] = useState(false)
+
   // Null until the operator picks one, so the branding setting for this report type keeps applying
   // as it changes. An explicit choice — including "Default" — wins from then on.
   const [presetOverride, setPresetOverride] = useState(null)
   const brandingPresetId = presetOverride ?? defaultBranding?.reportDefaults?.executive ?? ''
 
-  // Named branding sets a report can be rendered against instead of the default branding.
+  // Named branding sets a report can be rendered against instead of the default branding. Only the
+  // names/ids are needed now that the PDF is branded server-side, so the image payloads are skipped.
   const brandingPresets = ApiGetCall({
     url: '/api/ListBrandingPresets',
-    data: { includeImages: true },
-    queryKey: 'ListBrandingPresets-withImages',
+    data: { includeImages: false },
+    queryKey: 'ListBrandingPresets-list',
     waiting: previewOpen,
   })
 
@@ -1356,280 +1358,83 @@ export const ExecutiveReportButton = (props) => {
     [brandingPresets.data]
   )
 
-  const brandingSettings = useMemo(() => {
-    if (!brandingPresetId) return defaultBranding
-    const presets = Array.isArray(brandingPresets.data) ? brandingPresets.data : []
-    // A preset deleted since it was picked falls back to the default branding rather than
-    // rendering unbranded.
-    return presets.find((preset) => preset.id === brandingPresetId) || defaultBranding
-  }, [brandingPresetId, brandingPresets.data, defaultBranding])
-
-  const variables = useReportVariables()
-
+  // Only the sections the server-side executive report composes (Build-CippExecutiveReportTree).
   const [sectionConfig, setSectionConfig] = useState({
     executiveSummary: true,
     securityStandards: true,
-    driftCompliance: false,
     secureScore: true,
     licenseManagement: true,
     deviceManagement: true,
     conditionalAccess: true,
     infographics: true,
-    shadowAI: false,
   })
 
-  // Fetch organization data - only when preview is open
+  // A friendly tenant display name for the dialog chrome and download filename. The PDF itself
+  // resolves the real display name server-side; this call is only window dressing.
   const organization = ApiGetCall({
     url: '/api/ListGraphRequest',
-    queryKey: `${settings.currentTenant}-ListGraphRequest-organization-report`,
-    data: { tenantFilter: settings.currentTenant, Endpoint: 'organization' },
+    queryKey: `${tenantFilter}-ListGraphRequest-organization-report`,
+    data: { tenantFilter, Endpoint: 'organization' },
     waiting: previewOpen,
   })
+  const tenantName = organization.data?.Results?.[0]?.displayName || tenantFilter || 'Tenant'
 
-  const organizationRecord = organization.data?.Results?.[0]
-
-  // Fetch user counts - only when preview is open
-  const dashboard = ApiGetCall({
-    url: '/api/ListuserCounts',
-    data: { tenantFilter: settings.currentTenant },
-    queryKey: `${settings.currentTenant}-ListuserCounts-report`,
-    waiting: previewOpen,
-  })
-
-  // Only fetch additional data when preview dialog is opened
-  const secureScore = useSecureScore({ waiting: previewOpen })
-
-  // Get real license data - only when preview is open
-  const licenseData = ApiGetCall({
-    url: '/api/ListLicenses',
-    data: {
-      tenantFilter: settings.currentTenant,
-    },
-    queryKey: `licenses-report-${settings.currentTenant}`,
-    waiting: previewOpen,
-  })
-
-  // Get real device data - only when preview is open
-  const deviceData = ApiGetCall({
-    url: '/api/ListGraphRequest',
-    data: {
-      tenantFilter: settings.currentTenant,
-      Endpoint: 'deviceManagement/managedDevices',
-    },
-    queryKey: `ListGraphRequest-devices-report-${settings.currentTenant}`,
-    waiting: previewOpen,
-  })
-
-  // Get real conditional access policy data - only when preview is open
-  const conditionalAccessData = ApiGetCall({
-    url: '/api/ListConditionalAccessPolicies',
-    data: {
-      tenantFilter: settings.currentTenant,
-    },
-    queryKey: `ca-policies-report-${settings.currentTenant}`,
-    waiting: previewOpen,
-  })
-
-  // Get real standards data - only when preview is open
-  const standardsCompareData = ApiGetCall({
-    url: '/api/ListStandardsCompare',
-    data: {
-      tenantFilter: settings.currentTenant,
-    },
-    queryKey: `standards-compare-report-${settings.currentTenant}`,
-    waiting: previewOpen,
-  })
-
-  // Get drift compliance data - only when preview is open
-  const driftComplianceData = ApiGetCall({
-    url: '/api/listTenantDrift',
-    data: {
-      TenantFilter: settings.currentTenant,
-    },
-    queryKey: `drift-compliance-report-${settings.currentTenant}`,
-    waiting: previewOpen,
-  })
-
-  // Load all standard templates to resolve template display names
-  const standardTemplatesData = ApiGetCall({
-    url: `/api/listStandardTemplates`,
-    data: {}, // No templateId filter - get all templates
-    queryKey: `standard-templates-report-all`,
-    waiting: previewOpen,
-  })
-
-  // Shadow AI data for the optional Shadow AI section - only fetched when that section is
-  // enabled. Requires a single tenant; the CIPPDb cache must have been synced for data to show.
-  const shadowAIEnabled = sectionConfig.shadowAI && settings.currentTenant !== 'AllTenants'
-  const shadowAIData = ApiGetCall({
-    url: '/api/ListShadowAI',
-    data: { tenantFilter: settings.currentTenant },
-    queryKey: `ListShadowAI-${settings.currentTenant}`,
-    waiting: previewOpen && shadowAIEnabled,
-  })
-
-  // Check if all data is loaded (either successful or failed) - only relevant when preview is open
-  const isDataLoading =
-    previewOpen &&
-    (organization.isFetching ||
-      dashboard.isFetching ||
-      secureScore.isFetching ||
-      licenseData.isFetching ||
-      deviceData.isFetching ||
-      conditionalAccessData.isFetching ||
-      standardsCompareData.isFetching ||
-      driftComplianceData.isFetching ||
-      standardTemplatesData.isFetching ||
-      (shadowAIEnabled && shadowAIData.isFetching))
-
-  const hasAllDataFinished =
-    !previewOpen ||
-    ((organization.isSuccess || organization.isError) &&
-      (dashboard.isSuccess || dashboard.isError) &&
-      (secureScore.isSuccess || secureScore.isError) &&
-      (licenseData.isSuccess || licenseData.isError) &&
-      (deviceData.isSuccess || deviceData.isError) &&
-      (conditionalAccessData.isSuccess || conditionalAccessData.isError) &&
-      (standardsCompareData.isSuccess || standardsCompareData.isError) &&
-      (driftComplianceData.isSuccess || driftComplianceData.isError) &&
-      (standardTemplatesData.isSuccess || standardTemplatesData.isError) &&
-      (!shadowAIEnabled || shadowAIData.isSuccess || shadowAIData.isError))
-
-  // Button is always available now since we don't need to wait for data
-  const shouldShowButton = true
-
-  const tenantName = organizationRecord?.displayName || 'Tenant'
-  const tenantId = organizationRecord?.id
-  const userStats = {
-    licensedUsers: dashboard.data?.LicUsers || 0,
-    unlicensedUsers:
-      dashboard.data?.Users && dashboard.data?.LicUsers
-        ? dashboard.data?.Users - dashboard.data?.LicUsers
-        : 0,
-    guests: dashboard.data?.Guests || 0,
-    globalAdmins: dashboard.data?.Gas || 0,
-    permanentGlobalAdmins: dashboard.data?.PermanentGas ?? 0,
-    eligibleGlobalAdmins: dashboard.data?.EligibleGas ?? 0,
-    pimCapable: dashboard.data?.PIMCapable === true,
-  }
-
-  const fileName = `Executive_Report_${tenantName?.replace(/[^a-zA-Z0-9]/g, '_') || 'Tenant'}_${
+  const fileName = `Executive_Report_${String(tenantName).replace(/[^a-zA-Z0-9]/g, '_')}_${
     new Date().toISOString().split('T')[0]
   }.pdf`
 
-  // Memoize the document to prevent unnecessary re-renders - only when dialog is open
-  const reportDocument = useMemo(() => {
-    // Don't create document if dialog is closed
-    if (!previewOpen) {
-      return null
+  // The PDF is rendered server-side (ExecGetExecutiveReportPdf) via the shared CIPPSharp kit. Re-fetch
+  // whenever the dialog is open and the selected sections or branding change, so the preview tracks them.
+  useEffect(() => {
+    if (!previewOpen) return undefined
+    let objectUrl
+    let cancelled = false
+    setLoading(true)
+    setPdfError(false)
+    fetch('/api/ExecGetExecutiveReportPdf', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenantFilter, sectionConfig, brandingPresetId }),
+    })
+      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error('Failed to render report'))))
+      .then((blob) => {
+        if (cancelled) return
+        objectUrl = URL.createObjectURL(blob)
+        setPdfUrl(objectUrl)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPdfError(true)
+          setLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewOpen, tenantFilter, JSON.stringify(sectionConfig), brandingPresetId])
 
-    // Only create document if preview is open and data is ready
-    if (!hasAllDataFinished) {
-      return (
-        <Document>
-          <Page size="A4" style={{ padding: 40, fontFamily: 'Helvetica' }}>
-            <Text style={{ fontSize: 14, textAlign: 'center', marginTop: 100 }}>
-              Loading report data...
-            </Text>
-          </Page>
-        </Document>
-      )
-    }
+  const handleDownload = () => {
+    if (!pdfUrl) return
+    const link = document.createElement('a')
+    link.href = pdfUrl
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
-    try {
-      return (
-        <ExecutiveReportDocument
-          tenantName={tenantName}
-          tenantId={tenantId}
-          userStats={userStats}
-          standardsData={driftComplianceData.data}
-          organizationData={organizationRecord}
-          brandingSettings={brandingSettings}
-          variables={variables}
-          secureScoreData={secureScore.isSuccess ? secureScore : null}
-          licensingData={licenseData.isSuccess ? licenseData?.data : null}
-          deviceData={deviceData.isSuccess ? deviceData?.data?.Results : null}
-          conditionalAccessData={
-            conditionalAccessData.isSuccess ? conditionalAccessData?.data?.Results : null
-          }
-          standardsCompareData={standardsCompareData.isSuccess ? standardsCompareData?.data : null}
-          driftComplianceData={driftComplianceData.isSuccess ? driftComplianceData?.data : null}
-          standardTemplatesData={
-            standardTemplatesData.isSuccess ? standardTemplatesData?.data : null
-          }
-          shadowAIData={shadowAIEnabled && shadowAIData.isSuccess ? shadowAIData.data : null}
-          sectionConfig={sectionConfig}
-        />
-      )
-    } catch (error) {
-      console.error('Error creating ExecutiveReportDocument:', error)
-      return (
-        <Document>
-          <Page size="A4" style={{ padding: 40, fontFamily: 'Helvetica' }}>
-            <Text style={{ fontSize: 14, color: 'red' }}>
-              Error creating document: {error.message}
-            </Text>
-          </Page>
-        </Document>
-      )
-    }
-  }, [
-    previewOpen, // Most important - prevents creation when dialog is closed
-    hasAllDataFinished,
-    tenantName,
-    tenantId,
-    userStats,
-    organizationRecord,
-    dashboard.data,
-    brandingSettings,
-    // Resolved asynchronously, so without this the document keeps the copy built before the
-    // values landed and the footer shows %cippurl% instead of the URL.
-    variables,
-    secureScore?.isSuccess,
-    licenseData?.isSuccess,
-    deviceData?.isSuccess,
-    conditionalAccessData?.isSuccess,
-    standardsCompareData?.isSuccess,
-    driftComplianceData?.isSuccess,
-    shadowAIData?.isSuccess,
-    JSON.stringify(sectionConfig), // Stringify to prevent reference issues
-  ])
-
-  // Handle section toggle with mutual exclusion logic
+  // At least one section must stay enabled; otherwise a plain toggle.
   const handleSectionToggle = (sectionKey) => {
     setSectionConfig((prev) => {
-      // Count currently enabled sections
       const enabledSections = Object.values(prev).filter(Boolean).length
-
-      // If trying to disable the last remaining section, prevent it
       if (prev[sectionKey] && enabledSections === 1) {
-        return prev // Don't change state
+        return prev
       }
-
-      // Mutual exclusion logic for Security Standards and Drift Compliance
-      if (sectionKey === 'securityStandards' && !prev[sectionKey]) {
-        // Enabling Security Standards, disable Drift Compliance
-        return {
-          ...prev,
-          securityStandards: true,
-          driftCompliance: false,
-        }
-      }
-
-      if (sectionKey === 'driftCompliance' && !prev[sectionKey]) {
-        // Enabling Drift Compliance, disable Security Standards
-        return {
-          ...prev,
-          driftCompliance: true,
-          securityStandards: false,
-        }
-      }
-
-      return {
-        ...prev,
-        [sectionKey]: !prev[sectionKey],
-      }
+      return { ...prev, [sectionKey]: !prev[sectionKey] }
     })
   }
 
@@ -1655,11 +1460,6 @@ export const ExecutiveReportButton = (props) => {
       description: 'Compliance assessment and standards evaluation',
     },
     {
-      key: 'driftCompliance',
-      label: 'Drift Compliance',
-      description: 'Policy drift analysis and deviation management',
-    },
-    {
       key: 'secureScore',
       label: 'Microsoft Secure Score',
       description: 'Security posture measurement and trends',
@@ -1683,11 +1483,6 @@ export const ExecutiveReportButton = (props) => {
       key: 'infographics',
       label: 'Infographic Pages',
       description: 'Statistical pages with visual elements between sections',
-    },
-    {
-      key: 'shadowAI',
-      label: 'Shadow AI Report',
-      description: 'AI usage discovery and risk pages from the Shadow AI report',
     },
   ]
 
@@ -1939,62 +1734,44 @@ export const ExecutiveReportButton = (props) => {
             {sectionPanel()}
           </Paper>
 
-          {/* Right Panel - PDF Preview */}
+          {/* Right Panel - PDF Preview (server-rendered) */}
           <Box sx={{ flex: 1, height: '100%', minWidth: 0 }}>
-            {isDataLoading ? (
+            {loading && (
               <Box
                 sx={{
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: '100%',
                   gap: 2,
-                  // Gutters and a measure: this pane is the full width of the screen below md,
-                  // where the second line is long enough to run edge to edge and break badly.
-                  px: 3,
-                  textAlign: 'center',
                 }}
               >
-                <Typography variant="h6">Loading Report Data...</Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                    maxWidth: '40ch'
-                  }}>
-                  Fetching additional data for comprehensive report generation
-                </Typography>
+                <CircularProgress size={24} />
+                <Typography variant="body2">Generating report…</Typography>
               </Box>
-            ) : reportDocument ? (
-              <CippPdfPreview
-                viewerKey={`pdf-viewer-${Date.now()}`} // Fix for react-pdf "Eo is not a function" error
-                title={`Executive Report - ${tenantName}`}
-                fileName={`Executive_Report_${tenantName}.pdf`}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                }}
-                showToolbar={true}
-              >
-                {reportDocument}
-              </CippPdfPreview>
-            ) : (
+            )}
+            {pdfError && (
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: '100%',
+                  p: 4,
+                  textAlign: 'center',
                 }}
               >
-                <Typography variant="body1" sx={{
-                  color: "text.secondary"
-                }}>
-                  Report preview will appear here
+                <Typography variant="body2" color="error">
+                  The report could not be generated. Ensure this tenant has data and try again.
                 </Typography>
               </Box>
+            )}
+            {pdfUrl && !loading && !pdfError && (
+              <iframe
+                src={pdfUrl}
+                title={`Executive Report - ${tenantName}`}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+              />
             )}
           </Box>
         </DialogContent>
@@ -2024,59 +1801,11 @@ export const ExecutiveReportButton = (props) => {
           <Button
             variant="contained"
             startIcon={<CippIcons.Download />}
-            disabled={isDataLoading}
+            onClick={handleDownload}
+            disabled={!pdfUrl || loading}
             sx={{ minWidth: 140 }}
-            onClick={() => {
-              // Create document dynamically when download is clicked
-              const downloadDocument = (
-                <ExecutiveReportDocument
-                  tenantName={tenantName}
-                  tenantId={tenantId}
-                  userStats={userStats}
-                  standardsData={driftComplianceData.data}
-                  organizationData={organizationRecord}
-                  brandingSettings={brandingSettings}
-                  variables={variables}
-                  secureScoreData={secureScore.isSuccess ? secureScore : null}
-                  licensingData={licenseData.isSuccess ? licenseData?.data : null}
-                  deviceData={deviceData.isSuccess ? deviceData?.data?.Results : null}
-                  conditionalAccessData={
-                    conditionalAccessData.isSuccess ? conditionalAccessData?.data?.Results : null
-                  }
-                  standardsCompareData={
-                    standardsCompareData.isSuccess ? standardsCompareData?.data : null
-                  }
-                  driftComplianceData={
-                    driftComplianceData.isSuccess ? driftComplianceData?.data : null
-                  }
-                  shadowAIData={
-                    shadowAIEnabled && shadowAIData.isSuccess ? shadowAIData.data : null
-                  }
-                  sectionConfig={sectionConfig}
-                />
-              )
-
-              // Use react-pdf's pdf() function to generate and download
-              import('@react-pdf/renderer').then(({ pdf }) => {
-                pdf(downloadDocument)
-                  .toBlob()
-                  .then((blob) => {
-                    const url = URL.createObjectURL(blob)
-                    const link = document.createElement('a')
-                    link.href = url
-                    link.download = fileName
-                    document.body.appendChild(link)
-                    link.click()
-                    document.body.removeChild(link)
-                    URL.revokeObjectURL(url)
-                  })
-                  .catch((error) => {
-                    console.error('Error generating PDF:', error)
-                  })
-              })
-            }}
           >
-            {isDataLoading ? 'Loading...' : 'Download PDF'}
+            Download PDF
           </Button>
 
           <Button onClick={handleClose} variant="outlined">

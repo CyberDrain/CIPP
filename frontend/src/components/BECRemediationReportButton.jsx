@@ -12,10 +12,7 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material'
-import { PDFDownloadLink } from '@react-pdf/renderer'
-import { CippPdfPreview } from './CippPdf/CippPdfPreview'
-import { useReportVariables } from './CippPdf/useReportVariables'
-import { useBrandingSettings } from './CippPdf/useBrandingSettings'
+import { useSettings } from '../hooks/use-settings'
 import {
   AlertBox,
   Bold,
@@ -1209,22 +1206,58 @@ export const BECRemediationReportDocument = ({
 }
 
 // Main Button Component
+// The report PDF is now rendered server-side (ExecGetBecReportPdf) via the shared CIPPSharp component
+// kit, which reads the cached BEC run. The button fetches the finished PDF as a blob for preview +
+// download; the react-pdf BECRemediationReportDocument above is retained for the branding-settings preview.
 export const BECRemediationReportButton = ({ userData, becData, tenantName }) => {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+  const tenantFilter = useSettings().currentTenant
 
-  // Check if we have the necessary data
+  // Only offer the report once the BEC analysis has completed (its result is what the server reads).
   const hasData = userData && becData && !becData.Waiting
-
-  const brandingSettings = useBrandingSettings()
-  const variables = useReportVariables()
 
   const handleOpenDialog = () => {
     setDialogOpen(true)
+    setLoading(true)
+    setError(false)
+    setPdfUrl('')
+    const params = new URLSearchParams({
+      tenantFilter: tenantFilter ?? '',
+      userId: userData?.id ?? userData?.userId ?? '',
+      userName: userData?.userPrincipalName ?? '',
+      userDisplayName: userData?.displayName ?? '',
+    })
+    fetch(`/api/ExecGetBecReportPdf?${params.toString()}`, { credentials: 'same-origin' })
+      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error('Failed to render report'))))
+      .then((blob) => {
+        setPdfUrl(URL.createObjectURL(blob))
+        setLoading(false)
+      })
+      .catch(() => {
+        setError(true)
+        setLoading(false)
+      })
   }
 
   const handleCloseDialog = () => {
     setDialogOpen(false)
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl)
+      setPdfUrl('')
+    }
+  }
+
+  const handleDownload = () => {
+    if (!pdfUrl) return
+    const link = document.createElement('a')
+    link.href = pdfUrl
+    link.download = `BEC_Report_${(userData?.userPrincipalName || 'user').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   if (!hasData) {
@@ -1274,48 +1307,37 @@ export const BECRemediationReportButton = ({ userData, becData, tenantName }) =>
           </Box>
         </DialogTitle>
         <DialogContent dividers sx={{ p: 0 }}>
-          {hasData && (
-            <CippPdfPreview
-              width="100%"
-              height="100%"
+          {loading && (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2">Generating report…</Typography>
+            </Box>
+          )}
+          {error && (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', p: 4 }}>
+              <Typography variant="body2" color="error">
+                The report could not be generated. Ensure the BEC check has completed for this user.
+              </Typography>
+            </Box>
+          )}
+          {pdfUrl && !loading && !error && (
+            <iframe
+              src={pdfUrl}
               title={`BEC Remediation Report - ${tenantName}`}
-              fileName={`BEC_Remediation_Report_${tenantName}.pdf`}
-            >
-              <BECRemediationReportDocument
-                userData={userData}
-                becData={becData}
-                brandingSettings={brandingSettings}
-                tenantName={tenantName}
-                variables={variables}
-              />
-            </CippPdfPreview>
+              style={{ width: '100%', height: '100%', border: 'none' }}
+            />
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Close</Button>
-          <PDFDownloadLink
-            document={
-              <BECRemediationReportDocument
-                userData={userData}
-                becData={becData}
-                brandingSettings={brandingSettings}
-                tenantName={tenantName}
-                variables={variables}
-              />
-            }
-            fileName={`BEC_Report_${userData?.userPrincipalName}_${new Date().toISOString().split('T')[0]}.pdf`}
-            style={{ textDecoration: 'none' }}
+          <Button
+            variant="contained"
+            startIcon={<CippIcons.Download />}
+            onClick={handleDownload}
+            disabled={!pdfUrl || loading}
           >
-            {({ loading }) => (
-              <Button
-                variant="contained"
-                startIcon={loading ? <CircularProgress size={20} /> : <CippIcons.Download />}
-                disabled={loading}
-              >
-                {loading ? 'Generating...' : 'Download PDF'}
-              </Button>
-            )}
-          </PDFDownloadLink>
+            Download PDF
+          </Button>
         </DialogActions>
       </Dialog>
     </>

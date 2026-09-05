@@ -48,6 +48,27 @@ vi.mock('@react-pdf/renderer', () => {
   }
 })
 
+// The report PDF is now rendered server-side: the button POSTs to ExecGetExecutiveReportPdf and
+// shows the returned blob in an iframe. Stub fetch + object URLs so the dialog can open in jsdom.
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['%PDF-'], { type: 'application/pdf' })),
+      }),
+    ),
+  )
+  URL.createObjectURL = vi.fn(() => 'blob:mock-executive-report')
+  URL.revokeObjectURL = vi.fn()
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
+
 describe('ExecutiveReportButton', () => {
   it('does not trigger the MUI disabled-tooltip warning when rendered disabled', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -126,7 +147,7 @@ describe('ExecutiveReportButton', () => {
 
       expect(drawer.getByText('Report Sections')).toBeVisible()
       expect(drawer.getByText('Executive Summary')).toBeVisible()
-      expect(drawer.getByText('Shadow AI Report')).toBeVisible()
+      expect(drawer.getByText('Conditional Access')).toBeVisible()
     })
 
     it('toggles a section from inside the drawer', async () => {
@@ -140,7 +161,7 @@ describe('ExecutiveReportButton', () => {
 
       expect(toggle).not.toBeChecked()
       // the footer count is the shared state both panels read
-      expect(screen.getByText(/Sections enabled: 6 of 9/)).toBeInTheDocument()
+      expect(screen.getByText(/Sections enabled: 6 of 7/)).toBeInTheDocument()
     })
 
     it('lifts the drawer above the dialog that opened it', async () => {

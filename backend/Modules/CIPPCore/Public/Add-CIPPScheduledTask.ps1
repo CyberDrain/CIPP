@@ -295,6 +295,13 @@ function Add-CIPPScheduledTask {
                 }
             }
 
+            # Stored verbatim so the orchestrator expands groups at run time. The version marker tells
+            # it excludedTenants holds only the operator's picks, not a snapshot of unselected tenants.
+            if ($task.Tenants) {
+                $entity['Tenants'] = $task.Tenants -is [string] ? [string]$task.Tenants : [string]($task.Tenants | ConvertTo-Json -Compress -Depth 10)
+                $entity['TenantSelectionVersion'] = 2
+            }
+
             if ($task.Trigger) {
                 $entity.Trigger = [string]($task.Trigger | ConvertTo-Json -Compress)
                 $TriggerType = $task.Trigger.Type.value ?? $task.Trigger.Type

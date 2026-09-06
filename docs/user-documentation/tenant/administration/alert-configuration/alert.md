@@ -31,6 +31,10 @@ Both alert types share the same tenant scoping card.
 | Included Tenants for alert | The tenants, tenant groups or \*All Tenants the alert applies to. At least one entry is required.   |
 | Excluded Tenants for alert | Optional. Tenants selected here are skipped even if they fall within the included tenants or group. |
 
+{% hint style="info" %}
+Tenant group membership is resolved each time the alert runs, for both alert types. A tenant added to or removed from a targeted group is picked up automatically, with no need to edit and re-save the alert.
+{% endhint %}
+
 ## Alert Criteria
 
 The criteria card changes depending on which alert type you selected.

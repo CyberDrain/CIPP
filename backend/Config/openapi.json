@@ -5601,6 +5601,7 @@
         "tags": [
           "Tenant > Administration > Alerts"
         ],
+        "description": "Creates or updates a scripted CIPP alert, stored as a hidden scheduled task.\n\nA selection of two or more tenants or groups is stored verbatim and expanded on every run,\nso tenant group membership is always current.",
         "requestBody": {
           "required": true,
           "content": {
@@ -5609,16 +5610,15 @@
                 "type": "object",
                 "properties": {
                   "excludedTenants": {
-                    "type": "string"
-                  },
-                  "RowKey": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Tenants or tenant groups to skip even when they fall within the selection above. Optional."
                   },
                   "tenantFilter": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "description": "The tenants, tenant groups or *All Tenants the alert applies to. At least one is required."
                   }
                 },
                 "required": [
@@ -46081,7 +46081,7 @@
                         "x-cipp-field-source": "storage"
                       },
                       "ExecutedTime": {
-                        "x-cipp-field-source": "frontend"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "Hidden": {
                         "type": "boolean",
@@ -54868,6 +54868,9 @@
                       },
                       "excludedTenants": {
                         "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ExecutedTime": {
                         "x-cipp-field-source": "storage"
                       },
                       "Hidden": {

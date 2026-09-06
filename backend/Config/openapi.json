@@ -29669,6 +29669,72 @@
         "x-cipp-role": "Identity.Role.ReadWrite"
       }
     },
+    "/api/ExecPreviewBrandingReportPdf": {
+      "post": {
+        "summary": "ExecPreviewBrandingReportPdf",
+        "operationId": "ExecPreviewBrandingReportPdf",
+        "tags": [
+          "CIPP > Settings"
+        ],
+        "description": "Renders a sample report against a branding configuration - normally the unsaved state of the\nbranding editor - and returns it as application/pdf bytes, so a colour, logo, cover, footer or\nwatermark can be judged on every page of a real report before it is saved. Each report type has\na fixed sample of the data its builder needs (Config/ReportSamples/<type>.json); nothing is read\nfrom a tenant.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "branding": {
+                    "type": "string",
+                    "description": "The branding to render against, in the shape Get-CIPPBrandingSettings returns: colours (flat or under roleColours), a data-URL logo and cover or a coverStock path, footer and watermark. Omitted -> the saved branding settings."
+                  },
+                  "reportType": {
+                    "type": "string",
+                    "description": "Which report to preview: executive, reportBuilder, shadowAI, bec, sharing, permissions or mailFlow."
+                  },
+                  "tenantFilter": {
+                    "type": "string",
+                    "description": "Optional: the tenant whose %variables% (%cippurl%, custom variables) resolve in the footer and cover."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.AppSettings.Read",
+        "x-cipp-any-tenant": true
+      }
+    },
     "/api/ExecPreviewReportBuilderPdf": {
       "post": {
         "summary": "ExecPreviewReportBuilderPdf",
@@ -56156,359 +56222,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Derived from the Microsoft Graph entity it queries, and the fields the endpoint selects onto each record. This endpoint returns the Graph response as-is without selecting fields, so these are the properties the entity CAN carry (x-cipp-field-source: graph-entity) rather than a proven projection - Graph returns a default subset unless asked otherwise.",
-                    "properties": {
-                      "agent": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "aiToolsDetected": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "appDisplayName": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "appId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "appliedConditionalAccessPolicies": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "appliedEventListeners": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "appOwnerTenantId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "appTokenProtectionStatus": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "authenticationAppDeviceDetails": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "authenticationAppPolicyEvaluationDetails": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "authenticationContextClassReferences": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "authenticationDetails": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "authenticationMethodsUsed": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "authenticationProcessingDetails": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "authenticationProtocol": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "authenticationRequirement": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "authenticationRequirementPolicies": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "autonomousSystemNumber": {
-                        "type": "integer",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "azureResourceId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "byCategory": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "byRisk": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "clientAppUsed": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "clientCredentialType": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "clientSessionId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "conditionalAccessAudiences": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "conditionalAccessStatus": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "consentedAiApps": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "consentedApps": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "correlationId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "createdDateTime": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "crossTenantAccessType": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "detectedApps": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "deviceDetail": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "deviceInstalls": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "entraSynced": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "federatedCredentialId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "flaggedForReview": {
-                        "type": "boolean",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "globalSecureAccessIpAddress": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "highRiskTools": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "homeTenantId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "homeTenantName": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "id": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "incomingTokenType": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "intuneSynced": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "ipAddress": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "ipAddressFromResourceProvider": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "isInteractive": {
-                        "type": "boolean",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "isTenantRestricted": {
-                        "type": "boolean",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "isThroughGlobalSecureAccess": {
-                        "type": "boolean",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "lastDataRefresh": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "location": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "managedServiceIdentity": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "mfaDetail": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "networkLocationDetails": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "originalRequestId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "originalTransferMethod": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "privateLinkDetails": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "processingTimeInMilliseconds": {
-                        "type": "integer",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "resourceDisplayName": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "resourceId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "resourceOwnerTenantId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "resourceServicePrincipalId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "resourceTenantId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "riskDetail": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "riskEventTypes_v2": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "riskLevelAggregated": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "riskLevelDuringSignIn": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "riskState": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "sanctionedTools": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "servicePrincipalCredentialKeyId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "servicePrincipalCredentialThumbprint": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "servicePrincipalId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "servicePrincipalName": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "sessionId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "sessionLifetimePolicies": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "signInEventTypes": {
-                        "type": "array",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "signInIdentifier": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "signInIdentifierType": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "signInTokenProtectionStatus": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "status": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "summary": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "tokenIssuerName": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "tokenIssuerType": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "tokenProtectionStatusDetails": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "topTools": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "uniqueTokenIdentifier": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "userAgent": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "userDisplayName": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "userId": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "userPrincipalName": {
-                        "type": "string",
-                        "x-cipp-field-source": "graph-entity"
-                      },
-                      "userType": {
-                        "type": "object",
-                        "x-cipp-field-source": "graph-entity"
-                      }
-                    }
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
                   }
                 }
               }
@@ -56788,78 +56502,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
-                    "properties": {
-                      "assignments": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "broadClaimGrants": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "byBroadClaim": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "byPermissionLevel": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "byPrincipalType": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "claim": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "directFullControlGrants": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "externalGrants": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "grants": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "lastDataRefresh": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "level": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "libraries": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "librariesScanned": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "permissionsSynced": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "site": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "sitesScanned": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "sitesSkipped": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "skippedSites": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "summary": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "topSitesByUniqueLibraries": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "totalAssignments": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "type": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "uniquePermissionLibraries": {
-                        "x-cipp-field-source": "backend"
-                      }
-                    }
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
                   }
                 }
               }
@@ -57110,111 +56753,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
-                    "properties": {
-                      "anonymousEditLinks": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "anonymousLinks": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "byLinkType": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "byScope": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "externalLinks": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "externalRecipients": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "folderShares": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "internalLinks": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "itemsShared": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "lastDataRefresh": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "library": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "links": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "linksSynced": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "neverExpiringAnonymous": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "oneDriveAccounts": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "oneDriveFiles": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "oneDriveStorageUsedGB": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "passwordProtectedLinks": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "recipient": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "scope": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "sharePointFiles": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "sharePointSites": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "sharePointStorageUsedGB": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "site": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "summary": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "teamsFiles": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "teamsSites": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "teamsStorageUsedGB": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "topLibraries": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "topRecipients": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "topSites": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "totalLinks": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "type": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "usageSynced": {
-                        "x-cipp-field-source": "backend"
-                      }
-                    }
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
                   }
                 }
               }

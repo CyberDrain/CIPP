@@ -35,7 +35,7 @@ function Invoke-ListBECReports {
                     RequestedAt       = $_.RequestedAt
                     RequestedBy       = $_.RequestedBy
                     ErrorMessage      = $_.ErrorMessage
-                    ContainmentRuns   = @($_.Containment).Count
+                    ContainmentRuns   = @($_.Containment | Where-Object { $_ }).Count
                 }
             })
         $StatusCode = [HttpStatusCode]::OK

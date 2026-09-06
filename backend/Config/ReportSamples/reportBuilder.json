@@ -8,6 +8,38 @@
       "content": "<p>This preview uses <strong>sample data</strong> so you can see how your branding lands before running a report against a real tenant.</p>"
     },
     {
+      "type": "infobox",
+      "title": "Why this matters",
+      "content": "Identity is the perimeter: **every** control in this report starts with who can sign in, and from where.",
+      "static": true
+    },
+    {
+      "type": "richbullets",
+      "title": "Key points",
+      "items": [
+        {
+          "label": "MFA is enforced.",
+          "text": "All 128 licensed users are covered by a Conditional Access policy."
+        },
+        {
+          "label": "Legacy authentication is blocked.",
+          "text": "No sign-ins over IMAP, POP or SMTP AUTH in the last 30 days."
+        }
+      ],
+      "static": true
+    },
+    {
+      "type": "note",
+      "content": "Figures are taken from the last completed sync, not read live.",
+      "static": true
+    },
+    {
+      "type": "page",
+      "title": "Findings in detail",
+      "subtitle": "What we found, and what to do about it",
+      "static": true
+    },
+    {
       "id": "sample-2",
       "type": "scorecard",
       "title": "Environment Overview",
@@ -103,6 +135,52 @@
           "max": 100
         }
       ]
+    },
+    {
+      "type": "richtable",
+      "title": "Top findings",
+      "columns": [
+        {
+          "header": "Finding",
+          "key": "c1"
+        },
+        {
+          "header": "Impact",
+          "key": "c2"
+        },
+        {
+          "header": "Owner",
+          "key": "c3"
+        }
+      ],
+      "rows": [
+        {
+          "c1": "3 stale guest accounts",
+          "c2": "Medium",
+          "c3": "IT"
+        },
+        {
+          "c1": "2 devices out of compliance",
+          "c2": "Low",
+          "c3": "Service desk"
+        }
+      ],
+      "static": true
+    },
+    {
+      "type": "infoboxcolumns",
+      "columns": 2,
+      "items": [
+        {
+          "title": "Done this quarter",
+          "content": "Passwordless sign-in rolled out to 40% of staff."
+        },
+        {
+          "title": "Next quarter",
+          "content": "Extend it to the remaining sites and the shared mailboxes."
+        }
+      ],
+      "static": true
     },
     {
       "id": "sample-6",

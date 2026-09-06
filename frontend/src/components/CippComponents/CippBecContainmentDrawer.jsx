@@ -48,7 +48,7 @@ export const CippBecContainmentDrawer = ({
     queryKey: 'ListBECRemediationActions',
   })
   const catalog = useMemo(
-    () => catalogCall.data?.Actions || [],
+    () => (Array.isArray(catalogCall.data) ? catalogCall.data : []),
     [catalogCall.data]
   )
 
@@ -58,7 +58,90 @@ export const CippBecContainmentDrawer = ({
   })
   const watched = useWatch({ control: formControl.control })
 
-  // Default selection: the catalog's default set, plus the targeted actions that have flagged findings
+  // Every target picker's choices, from the run's findings. The reset below preselects the flagged ones.
+  const options = useMemo(
+    () => ({
+      MfaMethodIds: (becData?.MFADevices || []).map((m) => ({
+        label:
+          `${(m['@odata.type'] || '').replace('#microsoft.graph.', '').replace('AuthenticationMethod', '')} ${m.displayName || ''}`.trim(),
+        value: m.id,
+      })),
+      GrantIds: (becData?.UserGrants || []).map((g) => ({
+        label: `${g.ClientDisplayName || g.ClientAppId} (${g.Type}${g.Flagged ? ', flagged' : ''})`,
+        value: `${g.Type}|${g.Id}`,
+      })),
+      ServicePrincipalIds: Array.from(
+        new Map(
+          (becData?.UserGrants || [])
+            .filter(
+              (g) => g.Risk === 'CatalogMatch' && g.ClientServicePrincipalId
+            )
+            .map((g) => [
+              g.ClientServicePrincipalId,
+              {
+                label: g.ClientDisplayName || g.ClientServicePrincipalId,
+                value: g.ClientServicePrincipalId,
+              },
+            ])
+        ).values()
+      ),
+      RuleIds: (becData?.NewRules || []).map((r) => ({
+        label: r.Name,
+        value: r.Identity || r.Name,
+      })),
+      Delegations: (becData?.Delegations || []).map((d, index) => ({
+        label: `${d.PermissionType}: ${d.Trustee} (${d.Resource})${d.Flagged ? ' - flagged' : ''}`,
+        value: String(index),
+      })),
+      TransportRuleIds: (becData?.TransportRulesFlagged || []).map((r) => ({
+        label: `${r.Name}${r.ChangedInWindow ? ' - changed in window' : ''}`,
+        value: r.Guid || r.Identity || r.Name,
+      })),
+      AddInIds: (becData?.MailboxAddIns || []).map((a) => ({
+        label: `${a.DisplayName} (${a.ProviderName || 'unknown provider'})`,
+        value: a.Identity || a.AppId,
+      })),
+      Protocols: [
+        'EWS',
+        'IMAP',
+        'POP',
+        'ActiveSync',
+        'OWA',
+        'MAPI',
+        'ECP',
+        'SmtpAuth',
+      ].map((p) => ({ label: p, value: p })),
+      MobileDeviceIds: (becData?.SuspectUserDevices || []).map((d) => ({
+        label: `${d.DeviceModel || d.DeviceType || 'device'} (${d.DeviceID})`,
+        value: d.DeviceID,
+      })),
+      RegisteredDeviceIds: (becData?.RegisteredDevices || []).map((d) => ({
+        label: `${d.displayName || d.deviceId} (${d.operatingSystem || 'unknown OS'}${d.RegisteredInWindow ? ', registered in window' : ''})`,
+        value: d.id,
+      })),
+      BlockSenders: Array.from(
+        new Set(
+          (becData?.ReceivedMailFindings || [])
+            .map((f) => f.SenderAddress)
+            .filter(Boolean)
+        )
+      ).map((s) => ({ label: s, value: s })),
+      SharingLinkUrls: Array.from(
+        new Map(
+          (becData?.SharingChanges || [])
+            .filter((c) => c.ItemUrl)
+            .map((c) => [
+              c.ItemUrl,
+              { label: c.FileName || c.ItemUrl, value: c.ItemUrl },
+            ])
+        ).values()
+      ),
+    }),
+    [becData]
+  )
+
+  // Default selection: the catalog's default set, plus the targeted actions that have flagged findings.
+  // Re-applied on every open so the drawer always starts from the run's findings.
   useEffect(() => {
     if (!catalog.length) return
     const actions = {}
@@ -101,28 +184,13 @@ export const CippBecContainmentDrawer = ({
           label: `${d.displayName || d.deviceId} (${d.operatingSystem || 'unknown OS'})`,
           value: d.id,
         })),
-      BlockSenders: Array.from(
-        new Set(
-          (becData?.ReceivedMailFindings || [])
-            .map((f) => f.SenderAddress)
-            .filter(Boolean)
-        )
-      ).map((s) => ({ label: s, value: s })),
-      SharingLinkUrls: Array.from(
-        new Map(
-          (becData?.SharingChanges || [])
-            .filter((c) => c.ItemUrl)
-            .map((c) => [
-              c.ItemUrl,
-              { label: c.FileName || c.ItemUrl, value: c.ItemUrl },
-            ])
-        ).values()
-      ),
+      BlockSenders: options.BlockSenders,
+      SharingLinkUrls: options.SharingLinkUrls,
       CAState: { label: 'Enabled', value: 'enabled' },
       CAControls: { label: 'Require MFA', value: 'mfa' },
       CAExpiresHours: 24,
     })
-  }, [catalog, becData, visible])
+  }, [catalog, becData, options, visible, formControl])
 
   const selectedIds = useMemo(
     () => catalog.filter((a) => watched?.actions?.[a.Id]).map((a) => a.Id),
@@ -192,102 +260,10 @@ export const CippBecContainmentDrawer = ({
     runCall.mutate({ url: '/api/ExecBECRemediate', data: buildPayload() })
   }
 
-  const options = {
-    MfaMethodIds: (becData?.MFADevices || []).map((m) => ({
-      label:
-        `${(m['@odata.type'] || '').replace('#microsoft.graph.', '').replace('AuthenticationMethod', '')} ${m.displayName || ''}`.trim(),
-      value: m.id,
-    })),
-    GrantIds: (becData?.UserGrants || []).map((g) => ({
-      label: `${g.ClientDisplayName || g.ClientAppId} (${g.Type}${g.Flagged ? ', flagged' : ''})`,
-      value: `${g.Type}|${g.Id}`,
-    })),
-    ServicePrincipalIds: Array.from(
-      new Map(
-        (becData?.UserGrants || [])
-          .filter(
-            (g) => g.Risk === 'CatalogMatch' && g.ClientServicePrincipalId
-          )
-          .map((g) => [
-            g.ClientServicePrincipalId,
-            {
-              label: g.ClientDisplayName || g.ClientServicePrincipalId,
-              value: g.ClientServicePrincipalId,
-            },
-          ])
-      ).values()
-    ),
-    RuleIds: (becData?.NewRules || []).map((r) => ({
-      label: r.Name,
-      value: r.Identity || r.Name,
-    })),
-    Delegations: (becData?.Delegations || []).map((d, index) => ({
-      label: `${d.PermissionType}: ${d.Trustee} (${d.Resource})${d.Flagged ? ' - flagged' : ''}`,
-      value: String(index),
-    })),
-    TransportRuleIds: (becData?.TransportRulesFlagged || []).map((r) => ({
-      label: `${r.Name}${r.ChangedInWindow ? ' - changed in window' : ''}`,
-      value: r.Guid || r.Identity || r.Name,
-    })),
-    AddInIds: (becData?.MailboxAddIns || []).map((a) => ({
-      label: `${a.DisplayName} (${a.ProviderName || 'unknown provider'})`,
-      value: a.Identity || a.AppId,
-    })),
-    Protocols: [
-      'EWS',
-      'IMAP',
-      'POP',
-      'ActiveSync',
-      'OWA',
-      'MAPI',
-      'ECP',
-      'SmtpAuth',
-    ].map((p) => ({ label: p, value: p })),
-    MobileDeviceIds: (becData?.SuspectUserDevices || []).map((d) => ({
-      label: `${d.DeviceModel || d.DeviceType || 'device'} (${d.DeviceID})`,
-      value: d.DeviceID,
-    })),
-    RegisteredDeviceIds: (becData?.RegisteredDevices || []).map((d) => ({
-      label: `${d.displayName || d.deviceId} (${d.operatingSystem || 'unknown OS'}${d.RegisteredInWindow ? ', registered in window' : ''})`,
-      value: d.id,
-    })),
-    BlockSenders: Array.from(
-      new Set(
-        (becData?.ReceivedMailFindings || [])
-          .map((f) => f.SenderAddress)
-          .filter(Boolean)
-      )
-    ).map((s) => ({ label: s, value: s })),
-    SharingLinkUrls: Array.from(
-      new Map(
-        (becData?.SharingChanges || [])
-          .filter((c) => c.ItemUrl)
-          .map((c) => [
-            c.ItemUrl,
-            { label: c.FileName || c.ItemUrl, value: c.ItemUrl },
-          ])
-      ).values()
-    ),
-  }
-
+  // The catalog names the parameter each targeted action reads its targets from.
   const pickerFor = (action) => {
-    const name = {
-      RemoveMFA: 'MfaMethodIds',
-      RemoveOAuthGrants: 'GrantIds',
-      DisableServicePrincipals: 'ServicePrincipalIds',
-      DisableInboxRules: 'RuleIds',
-      RemoveDelegations: 'Delegations',
-      DisableTransportRules: 'TransportRuleIds',
-      DisableMailboxAddIns: 'AddInIds',
-      BlockProtocols: 'Protocols',
-      BlockMobileDevices: 'MobileDeviceIds',
-      RemoveMobileDevices: 'MobileDeviceIds',
-      DisableRegisteredDevices: 'RegisteredDeviceIds',
-      RemoveRegisteredDevices: 'RegisteredDeviceIds',
-      BlockSenders: 'BlockSenders',
-      RemoveSharingLinks: 'SharingLinkUrls',
-    }[action.Id]
-    if (action.Id === 'TargetedCAPolicy') {
+    const name = action.ParameterName
+    if (name === 'CAPolicy') {
       return (
         <Grid container spacing={1} sx={{ mt: 0.5 }}>
           <Grid size={{ xs: 12, md: 4 }}>

@@ -7,7 +7,7 @@ function Invoke-ExecBECBulkCheck {
     .SYNOPSIS
         Queues Business Email Compromise investigations for many users at once.
     .DESCRIPTION
-        Queues one BEC investigation per user as a single orchestration with a queue entry for progress. Accepts either an array of { UserIds, tenantFilter } items (the Users table bulk action) or one object with UserIds[]. Selection=ForeignSuccessfulSignIns picks every user with a successful sign-in in the last 7 days from outside their usage location instead of an explicit list. Each run gets its own case id; results appear on the BEC Reports page and each user's Compromise Remediation tab.
+        Queues one BEC investigation per user as a single orchestration with a queue entry for progress. Accepts either an array of { UserIds, tenantFilter } items (the Users table bulk action) or one object with UserIds[]. Each run gets its own case id; results appear on the BEC Reports page and each user's Compromise Remediation tab.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -21,24 +21,8 @@ function Invoke-ExecBECBulkCheck {
         $Unwrap = { param($Value) if ($Value -and $Value.PSObject.Properties['value']) { $Value.value } else { $Value } }
         $TenantFilter = [string](& $Unwrap ($Entries | ForEach-Object { $_.tenantFilter } | Where-Object { $_ } | Select-Object -First 1))
         if (-not $TenantFilter) { throw 'tenantFilter is required' }
-        # explicit ids, or Selection=ForeignSuccessfulSignIns
-        $Selection = [string](& $Unwrap ($Entries | ForEach-Object { $_.Selection } | Where-Object { $_ } | Select-Object -First 1))
-        $UserIds = @($Entries | ForEach-Object { @($_.UserIds) + @($_.userId) + @($_.userid) } | Where-Object { $_ } | ForEach-Object { [string](& $Unwrap $_) } | Where-Object { $_ } | Select-Object -Unique)
-
-        $Incomplete = $false
-        if ($Selection -eq 'ForeignSuccessfulSignIns') {
-            $Start = (Get-Date).ToUniversalTime().AddDays(-7).ToString('yyyy-MM-ddTHH:mm:ssZ')
-            $Users = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/users?`$select=id,userPrincipalName,usageLocation&`$top=999" -tenantid $TenantFilter -AsApp $true)
-            $UsageByUser = @{}
-            foreach ($User in $Users) { if ($User.id) { $UsageByUser[[string]$User.id] = [string]$User.usageLocation } }
-            $SignIns = @(New-GraphGetRequest -uri "https://graph.microsoft.com/beta/auditLogs/signIns?`$filter=createdDateTime ge $Start and status/errorCode eq 0&`$top=999&`$select=userId,location" -tenantid $TenantFilter -AsApp $true -noPagination $true)
-            if ($SignIns.Count -ge 999) { $Incomplete = $true }
-            $UserIds = @($SignIns | Where-Object {
-                    $Usage = $UsageByUser[[string]$_.userId]
-                    $Country = [string]$_.location.countryOrRegion
-                    $Usage -and $Country -and $Country -ne 'Unknown' -and $Country -ne $Usage
-                } | ForEach-Object { [string]$_.userId } | Select-Object -Unique)
-        }
+        # object ids of the users to investigate
+        $UserIds = @($Entries | ForEach-Object { @($_.UserIds) } | Where-Object { $_ } | ForEach-Object { [string](& $Unwrap $_) } | Where-Object { $_ } | Select-Object -Unique)
         if ($UserIds.Count -eq 0) { throw 'No users to check' }
 
         # Resolve UPN and display name in chunks of 15 ids
@@ -74,7 +58,7 @@ function Invoke-ExecBECBulkCheck {
         $null = Start-CIPPOrchestrator -InputObject $InputObject
         Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Queued $($Batch.Count) BEC investigation(s) (queue $($Queue.RowKey))" -Sev 'Info'
         $Body = @{
-            Results = "Queued $($Batch.Count) BEC investigation(s). Results appear on the BEC Reports page and each user's Compromise Remediation tab.$(if ($Incomplete) { ' The foreign sign-in selection hit its cap; some users may be missing.' })"
+            Results = "Queued $($Batch.Count) BEC investigation(s). Results appear on the BEC Reports page and each user's Compromise Remediation tab."
             QueueId = $Queue.RowKey
             Cases   = @($Cases)
         }

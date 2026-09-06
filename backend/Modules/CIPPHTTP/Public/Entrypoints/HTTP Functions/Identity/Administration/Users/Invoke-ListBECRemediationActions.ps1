@@ -13,9 +13,7 @@ function Invoke-ListBECRemediationActions {
     param($Request, $TriggerMetadata)
 
     try {
-        $Body = [pscustomobject]@{
-            Actions = @(Get-CIPPBecContainmentActions | Select-Object Id, Label, Description, Impact, Reversible, DefaultSelected, Order, TargetSource, ParameterName)
-        }
+        $Body = @(Get-CIPPBecContainmentActions | Select-Object Id, Label, Description, Impact, Reversible, DefaultSelected, Order, TargetSource, ParameterName)
         $StatusCode = [HttpStatusCode]::OK
     } catch {
         $Body = @{ Results = "Failed to list containment actions: $($_.Exception.Message)" }

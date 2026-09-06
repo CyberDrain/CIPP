@@ -42,6 +42,3 @@ AGENTS.md
 # Static copy of the generated OpenAPI spec, written by build-openapi.ps1 so the
 # in-app Swagger UI can read it without going through the API. Generated, not authored.
 frontend/public/openapi.json
-
-
-node_modules/

@@ -17,18 +17,14 @@ function Invoke-ListBECPhishingSpread {
     $SenderAddress = [string]$Request.Query.sender
     # optional subject fragment to narrow the trace (case-insensitive contains)
     $Subject = [string]$Request.Query.subject
-    # look-back in days (1-90)
-    $Days = [int]($Request.Query.days ?? 7)
-    if ($Days -lt 1) { $Days = 1 }
-    if ($Days -gt 90) { $Days = 90 }
 
     try {
         if (-not $SenderAddress) { throw 'sender is required' }
-        $Heuristics = Get-CIPPBecHeuristics
+        # look-back in days (1-90)
+        $Days = [Math]::Min([Math]::Max([int]($Request.Query.days ?? 7), 1), 90)
         $End = (Get-Date).ToUniversalTime()
         $Start = $End.AddDays(-$Days)
-        $Accepted = @()
-        try { $Accepted = @((New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-AcceptedDomain').DomainName | Where-Object { $_ } | ForEach-Object { ([string]$_).ToLowerInvariant() }) } catch { $Accepted = @() }
+        $Accepted = try { @((New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-AcceptedDomain').DomainName | Where-Object { $_ } | ForEach-Object { ([string]$_).ToLowerInvariant() }) } catch { @() }
 
         # Trace V2 takes at most 10 days per query; walk the range in 10-day windows, newest first.
         $Rows = [System.Collections.Generic.List[object]]::new()
@@ -37,7 +33,7 @@ function Invoke-ListBECPhishingSpread {
         while ($WindowEnd -gt $Start) {
             $WindowStart = $WindowEnd.AddDays(-10)
             if ($WindowStart -lt $Start) { $WindowStart = $Start }
-            $Trace = Get-CIPPBecMessageTrace -TenantFilter $TenantFilter -SenderAddress $SenderAddress -StartDate $WindowStart -EndDate $WindowEnd -MaxPages ([int]($Heuristics.caps.messageTracePages ?? 5))
+            $Trace = Get-CIPPBecMessageTrace -TenantFilter $TenantFilter -SenderAddress $SenderAddress -StartDate $WindowStart -EndDate $WindowEnd
             foreach ($Row in $Trace.Rows) { $Rows.Add($Row) }
             if (-not $Trace.Complete) { $Complete = $false }
             $WindowEnd = $WindowStart

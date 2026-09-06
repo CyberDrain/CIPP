@@ -62,9 +62,6 @@ function Get-CIPPBecReport {
             $ResultsRow = Get-CIPPAzDataTableEntity @ResultsTable -Filter "PartitionKey eq '$($Row.PartitionKey -replace "'", "''")' and RowKey eq '$($Row.RowKey -replace "'", "''")'" | Select-Object -First 1
             if ($ResultsRow -and $ResultsRow.Results) {
                 $Row | Add-Member -NotePropertyName 'Results' -NotePropertyValue ([string]$ResultsRow.Results | ConvertFrom-Json -Depth 20) -Force
-            } elseif ($Row.PSObject.Properties['ResultsBlob'] -and $Row.ResultsBlob) {
-                # runs written before results moved to table storage
-                throw "The results of case $CaseId were stored by an earlier version and can no longer be read; start a new run"
             } else {
                 throw "The results payload for case $CaseId was not found in the BecResults table"
             }

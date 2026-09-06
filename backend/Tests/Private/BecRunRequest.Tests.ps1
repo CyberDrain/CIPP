@@ -1,7 +1,7 @@
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     function Set-CIPPBecReport { param($TenantFilter, $CaseId, $Properties, $Results, [switch]$Replace) }
-    function New-CIPPAsyncDeployment { param($JobId, $Names, $StepTitles, $Source) }
+    function New-CIPPAsyncDeployment { param($JobId, $Names, $StepTitles, $Source, $TenantFilter) }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCaseId.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecRunSteps.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecRunRequest.ps1')
@@ -27,7 +27,6 @@ Describe 'New-CIPPBecRunRequest' {
     It 'writes the Waiting history row, the queued progress job keyed on the case id, and returns the queue item' {
         $Prepared = New-CIPPBecRunRequest -TenantFilter 'contoso.com' -UserId 'u1' -UserPrincipalName 'victim@contoso.com' -DisplayName 'Victim' -RequestedBy 'tech@msp.com'
         $Prepared.CaseId | Should -Match '^BEC-'
-        $Prepared.Scope | Should -Be 'Full'
         $script:Rows.Count | Should -Be 1
         $script:Rows[0].CaseId | Should -Be $Prepared.CaseId
         $script:Rows[0].Replace | Should -BeTrue
@@ -45,7 +44,6 @@ Describe 'New-CIPPBecRunRequest' {
         $Prepared.Item.FunctionName | Should -Be 'BECRun'
         $Prepared.Item.UserID | Should -Be 'u1'
         $Prepared.Item.userName | Should -Be 'victim@contoso.com'
-        $Prepared.Item.Scope | Should -Be 'Full'
         $Prepared.Item.CaseId | Should -Be $Prepared.CaseId
         $Prepared.Item.ContainsKey('QueueId') | Should -BeFalse
     }

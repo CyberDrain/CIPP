@@ -61,7 +61,7 @@ function New-CIPPBecEvidencePackage {
 
     $Files = [ordered]@{}
     $Files['results.json'] = $Utf8.GetBytes((ConvertTo-Json -InputObject $Results -Depth 20))
-    $CsvSections = @('NewRules', 'InboxRuleChanges', 'MailboxPermissionChanges', 'SentMessages', 'SafelistChanges', 'SharingChanges', 'SuspectUserSignIns', 'TenantLastSignIns', 'SuspectUserDevices', 'NewUsers', 'ChangedPasswords', 'MFADevices', 'IntuneDevices', 'AddedApps', 'MaliciousSPs', 'Delegations', 'MailboxAddIns', 'UserGrants', 'TransportRuleChanges', 'TransportRulesFlagged', 'ReceivedMailFindings', 'DefenderDetections', 'DirectoryAudits', 'RegisteredDevices', 'NonInteractiveSignIns', 'MailActivity')
+    $CsvSections = @('NewRules', 'InboxRuleChanges', 'MailboxPermissionChanges', 'SentMessages', 'SafelistChanges', 'SharingChanges', 'SuspectUserSignIns', 'SuspectUserDevices', 'NewUsers', 'ChangedPasswords', 'MFADevices', 'IntuneDevices', 'AddedApps', 'MaliciousSPs', 'Delegations', 'MailboxAddIns', 'UserGrants', 'TransportRuleChanges', 'TransportRulesFlagged', 'ReceivedMailFindings', 'DefenderDetections', 'DirectoryAudits', 'RegisteredDevices', 'NonInteractiveSignIns', 'MailActivity')
     foreach ($Section in $CsvSections) {
         $Rows = @($Results.$Section | Where-Object { $_ -and $_ -isnot [string] })
         if ($Rows.Count -eq 0) { continue }

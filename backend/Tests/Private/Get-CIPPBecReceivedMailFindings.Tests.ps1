@@ -9,7 +9,7 @@ BeforeAll {
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCollectorResult.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecReceivedMailFindings.ps1')
-    $script:Heuristics = Get-CIPPBecHeuristics -Force
+    $script:Heuristics = Get-CIPPBecHeuristics
 
     function New-Row {
         param([string]$Sender, [string]$Subject, [int]$Index = 1)

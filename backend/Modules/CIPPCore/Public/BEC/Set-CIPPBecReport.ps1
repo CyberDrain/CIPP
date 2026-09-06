@@ -58,7 +58,6 @@ function Set-CIPPBecReport {
                 Results      = $Json
             } -Force
         }
-        $Entity['ResultsBytes'] = [long][System.Text.Encoding]::UTF8.GetByteCount($Json)
     }
 
     $Table = Get-CIPPTable -TableName 'BecReports'

@@ -8,7 +8,7 @@ BeforeAll {
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCollectorResult.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecTransportRules.ps1')
-    $script:Heuristics = Get-CIPPBecHeuristics -Force
+    $script:Heuristics = Get-CIPPBecHeuristics
     $script:Start = (Get-Date).AddDays(-7)
     $script:End = Get-Date
 
@@ -76,7 +76,6 @@ Describe 'Get-CIPPBecTransportRules' {
             )
         }
         $Result = Get-CIPPBecTransportRules -TenantFilter 'contoso.com' -StartDate $script:Start -EndDate $script:End -Heuristics $script:Heuristics
-        $Result.Flagged.TotalRules | Should -Be 6
         $Result.Flagged.Data.Name | Should -Be @('Exfil', 'RecentDelete') -Because 'rules changed in the window sort first and only action-bearing rules are flagged'
         $Exfil = $Result.Flagged.Data | Where-Object { $_.Name -eq 'Exfil' }
         $Exfil.RiskReasons | Should -Contain 'BlindCopyTo = attacker@example.org'
@@ -106,6 +105,5 @@ Describe 'Get-CIPPBecTransportRules' {
         $Result.Changes.Complete | Should -BeTrue
         $Result.Flagged.Complete | Should -BeFalse
         $Result.Flagged.Error | Should -Match 'EXO down'
-        $Result.Flagged.TotalRules | Should -BeNullOrEmpty
     }
 }

@@ -24,7 +24,6 @@ function Get-CIPPBecScore {
     )
 
     $W = $Heuristics.score.weights
-    $Weight = { param($Name) [int]($W.$Name ?? 0) }
     $HighThreshold = [int]($Heuristics.score.thresholds.high ?? 7)
     $MediumThreshold = [int]($Heuristics.score.thresholds.medium ?? 4)
     $NewUsersThreshold = [int]($Heuristics.score.newUsersThreshold ?? 5)
@@ -116,8 +115,8 @@ function Get-CIPPBecScore {
             'PermissionChanges' { $Value -gt 0 -and [int]$Stats['PermissionChangesTargetingUser'] -eq 0 }
             default { $Value -gt 0 }
         }
-        $Wt = & $Weight $Name
-        if ($Applied) { $Total += $Wt }
+        $Wt = [int]($W.$Name ?? 0)
+        if ($Applied) { $Total = $Total + $Wt }
         $Breakdown.Add([pscustomobject]@{
                 Signal      = $Name
                 Description = $Descriptions[$Name]
@@ -133,6 +132,5 @@ function Get-CIPPBecScore {
         Level      = $Level
         Thresholds = [pscustomobject]@{ High = $HighThreshold; Medium = $MediumThreshold }
         Breakdown  = $Breakdown.ToArray()
-        Version    = 2
     }
 }

@@ -1,33 +1,12 @@
 {
-  "metadata": {
-    "name": "CIPP BEC Heuristics",
-    "description": "Detection heuristics, thresholds, collector caps and threat-score weights used by the Business Email Compromise check (Push-BECRun) and its server-side score (Get-CIPPBecScore). Everything here operates on metadata only - audit records, sign-ins, trace headers, permissions, grants, rules and devices - never on message bodies, attachments or file contents.",
-    "sections": {
-      "window": "Analysis window in days. Every 'in window' check and the recency flags use it.",
-      "caps": "Paging and storage caps per collector. When a cap is hit the collector reports Complete=false and the cap value so the report can say the data is partial.",
-      "score": "Additive threat-score weights and the High/Medium thresholds. The first fifteen weights are the ones the PDF report used before the score moved server-side and must stay aligned with it.",
-      "inboxRules": "Regexes that mark an inbox rule as suspicious.",
-      "highRiskAuditOperations": "Unified audit log operations that are treated as high risk when attributed to the investigated user.",
-      "phishingSubjectPatterns": "Named regexes applied to received-mail subjects from message-trace metadata.",
-      "typosquat": "Levenshtein distance band that flags a sender domain as a look-alike of one of the tenant's accepted domains.",
-      "riskyScopes": "Delegated OAuth scopes that make a user grant risky; the RiskyPermissions.json catalog is merged in at load time.",
-      "transportRules": "Transport-rule actions that indicate mail diversion or suppression, matched on parameter names and on the rule description.",
-      "directoryAudit": "Entra directory-audit activity names that matter during a compromise investigation.",
-      "mailActivity": "Unified audit log operations counted (never stored row by row) for the mailbox-activity check.",
-      "sentMail": "Mass-mail thresholds for the sent message trace analysis."
-    }
-  },
   "window": {
     "days": 7
   },
   "caps": {
-    "auditLogPageSize": 5000,
     "auditLogPages": 10,
     "mailActivityPages": 10,
-    "messageTracePageSize": 5000,
     "messageTracePages": 5,
     "storedSentMessages": 1000,
-    "storedReceivedMessages": 500,
     "storedMailActivityGroups": 500,
     "signIns": 50,
     "nonInteractiveSignIns": 50,
@@ -81,21 +60,6 @@
     "sensitiveNameRegex": "(?i)(invoice|payment|security|alert|verify|microsoft|admin)",
     "sensitiveKeywordRegex": "(?i)(invoice|payment|wire|remittance|bank|swift|iban|ach|routing|account number|beneficiary|payroll|password|credential|verif|urgent|confidential)"
   },
-  "highRiskAuditOperations": [
-    "Add-MailboxPermission",
-    "Add-RecipientPermission",
-    "Add-RoleGroupMember",
-    "New-InboxRule",
-    "Set-InboxRule",
-    "UpdateInboxRules",
-    "Set-AdminAuditLogConfig",
-    "Set-OrganizationConfig",
-    "HardDelete",
-    "Purge-ComplianceSearchAction",
-    "New-TransportRule",
-    "Set-TransportRule",
-    "Set-Mailbox"
-  ],
   "phishingSubjectPatterns": {
     "Urgent action language": "(?i)urgent.{0,25}(action|response).{0,25}required",
     "Account verification language": "(?i)(verify|validate).{0,25}(account|identity|password)",
@@ -109,8 +73,7 @@
     "maxDistance": 2
   },
   "riskyScopes": {
-    "regex": "(?i)(\\.ReadWrite(\\.All)?$|\\.All$|Mail\\.|Files\\.|Directory\\.|RoleManagement\\.|offline_access)",
-    "includeRiskyPermissionsCatalog": true
+    "regex": "(?i)(\\.ReadWrite(\\.All)?$|\\.All$|Mail\\.|Files\\.|Directory\\.|RoleManagement\\.|offline_access)"
   },
   "transportRules": {
     "operations": [

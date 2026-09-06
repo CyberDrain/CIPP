@@ -5,22 +5,19 @@ function Push-BECRun {
         .SYNOPSIS
         Runs the Business Email Compromise check for one user and stores the run.
         .DESCRIPTION
-        Queued by Invoke-ExecBECCheck / Invoke-ExecBECBulkCheck. Scope 'Quick' collects what the check
-        always collected (audit-log changes, sign-ins, rules, safelists, sharing, sent mail, apps, MFA,
-        devices, location analysis); scope 'Full' adds the delegation inventory, the user's OAuth
-        grants, transport rules, add-ins, received-mail heuristics, Defender detections, directory
+        Queued by Invoke-ExecBECCheck / Invoke-ExecBECBulkCheck. Collects audit-log changes, sign-ins,
+        rules, safelists, sharing, sent mail, apps, MFA, devices, the delegation inventory, the user's
+        OAuth grants, transport rules, add-ins, received-mail heuristics, Defender detections, directory
         audits, registered devices, non-interactive sign-ins, mailbox-activity counts and Identity
         Protection state. Every collector records a completeness marker and the threat score is
-        computed server-side. Results go to the BecReports table (metadata) and blob storage (payload),
-        keyed by the case id. Metadata only - no message bodies, attachments or file contents.
+        computed server-side. Results go to the BecReports table (metadata) and the BecResults table
+        (payload), keyed by the case id. Metadata only - no message bodies, attachments or file contents.
     #>
     param($Item)
 
     $TenantFilter = $Item.TenantFilter
     $SuspectUser = $Item.UserID
     $UserName = $Item.userName
-    # Every run is the full investigation; Scope stays on the row so older quick runs in the history keep their label.
-    $Scope = 'Full'
     $CaseId = if ($Item.CaseId) { [string]$Item.CaseId } else { New-CIPPBecCaseId }
 
     if (!$TenantFilter -or !$SuspectUser) {
@@ -55,7 +52,7 @@ function Push-BECRun {
     }
 
     Set-CippBecCaseContext -CaseId $CaseId
-    Write-Information "Working on $UserName ($Scope scope, case $CaseId)"
+    Write-Information "Working on $UserName (case $CaseId)"
 
     # Live progress for the page: the async-deployment row keyed on the case id (created when the
     # run was queued; created here for runs queued another way), one step per phase. Progress
@@ -63,12 +60,12 @@ function Push-BECRun {
     $StepIndex = @{}
     $RunSteps = @(Get-CIPPBecRunSteps)
     for ($i = 0; $i -lt $RunSteps.Count; $i++) { $StepIndex[$RunSteps[$i].Key] = $i }
-    $ProgressName = if ([string]::IsNullOrWhiteSpace($UserName)) { [string]$SuspectUser } else { [string]$UserName }
+    $ProgressName = [string]$UserName
     $Progress = @{ Current = $null }
     try {
         # (Re)create the job so every step starts pending: Craft retries a killed activity under the same
         # case id, and the retry must not inherit the dead attempt's half-finished steps.
-        $null = New-CIPPAsyncDeployment -JobId $CaseId -Names @($ProgressName) -StepTitles @($RunSteps.Title) -Source 'BEC'
+        $null = New-CIPPAsyncDeployment -JobId $CaseId -Names @($ProgressName) -StepTitles @($RunSteps.Title) -Source 'BEC' -TenantFilter $TenantFilter
         Set-CIPPAsyncDeploymentStatus -JobId $CaseId -Name $ProgressName -Status 'running'
         $null = Set-CIPPBecReport -TenantFilter $TenantFilter -CaseId $CaseId -Properties @{ Status = 'Running'; StartedAt = (Get-Date).ToUniversalTime().ToString('o') }
     } catch {
@@ -144,24 +141,6 @@ function Push-BECRun {
             Write-LogMessage -API 'BECRun' -message "Failed to retrieve audit logs for $($UserName): $($CippAuditError.NormalizedError)" -tenant $TenantFilter -sev Warning -LogData $CippAuditError
         }
         & $Phase 'SignIns' 'Reading sign-ins and mobile devices'
-        Write-Information 'Getting last sign-in'
-        try {
-            $URI = "https://graph.microsoft.com/beta/auditLogs/signIns?`$filter=(userId eq '$SuspectUser')&`$top=1&`$orderby=createdDateTime desc"
-            $LastSignIn = New-GraphGetRequest -uri $URI -tenantid $TenantFilter -noPagination $true -verbose | Select-Object @{ Name = 'CreatedDateTime'; Expression = $SignInDate },
-            id,
-            @{ Name = 'AppDisplayName'; Expression = { $_.resourceDisplayName } },
-            @{ Name = 'Status'; Expression = $SignInStatus },
-            @{ Name = 'IPAddress'; Expression = { $_.ipAddress } },
-            @{ Name = 'Country'; Expression = { $_.location.countryOrRegion } },
-            @{ Name = 'City'; Expression = { $_.location.city } }
-        } catch {
-            $LastSignIn = [PSCustomObject]@{
-                AppDisplayName  = 'Unknown - could not retrieve information. No access to sign-in logs'
-                CreatedDateTime = 'Unknown'
-                Id              = '0'
-                Status          = 'Could not retrieve additional details'
-            }
-        }
         Write-Information 'Getting suspect user sign-ins'
         $SuspectUserSignInsError = $null
         $SignInCap = [int]($Caps.signIns ?? 50)
@@ -479,35 +458,13 @@ function Push-BECRun {
             Write-LogMessage -API 'BECRun' -message "Failed to analyze sent message patterns for $($UserName): $($_.Exception.Message)" -tenant $TenantFilter -sev Warning
         }
 
-        & $Phase 'Tenant' 'Reading tenant sign-ins, users, MFA methods and applications'
-        Write-Information 'Getting last 50 tenant sign-ins'
-        try {
-            $TenantLastSignIns = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/auditLogs/signIns?`$filter=userDisplayName ne 'On-Premises Directory Synchronization Service Account'&`$top=50&`$orderby=createdDateTime desc" -tenantid $TenantFilter -noPagination $true | Select-Object @{ Name = 'CreatedDateTime'; Expression = $SignInDate },
-            id,
-            @{ Name = 'AppDisplayName'; Expression = { $_.resourceDisplayName } },
-            @{ Name = 'Status'; Expression = $SignInStatus },
-            @{ Name = 'IPAddress'; Expression = { $_.ipAddress } },
-            @{ Name = 'Country'; Expression = { $_.location.countryOrRegion } },
-            @{ Name = 'City'; Expression = { $_.location.city } }, UserPrincipalName, UserDisplayName
-        } catch {
-            $TenantLastSignIns = @(
-                [PSCustomObject]@{
-                    AppDisplayName  = 'Unknown - could not retrieve information. No access to sign-in logs'
-                    CreatedDateTime = 'Unknown'
-                    Id              = '0'
-                    Status          = 'Could not retrieve additional details'
-                    Exception       = $_.Exception.Message
-                }
-            )
-        }
-
-        # Known-malicious application catalog shipped with CIPP; matched on appId below.
-        $MaliciousAppsCatalog = try {
-            @((Get-Content -Path (Join-Path $env:CIPPRootPath 'Config\MaliciousApps.json') -ErrorAction Stop | ConvertFrom-Json).applications)
-        } catch {
-            Write-Information "Could not load MaliciousApps.json: $($_.Exception.Message)"
-            @()
-        }
+        & $Phase 'Tenant' 'Reading tenant users, MFA methods and applications'
+        # The rogue-application catalog (CIPP MaliciousApps.json + the Huntress feed) keyed by lowercase
+        # appId; shared with the consent collector so every section matches the same list.
+        $RogueAppFeed = Get-CIPPBecRogueAppFeed
+        $RogueApps = $RogueAppFeed.Apps
+        $CatalogAppIds = @($RogueApps.Keys)
+        $RogueMatch = { param($AppId) $Key = ([string]$AppId).ToLowerInvariant(); if ($Key -and $RogueApps.ContainsKey($Key)) { $RogueApps[$Key] } else { $null } }
 
         $Requests = @(
             @{
@@ -538,15 +495,14 @@ function Push-BECRun {
         )
         # Look for catalog apps present in the tenant regardless of age, chunked to keep each
         # 'in' filter within Graph's operand limit.
-        $CatalogAppIds = @($MaliciousAppsCatalog.appId | Where-Object { $_ })
-        for ($i = 0; $i -lt $CatalogAppIds.Count; $i += 15) {
-            $Chunk = $CatalogAppIds[$i..([Math]::Min($i + 14, $CatalogAppIds.Count - 1))]
-            $Requests += @{
-                id     = "MaliciousSPs$i"
-                url    = "servicePrincipals?`$select=displayName,appId,accountEnabled,createdDateTime&`$filter=appId in ('$($Chunk -join "','")')"
-                method = 'GET'
-            }
-        }
+        $Requests = @($Requests) + @(for ($i = 0; $i -lt $CatalogAppIds.Count; $i += 15) {
+                $Chunk = $CatalogAppIds[$i..([Math]::Min($i + 14, $CatalogAppIds.Count - 1))]
+                @{
+                    id     = "MaliciousSPs$i"
+                    url    = "servicePrincipals?`$select=displayName,appId,accountEnabled,createdDateTime&`$filter=appId in ('$($Chunk -join "','")')"
+                    method = 'GET'
+                }
+            })
 
         Write-Information 'Getting bulk requests'
         $GraphResults = New-GraphBulkRequest -Requests $Requests -tenantid $TenantFilter -asapp $true
@@ -567,9 +523,9 @@ function Push-BECRun {
 
         # Flag service principals added during the window that match the malicious catalog
         $NewSPs = @(foreach ($SP in @($NewSPs)) {
-                $CatalogEntry = $MaliciousAppsCatalog | Where-Object { $_.appId -eq $SP.appId } | Select-Object -First 1
+                $CatalogEntry = & $RogueMatch $SP.appId
                 $Match = if ($CatalogEntry) {
-                    [PSCustomObject]@{ Name = $CatalogEntry.name; Categories = @($CatalogEntry.categories); Description = $CatalogEntry.description }
+                    [PSCustomObject]@{ Name = $CatalogEntry.Name; Categories = @($CatalogEntry.Categories); Description = $CatalogEntry.Description; Source = $CatalogEntry.Source }
                 } else { $null }
                 $SP | Select-Object *, @{ Name = 'MaliciousMatch'; Expression = { $Match } }
             })
@@ -578,15 +534,16 @@ function Push-BECRun {
         # password reset, so an old grant matters as much as a new one.
         $MaliciousSPResults = @($GraphResults | Where-Object { $_.id -like 'MaliciousSPs*' -and [int]$_.status -lt 400 } | ForEach-Object { $_.body.value } | Where-Object { $_ })
         $MaliciousSPs = @(foreach ($SP in $MaliciousSPResults) {
-                $CatalogEntry = $MaliciousAppsCatalog | Where-Object { $_.appId -eq $SP.appId } | Select-Object -First 1
+                $CatalogEntry = & $RogueMatch $SP.appId
                 [PSCustomObject]@{
                     displayName     = $SP.displayName
                     appId           = $SP.appId
                     accountEnabled  = $SP.accountEnabled
                     createdDateTime = $SP.createdDateTime
-                    CatalogName     = $CatalogEntry.name
-                    Categories      = @($CatalogEntry.categories)
-                    Description     = $CatalogEntry.description
+                    CatalogName     = $CatalogEntry.Name
+                    Categories      = @($CatalogEntry.Categories)
+                    Description     = $CatalogEntry.Description
+                    Source          = $CatalogEntry.Source
                 }
             })
 
@@ -608,9 +565,7 @@ function Push-BECRun {
                     if (-not [string]::IsNullOrWhiteSpace($ParsedIntuneError.Message)) {
                         $IntuneDevicesError = $ParsedIntuneError.Message
                     }
-                } catch {
-                    # Not valid JSON after all - keep the raw message
-                }
+                } catch { Write-Verbose 'Intune error body is not JSON; keeping the raw message' }
             }
             if ($IntuneDevicesError -like 'An error has occurred*') {
                 $ActivityId = [regex]::Match($IntuneDevicesError, 'Activity ID: ([0-9a-fA-F-]{36})').Groups[1].Value
@@ -645,170 +600,149 @@ function Push-BECRun {
         & $Mark 'IntuneDevices' ([pscustomobject]@{ Complete = (-not $IntuneDevicesError); Cap = $null; Error = $IntuneDevicesError; Count = $IntuneDevices.Count })
 
         # ---------------------------------------------------------------------------------
-        # Full scope: the collectors that make this an investigation rather than a snapshot.
-        # Each one degrades to an Error marker - a failed collector never fails the run.
+        # The deeper collectors. Each one degrades to an Error marker - a failed collector
+        # never fails the run.
         # ---------------------------------------------------------------------------------
         $MailboxState = $null
         $Delegations = @()
         $MailboxAddIns = @()
-        $UserGrants = @()
         $TransportRuleChanges = @()
         $TransportRulesFlagged = @()
-        $TransportRuleTotal = $null
         $ReceivedMailFindings = @()
         $ReceivedMailSummary = $null
         $DefenderDetections = @()
-        $DefenderAvailable = $false
-        $DirectoryAudits = @()
-        $RegisteredDevices = @()
-        $NonInteractiveSignIns = @()
-        $MailActivity = @()
-        $MailActivitySummary = $null
-        $RiskState = $null
         $AcceptedDomains = @()
-        $HuntressFeedAvailable = $null
-        if ($Scope -eq 'Full') {
-            & $Phase 'MailboxInventory' 'Reading mailbox state, delegations and add-ins'
-            Write-Information 'Full scope: accepted domains'
-            try {
-                $AcceptedDomains = @((New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-AcceptedDomain' -Anchor $UserName).DomainName | Where-Object { $_ } | ForEach-Object { [string]$_ })
-            } catch {
-                Write-LogMessage -API 'BECRun' -message "Failed to retrieve accepted domains for $($TenantFilter): $((Get-NormalizedError -message $_.Exception.Message))" -tenant $TenantFilter -sev Warning
-            }
-            # Without accepted domains the external-trustee and typosquat checks fall back to the user's own domain.
-            if ($AcceptedDomains.Count -eq 0 -and $UserName -match '@') { $AcceptedDomains = @(($UserName -split '@')[-1]) }
-
-            $Collect = {
-                param($Name, [scriptblock]$Body)
-                try {
-                    & $Body
-                } catch {
-                    $CollectorError = Get-CippException -Exception $_
-                    Write-LogMessage -API 'BECRun' -message "BEC collector $Name failed for $($UserName): $($CollectorError.NormalizedError)" -tenant $TenantFilter -sev Warning -LogData $CollectorError
-                    New-CIPPBecCollectorResult -Data @() -Error $CollectorError.NormalizedError
-                }
-            }
-
-            # Preflight/eligibility: work out up front what this user and tenant actually support, so a
-            # check that cannot apply is skipped with its reason instead of run only to fail. Unknowns
-            # (a preflight that itself errors) fall through to running the check - the error classifier
-            # is the safety net for anything these preflights do not foresee.
-            $HasMailbox = $true
-            try {
-                $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-Mailbox' -cmdParams @{ Identity = $UserName } -Anchor $UserName -Select 'PrimarySmtpAddress'
-            } catch {
-                if ((Get-CIPPBecErrorInfo -Message (Get-CippException -Exception $_).NormalizedError).Skipped) { $HasMailbox = $false }
-            }
-            $SkusRead = $false
-            $ServicePlans = @()
-            try {
-                $ServicePlans = @(New-GraphGetRequest -uri 'https://graph.microsoft.com/v1.0/subscribedSkus' -tenantid $TenantFilter -AsApp $true | ForEach-Object { $_.servicePlans } | Where-Object { $_.provisioningStatus -in @('Success', 'PendingProvisioning') } | ForEach-Object { [string]$_.servicePlanName })
-                $SkusRead = $true
-            } catch {
-                Write-LogMessage -API 'BECRun' -message "BEC preflight could not read tenant plans for $($TenantFilter): $((Get-NormalizedError -message $_.Exception.Message))" -tenant $TenantFilter -sev Info
-            }
-            # Gate only when we definitively read the tenant's plans; on an unknown, attempt the check and
-            # let its own licence error (classified as skipped) decide - never skip on a failed preflight.
-            $HasEntraP2 = (-not $SkusRead) -or ($ServicePlans -contains 'AAD_PREMIUM_P2')
-            $HasDefenderP2 = (-not $SkusRead) -or ($ServicePlans -contains 'THREAT_INTELLIGENCE')
-            $Skip = { param($Requirement) New-CIPPBecCollectorResult -Data @() -Skipped $true -Requirement $Requirement }
-
-            Write-Information 'Full scope: mailbox inventory'
-            $Inventory = if ($HasMailbox) { & $Collect 'MailboxInventory' { Get-CIPPBecMailboxInventory -TenantFilter $TenantFilter -UserPrincipalName $UserName -Heuristics $Heuristics -AcceptedDomains $AcceptedDomains } } else { & $Skip 'this user has no Exchange Online mailbox' }
-            if ($Inventory.PSObject.Properties['MailboxState']) {
-                & $Mark 'MailboxState' $Inventory.MailboxState
-                & $Mark 'Delegations' $Inventory.Delegations
-                & $Mark 'MailboxAddIns' $Inventory.AddIns
-                $MailboxState = $Inventory.MailboxState.Data
-                $Delegations = @($Inventory.Delegations.Data)
-                $MailboxAddIns = @($Inventory.AddIns.Data)
-                # Exchange returns GrantSendOnBehalfTo (and some folder members) as directory ids; show the UPN.
-                $UserById = @{}
-                foreach ($TenantUser in @(($GraphResults | Where-Object { $_.id -eq 'Users' }).body.value)) { if ($TenantUser.id) { $UserById[[string]$TenantUser.id] = [string]$TenantUser.userPrincipalName } }
-                # A delegation whose grant is in this window's audit log (Add-MailboxPermission / Add-RecipientPermission /
-                # folder grants on this mailbox) is the classic persistence move and is flagged even for an internal trustee.
-                $RecentTrustees = @($PermissionsLog | Where-Object { $_.TargetsSuspect -and $_.Operation -match '^(Add-|Update)' -and $_.Trustee } | ForEach-Object { $_.Trustee.ToLowerInvariant() })
-                foreach ($Delegation in $Delegations) {
-                    if ($Delegation.Trustee -match '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' -and $UserById.ContainsKey($Delegation.Trustee)) {
-                        $Delegation | Add-Member -NotePropertyName 'TrusteeId' -NotePropertyValue $Delegation.Trustee -Force
-                        $Delegation.Trustee = $UserById[$Delegation.Trustee]
-                    }
-                    $GrantedInWindow = [bool]($Delegation.Trustee -and $RecentTrustees -contains $Delegation.Trustee.ToLowerInvariant())
-                    $Delegation | Add-Member -NotePropertyName 'GrantedInWindow' -NotePropertyValue $GrantedInWindow -Force
-                    if ($GrantedInWindow) { $Delegation.Flagged = $true }
-                }
-                $Delegations = @($Delegations | Sort-Object -Property @{ Expression = { $_.Flagged }; Descending = $true }, PermissionType, Trustee)
-                # ForwardingAddress (internal forwarding) is a directory id too
-                if ($MailboxState -and $MailboxState.ForwardingAddress -match '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' -and $UserById.ContainsKey([string]$MailboxState.ForwardingAddress)) {
-                    $MailboxState | Add-Member -NotePropertyName 'ForwardingAddressId' -NotePropertyValue $MailboxState.ForwardingAddress -Force
-                    $MailboxState.ForwardingAddress = $UserById[[string]$MailboxState.ForwardingAddress]
-                }
-            } else {
-                & $Mark 'MailboxState' $Inventory; & $Mark 'Delegations' $Inventory; & $Mark 'MailboxAddIns' $Inventory
-            }
-
-            & $Phase 'Grants' 'Reading application consents'
-            Write-Information 'Full scope: user grants'
-            $Grants = & $Collect 'UserGrants' { Get-CIPPBecUserGrants -TenantFilter $TenantFilter -UserId $SuspectUser -Heuristics $Heuristics }
-            & $Mark 'UserGrants' $Grants
-            $UserGrants = @($Grants.Data)
-            $HuntressFeedAvailable = $Grants.HuntressFeedAvailable
-
-            & $Phase 'TransportRules' 'Reading transport rules and their changes'
-            Write-Information 'Full scope: transport rules'
-            $Transport = & $Collect 'TransportRules' { Get-CIPPBecTransportRules -TenantFilter $TenantFilter -StartDate $startDate -EndDate $endDate -Heuristics $Heuristics -Anchor $UserName }
-            if ($Transport.PSObject.Properties['Changes']) {
-                & $Mark 'TransportRuleChanges' $Transport.Changes
-                & $Mark 'TransportRulesFlagged' $Transport.Flagged
-                $TransportRuleChanges = @($Transport.Changes.Data)
-                $TransportRulesFlagged = @($Transport.Flagged.Data)
-                $TransportRuleTotal = $Transport.Flagged.TotalRules
-            } else {
-                & $Mark 'TransportRuleChanges' $Transport; & $Mark 'TransportRulesFlagged' $Transport
-            }
-
-            & $Phase 'ReceivedMail' 'Reading the received-mail trace and Defender verdicts'
-            Write-Information 'Full scope: received mail'
-            $Received = & $Collect 'ReceivedMail' { Get-CIPPBecReceivedMailFindings -TenantFilter $TenantFilter -UserPrincipalName $UserName -StartDate $startDate -EndDate $endDate -Heuristics $Heuristics -AcceptedDomains $AcceptedDomains -Anchor $UserName -IncludeDefender:$HasDefenderP2 }
-            if ($Received.PSObject.Properties['Findings']) {
-                & $Mark 'ReceivedMailFindings' $Received.Findings
-                & $Mark 'DefenderDetections' $Received.Defender
-                $ReceivedMailFindings = @($Received.Findings.Data)
-                $ReceivedMailSummary = $Received.Findings.Summary
-                $DefenderDetections = @($Received.Defender.Data)
-                $DefenderAvailable = [bool]$Received.Defender.Available
-            } else {
-                & $Mark 'ReceivedMailFindings' $Received; & $Mark 'DefenderDetections' $Received
-            }
-
-            & $Phase 'Directory' 'Reading directory audits, registered devices and non-interactive sign-ins'
-            Write-Information 'Full scope: directory audits'
-            $Audits = & $Collect 'DirectoryAudits' { Get-CIPPBecDirectoryAudits -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate -Heuristics $Heuristics -Cap ([int]($Caps.directoryAudits ?? 500)) }
-            & $Mark 'DirectoryAudits' $Audits
-            $DirectoryAudits = @($Audits.Data)
-
-            Write-Information 'Full scope: registered devices'
-            $Registered = & $Collect 'RegisteredDevices' { Get-CIPPBecRegisteredDevices -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate }
-            & $Mark 'RegisteredDevices' $Registered
-            $RegisteredDevices = @($Registered.Data)
-
-            Write-Information 'Full scope: non-interactive sign-ins'
-            $NonInteractive = & $Collect 'NonInteractiveSignIns' { Get-CIPPBecNonInteractiveSignIns -TenantFilter $TenantFilter -UserId $SuspectUser -UsageLocation $UsageLocation -Top ([int]($Caps.nonInteractiveSignIns ?? 50)) }
-            & $Mark 'NonInteractiveSignIns' $NonInteractive
-            $NonInteractiveSignIns = @($NonInteractive.Data)
-
-            & $Phase 'Activity' 'Reading mailbox activity counts and Identity Protection state'
-            Write-Information 'Full scope: mailbox activity'
-            $Activity = if ($auditLog -eq $false) { New-CIPPBecCollectorResult -Data @() -Error 'Unified audit log ingestion is disabled for this tenant' } else { & $Collect 'MailActivity' { Get-CIPPBecMailActivity -TenantFilter $TenantFilter -UserPrincipalName $UserName -StartDate $startDate -EndDate $endDate -Heuristics $Heuristics -Anchor $UserName } }
-            & $Mark 'MailActivity' $Activity
-            $MailActivity = @($Activity.Data)
-            $MailActivitySummary = $Activity.Summary
-
-            Write-Information 'Full scope: risk state'
-            $Risk = if ($HasEntraP2) { & $Collect 'RiskState' { Get-CIPPBecRiskState -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate -Cap ([int]($Caps.riskDetections ?? 50)) } } else { & $Skip 'requires Entra ID P2 (Identity Protection)' }
-            & $Mark 'RiskState' $Risk
-            $RiskState = $Risk.Data
+        & $Phase 'MailboxInventory' 'Reading mailbox state, delegations and add-ins'
+        Write-Information 'Full scope: accepted domains'
+        try {
+            $AcceptedDomains = @((New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-AcceptedDomain' -Anchor $UserName).DomainName | Where-Object { $_ } | ForEach-Object { [string]$_ })
+        } catch {
+            Write-LogMessage -API 'BECRun' -message "Failed to retrieve accepted domains for $($TenantFilter): $((Get-NormalizedError -message $_.Exception.Message))" -tenant $TenantFilter -sev Warning
         }
+        # Without accepted domains the external-trustee and typosquat checks fall back to the user's own domain.
+        if ($AcceptedDomains.Count -eq 0 -and $UserName -match '@') { $AcceptedDomains = @(($UserName -split '@')[-1]) }
+
+        $Collect = {
+            param($Name, [scriptblock]$Body)
+            try {
+                & $Body
+            } catch {
+                $CollectorError = Get-CippException -Exception $_
+                Write-LogMessage -API 'BECRun' -message "BEC collector $Name failed for $($UserName): $($CollectorError.NormalizedError)" -tenant $TenantFilter -sev Warning -LogData $CollectorError
+                New-CIPPBecCollectorResult -Data @() -Error $CollectorError.NormalizedError
+            }
+        }
+
+        # Licence preflight: a check the tenant cannot support is skipped with its reason instead of
+        # run only to fail. An unknown (a preflight that itself errors) falls through to running the
+        # check - the error classifier (Get-CIPPBecErrorInfo, via $Mark) is the safety net, and is
+        # also what turns a missing mailbox into a skip.
+        $SkusRead = $false
+        $ServicePlans = @()
+        try {
+            $ServicePlans = @(New-GraphGetRequest -uri 'https://graph.microsoft.com/v1.0/subscribedSkus' -tenantid $TenantFilter -AsApp $true | ForEach-Object { $_.servicePlans } | Where-Object { $_.provisioningStatus -in @('Success', 'PendingProvisioning') } | ForEach-Object { [string]$_.servicePlanName })
+            $SkusRead = $true
+        } catch {
+            Write-LogMessage -API 'BECRun' -message "BEC preflight could not read tenant plans for $($TenantFilter): $((Get-NormalizedError -message $_.Exception.Message))" -tenant $TenantFilter -sev Info
+        }
+        # Gate only when we definitively read the tenant's plans; on an unknown, attempt the check and
+        # let its own licence error (classified as skipped) decide - never skip on a failed preflight.
+        $HasEntraP2 = (-not $SkusRead) -or ($ServicePlans -contains 'AAD_PREMIUM_P2')
+        $HasDefenderP2 = (-not $SkusRead) -or ($ServicePlans -contains 'THREAT_INTELLIGENCE')
+        $Skip = { param($Requirement) New-CIPPBecCollectorResult -Data @() -Skipped $true -Requirement $Requirement }
+
+        Write-Information 'Full scope: mailbox inventory'
+        $Inventory = & $Collect 'MailboxInventory' { Get-CIPPBecMailboxInventory -TenantFilter $TenantFilter -UserPrincipalName $UserName -Heuristics $Heuristics -AcceptedDomains $AcceptedDomains }
+        if ($Inventory.PSObject.Properties['MailboxState']) {
+            & $Mark 'MailboxState' $Inventory.MailboxState
+            & $Mark 'Delegations' $Inventory.Delegations
+            & $Mark 'MailboxAddIns' $Inventory.AddIns
+            $MailboxState = $Inventory.MailboxState.Data
+            $Delegations = @($Inventory.Delegations.Data)
+            $MailboxAddIns = @($Inventory.AddIns.Data)
+            # Exchange returns GrantSendOnBehalfTo (and some folder members) as directory ids; show the UPN.
+            $UserById = @{}
+            foreach ($TenantUser in @(($GraphResults | Where-Object { $_.id -eq 'Users' }).body.value)) { if ($TenantUser.id) { $UserById[[string]$TenantUser.id] = [string]$TenantUser.userPrincipalName } }
+            # A delegation whose grant is in this window's audit log (Add-MailboxPermission / Add-RecipientPermission /
+            # folder grants on this mailbox) is the classic persistence move and is flagged even for an internal trustee.
+            $RecentTrustees = @($PermissionsLog | Where-Object { $_.TargetsSuspect -and $_.Operation -match '^(Add-|Update)' -and $_.Trustee } | ForEach-Object { $_.Trustee.ToLowerInvariant() })
+            foreach ($Delegation in $Delegations) {
+                if ($Delegation.Trustee -match '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' -and $UserById.ContainsKey($Delegation.Trustee)) {
+                    $Delegation | Add-Member -NotePropertyName 'TrusteeId' -NotePropertyValue $Delegation.Trustee -Force
+                    $Delegation.Trustee = $UserById[$Delegation.Trustee]
+                }
+                $GrantedInWindow = [bool]($Delegation.Trustee -and $RecentTrustees -contains $Delegation.Trustee.ToLowerInvariant())
+                $Delegation | Add-Member -NotePropertyName 'GrantedInWindow' -NotePropertyValue $GrantedInWindow -Force
+                if ($GrantedInWindow) { $Delegation.Flagged = $true }
+            }
+            $Delegations = @($Delegations | Sort-Object -Property @{ Expression = { $_.Flagged }; Descending = $true }, PermissionType, Trustee)
+            # ForwardingAddress (internal forwarding) is a directory id too
+            if ($MailboxState -and $MailboxState.ForwardingAddress -match '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' -and $UserById.ContainsKey([string]$MailboxState.ForwardingAddress)) {
+                $MailboxState | Add-Member -NotePropertyName 'ForwardingAddressId' -NotePropertyValue $MailboxState.ForwardingAddress -Force
+                $MailboxState.ForwardingAddress = $UserById[[string]$MailboxState.ForwardingAddress]
+            }
+        } else {
+            & $Mark 'MailboxState' $Inventory; & $Mark 'Delegations' $Inventory; & $Mark 'MailboxAddIns' $Inventory
+        }
+
+        & $Phase 'Grants' 'Reading application consents'
+        Write-Information 'Full scope: user grants'
+        $Grants = & $Collect 'UserGrants' { Get-CIPPBecUserGrants -TenantFilter $TenantFilter -UserId $SuspectUser -Heuristics $Heuristics -RogueAppFeed $RogueAppFeed }
+        & $Mark 'UserGrants' $Grants
+        $UserGrants = @($Grants.Data)
+
+        & $Phase 'TransportRules' 'Reading transport rules and their changes'
+        Write-Information 'Full scope: transport rules'
+        $Transport = & $Collect 'TransportRules' { Get-CIPPBecTransportRules -TenantFilter $TenantFilter -StartDate $startDate -EndDate $endDate -Heuristics $Heuristics -Anchor $UserName }
+        if ($Transport.PSObject.Properties['Changes']) {
+            & $Mark 'TransportRuleChanges' $Transport.Changes
+            & $Mark 'TransportRulesFlagged' $Transport.Flagged
+            $TransportRuleChanges = @($Transport.Changes.Data)
+            $TransportRulesFlagged = @($Transport.Flagged.Data)
+        } else {
+            & $Mark 'TransportRuleChanges' $Transport; & $Mark 'TransportRulesFlagged' $Transport
+        }
+
+        & $Phase 'ReceivedMail' 'Reading the received-mail trace and Defender verdicts'
+        Write-Information 'Full scope: received mail'
+        $Received = & $Collect 'ReceivedMail' { Get-CIPPBecReceivedMailFindings -TenantFilter $TenantFilter -UserPrincipalName $UserName -StartDate $startDate -EndDate $endDate -Heuristics $Heuristics -AcceptedDomains $AcceptedDomains -Anchor $UserName -IncludeDefender:$HasDefenderP2 }
+        if ($Received.PSObject.Properties['Findings']) {
+            & $Mark 'ReceivedMailFindings' $Received.Findings
+            & $Mark 'DefenderDetections' $Received.Defender
+            $ReceivedMailFindings = @($Received.Findings.Data)
+            $ReceivedMailSummary = $Received.Findings.Summary
+            $DefenderDetections = @($Received.Defender.Data)
+        } else {
+            & $Mark 'ReceivedMailFindings' $Received; & $Mark 'DefenderDetections' $Received
+        }
+
+        & $Phase 'Directory' 'Reading directory audits, registered devices and non-interactive sign-ins'
+        Write-Information 'Full scope: directory audits'
+        $Audits = & $Collect 'DirectoryAudits' { Get-CIPPBecDirectoryAudits -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate -Heuristics $Heuristics -Cap ([int]($Caps.directoryAudits ?? 500)) }
+        & $Mark 'DirectoryAudits' $Audits
+        $DirectoryAudits = @($Audits.Data)
+
+        Write-Information 'Full scope: registered devices'
+        $Registered = & $Collect 'RegisteredDevices' { Get-CIPPBecRegisteredDevices -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate }
+        & $Mark 'RegisteredDevices' $Registered
+        $RegisteredDevices = @($Registered.Data)
+
+        Write-Information 'Full scope: non-interactive sign-ins'
+        $NonInteractive = & $Collect 'NonInteractiveSignIns' { Get-CIPPBecNonInteractiveSignIns -TenantFilter $TenantFilter -UserId $SuspectUser -UsageLocation $UsageLocation -Top ([int]($Caps.nonInteractiveSignIns ?? 50)) }
+        & $Mark 'NonInteractiveSignIns' $NonInteractive
+        $NonInteractiveSignIns = @($NonInteractive.Data)
+
+        & $Phase 'Activity' 'Reading mailbox activity counts and Identity Protection state'
+        Write-Information 'Full scope: mailbox activity'
+        $Activity = if ($auditLog -eq $false) { New-CIPPBecCollectorResult -Data @() -Error 'Unified audit log ingestion is disabled for this tenant' } else { & $Collect 'MailActivity' { Get-CIPPBecMailActivity -TenantFilter $TenantFilter -UserPrincipalName $UserName -StartDate $startDate -EndDate $endDate -Heuristics $Heuristics -Anchor $UserName } }
+        & $Mark 'MailActivity' $Activity
+        $MailActivity = @($Activity.Data)
+        $MailActivitySummary = $Activity.Summary
+
+        Write-Information 'Full scope: risk state'
+        $Risk = if ($HasEntraP2) { & $Collect 'RiskState' { Get-CIPPBecRiskState -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate -Cap ([int]($Caps.riskDetections ?? 50)) } } else { & $Skip 'requires Entra ID P2 (Identity Protection)' }
+        & $Mark 'RiskState' $Risk
+        $RiskState = $Risk.Data
 
         # Geo-locate the client IPs behind rule changes, safelist changes, sharing changes, sent
         # mail and (Full scope) transport-rule changes, directory audits and mailbox activity so
@@ -884,14 +818,11 @@ function Push-BECRun {
 
         $Results = [PSCustomObject]@{
             CaseId                   = $CaseId
-            Scope                    = $Scope
-            ContentPolicy            = 'metadata-only'
+            Scope                    = 'Full'
             AddedApps                = @($NewSPs)
             MaliciousSPs             = @($MaliciousSPs)
             SuspectUserSignIns       = @($SuspectUserSignIns)
             SuspectUserSignInsError  = $SuspectUserSignInsError
-            TenantLastSignIns        = @($TenantLastSignIns)
-            LastSuspectUserLogon     = @($LastSignIn)
             SuspectUserDevices       = @($Devices)
             NewRules                 = @($RulesLog)
             InboxRuleChanges         = @($RuleChangesLog)
@@ -909,26 +840,22 @@ function Push-BECRun {
             IntuneDevices            = @($IntuneDevices)
             IntuneDevicesError       = $IntuneDevicesError
             LocationAnalysis         = $LocationAnalysis
-            # Full-scope sections (empty arrays / $null on a Quick run)
+            # The deeper collectors
             MailboxState             = $MailboxState
             Delegations              = @($Delegations)
             MailboxAddIns            = @($MailboxAddIns)
             UserGrants               = @($UserGrants)
-            HuntressFeedAvailable    = $HuntressFeedAvailable
             TransportRuleChanges     = @($TransportRuleChanges)
             TransportRulesFlagged    = @($TransportRulesFlagged)
-            TransportRuleTotal       = $TransportRuleTotal
             ReceivedMailFindings     = @($ReceivedMailFindings)
             ReceivedMailSummary      = $ReceivedMailSummary
             DefenderDetections       = @($DefenderDetections)
-            DefenderAvailable        = $DefenderAvailable
             DirectoryAudits          = @($DirectoryAudits)
             RegisteredDevices        = @($RegisteredDevices)
             NonInteractiveSignIns    = @($NonInteractiveSignIns)
             MailActivity             = @($MailActivity)
             MailActivitySummary      = $MailActivitySummary
             RiskState                = $RiskState
-            AcceptedDomains          = @($AcceptedDomains)
             Completeness             = [pscustomobject]$Completeness
             AnalysisWindowDays       = $WindowDays
             ExtractedAt              = (Get-Date)
@@ -942,15 +869,15 @@ function Push-BECRun {
             UserPrincipalName = [string]$UserName
             DisplayName       = [string]$SuspectUserDetail.displayName
             Status            = 'Completed'
-            Scope             = $Scope
+            Scope             = 'Full'
             Score             = [int]$Score.Value
             Level             = [string]$Score.Level
             ExtractedAt       = $Results.ExtractedAt.ToUniversalTime().ToString('o')
             IncompleteCount   = @($Completeness.Values | Where-Object { -not $_.Complete }).Count
         }
-        Write-LogMessage -API 'BECRun' -message "BEC Check ($Scope) run for $UserName - threat level $($Score.Level) ($($Score.Value)) [case $CaseId]" -tenant $TenantFilter -sev 'Info'
+        Write-LogMessage -API 'BECRun' -message "BEC check run for $UserName - threat level $($Score.Level) ($($Score.Value)) [case $CaseId]" -tenant $TenantFilter -sev 'Info'
         & $Step 'Score' 'succeeded' "Threat level $($Score.Level) ($($Score.Value))"
-        Set-CIPPAsyncDeploymentStatus -JobId $CaseId -Name $ProgressName -Status 'succeeded' -Logs "Completed the $Scope run $CaseId with threat level $($Score.Level) ($($Score.Value))"
+        Set-CIPPAsyncDeploymentStatus -JobId $CaseId -Name $ProgressName -Status 'succeeded' -Logs "Completed run $CaseId with threat level $($Score.Level) ($($Score.Value))"
     } catch {
         $errMessage = Get-NormalizedError -message $_.Exception.Message
         $CippError = Get-CippException -Exception $_
@@ -962,7 +889,7 @@ function Push-BECRun {
                 UserId            = [string]$SuspectUser
                 UserPrincipalName = [string]$UserName
                 Status            = 'Error'
-                Scope             = $Scope
+                Scope             = 'Full'
                 ErrorMessage      = [string]$errMessage
                 ExtractedAt       = (Get-Date).ToUniversalTime().ToString('o')
             }

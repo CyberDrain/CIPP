@@ -111,13 +111,9 @@ function Get-CIPPBecTransportRules {
                 Flagged     = $true
             }
         }
-        $Result = New-CIPPBecCollectorResult -Data @($Rows | Sort-Object -Property @{ Expression = { $_.ChangedInWindow }; Descending = $true }, Name)
-        $Result | Add-Member -NotePropertyName 'TotalRules' -NotePropertyValue $Rules.Count -Force
-        $Result
+        New-CIPPBecCollectorResult -Data @($Rows | Sort-Object -Property @{ Expression = { $_.ChangedInWindow }; Descending = $true }, Name)
     } catch {
-        $Result = New-CIPPBecCollectorResult -Data @() -Error "Get-TransportRule failed: $((Get-NormalizedError -message $_.Exception.Message))"
-        $Result | Add-Member -NotePropertyName 'TotalRules' -NotePropertyValue $null -Force
-        $Result
+        New-CIPPBecCollectorResult -Data @() -Error "Get-TransportRule failed: $((Get-NormalizedError -message $_.Exception.Message))"
     }
 
     return [pscustomobject]@{

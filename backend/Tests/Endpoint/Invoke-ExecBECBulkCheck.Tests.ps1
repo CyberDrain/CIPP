@@ -96,6 +96,7 @@ Describe 'Invoke-ExecBECBulkCheck' {
         # only u1/u2/u3 resolve in the mock; the other 48 are reported as not found, none refused
         @($script:Orchestrations[0].Batch).Count | Should -Be 3
         @($Response.Body.Cases | Where-Object { $_.Error -eq 'User not found' }).Count | Should -Be 48
+        $Response.Body.Results | Should -Match '48 selected user\(s\) could not be found and were skipped'
     }
 
     It 'refuses an empty selection without queueing anything' {

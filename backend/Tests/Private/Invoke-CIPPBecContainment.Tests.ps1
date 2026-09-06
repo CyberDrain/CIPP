@@ -160,6 +160,21 @@ Describe 'Invoke-CIPPBecContainment' {
         $Rows[0].PSObject.Properties['copyField'] | Should -BeNullOrEmpty
     }
 
+    It 'looks a mobile device up on the mailbox when the run does not know it, so removal gets the partnership Guid' {
+        Mock New-ExoRequest { @([pscustomobject]@{ DeviceId = 'dev-live'; Guid = 'guid-live'; Identity = 'victim\ExchangeActiveSyncDevices\dev-live'; DeviceModel = 'Phone' }) } -ParameterFilter { $cmdlet -eq 'Get-MobileDevice' }
+        $Rows = Invoke-CIPPBecContainment -TenantFilter 'contoso.com' -UserPrincipalName 'victim@contoso.com' -Actions @('RemoveMobileDevices') -Parameters @{ MobileDeviceIds = @('dev-live', 'dev-missing') }
+        Should -Invoke New-ExoRequest -Times 1 -ParameterFilter { $cmdlet -eq 'Get-MobileDevice' -and $cmdParams.Mailbox -eq 'victim@contoso.com' }
+        Should -Invoke Set-CIPPMobileDevice -Times 1 -ParameterFilter { $Delete -eq 'true' -and $Guid -eq 'guid-live' -and $DeviceId -eq 'dev-live' }
+        Should -Invoke Set-CIPPMobileDevice -Times 1
+        ($Rows | Where-Object { $_.Target -eq 'dev-missing' }).state | Should -Be 'error'
+    }
+
+    It 'uses the run''s device inventory without a live lookup when it covers the picks' {
+        $null = Invoke-CIPPBecContainment -TenantFilter 'contoso.com' -UserPrincipalName 'victim@contoso.com' -Actions @('BlockMobileDevices') -RunResults $script:Run -Parameters @{ MobileDeviceIds = @('dev-1') }
+        Should -Invoke New-ExoRequest -Times 0 -ParameterFilter { $cmdlet -eq 'Get-MobileDevice' }
+        Should -Invoke Set-CIPPMobileDevice -Times 1 -ParameterFilter { $Quarantine -eq 'true' -and $DeviceId -eq 'dev-1' -and $Guid -eq 'guid-1' }
+    }
+
     It 'sets and clears the case log context' {
         $null = Invoke-CIPPBecContainment -TenantFilter 'contoso.com' -UserPrincipalName 'victim@contoso.com' -Actions @('RevokeSessions') -CaseId 'BEC-9'
         Should -Invoke Set-CippBecCaseContext -Times 1 -ParameterFilter { $CaseId -eq 'BEC-9' }

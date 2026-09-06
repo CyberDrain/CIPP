@@ -85,12 +85,13 @@ function Invoke-CippWebhookProcessing {
                 }
             }
             'becremediate' {
-                # Same dispatcher as the BEC page's containment: the rule's BecActions selection, or
-                # the default six when the rule predates selectable containment. Automation confirms
-                # Critical actions by design. The password never enters the alert payload.
+                # Same dispatcher as the BEC page's containment: the rule's BecActions selection, or - for a
+                # rule that predates selectable containment - the four steps this action always ran. Automation
+                # confirms Critical actions by design. The password never enters the alert payload.
                 $Username = (New-GraphGetRequest -uri "https://graph.microsoft.com/beta/users/$($Data.UserId)" -tenantid $TenantFilter).UserPrincipalName
                 $BecActionsRaw = try { $Data.CIPPBecActions | ConvertFrom-Json -ErrorAction Stop } catch { @() }
                 $BecActions = @($BecActionsRaw | ForEach-Object { if ($_ -and $_.PSObject.Properties['value']) { $_.value } else { $_ } } | Where-Object { $_ })
+                if ($BecActions.Count -eq 0) { $BecActions = @('ResetPassword', 'DisableAccount', 'RevokeSessions', 'DisableInboxRules') }
                 try {
                     $ContainmentRows = Invoke-CIPPBecContainment -TenantFilter $TenantFilter -UserId $Data.UserId -UserPrincipalName $Username -Actions $BecActions -Confirmed -Redacted -Headers 'Alert Engine' -APIName 'Alert Engine'
                     foreach ($Row in @($ContainmentRows)) { "$($Row.Action) ($($Row.state)): $($Row.resultText)" }

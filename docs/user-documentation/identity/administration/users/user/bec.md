@@ -148,7 +148,7 @@ The flow is deliberate:
 3. **Run containment** executes the actions in a fixed order (password, sign-in, sessions, MFA, consents, applications, rules, forwarding, auto-reply, delegations, transport rules, add-ins, protocols, devices, Conditional Access, OneDrive), each on its own, so one failure never stops the rest. Every action is logged with the case id, and the outcome is recorded on the run so the history and the evidence package carry it.
 
 {% hint style="info" %}
-The same containment runs from the audit-log alert action **Execute a BEC Remediate**. The alert rule can now choose which containment actions it runs; with none chosen it runs the classic six. Alerts confirm critical actions by design - there is no human to type the UPN - so be deliberate about which rules get it. The **NewRiskyUsers** scheduled alert has an opt-in switch that runs the classic six for users that newly appear at high risk.
+The same containment runs from the audit-log alert action **Execute a BEC Remediate**. The alert rule can now choose which containment actions it runs; with none chosen it runs the four steps this action always ran (reset password, block sign-in, revoke sessions, disable inbox rules). Alerts confirm critical actions by design - there is no human to type the UPN - so be deliberate about which rules get it. The **NewRiskyUsers** scheduled alert has an opt-in switch that runs the classic six for users that newly appear at high risk.
 {% endhint %}
 
 ### Purview content search and purge

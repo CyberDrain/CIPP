@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Spamfilter",
+    "path": "/email/spamfilter/list-spamfilter",
+    "icon": "Shield"
+  },
+  {
+    "label": "Spamfilter Templates",
+    "path": "/email/spamfilter/list-templates",
+    "icon": "Description"
+  }
+]

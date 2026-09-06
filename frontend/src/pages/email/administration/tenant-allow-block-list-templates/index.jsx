@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { CippIcons } from '../../../../utils/icon-registry'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
+import { TabbedLayout } from '../../../../layouts/TabbedLayout'
+import tabOptions from '../tenant-allow-block-lists/tabOptions.json'
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 import CippJsonView from '../../../../components/CippFormPages/CippJSONView'
 import { CippTenantAllowBlockListTemplateDrawer } from '../../../../components/CippComponents/CippTenantAllowBlockListTemplateDrawer.jsx'
@@ -72,5 +74,9 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout>
+    <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
+  </DashboardLayout>
+)
 export default Page

@@ -5,6 +5,11 @@
     "icon": "Settings"
   },
   {
+    "label": "Configuration",
+    "path": "/tenant/manage/configuration",
+    "icon": "Tune"
+  },
+  {
     "label": "Manage Drift",
     "path": "/tenant/manage/drift",
     "icon": "Sync"

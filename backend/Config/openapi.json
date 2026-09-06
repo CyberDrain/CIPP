@@ -118,6 +118,9 @@
       "name": "Tenant > Administration > Application Approval"
     },
     {
+      "name": "Tenant > Administration > Configuration"
+    },
+    {
       "name": "Tenant > Administration > Domains"
     },
     {
@@ -33036,6 +33039,126 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/ExecSetAdminAuditLogConfig": {
+      "post": {
+        "summary": "Enable or disable the tenant's Unified Audit Log on demand.",
+        "operationId": "ExecSetAdminAuditLogConfig",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Sets UnifiedAuditLogIngestionEnabled via Set-AdminAuditLogConfig (running\nEnable-OrganizationCustomization first when enabling on a dehydrated tenant), then folds\nthe value into the reporting cache so the UI reflects it immediately.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantFilter": {
+                    "type": "string"
+                  },
+                  "UnifiedAuditLogIngestionEnabled": {
+                    "type": "string",
+                    "description": "Whether the Unified Audit Log should be enabled"
+                  }
+                },
+                "required": [
+                  "tenantFilter",
+                  "UnifiedAuditLogIngestionEnabled"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.ReadWrite"
+      }
+    },
+    "/api/ExecSetAdminReportSettings": {
+      "post": {
+        "summary": "Set the tenant's admin report settings on demand.",
+        "operationId": "ExecSetAdminReportSettings",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Sets whether Microsoft 365 usage reports conceal user, group and site names\n(displayConcealedNames) via PATCH /beta/admin/reportSettings, then folds the value into\nthe reporting cache so the UI reflects it immediately.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayConcealedNames": {
+                    "type": "string",
+                    "description": "Conceal user/group/site names in usage reports"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "displayConcealedNames",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.ReadWrite"
+      }
+    },
     "/api/ExecSetAPDeviceGroupTag": {
       "post": {
         "summary": "ExecSetAPDeviceGroupTag",
@@ -33391,6 +33514,65 @@
         "x-cipp-role": "Identity.DirSync.ReadWrite"
       }
     },
+    "/api/ExecSetCrossTenantAccess": {
+      "post": {
+        "summary": "Set the default cross-tenant access inbound-trust settings on demand.",
+        "operationId": "ExecSetCrossTenantAccess",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "PATCHes the inbound-trust of the default cross-tenant access policy (trust MFA,\ncompliant-device and hybrid-joined claims from other tenants) for a single tenant.\nOne-off only; bulk enforcement across tenants is done via Standards.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "settings",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.ReadWrite"
+      }
+    },
     "/api/ExecSetDefaultMFAMethod": {
       "post": {
         "summary": "ExecSetDefaultMFAMethod",
@@ -33453,6 +33635,185 @@
           }
         ],
         "x-cipp-role": "Identity.User.ReadWrite"
+      }
+    },
+    "/api/ExecSetDeviceRegistrationPolicy": {
+      "post": {
+        "summary": "Set Entra device registration policy settings (LAPS, device quota) on demand.",
+        "operationId": "ExecSetDeviceRegistrationPolicy",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "The device registration policy is a singleton that only accepts a full-object PUT, so this\nreads the current object, mutates the requested fields (Windows LAPS enablement and the\nper-user device quota) and PUTs it back for a single tenant. One-off only; bulk enforcement\nis done via Standards.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "settings",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.ReadWrite"
+      }
+    },
+    "/api/ExecSetEntraAuthPolicy": {
+      "post": {
+        "summary": "Set Entra authorization policy settings on demand.",
+        "operationId": "ExecSetEntraAuthPolicy",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "PATCHes the authorization policy (guest invite scope, SSPR, and default-user-role\npermissions) for a single tenant (tenantFilter) or every tenant in a tenants[] array\n(fleet bulk-set). PATCH deep-merges, so only the provided fields are changed.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string",
+                    "description": "One-off, single tenant only. Bulk enforcement across tenants is done via Standards."
+                  }
+                },
+                "required": [
+                  "settings",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.ReadWrite"
+      }
+    },
+    "/api/ExecSetExchangeOrgConfig": {
+      "post": {
+        "summary": "Set tenant-wide Exchange Online organization settings on demand.",
+        "operationId": "ExecSetExchangeOrgConfig",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Applies one or more Set-OrganizationConfig toggles to a single tenant (tenantFilter)\nor, for the All Tenants fleet view, to every tenant in a tenants[] array. Values are\nthe real Exchange property names (the UI handles inverted senses such as AuditDisabled).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string",
+                    "description": "One-off, single tenant only. Bulk enforcement across tenants is done via Standards."
+                  }
+                },
+                "required": [
+                  "settings",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.ReadWrite"
       }
     },
     "/api/ExecSetLibraryInheritance": {
@@ -34316,6 +34677,124 @@
         "x-cipp-role": "Exchange.Mailbox.ReadWrite"
       }
     },
+    "/api/ExecSetOrgContacts": {
+      "post": {
+        "summary": "Set the organization notification contact addresses on demand.",
+        "operationId": "ExecSetOrgContacts",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "PATCHes the organization's marketing, technical and security/compliance notification\nemail lists for a single tenant. One-off only; bulk enforcement is done via Standards.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "settings",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.ReadWrite"
+      }
+    },
+    "/api/ExecSetOwaMailboxPolicy": {
+      "post": {
+        "summary": "Set the default OWA mailbox policy toggles on demand.",
+        "operationId": "ExecSetOwaMailboxPolicy",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Applies boolean toggles to the default OWA mailbox policy via Set-OwaMailboxPolicy for a\nsingle tenant. One-off only; bulk enforcement is done via Standards.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "settings",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.ReadWrite"
+      }
+    },
     "/api/ExecSetPackageTag": {
       "post": {
         "summary": "ExecSetPackageTag",
@@ -34832,6 +35311,67 @@
         "x-cipp-role": "Sharepoint.Site.ReadWrite"
       }
     },
+    "/api/ExecSetSharepointSettings": {
+      "post": {
+        "summary": "Set tenant-level SharePoint and OneDrive settings on demand.",
+        "operationId": "ExecSetSharepointSettings",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Updates one or more tenant-level SharePoint Online / OneDrive settings via\nPATCH /beta/admin/sharepoint/settings, then selectively updates the CIPP reporting\ncache with the new values so the UI reflects the change immediately (the live Graph\nread lags ~10s). This is the on-demand counterpart to the SharePoint Standards -\nit sets the value once, without drift-enforcement.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "type": "string",
+                    "description": "An object of SharePoint settings to update; only whitelisted properties are applied"
+                  },
+                  "tenantFilter": {
+                    "type": "string",
+                    "description": "The tenant to apply the settings to"
+                  }
+                },
+                "required": [
+                  "settings",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Admin.ReadWrite"
+      }
+    },
     "/api/ExecSetSiteProperties": {
       "post": {
         "summary": "ExecSetSiteProperties",
@@ -34892,6 +35432,129 @@
           }
         ],
         "x-cipp-role": "Sharepoint.Site.ReadWrite"
+      }
+    },
+    "/api/ExecSetSpoTenantSettings": {
+      "post": {
+        "summary": "Set SharePoint Online tenant admin (CSOM) settings on demand.",
+        "operationId": "ExecSetSpoTenantSettings",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Applies sharing-link, sync and guest-access toggles via Set-CIPPSPOTenant to a single\ntenant (tenantFilter) or every tenant in a tenants[] array (fleet bulk-set). The CSOM\nproperty bag only accepts Boolean/String/Int32, so enums are sent as their numeric codes.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string",
+                    "description": "One-off, single tenant only. Bulk enforcement across tenants is done via Standards."
+                  }
+                },
+                "required": [
+                  "settings",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Admin.ReadWrite"
+      }
+    },
+    "/api/ExecSetTeamsConfig": {
+      "post": {
+        "summary": "Set tenant-wide Teams Global policy toggles on demand.",
+        "operationId": "ExecSetTeamsConfig",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Applies boolean toggles to a Teams Global policy/configuration (selected by policyType)\nfor a single tenant (tenantFilter) or every tenant in a tenants[] array (fleet bulk-set).\nOnly a curated set of boolean fields per policy type is allowed; federation domain lists\nare intentionally excluded.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "policyType": {
+                    "type": "string"
+                  },
+                  "settings": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string",
+                    "description": "One-off, single tenant only. Bulk enforcement across tenants is done via Standards."
+                  }
+                },
+                "required": [
+                  "settings",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.ReadWrite"
       }
     },
     "/api/ExecSetUserPhoto": {
@@ -37754,6 +38417,49 @@
         "x-cipp-role": "Exchange.Mailbox.Read"
       }
     },
+    "/api/ListAdminAuditLogConfig": {
+      "get": {
+        "summary": "ListAdminAuditLogConfig",
+        "operationId": "ListAdminAuditLogConfig",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns the tenant's Exchange Online admin audit log configuration (notably whether the\nUnified Audit Log is enabled). Served from the CIPP reporting cache, populated on a miss.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read"
+      }
+    },
     "/api/ListAdminPortalLicenses": {
       "get": {
         "summary": "ListAdminPortalLicenses",
@@ -37795,6 +38501,59 @@
           }
         ],
         "x-cipp-role": "CIPP.Core.Read"
+      }
+    },
+    "/api/ListAdminReportSettings": {
+      "get": {
+        "summary": "ListAdminReportSettings",
+        "operationId": "ListAdminReportSettings",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns the tenant's admin report settings (currently whether usage-report user, group\nand site names are concealed). Read live from Graph so the value is always current.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the Microsoft Graph entity it queries. This endpoint returns the Graph response as-is without selecting fields, so these are the properties the entity CAN carry (x-cipp-field-source: graph-entity) rather than a proven projection - Graph returns a default subset unless asked otherwise.",
+                    "properties": {
+                      "displayConcealedNames": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "id": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read"
       }
     },
     "/api/ListAgent365PackageDetail": {
@@ -43025,6 +43784,112 @@
         "x-cipp-role": "Tenant.Standards.Read"
       }
     },
+    "/api/ListCrossTenantAccess": {
+      "get": {
+        "summary": "ListCrossTenantAccess",
+        "operationId": "ListCrossTenantAccess",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns the default cross-tenant access policy inbound-trust settings (whether MFA,\ncompliant-device and hybrid-joined claims from other Entra tenants are trusted).\nRead live from Graph, flattened for the Configuration UI.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the Microsoft Graph entity it queries, and the fields the endpoint selects onto each record. This endpoint returns the Graph response as-is without selecting fields, so these are the properties the entity CAN carry (x-cipp-field-source: graph-entity) rather than a proven projection - Graph returns a default subset unless asked otherwise.",
+                    "properties": {
+                      "appServiceConnectInbound": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "automaticUserConsentSettings": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "b2bCollaborationInbound": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "b2bCollaborationOutbound": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "b2bDirectConnectInbound": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "b2bDirectConnectOutbound": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "id": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "inboundTrust": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "invitationRedemptionIdentityProviderConfiguration": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "isCompliantDeviceAccepted": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "isHybridAzureADJoinedDeviceAccepted": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "isMfaAccepted": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "isServiceDefault": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "m365CollaborationInbound": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "m365CollaborationOutbound": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "tenantRestrictions": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read"
+      }
+    },
     "/api/ListCSPLicenses": {
       "get": {
         "summary": "ListCSPLicenses",
@@ -44457,6 +45322,58 @@
         "x-cipp-role": "Identity.Device.Read"
       }
     },
+    "/api/ListDeviceRegistrationPolicy": {
+      "get": {
+        "summary": "ListDeviceRegistrationPolicy",
+        "operationId": "ListDeviceRegistrationPolicy",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns the Entra device registration policy settings surfaced here (Windows LAPS and the\nper-user device quota), flattened for the Configuration UI. Read live from Graph.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the Microsoft Graph entity it queries, and the fields the endpoint selects onto each record. The fields taken from Graph are the ones this endpoint selects, so they are what the response actually carries.",
+                    "properties": {
+                      "lapsEnabled": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "userDeviceQuota": {
+                        "type": "integer",
+                        "x-cipp-field-source": "graph,backend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read"
+      }
+    },
     "/api/ListDevices": {
       "get": {
         "summary": "ListDevices",
@@ -45458,6 +46375,78 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/ListEntraAuthPolicy": {
+      "get": {
+        "summary": "ListEntraAuthPolicy",
+        "operationId": "ListEntraAuthPolicy",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns the Entra authorization policy settings (guest invite scope, SSPR, and the\ndefault-user-role permissions) flattened for the Configuration UI. Read live from Graph.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
+                    "properties": {
+                      "allowedToCreateApps": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "allowedToCreateSecurityGroups": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "allowedToCreateTenants": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "allowedToReadBitLockerKeysForOwnedDevice": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "allowedToReadOtherUsers": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "allowedToUseSSPR": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "allowInvitesFrom": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "blockMsolPowerShell": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "guestUserRoleId": {
+                        "x-cipp-field-source": "backend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read"
+      }
+    },
     "/api/ListEquipment": {
       "get": {
         "summary": "ListEquipment",
@@ -45659,6 +46648,49 @@
           }
         ],
         "x-cipp-role": "Exchange.Connector.Read"
+      }
+    },
+    "/api/ListExchangeOrgConfig": {
+      "get": {
+        "summary": "ListExchangeOrgConfig",
+        "operationId": "ListExchangeOrgConfig",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns tenant-wide Exchange Online organization settings (Get-OrganizationConfig).\nRead live so values are always current before a change.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read"
       }
     },
     "/api/ListExcludedLicenses": {
@@ -52899,6 +53931,106 @@
         "x-cipp-role": "CIPP.Core.Read"
       }
     },
+    "/api/ListOrgContacts": {
+      "get": {
+        "summary": "ListOrgContacts",
+        "operationId": "ListOrgContacts",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns the organization notification contact addresses (marketing, technical and\nsecurity/compliance notification emails). Read live from Graph.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the Microsoft Graph entity it queries, and the fields the endpoint selects onto each record. The fields taken from Graph are the ones this endpoint selects, so they are what the response actually carries.",
+                    "properties": {
+                      "marketingNotificationEmails": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph,backend"
+                      },
+                      "securityComplianceNotificationMails": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph,backend"
+                      },
+                      "technicalNotificationMails": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph,backend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read"
+      }
+    },
+    "/api/ListOwaMailboxPolicy": {
+      "get": {
+        "summary": "ListOwaMailboxPolicy",
+        "operationId": "ListOwaMailboxPolicy",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns the default OWA mailbox policy settings (third-party storage providers, direct\nfile access). Read live from Exchange Online.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read"
+      }
+    },
     "/api/ListPartnerRelationships": {
       "get": {
         "summary": "ListPartnerRelationships",
@@ -58274,6 +59406,49 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/ListSpoTenantSettings": {
+      "get": {
+        "summary": "ListSpoTenantSettings",
+        "operationId": "ListSpoTenantSettings",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns the SharePoint Online tenant admin (CSOM) settings - sharing link defaults,\nsync, guest access and related toggles that are not on the Graph sharepoint/settings\nobject. Read live (-SkipCache) so values are always current before a change.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Admin.Read"
+      }
+    },
     "/api/ListSPOVersionCleanup": {
       "get": {
         "summary": "ListSPOVersionCleanup",
@@ -58953,6 +60128,60 @@
           }
         ],
         "x-cipp-role": "Teams.Activity.Read"
+      }
+    },
+    "/api/ListTeamsConfig": {
+      "get": {
+        "summary": "ListTeamsConfig",
+        "operationId": "ListTeamsConfig",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Returns a tenant-wide Teams Global policy/configuration object for the Configuration UI.\nThe policyType query parameter selects which one (meeting, messaging, client, external\naccess). Read live via the Teams admin ConfigAPI.",
+        "parameters": [
+          {
+            "name": "policyType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read"
       }
     },
     "/api/ListTeamsLisLocation": {
@@ -59876,6 +61105,81 @@
           }
         ],
         "x-cipp-role": "Exchange.SpamFilter.Read",
+        "x-cipp-any-tenant": true
+      }
+    },
+    "/api/ListTenantConfigFleet": {
+      "get": {
+        "summary": "ListTenantConfigFleet",
+        "operationId": "ListTenantConfigFleet",
+        "tags": [
+          "Tenant > Administration > Configuration"
+        ],
+        "description": "Fleet (All Tenants) view for the Tenant Configuration page: returns one cached row per\ntenant for a given reporting-cache type, so a single request renders every tenant's\ncurrent values. Live per-tenant reads are done by each area's own List endpoint; the\nfleet view is cache-backed because live-calling every tenant is not feasible.",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "The reporting-cache type to project across all tenants",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                    "properties": {
+                      "Data": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ETag": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PartitionKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "RowKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Timestamp": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Type": {
+                        "x-cipp-field-source": "storage"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Config.Read",
         "x-cipp-any-tenant": true
       }
     },

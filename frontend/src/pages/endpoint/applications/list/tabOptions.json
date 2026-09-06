@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Applications",
+    "path": "/endpoint/applications/list",
+    "icon": "Apps"
+  },
+  {
+    "label": "Application Templates",
+    "path": "/endpoint/applications/templates",
+    "icon": "Description"
+  }
+]

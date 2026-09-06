@@ -1,7 +1,7 @@
 import { Box, Container, Stack, Typography } from '@mui/material'
-import { Layout as DashboardLayout } from '../../../layouts/index'
-import { CippHead } from '../../../components/CippComponents/CippHead'
-import { CippTemplatePackageManager } from '../../../components/CippComponents/CippTemplatePackageManager'
+import { Layout as DashboardLayout } from '../../../../layouts/index'
+import { CippHead } from '../../../../components/CippComponents/CippHead'
+import { CippTemplatePackageManager } from '../../../../components/CippComponents/CippTemplatePackageManager'
 
 const Page = () => {
   return (

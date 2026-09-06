@@ -47,12 +47,6 @@ export const nativeMenuItems = [
             permissions: ['Identity.Group.*'],
           },
           {
-            title: 'Group Templates',
-            path: '/identity/administration/group-templates',
-            permissions: ['Identity.Group.*'],
-            scope: 'global',
-          },
-          {
             title: 'Devices',
             path: '/identity/administration/devices',
             permissions: ['Identity.Device.*'],
@@ -71,18 +65,6 @@ export const nativeMenuItems = [
             title: 'JIT Admin',
             path: '/identity/administration/jit-admin',
             permissions: ['Identity.Role.*'],
-          },
-          {
-            title: 'JIT Admin Templates',
-            path: '/identity/administration/jit-admin-templates',
-            permissions: ['Identity.Role.*'],
-            scope: 'global',
-          },
-          {
-            title: 'JIT Role Templates',
-            path: '/identity/administration/jit-role-templates',
-            permissions: ['Identity.Role.*'],
-            scope: 'global',
           },
           {
             title: 'Vacation Mode',
@@ -251,10 +233,9 @@ export const nativeMenuItems = [
             permissions: ['Tenant.ConditionalAccess.*'],
           },
           {
-            title: 'CA Templates',
-            path: '/tenant/conditional/list-template',
+            title: 'CA Vacation Mode',
+            path: '/tenant/conditional/deploy-vacation',
             permissions: ['Tenant.ConditionalAccess.*'],
-            scope: 'global',
           },
           {
             title: 'Named Locations',
@@ -406,12 +387,6 @@ export const nativeMenuItems = [
             path: '/security/safelinks/safelinks',
             permissions: ['Security.SafeLinksPolicy.*'],
           },
-          {
-            title: 'Safe Links Templates',
-            path: '/security/safelinks/safelinks-template',
-            permissions: ['Security.SafeLinksPolicy.*'],
-            scope: 'global',
-          },
         ],
       },
       {
@@ -429,21 +404,9 @@ export const nativeMenuItems = [
             permissions: ['Security.DlpCompliancePolicy.*'],
           },
           {
-            title: 'DLP Policy Templates',
-            path: '/security/compliance/dlp-templates',
-            permissions: ['Security.DlpCompliancePolicy.*'],
-            scope: 'global',
-          },
-          {
             title: 'Retention Policies',
             path: '/security/compliance/retention',
             permissions: ['Security.RetentionCompliancePolicy.*'],
-          },
-          {
-            title: 'Retention Policy Templates',
-            path: '/security/compliance/retention-templates',
-            permissions: ['Security.RetentionCompliancePolicy.*'],
-            scope: 'global',
           },
           {
             title: 'Sensitivity Labels',
@@ -451,21 +414,9 @@ export const nativeMenuItems = [
             permissions: ['Security.SensitivityLabel.*'],
           },
           {
-            title: 'Sensitivity Label Templates',
-            path: '/security/compliance/labels-templates',
-            permissions: ['Security.SensitivityLabel.*'],
-            scope: 'global',
-          },
-          {
             title: 'Sensitive Information Types',
             path: '/security/compliance/sit',
             permissions: ['Security.SensitiveInfoType.*'],
-          },
-          {
-            title: 'Sensitive Info Type Templates',
-            path: '/security/compliance/sit-templates',
-            permissions: ['Security.SensitiveInfoType.*'],
-            scope: 'global',
           },
         ],
       },
@@ -555,13 +506,6 @@ export const nativeMenuItems = [
             path: '/endpoint/applications/queue',
             permissions: ['Endpoint.Application.*'],
           },
-          {
-            title: 'Application Templates',
-            path: '/endpoint/applications/templates',
-            docsPath: 'endpoint/applications/application-templates',
-            permissions: ['Endpoint.Application.*'],
-            scope: 'global',
-          },
         ],
       },
       {
@@ -625,37 +569,16 @@ export const nativeMenuItems = [
             permissions: ['Endpoint.MEM.*'],
           },
           {
-            title: 'Policy Templates',
-            path: '/endpoint/MEM/list-templates',
-            docsPath: 'endpoint/mem/list-templates',
-            permissions: ['Endpoint.MEM.*'],
-            scope: 'global',
-          },
-          {
             title: 'Reusable Settings',
             path: '/endpoint/MEM/reusable-settings',
             docsPath: 'endpoint/mem/reusable-settings',
             permissions: ['Endpoint.MEM.*'],
           },
           {
-            title: 'Reusable Settings Templates',
-            path: '/endpoint/MEM/reusable-settings-templates',
-            docsPath: 'endpoint/mem/reusable-settings-templates',
-            permissions: ['Endpoint.MEM.*'],
-            scope: 'global',
-          },
-          {
             title: 'Assignment Filters',
             path: '/endpoint/MEM/assignment-filters',
             docsPath: 'endpoint/mem/assignment-filters',
             permissions: ['Endpoint.MEM.*'],
-          },
-          {
-            title: 'Assignment Filter Templates',
-            path: '/endpoint/MEM/assignment-filter-templates',
-            docsPath: 'endpoint/mem/assignment-filter-templates',
-            permissions: ['Endpoint.MEM.*'],
-            scope: 'global',
           },
           {
             title: 'Scripts',
@@ -730,24 +653,27 @@ export const nativeMenuItems = [
         permissions: ['Sharepoint.Admin.*'],
       },
       {
-        title: 'SharePoint Templates',
-        path: '/teams-share/sharepoint-templates',
-        permissions: ['Sharepoint.Admin.*'],
-      },
-      {
         title: 'Deleted Sites',
         path: '/teams-share/deleted-sites',
         permissions: ['Sharepoint.Admin.*'],
       },
       {
-        title: 'Sharing Report',
-        path: '/teams-share/sharing-report',
+        title: 'Reports',
         permissions: ['Sharepoint.Site.*'],
-      },
-      {
-        title: 'Permissions Report',
-        path: '/teams-share/permissions-report',
-        permissions: ['Sharepoint.Site.*'],
+        items: [
+          {
+            title: 'Sharing Report',
+            path: '/teams-share/reports/sharing-report',
+            docsPath: 'teams-share/sharing-report',
+            permissions: ['Sharepoint.Site.*'],
+          },
+          {
+            title: 'Permissions Report',
+            path: '/teams-share/reports/permissions-report',
+            docsPath: 'teams-share/permissions-report',
+            permissions: ['Sharepoint.Site.*'],
+          },
+        ],
       },
       {
         title: 'External Users',
@@ -829,12 +755,6 @@ export const nativeMenuItems = [
             permissions: ['Exchange.Contact.*'],
           },
           {
-            title: 'Contact Templates',
-            path: '/email/administration/contacts-template',
-            permissions: ['Exchange.Contact.*'],
-            scope: 'global',
-          },
-          {
             title: 'Quarantine',
             path: '/email/administration/quarantine',
             permissions: ['Exchange.SpamFilter.*'],
@@ -848,12 +768,6 @@ export const nativeMenuItems = [
             title: 'Tenant Allow/Block Lists',
             path: '/email/administration/tenant-allow-block-lists',
             permissions: ['Exchange.SpamFilter.*'],
-          },
-          {
-            title: 'Allow/Block List Templates',
-            path: '/email/administration/tenant-allow-block-list-templates',
-            permissions: ['Exchange.SpamFilter.*'],
-            scope: 'global',
           },
           {
             title: 'Retention Policies & Tags',
@@ -872,21 +786,9 @@ export const nativeMenuItems = [
             permissions: ['Exchange.TransportRule.*'],
           },
           {
-            title: 'Transport Templates',
-            path: '/email/transport/list-templates',
-            permissions: ['Exchange.TransportRule.*'],
-            scope: 'global',
-          },
-          {
             title: 'Connectors',
             path: '/email/transport/list-connectors',
             permissions: ['Exchange.Connector.*'],
-          },
-          {
-            title: 'Connector Templates',
-            path: '/email/transport/list-connector-templates',
-            permissions: ['Exchange.Connector.*'],
-            scope: 'global',
           },
         ],
       },
@@ -900,21 +802,9 @@ export const nativeMenuItems = [
             permissions: ['Exchange.SpamFilter.*'],
           },
           {
-            title: 'Spamfilter Templates',
-            path: '/email/spamfilter/list-templates',
-            permissions: ['Exchange.SpamFilter.*'],
-            scope: 'global',
-          },
-          {
             title: 'Connection Filter',
             path: '/email/spamfilter/list-connectionfilter',
             permissions: ['Exchange.ConnectionFilter.*'],
-          },
-          {
-            title: 'Connection Filter Templates',
-            path: '/email/spamfilter/list-connectionfilter-templates',
-            permissions: ['Exchange.ConnectionFilter.*'],
-            scope: 'global',
           },
           {
             title: 'Quarantine Policies',
@@ -1158,25 +1048,34 @@ export const nativeMenuItems = [
         scope: 'global',
       },
       {
-        title: 'Template Library',
-        path: '/tools/templatelib',
-        roles: ['editor', 'admin', 'superadmin'],
-        permissions: ['CIPP.Core.*'],
-        scope: 'global',
-      },
-      {
-        title: 'Catalog',
-        path: '/tools/community-repos',
-        roles: ['editor', 'admin', 'superadmin'],
-        permissions: ['CIPP.Core.*'],
-        scope: 'global',
-      },
-      {
-        title: 'Template Package Manager',
-        path: '/tools/template-packages',
-        roles: ['editor', 'admin', 'superadmin'],
-        permissions: ['Tenant.ConditionalAccess.*', 'Endpoint.MEM.*'],
-        scope: 'global',
+        title: 'Template Tools',
+        permissions: ['CIPP.Core.*', 'Tenant.ConditionalAccess.*', 'Endpoint.MEM.*'],
+        items: [
+          {
+            title: 'Template Library',
+            path: '/tools/template-tools/templatelib',
+            docsPath: 'tools/templatelib',
+            roles: ['editor', 'admin', 'superadmin'],
+            permissions: ['CIPP.Core.*'],
+            scope: 'global',
+          },
+          {
+            title: 'Catalog',
+            path: '/tools/template-tools/community-repos',
+            docsPath: 'tools/community-repos',
+            roles: ['editor', 'admin', 'superadmin'],
+            permissions: ['CIPP.Core.*'],
+            scope: 'global',
+          },
+          {
+            title: 'Template Package Manager',
+            path: '/tools/template-tools/template-packages',
+            docsPath: 'tools/template-packages',
+            roles: ['editor', 'admin', 'superadmin'],
+            permissions: ['Tenant.ConditionalAccess.*', 'Endpoint.MEM.*'],
+            scope: 'global',
+          },
+        ],
       },
       {
         title: 'Scheduler',

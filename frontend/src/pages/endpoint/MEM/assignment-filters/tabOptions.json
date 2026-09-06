@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Assignment Filters",
+    "path": "/endpoint/MEM/assignment-filters",
+    "icon": "FilterList"
+  },
+  {
+    "label": "Assignment Filter Templates",
+    "path": "/endpoint/MEM/assignment-filter-templates",
+    "icon": "Description"
+  }
+]

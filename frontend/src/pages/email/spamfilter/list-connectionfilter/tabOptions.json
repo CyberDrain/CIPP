@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Connection Filter",
+    "path": "/email/spamfilter/list-connectionfilter",
+    "icon": "FilterAlt"
+  },
+  {
+    "label": "Connection Filter Templates",
+    "path": "/email/spamfilter/list-connectionfilter-templates",
+    "icon": "Description"
+  }
+]

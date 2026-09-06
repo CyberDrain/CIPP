@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Connectors",
+    "path": "/email/transport/list-connectors",
+    "icon": "SettingsEthernet"
+  },
+  {
+    "label": "Connector Templates",
+    "path": "/email/transport/list-connector-templates",
+    "icon": "Description"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Sensitive Information Types",
+    "path": "/security/compliance/sit",
+    "icon": "Fingerprint"
+  },
+  {
+    "label": "Sensitive Info Type Templates",
+    "path": "/security/compliance/sit-templates",
+    "icon": "Description"
+  }
+]

@@ -2,6 +2,8 @@ import { Button } from "@mui/material";
 import { CippIcons } from "../../../../utils/icon-registry"
 import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
 import { Layout as DashboardLayout } from "../../../../layouts/index";
+import { TabbedLayout } from "../../../../layouts/TabbedLayout";
+import tabOptions from "./tabOptions.json";
 import Link from "next/link";
 import { Stack } from "@mui/system";
 import { useCippReportDB } from "../../../../components/CippComponents/CippReportDBControls";
@@ -104,6 +106,10 @@ const Page = () => {
   );
 };
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => (
+  <DashboardLayout>
+    <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
+  </DashboardLayout>
+);
 
 export default Page;

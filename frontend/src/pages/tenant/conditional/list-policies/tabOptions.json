@@ -1,0 +1,12 @@
+[
+  {
+    "label": "CA Policies",
+    "path": "/tenant/conditional/list-policies",
+    "icon": "Security"
+  },
+  {
+    "label": "CA Templates",
+    "path": "/tenant/conditional/list-template",
+    "icon": "Description"
+  }
+]

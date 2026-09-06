@@ -28,15 +28,15 @@ Unlike the list, **Edit Job** and **Clone Job** here navigate to the job page ra
 
 The top card summarises the task. Only the values that are set appear, so a task with no post-execution actions simply omits that row.
 
-| Field          | Description                                                |
-| -------------- | ---------------------------------------------------------- |
-| Task State     | Whether the task is Planned, Running, Completed or Failed. |
-| Command        | The command the task executes.                             |
-| Tenant         | The tenant the task runs against.                          |
-| Recurrence     | How often the task repeats.                                |
-| Scheduled Time | When the task is next due to run.                          |
-| Executed Time  | When the task last ran.                                    |
-| Post Execution | Where the results are delivered after the task runs.       |
+| Field          | Description                                                                   |
+| -------------- | ----------------------------------------------------------------------------- |
+| Task State     | Whether the task is Planned, Running, Completed, Failed, or Failed - Planned. |
+| Command        | The command the task executes.                                                |
+| Tenant         | The tenant the task runs against.                                             |
+| Recurrence     | How often the task repeats.                                                   |
+| Scheduled Time | When the task is next due to run.                                             |
+| Executed Time  | When the task last ran.                                                       |
+| Post Execution | Where the results are delivered after the task runs.                          |
 
 The refresh control on the card re-reads the task without reloading the page, which is useful while waiting on a run you have just triggered.
 

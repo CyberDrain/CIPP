@@ -101,7 +101,7 @@ Preset filters above the table narrow the list to tasks that are **Running**, **
 | Column         | Description                                                                                   |
 | -------------- | --------------------------------------------------------------------------------------------- |
 | Executed Time  | The relative time since the task last ran.                                                    |
-| Task State     | Whether the task is Planned, Running, Completed, or Failed.                                   |
+| Task State     | Whether the task is Planned, Running, Completed, Failed, or Failed - Planned.                 |
 | Tenant         | The tenant the task runs against.                                                             |
 | Name           | The task's name.                                                                              |
 | Scheduled Time | The relative time since the task ran, or until it is next due to run.                         |
@@ -112,6 +112,12 @@ Preset filters above the table narrow the list to tasks that are **Running**, **
 | Psa Ticket Id  | The HaloPSA ticket the task's results are added to, when one was given instead of raising a new ticket. |
 | Recurrence     | How often the task repeats.                                                                   |
 | Results        | The results of the most recent execution.                                                     |
+
+{% hint style="info" %}
+A recurring task that fails keeps its schedule rather than stopping. It is listed as **Failed - Planned**, which leaves the failure visible while the task stays due to run again at its next interval. A task set to run once is listed as **Failed** and does not run again.
+
+A task scoped to a tenant group that resolves to no tenants records **No tenants in scope for this task.** in its results, then moves on to its next scheduled run. Nothing is executed against any tenant, and this is not counted as a failure.
+{% endhint %}
 
 ## Table Actions
 

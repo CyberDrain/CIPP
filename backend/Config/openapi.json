@@ -15088,7 +15088,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "Queues one BEC investigation per user as a single orchestration with a queue entry for progress. Accepts either an array of { UserIds, tenantFilter } items (the Users table bulk action) or one object with UserIds[]. Selection=ForeignSuccessfulSignIns picks every user with a successful sign-in in the last 7 days from outside their usage location instead of an explicit list. Each run gets its own case id; results appear on the BEC Reports page and each user's Compromise Remediation tab.",
+        "description": "Queues one BEC investigation per user as a single orchestration with a queue entry for progress. Accepts either an array of { UserIds, tenantFilter } items (the Users table bulk action) or one object with UserIds[]. Each run gets its own case id; results appear on the BEC Reports page and each user's Compromise Remediation tab.",
         "responses": {
           "200": {
             "description": "Success",
@@ -15126,7 +15126,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "GET with GUID (or caseId) returns that run: while it is queued or running { Waiting = true, Progress } where Progress is the job status (queued until a worker picks it up, then running) and the per-step state the page renders; { Error, Progress } when it failed; otherwise the results payload with the server-side Score, per-collector Completeness and a Run block. A queued or running run whose progress has not moved for 20 minutes is marked failed by this poll (the worker restarted or the run was abandoned) and returned as { Error }. GET without a GUID returns the user's latest run as { GUID, Status } and starts nothing (GUID is null when the user has no runs). POST with tenantFilter, userid and userName queues a new run and returns its { GUID }; GET with overwrite=true does the same for older callers. Every run is the full investigation and is kept in the BecReports table; metadata only, never message content.",
+        "description": "GET with GUID (or caseId) returns that run: while it is queued or running { Waiting = true, Progress } where Progress is the job status (queued until a worker picks it up, then running) and the per-step state the page renders; { Error, Progress } when it failed; otherwise the results payload with the server-side Score, per-collector Completeness and a Run block. A queued or running run whose progress has not moved for 20 minutes is marked failed by this poll (the worker restarted or the run was abandoned) and returned as { Error }. GET without a GUID returns the user's latest run as { GUID, Status } and starts nothing (GUID is null when the user has no runs). POST with tenantFilter, userid and userName queues a new run and returns its { GUID }. Every run is the full investigation and is kept in the BecReports table; metadata only, never message content.",
         "requestBody": {
           "required": true,
           "content": {
@@ -15170,15 +15170,6 @@
             "required": false,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "overwrite",
-            "in": "query",
-            "description": "A POST body, or overwrite=true on GET, starts a new run",
-            "required": false,
-            "schema": {
-              "type": "boolean"
             }
           },
           {
@@ -40993,69 +40984,6 @@
         "x-cipp-role": "Identity.AuditLog.Read"
       }
     },
-    "/api/ListBECEvidence": {
-      "get": {
-        "summary": "Builds and downloads the evidence package of a Business Email Compromise run.",
-        "operationId": "ListBECEvidence",
-        "tags": [
-          "Identity > Administration > Users"
-        ],
-        "description": "With download=true, collates the run's stored results, containment history and case logbook into a fresh ZIP with a SHA-256 manifest and streams it as application/zip; nothing is stored - the export is recorded on the run (hash, time, size) so the download can be verified later. This path cannot include the PDF report, which only the browser can render; ExecBECEvidenceExport accepts one. Without download=true the run's recorded exports are returned instead.",
-        "parameters": [
-          {
-            "name": "caseId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "download",
-            "in": "query",
-            "description": "true builds and streams the ZIP; otherwise the run's recorded exports are returned",
-            "required": false,
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/tenantFilter"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - invalid or missing bearer token"
-          },
-          "403": {
-            "description": "Forbidden - caller lacks the required RBAC role"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "x-cipp-role": "Identity.User.Read"
-      }
-    },
     "/api/ListBECPhishingSpread": {
       "get": {
         "summary": "Lists who else received mail from a sender, from message-trace metadata.",
@@ -41171,9 +41099,6 @@
                     "type": "object",
                     "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
                     "properties": {
-                      "Actions": {
-                        "x-cipp-field-source": "backend"
-                      },
                       "DefaultSelected": {
                         "x-cipp-field-source": "backend"
                       },

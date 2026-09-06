@@ -302,14 +302,18 @@ describe('TableBlockCard', () => {
     expect(latest.current.rows).toEqual([{ c2: 'b' }])
   })
 
-  it('picks a collection to fill the rows from and offers its fields on each column', async () => {
+  it('fills the rows from a collection and offers its fields on each column', async () => {
     const latest = renderLive(createStructuredBlock('richtable', 'b1'), { dataShape })
+    expect(screen.getByLabelText('Add row')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('combobox', { name: 'Fill rows from data' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Reporting database' }))
+    expect(screen.queryByLabelText('Add row')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Collection' }))
     await userEvent.click(within(await screen.findByRole('listbox')).getByText('Devices (4)'))
     expect(latest.current.dataSource).toEqual({ type: 'Devices', field: null, valueField: null, aggregate: null, filter: null })
 
-    const fieldInput = screen.getAllByLabelText('Field (when filled from data)')[0]
+    const fieldInput = screen.getAllByLabelText('Field')[0]
     const list = document.getElementById(fieldInput.getAttribute('list'))
     expect(Array.from(list.options).map((o) => o.value)).toEqual(['deviceName', 'operatingSystem', 'complianceState'])
 
@@ -359,10 +363,15 @@ describe('ChartBlockCard', () => {
     expect(screen.getByLabelText('Axis maximum')).toBeInTheDocument()
   })
 
-  it('picks a collection and the field to count by from the recorded shape', async () => {
+  it('switches to the reporting database, then picks a collection and the field to count by', async () => {
     const latest = renderLive(createStructuredBlock('chart', 'b1'), { dataShape })
+    expect(screen.getByLabelText('Add data point')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('combobox', { name: 'Fill from data' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Reporting database' }))
+    expect(latest.current.chartSource).toEqual({ type: null, field: null, valueField: null, aggregate: null, filter: null })
+    expect(screen.queryByLabelText('Add data point')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Collection' }))
     await userEvent.click(within(await screen.findByRole('listbox')).getByText('Devices (4)'))
     expect(latest.current.chartSource).toEqual({ type: 'Devices', field: null, valueField: null, aggregate: null, filter: null })
 
@@ -386,14 +395,14 @@ describe('ChartBlockCard', () => {
     expect(screen.getByRole('combobox', { name: 'Rows sharing a label' })).toBeInTheDocument()
   })
 
-  it('hides the typed points while a data source is picked', () => {
+  it('shows the picker, not the typed points, while the source is the reporting database', () => {
     renderLive(
       { ...createStructuredBlock('chart', 'b1'), chartSource: { type: 'Devices', field: null, valueField: null, aggregate: null, filter: null } },
       { dataShape }
     )
 
     expect(screen.queryByLabelText('Add data point')).not.toBeInTheDocument()
-    expect(screen.getByText(/points come from the data source/i)).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Collection' })).toBeInTheDocument()
   })
 
   it('adds a condition the rows must meet', async () => {
@@ -410,17 +419,16 @@ describe('ChartBlockCard', () => {
     expect(latest.current.chartSource.filter).toEqual({ field: 'complianceState', op: '=', value: 'compliant' })
   })
 
-  it('clears the data source back to the typed points', async () => {
+  it('switching back to Manual drops the source and shows the typed points again', async () => {
     const latest = renderLive(
-      { ...createStructuredBlock('chart', 'b1'), chartSource: { type: 'Devices', field: 'operatingSystem', filter: null } },
+      { ...createStructuredBlock('chart', 'b1'), chartSource: { type: 'Devices', field: 'operatingSystem', valueField: null, aggregate: null, filter: null } },
       { dataShape }
     )
 
-    await userEvent.click(screen.getByRole('combobox', { name: 'Fill from data' }))
-    await userEvent.keyboard('{Control>}a{/Control}{Backspace}')
-    await userEvent.tab()
+    await userEvent.click(screen.getByRole('button', { name: 'Manual' }))
 
     expect(latest.current.chartSource).toBeNull()
+    expect(screen.getByLabelText('Add data point')).toBeInTheDocument()
   })
 
   it('adds a data point', async () => {

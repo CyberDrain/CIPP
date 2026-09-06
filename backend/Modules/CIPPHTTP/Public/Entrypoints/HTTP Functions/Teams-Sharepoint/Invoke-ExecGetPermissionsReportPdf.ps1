@@ -23,7 +23,8 @@ function Invoke-ExecGetPermissionsReportPdf {
         }
         $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
 
-        $Raw = (Invoke-ListSharePointPermissions -Request @{ Query = @{ tenantFilter = $TenantFilter }; Headers = $Request.Headers }).Body
+        # The same shaped data the Permissions page reads (from the reporting cache).
+        $Raw = Get-CIPPSharePointPermissionsReport -TenantFilter $TenantFilter
         $Report = Build-CippPermissionsReportTree -Data @{
             TenantName   = $TenantName
             summary      = $Raw.summary

@@ -29,7 +29,8 @@ function Invoke-ExecGetShadowAIReportPdf {
         if ($RawCfg -is [hashtable]) { $SectionConfig = $RawCfg }
         elseif ($RawCfg) { foreach ($p in $RawCfg.PSObject.Properties) { $SectionConfig[$p.Name] = [bool]$p.Value } }
 
-        $Raw = (Invoke-ListShadowAI -Request @{ Query = @{ tenantFilter = $TenantFilter }; Headers = $Request.Headers }).Body
+        # The same shaped data the Shadow AI page reads (from the reporting cache).
+        $Raw = Get-CIPPShadowAIReport -TenantFilter $TenantFilter
         $Report = Build-CippShadowAIReportTree -SectionConfig $SectionConfig -Data @{
             TenantName    = $TenantName
             summary       = $Raw.summary

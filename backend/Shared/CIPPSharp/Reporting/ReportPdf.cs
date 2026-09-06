@@ -36,7 +36,13 @@ namespace CIPP.Reporting
             variables["reportname"] = reportName ?? "Report";
             variables["reportdate"] = generatedOn ?? string.Empty;
 
-            var ctx = new ReportContext
+            var logo = ReportComponents.DecodeImage(branding.Logo);
+            // Branding's own cover photo wins; otherwise a report can name a bundled stock cover via
+            // the %coverfallbackimage% variable (e.g. "/reportImages/soc.jpg"), mirroring the client's
+            // resolveCoverImage fallback so a report without configured branding still gets a cover.
+            var coverImage = ReportComponents.DecodeImage(branding.CoverImage)
+                ?? (variables.TryGetValue("coverfallbackimage", out var coverFallback) ? ReportComponents.DecodeImage(coverFallback) : null);
+            ReportContext Context(byte[]? logoBytes) => new()
             {
                 Theme = theme,
                 Variables = variables,
@@ -45,15 +51,22 @@ namespace CIPP.Reporting
                 TenantName = tenantName ?? "Organization",
                 ReportName = reportName ?? "Report",
                 GeneratedOn = generatedOn ?? string.Empty,
-                Logo = ReportComponents.DecodeImage(branding.Logo),
-                // Branding's own cover photo wins; otherwise a report can name a bundled stock cover via
-                // the %coverfallbackimage% variable (e.g. "/reportImages/soc.jpg"), mirroring the client's
-                // resolveCoverImage fallback so a report without configured branding still gets a cover.
-                CoverImage = ReportComponents.DecodeImage(branding.CoverImage)
-                    ?? (variables.TryGetValue("coverfallbackimage", out var coverFallback) ? ReportComponents.DecodeImage(coverFallback) : null),
+                Logo = logoBytes,
+                CoverImage = coverImage,
             };
 
             var groups = BuildPageGroups(blocks);
+            // A branding logo the engine cannot embed (a PNG with a bad chunk CRC, an unsupported format)
+            // only surfaces when the document is serialised, not where the logo is placed, so it must not
+            // sink the report: render once more without it. Any other failure still propagates.
+            try { return Compose(Context(logo), groups, chrome).ToBytes(); }
+            catch when (logo is not null) { return Compose(Context(null), groups, chrome).ToBytes(); }
+        }
+
+        private static PdfDocument Compose(ReportContext ctx, List<PageGroup> groups, bool chrome)
+        {
+            var theme = ctx.Theme;
+            var variables = ctx.Variables;
             // Branding's configured footer wins; a report's own %footerlabel% is the fallback (client
             // PageFooter's `label`), so a fixed report still identifies itself when no branding footer is set.
             var footerText = theme.FooterEnabled
@@ -61,7 +74,7 @@ namespace CIPP.Reporting
                 : (variables.TryGetValue("footerlabel", out var fl) ? ReportTheme.ApplyFooter(fl, variables) : string.Empty);
             var watermark = theme.WatermarkEnabled ? ReportTheme.ApplyWatermark(theme.WatermarkText, variables) : string.Empty;
 
-            var doc = PdfDocument.Create(compose =>
+            return PdfDocument.Create(compose =>
             {
                 compose.Defaults(p =>
                 {
@@ -120,8 +133,6 @@ namespace CIPP.Reporting
                     });
                 }
             }, BuildOptions());
-
-            return doc.ToBytes();
         }
 
         // PDF options carrying the emoji fallback font: the standard fonts have no glyph for any emoji, so a
@@ -193,13 +204,34 @@ namespace CIPP.Reporting
             // is kept tight - the default paragraph line height otherwise balloons the gap between them -
             // then the client paddingBottom 8 before the brand rule, and marginBottom 14 after it.
             var titleColour = ctx.Theme.Palette["title"];
-            item.Paragraph(b => { b.FontSize(ReportStyles.PageTitle); ReportComponents.EmitInline(b, title ?? ctx.ReportName, titleColour, ReportStyles.PageTitle, bold: true); },
-                PdfAlign.Left, null, new PdfParagraphStyle { LineHeight = 1.0, SpacingAfter = 3 });
-            if (!string.IsNullOrEmpty(subtitle))
+            var subtitleColour = ctx.Theme.Palette["subtitle"];
+            Action<PdfParagraphBuilder> titleRun = b => { b.FontSize(ReportStyles.PageTitle); ReportComponents.EmitInline(b, title ?? ctx.ReportName, titleColour, ReportStyles.PageTitle, bold: true); };
+            var titleStyle = new PdfParagraphStyle { LineHeight = 1.0, SpacingAfter = 3 };
+            Action<PdfParagraphBuilder>? subtitleRun = string.IsNullOrEmpty(subtitle) ? null
+                : b => { b.FontSize(ReportStyles.PageSubtitle); ReportComponents.EmitInline(b, subtitle!, subtitleColour, ReportStyles.PageSubtitle); };
+            var subtitleStyle = new PdfParagraphStyle { LineHeight = 1.05, SpacingAfter = 3 };
+
+            // Client pageHeader: the title block takes the width and the branding logo sits at the right
+            // edge, 30pt tall and top-aligned with the title. Without a logo the paragraphs flow directly.
+            var logoType = ctx.Logo is { Length: > 0 } ? ReportComponents.ImageContentType(ctx.Logo) : null;
+            if (logoType is null)
             {
-                var subtitleColour = ctx.Theme.Palette["subtitle"];
-                item.Paragraph(b => { b.FontSize(ReportStyles.PageSubtitle); ReportComponents.EmitInline(b, subtitle, subtitleColour, ReportStyles.PageSubtitle); },
-                    PdfAlign.Left, null, new PdfParagraphStyle { LineHeight = 1.05, SpacingAfter = 3 });
+                item.Paragraph(titleRun, PdfAlign.Left, null, titleStyle);
+                if (subtitleRun is not null) item.Paragraph(subtitleRun, PdfAlign.Left, null, subtitleStyle);
+            }
+            else
+            {
+                var box = ReportComponents.LogoBox(ctx.Logo!, 30, 120);
+                item.Row(r =>
+                {
+                    r.Gap(12);
+                    r.Column(75, c =>
+                    {
+                        c.Paragraph(titleRun, PdfAlign.Left, null, titleStyle);
+                        if (subtitleRun is not null) c.Paragraph(subtitleRun, PdfAlign.Left, null, subtitleStyle);
+                    });
+                    r.Column(25, c => c.Image(ctx.Logo!, box.w, box.h, PdfAlign.Right));
+                });
             }
             // Full-width brand rule under the header (HR auto-fits the content width; a fixed-width
             // rectangle risks exceeding it).

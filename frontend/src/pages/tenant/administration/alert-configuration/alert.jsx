@@ -1127,7 +1127,7 @@ const AlertWizard = () => {
                                   formControl={formControl}
                                   multiple={true}
                                   creatable={false}
-                                  helperText="Leave empty for the default set: reset password, block sign-in, revoke sessions, remove MFA methods, disable inbox rules, disable OneDrive sharing. Critical actions run without a typed confirmation when triggered by an alert."
+                                  helperText="Leave empty for the default set: reset password, block sign-in, revoke sessions, disable inbox rules (the four this action has always run). Critical actions run without a typed confirmation when triggered by an alert."
                                   api={{
                                     url: '/api/ListBECRemediationActions',
                                     queryKey: 'ListBECRemediationActions',

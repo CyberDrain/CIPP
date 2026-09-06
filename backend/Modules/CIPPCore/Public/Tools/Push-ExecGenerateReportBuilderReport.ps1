@@ -183,6 +183,11 @@ function Push-ExecGenerateReportBuilderReport {
                 $Block
             })
 
+        # Data tokens (&Users&, &Devices.complianceState=compliant&, a chart or table's data source)
+        # resolve against the reporting database here, on the server, so a scheduled run and a
+        # preview read the same data.
+        $EnrichedBlocks = @(Resolve-CippReportDataToken -Blocks $EnrichedBlocks -TenantFilter $TenantFilter)
+
         # -- Render the PDF server-side via the shared CIPPSharp component kit --
         # A render failure must not lose the report: the enriched blocks are still stored so the report
         # exists and can be re-rendered, and the failure is logged rather than thrown.

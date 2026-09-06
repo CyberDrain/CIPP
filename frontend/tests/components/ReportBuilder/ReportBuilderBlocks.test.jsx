@@ -281,6 +281,16 @@ describe('TableBlockCard', () => {
     expect(latest.current.rows).toEqual([{ c2: 'b' }])
   })
 
+  it('takes a data source and a field per column to fill the rows from', async () => {
+    const latest = renderLive(createStructuredBlock('richtable', 'b1'))
+
+    await userEvent.type(screen.getByLabelText('Fill rows from data'), '&Mailboxes&')
+    await userEvent.type(screen.getAllByLabelText('Field (when filled from data)')[0], 'UPN')
+
+    expect(latest.current.dataSource).toBe('&Mailboxes&')
+    expect(latest.current.columns[0]).toMatchObject({ key: 'c1', field: 'UPN' })
+  })
+
   it('labels the row fields after the column headers', () => {
     renderLive(createStructuredBlock('richtable', 'b1'))
 
@@ -321,6 +331,14 @@ describe('ChartBlockCard', () => {
 
     expect(screen.queryByLabelText('Centre label')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Axis maximum')).toBeInTheDocument()
+  })
+
+  it('takes a data source to fill the chart from when the report renders', async () => {
+    const latest = renderLive(createStructuredBlock('chart', 'b1'))
+
+    await userEvent.type(screen.getByLabelText('Fill from data'), '&Devices.operatingSystem&')
+
+    expect(latest.current.chartSource).toBe('&Devices.operatingSystem&')
   })
 
   it('adds a data point', async () => {

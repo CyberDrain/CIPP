@@ -1289,6 +1289,9 @@ namespace CIPP.Reporting
         /// section heading, then its body composed from the component kit. Hero/pagebreak are handled by
         /// the document scaffold, not here.
         /// </summary>
+        private static double? ParseNumber(string? text)
+            => double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : null;
+
         public static void RenderBlock(ReportContext ctx, PdfItemCompose item, ReportNode block, bool firstOnPage = false)
         {
             var content = block.Str("content") ?? string.Empty;
@@ -1316,8 +1319,11 @@ namespace CIPP.Reporting
                     Note(ctx, item, content);
                     return;
                 case "chart":
+                    // The fixed reports name these caption/max/centreLabel; the report builder saves them
+                    // with a chart prefix. Both reach the page.
                     Chart(ctx, item, block.Str("chartKind"), block.ListOf("chartData") ?? new List<object?>(),
-                        block.Str("title"), block.Str("caption"), block.Num("max"), block.Str("centreLabel"));
+                        block.Str("title"), block.Str("caption") ?? block.Str("chartCaption"),
+                        block.Num("max") ?? ParseNumber(block.Str("chartMax")), block.Str("centreLabel") ?? block.Str("chartCentreLabel"));
                     return;
             }
 

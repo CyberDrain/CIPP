@@ -96,6 +96,9 @@ export const CippBecObjectiveGroups = ({
           actions={actions}
           offCanvas={{ extendedInfoFields }}
           offCanvasOnRowClick
+          // On a phone every row is a card and a case page holds many of these lists, so each
+          // starts at ten cards and grows on demand instead of the desktop page size.
+          mobileCard={{ pageSize: 10 }}
         />
       </Box>
     )

@@ -29,7 +29,7 @@ The filters at the top narrow the list to High threat levels or completed runs.
 | Action                          | Description                                                                                                                                                                                                                |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | View run                        | Opens the user's Compromise Remediation page showing this run exactly as it was collected. From there the PDF report, the JSON and the evidence package can be produced, and containment run, for that case.               |
-| Download evidence package (ZIP) | Renders both report PDFs in the browser, builds a fresh evidence package from the stored run around them and downloads it. Every export is hashed and recorded on the run; compare a copy's SHA-256 with its recorded export before relying on it. |
+| Download evidence package (ZIP) | Renders both report PDFs in the browser, builds a fresh evidence package from the stored run around them and downloads it. |
 | Delete run                      | Removes the run, its results and its evidence package permanently. The logbook entries stamped with the case id are not removed.                                                                                           |
 
 {% hint style="info" %}

@@ -111,7 +111,7 @@ If CIPP cannot read the tenant's Intune devices, the card says so in red and sho
 | Contain user        | Opens the containment drawer described under [#containment](bec.md#containment "mention"): pick the actions and their targets, type the UPN for critical ones, run.                                                                                                                                  |
 | Generate PDF Report | Opens a preview of a formatted report covering the findings, written to be readable by managers and end users as well as technicians, and suitable for attaching to a compliance record. **Download PDF** saves it. What the report contains is covered under [#pdf-report](bec.md#pdf-report "mention") below. |
 | Download JSON       | Saves the complete analysis as a JSON file, including data the cards do not display.                                                                                                                                                                                                                              |
-| Export evidence     | Builds the evidence package for the run on screen and downloads it: a ZIP holding the PDF report, the results JSON, a CSV per finding set, the containment history, every logbook entry for the case and a manifest with the SHA-256 of each file. See [#evidence-export](bec.md#evidence-export "mention").                                                          |
+| Export evidence     | Builds the evidence package for the run on screen and downloads it: a ZIP holding both PDF reports, the results JSON, a CSV per finding set, the containment history and every logbook entry for the case. See [#evidence-export](bec.md#evidence-export "mention").                                                          |
 
 {% hint style="warning" %}
 Removing every MFA method leaves the account with no second factor registered. Once sign-in is unblocked and the password reset, the user has to register a method again, so plan how they will do that before running the containment on someone who is not sitting next to you.
@@ -167,7 +167,7 @@ The JSON export carries three data sets that no card displays: the last fifty si
 
 ## Evidence export
 
-**Export evidence (ZIP)** on the Report card packages everything CIPP holds about the case so it can be handed to an insurer, a client, a forensic partner or a compliance file, and be verified later. The package is built on the server from the stored run and contains:
+**Export evidence (ZIP)** on the Report card packages everything CIPP holds about the case so it can be handed to an insurer, a client, a forensic partner or a compliance file. The package is built on the server from the stored run and contains:
 
 | File                   | Contents                                                                                                                                                  |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -178,9 +178,8 @@ The JSON export carries three data sets that no card displays: the last fifty si
 | `score.json`           | The threat score with every signal that contributed to it.                                                                                                |
 | `containment.json`     | Every containment run recorded on the case, with passwords redacted.                                                                                      |
 | `logbook.json`         | Every CIPP logbook entry stamped with the case id, from the moment the run was queued to the export itself.                                               |
-| `manifest.sha256.json` | The case, tenant, user, who exported it and when, and the SHA-256 of every file above.                                                                    |
 
-The package is built fresh for every export and streamed to your browser - nothing is stored. Each export's SHA-256, time and size are recorded on the run (the last twenty) and shown next to the button and on the [BEC Reports](../../../reports/bec-reports.md) page, so a copy received later can be checked against the export it came from. Downloads from the reports page produce the same package, both PDFs included. Like the run itself, the package holds metadata only.
+The package is built fresh for every export and streamed to your browser - nothing is stored on the server. Downloads from the [BEC Reports](../../../reports/bec-reports.md) page produce the same package, both PDFs included. Like the run itself, the package holds metadata only.
 
 ## PDF Report
 

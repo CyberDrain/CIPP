@@ -1,16 +1,14 @@
 function New-CIPPBecEvidencePackage {
     <#
     .SYNOPSIS
-        Builds and hashes the evidence package (ZIP) for a BEC run.
+        Builds the evidence package (ZIP) for a BEC run.
     .DESCRIPTION
         Collates everything CIPP holds about a case into one ZIP: the results payload as JSON, one
-        CSV per finding set, the containment history, every logbook line stamped with the case id,
-        the client-rendered PDF report when supplied, and a manifest listing every file with its
-        SHA-256. Nothing is stored: the ZIP is returned to the caller to stream or encode, and only
-        the export record - the ZIP's SHA-256, time and size - is appended to the run (the last
-        twenty exports are kept) so a copy delivered later can still be verified. Everything inside
-        is metadata the run already collected; passwords were redacted before they were stored and
-        are scrubbed from the logbook copy again here.
+        CSV per finding set, the score, the containment history, every logbook line stamped with the
+        case id, and the browser-rendered PDF reports when supplied. Nothing is stored: the ZIP is
+        returned to the caller to hand to the browser. Everything inside is metadata the run already
+        collected; passwords were redacted before they were stored and are scrubbed from the logbook
+        copy again here.
     .PARAMETER TenantFilter
         Tenant default domain name.
     .PARAMETER CaseId
@@ -20,13 +18,13 @@ function New-CIPPBecEvidencePackage {
     .PARAMETER PdfSummaryBase64
         Optional base64-encoded C-suite summary PDF rendered by the frontend.
     .PARAMETER Headers
-        CIPP request headers (for the GeneratedBy field and logging).
+        CIPP request headers, for logging.
     .PARAMETER APIName
         Logging API name.
     .FUNCTIONALITY
         Internal
     #>
-    [CmdletBinding(SupportsShouldProcess = $true)]
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$TenantFilter,
         [Parameter(Mandatory = $true)][string]$CaseId,
@@ -40,10 +38,8 @@ function New-CIPPBecEvidencePackage {
     if (-not $Run) { throw "BEC run $CaseId was not found for $TenantFilter" }
     if ($Run.Status -ne 'Completed') { throw "BEC run $CaseId is $($Run.Status); only completed runs can be exported" }
     $Results = $Run.Results
-    $GeneratedBy = try { ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Headers.'x-ms-client-principal')) | ConvertFrom-Json).userDetails } catch { 'CIPP' }
     $GeneratedUtc = (Get-Date).ToUniversalTime()
     $Utf8 = [System.Text.UTF8Encoding]::new($false)
-    $Sha = { param([byte[]]$Bytes) [System.Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($Bytes)).ToLowerInvariant() }
 
     # Flatten a row for CSV: arrays join, nested objects become compact JSON.
     $Flatten = {
@@ -101,7 +97,7 @@ function New-CIPPBecEvidencePackage {
     }
     $Files['logbook.json'] = $Utf8.GetBytes((ConvertTo-Json -InputObject @($LogRows) -Depth 10))
 
-    # The frontend renders the report client-side (react-pdf), so it hands the PDF(s) in. Validate and
+    # The frontend renders the reports client-side (react-pdf), so it hands the PDFs in. Validate and
     # add each supplied one - the full report and the C-suite summary.
     $AddPdf = {
         param([string]$Base64, [string]$Name)
@@ -113,24 +109,6 @@ function New-CIPPBecEvidencePackage {
     }
     & $AddPdf $PdfBase64 'report-full.pdf'
     & $AddPdf $PdfSummaryBase64 'report-summary.pdf'
-
-    $Manifest = [ordered]@{
-        Schema            = 'cipp-bec-evidence/v1'
-        CaseId            = $CaseId
-        Tenant            = $TenantFilter
-        UserPrincipalName = $Run.UserPrincipalName
-        UserId            = $Run.UserId
-        Scope             = $Run.Scope
-        ExtractedAt       = $Run.ExtractedAt
-        Score             = $Run.Score
-        Level             = $Run.Level
-        ContentPolicy     = 'metadata-only'
-        GeneratedUtc      = $GeneratedUtc.ToString('o')
-        GeneratedBy       = [string]$GeneratedBy
-        HashAlgorithm     = 'SHA256'
-        Files             = @(foreach ($Name in $Files.Keys) { [pscustomobject]@{ Path = $Name; Bytes = $Files[$Name].Length; Sha256 = (& $Sha $Files[$Name]) } })
-    }
-    $Files['manifest.sha256.json'] = $Utf8.GetBytes((ConvertTo-Json -InputObject $Manifest -Depth 6))
 
     $Stream = [System.IO.MemoryStream]::new()
     $Archive = [System.IO.Compression.ZipArchive]::new($Stream, [System.IO.Compression.ZipArchiveMode]::Create, $true)
@@ -145,35 +123,13 @@ function New-CIPPBecEvidencePackage {
     }
     $ZipBytes = $Stream.ToArray()
     $Stream.Dispose()
-    $ZipSha256 = & $Sha $ZipBytes
 
-    if ($PSCmdlet.ShouldProcess("$TenantFilter/$CaseId", 'Record the evidence export')) {
-        # Nothing is stored; only the export record is kept so a copy can be verified later.
-        $ExportRecord = [pscustomobject]@{
-            At          = $GeneratedUtc.ToString('o')
-            By          = [string]$GeneratedBy
-            Sha256      = $ZipSha256
-            Bytes       = [long]$ZipBytes.Length
-            FileCount   = $Files.Count
-            IncludesPdf = [bool]($Files.Contains('report-full.pdf') -or $Files.Contains('report-summary.pdf'))
-        }
-        $Exports = @(@($Run.EvidenceExports) | Where-Object { $_ }) + @($ExportRecord)
-        if ($Exports.Count -gt 20) { $Exports = @($Exports | Select-Object -Last 20) }
-        $null = Set-CIPPBecReport -TenantFilter $TenantFilter -CaseId $CaseId -Properties @{
-            EvidenceExports   = @($Exports)
-            EvidenceSha256    = $ZipSha256
-            EvidenceCreatedAt = $GeneratedUtc.ToString('o')
-            EvidenceBytes     = [long]$ZipBytes.Length
-        }
-        Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Exported evidence package for BEC case $CaseId ($($Files.Count) files, $([math]::Round($ZipBytes.Length / 1KB)) KB, SHA-256 $ZipSha256); the package was streamed to the requester and not stored" -Sev 'Info'
-    }
+    Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Exported the evidence package for BEC case $CaseId ($($Files.Count) files, $([math]::Round($ZipBytes.Length / 1KB)) KB); the package was handed to the requester and not stored" -Sev 'Info'
 
     return [pscustomobject]@{
         CaseId    = $CaseId
-        ZipSha256 = $ZipSha256
         Bytes     = $ZipBytes.Length
         FileCount = $Files.Count
-        Manifest  = [pscustomobject]$Manifest
         ZipBytes  = $ZipBytes
     }
 }

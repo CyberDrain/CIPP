@@ -45,7 +45,7 @@ function Get-CIPPBecReport {
     }
     $Rows = @($Rows | Where-Object { $_ } | Sort-Object -Property RowKey -Descending)
     foreach ($Row in $Rows) {
-        foreach ($JsonProp in @('Containment', 'EvidenceExports')) {
+        foreach ($JsonProp in @('Containment')) {
             if ($Row.PSObject.Properties[$JsonProp] -and $Row.$JsonProp -is [string] -and $Row.$JsonProp) {
                 try { $Row.$JsonProp = $Row.$JsonProp | ConvertFrom-Json -ErrorAction Stop } catch { Write-Verbose "BEC run $($Row.RowKey): $JsonProp is not valid JSON, leaving it as text" }
             }

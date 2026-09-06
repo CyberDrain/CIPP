@@ -3,7 +3,6 @@ import { CippIcons } from '../../utils/icon-registry'
 import {
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -29,6 +28,7 @@ import {
   severityColour,
 } from './index'
 import { useSettings } from '../../hooks/use-settings'
+import { ServerPdfPane, useServerPdf } from './useServerPdf'
 
 const nz = (value) => Number(value ?? 0)
 const plural = (count, singular, pluralForm) =>
@@ -420,48 +420,15 @@ export const PermissionsReportDocument = ({
 // PermissionsReportDocument above is retained for the branding-settings live preview.
 export const PermissionsReportButton = ({ permissionsData, tenantName }) => {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [pdfUrl, setPdfUrl] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(false)
   const tenantFilter = useSettings().currentTenant
   const hasData = !!permissionsData?.summary
-
-  const handleOpen = () => {
-    setDialogOpen(true)
-    setLoading(true)
-    setError(false)
-    setPdfUrl('')
-    fetch(`/api/ExecGetPermissionsReportPdf?tenantFilter=${encodeURIComponent(tenantFilter)}`, {
-      credentials: 'same-origin',
-    })
-      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error('Failed to render report'))))
-      .then((blob) => {
-        setPdfUrl(URL.createObjectURL(blob))
-        setLoading(false)
-      })
-      .catch(() => {
-        setError(true)
-        setLoading(false)
-      })
-  }
-
-  const handleClose = () => {
-    setDialogOpen(false)
-    if (pdfUrl) {
-      URL.revokeObjectURL(pdfUrl)
-      setPdfUrl('')
-    }
-  }
-
-  const handleDownload = () => {
-    if (!pdfUrl) return
-    const link = document.createElement('a')
-    link.href = pdfUrl
-    link.download = `Permissions_Report_${(tenantName || 'report').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+  const pdf = useServerPdf({
+    url: `/api/ExecGetPermissionsReportPdf?tenantFilter=${encodeURIComponent(tenantFilter)}`,
+    enabled: dialogOpen,
+  })
+  const handleOpen = () => setDialogOpen(true)
+  const handleClose = () => setDialogOpen(false)
+  const fileName = `Permissions_Report_${(tenantName || 'report').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
 
   return (
     <>
@@ -504,34 +471,19 @@ export const PermissionsReportButton = ({ permissionsData, tenantName }) => {
           </Box>
         </DialogTitle>
         <DialogContent dividers sx={{ p: 0 }}>
-          {loading && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 }}>
-              <CircularProgress size={24} />
-              <Typography variant="body2">Generating report…</Typography>
-            </Box>
-          )}
-          {error && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', p: 4 }}>
-              <Typography variant="body2" color="error">
-                The report could not be generated. Ensure the permissions data has been synced for this tenant.
-              </Typography>
-            </Box>
-          )}
-          {pdfUrl && !loading && !error && (
-            <iframe
-              src={pdfUrl}
-              title={`Permissions Report - ${tenantName}`}
-              style={{ width: '100%', height: '100%', border: 'none' }}
-            />
-          )}
+          <ServerPdfPane
+            {...pdf}
+            title={`Permissions Report - ${tenantName}`}
+            errorText="The report could not be generated. Ensure the permissions data has been synced for this tenant."
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Close</Button>
           <Button
             variant="contained"
             startIcon={<CippIcons.Download />}
-            onClick={handleDownload}
-            disabled={!pdfUrl || loading}
+            onClick={() => pdf.download(fileName)}
+            disabled={!pdf.pdfUrl}
           >
             Download PDF
           </Button>

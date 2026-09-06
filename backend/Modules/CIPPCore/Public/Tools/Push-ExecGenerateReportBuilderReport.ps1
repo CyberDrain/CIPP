@@ -24,9 +24,8 @@ function Push-ExecGenerateReportBuilderReport {
             throw 'TenantFilter is required'
         }
 
-        # Page setup and branding for this report — page size, orientation, cover, footer,
-        # watermark and which branding preset to render against. Carried through untouched: the
-        # PDF is rendered in the browser, so this side only has to store what it was given.
+        # Page setup and branding for this report: page size, orientation, cover, footer,
+        # watermark and which branding preset to render against.
         $ParsedSettings = $null
         if ($Settings) {
             if ($Settings -is [string]) {
@@ -187,31 +186,17 @@ function Push-ExecGenerateReportBuilderReport {
         # -- Render the PDF server-side via the shared CIPPSharp component kit --
         # A render failure must not lose the report: the enriched blocks are still stored so the report
         # exists and can be re-rendered, and the failure is logged rather than thrown.
-        $PdfBase64 = ''
+        $PdfBytes = $null
         try {
-            # Branding: the template's chosen preset wins, else the tenant/global branding settings.
-            $BrandingForPdf = $null
-            if ($ParsedSettings -and $ParsedSettings.brandingPresetId) {
-                try { $BrandingForPdf = Get-CIPPBrandingPreset -PresetId $ParsedSettings.brandingPresetId } catch { $BrandingForPdf = $null }
-            }
-            if (-not $BrandingForPdf) {
-                try { $BrandingForPdf = Get-CIPPBrandingSettings } catch { $BrandingForPdf = @{} }
-            }
-
-            # Client display name for the cover; fall back to the tenant filter if it can't be resolved.
-            $TenantDisplayName = $TenantFilter
-            try {
-                $TenantInfo = Get-Tenants -TenantFilter $TenantFilter
-                if ($TenantInfo.displayName) { $TenantDisplayName = [string]$TenantInfo.displayName }
-            } catch { $TenantDisplayName = $TenantFilter }
-
+            # Client display name for the cover. The template's chosen branding preset wins, else the
+            # tenant/global branding settings (resolved by ConvertTo-CippReportPdf).
+            $TenantDisplayName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
             $PageSizePref = if ($ParsedSettings -and $ParsedSettings.size) { [string]$ParsedSettings.size } else { 'A4' }
             $IsLandscape = ($ParsedSettings -and "$($ParsedSettings.orientation)" -eq 'landscape')
 
-            $PdfBytes = ConvertTo-CippReportPdf -Blocks $EnrichedBlocks -Branding $BrandingForPdf `
-                -TenantName $TenantDisplayName -ReportName ($TemplateName ?? 'Report') `
-                -GeneratedOn ((Get-Date).ToString('MMMM d, yyyy')) -PageSize $PageSizePref -Landscape:$IsLandscape
-            if ($PdfBytes) { $PdfBase64 = [Convert]::ToBase64String($PdfBytes) }
+            $PdfBytes = ConvertTo-CippReportPdf -Blocks $EnrichedBlocks -BrandingPresetId ([string]$ParsedSettings.brandingPresetId) `
+                -TenantName $TenantDisplayName -TenantFilter $TenantFilter -ReportName ($TemplateName ?? 'Report') `
+                -PageSize $PageSizePref -Landscape:$IsLandscape
         } catch {
             $PdfError = Get-CippException -Exception $_
             Write-LogMessage -API 'ReportBuilder' -tenant $TenantFilter -message "PDF render failed, storing report without a PDF: $($PdfError.NormalizedError)" -Sev 'Warning' -LogData $PdfError
@@ -219,8 +204,10 @@ function Push-ExecGenerateReportBuilderReport {
 
         # Preview: hand the freshly rendered bytes straight back without persisting a report row.
         if ($PreviewOnly) {
-            return @{ PdfBase64 = $PdfBase64 }
+            return @{ PdfBytes = $PdfBytes }
         }
+        $PdfBase64 = if ($PdfBytes) { [Convert]::ToBase64String($PdfBytes) } else { '' }
+        $PdfFileName = ("$($TemplateName ?? 'Report')_$TenantFilter" -replace '[^a-zA-Z0-9_\-]', '_') + '.pdf'
 
         # Store the generated report
         $ReportGUID = (New-Guid).GUID
@@ -234,13 +221,21 @@ function Push-ExecGenerateReportBuilderReport {
             GeneratedAt    = [string](Get-Date).ToString('o')
             Status         = 'Completed'
             Settings       = if ($ParsedSettings) { [string](ConvertTo-Json -InputObject $ParsedSettings -Depth 10 -Compress) } else { '' }
-            # The finished PDF as base64. Add-CIPPAzDataTableEntity auto-splits the oversized property
-            # across part rows, so a multi-MB report survives the Azure Table 64KB/property limit.
-            Pdf            = [string]$PdfBase64
-            PdfContentType = 'application/pdf'
         }
-
         Add-CIPPAzDataTableEntity @ReportTable -Entity $ReportEntity -Force
+
+        # The finished PDF goes in its own table, keyed by the report GUID, so listing reports never pulls
+        # the base64. Add-CIPPAzDataTableEntity auto-splits the oversized property across part rows, so a
+        # multi-MB report survives the Azure Table 64KB/property limit.
+        if ($PdfBase64) {
+            $PdfTable = Get-CippTable -tablename 'ReportBuilderPdfs'
+            Add-CIPPAzDataTableEntity @PdfTable -Force -Entity @{
+                PartitionKey = $TenantFilter
+                RowKey       = [string]$ReportGUID
+                FileName     = $PdfFileName
+                Pdf          = $PdfBase64
+            }
+        }
         Write-LogMessage -API 'ReportBuilder' -tenant $TenantFilter -message "Generated report builder report '$TemplateName' with GUID $ReportGUID" -Sev 'Info'
 
         # Build result message with direct link
@@ -260,7 +255,6 @@ function Push-ExecGenerateReportBuilderReport {
         $TaskAttachments = [System.Collections.Generic.List[object]]::new()
 
         if ($PdfBase64) {
-            $PdfFileName = ("$($TemplateName ?? 'Report')_$TenantFilter" -replace '[^a-zA-Z0-9_\-]', '_') + '.pdf'
             $TaskAttachments.Add(@{
                     Name         = $PdfFileName
                     ContentType  = 'application/pdf'

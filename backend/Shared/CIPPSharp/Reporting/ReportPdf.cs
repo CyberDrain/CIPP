@@ -27,14 +27,9 @@ namespace CIPP.Reporting
             bool landscape = false,
             bool chrome = true)
         {
-            ReportMarkdown.RenderEmojiGlyphs = EmojiFontBytes.Value is { Length: > 0 };
-            ReportMarkdown.EmojiCoverage = ReportMarkdown.RenderEmojiGlyphs ? EmojiCoverageSet.Value : new HashSet<int>();
-            // Colour emoji render as bundled Twemoji inline images when the asset set is present; the
-            // monochrome font remains the fallback for anything not bundled (and for drawing contexts).
-            ReportMarkdown.RenderEmojiImages = TwemojiAssets.Enabled;
             var blocks = ReportNode.ParseTree(blocksJson);
-            var theme = ReportTheme.Create(BrandingInput.FromJson(brandingJson));
             var branding = BrandingInput.FromJson(brandingJson);
+            var theme = ReportTheme.Create(branding);
 
             var variables = ParseVariables(variablesJson);
             variables["tenantname"] = tenantName ?? "Organization";
@@ -137,8 +132,8 @@ namespace CIPP.Reporting
         private static PdfOptions BuildOptions()
         {
             var options = new PdfOptions();
-            var font = EmojiFontBytes.Value;
-            var coverage = EmojiCoverageSet.Value;
+            var font = ReportMarkdown.EmojiFontBytes.Value;
+            var coverage = ReportMarkdown.EmojiCoverage;
             if (font is { Length: > 0 } && coverage.Count > 0)
             {
                 // OfficeIMO embeds only the glyphs a given report actually uses, compressed, so a report
@@ -188,37 +183,6 @@ namespace CIPP.Reporting
             }
             return ranges.ConvertAll(r => new OfficeIMO.Drawing.OfficeFontUnicodeRange(r.start, r.end)).ToArray();
         }
-
-        // Exactly the emoji code points the bundled font can draw (above U+00FF, minus the CP1252 specials
-        // the standard fonts render): the single source of truth for what Sanitize keeps and which ranges
-        // OfficeIMO routes to the fallback. Read once from the font's own cmap so the two never drift.
-        private static readonly Lazy<HashSet<int>> EmojiCoverageSet = new(() =>
-        {
-            var set = new HashSet<int>();
-            var font = EmojiFontBytes.Value;
-            if (font is not { Length: > 0 }) return set;
-            try
-            {
-                foreach (var cp in FontCmap.ReadCodepoints(font))
-                    if (cp > 0xFF && !ReportMarkdown.IsWinAnsiSpecial(cp)) set.Add(cp);
-            }
-            catch { set.Clear(); }
-            return set;
-        });
-
-        // The fallback font ships next to the assembly as emoji-fallback.ttf (copied by the build, like the
-        // OfficeIMO DLLs). Loaded once; absence just means the emoji fall back to nothing rather than throwing.
-        private static readonly Lazy<byte[]?> EmojiFontBytes = new(() =>
-        {
-            try
-            {
-                var dir = System.IO.Path.GetDirectoryName(typeof(ReportPdf).Assembly.Location);
-                if (string.IsNullOrEmpty(dir)) return null;
-                var path = System.IO.Path.Combine(dir, "emoji-fallback.ttf");
-                return System.IO.File.Exists(path) ? System.IO.File.ReadAllBytes(path) : null;
-            }
-            catch { return null; }
-        });
 
         // The styled page header (big title + subtitle + brand rule) that opens each content group,
         // matching the client's ContentPage header. Rendered as content rather than a running header so

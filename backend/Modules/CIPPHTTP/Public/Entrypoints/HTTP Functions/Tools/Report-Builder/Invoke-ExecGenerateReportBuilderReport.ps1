@@ -23,6 +23,11 @@ function Invoke-ExecGenerateReportBuilderReport {
             $ExistingEntity = Get-CIPPAzDataTableEntity @ReportTable -Filter "RowKey eq '$($Body.ReportGUID)'"
             if ($ExistingEntity) {
                 Remove-CIPPAzDataTableEntity @ReportTable -Entity $ExistingEntity
+                # The rendered PDF sits in its own table; a large one is split across part rows, so fetch
+                # the raw head + part rows (keys only, no split markers) and hand them all to the remover.
+                $PdfTable = Get-CippTable -tablename 'ReportBuilderPdfs'
+                $PdfRows = @(Get-CIPPAzDataTableEntity @PdfTable -Filter "RowKey eq '$($Body.ReportGUID)' or OriginalEntityId eq '$($Body.ReportGUID)'" -Property PartitionKey, RowKey)
+                if ($PdfRows.Count -gt 0) { Remove-CIPPAzDataTableEntity @PdfTable -Entity $PdfRows }
                 Write-LogMessage -headers $Headers -API $APIName -message "Deleted generated report '$($Body.ReportGUID)'" -Sev 'Info'
                 $Result = @{ Results = 'Successfully deleted generated report' }
             } else {
@@ -70,8 +75,8 @@ function Invoke-ExecGenerateReportBuilderReport {
         $StatusCode = [HttpStatusCode]::BadRequest
     }
 
-    Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
+    return ([HttpResponseContext]@{
             StatusCode = $StatusCode
-            Body       = ConvertTo-Json -InputObject $Result -Depth 20
+            Body       = $Result
         })
 }

@@ -27,9 +27,9 @@ function New-CippReportHeading {
 }
 
 function New-CippReportParagraph {
-    # Body copy. -Html passes raw HTML (bold/links); -Markdown passes markdown; -Text wraps plain text.
+    # Body copy. -Html passes raw HTML (bold/links); -Text wraps plain text.
     # -Title adds a section heading above the paragraph. -Indent steps plain -Text in under a heading.
-    param([string]$Text, [string]$Html, [string]$Markdown, [string]$Title, [switch]$Indent)
+    param([string]$Text, [string]$Html, [string]$Title, [switch]$Indent)
     if ($Indent) {
         $n = [ordered]@{ type = 'paragraphindent'; content = [string]$Text }
         if ($Title) { $n.title = $Title }
@@ -37,8 +37,6 @@ function New-CippReportParagraph {
     }
     if ($Html) {
         $n = [ordered]@{ type = 'blank'; content = $Html }
-    } elseif ($Markdown) {
-        $n = [ordered]@{ type = 'database'; format = 'text'; content = $Markdown }
     } else {
         $n = [ordered]@{ type = 'blank'; content = ('<p>{0}</p>' -f [System.Net.WebUtility]::HtmlEncode([string]$Text)) }
     }
@@ -47,8 +45,8 @@ function New-CippReportParagraph {
 }
 
 function New-CippReportStatRow {
-    # A row of stat cards. -Stats: @( @{ value; label; caption; colour }, ... ).
-    param([string]$Title, [Parameter(Mandatory)][object[]]$Stats)
+    # A row of stat cards. -Stats: @( @{ value; label; caption; colour }, ... ). An empty row renders nothing.
+    param([string]$Title, [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Stats)
     $n = [ordered]@{ type = 'scorecard'; stats = @($Stats) }
     if ($Title) { $n.title = $Title }
     $n
@@ -78,7 +76,8 @@ function New-CippReportNote {
 
 function New-CippReportChart {
     # A chart: -Kind bar|donut|trend, -Data @( @{ label; value; colour }, ... ). Title shows in the frame.
-    param([string]$Title, [ValidateSet('bar', 'donut', 'trend')][string]$Kind = 'bar', [Parameter(Mandatory)][object[]]$Data, [double]$Max, [string]$Caption, [string]$CentreLabel)
+    # Empty data is allowed: the kit draws a "No data available" frame (a tenant with no mail, no risks...).
+    param([string]$Title, [ValidateSet('bar', 'donut', 'trend')][string]$Kind = 'bar', [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Data, [double]$Max, [string]$Caption, [string]$CentreLabel)
     $n = [ordered]@{ type = 'chart'; chartKind = $Kind; chartData = @($Data) }
     if ($Title) { $n.title = $Title }
     if ($PSBoundParameters.ContainsKey('Max')) { $n.max = $Max }

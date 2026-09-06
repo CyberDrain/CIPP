@@ -13,6 +13,9 @@ BeforeAll {
         Select-Object -First 1 -ExpandProperty FullName
     if (-not $HelperPath) { throw 'Could not locate ConvertTo-CippReportPdf.ps1 under Modules/' }
     . $HelperPath
+    # The wrapper resolves branding itself when none is passed; keep that offline.
+    function Get-CIPPBrandingSettings { @{} }
+    function Get-CIPPBrandingPreset { param($Id, [switch]$SkipImageData) @() }
 
     function Test-IsPdf {
         param($Bytes)

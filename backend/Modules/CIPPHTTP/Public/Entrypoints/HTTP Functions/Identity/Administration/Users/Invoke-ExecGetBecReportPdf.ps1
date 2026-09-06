@@ -19,9 +19,8 @@ function Invoke-ExecGetBecReportPdf {
 
     try {
         $TenantFilter = $Request.Query.tenantFilter ?? $Request.Body.tenantFilter
-        $UserId = $Request.Query.userId ?? $Request.Query.userid ?? $Request.Query.GUID ?? $Request.Body.userId
-        $UserName = $Request.Query.userName ?? $Request.Query.username ?? $Request.Body.userName
-        $UserDisplayName = $Request.Query.userDisplayName ?? $Request.Body.userDisplayName
+        # The investigated user's object id (the cachebec RowKey).
+        $UserId = $Request.Query.userId ?? $Request.Body.userId
         if ([string]::IsNullOrWhiteSpace($TenantFilter) -or [string]::IsNullOrWhiteSpace($UserId)) {
             return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = 'A tenantFilter and userId are required' })
         }
@@ -30,44 +29,23 @@ function Invoke-ExecGetBecReportPdf {
         # split across part rows is reassembled.
         $Table = Get-CippTable -tablename 'cachebec'
         $Row = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'bec' and RowKey eq '$UserId'" | Select-Object -First 1
-        if (-not $Row -or [string]::IsNullOrEmpty($Row.Results) -or $Row.Status -eq 'Waiting') {
+        if ([string]::IsNullOrEmpty($Row.Results) -or $Row.Status -eq 'Waiting') {
             return ([HttpResponseContext]@{
                     StatusCode = [HttpStatusCode]::NotFound
                     Body       = 'No completed BEC analysis is cached for this user. Run the BEC check first, then generate the report.'
                 })
         }
+        $BecData = $Row.Results | ConvertFrom-Json -AsHashtable
 
-        $BecData = if ($Row.Results -is [string]) { $Row.Results | ConvertFrom-Json -AsHashtable } else { $Row.Results }
+        $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
+        # The investigated user's UPN and display name label the cover and footer.
+        $UserName = $Request.Query.userName ?? $Request.Body.userName
+        $DisplayName = @($Request.Query.userDisplayName, $Request.Body.userDisplayName, $UserName, $UserId) |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
 
-        $TenantName = $TenantFilter
-        try {
-            $TenantInfo = Get-Tenants -TenantFilter $TenantFilter
-            if ($TenantInfo.displayName) { $TenantName = [string]$TenantInfo.displayName }
-        } catch { $TenantName = $TenantFilter }
+        $Report = Build-CippBecReportTree -UserData @{ displayName = $DisplayName; userPrincipalName = $UserName } -BecData $BecData -TenantName $TenantName
 
-        $DisplayName = if (-not [string]::IsNullOrWhiteSpace($UserDisplayName)) { $UserDisplayName } elseif (-not [string]::IsNullOrWhiteSpace($UserName)) { $UserName } else { $UserId }
-        $UserData = @{ displayName = $DisplayName; userPrincipalName = $UserName }
-
-        $Tree = Build-CippBecReportTree -UserData $UserData -BecData $BecData -TenantName $TenantName
-
-        $AnalysisDate = try { ([datetime]$BecData.ExtractedAt).ToString('MMM d, yyyy, hh:mm tt', [Globalization.CultureInfo]::InvariantCulture) } catch { [string]$BecData.ExtractedAt }
-        $Variables = @{
-            coverlabel      = 'Security Incident Report'
-            covertitle      = 'BEC Compromise'
-            coveraccent     = 'Analysis'
-            covertenant     = $DisplayName
-            coversubtitle   = "Business Email Compromise Investigation Report for $TenantName"
-            covermeta       = [string]$UserName
-            covermetanote   = "Analysis Date: $AnalysisDate"
-            coverfallbackimage = '/reportImages/soc.jpg'
-            coverfooternote = 'Confidential & Proprietary - For Internal Use Only'
-            footerlabel     = "$TenantName - BEC Analysis Report for $DisplayName"
-        }
-
-        $Branding = try { Get-CIPPBrandingSettings } catch { @{} }
-        $Bytes = ConvertTo-CippReportPdf -Blocks $Tree -Branding $Branding -Variables $Variables `
-            -TenantName $TenantName -TenantFilter $TenantFilter -ReportName 'BEC Analysis Report' -GeneratedOn ((Get-Date).ToString('MMMM d, yyyy'))
-
+        $Bytes = ConvertTo-CippReportPdf -Blocks $Report.Blocks -Variables $Report.Variables -TenantName $TenantName -TenantFilter $TenantFilter -ReportName 'BEC Analysis Report'
         $FileName = ("BEC_Report_$DisplayName" -replace '[^a-zA-Z0-9_\-]', '_') + '.pdf'
         return ([HttpResponseContext]@{
                 StatusCode  = [HttpStatusCode]::OK

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { CippIcons } from '../utils/icon-registry'
 import {
   Button,
@@ -16,12 +16,12 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  CircularProgress,
 } from '@mui/material'
 import { CippAutoComplete } from './CippComponents/CippAutocomplete'
 import { CippOffCanvas } from './CippComponents/CippOffCanvas'
 import { useSettings } from '../hooks/use-settings'
 import { ApiGetCall } from '../api/ApiCall'
+import { ServerPdfPane, useServerPdf } from './CippPdf/useServerPdf'
 import { ShadowAIReportPages } from './ShadowAIReportButton'
 import { DEFAULT_BRANDING_OPTION } from './ReportBuilder/reportSettings'
 import { useBrandingSettings } from './CippPdf/useBrandingSettings'
@@ -1327,9 +1327,6 @@ export const ExecutiveReportButton = (props) => {
 
   // Preview state
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [pdfUrl, setPdfUrl] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [pdfError, setPdfError] = useState(false)
 
   // Null until the operator picks one, so the branding setting for this report type keeps applying
   // as it changes. An explicit choice — including "Default" — wins from then on.
@@ -1369,63 +1366,21 @@ export const ExecutiveReportButton = (props) => {
     infographics: true,
   })
 
-  // A friendly tenant display name for the dialog chrome and download filename. The PDF itself
-  // resolves the real display name server-side; this call is only window dressing.
-  const organization = ApiGetCall({
-    url: '/api/ListGraphRequest',
-    queryKey: `${tenantFilter}-ListGraphRequest-organization-report`,
-    data: { tenantFilter, Endpoint: 'organization' },
-    waiting: previewOpen,
-  })
-  const tenantName = organization.data?.Results?.[0]?.displayName || tenantFilter || 'Tenant'
+  // The dialog title and download filename use the tenant domain; the PDF itself carries the real
+  // display name, resolved server-side.
+  const tenantName = tenantFilter || 'Tenant'
 
   const fileName = `Executive_Report_${String(tenantName).replace(/[^a-zA-Z0-9]/g, '_')}_${
     new Date().toISOString().split('T')[0]
   }.pdf`
 
-  // The PDF is rendered server-side (ExecGetExecutiveReportPdf) via the shared CIPPSharp kit. Re-fetch
-  // whenever the dialog is open and the selected sections or branding change, so the preview tracks them.
-  useEffect(() => {
-    if (!previewOpen) return undefined
-    let objectUrl
-    let cancelled = false
-    setLoading(true)
-    setPdfError(false)
-    fetch('/api/ExecGetExecutiveReportPdf', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenantFilter, sectionConfig, brandingPresetId }),
-    })
-      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error('Failed to render report'))))
-      .then((blob) => {
-        if (cancelled) return
-        objectUrl = URL.createObjectURL(blob)
-        setPdfUrl(objectUrl)
-        setLoading(false)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setPdfError(true)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewOpen, tenantFilter, JSON.stringify(sectionConfig), brandingPresetId])
-
-  const handleDownload = () => {
-    if (!pdfUrl) return
-    const link = document.createElement('a')
-    link.href = pdfUrl
-    link.download = fileName
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+  // The PDF is rendered server-side (ExecGetExecutiveReportPdf) via the shared CIPPSharp kit and
+  // re-rendered while the dialog is open whenever the selected sections or branding change.
+  const pdf = useServerPdf({
+    url: '/api/ExecGetExecutiveReportPdf',
+    body: { tenantFilter, sectionConfig, brandingPresetId },
+    enabled: previewOpen,
+  })
 
   // At least one section must stay enabled; otherwise a plain toggle.
   const handleSectionToggle = (sectionKey) => {
@@ -1736,43 +1691,11 @@ export const ExecutiveReportButton = (props) => {
 
           {/* Right Panel - PDF Preview (server-rendered) */}
           <Box sx={{ flex: 1, height: '100%', minWidth: 0 }}>
-            {loading && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  gap: 2,
-                }}
-              >
-                <CircularProgress size={24} />
-                <Typography variant="body2">Generating report…</Typography>
-              </Box>
-            )}
-            {pdfError && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  p: 4,
-                  textAlign: 'center',
-                }}
-              >
-                <Typography variant="body2" color="error">
-                  The report could not be generated. Ensure this tenant has data and try again.
-                </Typography>
-              </Box>
-            )}
-            {pdfUrl && !loading && !pdfError && (
-              <iframe
-                src={pdfUrl}
-                title={`Executive Report - ${tenantName}`}
-                style={{ width: '100%', height: '100%', border: 'none' }}
-              />
-            )}
+            <ServerPdfPane
+              {...pdf}
+              title={`Executive Report - ${tenantName}`}
+              errorText="The report could not be generated. Ensure this tenant has data and try again."
+            />
           </Box>
         </DialogContent>
 
@@ -1801,8 +1724,8 @@ export const ExecutiveReportButton = (props) => {
           <Button
             variant="contained"
             startIcon={<CippIcons.Download />}
-            onClick={handleDownload}
-            disabled={!pdfUrl || loading}
+            onClick={() => pdf.download(fileName)}
+            disabled={!pdf.pdfUrl}
             sx={{ minWidth: 140 }}
           >
             Download PDF

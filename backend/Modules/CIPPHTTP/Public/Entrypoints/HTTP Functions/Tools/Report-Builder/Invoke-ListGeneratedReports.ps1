@@ -75,9 +75,6 @@ function Invoke-ListGeneratedReports {
                     CustomCount  = $CustomCount
                     GeneratedAt  = $_.GeneratedAt
                     Status       = $_.Status
-                    # Whether a server-rendered PDF is stored (fetched separately via ExecGetReportBuilderPdf);
-                    # the base64 itself is never streamed down the list.
-                    HasPdf       = -not [string]::IsNullOrEmpty($_.Pdf)
                     ReportURL    = "/tools/report-builder?reportId=$($_.RowKey)"
                 }
             })

@@ -78,7 +78,11 @@ import {
 } from '@tiptap/extension-table'
 import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
-// PDF preview/download are rendered server-side (ExecPreviewReportBuilderPdf) rather than in the browser.
+import {
+  ServerPdfPane,
+  downloadServerPdf,
+  useServerPdf,
+} from '../../../../components/CippPdf/useServerPdf'
 import {
   STRUCTURED_BLOCK_TYPES,
   StructuredBlockCard,
@@ -1006,9 +1010,6 @@ const Page = () => {
   const [blocks, setBlocks] = useState([])
   const [templateGUID, setTemplateGUID] = useState(null)
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [previewError, setPreviewError] = useState(false)
   const [scheduleOpen, setScheduleOpen] = useState(false)
   const [saveOpen, setSaveOpen] = useState(false)
 
@@ -1580,70 +1581,6 @@ const Page = () => {
     })
   }
 
-  // Render the current (unsaved) builder state to a PDF on the server and return the blob. Branding is
-  // resolved server-side from the template's preset, so it is not sent from here. A plain closure (not
-  // useCallback) so it reads displayBlocks/reportSettings at call time - those consts are declared
-  // further down, and a dependency array would touch them before initialisation.
-  const fetchPreviewBlob = async () => {
-    const res = await fetch('/api/ExecPreviewReportBuilderPdf', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        TenantFilter: currentTenant,
-        TemplateName: saveForm.getValues('templateName') || 'Custom Report',
-        Blocks: displayBlocks,
-        Settings: reportSettings,
-      }),
-    })
-    if (!res.ok) throw new Error('Failed to render report preview')
-    return res.blob()
-  }
-
-  const handleDownload = async () => {
-    try {
-      const blob = await fetchPreviewBlob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `Report_${(currentTenant || 'report').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    } catch {
-      setPreviewError(true)
-    }
-  }
-
-  // When the preview dialog opens, render the current state on the server and show it in an iframe.
-  useEffect(() => {
-    if (!previewOpen) return undefined
-    let objectUrl
-    let cancelled = false
-    setPreviewLoading(true)
-    setPreviewError(false)
-    setPreviewUrl(null)
-    fetchPreviewBlob()
-      .then((blob) => {
-        if (cancelled) return
-        objectUrl = URL.createObjectURL(blob)
-        setPreviewUrl(objectUrl)
-      })
-      .catch(() => {
-        if (!cancelled) setPreviewError(true)
-      })
-      .finally(() => {
-        if (!cancelled) setPreviewLoading(false)
-      })
-    return () => {
-      cancelled = true
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
-    }
-    // Re-render only when the dialog opens; fetchPreviewBlob reads current state at call time.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewOpen])
-
   const handleBackClick = () => {
     router.push('/tools/report-builder/templates')
   }
@@ -1673,6 +1610,28 @@ const Page = () => {
     (templateId && templatesApi.isFetching) ||
     availableTestsApi.isFetching ||
     (!!currentTenant && testsApi.isFetching)
+
+  // The current (unsaved) builder state rendered on the server; branding resolves there from the
+  // template's preset. Declared after displayBlocks/reportSettings, which it reads.
+  const previewRequest = {
+    url: '/api/ExecPreviewReportBuilderPdf',
+    body: {
+      TenantFilter: currentTenant,
+      TemplateName: saveForm.getValues('templateName') || 'Custom Report',
+      Blocks: displayBlocks,
+      Settings: reportSettings,
+    },
+  }
+  const preview = useServerPdf({ ...previewRequest, enabled: previewOpen })
+  const downloadFileName = `Report_${(currentTenant || 'report').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+  // The toolbar download renders on demand without the preview; a failed render opens the preview,
+  // which shows the error.
+  const handleDownload = () =>
+    downloadServerPdf(
+      previewRequest.url,
+      previewRequest.body,
+      downloadFileName
+    ).catch(() => setPreviewOpen(true))
 
   /* ── Gate: loading state with skeletons ── */
   if (isLoading) {
@@ -2128,44 +2087,19 @@ const Page = () => {
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ p: 0, height: '100%' }}>
-          {previewError ? (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-              }}
-            >
-              <Typography sx={{ color: 'error.main' }}>
-                The report preview could not be rendered.
-              </Typography>
-            </Box>
-          ) : previewLoading || !previewUrl ? (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : (
-            <iframe
-              src={previewUrl}
-              title="Report preview"
-              style={{ width: '100%', height: '100%', border: 'none' }}
-            />
-          )}
+          <ServerPdfPane
+            {...preview}
+            title="Report preview"
+            errorText="The report preview could not be rendered."
+          />
         </DialogContent>
         <Divider />
         <DialogActions sx={{ p: 2 }}>
           <Button
             variant="contained"
             startIcon={<CippIcons.Download />}
-            onClick={handleDownload}
+            onClick={() => preview.download(downloadFileName)}
+            disabled={!preview.pdfUrl}
           >
             Download PDF
           </Button>

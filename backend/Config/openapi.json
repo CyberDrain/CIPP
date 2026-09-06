@@ -22507,53 +22507,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
-                  "properties": {
-                    "Blocks": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "ETag": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "GeneratedAt": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "PartitionKey": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Pdf": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "PdfContentType": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "RowKey": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Settings": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Status": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "TemplateName": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "TenantFilter": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Timestamp": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    }
-                  }
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
                 }
               }
             }
@@ -22659,10 +22613,12 @@
                     "type": "string"
                   },
                   "userId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The investigated user's object id (the cachebec RowKey)."
                   },
                   "userName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The investigated user's UPN and display name label the cover and footer."
                   }
                 },
                 "required": [
@@ -22673,14 +22629,6 @@
           }
         },
         "parameters": [
-          {
-            "name": "GUID",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "$ref": "#/components/parameters/tenantFilter"
           },
@@ -22695,6 +22643,7 @@
           {
             "name": "userId",
             "in": "query",
+            "description": "The investigated user's object id (the cachebec RowKey).",
             "required": false,
             "schema": {
               "type": "string"
@@ -22703,6 +22652,7 @@
           {
             "name": "userName",
             "in": "query",
+            "description": "The investigated user's UPN and display name label the cover and footer.",
             "required": false,
             "schema": {
               "type": "string"
@@ -22954,7 +22904,7 @@
         "tags": [
           "Email-Exchange > Reports"
         ],
-        "description": "Server-renders the Exchange mail flow report as application/pdf bytes. Gathers the same three mail\nflow datasets the Mail Flow page uses (ListMailFlowReports: MailFlowStatus, TopMailSender,\nTopSpamRecipient), aggregates the daily disposition rows the way the page does, and composes them\nthrough the shared CIPPSharp kit (Build-CippMailFlowReportTree) - the server-side replacement for the\nclient react-pdf MailFlowReportButton.",
+        "description": "Server-renders the Exchange mail flow report as application/pdf bytes. Reads the same three Exchange\nreports the Mail Flow page uses (Get-MailFlowStatusReport plus the TopMailSender and\nTopSpamRecipient traffic summaries), aggregates the daily disposition rows the way the page does,\nand composes them through the shared CIPPSharp kit (Build-CippMailFlowReportTree) - the server-side\nreplacement for the client react-pdf MailFlowReportButton.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22977,6 +22927,7 @@
           {
             "name": "days",
             "in": "query",
+            "description": "Reporting window in days (1-90).",
             "required": false,
             "schema": {
               "type": "string"
@@ -23170,11 +23121,12 @@
         "tags": [
           "Tools > Report-Builder"
         ],
-        "description": "Returns the server-rendered PDF for a generated Report Builder report as application/pdf bytes.\nBacks both the in-app preview (shown in an iframe) and the download button on the view and\ngenerated-reports pages.",
+        "description": "Returns the server-rendered PDF for a generated Report Builder report as application/pdf bytes.\nBacks both the in-app preview (shown in an iframe) and the download button on the view page.\n404 when the report has no rendered PDF (generated before server-side rendering, or its render\nfailed).",
         "parameters": [
           {
             "name": "id",
             "in": "query",
+            "description": "The generated report's GUID.",
             "required": true,
             "schema": {
               "type": "string"
@@ -23183,6 +23135,7 @@
           {
             "name": "ReportGUID",
             "in": "query",
+            "description": "The generated report's GUID.",
             "required": false,
             "schema": {
               "type": "string"
@@ -23196,53 +23149,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
-                  "properties": {
-                    "Blocks": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "ETag": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "GeneratedAt": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "PartitionKey": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Pdf": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "PdfContentType": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "RowKey": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Settings": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Status": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "TemplateName": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "TenantFilter": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Timestamp": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    }
-                  }
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
                 }
               }
             }
@@ -47775,13 +47682,6 @@
                         "x-cipp-field-source": "storage,frontend"
                       },
                       "PartitionKey": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "Pdf": {
-                        "type": "string",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "PdfContentType": {
                         "x-cipp-field-source": "storage"
                       },
                       "RowKey": {

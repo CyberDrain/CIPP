@@ -54,7 +54,8 @@ namespace CIPP.Reporting
             return "#" + digits.ToUpperInvariant();
         }
 
-        private static (int r, int g, int b) ToRgb(string? hex)
+        /// <summary>Hex (or the default brand colour when unparseable) as 0-255 channels.</summary>
+        public static (int r, int g, int b) ToRgb(string? hex)
         {
             var normalised = NormaliseHex(hex) ?? DefaultBrandColour;
             var d = normalised.Substring(1);
@@ -118,8 +119,6 @@ namespace CIPP.Reporting
         public string Secondary { get; }
         public string OnPrimary { get; }
         public IReadOnlyDictionary<string, string> Palette { get; }
-        public string OnHeading { get; }
-        public string OnChart { get; }
         public string OnTable { get; }
         public string OnInfographic { get; }
         public IReadOnlyList<string> Series { get; }
@@ -168,8 +167,6 @@ namespace CIPP.Reporting
             }
             Palette = palette;
 
-            OnHeading = ColourMath.ReadableTextOn(palette["heading"]);
-            OnChart = ColourMath.ReadableTextOn(palette["chart"]);
             OnTable = ColourMath.ReadableTextOn(palette["table"]);
             OnInfographic = ColourMath.ReadableTextOn(palette["infographicBackground"]);
             Series = BuildSeries(palette["chart"], palette["chartAccent"]);

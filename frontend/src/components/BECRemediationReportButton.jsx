@@ -10,9 +10,9 @@ import {
   Box,
   Typography,
   IconButton,
-  CircularProgress,
 } from '@mui/material'
 import { useSettings } from '../hooks/use-settings'
+import { ServerPdfPane, useServerPdf } from './CippPdf/useServerPdf'
 import {
   AlertBox,
   Bold,
@@ -1211,54 +1211,21 @@ export const BECRemediationReportDocument = ({
 // download; the react-pdf BECRemediationReportDocument above is retained for the branding-settings preview.
 export const BECRemediationReportButton = ({ userData, becData, tenantName }) => {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [pdfUrl, setPdfUrl] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(false)
   const tenantFilter = useSettings().currentTenant
 
   // Only offer the report once the BEC analysis has completed (its result is what the server reads).
   const hasData = userData && becData && !becData.Waiting
 
-  const handleOpenDialog = () => {
-    setDialogOpen(true)
-    setLoading(true)
-    setError(false)
-    setPdfUrl('')
-    const params = new URLSearchParams({
-      tenantFilter: tenantFilter ?? '',
-      userId: userData?.id ?? userData?.userId ?? '',
-      userName: userData?.userPrincipalName ?? '',
-      userDisplayName: userData?.displayName ?? '',
-    })
-    fetch(`/api/ExecGetBecReportPdf?${params.toString()}`, { credentials: 'same-origin' })
-      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error('Failed to render report'))))
-      .then((blob) => {
-        setPdfUrl(URL.createObjectURL(blob))
-        setLoading(false)
-      })
-      .catch(() => {
-        setError(true)
-        setLoading(false)
-      })
-  }
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false)
-    if (pdfUrl) {
-      URL.revokeObjectURL(pdfUrl)
-      setPdfUrl('')
-    }
-  }
-
-  const handleDownload = () => {
-    if (!pdfUrl) return
-    const link = document.createElement('a')
-    link.href = pdfUrl
-    link.download = `BEC_Report_${(userData?.userPrincipalName || 'user').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+  const params = new URLSearchParams({
+    tenantFilter: tenantFilter ?? '',
+    userId: userData?.id ?? userData?.userId ?? '',
+    userName: userData?.userPrincipalName ?? '',
+    userDisplayName: userData?.displayName ?? '',
+  })
+  const pdf = useServerPdf({ url: `/api/ExecGetBecReportPdf?${params}`, enabled: dialogOpen })
+  const handleOpenDialog = () => setDialogOpen(true)
+  const handleCloseDialog = () => setDialogOpen(false)
+  const fileName = `BEC_Report_${(userData?.userPrincipalName || 'user').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
 
   if (!hasData) {
     return null // Don't show button if data isn't ready
@@ -1307,34 +1274,19 @@ export const BECRemediationReportButton = ({ userData, becData, tenantName }) =>
           </Box>
         </DialogTitle>
         <DialogContent dividers sx={{ p: 0 }}>
-          {loading && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 }}>
-              <CircularProgress size={24} />
-              <Typography variant="body2">Generating report…</Typography>
-            </Box>
-          )}
-          {error && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', p: 4 }}>
-              <Typography variant="body2" color="error">
-                The report could not be generated. Ensure the BEC check has completed for this user.
-              </Typography>
-            </Box>
-          )}
-          {pdfUrl && !loading && !error && (
-            <iframe
-              src={pdfUrl}
-              title={`BEC Remediation Report - ${tenantName}`}
-              style={{ width: '100%', height: '100%', border: 'none' }}
-            />
-          )}
+          <ServerPdfPane
+            {...pdf}
+            title={`BEC Remediation Report - ${tenantName}`}
+            errorText="The report could not be generated. Ensure the BEC check has completed for this user."
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Close</Button>
           <Button
             variant="contained"
             startIcon={<CippIcons.Download />}
-            onClick={handleDownload}
-            disabled={!pdfUrl || loading}
+            onClick={() => pdf.download(fileName)}
+            disabled={!pdf.pdfUrl}
           >
             Download PDF
           </Button>

@@ -7,7 +7,7 @@ function Invoke-ExecBECCheck {
     .SYNOPSIS
         Reads, polls or starts a Business Email Compromise investigation.
     .DESCRIPTION
-        GET with GUID (or caseId) returns that run: while it is queued or running { Waiting = true, Progress } where Progress is the job status (queued until a worker picks it up, then running) and the per-step state the page renders; { Error, Progress } when it failed; otherwise the results payload with the server-side Score, per-collector Completeness and a Run block. A queued or running run whose progress has not moved for 20 minutes is marked failed by this poll (the worker restarted or the run was abandoned) and returned as { Error }. GET without a GUID returns the user's latest run as { GUID, Status } and starts nothing (GUID is null when the user has no runs). POST with tenantFilter, userid and userName queues a new run and returns its { GUID }; GET with overwrite=true does the same for older callers. Every run is the full investigation and is kept in the BecReports table; metadata only, never message content.
+        GET with GUID (or caseId) returns that run: while it is queued or running { Waiting = true, Progress } where Progress is the job status (queued until a worker picks it up, then running) and the per-step state the page renders; { Error, Progress } when it failed; otherwise the results payload with the server-side Score, per-collector Completeness and a Run block. A queued or running run whose progress has not moved for 20 minutes is marked failed by this poll (the worker restarted or the run was abandoned) and returned as { Error }. GET without a GUID returns the user's latest run as { GUID, Status } and starts nothing (GUID is null when the user has no runs). POST with tenantFilter, userid and userName queues a new run and returns its { GUID }. Every run is the full investigation and is kept in the BecReports table; metadata only, never message content.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -24,8 +24,8 @@ function Invoke-ExecBECCheck {
     $UserName = [string](& $Pick $Request.Query.userName $Payload.userName)
     # The run to read; GUID keeps the original poll contract
     $CaseId = [string](& $Pick $Request.Query.GUID $Request.Query.caseId)
-    # A POST body, or overwrite=true on GET, starts a new run
-    $Start = (-not [string]::IsNullOrWhiteSpace([string]$Payload.userid)) -or ($Request.Query.overwrite -eq $true)
+    # A POST body with a userid starts a new run
+    $Start = -not [string]::IsNullOrWhiteSpace([string]$Payload.userid)
     # A queued/running run with no progress update for this long is abandoned: the worker restarted
     # (Craft retries once, then gives up) or the queue lost it. One audit-log phase can take several
     # minutes on a large tenant, so the threshold is generous.

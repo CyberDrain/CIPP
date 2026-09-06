@@ -9,7 +9,7 @@ BeforeAll {
     function Set-CIPPBecReport { param($TenantFilter, $CaseId, $Properties, $Results, [switch]$Replace) }
     function New-CIPPBecCaseId { 'BEC-20260820120000-new001' }
     function Start-CIPPOrchestrator { param($InputObjectGuid, $InputObject, [switch]$CallerIsQueueTrigger) }
-    function New-CIPPAsyncDeployment { param($JobId, $Names, $StepTitles, $Source) $JobId }
+    function New-CIPPAsyncDeployment { param($JobId, $Names, $StepTitles, $Source, $TenantFilter) $JobId }
     function Get-CIPPAsyncDeployment { param($JobId) }
     function Set-CIPPAsyncDeploymentStatus { param($JobId, $Name, $Status, $Logs) }
     function Set-CIPPAsyncDeploymentStep { param($JobId, $Name, $StepIndex, $StepStatus, $Message) }
@@ -88,23 +88,7 @@ Describe 'Invoke-ExecBECCheck' {
             $Response.Body.Status | Should -Be 'Waiting'
             Should -Invoke Set-CIPPBecReport -Times 1 -ParameterFilter { $Replace.IsPresent -and $Properties.Status -eq 'Waiting' -and $Properties.Scope -eq 'Full' -and $Properties.UserId -eq 'u1' -and $Properties.RequestedBy -eq 'tech@msp.com' -and $CaseId -eq 'BEC-20260820120000-new001' }
             Should -Invoke New-CIPPAsyncDeployment -Times 1 -ParameterFilter { $JobId -eq 'BEC-20260820120000-new001' -and $Names -contains 'user@contoso.com' -and @($StepTitles).Count -eq 12 -and $Source -eq 'BEC' }
-            Should -Invoke Start-CIPPOrchestrator -Times 1 -ParameterFilter { $InputObject.OrchestratorName -eq 'BECRunOrchestrator' -and $InputObject.Batch[0].FunctionName -eq 'BECRun' -and $InputObject.Batch[0].CaseId -eq 'BEC-20260820120000-new001' -and $InputObject.Batch[0].Scope -eq 'Full' -and $InputObject.Batch[0].UserID -eq 'u1' }
-        }
-
-        It 'ignores a legacy scope parameter: every run is the full investigation' {
-            Mock Get-CIPPBecReport { @() }
-            $Response = Invoke-ExecBECCheck -Request (New-Request -Body ([pscustomobject]@{ tenantFilter = 'contoso.com'; userid = 'u1'; userName = 'user@contoso.com'; scope = [pscustomobject]@{ label = 'Quick'; value = 'Quick' } })) -TriggerMetadata $null
-            $Response.Body.Scope | Should -Be 'Full'
-            Should -Invoke New-CIPPAsyncDeployment -Times 1 -ParameterFilter { @($StepTitles).Count -eq 12 }
-            Should -Invoke Start-CIPPOrchestrator -Times 1 -ParameterFilter { $InputObject.Batch[0].Scope -eq 'Full' }
-        }
-
-        It 'GET overwrite=true still queues for older callers' {
-            Mock Get-CIPPBecReport { @($script:Completed) }
-            $Response = Invoke-ExecBECCheck -Request (New-Request @{ tenantFilter = 'contoso.com'; userid = 'u1'; userName = 'user@contoso.com'; overwrite = 'true' }) -TriggerMetadata $null
-            $Response.Body.GUID | Should -Be 'BEC-20260820120000-new001'
-            $Response.Body.Scope | Should -Be 'Full'
-            Should -Invoke Start-CIPPOrchestrator -Times 1 -ParameterFilter { $InputObject.Batch[0].Scope -eq 'Full' }
+            Should -Invoke Start-CIPPOrchestrator -Times 1 -ParameterFilter { $InputObject.OrchestratorName -eq 'BECRunOrchestrator' -and $InputObject.Batch[0].FunctionName -eq 'BECRun' -and $InputObject.Batch[0].CaseId -eq 'BEC-20260820120000-new001' -and $InputObject.Batch[0].UserID -eq 'u1' }
         }
 
         It 'POST without a userid fails cleanly and queues nothing' {

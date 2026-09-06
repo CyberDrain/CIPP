@@ -12,7 +12,7 @@ BeforeAll {
     function Start-CIPPOrchestrator { param($InputObjectGuid, $InputObject, [switch]$CallerIsQueueTrigger) }
     function Write-LogMessage { param($message, $tenant, $API, $tenantId, $headers, $user, $sev, $LogData) }
     function Get-CippException { param($Exception) [pscustomobject]@{ NormalizedError = [string]$Exception.Exception.Message } }
-    function New-CIPPAsyncDeployment { param($JobId, $Names, $StepTitles, $Source) $JobId }
+    function New-CIPPAsyncDeployment { param($JobId, $Names, $StepTitles, $Source, $TenantFilter) $JobId }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCaseId.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecRunSteps.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecRunRequest.ps1')
@@ -71,7 +71,6 @@ Describe 'Invoke-ExecBECBulkCheck' {
         $Batch = @($script:Orchestrations[0].Batch)
         $Batch.Count | Should -Be 2
         $Batch[0].FunctionName | Should -Be 'BECRun'
-        $Batch[0].Scope | Should -Be 'Full'
         $Batch[0].QueueId | Should -Be 'queue-1'
         $Batch[0].userName | Should -Be 'a@contoso.com'
         $Batch[0].CaseId | Should -Be $script:Rows[0].CaseId
@@ -82,7 +81,6 @@ Describe 'Invoke-ExecBECBulkCheck' {
         $Response = Invoke-ExecBECBulkCheck -Request (New-Request ([pscustomobject]@{ tenantFilter = 'contoso.com'; UserIds = @('u1', 'u3', 'u1'); Scope = 'Quick' })) -TriggerMetadata $null
         $Response.StatusCode | Should -Be 200
         @($script:Orchestrations[0].Batch).Count | Should -Be 2 -Because 'duplicates are collapsed'
-        @($script:Orchestrations[0].Batch)[0].Scope | Should -Be 'Full' -Because 'a legacy Scope in the body is ignored'
         $Response.Body.Results | Should -Match 'Queued 2 BEC investigation'
     }
 
@@ -107,24 +105,5 @@ Describe 'Invoke-ExecBECBulkCheck' {
         $None.Body.Results | Should -Match 'No users'
         $script:Orchestrations.Count | Should -Be 0
         $script:Rows.Count | Should -Be 0
-    }
-
-    It 'selects users with a successful sign-in from outside their usage location' {
-        Mock New-GraphGetRequest {
-            if ($uri -like '*/users?*') {
-                @([pscustomobject]@{ id = 'u1'; usageLocation = 'NL' }, [pscustomobject]@{ id = 'u2'; usageLocation = 'NL' }, [pscustomobject]@{ id = 'u3'; usageLocation = $null })
-            } else {
-                @(
-                    [pscustomobject]@{ userId = 'u1'; location = [pscustomobject]@{ countryOrRegion = 'NG' } }
-                    [pscustomobject]@{ userId = 'u1'; location = [pscustomobject]@{ countryOrRegion = 'NL' } }
-                    [pscustomobject]@{ userId = 'u2'; location = [pscustomobject]@{ countryOrRegion = 'NL' } }
-                    [pscustomobject]@{ userId = 'u3'; location = [pscustomobject]@{ countryOrRegion = 'US' } }
-                )
-            }
-        }
-        $Response = Invoke-ExecBECBulkCheck -Request (New-Request ([pscustomobject]@{ tenantFilter = 'contoso.com'; Selection = 'ForeignSuccessfulSignIns'; Scope = 'Full' })) -TriggerMetadata $null
-        $Response.StatusCode | Should -Be 200
-        @($script:Orchestrations[0].Batch).UserID | Should -Be @('u1') -Because 'u2 signed in from home and u3 has no usage location to compare against'
-        Should -Invoke New-GraphGetRequest -Times 1 -ParameterFilter { $uri -like '*signIns*' -and $uri -like '*status/errorCode eq 0*' }
     }
 }

@@ -31,37 +31,35 @@ vi.mock('../../../src/components/CippComponents/CippOffCanvas', () => ({
     ) : null,
 }))
 
-const catalog = {
-  Actions: [
-    {
-      Id: 'ResetPassword',
-      Label: 'Reset password',
-      Description: 'd',
-      Impact: 'Critical',
-      Reversible: false,
-      DefaultSelected: true,
-      Order: 1,
-    },
-    {
-      Id: 'RevokeSessions',
-      Label: 'Revoke sessions',
-      Description: 'd',
-      Impact: 'High',
-      Reversible: false,
-      DefaultSelected: true,
-      Order: 3,
-    },
-    {
-      Id: 'ClearForwarding',
-      Label: 'Clear mailbox forwarding',
-      Description: 'd',
-      Impact: 'High',
-      Reversible: true,
-      DefaultSelected: false,
-      Order: 8,
-    },
-  ],
-}
+const catalog = [
+  {
+    Id: 'ResetPassword',
+    Label: 'Reset password',
+    Description: 'd',
+    Impact: 'Critical',
+    Reversible: false,
+    DefaultSelected: true,
+    Order: 1,
+  },
+  {
+    Id: 'RevokeSessions',
+    Label: 'Revoke sessions',
+    Description: 'd',
+    Impact: 'High',
+    Reversible: false,
+    DefaultSelected: true,
+    Order: 3,
+  },
+  {
+    Id: 'ClearForwarding',
+    Label: 'Clear mailbox forwarding',
+    Description: 'd',
+    Impact: 'High',
+    Reversible: true,
+    DefaultSelected: false,
+    Order: 8,
+  },
+]
 
 let runMutate
 

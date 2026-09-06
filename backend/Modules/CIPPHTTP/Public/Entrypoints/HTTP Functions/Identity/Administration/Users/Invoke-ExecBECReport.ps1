@@ -21,17 +21,11 @@ function Invoke-ExecBECReport {
 
     try {
         if (-not $CaseId) { throw 'caseId is required' }
-        switch ($Action) {
-            'Delete' {
-                $Result = Remove-CIPPBecReport -TenantFilter $TenantFilter -CaseId $CaseId
-                Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Deleted BEC run $CaseId" -Sev 'Info'
-                $Body = @{ Results = $Result }
-                $StatusCode = [HttpStatusCode]::OK
-            }
-            default {
-                throw "Unknown action '$Action'"
-            }
-        }
+        if ($Action -ne 'Delete') { throw "Unknown action '$Action'" }
+        $Result = Remove-CIPPBecReport -TenantFilter $TenantFilter -CaseId $CaseId
+        Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Deleted BEC run $CaseId" -Sev 'Info'
+        $Body = @{ Results = $Result }
+        $StatusCode = [HttpStatusCode]::OK
     } catch {
         $ErrorMessage = Get-CippException -Exception $_
         Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "BEC run action '$Action' failed for $CaseId`: $($ErrorMessage.NormalizedError)" -Sev 'Error' -LogData $ErrorMessage

@@ -171,7 +171,8 @@ The JSON export carries three data sets that no card displays: the last fifty si
 
 | File                   | Contents                                                                                                                                                  |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `report.pdf`           | The PDF report, rendered in the browser at export time with your instance branding.                                                                        |
+| `report-full.pdf`      | The full PDF report, rendered in the browser at export time with your instance branding.                                                                   |
+| `report-summary.pdf`   | The C-suite summary PDF, rendered the same way.                                                                                                           |
 | `results.json`         | The complete results of the run, exactly as the page and the report use them.                                                                             |
 | `findings/*.csv`       | One CSV per finding set (inbox rules, delegations, consents, transport rules, received-mail findings, sign-ins, devices and so on). Empty sets are skipped. |
 | `score.json`           | The threat score with every signal that contributed to it.                                                                                                |
@@ -179,7 +180,7 @@ The JSON export carries three data sets that no card displays: the last fifty si
 | `logbook.json`         | Every CIPP logbook entry stamped with the case id, from the moment the run was queued to the export itself.                                               |
 | `manifest.sha256.json` | The case, tenant, user, who exported it and when, and the SHA-256 of every file above.                                                                    |
 
-The package is built fresh for every export and streamed to your browser - nothing is stored. Each export's SHA-256, time and size are recorded on the run (the last twenty) and shown next to the button and on the [BEC Reports](../../../reports/bec-reports.md) page, so a copy received later can be checked against the export it came from. Downloads from the reports page are built the same way but without the PDF, which only the browser can render. Like the run itself, the package holds metadata only.
+The package is built fresh for every export and streamed to your browser - nothing is stored. Each export's SHA-256, time and size are recorded on the run (the last twenty) and shown next to the button and on the [BEC Reports](../../../reports/bec-reports.md) page, so a copy received later can be checked against the export it came from. Downloads from the reports page produce the same package, both PDFs included. Like the run itself, the package holds metadata only.
 
 ## PDF Report
 

@@ -39,7 +39,7 @@ function Invoke-ExecBECRemediate {
         $Unknown = @($Actions | Where-Object { $_ -notin $Catalog.Id })
         if ($Unknown.Count -gt 0) { throw "Unknown containment action(s): $($Unknown -join ', ')" }
         $Critical = @($Selected | Where-Object { $_.Impact -eq 'Critical' })
-        $ConfirmationOk = $Confirmation -and ($Confirmation.Trim() -ieq $Username.Trim())
+        $ConfirmationOk = $Confirmation -and ($Confirmation.Trim() -ieq ([string]$Username).Trim())
         if ($Critical.Count -gt 0 -and -not $ConfirmationOk) {
             $StatusCode = [HttpStatusCode]::BadRequest
             throw "Type the user's UPN ($Username) to confirm: the selected actions include Critical changes ($($Critical.Label -join ', '))"

@@ -6,16 +6,13 @@ BeforeAll {
     function Revoke-CIPPSessions { param($userid, $username, $Headers, $APIName, $tenantFilter) }
     function Remove-CIPPUserMFA { param($UserPrincipalName, $TenantFilter, $MethodId, $Headers, $APIName) }
     function Remove-CIPPUserOAuthGrant { param($TenantFilter, $UserId, $GrantIds, $AppRoleAssignmentIds, $Headers, $APIName) }
-    function Set-CIPPServicePrincipalState { param($TenantFilter, $ServicePrincipalId, $AccountEnabled, $Headers, $APIName) }
     function Disable-CIPPInboxRules { param($TenantFilter, $UserPrincipalName, $RuleIds, $Headers, $APIName) }
     function Set-CIPPForwarding { param($UserID, $ForwardingSMTPAddress, $TenantFilter, $Username, $Headers, $APIName, $Forward, $KeepCopy, $Disable) }
     function Set-CIPPOutOfOffice { param($UserID, $InternalMessage, $ExternalMessage, $TenantFilter, $State, $APIName, $Headers) }
     function Remove-CIPPMailboxDelegation { param($TenantFilter, $UserPrincipalName, $Delegations, $Headers, $APIName) }
-    function Set-CIPPTransportRuleState { param($TenantFilter, $Identity, $Enabled, $Headers, $APIName) }
-    function Disable-CIPPMailboxApp { param($TenantFilter, $UserPrincipalName, $Identity, $Headers, $APIName) }
-    function Set-CIPPCASMailboxProtocols { param($TenantFilter, $UserPrincipalName, $Protocols, $Enabled, $Headers, $APIName) }
     function Set-CIPPMobileDevice { param($Headers, $Quarantine, $UserId, $DeviceId, $TenantFilter, $Delete, $Guid, $APIName) }
-    function Set-CIPPEntraDeviceState { param($TenantFilter, $DeviceId, $AccountEnabled, [switch]$Remove, $Headers, $APIName) }
+    function Set-CIPPDeviceState { param($Action, $DeviceID, $TenantFilter, $Headers, $APIName) }
+    function New-GraphPOSTRequest { param($uri, $tenantid, $type, $body, $AsApp) }
     function New-CIPPBecTargetedCAPolicy { param($TenantFilter, $UserId, $UserPrincipalName, $State, $Controls, $ExpiresHours, $CaseId, $Headers, $APIName) }
     function Set-CIPPOneDriveSharing { param($UserId, $TenantFilter, $SharingCapability, $APIName, $Headers, $URL) }
     function New-GraphGetRequest { param($uri, $tenantid, $AsApp, $noPagination) }
@@ -29,7 +26,7 @@ BeforeAll {
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecContainmentActions.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Invoke-CIPPBecContainment.ps1')
 
-    $script:Mutators = @('Set-CIPPResetPassword', 'Set-CIPPSignInState', 'Revoke-CIPPSessions', 'Remove-CIPPUserMFA', 'Remove-CIPPUserOAuthGrant', 'Set-CIPPServicePrincipalState', 'Disable-CIPPInboxRules', 'Set-CIPPForwarding', 'Set-CIPPOutOfOffice', 'Remove-CIPPMailboxDelegation', 'Set-CIPPTransportRuleState', 'Disable-CIPPMailboxApp', 'Set-CIPPCASMailboxProtocols', 'Set-CIPPMobileDevice', 'Set-CIPPEntraDeviceState', 'New-CIPPBecTargetedCAPolicy', 'Set-CIPPOneDriveSharing')
+    $script:Mutators = @('Set-CIPPResetPassword', 'Set-CIPPSignInState', 'Revoke-CIPPSessions', 'Remove-CIPPUserMFA', 'Remove-CIPPUserOAuthGrant', 'Disable-CIPPInboxRules', 'Set-CIPPForwarding', 'Set-CIPPOutOfOffice', 'Remove-CIPPMailboxDelegation', 'Set-CIPPMobileDevice', 'Set-CIPPDeviceState', 'New-CIPPBecTargetedCAPolicy', 'Set-CIPPOneDriveSharing', 'New-ExoRequest', 'New-GraphPOSTRequest')
     $script:Run = [pscustomobject]@{
         UserGrants            = @([pscustomobject]@{ Id = 'g-bad'; Type = 'DelegatedGrant'; Flagged = $true; Risk = 'CatalogMatch'; ClientServicePrincipalId = 'sp-bad' }, [pscustomobject]@{ Id = 'g-ok'; Type = 'DelegatedGrant'; Flagged = $false; Risk = 'Low' }, [pscustomobject]@{ Id = 'a-bad'; Type = 'AppRoleAssignment'; Flagged = $true; Risk = 'CatalogMatch'; ClientServicePrincipalId = 'sp-bad' })
         Delegations           = @([pscustomobject]@{ PermissionType = 'FullAccess'; Trustee = 'outsider@example.org'; Resource = 'victim@contoso.com'; Identity = 'victim@contoso.com'; Flagged = $true }, [pscustomobject]@{ PermissionType = 'SendAs'; Trustee = 'assistant@contoso.com'; Resource = 'victim@contoso.com'; Flagged = $false })
@@ -42,7 +39,6 @@ BeforeAll {
         ReceivedMailFindings  = @([pscustomobject]@{ FindingType = 'Typosquat'; SenderAddress = 'ceo@contos0.com'; SenderDomain = 'contos0.com' }, [pscustomobject]@{ FindingType = 'SubjectPattern'; SenderAddress = 'billing@evil.example'; SenderDomain = 'evil.example' }, [pscustomobject]@{ FindingType = 'Keyword'; SenderAddress = 'ceo@contos0.com'; SenderDomain = 'contos0.com' })
         SharingChanges        = @([pscustomobject]@{ Operation = 'AnonymousLinkCreated'; ItemUrl = 'https://contoso-my.sharepoint.com/personal/victim/Documents/payroll.xlsx'; FileName = 'payroll.xlsx' }, [pscustomobject]@{ Operation = 'CompanyLinkCreated'; ItemUrl = 'https://contoso-my.sharepoint.com/personal/victim/Documents/contracts.docx'; FileName = 'contracts.docx' })
     }
-    $script:AllActionIds = @((Get-CIPPBecContainmentActions).Id)
 }
 
 Describe 'Invoke-CIPPBecContainment' {
@@ -87,8 +83,8 @@ Describe 'Invoke-CIPPBecContainment' {
     It 'prefers explicit parameters over the run''s flagged items' {
         $Rows = Invoke-CIPPBecContainment -TenantFilter 'contoso.com' -UserId 'u1' -UserPrincipalName 'victim@contoso.com' -Actions @('RemoveOAuthGrants', 'DisableTransportRules', 'BlockProtocols', 'RemoveMFA') -Confirmed -RunResults $script:Run -Parameters @{ GrantIds = @('g-ok'); TransportRuleIds = @('tr-2'); Protocols = @('IMAP'); MfaMethodIds = @('m1', 'm2') }
         Should -Invoke Remove-CIPPUserOAuthGrant -Times 1 -ParameterFilter { $GrantIds -contains 'g-ok' -and $GrantIds -notcontains 'g-bad' -and $UserId -eq 'u1' }
-        Should -Invoke Set-CIPPTransportRuleState -Times 1 -ParameterFilter { $Identity -eq 'tr-2' -and $Enabled -eq $false }
-        Should -Invoke Set-CIPPCASMailboxProtocols -Times 1 -ParameterFilter { @($Protocols) -eq 'IMAP' -and $Enabled -eq $false }
+        Should -Invoke New-ExoRequest -Times 1 -ParameterFilter { $cmdlet -eq 'Disable-TransportRule' -and $cmdParams.Identity -eq 'tr-2' }
+        Should -Invoke New-ExoRequest -Times 1 -ParameterFilter { $cmdlet -eq 'Set-CASMailbox' -and $cmdParams.IMAPEnabled -eq $false -and $cmdParams.Keys.Count -eq 2 }
         Should -Invoke Remove-CIPPUserMFA -Times 2
         Should -Invoke Remove-CIPPUserMFA -Times 1 -ParameterFilter { $MethodId -eq 'm2' }
         ($Rows | Where-Object { $_.Action -eq 'RemoveOAuthGrants' }).Target | Should -Be 'g-ok'
@@ -97,7 +93,7 @@ Describe 'Invoke-CIPPBecContainment' {
     It 'reads parameters from a deserialised object as well as a hashtable' {
         $Params = [pscustomobject]@{ protocols = @('OWA', 'MAPI') }
         $null = Invoke-CIPPBecContainment -TenantFilter 'contoso.com' -UserPrincipalName 'victim@contoso.com' -Actions @('BlockProtocols') -Parameters $Params
-        Should -Invoke Set-CIPPCASMailboxProtocols -Times 1 -ParameterFilter { $Protocols -contains 'OWA' -and $Protocols -contains 'MAPI' }
+        Should -Invoke New-ExoRequest -Times 1 -ParameterFilter { $cmdlet -eq 'Set-CASMailbox' -and $cmdParams.OWAEnabled -eq $false -and $cmdParams.MAPIEnabled -eq $false }
     }
 
     It 'keeps going when one action fails and reports it as an error row' {
@@ -139,13 +135,29 @@ Describe 'Invoke-CIPPBecContainment' {
         @($Rows | Where-Object { $_.state -eq 'info' }).Count | Should -Be 3
         Should -Invoke Remove-CIPPUserOAuthGrant -Times 0
         Should -Invoke Remove-CIPPMailboxDelegation -Times 0
-        Should -Invoke Set-CIPPTransportRuleState -Times 0
+        Should -Invoke New-ExoRequest -Times 0
     }
 
     It 'resolves the user object id when a Graph action needs it and none was supplied' {
         $null = Invoke-CIPPBecContainment -TenantFilter 'contoso.com' -UserPrincipalName 'victim@contoso.com' -Actions @('TargetedCAPolicy') -Parameters @{ CAPolicy = @{ State = 'reportOnly'; Controls = 'mfaAndCompliantDevice'; ExpiresHours = 4 } }
         Should -Invoke New-GraphGetRequest -Times 1
         Should -Invoke New-CIPPBecTargetedCAPolicy -Times 1 -ParameterFilter { $UserId -eq 'user-guid' -and $State -eq 'enabledForReportingButNotEnabled' -and $Controls -eq 'mfaAndCompliantDevice' -and $ExpiresHours -eq 4 }
+    }
+
+    It 'disables the run''s catalog-matched applications and deletes in-window devices through the platform helpers' {
+        $Rows = Invoke-CIPPBecContainment -TenantFilter 'contoso.com' -UserPrincipalName 'victim@contoso.com' -Actions @('DisableServicePrincipals', 'RemoveRegisteredDevices', 'DisableMailboxAddIns') -Confirmed -RunResults $script:Run
+        Should -Invoke New-GraphPOSTRequest -Times 1 -ParameterFilter { $uri -like '*/servicePrincipals/sp-bad' -and $type -eq 'PATCH' -and $body -match '"accountEnabled":false' }
+        Should -Invoke Set-CIPPDeviceState -Times 1 -ParameterFilter { $Action -eq 'Delete' -and $DeviceID -eq 'entra-1' }
+        Should -Invoke Set-CIPPDeviceState -Times 0 -ParameterFilter { $DeviceID -eq 'entra-old' }
+        Should -Invoke New-ExoRequest -Times 1 -ParameterFilter { $cmdlet -eq 'Disable-App' -and $cmdParams.Identity -eq 'addin-1' -and $cmdParams.Mailbox -eq 'victim@contoso.com' }
+        @($Rows | Where-Object { $_.state -eq 'success' }).Count | Should -Be 3
+    }
+
+    It 'returns the redacted rows for automation with -Redacted' {
+        $Rows = Invoke-CIPPBecContainment -TenantFilter 'contoso.com' -UserPrincipalName 'victim@contoso.com' -Actions @('ResetPassword') -Confirmed -Redacted
+        $Rows[0].resultText | Should -Match '\[redacted\]'
+        $Rows[0].resultText | Should -Not -Match 'Hunter2'
+        $Rows[0].PSObject.Properties['copyField'] | Should -BeNullOrEmpty
     }
 
     It 'sets and clears the case log context' {

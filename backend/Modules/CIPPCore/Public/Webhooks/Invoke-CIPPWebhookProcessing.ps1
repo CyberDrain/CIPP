@@ -92,12 +92,8 @@ function Invoke-CippWebhookProcessing {
                 $BecActionsRaw = try { $Data.CIPPBecActions | ConvertFrom-Json -ErrorAction Stop } catch { @() }
                 $BecActions = @($BecActionsRaw | ForEach-Object { if ($_ -and $_.PSObject.Properties['value']) { $_.value } else { $_ } } | Where-Object { $_ })
                 try {
-                    $ContainmentRows = Invoke-CIPPBecContainment -TenantFilter $TenantFilter -UserId $Data.UserId -UserPrincipalName $Username -Actions $BecActions -Confirmed -Headers 'Alert Engine' -APIName 'Alert Engine'
-                    foreach ($Row in @($ContainmentRows)) {
-                        $Text = [string]$Row.resultText
-                        if ($Row.copyField) { $Text = $Text.Replace([string]$Row.copyField, '[redacted]') }
-                        "$($Row.Action) ($($Row.state)): $Text"
-                    }
+                    $ContainmentRows = Invoke-CIPPBecContainment -TenantFilter $TenantFilter -UserId $Data.UserId -UserPrincipalName $Username -Actions $BecActions -Confirmed -Redacted -Headers 'Alert Engine' -APIName 'Alert Engine'
+                    foreach ($Row in @($ContainmentRows)) { "$($Row.Action) ($($Row.state)): $($Row.resultText)" }
                 } catch {
                     Write-Host "BEC containment failed for $Username`: $($_.Exception.Message)"
                     "BEC containment failed for $Username`: $($_.Exception.Message)"

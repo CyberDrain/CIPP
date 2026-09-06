@@ -30,6 +30,9 @@ function Invoke-CIPPBecContainment {
         MobileDeviceIds, RegisteredDeviceIds, CAPolicy { State, Controls, ExpiresHours }.
     .PARAMETER Confirmed
         The operator (or automation) confirmed the Critical actions.
+    .PARAMETER Redacted
+        Return the redacted rows (password replaced, copyField dropped) - for automation that forwards
+        the results into an alert payload.
     .PARAMETER CaseId
         The BEC case the containment belongs to; results are appended to its run.
     .PARAMETER RunResults
@@ -49,6 +52,7 @@ function Invoke-CIPPBecContainment {
         [string[]]$Actions = @(),
         $Parameters,
         [switch]$Confirmed,
+        [switch]$Redacted,
         [string]$CaseId,
         $RunResults,
         $Headers,
@@ -71,18 +75,8 @@ function Invoke-CIPPBecContainment {
         throw "Confirmation is required: the selected actions include Critical changes ($($CriticalSelected.Id -join ', '))"
     }
 
-    # Parameters may arrive as a hashtable or a deserialised object; read them case-insensitively.
-    $Param = @{}
-    if ($Parameters -is [hashtable]) {
-        foreach ($Key in $Parameters.Keys) { $Param[[string]$Key] = $Parameters[$Key] }
-    } elseif ($Parameters) {
-        foreach ($Property in $Parameters.PSObject.Properties) { $Param[$Property.Name] = $Property.Value }
-    }
-    $GetParam = {
-        param($Name)
-        $Key = $Param.Keys | Where-Object { $_ -ieq $Name } | Select-Object -First 1
-        if ($Key) { $Param[$Key] } else { $null }
-    }
+    # Parameters may arrive as a hashtable or a deserialised object; member access on either is case-insensitive.
+    $GetParam = { param($Name) $Parameters.$Name }
     $AsList = { param($Value) @($Value | Where-Object { $null -ne $_ -and "$_" -ne '' }) }
 
     $Rows = [System.Collections.Generic.List[object]]::new()
@@ -129,7 +123,7 @@ function Invoke-CIPPBecContainment {
                     }
                     'RevokeSessions' {
                         $R = Revoke-CIPPSessions -userid $UserPrincipalName -username $UserPrincipalName -Headers $Headers -APIName $APIName -tenantFilter $TenantFilter
-                        & $Add $Id $UserPrincipalName ($(if ([string]$R -like '*Failed*') { 'error' } else { 'success' })) ([string]$R) $null
+                        & $Add $Id $UserPrincipalName 'success' ([string]$R) $null
                     }
                     'RemoveMFA' {
                         $MethodIds = & $AsList (& $GetParam 'MfaMethodIds')
@@ -166,8 +160,10 @@ function Invoke-CIPPBecContainment {
                         }
                         if ($SpIds.Count -eq 0) { & $Add $Id $UserPrincipalName 'info' 'No catalog-matched applications to disable' $null; break }
                         foreach ($SpId in $SpIds) {
-                            try { & $Add $Id $SpId 'success' ([string](Set-CIPPServicePrincipalState -TenantFilter $TenantFilter -ServicePrincipalId $SpId -AccountEnabled $false -Headers $Headers -APIName $APIName)) $null }
-                            catch { & $Add $Id $SpId 'error' $_.Exception.Message $null }
+                            try {
+                                $null = New-GraphPOSTRequest -uri "https://graph.microsoft.com/v1.0/servicePrincipals/$SpId" -tenantid $TenantFilter -type PATCH -body '{"accountEnabled":false}' -AsApp $true
+                                & $Add $Id $SpId 'success' "Disabled service principal $SpId tenant-wide" $null
+                            } catch { & $Add $Id $SpId 'error' "Failed to disable service principal $SpId`: $((Get-CippException -Exception $_).NormalizedError)" $null }
                         }
                     }
                     'DisableInboxRules' {
@@ -194,8 +190,10 @@ function Invoke-CIPPBecContainment {
                         if ($RuleIds.Count -eq 0 -and $RunResults) { $RuleIds = @($RunResults.TransportRulesFlagged | Where-Object { $_.ChangedInWindow -eq $true } | ForEach-Object { $_.Guid ?? $_.Identity ?? $_.Name }) }
                         if ($RuleIds.Count -eq 0) { & $Add $Id $TenantFilter 'info' 'No flagged transport rules changed in the window to disable' $null; break }
                         foreach ($RuleId in $RuleIds) {
-                            try { & $Add $Id $RuleId 'success' ([string](Set-CIPPTransportRuleState -TenantFilter $TenantFilter -Identity $RuleId -Enabled $false -Headers $Headers -APIName $APIName)) $null }
-                            catch { & $Add $Id $RuleId 'error' $_.Exception.Message $null }
+                            try {
+                                $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Disable-TransportRule' -cmdParams @{ Identity = $RuleId; Confirm = $false } -useSystemMailbox $true
+                                & $Add $Id $RuleId 'success' "Disabled transport rule '$RuleId'" $null
+                            } catch { & $Add $Id $RuleId 'error' "Failed to disable transport rule '$RuleId': $((Get-CippException -Exception $_).NormalizedError)" $null }
                         }
                     }
                     'DisableMailboxAddIns' {
@@ -203,15 +201,23 @@ function Invoke-CIPPBecContainment {
                         if ($AddInIds.Count -eq 0 -and $RunResults) { $AddInIds = @($RunResults.MailboxAddIns | Where-Object { $_.Flagged -eq $true } | ForEach-Object { $_.Identity ?? $_.AppId }) }
                         if ($AddInIds.Count -eq 0) { & $Add $Id $UserPrincipalName 'info' 'No flagged add-ins to disable' $null; break }
                         foreach ($AddInId in $AddInIds) {
-                            try { & $Add $Id $AddInId 'success' ([string](Disable-CIPPMailboxApp -TenantFilter $TenantFilter -UserPrincipalName $UserPrincipalName -Identity $AddInId -Headers $Headers -APIName $APIName)) $null }
-                            catch { & $Add $Id $AddInId 'error' $_.Exception.Message $null }
+                            try {
+                                $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Disable-App' -cmdParams @{ Identity = $AddInId; Mailbox = $UserPrincipalName; Confirm = $false } -Anchor $UserPrincipalName
+                                & $Add $Id $AddInId 'success' "Disabled add-in $AddInId for $UserPrincipalName" $null
+                            } catch { & $Add $Id $AddInId 'error' "Failed to disable add-in $AddInId`: $((Get-CippException -Exception $_).NormalizedError)" $null }
                         }
                     }
                     'BlockProtocols' {
-                        $Protocols = & $AsList (& $GetParam 'Protocols')
+                        $Protocols = @((& $AsList (& $GetParam 'Protocols')) | Select-Object -Unique)
                         if ($Protocols.Count -eq 0) { $Protocols = @('EWS', 'IMAP', 'POP', 'ActiveSync') }
-                        $R = Set-CIPPCASMailboxProtocols -TenantFilter $TenantFilter -UserPrincipalName $UserPrincipalName -Protocols $Protocols -Enabled $false -Headers $Headers -APIName $APIName
-                        & $Add $Id $UserPrincipalName 'success' ([string]$R) $null
+                        # Set-CASMailbox switch per protocol; SmtpAuth maps to SmtpClientAuthenticationDisabled, which is inverted.
+                        $ProtocolMap = @{ EWS = 'EWSEnabled'; IMAP = 'IMAPEnabled'; POP = 'POPEnabled'; ActiveSync = 'ActiveSyncEnabled'; OWA = 'OWAEnabled'; MAPI = 'MAPIEnabled'; ECP = 'ECPEnabled'; SmtpAuth = 'SmtpClientAuthenticationDisabled' }
+                        $Unknown = @($Protocols | Where-Object { -not $ProtocolMap.ContainsKey([string]$_) })
+                        if ($Unknown.Count -gt 0) { throw "Unknown protocol(s): $($Unknown -join ', ')" }
+                        $CasParams = @{ Identity = $UserPrincipalName }
+                        foreach ($Protocol in $Protocols) { $CasParams[$ProtocolMap[[string]$Protocol]] = ([string]$Protocol -eq 'SmtpAuth') }
+                        $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Set-CASMailbox' -cmdParams $CasParams -Anchor $UserPrincipalName
+                        & $Add $Id $UserPrincipalName 'success' "Disabled $($Protocols -join ', ') for $UserPrincipalName" $null
                     }
                     { $_ -in @('BlockMobileDevices', 'RemoveMobileDevices') } {
                         $Devices = @((& $GetParam 'MobileDeviceIds') | Where-Object { $_ })
@@ -229,9 +235,10 @@ function Invoke-CIPPBecContainment {
                         $DeviceIds = & $AsList (& $GetParam 'RegisteredDeviceIds')
                         if ($DeviceIds.Count -eq 0 -and $RunResults) { $DeviceIds = @($RunResults.RegisteredDevices | Where-Object { $_.RegisteredInWindow -eq $true } | ForEach-Object { $_.id }) }
                         if ($DeviceIds.Count -eq 0) { & $Add $Id $UserPrincipalName 'info' 'No registered devices from the window to act on' $null; break }
+                        $DeviceAction = if ($Id -eq 'DisableRegisteredDevices') { 'Disable' } else { 'Delete' }
                         foreach ($DeviceId in $DeviceIds) {
                             try {
-                                $R = if ($Id -eq 'DisableRegisteredDevices') { Set-CIPPEntraDeviceState -TenantFilter $TenantFilter -DeviceId $DeviceId -AccountEnabled $false -Headers $Headers -APIName $APIName } else { Set-CIPPEntraDeviceState -TenantFilter $TenantFilter -DeviceId $DeviceId -Remove -Headers $Headers -APIName $APIName }
+                                $R = Set-CIPPDeviceState -Action $DeviceAction -DeviceID $DeviceId -TenantFilter $TenantFilter -Headers $Headers -APIName $APIName
                                 & $Add $Id $DeviceId 'success' ([string]$R) $null
                             } catch { & $Add $Id $DeviceId 'error' $_.Exception.Message $null }
                         }
@@ -293,20 +300,19 @@ function Invoke-CIPPBecContainment {
         }
 
         # Persist and log a redacted copy: the password (copyField) must never reach the logbook or the run.
-        $Redacted = @(foreach ($Row in $Rows) {
+        $RedactedRows = @(foreach ($Row in $Rows) {
                 $Text = [string]$Row.resultText
                 if ($Row.copyField) { $Text = $Text.Replace([string]$Row.copyField, '[redacted]') }
                 [pscustomobject]@{ Action = $Row.Action; Target = $Row.Target; state = $Row.state; resultText = $Text }
             })
         $Summary = "Executed BEC containment for $UserPrincipalName ($($Selected.Id -join ', '))$(if ($CaseId) { " [case $CaseId]" })"
-        Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $Summary -Sev 'Info' -LogData @($Redacted)
+        Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $Summary -Sev 'Info' -LogData @($RedactedRows)
         if ($CaseId) {
             try {
                 $Run = Get-CIPPBecReport -TenantFilter $TenantFilter -CaseId $CaseId
                 if ($Run) {
                     $By = if ($Headers -and $Headers.'x-ms-client-principal') { try { ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Headers.'x-ms-client-principal')) | ConvertFrom-Json).userDetails } catch { 'CIPP' } } elseif ($Headers -is [string]) { $Headers } else { 'CIPP' }
-                    $History = @($Run.Containment | Where-Object { $_ })
-                    $History += [pscustomobject]@{ At = (Get-Date).ToUniversalTime().ToString('o'); By = [string]$By; Actions = @($Selected.Id); Results = $Redacted }
+                    $History = @($Run.Containment | Where-Object { $_ }) + @([pscustomobject]@{ At = (Get-Date).ToUniversalTime().ToString('o'); By = [string]$By; Actions = @($Selected.Id); Results = $RedactedRows })
                     $null = Set-CIPPBecReport -TenantFilter $TenantFilter -CaseId $CaseId -Properties @{ Containment = $History; LastContainmentAt = (Get-Date).ToUniversalTime().ToString('o') }
                 }
             } catch {
@@ -316,5 +322,5 @@ function Invoke-CIPPBecContainment {
     } finally {
         Set-CippBecCaseContext -CaseId $null
     }
-    return $Rows.ToArray()
+    return $(if ($Redacted) { $RedactedRows } else { $Rows.ToArray() })
 }

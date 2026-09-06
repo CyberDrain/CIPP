@@ -23,6 +23,13 @@ Describe 'Get-CIPPBecErrorInfo' {
         $I.Message | Should -Not -Match 'Activity ID'
     }
 
+    It 'treats Intune "not applicable to target tenant" (no Intune licence) as not-applicable' {
+        $I = Get-CIPPBecErrorInfo -Message 'Request not applicable to target tenant. - Operation ID (for customer support): 6f1b - Activity ID: 1967-68c5 - Url: https://fef.msub03.manage.microsoft.com/DeviceFE/StatelessDeviceFEService/deviceManagement/users(''guid'')/managedDevices?api-version=5024-03-01'
+        $I.Skipped | Should -BeTrue
+        $I.Message | Should -Be 'Intune is not licensed for this tenant.'
+        $I.Requirement | Should -Match 'Intune licence'
+    }
+
     It 'keeps a transient Intune service error as a failure, not a skip' {
         $I = Get-CIPPBecErrorInfo -Message 'Intune returned an unexpected error (HTTP 503). This is a failure inside the Intune service itself and is usually transient. Rerun the check to retry. Microsoft support reference (Activity ID): 1967-68c5'
         $I.Skipped | Should -BeFalse

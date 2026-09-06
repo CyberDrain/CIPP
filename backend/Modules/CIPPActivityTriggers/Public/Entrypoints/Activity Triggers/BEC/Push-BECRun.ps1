@@ -472,6 +472,27 @@ function Push-BECRun {
         $CatalogAppIds = @($RogueApps.Keys)
         $RogueMatch = { param($AppId) $Key = ([string]$AppId).ToLowerInvariant(); if ($Key -and $RogueApps.ContainsKey($Key)) { $RogueApps[$Key] } else { $null } }
 
+        # Licence preflight: a check the tenant cannot support is skipped with its reason instead of
+        # run only to fail. An unknown (a preflight that itself errors) falls through to running the
+        # check - the error classifier (Get-CIPPBecErrorInfo, via $Mark) is the safety net, and is
+        # also what turns a missing mailbox into a skip.
+        $SkusRead = $false
+        $ServicePlans = @()
+        try {
+            $ServicePlans = @(New-GraphGetRequest -uri 'https://graph.microsoft.com/v1.0/subscribedSkus' -tenantid $TenantFilter -AsApp $true | ForEach-Object { $_.servicePlans } | Where-Object { $_.provisioningStatus -in @('Success', 'PendingProvisioning') } | ForEach-Object { [string]$_.servicePlanName })
+            $SkusRead = $true
+        } catch {
+            Write-LogMessage -API 'BECRun' -message "BEC preflight could not read tenant plans for $($TenantFilter): $((Get-NormalizedError -message $_.Exception.Message))" -tenant $TenantFilter -sev Info
+        }
+        # Gate only when we definitively read the tenant's plans; on an unknown, attempt the check and
+        # let its own licence error (classified as skipped) decide - never skip on a failed preflight.
+        $HasEntraP2 = (-not $SkusRead) -or ($ServicePlans -contains 'AAD_PREMIUM_P2')
+        $HasDefenderP2 = (-not $SkusRead) -or ($ServicePlans -contains 'THREAT_INTELLIGENCE')
+        # Any Intune plan (INTUNE_A, INTUNE_O365, INTUNE_EDU, ...). A plan we did not expect still runs the
+        # query, and Graph's 'not applicable to target tenant' answer is classified as a licence skip.
+        $HasIntune = (-not $SkusRead) -or (@($ServicePlans -match '^INTUNE_').Count -gt 0)
+        $Skip = { param($Requirement) New-CIPPBecCollectorResult -Data @() -Skipped $true -Requirement $Requirement }
+
         $Requests = @(
             @{
                 id     = 'Users'
@@ -488,10 +509,12 @@ function Push-BECRun {
                 url    = "servicePrincipals?`$select=displayName,createdDateTime,appId,appDisplayName,publisher&`$filter=createdDateTime ge $($startDate.ToString('yyyy-MM-ddTHH:mm:ssZ'))"
                 method = 'GET'
             }
-            @{
-                id     = 'IntuneDevices'
-                url    = "users/$($SuspectUser)/managedDevices"
-                method = 'GET'
+            if ($HasIntune) {
+                @{
+                    id     = 'IntuneDevices'
+                    url    = "users/$($SuspectUser)/managedDevices"
+                    method = 'GET'
+                }
             }
             @{
                 id     = 'SuspectUser'
@@ -554,56 +577,60 @@ function Push-BECRun {
             })
 
         # Intune managed devices for the suspect user - surface Graph failures instead of a silent empty list
-        $IntuneResponse = $GraphResults | Where-Object { $_.id -eq 'IntuneDevices' } | Select-Object -First 1
         $IntuneDevicesError = $null
         $IntuneDevices = @()
-        if (-not $IntuneResponse) {
-            $IntuneDevicesError = 'Intune device query did not return a response'
-        } elseif ([int]$IntuneResponse.status -ge 400) {
-            # Graph proxies this call to Intune's DeviceFE service, which returns its own JSON
-            # error blob as the Graph error message. Unwrap it so the report shows a readable
-            # sentence instead of raw JSON, keeping the Activity ID for Microsoft support cases.
-            $RawIntuneError = $IntuneResponse.body.error.message
-            $IntuneDevicesError = $RawIntuneError
-            if ($RawIntuneError -match '^\s*\{') {
-                try {
-                    $ParsedIntuneError = $RawIntuneError | ConvertFrom-Json -ErrorAction Stop
-                    if (-not [string]::IsNullOrWhiteSpace($ParsedIntuneError.Message)) {
-                        $IntuneDevicesError = $ParsedIntuneError.Message
-                    }
-                } catch { Write-Verbose 'Intune error body is not JSON; keeping the raw message' }
-            }
-            if ($IntuneDevicesError -like 'An error has occurred*') {
-                $ActivityId = [regex]::Match($IntuneDevicesError, 'Activity ID: ([0-9a-fA-F-]{36})').Groups[1].Value
-                $IntuneDevicesError = "Intune returned an unexpected error (HTTP $($IntuneResponse.status)). This is a failure inside the Intune service itself and is usually transient. Rerun the check to retry.$(if ($ActivityId) { " Microsoft support reference (Activity ID): $ActivityId" })"
-            }
-            if ([string]::IsNullOrWhiteSpace($IntuneDevicesError)) {
-                $IntuneDevicesError = "Intune device query failed with status $($IntuneResponse.status)"
-            }
-            Write-LogMessage -API 'BECRun' -message "Failed to retrieve Intune devices for $($UserName): $IntuneDevicesError" -tenant $TenantFilter -sev Warning
+        if (-not $HasIntune) {
+            & $Mark 'IntuneDevices' (& $Skip 'requires an Intune licence')
         } else {
-            $IntuneDevicesRaw = $IntuneResponse.body.value ?? @()
-            $IntuneDevices = @(
-                foreach ($Device in @($IntuneDevicesRaw)) {
-                    [PSCustomObject]@{
-                        id                     = $Device.id
-                        deviceName             = $Device.deviceName
-                        operatingSystem        = $Device.operatingSystem
-                        osVersion              = $Device.osVersion
-                        complianceState        = $Device.complianceState
-                        enrolledDateTime       = if ($Device.enrolledDateTime) { ([datetime]$Device.enrolledDateTime).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') } else { $null }
-                        lastSyncDateTime       = if ($Device.lastSyncDateTime) { ([datetime]$Device.lastSyncDateTime).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') } else { $null }
-                        deviceEnrollmentType   = $Device.deviceEnrollmentType
-                        manufacturer           = $Device.manufacturer
-                        model                  = $Device.model
-                        serialNumber           = $Device.serialNumber
-                        userPrincipalName      = $Device.userPrincipalName
-                        managedDeviceOwnerType = $Device.managedDeviceOwnerType
-                    }
+            $IntuneResponse = $GraphResults | Where-Object { $_.id -eq 'IntuneDevices' } | Select-Object -First 1
+            if (-not $IntuneResponse) {
+                $IntuneDevicesError = 'Intune device query did not return a response'
+            } elseif ([int]$IntuneResponse.status -ge 400) {
+                # Graph proxies this call to Intune's DeviceFE service, which returns its own JSON
+                # error blob as the Graph error message. Unwrap it so the report shows a readable
+                # sentence instead of raw JSON, keeping the Activity ID for Microsoft support cases.
+                $RawIntuneError = $IntuneResponse.body.error.message
+                $IntuneDevicesError = $RawIntuneError
+                if ($RawIntuneError -match '^\s*\{') {
+                    try {
+                        $ParsedIntuneError = $RawIntuneError | ConvertFrom-Json -ErrorAction Stop
+                        if (-not [string]::IsNullOrWhiteSpace($ParsedIntuneError.Message)) {
+                            $IntuneDevicesError = $ParsedIntuneError.Message
+                        }
+                    } catch { Write-Verbose 'Intune error body is not JSON; keeping the raw message' }
                 }
-            )
+                if ($IntuneDevicesError -like 'An error has occurred*') {
+                    $ActivityId = [regex]::Match($IntuneDevicesError, 'Activity ID: ([0-9a-fA-F-]{36})').Groups[1].Value
+                    $IntuneDevicesError = "Intune returned an unexpected error (HTTP $($IntuneResponse.status)). This is a failure inside the Intune service itself and is usually transient. Rerun the check to retry.$(if ($ActivityId) { " Microsoft support reference (Activity ID): $ActivityId" })"
+                }
+                if ([string]::IsNullOrWhiteSpace($IntuneDevicesError)) {
+                    $IntuneDevicesError = "Intune device query failed with status $($IntuneResponse.status)"
+                }
+                Write-LogMessage -API 'BECRun' -message "Failed to retrieve Intune devices for $($UserName): $IntuneDevicesError" -tenant $TenantFilter -sev Warning
+            } else {
+                $IntuneDevicesRaw = $IntuneResponse.body.value ?? @()
+                $IntuneDevices = @(
+                    foreach ($Device in @($IntuneDevicesRaw)) {
+                        [PSCustomObject]@{
+                            id                     = $Device.id
+                            deviceName             = $Device.deviceName
+                            operatingSystem        = $Device.operatingSystem
+                            osVersion              = $Device.osVersion
+                            complianceState        = $Device.complianceState
+                            enrolledDateTime       = if ($Device.enrolledDateTime) { ([datetime]$Device.enrolledDateTime).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') } else { $null }
+                            lastSyncDateTime       = if ($Device.lastSyncDateTime) { ([datetime]$Device.lastSyncDateTime).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') } else { $null }
+                            deviceEnrollmentType   = $Device.deviceEnrollmentType
+                            manufacturer           = $Device.manufacturer
+                            model                  = $Device.model
+                            serialNumber           = $Device.serialNumber
+                            userPrincipalName      = $Device.userPrincipalName
+                            managedDeviceOwnerType = $Device.managedDeviceOwnerType
+                        }
+                    }
+                )
+            }
+            & $Mark 'IntuneDevices' ([pscustomobject]@{ Complete = (-not $IntuneDevicesError); Cap = $null; Error = $IntuneDevicesError; Count = $IntuneDevices.Count })
         }
-        & $Mark 'IntuneDevices' ([pscustomobject]@{ Complete = (-not $IntuneDevicesError); Cap = $null; Error = $IntuneDevicesError; Count = $IntuneDevices.Count })
 
         # ---------------------------------------------------------------------------------
         # The deeper collectors. Each one degrades to an Error marker - a failed collector
@@ -638,24 +665,6 @@ function Push-BECRun {
                 New-CIPPBecCollectorResult -Data @() -Error $CollectorError.NormalizedError
             }
         }
-
-        # Licence preflight: a check the tenant cannot support is skipped with its reason instead of
-        # run only to fail. An unknown (a preflight that itself errors) falls through to running the
-        # check - the error classifier (Get-CIPPBecErrorInfo, via $Mark) is the safety net, and is
-        # also what turns a missing mailbox into a skip.
-        $SkusRead = $false
-        $ServicePlans = @()
-        try {
-            $ServicePlans = @(New-GraphGetRequest -uri 'https://graph.microsoft.com/v1.0/subscribedSkus' -tenantid $TenantFilter -AsApp $true | ForEach-Object { $_.servicePlans } | Where-Object { $_.provisioningStatus -in @('Success', 'PendingProvisioning') } | ForEach-Object { [string]$_.servicePlanName })
-            $SkusRead = $true
-        } catch {
-            Write-LogMessage -API 'BECRun' -message "BEC preflight could not read tenant plans for $($TenantFilter): $((Get-NormalizedError -message $_.Exception.Message))" -tenant $TenantFilter -sev Info
-        }
-        # Gate only when we definitively read the tenant's plans; on an unknown, attempt the check and
-        # let its own licence error (classified as skipped) decide - never skip on a failed preflight.
-        $HasEntraP2 = (-not $SkusRead) -or ($ServicePlans -contains 'AAD_PREMIUM_P2')
-        $HasDefenderP2 = (-not $SkusRead) -or ($ServicePlans -contains 'THREAT_INTELLIGENCE')
-        $Skip = { param($Requirement) New-CIPPBecCollectorResult -Data @() -Skipped $true -Requirement $Requirement }
 
         Write-Information 'Full scope: mailbox inventory'
         $Inventory = & $Collect 'MailboxInventory' { Get-CIPPBecMailboxInventory -TenantFilter $TenantFilter -UserPrincipalName $UserName -Heuristics $Heuristics -AcceptedDomains $AcceptedDomains }

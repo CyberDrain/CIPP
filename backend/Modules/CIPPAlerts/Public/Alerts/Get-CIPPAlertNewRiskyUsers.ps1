@@ -59,12 +59,8 @@ function Get-CIPPAlertNewRiskyUsers {
                 if ($ContainHighRiskUsers -and $_.riskLevel -eq 'high' -and $_.riskState -eq 'atRisk') {
                     $RiskyUpn = $_.userPrincipalName
                     try {
-                        $Rows = Invoke-CIPPBecContainment -TenantFilter $TenantFilter -UserPrincipalName $RiskyUpn -Confirmed -Headers 'Alert Engine' -APIName 'Alert Engine'
-                        $Containment = @(foreach ($Row in @($Rows)) {
-                                $Text = [string]$Row.resultText
-                                if ($Row.copyField) { $Text = $Text.Replace([string]$Row.copyField, '[redacted]') }
-                                "$($Row.Action) ($($Row.state)): $Text"
-                            }) -join '; '
+                        $Rows = Invoke-CIPPBecContainment -TenantFilter $TenantFilter -UserPrincipalName $RiskyUpn -Confirmed -Redacted -Headers 'Alert Engine' -APIName 'Alert Engine'
+                        $Containment = @(foreach ($Row in @($Rows)) { "$($Row.Action) ($($Row.state)): $($Row.resultText)" }) -join '; '
                         Write-LogMessage -API 'Alerts' -tenant $TenantFilter -message "Auto-contained high-risk user $RiskyUpn (NewRiskyUsers alert)" -sev Info
                     } catch {
                         $Containment = "Auto-containment failed: $($_.Exception.Message)"

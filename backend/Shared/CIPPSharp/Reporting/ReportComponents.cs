@@ -1115,7 +1115,7 @@ namespace CIPP.Reporting
         }
 
         // Donut geometry in chart coords: the ring's centre and radius, and where the legend starts.
-        private const double DonutCy = 68, DonutOuterR = 60, DonutInnerR = 25, DonutLegendY = 144, LegendRowH = 14;
+        private const double DonutCy = 68, DonutOuterR = 60, DonutInnerR = 25, DonutLegendY = 158, LegendRowH = 14;
 
         /// <summary>The height a donut needs: the ring, then one legend row for up to three entries, two beyond.</summary>
         private static double DonutViewHeight(List<(string label, double value, string colour)> entries)
@@ -1168,16 +1168,25 @@ namespace CIPP.Reporting
         private static void DrawLegend(ReportContext ctx, OfficeDrawing dw,
             List<(string label, double value, string colour)> entries, double ox, double oy, double baseY)
         {
+            // Each row is laid out from its own centre: an entry is a swatch, a gap and its text, sized
+            // at roughly 3.6pt a character at the label size, with a gap between entries. Fixed columns
+            // put the first entry at the frame's edge and the rest wherever the columns happened to fall.
+            const double swatch = 8, swatchGap = 4, entryGap = 18, charW = 3.6;
             var n = entries.Count;
             var perRow = n <= 3 ? n : (int)Math.Ceiling(n / 2.0);
-            var colW = (ChartViewW - 40) / Math.Max(perRow, 1);
-            for (var i = 0; i < n; i++)
+            for (var row = 0; row * perRow < n; row++)
             {
-                var e = entries[i];
-                var row = i / perRow; var col = i % perRow;
-                var x = 20 + col * colW; var rowY = baseY + row * LegendRowH;
-                var sw = OfficeShape.Rectangle(8, 8); sw.FillColor = OC(e.colour); dw.AddShape(sw, ox + x, oy + rowY - 6);
-                AddT(dw, San($"{e.label} ({FmtNum(e.value)})"), ox + x + 12, oy + rowY - 6, colW - 12, 10, ChartLabelSize, ctx.Theme.Palette["body"], OfficeTextAlignment.Left);
+                var rowEntries = entries.Skip(row * perRow).Take(perRow).ToList();
+                var texts = rowEntries.Select(e => San($"{e.label} ({FmtNum(e.value)})")).ToList();
+                var widths = texts.Select(text => swatch + swatchGap + text.Length * charW).ToList();
+                var x = Math.Max(10, (ChartViewW - (widths.Sum() + entryGap * (rowEntries.Count - 1))) / 2);
+                var rowY = baseY + row * LegendRowH;
+                for (var i = 0; i < rowEntries.Count; i++)
+                {
+                    var sw = OfficeShape.Rectangle(swatch, swatch); sw.FillColor = OC(rowEntries[i].colour); dw.AddShape(sw, ox + x, oy + rowY - 6);
+                    AddT(dw, texts[i], ox + x + swatch + swatchGap, oy + rowY - 6, widths[i] + 20, 10, ChartLabelSize, ctx.Theme.Palette["body"], OfficeTextAlignment.Left);
+                    x += widths[i] + entryGap;
+                }
             }
         }
 

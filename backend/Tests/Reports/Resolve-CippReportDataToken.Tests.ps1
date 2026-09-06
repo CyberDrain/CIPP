@@ -94,6 +94,23 @@ Describe 'Resolve-CippReportDataToken' {
         $Blocks[0].limit | Should -Be 200
     }
 
+    It 'fills a chart from a picked source, grouping the rows the condition keeps' {
+        $Blocks = Resolve-Blocks @(@{ type = 'chart'; title = 'Compliant by OS'; chartSource = @{ type = 'Devices'; field = 'operatingSystem'; filter = @{ field = 'complianceState'; op = '='; value = 'compliant' } }; chartData = @() })
+        $Points = @($Blocks[0].chartData)
+        ($Points | ForEach-Object { "$($_.label)=$($_.value)" }) -join ';' | Should -Be 'macOS=1;Windows=1;(blank)=1'
+    }
+
+    It 'counts a picked source with no field as one slice' {
+        $Blocks = Resolve-Blocks @(@{ type = 'chart'; title = 'Devices'; chartSource = @{ type = 'Devices'; field = $null; filter = $null }; chartData = @() })
+        $Blocks[0].chartData[0].value | Should -Be 4
+    }
+
+    It 'fills a table from a picked source' {
+        $Blocks = Resolve-Blocks @(@{ type = 'richtable'; dataSource = @{ type = 'Users'; filter = @{ field = 'accountEnabled'; op = '!='; value = 'true' } }; columns = @(@{ header = 'Name'; key = 'c1'; field = 'displayName' }); rows = @() })
+        @($Blocks[0].rows).Count | Should -Be 1
+        $Blocks[0].rows[0].c1 | Should -Be 'Guest User'
+    }
+
     It 'keeps typed rows when the table source names nothing' {
         $Blocks = Resolve-Blocks @(@{ type = 'richtable'; dataSource = '&Nothing&'; columns = @(@{ header = 'A'; key = 'c1' }); rows = @(@{ c1 = 'typed' }) })
         $Blocks[0].rows[0].c1 | Should -Be 'typed'

@@ -22,6 +22,19 @@ vi.mock('../../../src/components/CippPdf/useBrandingSettings', async (importOrig
   useBrandingSettings: () => ({ coverImages: [{ id: 'img-1', name: 'Board room' }, { id: 'img-2', name: '' }] }),
 }))
 
+// A reporting database with one collection, as the builder page hands it to the cards.
+const dataShape = [
+  {
+    type: 'Devices',
+    count: 4,
+    fields: [
+      { name: 'deviceName', type: 'string' },
+      { name: 'operatingSystem', type: 'string' },
+      { name: 'complianceState', type: 'string' },
+    ],
+  },
+]
+
 const shell = (overrides = {}) => ({
   index: 0,
   totalBlocks: 3,
@@ -281,14 +294,19 @@ describe('TableBlockCard', () => {
     expect(latest.current.rows).toEqual([{ c2: 'b' }])
   })
 
-  it('takes a data source and a field per column to fill the rows from', async () => {
-    const latest = renderLive(createStructuredBlock('richtable', 'b1'))
+  it('picks a collection to fill the rows from and offers its fields on each column', async () => {
+    const latest = renderLive(createStructuredBlock('richtable', 'b1'), { dataShape })
 
-    await userEvent.type(screen.getByLabelText('Fill rows from data'), '&Mailboxes&')
-    await userEvent.type(screen.getAllByLabelText('Field (when filled from data)')[0], 'UPN')
+    await userEvent.click(screen.getByRole('combobox', { name: 'Fill rows from data' }))
+    await userEvent.click(within(await screen.findByRole('listbox')).getByText('Devices (4)'))
+    expect(latest.current.dataSource).toEqual({ type: 'Devices', field: null, filter: null })
 
-    expect(latest.current.dataSource).toBe('&Mailboxes&')
-    expect(latest.current.columns[0]).toMatchObject({ key: 'c1', field: 'UPN' })
+    const fieldInput = screen.getAllByLabelText('Field (when filled from data)')[0]
+    const list = document.getElementById(fieldInput.getAttribute('list'))
+    expect(Array.from(list.options).map((o) => o.value)).toEqual(['deviceName', 'operatingSystem', 'complianceState'])
+
+    await userEvent.type(fieldInput, 'deviceName')
+    expect(latest.current.columns[0]).toMatchObject({ key: 'c1', field: 'deviceName' })
   })
 
   it('labels the row fields after the column headers', () => {
@@ -333,12 +351,43 @@ describe('ChartBlockCard', () => {
     expect(screen.getByLabelText('Axis maximum')).toBeInTheDocument()
   })
 
-  it('takes a data source to fill the chart from when the report renders', async () => {
-    const latest = renderLive(createStructuredBlock('chart', 'b1'))
+  it('picks a collection and the field to count by from the recorded shape', async () => {
+    const latest = renderLive(createStructuredBlock('chart', 'b1'), { dataShape })
 
-    await userEvent.type(screen.getByLabelText('Fill from data'), '&Devices.operatingSystem&')
+    await userEvent.click(screen.getByRole('combobox', { name: 'Fill from data' }))
+    await userEvent.click(within(await screen.findByRole('listbox')).getByText('Devices (4)'))
+    expect(latest.current.chartSource).toEqual({ type: 'Devices', field: null, filter: null })
 
-    expect(latest.current.chartSource).toBe('&Devices.operatingSystem&')
+    await userEvent.click(screen.getByRole('combobox', { name: 'One slice per' }))
+    await userEvent.click(within(await screen.findByRole('listbox')).getByText('operatingSystem (string)'))
+    expect(latest.current.chartSource).toEqual({ type: 'Devices', field: 'operatingSystem', filter: null })
+  })
+
+  it('adds a condition the rows must meet', async () => {
+    const latest = renderLive(
+      { ...createStructuredBlock('chart', 'b1'), chartSource: { type: 'Devices', field: 'operatingSystem', filter: null } },
+      { dataShape }
+    )
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Only rows where' }))
+    await userEvent.click(within(await screen.findByRole('listbox')).getByText('complianceState (string)'))
+    // the chart's own data points have a Value column too; the condition's field renders last
+    await userEvent.type(screen.getAllByLabelText('Value').at(-1), 'compliant')
+
+    expect(latest.current.chartSource.filter).toEqual({ field: 'complianceState', op: '=', value: 'compliant' })
+  })
+
+  it('clears the data source back to the typed points', async () => {
+    const latest = renderLive(
+      { ...createStructuredBlock('chart', 'b1'), chartSource: { type: 'Devices', field: 'operatingSystem', filter: null } },
+      { dataShape }
+    )
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Fill from data' }))
+    await userEvent.keyboard('{Control>}a{/Control}{Backspace}')
+    await userEvent.tab()
+
+    expect(latest.current.chartSource).toBeNull()
   })
 
   it('adds a data point', async () => {

@@ -2,10 +2,20 @@
 // which score signal belongs to which objective, so the triage header (score spine) and the
 // evidence groups stay in lock-step: click a fired signal, land on the group that explains it.
 //
-// A finding is { key, title, columns?, custom? }: `key` is the becData field that holds its rows and
-// `columns` are the CippDataTable simpleColumns; a bespoke finding (mailbox state, sent-mail analysis)
-// carries `custom: '<renderer>'` instead. What is flagged and why comes from becFindingFlags (below),
-// and whether a check could run from BEC_FINDING_MARKERS — not from the finding object.
+// A finding is { key, title, columns, rows?, sections?, summary?, alert?, empty?, note?, custom? }:
+//  - `key` is the becData field the finding is about (and the flag/coverage lookup key);
+//  - `rows(becData, ctx)` projects the table rows (defaults to becData[key]); `columns` are the
+//    CippDataTable simpleColumns; `actions` names a component-provided row-action set;
+//  - `sections` are extra titled tables below the main one, each { title, rows, columns };
+//  - `summary` is a sentence shown above the tables, `alert` a warning banner, `empty` the prose when
+//    there is nothing to show;
+//  - `custom` names one of the few renderers whose shape is not tables (component-owned).
+// ctx is { windowDays, windowStart }. What is flagged and why comes from becFindingFlags (below), and
+// whether a check could run from BEC_FINDING_MARKERS - never from the finding object.
+
+const arr = (value) => (Array.isArray(value) ? value : [])
+export const joinList = (value) =>
+  Array.isArray(value) ? value.join(', ') : (value ?? '')
 
 export const BEC_GROUPS = [
   {
@@ -42,7 +52,25 @@ export const BEC_GROUPS = [
           'ForeignLocation',
         ],
       },
-      { key: 'MFADevices', title: 'MFA methods', custom: 'mfa' },
+      {
+        key: 'MFADevices',
+        title: 'MFA methods',
+        columns: ['Method', 'displayName', 'createdDateTime', 'Recent'],
+        rows: (b, ctx) =>
+          arr(b.MFADevices).map((m) => ({
+            Method: String(m['@odata.type'] || '').replace(
+              '#microsoft.graph.',
+              ''
+            ),
+            displayName: m.displayName,
+            createdDateTime: m.createdDateTime,
+            Recent: m.createdDateTime
+              ? new Date(m.createdDateTime) >= ctx.windowStart
+              : false,
+          })),
+        empty:
+          'No MFA methods are registered. If MFA was expected, an attacker may have removed it.',
+      },
       { key: 'RiskState', title: 'Identity Protection', custom: 'risk' },
       {
         key: 'RegisteredDevices',
@@ -61,7 +89,18 @@ export const BEC_GROUPS = [
       {
         key: 'IntuneDevices',
         title: 'Intune-managed devices',
-        custom: 'intune',
+        columns: [
+          'deviceName',
+          'operatingSystem',
+          'osVersion',
+          'complianceState',
+          'enrolledDateTime',
+          'lastSyncDateTime',
+          'deviceEnrollmentType',
+          'serialNumber',
+        ],
+        actions: 'intune',
+        empty: 'No Intune-managed devices found for this user.',
       },
     ],
   },
@@ -72,7 +111,41 @@ export const BEC_GROUPS = [
     blurb:
       'Footholds that survive a password reset — rules, consents, delegations, apps.',
     findings: [
-      { key: 'NewRules', title: 'Inbox rules', custom: 'rules' },
+      {
+        key: 'NewRules',
+        title: 'Inbox rules',
+        columns: ['Name', 'RecentlyChanged', 'RiskReasons', 'Description'],
+        rows: (b) =>
+          arr(b.NewRules).map((r) => ({
+            Name: r.Name,
+            RecentlyChanged: r.RecentlyChanged === true,
+            RiskReasons: joinList(r.RiskReasons),
+            Description: r.Description,
+            // Surfaced in the More Info panel (not as columns) so the rule's behaviour is readable in full.
+            MoveToFolder: r.MoveToFolder,
+            DeleteMessage: r.DeleteMessage,
+            MarkAsRead: r.MarkAsRead,
+            StopProcessingRules: r.StopProcessingRules,
+            Enabled: r.Enabled,
+            Risk: r.Risk,
+          })),
+        sections: [
+          {
+            title: (ctx) => `Rule changes in the last ${ctx.windowDays} days`,
+            rows: (b) => arr(b.InboxRuleChanges),
+            columns: [
+              'Operation',
+              'RuleName',
+              'Date',
+              'UserKey',
+              'ClientIP',
+              'Country',
+              'ForeignLocation',
+            ],
+          },
+        ],
+        empty: 'No inbox rules or rule changes found.',
+      },
       {
         key: 'Delegations',
         title: 'Mailbox delegations',
@@ -97,6 +170,15 @@ export const BEC_GROUPS = [
           'CatalogMatch',
           'Scope',
         ],
+        // nested objects the table cannot render flat
+        rows: (b) =>
+          arr(b.UserGrants).map((g) => ({
+            ...g,
+            HighRiskScopes: joinList(g.HighRiskScopes),
+            CatalogMatch: g.CatalogMatch?.Name
+              ? `${g.CatalogMatch.Name} (${g.CatalogMatch.Source})`
+              : '',
+          })),
       },
       {
         key: 'MailboxAddIns',
@@ -111,7 +193,55 @@ export const BEC_GROUPS = [
           'Flagged',
         ],
       },
-      { key: 'AddedApps', title: 'New applications', custom: 'apps' },
+      {
+        key: 'AddedApps',
+        title: 'New applications',
+        // Catalog matches first - a match is the point of this check, whatever the app's age. The
+        // catalog is CIPP's own MaliciousApps.json merged with the Huntress rogue-apps feed; Source says which.
+        columns: [
+          'displayName',
+          'appId',
+          'CatalogName',
+          'Source',
+          'Categories',
+          'Description',
+          'accountEnabled',
+          'createdDateTime',
+        ],
+        rows: (b) =>
+          arr(b.MaliciousSPs).map((a) => ({
+            ...a,
+            Categories: joinList(a.Categories),
+          })),
+        alert: (b) =>
+          arr(b.MaliciousSPs).length > 0
+            ? `${arr(b.MaliciousSPs).length} application(s) in this tenant match the known-malicious catalog. Consent-based access survives a password reset — remove any that are not explained.`
+            : null,
+        sections: [
+          {
+            title: 'New applications in the window',
+            rows: (b) =>
+              arr(b.AddedApps).map((a) => ({
+                displayName: a.displayName,
+                appId: a.appId,
+                createdDateTime: a.createdDateTime,
+                MaliciousMatch: a.MaliciousMatch?.Name || '',
+                Source: a.MaliciousMatch?.Source || '',
+                Categories: joinList(a.MaliciousMatch?.Categories),
+                Description: a.MaliciousMatch?.Description || '',
+              })),
+            columns: [
+              'displayName',
+              'appId',
+              'createdDateTime',
+              'MaliciousMatch',
+              'Source',
+              'Categories',
+            ],
+          },
+        ],
+        empty: 'No new applications found.',
+      },
     ],
   },
   {
@@ -125,12 +255,64 @@ export const BEC_GROUPS = [
       {
         key: 'TrustedSenders',
         title: 'Trusted & blocked senders',
-        custom: 'safelist',
+        columns: ['Sender', 'Type'],
+        rows: (b) => [
+          ...arr(b.TrustedSenders).map((s) => ({ Sender: s, Type: 'Trusted' })),
+          ...arr(b.BlockedSenders).map((s) => ({ Sender: s, Type: 'Blocked' })),
+        ],
+        sections: [
+          {
+            title: (ctx) => `Changes in the last ${ctx.windowDays} days`,
+            rows: (b) => arr(b.SafelistChanges),
+            columns: [
+              'Operation',
+              'UserKey',
+              'Date',
+              'ClientIP',
+              'Country',
+              'ForeignLocation',
+            ],
+          },
+        ],
+        empty: 'No trusted or blocked senders found.',
       },
       {
         key: 'TransportRuleChanges',
         title: 'Transport rules',
-        custom: 'transport',
+        columns: [
+          'Date',
+          'Operation',
+          'RuleName',
+          'Actor',
+          'ClientIP',
+          'Country',
+          'RiskyParameters',
+          'Flagged',
+        ],
+        rows: (b) =>
+          arr(b.TransportRuleChanges).map((c) => ({
+            ...c,
+            RiskyParameters: joinList(c.RiskyParameters),
+          })),
+        sections: [
+          {
+            title: 'Current rules that divert or suppress mail',
+            rows: (b) =>
+              arr(b.TransportRulesFlagged).map((r) => ({
+                ...r,
+                RiskReasons: joinList(r.RiskReasons),
+              })),
+            columns: [
+              'Name',
+              'State',
+              'Mode',
+              'WhenChanged',
+              'ChangedInWindow',
+              'RiskReasons',
+            ],
+          },
+        ],
+        empty: 'No transport-rule changes or diverting rules found.',
       },
       {
         key: 'MailboxPermissionChanges',
@@ -154,7 +336,58 @@ export const BEC_GROUPS = [
     blurb:
       'What left and who was hit — sent bursts, sharing links, mail activity, phishing.',
     findings: [
-      { key: 'SentMessages', title: 'Sent messages', custom: 'sent' },
+      {
+        key: 'SentMessages',
+        title: 'Sent messages',
+        columns: [
+          'Subject',
+          'RecipientAddress',
+          'Status',
+          'Received',
+          'FromIP',
+          'Country',
+        ],
+        summary: (b, ctx) => {
+          const a = b.SentMessageAnalysis
+          if (!a) return null
+          const sent = arr(b.SentMessages)
+          return (
+            `${a.TotalMessages ?? sent.length} message(s) to ${a.TotalRecipients ?? sent.length} recipient(s) in the last ${ctx.windowDays} days.` +
+            (a.FlaggedSubjectCount > 0
+              ? ` ${a.FlaggedSubjectCount} subject(s) look like a campaign.`
+              : '') +
+            (arr(a.Bursts).length > 0
+              ? ` ${arr(a.Bursts).length} send burst(s).`
+              : '')
+          )
+        },
+        sections: [
+          {
+            title: 'Repeated subjects',
+            rows: (b) => arr(b.SentMessageAnalysis?.RepeatedSubjects),
+            columns: [
+              'Subject',
+              'MessageCount',
+              'RecipientCount',
+              'FirstSent',
+              'LastSent',
+              'Flagged',
+            ],
+          },
+          {
+            title: 'Send bursts',
+            rows: (b) => arr(b.SentMessageAnalysis?.Bursts),
+            columns: [
+              'WindowStart',
+              'WindowMinutes',
+              'MessageCount',
+              'RecipientCount',
+              'TopSubject',
+            ],
+          },
+        ],
+        empty: 'No sent messages found in the window.',
+      },
       {
         key: 'SharingChanges',
         title: 'Sharing links',
@@ -172,7 +405,29 @@ export const BEC_GROUPS = [
       {
         key: 'MailActivity',
         title: 'Mailbox activity',
-        custom: 'mailActivity',
+        columns: [
+          'Operation',
+          'Count',
+          'ClientIP',
+          'Country',
+          'ForeignLocation',
+          'ClientInfoString',
+          'MailAccessType',
+          'Actor',
+          'FirstSeen',
+          'LastSeen',
+        ],
+        summary: (b) => {
+          const s = b.MailActivitySummary
+          if (!s) return null
+          return (
+            `${s.MailItemsAccessedCount} access(es), ${s.HardDeleteCount} hard delete(s), ${s.SoftDeleteCount} soft delete(s), ${s.SendCount} send(s) from ${s.DistinctClientIPs} client IP(s). Counts only — no items were read.` +
+            (s.HardDeleteExceeded
+              ? ` Hard deletes exceed the ${s.HardDeleteThreshold} threshold.`
+              : '')
+          )
+        },
+        empty: 'No mailbox-activity counts were recorded.',
       },
       {
         key: 'ReceivedMailFindings',

@@ -1030,7 +1030,17 @@ namespace CIPP.Reporting
             var hasCaption = !string.IsNullOrEmpty(caption);
             var plotTop = pad + (hasTitle ? titleH + titleGap : 0);
             var leftPad = Math.Max(0, (w - ChartViewW) / 2);
-            var totalH = plotTop + ChartViewH + pad + (hasCaption ? captionGap + captionH : 0);
+
+            var entries = data.Select((d, i) => (
+                label: ReportNode.RowStr(d, "label") ?? string.Empty,
+                value: ReportNode.RowNum(d, "value"),
+                colour: SeriesColour(ctx, ReportNode.RowStr(d, "colour"), i))).ToList();
+
+            // A donut is drawn to its own height - the ring and the legend rows it needs - rather than
+            // the 400x200 box the bar and trend charts fill, so the frame closes up under the legend
+            // instead of leaving a band of white there and above the ring.
+            var viewH = k == "donut" && entries.Count > 0 ? DonutViewHeight(entries) : ChartViewH;
+            var totalH = plotTop + viewH + pad + (hasCaption ? captionGap + captionH : 0);
 
             var dw = new OfficeDrawing(w, totalH);
             var frame = OfficeShape.RoundedRectangle(w, totalH, 6);
@@ -1039,19 +1049,14 @@ namespace CIPP.Reporting
             if (hasTitle)
                 AddT(dw, San(title!), 0, pad, w, titleH, ChartTitleSize, ctx.Theme.Palette["body"], OfficeTextAlignment.Center, true);
 
-            var entries = data.Select((d, i) => (
-                label: ReportNode.RowStr(d, "label") ?? string.Empty,
-                value: ReportNode.RowNum(d, "value"),
-                colour: SeriesColour(ctx, ReportNode.RowStr(d, "colour"), i))).ToList();
-
             if (entries.Count == 0)
-                AddT(dw, "No data available for this chart.", 0, plotTop + ChartViewH / 2 - 6, w, 12, ReportStyles.Body, ReportColours.Faint, OfficeTextAlignment.Center);
+                AddT(dw, "No data available for this chart.", 0, plotTop + viewH / 2 - 6, w, 12, ReportStyles.Body, ReportColours.Faint, OfficeTextAlignment.Center);
             else if (k == "donut") DrawDonut(ctx, dw, entries, leftPad, plotTop, centreLabel);
             else if (k == "trend") DrawTrend(ctx, dw, entries, leftPad, plotTop, max);
             else DrawBar(ctx, dw, entries, leftPad, plotTop);
 
             if (hasCaption)
-                AddT(dw, San(caption!), 0, plotTop + ChartViewH + captionGap, w, captionH, ChartLabelSize, ctx.Theme.Palette["chart"], OfficeTextAlignment.Center);
+                AddT(dw, San(caption!), 0, plotTop + viewH + captionGap, w, captionH, ChartLabelSize, ctx.Theme.Palette["chart"], OfficeTextAlignment.Center);
 
             item.Drawing(dw, PdfAlign.Left);
             item.Spacer(12);
@@ -1109,19 +1114,31 @@ namespace CIPP.Reporting
             }
         }
 
+        // Donut geometry in chart coords: the ring's centre and radius, and where the legend starts.
+        private const double DonutCy = 68, DonutOuterR = 60, DonutInnerR = 25, DonutLegendY = 144, LegendRowH = 14;
+
+        /// <summary>The height a donut needs: the ring, then one legend row for up to three entries, two beyond.</summary>
+        private static double DonutViewHeight(List<(string label, double value, string colour)> entries)
+        {
+            var visible = entries.Count(e => e.value > 0);
+            var rows = visible <= 3 ? 1 : 2;
+            return DonutLegendY + rows * LegendRowH - 2;
+        }
+
         private static void DrawDonut(ReportContext ctx, OfficeDrawing dw,
             List<(string label, double value, string colour)> entries, double ox, double oy, string? centreLabel = null)
         {
             var visible = entries.Where(e => e.value > 0).ToList();
             var total = visible.Sum(e => e.value);
+            var viewH = DonutViewHeight(entries);
             if (total <= 0)
             {
-                AddT(dw, "No data available for this chart.", ox, oy + ChartViewH / 2 - 6, ChartViewW, 12, ReportStyles.Body, ReportColours.Faint, OfficeTextAlignment.Center);
+                AddT(dw, "No data available for this chart.", ox, oy + viewH / 2 - 6, ChartViewW, 12, ReportStyles.Body, ReportColours.Faint, OfficeTextAlignment.Center);
                 return;
             }
-            // Local chart coords (0..400, 0..200); all slices share one 400x200 path box placed at the
-            // chart offset, so they align (a bare Path() normalises each to its own box and misplaces them).
-            double cx = ChartViewW / 2, cy = 85, outerR = 60, innerR = 25;
+            // Local chart coords (0..400, 0..viewH); all slices share one path box placed at the chart
+            // offset, so they align (a bare Path() normalises each to its own box and misplaces them).
+            double cx = ChartViewW / 2, cy = DonutCy, outerR = DonutOuterR, innerR = DonutInnerR;
             double preceding = 0;
             foreach (var e in visible)
             {
@@ -1135,7 +1152,7 @@ namespace CIPP.Reporting
                 cmds.Add(OfficePathCommand.LineTo(ie.x, ie.y));
                 ArcBeziers(cmds, cx, cy, innerR, endAngle * Math.PI / 180, startAngle * Math.PI / 180);
                 cmds.Add(OfficePathCommand.Close());
-                var slice = OfficeShape.Path(ChartViewW, ChartViewH, cmds);
+                var slice = OfficeShape.Path(ChartViewW, viewH, cmds);
                 slice.FillColor = OC(e.colour); slice.StrokeColor = OC(ReportColours.White); slice.StrokeWidth = 1;
                 dw.AddShape(slice, ox, oy);
                 preceding += e.value;
@@ -1145,7 +1162,7 @@ namespace CIPP.Reporting
             AddT(dw, FmtNum(total), ox + ChartViewW / 2 - 40, oy + cy - (centred ? 8 : 13), 80, 16, 14, ReportColours.Ink, OfficeTextAlignment.Center);
             if (!centred)
                 AddT(dw, San(centreLabel!), ox + ChartViewW / 2 - 40, oy + cy + 8, 80, 10, 7, ReportColours.Muted, OfficeTextAlignment.Center);
-            DrawLegend(ctx, dw, visible, ox, oy, 172);
+            DrawLegend(ctx, dw, visible, ox, oy, DonutLegendY);
         }
 
         private static void DrawLegend(ReportContext ctx, OfficeDrawing dw,
@@ -1158,7 +1175,7 @@ namespace CIPP.Reporting
             {
                 var e = entries[i];
                 var row = i / perRow; var col = i % perRow;
-                var x = 20 + col * colW; var rowY = baseY + row * 14;
+                var x = 20 + col * colW; var rowY = baseY + row * LegendRowH;
                 var sw = OfficeShape.Rectangle(8, 8); sw.FillColor = OC(e.colour); dw.AddShape(sw, ox + x, oy + rowY - 6);
                 AddT(dw, San($"{e.label} ({FmtNum(e.value)})"), ox + x + 12, oy + rowY - 6, colW - 12, 10, ChartLabelSize, ctx.Theme.Palette["body"], OfficeTextAlignment.Left);
             }

@@ -9,6 +9,7 @@ import { CippBecContainmentDrawer } from '../CippComponents/CippBecContainmentDr
 import { CippBecEvidenceExportButton } from '../CippComponents/CippBecEvidenceExportButton'
 import {
   becLevelColor,
+  becFindingFlags,
   BEC_SIGNAL_GROUP,
   becSkippedChecks,
 } from '../../utils/bec-objectives'
@@ -41,27 +42,17 @@ export const CippBecTriageHeader = ({
   // knows the drawer will have targets waiting, not to replace the drawer's own selection.
   const extras = useMemo(() => {
     if (!becData) return []
-    const d = (arr, pred) => (arr || []).filter(pred).length
+    const flags = becFindingFlags(becData, becData.AnalysisWindowDays || 7)
     return [
-      { n: d(becData.NewRules, () => true), label: 'suspicious inbox rule' },
-      {
-        n: d(becData.Delegations, (x) => x.Flagged),
-        label: 'flagged delegation',
-      },
-      { n: d(becData.UserGrants, (x) => x.Flagged), label: 'risky consent' },
-      {
-        n: d(becData.TransportRuleChanges, (x) => x.Flagged),
-        label: 'risky transport-rule change',
-      },
-      {
-        n: d(becData.MailboxAddIns, (x) => x.Flagged),
-        label: 'flagged add-in',
-      },
-      {
-        n: d(becData.RegisteredDevices, (x) => x.RegisteredInWindow),
-        label: 'new registered device',
-      },
-    ].filter((x) => x.n > 0)
+      ['NewRules', 'suspicious inbox rule'],
+      ['Delegations', 'flagged delegation'],
+      ['UserGrants', 'risky consent'],
+      ['TransportRuleChanges', 'risky transport-rule change'],
+      ['MailboxAddIns', 'flagged add-in'],
+      ['RegisteredDevices', 'new registered device'],
+    ]
+      .filter(([key]) => flags[key])
+      .map(([key, label]) => ({ n: flags[key].count, label }))
   }, [becData])
 
   const upn = userData?.userPrincipalName

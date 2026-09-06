@@ -36,6 +36,16 @@ import {
   Section,
   StatRow,
 } from './CippPdf'
+import {
+  BEC_GROUPS,
+  becGroupFlagged,
+  becWindowStart,
+} from '../utils/bec-objectives'
+import {
+  BEC_OBJECTIVE_COLOR,
+  BEC_OBJECTIVE_LABEL,
+  buildBecTimeline,
+} from '../utils/bec-timeline'
 
 // BEC Remediation PDF Document Component
 // Exported so the branding preview can render this report against sample data, and so tests can
@@ -45,7 +55,6 @@ export const BECRemediationReportDocument = ({
   becData,
   brandingSettings,
   tenantName,
-  remediationData,
   variables,
   // 'full' (default) = every page; 'summary' = the executive pages only, for a C-suite reader.
   variant = 'full',
@@ -123,16 +132,10 @@ export const BECRemediationReportDocument = ({
     (locationAnalysis?.ForeignSharingChangeCount || 0) +
     (locationAnalysis?.ForeignSentMessageCount || 0)
 
-  // the analysis window: 7 days before the data was extracted
-  const analysisWindowStart = (() => {
-    const extractedAt = becData?.ExtractedAt
-      ? new Date(becData.ExtractedAt)
-      : new Date()
-    if (Number.isNaN(extractedAt.getTime())) {
-      return new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
-    }
-    return new Date(extractedAt.getTime() - 7 * 24 * 60 * 60 * 1000)
-  })()
+  const analysisWindowStart = becWindowStart(
+    becData,
+    becData?.AnalysisWindowDays || 7
+  )
 
   const recentIntuneDevices = (becData?.IntuneDevices || []).filter(
     (device) => {
@@ -171,63 +174,17 @@ export const BECRemediationReportDocument = ({
     }
   )
 
-  // Determine threat level. Runs made after the score moved server-side carry becData.Score
-  // (same weights, computed once for the API, the page and this report); older cached runs
-  // fall back to the original client-side calculation so they still render.
-  const calculateThreatLevel = () => {
-    if (becData?.Score?.Level) {
-      const level = becData.Score.Level
-      return {
-        level,
-        value: becData.Score.Value,
-        color:
-          level === 'High'
-            ? '#742A2A'
-            : level === 'Medium'
-              ? '#744210'
-              : '#22543D',
-      }
-    }
-    let threatScore = 0
-    if (stats.newRules > 0) threatScore += 3
-    if (stats.ruleChanges > 0) threatScore += 3
-    // A change to this mailbox's permissions outweighs unrelated tenant churn, which the
-    // tenant-wide search also surfaces
-    if (stats.permissionChangesTargetingUser > 0) threatScore += 2
-    else if (stats.permissionChanges > 0) threatScore += 1
-    // Generic new service principals appear constantly; the actually-bad ones score +5 below
-    if (stats.newApps > 0) threatScore += 1
-    if (stats.newUsers > 5) threatScore += 1
-    if (stats.safelistChanges > 0) threatScore += 2
-
-    // Check for suspicious rules (RSS folder moves)
-    const hasSuspiciousRules = becData?.NewRules?.some((rule) =>
-      rule.MoveToFolder?.includes('RSS')
-    )
-    if (hasSuspiciousRules) threatScore += 5
-
-    // A catalog-matched application is a confirmed bad indicator, not a heuristic
-    if (stats.maliciousApps > 0) threatScore += 5
-    // Only a successful foreign sign-in proves access - failed foreign attempts are
-    // password-spray background noise present on almost every tenant
-    if (stats.foreignSuccessfulSignIns > 0) threatScore += 3
-    if (stats.foreignActivity > 0) threatScore += 3
-    // An anonymous link exposes data to anyone holding the URL, past any later reset
-    if (stats.anonymousLinks > 0) threatScore += 3
-    // Repeated-subject campaigns and send bursts are how a compromised mailbox spreads
-    if (stats.massMailFlagged) threatScore += 3
-    // Persistence moves during the window: a fresh MFA method or device enrollment
-    if (stats.recentMfaDevices > 0) threatScore += 2
-    if (stats.recentIntuneDevices > 0) threatScore += 2
-
-    if (threatScore >= 7)
-      return { level: 'High', value: threatScore, color: '#742A2A' }
-    if (threatScore >= 4)
-      return { level: 'Medium', value: threatScore, color: '#744210' }
-    return { level: 'Low', value: threatScore, color: '#22543D' }
+  // The threat level is computed server-side (Get-CIPPBecScore) and stored on the run.
+  const threatLevel = {
+    level: becData?.Score?.Level || 'Low',
+    value: becData?.Score?.Value ?? 0,
+    color:
+      becData?.Score?.Level === 'High'
+        ? '#742A2A'
+        : becData?.Score?.Level === 'Medium'
+          ? '#744210'
+          : '#22543D',
   }
-
-  const threatLevel = calculateThreatLevel()
   const appliedSignals = (becData?.Score?.Breakdown || []).filter(
     (signal) => signal.Applied
   )
@@ -273,11 +230,6 @@ export const BECRemediationReportDocument = ({
   // check pages render. These lead the report so a reader who stops after the first pages still has
   // the verdict, the shape of what was found, and what to do about it, before any deep detail.
   // ============================================================================================
-  const parseDate = (value) => {
-    if (!value) return null
-    const parsed = new Date(value)
-    return Number.isNaN(parsed.getTime()) ? null : parsed
-  }
   const forwardingAddress =
     becData?.MailboxState?.ForwardingSmtpAddress ||
     becData?.MailboxState?.ForwardingAddress ||
@@ -338,7 +290,7 @@ export const BECRemediationReportDocument = ({
       danger: stats.foreignSuccessfulSignIns,
     },
     { area: 'Directory audit events', count: flaggedAudits.length },
-    { area: 'Identity Protection risk', count: riskState?.IsAtRisk ? 1 : 0 },
+    { area: 'Identity Protection risk', count: riskState?.Listed ? 1 : 0 },
   ].map((row) => {
     const danger = row.danger || 0
     const flagged = row.count || 0
@@ -358,55 +310,18 @@ export const BECRemediationReportDocument = ({
     (row) => row.result !== 'Clear'
   ).length
 
-  // The findings grouped by the attacker objective they serve — the same five-objective lens the
-  // case workspace uses — so the breakdown reads as a story (how far the intrusion got) not a list.
-  const objectiveBreakdown = [
-    {
-      label: 'Access',
-      value:
-        stats.foreignSuccessfulSignIns +
-        stats.recentMfaDevices +
-        recentRegisteredDevices.length +
-        stats.recentIntuneDevices +
-        (riskState?.IsAtRisk ? 1 : 0),
-      colour: '#3182CE',
-    },
-    {
-      label: 'Persistence',
-      value:
-        stats.newRules +
-        stats.ruleChanges +
-        flaggedDelegations.length +
-        flaggedGrants.length +
-        stats.maliciousApps +
-        flaggedAddIns.length,
-      colour: '#805AD5',
-    },
-    {
-      label: 'Mail flow',
-      value:
-        stats.permissionChanges +
-        flaggedTransportRules.length +
-        flaggedTransportChanges.length +
-        (hasForwarding ? 1 : 0) +
-        stats.safelistChanges,
-      colour: '#DD6B20',
-    },
-    {
-      label: 'Exfiltration',
-      value:
-        stats.sharingChanges +
-        (stats.massMailFlagged ? 1 : 0) +
-        receivedFindings.length +
-        deliveredThreats.length,
-      colour: '#E53E3E',
-    },
-    {
-      label: 'Blast radius',
-      value: flaggedAudits.length + stats.newUsers,
-      colour: '#718096',
-    },
-  ]
+  // The findings grouped by the attacker objective they serve — the same five-objective lens and
+  // the same flag predicates the case workspace uses, so the report and the page agree.
+  const objectiveFlagged = becGroupFlagged(becData, windowDays)
+  const objectiveBreakdown = BEC_GROUPS.map((group) => ({
+    label: BEC_OBJECTIVE_LABEL[group.id],
+    value: objectiveFlagged[group.id] || 0,
+    colour: BEC_OBJECTIVE_COLOR[group.id],
+  }))
+  const objectiveMax = Math.max(
+    ...objectiveBreakdown.map((entry) => entry.value),
+    1
+  )
   const totalFindings = objectiveBreakdown.reduce(
     (sum, objective) => sum + objective.value,
     0
@@ -516,7 +431,7 @@ export const BECRemediationReportDocument = ({
       `Unauthorized access is confirmed — ${
         stats.foreignSuccessfulSignIns + foreignNonInteractive.length
       } successful sign-in(s) came from outside the account's assigned location.`,
-    riskState?.IsAtRisk &&
+    riskState?.Listed &&
       `Microsoft Identity Protection currently flags this account as at risk${
         riskState.RiskLevel ? ` (${riskState.RiskLevel} risk)` : ''
       }.`,
@@ -542,105 +457,15 @@ export const BECRemediationReportDocument = ({
       `${flaggedDelegations.length} mailbox delegation(s) let another account read this mailbox.`,
   ].filter(Boolean)
 
-  // A chronological "order of events" that correlates every timestamped signal — sign-ins (with the
-  // client app and IP), directory changes, mailbox and mail-flow changes, sharing, and the mail
-  // itself (sent, received-phishing and Defender-delivered) — so the report reads as the shape of the
-  // intrusion over time. Each row carries who/where detail, and identical bursts collapse to one ×N
-  // line so a repeated audit event does not drown the narrative.
-  const shortUpn = (value) => {
-    const text = String(value ?? '')
-    return text.length > 34 && text.includes('@') ? text.split('@')[0] : text
-  }
-  const joinDetail = (...parts) => parts.filter(Boolean).join(' · ')
-  const timelineRaw = [
-    ...foreignSignIns.map((signIn) => ({
-      date: parseDate(
-        signIn.CreatedDateTime || signIn.createdDateTime || signIn.Timestamp
-      ),
-      label: `Sign-in (${signIn.Status || 'unknown'})`,
-      detail: joinDetail(
-        [signIn.City, signIn.Country].filter(Boolean).join(', '),
-        signIn.AppDisplayName || signIn.appDisplayName || signIn.ClientAppUsed,
-        signIn.IPAddress || signIn.ipAddress || signIn.ClientIP
-      ),
-    })),
-    ...flaggedAudits.map((audit) => ({
-      date: parseDate(audit.ActivityDateTime),
-      label: audit.Activity || 'Directory audit event',
-      detail: joinDetail(shortUpn(audit.InitiatedBy), audit.ClientIP),
-    })),
-    ...(becData?.InboxRuleChanges || []).map((change) => ({
-      date: parseDate(change.Date),
-      label: change.Operation || 'Inbox rule change',
-      detail: joinDetail(
-        change.RuleName,
-        change.ClientIP,
-        change.ForeignLocation === true ? 'foreign' : null
-      ),
-    })),
-    ...(becData?.MailboxPermissionChanges || []).map((change) => ({
-      date: parseDate(change.Date),
-      label: change.Operation || 'Mailbox permission change',
-      detail: joinDetail(
-        change.TargetsSuspect ? 'targets this mailbox' : null,
-        change.ClientIP
-      ),
-    })),
-    ...(becData?.SafelistChanges || []).map((change) => ({
-      date: parseDate(change.Date),
-      label: change.Operation || 'Safelist change',
-      detail: joinDetail(change.ClientIP),
-    })),
-    ...(becData?.SharingChanges || []).map((change) => ({
-      date: parseDate(change.Date),
-      label: change.Operation || 'Sharing change',
-      detail: joinDetail(change.FileName, change.Target),
-    })),
-    ...(becData?.SentMessages || []).map((message) => ({
-      date: parseDate(message.Received),
-      label: 'Sent mail',
-      detail: joinDetail(
-        message.Subject,
-        message.RecipientAddress ? `to ${message.RecipientAddress}` : null,
-        message.FromIP
-      ),
-    })),
-    ...receivedFindings.map((finding) => ({
-      date: parseDate(finding.Received),
-      label: `Received: ${finding.FindingType || 'finding'}`,
-      detail: joinDetail(finding.Subject, finding.SenderAddress),
-    })),
-    ...deliveredThreats.map((threat) => ({
-      date: parseDate(threat.ReceivedDateTime),
-      label: 'Threat delivered (Defender)',
-      detail: joinDetail(threat.Subject, threat.SenderAddress),
-    })),
-    ...(becData?.MFADevices || []).filter(isRecentMfaDevice).map((method) => ({
-      date: parseDate(method.createdDateTime),
-      label: 'MFA method registered',
-      detail: String(method['@odata.type'] || '').replace(
-        '#microsoft.graph.',
-        ''
-      ),
-    })),
-    ...recentRegisteredDevices.map((device) => ({
-      date: parseDate(device.registrationDateTime || device.createdDateTime),
-      label: 'Entra device registered',
-      detail: device.displayName || device.deviceId || '',
-    })),
-    ...recentIntuneDevices.map((device) => ({
-      date: parseDate(device.enrolledDateTime),
-      label: 'Intune device enrolled',
-      detail: device.deviceName || device.model || '',
-    })),
-    ...(becData?.ChangedPasswords || []).map((user) => ({
-      date: parseDate(user.lastPasswordChangeDateTime),
-      label: 'Password changed',
-      detail: user.displayName || user.userPrincipalName || '',
-    })),
-  ]
-    .filter((event) => event.date)
-    .sort((a, b) => a.date - b.date)
+  // A chronological "order of events" that correlates every timestamped signal — the same event
+  // stream the case page's timeline shows (buildBecTimeline) — so the report reads as the shape of
+  // the intrusion over time. Identical bursts collapse to one ×N line so a repeated audit event does
+  // not drown the narrative.
+  const { events: timelineRaw } = buildBecTimeline(
+    becData,
+    windowDays,
+    userData?.userPrincipalName
+  )
 
   // Collapse a run of identical events in the same minute (same label and detail) into one ×N row.
   const timelineCollapsed = []
@@ -658,8 +483,7 @@ export const BECRemediationReportDocument = ({
     }
     timelineCollapsed.push({ ...event, minute, count: 1 })
   })
-  const timelineTotal = timelineCollapsed.length
-  const timelineEvents = timelineCollapsed.slice(0, 40).map((event) => ({
+  const timelineEvents = timelineCollapsed.map((event) => ({
     when: formatDate(event.date),
     event: event.count > 1 ? `${event.label} (×${event.count})` : event.label,
     detail: event.detail,
@@ -727,7 +551,7 @@ export const BECRemediationReportDocument = ({
             <Bold>{tenantName}</Bold>. The investigation analyzed suspicious
             activity indicators including mailbox rules, permission changes, new
             applications, authentication patterns, and sign-in locations over a
-            7-day period.
+            {windowDays}-day period.
           </Paragraph>
 
           <Paragraph>
@@ -813,10 +637,7 @@ export const BECRemediationReportDocument = ({
                 items={objectiveBreakdown.map((objective) => ({
                   label: objective.label,
                   value: objective.value,
-                  max: Math.max(
-                    ...objectiveBreakdown.map((entry) => entry.value),
-                    1
-                  ),
+                  max: objectiveMax,
                   display: `${objective.value}`,
                   colour: objective.colour,
                 }))}
@@ -890,14 +711,8 @@ export const BECRemediationReportDocument = ({
                   { header: 'Detail', key: 'detail', width: 3 },
                 ]}
                 rows={timelineEvents}
-                limit={timelineEvents.length}
+                limit={40}
               />
-              {timelineTotal > timelineEvents.length && (
-                <Note>
-                  Showing the first {timelineEvents.length} of {timelineTotal}{' '}
-                  correlated events, earliest first.
-                </Note>
-              )}
             </>
           ) : (
             <ClearBox title="✔️ No timestamped events in the window">
@@ -1196,8 +1011,9 @@ export const BECRemediationReportDocument = ({
               {stats.newUsers > 0 ? (
                 <>
                   <AlertBox title={`ℹ️ ${stats.newUsers} New User(s) Found`}>
-                    The following users were created in the last 7 days. Verify
-                    that each account creation was authorized and legitimate.
+                    The following users were created in the last {windowDays}{' '}
+                    days. Verify that each account creation was authorized and
+                    legitimate.
                   </AlertBox>
 
                   {becData.NewUsers.slice(0, 8).map((user, index) => (
@@ -1504,7 +1320,7 @@ export const BECRemediationReportDocument = ({
                   <Paragraph indent>
                     ℹ️ {stats.mfaDevices} MFA device(s) registered
                     {stats.recentMfaDevices > 0
-                      ? `, including ${stats.recentMfaDevices} registered in the last 7 days. Verify the recent registrations were made by the user — attackers register their own method to keep access after a password reset.`
+                      ? `, including ${stats.recentMfaDevices} registered in the last ${windowDays} days. Verify the recent registrations were made by the user — attackers register their own method to keep access after a password reset.`
                       : '. Verify each device belongs to the user.'}
                   </Paragraph>
 
@@ -1524,7 +1340,8 @@ export const BECRemediationReportDocument = ({
                         {'\n'}
                         Registered: {formatDate(device.createdDateTime)}
                         {isRecentMfaDevice(device) &&
-                          '\n⚠️ Registered in the last 7 days'}
+                          `
+⚠️ Registered in the last ${windowDays} days`}
                       </InfoBox>
                     ))}
                   {becData.MFADevices.length > 5 && (
@@ -1710,8 +1527,8 @@ export const BECRemediationReportDocument = ({
                     ℹ️ {stats.intuneDevices} Intune-managed device(s) associated
                     with this user
                     {stats.recentIntuneDevices > 0
-                      ? `, including ${stats.recentIntuneDevices} enrolled in the last 7 days.`
-                      : '. None were enrolled in the last 7 days.'}
+                      ? `, including ${stats.recentIntuneDevices} enrolled in the last ${windowDays} days.`
+                      : `. None were enrolled in the last ${windowDays} days.`}
                   </Paragraph>
 
                   {sortedIntuneDevices.slice(0, 5).map((device, index) => (
@@ -2377,7 +2194,7 @@ export const BECRemediationReportDocument = ({
                 {'\n'}
                 Organization: {tenantName}
                 {'\n'}
-                Analysis Period: 7 days
+                Analysis Period: {windowDays} days
                 {'\n'}
                 Assigned Usage Location:{' '}
                 {locationAnalysis?.UsageLocation || 'Not assigned'}
@@ -2409,7 +2226,8 @@ export const BECRemediationReportDocument = ({
                 {'\n'}
                 MFA Devices: {stats.mfaDevices}
                 {'\n'}
-                Recent MFA Registrations (7d): {stats.recentMfaDevices}
+                Recent MFA Registrations ({windowDays}d):{' '}
+                {stats.recentMfaDevices}
                 {'\n'}
                 Password Changes: {stats.passwordChanges}
                 {'\n'}
@@ -2425,7 +2243,8 @@ export const BECRemediationReportDocument = ({
                 {'\n'}
                 Intune Devices: {stats.intuneDevices}
                 {'\n'}
-                Recent Intune Enrollments (7d): {stats.recentIntuneDevices}
+                Recent Intune Enrollments ({windowDays}d):{' '}
+                {stats.recentIntuneDevices}
                 {'\n'}
                 Foreign Sign-ins: {stats.foreignSignIns} (
                 {stats.foreignSuccessfulSignIns} successful)

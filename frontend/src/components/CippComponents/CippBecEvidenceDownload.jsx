@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { Button, CircularProgress, IconButton, Tooltip } from '@mui/material'
-import { CippIcons } from '../../utils/icon-registry'
 import { ApiPostCall } from '../../api/ApiCall'
 import { useBrandingSettings } from '../CippPdf/useBrandingSettings'
 import { useReportVariables } from '../CippPdf/useReportVariables'
@@ -32,17 +30,17 @@ const tenantOf = (row) => row?.Tenant ?? row?.tenantFilter
 const upnOf = (row) => row?.UserPrincipalName ?? row?.userPrincipalName
 
 /**
- * Downloads a case's evidence package WITH the report PDFs, without opening the case: it fetches the
- * case results, renders the full report and the C-suite summary in-memory (no browser tab), posts them
- * to the export endpoint, and saves the ZIP under a name carrying the user and case.
- *
- * Returned as a hook so one owner (the runs hub) drives it for every row and can show one status,
- * while the button below is the self-contained form for a single place.
+ * Downloads a case's evidence package WITH the report PDFs: fetches the case results when the caller
+ * has none, renders the full report and the C-suite summary in-memory (no browser tab), posts them to
+ * the export endpoint (which collates the ZIP with a SHA-256 manifest), and saves the ZIP under a name
+ * carrying the user and case. One hook serves the runs hub (per row) and the case page's export button.
  */
 export const useBecEvidenceDownload = () => {
   const brandingSettings = useBrandingSettings()
   const variables = useReportVariables()
   const [pendingCaseId, setPendingCaseId] = useState(null)
+  const [lastHash, setLastHash] = useState(null)
+  const [lastError, setLastError] = useState(null)
   const exportCall = ApiPostCall({})
 
   const download = async (row, providedBecData) => {
@@ -50,6 +48,7 @@ export const useBecEvidenceDownload = () => {
     const tenantFilter = tenantOf(row)
     if (!caseId || !tenantFilter || pendingCaseId) return
     setPendingCaseId(caseId)
+    setLastError(null)
     try {
       let becData = providedBecData
       if (!becData) {
@@ -102,10 +101,11 @@ export const useBecEvidenceDownload = () => {
           },
           {
             onSuccess: (result) => {
-              const zip = result?.data?.Evidence?.ZipBase64
-              if (zip) {
-                const blob = base64ToBlob(zip, 'application/zip')
-                const url = URL.createObjectURL(blob)
+              const evidence = result?.data?.Evidence
+              if (evidence?.ZipBase64) {
+                const url = URL.createObjectURL(
+                  base64ToBlob(evidence.ZipBase64, 'application/zip')
+                )
                 const link = document.createElement('a')
                 link.href = url
                 link.download = `BEC_Evidence_${safe(upnOf(row) || userData.id)}_${safe(caseId)}.zip`
@@ -114,67 +114,26 @@ export const useBecEvidenceDownload = () => {
                 document.body.removeChild(link)
                 URL.revokeObjectURL(url)
               }
+              setLastHash(evidence?.ZipSha256 || null)
               resolve()
             },
-            onError: () => resolve(),
+            onError: (error) => {
+              setLastError(
+                error?.response?.data?.Results ||
+                  'the export failed; see the logbook'
+              )
+              resolve()
+            },
           }
         )
       })
     } catch (error) {
       console.error('BEC evidence download failed', error)
+      setLastError(error?.message || 'the export failed; see the logbook')
     } finally {
       setPendingCaseId(null)
     }
   }
 
-  return { download, pendingCaseId, exportCall }
+  return { download, busy: pendingCaseId != null, lastHash, lastError }
 }
-
-/**
- * Self-contained download control for a single case (its own hook instance). `variant='icon'` for a
- * compact per-row button, otherwise a labelled button.
- */
-export const CippBecEvidenceDownloadButton = ({
-  row,
-  becData,
-  variant = 'button',
-  label = 'Download evidence (ZIP)',
-}) => {
-  const { download, pendingCaseId } = useBecEvidenceDownload()
-  const busy = pendingCaseId != null
-  const disabled = busy || !caseOf(row)
-
-  if (variant === 'icon') {
-    return (
-      <Tooltip title={busy ? 'Building evidence package…' : label}>
-        <span>
-          <IconButton
-            size="small"
-            onClick={() => download(row, becData)}
-            disabled={disabled}
-          >
-            {busy ? (
-              <CircularProgress size={18} />
-            ) : (
-              <CippIcons.Archive fontSize="small" />
-            )}
-          </IconButton>
-        </span>
-      </Tooltip>
-    )
-  }
-
-  return (
-    <Button
-      size="small"
-      variant="outlined"
-      startIcon={busy ? <CircularProgress size={16} /> : <CippIcons.Archive />}
-      onClick={() => download(row, becData)}
-      disabled={disabled}
-    >
-      {busy ? 'Building…' : label}
-    </Button>
-  )
-}
-
-export default CippBecEvidenceDownloadButton

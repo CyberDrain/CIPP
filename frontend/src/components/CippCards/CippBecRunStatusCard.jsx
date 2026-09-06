@@ -13,18 +13,6 @@ import { CippIcons } from '../../utils/icon-registry'
 import ReactTimeAgo from 'react-time-ago'
 import CippButtonCard from './CippButtonCard'
 import { CippJobProgress } from '../CippComponents/CippJobProgress'
-import { CippBecContainmentDrawer } from '../CippComponents/CippBecContainmentDrawer'
-import { PropertyList } from '../property-list'
-import { PropertyListItem } from '../property-list-item'
-
-const levelColor = (level) =>
-  level === 'High'
-    ? 'error'
-    : level === 'Medium'
-      ? 'warning'
-      : level === 'Low'
-        ? 'success'
-        : 'default'
 
 const toDate = (value) => {
   if (!value) return null
@@ -33,25 +21,22 @@ const toDate = (value) => {
 }
 
 /**
- * The investigation's status card: what the page is showing and what is happening to it.
- * state: loading | none | waiting | error | completed
+ * The investigation's status card while there is no completed case on screen (a completed case
+ * renders the triage header instead).
+ * state: loading | none | waiting | error
  *  - none:      the user has no run yet; nothing starts until the button is pressed
  *  - waiting:   a run is queued (no worker has picked it up) or running (live steps from the
  *               async-deployment job, the same progress rows the SharePoint deploy uses)
  *  - error:     the run failed; the failed phase is shown
- *  - completed: a summary of the run on screen
- * The header carries only the title and the state chips; the buttons live in the footer so a
- * long UPN never fights the actions for space.
+ * The header carries only the title and the state chips; the button lives in the footer so a
+ * long UPN never fights it for space.
  */
 export const CippBecRunStatusCard = ({
   userPrincipalName,
-  userId,
-  tenantFilter,
   state,
   caseId,
   scope,
   poll,
-  becData,
   onStart,
   startPending = false,
   windowDays = 7,
@@ -63,15 +48,9 @@ export const CippBecRunStatusCard = ({
   const failedStep = steps.find((step) => step.Status === 'failed')
   const jobQueued =
     state === 'waiting' && (!progress || progress.Status === 'queued')
-  const requestedAt = toDate(poll?.RequestedAt ?? becData?.Run?.RequestedAt)
+  const requestedAt = toDate(poll?.RequestedAt)
   const startedAt = toDate(poll?.StartedAt)
   const busy = state === 'waiting' || state === 'loading' || startPending
-  const run = becData?.Run
-  const completeness = becData?.Completeness || {}
-  const markers = Object.values(completeness).filter(Boolean)
-  const incomplete = markers.filter((marker) => marker.Complete === false)
-  const extractedAt = toDate(run?.ExtractedAt ?? becData?.ExtractedAt)
-  const evidenceAt = toDate(run?.EvidenceCreatedAt)
 
   let statusChip = null
   if (state === 'loading') {
@@ -97,16 +76,6 @@ export const CippBecRunStatusCard = ({
     )
   } else if (state === 'error') {
     statusChip = <Chip size="small" color="error" label="Failed" />
-  } else if (state === 'completed') {
-    statusChip = becData?.Score ? (
-      <Chip
-        size="small"
-        color={levelColor(becData.Score.Level)}
-        label={`${becData.Score.Level} (${becData.Score.Value})`}
-      />
-    ) : (
-      <Chip size="small" color="success" label="Completed" />
-    )
   }
 
   const startButton = (
@@ -121,9 +90,7 @@ export const CippBecRunStatusCard = ({
         </SvgIcon>
       }
     >
-      {state === 'completed' || state === 'error'
-        ? 'Run a new investigation'
-        : 'Run investigation'}
+      {state === 'error' ? 'Run a new investigation' : 'Run investigation'}
     </Button>
   )
 
@@ -162,22 +129,7 @@ export const CippBecRunStatusCard = ({
           </Stack>
         </Stack>
       }
-      CardButton={
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-          {startButton}
-          {state === 'completed' && (
-            <CippBecContainmentDrawer
-              userPrincipalName={userPrincipalName}
-              userId={userId}
-              tenantFilter={tenantFilter}
-              caseId={caseId}
-              becData={becData}
-              disabled={busy}
-              buttonText="Contain user"
-            />
-          )}
-        </Stack>
-      }
+      CardButton={startButton}
       isFetching={false}
     >
       {state === 'loading' && (
@@ -264,76 +216,6 @@ export const CippBecRunStatusCard = ({
           <Typography variant="body2" color="text.secondary">
             The failure is recorded in the logbook with the case id. Start a new
             run once the cause is fixed; the failed run stays in the history.
-          </Typography>
-        </Stack>
-      )}
-
-      {state === 'completed' && (
-        <Stack spacing={2}>
-          <Typography variant="body2">
-            Use the findings below as a guide to whether the mailbox has been
-            compromised. Everything was read from the last {windowDays} days and
-            is metadata only: audit records, sign-ins, permissions, rules and
-            trace headers - never message content.
-          </Typography>
-          <PropertyList>
-            <PropertyListItem
-              label="Extracted"
-              value={
-                extractedAt ? (
-                  <>
-                    <ReactTimeAgo date={extractedAt} /> (
-                    {extractedAt.toLocaleString()})
-                  </>
-                ) : (
-                  'unknown'
-                )
-              }
-            />
-            <PropertyListItem
-              label="Requested by"
-              value={run?.RequestedBy || 'unknown'}
-            />
-            <PropertyListItem
-              label="Checks"
-              value={
-                markers.length > 0
-                  ? `${markers.length - incomplete.length} of ${markers.length} complete${
-                      incomplete.length > 0
-                        ? `, ${incomplete.length} partial or failed`
-                        : ''
-                    }`
-                  : 'no completeness data'
-              }
-            />
-            <PropertyListItem
-              label="Containment"
-              value={
-                (run?.Containment || []).length > 0
-                  ? `${run.Containment.length} run(s) recorded on this case`
-                  : 'not run on this case'
-              }
-            />
-            <PropertyListItem
-              label="Evidence"
-              value={
-                run?.EvidenceSha256 ? (
-                  <>
-                    exported {evidenceAt && <ReactTimeAgo date={evidenceAt} />}{' '}
-                    <Box component="span" sx={{ fontFamily: 'monospace' }}>
-                      {run.EvidenceSha256.slice(0, 12)}...
-                    </Box>
-                  </>
-                ) : (
-                  'not exported'
-                )
-              }
-            />
-          </PropertyList>
-          <Typography variant="body2" color="text.secondary">
-            <strong>Contain user</strong> opens the containment drawer: pick any
-            combination of the classic six steps and the targeted actions the
-            findings support; critical actions need the UPN typed to confirm.
           </Typography>
         </Stack>
       )}

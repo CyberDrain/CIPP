@@ -162,45 +162,4 @@ describe('CippBecRunStatusCard', () => {
       screen.getByRole('button', { name: /run a new investigation/i })
     ).toBeEnabled()
   })
-
-  it('summarises a completed run, labels an older quick run, and offers containment', () => {
-    renderWithProviders(
-      <CippBecRunStatusCard
-        {...base}
-        state="completed"
-        caseId="BEC-3"
-        scope="Quick"
-        poll={{}}
-        becData={{
-          Score: { Level: 'High', Value: 11 },
-          Completeness: {
-            AuditLog: { Complete: true },
-            SignIns: { Complete: false, Cap: '50 sign-ins' },
-          },
-          Run: {
-            ExtractedAt: '2026-08-23T08:05:00Z',
-            RequestedBy: 'tech@msp.com',
-            Containment: [{ At: '2026-08-23T08:10:00Z' }],
-            EvidenceSha256: 'abcdef1234567890',
-            EvidenceCreatedAt: '2026-08-23T08:15:00Z',
-          },
-        }}
-        onStart={vi.fn()}
-      />
-    )
-    expect(screen.getByText('High (11)')).toBeInTheDocument()
-    expect(screen.getByText('Quick check (older run)')).toBeInTheDocument()
-    expect(
-      screen.getByText('1 of 2 complete, 1 partial or failed')
-    ).toBeInTheDocument()
-    expect(screen.getByText('tech@msp.com')).toBeInTheDocument()
-    expect(
-      screen.getByText('1 run(s) recorded on this case')
-    ).toBeInTheDocument()
-    expect(screen.getByText(/abcdef123456/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /contain user/i })).toBeEnabled()
-    expect(
-      screen.getByRole('button', { name: /run a new investigation/i })
-    ).toBeEnabled()
-  })
 })

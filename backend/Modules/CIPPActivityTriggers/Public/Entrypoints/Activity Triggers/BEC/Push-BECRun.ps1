@@ -117,6 +117,23 @@ function Push-BECRun {
         # renders a locale string neither understands
         $SignInDate = { if ($_.createdDateTime) { ([datetime]$_.createdDateTime).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') } else { $null } }
 
+        # Licence preflight, up front and all at once: a check the tenant cannot support is skipped with
+        # its reason instead of run only to fail. Get-CIPPTenantCapabilities is CIPP's shared (cached)
+        # service-plan read and the plan names are the ones Test-CIPPStandardLicense's presets use. If
+        # the read itself fails every check runs and the error classifier (Get-CIPPBecErrorInfo, via
+        # $Mark) is the safety net - never skip on a failed preflight.
+        $Capabilities = $null
+        try {
+            $Capabilities = Get-CIPPTenantCapabilities -TenantFilter $TenantFilter
+        } catch {
+            Write-LogMessage -API 'BECRun' -message "BEC preflight could not read tenant plans for $($TenantFilter): $((Get-NormalizedError -message $_.Exception.Message))" -tenant $TenantFilter -sev Info
+        }
+        $HasPlan = { param([string[]]$Plans) (-not $Capabilities) -or [bool]@($Plans | Where-Object { $Capabilities.$_ -eq $true }).Count }
+        $HasEntraP2 = & $HasPlan 'AAD_PREMIUM_P2'
+        $HasDefenderP2 = & $HasPlan 'THREAT_INTELLIGENCE', 'THREAT_INTELLIGENCE_GOV'
+        $HasIntune = & $HasPlan 'INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1'
+        $Skip = { param($Requirement) New-CIPPBecCollectorResult -Data @() -Skipped $true -Requirement $Requirement }
+
         & $Phase 'AuditLog' "Searching the unified audit log for the last $WindowDays days"
         Write-Information 'Getting audit logs'
         $auditLog = $null
@@ -471,27 +488,6 @@ function Push-BECRun {
         $RogueApps = $RogueAppFeed.Apps
         $CatalogAppIds = @($RogueApps.Keys)
         $RogueMatch = { param($AppId) $Key = ([string]$AppId).ToLowerInvariant(); if ($Key -and $RogueApps.ContainsKey($Key)) { $RogueApps[$Key] } else { $null } }
-
-        # Licence preflight: a check the tenant cannot support is skipped with its reason instead of
-        # run only to fail. An unknown (a preflight that itself errors) falls through to running the
-        # check - the error classifier (Get-CIPPBecErrorInfo, via $Mark) is the safety net, and is
-        # also what turns a missing mailbox into a skip.
-        $SkusRead = $false
-        $ServicePlans = @()
-        try {
-            $ServicePlans = @(New-GraphGetRequest -uri 'https://graph.microsoft.com/v1.0/subscribedSkus' -tenantid $TenantFilter -AsApp $true | ForEach-Object { $_.servicePlans } | Where-Object { $_.provisioningStatus -in @('Success', 'PendingProvisioning') } | ForEach-Object { [string]$_.servicePlanName })
-            $SkusRead = $true
-        } catch {
-            Write-LogMessage -API 'BECRun' -message "BEC preflight could not read tenant plans for $($TenantFilter): $((Get-NormalizedError -message $_.Exception.Message))" -tenant $TenantFilter -sev Info
-        }
-        # Gate only when we definitively read the tenant's plans; on an unknown, attempt the check and
-        # let its own licence error (classified as skipped) decide - never skip on a failed preflight.
-        $HasEntraP2 = (-not $SkusRead) -or ($ServicePlans -contains 'AAD_PREMIUM_P2')
-        $HasDefenderP2 = (-not $SkusRead) -or ($ServicePlans -contains 'THREAT_INTELLIGENCE')
-        # Any Intune plan (INTUNE_A, INTUNE_O365, INTUNE_EDU, ...). A plan we did not expect still runs the
-        # query, and Graph's 'not applicable to target tenant' answer is classified as a licence skip.
-        $HasIntune = (-not $SkusRead) -or (@($ServicePlans -match '^INTUNE_').Count -gt 0)
-        $Skip = { param($Requirement) New-CIPPBecCollectorResult -Data @() -Skipped $true -Requirement $Requirement }
 
         $Requests = @(
             @{

@@ -3,8 +3,10 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '../../test-utils'
 import {
+  BLOCK_CATEGORIES,
   STRUCTURED_BLOCK_TYPES,
   StructuredBlockCard,
+  blockTypesFor,
   createStructuredBlock,
   isStructuredBlock,
 } from '../../../src/components/ReportBuilder/ReportBuilderBlocks'
@@ -58,19 +60,35 @@ const renderLive = (initial, props = {}) => {
 }
 
 describe('block type registry', () => {
-  it('lists every structured type the builder offers', () => {
+  it('lists every structured type the builder offers, in picker order', () => {
     expect(STRUCTURED_BLOCK_TYPES.map((t) => t.value)).toEqual([
+      'note',
+      'richbullets',
+      'infobox',
+      'infoboxcolumns',
+      'richtable',
       'chart',
       'scorecard',
       'progress',
+      'page',
       'hero',
       'pagebreak',
     ])
   })
 
-  it('recognises structured types', () => {
+  it('offers every block type in exactly one category, the text blocks included', () => {
+    const values = BLOCK_CATEGORIES.flatMap((entry) => entry.blocks.map((b) => b.value))
+    expect(new Set(values).size).toBe(values.length)
+    expect(values).toEqual(expect.arrayContaining(['blank', 'test', 'database']))
+    expect(blockTypesFor('layout').map((b) => b.value)).toEqual(['page', 'hero', 'pagebreak'])
+    expect(blockTypesFor(undefined)).toEqual([])
+  })
+
+  it('recognises structured types, the callout styles included', () => {
     expect(isStructuredBlock('chart')).toBe(true)
     expect(isStructuredBlock('pagebreak')).toBe(true)
+    expect(isStructuredBlock('alertbox')).toBe(true)
+    expect(isStructuredBlock('clearbox')).toBe(true)
   })
 
   it('leaves the text block types to the page that owns their editors', () => {
@@ -109,6 +127,99 @@ describe('createStructuredBlock', () => {
 
   it('carries the id it was given', () => {
     expect(createStructuredBlock('chart', 'block-123').id).toBe('block-123')
+  })
+
+  it('gives a table keyed columns and a row keyed to them', () => {
+    const block = createStructuredBlock('richtable', 'b1')
+    expect(block.columns.map((c) => c.key)).toEqual(['c1', 'c2'])
+    expect(Object.keys(block.rows[0])).toEqual(['c1', 'c2'])
+  })
+
+  it('lays a callout grid out two across with a callout to edit', () => {
+    const block = createStructuredBlock('infoboxcolumns', 'b1')
+    expect(block.columns).toBe(2)
+    expect(block.items.length).toBeGreaterThan(0)
+  })
+})
+
+describe('PageBlockCard', () => {
+  it('edits the subtitle that goes in the page header', async () => {
+    const latest = renderLive(createStructuredBlock('page', 'b1'))
+
+    await userEvent.type(screen.getByLabelText('Subtitle'), 'Q3')
+
+    expect(latest.current.subtitle).toBe('Q3')
+  })
+})
+
+describe('NoteBlockCard', () => {
+  it('edits the note text', async () => {
+    const latest = renderLive({ ...createStructuredBlock('note', 'b1'), content: '' })
+
+    await userEvent.type(screen.getByLabelText('Note'), 'Figures as of Monday.')
+
+    expect(latest.current.content).toBe('Figures as of Monday.')
+  })
+})
+
+describe('BulletsBlockCard', () => {
+  it('edits a bullet without disturbing its lead', async () => {
+    const latest = renderLive(createStructuredBlock('richbullets', 'b1'))
+
+    await userEvent.type(screen.getByLabelText('Text'), ' Really.')
+
+    expect(latest.current.items[0].text).toBe('What it means for the organisation. Really.')
+    expect(latest.current.items[0].label).toBe('First point.')
+  })
+})
+
+describe('CalloutBlockCard', () => {
+  it('switches the block type with the style, so the renderer draws the right box', async () => {
+    const latest = renderLive(createStructuredBlock('infobox', 'b1'))
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Style' }))
+    await userEvent.click(within(await screen.findByRole('listbox')).getByText('Warning'))
+
+    expect(latest.current.type).toBe('alertbox')
+  })
+
+  it('keeps the title and text when the style changes', async () => {
+    const latest = renderLive({ ...createStructuredBlock('clearbox', 'b1'), title: 'All good', content: 'Nothing to do.' })
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Style' }))
+    await userEvent.click(within(await screen.findByRole('listbox')).getByText('Info'))
+
+    expect(latest.current).toMatchObject({ type: 'infobox', title: 'All good', content: 'Nothing to do.' })
+  })
+})
+
+describe('TableBlockCard', () => {
+  it('gives a new column the next free key', async () => {
+    const latest = renderLive(createStructuredBlock('richtable', 'b1'))
+
+    await userEvent.click(screen.getByLabelText('Add column'))
+
+    expect(latest.current.columns.map((c) => c.key)).toEqual(['c1', 'c2', 'c3'])
+  })
+
+  it('takes a removed column\'s cells with it', async () => {
+    const latest = renderLive({
+      ...createStructuredBlock('richtable', 'b1'),
+      rows: [{ c1: 'a', c2: 'b' }],
+    })
+
+    // the columns editor renders first, so its remove buttons come first
+    await userEvent.click(screen.getAllByRole('button', { name: 'Remove row' })[0])
+
+    expect(latest.current.columns.map((c) => c.key)).toEqual(['c2'])
+    expect(latest.current.rows).toEqual([{ c2: 'b' }])
+  })
+
+  it('labels the row fields after the column headers', () => {
+    renderLive(createStructuredBlock('richtable', 'b1'))
+
+    expect(screen.getByLabelText('Item')).toBeInTheDocument()
+    expect(screen.getByLabelText('Value')).toBeInTheDocument()
   })
 })
 

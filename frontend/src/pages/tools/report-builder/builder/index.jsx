@@ -84,8 +84,9 @@ import {
   useServerPdf,
 } from '../../../../components/CippPdf/useServerPdf'
 import {
-  STRUCTURED_BLOCK_TYPES,
+  BLOCK_CATEGORIES,
   StructuredBlockCard,
+  blockTypesFor,
   createStructuredBlock,
   isStructuredBlock,
 } from '../../../../components/ReportBuilder/ReportBuilderBlocks'
@@ -1016,6 +1017,7 @@ const Page = () => {
   const saveForm = useForm({ defaultValues: { templateName: '' } })
   const addBlockForm = useForm({
     defaultValues: {
+      blockCategory: null,
       blockType: null,
       testSuite: null,
       selectedTest: [],
@@ -1033,6 +1035,10 @@ const Page = () => {
     defaultValues: { scheduleName: '', recurrence: null, postExecution: [] },
   })
 
+  const watchBlockCategory = useWatch({
+    control: addBlockForm.control,
+    name: 'blockCategory',
+  })
   const watchBlockType = useWatch({
     control: addBlockForm.control,
     name: 'blockType',
@@ -1098,6 +1104,20 @@ const Page = () => {
       shouldValidate: false,
     })
   }, [watchBlockType])
+
+  // A block belongs to one category, so a pick from another category is cleared when it changes.
+  useEffect(() => {
+    const picked = addBlockForm.getValues('blockType')
+    if (
+      picked &&
+      !blockTypesFor(watchBlockCategory?.value).some((option) => option.value === picked.value)
+    ) {
+      addBlockForm.setValue('blockType', null, {
+        shouldDirty: false,
+        shouldValidate: false,
+      })
+    }
+  }, [watchBlockCategory])
 
   // When test suite changes, reset test selection.
   useEffect(() => {
@@ -1395,6 +1415,7 @@ const Page = () => {
         createStructuredBlock(type.value, `block-${Date.now()}`),
       ])
       addBlockForm.reset({
+        blockCategory: addBlockForm.getValues('blockCategory'),
         blockType: null,
         testSuite: null,
         selectedTest: [],
@@ -1413,6 +1434,7 @@ const Page = () => {
         },
       ])
       addBlockForm.reset({
+        blockCategory: addBlockForm.getValues('blockCategory'),
         blockType: null,
         testSuite: null,
         selectedTest: [],
@@ -1437,6 +1459,7 @@ const Page = () => {
         })),
       ])
       addBlockForm.reset({
+        blockCategory: addBlockForm.getValues('blockCategory'),
         blockType: null,
         testSuite: null,
         selectedTest: [],
@@ -1464,6 +1487,7 @@ const Page = () => {
         },
       ])
       addBlockForm.reset({
+        blockCategory: addBlockForm.getValues('blockCategory'),
         blockType: null,
         testSuite: null,
         selectedTest: [],
@@ -1490,6 +1514,7 @@ const Page = () => {
       })),
     ])
     addBlockForm.reset({
+      blockCategory: addBlockForm.getValues('blockCategory'),
       blockType: null,
       testSuite: null,
       selectedTest: [],
@@ -1810,20 +1835,29 @@ const Page = () => {
                   alignItems: 'center',
                 }}
               >
+                {/* Two steps, a category and then a block: the engine draws a dozen kinds of
+                    block, and one list of all of them is more than a dropdown reads well with. */}
+                <Grid size={{ xs: 12, md: 2 }}>
+                  <CippFormComponent
+                    type="autoComplete"
+                    name="blockCategory"
+                    label="Category"
+                    formControl={addBlockForm}
+                    multiple={false}
+                    creatable={false}
+                    options={BLOCK_CATEGORIES.map(({ label, value }) => ({ label, value }))}
+                  />
+                </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
                   <CippFormComponent
                     type="autoComplete"
                     name="blockType"
-                    label="Block Type"
+                    label="Block"
                     formControl={addBlockForm}
                     multiple={false}
                     creatable={false}
-                    options={[
-                      { label: 'Custom Block', value: 'blank' },
-                      { label: 'Test Result', value: 'test' },
-                      { label: 'Database Data', value: 'database' },
-                      ...STRUCTURED_BLOCK_TYPES,
-                    ]}
+                    disabled={!watchBlockCategory?.value}
+                    options={blockTypesFor(watchBlockCategory?.value)}
                   />
                 </Grid>
                 <CippFormCondition

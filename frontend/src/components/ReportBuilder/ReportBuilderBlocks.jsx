@@ -13,12 +13,63 @@ import { CHART_KINDS } from './reportSettings'
 
 /* ── Block definitions ───────────────────────────────────── */
 
-export const STRUCTURED_BLOCK_TYPES = [
-  { label: 'Chart', value: 'chart' },
-  { label: 'Score Cards', value: 'scorecard' },
-  { label: 'Progress Bars', value: 'progress' },
-  { label: 'Section Divider', value: 'hero' },
-  { label: 'Page Break', value: 'pagebreak' },
+/**
+ * Every block the builder can add, grouped the way the picker offers them: a category first, then
+ * the block. One flat list of all of them is more than a dropdown reads well with. The text blocks
+ * ('blank', 'test', 'database') keep their editors in the builder page; everything else is a
+ * structured block with an editor below. This mirrors the server engine's block vocabulary
+ * (ReportComponents.RenderBlock) - a block type not listed here has no way into a report.
+ */
+export const BLOCK_CATEGORIES = [
+  {
+    label: 'Text',
+    value: 'text',
+    blocks: [
+      { label: 'Custom Block', value: 'blank' },
+      { label: 'Note', value: 'note' },
+      { label: 'Bullet List', value: 'richbullets' },
+      { label: 'Callout', value: 'infobox' },
+      { label: 'Callout Grid', value: 'infoboxcolumns' },
+    ],
+  },
+  {
+    label: 'Data',
+    value: 'data',
+    blocks: [
+      { label: 'Test Result', value: 'test' },
+      { label: 'Database Data', value: 'database' },
+      { label: 'Table', value: 'richtable' },
+    ],
+  },
+  {
+    label: 'Visuals',
+    value: 'visuals',
+    blocks: [
+      { label: 'Chart', value: 'chart' },
+      { label: 'Score Cards', value: 'scorecard' },
+      { label: 'Progress Bars', value: 'progress' },
+    ],
+  },
+  {
+    label: 'Layout',
+    value: 'layout',
+    blocks: [
+      { label: 'Titled Page', value: 'page' },
+      { label: 'Section Divider', value: 'hero' },
+      { label: 'Page Break', value: 'pagebreak' },
+    ],
+  },
+]
+
+/** The blocks a category offers: the second step of the picker. */
+export const blockTypesFor = (category) =>
+  BLOCK_CATEGORIES.find((entry) => entry.value === category)?.blocks ?? []
+
+// One callout to the picker, three block types to the renderer; the editor switches between them.
+export const CALLOUT_STYLES = [
+  { label: 'Info', value: 'infobox' },
+  { label: 'Good news', value: 'clearbox' },
+  { label: 'Warning', value: 'alertbox' },
 ]
 
 const BLOCK_META = {
@@ -27,9 +78,22 @@ const BLOCK_META = {
   progress: { label: 'Progress Bars', Icon: CippIcons.Speed, colour: 'info' },
   hero: { label: 'Section Divider', Icon: CippIcons.ViewCarousel, colour: 'warning' },
   pagebreak: { label: 'Page Break', Icon: CippIcons.HorizontalRule, colour: 'default' },
+  page: { label: 'Titled Page', Icon: CippIcons.Description, colour: 'default' },
+  note: { label: 'Note', Icon: CippIcons.InfoOutlined, colour: 'default' },
+  richbullets: { label: 'Bullet List', Icon: CippIcons.List, colour: 'primary' },
+  infobox: { label: 'Callout', Icon: CippIcons.Info, colour: 'info' },
+  clearbox: { label: 'Callout', Icon: CippIcons.CheckCircle, colour: 'success' },
+  alertbox: { label: 'Callout', Icon: CippIcons.Warning, colour: 'warning' },
+  infoboxcolumns: { label: 'Callout Grid', Icon: CippIcons.ViewModule, colour: 'info' },
+  richtable: { label: 'Table', Icon: CippIcons.TableChart, colour: 'secondary' },
 }
 
 export const isStructuredBlock = (type) => Object.prototype.hasOwnProperty.call(BLOCK_META, type)
+
+/** The picker entries that are structured blocks, in picker order. */
+export const STRUCTURED_BLOCK_TYPES = BLOCK_CATEGORIES.flatMap((entry) => entry.blocks).filter(
+  (option) => isStructuredBlock(option.value)
+)
 
 // The stock covers, in the {label, value} shape CippAutoComplete works in.
 const HERO_BACKGROUND_OPTIONS = COVER_STOCK_OPTIONS.map((option) => ({
@@ -80,6 +144,39 @@ export const createStructuredBlock = (type, id) => {
       }
     case 'pagebreak':
       return { ...base, title: '' }
+    case 'page':
+      return { ...base, title: 'New page', subtitle: '' }
+    case 'note':
+      return { ...base, content: 'A short aside for the reader.' }
+    case 'richbullets':
+      return {
+        ...base,
+        title: 'Key points',
+        items: [{ label: 'First point.', text: 'What it means for the organisation.' }],
+      }
+    case 'infobox':
+    case 'clearbox':
+    case 'alertbox':
+      return { ...base, title: 'Worth noting', content: 'Something the reader should not miss.' }
+    case 'infoboxcolumns':
+      return {
+        ...base,
+        columns: 2,
+        items: [
+          { title: 'Point one', content: 'A short explanation.' },
+          { title: 'Point two', content: 'A short explanation.' },
+        ],
+      }
+    case 'richtable':
+      return {
+        ...base,
+        title: 'Table',
+        columns: [
+          { header: 'Item', key: 'c1' },
+          { header: 'Value', key: 'c2' },
+        ],
+        rows: [{ c1: '', c2: '' }],
+      }
     default:
       return base
   }
@@ -187,6 +284,8 @@ const RowsEditor = ({ rows, columns, onChange, addLabel = 'Add row', minRows = 1
               size="small"
               label={column.label}
               type={column.type || 'text'}
+              multiline={Boolean(column.multiline)}
+              minRows={column.multiline ? 2 : undefined}
               value={row[column.key] ?? ''}
               onChange={(event) => update(rowIndex, column.key, event.target.value)}
               sx={{ flex: column.width ?? 1 }}
@@ -436,9 +535,238 @@ export const PageBreakBlockCard = ({ block, index, ...shell }) => (
   </BlockShell>
 )
 
+/* ── Titled page ─────────────────────────────────────────── */
+
+export const PageBlockCard = ({ block, index, onUpdate, ...shell }) => (
+  <BlockShell block={block} index={index} {...shell}>
+    <Stack spacing={2}>
+      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+        Starts a new page with this title and subtitle in its header. The blocks that follow land on
+        it.
+      </Typography>
+      <Stack direction="row" spacing={1}>
+        <TitleField block={block} index={index} onUpdate={onUpdate} label="Page title" />
+        <TextField
+          size="small"
+          fullWidth
+          label="Subtitle"
+          value={block.subtitle ?? ''}
+          onChange={(event) => onUpdate(index, { ...block, subtitle: event.target.value })}
+        />
+      </Stack>
+    </Stack>
+  </BlockShell>
+)
+
+/* ── Note ────────────────────────────────────────────────── */
+
+export const NoteBlockCard = ({ block, index, onUpdate, ...shell }) => (
+  <BlockShell block={block} index={index} {...shell}>
+    <TextField
+      size="small"
+      fullWidth
+      multiline
+      minRows={2}
+      label="Note"
+      helperText="A small italic aside, the size of a caption."
+      value={block.content ?? ''}
+      onChange={(event) => onUpdate(index, { ...block, content: event.target.value })}
+    />
+  </BlockShell>
+)
+
+/* ── Bullet list ─────────────────────────────────────────── */
+
+export const BulletsBlockCard = ({ block, index, onUpdate, ...shell }) => {
+  const items = block.items || []
+  return (
+    <BlockShell
+      block={block}
+      index={index}
+      chips={<Chip label={`${items.length} bullets`} size="small" variant="outlined" />}
+      {...shell}
+    >
+      <Stack spacing={2}>
+        <TitleField block={block} index={index} onUpdate={onUpdate} />
+        <RowsEditor
+          rows={items}
+          columns={[
+            { key: 'label', label: 'Lead (bold)', width: 1 },
+            { key: 'text', label: 'Text', width: 3 },
+          ]}
+          onChange={(next) => onUpdate(index, { ...block, items: next })}
+          addLabel="Add bullet"
+        />
+      </Stack>
+    </BlockShell>
+  )
+}
+
+/* ── Callout ─────────────────────────────────────────────── */
+
+export const CalloutBlockCard = ({ block, index, onUpdate, ...shell }) => {
+  const set = (patch) => onUpdate(index, { ...block, ...patch })
+  const style = CALLOUT_STYLES.find((option) => option.value === block.type) ?? CALLOUT_STYLES[0]
+
+  return (
+    <BlockShell
+      block={block}
+      index={index}
+      chips={<Chip label={style.label} size="small" variant="outlined" />}
+      {...shell}
+    >
+      <Stack spacing={2}>
+        <Stack direction="row" spacing={1}>
+          <TitleField block={block} index={index} onUpdate={onUpdate} label="Callout title" />
+          <Box sx={{ minWidth: 180 }}>
+            <CippAutoComplete
+              size="small"
+              label="Style"
+              multiple={false}
+              creatable={false}
+              disableClearable={true}
+              options={CALLOUT_STYLES}
+              value={style}
+              onChange={(option) => set({ type: option?.value ?? 'infobox' })}
+            />
+          </Box>
+        </Stack>
+        <TextField
+          size="small"
+          fullWidth
+          multiline
+          minRows={3}
+          label="Text"
+          helperText="Markdown works here: **bold**, _italic_ and links."
+          value={block.content ?? ''}
+          onChange={(event) => set({ content: event.target.value })}
+        />
+      </Stack>
+    </BlockShell>
+  )
+}
+
+/* ── Callout grid ────────────────────────────────────────── */
+
+const GRID_LAYOUT_OPTIONS = [
+  { label: '2 across', value: 2 },
+  { label: '3 across', value: 3 },
+]
+
+export const CalloutGridBlockCard = ({ block, index, onUpdate, ...shell }) => {
+  const set = (patch) => onUpdate(index, { ...block, ...patch })
+  const items = block.items || []
+  const layout =
+    GRID_LAYOUT_OPTIONS.find((option) => option.value === Number(block.columns)) ??
+    GRID_LAYOUT_OPTIONS[0]
+
+  return (
+    <BlockShell
+      block={block}
+      index={index}
+      chips={<Chip label={`${items.length} callouts`} size="small" variant="outlined" />}
+      {...shell}
+    >
+      <Stack spacing={2}>
+        <Box sx={{ maxWidth: 200 }}>
+          <CippAutoComplete
+            size="small"
+            label="Layout"
+            multiple={false}
+            creatable={false}
+            disableClearable={true}
+            options={GRID_LAYOUT_OPTIONS}
+            value={layout}
+            onChange={(option) => set({ columns: option?.value ?? 2 })}
+          />
+        </Box>
+        <RowsEditor
+          rows={items}
+          columns={[
+            { key: 'title', label: 'Title', width: 1 },
+            { key: 'content', label: 'Text', width: 3, multiline: true },
+          ]}
+          onChange={(next) => set({ items: next })}
+          addLabel="Add callout"
+        />
+      </Stack>
+    </BlockShell>
+  )
+}
+
+/* ── Table ───────────────────────────────────────────────── */
+
+export const TableBlockCard = ({ block, index, onUpdate, ...shell }) => {
+  const set = (patch) => onUpdate(index, { ...block, ...patch })
+  const columns = block.columns || []
+  const rows = block.rows || []
+
+  // Columns are keyed rather than positional, so renaming a header never detaches the cells under
+  // it. A new column takes the next free key; a removed one takes its cells with it.
+  const nextKey = () =>
+    `c${columns.reduce((max, column) => Math.max(max, Number(String(column.key).replace(/[^0-9]/g, '')) || 0), 0) + 1}`
+  const setColumns = (next) => {
+    const keyed = next.map((column) => (column.key ? column : { ...column, key: nextKey() }))
+    const keep = new Set(keyed.map((column) => column.key))
+    set({
+      columns: keyed,
+      rows: rows.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => keep.has(key)))),
+    })
+  }
+
+  return (
+    <BlockShell
+      block={block}
+      index={index}
+      chips={<Chip label={`${rows.length} rows`} size="small" variant="outlined" />}
+      {...shell}
+    >
+      <Stack spacing={2}>
+        <TitleField block={block} index={index} onUpdate={onUpdate} />
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          Columns
+        </Typography>
+        <RowsEditor
+          rows={columns}
+          columns={[{ key: 'header', label: 'Column header', width: 1 }]}
+          onChange={setColumns}
+          addLabel="Add column"
+        />
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          Rows
+        </Typography>
+        <RowsEditor
+          rows={rows}
+          columns={columns.map((column, position) => ({
+            key: column.key,
+            label: column.header || `Column ${position + 1}`,
+            width: 1,
+          }))}
+          onChange={(next) => set({ rows: next })}
+          addLabel="Add row"
+        />
+      </Stack>
+    </BlockShell>
+  )
+}
+
 /** Pick the editor for a structured block. Returns null for block types handled elsewhere. */
 export const StructuredBlockCard = ({ block, ...props }) => {
   switch (block.type) {
+    case 'page':
+      return <PageBlockCard block={block} {...props} />
+    case 'note':
+      return <NoteBlockCard block={block} {...props} />
+    case 'richbullets':
+      return <BulletsBlockCard block={block} {...props} />
+    case 'infobox':
+    case 'clearbox':
+    case 'alertbox':
+      return <CalloutBlockCard block={block} {...props} />
+    case 'infoboxcolumns':
+      return <CalloutGridBlockCard block={block} {...props} />
+    case 'richtable':
+      return <TableBlockCard block={block} {...props} />
     case 'chart':
       return <ChartBlockCard block={block} {...props} />
     case 'scorecard':

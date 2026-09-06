@@ -91,10 +91,8 @@ const PREVIEW_TOOLTIP =
 // ListBrandingSettings, and base64 adds about a third on top.
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-// The formats the report engine draws; Add-CIPPImage enforces the same list. PNG and JPEG are stored
-// as picked. Anything else the browser can decode (SVG, GIF, BMP, WebP) is redrawn as a PNG here - at
-// its own size for a raster, at up to 1024px for an SVG - so the stored image, the branding preview
-// (react-pdf, which only takes PNG/JPEG) and the server-rendered reports all see one plain raster.
+// The formats the report engine draws, stored exactly as picked; Add-CIPPImage enforces the same
+// list. TIFF is left out only because browsers cannot show it in the gallery.
 const SUPPORTED_IMAGE_TYPES = [
   "image/png",
   "image/jpeg",
@@ -103,39 +101,8 @@ const SUPPORTED_IMAGE_TYPES = [
   "image/webp",
   "image/svg+xml",
 ];
-const SVG_RASTER_PX = 1024;
 
-const readAsDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = () => reject(new Error("The image could not be read"));
-    reader.readAsDataURL(file);
-  });
-
-const toPngDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const width = img.naturalWidth || 1;
-      const height = img.naturalHeight || 1;
-      const scale = file.type === "image/svg+xml" ? SVG_RASTER_PX / Math.max(width, height) : 1;
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(width * scale));
-      canvas.height = Math.max(1, Math.round(height * scale));
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("The image could not be decoded"));
-    };
-    img.src = url;
-  });
-
-const readImageFile = async (file, onSuccess) => {
+const readImageFile = (file, onSuccess) => {
   if (!file) return;
   if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
     alert("Unsupported image format. Use PNG, JPEG, GIF, BMP, WebP or SVG.");
@@ -145,23 +112,9 @@ const readImageFile = async (file, onSuccess) => {
     alert("File size must be less than 5MB");
     return;
   }
-  let dataUrl;
-  try {
-    dataUrl =
-      file.type === "image/png" || file.type === "image/jpeg"
-        ? await readAsDataUrl(file)
-        : await toPngDataUrl(file);
-  } catch {
-    alert("The image could not be read.");
-    return;
-  }
-  // Checked again after conversion: a redrawn PNG can be larger than the file that was picked.
-  const decodedBytes = Math.ceil(((dataUrl.length - dataUrl.indexOf(",") - 1) * 3) / 4);
-  if (decodedBytes > MAX_IMAGE_BYTES) {
-    alert("File size must be less than 5MB");
-    return;
-  }
-  onSuccess(dataUrl);
+  const reader = new FileReader();
+  reader.onload = (e) => onSuccess(e.target.result);
+  reader.readAsDataURL(file);
 };
 
 const GalleryTile = ({

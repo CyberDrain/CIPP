@@ -148,6 +148,7 @@
     * [Microsoft Entra Connect Report](user-documentation/identity/reports/azure-ad-connect-report.md)
     * [Risk Detections](user-documentation/identity/reports/risk-detections.md)
     * [Group Usage Report](user-documentation/identity/reports/group-usage.md)
+    * [BEC Reports](user-documentation/identity/reports/bec-reports.md)
 * [Tenant Administration](user-documentation/tenant/README.md)
   * [Administration](user-documentation/tenant/administration/README.md)
     * [Tenants](user-documentation/tenant/administration/tenants/README.md)

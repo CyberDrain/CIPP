@@ -33,6 +33,14 @@ const dataShape = [
       { name: 'complianceState', type: 'string' },
     ],
   },
+  {
+    type: 'SecureScore',
+    count: 14,
+    fields: [
+      { name: 'createdDateTime', type: 'date' },
+      { name: 'currentScore', type: 'number' },
+    ],
+  },
 ]
 
 const shell = (overrides = {}) => ({
@@ -299,7 +307,7 @@ describe('TableBlockCard', () => {
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Fill rows from data' }))
     await userEvent.click(within(await screen.findByRole('listbox')).getByText('Devices (4)'))
-    expect(latest.current.dataSource).toEqual({ type: 'Devices', field: null, filter: null })
+    expect(latest.current.dataSource).toEqual({ type: 'Devices', field: null, valueField: null, aggregate: null, filter: null })
 
     const fieldInput = screen.getAllByLabelText('Field (when filled from data)')[0]
     const list = document.getElementById(fieldInput.getAttribute('list'))
@@ -356,16 +364,41 @@ describe('ChartBlockCard', () => {
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Fill from data' }))
     await userEvent.click(within(await screen.findByRole('listbox')).getByText('Devices (4)'))
-    expect(latest.current.chartSource).toEqual({ type: 'Devices', field: null, filter: null })
+    expect(latest.current.chartSource).toEqual({ type: 'Devices', field: null, valueField: null, aggregate: null, filter: null })
 
-    await userEvent.click(screen.getByRole('combobox', { name: 'One slice per' }))
+    await userEvent.click(screen.getByRole('combobox', { name: 'Per' }))
     await userEvent.click(within(await screen.findByRole('listbox')).getByText('operatingSystem (string)'))
-    expect(latest.current.chartSource).toEqual({ type: 'Devices', field: 'operatingSystem', filter: null })
+    expect(latest.current.chartSource).toMatchObject({ type: 'Devices', field: 'operatingSystem', valueField: null })
+  })
+
+  it('plots a field\'s value per date field, the way a Secure Score trend is built', async () => {
+    const latest = renderLive(
+      { ...createStructuredBlock('chart', 'b1'), chartKind: 'trend', chartSource: { type: 'SecureScore', field: null, valueField: null, aggregate: null, filter: null } },
+      { dataShape }
+    )
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Show' }))
+    await userEvent.click(within(await screen.findByRole('listbox')).getByText('currentScore (number)'))
+    await userEvent.click(screen.getByRole('combobox', { name: 'Per' }))
+    await userEvent.click(within(await screen.findByRole('listbox')).getByText('createdDateTime (date)'))
+
+    expect(latest.current.chartSource).toMatchObject({ type: 'SecureScore', field: 'createdDateTime', valueField: 'currentScore', aggregate: null })
+    expect(screen.getByRole('combobox', { name: 'Rows sharing a label' })).toBeInTheDocument()
+  })
+
+  it('hides the typed points while a data source is picked', () => {
+    renderLive(
+      { ...createStructuredBlock('chart', 'b1'), chartSource: { type: 'Devices', field: null, valueField: null, aggregate: null, filter: null } },
+      { dataShape }
+    )
+
+    expect(screen.queryByLabelText('Add data point')).not.toBeInTheDocument()
+    expect(screen.getByText(/points come from the data source/i)).toBeInTheDocument()
   })
 
   it('adds a condition the rows must meet', async () => {
     const latest = renderLive(
-      { ...createStructuredBlock('chart', 'b1'), chartSource: { type: 'Devices', field: 'operatingSystem', filter: null } },
+      { ...createStructuredBlock('chart', 'b1'), chartSource: { type: 'Devices', field: 'operatingSystem', valueField: null, aggregate: null, filter: null } },
       { dataShape }
     )
 

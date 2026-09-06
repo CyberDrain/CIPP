@@ -12,6 +12,16 @@ BeforeAll {
             [PSCustomObject]@{ displayName = 'Alex Wilber'; accountEnabled = $true; assignedLicenses = @(@{ skuId = 'e3' }) }
             [PSCustomObject]@{ displayName = 'Guest User'; accountEnabled = $false; assignedLicenses = @() }
         )
+        SecureScore = @(
+            [PSCustomObject]@{ createdDateTime = '2026-08-24T00:00:00Z'; currentScore = 213.71; maxScore = 273 }
+            [PSCustomObject]@{ createdDateTime = '2026-08-22T00:00:00Z'; currentScore = 210.5; maxScore = 273 }
+            [PSCustomObject]@{ createdDateTime = '2026-08-23T00:00:00Z'; currentScore = 213.69; maxScore = 273 }
+        )
+        Mailboxes = @(
+            [PSCustomObject]@{ UPN = 'a@x'; department = 'Sales'; TotalItemSize = 10 }
+            [PSCustomObject]@{ UPN = 'b@x'; department = 'sales'; TotalItemSize = 5 }
+            [PSCustomObject]@{ UPN = 'c@x'; department = 'IT'; TotalItemSize = 40 }
+        )
         Devices = @(
             [PSCustomObject]@{ deviceName = 'PC1'; operatingSystem = 'Windows'; complianceState = 'compliant'; storageTotal = 512 }
             [PSCustomObject]@{ deviceName = 'PC2'; operatingSystem = 'Windows'; complianceState = 'noncompliant'; storageTotal = 256 }
@@ -25,7 +35,14 @@ BeforeAll {
         $script:Reads++
         if ($script:Db.ContainsKey($Type)) { $script:Db[$Type] } else { throw "No cache for $Type" }
     }
-    function Resolve-Blocks($Blocks) { @(Resolve-CippReportDataToken -Blocks $Blocks -TenantFilter 'contoso.onmicrosoft.com') }
+    function Resolve-Blocks($Blocks) {
+        $Out = @(Resolve-CippReportDataToken -Blocks $Blocks -TenantFilter 'contoso.onmicrosoft.com')
+        # one element per block, never a wrapped array: that is what blanked every preview once
+        $Out.Count | Should -Be @($Blocks).Count
+        foreach ($b in $Out) { $b -is [array] | Should -BeFalse }
+        # kept an array for the tests' indexing; a lone block would otherwise unroll to itself
+        , $Out
+    }
 }
 
 Describe 'Resolve-CippReportDataToken' {
@@ -98,6 +115,25 @@ Describe 'Resolve-CippReportDataToken' {
         $Blocks = Resolve-Blocks @(@{ type = 'chart'; title = 'Compliant by OS'; chartSource = @{ type = 'Devices'; field = 'operatingSystem'; filter = @{ field = 'complianceState'; op = '='; value = 'compliant' } }; chartData = @() })
         $Points = @($Blocks[0].chartData)
         ($Points | ForEach-Object { "$($_.label)=$($_.value)" }) -join ';' | Should -Be 'macOS=1;Windows=1;(blank)=1'
+    }
+
+    It 'plots a value per row in date order, as a Secure Score trend needs' {
+        $Blocks = Resolve-Blocks @(@{ type = 'chart'; chartKind = 'trend'; chartSource = @{ type = 'SecureScore'; field = 'createdDateTime'; valueField = 'currentScore'; filter = $null }; chartData = @() })
+        ($Blocks[0].chartData | ForEach-Object { "$($_.label)=$($_.value)" }) -join ';' | Should -Be 'Aug 22=210.5;Aug 23=213.69;Aug 24=213.71'
+    }
+
+    It 'plots a value per row in row order when the labels are not dates, and treats Count of rows as counting' {
+        $Blocks = Resolve-Blocks @(
+            @{ type = 'chart'; chartKind = 'bar'; chartSource = @{ type = 'Mailboxes'; field = 'UPN'; valueField = 'TotalItemSize'; filter = $null }; chartData = @() }
+            @{ type = 'chart'; chartKind = 'bar'; chartSource = @{ type = 'Mailboxes'; field = 'department'; valueField = '__count'; filter = $null }; chartData = @() }
+        )
+        ($Blocks[0].chartData | ForEach-Object { "$($_.label)=$($_.value)" }) -join ';' | Should -Be 'a@x=10;b@x=5;c@x=40'
+        ($Blocks[1].chartData | ForEach-Object { "$($_.label)=$($_.value)" }) -join ';' | Should -Be 'Sales=2;IT=1'
+    }
+
+    It 'combines the rows sharing a label with the chosen aggregate' {
+        $Blocks = Resolve-Blocks @(@{ type = 'chart'; chartKind = 'bar'; chartSource = @{ type = 'Mailboxes'; field = 'department'; valueField = 'TotalItemSize'; aggregate = 'sum'; filter = $null }; chartData = @() })
+        ($Blocks[0].chartData | ForEach-Object { "$($_.label)=$($_.value)" }) -join ';' | Should -Be 'IT=40;Sales=15'
     }
 
     It 'counts a picked source with no field as one slice' {

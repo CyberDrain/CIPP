@@ -33,6 +33,7 @@ function Resolve-CippReportDataToken {
     $Pattern = '(?:&amp;|&)(?<type>[A-Za-z0-9_-]+)(?:\.(?<field>[A-Za-z0-9_.-]+))?(?:(?<op>!=|=)(?<value>[^&]*?))?(?::(?<agg>sum|avg|min|max|count))?(?:&amp;|&)'
     $MaxListed = 25
     $MaxSlices = 8
+    $MaxPoints = 30
     $MaxRows = 200
 
     # One read per collection per render; a collection the database does not hold reads as $null.
@@ -159,7 +160,14 @@ function Resolve-CippReportDataToken {
         if (-not $Source.type) { return $null }
         $Filter = $Source.filter
         $Spec = if ($Filter -and $Filter.field -and $Filter.op) { @{ field = "$($Filter.field)"; op = "$($Filter.op)"; value = "$($Filter.value)" } }
-        @{ type = "$($Source.type)"; field = $(if ($Source.field) { "$($Source.field)" }); filter = $Spec }
+        @{
+            type       = "$($Source.type)"
+            field      = $(if ($Source.field) { "$($Source.field)" })
+            # a numeric field to plot instead of counting rows; aggregate combines rows sharing a label
+            valueField = $(if ($Source.valueField -and "$($Source.valueField)" -ne '__count') { "$($Source.valueField)" })
+            aggregate  = $(if ($Source.aggregate -and @('sum', 'avg', 'max', 'min') -contains "$($Source.aggregate)") { "$($Source.aggregate)" })
+            filter     = $Spec
+        }
     }
     $RowsFor = {
         param($Spec)
@@ -173,14 +181,39 @@ function Resolve-CippReportDataToken {
         if ($null -eq $Block) { continue }
         $Type = "$($Block.type)"
 
-        # A chart drawn from the data: one slice per distinct value of the field, the long tail as Other;
-        # a single counted slice when no field was picked.
+        # A chart drawn from the data. Counting rows: one slice per distinct value of the field, the long
+        # tail as Other, or a single counted slice when no field was picked. Plotting a field's value:
+        # one point per row labelled by the field - chronological when the labels are dates, which is
+        # how a Secure Score trend reads - or, with an aggregate, one point per label.
         if ($Type -eq 'chart' -and $Block.chartSource) {
             $Spec = & $SourceOf $Block.chartSource
             $Rows = if ($Spec) { & $RowsFor $Spec }
             if ($Spec -and $null -ne $Rows) {
                 $Field = $Spec.field
-                $Points = if ($Field) {
+                $Points = if ($Spec.valueField) {
+                    $Series = @(foreach ($Row in $Rows) {
+                            $Number = @(& $ValueOf $Row $Spec.valueField | ForEach-Object { $_ -as [double] } | Where-Object { $null -ne $_ }) | Select-Object -First 1
+                            if ($null -eq $Number) { continue }
+                            $Raw = if ($Field) { @(& $ValueOf $Row $Field | ForEach-Object { "$_" }) | Select-Object -First 1 } else { $null }
+                            $Date = [datetime]::MinValue
+                            $IsDate = $null -ne $Raw -and [datetime]::TryParse("$Raw", [cultureinfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::AssumeUniversal, [ref]$Date)
+                            @{ raw = $Raw; value = [double]$Number; date = $(if ($IsDate) { $Date }) }
+                        })
+                    if ($Spec.aggregate) {
+                        $Combined = @($Series | Group-Object { "$($_.raw)".ToLowerInvariant() } | ForEach-Object {
+                                $Measured = @($_.Group | ForEach-Object { $_.value }) | Measure-Object -Sum -Average -Maximum -Minimum
+                                $Figure = switch ($Spec.aggregate) { 'avg' { [math]::Round($Measured.Average, 2) } 'max' { $Measured.Maximum } 'min' { $Measured.Minimum } default { $Measured.Sum } }
+                                @{ label = "$($_.Group[0].raw)"; value = [double]$Figure }
+                            })
+                        @($Combined | Sort-Object -Property @{ Expression = { $_.value }; Descending = $true }, @{ Expression = { $_.label } } | Select-Object -First $MaxSlices)
+                    } elseif ($Series.Count -gt 0 -and @($Series | Where-Object { $null -ne $_.date }).Count -eq $Series.Count) {
+                        $Ordered = @($Series | Sort-Object -Property { $_.date } | Select-Object -Last $MaxPoints)
+                        $Format = if (@($Ordered | ForEach-Object { $_.date.Year } | Select-Object -Unique).Count -gt 1) { 'MMM d yyyy' } else { 'MMM d' }
+                        @($Ordered | ForEach-Object { @{ label = $_.date.ToString($Format, [cultureinfo]::InvariantCulture); value = $_.value } })
+                    } else {
+                        @($Series | Select-Object -Last $MaxPoints | ForEach-Object { @{ label = $(if ($null -ne $_.raw) { "$($_.raw)" } else { '' }); value = $_.value } })
+                    }
+                } elseif ($Field) {
                     $Groups = @(foreach ($Row in $Rows) { @(& $ValueOf $Row $Field | ForEach-Object { "$_" }) }) | Group-Object { $_.ToLowerInvariant() } | Sort-Object -Property @{ Expression = 'Count'; Descending = $true }, @{ Expression = 'Name'; Descending = $false }
                     $Blank = @($Rows | Where-Object { @(& $ValueOf $_ $Field).Count -eq 0 }).Count
                     $Top = @($Groups | Select-Object -First $MaxSlices | ForEach-Object { @{ label = $_.Group[0]; value = $_.Count } })
@@ -222,5 +255,7 @@ function Resolve-CippReportDataToken {
         }
     }
 
-    return , @($Blocks)
+    # Unrolled, not wrapped: callers collect with @(), and a wrapped array would reach them as one
+    # element holding every block - which the renderer then draws as nothing at all.
+    return $Blocks
 }

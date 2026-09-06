@@ -200,11 +200,23 @@ const FILTER_OPS = [
   { label: 'is not', value: '!=' },
 ]
 
+const COUNT_ROWS = { label: 'Count of rows', value: '__count' }
+
+const AGGREGATES = [
+  { label: 'One point per row', value: null },
+  { label: 'Add them up', value: 'sum' },
+  { label: 'Average them', value: 'avg' },
+  { label: 'Take the highest', value: 'max' },
+  { label: 'Take the lowest', value: 'min' },
+]
+
 /**
- * Where a chart or table gets its data: a collection from the reporting database, for a chart the
- * field to count by, and an optional condition rows must meet. Saved as { type, field, filter }
- * and resolved on the server when the report renders. The collections and fields on offer are the
- * shapes recorded when the cache was written; a field can still be typed, since a shape is sampled.
+ * Where a chart or table gets its data: a collection from the reporting database; for a chart what
+ * to show - a count of rows, or a field's value - and the field to show it per (a date field makes
+ * a trend, any other a category), optionally combining rows that share a label; and a condition
+ * rows must meet. Saved as { type, field, valueField, aggregate, filter } and resolved on the server
+ * when the report renders. The collections and fields on offer are the shapes recorded when the
+ * cache was written; a field can still be typed, since a shape is sampled.
  */
 export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
   const source = value && typeof value === 'object' ? value : null
@@ -217,8 +229,16 @@ export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
   )
   const filter = source?.filter ?? null
   const asOption = (name) => (name ? (fields.find((f) => f.value === name) ?? { label: name, value: name }) : null)
+  const plotting = Boolean(source?.valueField && source.valueField !== '__count')
   const patch = (next) =>
-    onChange({ type: source?.type ?? null, field: source?.field ?? null, filter, ...next })
+    onChange({
+      type: source?.type ?? null,
+      field: source?.field ?? null,
+      valueField: source?.valueField ?? null,
+      aggregate: source?.aggregate ?? null,
+      filter,
+      ...next,
+    })
 
   return (
     <Stack spacing={1}>
@@ -233,25 +253,62 @@ export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
             options={collections}
             value={collections.find((option) => option.value === source?.type) ?? null}
             onChange={(option) =>
-              onChange(option?.value ? { type: option.value, field: null, filter: null } : null)
+              onChange(
+                option?.value
+                  ? { type: option.value, field: null, valueField: null, aggregate: null, filter: null }
+                  : null
+              )
             }
           />
         </Box>
         {mode === 'chart' && source?.type ? (
-          <Box sx={{ flex: 1 }}>
-            <CippAutoComplete
-              size="small"
-              label="One slice per"
-              placeholder="No field: a single count"
-              multiple={false}
-              creatable={true}
-              options={fields}
-              value={asOption(source.field)}
-              onChange={(option) => patch({ field: option?.value ?? null })}
-            />
-          </Box>
+          <>
+            <Box sx={{ flex: 1 }}>
+              <CippAutoComplete
+                size="small"
+                label="Show"
+                multiple={false}
+                creatable={true}
+                disableClearable={true}
+                options={[COUNT_ROWS, ...fields]}
+                value={plotting ? asOption(source.valueField) : COUNT_ROWS}
+                onChange={(option) =>
+                  patch({
+                    valueField: option?.value && option.value !== '__count' ? option.value : null,
+                    aggregate: null,
+                  })
+                }
+              />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <CippAutoComplete
+                size="small"
+                label="Per"
+                placeholder={plotting ? 'Row order' : 'No field: a single count'}
+                multiple={false}
+                creatable={true}
+                options={fields}
+                value={asOption(source.field)}
+                onChange={(option) => patch({ field: option?.value ?? null })}
+              />
+            </Box>
+          </>
         ) : null}
       </Stack>
+      {mode === 'chart' && plotting && source?.field ? (
+        <Box sx={{ maxWidth: 320 }}>
+          <CippAutoComplete
+            size="small"
+            label="Rows sharing a label"
+            multiple={false}
+            creatable={false}
+            disableClearable={true}
+            options={AGGREGATES}
+            value={AGGREGATES.find((option) => option.value === (source.aggregate ?? null)) ?? AGGREGATES[0]}
+            onChange={(option) => patch({ aggregate: option?.value ?? null })}
+          />
+        </Box>
+      ) : null}
       {source?.type ? (
         <Stack direction="row" spacing={1}>
           <Box sx={{ flex: 1 }}>
@@ -300,7 +357,7 @@ export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
       ) : null}
       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
         {mode === 'chart'
-          ? 'Counted from the reporting database when the report renders: one slice per value of the field, or a single count with no field.'
+          ? 'Read from the reporting database when the report renders. Counting rows gives one slice per value of the field; a field\'s value per date field gives a trend, the last 30 points in date order.'
           : 'The rows of the collection (those the condition keeps) fill the table when the report renders; each column reads the field it names.'}
       </Typography>
     </Stack>
@@ -486,16 +543,23 @@ export const ChartBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
           </Box>
         </Stack>
 
-        <RowsEditor
-          rows={block.chartData || []}
-          columns={[
-            { key: 'label', label: 'Label', width: 2 },
-            { key: 'value', label: 'Value', width: 1, type: 'number' },
-            { key: 'colour', label: 'Colour (optional)', width: 1 },
-          ]}
-          onChange={(chartData) => set({ chartData })}
-          addLabel="Add data point"
-        />
+        {block.chartSource?.type ? (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            The points come from the data source below when the report renders; clear it to type
+            them in.
+          </Typography>
+        ) : (
+          <RowsEditor
+            rows={block.chartData || []}
+            columns={[
+              { key: 'label', label: 'Label', width: 2 },
+              { key: 'value', label: 'Value', width: 1, type: 'number' },
+              { key: 'colour', label: 'Colour (optional)', width: 1 },
+            ]}
+            onChange={(chartData) => set({ chartData })}
+            addLabel="Add data point"
+          />
+        )}
 
         <Stack direction="row" spacing={1}>
           <TextField

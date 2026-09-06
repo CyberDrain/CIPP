@@ -35,7 +35,6 @@ export const CippBecRunStatusCard = ({
   userPrincipalName,
   state,
   caseId,
-  scope,
   poll,
   onStart,
   startPending = false,
@@ -116,13 +115,6 @@ export const CippBecRunStatusCard = ({
             useFlexGap
           >
             {statusChip}
-            {scope === 'Quick' && (
-              <Chip
-                size="small"
-                variant="outlined"
-                label="Quick check (older run)"
-              />
-            )}
             {caseId && (
               <Chip size="small" variant="outlined" label={`Case ${caseId}`} />
             )}

@@ -128,7 +128,6 @@ Describe 'Push-BECRun' {
         Should -Invoke Get-CIPPBecReceivedMailFindings -Times 1 -ParameterFilter { $IncludeDefender.IsPresent }
         Should -Invoke Get-CIPPBecNonInteractiveSignIns -Times 1 -ParameterFilter { $UsageLocation -eq 'NL' }
         $R = $script:Saved.Results
-        $R.Scope | Should -Be 'Full'
         $R.MailboxState.HasForwarding | Should -BeTrue
         $R.Delegations.Count | Should -Be 3
         $Helper = $R.Delegations | Where-Object { $_.Trustee -eq 'Helper@contoso.com' }

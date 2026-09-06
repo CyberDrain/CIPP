@@ -64,7 +64,6 @@ Describe 'Invoke-ExecBECBulkCheck' {
         $script:Rows.Count | Should -Be 2
         $script:Rows[0].Replace | Should -BeTrue
         $script:Rows[0].Properties.Status | Should -Be 'Waiting'
-        $script:Rows[0].Properties.Scope | Should -Be 'Full'
         $script:Rows[0].Properties.QueueId | Should -Be 'queue-1'
         $script:Rows[0].Properties.RequestedBy | Should -Be 'tech@msp.com'
         $script:Orchestrations.Count | Should -Be 1

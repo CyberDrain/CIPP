@@ -290,7 +290,6 @@ const Page = () => {
             tenantFilter={tenant}
             state={runState}
             caseId={activeCaseId}
-            scope={becData?.Scope ?? poll?.Scope ?? latestRun?.Scope}
             poll={poll}
             becData={becData}
             onStart={startRun}

@@ -309,10 +309,7 @@ export const CippBecContainmentDrawer = ({
     if (available.length === 0 && name !== 'Protocols') {
       return (
         <Typography variant="caption" color="text.secondary">
-          {becData?.Scope === 'Full' ||
-          ['MfaMethodIds', 'RuleIds', 'MobileDeviceIds'].includes(name)
-            ? 'Nothing of this kind was found in the run; nothing will be changed.'
-            : 'Targets come from the full analysis; run it to pick them, or the action does nothing.'}
+          Nothing of this kind was found in the run; nothing will be changed.
         </Typography>
       )
     }

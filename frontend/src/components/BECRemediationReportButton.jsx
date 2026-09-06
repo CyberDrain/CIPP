@@ -197,7 +197,6 @@ export const BECRemediationReportDocument = ({
   const incompleteCollectors = completenessEntries.filter(
     ([, marker]) => marker && marker.Complete === false && !marker.Skipped
   )
-  const isFullScope = becData?.Scope === 'Full'
   const windowDays = becData?.AnalysisWindowDays || 7
   const flaggedDelegations = (becData?.Delegations || []).filter(
     (d) => d.Flagged
@@ -759,10 +758,9 @@ export const BECRemediationReportDocument = ({
             </InfoBox>
             {becData?.CaseId && (
               <InfoBox title="Case">
-                {becData.CaseId} -{' '}
-                {isFullScope ? 'full investigation' : 'quick check'}. Metadata
-                only: audit records, sign-ins, trace headers, permissions, rules
-                and devices were collected; no message content was read.
+                {becData.CaseId} - full investigation. Metadata only: audit
+                records, sign-ins, trace headers, permissions, rules and devices
+                were collected; no message content was read.
               </InfoBox>
             )}
             {skippedCollectors.length > 0 && (
@@ -1711,7 +1709,7 @@ export const BECRemediationReportDocument = ({
           </ContentPage>
 
           {/* FULL INVESTIGATION PAGE */}
-          {isFullScope && (
+          {
             <ContentPage
               title="Full Investigation Findings"
               subtitle="Delegations, consents, transport rules, received mail, directory audit, devices and risk state"
@@ -2049,7 +2047,7 @@ export const BECRemediationReportDocument = ({
                 )}
               </Section>
             </ContentPage>
-          )}
+          }
 
           {/* RECOMMENDATIONS PAGE */}
           <ContentPage

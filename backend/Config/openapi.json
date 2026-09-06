@@ -15209,12 +15209,6 @@
                     "Containment": {
                       "x-cipp-field-source": "backend"
                     },
-                    "EvidenceCreatedAt": {
-                      "x-cipp-field-source": "backend"
-                    },
-                    "EvidenceSha256": {
-                      "x-cipp-field-source": "backend"
-                    },
                     "ExtractedAt": {
                       "x-cipp-field-source": "backend"
                     },
@@ -15222,9 +15216,6 @@
                       "x-cipp-field-source": "backend"
                     },
                     "RequestedBy": {
-                      "x-cipp-field-source": "backend"
-                    },
-                    "Scope": {
                       "x-cipp-field-source": "backend"
                     },
                     "Status": {
@@ -15260,7 +15251,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "Collates the run's stored results, one CSV per finding set, the containment history, every logbook entry stamped with the case id and the PDF report when pdfBase64 is supplied into a ZIP with a manifest listing the SHA-256 of every file. Nothing is stored: the ZIP is returned base64-encoded (ZipBase64) for the browser to save, and only the export record - hash, time, size - is kept on the run so a copy can be verified later. Metadata only - nothing in the package is message content.",
+        "description": "Collates the run's stored results, one CSV per finding set, the score, the containment history, every logbook entry stamped with the case id and the browser-rendered PDF reports (pdfBase64, pdfSummaryBase64) into a ZIP. Nothing is stored: the ZIP is returned base64-encoded (ZipBase64) for the browser to save. Metadata only - nothing in the package is message content.",
         "requestBody": {
           "required": true,
           "content": {
@@ -15307,13 +15298,7 @@
                     "FileCount": {
                       "x-cipp-field-source": "backend"
                     },
-                    "Manifest": {
-                      "x-cipp-field-source": "backend"
-                    },
                     "ZipBase64": {
-                      "x-cipp-field-source": "backend"
-                    },
-                    "ZipSha256": {
                       "x-cipp-field-source": "backend"
                     }
                   }
@@ -41158,7 +41143,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "Lists every stored BEC run (case id, user, scope, status, threat level and score, when it was extracted, who requested it, whether evidence was exported) for a tenant, or for every tenant with tenantFilter=AllTenants. Optionally narrowed to one user with userId. Runs are kept until deleted; this list never reads the result payloads.",
+        "description": "Lists every stored BEC run (case id, user, status, threat level and score, when it was extracted, who requested it) for a tenant, or for every tenant with tenantFilter=AllTenants. Optionally narrowed to one user with userId. Runs are kept until deleted; this list never reads the result payloads.",
         "parameters": [
           {
             "name": "tenantFilter",
@@ -41201,16 +41186,7 @@
                       "ErrorMessage": {
                         "x-cipp-field-source": "backend"
                       },
-                      "EvidenceCreatedAt": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "EvidenceSha256": {
-                        "x-cipp-field-source": "backend"
-                      },
                       "ExtractedAt": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "HasEvidence": {
                         "x-cipp-field-source": "backend"
                       },
                       "IncompleteCount": {
@@ -41223,9 +41199,6 @@
                         "x-cipp-field-source": "backend"
                       },
                       "RequestedBy": {
-                        "x-cipp-field-source": "backend"
-                      },
-                      "Scope": {
                         "x-cipp-field-source": "backend"
                       },
                       "Score": {

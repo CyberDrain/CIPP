@@ -8,6 +8,7 @@ BeforeAll {
     function New-ExoRequest { param($tenantid, $cmdlet, $cmdParams, $Anchor, $Select, $useSystemMailbox, $NoAuthCheck, [switch]$Compliance, $ApiVersion, [switch]$AsApp) }
     function New-GraphGetRequest { param($uri, $tenantid, $AsApp, $noPagination, $scope, $ComplexFilter, $NoAuthCheck, [switch]$verbose) }
     function New-GraphBulkRequest { param($Requests, $tenantid, $asapp, $NoAuthCheck, $scope, $NoPaginateIds, $Version, $Headers) }
+    function Get-CIPPTenantCapabilities { param($TenantFilter, $APIName, $Headers) }
     function Get-CIPPGeoIPLocationBatch { param([string[]]$IPs) }
     function Write-LogMessage { param($message, $tenant, $API, $tenantId, $headers, $user, $sev, $LogData) }
     function Get-CippException { param($Exception) [pscustomobject]@{ NormalizedError = [string]$Exception.Exception.Message } }
@@ -86,12 +87,11 @@ Describe 'Push-BECRun' {
             }
         }
         Mock Get-CIPPBecMessageTrace { [pscustomobject]@{ Complete = $true; Cap = $null; Pages = 1; Rows = @([pscustomobject]@{ MessageTraceId = 't1'; Status = 'Delivered'; Subject = 'Hi'; RecipientAddress = 'a@example.org'; Received = '2026-08-19T02:00:00Z'; FromIP = '203.0.113.10' }) } }
+        # Eligible tenant: Entra ID P2, Defender for Office 365 Plan 2 and Intune present, so the
+        # licence preflight lets Identity Protection, Defender and the device query run.
+        Mock Get-CIPPTenantCapabilities { [pscustomobject]@{ AAD_PREMIUM_P2 = $true; THREAT_INTELLIGENCE = $true; INTUNE_A = $true } }
         Mock New-GraphGetRequest {
-            if ($uri -like '*subscribedSkus*') {
-                # Eligible tenant: Entra ID P2, Defender for Office 365 Plan 2 and Intune present, so the
-                # licence preflight lets Identity Protection, Defender and the device query run.
-                [pscustomobject]@{ servicePlans = @([pscustomobject]@{ servicePlanName = 'AAD_PREMIUM_P2'; provisioningStatus = 'Success' }, [pscustomobject]@{ servicePlanName = 'THREAT_INTELLIGENCE'; provisioningStatus = 'Success' }, [pscustomobject]@{ servicePlanName = 'INTUNE_A'; provisioningStatus = 'Success' }) }
-            } elseif ($uri -like '*signIns*') {
+            if ($uri -like '*signIns*') {
                 [pscustomobject]@{ id = 's1'; createdDateTime = '2026-08-19T03:00:00Z'; resourceDisplayName = 'Office 365 Exchange Online'; clientAppUsed = 'Browser'; conditionalAccessStatus = 'success'; status = [pscustomobject]@{ errorCode = 0 }; ipAddress = '203.0.113.10'; location = [pscustomobject]@{ countryOrRegion = 'NG'; city = 'Lagos' } }
             } else { @() }
         }
@@ -255,7 +255,7 @@ Describe 'Push-BECRun' {
     }
 
     It 'preflight skips Identity Protection when the tenant has no Entra ID P2 - without calling it' {
-        Mock New-GraphGetRequest { [pscustomobject]@{ servicePlans = @([pscustomobject]@{ servicePlanName = 'AAD_PREMIUM'; provisioningStatus = 'Success' }) } } -ParameterFilter { $uri -like '*subscribedSkus*' }
+        Mock Get-CIPPTenantCapabilities { [pscustomobject]@{ AAD_PREMIUM = $true; INTUNE_A = $true } }
         Push-BECRun -Item ($script:Item + @{ Scope = 'Full' })
         Should -Invoke Get-CIPPBecRiskState -Times 0 -Because 'the licence preflight skips it instead of running it to fail'
         $R = $script:Saved.Results
@@ -265,7 +265,7 @@ Describe 'Push-BECRun' {
     }
 
     It 'preflight skips the Intune device check when the tenant has no Intune plan - without querying it' {
-        Mock New-GraphGetRequest { [pscustomobject]@{ servicePlans = @([pscustomobject]@{ servicePlanName = 'AAD_PREMIUM_P2'; provisioningStatus = 'Success' }) } } -ParameterFilter { $uri -like '*subscribedSkus*' }
+        Mock Get-CIPPTenantCapabilities { [pscustomobject]@{ AAD_PREMIUM_P2 = $true } }
         Push-BECRun -Item $script:Item
         Should -Invoke New-GraphBulkRequest -Times 0 -ParameterFilter { @($Requests | Where-Object { $_.id -eq 'IntuneDevices' }).Count -gt 0 } -Because 'the licence preflight drops the request instead of sending it to fail'
         $R = $script:Saved.Results
@@ -273,6 +273,15 @@ Describe 'Push-BECRun' {
         $R.Completeness.IntuneDevices.Requirement | Should -Match 'Intune licence'
         $R.Completeness.IntuneDevices.Error | Should -BeNullOrEmpty
         $R.IntuneDevices | Should -BeNullOrEmpty
+        $script:Saved.Properties.Status | Should -Be 'Completed'
+    }
+
+    It 'runs every gated check when the plan read itself fails - never skips on a failed preflight' {
+        Mock Get-CIPPTenantCapabilities { throw 'CacheCapabilities unavailable' }
+        Push-BECRun -Item $script:Item
+        Should -Invoke Get-CIPPBecRiskState -Times 1
+        Should -Invoke New-GraphBulkRequest -Times 1 -ParameterFilter { @($Requests | Where-Object { $_.id -eq 'IntuneDevices' }).Count -gt 0 }
+        $script:Saved.Results.Completeness.RiskState.Skipped | Should -BeFalse
         $script:Saved.Properties.Status | Should -Be 'Completed'
     }
 

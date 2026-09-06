@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { Box, Stack } from '@mui/system'
 import { Alert, Button, Chip, Typography } from '@mui/material'
 import CippButtonCard from '../CippCards/CippButtonCard'
@@ -16,28 +16,17 @@ import {
   becFindingFlags,
   becCoverage,
   becWindowStart,
+  joinList,
   BEC_FINDING_MARKERS,
 } from '../../utils/bec-objectives'
 
-const joinList = (value) =>
-  Array.isArray(value) ? value.join(', ') : (value ?? '')
 const arr = (value) => (Array.isArray(value) ? value : [])
-
-// Generic findings whose rows carry nested objects the table can't render flat.
-const FLATTEN = {
-  UserGrants: (g) => ({
-    ...g,
-    HighRiskScopes: joinList(g.HighRiskScopes),
-    CatalogMatch: g.CatalogMatch?.Name
-      ? `${g.CatalogMatch.Name} (${g.CatalogMatch.Source})`
-      : '',
-  }),
-}
 
 // The evidence half of the case workspace: every finding, grouped by attacker objective, flagged
 // first. A check that could not run (missing licence/permission) is shown as "not checked", never as
 // a clean pass. A group with flagged findings opens by default; the triage spine can open and scroll
-// to any group. Tables are metadata only, exactly what the collectors returned.
+// to any group. Tables are metadata only, exactly what the collectors returned. What each finding
+// shows is data on BEC_GROUPS; only three findings need a renderer of their own (below).
 export const CippBecObjectiveGroups = ({
   becData,
   windowDays,
@@ -50,36 +39,33 @@ export const CippBecObjectiveGroups = ({
   const [spreadOpen, setSpreadOpen] = useState(false)
   const [spread, setSpread] = useState({ sender: '', subject: '' })
   const dismissRiskDialog = useDialog()
-  const intuneDeviceActions = useMemo(
-    () => getBecIntuneDeviceActions({ tenantFilter }),
+  const rowActions = useMemo(
+    () => ({
+      intune: getBecIntuneDeviceActions({ tenantFilter }),
+      // Blocking a sender now lives in the containment drawer (tenant-wide, catalog-driven). The one
+      // row action left scopes the phishing wave: it pre-fills the spread search with this message's
+      // sender and subject and runs it, so "who else got this" is one click.
+      received: [
+        {
+          label: 'Who else got this email?',
+          noConfirm: true,
+          customFunction: (row) => {
+            setSpread({
+              sender: row.SenderAddress || '',
+              subject: row.Subject || '',
+            })
+            setSpreadOpen(true)
+          },
+        },
+      ],
+    }),
     [tenantFilter]
   )
 
-  const analysisWindowStart = useMemo(
-    () => becWindowStart(becData, windowDays),
+  const ctx = useMemo(
+    () => ({ windowDays, windowStart: becWindowStart(becData, windowDays) }),
     [becData, windowDays]
   )
-
-  // Blocking a sender/domain now lives in the containment drawer (tenant-wide, catalog-driven), not
-  // as a per-row action. The one row action left scopes the phishing wave: it pre-fills the spread
-  // search with this message's sender and subject and runs it, so "who else got this" is one click.
-  const receivedMailActions = useMemo(
-    () => [
-      {
-        label: 'Who else got this email?',
-        noConfirm: true,
-        customFunction: (row) => {
-          setSpread({
-            sender: row.SenderAddress || '',
-            subject: row.Subject || '',
-          })
-          setSpreadOpen(true)
-        },
-      },
-    ],
-    []
-  )
-
   const counts = useMemo(
     () => becGroupFlagged(becData, windowDays),
     [becData, windowDays]
@@ -114,45 +100,30 @@ export const CippBecObjectiveGroups = ({
       </Box>
     )
   }
-
+  const muted = (text, sx) => (
+    <Typography variant="body2" color="text.secondary" sx={sx}>
+      {text}
+    </Typography>
+  )
   const subHeader = (title) => (
     <Typography variant="subtitle2" sx={{ mt: 2 }}>
       {title}
     </Typography>
   )
 
-  // Content-only renderers for findings whose shape is not one flat table. Header and coverage note
-  // are owned by renderFinding, so these render nothing when the check was skipped or failed.
+  // The three findings whose shape is not tables. Header and coverage note are owned by
+  // renderFinding, so these render nothing when the check was skipped or failed.
   const custom = {
-    mfa: () => {
-      const rows = arr(becData.MFADevices).map((m) => ({
-        Method: String(m['@odata.type'] || '').replace('#microsoft.graph.', ''),
-        displayName: m.displayName,
-        createdDateTime: m.createdDateTime,
-        Recent: m.createdDateTime
-          ? new Date(m.createdDateTime) >= analysisWindowStart
-          : false,
-      }))
-      return rows.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          No MFA methods are registered. If MFA was expected, an attacker may
-          have removed it.
-        </Typography>
-      ) : (
-        table(rows, ['Method', 'displayName', 'createdDateTime', 'Recent'])
-      )
-    },
     risk: () => {
       const rs = becData.RiskState
-      const detections = arr(rs?.Detections)
       return (
         <>
-          <Typography variant="body2" color="text.secondary">
-            {rs?.Listed
+          {muted(
+            rs?.Listed
               ? `Listed as ${rs.RiskState} at ${rs.RiskLevel} risk (${rs.RiskDetail || 'no detail'}).`
-              : 'Not listed as risky.'}
-          </Typography>
-          {table(detections, [
+              : 'Not listed as risky.'
+          )}
+          {table(arr(rs?.Detections), [
             'DetectedDateTime',
             'RiskEventType',
             'RiskLevel',
@@ -189,107 +160,6 @@ export const CippBecObjectiveGroups = ({
               />
             </Box>
           )}
-        </>
-      )
-    },
-    intune: () =>
-      table(
-        arr(becData.IntuneDevices),
-        [
-          'deviceName',
-          'operatingSystem',
-          'osVersion',
-          'complianceState',
-          'enrolledDateTime',
-          'lastSyncDateTime',
-          'deviceEnrollmentType',
-          'serialNumber',
-        ],
-        intuneDeviceActions
-      ) ?? (
-        <Typography variant="body2" color="text.secondary">
-          No Intune-managed devices found for this user.
-        </Typography>
-      ),
-    rules: () => {
-      const newRules = arr(becData.NewRules).map((r) => ({
-        Name: r.Name,
-        RecentlyChanged: r.RecentlyChanged === true,
-        RiskReasons: joinList(r.RiskReasons),
-        Description: r.Description,
-        // Surfaced in the More Info panel (not as columns) so the rule's behaviour is readable in full.
-        MoveToFolder: r.MoveToFolder,
-        DeleteMessage: r.DeleteMessage,
-        MarkAsRead: r.MarkAsRead,
-        StopProcessingRules: r.StopProcessingRules,
-        Enabled: r.Enabled,
-        Risk: r.Risk,
-      }))
-      const changes = arr(becData.InboxRuleChanges)
-      return (
-        <>
-          {newRules.length === 0 && changes.length === 0 && (
-            <Typography variant="body2" color="text.secondary">
-              No inbox rules or rule changes found.
-            </Typography>
-          )}
-          {table(newRules, [
-            'Name',
-            'RecentlyChanged',
-            'RiskReasons',
-            'Description',
-          ])}
-          {changes.length > 0 &&
-            subHeader(`Rule changes in the last ${windowDays} days`)}
-          {table(changes, [
-            'Operation',
-            'RuleName',
-            'Date',
-            'UserKey',
-            'ClientIP',
-            'Country',
-            'ForeignLocation',
-          ])}
-        </>
-      )
-    },
-    apps: () => {
-      const added = arr(becData.AddedApps).map((a) => ({
-        displayName: a.displayName,
-        appId: a.appId,
-        createdDateTime: a.createdDateTime,
-        MaliciousMatch: a.MaliciousMatch?.Name || '',
-      }))
-      const malicious = arr(becData.MaliciousSPs)
-      return (
-        <>
-          {added.length === 0 && malicious.length === 0 && (
-            <Typography variant="body2" color="text.secondary">
-              No new applications found.
-            </Typography>
-          )}
-          {/* Malicious apps first - a catalog match is the point of this check, whatever its age. */}
-          {malicious.length > 0 && (
-            <Alert severity="warning" sx={{ mt: 1 }}>
-              {malicious.length} application(s) in this tenant match the
-              known-malicious catalog. Consent-based access survives a password
-              reset — remove any that are not explained.
-            </Alert>
-          )}
-          {table(malicious, [
-            'displayName',
-            'appId',
-            'CatalogName',
-            'accountEnabled',
-            'createdDateTime',
-          ])}
-          {added.length > 0 && subHeader('New applications in the window')}
-          {table(added, [
-            'displayName',
-            'appId',
-            'createdDateTime',
-            'MaliciousMatch',
-          ])}
         </>
       )
     },
@@ -337,149 +207,6 @@ export const CippBecObjectiveGroups = ({
         </PropertyList>
       )
     },
-    safelist: () => {
-      const senders = [
-        ...arr(becData.TrustedSenders).map((s) => ({
-          Sender: s,
-          Type: 'Trusted',
-        })),
-        ...arr(becData.BlockedSenders).map((s) => ({
-          Sender: s,
-          Type: 'Blocked',
-        })),
-      ]
-      const changes = arr(becData.SafelistChanges)
-      return (
-        <>
-          {senders.length === 0 && changes.length === 0 && (
-            <Typography variant="body2" color="text.secondary">
-              No trusted or blocked senders found.
-            </Typography>
-          )}
-          {table(senders, ['Sender', 'Type'])}
-          {changes.length > 0 &&
-            subHeader(`Changes in the last ${windowDays} days`)}
-          {table(changes, [
-            'Operation',
-            'UserKey',
-            'Date',
-            'ClientIP',
-            'Country',
-            'ForeignLocation',
-          ])}
-        </>
-      )
-    },
-    transport: () => {
-      const changes = arr(becData.TransportRuleChanges).map((c) => ({
-        ...c,
-        RiskyParameters: joinList(c.RiskyParameters),
-      }))
-      const flagged = arr(becData.TransportRulesFlagged).map((r) => ({
-        ...r,
-        RiskReasons: joinList(r.RiskReasons),
-      }))
-      return (
-        <>
-          {changes.length === 0 && flagged.length === 0 && (
-            <Typography variant="body2" color="text.secondary">
-              No transport-rule changes or diverting rules found.
-            </Typography>
-          )}
-          {table(changes, [
-            'Date',
-            'Operation',
-            'RuleName',
-            'Actor',
-            'ClientIP',
-            'Country',
-            'RiskyParameters',
-            'Flagged',
-          ])}
-          {flagged.length > 0 &&
-            subHeader('Current rules that divert or suppress mail')}
-          {table(flagged, [
-            'Name',
-            'State',
-            'Mode',
-            'WhenChanged',
-            'ChangedInWindow',
-            'RiskReasons',
-          ])}
-        </>
-      )
-    },
-    sent: () => {
-      const analysis = becData.SentMessageAnalysis
-      const sent = arr(becData.SentMessages)
-      return (
-        <>
-          {analysis ? (
-            <Typography variant="body2" color="text.secondary">
-              {analysis.TotalMessages ?? sent.length} message(s) to{' '}
-              {analysis.TotalRecipients ?? sent.length} recipient(s) in the last{' '}
-              {windowDays} days.
-              {analysis.FlaggedSubjectCount > 0
-                ? ` ${analysis.FlaggedSubjectCount} subject(s) look like a campaign.`
-                : ''}
-              {analysis.Bursts?.length > 0
-                ? ` ${analysis.Bursts.length} send burst(s).`
-                : ''}
-            </Typography>
-          ) : (
-            sent.length === 0 && (
-              <Typography variant="body2" color="text.secondary">
-                No sent messages found in the window.
-              </Typography>
-            )
-          )}
-          {table(sent, [
-            'Subject',
-            'RecipientAddress',
-            'Status',
-            'Received',
-            'FromIP',
-            'Country',
-          ])}
-        </>
-      )
-    },
-    mailActivity: () => {
-      const summary = becData.MailActivitySummary
-      const rows = arr(becData.MailActivity)
-      return (
-        <>
-          {summary ? (
-            <Typography variant="body2" color="text.secondary">
-              {summary.MailItemsAccessedCount} access(es),{' '}
-              {summary.HardDeleteCount} hard delete(s),{' '}
-              {summary.SoftDeleteCount} soft delete(s), {summary.SendCount}{' '}
-              send(s) from {summary.DistinctClientIPs} client IP(s). Counts only
-              — no items were read.
-              {summary.HardDeleteExceeded
-                ? ` Hard deletes exceed the ${summary.HardDeleteThreshold} threshold.`
-                : ''}
-            </Typography>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              No mailbox-activity counts were recorded.
-            </Typography>
-          )}
-          {table(rows, [
-            'Operation',
-            'Count',
-            'ClientIP',
-            'Country',
-            'ForeignLocation',
-            'ClientInfoString',
-            'MailAccessType',
-            'Actor',
-            'FirstSeen',
-            'LastSeen',
-          ])}
-        </>
-      )
-    },
     received: () => {
       const findings = arr(becData.ReceivedMailFindings)
       const defender = arr(becData.DefenderDetections).map((r) => ({
@@ -500,11 +227,8 @@ export const CippBecObjectiveGroups = ({
               Trace a sender&apos;s spread
             </Button>
           </Box>
-          {findings.length === 0 && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              No phishing-shaped or look-alike senders found.
-            </Typography>
-          )}
+          {findings.length === 0 &&
+            muted('No phishing-shaped or look-alike senders found.', { mt: 1 })}
           {table(
             findings,
             [
@@ -516,7 +240,7 @@ export const CippBecObjectiveGroups = ({
               'Reason',
               'Status',
             ],
-            receivedMailActions
+            rowActions.received
           )}
           {defender.length > 0 &&
             subHeader('Defender for Office 365 detections')}
@@ -534,6 +258,42 @@ export const CippBecObjectiveGroups = ({
     },
   }
 
+  // Everything else is data on the finding: a summary line, a warning, the main table, titled
+  // sections below it, and the prose for an empty result.
+  const generic = (finding) => {
+    const rows = finding.rows
+      ? arr(finding.rows(becData, ctx))
+      : arr(becData[finding.key])
+    const sections = arr(finding.sections)
+      .map((s) => ({
+        ...s,
+        title: typeof s.title === 'function' ? s.title(ctx) : s.title,
+        rows: arr(s.rows(becData, ctx)),
+      }))
+      .filter((s) => s.rows.length > 0)
+    const summary = finding.summary?.(becData, ctx)
+    const alert = finding.alert?.(becData, ctx)
+    const nothing = rows.length === 0 && sections.length === 0
+    return (
+      <>
+        {summary && muted(summary)}
+        {alert && (
+          <Alert severity="warning" sx={{ mt: 1 }}>
+            {alert}
+          </Alert>
+        )}
+        {nothing && !summary && muted(finding.empty || 'Nothing found.')}
+        {table(rows, finding.columns, rowActions[finding.actions])}
+        {sections.map((s) => (
+          <Fragment key={s.title}>
+            {subHeader(s.title)}
+            {table(s.rows, s.columns)}
+          </Fragment>
+        ))}
+      </>
+    )
+  }
+
   // One coverage note per finding: skipped (missing entitlement) reads as "not checked", a hard
   // failure as "couldn't check", a cap as "partial". A skipped/failed check renders no content, so an
   // empty section is never mistaken for a clean one.
@@ -546,18 +306,6 @@ export const CippBecObjectiveGroups = ({
     // Only suppress content when every check behind the finding was blocked; a finding with some
     // checks still complete (phishing ran, Defender skipped) keeps its content and adds the note.
     const blocked = cov.allBlocked
-    const content = () => {
-      if (finding.custom) return custom[finding.custom]?.()
-      const raw = arr(becData[finding.key])
-      const rows = FLATTEN[finding.key] ? raw.map(FLATTEN[finding.key]) : raw
-      return rows.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          Nothing found.
-        </Typography>
-      ) : (
-        table(rows, finding.columns)
-      )
-    }
     return (
       <Box key={finding.key} sx={{ mt: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center">
@@ -615,7 +363,8 @@ export const CippBecObjectiveGroups = ({
             Partial results — {cov.cap}.
           </Typography>
         )}
-        {!blocked && content()}
+        {!blocked &&
+          (finding.custom ? custom[finding.custom]?.() : generic(finding))}
       </Box>
     )
   }

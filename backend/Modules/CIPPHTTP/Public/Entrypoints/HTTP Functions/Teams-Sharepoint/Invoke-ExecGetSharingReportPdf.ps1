@@ -23,9 +23,8 @@ function Invoke-ExecGetSharingReportPdf {
         }
         $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
 
-        # Gather the shaped sharing data in-process from the list endpoint (reads the reporting cache; no
-        # live Graph enumeration), then hand it to the tree builder with the tenant name.
-        $Raw = (Invoke-ListSharePointSharing -Request @{ Query = @{ tenantFilter = $TenantFilter }; Headers = $Request.Headers }).Body
+        # The same shaped data the Sharing page reads (from the reporting cache; no live Graph enumeration).
+        $Raw = Get-CIPPSharePointSharingReport -TenantFilter $TenantFilter
         $Report = Build-CippSharingReportTree -Data @{
             TenantName    = $TenantName
             summary       = $Raw.summary

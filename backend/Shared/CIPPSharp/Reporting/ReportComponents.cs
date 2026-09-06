@@ -94,6 +94,24 @@ namespace CIPP.Reporting
             });
         }
 
+        /// <summary>
+        /// The box a branding logo is drawn in: the client sets a fixed height (cover 100pt, page header
+        /// 30pt) and lets the width follow the image's aspect ratio; the width cap keeps a banner-shaped
+        /// logo off the cover date and out of the page-header title column.
+        /// </summary>
+        public static (double w, double h) LogoBox(byte[] bytes, double height, double maxWidth)
+        {
+            var (pxW, pxH) = ImageSize(bytes);
+            var w = pxW * (height / pxH);
+            if (w > maxWidth) { height *= maxWidth / w; w = maxWidth; }
+            return (Math.Round(w), Math.Round(height));
+        }
+
+        /// <summary>The MIME type a drawing needs beside the bytes; null for anything but PNG/JPEG (skipped rather than failing).</summary>
+        public static string? ImageContentType(byte[] b) =>
+            b.Length > 8 && b[0] == 0x89 && b[1] == 0x50 ? "image/png" :
+            b.Length > 2 && b[0] == 0xFF && b[1] == 0xD8 ? "image/jpeg" : null;
+
         /// <summary>Read PNG/JPEG pixel size from raw bytes (no System.Drawing dependency).</summary>
         public static (int w, int h) ImageSize(byte[] b)
         {
@@ -247,17 +265,30 @@ namespace CIPP.Reporting
             var primary = ctx.Theme.Primary;
             var dw = new OfficeDrawing(w, h);
 
-            // Vertical anchors mirror the client cover's fixed paddings (page pad 60, header + 40 margin,
-            // hero paddingTop 24) rather than a proportion of page height, so the block lands in the same
-            // place the react-pdf cover does. The drawing origin already sits at the page margin, so each
-            // client "from page top" figure is offset by PagePadding here.
+            // Vertical anchors mirror the client cover's fixed paddings (page pad 60, a header row of the
+            // logo and date with a 40pt margin under it, hero paddingTop 24) rather than a proportion of
+            // page height, so the block lands where the react-pdf cover puts it. The drawing origin already
+            // sits at the page margin, so each client "from page top" figure is offset by PagePadding here.
+            const double coverPad = 60, headerGap = 40, heroPad = 24, dateLine = 11, logoHeight = 100;
+            var headerTop = coverPad - ReportStyles.PagePadding;
+
+            // Client coverHeader: the branding logo on the left at 100pt (width by aspect ratio, capped so
+            // a banner never reaches the date), the date on the right, the two vertically centred on each
+            // other. Without a logo the row is just the date line, which is where the hero's 135pt top came
+            // from (60 + 11 + 40 + 24).
+            var logoType = ctx.Logo is { Length: > 0 } ? ImageContentType(ctx.Logo) : null;
+            var logoBox = logoType is null ? (w: 0.0, h: 0.0) : LogoBox(ctx.Logo!, logoHeight, 260);
+            var headerH = Math.Max(dateLine, logoBox.h);
+            if (logoType is not null)
+                dw.AddImage(ctx.Logo!, logoType, new OfficeImageProjection(
+                    new OfficeImagePlacement(leftPad, headerTop, logoBox.w, logoBox.h), new OfficeImageSourceCrop(0, 0, 0, 0), 0, null, null, false, false));
             if (!string.IsNullOrEmpty(ctx.GeneratedOn))
-                AddT(dw, San(ctx.GeneratedOn).ToUpperInvariant(), 0, 60 - ReportStyles.PagePadding, w, 14, 9, subtitleC, OfficeTextAlignment.Right);
+                AddT(dw, San(ctx.GeneratedOn).ToUpperInvariant(), 0, headerTop + Math.Max(0, (headerH - 14) / 2), w, 14, 9, subtitleC, OfficeTextAlignment.Right);
 
             var coverLabel = (ctx.Variables.TryGetValue("coverlabel", out var cl) && !string.IsNullOrWhiteSpace(cl)) ? cl : "ASSESSMENT REPORT";
             coverLabel = San(coverLabel).ToUpperInvariant();
             var chipW = Math.Min(w - leftPad * 2, 26 + coverLabel.Length * 6.4);
-            var y = 135 - ReportStyles.PagePadding;   // client coverHero content top (chip)
+            var y = coverPad + headerH + headerGap + heroPad - ReportStyles.PagePadding;   // client coverHero content top (chip)
             var chip = OfficeShape.RoundedRectangle(chipW, 26, 13); chip.FillColor = OC(primary);
             dw.AddShape(chip, leftPad, y);
             // AddText seats the glyph near the top of its box, so a box that merely matches the pill leaves

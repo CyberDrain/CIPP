@@ -37,11 +37,14 @@ namespace CIPP.Reporting
             variables["reportdate"] = generatedOn ?? string.Empty;
 
             var logo = ReportComponents.DecodeImage(branding.Logo);
-            // Branding's own cover photo wins; otherwise a report can name a bundled stock cover via
-            // the %coverfallbackimage% variable (e.g. "/reportImages/soc.jpg"), mirroring the client's
-            // resolveCoverImage fallback so a report without configured branding still gets a cover.
+            // The cover photo, resolved the way the client's resolveCoverImage did: an uploaded cover wins,
+            // then the stock photo the branding picked ("none" means no cover at all), then the report's
+            // own %coverfallbackimage% (e.g. "/reportImages/soc.jpg"), so a report without configured
+            // branding still gets a cover.
             var coverImage = ReportComponents.DecodeImage(branding.CoverImage)
-                ?? (variables.TryGetValue("coverfallbackimage", out var coverFallback) ? ReportComponents.DecodeImage(coverFallback) : null);
+                ?? (branding.CoverStock == "none" ? null
+                    : ReportComponents.DecodeImage(branding.CoverStock)
+                        ?? (variables.TryGetValue("coverfallbackimage", out var coverFallback) ? ReportComponents.DecodeImage(coverFallback) : null));
             ReportContext Context(byte[]? logoBytes) => new()
             {
                 Theme = theme,

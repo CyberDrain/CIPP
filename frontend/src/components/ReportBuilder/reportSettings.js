@@ -27,6 +27,13 @@ import { PAGE_ORIENTATIONS, PAGE_SIZES } from '../CippPdf'
  */
 export const DEFAULT_BRANDING_OPTION = { label: 'Default', value: '' }
 
+// The chart shapes a chart block can ask for; the server-side renderer draws whichever one is saved.
+export const CHART_KINDS = [
+  { label: 'Donut', value: 'donut' },
+  { label: 'Bar', value: 'bar' },
+  { label: 'Trend line', value: 'trend' },
+]
+
 // The autoComplete field works in {label, value} objects, so the form holds options rather than
 // bare strings and the converters translate at the edges.
 export const optionFor = (options, value, fallbackIndex = 0) =>

@@ -20,7 +20,8 @@ namespace CIPP.Reporting
         public string? WatermarkText { get; init; }
         public bool? WatermarkEnabled { get; init; }
         public string? Logo { get; init; }        // data-URL
-        public string? CoverImage { get; init; }   // data-URL
+        public string? CoverImage { get; init; }   // data-URL (an uploaded cover)
+        public string? CoverStock { get; init; }   // a bundled /reportImages/ path, or "none"
         private Dictionary<string, string> RoleColours { get; init; } = new();
         private Dictionary<string, string> FlatColours { get; init; } = new();
 
@@ -66,6 +67,7 @@ namespace CIPP.Reporting
                 WatermarkEnabled = Bool("watermarkEnabled"),
                 Logo = Str("logo"),
                 CoverImage = Str("coverImage"),
+                CoverStock = Str("coverStock"),
                 RoleColours = roles,
                 FlatColours = flat,
             };

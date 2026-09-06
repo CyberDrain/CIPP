@@ -2,7 +2,8 @@ import { Box, Chip, IconButton, Stack, TextField, Tooltip, Typography } from '@m
 import { CippIcons } from '../../utils/icon-registry'
 import CippButtonCard from '../CippCards/CippButtonCard'
 import { CippAutoComplete } from '../CippComponents/CippAutocomplete'
-import { CHART_KINDS, COVER_STOCK_OPTIONS } from '../CippPdf'
+import { COVER_STOCK_OPTIONS } from '../CippPdf'
+import { CHART_KINDS } from './reportSettings'
 
 // Editors for the report builder's structured blocks — the ones that carry data rather than prose.
 //

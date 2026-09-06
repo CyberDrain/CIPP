@@ -66,13 +66,12 @@ Describe 'Get-CIPPBecReport' {
         }
     }
 
-    It 'lists a tenant newest first with CaseId/Tenant aliases and parsed Containment and EvidenceExports' {
+    It 'lists a tenant newest first with CaseId/Tenant aliases and parsed Containment' {
         $Rows = @(Get-CIPPBecReport -TenantFilter 'contoso.com')
         $Rows.Count | Should -Be 2
         $Rows[0].CaseId | Should -Be 'BEC-20260805000000-bbbbbb'
         $Rows[1].Tenant | Should -Be 'contoso.com'
         $Rows[1].Containment[0].Actions | Should -Be @('ResetPassword')
-        $Rows[1].EvidenceExports[0].Sha256 | Should -Be 'abc'
     }
 
     It 'narrows to one user and scans every tenant for AllTenants' {

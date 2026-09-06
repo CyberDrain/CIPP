@@ -74,12 +74,6 @@ describe('CippBecEvidenceExportButton', () => {
     // the ZIP from the response is handed straight to the browser - no second request
     await waitFor(() => expect(clickSpy).toHaveBeenCalled())
     expect(global.URL.createObjectURL).toHaveBeenCalledTimes(1)
-    // the ZIP SHA is surfaced on the button's hover tooltip, not as an inline results panel
-    await waitFor(() =>
-      expect(
-        document.querySelector('[aria-label*="SHA-256: abc123"]')
-      ).not.toBeNull()
-    )
     clickSpy.mockRestore()
   }, 30000)
 

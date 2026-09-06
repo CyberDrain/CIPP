@@ -36,9 +36,6 @@ function Invoke-ListBECReports {
                     RequestedBy       = $_.RequestedBy
                     ErrorMessage      = $_.ErrorMessage
                     ContainmentRuns   = @($_.Containment).Count
-                    HasEvidence       = [bool]$_.EvidenceSha256
-                    EvidenceSha256    = $_.EvidenceSha256
-                    EvidenceCreatedAt = $_.EvidenceCreatedAt
                 }
             })
         $StatusCode = [HttpStatusCode]::OK

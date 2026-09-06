@@ -216,9 +216,6 @@ const Page = () => {
       'RequestedAt',
       'RequestedBy',
       'ContainmentRuns',
-      'HasEvidence',
-      'EvidenceSha256',
-      'EvidenceCreatedAt',
       'ErrorMessage',
     ],
     actions: actions,
@@ -258,7 +255,6 @@ const Page = () => {
               'ExtractedAt',
               'RequestedBy',
               'ContainmentRuns',
-              'HasEvidence',
               'CaseId',
             ]
       }

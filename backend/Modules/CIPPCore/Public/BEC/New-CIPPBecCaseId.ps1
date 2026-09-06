@@ -6,7 +6,7 @@ function New-CIPPBecCaseId {
         Case ids are BEC-<yyyyMMddHHmmss>-<6 hex>: the timestamp prefix keeps them chronologically
         sortable as table RowKeys (so a user's run history lists in order) and the random suffix keeps
         two runs queued in the same second distinct. The id is stamped on the run row, the results
-        blob, every logbook entry written during the case and the evidence manifest.
+        row, every logbook entry written during the case and the evidence package.
     .FUNCTIONALITY
         Internal
     #>

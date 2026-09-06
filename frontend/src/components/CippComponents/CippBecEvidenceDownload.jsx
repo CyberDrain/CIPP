@@ -32,14 +32,13 @@ const upnOf = (row) => row?.UserPrincipalName ?? row?.userPrincipalName
 /**
  * Downloads a case's evidence package WITH the report PDFs: fetches the case results when the caller
  * has none, renders the full report and the C-suite summary in-memory (no browser tab), posts them to
- * the export endpoint (which collates the ZIP with a SHA-256 manifest), and saves the ZIP under a name
- * carrying the user and case. One hook serves the runs hub (per row) and the case page's export button.
+ * the export endpoint (which collates the ZIP), and saves the ZIP under a name carrying the user and
+ * case. One hook serves the runs hub (per row) and the case page's export button.
  */
 export const useBecEvidenceDownload = () => {
   const brandingSettings = useBrandingSettings()
   const variables = useReportVariables()
   const [pendingCaseId, setPendingCaseId] = useState(null)
-  const [lastHash, setLastHash] = useState(null)
   const [lastError, setLastError] = useState(null)
   const exportCall = ApiPostCall({})
 
@@ -114,7 +113,6 @@ export const useBecEvidenceDownload = () => {
                 document.body.removeChild(link)
                 URL.revokeObjectURL(url)
               }
-              setLastHash(evidence?.ZipSha256 || null)
               resolve()
             },
             onError: (error) => {
@@ -135,5 +133,5 @@ export const useBecEvidenceDownload = () => {
     }
   }
 
-  return { download, busy: pendingCaseId != null, lastHash, lastError }
+  return { download, busy: pendingCaseId != null, lastError }
 }

@@ -3,39 +3,11 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Chip,
   Divider,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Typography,
 } from '@mui/material'
-
-const stateColor = (state) =>
-  ({
-    success: 'success',
-    error: 'error',
-    warning: 'warning',
-    info: 'default',
-  })[state] || 'default'
-
-// Action ids are stored PascalCase (RemoveMFA); space them for display.
-const humanize = (id) =>
-  String(id || '')
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .trim()
-
-const fmt = (value) => {
-  if (!value) return 'Unknown time'
-  try {
-    return new Date(value).toLocaleString()
-  } catch {
-    return String(value)
-  }
-}
+import { CippDataTable } from '../CippTable/CippDataTable'
 
 // The containment actions run for this case and their per-target results, newest first. Reads the
 // history persisted on the run (becData.Run.Containment); renders nothing until something has run.
@@ -58,40 +30,19 @@ export const CippBecRemediationHistory = ({ becData }) => {
             return (
               <Box key={index}>
                 <Typography variant="subtitle2" gutterBottom>
-                  {fmt(entry.At)} · {entry.By || 'CIPP'} ·{' '}
-                  {(entry.Actions || []).length} action(s)
+                  {entry.At
+                    ? new Date(entry.At).toLocaleString()
+                    : 'Unknown time'}{' '}
+                  · {entry.By || 'CIPP'} · {(entry.Actions || []).length}{' '}
+                  action(s)
                 </Typography>
                 {results.length > 0 ? (
-                  <Box sx={{ overflowX: 'auto' }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Action</TableCell>
-                          <TableCell>Target</TableCell>
-                          <TableCell>Result</TableCell>
-                          <TableCell>State</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {results.map((row, rowIndex) => (
-                          <TableRow key={rowIndex}>
-                            <TableCell>{humanize(row.Action)}</TableCell>
-                            <TableCell sx={{ wordBreak: 'break-all' }}>
-                              {row.Target}
-                            </TableCell>
-                            <TableCell>{row.resultText}</TableCell>
-                            <TableCell>
-                              <Chip
-                                size="small"
-                                color={stateColor(row.state)}
-                                label={row.state || 'unknown'}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </Box>
+                  <CippDataTable
+                    noCard
+                    hideTitle
+                    data={results}
+                    simpleColumns={['Action', 'Target', 'resultText', 'state']}
+                  />
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     No per-action results were recorded.

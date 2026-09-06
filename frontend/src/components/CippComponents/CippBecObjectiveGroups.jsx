@@ -15,6 +15,7 @@ import {
   becGroupFlagged,
   becFindingFlags,
   becCoverage,
+  becWindowStart,
   BEC_FINDING_MARKERS,
 } from '../../utils/bec-objectives'
 
@@ -54,13 +55,10 @@ export const CippBecObjectiveGroups = ({
     [tenantFilter]
   )
 
-  const analysisWindowStart = useMemo(() => {
-    const parsed = becData?.ExtractedAt
-      ? new Date(becData.ExtractedAt)
-      : new Date()
-    const extractedAt = Number.isNaN(parsed.getTime()) ? new Date() : parsed
-    return new Date(extractedAt.getTime() - windowDays * 24 * 60 * 60 * 1000)
-  }, [becData, windowDays])
+  const analysisWindowStart = useMemo(
+    () => becWindowStart(becData, windowDays),
+    [becData, windowDays]
+  )
 
   // Blocking a sender/domain now lives in the containment drawer (tenant-wide, catalog-driven), not
   // as a per-row action. The one row action left scopes the phishing wave: it pre-fills the spread

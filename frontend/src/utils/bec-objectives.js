@@ -17,7 +17,6 @@ export const BEC_GROUPS = [
       {
         key: 'SuspectUserSignIns',
         title: 'Interactive sign-ins',
-        error: 'SuspectUserSignInsError',
         columns: [
           'CreatedDateTime',
           'AppDisplayName',
@@ -27,7 +26,6 @@ export const BEC_GROUPS = [
           'City',
           'ForeignLocation',
         ],
-        flag: (rows) => rows.filter((r) => r.ForeignLocation === true).length,
       },
       {
         key: 'NonInteractiveSignIns',
@@ -43,10 +41,6 @@ export const BEC_GROUPS = [
           'IncomingTokenType',
           'ForeignLocation',
         ],
-        flag: (rows) =>
-          rows.filter(
-            (r) => r.ForeignLocation === true && r.Status === 'Success'
-          ).length,
       },
       { key: 'MFADevices', title: 'MFA methods', custom: 'mfa' },
       { key: 'RiskState', title: 'Identity Protection', custom: 'risk' },
@@ -63,12 +57,10 @@ export const BEC_GROUPS = [
           'isCompliant',
           'RegisteredInWindow',
         ],
-        flag: (rows) => rows.filter((r) => r.RegisteredInWindow).length,
       },
       {
         key: 'IntuneDevices',
         title: 'Intune-managed devices',
-        error: 'IntuneDevicesError',
         custom: 'intune',
       },
     ],
@@ -91,7 +83,6 @@ export const BEC_GROUPS = [
           'Resource',
           'Flagged',
         ],
-        flag: (rows) => rows.filter((r) => r.Flagged).length,
       },
       {
         key: 'UserGrants',
@@ -106,7 +97,6 @@ export const BEC_GROUPS = [
           'CatalogMatch',
           'Scope',
         ],
-        flag: (rows) => rows.filter((r) => r.Flagged).length,
       },
       {
         key: 'MailboxAddIns',
@@ -120,7 +110,6 @@ export const BEC_GROUPS = [
           'AppVersion',
           'Flagged',
         ],
-        flag: (rows) => rows.filter((r) => r.Flagged).length,
       },
       { key: 'AddedApps', title: 'New applications', custom: 'apps' },
     ],
@@ -155,7 +144,6 @@ export const BEC_GROUPS = [
           'Country',
           'TargetsSuspect',
         ],
-        flag: (rows) => rows.filter((r) => r.TargetsSuspect === true).length,
       },
     ],
   },
@@ -180,9 +168,6 @@ export const BEC_GROUPS = [
           'Country',
           'ForeignLocation',
         ],
-        flag: (rows) =>
-          rows.filter((r) => String(r.Operation).startsWith('AnonymousLink'))
-            .length,
       },
       {
         key: 'MailActivity',
@@ -206,7 +191,6 @@ export const BEC_GROUPS = [
         key: 'NewUsers',
         title: 'Recently added users',
         columns: ['userPrincipalName', 'createdDateTime'],
-        flag: (rows) => rows.length,
       },
       {
         key: 'ChangedPasswords',
@@ -228,7 +212,6 @@ export const BEC_GROUPS = [
           'Direction',
           'Flagged',
         ],
-        flag: (rows) => rows.filter((r) => r.Flagged).length,
       },
     ],
   },
@@ -335,6 +318,15 @@ export const becSkippedChecks = (becData) =>
     .filter(([, m]) => m && m.Skipped)
     .map(([name, m]) => ({ name, requirement: m.Requirement }))
 
+// Start of the analysis window: windowDays before the run was extracted (now, for a run without a date).
+export const becWindowStart = (becData, windowDays = 7) => {
+  const extracted = new Date(becData?.ExtractedAt || Date.now())
+  const base = Number.isNaN(extracted.getTime())
+    ? Date.now()
+    : extracted.getTime()
+  return new Date(base - windowDays * 86400000)
+}
+
 export const becLevelColor = (level) =>
   level === 'High'
     ? 'error'
@@ -350,11 +342,7 @@ export const becLevelColor = (level) =>
 export const becFindingFlags = (becData, windowDays = 7) => {
   const b = becData || {}
   const a = (v) => (Array.isArray(v) ? v : [])
-  const extractedAt = b.ExtractedAt ? new Date(b.ExtractedAt) : new Date()
-  const base = Number.isNaN(extractedAt.getTime())
-    ? Date.now()
-    : extractedAt.getTime()
-  const windowStart = new Date(base - windowDays * 24 * 60 * 60 * 1000)
+  const windowStart = becWindowStart(b, windowDays)
   const inWindow = (v) => {
     if (!v) return false
     const d = new Date(v)

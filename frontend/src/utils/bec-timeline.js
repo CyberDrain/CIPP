@@ -3,6 +3,7 @@
 // objective it serves, a severity, and structured correlation keys (source IP, app, location, external
 // sender, and the other account it acted on) so a graph view can cluster events that share a source or
 // a target, not just lay them out by time. The earliest access/foothold event is the likely start.
+import { becWindowStart } from './bec-objectives'
 
 const toDate = (value) => {
   if (!value) return null
@@ -101,13 +102,7 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
     return null
   }
 
-  const analysisStart = (() => {
-    const extracted = becData.ExtractedAt
-      ? new Date(becData.ExtractedAt)
-      : new Date()
-    const base = Number.isNaN(extracted.getTime()) ? new Date() : extracted
-    return new Date(base.getTime() - windowDays * 86400000)
-  })()
+  const analysisStart = becWindowStart(becData, windowDays)
   const isRecent = (value) => {
     const parsed = toDate(value)
     return parsed && parsed >= analysisStart
@@ -269,6 +264,17 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
         label: 'Device registered',
         target: clean(device.displayName || device.deviceId),
       })),
+    ...arr(becData.IntuneDevices)
+      .filter((device) => isRecent(device.enrolledDateTime))
+      .map((device) => ({
+        key: 'intune',
+        date: toDate(device.enrolledDateTime),
+        category: 'device',
+        objective: 'access',
+        severity: 'medium',
+        label: 'Intune device enrolled',
+        target: clean(device.deviceName || device.model),
+      })),
     ...arr(becData.ChangedPasswords).map((user) => ({
       key: 'password',
       date: toDate(user.lastPasswordChangeDateTime),
@@ -335,7 +341,7 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
  * fan back out to that account (a target). This is the non-linear view — it groups what an attacker did
  * by where it came from and who it reached, rather than laying everything out by time.
  *
- * @returns {{ account, hubs, orphans, targets, startOfCompromise, eventCount }}
+ * @returns {{ account, hubs, orphans, targets, startOfCompromise }}
  *   hubs = [{ ip, location, foreign, events }]; orphans = events with no source IP;
  *   targets = [{ account, events }] the other accounts the victim's events acted on.
  */
@@ -409,6 +415,5 @@ export function buildBecCorrelationGraph(
     orphans,
     targets,
     startOfCompromise,
-    eventCount: events.length,
   }
 }

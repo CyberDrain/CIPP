@@ -35,7 +35,7 @@ const Page = () => {
   const { userId, caseId: caseIdParam } = router.query
   const tenant = router.query.tenantFilter || settings.currentTenant
 
-  const [ready, setReady] = useState(false)
+  const ready = !!userId
   const [selectedCaseId, setSelectedCaseId] = useState(caseIdParam || null)
   const [startedCaseId, setStartedCaseId] = useState(null)
   const [pollActive, setPollActive] = useState(false)
@@ -46,14 +46,12 @@ const Page = () => {
   const autoStartedRef = useRef(false)
 
   useEffect(() => {
-    if (userId) setReady(true)
-  }, [userId])
-  useEffect(() => {
     if (caseIdParam) setSelectedCaseId(caseIdParam)
   }, [caseIdParam])
 
   const userRequest = ApiGetCall({
-    url: `/api/ListUsers?UserId=${userId}&tenantFilter=${tenant}`,
+    url: '/api/ListUsers',
+    data: { UserId: userId, tenantFilter: tenant },
     queryKey: `ListUsers-${userId}`,
     waiting: ready,
   })

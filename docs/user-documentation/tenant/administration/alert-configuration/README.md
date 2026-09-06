@@ -20,7 +20,7 @@ Use [alert.md](alert.md "mention") to create a new alert rule of either type.
 | Excluded Tenants | Any tenants or tenant groups left out of the alert's scope.                                                                                                                                                                              |
 
 {% hint style="info" %}
-Excluded tenants only apply where the alert is scoped broadly, such as to all tenants or to a tenant group. A scripted alert that names its tenants individually has nothing to exclude, so this column stays empty.
+Exclusions apply to both alert types and to any scope, including an alert that names its tenants individually. An excluded tenant group is resolved each time the alert runs, so a tenant added to that group is skipped from then on without editing the alert.
 {% endhint %}
 
 ## Table Actions

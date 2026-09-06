@@ -88,9 +88,9 @@ Describe 'Push-BECRun' {
         Mock Get-CIPPBecMessageTrace { [pscustomobject]@{ Complete = $true; Cap = $null; Pages = 1; Rows = @([pscustomobject]@{ MessageTraceId = 't1'; Status = 'Delivered'; Subject = 'Hi'; RecipientAddress = 'a@example.org'; Received = '2026-08-19T02:00:00Z'; FromIP = '203.0.113.10' }) } }
         Mock New-GraphGetRequest {
             if ($uri -like '*subscribedSkus*') {
-                # Eligible tenant: Entra ID P2 and Defender for Office 365 Plan 2 present, so the
-                # licence preflight lets Identity Protection and Defender run.
-                [pscustomobject]@{ servicePlans = @([pscustomobject]@{ servicePlanName = 'AAD_PREMIUM_P2'; provisioningStatus = 'Success' }, [pscustomobject]@{ servicePlanName = 'THREAT_INTELLIGENCE'; provisioningStatus = 'Success' }) }
+                # Eligible tenant: Entra ID P2, Defender for Office 365 Plan 2 and Intune present, so the
+                # licence preflight lets Identity Protection, Defender and the device query run.
+                [pscustomobject]@{ servicePlans = @([pscustomobject]@{ servicePlanName = 'AAD_PREMIUM_P2'; provisioningStatus = 'Success' }, [pscustomobject]@{ servicePlanName = 'THREAT_INTELLIGENCE'; provisioningStatus = 'Success' }, [pscustomobject]@{ servicePlanName = 'INTUNE_A'; provisioningStatus = 'Success' }) }
             } elseif ($uri -like '*signIns*') {
                 [pscustomobject]@{ id = 's1'; createdDateTime = '2026-08-19T03:00:00Z'; resourceDisplayName = 'Office 365 Exchange Online'; clientAppUsed = 'Browser'; conditionalAccessStatus = 'success'; status = [pscustomobject]@{ errorCode = 0 }; ipAddress = '203.0.113.10'; location = [pscustomobject]@{ countryOrRegion = 'NG'; city = 'Lagos' } }
             } else { @() }
@@ -261,6 +261,18 @@ Describe 'Push-BECRun' {
         $R = $script:Saved.Results
         $R.Completeness.RiskState.Skipped | Should -BeTrue
         $R.Completeness.RiskState.Requirement | Should -Match 'Entra ID P2'
+        $script:Saved.Properties.Status | Should -Be 'Completed'
+    }
+
+    It 'preflight skips the Intune device check when the tenant has no Intune plan - without querying it' {
+        Mock New-GraphGetRequest { [pscustomobject]@{ servicePlans = @([pscustomobject]@{ servicePlanName = 'AAD_PREMIUM_P2'; provisioningStatus = 'Success' }) } } -ParameterFilter { $uri -like '*subscribedSkus*' }
+        Push-BECRun -Item $script:Item
+        Should -Invoke New-GraphBulkRequest -Times 0 -ParameterFilter { @($Requests | Where-Object { $_.id -eq 'IntuneDevices' }).Count -gt 0 } -Because 'the licence preflight drops the request instead of sending it to fail'
+        $R = $script:Saved.Results
+        $R.Completeness.IntuneDevices.Skipped | Should -BeTrue
+        $R.Completeness.IntuneDevices.Requirement | Should -Match 'Intune licence'
+        $R.Completeness.IntuneDevices.Error | Should -BeNullOrEmpty
+        $R.IntuneDevices | Should -BeNullOrEmpty
         $script:Saved.Properties.Status | Should -Be 'Completed'
     }
 

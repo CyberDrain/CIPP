@@ -32,6 +32,14 @@ function Get-CIPPBecErrorInfo {
             Requirement = 'this user has no Exchange Online mailbox'
         }
     }
+    # Intune not licensed: the device service rejects the tenant outright. A licence gap, not a failure.
+    if ($Raw -match '(?i)not applicable to (the )?target tenant') {
+        return [pscustomobject]@{
+            Message     = 'Intune is not licensed for this tenant.'
+            Skipped     = $true
+            Requirement = 'requires an Intune licence'
+        }
+    }
     # Intune not provisioned (or a transient service 404): treat as not applicable, with a retry hint.
     if ($Raw -match '(?i)Intune.+(HTTP 404|not.+provision|no.+Intune)') {
         return [pscustomobject]@{

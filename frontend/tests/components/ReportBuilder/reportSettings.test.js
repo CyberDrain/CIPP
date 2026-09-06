@@ -267,6 +267,8 @@ describe('serialiseBlock', () => {
     expect(serialiseBlock({ type: 'page', title: 'Findings', subtitle: 'Detail' }).subtitle).toBe('Detail')
     expect(serialiseBlock({ type: 'infoboxcolumns', static: true, columns: 3, items: [] }).columns).toBe(3)
     expect(serialiseBlock({ type: 'infobox', static: true, content: 'Keep me' }).content).toBe('Keep me')
+    expect(serialiseBlock({ type: 'chart', chartSource: '&Devices.os&' }).chartSource).toBe('&Devices.os&')
+    expect(serialiseBlock({ type: 'richtable', dataSource: '&Mailboxes&' }).dataSource).toBe('&Mailboxes&')
     expect(serialiseBlock({ type: 'cover', title: 'T', coverAccent: 'A', coverLabel: 'L' })).toMatchObject({
       coverAccent: 'A',
       coverLabel: 'L',

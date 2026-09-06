@@ -13,6 +13,13 @@ import { CHART_KINDS } from './reportSettings'
 
 /* ── Block definitions ───────────────────────────────────── */
 
+// Data tokens resolve against the reporting database when the report renders, on the server, so a
+// scheduled report reads the same data a preview does. The collection names are the Database Data
+// block's sources.
+const DATA_TOKEN_HINT =
+  'Figures can be data tokens, read when the report renders: &Users& counts a collection, ' +
+  '&Devices.complianceState=compliant& counts the rows that match, &Mailboxes.TotalItemSize:sum& adds a field up.'
+
 /**
  * Every block the builder can add, grouped the way the picker offers them: a category first, then
  * the block. One flat list of all of them is more than a dropdown reads well with. The text blocks
@@ -404,6 +411,15 @@ export const ChartBlockCard = ({ block, index, onUpdate, ...shell }) => {
             />
           ) : null}
         </Stack>
+        <TextField
+          size="small"
+          fullWidth
+          label="Fill from data"
+          placeholder="&Devices.operatingSystem&"
+          helperText="A data token: one slice per value of that field, counted from the reporting database when the report renders. Blank = the data points above."
+          value={block.chartSource ?? ''}
+          onChange={(event) => set({ chartSource: event.target.value })}
+        />
       </Stack>
     </BlockShell>
   )
@@ -428,6 +444,9 @@ export const ScorecardBlockCard = ({ block, index, onUpdate, ...shell }) => {
           onChange={(next) => onUpdate(index, { ...block, stats: next })}
           addLabel="Add card"
         />
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          {DATA_TOKEN_HINT}
+        </Typography>
         {stats.length > 4 ? (
           <Typography variant="caption" sx={{
             color: "warning.main"
@@ -456,6 +475,9 @@ export const ProgressBlockCard = ({ block, index, onUpdate, ...shell }) => (
         onChange={(items) => onUpdate(index, { ...block, items })}
         addLabel="Add bar"
       />
+      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+        {DATA_TOKEN_HINT}
+      </Typography>
     </Stack>
   </BlockShell>
 )
@@ -850,12 +872,24 @@ export const TableBlockCard = ({ block, index, onUpdate, ...shell }) => {
     >
       <Stack spacing={2}>
         <TitleField block={block} index={index} onUpdate={onUpdate} />
+        <TextField
+          size="small"
+          fullWidth
+          label="Fill rows from data"
+          placeholder="&Mailboxes&"
+          helperText="A data token naming a collection (a filter such as &Devices.complianceState!=compliant& works too). Each column then reads the field it names. Blank = the rows typed below."
+          value={block.dataSource ?? ''}
+          onChange={(event) => set({ dataSource: event.target.value })}
+        />
         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
           Columns
         </Typography>
         <RowsEditor
           rows={columns}
-          columns={[{ key: 'header', label: 'Column header', width: 1 }]}
+          columns={[
+            { key: 'header', label: 'Column header', width: 1 },
+            { key: 'field', label: 'Field (when filled from data)', width: 1 },
+          ]}
           onChange={setColumns}
           addLabel="Add column"
         />

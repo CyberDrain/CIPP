@@ -15,6 +15,7 @@ BeforeAll {
     }
     . (Find-Module1 'ConvertTo-CippReportPdf.ps1')
     . (Find-Module1 'Get-CippReportTenantName.ps1')
+    . (Find-Module1 'Resolve-CippReportDataToken.ps1')
     . (Find-Module1 'Push-ExecGenerateReportBuilderReport.ps1')
 
     # Static stubs for the storage/data helpers the generator calls. The Add stub captures the stored
@@ -26,6 +27,7 @@ BeforeAll {
     function Get-CIPPBrandingSettings { @{ colour = '#F77F00' } }
     function Get-CIPPBrandingPreset { param($Id, [switch]$SkipImageData) @() }
     function Get-Tenants { param($TenantFilter) @{ displayName = 'Contoso' } }
+    function New-CIPPDbRequest { param($TenantFilter, $Type, $Fields) @() }
     function Get-CIPPTextReplacement { param($TenantFilter, $Text, [switch]$EscapeForJson) $Text }
     function Write-LogMessage { param([Parameter(ValueFromRemainingArguments = $true)]$Rest) }
     function Get-CippException { param($Exception) @{ NormalizedError = "$($Exception)" } }

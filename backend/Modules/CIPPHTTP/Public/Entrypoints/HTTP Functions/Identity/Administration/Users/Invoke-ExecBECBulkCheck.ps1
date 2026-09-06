@@ -50,6 +50,7 @@ function Invoke-ExecBECBulkCheck {
             $Cases.Add([pscustomobject]@{ UserId = [string]$User.id; UserPrincipalName = [string]$User.userPrincipalName; CaseId = $Prepared.CaseId })
         }
         if ($Batch.Count -eq 0) { throw 'None of the selected users could be resolved' }
+        $Unresolved = @($Cases | Where-Object { $_.Error } | ForEach-Object { $_.UserId })
         $InputObject = [PSCustomObject]@{
             OrchestratorName = 'BECRunOrchestrator'
             Batch            = @($Batch)
@@ -58,7 +59,7 @@ function Invoke-ExecBECBulkCheck {
         $null = Start-CIPPOrchestrator -InputObject $InputObject
         Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Queued $($Batch.Count) BEC investigation(s) (queue $($Queue.RowKey))" -Sev 'Info'
         $Body = @{
-            Results = "Queued $($Batch.Count) BEC investigation(s). Results appear on the BEC Reports page and each user's Compromise Remediation tab."
+            Results = "Queued $($Batch.Count) BEC investigation(s). Results appear on the BEC Reports page and each user's Compromise Remediation tab.$(if ($Unresolved.Count -gt 0) { " $($Unresolved.Count) selected user(s) could not be found and were skipped: $($Unresolved -join ', ')." })"
             QueueId = $Queue.RowKey
             Cases   = @($Cases)
         }

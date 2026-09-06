@@ -569,7 +569,7 @@ function Push-BECRun {
             }
             if ($IntuneDevicesError -like 'An error has occurred*') {
                 $ActivityId = [regex]::Match($IntuneDevicesError, 'Activity ID: ([0-9a-fA-F-]{36})').Groups[1].Value
-                $IntuneDevicesError = "Intune returned an unexpected error (HTTP $($IntuneResponse.status)). This is a failure inside the Intune service itself - usually transient, or the tenant does not have Intune provisioned. Rerun the check to retry.$(if ($ActivityId) { " Microsoft support reference (Activity ID): $ActivityId" })"
+                $IntuneDevicesError = "Intune returned an unexpected error (HTTP $($IntuneResponse.status)). This is a failure inside the Intune service itself and is usually transient. Rerun the check to retry.$(if ($ActivityId) { " Microsoft support reference (Activity ID): $ActivityId" })"
             }
             if ([string]::IsNullOrWhiteSpace($IntuneDevicesError)) {
                 $IntuneDevicesError = "Intune device query failed with status $($IntuneResponse.status)"

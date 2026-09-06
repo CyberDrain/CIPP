@@ -23,6 +23,13 @@ Describe 'Get-CIPPBecErrorInfo' {
         $I.Message | Should -Not -Match 'Activity ID'
     }
 
+    It 'keeps a transient Intune service error as a failure, not a skip' {
+        $I = Get-CIPPBecErrorInfo -Message 'Intune returned an unexpected error (HTTP 503). This is a failure inside the Intune service itself and is usually transient. Rerun the check to retry. Microsoft support reference (Activity ID): 1967-68c5'
+        $I.Skipped | Should -BeFalse
+        $I.Message | Should -Match 'transient'
+        $I.Message | Should -Not -Match 'Activity ID'
+    }
+
     It 'strips the Exchange diagnostic prefix from a real failure' {
         $I = Get-CIPPBecErrorInfo -Message 'Ex3F6FA7|Microsoft.Exchange.Management.Tasks.SomeException|The server is busy, try again.'
         $I.Skipped | Should -BeFalse

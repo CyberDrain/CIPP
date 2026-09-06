@@ -220,9 +220,20 @@ function Invoke-CIPPBecContainment {
                         & $Add $Id $UserPrincipalName 'success' "Disabled $($Protocols -join ', ') for $UserPrincipalName" $null
                     }
                     { $_ -in @('BlockMobileDevices', 'RemoveMobileDevices') } {
-                        $Devices = @((& $GetParam 'MobileDeviceIds') | Where-Object { $_ })
-                        $DeviceRows = if ($Devices.Count -gt 0 -and $RunResults) { @($RunResults.SuspectUserDevices | Where-Object { $_.DeviceID -in $Devices -or $_.Guid -in $Devices -or $_.Identity -in $Devices }) } elseif ($Devices.Count -gt 0) { @($Devices | ForEach-Object { [pscustomobject]@{ DeviceID = $_; Guid = $_ } }) } else { @($RunResults.SuspectUserDevices) }
-                        if ($DeviceRows.Count -eq 0) { & $Add $Id $UserPrincipalName 'info' 'No mobile device partnerships found' $null; break }
+                        $Picked = @((& $GetParam 'MobileDeviceIds') | Where-Object { $_ } | ForEach-Object { [string]$_ })
+                        $Known = @($RunResults.SuspectUserDevices | Where-Object { $_ })
+                        # The block list takes the DeviceID and the removal takes the partnership Guid, so a pick the run's
+                        # inventory does not know (no run, or an API caller) is looked up on the mailbox rather than guessed.
+                        $Unresolved = @($Picked | Where-Object { $_ -notin @($Known.DeviceID) -and $_ -notin @($Known.Guid) -and $_ -notin @($Known.Identity) })
+                        if ($Known.Count -eq 0 -or $Unresolved.Count -gt 0) {
+                            $Live = @(New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-MobileDevice' -cmdParams @{ Mailbox = $UserPrincipalName } -Anchor $UserPrincipalName | Where-Object { $_ })
+                            $Known = @($Known) + @($Live | Where-Object { $_.Guid -notin @($Known.Guid) })
+                        }
+                        $DeviceRows = if ($Picked.Count -gt 0) { @($Known | Where-Object { $_.DeviceID -in $Picked -or $_.Guid -in $Picked -or $_.Identity -in $Picked }) } else { @($Known) }
+                        foreach ($Missing in @($Picked | Where-Object { $_ -notin @($DeviceRows.DeviceID) -and $_ -notin @($DeviceRows.Guid) -and $_ -notin @($DeviceRows.Identity) })) {
+                            & $Add $Id $Missing 'error' "No mobile device partnership '$Missing' found on $UserPrincipalName" $null
+                        }
+                        if ($DeviceRows.Count -eq 0) { if ($Picked.Count -eq 0) { & $Add $Id $UserPrincipalName 'info' 'No mobile device partnerships found' $null }; break }
                         foreach ($Device in $DeviceRows) {
                             $Target = [string]($Device.DeviceID ?? $Device.Guid)
                             try {

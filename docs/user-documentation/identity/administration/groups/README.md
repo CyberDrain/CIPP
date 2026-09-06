@@ -40,6 +40,7 @@ The Groups page lists every group in the tenant and is where group membership, m
 | On Premises Sync Enabled     | Whether the group is synchronised from on-premises Active Directory.                                                                          |
 | Members                      | The group's members, reached through a **View members** button.                                                                               |
 | Owners                       | The group's owners, reached through a **View owners** button.                                                                                 |
+| Has Owner                    | Whether the group has at least one owner.                                                                                                     |
 
 {% hint style="info" %}
 Group Type is composed by CIPP rather than returned by Graph, which reports the same information across the `groupTypes`, `mailEnabled` and `securityEnabled` properties. A group is Microsoft 365 when its `groupTypes` include `Unified`, Mail-Enabled Security when it is both mail and security enabled, Security when it is security enabled alone, and a Distribution List when it is mail enabled alone. This matters when comparing against Graph output or the Entra portal, where no single equivalent field exists.

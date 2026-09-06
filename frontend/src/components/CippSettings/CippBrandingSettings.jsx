@@ -264,6 +264,15 @@ const CippBrandingSettings = () => {
   const [coverImageId, setCoverImageId] = useState(branding.coverImageId || null);
   const [coverImageIds, setCoverImageIds] = useState(() => normalizeCoverImageIds(branding));
   const [coverUploads, setCoverUploads] = useState(() => normalizeCoverUploads(branding));
+  // The names given to uploaded covers, by image id. They travel with the gallery so the report
+  // builder can offer a cover as "Board room" rather than "Uploaded 3".
+  const [coverNames, setCoverNames] = useState({});
+  useEffect(() => {
+    const list = brandingQuery.data?.coverImages;
+    if (Array.isArray(list)) {
+      setCoverNames(Object.fromEntries(list.map((image) => [image.id, image.name || ""])));
+    }
+  }, [brandingQuery.data]);
   const [uploadPending, setUploadPending] = useState(false);
   const [coversReady, setCoversReady] = useState(false);
   // Last selection chosen in this UI — prevents stale ListUserSettings from restoring an old pick.
@@ -519,12 +528,12 @@ const CippBrandingSettings = () => {
           key: id,
           id,
           src: coverUploads[index],
-          label: `Uploaded ${index + 1}`,
+          label: coverNames[id] || `Uploaded ${index + 1}`,
           type: "upload",
           empty: false,
         }))
         .filter((option) => typeof option.src === "string" && option.src.startsWith("data:image/")),
-    [coverImageIds, coverUploads]
+    [coverImageIds, coverUploads, coverNames]
   );
 
   const stockOptions = useMemo(
@@ -700,6 +709,22 @@ const CippBrandingSettings = () => {
     }
     setCoverImageId(option.id);
     pinCoverSelection(option.id, coverStock);
+  };
+
+  const handleCoverRename = async (id, name) => {
+    const trimmed = (name || "").trim();
+    if ((coverNames[id] || "") === trimmed) return;
+    setCoverNames((prev) => ({ ...prev, [id]: trimmed }));
+    try {
+      await brandingApi.mutateAsync({
+        url: "/api/ExecBrandingSettings",
+        data: { Action: "RenameImage", kind: "cover", id, name: trimmed },
+        queryKey: "BrandingCoverRename",
+      });
+    } catch (error) {
+      console.error("Failed to name cover", error);
+      alert(error?.response?.data?.Results || error.message || "Failed to name cover");
+    }
   };
 
   const handleCoverDelete = async (id) => {
@@ -1277,7 +1302,7 @@ const CippBrandingSettings = () => {
                             option.type === "upload"
                               ? coverImageId === option.id
                               : !coverImageId && coverStock === option.src;
-                          return (
+                          const tile = (
                             <GalleryTile
                               key={option.key}
                               src={option.src}
@@ -1292,6 +1317,26 @@ const CippBrandingSettings = () => {
                                   : undefined
                               }
                             />
+                          );
+                          if (option.type !== "upload") return tile;
+                          // An uploaded cover can be named, which is how the report builder offers it
+                          // as an Infographic page background.
+                          return (
+                            <Box key={option.key} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                              {tile}
+                              <TextField
+                                size="small"
+                                variant="standard"
+                                placeholder="Name this cover"
+                                defaultValue={coverNames[option.id] || ""}
+                                disabled={busy}
+                                inputProps={{ "aria-label": `Name for ${option.label}`, maxLength: 64 }}
+                                onBlur={(event) => handleCoverRename(option.id, event.target.value)}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter") event.target.blur();
+                                }}
+                              />
+                            </Box>
                           );
                         })}
                   </Box>

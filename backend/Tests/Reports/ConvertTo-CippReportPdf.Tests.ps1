@@ -206,3 +206,21 @@ Describe 'Report builder cover block' {
         ([regex]::Matches($Pdf, '/Type /Page[^s]')).Count | Should -Be 2
     }
 }
+
+Describe 'Gallery covers on Infographic pages' {
+    It 'reads a gallery cover into the page and leaves a missing one as a plain background' {
+        function Get-CIPPImage { param($PartitionKey, $Id) if ($Id -eq 'g1') { @{ data = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' } } }
+        $Blocks = @(
+            @{ type = 'hero'; title = 'With cover'; heroHighlight = '1'; heroImage = 'gallery:g1' }
+            @{ type = 'hero'; title = 'Without'; heroHighlight = '2'; heroImage = 'gallery:missing' }
+        )
+        $Bytes = ConvertTo-CippReportPdf -Blocks $Blocks -Variables @{} -Branding @{ colour = '#0E4C92'; coverStock = 'none' } -TenantName 'Contoso' -ReportName 'T'
+        $Pdf = [System.Text.Encoding]::Latin1.GetString($Bytes)
+        # the PNG carries an alpha mask, so it lands as two image objects; none at all without a cover
+        ([regex]::Matches($Pdf, '/Subtype /Image')).Count | Should -BeGreaterOrEqual 1
+        $Plain = ConvertTo-CippReportPdf -Blocks @(@{ type = 'hero'; title = 'Without'; heroHighlight = '2'; heroImage = 'gallery:missing' }) -Variables @{} -Branding @{ colour = '#0E4C92'; coverStock = 'none' } -TenantName 'Contoso' -ReportName 'T'
+        ([regex]::Matches([System.Text.Encoding]::Latin1.GetString($Plain), '/Subtype /Image')).Count | Should -Be 0
+        $Blocks[0].heroImage | Should -BeLike 'data:image/png;base64,*'
+        $Blocks[1].heroImage | Should -Be ''
+    }
+}

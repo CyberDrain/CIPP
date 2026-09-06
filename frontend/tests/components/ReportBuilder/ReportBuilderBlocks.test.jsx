@@ -15,6 +15,13 @@ import {
 // What matters is that an edit reaches the parent in the shape the renderer reads, and that the
 // list controls cannot leave a block with no rows at all.
 
+// The Infographic card lists the branding gallery's covers; the hook behind it is replaced so the
+// tests neither fetch nor depend on a tenant's gallery.
+vi.mock('../../../src/components/CippPdf/useBrandingSettings', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useBrandingSettings: () => ({ coverImages: [{ id: 'img-1', name: 'Board room' }, { id: 'img-2', name: '' }] }),
+}))
+
 const shell = (overrides = {}) => ({
   index: 0,
   totalBlocks: 3,
@@ -429,6 +436,17 @@ describe('HeroBlockCard', () => {
     await userEvent.click(within(await screen.findByRole('listbox')).getByText('No cover image'))
 
     expect(latest.current.heroImage).toBe('')
+  })
+
+  it('offers the uploaded covers by the names given in the branding gallery', async () => {
+    const latest = renderLive(createStructuredBlock('hero', 'b1'))
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Background' }))
+    const listbox = within(await screen.findByRole('listbox'))
+    expect(listbox.getByText('Uploaded: cover 2')).toBeInTheDocument()
+    await userEvent.click(listbox.getByText('Uploaded: Board room'))
+
+    expect(latest.current.heroImage).toBe('gallery:img-1')
   })
 
   it('says the block takes a whole page, which is not obvious from the editor', () => {

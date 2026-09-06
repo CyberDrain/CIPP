@@ -47,6 +47,20 @@ function ConvertTo-CippReportPdf {
         } catch { @{} }
     }
 
+    # An Infographic page can use a cover from the branding gallery ('gallery:<id>', as the report
+    # builder stores it); the renderer takes image bytes, so the image is read here. An image that is
+    # gone leaves the page's plain background rather than failing the report.
+    if ($Blocks -isnot [string]) {
+        foreach ($Block in @($Blocks)) {
+            $HeroImage = [string]$Block.heroImage
+            if ($Block.type -ne 'hero' -or $HeroImage -notlike 'gallery:*') { continue }
+            $Image = try { Get-CIPPImage -PartitionKey 'brandingCover' -Id $HeroImage.Substring(8) } catch { $null }
+            $Resolved = if ($Image.data) { [string]$Image.data } else { '' }
+            if ($Block -is [System.Collections.IDictionary]) { $Block['heroImage'] = $Resolved }
+            else { $Block | Add-Member -NotePropertyName 'heroImage' -NotePropertyValue $Resolved -Force }
+        }
+    }
+
     # Accept objects or pre-serialised JSON for each structured input.
     $BlocksJson = if ($Blocks -is [string]) { $Blocks } else { ConvertTo-Json -InputObject @($Blocks) -Depth 20 -Compress }
     $BrandingJson = if ($null -eq $Branding) { '{}' } elseif ($Branding -is [string]) { $Branding } else { ConvertTo-Json -InputObject $Branding -Depth 10 -Compress }

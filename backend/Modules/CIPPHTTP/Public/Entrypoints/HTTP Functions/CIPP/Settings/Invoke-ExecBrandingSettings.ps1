@@ -451,6 +451,32 @@ Function Invoke-ExecBrandingSettings {
                 Write-LogMessage -API $APIName -tenant 'Global' -headers $Request.Headers -message 'Reset branding settings to defaults' -Sev 'Info'
                 'Successfully reset branding settings to defaults'
             }
+            'RenameImage' {
+                # A name for a gallery image, so it can be picked by name where the image is offered
+                # elsewhere: the report builder lists uploaded covers as Infographic page backgrounds.
+                $Kind = "$($Request.Body.kind)".ToLowerInvariant()
+                $ImageId = "$($Request.Body.id)".Trim()
+                $ImageName = "$($Request.Body.name)".Trim()
+                if (-not $ImageId) {
+                    $StatusCode = [HttpStatusCode]::BadRequest
+                    'Error: id is required.'
+                    break
+                }
+                if ($ImageName.Length -gt 64) {
+                    $StatusCode = [HttpStatusCode]::BadRequest
+                    'Error: Image name must be 64 characters or fewer.'
+                    break
+                }
+                $PartitionKey = switch ($Kind) { 'logo' { 'logo' } 'cover' { 'brandingCover' } default { $null } }
+                if (-not $PartitionKey) {
+                    $StatusCode = [HttpStatusCode]::BadRequest
+                    'Error: kind must be logo or cover.'
+                    break
+                }
+                Set-CIPPImageName -PartitionKey $PartitionKey -Id $ImageId -Name $ImageName
+                Write-LogMessage -API $APIName -tenant 'Global' -headers $Request.Headers -message "Named branding $Kind image $ImageId '$ImageName'" -Sev 'Info'
+                'Successfully named image'
+            }
             'ListPresets' {
                 Get-CIPPBrandingPreset
             }

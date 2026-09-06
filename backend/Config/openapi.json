@@ -15455,7 +15455,8 @@
                     "type": "string"
                   },
                   "kind": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "A name for a gallery image, so it can be picked by name where the image is offered elsewhere: the report builder lists uploaded covers as Infographic page backgrounds."
                   },
                   "logoImageId": {
                     "type": "string"

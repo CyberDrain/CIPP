@@ -2,7 +2,7 @@ import { Box, Chip, IconButton, Stack, TextField, Tooltip, Typography } from '@m
 import { CippIcons } from '../../utils/icon-registry'
 import CippButtonCard from '../CippCards/CippButtonCard'
 import { CippAutoComplete } from '../CippComponents/CippAutocomplete'
-import { COVER_STOCK_OPTIONS } from '../CippPdf'
+import { COVER_STOCK_OPTIONS, useBrandingSettings } from '../CippPdf'
 import { CHART_KINDS } from './reportSettings'
 
 // Editors for the report builder's structured blocks — the ones that carry data rather than prose.
@@ -464,6 +464,16 @@ export const ProgressBlockCard = ({ block, index, onUpdate, ...shell }) => (
 
 export const HeroBlockCard = ({ block, index, onUpdate, ...shell }) => {
   const set = (patch) => onUpdate(index, { ...block, ...patch })
+  // The stock photos, then the covers uploaded to the branding gallery under the names given there.
+  // A gallery cover is stored as 'gallery:<id>' and read into the report when it renders.
+  const branding = useBrandingSettings()
+  const backgroundOptions = [
+    ...HERO_BACKGROUND_OPTIONS,
+    ...(branding.coverImages || []).map((image, position) => ({
+      label: `Uploaded: ${image.name || `cover ${position + 1}`}`,
+      value: `gallery:${image.id}`,
+    })),
+  ]
 
   return (
     <BlockShell block={block} index={index} {...shell}>
@@ -508,11 +518,11 @@ export const HeroBlockCard = ({ block, index, onUpdate, ...shell }) => {
               multiple={false}
               creatable={false}
               disableClearable={true}
-              options={HERO_BACKGROUND_OPTIONS}
+              options={backgroundOptions}
               value={
-                HERO_BACKGROUND_OPTIONS.find(
+                backgroundOptions.find(
                   (option) => option.value === (block.heroImage || 'none')
-                ) ?? HERO_BACKGROUND_OPTIONS[0]
+                ) ?? backgroundOptions[0]
               }
               onChange={(option) =>
                 set({ heroImage: !option || option.value === 'none' ? '' : option.value })

@@ -148,15 +148,33 @@ Describe 'DBCache collectors reworked for bounded memory' {
             Should -Invoke New-GraphGetRequest -Times 1 -Exactly -ParameterFilter { $Stream.IsPresent }
             $Row = $script:DbWrites[0].Rows[0]
             # membersCsv/ownersCsv are precomputed so the paged list read can stream the blob
-            # verbatim; both sit next to their source arrays in the emitted order.
-            $Added = @($Row.PSObject.Properties.Name) | Select-Object -Last 8
-            $Added | Should -Be @('members', 'membersCsv', 'ownersCsv', 'primDomain', 'teamsEnabled', 'dynamicGroupBool', 'groupType', 'calculatedGroupType')
+            # verbatim; both sit next to their source arrays in the emitted order. hasOwner is
+            # set unconditionally right after, so the AsRawJson paged read has a stable owner
+            # flag even for a genuinely owner-less group (where ownersCsv itself never gets set).
+            $Added = @($Row.PSObject.Properties.Name) | Select-Object -Last 9
+            $Added | Should -Be @('members', 'membersCsv', 'ownersCsv', 'hasOwner', 'primDomain', 'teamsEnabled', 'dynamicGroupBool', 'groupType', 'calculatedGroupType')
             $Row.membersCsv | Should -Be 'user1@contoso.com'
             $Row.ownersCsv | Should -Be 'owner1@contoso.com'
+            $Row.hasOwner | Should -BeTrue
             $Row.groupType | Should -Be 'Microsoft 365'
             $Row.calculatedGroupType | Should -Be 'm365'
             $Row.primDomain | Should -Be 'contoso.com'
             $Row.teamsEnabled | Should -BeTrue
+        }
+
+        It 'sets hasOwner to false for a genuinely owner-less group' {
+            Mock -CommandName New-GraphGetRequest -MockWith {
+                @([pscustomobject]@{ id = 'g1'; displayName = 'One'; mail = 'one@contoso.com'; groupTypes = @('Unified'); mailEnabled = $true; securityEnabled = $false; resourceProvisioningOptions = @('Team'); owners = @() })
+            }
+            Mock -CommandName New-GraphBulkRequest -MockWith {
+                @([pscustomobject]@{ id = 'g1'; body = [pscustomobject]@{ value = @() } })
+            }
+
+            Set-CIPPDBCacheGroups -TenantFilter 'contoso.com'
+
+            $Row = $script:DbWrites[0].Rows[0]
+            $Row.hasOwner | Should -BeFalse
+            $Row.PSObject.Properties.Name | Should -Not -Contain 'ownersCsv'
         }
 
         It 'omits the members property entirely when no member lookup ran' {

@@ -68,6 +68,9 @@ function Get-CIPPGroupsReport {
                 if ($Group.owners -and -not $Group.ownersCsv) {
                     $Group | Add-Member -NotePropertyName 'ownersCsv' -NotePropertyValue ($Group.owners.userPrincipalName -join ',') -Force
                 }
+                if ($null -eq $Group.hasOwner) {
+                    $Group | Add-Member -NotePropertyName 'hasOwner' -NotePropertyValue (-not [string]::IsNullOrEmpty($Group.ownersCsv)) -Force
+                }
                 # Per-item timestamp: a page may span tenants.
                 $Group | Add-Member -NotePropertyName 'CacheTimestamp' -NotePropertyValue $Item.Timestamp -Force
                 if ($TenantFilter -eq 'AllTenants') {
@@ -122,6 +125,7 @@ function Get-CIPPGroupsReport {
             if ($Group.owners -and -not $Group.ownersCsv) {
                 $Group | Add-Member -NotePropertyName 'ownersCsv' -NotePropertyValue ($Group.owners.userPrincipalName -join ',') -Force
             }
+            $Group | Add-Member -NotePropertyName 'hasOwner' -NotePropertyValue (-not [string]::IsNullOrEmpty($Group.ownersCsv)) -Force
             $Group | Add-Member -NotePropertyName 'CacheTimestamp' -NotePropertyValue $CacheTimestamp -Force
             $Results.Add($Group)
         } catch {

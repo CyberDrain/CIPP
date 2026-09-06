@@ -179,7 +179,12 @@ function Invoke-ListGroups {
                 $GroupProperties.Add(@{Name = 'membersCsv'; Expression = { $_.members.userPrincipalName -join ',' } })
             }
             if ($ExpandOwners -and -not $ExpandMembers) {
-                $GroupProperties.Add(@{Name = 'ownersCsv'; Expression = { $_.owners.userPrincipalName -join ',' } })
+                # hasOwner only - ownersCsv is deliberately not emitted here. Populating it would
+                # make subTableShowsCachedColumn() (frontend) swap the interactive "View owners"
+                # button (Add/Remove Owner actions) for a read-only CSV column tenant-wide, since
+                # that check only looks at whether the field is populated, not which caller asked
+                # for it.
+                $GroupProperties.Add(@{Name = 'hasOwner'; Expression = { $_.owners.Count -gt 0 } })
             }
             $GroupProperties.Add(@{Name = 'teamsEnabled'; Expression = { if ($_.resourceProvisioningOptions -like '*Team*') { $true }else { $false } } })
             $GroupProperties.Add(@{Name = 'groupType'; Expression = {

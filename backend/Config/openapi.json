@@ -22591,6 +22591,83 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/ExecGetBaselineWhatIfReportPdf": {
+      "post": {
+        "summary": "ExecGetBaselineWhatIfReportPdf",
+        "operationId": "ExecGetBaselineWhatIfReportPdf",
+        "tags": [
+          "Tenant > Standards"
+        ],
+        "description": "Server-renders the Baseline What-If report as application/pdf bytes: what applying the\nconfigured standards would change for a tenant today, what each planned stage will change,\noptionally what assigning one more baseline would roll out, and the agreed exceptions. Reads\nthe same alignment payload the Baselines page shows (Get-CIPPBaselineAlignment), composes it\nthrough the shared CIPPSharp component kit (Build-CippBaselineWhatIfReportTree) and returns\nthe finished PDF. Nothing is changed by producing it.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "simulatedTemplateId": {
+                    "type": "string",
+                    "description": "Optional: the GUID of a baseline not assigned to the tenant, to preview what assigning it would roll out stage by stage."
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "simulatedTemplateId",
+            "in": "query",
+            "description": "Optional: the GUID of a baseline not assigned to the tenant, to preview what assigning it would roll out stage by stage.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Baselines.Read"
+      }
+    },
     "/api/ExecGetBecReportPdf": {
       "post": {
         "summary": "ExecGetBecReportPdf",

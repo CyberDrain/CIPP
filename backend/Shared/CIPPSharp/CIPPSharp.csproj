@@ -13,8 +13,15 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\</OutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <!-- No deps.json is generated (GenerateDependencyFile=false), so NuGet runtime assemblies must be
+         copied physically next to CIPPSharp.dll for the PowerShell host to resolve them by same-dir probing. -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" />
+    <!-- Compile-only: ExcludeAssets="runtime" keeps the System.Management.Automation facade out of bin\
+         (PowerShell supplies the real assembly at runtime) while still compiling against its types. -->
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" ExcludeAssets="runtime" />
+    <!-- Server-side PDF renderer. MIT, zero third-party deps: only OfficeIMO.Pdf.dll + OfficeIMO.Core.dll land in bin\. -->
+    <PackageReference Include="OfficeIMO.Pdf" Version="3.3.0" />
   </ItemGroup>
 </Project>

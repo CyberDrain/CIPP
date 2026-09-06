@@ -34,6 +34,7 @@ BeforeAll {
     function Get-CIPPBecRogueAppFeed { }
 
     # Real pieces under test alongside the run
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/ConvertTo-CIPPBecHostAddress.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCollectorResult.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCaseId.ps1')
@@ -76,7 +77,7 @@ Describe 'Push-BECRun' {
         }
         Mock Search-CIPPBecAuditLog {
             if ($Operations -contains 'New-InboxRule') {
-                [pscustomobject]@{ Complete = $true; Cap = $null; Pages = 1; Records = @([pscustomobject]@{ Identity = 'a1'; Operation = 'New-InboxRule'; AuditData = [pscustomobject]@{ Operation = 'New-InboxRule'; UserId = 'victim@contoso.com'; CreationTime = '2026-08-19T01:00:00Z'; ClientIP = '203.0.113.10'; ObjectId = 'victim@contoso.com\Hide invoices'; Parameters = @([pscustomobject]@{ Name = 'Name'; Value = 'Hide invoices' }, [pscustomobject]@{ Name = 'MoveToFolder'; Value = 'RSS Feeds' }) } }) }
+                [pscustomobject]@{ Complete = $true; Cap = $null; Pages = 1; Records = @([pscustomobject]@{ Identity = 'a1'; Operation = 'New-InboxRule'; AuditData = [pscustomobject]@{ Operation = 'New-InboxRule'; UserId = 'victim@contoso.com'; CreationTime = '2026-08-19T01:00:00Z'; ClientIP = '203.0.113.10:51234'; ObjectId = 'victim@contoso.com\Hide invoices'; Parameters = @([pscustomobject]@{ Name = 'Name'; Value = 'Hide invoices' }, [pscustomobject]@{ Name = 'MoveToFolder'; Value = 'RSS Feeds' }) } }) }
             } elseif ($Operations -contains 'Add-MailboxPermission') {
                 # one grant on the investigated mailbox (the delegation join below picks it up), page cap hit
                 [pscustomobject]@{ Complete = $false; Cap = '10 pages of 5000 records'; Pages = 10; Records = @([pscustomobject]@{ Identity = 'p1'; Operation = 'Add-MailboxPermission'; AuditData = [pscustomobject]@{ Operation = 'Add-MailboxPermission'; UserKey = 'admin@contoso.com'; CreationTime = '2026-08-19T05:00:00Z'; ClientIP = '203.0.113.10'; ObjectId = 'contoso.onmicrosoft.com/Users/Victim'; Parameters = @([pscustomobject]@{ Name = 'Identity'; Value = 'victim@contoso.com' }, [pscustomobject]@{ Name = 'User'; Value = 'helper@contoso.com' }, [pscustomobject]@{ Name = 'AccessRights'; Value = 'FullAccess' }) } }) }
@@ -141,6 +142,9 @@ Describe 'Push-BECRun' {
         $R.UserGrants[0].Risk | Should -Be 'CatalogMatch'
         $R.TransportRuleChanges[0].Country | Should -Be 'NG' -Because 'full-scope client IPs go through the same geo lookup'
         $R.TransportRuleChanges[0].ForeignLocation | Should -BeTrue
+        $R.InboxRuleChanges[0].ClientIP | Should -Be '203.0.113.10' -Because 'the client port is dropped so one host correlates as one'
+        $R.InboxRuleChanges[0].Country | Should -Be 'NG'
+        $R.InboxRuleChanges[0].AuditData.Operation | Should -Be 'New-InboxRule' -Because 'the raw audit record rides along for the More Info panel'
         $R.LocationAnalysis.ForeignTransportRuleChangeCount | Should -Be 1
         $R.Completeness.DefenderDetections.Complete | Should -BeFalse
         $R.Completeness.DefenderDetections.Error | Should -Be 'Invalid subscription'

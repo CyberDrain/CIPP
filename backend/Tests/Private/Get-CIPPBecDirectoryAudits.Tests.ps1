@@ -6,6 +6,7 @@ BeforeAll {
     function ConvertTo-CIPPODataFilterValue { param($Value, $Type) $Value }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCollectorResult.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/ConvertTo-CIPPBecHostAddress.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecDirectoryAudits.ps1')
     $script:Heuristics = Get-CIPPBecHeuristics
     $script:UserId = 'c0ffee00-0000-4000-8000-000000000001'

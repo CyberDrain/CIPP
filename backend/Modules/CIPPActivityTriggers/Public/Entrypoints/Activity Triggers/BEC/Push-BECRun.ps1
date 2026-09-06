@@ -190,6 +190,7 @@ function Push-BECRun {
                     $TargetCandidates = @($objectID, $IdentityParam, $AD.MailboxOwnerUPN) -join ' '
                     # who received the access: the User/Trustee parameter, or the folder member for AddFolderPermissions
                     $Trustee = if ($AD.Parameters) { ($AD.Parameters | Where-Object { $_.Name -in @('User', 'Trustee', 'Delegate') } | Select-Object -First 1).Value } else { $AD.item.ParentFolder.MemberUpn ?? $AD.item.ParentFolder.MemberSid }
+                    $TargetsSuspect = ($TargetCandidates -like "*$UserName*" -or ($UserLocalPart -and $TargetCandidates -like "*$UserLocalPart*"))
                     [pscustomobject]@{
                         Operation      = $AD.Operation
                         UserKey        = $AD.UserKey
@@ -197,8 +198,10 @@ function Push-BECRun {
                         Permissions    = $perms
                         Trustee        = [string]$Trustee
                         Date           = $AD.CreationTime
-                        ClientIP       = $AD.ClientIP ?? $AD.ClientIPAddress
-                        TargetsSuspect = ($TargetCandidates -like "*$UserName*" -or ($UserLocalPart -and $TargetCandidates -like "*$UserLocalPart*"))
+                        ClientIP       = ConvertTo-CIPPBecHostAddress -Address ($AD.ClientIP ?? $AD.ClientIPAddress)
+                        TargetsSuspect = $TargetsSuspect
+                        # the full audit record, kept for the rows about this mailbox (the search is tenant-wide)
+                        AuditData      = if ($TargetsSuspect) { $AD } else { $null }
                     }
                 })
         } catch {
@@ -239,7 +242,8 @@ function Push-BECRun {
                             Parameters = ($_.Parameters | Where-Object { $_ -and $_.Name -notin 'Identity', 'Name' } | ForEach-Object { "$($_.Name)=$($_.Value)" }) -join '; '
                             Date       = $_.CreationTime
                             # admin-cmdlet records carry ClientIP, mailbox-sync records (UpdateInboxRules) ClientIPAddress
-                            ClientIP   = $_.ClientIP ?? $_.ClientIPAddress
+                            ClientIP   = ConvertTo-CIPPBecHostAddress -Address ($_.ClientIP ?? $_.ClientIPAddress)
+                            AuditData  = $_
                         }
                     })
             }
@@ -339,7 +343,8 @@ function Push-BECRun {
                             Operation = $_.Operation
                             UserKey   = $_.UserId
                             Date      = $_.CreationTime
-                            ClientIP  = $_.ClientIP ?? $_.ClientIPAddress
+                            ClientIP  = ConvertTo-CIPPBecHostAddress -Address ($_.ClientIP ?? $_.ClientIPAddress)
+                            AuditData = $_
                             # the audit record carries the full new list, not a delta
                             Trusted   = if ($TrustedValue) { @(($TrustedValue -split ';').Trim() | Where-Object { $_ }) } else { $null }
                             Blocked   = if ($BlockedValue) { @(($BlockedValue -split ';').Trim() | Where-Object { $_ }) } else { $null }
@@ -370,7 +375,8 @@ function Push-BECRun {
                             ItemUrl    = $_.ObjectId
                             Target     = $_.TargetUserOrGroupName
                             TargetType = $_.TargetUserOrGroupType
-                            ClientIP   = $_.ClientIP ?? $_.ClientIPAddress
+                            ClientIP   = ConvertTo-CIPPBecHostAddress -Address ($_.ClientIP ?? $_.ClientIPAddress)
+                            AuditData  = $_
                         }
                     })
             }
@@ -750,7 +756,6 @@ function Push-BECRun {
         # their own location from Graph. A geo failure degrades to no location, never a failed run.
         & $Phase 'Score' 'Resolving locations and computing the threat score'
         Write-Information 'Resolving IP locations'
-        $ClientIpRegex = [regex]'^(?<IP>(?:\d{1,3}(?:\.\d{1,3}){3}|\[[0-9a-fA-F:]+\]|[0-9a-fA-F:]+))(?::\d+)?$'
         $GeoIPCandidates = [System.Collections.Generic.List[string]]::new()
         $GeoRows = @($RuleChangesLog) + @($SafelistChanges) + @($SharingChanges) + @($PermissionsLog | Where-Object { $_.TargetsSuspect }) + @($TransportRuleChanges) + @($DirectoryAudits) + @($MailActivity)
         foreach ($Row in $GeoRows) { if ($Row.ClientIP) { $GeoIPCandidates.Add([string]$Row.ClientIP) } }
@@ -768,7 +773,7 @@ function Push-BECRun {
             param($RawIP)
             if ([string]::IsNullOrWhiteSpace($RawIP)) { return $null }
             # same normalization the batch helper applies to its keys (strip :port and brackets)
-            $Clean = $ClientIpRegex.Replace(([string]$RawIP).Trim(), '${IP}') -replace '[\[\]]', ''
+            $Clean = ConvertTo-CIPPBecHostAddress -Address $RawIP
             if ([string]::IsNullOrWhiteSpace($Clean)) { return $null }
             return $GeoMap[$Clean]
         }

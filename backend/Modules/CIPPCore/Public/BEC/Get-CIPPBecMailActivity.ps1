@@ -52,7 +52,7 @@ function Get-CIPPBecMailActivity {
         $AD = $Record.AuditData
         if (-not $AD) { return }
         $Operation = [string]($AD.Operation ?? $Record.Operation)
-        $ClientIP = [string]($AD.ClientIP ?? $AD.ClientIPAddress)
+        $ClientIP = [string](ConvertTo-CIPPBecHostAddress -Address ($AD.ClientIP ?? $AD.ClientIPAddress))
         $ClientInfo = [string]($AD.ClientInfoString ?? $AD.ClientAppId ?? $AD.ClientApplication)
         if ($ClientInfo.Length -gt 120) { $ClientInfo = $ClientInfo.Substring(0, 120) + '...' }
         $AccessType = [string]$AD.MailAccessType

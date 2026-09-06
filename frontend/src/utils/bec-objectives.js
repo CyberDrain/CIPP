@@ -14,6 +14,8 @@
 // whether a check could run from BEC_FINDING_MARKERS - never from the finding object.
 
 const arr = (value) => (Array.isArray(value) ? value : [])
+const sameName = (a, b) =>
+  String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase()
 export const joinList = (value) =>
   Array.isArray(value) ? value.join(', ') : (value ?? '')
 
@@ -279,36 +281,62 @@ export const BEC_GROUPS = [
       {
         key: 'TransportRuleChanges',
         title: 'Transport rules',
+        // One row per current rule that diverts or suppresses mail, with the latest audited change to
+        // it (who, from where, when) folded in; changes to rules that are not flagged now (or no longer
+        // exist) are listed below, so a rule is never shown twice.
         columns: [
-          'Date',
-          'Operation',
-          'RuleName',
-          'Actor',
-          'ClientIP',
+          'Name',
+          'State',
+          'Mode',
+          'RiskReasons',
+          'LastChange',
+          'ChangedBy',
+          'ChangedFrom',
           'Country',
-          'RiskyParameters',
-          'Flagged',
+          'ChangeDate',
         ],
-        rows: (b) =>
-          arr(b.TransportRuleChanges).map((c) => ({
-            ...c,
-            RiskyParameters: joinList(c.RiskyParameters),
-          })),
+        rows: (b) => {
+          const changes = arr(b.TransportRuleChanges)
+          const latestFor = (name) =>
+            changes
+              .filter((c) => sameName(c.RuleName, name))
+              .sort((x, y) => new Date(y.Date) - new Date(x.Date))[0]
+          return arr(b.TransportRulesFlagged).map((r) => {
+            const c = latestFor(r.Name)
+            return {
+              ...r,
+              RiskReasons: joinList(r.RiskReasons),
+              LastChange: c?.Operation || '',
+              ChangedBy: c?.Actor || '',
+              ChangedFrom: c?.ClientIP || '',
+              Country: c?.Country || '',
+              ChangeDate: c?.Date || '',
+              ForeignLocation: c?.ForeignLocation,
+              AuditData: c?.AuditData,
+            }
+          })
+        },
         sections: [
           {
-            title: 'Current rules that divert or suppress mail',
-            rows: (b) =>
-              arr(b.TransportRulesFlagged).map((r) => ({
-                ...r,
-                RiskReasons: joinList(r.RiskReasons),
-              })),
+            title: 'Changes to rules that are not currently flagged',
+            rows: (b) => {
+              const flagged = arr(b.TransportRulesFlagged).map((r) => r.Name)
+              return arr(b.TransportRuleChanges)
+                .filter((c) => !flagged.some((n) => sameName(c.RuleName, n)))
+                .map((c) => ({
+                  ...c,
+                  RiskyParameters: joinList(c.RiskyParameters),
+                }))
+            },
             columns: [
-              'Name',
-              'State',
-              'Mode',
-              'WhenChanged',
-              'ChangedInWindow',
-              'RiskReasons',
+              'Date',
+              'Operation',
+              'RuleName',
+              'Actor',
+              'ClientIP',
+              'Country',
+              'RiskyParameters',
+              'Flagged',
             ],
           },
         ],

@@ -62,11 +62,12 @@ function Get-CIPPBecTransportRules {
                 Operation       = $AD.Operation
                 Date            = $AD.CreationTime
                 Actor           = $AD.UserId
-                ClientIP        = $AD.ClientIP ?? $AD.ClientIPAddress
+                ClientIP        = ConvertTo-CIPPBecHostAddress -Address ($AD.ClientIP ?? $AD.ClientIPAddress)
                 RuleName        = [string]$RuleName
                 Parameters      = ($Described -join '; ')
                 RiskyParameters = $Risky
                 Flagged         = ($Risky.Count -gt 0 -and $AD.Operation -in @('New-TransportRule', 'Set-TransportRule', 'Enable-TransportRule'))
+                AuditData       = $AD
             }
         }
         $Rows = @($Rows | Sort-Object -Property @{ Expression = { $_.Flagged }; Descending = $true }, @{ Expression = { $_.Date }; Descending = $true })

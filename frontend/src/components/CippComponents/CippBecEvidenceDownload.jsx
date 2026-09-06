@@ -54,7 +54,7 @@ export const useBecEvidenceDownload = () => {
         const response = await fetch(
           `/api/execBECCheck?GUID=${encodeURIComponent(caseId)}&tenantFilter=${encodeURIComponent(tenantFilter)}`
         )
-        if (!response.ok) throw new Error(`Could not load case ${caseId}`)
+        if (!response.ok) throw new Error('Could not load the case results')
         becData = await response.json()
       }
       if (becData?.Waiting || becData?.Error) {
@@ -126,7 +126,10 @@ export const useBecEvidenceDownload = () => {
         )
       })
     } catch (error) {
-      console.error('BEC evidence download failed', error)
+      console.error(
+        'BEC evidence download failed:',
+        String(error?.message ?? '').replace(/[\r\n]+/g, ' ')
+      )
       setLastError(error?.message || 'the export failed; see the logbook')
     } finally {
       setPendingCaseId(null)

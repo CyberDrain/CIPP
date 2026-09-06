@@ -1,4 +1,14 @@
-import { Box, Chip, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import {
+  Box,
+  Chip,
+  IconButton,
+  Stack,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { CippIcons } from '../../utils/icon-registry'
 import CippButtonCard from '../CippCards/CippButtonCard'
 import { CippAutoComplete } from '../CippComponents/CippAutocomplete'
@@ -193,6 +203,29 @@ export const createStructuredBlock = (type, id) => {
   }
 }
 
+/* ── Data source switch ──────────────────────────────────── */
+
+/**
+ * Where a chart's or table's data comes from: typed in by hand, or the reporting database. Chosen
+ * first, so each mode shows only its own controls. "Cache" mode with nothing picked yet is a source
+ * object with no collection, which the renderer ignores until one is chosen.
+ */
+const EMPTY_SOURCE = { type: null, field: null, valueField: null, aggregate: null, filter: null }
+
+const SourceSwitch = ({ value, onChange }) => (
+  <ToggleButtonGroup
+    exclusive
+    size="small"
+    color="primary"
+    aria-label="Data source"
+    value={value}
+    onChange={(event, next) => next && onChange(next)}
+  >
+    <ToggleButton value="manual">Manual</ToggleButton>
+    <ToggleButton value="cache">Reporting database</ToggleButton>
+  </ToggleButtonGroup>
+)
+
 /* ── Data source picker ──────────────────────────────────── */
 
 const FILTER_OPS = [
@@ -246,18 +279,14 @@ export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
         <Box sx={{ flex: 1 }}>
           <CippAutoComplete
             size="small"
-            label={mode === 'chart' ? 'Fill from data' : 'Fill rows from data'}
-            placeholder="None: use what is typed above"
+            label="Collection"
+            placeholder="Pick a collection"
             multiple={false}
             creatable={false}
             options={collections}
             value={collections.find((option) => option.value === source?.type) ?? null}
             onChange={(option) =>
-              onChange(
-                option?.value
-                  ? { type: option.value, field: null, valueField: null, aggregate: null, filter: null }
-                  : null
-              )
+              onChange(option?.value ? { ...EMPTY_SOURCE, type: option.value } : EMPTY_SOURCE)
             }
           />
         </Box>
@@ -543,11 +572,17 @@ export const ChartBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
           </Box>
         </Stack>
 
-        {block.chartSource?.type ? (
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            The points come from the data source below when the report renders; clear it to type
-            them in.
-          </Typography>
+        <SourceSwitch
+          value={block.chartSource ? 'cache' : 'manual'}
+          onChange={(next) => set({ chartSource: next === 'cache' ? EMPTY_SOURCE : null })}
+        />
+        {block.chartSource ? (
+          <DataSourcePicker
+            mode="chart"
+            value={block.chartSource}
+            onChange={(chartSource) => set({ chartSource })}
+            dataShape={dataShape}
+          />
         ) : (
           <RowsEditor
             rows={block.chartData || []}
@@ -590,12 +625,6 @@ export const ChartBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
             />
           ) : null}
         </Stack>
-        <DataSourcePicker
-          mode="chart"
-          value={block.chartSource}
-          onChange={(chartSource) => set({ chartSource })}
-          dataShape={dataShape}
-        />
       </Stack>
     </BlockShell>
   )
@@ -1051,42 +1080,62 @@ export const TableBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
     >
       <Stack spacing={2}>
         <TitleField block={block} index={index} onUpdate={onUpdate} />
-        <DataSourcePicker
-          mode="table"
-          value={block.dataSource}
-          onChange={(dataSource) => set({ dataSource })}
-          dataShape={dataShape}
+        <SourceSwitch
+          value={block.dataSource ? 'cache' : 'manual'}
+          onChange={(next) => set({ dataSource: next === 'cache' ? EMPTY_SOURCE : null })}
         />
-        <datalist id={fieldListId}>
-          {sourceFields.map((field) => (
-            <option key={field.name} value={field.name} />
-          ))}
-        </datalist>
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          Columns
-        </Typography>
-        <RowsEditor
-          rows={columns}
-          columns={[
-            { key: 'header', label: 'Column header', width: 1 },
-            { key: 'field', label: 'Field (when filled from data)', width: 1, inputProps: { list: fieldListId } },
-          ]}
-          onChange={setColumns}
-          addLabel="Add column"
-        />
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          Rows
-        </Typography>
-        <RowsEditor
-          rows={rows}
-          columns={columns.map((column, position) => ({
-            key: column.key,
-            label: column.header || `Column ${position + 1}`,
-            width: 1,
-          }))}
-          onChange={(next) => set({ rows: next })}
-          addLabel="Add row"
-        />
+        {block.dataSource ? (
+          <>
+            <DataSourcePicker
+              mode="table"
+              value={block.dataSource}
+              onChange={(dataSource) => set({ dataSource })}
+              dataShape={dataShape}
+            />
+            <datalist id={fieldListId}>
+              {sourceFields.map((field) => (
+                <option key={field.name} value={field.name} />
+              ))}
+            </datalist>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Columns: the field each one reads (its header when blank)
+            </Typography>
+            <RowsEditor
+              rows={columns}
+              columns={[
+                { key: 'header', label: 'Column header', width: 1 },
+                { key: 'field', label: 'Field', width: 1, inputProps: { list: fieldListId } },
+              ]}
+              onChange={setColumns}
+              addLabel="Add column"
+            />
+          </>
+        ) : (
+          <>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Columns
+            </Typography>
+            <RowsEditor
+              rows={columns}
+              columns={[{ key: 'header', label: 'Column header', width: 1 }]}
+              onChange={setColumns}
+              addLabel="Add column"
+            />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Rows
+            </Typography>
+            <RowsEditor
+              rows={rows}
+              columns={columns.map((column, position) => ({
+                key: column.key,
+                label: column.header || `Column ${position + 1}`,
+                width: 1,
+              }))}
+              onChange={(next) => set({ rows: next })}
+              addLabel="Add row"
+            />
+          </>
+        )}
       </Stack>
     </BlockShell>
   )

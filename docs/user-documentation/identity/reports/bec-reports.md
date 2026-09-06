@@ -16,12 +16,10 @@ Runs are never expired automatically. A run stays, with its results, until it is
 | UserPrincipalName | The investigated user.                                                                                                                            |
 | Level             | The threat level the server assigned: High, Medium or Low. Empty while the run is waiting or when it failed.                                      |
 | Score             | The threat score behind the level. The breakdown is on the run itself.                                                                            |
-| Scope             | **Full** for every run since the investigation became full-only; **Quick** on older runs that collected only the classic eleven checks.           |
 | Status            | **Waiting** while queued or running, **Completed**, or **Error** with the reason in the details panel.                                            |
 | ExtractedAt       | When the data was collected.                                                                                                                      |
 | RequestedBy       | Who queued the run, or the alert engine when an alert started it.                                                                                 |
 | ContainmentRuns   | How many containment runs were recorded on the case.                                                                                              |
-| HasEvidence       | Whether evidence has been exported for the run at least once. Every export's hash, time and size are recorded on the run; the latest is in the details panel.                             |
 | CaseId            | The case id. It appears on every logbook line the run, its containment and its exports produced, so the Logbook can be filtered to a single case. |
 
 The filters at the top narrow the list to High threat levels or completed runs.

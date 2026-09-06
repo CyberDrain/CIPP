@@ -822,7 +822,6 @@ function Push-BECRun {
 
         $Results = [PSCustomObject]@{
             CaseId                   = $CaseId
-            Scope                    = 'Full'
             AddedApps                = @($NewSPs)
             MaliciousSPs             = @($MaliciousSPs)
             SuspectUserSignIns       = @($SuspectUserSignIns)
@@ -873,7 +872,6 @@ function Push-BECRun {
             UserPrincipalName = [string]$UserName
             DisplayName       = [string]$SuspectUserDetail.displayName
             Status            = 'Completed'
-            Scope             = 'Full'
             Score             = [int]$Score.Value
             Level             = [string]$Score.Level
             ExtractedAt       = $Results.ExtractedAt.ToUniversalTime().ToString('o')
@@ -893,7 +891,6 @@ function Push-BECRun {
                 UserId            = [string]$SuspectUser
                 UserPrincipalName = [string]$UserName
                 Status            = 'Error'
-                Scope             = 'Full'
                 ErrorMessage      = [string]$errMessage
                 ExtractedAt       = (Get-Date).ToUniversalTime().ToString('o')
             }

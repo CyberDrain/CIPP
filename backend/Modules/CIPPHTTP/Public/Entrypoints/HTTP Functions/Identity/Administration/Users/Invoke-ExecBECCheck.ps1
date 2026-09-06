@@ -74,7 +74,6 @@ function Invoke-ExecBECCheck {
 
                 $Summary = @{
                     CaseId      = $Run.CaseId
-                    Scope       = $Run.Scope
                     Status      = $Run.Status
                     RequestedAt = $Run.RequestedAt
                     RequestedBy = $Run.RequestedBy
@@ -92,14 +91,11 @@ function Invoke-ExecBECCheck {
                 $Results = $Run.Results
                 $Results | Add-Member -NotePropertyName 'Run' -NotePropertyValue ([pscustomobject]@{
                         CaseId            = $Run.CaseId
-                        Scope             = $Run.Scope
                         Status            = $Run.Status
                         ExtractedAt       = $Run.ExtractedAt
                         RequestedAt       = $Run.RequestedAt
                         RequestedBy       = $Run.RequestedBy
                         Containment       = $Run.Containment
-                        EvidenceSha256    = $Run.EvidenceSha256
-                        EvidenceCreatedAt = $Run.EvidenceCreatedAt
                     }) -Force
                 $Results
             }
@@ -114,15 +110,15 @@ function Invoke-ExecBECCheck {
             }
             $null = Start-CIPPOrchestrator -InputObject $InputObject
             Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Queued a BEC investigation for $UserName [case $($Prepared.CaseId)]" -Sev 'Info'
-            $Body = @{ GUID = $Prepared.CaseId; CaseId = $Prepared.CaseId; Scope = 'Full'; Status = 'Waiting' }
+            $Body = @{ GUID = $Prepared.CaseId; CaseId = $Prepared.CaseId; Status = 'Waiting' }
         } else {
             if (-not $UserId) { throw 'userid is required' }
             # the latest run that is not a failure; never starts one
             $Latest = @(Get-CIPPBecReport -TenantFilter $TenantFilter -UserId $UserId | Where-Object { $_.Status -in @('Completed', 'Waiting', 'Running') }) | Select-Object -First 1
             $Body = if ($Latest) {
-                @{ GUID = $Latest.CaseId; CaseId = $Latest.CaseId; Scope = $Latest.Scope; Status = $Latest.Status }
+                @{ GUID = $Latest.CaseId; CaseId = $Latest.CaseId; Status = $Latest.Status }
             } else {
-                @{ GUID = $null; CaseId = $null; Scope = $null; Status = $null; NoRuns = $true }
+                @{ GUID = $null; CaseId = $null; Status = $null; NoRuns = $true }
             }
         }
         $StatusCode = [HttpStatusCode]::OK

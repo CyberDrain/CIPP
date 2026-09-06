@@ -31,7 +31,6 @@ Describe 'New-CIPPBecRunRequest' {
         $script:Rows[0].CaseId | Should -Be $Prepared.CaseId
         $script:Rows[0].Replace | Should -BeTrue
         $script:Rows[0].Properties.Status | Should -Be 'Waiting'
-        $script:Rows[0].Properties.Scope | Should -Be 'Full'
         $script:Rows[0].Properties.UserPrincipalName | Should -Be 'victim@contoso.com'
         $script:Rows[0].Properties.DisplayName | Should -Be 'Victim'
         $script:Rows[0].Properties.RequestedBy | Should -Be 'tech@msp.com'

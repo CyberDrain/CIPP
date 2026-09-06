@@ -7,7 +7,7 @@ function Invoke-ListBECReports {
     .SYNOPSIS
         Lists Business Email Compromise runs.
     .DESCRIPTION
-        Lists every stored BEC run (case id, user, scope, status, threat level and score, when it was extracted, who requested it, whether evidence was exported) for a tenant, or for every tenant with tenantFilter=AllTenants. Optionally narrowed to one user with userId. Runs are kept until deleted; this list never reads the result payloads.
+        Lists every stored BEC run (case id, user, status, threat level and score, when it was extracted, who requested it) for a tenant, or for every tenant with tenantFilter=AllTenants. Optionally narrowed to one user with userId. Runs are kept until deleted; this list never reads the result payloads.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -28,7 +28,6 @@ function Invoke-ListBECReports {
                     UserPrincipalName = $_.UserPrincipalName
                     DisplayName       = $_.DisplayName
                     Status            = $_.Status
-                    Scope             = $_.Scope
                     Level             = $_.Level
                     Score             = $_.Score
                     IncompleteCount   = $_.IncompleteCount

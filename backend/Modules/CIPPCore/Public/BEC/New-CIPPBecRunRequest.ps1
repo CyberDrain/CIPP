@@ -54,7 +54,6 @@ function New-CIPPBecRunRequest {
             UserId            = $UserId
             UserPrincipalName = [string]$UserPrincipalName
             Status            = 'Waiting'
-            Scope             = 'Full'
             RequestedBy       = $RequestedBy
             RequestedAt       = (Get-Date).ToUniversalTime().ToString('o')
         }

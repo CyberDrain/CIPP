@@ -16,7 +16,7 @@ function Set-CIPPBecReport {
     .PARAMETER CaseId
         The run's case id.
     .PARAMETER Properties
-        Hashtable of row properties to set/merge (Status, Scope, Score, Level, UserId, ...).
+        Hashtable of row properties to set/merge (Status, Score, Level, UserId, ...).
     .PARAMETER Results
         When supplied, serialised to JSON and written to the run's BecResults row (replace).
     .PARAMETER Replace

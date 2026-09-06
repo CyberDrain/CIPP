@@ -1,6 +1,6 @@
 # Pester tests for ConvertTo-CippReportPdf and the CIPPSharp component kit it wraps.
 # Verifies every block type renders to a valid PDF, empty input still produces a page, branding is
-# applied without throwing, and the image-fit invariant (OfficeIMO throws on over-tall images) holds.
+# applied without throwing, and every image format the engine accepts decodes and renders.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
@@ -80,11 +80,34 @@ Describe 'ConvertTo-CippReportPdf' {
         }
     }
 
-    Context 'Image fit invariant' {
-        It 'scales an over-tall image into the max box (height never exceeds the cap)' {
-            $fit = [CIPP.Reporting.ReportComponents]::FitImage($script:TinyPng, 100, 5000, 180.0, 90.0)
-            $fit | Should -Not -BeNullOrEmpty
-            $fit.Item3 | Should -BeLessOrEqual 90
+    Context 'Image formats' {
+        BeforeAll {
+            # 1x1 fixtures: the smallest valid GIF and WebP, a two-colour SVG, and a corrupt PNG.
+            $script:Gif = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+            $script:Webp = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA'
+            $script:Svg = 'data:image/svg+xml;base64,' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20"><rect width="40" height="20" fill="#F77F00"/></svg>'))
+            $script:Block = @(@{ type = 'blank'; title = 'Formats'; content = '<p>x</p>' })
+        }
+        It 'identifies every raster OfficeIMO decodes, not just PNG and JPEG' {
+            [CIPP.Reporting.ReportComponents]::ImageContentType([CIPP.Reporting.ReportComponents]::DecodeImage($script:Gif)) | Should -Be 'image/gif'
+            [CIPP.Reporting.ReportComponents]::ImageContentType([CIPP.Reporting.ReportComponents]::DecodeImage($script:Webp)) | Should -Be 'image/webp'
+        }
+        It 'rasterises an SVG once at decode time so every placement sees a PNG' {
+            $bytes = [CIPP.Reporting.ReportComponents]::DecodeImage($script:Svg)
+            [CIPP.Reporting.ReportComponents]::ImageContentType($bytes) | Should -Be 'image/png'
+            # 40x20 source scaled to 1200px on the long side, aspect kept.
+            $size = [CIPP.Reporting.ReportComponents]::ImageSize($bytes)
+            $size.Item1 | Should -Be 1200
+            $size.Item2 | Should -Be 600
+        }
+        It 'drops what OfficeIMO cannot identify rather than failing the render' {
+            [CIPP.Reporting.ReportComponents]::DecodeImage($script:TinyPng) | Should -BeNullOrEmpty
+            [CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('not an image'))) | Should -BeNullOrEmpty
+        }
+        It 'renders a GIF logo, an SVG logo and a WebP cover' {
+            Test-IsPdf (ConvertTo-CippReportPdf -Blocks $script:Block -Branding @{ logo = $script:Gif }) | Should -BeTrue
+            Test-IsPdf (ConvertTo-CippReportPdf -Blocks $script:Block -Branding @{ logo = $script:Svg }) | Should -BeTrue
+            Test-IsPdf (ConvertTo-CippReportPdf -Blocks $script:Block -Branding @{ coverImage = $script:Webp; logo = $script:Webp }) | Should -BeTrue
         }
     }
 

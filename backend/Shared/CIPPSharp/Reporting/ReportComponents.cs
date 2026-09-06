@@ -29,17 +29,8 @@ namespace CIPP.Reporting
             return PdfColor.FromRgb((byte)r, (byte)g, (byte)b);
         }
 
-        // -- image fit --
-        /// <summary>Decode a data-URL/base64 image and scale it into a max point-box (OfficeIMO throws on over-tall images).</summary>
-        public static (byte[] bytes, double w, double h)? FitImage(string? dataUrl, int pxW, int pxH, double maxW, double maxH)
-        {
-            var bytes = DecodeImage(dataUrl);
-            if (bytes is null) return null;
-            if (pxW <= 0 || pxH <= 0) { pxW = 800; pxH = 600; }
-            var scale = Math.Min(Math.Min(maxW / pxW, maxH / pxH), 1.0);
-            return (bytes, Math.Round(pxW * scale), Math.Round(pxH * scale));
-        }
-
+        // -- images --
+        /// <summary>Decode a data-URL/base64 image (or resolve a bundled /reportImages/ path) into bytes OfficeIMO can draw anywhere, or null.</summary>
         public static byte[]? DecodeImage(string? dataUrl)
         {
             if (string.IsNullOrWhiteSpace(dataUrl)) return null;
@@ -54,7 +45,28 @@ namespace CIPP.Reporting
 
             var comma = s.IndexOf("base64,", StringComparison.OrdinalIgnoreCase);
             if (comma >= 0) s = s.Substring(comma + "base64,".Length);
-            try { return Convert.FromBase64String(s.Trim()); } catch { return null; }
+            byte[] bytes;
+            try { bytes = Convert.FromBase64String(s.Trim()); } catch { return null; }
+            return NormaliseImage(bytes);
+        }
+
+        // Every raster OfficeIMO decodes (PNG, JPEG, GIF, BMP, TIFF, WebP) is handed to it as-is. An SVG
+        // is only accepted by the drawing API, not by flow images or page backgrounds, so it is rasterised
+        // once here through OfficeIMO's own SVG reader - transparent background, ~1200px on the long side,
+        // crisp at logo and cover sizes and a few KB for a typical logo - and then behaves like a PNG.
+        // Anything OfficeIMO cannot identify is dropped here rather than left to fail at serialisation.
+        // Add-CIPPImage enforces the same list at upload time.
+        private const double SvgRasterSize = 1200;
+        private static byte[]? NormaliseImage(byte[] bytes)
+        {
+            try
+            {
+                if (!OfficeImageReader.TryIdentifyByContent(bytes, null, out var info)) return null;
+                if (info.Format != OfficeImageFormat.Svg) return bytes;
+                if (!OfficeSvgDrawingReader.TryRead(bytes, out var drawing) || drawing.Width <= 0 || drawing.Height <= 0) return null;
+                return OfficeDrawingRasterRenderer.ToPng(drawing, SvgRasterSize / Math.Max(drawing.Width, drawing.Height), null);
+            }
+            catch { return null; }
         }
 
         private static readonly Regex ReportImagesPathPattern =
@@ -107,28 +119,22 @@ namespace CIPP.Reporting
             return (Math.Round(w), Math.Round(height));
         }
 
-        /// <summary>The MIME type a drawing needs beside the bytes; null for anything but PNG/JPEG (skipped rather than failing).</summary>
-        public static string? ImageContentType(byte[] b) =>
-            b.Length > 8 && b[0] == 0x89 && b[1] == 0x50 ? "image/png" :
-            b.Length > 2 && b[0] == 0xFF && b[1] == 0xD8 ? "image/jpeg" : null;
+        /// <summary>The MIME type a drawing needs beside the bytes, from the content itself; null when OfficeIMO cannot identify it (skipped rather than failing).</summary>
+        public static string? ImageContentType(byte[] b)
+        {
+            try { return OfficeImageReader.TryIdentifyByContent(b, null, out var info) ? info.MimeType : null; }
+            catch { return null; }
+        }
 
-        /// <summary>Read PNG/JPEG pixel size from raw bytes (no System.Drawing dependency).</summary>
+        /// <summary>Pixel size of any image OfficeIMO identifies (a 4:3 guess for anything it cannot).</summary>
         public static (int w, int h) ImageSize(byte[] b)
         {
-            if (b.Length > 24 && b[0] == 0x89 && b[1] == 0x50)
-                return ((b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19], (b[20] << 24) | (b[21] << 16) | (b[22] << 8) | b[23]);
-            if (b.Length > 4 && b[0] == 0xFF && b[1] == 0xD8)
+            try
             {
-                var i = 2;
-                while (i < b.Length - 8)
-                {
-                    if (b[i] != 0xFF) { i++; continue; }
-                    var m = b[i + 1];
-                    if (m >= 0xC0 && m <= 0xCF && m != 0xC4 && m != 0xC8 && m != 0xCC)
-                        return ((b[i + 7] << 8) | b[i + 8], (b[i + 5] << 8) | b[i + 6]);
-                    i += 2 + ((b[i + 2] << 8) | b[i + 3]);
-                }
+                if (OfficeImageReader.TryIdentifyByContent(b, null, out var info) && info.Width > 0 && info.Height > 0)
+                    return (info.Width, info.Height);
             }
+            catch { /* fall through to the guess */ }
             return (800, 600);
         }
 

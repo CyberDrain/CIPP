@@ -21,7 +21,7 @@ function Invoke-ExecGetPermissionsReportPdf {
         if ([string]::IsNullOrWhiteSpace($TenantFilter)) {
             return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = 'A tenantFilter is required' })
         }
-        $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
+        $TenantName = Get-CippReportTenantName -TenantFilter $TenantFilter
 
         # The same shaped data the Permissions page reads (from the reporting cache).
         $Raw = Get-CIPPSharePointPermissionsReport -TenantFilter $TenantFilter

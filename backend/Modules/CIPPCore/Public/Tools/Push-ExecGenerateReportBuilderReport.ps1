@@ -188,9 +188,10 @@ function Push-ExecGenerateReportBuilderReport {
         # exists and can be re-rendered, and the failure is logged rather than thrown.
         $PdfBytes = $null
         try {
-            # Client display name for the cover. The template's chosen branding preset wins, else the
-            # tenant/global branding settings (resolved by ConvertTo-CippReportPdf).
-            $TenantDisplayName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
+            # The tenant's name for the cover, as the branding names it (alias, organisation name or
+            # domain). The template's chosen preset wins, else the global branding settings - the same
+            # resolution ConvertTo-CippReportPdf applies to the rest of the branding.
+            $TenantDisplayName = Get-CippReportTenantName -TenantFilter $TenantFilter -BrandingPresetId ([string]$ParsedSettings.brandingPresetId)
             $PageSizePref = if ($ParsedSettings -and $ParsedSettings.size) { [string]$ParsedSettings.size } else { 'A4' }
             $IsLandscape = ($ParsedSettings -and "$($ParsedSettings.orientation)" -eq 'landscape')
 

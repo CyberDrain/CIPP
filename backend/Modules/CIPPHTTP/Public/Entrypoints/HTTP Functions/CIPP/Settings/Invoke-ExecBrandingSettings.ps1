@@ -240,6 +240,19 @@ Function Invoke-ExecBrandingSettings {
                     }
                 }
 
+                # Which of the tenant's names a report prints: alias (the name CIPP shows), name (the
+                # Microsoft 365 organisation name) or domain (the default domain).
+                if (-not $ErrorMessage -and $Request.Body.PSObject.Properties.Name -contains 'tenantLabel') {
+                    $TenantLabel = "$($Request.Body.tenantLabel)"
+                    if (@('alias', 'name', 'domain') -notcontains $TenantLabel) {
+                        $StatusCode = [HttpStatusCode]::BadRequest
+                        $ErrorMessage = 'Error: tenantLabel must be alias, name or domain.'
+                    } else {
+                        $BrandingConfig | Add-Member -MemberType NoteProperty -Name 'tenantLabel' -Value $TenantLabel -Force
+                        $Updated = $true
+                    }
+                }
+
                 # Show the branded footer text on report pages.
                 if (-not $ErrorMessage -and $Request.Body.PSObject.Properties.Name -contains 'showFooter') {
                     $BrandingConfig | Add-Member -MemberType NoteProperty -Name 'showFooter' -Value ([bool]$Request.Body.showFooter) -Force
@@ -513,6 +526,14 @@ Function Invoke-ExecBrandingSettings {
                     break
                 }
 
+                # Which of the tenant's names the preset's reports print; see the Set action.
+                $PresetTenantLabel = if ($Request.Body.tenantLabel) { "$($Request.Body.tenantLabel)" } else { 'alias' }
+                if (@('alias', 'name', 'domain') -notcontains $PresetTenantLabel) {
+                    $StatusCode = [HttpStatusCode]::BadRequest
+                    'Error: tenantLabel must be alias, name or domain.'
+                    break
+                }
+
                 $PresetId = if ($Request.Body.id) { "$($Request.Body.id)" } else { (New-Guid).Guid }
 
                 Add-CIPPAzDataTableEntity @Table -Force -Entity @{
@@ -530,6 +551,7 @@ Function Invoke-ExecBrandingSettings {
                     showPageNumbers  = [bool]$Request.Body.showPageNumbers
                     watermarkText    = $PresetWatermark
                     watermarkEnabled = [bool]$Request.Body.watermarkEnabled
+                    tenantLabel      = $PresetTenantLabel
                 } | Out-Null
 
                 Write-LogMessage -API $APIName -tenant 'Global' -headers $Request.Headers -message "Saved branding preset '$PresetName'" -Sev 'Info'

@@ -37,7 +37,7 @@ function Invoke-ExecGetBecReportPdf {
         }
         $BecData = $Row.Results | ConvertFrom-Json -AsHashtable
 
-        $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
+        $TenantName = Get-CippReportTenantName -TenantFilter $TenantFilter
         # The investigated user's UPN and display name label the cover and footer.
         $UserName = $Request.Query.userName ?? $Request.Body.userName
         $DisplayName = @($Request.Query.userDisplayName, $Request.Body.userDisplayName, $UserName, $UserId) |

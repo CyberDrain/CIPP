@@ -74,6 +74,17 @@ const roleColourValues = (source) =>
     ])
   );
 
+// Which of the tenant's names a report prints on its cover, in its prose and as %tenantname%.
+// "alias" is what CIPP shows for the tenant - an alias when one is set - and was the only choice.
+const TENANT_LABEL_OPTIONS = [
+  { label: "Name as shown in CIPP (alias when set)", value: "alias" },
+  { label: "Microsoft 365 organisation name", value: "name" },
+  { label: "Default domain", value: "domain" },
+];
+
+const TENANT_LABEL_TOOLTIP =
+  "How reports refer to the tenant: on the cover, in the text and wherever %tenantname% is used. The name shown in CIPP is the tenant's alias when one is set; the organisation name is what Microsoft 365 holds regardless of any alias.";
+
 const FOOTER_TOOLTIP =
   "Text shown at the bottom of every report page. Type % for CIPP's variables, plus %reportname% and %reportdate% which reports add. Report templates can override this or switch it off individually.";
 
@@ -320,6 +331,7 @@ const CippBrandingSettings = () => {
       showPageNumbers: branding.showPageNumbers !== false,
       watermarkText: branding.watermarkText || "",
       watermarkEnabled: branding.watermarkEnabled !== false,
+      tenantLabel: branding.tenantLabel || "alias",
       ...roleColourValues(branding),
       previewReportType: reportTypeOptions[0],
     },
@@ -336,6 +348,7 @@ const CippBrandingSettings = () => {
     showPageNumbers: source.showPageNumbers !== false,
     watermarkText: source.watermarkText || "",
     watermarkEnabled: source.watermarkEnabled !== false,
+    tenantLabel: source.tenantLabel || "alias",
     // Flat for the preview (createReportTheme accepts either) and nested for saving.
     ...roleColourValues(source),
     roleColours: roleColourValues(source),
@@ -767,6 +780,7 @@ const CippBrandingSettings = () => {
           showPageNumbers: brandingData.showPageNumbers,
           watermarkText: brandingData.watermarkText,
           watermarkEnabled: brandingData.watermarkEnabled,
+          tenantLabel: brandingData.tenantLabel,
         },
         queryKey: "BrandingPresetSave",
       },
@@ -854,6 +868,7 @@ const CippBrandingSettings = () => {
         showPageNumbers: brandingData.showPageNumbers,
         watermarkText: brandingData.watermarkText,
         watermarkEnabled: brandingData.watermarkEnabled,
+        tenantLabel: brandingData.tenantLabel,
         roleColours: brandingData.roleColours,
         reportDefaults,
       },
@@ -1469,6 +1484,28 @@ const CippBrandingSettings = () => {
                     </Box>
                   ))}
                 </Box>
+              </Box>
+
+              <Box>
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  sx={{
+                    alignItems: "center",
+                    mb: 1
+                  }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                    Tenant Name
+                  </Typography>
+                  <CippInfoTooltip title={TENANT_LABEL_TOOLTIP} />
+                </Stack>
+                <CippFormComponent
+                  type="radio"
+                  name="tenantLabel"
+                  row
+                  options={TENANT_LABEL_OPTIONS}
+                  formControl={formControl}
+                />
               </Box>
 
               <Box>

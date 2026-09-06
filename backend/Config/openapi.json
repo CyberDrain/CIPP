@@ -15482,6 +15482,10 @@
                   "showPageNumbers": {
                     "type": "boolean"
                   },
+                  "tenantLabel": {
+                    "type": "string",
+                    "description": "Which of the tenant's names the preset's reports print; see the Set action."
+                  },
                   "watermarkEnabled": {
                     "type": "boolean"
                   },
@@ -22814,7 +22818,8 @@
                 "type": "object",
                 "properties": {
                   "brandingPresetId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The branding preset a caller picked for this render, else the global branding settings."
                   },
                   "sectionConfig": {
                     "type": "string"
@@ -22834,6 +22839,7 @@
           {
             "name": "brandingPresetId",
             "in": "query",
+            "description": "The branding preset a caller picked for this render, else the global branding settings.",
             "required": false,
             "schema": {
               "type": "string"
@@ -29762,8 +29768,14 @@
                 "type": "object",
                 "properties": {
                   "branding": {
-                    "type": "string",
-                    "description": "The branding to render against, in the shape Get-CIPPBrandingSettings returns: colours (flat or under roleColours), a data-URL logo and cover or a coverStock path, footer and watermark. Omitted -> the saved branding settings."
+                    "type": "object",
+                    "properties": {
+                      "tenantLabel": {
+                        "type": "string",
+                        "description": "The sample tenant, named the way the branding under edit would name a real one."
+                      }
+                    },
+                    "description": "The branding to render against, in the shape Get-CIPPBrandingSettings returns: colours (flat or under roleColours), a data-URL logo and cover or a coverStock path, footer, watermark and tenantLabel. Omitted -> the saved branding settings."
                   },
                   "reportType": {
                     "type": "string",

@@ -29,7 +29,16 @@ function Invoke-ExecPreviewBrandingReportPdf {
             return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = "Unknown report type '$ReportType'. Use one of: $($ReportNames.Keys -join ', ')." })
         }
         $Sample = Get-Content (Join-Path $env:CIPPRootPath "Config\ReportSamples\$ReportType.json") -Raw | ConvertFrom-Json -AsHashtable
-        $TenantName = 'Contoso (sample data)'
+        # The branding to render against, in the shape Get-CIPPBrandingSettings returns: colours (flat or
+        # under roleColours), a data-URL logo and cover or a coverStock path, footer, watermark and
+        # tenantLabel. Omitted -> the saved branding settings.
+        $Branding = $Request.Body.branding
+        # The sample tenant, named the way the branding under edit would name a real one.
+        $TenantName = switch ([string]$Branding.tenantLabel) {
+            'domain' { 'contoso.onmicrosoft.com' }
+            'name' { 'Contoso Ltd (sample data)' }
+            default { 'Contoso (sample data)' }
+        }
         $Data = @{ TenantName = $TenantName } + $Sample
         $Report = switch ($ReportType) {
             'reportBuilder' { @{ Blocks = @($Sample.blocks); Variables = @{} } }
@@ -41,10 +50,6 @@ function Invoke-ExecPreviewBrandingReportPdf {
             default { Build-CippExecutiveReportTree -Data $Data }
         }
 
-        # The branding to render against, in the shape Get-CIPPBrandingSettings returns: colours (flat or
-        # under roleColours), a data-URL logo and cover or a coverStock path, footer and watermark. Omitted
-        # -> the saved branding settings.
-        $Branding = $Request.Body.branding
         # Optional: the tenant whose %variables% (%cippurl%, custom variables) resolve in the footer and cover.
         $TenantFilter = [string]$Request.Body.tenantFilter
         $Bytes = ConvertTo-CippReportPdf -Blocks $Report.Blocks -Variables $Report.Variables -Branding $Branding -TenantName $TenantName -TenantFilter $TenantFilter -ReportName $ReportNames[$ReportType]

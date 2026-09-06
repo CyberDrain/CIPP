@@ -24,7 +24,7 @@ function Invoke-ExecGetMailFlowReportPdf {
         }
         # Reporting window in days (1-90).
         $Days = [Math]::Min([Math]::Max([int]($Request.Query.days ?? 14), 1), 90)
-        $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
+        $TenantName = Get-CippReportTenantName -TenantFilter $TenantFilter
 
         $Window = @{
             StartDate = (Get-Date).AddDays(-$Days).ToUniversalTime().ToString('s')

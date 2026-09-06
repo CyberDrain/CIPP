@@ -16,7 +16,7 @@ BeforeAll {
 
     $Reporting = Get-ChildItem -Path (Join-Path $RepoRoot 'Modules') -Recurse -Directory -Filter 'Reporting' | Select-Object -First 1
     Get-ChildItem -Path $Reporting.FullName -Filter '*.ps1' | ForEach-Object { . $_.FullName }
-    foreach ($Name in 'ConvertTo-CippReportPdf.ps1', 'Invoke-ExecGetBaselineWhatIfReportPdf.ps1') {
+    foreach ($Name in 'ConvertTo-CippReportPdf.ps1', 'Get-CippReportTenantName.ps1', 'Invoke-ExecGetBaselineWhatIfReportPdf.ps1') {
         . (Get-ChildItem -Path (Join-Path $RepoRoot 'Modules') -Recurse -Filter $Name | Select-Object -First 1 -ExpandProperty FullName)
     }
     function Get-CIPPBrandingSettings { @{ colour = '#F77F00' } }

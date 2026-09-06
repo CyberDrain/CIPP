@@ -25,7 +25,7 @@ function Invoke-ExecGetBaselineWhatIfReportPdf {
         }
         # Optional: the GUID of a baseline not assigned to the tenant, to preview what assigning it would roll out stage by stage.
         $SimulatedTemplateId = [string]($Request.Query.simulatedTemplateId ?? $Request.Body.simulatedTemplateId)
-        $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
+        $TenantName = Get-CippReportTenantName -TenantFilter $TenantFilter
 
         $Alignment = Get-CIPPBaselineAlignment -TenantFilter $TenantFilter
         $Simulated = if ($SimulatedTemplateId) { @(Get-CIPPBaseline) | Where-Object { $_.GUID -eq $SimulatedTemplateId } | Select-Object -First 1 }

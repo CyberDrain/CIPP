@@ -21,7 +21,7 @@ function Invoke-ExecGetShadowAIReportPdf {
         if ([string]::IsNullOrWhiteSpace($TenantFilter)) {
             return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = 'A tenantFilter is required' })
         }
-        $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
+        $TenantName = Get-CippReportTenantName -TenantFilter $TenantFilter
 
         # Optional per-section toggles from the client's section panel (POST body). Absent -> full report.
         $SectionConfig = @{}

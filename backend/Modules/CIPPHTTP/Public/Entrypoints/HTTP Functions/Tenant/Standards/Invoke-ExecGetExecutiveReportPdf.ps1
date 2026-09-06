@@ -26,7 +26,9 @@ function Invoke-ExecGetExecutiveReportPdf {
             return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = 'A tenantFilter is required' })
         }
 
-        $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
+        # The branding preset a caller picked for this render, else the global branding settings.
+        $BrandingPresetId = [string]($Request.Body.brandingPresetId ?? $Request.Query.brandingPresetId)
+        $TenantName = Get-CippReportTenantName -TenantFilter $TenantFilter -BrandingPresetId $BrandingPresetId
 
         # GA directory role template id, used to pull the Global Administrator count from the Roles cache.
         $GaTemplateId = '62e90394-69f5-4237-9190-012177145e10'
@@ -179,7 +181,7 @@ function Invoke-ExecGetExecutiveReportPdf {
         # Branding: a named preset if the client selected one (the report's Branding dropdown), else
         # the tenant/global default.
         $Bytes = ConvertTo-CippReportPdf -Blocks $Report.Blocks -Variables $Report.Variables -TenantName $TenantName -TenantFilter $TenantFilter `
-            -ReportName 'Executive Summary' -BrandingPresetId ($Request.Body.brandingPresetId ?? $Request.Query.brandingPresetId)
+            -ReportName 'Executive Summary' -BrandingPresetId $BrandingPresetId
 
         $FileName = ("Executive_Report_$TenantFilter" -replace '[^a-zA-Z0-9_\-]', '_') + '.pdf'
         return ([HttpResponseContext]@{

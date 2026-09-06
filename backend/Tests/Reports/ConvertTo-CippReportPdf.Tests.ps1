@@ -175,3 +175,16 @@ Describe 'Watermark layering' {
         [System.Text.Encoding]::Latin1.GetString($Bytes) | Should -Not -Match '0\.707 -0\.707 0\.707 0\.707'
     }
 }
+
+Describe 'Tenant name in the branding text' {
+    It 'substitutes %tenantname% with the name the report was given, before the cache-based replacement runs' {
+        $script:Seen = @()
+        function Get-CIPPTextReplacement { param($TenantFilter, $Text, [switch]$EscapeForJson) $script:Seen += $Text; $Text -replace '%tenantname%', 'CacheName' }
+        $Bytes = ConvertTo-CippReportPdf -Blocks @(@{ type = 'blank'; title = 'T'; content = '<p>x</p>' }) -Variables @{} -Branding @{ colour = '#0E4C92'; footerText = 'Prepared for %TenantName%'; watermarkText = '%tenantname%' } -TenantName 'contoso.onmicrosoft.com' -TenantFilter 'contoso.onmicrosoft.com' -ReportName 'T'
+        [System.Text.Encoding]::ASCII.GetString($Bytes[0..4]) | Should -Be '%PDF-'
+        $Branding = $script:Seen | Where-Object { $_ -like '*footerText*' } | Select-Object -First 1
+        $Branding | Should -Match 'Prepared for contoso\.onmicrosoft\.com'
+        $Branding | Should -Match '"watermarkText":"contoso\.onmicrosoft\.com"'
+        $Branding | Should -Not -Match '(?i)%tenantname%'
+    }
+}

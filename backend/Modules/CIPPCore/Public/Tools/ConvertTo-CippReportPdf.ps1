@@ -57,6 +57,13 @@ function ConvertTo-CippReportPdf {
     # The branding footer/watermark and cover text carry these tokens; unknown tokens are left as written
     # for the component kit to substitute (report-specific vars like %footerlabel%). No-op without a tenant.
     if (-not [string]::IsNullOrWhiteSpace($TenantFilter)) {
+        # %tenantname% names the tenant the way the report does (the branding's tenantLabel, resolved
+        # by the caller into -TenantName) rather than the way the tenant cache does, so a footer and
+        # the cover agree. Substituted before the general replacement, which would use the cache.
+        if ($PSBoundParameters.ContainsKey('TenantName')) {
+            $EscapedName = (ConvertTo-Json -InputObject $TenantName -Compress).Trim('"')
+            $BrandingJson = [regex]::Replace($BrandingJson, '%tenantname%', $EscapedName, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        }
         $BrandingJson = Get-CIPPTextReplacement -TenantFilter $TenantFilter -Text $BrandingJson -EscapeForJson
         $VariablesJson = Get-CIPPTextReplacement -TenantFilter $TenantFilter -Text $VariablesJson -EscapeForJson
     }

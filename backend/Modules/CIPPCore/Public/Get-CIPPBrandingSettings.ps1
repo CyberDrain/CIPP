@@ -285,5 +285,7 @@ function Get-CIPPBrandingSettings {
         watermarkEnabled = $WatermarkEnabled
         reportDefaults   = $ReportDefaults
         roleColours      = $RoleColours
+        # Which of the tenant's names a report prints; 'alias' is the name CIPP shows, the old behaviour.
+        tenantLabel      = if (@('alias', 'name', 'domain') -contains "$($BrandingConfig.tenantLabel)") { "$($BrandingConfig.tenantLabel)" } else { 'alias' }
     }
 }

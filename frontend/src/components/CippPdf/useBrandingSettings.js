@@ -21,6 +21,8 @@ export const DEFAULT_BRANDING = Object.freeze({
   logoUploads: [],
   coverImage: null,
   coverUploads: [],
+  // The gallery covers by id and name, for pickers that offer them (the report builder's Infographic).
+  coverImages: [],
   footerText: '',
   coverFooterText: '',
   showFooter: true,

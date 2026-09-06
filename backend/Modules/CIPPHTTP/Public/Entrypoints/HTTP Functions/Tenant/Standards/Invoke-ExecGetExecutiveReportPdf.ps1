@@ -26,11 +26,7 @@ function Invoke-ExecGetExecutiveReportPdf {
             return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = 'A tenantFilter is required' })
         }
 
-        $TenantName = $TenantFilter
-        try {
-            $TenantInfo = Get-Tenants -TenantFilter $TenantFilter
-            if ($TenantInfo.displayName) { $TenantName = [string]$TenantInfo.displayName }
-        } catch { $TenantName = $TenantFilter }
+        $TenantName = (Get-Tenants -TenantFilter $TenantFilter).displayName ?? $TenantFilter
 
         # GA directory role template id, used to pull the Global Administrator count from the Roles cache.
         $GaTemplateId = '62e90394-69f5-4237-9190-012177145e10'
@@ -174,40 +170,16 @@ function Invoke-ExecGetExecutiveReportPdf {
 
         # Optional per-section toggles from the client's section panel (POST body). Absent -> full report.
         $SectionConfig = @{}
-        $RawCfg = $Request.Body.sectionConfig ?? $Request.Body.SectionConfig
-        if ($RawCfg) {
-            if ($RawCfg -is [hashtable]) { $SectionConfig = $RawCfg }
-            else { foreach ($p in $RawCfg.PSObject.Properties) { $SectionConfig[$p.Name] = [bool]$p.Value } }
-        }
+        $RawCfg = $Request.Body.sectionConfig
+        if ($RawCfg -is [hashtable]) { $SectionConfig = $RawCfg }
+        elseif ($RawCfg) { foreach ($p in $RawCfg.PSObject.Properties) { $SectionConfig[$p.Name] = [bool]$p.Value } }
 
-        # Section-divider photos ship beside the CIPPSharp assembly; the renderer resolves the
-        # /reportImages/ paths to the bundled bytes, so the hero pages render with their photos.
-        $Tree = Build-CippExecutiveReportTree -Data $Data -HeroImages (Get-CippReportHeroImages) -SectionConfig $SectionConfig
-
-        $Variables = @{
-            coverlabel      = 'SECURITY ASSESSMENT'
-            covertitle      = 'Executive'
-            coveraccent     = 'Summary'
-            covertenant     = $TenantName
-            coversubtitle   = "Security & Compliance Assessment for $TenantName"
-            coverfooternote = 'Confidential - For Internal Use Only'
-            coverfallbackimage = '/reportImages/soc.jpg'
-            footerlabel     = "$TenantName - Executive Summary"
-        }
+        $Report = Build-CippExecutiveReportTree -Data $Data -SectionConfig $SectionConfig
 
         # Branding: a named preset if the client selected one (the report's Branding dropdown), else
-        # the tenant/global default. Presets resolve to the same shape as Get-CIPPBrandingSettings.
-        $Branding = try {
-            $PresetId = $Request.Body.brandingPresetId ?? $Request.Query.brandingPresetId
-            if (-not [string]::IsNullOrWhiteSpace($PresetId)) {
-                $Preset = Get-CIPPBrandingPreset -Id $PresetId | Select-Object -First 1
-                if ($Preset) { $Preset } else { Get-CIPPBrandingSettings }
-            } else {
-                Get-CIPPBrandingSettings
-            }
-        } catch { @{} }
-        $Bytes = ConvertTo-CippReportPdf -Blocks $Tree -Branding $Branding -Variables $Variables `
-            -TenantName $TenantName -TenantFilter $TenantFilter -ReportName 'Executive Summary' -GeneratedOn ((Get-Date).ToString('MMMM d, yyyy'))
+        # the tenant/global default.
+        $Bytes = ConvertTo-CippReportPdf -Blocks $Report.Blocks -Variables $Report.Variables -TenantName $TenantName -TenantFilter $TenantFilter `
+            -ReportName 'Executive Summary' -BrandingPresetId ($Request.Body.brandingPresetId ?? $Request.Query.brandingPresetId)
 
         $FileName = ("Executive_Report_$TenantFilter" -replace '[^a-zA-Z0-9_\-]', '_') + '.pdf'
         return ([HttpResponseContext]@{

@@ -10,8 +10,6 @@ namespace CIPP.Reporting
     public static class ReportStyles
     {
         public const double PagePadding = 32;      // margin down each side of a content page
-        public const double PagePaddingTop = 28;
-        public const double TableRowPadding = 12;
 
         // Font sizes (points).
         public const double PageTitle = 20;

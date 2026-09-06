@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { CippIcons } from '../utils/icon-registry'
 import {
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,6 +17,7 @@ import {
 } from '@mui/material'
 import { CippOffCanvas } from './CippComponents/CippOffCanvas'
 import { useSettings } from '../hooks/use-settings'
+import { ServerPdfPane, useServerPdf } from './CippPdf/useServerPdf'
 import {
   Bold,
   BulletList,
@@ -574,9 +574,6 @@ const sectionOptions = [
 
 export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
   const tenantFilter = useSettings().currentTenant
-  const [pdfUrl, setPdfUrl] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [pdfError, setPdfError] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   // Below md the 320px config rail would leave the preview about 70px wide, so it moves into
   // a drawer and the preview takes the whole dialog. Same treatment as the executive report.
@@ -604,49 +601,13 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
     })
   }
 
-  // The PDF is rendered server-side (ExecGetShadowAIReportPdf) via the shared CIPPSharp kit. Re-fetch
-  // whenever the dialog is open and the selected sections change, so the preview tracks the toggles.
-  useEffect(() => {
-    if (!previewOpen) return undefined
-    let objectUrl
-    let cancelled = false
-    setLoading(true)
-    setPdfError(false)
-    fetch('/api/ExecGetShadowAIReportPdf', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenantFilter, sectionConfig }),
-    })
-      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error('Failed to render report'))))
-      .then((blob) => {
-        if (cancelled) return
-        objectUrl = URL.createObjectURL(blob)
-        setPdfUrl(objectUrl)
-        setLoading(false)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setPdfError(true)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewOpen, tenantFilter, JSON.stringify(sectionConfig)])
-
-  const handleDownload = () => {
-    if (!pdfUrl) return
-    const link = document.createElement('a')
-    link.href = pdfUrl
-    link.download = fileName
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+  // The PDF is rendered server-side (ExecGetShadowAIReportPdf) via the shared CIPPSharp kit and
+  // re-rendered while the dialog is open whenever the selected sections change.
+  const pdf = useServerPdf({
+    url: '/api/ExecGetShadowAIReportPdf',
+    body: { tenantFilter, sectionConfig },
+    enabled: previewOpen,
+  })
 
   const fileName = `Shadow_AI_Report_${String(tenantName).replace(/[^a-zA-Z0-9]/g, '_')}_${
     new Date().toISOString().split('T')[0]
@@ -820,26 +781,11 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
 
           {/* Right Panel - PDF Preview (server-rendered) */}
           <Box sx={{ flex: 1, height: '100%', minWidth: 0 }}>
-            {loading && (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 }}>
-                <CircularProgress size={24} />
-                <Typography variant="body2">Generating report…</Typography>
-              </Box>
-            )}
-            {pdfError && (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', p: 4 }}>
-                <Typography variant="body2" color="error">
-                  The report could not be generated. Ensure the Shadow AI data has been synced for this tenant.
-                </Typography>
-              </Box>
-            )}
-            {pdfUrl && !loading && !pdfError && (
-              <iframe
-                src={pdfUrl}
-                title={`Shadow AI Report - ${tenantName}`}
-                style={{ width: '100%', height: '100%', border: 'none' }}
-              />
-            )}
+            <ServerPdfPane
+              {...pdf}
+              title={`Shadow AI Report - ${tenantName}`}
+              errorText="The report could not be generated. Ensure the Shadow AI data has been synced for this tenant."
+            />
           </Box>
         </DialogContent>
         <DialogActions
@@ -867,8 +813,8 @@ export const ShadowAIReportButton = ({ data, tenantName, disabled }) => {
           <Button
             variant="contained"
             startIcon={<CippIcons.Download />}
-            onClick={handleDownload}
-            disabled={!pdfUrl || loading}
+            onClick={() => pdf.download(fileName)}
+            disabled={!pdf.pdfUrl}
           >
             Download PDF
           </Button>

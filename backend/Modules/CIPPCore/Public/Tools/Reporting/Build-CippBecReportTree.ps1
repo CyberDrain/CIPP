@@ -4,9 +4,9 @@ function Build-CippBecReportTree {
         Compose the BEC (Business Email Compromise) analysis report as a component tree - the server
         port of BECRemediationReportButton's BECRemediationReportDocument.
     .DESCRIPTION
-        Returns the content blocks only; the cover (title/accent/tenant/label/subtitle/meta) is set by
-        the caller through report variables, since the BEC cover names the compromised user rather than
-        the tenant. Detail callouts use -Lines so each label/value line is a tight line break.
+        Returns @{ Blocks; Variables }: the content blocks plus the cover/footer report variables. The
+        cover names the compromised user rather than the tenant. Detail callouts use -Lines so each
+        label/value line is a tight line break.
     .PARAMETER UserData
         The investigated user: displayName, userPrincipalName.
     .PARAMETER BecData
@@ -79,24 +79,24 @@ function Build-CippBecReportTree {
     $sortedIntune = @($bec.IntuneDevices | Sort-Object -Property @{ Expression = { try { [datetime]$_.enrolledDateTime } catch { [datetime]0 } }; Descending = $true })
 
     # -- threat level --
-    $score = 0
-    if ($stats.newRules -gt 0) { $score += 3 }
-    if ($stats.ruleChanges -gt 0) { $score += 3 }
-    if ($stats.permissionChangesTargetingUser -gt 0) { $score += 2 } elseif ($stats.permissionChanges -gt 0) { $score += 1 }
-    if ($stats.newApps -gt 0) { $score += 1 }
-    if ($stats.newUsers -gt 5) { $score += 1 }
-    if ($stats.safelistChanges -gt 0) { $score += 2 }
-    if (@($bec.NewRules | Where-Object { "$($_.MoveToFolder)" -like '*RSS*' }).Count -gt 0) { $score += 5 }
-    if ($stats.maliciousApps -gt 0) { $score += 5 }
-    if ($stats.foreignSuccessfulSignIns -gt 0) { $score += 3 }
-    if ($stats.foreignActivity -gt 0) { $score += 3 }
-    if ($stats.anonymousLinks -gt 0) { $score += 3 }
-    if ($stats.massMailFlagged) { $score += 3 }
-    if ($stats.recentMfaDevices -gt 0) { $score += 2 }
-    if ($stats.recentIntuneDevices -gt 0) { $score += 2 }
-    if ($score -ge 7) { $threatLevel = 'High'; $threatColour = '#742A2A' }
-    elseif ($score -ge 4) { $threatLevel = 'Medium'; $threatColour = '#744210' }
-    else { $threatLevel = 'Low'; $threatColour = '#22543D' }
+    $score = (@(
+            if ($stats.newRules -gt 0) { 3 }
+            if ($stats.ruleChanges -gt 0) { 3 }
+            if ($stats.permissionChangesTargetingUser -gt 0) { 2 } elseif ($stats.permissionChanges -gt 0) { 1 }
+            if ($stats.newApps -gt 0) { 1 }
+            if ($stats.newUsers -gt 5) { 1 }
+            if ($stats.safelistChanges -gt 0) { 2 }
+            if (@($bec.NewRules | Where-Object { "$($_.MoveToFolder)" -like '*RSS*' }).Count -gt 0) { 5 }
+            if ($stats.maliciousApps -gt 0) { 5 }
+            if ($stats.foreignSuccessfulSignIns -gt 0) { 3 }
+            if ($stats.foreignActivity -gt 0) { 3 }
+            if ($stats.anonymousLinks -gt 0) { 3 }
+            if ($stats.massMailFlagged) { 3 }
+            if ($stats.recentMfaDevices -gt 0) { 2 }
+            if ($stats.recentIntuneDevices -gt 0) { 2 }
+        ) | Measure-Object -Sum).Sum
+    $threatLevel = if ($score -ge 7) { 'High' } elseif ($score -ge 4) { 'Medium' } else { 'Low' }
+    $threatColour = @{ High = '#742A2A'; Medium = '#744210'; Low = '#22543D' }[$threatLevel]
 
     $upn = $UserData.userPrincipalName
     $usageLoc = $loc.UsageLocation
@@ -254,10 +254,11 @@ function Build-CippBecReportTree {
         $foreignTail = if ($stats.foreignSentMessages -gt 0) { ", including $($stats.foreignSentMessages) from an IP outside the user's assigned usage location." } else { '.' }
         $b.Add((New-CippReportParagraph -Indent -Text "[i] $totMsg message(s) to $totRcp recipient(s) were sent by this mailbox during the analysis period$foreignTail"))
         if ($stats.massMailFlagged) {
-            $mm = ''
-            if ($stats.repeatedSubjects -gt 0) { $mm += "$($stats.repeatedSubjects) subject(s) were sent as many separate messages or to many recipients. " }
-            if ($stats.sendBursts -gt 0) { $mm += "$($stats.sendBursts) short burst(s) of high-volume sending were detected. " }
-            $mm += 'Identical-subject mass mail and send bursts are how a compromised mailbox spreads phishing or fraudulent invoices. Review the campaigns below and warn the recipients if the content was malicious.'
+            $mm = -join @(
+                if ($stats.repeatedSubjects -gt 0) { "$($stats.repeatedSubjects) subject(s) were sent as many separate messages or to many recipients. " }
+                if ($stats.sendBursts -gt 0) { "$($stats.sendBursts) short burst(s) of high-volume sending were detected. " }
+                'Identical-subject mass mail and send bursts are how a compromised mailbox spreads phishing or fraudulent invoices. Review the campaigns below and warn the recipients if the content was malicious.'
+            )
             $b.Add((New-CippReportAlertBox -Title '[!] Mass-Mail Pattern Detected' -Content $mm))
         }
         foreach ($g in @($ana.RepeatedSubjects | Select-Object -First 5)) {
@@ -266,8 +267,10 @@ function Build-CippBecReportTree {
         if ((Cnt $ana.RepeatedSubjects) -gt 5) { $b.Add((New-CippReportNote -Text "... and $((Cnt $ana.RepeatedSubjects) - 5) more repeated subjects (see JSON export for full list)")) }
         foreach ($burst in @($ana.Bursts | Select-Object -First 5)) {
             $win = if ($burst.WindowMinutes) { $burst.WindowMinutes } else { 10 }
-            $content = "Starting: $(if ($burst.WindowStart) { $burst.WindowStart } else { 'N/A' })"
-            if ($burst.TopSubject) { $content += "`nMost common subject: $($burst.TopSubject)" }
+            $content = @(
+                "Starting: $(if ($burst.WindowStart) { $burst.WindowStart } else { 'N/A' })"
+                if ($burst.TopSubject) { "Most common subject: $($burst.TopSubject)" }
+            ) -join "`n"
             $b.Add((New-CippReportInfoBox -Lines -Title "[!] Send burst: $($burst.MessageCount) message(s) to $($burst.RecipientCount) recipient(s) in $win minutes" -Content $content))
         }
         if ((Cnt $ana.Bursts) -gt 5) { $b.Add((New-CippReportNote -Text "... and $((Cnt $ana.Bursts) - 5) more bursts (see JSON export for full list)")) }
@@ -490,5 +493,19 @@ function Build-CippBecReportTree {
                 @{ text = 'Microsoft Security: Business Email Compromise resources' }
             )))
 
-    , @($b)
+    @{
+        Blocks    = @($b)
+        Variables = @{
+            coverlabel         = 'Security Incident Report'
+            covertitle         = 'BEC Compromise'
+            coveraccent        = 'Analysis'
+            covertenant        = [string]$UserData.displayName
+            coversubtitle      = "Business Email Compromise Investigation Report for $TenantName"
+            covermeta          = [string]$upn
+            covermetanote      = "Analysis Date: $(FmtDate $bec.ExtractedAt)"
+            coverfallbackimage = '/reportImages/soc.jpg'
+            coverfooternote    = 'Confidential & Proprietary - For Internal Use Only'
+            footerlabel        = "$TenantName - BEC Analysis Report for $($UserData.displayName)"
+        }
+    }
 }

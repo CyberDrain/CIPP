@@ -34,7 +34,7 @@ function Invoke-ExecPreviewReportBuilderPdf {
 
         $Preview = Push-ExecGenerateReportBuilderReport @GenerateParams
 
-        if (-not $Preview -or [string]::IsNullOrEmpty($Preview.PdfBase64)) {
+        if (-not $Preview.PdfBytes) {
             return ([HttpResponseContext]@{
                     StatusCode = [HttpStatusCode]::InternalServerError
                     Body       = 'Failed to render the report preview.'
@@ -44,7 +44,7 @@ function Invoke-ExecPreviewReportBuilderPdf {
         return ([HttpResponseContext]@{
                 StatusCode  = [HttpStatusCode]::OK
                 ContentType = 'application/pdf'
-                Body        = [Convert]::FromBase64String($Preview.PdfBase64)
+                Body        = $Preview.PdfBytes
             })
     } catch {
         $ErrorMessage = Get-CippException -Exception $_

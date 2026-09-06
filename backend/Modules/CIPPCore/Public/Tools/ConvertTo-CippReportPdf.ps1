@@ -11,7 +11,9 @@ function ConvertTo-CippReportPdf {
     .PARAMETER Blocks
         The component tree: an array of block/component nodes, or a JSON string of the same.
     .PARAMETER Branding
-        Branding settings (Get-CIPPBrandingSettings / a preset) as an object or JSON string.
+        Branding settings as an object or JSON string. Omit it to render against the tenant/global
+        branding settings, or name a preset with -BrandingPresetId (a missing preset falls back to the
+        settings, so a report is always branded).
     .PARAMETER Variables
         %variable% values for footer/watermark/cover text, as a hashtable or JSON string.
     .PARAMETER TenantName
@@ -26,6 +28,7 @@ function ConvertTo-CippReportPdf {
     param(
         [Parameter(Mandatory = $true)]$Blocks,
         $Branding,
+        [string]$BrandingPresetId,
         $Variables,
         [string]$TenantName = 'Organization',
         [string]$ReportName = 'Report',
@@ -36,6 +39,13 @@ function ConvertTo-CippReportPdf {
         # the branding footer/watermark and cover text. Omit to skip variable replacement.
         [string]$TenantFilter
     )
+
+    if ($null -eq $Branding) {
+        $Branding = try {
+            $Preset = if ($BrandingPresetId) { Get-CIPPBrandingPreset -Id $BrandingPresetId | Select-Object -First 1 }
+            if ($Preset) { $Preset } else { Get-CIPPBrandingSettings }
+        } catch { @{} }
+    }
 
     # Accept objects or pre-serialised JSON for each structured input.
     $BlocksJson = if ($Blocks -is [string]) { $Blocks } else { ConvertTo-Json -InputObject @($Blocks) -Depth 20 -Compress }

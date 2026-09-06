@@ -25,10 +25,8 @@ namespace CIPP.Reporting
         // -- colour bridge --
         public static PdfColor Pdf(string hex)
         {
-            var norm = ColourMath.NormaliseHex(hex) ?? ColourMath.DefaultBrandColour;
-            var d = norm.Substring(1);
-            byte B(int i) => byte.Parse(d.Substring(i, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-            return PdfColor.FromRgb(B(0), B(2), B(4));
+            var (r, g, b) = ColourMath.ToRgb(hex);
+            return PdfColor.FromRgb((byte)r, (byte)g, (byte)b);
         }
 
         // -- image fit --
@@ -687,7 +685,7 @@ namespace CIPP.Reporting
             return new List<PdfTableCell[]> { new[] { new PdfTableCell(runs) } };
         }
 
-        private static PdfTableStyle CalloutStyle(string bgHex, string? stripeHex, double stripeWidth, string borderHex, double borderWidth, bool hasTitle)
+        private static PdfTableStyle CalloutStyle(string bgHex, string? stripeHex, double stripeWidth, string borderHex, double borderWidth)
         {
             // Single cell -> the table's BorderWidth draws just the perimeter box (no interior grid). The left
             // edge is overridden with the accent stripe via a per-cell LeftBorder when the callout has one.
@@ -723,15 +721,25 @@ namespace CIPP.Reporting
         public static void InfoBox(ReportContext ctx, PdfItemCompose item, string? title, string? tone,
             string? colour, bool tintTitle, string content, bool lines = false)
         {
-            var accent = string.IsNullOrEmpty(colour) ? ctx.Theme.Palette["card"] : colour!;
-            var bg = ReportColours.Panel;
-            var titleColour = ctx.Theme.Palette["body"];
-            if (tone == "ok") { bg = ReportColours.OkBg; titleColour = ReportColours.Success; }
-            else if (tone == "warn") { bg = ReportColours.WarnBg; titleColour = ReportColours.Warning; }
-            if (tintTitle && !string.IsNullOrEmpty(colour)) titleColour = colour!;
+            var (accent, bg, titleColour) = InfoBoxColours(ctx, tone, colour, tintTitle);
             var body = CalloutBodyRuns(ctx, content, lines, ReportStyles.InfoText, ctx.Theme.Palette["subtitle"]);
-            item.Table(CalloutRows(title, titleColour, ReportStyles.InfoTitle, body), PdfAlign.Left, CalloutStyle(bg, accent, 4, ReportColours.Line, 1, !string.IsNullOrEmpty(title)));
+            item.Table(CalloutRows(title, titleColour, ReportStyles.InfoTitle, body), PdfAlign.Left, CalloutStyle(bg, accent, 4, ReportColours.Line, 1));
             item.Spacer(CalloutGap);
+        }
+
+        // An InfoBox's stripe accent, background tint and title colour: `tone` (ok/warn) picks the tint,
+        // `colour` overrides the stripe (and the title when tintTitle).
+        private static (string accent, string bg, string title) InfoBoxColours(ReportContext ctx, string? tone, string? colour, bool tintTitle)
+        {
+            var accent = string.IsNullOrEmpty(colour) ? ctx.Theme.Palette["card"] : colour!;
+            var (bg, title) = tone switch
+            {
+                "ok" => (ReportColours.OkBg, ReportColours.Success),
+                "warn" => (ReportColours.WarnBg, ReportColours.Warning),
+                _ => (ReportColours.Panel, ctx.Theme.Palette["body"]),
+            };
+            if (tintTitle && !string.IsNullOrEmpty(colour)) title = colour!;
+            return (accent, bg, title);
         }
 
         /// <summary>A warning callout: red-tinted background with a full accent-coloured border (client AlertBox).</summary>
@@ -739,7 +747,7 @@ namespace CIPP.Reporting
         {
             var accent = string.IsNullOrEmpty(colour) ? ctx.Theme.Palette["card"] : colour!;
             var body = CalloutBodyRuns(ctx, content, lines, ReportStyles.AlertText, ctx.Theme.Palette["body"]);
-            item.Table(CalloutRows(title, accent, ReportStyles.AlertTitle, body), PdfAlign.Left, CalloutStyle(ReportColours.AlertBg, null, 0, accent, 2, !string.IsNullOrEmpty(title)));
+            item.Table(CalloutRows(title, accent, ReportStyles.AlertTitle, body), PdfAlign.Left, CalloutStyle(ReportColours.AlertBg, null, 0, accent, 2));
             item.Spacer(AlertGap);
         }
 
@@ -810,14 +818,9 @@ namespace CIPP.Reporting
         private static void InfoBoxCol(ReportContext ctx, PdfRowColumnCompose col, string? title, string? tone,
             string? colour, bool tintTitle, string content)
         {
-            var accent = string.IsNullOrEmpty(colour) ? ctx.Theme.Palette["card"] : colour!;
-            var bg = ReportColours.Panel;
-            var titleColour = ctx.Theme.Palette["body"];
-            if (tone == "ok") { bg = ReportColours.OkBg; titleColour = ReportColours.Success; }
-            else if (tone == "warn") { bg = ReportColours.WarnBg; titleColour = ReportColours.Warning; }
-            if (tintTitle && !string.IsNullOrEmpty(colour)) titleColour = colour!;
+            var (accent, bg, titleColour) = InfoBoxColours(ctx, tone, colour, tintTitle);
             var body = CalloutBodyRuns(ctx, content, false, ReportStyles.InfoText, ctx.Theme.Palette["subtitle"]);
-            col.Table(CalloutRows(title, titleColour, ReportStyles.InfoTitle, body), PdfAlign.Left, CalloutStyle(bg, accent, 4, ReportColours.Line, 1, !string.IsNullOrEmpty(title)));
+            col.Table(CalloutRows(title, titleColour, ReportStyles.InfoTitle, body), PdfAlign.Left, CalloutStyle(bg, accent, 4, ReportColours.Line, 1));
         }
 
         // Series colour for a chart entry: its own colour, else the theme series cycled by index.
@@ -959,10 +962,8 @@ namespace CIPP.Reporting
 
         private static OfficeColor OC(string hex)
         {
-            var norm = ColourMath.NormaliseHex(hex) ?? ColourMath.DefaultBrandColour;
-            var d = norm.Substring(1);
-            byte B(int i) => byte.Parse(d.Substring(i, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-            return OfficeColor.FromRgb(B(0), B(2), B(4));
+            var (r, g, b) = ColourMath.ToRgb(hex);
+            return OfficeColor.FromRgb((byte)r, (byte)g, (byte)b);
         }
 
         private static string FmtNum(double v)

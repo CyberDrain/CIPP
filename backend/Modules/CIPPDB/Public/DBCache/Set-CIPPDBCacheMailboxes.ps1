@@ -54,7 +54,12 @@ function Set-CIPPDBCacheMailboxes {
         # Transform Get-Mailbox results and merge Get-User properties
         $Mailboxes = [System.Collections.Generic.List[PSObject]]::new()
         foreach ($Mailbox in @($BulkResults.'Get-Mailbox')) {
-            $MatchedUser = $UserLookup[$Mailbox.ExternalDirectoryObjectId]
+            # ExternalDirectoryObjectId can be null for a mailbox that has no linked Entra ID
+            # directory object (the $UserLookup population above already guards against this on
+            # the write side - see the -and check a few lines up). Indexing a hashtable with a
+            # null key throws "Index operation failed; the array index evaluated to null." and
+            # aborts the whole cache run for the tenant, so the read side needs the same guard.
+            $MatchedUser = if ($Mailbox.ExternalDirectoryObjectId) { $UserLookup[$Mailbox.ExternalDirectoryObjectId] } else { $null }
             $AutoExpandingArchiveState = Get-CIPPAutoExpandingArchiveState -MailboxAutoExpandingArchiveEnabled $Mailbox.AutoExpandingArchiveEnabled -OrgAutoExpandingArchiveEnabled $OrgAutoExpandingArchiveEnabled
             $Mailboxes.Add(($Mailbox | Select-Object id, ExchangeGuid, ArchiveGuid, WhenSoftDeleted,
                     @{ Name = 'UPN'; Expression = { $_.'UserPrincipalName' } },

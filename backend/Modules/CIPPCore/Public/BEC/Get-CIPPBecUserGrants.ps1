@@ -144,7 +144,5 @@ function Get-CIPPBecUserGrants {
 
     $Data = @($Rows | Sort-Object -Property @{ Expression = { $_.Flagged }; Descending = $true }, ClientDisplayName)
     $ErrorText = if ($Errors.Count -gt 0) { $Errors -join '; ' } else { $null }
-    $Result = New-CIPPBecCollectorResult -Data $Data -Complete ($Errors.Count -eq 0) -Error $ErrorText
-    $Result | Add-Member -NotePropertyName 'HuntressFeedAvailable' -NotePropertyValue ([bool]$RogueAppFeed.HuntressAvailable) -Force
-    return $Result
+    return New-CIPPBecCollectorResult -Data $Data -Complete ($Errors.Count -eq 0) -Error $ErrorText
 }

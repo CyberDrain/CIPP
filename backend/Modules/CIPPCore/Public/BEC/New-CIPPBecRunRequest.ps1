@@ -62,7 +62,7 @@ function New-CIPPBecRunRequest {
         if ($QueueId) { $Properties.QueueId = $QueueId }
         $null = Set-CIPPBecReport -TenantFilter $TenantFilter -CaseId $CaseId -Replace -Properties $Properties
         # The progress job: every step pending, row status queued, until Push-BECRun takes over.
-        $null = New-CIPPAsyncDeployment -JobId $CaseId -Names @($Name) -StepTitles @((Get-CIPPBecRunSteps).Title) -Source 'BEC'
+        $null = New-CIPPAsyncDeployment -JobId $CaseId -Names @($Name) -StepTitles @((Get-CIPPBecRunSteps).Title) -Source 'BEC' -TenantFilter $TenantFilter
     }
 
     $Item = @{
@@ -70,7 +70,6 @@ function New-CIPPBecRunRequest {
         UserID       = $UserId
         TenantFilter = $TenantFilter
         userName     = [string]$UserPrincipalName
-        Scope        = 'Full'
         CaseId       = $CaseId
     }
     if ($QueueId) {
@@ -80,7 +79,6 @@ function New-CIPPBecRunRequest {
 
     return [pscustomobject]@{
         CaseId = $CaseId
-        Scope  = 'Full'
         Item   = $Item
     }
 }

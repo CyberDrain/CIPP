@@ -13,6 +13,5 @@ function New-CIPPBecCaseId {
     [CmdletBinding()]
     param()
 
-    $Suffix = -join ((1..6) | ForEach-Object { '{0:x}' -f (Get-Random -Minimum 0 -Maximum 16) })
-    return 'BEC-{0}-{1}' -f (Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss'), $Suffix
+    return 'BEC-{0}-{1}' -f (Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss'), [guid]::NewGuid().ToString('N').Substring(0, 6)
 }

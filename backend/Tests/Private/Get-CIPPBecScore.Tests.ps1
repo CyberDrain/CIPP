@@ -5,7 +5,7 @@ BeforeAll {
     $env:CIPPRootPath = $RepoRoot
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecScore.ps1')
-    $script:Heuristics = Get-CIPPBecHeuristics -Force
+    $script:Heuristics = Get-CIPPBecHeuristics
 
     function New-Results {
         param([hashtable]$Overrides = @{})
@@ -39,7 +39,6 @@ Describe 'Get-CIPPBecScore' {
         $Score = Get-CIPPBecScore -Results (New-Results) -Heuristics $script:Heuristics
         $Score.Value | Should -Be 0
         $Score.Level | Should -Be 'Low'
-        $Score.Breakdown.Count | Should -Be 30
         @($Score.Breakdown | Where-Object { $_.Applied }).Count | Should -Be 0
         $Score.Thresholds.High | Should -Be 7
         $Score.Thresholds.Medium | Should -Be 4

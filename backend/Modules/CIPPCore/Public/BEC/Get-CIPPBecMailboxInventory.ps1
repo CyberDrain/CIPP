@@ -43,10 +43,10 @@ function Get-CIPPBecMailboxInventory {
         @{ CmdletInput = @{ CmdletName = 'Get-MailboxPermission'; Parameters = @{ Identity = $Upn } }; OperationGuid = 'MailboxPermission' }
         @{ CmdletInput = @{ CmdletName = 'Get-RecipientPermission'; Parameters = @{ Identity = $Upn } }; OperationGuid = 'RecipientPermission' }
         @{ CmdletInput = @{ CmdletName = 'Get-App'; Parameters = @{ Mailbox = $Upn } }; OperationGuid = 'Apps' }
+        foreach ($Scope in @($Heuristics.delegations.folderScopes)) {
+            @{ CmdletInput = @{ CmdletName = 'Get-MailboxFolderStatistics'; Parameters = @{ Identity = $Upn; FolderScope = $Scope } }; OperationGuid = "FolderStats-$Scope" }
+        }
     )
-    foreach ($Scope in @($Heuristics.delegations.folderScopes)) {
-        $Round1 += @{ CmdletInput = @{ CmdletName = 'Get-MailboxFolderStatistics'; Parameters = @{ Identity = $Upn; FolderScope = $Scope } }; OperationGuid = "FolderStats-$Scope" }
-    }
 
     $Bulk = New-ExoBulkRequest -tenantid $TenantFilter -cmdletArray @($Round1) -ReturnWithCommand $true -Anchor $Upn
     if (-not $Bulk) { $Bulk = @{} }
@@ -83,12 +83,14 @@ function Get-CIPPBecMailboxInventory {
         })
 
     $IsResource = $Mailbox.RecipientTypeDetails -in @('RoomMailbox', 'EquipmentMailbox')
-    $Round2 = @(foreach ($Folder in $Folders) {
+    $Round2 = @(
+        foreach ($Folder in $Folders) {
             @{ CmdletInput = @{ CmdletName = 'Get-MailboxFolderPermission'; Parameters = @{ Identity = "$($Upn):$($Folder.FolderId)" } }; OperationGuid = "FolderPermission-$($Folder.FolderType)" }
-        })
-    if ($IsResource) {
-        $Round2 += @{ CmdletInput = @{ CmdletName = 'Get-CalendarProcessing'; Parameters = @{ Identity = $Upn } }; OperationGuid = 'CalendarProcessing' }
-    }
+        }
+        if ($IsResource) {
+            @{ CmdletInput = @{ CmdletName = 'Get-CalendarProcessing'; Parameters = @{ Identity = $Upn } }; OperationGuid = 'CalendarProcessing' }
+        }
+    )
     $FolderPermissions = @{}
     $ResourceDelegates = @()
     if ($Round2.Count -gt 0) {

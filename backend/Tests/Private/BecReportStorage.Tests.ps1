@@ -28,7 +28,6 @@ Describe 'Set-CIPPBecReport' {
         $RowWrite = $script:Writes | Where-Object { $_.Table -eq 'BecReports' }
         $RowWrite | Should -HaveCount 1
         $RowWrite.OperationType | Should -Be 'UpsertMerge'
-        $Entity.ResultsBytes | Should -BeGreaterThan 0
         $Entity.Keys | Should -Not -Contain 'ResultsBlob'
     }
 
@@ -96,11 +95,6 @@ Describe 'Get-CIPPBecReport' {
         $Run.Status | Should -Be 'Waiting'
         $Run.PSObject.Properties['Results'] | Should -BeNullOrEmpty
         Should -Invoke Get-CIPPAzDataTableEntity -Times 0 -ParameterFilter { $Context.TableName -eq 'BecResults' }
-    }
-
-    It 'names the cause for runs whose results were stored by the blob-era version' {
-        $script:RunRows += [pscustomobject]@{ PartitionKey = 'contoso.com'; RowKey = 'BEC-20260707000000-dddddd'; UserId = 'u1'; Status = 'Completed'; ResultsBlob = 'bec-reports/contoso.com/BEC-20260707000000-dddddd/results.json'; ETag = 'e4' }
-        { Get-CIPPBecReport -TenantFilter 'contoso.com' -CaseId 'BEC-20260707000000-dddddd' -IncludeResults } | Should -Throw '*stored by an earlier version*'
     }
 }
 

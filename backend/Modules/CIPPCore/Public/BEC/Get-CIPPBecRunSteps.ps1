@@ -6,29 +6,25 @@ function Get-CIPPBecRunSteps {
         Push-BECRun reports its progress through the async-deployment rows (the same mechanism the
         SharePoint template deployment uses), one step per phase. This is the single definition of
         those phases so the run, the endpoint that queues it and the page that renders the steps
-        agree on the list. Every run is the full investigation; the last step is always the
-        location analysis, score and report.
+        agree on the list. The last step is always the location analysis, score and report.
     .FUNCTIONALITY
         Internal
     #>
     [CmdletBinding()]
     param()
 
-    $Steps = [System.Collections.Generic.List[object]]::new()
-    $Add = { param($Key, $Title) $Steps.Add([pscustomobject]@{ Key = $Key; Title = $Title }) }
-
-    & $Add 'AuditLog' 'Unified audit log: rules, permissions, safelists and sharing'
-    & $Add 'SignIns' 'Sign-ins and mobile devices'
-    & $Add 'MailboxRules' 'Inbox rules, safelists and sharing links'
-    & $Add 'SentMail' 'Sent message trace'
-    & $Add 'Tenant' 'Tenant sign-ins, users, MFA methods and applications'
-    & $Add 'MailboxInventory' 'Mailbox state, delegations and add-ins'
-    & $Add 'Grants' 'Application consents'
-    & $Add 'TransportRules' 'Transport rules'
-    & $Add 'ReceivedMail' 'Received mail and Defender verdicts'
-    & $Add 'Directory' 'Directory audits, registered devices and non-interactive sign-ins'
-    & $Add 'Activity' 'Mailbox activity and Identity Protection'
-    & $Add 'Score' 'Location analysis, threat score and report'
-
-    return $Steps.ToArray()
+    @(
+        [pscustomobject]@{ Key = 'AuditLog'; Title = 'Unified audit log: rules, permissions, safelists and sharing' }
+        [pscustomobject]@{ Key = 'SignIns'; Title = 'Sign-ins and mobile devices' }
+        [pscustomobject]@{ Key = 'MailboxRules'; Title = 'Inbox rules, safelists and sharing links' }
+        [pscustomobject]@{ Key = 'SentMail'; Title = 'Sent message trace' }
+        [pscustomobject]@{ Key = 'Tenant'; Title = 'Tenant users, MFA methods and applications' }
+        [pscustomobject]@{ Key = 'MailboxInventory'; Title = 'Mailbox state, delegations and add-ins' }
+        [pscustomobject]@{ Key = 'Grants'; Title = 'Application consents' }
+        [pscustomobject]@{ Key = 'TransportRules'; Title = 'Transport rules' }
+        [pscustomobject]@{ Key = 'ReceivedMail'; Title = 'Received mail and Defender verdicts' }
+        [pscustomobject]@{ Key = 'Directory'; Title = 'Directory audits, registered devices and non-interactive sign-ins' }
+        [pscustomobject]@{ Key = 'Activity'; Title = 'Mailbox activity and Identity Protection' }
+        [pscustomobject]@{ Key = 'Score'; Title = 'Location analysis, threat score and report' }
+    )
 }

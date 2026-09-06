@@ -54,7 +54,5 @@ function Get-CIPPBecNonInteractiveSignIns {
         }
     }
     $Data = @($Rows)
-    $Result = New-CIPPBecCollectorResult -Data $Data -Complete ($Data.Count -lt $Top) -Cap ($(if ($Data.Count -ge $Top) { "$Top most recent sign-ins" } else { $null }))
-    $Result | Add-Member -NotePropertyName 'ForeignSuccessfulCount' -NotePropertyValue (@($Data | Where-Object { $_.ForeignLocation -eq $true -and $_.Status -eq 'Success' }).Count) -Force
-    return $Result
+    return New-CIPPBecCollectorResult -Data $Data -Complete ($Data.Count -lt $Top) -Cap ($(if ($Data.Count -ge $Top) { "$Top most recent sign-ins" } else { $null }))
 }

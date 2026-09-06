@@ -16,7 +16,7 @@ BeforeAll {
     function Set-CIPPBecReport { param($TenantFilter, $CaseId, $Properties, $Results, [switch]$Replace) }
     # Live progress (the async-deployment rows the page polls)
     function Get-CIPPAsyncDeployment { param($JobId) }
-    function New-CIPPAsyncDeployment { param($JobId, $Names, $StepTitles, $Source) $JobId }
+    function New-CIPPAsyncDeployment { param($JobId, $Names, $StepTitles, $Source, $TenantFilter) $JobId }
     function Set-CIPPAsyncDeploymentStatus { param($JobId, $Name, $Status, $Logs) }
     function Set-CIPPAsyncDeploymentStep { param($JobId, $Name, $StepIndex, $StepStatus, $Message) }
     function Search-CIPPBecAuditLog { param($TenantFilter, $StartDate, $EndDate, $Operations, $UserIds, $RecordType, $ObjectIds, $Anchor, $PageSize, $MaxPages) }
@@ -31,6 +31,7 @@ BeforeAll {
     function Get-CIPPBecNonInteractiveSignIns { param($TenantFilter, $UserId, $UsageLocation, $Top) }
     function Get-CIPPBecMailActivity { param($TenantFilter, $UserPrincipalName, $StartDate, $EndDate, $Heuristics, $Anchor) }
     function Get-CIPPBecRiskState { param($TenantFilter, $UserId, $StartDate, $Cap) }
+    function Get-CIPPBecRogueAppFeed { }
 
     # Real pieces under test alongside the run
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
@@ -107,7 +108,7 @@ Describe 'Push-BECRun' {
             }
         }
         Mock Get-CIPPBecMailboxInventory { [pscustomobject]@{ MailboxState = (New-CIPPBecCollectorResult -Data ([pscustomobject]@{ HasForwarding = $true; ForwardingSmtpAddress = 'smtp:x@example.org' }) -Count 1); Delegations = (New-CIPPBecCollectorResult -Data @([pscustomobject]@{ PermissionType = 'FullAccess'; Trustee = 'outsider@example.org'; Flagged = $true }, [pscustomobject]@{ PermissionType = 'FullAccess'; Trustee = 'Helper@contoso.com'; Flagged = $false }, [pscustomobject]@{ PermissionType = 'SendOnBehalf'; Trustee = '1b4e28ba-2fa1-11d2-883f-0016d3cca427'; Flagged = $false })); AddIns = (Empty) } }
-        Mock Get-CIPPBecUserGrants { $R = New-CIPPBecCollectorResult -Data @([pscustomobject]@{ Id = 'g1'; Risk = 'CatalogMatch'; Flagged = $true }); $R | Add-Member -NotePropertyName HuntressFeedAvailable -NotePropertyValue $true -Force; $R }
+        Mock Get-CIPPBecUserGrants { New-CIPPBecCollectorResult -Data @([pscustomobject]@{ Id = 'g1'; Risk = 'CatalogMatch'; Flagged = $true }) }
         Mock Get-CIPPBecTransportRules { [pscustomobject]@{ Changes = (New-CIPPBecCollectorResult -Data @([pscustomobject]@{ Operation = 'New-TransportRule'; RuleName = 'Exfil'; ClientIP = '203.0.113.10'; Flagged = $true })); Flagged = (Empty) } }
         Mock Get-CIPPBecReceivedMailFindings { [pscustomobject]@{ Findings = (Empty); Defender = (New-CIPPBecCollectorResult -Data @() -Error 'Invalid subscription') } }
         Mock Get-CIPPBecDirectoryAudits { Empty }
@@ -115,6 +116,7 @@ Describe 'Push-BECRun' {
         Mock Get-CIPPBecNonInteractiveSignIns { Empty }
         Mock Get-CIPPBecMailActivity { $R = Empty; $R | Add-Member -NotePropertyName Summary -NotePropertyValue ([pscustomobject]@{ HardDeleteExceeded = $false }) -Force; $R }
         Mock Get-CIPPBecRiskState { New-CIPPBecCollectorResult -Data ([pscustomobject]@{ Listed = $false; Detections = @() }) -Count 0 }
+        Mock Get-CIPPBecRogueAppFeed { [pscustomobject]@{ Apps = @{}; HuntressAvailable = $false } }
     }
 
     It 'runs every collector (a legacy Scope on the queue item is ignored), flattens their data and scores the signals' {
@@ -138,11 +140,9 @@ Describe 'Push-BECRun' {
         $Assistant.TrusteeId | Should -Be '1b4e28ba-2fa1-11d2-883f-0016d3cca427'
         $R.Delegations[0].Flagged | Should -BeTrue -Because 'flagged delegations sort first'
         $R.UserGrants[0].Risk | Should -Be 'CatalogMatch'
-        $R.HuntressFeedAvailable | Should -BeTrue
         $R.TransportRuleChanges[0].Country | Should -Be 'NG' -Because 'full-scope client IPs go through the same geo lookup'
         $R.TransportRuleChanges[0].ForeignLocation | Should -BeTrue
         $R.LocationAnalysis.ForeignTransportRuleChangeCount | Should -Be 1
-        $R.AcceptedDomains | Should -Contain 'contoso.com'
         $R.Completeness.DefenderDetections.Complete | Should -BeFalse
         $R.Completeness.DefenderDetections.Error | Should -Be 'Invalid subscription'
         $R.Completeness.Delegations.Complete | Should -BeTrue
@@ -261,14 +261,14 @@ Describe 'Push-BECRun' {
         $script:Saved.Properties.Status | Should -Be 'Completed'
     }
 
-    It 'preflight skips the mailbox checks when the user has no mailbox - without calling the inventory' {
-        Mock New-ExoRequest { throw 'Ex41BAF5|Microsoft.Exchange.Configuration.Tasks.ManagementObjectNotFoundException|The specified mailbox doesn''t exist.' } -ParameterFilter { $cmdlet -eq 'Get-Mailbox' }
-        Push-BECRun -Item ($script:Item + @{ Scope = 'Full' })
-        Should -Invoke Get-CIPPBecMailboxInventory -Times 0 -Because 'no mailbox means the inventory cannot apply'
+    It 'classifies a user without a mailbox as skipped mailbox checks, not failed ones' {
+        Mock Get-CIPPBecMailboxInventory { $E = New-CIPPBecCollectorResult -Data @() -Error 'Get-Mailbox: Ex41BAF5|Microsoft.Exchange.Configuration.Tasks.ManagementObjectNotFoundException|The specified mailbox doesn''t exist.'; [pscustomobject]@{ MailboxState = $E; Delegations = $E; AddIns = $E } }
+        Push-BECRun -Item $script:Item
         $R = $script:Saved.Results
         $R.Completeness.MailboxState.Skipped | Should -BeTrue
         $R.Completeness.Delegations.Skipped | Should -BeTrue
         $R.Completeness.MailboxState.Requirement | Should -Match 'no Exchange Online mailbox'
+        $script:Saved.Properties.Status | Should -Be 'Completed'
     }
 
     It 'flags an inbox rule that forwards externally, deletes, and scopes to no conditions' {

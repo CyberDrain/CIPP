@@ -80,7 +80,6 @@ Describe 'Get-CIPPBecUserGrants' {
         $Benign.Risk | Should -Be 'Low'
         $Benign.HighRiskScopes.Count | Should -Be 0
         $Result.Data[0].Flagged | Should -BeTrue -Because 'flagged rows sort first'
-        $Result.HuntressFeedAvailable | Should -BeTrue
         $Result.Data[0].ResourceDisplayName | Should -Be 'Microsoft Graph'
     }
 
@@ -121,7 +120,6 @@ Describe 'Get-CIPPBecUserGrants' {
         Mock Get-CIPPBecRogueAppFeed { [pscustomobject]@{ Apps = @{}; HuntressAvailable = $false } }
         $script:GrantsFixture = @([pscustomobject]@{ id = 'g1'; clientId = 'sp-rogue'; resourceId = 'sp-graph'; consentType = 'Principal'; scope = 'User.Read' })
         $Result = Get-CIPPBecUserGrants -TenantFilter 'contoso.com' -UserId 'user-1' -Heuristics $script:Heuristics
-        $Result.HuntressFeedAvailable | Should -BeFalse
         $Result.Data[0].CatalogMatch | Should -BeNullOrEmpty
         Should -Invoke Get-CIPPBecRogueAppFeed -Times 1
     }

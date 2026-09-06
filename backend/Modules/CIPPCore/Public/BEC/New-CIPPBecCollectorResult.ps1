@@ -40,7 +40,7 @@ function New-CIPPBecCollectorResult {
 
     if ($null -eq $Data) { $Data = @() }
     if ($null -eq $Count) {
-        $Count = if ($Data -is [System.Collections.IEnumerable] -and $Data -isnot [string] -and $Data -isnot [hashtable] -and $Data -isnot [pscustomobject]) { @($Data).Count } elseif ($Data -is [pscustomobject] -or $Data -is [hashtable]) { 1 } else { @($Data).Count }
+        $Count = @($Data).Count
     }
     if (-not [string]::IsNullOrWhiteSpace($ErrorText)) { $Complete = $false }
     if ($Skipped) { $Complete = $false }

@@ -6,7 +6,7 @@ BeforeAll {
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCollectorResult.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecMailboxInventory.ps1')
-    $script:Heuristics = Get-CIPPBecHeuristics -Force
+    $script:Heuristics = Get-CIPPBecHeuristics
     $script:Upn = 'victim@contoso.com'
 
     # Build the cmdlet-keyed result New-ExoBulkRequest -ReturnWithCommand produces, stamping each row with its OperationGuid.

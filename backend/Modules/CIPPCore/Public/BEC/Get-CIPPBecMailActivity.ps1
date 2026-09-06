@@ -77,8 +77,8 @@ function Get-CIPPBecMailActivity {
             }
         }
         $Group = $Groups[$Key]
-        $Group.Count += $Count
-        $Group.Records += 1
+        $Group.Count = $Group.Count + $Count
+        $Group.Records = $Group.Records + 1
         if ($When) {
             if (-not $Group.FirstSeen -or $When -lt $Group.FirstSeen) { $Group.FirstSeen = $When }
             if (-not $Group.LastSeen -or $When -gt $Group.LastSeen) { $Group.LastSeen = $When }

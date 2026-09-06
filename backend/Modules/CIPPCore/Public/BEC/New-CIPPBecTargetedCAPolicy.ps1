@@ -85,9 +85,9 @@ function New-CIPPBecTargetedCAPolicy {
                 Reference     = $CaseId
             }
             $null = Add-CIPPScheduledTask -Task $Task -Hidden $false -Headers $Headers
-            $Message += "; removal scheduled for $($ExpiresUtc.ToString('u'))"
+            $Message = "$Message; removal scheduled for $($ExpiresUtc.ToString('u'))"
         } catch {
-            $Message += "; WARNING: could not schedule its removal ($($_.Exception.Message)) - remove it manually after $($ExpiresUtc.ToString('u'))"
+            $Message = "$Message; WARNING: could not schedule its removal ($($_.Exception.Message)) - remove it manually after $($ExpiresUtc.ToString('u'))"
             Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Could not schedule removal of CA policy $($Policy.id): $($_.Exception.Message)" -Sev 'Warning'
         }
         return $Message

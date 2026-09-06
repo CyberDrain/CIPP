@@ -261,8 +261,11 @@ namespace CIPP.Reporting
                         f.Text(safeFooter);
                 });
             }
+            // Named on purpose: OfficeIMO's positional order is (text, fontSize, colour, opacity, angle), so
+            // Watermark(text, 0.08, colour) asks for a 0.08pt watermark - drawn, but invisible. The values
+            // mirror the client's watermarkText style: 72pt bold, uppercase, 8% opacity, rotated -45deg.
             if (!string.IsNullOrEmpty(watermark))
-                p.Watermark(watermark, 0.08, ReportComponents.Pdf(ctx.Theme.Palette["watermark"]));
+                p.Watermark(watermark.ToUpperInvariant(), fontSize: 72, color: ReportComponents.Pdf(ctx.Theme.Palette["watermark"]), opacity: 0.08, rotationAngle: -45, bold: true);
         }
 
         private sealed class PageGroup

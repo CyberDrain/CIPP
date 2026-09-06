@@ -188,3 +188,21 @@ Describe 'Tenant name in the branding text' {
         $Branding | Should -Not -Match '(?i)%tenantname%'
     }
 }
+
+Describe 'Report builder cover block' {
+    It 'puts a cover block on the cover and draws nothing else for it' {
+        $Bytes = ConvertTo-CippReportPdf -Blocks @(
+            @{ type = 'cover'; title = 'Custom Cover'; coverAccent = 'Words'; subtitle = 'A subtitle of my own'; coverLabel = 'My Label' }
+            @{ type = 'blank'; title = 'Body'; content = '<p>x</p>' }
+        ) -Variables @{} -Branding @{ colour = '#0E4C92' } -TenantName 'Contoso' -ReportName 'Ignored Name'
+        $Pdf = [System.Text.Encoding]::Latin1.GetString($Bytes)
+        $Hex = { param($s) [Convert]::ToHexString([System.Text.Encoding]::ASCII.GetBytes($s)) }
+        # the drawing writes a word per string, so the words are what can be matched
+        $Pdf | Should -Match (& $Hex 'CUSTOM')
+        $Pdf | Should -Match (& $Hex 'COVER')
+        $Pdf | Should -Match (& $Hex 'WORDS')
+        $Pdf | Should -Match (& $Hex 'LABEL')
+        $Pdf | Should -Not -Match (& $Hex 'IGNORED')
+        ([regex]::Matches($Pdf, '/Type /Page[^s]')).Count | Should -Be 2
+    }
+}

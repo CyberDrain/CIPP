@@ -134,6 +134,8 @@ export const serialiseBlock = (b) => ({
   heroFooterText: b.heroFooterText || null,
   heroImage: b.heroImage || null,
   subtitle: b.subtitle || null,
+  coverAccent: b.coverAccent || null,
+  coverLabel: b.coverLabel || null,
   // A table's column list, or a callout grid's column count; either way the renderer's own field.
   columns: b.columns ?? null,
   rows: b.rows || null,

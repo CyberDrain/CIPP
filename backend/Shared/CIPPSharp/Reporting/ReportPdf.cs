@@ -37,6 +37,19 @@ namespace CIPP.Reporting
             variables["reportname"] = reportName ?? "Report";
             variables["reportdate"] = generatedOn ?? string.Empty;
 
+            // A report builder cover block: its fields become the cover variables a fixed report's tree
+            // builder supplies, and the block itself draws nothing.
+            var cover = blocks.Find(b => b.Type == "cover");
+            if (cover != null)
+            {
+                foreach (var (variable, field) in new[] { ("covertitle", "title"), ("coveraccent", "coverAccent"), ("coversubtitle", "subtitle"), ("coverlabel", "coverLabel") })
+                {
+                    var value = cover.Str(field);
+                    if (!string.IsNullOrWhiteSpace(value)) variables[variable] = value;
+                }
+                blocks.RemoveAll(b => b.Type == "cover");
+            }
+
             var logo = ReportComponents.DecodeImage(branding.Logo);
             // The cover photo, resolved the way the client's resolveCoverImage did: an uploaded cover wins,
             // then the stock photo the branding picked ("none" means no cover at all), then the report's

@@ -142,40 +142,63 @@ function Resolve-CippReportDataToken {
 
     $ParseToken = { param([string]$Text) $m = [regex]::Match("$Text".Trim(), "^$Pattern$"); if ($m.Success) { $m } }
 
+    # A chart or table source as the builder's picker saves it - { type; field; filter = { field; op;
+    # value } } - or as a token; either way @{ type; field; filter }, with filter $null when there is none.
+    $SourceOf = {
+        param($Source)
+        if ($null -eq $Source) { return $null }
+        if ($Source -is [string]) {
+            $m = & $ParseToken $Source
+            if (-not $m) { return $null }
+            $Field = $m.Groups['field'].Value
+            if ($m.Groups['op'].Value) {
+                return @{ type = $m.Groups['type'].Value; field = $null; filter = @{ field = $Field; op = $m.Groups['op'].Value; value = $m.Groups['value'].Value } }
+            }
+            return @{ type = $m.Groups['type'].Value; field = $(if ($Field) { $Field }); filter = $null }
+        }
+        if (-not $Source.type) { return $null }
+        $Filter = $Source.filter
+        $Spec = if ($Filter -and $Filter.field -and $Filter.op) { @{ field = "$($Filter.field)"; op = "$($Filter.op)"; value = "$($Filter.value)" } }
+        @{ type = "$($Source.type)"; field = $(if ($Source.field) { "$($Source.field)" }); filter = $Spec }
+    }
+    $RowsFor = {
+        param($Spec)
+        $Rows = & $RowsOf $Spec.type
+        if ($null -eq $Rows) { return $null }
+        if ($Spec.filter) { $Rows = @($Rows | Where-Object { & $RowMatches $_ $Spec.filter.field $Spec.filter.op $Spec.filter.value }) }
+        , @($Rows)
+    }
+
     foreach ($Block in @($Blocks)) {
         if ($null -eq $Block) { continue }
         $Type = "$($Block.type)"
 
-        # A chart drawn from the data: one slice per distinct value of the field, the long tail as Other.
+        # A chart drawn from the data: one slice per distinct value of the field, the long tail as Other;
+        # a single counted slice when no field was picked.
         if ($Type -eq 'chart' -and $Block.chartSource) {
-            $Source = & $ParseToken $Block.chartSource
-            $Rows = if ($Source) { & $RowsOf $Source.Groups['type'].Value }
-            if ($Source -and $null -ne $Rows) {
-                $Field = $Source.Groups['field'].Value
-                $Op = $Source.Groups['op'].Value
-                $Points = if ($Field -and -not $Op) {
-                    $Groups = @(foreach ($Row in $Rows) { @(& $ValueOf $Row $Field | ForEach-Object { "$_" }) }) | Group-Object { $_.ToLowerInvariant() } | Sort-Object -Property Count -Descending
+            $Spec = & $SourceOf $Block.chartSource
+            $Rows = if ($Spec) { & $RowsFor $Spec }
+            if ($Spec -and $null -ne $Rows) {
+                $Field = $Spec.field
+                $Points = if ($Field) {
+                    $Groups = @(foreach ($Row in $Rows) { @(& $ValueOf $Row $Field | ForEach-Object { "$_" }) }) | Group-Object { $_.ToLowerInvariant() } | Sort-Object -Property @{ Expression = 'Count'; Descending = $true }, @{ Expression = 'Name'; Descending = $false }
                     $Blank = @($Rows | Where-Object { @(& $ValueOf $_ $Field).Count -eq 0 }).Count
                     $Top = @($Groups | Select-Object -First $MaxSlices | ForEach-Object { @{ label = $_.Group[0]; value = $_.Count } })
                     $Rest = @($Groups | Select-Object -Skip $MaxSlices | Measure-Object -Property Count -Sum).Sum
                     @($Top; if ($Rest -gt 0) { @{ label = 'Other'; value = [int]$Rest } }; if ($Blank -gt 0) { @{ label = '(blank)'; value = $Blank } })
                 } else {
-                    $Count = if ($Op) { @($Rows | Where-Object { & $RowMatches $_ $Field $Op $Source.Groups['value'].Value }).Count } else { $Rows.Count }
-                    @(@{ label = $(if ($Block.title) { "$($Block.title)" } else { $Source.Groups['type'].Value }); value = $Count })
+                    @(@{ label = $(if ($Block.title) { "$($Block.title)" } else { $Spec.type }); value = $Rows.Count })
                 }
                 & $SetProperty $Block 'chartData' @($Points)
             }
         }
 
-        # A table filled from the data: the rows (or the ones a filter token keeps), each column
-        # reading the field it names.
+        # A table filled from the data: the rows (the ones the condition keeps), each column reading
+        # the field it names.
         if ($Type -eq 'richtable' -and $Block.dataSource) {
-            $Source = & $ParseToken $Block.dataSource
-            $Rows = if ($Source) { & $RowsOf $Source.Groups['type'].Value }
-            if ($Source -and $null -ne $Rows) {
-                $Field = $Source.Groups['field'].Value
-                $Op = $Source.Groups['op'].Value
-                if ($Field -and $Op) { $Rows = @($Rows | Where-Object { & $RowMatches $_ $Field $Op $Source.Groups['value'].Value }) }
+            $Spec = & $SourceOf $Block.dataSource
+            $Rows = if ($Spec) { & $RowsFor $Spec }
+            if ($Spec -and $null -ne $Rows) {
                 $Columns = @($Block.columns)
                 $TableRows = @(foreach ($Row in ($Rows | Select-Object -First $MaxRows)) {
                         $Cells = [ordered]@{}

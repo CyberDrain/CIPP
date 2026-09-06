@@ -14,8 +14,8 @@ import { CHART_KINDS } from './reportSettings'
 /* ── Block definitions ───────────────────────────────────── */
 
 // Data tokens resolve against the reporting database when the report renders, on the server, so a
-// scheduled report reads the same data a preview does. The collection names are the Database Data
-// block's sources.
+// scheduled report reads the same data a preview does. Charts and tables pick their data with the
+// DataSourcePicker below; free-text figures can still use a token.
 const DATA_TOKEN_HINT =
   'Figures can be data tokens, read when the report renders: &Users& counts a collection, ' +
   '&Devices.complianceState=compliant& counts the rows that match, &Mailboxes.TotalItemSize:sum& adds a field up.'
@@ -193,6 +193,120 @@ export const createStructuredBlock = (type, id) => {
   }
 }
 
+/* ── Data source picker ──────────────────────────────────── */
+
+const FILTER_OPS = [
+  { label: 'is', value: '=' },
+  { label: 'is not', value: '!=' },
+]
+
+/**
+ * Where a chart or table gets its data: a collection from the reporting database, for a chart the
+ * field to count by, and an optional condition rows must meet. Saved as { type, field, filter }
+ * and resolved on the server when the report renders. The collections and fields on offer are the
+ * shapes recorded when the cache was written; a field can still be typed, since a shape is sampled.
+ */
+export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
+  const source = value && typeof value === 'object' ? value : null
+  const collections = dataShape.map((entry) => ({
+    label: entry.count == null ? entry.type : `${entry.type} (${entry.count})`,
+    value: entry.type,
+  }))
+  const fields = (dataShape.find((entry) => entry.type === source?.type)?.fields ?? []).map(
+    (field) => ({ label: field.type ? `${field.name} (${field.type})` : field.name, value: field.name })
+  )
+  const filter = source?.filter ?? null
+  const asOption = (name) => (name ? (fields.find((f) => f.value === name) ?? { label: name, value: name }) : null)
+  const patch = (next) =>
+    onChange({ type: source?.type ?? null, field: source?.field ?? null, filter, ...next })
+
+  return (
+    <Stack spacing={1}>
+      <Stack direction="row" spacing={1}>
+        <Box sx={{ flex: 1 }}>
+          <CippAutoComplete
+            size="small"
+            label={mode === 'chart' ? 'Fill from data' : 'Fill rows from data'}
+            placeholder="None: use what is typed above"
+            multiple={false}
+            creatable={false}
+            options={collections}
+            value={collections.find((option) => option.value === source?.type) ?? null}
+            onChange={(option) =>
+              onChange(option?.value ? { type: option.value, field: null, filter: null } : null)
+            }
+          />
+        </Box>
+        {mode === 'chart' && source?.type ? (
+          <Box sx={{ flex: 1 }}>
+            <CippAutoComplete
+              size="small"
+              label="One slice per"
+              placeholder="No field: a single count"
+              multiple={false}
+              creatable={true}
+              options={fields}
+              value={asOption(source.field)}
+              onChange={(option) => patch({ field: option?.value ?? null })}
+            />
+          </Box>
+        ) : null}
+      </Stack>
+      {source?.type ? (
+        <Stack direction="row" spacing={1}>
+          <Box sx={{ flex: 1 }}>
+            <CippAutoComplete
+              size="small"
+              label="Only rows where"
+              placeholder="Every row"
+              multiple={false}
+              creatable={true}
+              options={fields}
+              value={asOption(filter?.field)}
+              onChange={(option) =>
+                patch({
+                  filter: option?.value
+                    ? { field: option.value, op: filter?.op ?? '=', value: filter?.value ?? '' }
+                    : null,
+                })
+              }
+            />
+          </Box>
+          {filter?.field ? (
+            <>
+              <Box sx={{ minWidth: 130 }}>
+                <CippAutoComplete
+                  size="small"
+                  label="Condition"
+                  multiple={false}
+                  creatable={false}
+                  disableClearable={true}
+                  options={FILTER_OPS}
+                  value={FILTER_OPS.find((option) => option.value === filter.op) ?? FILTER_OPS[0]}
+                  onChange={(option) => patch({ filter: { ...filter, op: option?.value ?? '=' } })}
+                />
+              </Box>
+              <TextField
+                size="small"
+                label="Value"
+                placeholder="compliant, true, Win*"
+                value={filter.value ?? ''}
+                onChange={(event) => patch({ filter: { ...filter, value: event.target.value } })}
+                sx={{ flex: 1 }}
+              />
+            </>
+          ) : null}
+        </Stack>
+      ) : null}
+      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+        {mode === 'chart'
+          ? 'Counted from the reporting database when the report renders: one slice per value of the field, or a single count with no field.'
+          : 'The rows of the collection (those the condition keeps) fill the table when the report renders; each column reads the field it names.'}
+      </Typography>
+    </Stack>
+  )
+}
+
 /* ── Shared shell ────────────────────────────────────────── */
 
 const BlockShell = ({ block, index, totalBlocks, onRemove, onMoveUp, onMoveDown, chips, children }) => {
@@ -295,6 +409,7 @@ const RowsEditor = ({ rows, columns, onChange, addLabel = 'Add row', minRows = 1
               size="small"
               label={column.label}
               type={column.type || 'text'}
+              slotProps={{ htmlInput: column.inputProps }}
               value={row[column.key] ?? ''}
               onChange={(event) => update(rowIndex, column.key, event.target.value)}
               sx={{ flex: column.width ?? 1 }}
@@ -342,7 +457,7 @@ const TitleField = ({ block, index, onUpdate, label = 'Block title', helperText 
 
 /* ── Chart ───────────────────────────────────────────────── */
 
-export const ChartBlockCard = ({ block, index, onUpdate, ...shell }) => {
+export const ChartBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) => {
   const set = (patch) => onUpdate(index, { ...block, ...patch })
   const kind = block.chartKind || 'donut'
 
@@ -411,14 +526,11 @@ export const ChartBlockCard = ({ block, index, onUpdate, ...shell }) => {
             />
           ) : null}
         </Stack>
-        <TextField
-          size="small"
-          fullWidth
-          label="Fill from data"
-          placeholder="&Devices.operatingSystem&"
-          helperText="A data token: one slice per value of that field, counted from the reporting database when the report renders. Blank = the data points above."
-          value={block.chartSource ?? ''}
-          onChange={(event) => set({ chartSource: event.target.value })}
+        <DataSourcePicker
+          mode="chart"
+          value={block.chartSource}
+          onChange={(chartSource) => set({ chartSource })}
+          dataShape={dataShape}
         />
       </Stack>
     </BlockShell>
@@ -845,10 +957,13 @@ export const CalloutGridBlockCard = ({ block, index, onUpdate, ...shell }) => {
 
 /* ── Table ───────────────────────────────────────────────── */
 
-export const TableBlockCard = ({ block, index, onUpdate, ...shell }) => {
+export const TableBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) => {
   const set = (patch) => onUpdate(index, { ...block, ...patch })
   const columns = block.columns || []
   const rows = block.rows || []
+  // The picked collection's fields, offered on each column's field input.
+  const sourceFields = dataShape?.find((entry) => entry.type === block.dataSource?.type)?.fields ?? []
+  const fieldListId = `table-fields-${block.id}`
 
   // Columns are keyed rather than positional, so renaming a header never detaches the cells under
   // it. A new column takes the next free key; a removed one takes its cells with it.
@@ -872,15 +987,17 @@ export const TableBlockCard = ({ block, index, onUpdate, ...shell }) => {
     >
       <Stack spacing={2}>
         <TitleField block={block} index={index} onUpdate={onUpdate} />
-        <TextField
-          size="small"
-          fullWidth
-          label="Fill rows from data"
-          placeholder="&Mailboxes&"
-          helperText="A data token naming a collection (a filter such as &Devices.complianceState!=compliant& works too). Each column then reads the field it names. Blank = the rows typed below."
-          value={block.dataSource ?? ''}
-          onChange={(event) => set({ dataSource: event.target.value })}
+        <DataSourcePicker
+          mode="table"
+          value={block.dataSource}
+          onChange={(dataSource) => set({ dataSource })}
+          dataShape={dataShape}
         />
+        <datalist id={fieldListId}>
+          {sourceFields.map((field) => (
+            <option key={field.name} value={field.name} />
+          ))}
+        </datalist>
         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
           Columns
         </Typography>
@@ -888,7 +1005,7 @@ export const TableBlockCard = ({ block, index, onUpdate, ...shell }) => {
           rows={columns}
           columns={[
             { key: 'header', label: 'Column header', width: 1 },
-            { key: 'field', label: 'Field (when filled from data)', width: 1 },
+            { key: 'field', label: 'Field (when filled from data)', width: 1, inputProps: { list: fieldListId } },
           ]}
           onChange={setColumns}
           addLabel="Add column"

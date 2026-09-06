@@ -1072,6 +1072,23 @@ const Page = () => {
     waiting: !!currentTenant,
   })
 
+  // Every collection's row count and fields, as recorded when the cache was written: what the
+  // chart and table data pickers offer.
+  const dataShapeApi = ApiGetCall({
+    url: '/api/ListDBCache',
+    data: { tenantFilter: currentTenant, type: '_shape' },
+    queryKey: `ListDBCache-shape-${currentTenant}`,
+    waiting: !!currentTenant,
+  })
+  const dataShape = useMemo(() => {
+    const shapes = dataShapeApi.data?.Results
+    return (Array.isArray(shapes) ? shapes : []).map((shape) => ({
+      type: shape.Type,
+      count: shape.Count,
+      fields: Array.isArray(shape.Fields) ? shape.Fields : [],
+    }))
+  }, [dataShapeApi.data])
+
   const availableCacheTypes = useMemo(() => {
     if (
       !availableCacheTypesApi.isSuccess ||
@@ -2053,6 +2070,7 @@ const Page = () => {
                         key={block.id}
                         block={block}
                         index={index}
+                        dataShape={dataShape}
                         totalBlocks={blocks.length}
                         onRemove={handleRemoveBlock}
                         onUpdate={handleUpdateBlock}

@@ -70,6 +70,7 @@ describe('block type registry', () => {
       'chart',
       'scorecard',
       'progress',
+      'cover',
       'page',
       'hero',
       'pagebreak',
@@ -80,7 +81,7 @@ describe('block type registry', () => {
     const values = BLOCK_CATEGORIES.flatMap((entry) => entry.blocks.map((b) => b.value))
     expect(new Set(values).size).toBe(values.length)
     expect(values).toEqual(expect.arrayContaining(['blank', 'test', 'database']))
-    expect(blockTypesFor('layout').map((b) => b.value)).toEqual(['page', 'hero', 'pagebreak'])
+    expect(blockTypesFor('layout').map((b) => b.value)).toEqual(['cover', 'page', 'hero', 'pagebreak'])
     expect(blockTypesFor(undefined)).toEqual([])
   })
 
@@ -139,6 +140,64 @@ describe('createStructuredBlock', () => {
     const block = createStructuredBlock('infoboxcolumns', 'b1')
     expect(block.columns).toBe(2)
     expect(block.items.length).toBeGreaterThan(0)
+  })
+})
+
+describe('CoverBlockCard', () => {
+  it('starts blank so the report name stays the title until one is typed', () => {
+    const block = createStructuredBlock('cover', 'b1')
+    expect(block.title).toBe('')
+    expect(block.coverAccent).toBe('')
+  })
+
+  it('edits the title, accent, subtitle and label', async () => {
+    const latest = renderLive(createStructuredBlock('cover', 'b1'))
+
+    await userEvent.type(screen.getByLabelText('Cover title'), 'Quarterly Security')
+    await userEvent.type(screen.getByLabelText('Accent'), 'Review')
+    await userEvent.type(screen.getByLabelText('Subtitle'), 'Where we stand')
+    await userEvent.type(screen.getByLabelText('Label'), 'Security Review')
+
+    expect(latest.current).toMatchObject({
+      title: 'Quarterly Security',
+      coverAccent: 'Review',
+      subtitle: 'Where we stand',
+      coverLabel: 'Security Review',
+    })
+  })
+})
+
+describe('CalloutGridBlockCard', () => {
+  it('lays the callouts out in the grid the page will use', async () => {
+    const latest = renderLive(createStructuredBlock('infoboxcolumns', 'b1'))
+    expect(screen.getByTestId('callout-grid').dataset.columns).toBe('2')
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Layout' }))
+    await userEvent.click(within(await screen.findByRole('listbox')).getByText('1 across'))
+
+    expect(latest.current.columns).toBe(1)
+    expect(screen.getByTestId('callout-grid').dataset.columns).toBe('1')
+  })
+
+  it('adds and removes callouts, keeping at least one', async () => {
+    const latest = renderLive(createStructuredBlock('infoboxcolumns', 'b1'))
+
+    await userEvent.click(screen.getByLabelText('Add callout'))
+    expect(latest.current.items).toHaveLength(3)
+
+    await userEvent.click(screen.getAllByRole('button', { name: 'Remove callout' })[0])
+    await userEvent.click(screen.getAllByRole('button', { name: 'Remove callout' })[0])
+    expect(latest.current.items).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Remove callout' })).toBeDisabled()
+  })
+
+  it('edits one callout without disturbing the others', async () => {
+    const latest = renderLive(createStructuredBlock('infoboxcolumns', 'b1'))
+
+    await userEvent.type(screen.getAllByLabelText('Title')[1], '!')
+
+    expect(latest.current.items[1].title).toBe('Point two!')
+    expect(latest.current.items[0].title).toBe('Point one')
   })
 })
 

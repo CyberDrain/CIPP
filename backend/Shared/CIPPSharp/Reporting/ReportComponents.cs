@@ -316,8 +316,12 @@ namespace CIPP.Reporting
                 lead = words.Length > 1 ? string.Join(" ", words[..^1]) : (words.Length == 1 ? words[0] : string.Empty);
                 accent = words.Length > 1 ? words[^1] : string.Empty;
             }
-            if (!string.IsNullOrEmpty(lead)) { AddT(dw, lead, leftPad, y, w - leftPad, 56, ReportStyles.CoverTitle, coverText, OfficeTextAlignment.Left, true); y += 53; }
-            if (!string.IsNullOrEmpty(accent)) { AddT(dw, accent, leftPad, y, w - leftPad, 56, ReportStyles.CoverTitle, primary, OfficeTextAlignment.Left, true); y += 53; }
+            // A long line shrinks to fit rather than running off the page ("QUARTERLY SECURITY" did):
+            // Helvetica Bold capitals average about 0.7em, so the size that fits is the box over that.
+            double FitTitle(string s) => Math.Min(ReportStyles.CoverTitle, (w - leftPad) / Math.Max(1, s.Length * 0.7));
+            var titleSize = Math.Min(FitTitle(lead), FitTitle(accent));
+            if (!string.IsNullOrEmpty(lead)) { AddT(dw, lead, leftPad, y, w - leftPad, 56, titleSize, coverText, OfficeTextAlignment.Left, true); y += 53; }
+            if (!string.IsNullOrEmpty(accent)) { AddT(dw, accent, leftPad, y, w - leftPad, 56, titleSize, primary, OfficeTextAlignment.Left, true); y += 53; }
             if (!string.IsNullOrEmpty(lead) || !string.IsNullOrEmpty(accent)) y += 20;  // client title marginBottom 20
 
             if (ctx.Variables.TryGetValue("coversubtitle", out var cs) && !string.IsNullOrWhiteSpace(cs))

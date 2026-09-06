@@ -54,8 +54,9 @@ export const BLOCK_CATEGORIES = [
     label: 'Layout',
     value: 'layout',
     blocks: [
+      { label: 'Cover', value: 'cover' },
       { label: 'Titled Page', value: 'page' },
-      { label: 'Section Divider', value: 'hero' },
+      { label: 'Infographic', value: 'hero' },
       { label: 'Page Break', value: 'pagebreak' },
     ],
   },
@@ -76,8 +77,9 @@ const BLOCK_META = {
   chart: { label: 'Chart', Icon: CippIcons.BarChart, colour: 'primary' },
   scorecard: { label: 'Score Cards', Icon: CippIcons.Assessment, colour: 'success' },
   progress: { label: 'Progress Bars', Icon: CippIcons.Speed, colour: 'info' },
-  hero: { label: 'Section Divider', Icon: CippIcons.ViewCarousel, colour: 'warning' },
+  hero: { label: 'Infographic', Icon: CippIcons.ViewCarousel, colour: 'warning' },
   pagebreak: { label: 'Page Break', Icon: CippIcons.HorizontalRule, colour: 'default' },
+  cover: { label: 'Cover', Icon: CippIcons.Window, colour: 'default' },
   page: { label: 'Titled Page', Icon: CippIcons.Description, colour: 'default' },
   note: { label: 'Note', Icon: CippIcons.InfoOutlined, colour: 'default' },
   richbullets: { label: 'Bullet List', Icon: CippIcons.List, colour: 'primary' },
@@ -144,6 +146,8 @@ export const createStructuredBlock = (type, id) => {
       }
     case 'pagebreak':
       return { ...base, title: '' }
+    case 'cover':
+      return { ...base, title: '', coverAccent: '', subtitle: '', coverLabel: '' }
     case 'page':
       return { ...base, title: 'New page', subtitle: '' }
     case 'note':
@@ -284,8 +288,6 @@ const RowsEditor = ({ rows, columns, onChange, addLabel = 'Add row', minRows = 1
               size="small"
               label={column.label}
               type={column.type || 'text'}
-              multiline={Boolean(column.multiline)}
-              minRows={column.multiline ? 2 : undefined}
               value={row[column.key] ?? ''}
               onChange={(event) => update(rowIndex, column.key, event.target.value)}
               sx={{ flex: column.width ?? 1 }}
@@ -458,7 +460,7 @@ export const ProgressBlockCard = ({ block, index, onUpdate, ...shell }) => (
   </BlockShell>
 )
 
-/* ── Section divider ─────────────────────────────────────── */
+/* ── Infographic ─────────────────────────────────────── */
 
 export const HeroBlockCard = ({ block, index, onUpdate, ...shell }) => {
   const set = (patch) => onUpdate(index, { ...block, ...patch })
@@ -534,6 +536,58 @@ export const PageBreakBlockCard = ({ block, index, ...shell }) => (
     </Typography>
   </BlockShell>
 )
+
+/* ── Cover ───────────────────────────────────────────────── */
+
+export const CoverBlockCard = ({ block, index, onUpdate, ...shell }) => {
+  const set = (patch) => onUpdate(index, { ...block, ...patch })
+
+  return (
+    <BlockShell block={block} index={index} {...shell}>
+      <Stack spacing={2}>
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          The cover page. Leave the title blank to use the report's name; the accent is the part of
+          the title set in the brand colour.
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <TitleField
+            block={block}
+            index={index}
+            onUpdate={onUpdate}
+            label="Cover title"
+            helperText="Blank = the report's name"
+          />
+          <TextField
+            size="small"
+            label="Accent"
+            placeholder="Review"
+            value={block.coverAccent ?? ''}
+            onChange={(event) => set({ coverAccent: event.target.value })}
+            sx={{ minWidth: 180 }}
+          />
+        </Stack>
+        <TextField
+          size="small"
+          fullWidth
+          multiline
+          minRows={2}
+          label="Subtitle"
+          value={block.subtitle ?? ''}
+          onChange={(event) => set({ subtitle: event.target.value })}
+        />
+        <TextField
+          size="small"
+          label="Label"
+          placeholder="Assessment Report"
+          helperText="The small pill above the title"
+          value={block.coverLabel ?? ''}
+          onChange={(event) => set({ coverLabel: event.target.value })}
+          sx={{ maxWidth: 320 }}
+        />
+      </Stack>
+    </BlockShell>
+  )
+}
 
 /* ── Titled page ─────────────────────────────────────────── */
 
@@ -649,6 +703,7 @@ export const CalloutBlockCard = ({ block, index, onUpdate, ...shell }) => {
 /* ── Callout grid ────────────────────────────────────────── */
 
 const GRID_LAYOUT_OPTIONS = [
+  { label: '1 across', value: 1 },
   { label: '2 across', value: 2 },
   { label: '3 across', value: 3 },
 ]
@@ -658,7 +713,9 @@ export const CalloutGridBlockCard = ({ block, index, onUpdate, ...shell }) => {
   const items = block.items || []
   const layout =
     GRID_LAYOUT_OPTIONS.find((option) => option.value === Number(block.columns)) ??
-    GRID_LAYOUT_OPTIONS[0]
+    GRID_LAYOUT_OPTIONS[1]
+  const updateItem = (position, patch) =>
+    set({ items: items.map((entry, i) => (i === position ? { ...entry, ...patch } : entry)) })
 
   return (
     <BlockShell
@@ -680,15 +737,75 @@ export const CalloutGridBlockCard = ({ block, index, onUpdate, ...shell }) => {
             onChange={(option) => set({ columns: option?.value ?? 2 })}
           />
         </Box>
-        <RowsEditor
-          rows={items}
-          columns={[
-            { key: 'title', label: 'Title', width: 1 },
-            { key: 'content', label: 'Text', width: 3, multiline: true },
-          ]}
-          onChange={(next) => set({ items: next })}
-          addLabel="Add callout"
-        />
+        {/* Laid out the way the page will be, so the grid can be judged without a preview. */}
+        <Box
+          data-testid="callout-grid"
+          data-columns={layout.value}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${layout.value}, minmax(0, 1fr))`,
+            gap: 1.5,
+          }}
+        >
+          {items.map((entry, position) => (
+            <Box
+              key={position}
+              sx={{
+                borderLeft: '4px solid',
+                borderColor: 'primary.main',
+                bgcolor: 'action.hover',
+                borderRadius: 1,
+                p: 1.5,
+              }}
+            >
+              <Stack spacing={1}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    label="Title"
+                    value={entry.title ?? ''}
+                    onChange={(event) => updateItem(position, { title: event.target.value })}
+                  />
+                  <Tooltip title="Remove callout">
+                    <span>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        aria-label="Remove callout"
+                        onClick={() => set({ items: items.filter((_, i) => i !== position) })}
+                        disabled={items.length <= 1}
+                      >
+                        <CippIcons.Delete fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Stack>
+                <TextField
+                  size="small"
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  label="Text"
+                  value={entry.content ?? ''}
+                  onChange={(event) => updateItem(position, { content: event.target.value })}
+                />
+              </Stack>
+            </Box>
+          ))}
+        </Box>
+        <Box>
+          <IconButton
+            size="small"
+            aria-label="Add callout"
+            onClick={() => set({ items: [...items, { title: '', content: '' }] })}
+          >
+            <CippIcons.Add fontSize="small" />
+          </IconButton>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Add callout
+          </Typography>
+        </Box>
       </Stack>
     </BlockShell>
   )
@@ -753,6 +870,8 @@ export const TableBlockCard = ({ block, index, onUpdate, ...shell }) => {
 /** Pick the editor for a structured block. Returns null for block types handled elsewhere. */
 export const StructuredBlockCard = ({ block, ...props }) => {
   switch (block.type) {
+    case 'cover':
+      return <CoverBlockCard block={block} {...props} />
     case 'page':
       return <PageBlockCard block={block} {...props} />
     case 'note':

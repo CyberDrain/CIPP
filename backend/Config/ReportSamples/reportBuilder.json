@@ -1,6 +1,14 @@
 {
   "blocks": [
     {
+      "type": "cover",
+      "title": "Quarterly Security",
+      "coverAccent": "Review",
+      "subtitle": "How the tenant stood this quarter, what changed, and what comes next.",
+      "coverLabel": "Security Review",
+      "static": true
+    },
+    {
       "id": "sample-1",
       "type": "blank",
       "title": "Summary",

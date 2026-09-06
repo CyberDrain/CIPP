@@ -144,3 +144,34 @@ Describe 'ConvertTo-CippReportPdf' {
         }
     }
 }
+
+Describe 'Watermark layering' {
+    # OfficeIMO paints the watermark first; the engine moves its operator block to the end of each page's
+    # content stream so it sits over the content, on content pages and dark divider pages alike.
+    It 'draws the watermark after everything else on every page that carries one' {
+        $Blocks = @(
+            @{ type = 'scorecard'; title = 'Figures'; stats = @(@{ value = '1'; label = 'One' }, @{ value = '2'; label = 'Two' }) }
+            @{ type = 'hero'; title = 'Divider'; heroHighlight = '83%'; heroSubText = 'of controls in place' }
+            @{ type = 'blank'; title = 'After the divider'; content = '<p>Body text under the mark.</p>' }
+        )
+        $Bytes = ConvertTo-CippReportPdf -Blocks $Blocks -Variables @{} -Branding @{ colour = '#0E4C92'; watermarkText = 'Preview'; watermarkEnabled = $true } -TenantName 'Contoso' -ReportName 'T'
+        $Pdf = [System.Text.Encoding]::Latin1.GetString($Bytes)
+        $Marker = '<50524556494557> Tj'
+        $Streams = [regex]::Matches($Pdf, '(?s)<< /Length (\d+) >>\s*stream\n(.*?)\nendstream') | ForEach-Object { $_.Groups[2].Value }
+        $Marked = @($Streams | Where-Object { $_.Contains($Marker) })
+        # a content page and the divider at least; the cover never carries one
+        $Marked.Count | Should -BeGreaterOrEqual 2
+        $Streams[0] | Should -Not -Match 'Tj\s*ET\s*Q\s*$'
+        foreach ($Data in $Marked) {
+            $Data.TrimEnd() | Should -Match "$([regex]::Escape($Marker))\s*ET\s*Q$"
+            ([regex]::Matches($Data, '> Tj|\) Tj') | Select-Object -Last 1).Value | Should -Be '> Tj'
+            $Data.LastIndexOf(' re') | Should -BeLessThan $Data.IndexOf($Marker)
+        }
+    }
+
+    It 'leaves a document without a watermark untouched' {
+        $Bytes = ConvertTo-CippReportPdf -Blocks @(@{ type = 'blank'; title = 'T'; content = '<p>x</p>' }) -Variables @{} -Branding @{ colour = '#0E4C92' } -TenantName 'Contoso' -ReportName 'T'
+        [System.Text.Encoding]::ASCII.GetString($Bytes[0..4]) | Should -Be '%PDF-'
+        [System.Text.Encoding]::Latin1.GetString($Bytes) | Should -Not -Match '0\.707 -0\.707 0\.707 0\.707'
+    }
+}

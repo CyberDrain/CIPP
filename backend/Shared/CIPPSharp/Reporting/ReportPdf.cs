@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
 using OfficeIMO;
 using OfficeIMO.Pdf;
@@ -62,11 +63,13 @@ namespace CIPP.Reporting
             // A branding logo the engine cannot embed (a PNG with a bad chunk CRC, an unsupported format)
             // only surfaces when the document is serialised, not where the logo is placed, so it must not
             // sink the report: render once more without it. Any other failure still propagates.
-            try { return Compose(Context(logo), groups, chrome).ToBytes(); }
-            catch when (logo is not null) { return Compose(Context(null), groups, chrome).ToBytes(); }
+            var watermark = theme.WatermarkEnabled ? ReportTheme.ApplyWatermark(theme.WatermarkText, variables) : string.Empty;
+            byte[] Finish(PdfDocument doc) => chrome ? LiftWatermark(doc.ToBytes(), watermark) : doc.ToBytes();
+            try { return Finish(Compose(Context(logo), groups, chrome, watermark)); }
+            catch when (logo is not null) { return Finish(Compose(Context(null), groups, chrome, watermark)); }
         }
 
-        private static PdfDocument Compose(ReportContext ctx, List<PageGroup> groups, bool chrome)
+        private static PdfDocument Compose(ReportContext ctx, List<PageGroup> groups, bool chrome, string watermark)
         {
             var theme = ctx.Theme;
             var variables = ctx.Variables;
@@ -75,7 +78,6 @@ namespace CIPP.Reporting
             var footerText = theme.FooterEnabled
                 ? ReportTheme.ApplyFooter(theme.FooterTemplate, variables)
                 : (variables.TryGetValue("footerlabel", out var fl) ? ReportTheme.ApplyFooter(fl, variables) : string.Empty);
-            var watermark = theme.WatermarkEnabled ? ReportTheme.ApplyWatermark(theme.WatermarkText, variables) : string.Empty;
 
             return PdfDocument.Create(compose =>
             {
@@ -117,6 +119,10 @@ namespace CIPP.Reporting
                                 try { p.BackgroundImage(heroImage, OfficeIMO.Drawing.OfficeImageFit.Cover, 0.28); }
                                 catch { /* an unusable cover photo leaves the plain dark page */ }
                             }
+                            // The client's watermarkTextOnDark: the same mark in the divider's text colour and a
+                            // little stronger, since an 8% brand-colour mark disappears on a dark page.
+                            if (!string.IsNullOrEmpty(watermark))
+                                p.Watermark(watermark.ToUpperInvariant(), fontSize: 72, color: ReportComponents.Pdf(ctx.Theme.OnInfographic), opacity: 0.12, rotationAngle: -45, bold: true);
                             p.Content(cc => cc.Item(i => ReportComponents.RenderHeroDrawing(ctx, i, group.Block!)));
                         });
                         continue;
@@ -266,6 +272,78 @@ namespace CIPP.Reporting
             // mirror the client's watermarkText style: 72pt bold, uppercase, 8% opacity, rotated -45deg.
             if (!string.IsNullOrEmpty(watermark))
                 p.Watermark(watermark.ToUpperInvariant(), fontSize: 72, color: ReportComponents.Pdf(ctx.Theme.Palette["watermark"]), opacity: 0.08, rotationAngle: -45, bold: true);
+        }
+
+        /// <summary>
+        /// OfficeIMO paints a page watermark before anything else on the page, so every card, panel and
+        /// image covers it, where the client reports drew it over the content. The PDF it writes is
+        /// classic - no object or cross-reference streams - with uncompressed content streams, so the
+        /// watermark's operator block (a self-contained q ... Q group, recognised by its text and its
+        /// -45 degree text matrix) is moved to the end of each page's content stream in place: the same
+        /// bytes in a different order, so no length or offset in the file changes. A stream the block
+        /// cannot be found in is left as written.
+        /// </summary>
+        internal static byte[] LiftWatermark(byte[] pdf, string watermark)
+        {
+            if (string.IsNullOrEmpty(watermark)) return pdf;
+            var marker = Encoding.ASCII.GetBytes("<" + Convert.ToHexString(Encoding.Latin1.GetBytes(watermark.ToUpperInvariant())) + "> Tj");
+            var rotation = Encoding.ASCII.GetBytes("0.707 -0.707 0.707 0.707");
+            var streamTag = Encoding.ASCII.GetBytes("stream\n");
+            var lengthTag = Encoding.ASCII.GetBytes("/Length ");
+            var open = Encoding.ASCII.GetBytes("q\n");
+            var close = Encoding.ASCII.GetBytes("\nQ\n");
+
+            var at = 0;
+            while ((at = IndexOf(pdf, marker, at, pdf.Length)) >= 0)
+            {
+                var streamAt = LastIndexOf(pdf, streamTag, at);
+                var lengthAt = streamAt < 0 ? -1 : LastIndexOf(pdf, lengthTag, streamAt);
+                if (streamAt < 0 || lengthAt < 0 || streamAt - lengthAt > 64) { at += marker.Length; continue; }
+                var dataStart = streamAt + streamTag.Length;
+                var length = 0;
+                for (var d = lengthAt + lengthTag.Length; d < pdf.Length && pdf[d] >= '0' && pdf[d] <= '9'; d++) length = length * 10 + (pdf[d] - '0');
+                var dataEnd = Math.Min(dataStart + length, pdf.Length);
+
+                // Back to the "q" that opens the watermark's group (at a line start), forward to its "Q".
+                var blockStart = LastIndexOf(pdf, open, at);
+                while (blockStart > dataStart && pdf[blockStart - 1] != '\n') blockStart = LastIndexOf(pdf, open, blockStart);
+                var closeAt = IndexOf(pdf, close, at, dataEnd);
+                if (blockStart < dataStart || closeAt < 0) { at = dataEnd; continue; }
+                var blockEnd = closeAt + close.Length;
+                if (IndexOf(pdf, rotation, blockStart, blockEnd) < 0) { at = dataEnd; continue; }
+
+                var block = pdf[blockStart..blockEnd];
+                var tail = pdf[blockEnd..dataEnd];
+                // Same length: the block's trailing newline becomes the separator in front of it.
+                Buffer.BlockCopy(tail, 0, pdf, blockStart, tail.Length);
+                var moved = blockStart + tail.Length;
+                pdf[moved] = (byte)'\n';
+                Buffer.BlockCopy(block, 0, pdf, moved + 1, block.Length - 1);
+                at = dataEnd;
+            }
+            return pdf;
+        }
+
+        private static int IndexOf(byte[] hay, byte[] needle, int from, int to)
+        {
+            for (var i = Math.Max(0, from); i <= to - needle.Length; i++)
+            {
+                var j = 0;
+                while (j < needle.Length && hay[i + j] == needle[j]) j++;
+                if (j == needle.Length) return i;
+            }
+            return -1;
+        }
+
+        private static int LastIndexOf(byte[] hay, byte[] needle, int before)
+        {
+            for (var i = Math.Min(before, hay.Length) - needle.Length; i >= 0; i--)
+            {
+                var j = 0;
+                while (j < needle.Length && hay[i + j] == needle[j]) j++;
+                if (j == needle.Length) return i;
+            }
+            return -1;
         }
 
         private sealed class PageGroup

@@ -102,6 +102,8 @@
       "Add device",
       "Add registered owner to device",
       "Add registered users to device",
+      "Invite external user",
+      "Add user",
       "Add member to role",
       "Add eligible member to role",
       "Disable Strong Authentication",

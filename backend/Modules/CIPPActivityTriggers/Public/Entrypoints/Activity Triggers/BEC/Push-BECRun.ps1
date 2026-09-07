@@ -491,7 +491,7 @@ function Push-BECRun {
         $Requests = @(
             @{
                 id     = 'Users'
-                url    = "users?`$select=id,displayName,userPrincipalName,createdDateTime,lastPasswordChangeDateTime"
+                url    = "users?`$select=id,displayName,userPrincipalName,userType,createdDateTime,lastPasswordChangeDateTime"
                 method = 'GET'
             }
             @{

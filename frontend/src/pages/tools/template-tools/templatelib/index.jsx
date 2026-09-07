@@ -2,14 +2,14 @@ import { useEffect } from "react";
 import { Divider, Typography, Alert, Chip, Link } from "@mui/material";
 import NextLink from "next/link";
 import { useForm, useWatch } from "react-hook-form";
-import { Layout as DashboardLayout } from "../../../layouts/index";
-import CippFormPage from "../../../components/CippFormPages/CippFormPage";
-import CippFormComponent from "../../../components/CippComponents/CippFormComponent";
-import { CippFormTenantSelector } from "../../../components/CippComponents/CippFormTenantSelector";
+import { Layout as DashboardLayout } from "../../../../layouts/index";
+import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
+import CippFormComponent from "../../../../components/CippComponents/CippFormComponent";
+import { CippFormTenantSelector } from "../../../../components/CippComponents/CippFormTenantSelector";
 import { Grid } from "@mui/system";
-import { CippFormCondition } from "../../../components/CippComponents/CippFormCondition";
-import { CippDataTable } from "../../../components/CippTable/CippDataTable";
-import { ApiGetCall } from "../../../api/ApiCall";
+import { CippFormCondition } from "../../../../components/CippComponents/CippFormCondition";
+import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
+import { ApiGetCall } from "../../../../api/ApiCall";
 
 // react-query key for the "configured template libraries" table below. Passed to CippFormPage as a
 // related query key so creating a new library refreshes the table without a manual reload.

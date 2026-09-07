@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Sensitivity Labels",
+    "path": "/security/compliance/labels",
+    "icon": "Label"
+  },
+  {
+    "label": "Sensitivity Label Templates",
+    "path": "/security/compliance/labels-templates",
+    "icon": "Description"
+  }
+]

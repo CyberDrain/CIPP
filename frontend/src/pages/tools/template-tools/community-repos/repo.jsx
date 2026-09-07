@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import { Layout as DashboardLayout } from "../../../layouts";
+import { Layout as DashboardLayout } from "../../../../layouts";
 
 // The per-repo template browser has been replaced by the unified community template catalog.
 const Page = () => {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/tools/community-repos");
+    router.replace("/tools/template-tools/community-repos");
   }, [router]);
 
   return null;

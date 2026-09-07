@@ -63,14 +63,35 @@ async function loadTabOptions() {
     "/tenant/gdap-management",
     "/tenant/gdap-management/relationships/relationship",
     "/cipp/settings",
+    // Template pages folded into their parent pages as tabs — listed here so the
+    // universal page search still indexes them (they are no longer nav leaves).
+    "/email/administration/contacts",
+    "/email/administration/tenant-allow-block-lists",
+    "/email/transport/list-rules",
+    "/email/transport/list-connectors",
+    "/email/spamfilter/list-spamfilter",
+    "/email/spamfilter/list-connectionfilter",
+    "/security/safelinks/safelinks",
+    "/security/compliance/dlp",
+    "/security/compliance/retention",
+    "/security/compliance/labels",
+    "/security/compliance/sit",
+    "/identity/administration/groups",
+    "/identity/administration/jit-admin",
+    "/endpoint/MEM/list-policies",
+    "/endpoint/MEM/reusable-settings",
+    "/endpoint/MEM/assignment-filters",
+    "/endpoint/applications/list",
+    "/tenant/conditional/list-policies",
+    "/teams-share/sharepoint",
   ];
 
   const tabOptions = [];
 
   for (const basePath of tabOptionPaths) {
     try {
-      const module = await import(`../../pages${basePath}/tabOptions.json`);
-      const options = module.default || module;
+      const tabModule = await import(`../../pages${basePath}/tabOptions.json`);
+      const options = tabModule.default || tabModule;
 
       options.forEach((option) => {
         tabOptions.push({
@@ -241,6 +262,11 @@ export const CippUniversalSearchV2 = React.forwardRef(
         .map((tab) => {
           const normalizedTabPath = tab.path.replace(/\/$/, "");
           const normalizedBasePath = tab.basePath?.replace(/\/$/, "");
+
+          // A tab whose own path is a real nav leaf is already surfaced as a Page result
+          // (every tabOptions list starts with its parent). Skip it here so it is not listed
+          // twice — the same page once as "Page" and once as "Tab".
+          if (leafItemIndex[normalizedTabPath]) return null;
 
           let pageItem = leafItemIndex[normalizedTabPath];
 

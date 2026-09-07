@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Tenant Allow/Block Lists",
+    "path": "/email/administration/tenant-allow-block-lists",
+    "icon": "Block"
+  },
+  {
+    "label": "Allow/Block List Templates",
+    "path": "/email/administration/tenant-allow-block-list-templates",
+    "icon": "Description"
+  }
+]

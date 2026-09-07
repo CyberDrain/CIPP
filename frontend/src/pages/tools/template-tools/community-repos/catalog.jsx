@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import { CippIcons } from "../../../utils/icon-registry";
+import { CippIcons } from "../../../../utils/icon-registry";
 import { useRouter } from "next/router";
-import { Layout as DashboardLayout } from "../../../layouts/index";
+import { Layout as DashboardLayout } from "../../../../layouts/index";
 import { Box, Button, Container, Stack, Typography } from "@mui/material";
 import Link from "next/link";
-import { CippHead } from "../../../components/CippComponents/CippHead";
-import { CippTemplateCatalog } from "../../../components/CippComponents/CippTemplateCatalog";
+import { CippHead } from "../../../../components/CippComponents/CippHead";
+import { CippTemplateCatalog } from "../../../../components/CippComponents/CippTemplateCatalog";
 
 const Page = () => {
   const router = useRouter();
@@ -44,7 +44,7 @@ const Page = () => {
               variant="outlined"
               startIcon={<CippIcons.ArrowBack />}
               component={Link}
-              href="/tools/community-repos"
+              href="/tools/template-tools/community-repos"
             >
               Back to Sources
             </Button>

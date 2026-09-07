@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Safe Links Policies",
+    "path": "/security/safelinks/safelinks",
+    "icon": "Link"
+  },
+  {
+    "label": "Safe Links Templates",
+    "path": "/security/safelinks/safelinks-template",
+    "icon": "Description"
+  }
+]

@@ -22,15 +22,8 @@
          (PowerShell supplies the real assembly at runtime) while still compiling against its types. -->
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" ExcludeAssets="runtime" />
     <!-- Server-side PDF renderer. MIT, zero third-party deps: only OfficeIMO.Pdf.dll + OfficeIMO.Core.dll land in bin\.
-         INTERIM: pinned to a locally patched OfficeIMO.Pdf 3.4.0 build that adds PdfTableStyle.CornerRadius /
-         PdfPanelStyle.CornerRadius (rounded callout boxes and stat cards). Replace both References below with
-           <PackageReference Include="OfficeIMO.Pdf" Version="<release with CornerRadius>" />
-         once the change is published upstream (EvotecIT/OfficeIMO), and delete backend/Shared/CIPPSharp/lib. -->
-    <Reference Include="OfficeIMO.Pdf">
-      <HintPath>lib\OfficeIMO.Pdf.dll</HintPath>
-    </Reference>
-    <Reference Include="OfficeIMO.Core">
-      <HintPath>lib\OfficeIMO.Core.dll</HintPath>
-    </Reference>
+         3.4.1 is the first upstream release carrying PdfTableStyle.CornerRadius / PdfPanelStyle.CornerRadius
+         (rounded callout boxes and stat cards); OfficeIMO.Core resolves transitively. -->
+    <PackageReference Include="OfficeIMO.Pdf" Version="3.4.1" />
   </ItemGroup>
 </Project>

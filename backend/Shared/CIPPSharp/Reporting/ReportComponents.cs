@@ -751,7 +751,9 @@ namespace CIPP.Reporting
             if (stripeHex is not null)
                 style.CellBorders = new Dictionary<(int, int), PdfCellBorder>
                 {
-                    [(0, 0)] = new PdfCellBorder { LeftBorder = new PdfCellBorderSide { Color = Pdf(stripeHex), Width = stripeWidth } },
+                    // only the left stripe; disable the class-default grey sides so 3.4.x's general
+                    // cell-border renderer doesn't lay grey over the accent at the rounded corners.
+                    [(0, 0)] = new PdfCellBorder { LeftBorder = new PdfCellBorderSide { Color = Pdf(stripeHex), Width = stripeWidth }, Top = false, Right = false, Bottom = false },
                 };
             return style;
         }
@@ -945,7 +947,9 @@ namespace CIPP.Reporting
                 CellFills = new Dictionary<(int, int), PdfColor> { [(0, 0)] = Pdf(ReportColours.White) },
                 CellBorders = new Dictionary<(int, int), PdfCellBorder>
                 {
-                    [(0, 0)] = new PdfCellBorder { TopBorder = new PdfCellBorderSide { Color = Pdf(accent), Width = 3 } },
+                    // only the top accent bar; disable the class-default grey sides so 3.4.x's general
+                    // cell-border renderer doesn't lay grey over the accent at the rounded corners.
+                    [(0, 0)] = new PdfCellBorder { TopBorder = new PdfCellBorderSide { Color = Pdf(accent), Width = 3 }, Left = false, Right = false, Bottom = false },
                 },
             };
             col.Table(rows, PdfAlign.Left, style);

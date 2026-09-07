@@ -19,6 +19,9 @@ const clean = (value) => {
   return text.length > 0 ? text : null
 }
 const joinDetail = (...parts) => parts.filter(Boolean).join(' · ')
+// One event per sent message reads well for a handful; a mass mailing (a thousand onward phishes)
+// buries every other event, so past this many rows the sends fold into one event per hour and source.
+const SENT_COMPACT_THRESHOLD = 25
 
 export const BEC_OBJECTIVE_LABEL = {
   access: 'Access',
@@ -112,6 +115,65 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
     (signIn) => signIn.ForeignLocation === true
   )
 
+  const sentEvents = (messages) => {
+    const single = (message) => ({
+      key: 'sent',
+      date: toDate(message.Received),
+      category: 'sent',
+      objective: 'exfil',
+      severity: 'info',
+      label: 'Sent mail',
+      ip: clean(message.FromIP),
+      target: clean(message.Subject),
+      recipient: clean(message.RecipientAddress),
+      // The recipient is an account the compromised mailbox reached — onward/lateral phishing.
+      affects: otherAccount(message.RecipientAddress),
+    })
+    if (messages.length <= SENT_COMPACT_THRESHOLD) return messages.map(single)
+    const buckets = new Map()
+    messages.forEach((message) => {
+      const date = toDate(message.Received)
+      if (!date) return
+      const hour = new Date(date)
+      hour.setUTCMinutes(0, 0, 0)
+      const ip = clean(message.FromIP)
+      const key = `${hour.getTime()}|${ip || ''}`
+      if (!buckets.has(key)) buckets.set(key, { date: hour, ip, rows: [] })
+      buckets.get(key).rows.push(message)
+    })
+    return [...buckets.values()].map(({ date, ip, rows }) => {
+      // trace rows are per recipient: count distinct messages and distinct recipients separately
+      const emails =
+        new Set(rows.map((m) => m.MessageTraceId).filter(Boolean)).size ||
+        rows.length
+      const recipients = new Set(
+        rows.map((m) => clean(m.RecipientAddress)).filter(Boolean)
+      ).size
+      const subjects = new Map()
+      rows.forEach((m) => {
+        const subject = clean(m.Subject) || '(no subject)'
+        subjects.set(subject, (subjects.get(subject) || 0) + 1)
+      })
+      const topSubject = [...subjects.entries()].sort(
+        (a, b) => b[1] - a[1]
+      )[0]?.[0]
+      return {
+        key: 'sent',
+        date,
+        category: 'sent',
+        objective: 'exfil',
+        severity: 'info',
+        label: `${emails} email${emails === 1 ? '' : 's'} sent`,
+        ip,
+        target: joinDetail(
+          `to ${recipients} recipient${recipients === 1 ? '' : 's'}`,
+          topSubject ? `"${topSubject}"` : null
+        ),
+        count: emails,
+      }
+    })
+  }
+
   const raw = [
     ...foreignSignIns.map((signIn) => ({
       key: 'signin',
@@ -193,19 +255,7 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
         change.Target
       ),
     })),
-    ...arr(becData.SentMessages).map((message) => ({
-      key: 'sent',
-      date: toDate(message.Received),
-      category: 'sent',
-      objective: 'exfil',
-      severity: 'info',
-      label: 'Sent mail',
-      ip: clean(message.FromIP),
-      target: clean(message.Subject),
-      recipient: clean(message.RecipientAddress),
-      // The recipient is an account the compromised mailbox reached — onward/lateral phishing.
-      affects: otherAccount(message.RecipientAddress),
-    })),
+    ...sentEvents(arr(becData.SentMessages)),
     ...arr(becData.ReceivedMailFindings).map((finding) => ({
       key: 'received',
       date: toDate(finding.Received),

@@ -151,15 +151,9 @@ The flow is deliberate:
 The same containment runs from the audit-log alert action **Execute a BEC Remediate**. The alert rule can now choose which containment actions it runs; with none chosen it runs the four steps this action always ran (reset password, block sign-in, revoke sessions, disable inbox rules). Alerts confirm critical actions by design - there is no human to type the UPN - so be deliberate about which rules get it. The **NewRiskyUsers** scheduled alert has an opt-in switch that runs the classic six for users that newly appear at high risk.
 {% endhint %}
 
-### Purview content search and purge
+### Tracing a sender's spread
 
-The **Purview content search and purge** card is the GDAP-compatible answer to "get that phishing message out of everyone's mailbox". Enter the sender, a subject fragment and the dates, choose every mailbox or a list, and CIPP creates and starts a Purview content search. **Refresh status** shows the state and the item count per mailbox - counts only; CIPP never retrieves the messages. The **Who else received mail from this sender?** row action on the received-mail findings (and **Trace a sender's spread**) lists the recipients of a sender from message-trace metadata, split into internal and external, to decide which mailboxes the search should cover. The row actions also add the sender or its whole domain to the Tenant Allow/Block List.
-
-Purging soft-deletes the found items through Purview. It is irreversible from CIPP and is gated two ways: only a CIPP **super admin** sees the control, and the **search name must be typed** to confirm; the status above the control shows the counts that will be purged. Purview removes at most 10 items per mailbox per purge, so repeat the search and purge until the count reaches zero.
-
-{% hint style="warning" %}
-Content search needs the CIPP-SAM service principal in a Purview role group that includes **Compliance Search** (eDiscovery Manager); purging additionally needs **Search And Purge**. Neither is granted by the CIPP-SAM setup. When the role is missing the result says exactly that rather than failing silently.
-{% endhint %}
+**Trace a sender's spread** on the received-mail card, and **Who else got this email?** on a received-mail finding, list the recipients of a sender (optionally narrowed to a subject) from message-trace metadata, split into internal and external, so the blast radius of a phish is known before anyone starts cleaning up. CIPP does not search or purge mailbox content.
 
 {% hint style="info" %}
 The JSON export carries data no card displays: the mobile devices attached to the mailbox, and for each Intune device the manufacturer, model, owner type, and assigned user. If the investigation turns on an unrecognised device, that is where to look.

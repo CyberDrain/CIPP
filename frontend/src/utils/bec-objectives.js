@@ -16,6 +16,48 @@
 const arr = (value) => (Array.isArray(value) ? value : [])
 const sameName = (a, b) =>
   String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase()
+// Audit records name an inbox rule as "<mailbox>\<rule>"; the rule itself is just "<rule>".
+const ruleLeaf = (name) =>
+  String(name ?? '')
+    .split('\\')
+    .pop()
+// Exchange plumbing on a Get-InboxRule object. Everything else (conditions, exceptions, actions,
+// description) rides along to the More Info panel so a rule's whole behaviour is readable.
+const RULE_PLUMBING = new Set([
+  'DistinguishedName',
+  'Guid',
+  'ObjectState',
+  'IsValid',
+  'ExchangeVersion',
+  'OrganizationId',
+  'ExchangeObjectId',
+  'RuleIdentity',
+  'MailboxOwnerId',
+  'ObjectCategory',
+  'ObjectClass',
+  'Id',
+  'PSComputerName',
+  'RunspaceId',
+  'PSShowComputerName',
+  'Legacy',
+  'SupportedByTask',
+  'Suspicious',
+  'WhenChanged',
+  'WhenCreated',
+  'WhenChangedUTC',
+  'WhenCreatedUTC',
+  'OriginatingServer',
+])
+const ruleDetail = (rule) =>
+  Object.fromEntries(
+    Object.entries(rule || {}).filter(
+      ([key, value]) =>
+        !RULE_PLUMBING.has(key) &&
+        value !== null &&
+        value !== '' &&
+        !(Array.isArray(value) && value.length === 0)
+    )
+  )
 export const joinList = (value) =>
   Array.isArray(value) ? value.join(', ') : (value ?? '')
 
@@ -116,21 +158,40 @@ export const BEC_GROUPS = [
       {
         key: 'NewRules',
         title: 'Inbox rules',
-        columns: ['Name', 'RecentlyChanged', 'RiskReasons', 'Description'],
-        rows: (b) =>
-          arr(b.NewRules).map((r) => ({
-            Name: r.Name,
-            RecentlyChanged: r.RecentlyChanged === true,
-            RiskReasons: joinList(r.RiskReasons),
-            Description: r.Description,
-            // Surfaced in the More Info panel (not as columns) so the rule's behaviour is readable in full.
-            MoveToFolder: r.MoveToFolder,
-            DeleteMessage: r.DeleteMessage,
-            MarkAsRead: r.MarkAsRead,
-            StopProcessingRules: r.StopProcessingRules,
-            Enabled: r.Enabled,
-            Risk: r.Risk,
-          })),
+        // Inbox rules carry no timestamp of their own, so the latest audited change to each rule
+        // (operation, when, from where) is folded into its row; the full change history follows below.
+        columns: [
+          'Name',
+          'Risk',
+          'RiskReasons',
+          'LastChange',
+          'ChangeDate',
+          'ChangedFrom',
+          'Country',
+          'Description',
+        ],
+        rows: (b) => {
+          const changes = arr(b.InboxRuleChanges)
+          const latestFor = (name) =>
+            changes
+              .filter((c) => sameName(ruleLeaf(c.RuleName), name))
+              .sort((x, y) => new Date(y.Date) - new Date(x.Date))[0]
+          return arr(b.NewRules).map((r) => {
+            const c = latestFor(r.Name)
+            return {
+              ...ruleDetail(r),
+              Name: r.Name,
+              RecentlyChanged: r.RecentlyChanged === true,
+              RiskReasons: joinList(r.RiskReasons),
+              LastChange: c?.Operation || '',
+              ChangeDate: c?.Date || '',
+              ChangedFrom: c?.ClientIP || '',
+              Country: c?.Country || '',
+              ForeignLocation: c?.ForeignLocation,
+              ChangeAuditData: c?.AuditData,
+            }
+          })
+        },
         sections: [
           {
             title: (ctx) => `Rule changes in the last ${ctx.windowDays} days`,
@@ -473,7 +534,7 @@ export const BEC_GROUPS = [
       {
         key: 'NewUsers',
         title: 'Recently added users',
-        columns: ['userPrincipalName', 'createdDateTime'],
+        columns: ['userPrincipalName', 'userType', 'createdDateTime'],
       },
       {
         key: 'ChangedPasswords',

@@ -40,6 +40,49 @@ describe('buildBecTimeline', () => {
       startOfCompromise: null,
     })
   })
+
+  const sentRow = (i, hour) => ({
+    MessageTraceId: `m${i}`,
+    // uneven split so the top subject is unambiguous (26 of 40 rows in the first hour)
+    Subject: i % 3 ? 'Invoice attached' : 'Urgent',
+    RecipientAddress: `r${i}@example.org`,
+    Received: `2026-08-20T${String(hour).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}:00Z`,
+    FromIP: '203.0.113.10',
+  })
+
+  it('keeps one event per sent message up to the compaction threshold', () => {
+    const rows = Array.from({ length: 25 }, (_, i) => sentRow(i, 10))
+    const { events } = buildBecTimeline(
+      { SentMessages: rows },
+      7,
+      'v@contoso.com'
+    )
+    const sent = events.filter((e) => e.category === 'sent')
+    expect(sent).toHaveLength(25)
+    expect(sent[0].label).toBe('Sent mail')
+    expect(sent[0].affects).toBe('r0@example.org')
+  })
+
+  it('folds a mass mailing into one event per hour and source with message and recipient counts', () => {
+    const rows = [
+      ...Array.from({ length: 40 }, (_, i) => sentRow(i, 10)),
+      ...Array.from({ length: 20 }, (_, i) => sentRow(100 + i, 11)),
+    ]
+    const { events } = buildBecTimeline(
+      { SentMessages: rows },
+      7,
+      'v@contoso.com'
+    )
+    const sent = events.filter((e) => e.category === 'sent')
+    expect(sent).toHaveLength(2)
+    expect(sent[0].label).toBe('40 emails sent')
+    expect(sent[0].ip).toBe('203.0.113.10')
+    expect(sent[0].target).toContain('to 40 recipients')
+    expect(sent[0].target).toContain('"Invoice attached"')
+    expect(sent[0].date.toISOString()).toBe('2026-08-20T10:00:00.000Z')
+    expect(sent[1].label).toBe('20 emails sent')
+    expect(sent[1].affects).toBeUndefined()
+  })
 })
 
 describe('buildBecCorrelationGraph', () => {

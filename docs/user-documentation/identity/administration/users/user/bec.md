@@ -82,6 +82,10 @@ When the account has no usage location assigned, the card says the comparison is
 Usage location is an administrative setting, not a statement of where the user works. Travel, VPN egress points, and mobile carrier routing all produce foreign rows on healthy accounts, and a usage location that was never set correctly produces them permanently. A foreign sign-in is a prompt to check with the user; a rule or safelist change from a foreign IP is much harder to explain innocently.
 {% endhint %}
 
+### Partner and CIPP actions
+
+Every audited change in the case names its actor, and the run classifies that actor: the tenant's own user, a partner identity acting over GDAP (this partner or another), CIPP's own service principal, or an application. Partner identities are resolved to their partner-tenant name when they belong to this partner. The **Partner and CIPP actions on this account** finding under the tenant-wide group gathers every change made by a partner or CIPP identity - directory changes, rule, safelist, sharing and permission changes, transport-rule changes and mailbox activity - in one list, and each source table carries the same **ActorKind** column. Routine MSP work reads as such, and anything a partner identity did that the investigation did not expect stands out on its own.
+
 ### Intune Device Actions
 
 Each row in Check 9 carries its own actions, so a suspect device can be dealt with without leaving the investigation.

@@ -1,4 +1,4 @@
-import { BEC_GROUPS } from '../../src/utils/bec-objectives'
+import { BEC_GROUPS, becPartnerActions } from '../../src/utils/bec-objectives'
 
 const finding = (key) =>
   BEC_GROUPS.flatMap((group) => group.findings).find((f) => f.key === key)
@@ -78,6 +78,79 @@ describe('bec-objectives inbox rules', () => {
       LastChange: '',
       ChangeDate: '',
       ChangedFrom: '',
+    })
+  })
+})
+
+describe('becPartnerActions', () => {
+  it('gathers the rows a partner or CIPP identity acted on from every source, newest first', () => {
+    const rows = becPartnerActions({
+      DirectoryAudits: [
+        {
+          ActivityDateTime: '2026-08-19T03:00:00Z',
+          Activity: 'Reset user password',
+          InitiatedBy: 'CIPP-SAM',
+          ActorKind: 'CIPP',
+          ActorResolved: 'CIPP (service principal)',
+          Targets: 'victim@contoso.com',
+        },
+        {
+          ActivityDateTime: '2026-08-19T04:00:00Z',
+          Activity: 'Update user',
+          InitiatedBy: 'admin@contoso.com',
+          ActorKind: 'User',
+        },
+      ],
+      InboxRuleChanges: [
+        {
+          Date: '2026-08-19T02:00:00Z',
+          Operation: 'New-InboxRule',
+          RuleName: 'Partner rule',
+          UserKey: 'user_0123@contoso.onmicrosoft.com',
+          ActorKind: 'Partner',
+          ActorResolved: 'tech@msp.example',
+          ClientIP: '198.51.100.7',
+          Country: 'GB',
+        },
+      ],
+      MailboxPermissionChanges: [
+        {
+          Date: '2026-08-19T05:00:00Z',
+          Operation: 'Add-MailboxPermission',
+          Permissions: ['FullAccess'],
+          Trustee: 'helper@contoso.com',
+          TargetsSuspect: true,
+          UserId: 'x',
+          ActorKind: 'OtherPartner',
+        },
+        {
+          Date: '2026-08-19T06:00:00Z',
+          Operation: 'Add-MailboxPermission',
+          Permissions: ['FullAccess'],
+          TargetsSuspect: false,
+          ActorKind: 'Partner',
+        },
+      ],
+    })
+    expect(rows.map((r) => r.Source)).toEqual([
+      'Mailbox permission',
+      'Directory audit',
+      'Inbox rule',
+    ])
+    expect(rows[0]).toMatchObject({
+      ActorKind: 'OtherPartner',
+      Detail: 'FullAccess to helper@contoso.com',
+    })
+    expect(rows[1]).toMatchObject({
+      Actor: 'CIPP (service principal)',
+      ActorKind: 'CIPP',
+      Operation: 'Reset user password',
+    })
+    expect(rows[2]).toMatchObject({
+      Actor: 'tech@msp.example',
+      ActorKind: 'Partner',
+      Detail: 'Partner rule',
+      Country: 'GB',
     })
   })
 })

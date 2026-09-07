@@ -319,6 +319,12 @@ export const CippBecObjectiveGroups = ({
             <Chip size="small" variant="outlined" label="not checked" />
           ) : cov.state !== 'ok' ? (
             <Chip size="small" variant="outlined" label="partial" />
+          ) : finding.count?.(becData, ctx) > 0 ? (
+            <Chip
+              size="small"
+              variant="outlined"
+              label={`${finding.count(becData, ctx)} recorded`}
+            />
           ) : (
             <Chip size="small" color="success" label="clear" />
           )}

@@ -33,9 +33,11 @@ BeforeAll {
     function Get-CIPPBecMailActivity { param($TenantFilter, $UserPrincipalName, $StartDate, $EndDate, $Heuristics, $Anchor) }
     function Get-CIPPBecRiskState { param($TenantFilter, $UserId, $StartDate, $Cap) }
     function Get-CIPPBecRogueAppFeed { }
+    function Get-CIPPPartnerUserLookup { @{} }
 
     # Real pieces under test alongside the run
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/ConvertTo-CIPPBecHostAddress.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/AuditLogs/Resolve-CIPPAuditActor.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCollectorResult.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCaseId.ps1')
@@ -118,6 +120,7 @@ Describe 'Push-BECRun' {
         Mock Get-CIPPBecMailActivity { $R = Empty; $R | Add-Member -NotePropertyName Summary -NotePropertyValue ([pscustomobject]@{ HardDeleteExceeded = $false }) -Force; $R }
         Mock Get-CIPPBecRiskState { New-CIPPBecCollectorResult -Data ([pscustomobject]@{ Listed = $false; Detections = @() }) -Count 0 }
         Mock Get-CIPPBecRogueAppFeed { [pscustomobject]@{ Apps = @{}; HuntressAvailable = $false } }
+        Mock Get-CIPPPartnerUserLookup { @{ '0123abcd-4567-4890-8abc-def012345678' = @{ userPrincipalName = 'tech@msp.example' } } }
     }
 
     It 'runs every collector (a legacy Scope on the queue item is ignored), flattens their data and scores the signals' {
@@ -145,6 +148,7 @@ Describe 'Push-BECRun' {
         $R.InboxRuleChanges[0].ClientIP | Should -Be '203.0.113.10' -Because 'the client port is dropped so one host correlates as one'
         $R.InboxRuleChanges[0].Country | Should -Be 'NG'
         $R.InboxRuleChanges[0].AuditData.Operation | Should -Be 'New-InboxRule' -Because 'the raw audit record rides along for the More Info panel'
+        $R.InboxRuleChanges[0].ActorKind | Should -Be 'User' -Because 'the mailbox owner made the rule'
         $R.LocationAnalysis.ForeignTransportRuleChangeCount | Should -Be 1
         $R.Completeness.DefenderDetections.Complete | Should -BeFalse
         $R.Completeness.DefenderDetections.Error | Should -Be 'Invalid subscription'
@@ -247,6 +251,27 @@ Describe 'Push-BECRun' {
     It 'mints a case id when the queue item carries none' {
         Push-BECRun -Item @{ TenantFilter = 'contoso.com'; UserID = 'user-guid'; userName = 'victim@contoso.com' }
         $script:Saved.CaseId | Should -Match '^BEC-\d{14}-[0-9a-f]{6}$'
+    }
+
+    It 'stamps partner (GDAP) and CIPP actors on audited rows so the case can list them separately' {
+        Mock Search-CIPPBecAuditLog {
+            if ($Operations -contains 'New-InboxRule') {
+                [pscustomobject]@{ Complete = $true; Cap = $null; Pages = 1; Records = @([pscustomobject]@{ Identity = 'a2'; Operation = 'New-InboxRule'; AuditData = [pscustomobject]@{ Operation = 'New-InboxRule'; UserId = 'user_0123abcd456748908abcdef012345678@contoso.onmicrosoft.com'; CreationTime = '2026-08-19T02:00:00Z'; ClientIP = '198.51.100.7'; ObjectId = 'victim@contoso.com\Partner rule'; Parameters = @([pscustomobject]@{ Name = 'Name'; Value = 'Partner rule' }) } }) }
+            } else { [pscustomobject]@{ Complete = $true; Cap = $null; Pages = 1; Records = @() } }
+        }
+        Mock Get-CIPPBecDirectoryAudits { New-CIPPBecCollectorResult -Data @([pscustomobject]@{ Id = 'd1'; ActivityDateTime = '2026-08-19T03:00:00Z'; Activity = 'Reset user password'; InitiatedBy = 'CIPP-SAM'; InitiatedByType = 'Application'; InitiatedById = '11111111-2222-4333-8444-555555555555'; Flagged = $true }) }
+        $PriorAppId = $env:ApplicationID
+        $env:ApplicationID = '11111111-2222-4333-8444-555555555555'
+        try {
+            Push-BECRun -Item $script:Item
+        } finally {
+            $env:ApplicationID = $PriorAppId
+        }
+        $R = $script:Saved.Results
+        $R.InboxRuleChanges[0].ActorKind | Should -Be 'Partner'
+        $R.InboxRuleChanges[0].ActorResolved | Should -Be 'tech@msp.example'
+        $R.DirectoryAudits[0].ActorKind | Should -Be 'CIPP'
+        $R.DirectoryAudits[0].ActorResolved | Should -Be 'CIPP (service principal)'
     }
 
     It 'does nothing without a tenant or user' {

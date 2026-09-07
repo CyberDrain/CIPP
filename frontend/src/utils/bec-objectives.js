@@ -58,6 +58,73 @@ const ruleDetail = (rule) =>
         !(Array.isArray(value) && value.length === 0)
     )
   )
+// The run stamps every audited row with who acted (ActorKind / ActorResolved): the tenant's own user,
+// a partner (GDAP) identity - this partner or another - CIPP's own service principal, or an application.
+const BEC_PARTNER_KINDS = new Set(['Partner', 'OtherPartner', 'CIPP'])
+export const isBecPartnerActor = (row) => BEC_PARTNER_KINDS.has(row?.ActorKind)
+// Every audited change whose actor was a partner or CIPP identity, from all the sources, newest first.
+export const becPartnerActions = (b) => {
+  const pick = (rows, source, map) =>
+    arr(rows)
+      .filter(isBecPartnerActor)
+      .map((r) => ({
+        Source: source,
+        Actor:
+          r.ActorResolved ||
+          r.UserId ||
+          r.UserKey ||
+          r.Actor ||
+          r.InitiatedBy ||
+          '',
+        ActorKind: r.ActorKind,
+        ClientIP: r.ClientIP,
+        Country: r.Country,
+        ...map(r),
+      }))
+  return [
+    ...pick(b.DirectoryAudits, 'Directory audit', (r) => ({
+      Date: r.ActivityDateTime,
+      Operation: r.Activity,
+      Detail: r.ModifiedProperties || r.Targets,
+    })),
+    ...pick(b.InboxRuleChanges, 'Inbox rule', (r) => ({
+      Date: r.Date,
+      Operation: r.Operation,
+      Detail: r.RuleName,
+    })),
+    ...pick(
+      arr(b.MailboxPermissionChanges).filter((r) => r.TargetsSuspect),
+      'Mailbox permission',
+      (r) => ({
+        Date: r.Date,
+        Operation: r.Operation,
+        Detail: [joinList(r.Permissions), r.Trustee]
+          .filter(Boolean)
+          .join(' to '),
+      })
+    ),
+    ...pick(b.SafelistChanges, 'Safelist', (r) => ({
+      Date: r.Date,
+      Operation: r.Operation,
+      Detail: '',
+    })),
+    ...pick(b.SharingChanges, 'Sharing', (r) => ({
+      Date: r.Date,
+      Operation: r.Operation,
+      Detail: r.FileName,
+    })),
+    ...pick(b.TransportRuleChanges, 'Transport rule', (r) => ({
+      Date: r.Date,
+      Operation: r.Operation,
+      Detail: r.RuleName,
+    })),
+    ...pick(b.MailActivity, 'Mailbox activity', (r) => ({
+      Date: r.LastSeen,
+      Operation: r.Operation,
+      Detail: `${r.Count} operation(s)`,
+    })),
+  ].sort((x, y) => new Date(y.Date) - new Date(x.Date))
+}
 export const joinList = (value) =>
   Array.isArray(value) ? value.join(', ') : (value ?? '')
 
@@ -165,6 +232,8 @@ export const BEC_GROUPS = [
           'Risk',
           'RiskReasons',
           'LastChange',
+          'ChangedBy',
+          'ChangedByKind',
           'ChangeDate',
           'ChangedFrom',
           'Country',
@@ -184,6 +253,8 @@ export const BEC_GROUPS = [
               RecentlyChanged: r.RecentlyChanged === true,
               RiskReasons: joinList(r.RiskReasons),
               LastChange: c?.Operation || '',
+              ChangedBy: c?.ActorResolved || c?.UserKey || '',
+              ChangedByKind: c?.ActorKind || '',
               ChangeDate: c?.Date || '',
               ChangedFrom: c?.ClientIP || '',
               Country: c?.Country || '',
@@ -201,6 +272,7 @@ export const BEC_GROUPS = [
               'RuleName',
               'Date',
               'UserKey',
+              'ActorKind',
               'ClientIP',
               'Country',
               'ForeignLocation',
@@ -330,6 +402,7 @@ export const BEC_GROUPS = [
             columns: [
               'Operation',
               'UserKey',
+              'ActorKind',
               'Date',
               'ClientIP',
               'Country',
@@ -352,6 +425,7 @@ export const BEC_GROUPS = [
           'RiskReasons',
           'LastChange',
           'ChangedBy',
+          'ChangedByKind',
           'ChangedFrom',
           'Country',
           'ChangeDate',
@@ -368,7 +442,8 @@ export const BEC_GROUPS = [
               ...r,
               RiskReasons: joinList(r.RiskReasons),
               LastChange: c?.Operation || '',
-              ChangedBy: c?.Actor || '',
+              ChangedBy: c?.ActorResolved || c?.Actor || '',
+              ChangedByKind: c?.ActorKind || '',
               ChangedFrom: c?.ClientIP || '',
               Country: c?.Country || '',
               ChangeDate: c?.Date || '',
@@ -394,6 +469,7 @@ export const BEC_GROUPS = [
               'Operation',
               'RuleName',
               'Actor',
+              'ActorKind',
               'ClientIP',
               'Country',
               'RiskyParameters',
@@ -407,7 +483,8 @@ export const BEC_GROUPS = [
         key: 'MailboxPermissionChanges',
         title: 'Mailbox permission changes',
         columns: [
-          'UserKey',
+          'UserId',
+          'ActorKind',
           'Operation',
           'Permissions',
           'Date',
@@ -483,6 +560,8 @@ export const BEC_GROUPS = [
         columns: [
           'Date',
           'Operation',
+          'UserKey',
+          'ActorKind',
           'FileName',
           'Target',
           'Workload',
@@ -503,6 +582,7 @@ export const BEC_GROUPS = [
           'ClientInfoString',
           'MailAccessType',
           'Actor',
+          'ActorKind',
           'FirstSeen',
           'LastSeen',
         ],
@@ -532,6 +612,27 @@ export const BEC_GROUPS = [
     blurb: 'Tenant-wide signals that outlast the one mailbox.',
     findings: [
       {
+        key: 'PartnerActions',
+        title: 'Partner and CIPP actions on this account',
+        // Every audited change in the case whose actor was a partner (GDAP) identity or CIPP's own
+        // service principal, gathered from all the sources above. Routine MSP work reads as such, and
+        // anything a partner identity did that the investigation did not expect stands out on its own.
+        columns: [
+          'Date',
+          'Source',
+          'Operation',
+          'Actor',
+          'ActorKind',
+          'Detail',
+          'ClientIP',
+          'Country',
+        ],
+        rows: (b) => becPartnerActions(b),
+        count: (b) => becPartnerActions(b).length,
+        empty:
+          'No actions by partner or CIPP identities were found in the window.',
+      },
+      {
         key: 'NewUsers',
         title: 'Recently added users',
         columns: ['userPrincipalName', 'userType', 'createdDateTime'],
@@ -550,6 +651,7 @@ export const BEC_GROUPS = [
           'Activity',
           'Result',
           'InitiatedBy',
+          'ActorKind',
           'ClientIP',
           'Country',
           'Targets',
@@ -620,6 +722,15 @@ export const BEC_FINDING_MARKERS = {
   NewUsers: ['TenantUsers'],
   ChangedPasswords: ['TenantUsers'],
   DirectoryAudits: ['DirectoryAudits'],
+  PartnerActions: [
+    'DirectoryAudits',
+    'InboxRuleChanges',
+    'AuditLog',
+    'SafelistChanges',
+    'SharingChanges',
+    'TransportRuleChanges',
+    'MailActivity',
+  ],
 }
 
 // Coverage across a finding's completeness markers, so it renders "skipped" / "failed" / "partial"

@@ -527,48 +527,8 @@ function Test-CIPPAuditLogRules {
             }
         }
 
-        # Partner users - cache in cacheauditloglookups (PartitionKey '_partner') to avoid a fresh Graph fetch every invocation
-        # Process-wide, not per tenant: this row is keyed '_partner' and is the same answer for
-        # every tenant this worker handles, so a per-tenant memo would still re-read it once per
-        # tenant. It was read on every invocation.
-        if ($null -eq $script:PartnerUserMemo -or $script:PartnerUserMemo.Expires -le [datetime]::UtcNow) {
-            $script:PartnerUserMemo = [PSCustomObject]@{
-                Expires = [datetime]::UtcNow.AddMinutes(5)
-                Lookup  = $null
-            }
-            $PartnerUsersCache = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '_partner' and RowKey eq 'users' and Timestamp gt datetime'$1dayago'"
-        } elseif ($null -ne $script:PartnerUserMemo.Lookup) {
-            $PartnerUserLookup = $script:PartnerUserMemo.Lookup
-            $PartnerUsersCache = $null
-        } else {
-            # Memo exists but holds nothing yet - the previous pass fell through to the Graph
-            # refresh below. Re-read rather than assume, so a concurrent refresh is picked up.
-            $PartnerUsersCache = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '_partner' and RowKey eq 'users' and Timestamp gt datetime'$1dayago'"
-        }
-
-        if ($null -ne $PartnerUserLookup -and $null -eq $PartnerUsersCache) {
-            Write-Information "Partner user hashtable served from memo: $($PartnerUserLookup.Count) partner users"
-        } elseif ($PartnerUsersCache -and $PartnerUsersCache.Format -eq 'hashtable') {
-            Write-Information 'Loading partner user hashtable from cache'
-            $PartnerUserLookup = ($PartnerUsersCache.Data | ConvertFrom-Json -ErrorAction SilentlyContinue -AsHashtable) ?? @{}
-        } else {
-            $PartnerUsers = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/users?`$select=id,displayName,userPrincipalName,accountEnabled&`$top=999" -AsApp $true -NoAuthCheck $true
-            $PartnerUserLookup = @{}
-            foreach ($PartnerUser in $PartnerUsers) {
-                if (![string]::IsNullOrEmpty($PartnerUser.id)) {
-                    $PartnerUserLookup[$PartnerUser.id] = $PartnerUser
-                }
-            }
-            Add-CIPPAzDataTableEntity @Table -Entity @{
-                PartitionKey = '_partner'
-                RowKey       = 'users'
-                Data         = [string]($PartnerUserLookup | ConvertTo-Json -Compress)
-                Format       = 'hashtable'
-            } -Force
-            $PartnerUsers = $null
-        }
-        $script:PartnerUserMemo.Lookup = $PartnerUserLookup
-        Write-Information "Partner user hashtable: $($PartnerUserLookup.Count) partner users"
+        # Partner users: the shared lookup (memoised per worker, cached for a day) the BEC run reads too.
+        $PartnerUserLookup = Get-CIPPPartnerUserLookup
 
         Write-Warning '## Audit Log Configuration ##'
         Write-Information ($Configuration | ConvertTo-Json -Depth 10)

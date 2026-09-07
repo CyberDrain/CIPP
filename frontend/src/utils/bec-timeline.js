@@ -3,7 +3,7 @@
 // objective it serves, a severity, and structured correlation keys (source IP, app, location, external
 // sender, and the other account it acted on) so a graph view can cluster events that share a source or
 // a target, not just lay them out by time. The earliest access/foothold event is the likely start.
-import { becWindowStart } from './bec-objectives'
+import { becWindowStart, isBecPartnerActor } from './bec-objectives'
 
 const toDate = (value) => {
   if (!value) return null
@@ -198,7 +198,8 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
         severity: 'medium',
         label: audit.Activity || 'Directory change',
         ip: clean(audit.ClientIP),
-        actor: shortUpn(audit.InitiatedBy),
+        actor: shortUpn(audit.ActorResolved || audit.InitiatedBy),
+        partner: isBecPartnerActor(audit),
       })),
     ...arr(becData.InboxRuleChanges).map((change) => ({
       key: 'rule',
@@ -210,6 +211,7 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
       ip: clean(change.ClientIP),
       target: clean(change.RuleName),
       foreign: change.ForeignLocation === true,
+      partner: isBecPartnerActor(change),
     })),
     ...arr(becData.MailboxPermissionChanges).map((change) => ({
       key: 'permission',
@@ -220,6 +222,7 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
       label: change.Operation || 'Mailbox permission change',
       ip: clean(change.ClientIP),
       targetsSuspect: !!change.TargetsSuspect,
+      partner: isBecPartnerActor(change),
       // The counterparty, whichever isn't the victim: the grantee (Trustee) of a delegation first, then
       // the mailbox acted on. So a FullAccess/SendAs grant to a colleague ties that colleague in.
       affects: otherAccount(
@@ -236,6 +239,7 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
       objective: 'mailflow',
       severity: 'medium',
       label: change.Operation || 'Safelist change',
+      partner: isBecPartnerActor(change),
       ip: clean(change.ClientIP),
     })),
     ...arr(becData.SharingChanges).map((change) => ({
@@ -247,6 +251,7 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
         ? 'high'
         : 'medium',
       label: change.Operation || 'Sharing change',
+      partner: isBecPartnerActor(change),
       ip: clean(change.ClientIP),
       target: clean(change.FileName),
       affects: otherAccount(
@@ -351,6 +356,7 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
         event.recipient ? `to ${event.recipient}` : null,
         event.sender,
         event.foreign ? 'foreign' : null,
+        event.partner ? 'partner action' : null,
         event.targetsSuspect ? 'targets this mailbox' : null,
         event.ip
       ),
@@ -362,6 +368,7 @@ export function buildBecTimeline(becData, windowDays = 7, accountUpn = null) {
         event.target,
         event.sender,
         event.foreign ? 'foreign' : null,
+        event.partner ? 'partner action' : null,
         event.targetsSuspect ? 'targets this mailbox' : null
       ),
     }))

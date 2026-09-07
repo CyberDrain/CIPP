@@ -212,6 +212,7 @@ function Push-BECRun {
                     [pscustomobject]@{
                         Operation      = $AD.Operation
                         UserKey        = $AD.UserKey
+                        UserId         = $AD.UserId
                         ObjectId       = $objectId
                         Permissions    = $perms
                         Trustee        = [string]$Trustee
@@ -753,6 +754,29 @@ function Push-BECRun {
         $Risk = if ($HasEntraP2) { & $Collect 'RiskState' { Get-CIPPBecRiskState -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate } } else { & $Skip 'requires Entra ID P2 (Identity Protection)' }
         & $Mark 'RiskState' $Risk
         $RiskState = $Risk.Data
+
+        # Who did it: a partner (GDAP) identity, CIPP's own service principal, an application or the
+        # tenant's own user. Stamped on every actor-bearing row so partner and CIPP actions read as such
+        # (the case page lists them together) instead of as unknown actors. The score is not changed.
+        $PartnerUsers = try { Get-CIPPPartnerUserLookup } catch { Write-Information "BEC: partner user lookup unavailable: $($_.Exception.Message)"; @{} }
+        $StampActor = {
+            param($Rows, $Property, $TypeProperty, $IdProperty)
+            foreach ($Row in @($Rows)) {
+                if (-not $Row) { continue }
+                $Type = if ($TypeProperty) { [string]$Row.$TypeProperty } else { 'User' }
+                $AppId = if ($IdProperty -and $Type -eq 'Application') { [string]$Row.$IdProperty } else { $null }
+                $Who = Resolve-CIPPAuditActor -Actor ([string]$Row.$Property) -ActorType $Type -AppId $AppId -PartnerUserLookup $PartnerUsers
+                $Row | Add-Member -NotePropertyName 'ActorKind' -NotePropertyValue $Who.Kind -Force
+                $Row | Add-Member -NotePropertyName 'ActorResolved' -NotePropertyValue $Who.Actor -Force
+            }
+        }
+        & $StampActor $RuleChangesLog 'UserKey'
+        & $StampActor $PermissionsLog 'UserId'
+        & $StampActor $SafelistChanges 'UserKey'
+        & $StampActor $SharingChanges 'UserKey'
+        & $StampActor $TransportRuleChanges 'Actor'
+        & $StampActor $DirectoryAudits 'InitiatedBy' 'InitiatedByType' 'InitiatedById'
+        & $StampActor $MailActivity 'Actor'
 
         # Geo-locate the client IPs behind rule changes, safelist changes, sharing changes, sent
         # mail and (Full scope) transport-rule changes, directory audits and mailbox activity so

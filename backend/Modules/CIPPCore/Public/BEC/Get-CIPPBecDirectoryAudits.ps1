@@ -74,6 +74,7 @@ function Get-CIPPBecDirectoryAudits {
                     ResultReason        = $Item.resultReason
                     InitiatedBy         = $Actor
                     InitiatedByType     = $ActorType
+                    InitiatedById       = [string]($Item.initiatedBy.user.id ?? $Item.initiatedBy.app.appId ?? $Item.initiatedBy.app.servicePrincipalId)
                     ClientIP            = ConvertTo-CIPPBecHostAddress -Address $Item.initiatedBy.user.ipAddress
                     Targets             = ($Targets -join ', ')
                     ModifiedProperties  = ($Modified -join '; ')

@@ -754,6 +754,7 @@ export const CippDataTable = (props) => {
   const router = useRouter()
   const routerPageName = router.pathname.split('/').slice(1).join('/')
   const pageName = persistenceKey ?? (isInDialog ? '' : routerPageName)
+  const preferredColumnVisibility = pageName ? settings?.columnDefaults?.[pageName] : undefined
 
   // 'cards' below the md breakpoint (or when forced via settings/prop), 'table' otherwise.
   // simple tables always resolve to 'table'.
@@ -1003,7 +1004,8 @@ export const CippDataTable = (props) => {
       setSorting(defaultSorting)
     }
     setUsedColumns(finalColumns)
-    setColumnVisibility(newVisibility)
+    // Keep saved page preferences when new API data regenerates the columns.
+    setColumnVisibility({ ...newVisibility, ...preferredColumnVisibility })
   }, [
     columns.length,
     usedData,
@@ -1011,6 +1013,7 @@ export const CippDataTable = (props) => {
     settings?.currentTenant,
     filterTypeMap,
     subTables,
+    preferredColumnVisibility,
   ])
 
   // Previous-value refs for the guards below: CippDataTable is the single owner of this
@@ -1061,16 +1064,16 @@ export const CippDataTable = (props) => {
     if (!pageName) {
       return
     }
-    const preferred = settings?.columnDefaults?.[pageName]
+    const preferred = preferredColumnVisibility
     if (
       preferred &&
       Object.keys(preferred).length > 0 &&
       appliedColumnDefaultsRef.current[pageName] !== preferred
     ) {
       appliedColumnDefaultsRef.current[pageName] = preferred
-      setColumnVisibility(preferred)
+      setColumnVisibility((previous) => ({ ...previous, ...preferred }))
     }
-  }, [settings?.columnDefaults?.[pageName], pageName])
+  }, [preferredColumnVisibility, pageName])
 
   const createDialog = useDialog()
   const hasActions = !!actions

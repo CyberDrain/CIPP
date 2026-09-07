@@ -524,7 +524,10 @@ export const CIPPTableToptoolbar = React.memo(
         settings?.columnDefaults?.[pageName] &&
         Object.keys(settings?.columnDefaults?.[pageName]).length > 0
       ) {
-        setColumnVisibility(settings?.columnDefaults?.[pageName])
+        setColumnVisibility((previous) => ({
+          ...previous,
+          ...settings.columnDefaults[pageName],
+        }))
       } else {
         setColumnVisibility((prevVisibility) => {
           const updatedVisibility = {}

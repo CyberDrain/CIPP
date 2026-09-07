@@ -4,16 +4,7 @@
   },
   "caps": {
     "auditLogPages": 10,
-    "mailActivityPages": 10,
-    "messageTracePages": 5,
-    "storedSentMessages": 1000,
-    "storedMailActivityGroups": 500,
-    "signIns": 50,
-    "nonInteractiveSignIns": 50,
-    "directoryAudits": 500,
-    "transportRuleChanges": 200,
-    "riskDetections": 50,
-    "defenderMessages": 1000
+    "mailActivityPages": 10
   },
   "score": {
     "thresholds": {

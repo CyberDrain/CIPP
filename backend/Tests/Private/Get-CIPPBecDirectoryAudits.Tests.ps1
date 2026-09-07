@@ -58,8 +58,8 @@ Describe 'Get-CIPPBecDirectoryAudits' {
         $script:TargetMissing = $false
     }
 
-    It 'batches one target and one actor query with the escaped user id, window start, cap and eventual consistency' {
-        $null = Get-CIPPBecDirectoryAudits -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -Heuristics $script:Heuristics -Cap 250
+    It 'batches one target and one actor query with the escaped user id, window start, page size and eventual consistency' {
+        $null = Get-CIPPBecDirectoryAudits -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -Heuristics $script:Heuristics
         Should -Invoke ConvertTo-CIPPODataFilterValue -Times 1 -ParameterFilter { $Value -eq $script:UserId -and $Type -eq 'Guid' }
         Should -Invoke New-GraphBulkRequest -Times 1 -ParameterFilter {
             $Target = $Requests | Where-Object { $_.id -eq 'Target' }
@@ -67,8 +67,8 @@ Describe 'Get-CIPPBecDirectoryAudits' {
             @($Requests).Count -eq 2 -and
             $tenantid -eq 'contoso.com' -and $asapp -eq $true -and
             $Target.method -eq 'GET' -and $Actor.method -eq 'GET' -and
-            $Target.url -like "auditLogs/directoryAudits?`$filter=activityDateTime ge 2026-08-20T09:30:00Z and targetResources/any(t:t/id eq '$($script:UserId)')&`$top=250&`$select=id,activityDateTime,*" -and
-            $Actor.url -like "auditLogs/directoryAudits?`$filter=activityDateTime ge 2026-08-20T09:30:00Z and initiatedBy/user/id eq '$($script:UserId)'&`$top=250&`$select=id,activityDateTime,*" -and
+            $Target.url -like "auditLogs/directoryAudits?`$filter=activityDateTime ge 2026-08-20T09:30:00Z and targetResources/any(t:t/id eq '$($script:UserId)')&`$top=999&`$select=id,activityDateTime,*" -and
+            $Actor.url -like "auditLogs/directoryAudits?`$filter=activityDateTime ge 2026-08-20T09:30:00Z and initiatedBy/user/id eq '$($script:UserId)'&`$top=999&`$select=id,activityDateTime,*" -and
             $Target.headers.ConsistencyLevel -eq 'eventual' -and $Actor.headers.ConsistencyLevel -eq 'eventual'
         }
     }
@@ -133,22 +133,28 @@ Describe 'Get-CIPPBecDirectoryAudits' {
         $App.Targets | Should -Be 'Sales'
     }
 
-    It 'reports the per-direction cap when a direction returns Cap rows or a nextLink' {
-        $script:TargetFixture = @(
-            Get-AuditFixture -Id 'a1' -Activity 'Update group'
-            Get-AuditFixture -Id 'a2' -Activity 'Update group'
-        )
-        $Result = Get-CIPPBecDirectoryAudits -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -Heuristics $script:Heuristics -Cap 2
-        $Result.Complete | Should -BeFalse
-        $Result.Cap | Should -Be '2 rows per direction'
-        $Result.Error | Should -BeNullOrEmpty
-        $Result.Count | Should -Be 2
+    It 'reports partial only when the batch helper flags a failed continuation page - a full page is not a cap' {
+        $script:TargetFixture = @(1..999 | ForEach-Object { Get-AuditFixture -Id "a$_" -Activity 'Update group' })
+        $script:TargetNextLink = 'https://graph.microsoft.com/v1.0/auditLogs/directoryAudits?$skiptoken=abc'
+        $Result = Get-CIPPBecDirectoryAudits -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -Heuristics $script:Heuristics
+        $Result.Complete | Should -BeTrue -Because 'the helper already merged every continuation page into the response'
+        $Result.Cap | Should -BeNullOrEmpty
+        $Result.Count | Should -Be 999
 
         $script:TargetFixture = @(Get-AuditFixture -Id 'a1' -Activity 'Update group')
-        $script:TargetNextLink = 'https://graph.microsoft.com/v1.0/auditLogs/directoryAudits?$skiptoken=abc'
-        $Result = Get-CIPPBecDirectoryAudits -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -Heuristics $script:Heuristics -Cap 500
+        Mock New-GraphBulkRequest {
+            foreach ($R in (Invoke-FakeBulk -Requests $Requests)) {
+                if ($R.id -eq 'Target') {
+                    $R | Add-Member -NotePropertyName 'PagingIncomplete' -NotePropertyValue $true -Force
+                    $R | Add-Member -NotePropertyName 'PagingError' -NotePropertyValue 'continuation page returned 429' -Force
+                }
+                $R
+            }
+        }
+        $Result = Get-CIPPBecDirectoryAudits -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -Heuristics $script:Heuristics
         $Result.Complete | Should -BeFalse
-        $Result.Cap | Should -Be '500 rows per direction'
+        $Result.Cap | Should -Be 'Target query: continuation page returned 429'
+        $Result.Error | Should -BeNullOrEmpty
         $Result.Count | Should -Be 1
     }
 

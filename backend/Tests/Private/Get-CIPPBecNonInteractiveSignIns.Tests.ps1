@@ -5,6 +5,7 @@ BeforeAll {
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCollectorResult.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecNonInteractiveSignIns.ps1')
     $script:UserId = 'c0ffee00-0000-4000-8000-000000000001'
+    $script:Start = [datetime]::new(2026, 8, 14, 0, 0, 0, [System.DateTimeKind]::Utc)
 
     function Get-SignInFixture {
         param([string]$Id, $Country = 'NL', [string]$CaStatus = 'success', $ErrorCode = 0, [string]$When = '2026-08-21T10:00:00Z')
@@ -34,18 +35,18 @@ Describe 'Get-CIPPBecNonInteractiveSignIns' {
         $script:SignIns = @()
     }
 
-    It 'queries the beta sign-in log for the user''s non-interactive events, newest first, on a single page' {
-        $null = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -UsageLocation 'NL' -Top 25
+    It 'queries the beta sign-in log for the user''s non-interactive events inside the window, newest first, paged to the end' {
+        $null = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -UsageLocation 'NL'
         Should -Invoke ConvertTo-CIPPODataFilterValue -Times 1 -ParameterFilter { $Value -eq $script:UserId -and $Type -eq 'Guid' }
         Should -Invoke New-GraphGetRequest -Times 1 -ParameterFilter {
-            $uri -eq "https://graph.microsoft.com/beta/auditLogs/signIns?`$filter=userId eq '$($script:UserId)' and signInEventTypes/any(t: t eq 'nonInteractiveUser')&`$top=25&`$orderby=createdDateTime desc" -and
-            $tenantid -eq 'contoso.com' -and $AsApp -eq $true -and $noPagination -eq $true
+            $uri -eq "https://graph.microsoft.com/beta/auditLogs/signIns?`$filter=userId eq '$($script:UserId)' and signInEventTypes/any(t: t eq 'nonInteractiveUser') and createdDateTime ge 2026-08-14T00:00:00Z&`$top=999&`$orderby=createdDateTime desc" -and
+            $tenantid -eq 'contoso.com' -and $AsApp -eq $true -and $noPagination -ne $true
         }
     }
 
     It 'projects a sign-in row with a UTC timestamp, token details and the location verdict' {
         $script:SignIns = @(Get-SignInFixture -Id 's1' -When '2026-08-21T12:00:00+02:00')
-        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -UsageLocation 'NL'
+        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -UsageLocation 'NL'
         $Result.Complete | Should -BeTrue
         $Result.Cap | Should -BeNullOrEmpty
         $Result.Error | Should -BeNullOrEmpty
@@ -76,7 +77,7 @@ Describe 'Get-CIPPBecNonInteractiveSignIns' {
             Get-SignInFixture -Id 's-pw' -CaStatus 'success' -ErrorCode 50126
             Get-SignInFixture -Id 's-ca' -CaStatus 'failure' -ErrorCode 0
         )
-        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -UsageLocation 'NL'
+        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -UsageLocation 'NL'
         ($Result.Data | Where-Object { $_.id -eq 's-ok' }).Status | Should -Be 'Success'
         ($Result.Data | Where-Object { $_.id -eq 's-na' }).Status | Should -Be 'Success' -Because 'no applicable CA policy is still a successful sign-in'
         ($Result.Data | Where-Object { $_.id -eq 's-pw' }).Status | Should -Be 'Failed' -Because 'a non-zero error code fails the sign-in even when CA passed'
@@ -93,7 +94,7 @@ Describe 'Get-CIPPBecNonInteractiveSignIns' {
             Get-SignInFixture -Id 's-blank' -Country ''
             Get-SignInFixture -Id 's-noloc' -Country $null
         )
-        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -UsageLocation 'NL'
+        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -UsageLocation 'NL'
         $Result.Count | Should -Be 6
         $InCountry = $Result.Data | Where-Object { $_.id -eq 's-home' }
         $InCountry.ForeignLocation | Should -BeOfType [bool]
@@ -108,27 +109,21 @@ Describe 'Get-CIPPBecNonInteractiveSignIns' {
         $NoLoc.City | Should -BeNullOrEmpty
 
         $script:SignIns = @(Get-SignInFixture -Id 's-away' -Country 'US')
-        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId
+        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start
         $Result.Data[0].ForeignLocation | Should -BeNullOrEmpty -Because 'without a usage location there is nothing to compare against'
     }
 
-    It 'marks the result capped when Graph returns Top rows and complete when it returns fewer' {
-        $script:SignIns = @(1..3 | ForEach-Object { Get-SignInFixture -Id "s$_" })
-        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -UsageLocation 'NL' -Top 3
-        $Result.Complete | Should -BeFalse
-        $Result.Cap | Should -Be '3 most recent sign-ins'
-        $Result.Error | Should -BeNullOrEmpty
-        $Result.Count | Should -Be 3
-
-        $script:SignIns = @(1..2 | ForEach-Object { Get-SignInFixture -Id "s$_" })
-        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -UsageLocation 'NL' -Top 3
+    It 'reports every row Graph paged back as complete - there is no count cap' {
+        $script:SignIns = @(1..1200 | ForEach-Object { Get-SignInFixture -Id "s$_" })
+        $Result = Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -UsageLocation 'NL'
         $Result.Complete | Should -BeTrue
         $Result.Cap | Should -BeNullOrEmpty
-        $Result.Count | Should -Be 2
+        $Result.Error | Should -BeNullOrEmpty
+        $Result.Count | Should -Be 1200
     }
 
     It 'lets a Graph failure propagate to the caller instead of reporting an empty sign-in list' {
         Mock New-GraphGetRequest { throw 'Graph unavailable' }
-        { Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -UsageLocation 'NL' } | Should -Throw -ExpectedMessage '*Graph unavailable*'
+        { Get-CIPPBecNonInteractiveSignIns -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -UsageLocation 'NL' } | Should -Throw -ExpectedMessage '*Graph unavailable*'
     }
 }

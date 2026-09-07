@@ -3,7 +3,7 @@ BeforeAll {
     $script:OriginalRoot = $env:CIPPRootPath
     $env:CIPPRootPath = $RepoRoot
     function Get-CIPPBecMessageTrace { param($TenantFilter, $SenderAddress, $RecipientAddress, $StartDate, $EndDate, $Anchor, $PageSize, $MaxPages) }
-    function New-GraphGetRequest { param($uri, $tenantid, $AsApp, $noPagination) }
+    function New-GraphGetRequest { param($uri, $tenantid, $AsApp, $noPagination, [switch]$Stream) }
     function Get-NormalizedError { param($message) $message }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Tools/Get-CIPPLevenshteinDistance.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
@@ -151,16 +151,8 @@ Describe 'Get-CIPPBecReceivedMailFindings' {
             $A.LatestDeliveryLocation | Should -Be 'inbox'
             ($Result.Defender.Data | Where-Object { $_.NetworkMessageId -eq 'b' }).Delivered | Should -BeFalse
             $Result.Defender.AnalyzedCount | Should -Be 3 -Because 'three of the four analysed messages were addressed to this mailbox'
-            # the service rejects $filter on the recipient, so the request must carry the window and the cap only
-            Should -Invoke New-GraphGetRequest -Times 1 -ParameterFilter { $uri -like '*security/collaboration/analyzedEmails?startTime=*' -and $uri -notlike '*$filter*' -and $uri -like '*$top=1000*' -and $AsApp -eq $true }
-        }
-
-        It 'reports the tenant-wide page cap as incomplete' {
-            Mock New-GraphGetRequest { @(1..1000 | ForEach-Object { [pscustomobject]@{ networkMessageId = "m$_"; loggedDateTime = '2026-08-20T10:00:00Z'; recipientEmailAddress = 'other@contoso.com'; threatTypes = @('none') } }) }
-            $Result = Get-CIPPBecReceivedMailFindings -TenantFilter 'contoso.com' -UserPrincipalName 'victim@contoso.com' -StartDate $script:Start -EndDate $script:End -Heuristics $script:Heuristics -IncludeDefender
-            $Result.Defender.Complete | Should -BeFalse
-            $Result.Defender.Cap | Should -Match 'tenant-wide'
-            $Result.Defender.AnalyzedCount | Should -Be 0
+            # the service rejects $filter on the recipient, so the request carries the window only and is streamed page by page
+            Should -Invoke New-GraphGetRequest -Times 1 -ParameterFilter { $uri -like '*security/collaboration/analyzedEmails?startTime=*' -and $uri -notlike '*$filter*' -and $uri -like '*$top=1000*' -and $AsApp -eq $true -and $Stream -eq $true -and $noPagination -ne $true }
         }
 
         It 'reports a permission error as incomplete with the PermissionError flag, never as "no phishing"' {

@@ -5,8 +5,8 @@ function Get-CIPPBecMessageTrace {
     .DESCRIPTION
         Get-MessageTraceV2 returns at most ResultSize rows per call, newest first, and continues from a
         cursor made of the last row's Received time (as the next EndDate) plus its RecipientAddress
-        (StartingRecipientAddress). This walker follows that cursor up to MaxPages, de-duplicates rows
-        on trace id + recipient + received, stops when the cursor stalls, and reports
+        (StartingRecipientAddress). This walker follows that cursor until a short page ends the window,
+        de-duplicates rows on trace id + recipient + received, stops when the cursor stalls, and reports
         { Rows, Complete, Pages, Cap }. Only trace metadata is returned (sender, recipient, subject,
         status, size, IPs, timestamps) - never message content.
     .PARAMETER TenantFilter
@@ -23,8 +23,6 @@ function Get-CIPPBecMessageTrace {
         Anchor mailbox for the EXO request.
     .PARAMETER PageSize
         Rows per page (max 5000).
-    .PARAMETER MaxPages
-        Page cap; hitting it sets Complete to $false.
     .FUNCTIONALITY
         Internal
     #>
@@ -36,8 +34,7 @@ function Get-CIPPBecMessageTrace {
         [Parameter(Mandatory = $true)][datetime]$StartDate,
         [Parameter(Mandatory = $true)][datetime]$EndDate,
         [string]$Anchor,
-        [ValidateRange(1, 5000)][int]$PageSize = 5000,
-        [ValidateRange(1, 95)][int]$MaxPages = 5
+        [ValidateRange(1, 5000)][int]$PageSize = 5000
     )
 
     if (-not $SenderAddress -and -not $RecipientAddress) {
@@ -90,12 +87,12 @@ function Get-CIPPBecMessageTrace {
         $PreviousCursor = $Cursor
         $TraceParams.EndDate = $LastReceived.ToString('s')
         $TraceParams.StartingRecipientAddress = $Last.RecipientAddress
-    } while ($Pages -lt $MaxPages)
+    } while (-not $Done -and -not $Stalled)
 
     return [pscustomobject]@{
         Rows     = $Rows.ToArray()
         Complete = [bool]$Done
         Pages    = $Pages
-        Cap      = if ($Done) { $null } elseif ($Stalled) { 'paging stalled (cursor did not advance)' } else { "$MaxPages pages of $PageSize rows" }
+        Cap      = if ($Stalled) { 'paging stalled (cursor did not advance)' } else { $null }
     }
 }

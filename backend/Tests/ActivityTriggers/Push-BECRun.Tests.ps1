@@ -29,7 +29,7 @@ BeforeAll {
     function Get-CIPPBecReceivedMailFindings { param($TenantFilter, $UserPrincipalName, $StartDate, $EndDate, $Heuristics, $AcceptedDomains, $Anchor, [switch]$IncludeDefender) }
     function Get-CIPPBecDirectoryAudits { param($TenantFilter, $UserId, $StartDate, $Heuristics, $Cap) }
     function Get-CIPPBecRegisteredDevices { param($TenantFilter, $UserId, $StartDate) }
-    function Get-CIPPBecNonInteractiveSignIns { param($TenantFilter, $UserId, $UsageLocation, $Top) }
+    function Get-CIPPBecNonInteractiveSignIns { param($TenantFilter, $UserId, $UsageLocation, $StartDate) }
     function Get-CIPPBecMailActivity { param($TenantFilter, $UserPrincipalName, $StartDate, $EndDate, $Heuristics, $Anchor) }
     function Get-CIPPBecRiskState { param($TenantFilter, $UserId, $StartDate, $Cap) }
     function Get-CIPPBecRogueAppFeed { }

@@ -12,8 +12,6 @@ function Get-CIPPBecRiskState {
         The user's object id.
     .PARAMETER StartDate
         Window start (UTC) for detections.
-    .PARAMETER Cap
-        Maximum detections to return.
     .FUNCTIONALITY
         Internal
     #>
@@ -21,8 +19,7 @@ function Get-CIPPBecRiskState {
     param(
         [Parameter(Mandatory = $true)][string]$TenantFilter,
         [Parameter(Mandatory = $true)][string]$UserId,
-        [Parameter(Mandatory = $true)][datetime]$StartDate,
-        [int]$Cap = 50
+        [Parameter(Mandatory = $true)][datetime]$StartDate
     )
 
     $SafeId = ConvertTo-CIPPODataFilterValue -Value $UserId -Type Guid
@@ -64,7 +61,7 @@ function Get-CIPPBecRiskState {
 
     try {
         $Start = $StartDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
-        $Detections = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/identityProtection/riskDetections?`$filter=userId eq '$SafeId' and detectedDateTime ge $Start&`$top=$Cap&`$orderby=detectedDateTime desc" -tenantid $TenantFilter -noPagination $true)
+        $Detections = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/identityProtection/riskDetections?`$filter=userId eq '$SafeId' and detectedDateTime ge $Start&`$orderby=detectedDateTime desc" -tenantid $TenantFilter)
         $State.Detections = @(foreach ($Detection in $Detections) {
                 if (-not $Detection.id) { continue }
                 [pscustomobject]@{

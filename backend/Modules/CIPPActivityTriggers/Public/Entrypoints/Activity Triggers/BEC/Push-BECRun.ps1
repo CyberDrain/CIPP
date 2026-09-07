@@ -160,10 +160,11 @@ function Push-BECRun {
         & $Phase 'SignIns' 'Reading sign-ins and mobile devices'
         Write-Information 'Getting suspect user sign-ins'
         $SuspectUserSignInsError = $null
-        $SignInCap = [int]($Caps.signIns ?? 50)
         try {
-            $URI = "https://graph.microsoft.com/beta/auditLogs/signIns?`$filter=(userId eq '$SuspectUser')&`$top=$SignInCap&`$orderby=createdDateTime desc"
-            $SuspectUserSignIns = @(New-GraphGetRequest -uri $URI -tenantid $TenantFilter -noPagination $true | Select-Object @{ Name = 'CreatedDateTime'; Expression = $SignInDate },
+            # Every interactive sign-in in the window, paged to the end: the score's foreign sign-in
+            # signals count these, so a newest-N cut would hide the first foreign access.
+            $URI = "https://graph.microsoft.com/beta/auditLogs/signIns?`$filter=(userId eq '$SuspectUser') and createdDateTime ge $($startDate.ToString('yyyy-MM-ddTHH:mm:ssZ'))&`$top=999&`$orderby=createdDateTime desc"
+            $SuspectUserSignIns = @(New-GraphGetRequest -uri $URI -tenantid $TenantFilter | Select-Object @{ Name = 'CreatedDateTime'; Expression = $SignInDate },
                 id,
                 @{ Name = 'AppDisplayName'; Expression = { $_.resourceDisplayName } },
                 @{ Name = 'ClientAppUsed'; Expression = { $_.clientAppUsed } },
@@ -171,7 +172,7 @@ function Push-BECRun {
                 @{ Name = 'IPAddress'; Expression = { $_.ipAddress } },
                 @{ Name = 'Country'; Expression = { $_.location.countryOrRegion } },
                 @{ Name = 'City'; Expression = { $_.location.city } })
-            & $Mark 'SignIns' ([pscustomobject]@{ Complete = ($SuspectUserSignIns.Count -lt $SignInCap); Cap = $(if ($SuspectUserSignIns.Count -ge $SignInCap) { "$SignInCap most recent sign-ins" } else { $null }); Error = $null; Count = $SuspectUserSignIns.Count })
+            & $Mark 'SignIns' ([pscustomobject]@{ Complete = $true; Cap = $null; Error = $null; Count = $SuspectUserSignIns.Count })
         } catch {
             $SuspectUserSignIns = @()
             $CippSignInError = Get-CippException -Exception $_
@@ -406,13 +407,11 @@ function Push-BECRun {
 
         & $Phase 'SentMail' 'Walking the sent message trace'
         Write-Information 'Getting sent message trace'
-        $StoredSentCap = [int]($Caps.storedSentMessages ?? 1000)
         try {
-            $SentTrace = Get-CIPPBecMessageTrace -TenantFilter $TenantFilter -SenderAddress $UserName -StartDate $startDate -EndDate $endDate -Anchor $UserName -MaxPages ([int]($Caps.messageTracePages ?? 5))
+            $SentTrace = Get-CIPPBecMessageTrace -TenantFilter $TenantFilter -SenderAddress $UserName -StartDate $startDate -EndDate $endDate -Anchor $UserName
             $SentMessagesRaw = @($SentTrace.Rows)
-            $SentMessages = @($SentMessagesRaw | Select-Object -First $StoredSentCap | Select-Object MessageTraceId, Status, Subject, RecipientAddress, @{ Name = 'Received'; Expression = { ([datetime]$_.Received).ToString('u') } }, FromIP)
-            $SentCapText = if (-not $SentTrace.Complete) { $SentTrace.Cap } elseif ($SentMessagesRaw.Count -gt $StoredSentCap) { "$StoredSentCap stored rows (analysis covered all $($SentMessagesRaw.Count))" } else { $null }
-            & $Mark 'SentMessages' ([pscustomobject]@{ Complete = ($SentTrace.Complete -and $SentMessagesRaw.Count -le $StoredSentCap); Cap = $SentCapText; Error = $null; Count = $SentMessagesRaw.Count })
+            $SentMessages = @($SentMessagesRaw | Select-Object MessageTraceId, Status, Subject, RecipientAddress, @{ Name = 'Received'; Expression = { ([datetime]$_.Received).ToString('u') } }, FromIP)
+            & $Mark 'SentMessages' ([pscustomobject]@{ Complete = $SentTrace.Complete; Cap = $SentTrace.Cap; Error = $null; Count = $SentMessagesRaw.Count })
         } catch {
             $SentMessagesRaw = @()
             $SentMessages = @()
@@ -729,7 +728,7 @@ function Push-BECRun {
 
         & $Phase 'Directory' 'Reading directory audits, registered devices and non-interactive sign-ins'
         Write-Information 'Full scope: directory audits'
-        $Audits = & $Collect 'DirectoryAudits' { Get-CIPPBecDirectoryAudits -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate -Heuristics $Heuristics -Cap ([int]($Caps.directoryAudits ?? 500)) }
+        $Audits = & $Collect 'DirectoryAudits' { Get-CIPPBecDirectoryAudits -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate -Heuristics $Heuristics }
         & $Mark 'DirectoryAudits' $Audits
         $DirectoryAudits = @($Audits.Data)
 
@@ -739,7 +738,7 @@ function Push-BECRun {
         $RegisteredDevices = @($Registered.Data)
 
         Write-Information 'Full scope: non-interactive sign-ins'
-        $NonInteractive = & $Collect 'NonInteractiveSignIns' { Get-CIPPBecNonInteractiveSignIns -TenantFilter $TenantFilter -UserId $SuspectUser -UsageLocation $UsageLocation -Top ([int]($Caps.nonInteractiveSignIns ?? 50)) }
+        $NonInteractive = & $Collect 'NonInteractiveSignIns' { Get-CIPPBecNonInteractiveSignIns -TenantFilter $TenantFilter -UserId $SuspectUser -UsageLocation $UsageLocation -StartDate $startDate }
         & $Mark 'NonInteractiveSignIns' $NonInteractive
         $NonInteractiveSignIns = @($NonInteractive.Data)
 
@@ -751,7 +750,7 @@ function Push-BECRun {
         $MailActivitySummary = $Activity.Summary
 
         Write-Information 'Full scope: risk state'
-        $Risk = if ($HasEntraP2) { & $Collect 'RiskState' { Get-CIPPBecRiskState -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate -Cap ([int]($Caps.riskDetections ?? 50)) } } else { & $Skip 'requires Entra ID P2 (Identity Protection)' }
+        $Risk = if ($HasEntraP2) { & $Collect 'RiskState' { Get-CIPPBecRiskState -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate } } else { & $Skip 'requires Entra ID P2 (Identity Protection)' }
         & $Mark 'RiskState' $Risk
         $RiskState = $Risk.Data
 

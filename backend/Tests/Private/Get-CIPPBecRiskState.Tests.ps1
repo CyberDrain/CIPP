@@ -23,11 +23,11 @@ Describe 'Get-CIPPBecRiskState' {
         Mock New-GraphGetRequest -ParameterFilter { $uri -like '*/identityProtection/riskDetections*' } { $script:Detections }
     }
 
-    It 'reports a listed risky user with its detections mapped to the report shape, asking Graph for the window and cap' {
-        $Result = Get-CIPPBecRiskState -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start -Cap 25
+    It 'reports a listed risky user with its detections mapped to the report shape, asking Graph for the whole window' {
+        $Result = Get-CIPPBecRiskState -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start
 
         Should -Invoke New-GraphGetRequest -Times 1 -ParameterFilter { $uri -eq 'https://graph.microsoft.com/v1.0/identityProtection/riskyUsers/3f2504e0-4f89-41d3-9a0c-0305e82c3301' -and $tenantid -eq 'contoso.com' -and $noPagination -eq $true }
-        Should -Invoke New-GraphGetRequest -Times 1 -ParameterFilter { $uri -eq "https://graph.microsoft.com/v1.0/identityProtection/riskDetections?`$filter=userId eq '3f2504e0-4f89-41d3-9a0c-0305e82c3301' and detectedDateTime ge 2026-08-13T00:00:00Z&`$top=25&`$orderby=detectedDateTime desc" -and $tenantid -eq 'contoso.com' }
+        Should -Invoke New-GraphGetRequest -Times 1 -ParameterFilter { $uri -eq "https://graph.microsoft.com/v1.0/identityProtection/riskDetections?`$filter=userId eq '3f2504e0-4f89-41d3-9a0c-0305e82c3301' and detectedDateTime ge 2026-08-13T00:00:00Z&`$orderby=detectedDateTime desc" -and $tenantid -eq 'contoso.com' -and $noPagination -ne $true }
         $Result.Complete | Should -BeTrue
         $Result.Skipped | Should -BeFalse
         $Result.Requirement | Should -BeNullOrEmpty
@@ -53,12 +53,12 @@ Describe 'Get-CIPPBecRiskState' {
         $Result.Data.Detections[1].Country | Should -BeNullOrEmpty -Because 'a detection without a location still maps'
     }
 
-    It 'treats a riskyUsers 404 as not listed, stays complete, and defaults the detection cap to 50' {
+    It 'treats a riskyUsers 404 as not listed, stays complete, and still reads the detections without a count cap' {
         Mock New-GraphGetRequest -ParameterFilter { $uri -like '*/identityProtection/riskyUsers/*' } { throw "Request_ResourceNotFound: Resource '3f2504e0-4f89-41d3-9a0c-0305e82c3301' does not exist or one of its queried reference-property objects are not present." }
         Mock New-GraphGetRequest -ParameterFilter { $uri -like '*/identityProtection/riskDetections*' } { @() }
         $Result = Get-CIPPBecRiskState -TenantFilter 'contoso.com' -UserId $script:UserId -StartDate $script:Start
 
-        Should -Invoke New-GraphGetRequest -Times 1 -ParameterFilter { $uri -like '*/riskDetections?*top=50&*' }
+        Should -Invoke New-GraphGetRequest -Times 1 -ParameterFilter { $uri -like '*/riskDetections?*' -and $uri -notlike '*top=*' -and $noPagination -ne $true }
         $Result.Complete | Should -BeTrue
         $Result.Error | Should -BeNullOrEmpty
         $Result.Skipped | Should -BeFalse

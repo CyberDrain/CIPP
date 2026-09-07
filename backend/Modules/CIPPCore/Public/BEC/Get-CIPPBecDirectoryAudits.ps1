@@ -17,8 +17,6 @@ function Get-CIPPBecDirectoryAudits {
         Window start (UTC).
     .PARAMETER Heuristics
         The BEC heuristics object (directoryAudit.flaggedActivities).
-    .PARAMETER Cap
-        Maximum rows per direction.
     .FUNCTIONALITY
         Internal
     #>
@@ -27,16 +25,15 @@ function Get-CIPPBecDirectoryAudits {
         [Parameter(Mandatory = $true)][string]$TenantFilter,
         [Parameter(Mandatory = $true)][string]$UserId,
         [Parameter(Mandatory = $true)][datetime]$StartDate,
-        [Parameter(Mandatory = $true)]$Heuristics,
-        [int]$Cap = 500
+        [Parameter(Mandatory = $true)]$Heuristics
     )
 
     $SafeId = ConvertTo-CIPPODataFilterValue -Value $UserId -Type Guid
     $Start = $StartDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     $Select = 'id,activityDateTime,activityDisplayName,category,result,resultReason,initiatedBy,targetResources,loggedByService'
     $Requests = @(
-        @{ id = 'Target'; method = 'GET'; url = "auditLogs/directoryAudits?`$filter=activityDateTime ge $Start and targetResources/any(t:t/id eq '$SafeId')&`$top=$Cap&`$select=$Select"; headers = @{ ConsistencyLevel = 'eventual' } }
-        @{ id = 'Actor'; method = 'GET'; url = "auditLogs/directoryAudits?`$filter=activityDateTime ge $Start and initiatedBy/user/id eq '$SafeId'&`$top=$Cap&`$select=$Select"; headers = @{ ConsistencyLevel = 'eventual' } }
+        @{ id = 'Target'; method = 'GET'; url = "auditLogs/directoryAudits?`$filter=activityDateTime ge $Start and targetResources/any(t:t/id eq '$SafeId')&`$top=999&`$select=$Select"; headers = @{ ConsistencyLevel = 'eventual' } }
+        @{ id = 'Actor'; method = 'GET'; url = "auditLogs/directoryAudits?`$filter=activityDateTime ge $Start and initiatedBy/user/id eq '$SafeId'&`$top=999&`$select=$Select"; headers = @{ ConsistencyLevel = 'eventual' } }
     )
     $Responses = New-GraphBulkRequest -Requests $Requests -tenantid $TenantFilter -asapp $true
 
@@ -44,13 +41,14 @@ function Get-CIPPBecDirectoryAudits {
     $Errors = [System.Collections.Generic.List[string]]::new()
     $Seen = [System.Collections.Generic.HashSet[string]]::new()
     $Rows = [System.Collections.Generic.List[object]]::new()
-    $Capped = $false
+    $Partial = [System.Collections.Generic.List[string]]::new()
     foreach ($Direction in @('Target', 'Actor')) {
         $Response = $Responses | Where-Object { $_.id -eq $Direction } | Select-Object -First 1
         if (-not $Response) { $Errors.Add("$Direction query returned no response"); continue }
         if ([int]$Response.status -ge 400) { $Errors.Add("$Direction query: $($Response.body.error.message ?? "status $($Response.status)")"); continue }
         $Items = @($Response.body.value)
-        if ($Items.Count -ge $Cap -or $Response.body.'@odata.nextLink') { $Capped = $true }
+        # The batch helper follows every nextLink; it flags the item when a continuation page failed.
+        if ($Response.PagingIncomplete) { $Partial.Add("$Direction query: $($Response.PagingError ?? 'a continuation page failed')") }
         foreach ($Item in $Items) {
             if (-not $Item.id -or -not $Seen.Add([string]$Item.id)) { continue }
             $Actor = if ($Item.initiatedBy.user) { $Item.initiatedBy.user.userPrincipalName ?? $Item.initiatedBy.user.displayName ?? $Item.initiatedBy.user.id } elseif ($Item.initiatedBy.app) { $Item.initiatedBy.app.displayName ?? $Item.initiatedBy.app.appId } else { $null }
@@ -87,5 +85,5 @@ function Get-CIPPBecDirectoryAudits {
 
     $Data = @($Rows | Sort-Object -Property @{ Expression = { $_.Flagged }; Descending = $true }, @{ Expression = { $_.ActivityDateTime }; Descending = $true })
     $ErrorText = if ($Errors.Count -gt 0) { $Errors -join '; ' } else { $null }
-    return New-CIPPBecCollectorResult -Data $Data -Complete (-not $Capped -and $Errors.Count -eq 0) -Cap ($(if ($Capped) { "$Cap rows per direction" } else { $null })) -Error $ErrorText
+    return New-CIPPBecCollectorResult -Data $Data -Complete ($Partial.Count -eq 0 -and $Errors.Count -eq 0) -Cap ($(if ($Partial.Count -gt 0) { $Partial -join '; ' } else { $null })) -Error $ErrorText
 }

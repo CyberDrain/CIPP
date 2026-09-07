@@ -38,7 +38,6 @@ function Get-CIPPBecMailActivity {
     $UserOps = @($Heuristics.mailActivity.userOperations)
     $OwnerOps = @($Heuristics.mailActivity.mailboxOwnerOperations)
     $MaxPages = [int]($Heuristics.caps.mailActivityPages ?? 10)
-    $GroupCap = [int]($Heuristics.caps.storedMailActivityGroups ?? 500)
     $HardDeleteThreshold = [int]($Heuristics.mailActivity.hardDeleteThreshold ?? 20)
 
     $Groups = @{}
@@ -131,8 +130,7 @@ function Get-CIPPBecMailActivity {
         SendAsByOthersCount    = [int](@($Rows | Where-Object { $_.Operation -in $OwnerOps -and $_.MailboxOwner -eq $UserPrincipalName -and $_.Actor -ne $UserPrincipalName } | Measure-Object -Property Count -Sum).Sum)
     }
 
-    $Capped = $Rows.Count -gt $GroupCap
-    $Result = New-CIPPBecCollectorResult -Data @($Rows | Select-Object -First $GroupCap) -Complete ($Complete -and -not $Capped -and $Errors.Count -eq 0) -Cap ($(if ($Cap) { $Cap } elseif ($Capped) { "$GroupCap stored groups" } else { $null })) -Error ($(if ($Errors.Count -gt 0) { $Errors -join '; ' } else { $null })) -Count $Rows.Count
+    $Result = New-CIPPBecCollectorResult -Data $Rows -Complete ($Complete -and $Errors.Count -eq 0) -Cap $Cap -Error ($(if ($Errors.Count -gt 0) { $Errors -join '; ' } else { $null })) -Count $Rows.Count
     $Result | Add-Member -NotePropertyName 'Summary' -NotePropertyValue $Summary -Force
     return $Result
 }

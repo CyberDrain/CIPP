@@ -43,7 +43,6 @@ function Get-CIPPBecReceivedMailFindings {
 
     $MinDistance = [int]($Heuristics.typosquat.minDistance ?? 1)
     $MaxDistance = [int]($Heuristics.typosquat.maxDistance ?? 2)
-    $MaxPages = [int]($Heuristics.caps.messageTracePages ?? 5)
     $Patterns = @{}
     if ($Heuristics.phishingSubjectPatterns) {
         foreach ($Property in $Heuristics.phishingSubjectPatterns.PSObject.Properties) { $Patterns[$Property.Name] = [string]$Property.Value }
@@ -52,7 +51,7 @@ function Get-CIPPBecReceivedMailFindings {
     $Accepted = @($AcceptedDomains | Where-Object { $_ } | ForEach-Object { $_.ToLowerInvariant() } | Select-Object -Unique)
 
     $Findings = try {
-        $Trace = Get-CIPPBecMessageTrace -TenantFilter $TenantFilter -RecipientAddress $UserPrincipalName -StartDate $StartDate -EndDate $EndDate -Anchor $Anchor -MaxPages $MaxPages
+        $Trace = Get-CIPPBecMessageTrace -TenantFilter $TenantFilter -RecipientAddress $UserPrincipalName -StartDate $StartDate -EndDate $EndDate -Anchor $Anchor
         $Rows = @($Trace.Rows)
 
         # Typosquat is a property of the sender domain, so evaluate each distinct domain once.
@@ -124,12 +123,11 @@ function Get-CIPPBecReceivedMailFindings {
         try {
             $Now = (Get-Date).ToUniversalTime()
             $End = if ($EndDate.ToUniversalTime() -gt $Now) { $Now } else { $EndDate.ToUniversalTime() }
-            $DefenderTop = [int]($Heuristics.caps.defenderMessages ?? 1000)
-            # The service rejects $filter on recipientEmailAddress ("Invalid filter with propName"), so the window is
-            # read tenant-wide (metadata only) and matched to the mailbox here; the page cap is reported as such.
-            $Uri = "https://graph.microsoft.com/beta/security/collaboration/analyzedEmails?startTime=$($StartDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))&endTime=$($End.ToString('yyyy-MM-ddTHH:mm:ssZ'))&`$top=$DefenderTop"
-            $TenantAnalyzed = @(New-GraphGetRequest -uri $Uri -tenantid $TenantFilter -AsApp $true -noPagination $true | Where-Object { $_ })
-            $Analyzed = @($TenantAnalyzed | Where-Object { [string]$_.recipientEmailAddress -eq $UserPrincipalName -or (@($_.recipientDetail.ccRecipients) -contains $UserPrincipalName) })
+            # The service rejects $filter on recipientEmailAddress ("Invalid filter with propName"), so the whole
+            # window is read tenant-wide (metadata only) and matched to the mailbox here. The pages are streamed
+            # through the match, so only this mailbox's rows are ever held however busy the tenant is.
+            $Uri = "https://graph.microsoft.com/beta/security/collaboration/analyzedEmails?startTime=$($StartDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))&endTime=$($End.ToString('yyyy-MM-ddTHH:mm:ssZ'))&`$top=1000"
+            $Analyzed = @(New-GraphGetRequest -uri $Uri -tenantid $TenantFilter -AsApp $true -Stream | Where-Object { $_ -and ([string]$_.recipientEmailAddress -eq $UserPrincipalName -or (@($_.recipientDetail.ccRecipients) -contains $UserPrincipalName)) })
             $Threats = foreach ($Mail in $Analyzed) {
                 $ThreatTypes = @($Mail.threatTypes | Where-Object { $_ -and $_ -notin @('none', 'unknown', 'unknownFutureValue') })
                 if ($ThreatTypes.Count -eq 0) { continue }
@@ -150,7 +148,7 @@ function Get-CIPPBecReceivedMailFindings {
                     Delivered                = ($Action -match '^(delivered|deliveredAsSpam|replaced|deliveredToJunk)$' -or $LatestLocation -match '^(inbox|junkFolder|folder)')
                 }
             }
-            $Result = New-CIPPBecCollectorResult -Data @($Threats | Sort-Object -Property @{ Expression = { $_.Delivered }; Descending = $true }, @{ Expression = { $_.ReceivedDateTime }; Descending = $true }) -Complete ($TenantAnalyzed.Count -lt $DefenderTop) -Cap ($(if ($TenantAnalyzed.Count -ge $DefenderTop) { "first $DefenderTop analysed messages in the window (tenant-wide; the service cannot filter by recipient)" } else { $null }))
+            $Result = New-CIPPBecCollectorResult -Data @($Threats | Sort-Object -Property @{ Expression = { $_.Delivered }; Descending = $true }, @{ Expression = { $_.ReceivedDateTime }; Descending = $true })
             $Result | Add-Member -NotePropertyName 'AnalyzedCount' -NotePropertyValue $Analyzed.Count -Force
             $Result | Add-Member -NotePropertyName 'Available' -NotePropertyValue $true -Force
             $Result

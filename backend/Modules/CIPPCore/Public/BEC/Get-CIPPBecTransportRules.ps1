@@ -40,7 +40,6 @@ function Get-CIPPBecTransportRules {
     $MatchesAny = { param($Name, [bool]$Recent) ($ParamRegex -and $Name -match $ParamRegex) -or ($Recent -and $RecentRegex -and $Name -match $RecentRegex) }
     $Operations = @($Heuristics.transportRules.operations)
     $MaxPages = [int]($Heuristics.caps.auditLogPages ?? 10)
-    $ChangeCap = [int]($Heuristics.caps.transportRuleChanges ?? 200)
 
     $HasValue = { param($Value) if ($null -eq $Value) { $false } elseif ($Value -is [bool]) { $Value } elseif ($Value -is [string]) { -not [string]::IsNullOrWhiteSpace($Value) -and $Value -ne 'False' } elseif ($Value -is [System.Collections.IEnumerable]) { @($Value | Where-Object { $_ }).Count -gt 0 } else { [string]$Value -notin @('', '0', 'False') } }
 
@@ -71,8 +70,7 @@ function Get-CIPPBecTransportRules {
             }
         }
         $Rows = @($Rows | Sort-Object -Property @{ Expression = { $_.Flagged }; Descending = $true }, @{ Expression = { $_.Date }; Descending = $true })
-        $Capped = $Rows.Count -gt $ChangeCap
-        New-CIPPBecCollectorResult -Data @($Rows | Select-Object -First $ChangeCap) -Complete ($Search.Complete -and -not $Capped) -Cap ($(if (-not $Search.Complete) { $Search.Cap } elseif ($Capped) { "$ChangeCap stored changes" } else { $null })) -Count $Rows.Count
+        New-CIPPBecCollectorResult -Data $Rows -Complete $Search.Complete -Cap $Search.Cap -Count $Rows.Count
     } catch {
         New-CIPPBecCollectorResult -Data @() -Error "Transport rule audit search failed: $((Get-NormalizedError -message $_.Exception.Message))"
     }

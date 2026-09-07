@@ -145,20 +145,20 @@ Describe 'Get-CIPPBecMailActivity' {
         $Result.Summary.HardDeleteExceeded | Should -BeFalse
     }
 
-    It 'stores at most caps.storedMailActivityGroups groups, keeps the busiest, and reports the cap while Count and Summary cover every group' {
-        $Capped = [pscustomobject]@{
+    It 'stores every group, busiest first, and passes caps.mailActivityPages on as the audit-log slice budget' {
+        $Budget = [pscustomobject]@{
             mailActivity = $script:Heuristics.mailActivity
-            caps         = [pscustomobject]@{ storedMailActivityGroups = 3; mailActivityPages = 2 }
+            caps         = [pscustomobject]@{ mailActivityPages = 2 }
         }
         $script:UserRecords = @(1..5 | ForEach-Object { New-Record -Operation 'MailItemsAccessed' -ClientIP "203.0.113.$_" -OperationCount $_ })
-        $Result = Get-CIPPBecMailActivity -TenantFilter 'contoso.com' -UserPrincipalName $script:Upn -StartDate $script:Start -EndDate $script:End -Heuristics $Capped
+        $Result = Get-CIPPBecMailActivity -TenantFilter 'contoso.com' -UserPrincipalName $script:Upn -StartDate $script:Start -EndDate $script:End -Heuristics $Budget
 
         Should -Invoke Search-CIPPBecAuditLog -Times 1 -ParameterFilter { $null -ne $UserIds -and $MaxPages -eq 2 }
-        $Result.Data.Count | Should -Be 3
-        @($Result.Data | ForEach-Object Count) | Should -Be @(5, 4, 3)
+        $Result.Data.Count | Should -Be 5
+        @($Result.Data | ForEach-Object Count) | Should -Be @(5, 4, 3, 2, 1)
         $Result.Count | Should -Be 5
-        $Result.Complete | Should -BeFalse
-        $Result.Cap | Should -Be '3 stored groups'
+        $Result.Complete | Should -BeTrue
+        $Result.Cap | Should -BeNullOrEmpty
         $Result.Error | Should -BeNullOrEmpty
         $Result.Summary.MailItemsAccessedCount | Should -Be 15
         $Result.Summary.DistinctClientIPs | Should -Be 5

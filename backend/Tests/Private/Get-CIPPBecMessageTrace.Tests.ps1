@@ -53,18 +53,18 @@ Describe 'Get-CIPPBecMessageTrace' {
         $script:Calls[1].EndDate | Should -Be ((Get-Date '2026-08-20T12:00:00Z').ToUniversalTime().AddMinutes(-2).ToString('s'))
     }
 
-    It 'reports partial results at the page cap' {
-        Mock New-ExoRequest { $script:Calls.Add($cmdParams); $Base = ($script:Calls.Count - 1) * 2; 1..2 | ForEach-Object { New-TraceRow -Index ($Base + $_) } }
-        $Result = Get-CIPPBecMessageTrace -TenantFilter 'contoso.com' -SenderAddress 'user@contoso.com' -StartDate $script:Start -EndDate $script:End -PageSize 2 -MaxPages 3
-        $Result.Complete | Should -BeFalse
-        $Result.Pages | Should -Be 3
-        $Result.Rows.Count | Should -Be 6
-        $Result.Cap | Should -Match '3 pages'
+    It 'walks every page until a short page ends the window - there is no page ceiling' {
+        Mock New-ExoRequest { $script:Calls.Add($cmdParams); $Base = ($script:Calls.Count - 1) * 2; if ($script:Calls.Count -le 7) { 1..2 | ForEach-Object { New-TraceRow -Index ($Base + $_) } } else { New-TraceRow -Index ($Base + 1) } }
+        $Result = Get-CIPPBecMessageTrace -TenantFilter 'contoso.com' -SenderAddress 'user@contoso.com' -StartDate $script:Start -EndDate $script:End -PageSize 2
+        $Result.Complete | Should -BeTrue
+        $Result.Pages | Should -Be 8
+        $Result.Rows.Count | Should -Be 15
+        $Result.Cap | Should -BeNullOrEmpty
     }
 
     It 'stops and reports partial results when the cursor does not advance' {
         Mock New-ExoRequest { $script:Calls.Add($cmdParams); 1..2 | ForEach-Object { New-TraceRow -Index $_ } }
-        $Result = Get-CIPPBecMessageTrace -TenantFilter 'contoso.com' -SenderAddress 'user@contoso.com' -StartDate $script:Start -EndDate $script:End -PageSize 2 -MaxPages 5
+        $Result = Get-CIPPBecMessageTrace -TenantFilter 'contoso.com' -SenderAddress 'user@contoso.com' -StartDate $script:Start -EndDate $script:End -PageSize 2
         $Result.Complete | Should -BeFalse
         $Result.Cap | Should -Match 'stalled'
         $Result.Rows.Count | Should -Be 2

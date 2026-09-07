@@ -94,12 +94,14 @@ namespace CIPP.Reporting
 
             return PdfDocument.Create(compose =>
             {
-                compose.Defaults(p =>
+                // OfficeIMO 3.4 dropped the document-wide Defaults() hook, so the page size, margin and
+                // orientation are applied to every page/section here instead.
+                void ApplyPageDefaults(PdfPageBuilder p)
                 {
                     p.Size(ResolveSize(ctx.PageSize));
                     if (ctx.Landscape) p.Landscape();
                     p.Margin(ReportStyles.PagePadding);
-                });
+                }
 
                 // Cover - its own page, no header/footer/watermark. Skipped in chrome-less mode (used by
                 // the component A/B harness and any embedded/preview render that wants only the content).
@@ -107,6 +109,7 @@ namespace CIPP.Reporting
                 if (chrome)
                     compose.Page(p =>
                     {
+                        ApplyPageDefaults(p);
                         p.Background(ReportComponents.Pdf(ReportColours.White));
                         if (ctx.CoverImage is { Length: > 0 })
                         {
@@ -126,6 +129,7 @@ namespace CIPP.Reporting
                         var heroImage = ReportComponents.DecodeImage(group.Block!.Str("heroImage") ?? group.Block!.Str("backgroundImage"));
                         compose.Section(p =>
                         {
+                            ApplyPageDefaults(p);
                             p.Background(ReportComponents.Pdf(ctx.Theme.Palette["infographicBackground"]));
                             if (heroImage is { Length: > 0 })
                             {
@@ -142,6 +146,7 @@ namespace CIPP.Reporting
                     }
                     compose.Section(p =>
                     {
+                        ApplyPageDefaults(p);
                         if (chrome) ApplyContentChrome(p, ctx, footerText, watermark);
                         p.Content(cc => cc.Item(i =>
                         {
@@ -220,7 +225,7 @@ namespace CIPP.Reporting
         // The styled page header (big title + subtitle + brand rule) that opens each content group,
         // matching the client's ContentPage header. Rendered as content rather than a running header so
         // it can carry the brand-coloured rule the running-header API can't draw.
-        private static void RenderPageHeader(ReportContext ctx, PdfItemCompose item, string? title, string? subtitle)
+        private static void RenderPageHeader(ReportContext ctx, PdfContentBuilder item, string? title, string? subtitle)
         {
             // Title and subtitle read as one unit (client pageTitle marginBottom 8), so the title line box
             // is kept tight - the default paragraph line height otherwise balloons the gap between them -
@@ -247,12 +252,12 @@ namespace CIPP.Reporting
                 item.Row(r =>
                 {
                     r.Gap(12);
-                    r.Column(75, c =>
+                    r.PercentColumn(75, c =>
                     {
                         c.Paragraph(titleRun, PdfAlign.Left, null, titleStyle);
                         if (subtitleRun is not null) c.Paragraph(subtitleRun, PdfAlign.Left, null, subtitleStyle);
                     });
-                    r.Column(25, c => c.Image(ctx.Logo!, box.w, box.h, PdfAlign.Right));
+                    r.PercentColumn(25, c => c.Image(ctx.Logo!, box.w, box.h, PdfAlign.Right));
                 });
             }
             // Full-width brand rule under the header (HR auto-fits the content width; a fixed-width
@@ -261,7 +266,7 @@ namespace CIPP.Reporting
             item.Spacer(8);
         }
 
-        private static void ApplyContentChrome(PdfPageCompose p, ReportContext ctx, string footerText, string watermark)
+        private static void ApplyContentChrome(PdfPageBuilder p, ReportContext ctx, string footerText, string watermark)
         {
             if (ctx.Theme.FooterShow || ctx.Theme.ShowPageNumbers)
             {

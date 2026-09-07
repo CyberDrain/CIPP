@@ -12,7 +12,7 @@ namespace CIPP.Reporting
 {
     /// <summary>
     /// The reusable component kit - the server port of reportPdfPrimitives.jsx. Every component takes the
-    /// <see cref="ReportContext"/> (theme/styles/variables) and the current OfficeIMO <see cref="PdfItemCompose"/>,
+    /// <see cref="ReportContext"/> (theme/styles/variables) and the current OfficeIMO <see cref="PdfContentBuilder"/>,
     /// and encapsulates all OfficeIMO calls. Reports compose these; no report inlines a raw OfficeIMO call.
     /// </summary>
     public static class ReportComponents
@@ -170,7 +170,7 @@ namespace CIPP.Reporting
         }
 
         // -- primitives --
-        public static void Heading(ReportContext ctx, PdfItemCompose item, int level, IReadOnlyList<TextRun> runs)
+        public static void Heading(ReportContext ctx, PdfContentBuilder item, int level, IReadOnlyList<TextRun> runs)
         {
             var text = RunsToPlain(runs);
             var colour = level switch { 1 => ReportColours.Ink, 2 => ctx.Theme.Palette["heading"], _ => ReportColours.Body };
@@ -200,7 +200,7 @@ namespace CIPP.Reporting
             Size = ReportStyles.Body, Colour = ctx.Theme.Palette["body"], Align = PdfAlign.Justify, LineHeight = 1.35, SpacingAfter = 6,
         };
 
-        public static void Paragraph(ReportContext ctx, PdfItemCompose item, IReadOnlyList<TextRun> runs, TextStyle? style = null)
+        public static void Paragraph(ReportContext ctx, PdfContentBuilder item, IReadOnlyList<TextRun> runs, TextStyle? style = null)
         {
             var st = style ?? BodyStyle(ctx);
             item.Paragraph(b => ApplyRuns(b, runs, st.Colour, st.Size), st.Align, null,
@@ -209,14 +209,14 @@ namespace CIPP.Reporting
 
         // Section title: 14pt bold heading colour (client styles.sectionTitle marginBottom 8, tightened to
         // 5 to offset OfficeIMO's looser leading around the heading).
-        public static void SectionTitle(ReportContext ctx, PdfItemCompose item, string title)
+        public static void SectionTitle(ReportContext ctx, PdfContentBuilder item, string title)
             => item.Paragraph(b => { b.FontSize(ReportStyles.SectionTitle); EmitInline(b, title, ctx.Theme.Palette["heading"], ReportStyles.SectionTitle, bold: true); },
                 PdfAlign.Left, null, new PdfParagraphStyle { LineHeight = 1.1, SpacingAfter = 5 });
 
         // A callout's list rendered as one paragraph, a line break between items (a panel ignores list
         // styling, so this matches the client's single-text-block callout bullets). `marker(i)` prefixes
         // each line (a bullet dot, or "N. " for numbered).
-        private static void BulletLines(ReportContext ctx, PdfItemCompose item, IReadOnlyList<string> items, TextStyle ts, Func<int, string> marker)
+        private static void BulletLines(ReportContext ctx, PdfContentBuilder item, IReadOnlyList<string> items, TextStyle ts, Func<int, string> marker)
         {
             if (items.Count == 0) return;
             item.Paragraph(b =>
@@ -231,13 +231,13 @@ namespace CIPP.Reporting
             }, PdfAlign.Left, null, new PdfParagraphStyle { LeftIndent = 12, SpacingAfter = ts.SpacingAfter, LineHeight = ts.LineHeight });
         }
 
-        public static void Bullets(ReportContext ctx, PdfItemCompose item, IEnumerable<string> items, double? size = null)
+        public static void Bullets(ReportContext ctx, PdfContentBuilder item, IEnumerable<string> items, double? size = null)
             => BulletParagraphs(ctx, item, new List<string>(items), size ?? ReportStyles.BulletText, _ => "•  ");
 
         // A bullet/numbered list drawn as one paragraph per item (marker + emoji-aware text) rather than
         // item.Bullets, so an emoji in a list item renders as an inline colour image. Marker in the heading
         // colour; matches the old ListStyle (indent 12, 4pt item spacing, 1.3 line height).
-        private static void BulletParagraphs(ReportContext ctx, PdfItemCompose item, IReadOnlyList<string> items, double size, Func<int, string> marker)
+        private static void BulletParagraphs(ReportContext ctx, PdfContentBuilder item, IReadOnlyList<string> items, double size, Func<int, string> marker)
         {
             var body = ctx.Theme.Palette["body"];
             var markerColour = ctx.Theme.Palette["heading"];
@@ -253,7 +253,7 @@ namespace CIPP.Reporting
             }
         }
 
-        public static void Numbered(ReportContext ctx, PdfItemCompose item, IEnumerable<string> items, int start, double? size = null)
+        public static void Numbered(ReportContext ctx, PdfContentBuilder item, IEnumerable<string> items, int start, double? size = null)
             => BulletParagraphs(ctx, item, new List<string>(items), size ?? ReportStyles.BulletText, i => (start + i) + ".  ");
 
         // The branded cover, drawn as a page-sized OfficeDrawing over an optional full-bleed cover photo
@@ -261,7 +261,7 @@ namespace CIPP.Reporting
         // and tenant vertically placed, and the confidential note at the bottom. A drawing lets the chip
         // be a real rounded pill and the confidential note sit at the page foot - neither is possible in
         // the plain content flow.
-        public static void RenderCoverDrawing(ReportContext ctx, PdfItemCompose item)
+        public static void RenderCoverDrawing(ReportContext ctx, PdfContentBuilder item)
         {
             var w = ctx.ContentWidth - 2;
             var h = ctx.ContentHeight;
@@ -362,7 +362,7 @@ namespace CIPP.Reporting
         // headline/subtext block, vertically centred and left-aligned, with the footer note bottom-right.
         // Drawn as one page-sized OfficeDrawing (transparent) over the section's background image, because
         // flow layout can neither vertically centre nor pin the footer to the bottom-right corner.
-        public static void RenderHeroDrawing(ReportContext ctx, PdfItemCompose item, ReportNode block)
+        public static void RenderHeroDrawing(ReportContext ctx, PdfContentBuilder item, ReportNode block)
         {
             var w = ctx.ContentWidth - 2;
             var h = ctx.ContentHeight;
@@ -397,7 +397,7 @@ namespace CIPP.Reporting
 
         /// <summary>Rich bullets (client BulletList with {label, text}): an orange marker, a bold label, then
         /// body text - each an item.Paragraph with per-run colour so the marker and label differ from the text.</summary>
-        public static void RichBullets(ReportContext ctx, PdfItemCompose item, List<object?> items)
+        public static void RichBullets(ReportContext ctx, PdfContentBuilder item, List<object?> items)
         {
             foreach (var it in items)
             {
@@ -444,7 +444,7 @@ namespace CIPP.Reporting
             return list;
         }
 
-        public static void Table(ReportContext ctx, PdfItemCompose item, IEnumerable<string[]> rows)
+        public static void Table(ReportContext ctx, PdfContentBuilder item, IEnumerable<string[]> rows)
             => item.Table(UpperHeader(rows), PdfAlign.Left, BrandedTableStyle(ctx));
 
         // Shared status vocabulary (client STATUS_TONES): a status word coloured by tone.
@@ -466,7 +466,7 @@ namespace CIPP.Reporting
         /// field (Compliant=green, Review=red, ...); a <c>bold</c> column draws its value bold. Header band
         /// in the brand table colour, uppercase; striped body rows; rows beyond <c>limit</c> drop to a note.
         /// </summary>
-        public static void RichTable(ReportContext ctx, PdfItemCompose item, List<object?> columns, List<object?> rows, int limit)
+        public static void RichTable(ReportContext ctx, PdfContentBuilder item, List<object?> columns, List<object?> rows, int limit)
         {
             if (columns.Count == 0) return;
             var widths = new List<double>();
@@ -526,7 +526,7 @@ namespace CIPP.Reporting
                 Note(ctx, item, $"... and {hidden} more. Export the table from the report page for the full list.");
         }
 
-        public static void Code(ReportContext ctx, PdfItemCompose item, string text)
+        public static void Code(ReportContext ctx, PdfContentBuilder item, string text)
             => item.Paragraph(b =>
             {
                 b.Font(PdfStandardFont.Courier).FontSize(CodeParagraphSize).Color(Pdf(ReportColours.Body));
@@ -534,11 +534,11 @@ namespace CIPP.Reporting
                 for (var i = 0; i < lines.Length; i++) { if (i > 0) b.LineBreak(); b.Text(lines[i]); }
             });
 
-        public static void Hr(ReportContext ctx, PdfItemCompose item) => item.HR();
+        public static void Hr(ReportContext ctx, PdfContentBuilder item) => item.HR();
 
         // A small italic aside after a truncated list (client styles.truncationNote): 8pt faint italic,
         // indented to the table's inner padding.
-        public static void Note(ReportContext ctx, PdfItemCompose item, string text)
+        public static void Note(ReportContext ctx, PdfContentBuilder item, string text)
             => item.Paragraph(b => { b.Italic(true).FontSize(ReportStyles.TableCell); EmitInline(b, text, ReportColours.Faint, ReportStyles.TableCell); },
                 PdfAlign.Left, null, new PdfParagraphStyle { LeftIndent = 12, SpacingAfter = 4 });
 
@@ -553,6 +553,7 @@ namespace CIPP.Reporting
         private const double CalloutPadY = 12;      // fallback vertical cell padding
         private const double CalloutPadTop = 11;    // top padding (client padding 12, less the cell's own top leading)
         private const double CalloutPadBottom = 10; // bottom padding (client 12; the cell's line descent already adds space)
+        private const double CardCornerRadius = 6; // rounded corners on callout boxes and stat cards (client border-radius)
         private const double CalloutGap = 12;    // space after an InfoBox/ClearBox (client infoBox marginBottom 12)
         private const double AlertGap = 16;      // space after an AlertBox (client alertBox marginBottom 16)
         private const double SectionGap = 12;    // space before a new section's heading (client section marginBottom 12)
@@ -735,6 +736,7 @@ namespace CIPP.Reporting
                 HeaderRowCount = 0,
                 BorderColor = Pdf(borderHex),
                 BorderWidth = borderWidth,
+                CornerRadius = CardCornerRadius,  // softly rounded box; stripe/border are clipped to the rounded corners
                 RowSeparatorWidth = 0,
                 CellPaddingX = CalloutPadX,
                 CellPaddingY = CalloutPadY,
@@ -759,7 +761,7 @@ namespace CIPP.Reporting
         /// the background and title; `colour` recolours the stripe (and the title when tintTitle). `content`
         /// is markdown, or line-broken label/value text when `lines`.
         /// </summary>
-        public static void InfoBox(ReportContext ctx, PdfItemCompose item, string? title, string? tone,
+        public static void InfoBox(ReportContext ctx, PdfContentBuilder item, string? title, string? tone,
             string? colour, bool tintTitle, string content, bool lines = false)
         {
             var (accent, bg, titleColour) = InfoBoxColours(ctx, tone, colour, tintTitle);
@@ -784,7 +786,7 @@ namespace CIPP.Reporting
         }
 
         /// <summary>A warning callout: red-tinted background with a full accent-coloured border (client AlertBox).</summary>
-        public static void AlertBox(ReportContext ctx, PdfItemCompose item, string? title, string? colour, string content, bool lines = false)
+        public static void AlertBox(ReportContext ctx, PdfContentBuilder item, string? title, string? colour, string content, bool lines = false)
         {
             var accent = string.IsNullOrEmpty(colour) ? ctx.Theme.Palette["card"] : colour!;
             var body = CalloutBodyRuns(ctx, content, lines, ReportStyles.AlertText, ctx.Theme.Palette["body"]);
@@ -793,12 +795,12 @@ namespace CIPP.Reporting
         }
 
         /// <summary>The all-clear counterpart to AlertBox - a green InfoBox for a check that found nothing.</summary>
-        public static void ClearBox(ReportContext ctx, PdfItemCompose item, string? title, string content, bool lines = false)
+        public static void ClearBox(ReportContext ctx, PdfContentBuilder item, string? title, string content, bool lines = false)
             => InfoBox(ctx, item, title, "ok", null, false, content, lines);
 
         // Body copy stepped in under a heading (client Paragraph indent: marginLeft 12, marginTop 8). Used
         // for the BEC summary lines that introduce a check's detail callouts.
-        public static void IndentedParagraph(ReportContext ctx, PdfItemCompose item, string text)
+        public static void IndentedParagraph(ReportContext ctx, PdfContentBuilder item, string text)
         {
             item.Spacer(4);
             var body = ctx.Theme.Palette["body"];
@@ -833,7 +835,7 @@ namespace CIPP.Reporting
         /// risk-level pairs). Each item is a node with title/content/tone/colour/tintTitle. Short final rows
         /// are padded so columns keep their width.
         /// </summary>
-        public static void InfoBoxColumns(ReportContext ctx, PdfItemCompose item, List<object?> items, int cols)
+        public static void InfoBoxColumns(ReportContext ctx, PdfContentBuilder item, List<object?> items, int cols)
         {
             if (items.Count == 0) return;
             if (cols < 1) cols = 1;
@@ -845,18 +847,18 @@ namespace CIPP.Reporting
                 {
                     r.Gap(10);
                     foreach (var node in slice)
-                        r.Column(width, col => InfoBoxCol(ctx, col,
+                        r.PercentColumn(width, col => InfoBoxCol(ctx, col,
                             ReportNode.RowStr(node, "title"), ReportNode.RowStr(node, "tone"),
                             ReportNode.RowStr(node, "colour"), RowBool(node, "tintTitle"),
                             ReportNode.RowStr(node, "content") ?? string.Empty));
-                    for (var k = slice.Count; k < cols; k++) r.Column(width, _ => { });
+                    for (var k = slice.Count; k < cols; k++) r.PercentColumn(width, _ => { });
                 });
                 item.Spacer(CalloutGap);
             }
         }
 
         // One InfoBox rendered inside a row column, as the same single-cell table used full width.
-        private static void InfoBoxCol(ReportContext ctx, PdfRowColumnCompose col, string? title, string? tone,
+        private static void InfoBoxCol(ReportContext ctx, PdfContentBuilder col, string? title, string? tone,
             string? colour, bool tintTitle, string content)
         {
             var (accent, bg, titleColour) = InfoBoxColours(ctx, tone, colour, tintTitle);
@@ -876,7 +878,7 @@ namespace CIPP.Reporting
         // panel inside a row column left-aligns its text regardless of alignment, whereas a table cell
         // honours Alignments.Center - so the number and label sit centred like the client statCard. The
         // gaps between cards come from the row gap; the brand accent is the card's top border.
-        public static void StatRow(ReportContext ctx, PdfItemCompose item, List<object?> stats)
+        public static void StatRow(ReportContext ctx, PdfContentBuilder item, List<object?> stats)
         {
             if (stats.Count == 0) return;
             var accent = ctx.Theme.Palette["card"];
@@ -894,13 +896,13 @@ namespace CIPP.Reporting
                     var label = (ReportNode.RowStr(s, "label") ?? string.Empty).ToUpperInvariant();
                     var caption = ReportNode.RowStr(s, "caption");
                     var colour = ReportNode.RowStr(s, "colour") ?? accent;
-                    r.Column(width, col => StatCard(ctx, col, value, label, caption, colour, accent, reserveCaption));
+                    r.PercentColumn(width, col => StatCard(ctx, col, value, label, caption, colour, accent, reserveCaption));
                 }
             });
             item.Spacer(8);
         }
 
-        private static void StatCard(ReportContext ctx, PdfRowColumnCompose col, string value, string label, string? caption, string colour, string accent, bool reserveCaption = false)
+        private static void StatCard(ReportContext ctx, PdfContentBuilder col, string value, string label, string? caption, string colour, string accent, bool reserveCaption = false)
         {
             // One cell, the number over the label as separate runs split by a line break, so there is no
             // internal row divider - just the outer card border and its brand top accent.
@@ -929,6 +931,7 @@ namespace CIPP.Reporting
                 HeaderRowCount = 0,
                 BorderColor = Pdf(ReportColours.Line),
                 BorderWidth = 1,
+                CornerRadius = CardCornerRadius,  // softly rounded card; top accent bar is clipped to the rounded corners
                 RowSeparatorWidth = 0,
                 CellPaddingX = 6,
                 CellPaddingY = 8,
@@ -951,7 +954,7 @@ namespace CIPP.Reporting
         // Labelled progress bars (client ProgressList): each item is its own bordered row box holding a
         // bold label, a data bar over a grey track, and a bold value. One 1-row table per item gives the
         // per-row border and lets the label/value be bold via cell runs; the row gap comes from a spacer.
-        public static void Progress(ReportContext ctx, PdfItemCompose item, List<object?> items)
+        public static void Progress(ReportContext ctx, PdfContentBuilder item, List<object?> items)
         {
             if (items.Count == 0) return;
             for (var i = 0; i < items.Count; i++)
@@ -1020,7 +1023,7 @@ namespace CIPP.Reporting
                 new OfficeFontInfo("Helvetica", size, bold ? OfficeFontStyle.Bold : OfficeFontStyle.Regular),
                 OC(colourHex), align, lineHeight: null, wrapText: wrap);
 
-        public static void Chart(ReportContext ctx, PdfItemCompose item, string? kind, List<object?> data,
+        public static void Chart(ReportContext ctx, PdfContentBuilder item, string? kind, List<object?> data,
             string? title = null, string? caption = null, double? max = null, string? centreLabel = null)
         {
             var k = (kind ?? "bar").ToLowerInvariant();
@@ -1248,12 +1251,12 @@ namespace CIPP.Reporting
         // -- dispatch --
         /// <summary>Render a list of component/primitive nodes into the current item flow. An optional text
         /// style flows into paragraph nodes so a callout renders its body at the callout size, not body copy.</summary>
-        public static void RenderNodes(ReportContext ctx, PdfItemCompose item, IEnumerable<ReportNode> nodes, TextStyle? textStyle = null)
+        public static void RenderNodes(ReportContext ctx, PdfContentBuilder item, IEnumerable<ReportNode> nodes, TextStyle? textStyle = null)
         {
             foreach (var node in nodes) RenderNode(ctx, item, node, textStyle);
         }
 
-        private static void RenderNode(ReportContext ctx, PdfItemCompose item, ReportNode node, TextStyle? textStyle = null)
+        private static void RenderNode(ReportContext ctx, PdfContentBuilder item, ReportNode node, TextStyle? textStyle = null)
         {
             switch (node.Type)
             {
@@ -1296,7 +1299,7 @@ namespace CIPP.Reporting
             }
         }
 
-        private static void RenderTableNode(ReportContext ctx, PdfItemCompose item, ReportNode node)
+        private static void RenderTableNode(ReportContext ctx, PdfContentBuilder item, ReportNode node)
         {
             var rows = node.Get<List<string[]>>("rows");
             if (rows is { Count: > 0 }) item.Table(UpperHeader(rows), PdfAlign.Left, BrandedTableStyle(ctx));
@@ -1318,7 +1321,7 @@ namespace CIPP.Reporting
         private static double? ParseNumber(string? text)
             => double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : null;
 
-        public static void RenderBlock(ReportContext ctx, PdfItemCompose item, ReportNode block, bool firstOnPage = false)
+        public static void RenderBlock(ReportContext ctx, PdfContentBuilder item, ReportNode block, bool firstOnPage = false)
         {
             var content = block.Str("content") ?? string.Empty;
 

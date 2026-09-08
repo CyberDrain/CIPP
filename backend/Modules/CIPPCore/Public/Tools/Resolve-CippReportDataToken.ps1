@@ -256,19 +256,27 @@ function Resolve-CippReportDataToken {
             }
         }
 
-        # A sankey (flow diagram) drawn from the data. Two shapes:
-        #   flow     - an ordered list of categorical fields; each adjacent pair (a, b) becomes a link
-        #              a -> b weighted by the number of rows (or the sum of valueField). >2 fields make
-        #              a multi-column flow. Node ids are namespaced by field so a value shared between
-        #              two columns does not fold into one node (which would break the layering).
+        # A sankey (flow diagram) drawn from the data. Three shapes:
+        #   preset   - a faithful server-side port of a dashboard sankey (MFA coverage, auth methods,
+        #              licence allocation, device compliance); Get-CippReportSankeyData does the exact
+        #              per-sankey computation the dashboard card does, so the report matches the dashboard.
         #   measures - one category field on the left, plus numeric measure fields, each a right-hand
-        #              node; every row adds category -> measureLabel weighted by that field. (The licence
-        #              assigned/available shape - one row, several numeric columns.)
+        #              node; every row adds category -> measureLabel weighted by that field.
+        #   flow     - an ordered list of categorical fields; each adjacent pair (a, b) becomes a link
+        #              a -> b weighted by the number of rows (or the sum of valueField). Node ids are
+        #              namespaced by stage so a value shared between two columns does not fold/cycle.
         if ($Type -eq 'sankey' -and $Block.sankeySource) {
             $Sankey = $Block.sankeySource
             $CollectionType = "$($Sankey.type)"
             $Rows = if ($CollectionType) { & $RowsOf $CollectionType }
-            if ($null -ne $Rows) {
+            if ($null -ne $Rows -and $Sankey.preset) {
+                # Faithful dashboard sankey - the ported card logic owns the whole {nodes, links}.
+                $Built = try { Get-CippReportSankeyData -Preset "$($Sankey.preset)" -Rows @($Rows) } catch { $null }
+                if ($Built -and @($Built.links).Count -gt 0) {
+                    & $SetProperty $Block 'nodes' @($Built.nodes)
+                    & $SetProperty $Block 'links' @($Built.links)
+                }
+            } elseif ($null -ne $Rows) {
                 $SankeyFilter = $Sankey.filter
                 if ($SankeyFilter -and $SankeyFilter.field -and $SankeyFilter.op) {
                     $Rows = @($Rows | Where-Object { & $RowMatches $_ "$($SankeyFilter.field)" "$($SankeyFilter.op)" "$($SankeyFilter.value)" })
@@ -320,49 +328,22 @@ function Resolve-CippReportDataToken {
                         }
                     }
                 } else {
-                    # flow: an ordered list of stage specs. Each stage is either a plain field name (a node
-                    # per distinct value), a constant node { const, colour } that every row shares, or a
-                    # derived bucket { derive: [ { when: [ {field, op, value}, ... ], label, colour }, ...,
-                    # { label } ] } - the first rule whose conditions ALL match wins, and a rule with no
-                    # `when` is the default. Conditions use the same matcher as filters ('=' with '*'
-                    # wildcards, '!='), so a derived stage buckets rows generically with no per-report code
-                    # (e.g. an MFA coverage flow: registered/not, then how it is enforced).
-                    $FieldSpecs = @($Sankey.fields)
+                    # flow: an ordered list of categorical fields; adjacent pairs become links. Node ids are
+                    # namespaced by stage index so the same value in two columns stays two nodes.
+                    $Fields = @($Sankey.fields | Where-Object { $_ } | ForEach-Object { "$_" })
                     $ValueField = if ($Sankey.valueField) { "$($Sankey.valueField)" }
-                    $StageOf = {
-                        param($Row, $Spec)
-                        if ($Spec -is [string]) {
-                            $Value = @(& $ValueOf $Row $Spec | ForEach-Object { "$_" }) | Select-Object -First 1
-                            return @{ label = $(if ($Value) { $Value } else { '(blank)' }); colour = $null }
-                        }
-                        if ($Spec.const) { return @{ label = "$($Spec.const)"; colour = "$($Spec.colour)" } }
-                        if ($Spec.derive) {
-                            foreach ($Rule in @($Spec.derive)) {
-                                $Matched = $true
-                                foreach ($Cond in @($Rule.when)) {
-                                    if ($Cond -and $Cond.field -and -not (& $RowMatches $Row "$($Cond.field)" $(if ($Cond.op) { "$($Cond.op)" } else { '=' }) "$($Cond.value)")) {
-                                        $Matched = $false; break
-                                    }
-                                }
-                                if ($Matched) { return @{ label = "$($Rule.label)"; colour = "$($Rule.colour)" } }
-                            }
-                        }
-                        return $null
-                    }
-                    if ($FieldSpecs.Count -ge 2) {
+                    if ($Fields.Count -ge 2) {
                         foreach ($Row in $Rows) {
                             $Weight = if ($ValueField) {
                                 @(& $ValueOf $Row $ValueField | ForEach-Object { $_ -as [double] } | Where-Object { $null -ne $_ }) | Select-Object -First 1
                             } else { 1 }
                             if ($null -eq $Weight -or $Weight -le 0) { continue }
-                            $Incomplete = $false
-                            $Stages = @(for ($si = 0; $si -lt $FieldSpecs.Count; $si++) {
-                                    $Stage = & $StageOf $Row $FieldSpecs[$si]
-                                    if ($null -eq $Stage -or [string]::IsNullOrEmpty("$($Stage.label)")) { $Incomplete = $true; break }
-                                    [pscustomobject]@{ Id = ('{0}:{1}' -f $si, $Stage.label); Label = "$($Stage.label)"; Colour = "$($Stage.colour)" }
+                            $Stages = @(for ($si = 0; $si -lt $Fields.Count; $si++) {
+                                    $Value = @(& $ValueOf $Row $Fields[$si] | ForEach-Object { "$_" }) | Select-Object -First 1
+                                    if (-not $Value) { $Value = '(blank)' }
+                                    [pscustomobject]@{ Id = ('{0}:{1}' -f $si, $Value); Label = "$Value" }
                                 })
-                            if ($Incomplete) { continue }
-                            foreach ($Stage in $Stages) { & $AddNode $Stage.Id $Stage.Label $Stage.Colour }
+                            foreach ($Stage in $Stages) { & $AddNode $Stage.Id $Stage.Label $null }
                             for ($i = 0; $i -lt $Stages.Count - 1; $i++) { & $AddLink $Stages[$i].Id $Stages[$i + 1].Id ([double]$Weight) }
                         }
                     }

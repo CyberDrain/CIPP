@@ -53,6 +53,7 @@ export const PRESET_TOPICS = [
     variants: [
       { label: 'Registration (donut)', preset: 'mfaregistration' },
       { label: 'Coverage flow (Sankey)', preset: 'mfaflow' },
+      { label: 'Auth methods (Sankey)', preset: 'authmethods' },
     ],
   },
   { label: 'Conditional Access', value: 'ca', variants: [{ label: 'By state (donut)', preset: 'castate' }] },
@@ -66,15 +67,6 @@ export const PRESET_TOPICS = [
     ],
   },
   { label: 'Users', value: 'users', variants: [{ label: 'By type (donut)', preset: 'usertype' }] },
-  {
-    label: 'Compliance tests',
-    value: 'tests',
-    variants: [
-      { label: 'By result (donut)', preset: 'testsresult' },
-      { label: 'By category (donut)', preset: 'testscategory' },
-      { label: 'Category to result (flow)', preset: 'testsflow' },
-    ],
-  },
 ]
 
 /**
@@ -288,116 +280,40 @@ export const BLOCK_PRESETS = {
     chartCentreLabel: 'Users',
     chartMax: '',
   }),
-  // Assigned vs available seats per licence, as a flow (the dashboard LicenseSankey). Measures mode:
-  // one row per SKU with two numeric columns fanning out to Assigned / Available nodes.
+  // Faithful ports of the dashboard sankeys - the server (Get-CippReportSankeyData) runs the exact
+  // computation the dashboard card does, so the report matches the dashboard. `preset` names which one.
+  // The dashboard LicenseCard: the top-5 licences by total, each fanning out to its own assigned/available.
   licenseflow: () => ({
     type: 'sankey',
     static: true,
-    title: 'Licence flow',
-    chartCaption: 'Assigned vs available seats per licence',
-    sankeySource: {
-      type: 'LicenseOverview',
-      mode: 'measures',
-      field: 'License',
-      valueField: null,
-      fields: [],
-      filter: null,
-      limit: 6,
-      measures: [
-        { field: 'CountUsed', label: 'Assigned', colour: 'hsl(99, 70%, 45%)' },
-        { field: 'CountAvailable', label: 'Available', colour: 'hsl(28, 100%, 53%)' },
-      ],
-    },
+    title: 'Licence allocation',
+    chartCaption: 'Top licences: assigned vs available seats',
+    sankeySource: { type: 'LicenseOverview', preset: 'licenseAllocation' },
   }),
-  // The dashboard MFACard flow, built generically from derived stages (no MFA-specific server code):
-  // enabled users -> registered / not registered -> how MFA is enforced. Each derived stage is an
-  // ordered rule list, first match wins; a rule with no `when` is the default. Reproduces the
-  // dashboard's buckets and colours exactly.
+  // The dashboard MFACard: enabled users -> registered / not registered -> how MFA is enforced.
   mfaflow: () => ({
     type: 'sankey',
     static: true,
     title: 'User authentication',
     chartCaption: 'Enabled users: MFA registration and how it is enforced',
-    sankeySource: {
-      type: 'MFAState',
-      mode: 'flow',
-      valueField: null,
-      field: null,
-      measures: [],
-      filter: { field: 'AccountEnabled', op: '=', value: 'true' },
-      fields: [
-        { const: 'Enabled users', colour: 'hsl(28, 100%, 53%)' },
-        {
-          derive: [
-            { when: [{ field: 'MFARegistration', op: '=', value: 'true' }], label: 'MFA registered', colour: 'hsl(99, 70%, 50%)' },
-            { when: [{ field: 'PerUser', op: '=', value: 'enabled' }], label: 'MFA registered', colour: 'hsl(99, 70%, 50%)' },
-            { when: [{ field: 'PerUser', op: '=', value: 'enforced' }], label: 'MFA registered', colour: 'hsl(99, 70%, 50%)' },
-            { label: 'Not registered', colour: 'hsl(39, 100%, 50%)' },
-          ],
-        },
-        {
-          derive: [
-            { when: [{ field: 'PerUser', op: '=', value: 'enabled' }], label: 'Per-user MFA', colour: 'hsl(200, 70%, 50%)' },
-            { when: [{ field: 'PerUser', op: '=', value: 'enforced' }], label: 'Per-user MFA', colour: 'hsl(200, 70%, 50%)' },
-            { when: [{ field: 'CoveredByCA', op: '=', value: 'Enforced*' }], label: 'CA policy', colour: 'hsl(99, 70%, 50%)' },
-            { when: [{ field: 'CoveredBySD', op: '=', value: 'true' }], label: 'Security defaults', colour: 'hsl(140, 70%, 50%)' },
-            { label: 'No enforcement', colour: 'hsl(0, 100%, 50%)' },
-          ],
-        },
-      ],
-    },
+    sankeySource: { type: 'MFAState', preset: 'mfaCoverage' },
   }),
-  // Compliance test results (the CippTestResults data source, not a reporting collection).
-  testsresult: () => ({
-    type: 'chart',
-    static: true,
-    title: 'Compliance tests by result',
-    chartKind: 'donut',
-    chartSource: source('TestResults', { field: 'Status' }),
-    chartCaption: 'In-app compliance test results',
-    chartCentreLabel: 'Tests',
-    chartMax: '',
-  }),
-  testscategory: () => ({
-    type: 'chart',
-    static: true,
-    title: 'Compliance tests by category',
-    chartKind: 'donut',
-    chartSource: source('TestResults', { field: 'Category' }),
-    chartCaption: 'In-app compliance test results',
-    chartCentreLabel: 'Tests',
-    chartMax: '',
-  }),
-  testsflow: () => ({
+  // The dashboard AuthMethodCard: users by factor class (single / multi / phishable / phish-resistant)
+  // and the method breakdown beneath.
+  authmethods: () => ({
     type: 'sankey',
     static: true,
-    title: 'Compliance tests: category to result',
-    chartCaption: 'In-app compliance test results',
-    sankeySource: {
-      type: 'TestResults',
-      mode: 'flow',
-      fields: ['Category', 'Status'],
-      valueField: null,
-      field: null,
-      measures: [],
-      filter: null,
-    },
+    title: 'All users auth methods',
+    chartCaption: 'Enabled users by authentication strength',
+    sankeySource: { type: 'MFAState', preset: 'authMethods' },
   }),
-  // Managed devices flowing operating system -> compliance state.
+  // Managed devices -> operating system -> compliance state (server-computed, faithful to the dashboard).
   devicecomplianceflow: () => ({
     type: 'sankey',
     static: true,
-    title: 'Device compliance flow',
-    chartCaption: 'Managed devices: operating system to compliance state',
-    sankeySource: {
-      type: 'ManagedDevices',
-      mode: 'flow',
-      fields: ['operatingSystem', 'complianceState'],
-      valueField: null,
-      field: null,
-      measures: [],
-      filter: null,
-    },
+    title: 'Device compliance',
+    chartCaption: 'Managed devices by operating system and compliance state',
+    sankeySource: { type: 'ManagedDevices', preset: 'deviceCompliance' },
   }),
 }
 
@@ -1038,9 +954,6 @@ const SankeySourcePicker = ({ value, onChange, dataShape = [] }) => {
     name ? (fields.find((f) => f.value === name) ?? { label: name, value: name }) : null
   const patch = (next) => onChange({ ...EMPTY_SANKEY_SOURCE, ...source, ...next })
   const stages = source.fields ?? []
-  // Derived/constant stages (e.g. the MFA coverage preset) are objects, not plain field names; the
-  // simple stage pickers can't represent them, so the editor shows a note for those instead.
-  const hasAdvancedStages = stages.some((stage) => stage && typeof stage === 'object')
   const setStage = (position, name) => {
     const next = [...stages]
     if (name) next[position] = name
@@ -1048,6 +961,24 @@ const SankeySourcePicker = ({ value, onChange, dataShape = [] }) => {
     patch({ fields: next.filter(Boolean) })
   }
   const filter = source.filter ?? null
+
+  // A pre-built dashboard sankey (`preset`) is computed faithfully on the server from fixed card logic,
+  // so there are no fields to edit here - show a note with an escape hatch to a custom flow.
+  if (source.preset) {
+    return (
+      <Stack spacing={1}>
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          Built-in dashboard layout ({source.preset}) from {source.type}. It matches the dashboard and is
+          not edited here.
+        </Typography>
+        <Box>
+          <ToggleButton size="small" value="reset" onClick={() => onChange(EMPTY_SANKEY_SOURCE)}>
+            Switch to a custom flow
+          </ToggleButton>
+        </Box>
+      </Stack>
+    )
+  }
 
   return (
     <Stack spacing={1}>
@@ -1082,24 +1013,7 @@ const SankeySourcePicker = ({ value, onChange, dataShape = [] }) => {
         </ToggleButtonGroup>
       </Stack>
 
-      {source.type && mode === 'flow' && hasAdvancedStages ? (
-        <Stack spacing={1}>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            This flow uses advanced derived stages (e.g. the pre-built MFA coverage layout, which buckets
-            users into registered/not and how MFA is enforced). It renders as designed but is not editable
-            here.
-          </Typography>
-          <Box>
-            <ToggleButton
-              size="small"
-              value="reset"
-              onClick={() => patch({ fields: [] })}
-            >
-              Replace with simple fields
-            </ToggleButton>
-          </Box>
-        </Stack>
-      ) : source.type && mode === 'flow' ? (
+      {source.type && mode === 'flow' ? (
         <Stack direction="row" spacing={1}>
           {[0, 1, 2].map((position) => (
             <Box key={position} sx={{ flex: 1 }}>

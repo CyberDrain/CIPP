@@ -1305,8 +1305,8 @@ namespace CIPP.Reporting
         }
 
         // -- sankey (the dashboard CippSankey / nivo flow diagram) --
-        // A sankey is a layered DAG: nodes fall into columns (the longest path from a source, with sinks
-        // pushed to the last column - nivo align="justify"), a node's height is proportional to the flow
+        // A sankey is a layered DAG: nodes fall into columns by the longest path from a source (a node is
+        // one column right of everything that flows into it), a node's height is proportional to the flow
         // through it, and links are ribbons whose thickness carries the value. Same OfficeDrawing canvas as
         // the other charts (top-left origin, y down) so the geometry mirrors d3-sankey directly.
         private sealed class SankeyNode
@@ -1399,13 +1399,15 @@ namespace CIPP.Reporting
             if (all.Count == 0) return all;
             foreach (var n in all) n.Value = Math.Max(n.Out.Sum(l => l.Value), n.In.Sum(l => l.Value));
 
-            // Column (depth) = longest path from a source; then sinks jump to the last column (justify).
+            // Column (depth) = longest path from a source, so a node sits one column right of every node
+            // that flows into it. Leaf nodes stay at their natural depth (NOT justified to the last
+            // column) - otherwise a stage-1 terminal like "Single factor" jumps to the output column and
+            // its users appear to skip the middle stage instead of flowing through it.
             for (var i = 0; i < all.Count; i++)
                 foreach (var n in all)
                     foreach (var l in n.Out)
                         if (l.Tgt.Depth < n.Depth + 1) l.Tgt.Depth = n.Depth + 1;
             var columnCount = all.Max(n => n.Depth) + 1;
-            foreach (var n in all) if (n.Out.Count == 0) n.Depth = columnCount - 1;
 
             var columns = Enumerable.Range(0, columnCount)
                 .Select(d => all.Where(n => n.Depth == d).OrderBy(n => sequence[n.Id]).ToList())

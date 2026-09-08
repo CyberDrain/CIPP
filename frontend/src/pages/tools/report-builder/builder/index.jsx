@@ -86,10 +86,12 @@ import {
 import {
   BLOCK_CATEGORIES,
   StructuredBlockCard,
+  TEST_RESULTS_SHAPE,
   blockTypesFor,
   createStructuredBlock,
   createPresetBlocks,
-  isPreset,
+  isPresetTopic,
+  presetVariantsFor,
   isStructuredBlock,
 } from '../../../../components/ReportBuilder/ReportBuilderBlocks'
 import { PAGE_ORIENTATIONS, PAGE_SIZES } from '../../../../components/CippPdf'
@@ -1021,6 +1023,7 @@ const Page = () => {
     defaultValues: {
       blockCategory: null,
       blockType: null,
+      presetVariant: null,
       testSuite: null,
       selectedTest: [],
       dbCacheType: null,
@@ -1050,6 +1053,11 @@ const Page = () => {
     control: addBlockForm.control,
     name: 'blockType',
   })
+  // The pre-built topic's chart-type variants; a third picker step appears when a topic offers more
+  // than one (e.g. Licences: bar, table or flow).
+  const presetVariantOptions = isPresetTopic(watchBlockType?.value)
+    ? presetVariantsFor(watchBlockType.value)
+    : []
   const watchTestSuite = useWatch({
     control: addBlockForm.control,
     name: 'testSuite',
@@ -1089,11 +1097,14 @@ const Page = () => {
   })
   const dataShape = useMemo(() => {
     const shapes = dataShapeApi.data?.Results
-    return (Array.isArray(shapes) ? shapes : []).map((shape) => ({
+    const reporting = (Array.isArray(shapes) ? shapes : []).map((shape) => ({
       type: shape.Type,
       count: shape.Count,
       fields: Array.isArray(shape.Fields) ? shape.Fields : [],
     }))
+    // The in-app compliance test results are offered as a data source alongside the reporting
+    // collections, so charts/tables/flows can be driven by test data too.
+    return [TEST_RESULTS_SHAPE, ...reporting]
   }, [dataShapeApi.data])
 
   const availableCacheTypes = useMemo(() => {
@@ -1124,6 +1135,10 @@ const Page = () => {
       shouldValidate: false,
     })
     addBlockForm.setValue('dbFormat', null, {
+      shouldDirty: false,
+      shouldValidate: false,
+    })
+    addBlockForm.setValue('presetVariant', null, {
       shouldDirty: false,
       shouldValidate: false,
     })
@@ -1433,12 +1448,18 @@ const Page = () => {
     const type = addBlockForm.getValues('blockType')
     if (!type) return
 
-    if (isPreset(type.value)) {
-      const made = createPresetBlocks(type.value, `block-${Date.now()}`)
+    if (isPresetTopic(type.value)) {
+      // The chosen chart-type variant, or the topic's only one when it has a single visual.
+      const variants = presetVariantsFor(type.value)
+      const chosen = addBlockForm.getValues('presetVariant')
+      const presetKey = chosen?.value || variants[0]?.value
+      if (!presetKey) return
+      const made = createPresetBlocks(`preset:${presetKey}`, `block-${Date.now()}`)
       if (made.length) setBlocks((prev) => [...prev, ...made])
       addBlockForm.reset({
         blockCategory: addBlockForm.getValues('blockCategory'),
         blockType: null,
+        presetVariant: null,
         testSuite: null,
         selectedTest: [],
         dbCacheType: null,
@@ -1899,6 +1920,19 @@ const Page = () => {
                     options={blockTypesFor(watchBlockCategory?.value)}
                   />
                 </Grid>
+                {presetVariantOptions.length > 1 ? (
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <CippFormComponent
+                      type="autoComplete"
+                      name="presetVariant"
+                      label="Chart type"
+                      formControl={addBlockForm}
+                      multiple={false}
+                      creatable={false}
+                      options={presetVariantOptions}
+                    />
+                  </Grid>
+                ) : null}
                 <CippFormCondition
                   field="blockType"
                   compareType="valueEq"

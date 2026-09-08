@@ -31,6 +31,53 @@ const DATA_TOKEN_HINT =
   '&Devices.complianceState=compliant& counts the rows that match, &Mailboxes.TotalItemSize:sum& adds a field up.'
 
 /**
+ * Pre-built components grouped by topic. The picker offers the topic (Licences, MFA, Devices...) as
+ * the second step and, when a topic has more than one visual, the chart type as a third step, so a
+ * consistent naming scheme (topic then chart type) replaces a long flat list. Each variant's `preset`
+ * is a key in BLOCK_PRESETS below.
+ */
+export const PRESET_TOPICS = [
+  { label: 'Secure Score', value: 'securescore', variants: [{ label: 'Trend', preset: 'securescore' }] },
+  {
+    label: 'Licences',
+    value: 'licences',
+    variants: [
+      { label: 'Usage (bar)', preset: 'licenseusage' },
+      { label: 'Summary (table)', preset: 'licensetable' },
+      { label: 'Flow (Sankey)', preset: 'licenseflow' },
+    ],
+  },
+  {
+    label: 'MFA',
+    value: 'mfa',
+    variants: [
+      { label: 'Registration (donut)', preset: 'mfaregistration' },
+      { label: 'Coverage flow (Sankey)', preset: 'mfaflow' },
+    ],
+  },
+  { label: 'Conditional Access', value: 'ca', variants: [{ label: 'By state (donut)', preset: 'castate' }] },
+  {
+    label: 'Devices',
+    value: 'devices',
+    variants: [
+      { label: 'Compliance (donut)', preset: 'devicecompliance' },
+      { label: 'Compliance flow (Sankey)', preset: 'devicecomplianceflow' },
+      { label: 'By OS (donut)', preset: 'deviceos' },
+    ],
+  },
+  { label: 'Users', value: 'users', variants: [{ label: 'By type (donut)', preset: 'usertype' }] },
+  {
+    label: 'Compliance tests',
+    value: 'tests',
+    variants: [
+      { label: 'By result (donut)', preset: 'testsresult' },
+      { label: 'By category (donut)', preset: 'testscategory' },
+      { label: 'Category to result (flow)', preset: 'testsflow' },
+    ],
+  },
+]
+
+/**
  * Every block the builder can add, grouped the way the picker offers them: a category first, then
  * the block. One flat list of all of them is more than a dropdown reads well with. The text blocks
  * ('blank', 'test', 'database') keep their editors in the builder page; everything else is a
@@ -78,29 +125,48 @@ export const BLOCK_CATEGORIES = [
       { label: 'Page Break', value: 'pagebreak' },
     ],
   },
-  // Pre-built components: one click drops a block already wired to the right reporting-database
-  // collection, so the common dashboard visuals don't have to be assembled by hand every time. Each
-  // value is a 'preset:<key>' resolved by createPresetBlocks below; the block it produces is an
-  // ordinary block (a chart/table with its source set), so it edits, saves and renders like any other.
+  // Pre-built components: one click drops a block already wired to the right data source, so the
+  // common dashboard visuals aren't assembled by hand. The second step is the topic (below); when the
+  // topic has several visuals the builder adds a third step to pick the chart type. A topic value is
+  // 'topic:<key>' resolved via presetVariantsFor; each variant maps to a BLOCK_PRESETS factory.
   {
     label: 'Pre-built',
     value: 'presets',
-    blocks: [
-      // The chart type is in each label so that when several visuals cover the same data (e.g. licence
-      // usage as a bar, a table, or a flow) the picker shows which is which.
-      { label: 'Secure Score (trend)', value: 'preset:securescore' },
-      { label: 'Licence usage (bar)', value: 'preset:licenseusage' },
-      { label: 'Licence summary (table)', value: 'preset:licensetable' },
-      { label: 'Licence flow (Sankey)', value: 'preset:licenseflow' },
-      { label: 'MFA registration (donut)', value: 'preset:mfaregistration' },
-      { label: 'MFA coverage flow (Sankey)', value: 'preset:mfaflow' },
-      { label: 'Conditional Access (donut)', value: 'preset:castate' },
-      { label: 'Device compliance (donut)', value: 'preset:devicecompliance' },
-      { label: 'Device compliance flow (Sankey)', value: 'preset:devicecomplianceflow' },
-      { label: 'Devices by OS (donut)', value: 'preset:deviceos' },
-      { label: 'Users by type (donut)', value: 'preset:usertype' },
-    ],
+    blocks: PRESET_TOPICS.map((topic) => ({ label: topic.label, value: `topic:${topic.value}` })),
   },
+]
+
+export const isPresetTopic = (value) => typeof value === 'string' && value.startsWith('topic:')
+
+/** The chart-type variants a pre-built topic offers (the picker's third step). */
+export const presetVariantsFor = (topicValue) =>
+  (PRESET_TOPICS.find((topic) => `topic:${topic.value}` === topicValue)?.variants ?? []).map((variant) => ({
+    label: variant.label,
+    value: variant.preset,
+  }))
+
+// The in-app compliance test results as a data-source "collection", so a chart/table/flow can be
+// driven by test data the same way as a reporting collection. Its fields mirror what a test writes
+// (Add-CippTestResult); the server resolves a 'TestResults' source from CippTestResults. Merged into
+// the picker's collection list (which otherwise comes from the reporting database shape).
+export const TEST_RESULTS_SHAPE = {
+  type: 'TestResults',
+  count: null,
+  fields: [
+    { name: 'Status', type: 'string' },
+    { name: 'TestType', type: 'string' },
+    { name: 'Risk', type: 'string' },
+    { name: 'Category', type: 'string' },
+    { name: 'Name', type: 'string' },
+    { name: 'ImplementationEffort', type: 'string' },
+    { name: 'UserImpact', type: 'string' },
+  ],
+}
+
+// A chart's page width: full, or half so two can sit side by side (the engine pairs adjacent halves).
+export const CHART_WIDTHS = [
+  { label: 'Full width', value: 'full' },
+  { label: 'Half (side by side)', value: 'half' },
 ]
 
 // A chart source in the shape the picker saves + the server resolver reads. `field` is the "Per"
@@ -243,20 +309,78 @@ export const BLOCK_PRESETS = {
       ],
     },
   }),
-  // Enabled users flowing type -> registered -> enforcement mechanism (the dashboard MFASankey).
+  // The dashboard MFACard flow, built generically from derived stages (no MFA-specific server code):
+  // enabled users -> registered / not registered -> how MFA is enforced. Each derived stage is an
+  // ordered rule list, first match wins; a rule with no `when` is the default. Reproduces the
+  // dashboard's buckets and colours exactly.
   mfaflow: () => ({
     type: 'sankey',
     static: true,
-    title: 'MFA coverage flow',
-    chartCaption: 'Enabled users: type to MFA registration to enforcement',
+    title: 'User authentication',
+    chartCaption: 'Enabled users: MFA registration and how it is enforced',
     sankeySource: {
       type: 'MFAState',
       mode: 'flow',
-      fields: ['userType', 'MFARegistration', 'CoveredByCA'],
       valueField: null,
       field: null,
       measures: [],
       filter: { field: 'AccountEnabled', op: '=', value: 'true' },
+      fields: [
+        { const: 'Enabled users', colour: 'hsl(28, 100%, 53%)' },
+        {
+          derive: [
+            { when: [{ field: 'MFARegistration', op: '=', value: 'true' }], label: 'MFA registered', colour: 'hsl(99, 70%, 50%)' },
+            { when: [{ field: 'PerUser', op: '=', value: 'enabled' }], label: 'MFA registered', colour: 'hsl(99, 70%, 50%)' },
+            { when: [{ field: 'PerUser', op: '=', value: 'enforced' }], label: 'MFA registered', colour: 'hsl(99, 70%, 50%)' },
+            { label: 'Not registered', colour: 'hsl(39, 100%, 50%)' },
+          ],
+        },
+        {
+          derive: [
+            { when: [{ field: 'PerUser', op: '=', value: 'enabled' }], label: 'Per-user MFA', colour: 'hsl(200, 70%, 50%)' },
+            { when: [{ field: 'PerUser', op: '=', value: 'enforced' }], label: 'Per-user MFA', colour: 'hsl(200, 70%, 50%)' },
+            { when: [{ field: 'CoveredByCA', op: '=', value: 'Enforced*' }], label: 'CA policy', colour: 'hsl(99, 70%, 50%)' },
+            { when: [{ field: 'CoveredBySD', op: '=', value: 'true' }], label: 'Security defaults', colour: 'hsl(140, 70%, 50%)' },
+            { label: 'No enforcement', colour: 'hsl(0, 100%, 50%)' },
+          ],
+        },
+      ],
+    },
+  }),
+  // Compliance test results (the CippTestResults data source, not a reporting collection).
+  testsresult: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Compliance tests by result',
+    chartKind: 'donut',
+    chartSource: source('TestResults', { field: 'Status' }),
+    chartCaption: 'In-app compliance test results',
+    chartCentreLabel: 'Tests',
+    chartMax: '',
+  }),
+  testscategory: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Compliance tests by category',
+    chartKind: 'donut',
+    chartSource: source('TestResults', { field: 'Category' }),
+    chartCaption: 'In-app compliance test results',
+    chartCentreLabel: 'Tests',
+    chartMax: '',
+  }),
+  testsflow: () => ({
+    type: 'sankey',
+    static: true,
+    title: 'Compliance tests: category to result',
+    chartCaption: 'In-app compliance test results',
+    sankeySource: {
+      type: 'TestResults',
+      mode: 'flow',
+      fields: ['Category', 'Status'],
+      valueField: null,
+      field: null,
+      measures: [],
+      filter: null,
     },
   }),
   // Managed devices flowing operating system -> compliance state.
@@ -783,7 +907,7 @@ export const ChartBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
       <Stack spacing={2}>
         <Stack direction="row" spacing={1}>
           <TitleField block={block} index={index} onUpdate={onUpdate} />
-          <Box sx={{ minWidth: 180 }}>
+          <Box sx={{ minWidth: 170 }}>
             <CippAutoComplete
               size="small"
               label="Chart type"
@@ -795,7 +919,24 @@ export const ChartBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
               onChange={(option) => set({ chartKind: option?.value ?? 'donut' })}
             />
           </Box>
+          <Box sx={{ minWidth: 170 }}>
+            <CippAutoComplete
+              size="small"
+              label="Width"
+              multiple={false}
+              creatable={false}
+              disableClearable={true}
+              options={CHART_WIDTHS}
+              value={CHART_WIDTHS.find((option) => option.value === (block.width || 'full')) ?? CHART_WIDTHS[0]}
+              onChange={(option) => set({ width: option?.value === 'half' ? 'half' : null })}
+            />
+          </Box>
         </Stack>
+        {block.width === 'half' ? (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Half width: two half-width charts in a row render side by side. Best for donut charts.
+          </Typography>
+        ) : null}
 
         <SourceSwitch
           value={block.chartSource ? 'cache' : 'manual'}
@@ -897,6 +1038,9 @@ const SankeySourcePicker = ({ value, onChange, dataShape = [] }) => {
     name ? (fields.find((f) => f.value === name) ?? { label: name, value: name }) : null
   const patch = (next) => onChange({ ...EMPTY_SANKEY_SOURCE, ...source, ...next })
   const stages = source.fields ?? []
+  // Derived/constant stages (e.g. the MFA coverage preset) are objects, not plain field names; the
+  // simple stage pickers can't represent them, so the editor shows a note for those instead.
+  const hasAdvancedStages = stages.some((stage) => stage && typeof stage === 'object')
   const setStage = (position, name) => {
     const next = [...stages]
     if (name) next[position] = name
@@ -938,7 +1082,24 @@ const SankeySourcePicker = ({ value, onChange, dataShape = [] }) => {
         </ToggleButtonGroup>
       </Stack>
 
-      {source.type && mode === 'flow' ? (
+      {source.type && mode === 'flow' && hasAdvancedStages ? (
+        <Stack spacing={1}>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            This flow uses advanced derived stages (e.g. the pre-built MFA coverage layout, which buckets
+            users into registered/not and how MFA is enforced). It renders as designed but is not editable
+            here.
+          </Typography>
+          <Box>
+            <ToggleButton
+              size="small"
+              value="reset"
+              onClick={() => patch({ fields: [] })}
+            >
+              Replace with simple fields
+            </ToggleButton>
+          </Box>
+        </Stack>
+      ) : source.type && mode === 'flow' ? (
         <Stack direction="row" spacing={1}>
           {[0, 1, 2].map((position) => (
             <Box key={position} sx={{ flex: 1 }}>

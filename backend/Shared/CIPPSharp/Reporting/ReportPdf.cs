@@ -155,7 +155,22 @@ namespace CIPP.Reporting
                             // name and the generated-on date.
                             if (chrome) RenderPageHeader(ctx, i, group.Title ?? ctx.ReportName, group.Subtitle ?? ctx.GeneratedOn);
                             var firstBlock = true;
-                            foreach (var block in group.Blocks) { ReportComponents.RenderBlock(ctx, i, block, firstBlock); firstBlock = false; }
+                            // Two adjacent half-width charts render side by side in one row; anything else
+                            // (including a lone half-width chart) renders on its own line.
+                            for (var bi = 0; bi < group.Blocks.Count; bi++)
+                            {
+                                var block = group.Blocks[bi];
+                                if (ReportComponents.IsHalfWidthChart(block) && bi + 1 < group.Blocks.Count && ReportComponents.IsHalfWidthChart(group.Blocks[bi + 1]))
+                                {
+                                    ReportComponents.RenderChartPair(ctx, i, block, group.Blocks[bi + 1], firstBlock);
+                                    bi++;
+                                }
+                                else
+                                {
+                                    ReportComponents.RenderBlock(ctx, i, block, firstBlock);
+                                }
+                                firstBlock = false;
+                            }
                         }));
                     });
                 }

@@ -36,13 +36,22 @@ function Resolve-CippReportDataToken {
     $MaxPoints = 30
     $MaxRows = 200
 
-    # One read per collection per render; a collection the database does not hold reads as $null.
+    # One read per collection per render; a collection the database does not hold reads as $null. The
+    # reserved collection 'TestResults' reads the in-app compliance test results (CippTestResults) instead
+    # of the reporting database, so a chart/table/flow can be driven by test data (count by Status,
+    # Category, Risk...) the same way it is driven by reporting collections.
     $Cache = @{}
     $RowsOf = {
         param([string]$Type)
         $Key = $Type.ToLowerInvariant()
         if (-not $Cache.ContainsKey($Key)) {
-            $Rows = try { @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type) | Where-Object { $null -ne $_ -and $_ -ne $false } } catch { $null }
+            $Rows = try {
+                if ($Key -eq 'testresults') {
+                    @((Get-CIPPTestResults -TenantFilter $TenantFilter).TestResults) | Where-Object { $null -ne $_ }
+                } else {
+                    @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type) | Where-Object { $null -ne $_ -and $_ -ne $false }
+                }
+            } catch { $null }
             $Cache[$Key] = if ($null -eq $Rows) { $null } else { @($Rows) }
         }
         $Cache[$Key]
@@ -311,20 +320,49 @@ function Resolve-CippReportDataToken {
                         }
                     }
                 } else {
-                    $Fields = @($Sankey.fields | Where-Object { $_ } | ForEach-Object { "$_" })
+                    # flow: an ordered list of stage specs. Each stage is either a plain field name (a node
+                    # per distinct value), a constant node { const, colour } that every row shares, or a
+                    # derived bucket { derive: [ { when: [ {field, op, value}, ... ], label, colour }, ...,
+                    # { label } ] } - the first rule whose conditions ALL match wins, and a rule with no
+                    # `when` is the default. Conditions use the same matcher as filters ('=' with '*'
+                    # wildcards, '!='), so a derived stage buckets rows generically with no per-report code
+                    # (e.g. an MFA coverage flow: registered/not, then how it is enforced).
+                    $FieldSpecs = @($Sankey.fields)
                     $ValueField = if ($Sankey.valueField) { "$($Sankey.valueField)" }
-                    if ($Fields.Count -ge 2) {
+                    $StageOf = {
+                        param($Row, $Spec)
+                        if ($Spec -is [string]) {
+                            $Value = @(& $ValueOf $Row $Spec | ForEach-Object { "$_" }) | Select-Object -First 1
+                            return @{ label = $(if ($Value) { $Value } else { '(blank)' }); colour = $null }
+                        }
+                        if ($Spec.const) { return @{ label = "$($Spec.const)"; colour = "$($Spec.colour)" } }
+                        if ($Spec.derive) {
+                            foreach ($Rule in @($Spec.derive)) {
+                                $Matched = $true
+                                foreach ($Cond in @($Rule.when)) {
+                                    if ($Cond -and $Cond.field -and -not (& $RowMatches $Row "$($Cond.field)" $(if ($Cond.op) { "$($Cond.op)" } else { '=' }) "$($Cond.value)")) {
+                                        $Matched = $false; break
+                                    }
+                                }
+                                if ($Matched) { return @{ label = "$($Rule.label)"; colour = "$($Rule.colour)" } }
+                            }
+                        }
+                        return $null
+                    }
+                    if ($FieldSpecs.Count -ge 2) {
                         foreach ($Row in $Rows) {
                             $Weight = if ($ValueField) {
                                 @(& $ValueOf $Row $ValueField | ForEach-Object { $_ -as [double] } | Where-Object { $null -ne $_ }) | Select-Object -First 1
                             } else { 1 }
                             if ($null -eq $Weight -or $Weight -le 0) { continue }
-                            $Stages = @(foreach ($FieldName in $Fields) {
-                                    $Value = @(& $ValueOf $Row $FieldName | ForEach-Object { "$_" }) | Select-Object -First 1
-                                    if (-not $Value) { $Value = '(blank)' }
-                                    [pscustomobject]@{ Id = "$FieldName=$Value"; Label = $Value }
+                            $Incomplete = $false
+                            $Stages = @(for ($si = 0; $si -lt $FieldSpecs.Count; $si++) {
+                                    $Stage = & $StageOf $Row $FieldSpecs[$si]
+                                    if ($null -eq $Stage -or [string]::IsNullOrEmpty("$($Stage.label)")) { $Incomplete = $true; break }
+                                    [pscustomobject]@{ Id = ('{0}:{1}' -f $si, $Stage.label); Label = "$($Stage.label)"; Colour = "$($Stage.colour)" }
                                 })
-                            foreach ($Stage in $Stages) { & $AddNode $Stage.Id $Stage.Label $null }
+                            if ($Incomplete) { continue }
+                            foreach ($Stage in $Stages) { & $AddNode $Stage.Id $Stage.Label $Stage.Colour }
                             for ($i = 0; $i -lt $Stages.Count - 1; $i++) { & $AddLink $Stages[$i].Id $Stages[$i + 1].Id ([double]$Weight) }
                         }
                     }

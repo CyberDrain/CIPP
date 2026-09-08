@@ -127,6 +127,8 @@ export const serialiseBlock = (b) => ({
   chartCaption: b.chartCaption || null,
   chartCentreLabel: b.chartCentreLabel || null,
   chartMax: b.chartMax || null,
+  // A chart set to 'half' renders at half page width, so two can sit side by side.
+  width: b.width || null,
   stats: b.stats || null,
   items: b.items || null,
   heroHighlight: b.heroHighlight || null,

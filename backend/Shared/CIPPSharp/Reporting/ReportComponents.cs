@@ -1031,15 +1031,21 @@ namespace CIPP.Reporting
                 OC(colourHex), align, lineHeight: null, wrapText: wrap);
 
         public static void Chart(ReportContext ctx, PdfContentBuilder item, string? kind, List<object?> data,
-            string? title = null, string? caption = null, double? max = null, string? centreLabel = null)
+            string? title = null, string? caption = null, double? max = null, string? centreLabel = null,
+            double? availableWidth = null)
         {
             var k = (kind ?? "bar").ToLowerInvariant();
-            var w = ctx.ContentWidth - 2; // a drawing exactly the content width is rejected as too wide
+            // A drawing exactly the content width is rejected as too wide; availableWidth lets a chart draw
+            // inside a narrower column (half-width side-by-side charts) instead of the full page width.
+            var w = (availableWidth ?? ctx.ContentWidth) - 2;
             const double pad = 16, titleH = 14, titleGap = 12, captionGap = 8, captionH = 10;
             var hasTitle = !string.IsNullOrEmpty(title);
             var hasCaption = !string.IsNullOrEmpty(caption);
             var plotTop = pad + (hasTitle ? titleH + titleGap : 0);
-            var leftPad = Math.Max(0, (w - ChartViewW) / 2);
+            // The plot's own coordinate width: the 400pt design width, or the drawing if it is narrower
+            // (a half-width chart), so the geometry scales down to fit rather than overflowing the frame.
+            var vw = Math.Min(ChartViewW, w);
+            var leftPad = Math.Max(0, (w - vw) / 2);
 
             var entries = data.Select((d, i) => (
                 label: ReportNode.RowStr(d, "label") ?? string.Empty,
@@ -1049,7 +1055,7 @@ namespace CIPP.Reporting
             // A donut is drawn to its own height - the ring and the legend rows it needs - rather than
             // the 400x200 box the bar and trend charts fill, so the frame closes up under the legend
             // instead of leaving a band of white there and above the ring.
-            var viewH = k == "donut" && entries.Count > 0 ? DonutViewHeight(entries) : ChartViewH;
+            var viewH = k == "donut" && entries.Count > 0 ? DonutViewHeight(entries, vw) : ChartViewH;
             var totalH = plotTop + viewH + pad + (hasCaption ? captionGap + captionH : 0);
 
             var dw = new OfficeDrawing(w, totalH);
@@ -1061,15 +1067,40 @@ namespace CIPP.Reporting
 
             if (entries.Count == 0)
                 AddT(dw, "No data available for this chart.", 0, plotTop + viewH / 2 - 6, w, 12, ReportStyles.Body, ReportColours.Faint, OfficeTextAlignment.Center);
-            else if (k == "donut") DrawDonut(ctx, dw, entries, leftPad, plotTop, centreLabel);
-            else if (k == "trend") DrawTrend(ctx, dw, entries, leftPad, plotTop, max);
-            else DrawBar(ctx, dw, entries, leftPad, plotTop);
+            else if (k == "donut") DrawDonut(ctx, dw, entries, leftPad, plotTop, centreLabel, vw);
+            else if (k == "trend") DrawTrend(ctx, dw, entries, leftPad, plotTop, max, vw);
+            else DrawBar(ctx, dw, entries, leftPad, plotTop, vw);
 
             if (hasCaption)
                 AddT(dw, San(caption!), 0, plotTop + viewH + captionGap, w, captionH, ChartLabelSize, ctx.Theme.Palette["chart"], OfficeTextAlignment.Center);
 
             item.Drawing(dw, PdfAlign.Left);
             item.Spacer(12);
+        }
+
+        /// <summary>A chart block flagged to render at half the page width (so two can sit side by side).</summary>
+        public static bool IsHalfWidthChart(ReportNode block)
+            => block.Type == "chart" && string.Equals(block.Str("width"), "half", StringComparison.OrdinalIgnoreCase);
+
+        // Render a chart block, optionally into a given width (a half-width column). Shared by the block
+        // dispatch (a lone half-width chart) and the side-by-side pair renderer.
+        private static void ChartFromBlock(ReportContext ctx, PdfContentBuilder item, ReportNode block, double? availableWidth)
+            => Chart(ctx, item, block.Str("chartKind"), block.ListOf("chartData") ?? new List<object?>(),
+                block.Str("title"), block.Str("caption") ?? block.Str("chartCaption"),
+                block.Num("max") ?? ParseNumber(block.Str("chartMax")), block.Str("centreLabel") ?? block.Str("chartCentreLabel"),
+                availableWidth);
+
+        /// <summary>Two half-width charts side by side in one row (the caller has checked both qualify).</summary>
+        public static void RenderChartPair(ReportContext ctx, PdfContentBuilder item, ReportNode a, ReportNode b, bool firstOnPage)
+        {
+            const double gap = 16;
+            var colWidth = (ctx.ContentWidth - gap) / 2;
+            item.Row(r =>
+            {
+                r.Gap(gap);
+                r.PercentColumn(50, col => ChartFromBlock(ctx, col, a, colWidth));
+                r.PercentColumn(50, col => ChartFromBlock(ctx, col, b, colWidth));
+            });
         }
 
         private static (double x, double y) Polar(double cx, double cy, double r, double deg)
@@ -1097,9 +1128,10 @@ namespace CIPP.Reporting
         }
 
         private static void DrawBar(ReportContext ctx, OfficeDrawing dw,
-            List<(string label, double value, string colour)> entries, double ox, double oy)
+            List<(string label, double value, string colour)> entries, double ox, double oy, double viewW = ChartViewW)
         {
-            const double plotLeft = 40, plotTop = 20, plotWidth = 340, plotHeight = 130;
+            const double plotLeft = 40, plotTop = 20, plotHeight = 130;
+            var plotWidth = viewW - plotLeft - 20; // 340 at the full 400 design width
             const double plotBottom = plotTop + plotHeight;
             var maxValue = Math.Max(entries.Max(e => e.value), 0); if (maxValue <= 0) maxValue = 1;
             var slot = plotWidth / entries.Count;
@@ -1126,29 +1158,53 @@ namespace CIPP.Reporting
 
         // Donut geometry in chart coords: the ring's centre and radius, and where the legend starts.
         private const double DonutCy = 68, DonutOuterR = 60, DonutInnerR = 25, DonutLegendY = 158, LegendRowH = 14;
+        private const double LegendSwatch = 8, LegendSwatchGap = 4, LegendEntryGap = 18, LegendCharW = 3.6;
 
-        /// <summary>The height a donut needs: the ring, then one legend row for up to three entries, two beyond.</summary>
-        private static double DonutViewHeight(List<(string label, double value, string colour)> entries)
+        // Legend entries packed into rows that fit the given width: they flow left to right and wrap when
+        // the next entry would overrun, so a narrow (half-width) donut stacks its legend rather than
+        // running its labels off the edge (which OfficeIMO rejects). Shared by the height reservation and
+        // the drawing so both agree on the row count.
+        private static List<List<(string label, double value, string colour)>> PackLegend(
+            List<(string label, double value, string colour)> entries, double viewW)
         {
-            var visible = entries.Count(e => e.value > 0);
-            var rows = visible <= 3 ? 1 : 2;
+            var budget = Math.Max(60, viewW - 20);
+            var rows = new List<List<(string label, double value, string colour)>>();
+            var current = new List<(string label, double value, string colour)>();
+            double used = 0;
+            foreach (var e in entries)
+            {
+                var text = San($"{e.label} ({FmtNum(e.value)})");
+                var entryW = LegendSwatch + LegendSwatchGap + text.Length * LegendCharW;
+                var add = (current.Count == 0 ? 0 : LegendEntryGap) + entryW;
+                if (current.Count > 0 && used + add > budget) { rows.Add(current); current = new List<(string, double, string)>(); used = 0; add = entryW; }
+                current.Add(e); used += add;
+            }
+            if (current.Count > 0) rows.Add(current);
+            return rows;
+        }
+
+        /// <summary>The height a donut needs: the ring, then however many legend rows fit the width.</summary>
+        private static double DonutViewHeight(List<(string label, double value, string colour)> entries, double viewW = ChartViewW)
+        {
+            var rows = Math.Max(1, PackLegend(entries.Where(e => e.value > 0).ToList(), viewW).Count);
             return DonutLegendY + rows * LegendRowH - 2;
         }
 
         private static void DrawDonut(ReportContext ctx, OfficeDrawing dw,
-            List<(string label, double value, string colour)> entries, double ox, double oy, string? centreLabel = null)
+            List<(string label, double value, string colour)> entries, double ox, double oy, string? centreLabel = null,
+            double viewW = ChartViewW)
         {
             var visible = entries.Where(e => e.value > 0).ToList();
             var total = visible.Sum(e => e.value);
-            var viewH = DonutViewHeight(entries);
+            var viewH = DonutViewHeight(entries, viewW);
             if (total <= 0)
             {
-                AddT(dw, "No data available for this chart.", ox, oy + viewH / 2 - 6, ChartViewW, 12, ReportStyles.Body, ReportColours.Faint, OfficeTextAlignment.Center);
+                AddT(dw, "No data available for this chart.", ox, oy + viewH / 2 - 6, viewW, 12, ReportStyles.Body, ReportColours.Faint, OfficeTextAlignment.Center);
                 return;
             }
-            // Local chart coords (0..400, 0..viewH); all slices share one path box placed at the chart
+            // Local chart coords (0..viewW, 0..viewH); all slices share one path box placed at the chart
             // offset, so they align (a bare Path() normalises each to its own box and misplaces them).
-            double cx = ChartViewW / 2, cy = DonutCy, outerR = DonutOuterR, innerR = DonutInnerR;
+            double cx = viewW / 2, cy = DonutCy, outerR = DonutOuterR, innerR = DonutInnerR;
             double preceding = 0;
             foreach (var e in visible)
             {
@@ -1162,48 +1218,48 @@ namespace CIPP.Reporting
                 cmds.Add(OfficePathCommand.LineTo(ie.x, ie.y));
                 ArcBeziers(cmds, cx, cy, innerR, endAngle * Math.PI / 180, startAngle * Math.PI / 180);
                 cmds.Add(OfficePathCommand.Close());
-                var slice = OfficeShape.Path(ChartViewW, viewH, cmds);
+                var slice = OfficeShape.Path(viewW, viewH, cmds);
                 slice.FillColor = OC(e.colour); slice.StrokeColor = OC(ReportColours.White); slice.StrokeWidth = 1;
                 dw.AddShape(slice, ox, oy);
                 preceding += e.value;
             }
             // Total in the middle, with an optional caption under it (client centreLabel).
             var centred = string.IsNullOrEmpty(centreLabel);
-            AddT(dw, FmtNum(total), ox + ChartViewW / 2 - 40, oy + cy - (centred ? 8 : 13), 80, 16, 14, ReportColours.Ink, OfficeTextAlignment.Center);
+            AddT(dw, FmtNum(total), ox + viewW / 2 - 40, oy + cy - (centred ? 8 : 13), 80, 16, 14, ReportColours.Ink, OfficeTextAlignment.Center);
             if (!centred)
-                AddT(dw, San(centreLabel!), ox + ChartViewW / 2 - 40, oy + cy + 8, 80, 10, 7, ReportColours.Muted, OfficeTextAlignment.Center);
-            DrawLegend(ctx, dw, visible, ox, oy, DonutLegendY);
+                AddT(dw, San(centreLabel!), ox + viewW / 2 - 40, oy + cy + 8, 80, 10, 7, ReportColours.Muted, OfficeTextAlignment.Center);
+            DrawLegend(ctx, dw, visible, ox, oy, DonutLegendY, viewW);
         }
 
         private static void DrawLegend(ReportContext ctx, OfficeDrawing dw,
-            List<(string label, double value, string colour)> entries, double ox, double oy, double baseY)
+            List<(string label, double value, string colour)> entries, double ox, double oy, double baseY, double viewW = ChartViewW)
         {
-            // Each row is laid out from its own centre: an entry is a swatch, a gap and its text, sized
-            // at roughly 3.6pt a character at the label size, with a gap between entries. Fixed columns
-            // put the first entry at the frame's edge and the rest wherever the columns happened to fall.
-            const double swatch = 8, swatchGap = 4, entryGap = 18, charW = 3.6;
-            var n = entries.Count;
-            var perRow = n <= 3 ? n : (int)Math.Ceiling(n / 2.0);
-            for (var row = 0; row * perRow < n; row++)
+            // Rows are packed to the width (see PackLegend), each centred; a text box is clamped to what
+            // is left inside the drawing so a long label never runs past the edge.
+            var packed = PackLegend(entries, viewW);
+            for (var row = 0; row < packed.Count; row++)
             {
-                var rowEntries = entries.Skip(row * perRow).Take(perRow).ToList();
+                var rowEntries = packed[row];
                 var texts = rowEntries.Select(e => San($"{e.label} ({FmtNum(e.value)})")).ToList();
-                var widths = texts.Select(text => swatch + swatchGap + text.Length * charW).ToList();
-                var x = Math.Max(10, (ChartViewW - (widths.Sum() + entryGap * (rowEntries.Count - 1))) / 2);
+                var widths = texts.Select(t => LegendSwatch + LegendSwatchGap + t.Length * LegendCharW).ToList();
+                var x = Math.Max(6, (viewW - (widths.Sum() + LegendEntryGap * (rowEntries.Count - 1))) / 2);
                 var rowY = baseY + row * LegendRowH;
                 for (var i = 0; i < rowEntries.Count; i++)
                 {
-                    var sw = OfficeShape.Rectangle(swatch, swatch); sw.FillColor = OC(rowEntries[i].colour); dw.AddShape(sw, ox + x, oy + rowY - 6);
-                    AddT(dw, texts[i], ox + x + swatch + swatchGap, oy + rowY - 6, widths[i] + 20, 10, ChartLabelSize, ctx.Theme.Palette["body"], OfficeTextAlignment.Left);
-                    x += widths[i] + entryGap;
+                    var sw = OfficeShape.Rectangle(LegendSwatch, LegendSwatch); sw.FillColor = OC(rowEntries[i].colour); dw.AddShape(sw, ox + x, oy + rowY - 6);
+                    var textX = x + LegendSwatch + LegendSwatchGap;
+                    var textW = Math.Max(4, Math.Min(texts[i].Length * LegendCharW + 8, viewW - textX - 2));
+                    AddT(dw, texts[i], ox + textX, oy + rowY - 6, textW, 10, ChartLabelSize, ctx.Theme.Palette["body"], OfficeTextAlignment.Left);
+                    x += widths[i] + LegendEntryGap;
                 }
             }
         }
 
         private static void DrawTrend(ReportContext ctx, OfficeDrawing dw,
-            List<(string label, double value, string colour)> entries, double ox, double oy, double? max)
+            List<(string label, double value, string colour)> entries, double ox, double oy, double? max, double viewW = ChartViewW)
         {
-            const double plotLeft = 40, plotTop = 20, plotWidth = 320, plotHeight = 140;
+            const double plotLeft = 40, plotTop = 20, plotHeight = 140;
+            var plotWidth = viewW - plotLeft - 40; // 320 at the full 400 design width
             const double plotBottom = plotTop + plotHeight;
             var colour = ctx.Theme.Primary;
             var dataMax = Math.Max(entries.Max(e => e.value), 0);
@@ -1230,11 +1286,11 @@ namespace CIPP.Reporting
                 area.Add(OfficePathCommand.LineTo(pts[^1].x, plotBottom));
                 area.Add(OfficePathCommand.LineTo(pts[0].x, plotBottom));
                 area.Add(OfficePathCommand.Close());
-                var areaShape = OfficeShape.Path(ChartViewW, ChartViewH, area); areaShape.FillColor = OC(colour); areaShape.FillOpacity = 0.3; dw.AddShape(areaShape, ox, oy);
+                var areaShape = OfficeShape.Path(viewW, ChartViewH, area); areaShape.FillColor = OC(colour); areaShape.FillOpacity = 0.3; dw.AddShape(areaShape, ox, oy);
 
                 var line = new List<OfficePathCommand> { OfficePathCommand.MoveTo(pts[0].x, pts[0].y) };
                 for (var i = 1; i < pts.Count; i++) line.Add(OfficePathCommand.LineTo(pts[i].x, pts[i].y));
-                var lineShape = OfficeShape.Path(ChartViewW, ChartViewH, line); lineShape.StrokeColor = OC(colour); lineShape.StrokeWidth = 2; dw.AddShape(lineShape, ox, oy);
+                var lineShape = OfficeShape.Path(viewW, ChartViewH, line); lineShape.StrokeColor = OC(colour); lineShape.StrokeWidth = 2; dw.AddShape(lineShape, ox, oy);
             }
             foreach (var p in pts)
             {
@@ -1578,10 +1634,9 @@ namespace CIPP.Reporting
                     return;
                 case "chart":
                     // The fixed reports name these caption/max/centreLabel; the report builder saves them
-                    // with a chart prefix. Both reach the page.
-                    Chart(ctx, item, block.Str("chartKind"), block.ListOf("chartData") ?? new List<object?>(),
-                        block.Str("title"), block.Str("caption") ?? block.Str("chartCaption"),
-                        block.Num("max") ?? ParseNumber(block.Str("chartMax")), block.Str("centreLabel") ?? block.Str("chartCentreLabel"));
+                    // with a chart prefix. Both reach the page. A half-width chart with no adjacent partner
+                    // renders at half width on its own line (the pair renderer handles two together).
+                    ChartFromBlock(ctx, item, block, IsHalfWidthChart(block) ? (ctx.ContentWidth - 16) / 2 : (double?)null);
                     return;
                 case "sankey":
                     Sankey(ctx, item, block.ListOf("nodes") ?? new List<object?>(), block.ListOf("links") ?? new List<object?>(),

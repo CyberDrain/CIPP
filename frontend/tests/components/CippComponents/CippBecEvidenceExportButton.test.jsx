@@ -11,33 +11,18 @@ vi.mock('../../../src/api/ApiCall', () => ({
   ApiPostCall: vi.fn(),
   ApiGetCallWithPagination: vi.fn(),
 }))
-vi.mock('../../../src/components/CippComponents/CippApiResults', () => ({
-  CippApiResults: () => null,
-}))
-vi.mock('../../../src/components/BECRemediationReportButton', () => ({
-  BECRemediationReportDocument: () => null,
-}))
-vi.mock('../../../src/components/CippPdf/useBrandingSettings', () => ({
-  useBrandingSettings: () => ({}),
-}))
-vi.mock('../../../src/components/CippPdf/useReportVariables', () => ({
-  useReportVariables: () => ({}),
-}))
-const pdfBlob = new Blob(['%PDF-1.4 test'], { type: 'application/pdf' })
-vi.mock('@react-pdf/renderer', () => ({
-  pdf: () => ({ toBlob: () => Promise.resolve(pdfBlob) }),
-}))
 
 describe('CippBecEvidenceExportButton', () => {
   let mutate
   beforeEach(() => {
-    // the single POST returns the freshly built ZIP (base64) - nothing is stored server-side
+    // the single POST returns the freshly built ZIP (base64); the backend renders the report PDFs
+    // server-side and collates the package - nothing is stored, and no PDF is sent from the browser
     mutate = vi.fn((payload, options) =>
       options?.onSuccess?.({
         data: {
           Evidence: {
             ZipSha256: 'abc123',
-            ZipBase64: btoa('PK fake zip bytes'),
+            ZipBase64: btoa('PK fake zip bytes'),
           },
         },
       })
@@ -47,14 +32,12 @@ describe('CippBecEvidenceExportButton', () => {
     global.URL.revokeObjectURL = vi.fn()
   })
 
-  it('renders the report, posts it with the case id, and downloads the ZIP from the response', async () => {
+  it('posts the case id and downloads the ZIP the backend returns', async () => {
     renderWithProviders(
       <CippBecEvidenceExportButton
         tenantFilter="contoso.com"
         caseId="BEC-20260820120000-ab12cd"
         userData={{ id: 'u1', userPrincipalName: 'victim@contoso.com' }}
-        becData={{ CaseId: 'BEC-20260820120000-ab12cd' }}
-        tenantName="Contoso"
       />
     )
     const clickSpy = vi
@@ -68,9 +51,8 @@ describe('CippBecEvidenceExportButton', () => {
     expect(payload.url).toBe('/api/ExecBECEvidenceExport')
     expect(payload.data.tenantFilter).toBe('contoso.com')
     expect(payload.data.caseId).toBe('BEC-20260820120000-ab12cd')
-    // the rendered PDF travels as base64 (no data: prefix)
-    expect(payload.data.pdfBase64).toMatch(/^[A-Za-z0-9+/=]+$/)
-    expect(atob(payload.data.pdfBase64)).toContain('%PDF')
+    // no client-rendered PDF is sent; the backend renders both report PDFs server-side
+    expect(payload.data.pdfBase64).toBeUndefined()
     // the ZIP from the response is handed straight to the browser - no second request
     await waitFor(() => expect(clickSpy).toHaveBeenCalled())
     expect(global.URL.createObjectURL).toHaveBeenCalledTimes(1)
@@ -83,7 +65,6 @@ describe('CippBecEvidenceExportButton', () => {
         tenantFilter="contoso.com"
         caseId={null}
         userData={{ id: 'u1' }}
-        becData={{}}
       />
     )
     expect(

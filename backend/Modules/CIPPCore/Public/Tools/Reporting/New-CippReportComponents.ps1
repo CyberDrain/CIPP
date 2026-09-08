@@ -86,6 +86,16 @@ function New-CippReportChart {
     $n
 }
 
+function New-CippReportProgress {
+    # A list of labelled progress bars (the client ProgressList). -Items: @( @{ label; value; max; display; colour }, ... ).
+    # Each renders a value/max data bar over a grey track - zero-safe (a 0 value draws an empty track), unlike a
+    # bar chart whose rounded bars collapse at zero. -Display overrides the "N%" label (e.g. a raw count).
+    param([string]$Title, [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Items)
+    $n = [ordered]@{ type = 'progress'; items = @($Items) }
+    if ($Title) { $n.title = $Title }
+    $n
+}
+
 function New-CippReportInfoBox {
     # A callout with a left accent stripe. -Tone ok|warn tints it; -Content is markdown, unless -Lines is
     # set, in which case each '\n' line is kept as a tight line break (label/value detail lists).

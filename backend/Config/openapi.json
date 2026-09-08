@@ -15255,7 +15255,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "Collates the run's stored results, one CSV per finding set, the score, the containment history, every logbook entry stamped with the case id and the browser-rendered PDF reports (pdfBase64, pdfSummaryBase64) into a ZIP. Nothing is stored: the ZIP is returned base64-encoded (ZipBase64) for the browser to save. Metadata only - nothing in the package is message content.",
+        "description": "Collates the run's stored results, one CSV per finding set, the score, the containment history, every logbook entry stamped with the case id and the full and C-suite-summary report PDFs (rendered server-side) into a ZIP. Nothing is stored: the ZIP is returned base64-encoded (ZipBase64) for the browser to save. Metadata only - nothing in the package is message content.",
         "requestBody": {
           "required": true,
           "content": {
@@ -15264,13 +15264,6 @@
                 "type": "object",
                 "properties": {
                   "caseId": {
-                    "type": "string"
-                  },
-                  "pdfBase64": {
-                    "type": "string",
-                    "description": "optional: the report PDFs rendered in the browser, base64-encoded (full report + C-suite summary)"
-                  },
-                  "pdfSummaryBase64": {
                     "type": "string"
                   },
                   "tenantFilter": {

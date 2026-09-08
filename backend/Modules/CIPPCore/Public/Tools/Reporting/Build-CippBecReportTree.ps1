@@ -23,8 +23,11 @@ function Build-CippBecReportTree {
         The tenant the user belongs to.
     #>
     [CmdletBinding()]
-    param([Parameter(Mandatory)]$UserData, [Parameter(Mandatory)]$BecData, [string]$TenantName)
+    param([Parameter(Mandatory)]$UserData, [Parameter(Mandatory)]$BecData, [string]$TenantName, [ValidateSet('full', 'summary')][string]$Variant = 'full')
 
+    # 'summary' = the executive pages only (cover + Executive Summary), for a C-suite reader; 'full' =
+    # every page. Mirrors the client BECRemediationReportDocument variant.
+    $isSummary = $Variant -eq 'summary'
     $bec = $BecData
     $loc = $bec.LocationAnalysis
     $ana = $bec.SentMessageAnalysis
@@ -458,19 +461,21 @@ function Build-CippBecReportTree {
     }
 
     $b.Add((New-CippReportHeading -Title 'Findings at a Glance'))
-    $b.Add((New-CippReportParagraph -Text "Every check in this investigation and its result. Flagged rows are expanded in the detailed findings later in this report. $flaggedAreaCount of $($summaryData.Count) checks returned something to review."))
+    $b.Add((New-CippReportParagraph -Text ("Every check in this investigation and its result. $(if (-not $isSummary) { 'Flagged rows are expanded in the detailed findings later in this report. ' })$flaggedAreaCount of $($summaryData.Count) checks returned something to review.")))
     if ($totalFindings -gt 0) {
         $b.Add((New-CippReportParagraph -Html '<p><b>Findings by attacker objective</b> - grouped by what each finding would let an attacker do:</p>'))
-        $b.Add((New-CippReportChart -Title 'Findings by attacker objective' -Kind bar -Max ([double]$objectiveMax) -Data @($objectiveData)))
+        $b.Add((New-CippReportProgress -Items @($objectiveData | ForEach-Object { @{ label = $_.label; value = $_.value; max = $objectiveMax; display = "$($_.value)"; colour = $_.colour } })))
     }
     $b.Add((New-CippReportTable -Columns @(
                 @{ header = 'Check'; key = 'area'; width = 3; bold = $true }
                 @{ header = 'Result'; key = 'result'; width = 2; toneField = 'tone' }
             ) -Rows @($summaryData) -Limit $summaryData.Count))
-    $b.Add((New-CippReportNote -Text 'Checks that could not run (missing a licence, permission, mailbox or service) are itemised under Data Source Information below - a check that did not run is not a pass.'))
+    if (-not $isSummary) {
+        $b.Add((New-CippReportNote -Text 'Checks that could not run (missing a licence, permission, mailbox or service) are itemised under Data Source Information below - a check that did not run is not a pass.'))
+    }
 
     $b.Add((New-CippReportHeading -Title 'Priority Remediation Actions'))
-    $b.Add((New-CippReportParagraph -Text 'Actions specific to what this investigation found, most urgent first. Your IT or security team should carry these out without delay; the strategic and preventative measures follow later in this report.'))
+    $b.Add((New-CippReportParagraph -Text ("Actions specific to what this investigation found, most urgent first. Your IT or security team should carry these out without delay$(if (-not $isSummary) { '; the strategic and preventative measures follow later in this report.' } else { '.' })")))
     $b.Add((New-CippReportTable -Columns @(
                 @{ header = 'Priority'; key = 'tag'; width = 1; toneField = 'tone' }
                 @{ header = 'Action'; key = 'text'; width = 5 }
@@ -500,6 +505,9 @@ function Build-CippBecReportTree {
                 ) -Rows @($remediationRows) -Limit $remediationRows.Count))
     }
 
+    # Data Source Information and every detail page (Understanding BEC, Checks 1-21, Recommendations,
+    # Compliance) are the full report only; the summary variant stops after the executive lead.
+    if (-not $isSummary) {
     $b.Add((New-CippReportHeading -Title 'Data Source Information'))
     $b.Add((New-CippReportInfoBox -Title 'Audit Log Status' -Content $(if ($bec.ExtractResult) { "$($bec.ExtractResult)" } else { 'Unknown' })))
     $b.Add((New-CippReportInfoBox -Title 'Analysis Period' -Content ("Last $windowDays days ending {0}" -f (FmtDate $bec.ExtractedAt))))
@@ -1035,6 +1043,7 @@ function Build-CippBecReportTree {
                 @{ text = 'CISA: Cybersecurity & Infrastructure Security Agency (cisa.gov)' }
                 @{ text = 'Microsoft Security: Business Email Compromise resources' }
             )))
+    }
 
     @{
         Blocks    = @($b)

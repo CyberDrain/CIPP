@@ -91,14 +91,17 @@ Describe 'Report tree builders' {
         Test-Report $r 'SECURITY ASSESSMENT'
     }
 
-    It 'BEC: scores the RSS-folder rule as High risk, names the user on the cover and renders' {
+    It 'BEC: renders the server-computed threat level, names the user on the cover and renders' {
+        # The threat level is computed server-side (Get-CIPPBecScore) and stored on the run; the builder
+        # renders that stored Score rather than scoring the findings itself.
         $r = Build-CippBecReportTree -TenantName 'Contoso' -UserData @{ displayName = 'Alice'; userPrincipalName = 'alice@contoso.com' } -BecData @{
             ExtractedAt         = '2026-09-01T00:00:00Z'
+            Score               = @{ Value = 19; Level = 'High' }
             NewRules            = @(@{ Name = 'Hide'; MoveToFolder = 'RSS Subscriptions' })
             SentMessageAnalysis = @{ Flagged = $true; Bursts = @(@{ MessageCount = 40; RecipientCount = 40; WindowStart = '2026-09-01T09:00:00Z'; TopSubject = 'Invoice' }) }
             LocationAnalysis    = @{ UsageLocation = 'AU' }
         }
-        ($r.Blocks | Where-Object { $_.type -eq 'alertbox' -and $_.title -like 'Threat Assessment:*' }).title | Should -Be 'Threat Assessment: High'
+        ($r.Blocks | Where-Object { $_.type -eq 'alertbox' -and $_.title -like 'Threat Assessment:*' }).title | Should -Be 'Threat Assessment: High (score 19)'
         $r.Variables.covertenant | Should -Be 'Alice'
         $r.Variables.footerlabel | Should -Be 'Contoso - BEC Analysis Report for Alice'
         Test-Report $r 'Security Incident Report'

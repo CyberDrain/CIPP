@@ -22918,7 +22918,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "Server-renders the BEC (Business Email Compromise) analysis report as application/pdf bytes. Reads\nthe cached BEC run for the user (the cachebec table, populated by execBECCheck / Push-BECRun) and\ncomposes it through the shared CIPPSharp component kit (Build-CippBecReportTree) - the server-side\nreplacement for the client react-pdf BECRemediationReportButton. The BEC check must have completed\nfor the user first (the report reads its cached result, it does not trigger a new run).",
+        "description": "Server-renders a stored Business Email Compromise (BEC) run as application/pdf bytes. Reads the\nrun through Get-CIPPBecReport (the BecReports metadata row plus its BecResults payload) and\ncomposes it through the shared CIPPSharp component kit (Build-CippBecReportTree) - the server-side\nreplacement for the client react-pdf BECRemediationReportButton. A run is named by its caseId;\npass userId instead to render the user's newest completed run. The run must have completed - the\nreport reads its stored result, it does not trigger a new investigation.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22926,19 +22926,22 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "caseId": {
+                    "type": "string",
+                    "description": "The stored run to render. A caseId names it directly; a userId picks the user's newest completed run."
+                  },
                   "tenantFilter": {
                     "type": "string"
                   },
                   "userDisplayName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The investigated user labels the cover and footer; the run stored who it was for."
                   },
                   "userId": {
-                    "type": "string",
-                    "description": "The investigated user's object id (the cachebec RowKey)."
+                    "type": "string"
                   },
                   "userName": {
-                    "type": "string",
-                    "description": "The investigated user's UPN and display name label the cover and footer."
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -22950,11 +22953,21 @@
         },
         "parameters": [
           {
+            "name": "caseId",
+            "in": "query",
+            "description": "The stored run to render. A caseId names it directly; a userId picks the user's newest completed run.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "$ref": "#/components/parameters/tenantFilter"
           },
           {
             "name": "userDisplayName",
             "in": "query",
+            "description": "The investigated user labels the cover and footer; the run stored who it was for.",
             "required": false,
             "schema": {
               "type": "string"
@@ -22963,7 +22976,6 @@
           {
             "name": "userId",
             "in": "query",
-            "description": "The investigated user's object id (the cachebec RowKey).",
             "required": false,
             "schema": {
               "type": "string"
@@ -22972,7 +22984,6 @@
           {
             "name": "userName",
             "in": "query",
-            "description": "The investigated user's UPN and display name label the cover and footer.",
             "required": false,
             "schema": {
               "type": "string"
@@ -22986,33 +22997,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
-                  "properties": {
-                    "ETag": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "PartitionKey": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Results": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "RowKey": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Status": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Timestamp": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "UserId": {
-                      "x-cipp-field-source": "storage"
-                    }
-                  }
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
                 }
               }
             }

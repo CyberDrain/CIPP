@@ -264,7 +264,9 @@ namespace CIPP.Reporting
         public static void RenderCoverDrawing(ReportContext ctx, PdfContentBuilder item)
         {
             var w = ctx.ContentWidth - 2;
-            var h = ctx.ContentHeight;
+            // A drawing exactly the content height is rejected as too tall (as with width): landscape trips
+            // this because the A4 long edge is a hair over the page height, so shave 2pt off both here.
+            var h = ctx.ContentHeight - 2;
             const double leftPad = 28;
             var coverText = ctx.Theme.Palette["coverText"];
             var subtitleC = ctx.Theme.Palette["subtitle"];
@@ -365,7 +367,8 @@ namespace CIPP.Reporting
         public static void RenderHeroDrawing(ReportContext ctx, PdfContentBuilder item, ReportNode block)
         {
             var w = ctx.ContentWidth - 2;
-            var h = ctx.ContentHeight;
+            // See RenderCoverDrawing: a page-tall drawing is rejected in landscape without this 2pt shave.
+            var h = ctx.ContentHeight - 2;
             var highlightColour = ctx.Theme.Palette["infographic"];
             var onDark = ctx.Theme.OnInfographic;
             var overtitle = block.Str("overtitle") ?? block.Str("heroOvertitle");

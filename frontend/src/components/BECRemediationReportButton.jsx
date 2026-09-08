@@ -15,7 +15,9 @@ import { useSettings } from '../hooks/use-settings'
 import { ServerPdfPane, useServerPdf } from './CippPdf/useServerPdf'
 
 // The report PDF is rendered server-side (ExecGetBecReportPdf) by the shared CIPPSharp component kit,
-// which reads the cached BEC run; the button fetches the finished PDF as a blob for preview and download.
+// which reads the stored BEC run (BecReports/BecResults) by case id; the button fetches the finished
+// PDF as a blob for preview and download. A run is identified by its caseId - userId is the fallback
+// the server uses to pick the user's newest completed run.
 export const BECRemediationReportButton = ({ userData, becData, tenantName }) => {
   const [dialogOpen, setDialogOpen] = useState(false)
   const tenantFilter = useSettings().currentTenant
@@ -25,6 +27,7 @@ export const BECRemediationReportButton = ({ userData, becData, tenantName }) =>
 
   const params = new URLSearchParams({
     tenantFilter: tenantFilter ?? '',
+    caseId: becData?.CaseId ?? becData?.Run?.CaseId ?? '',
     userId: userData?.id ?? userData?.userId ?? '',
     userName: userData?.userPrincipalName ?? '',
     userDisplayName: userData?.displayName ?? '',

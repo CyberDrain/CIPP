@@ -247,11 +247,106 @@ function Resolve-CippReportDataToken {
             }
         }
 
+        # A sankey (flow diagram) drawn from the data. Two shapes:
+        #   flow     - an ordered list of categorical fields; each adjacent pair (a, b) becomes a link
+        #              a -> b weighted by the number of rows (or the sum of valueField). >2 fields make
+        #              a multi-column flow. Node ids are namespaced by field so a value shared between
+        #              two columns does not fold into one node (which would break the layering).
+        #   measures - one category field on the left, plus numeric measure fields, each a right-hand
+        #              node; every row adds category -> measureLabel weighted by that field. (The licence
+        #              assigned/available shape - one row, several numeric columns.)
+        if ($Type -eq 'sankey' -and $Block.sankeySource) {
+            $Sankey = $Block.sankeySource
+            $CollectionType = "$($Sankey.type)"
+            $Rows = if ($CollectionType) { & $RowsOf $CollectionType }
+            if ($null -ne $Rows) {
+                $SankeyFilter = $Sankey.filter
+                if ($SankeyFilter -and $SankeyFilter.field -and $SankeyFilter.op) {
+                    $Rows = @($Rows | Where-Object { & $RowMatches $_ "$($SankeyFilter.field)" "$($SankeyFilter.op)" "$($SankeyFilter.value)" })
+                }
+                $NodeOrder = [System.Collections.Generic.List[string]]::new()
+                $NodeLabel = @{}
+                $NodeColour = @{}
+                $LinkValue = [ordered]@{}
+                $Palette = { param([int]$Index) 'hsl({0}, 70%, 50%)' -f ((205 + $Index * 37) % 360) }
+                $AddNode = {
+                    param([string]$Id, [string]$Label, [string]$Colour)
+                    if (-not $NodeLabel.ContainsKey($Id)) {
+                        $NodeOrder.Add($Id)
+                        $NodeLabel[$Id] = $Label
+                        $NodeColour[$Id] = if ($Colour) { $Colour } else { & $Palette ($NodeOrder.Count - 1) }
+                    }
+                }
+                $AddLink = {
+                    param([string]$Source, [string]$Target, [double]$Value)
+                    $Key = "$Source`n$Target"
+                    $LinkValue[$Key] = ([double]($LinkValue[$Key]) + $Value)
+                }
+
+                if ("$($Sankey.mode)" -eq 'measures') {
+                    $CategoryField = "$($Sankey.field)"
+                    $Measures = @($Sankey.measures)
+                    $Limit = if (($Sankey.limit -as [int]) -gt 0) { [int]$Sankey.limit } else { 8 }
+                    # Rank categories by their total across all measures, keep the top N.
+                    $CategoryTotals = @{}
+                    foreach ($Row in $Rows) {
+                        $Category = @(& $ValueOf $Row $CategoryField | ForEach-Object { "$_" }) | Select-Object -First 1
+                        if (-not $Category) { continue }
+                        foreach ($Measure in $Measures) {
+                            $Number = @(& $ValueOf $Row "$($Measure.field)" | ForEach-Object { $_ -as [double] } | Where-Object { $null -ne $_ }) | Select-Object -First 1
+                            if ($null -ne $Number) { $CategoryTotals[$Category] = ([double]($CategoryTotals[$Category]) + [double]$Number) }
+                        }
+                    }
+                    $KeepCategories = @($CategoryTotals.GetEnumerator() | Sort-Object -Property Value -Descending | Select-Object -First $Limit -ExpandProperty Key)
+                    foreach ($Row in $Rows) {
+                        $Category = @(& $ValueOf $Row $CategoryField | ForEach-Object { "$_" }) | Select-Object -First 1
+                        if (-not $Category -or $Category -notin $KeepCategories) { continue }
+                        & $AddNode $Category $Category $null
+                        foreach ($Measure in $Measures) {
+                            $Label = if ($Measure.label) { "$($Measure.label)" } else { "$($Measure.field)" }
+                            $Number = @(& $ValueOf $Row "$($Measure.field)" | ForEach-Object { $_ -as [double] } | Where-Object { $null -ne $_ }) | Select-Object -First 1
+                            if ($null -eq $Number -or $Number -le 0) { continue }
+                            & $AddNode "measure:$Label" $Label "$($Measure.colour)"
+                            & $AddLink $Category "measure:$Label" ([double]$Number)
+                        }
+                    }
+                } else {
+                    $Fields = @($Sankey.fields | Where-Object { $_ } | ForEach-Object { "$_" })
+                    $ValueField = if ($Sankey.valueField) { "$($Sankey.valueField)" }
+                    if ($Fields.Count -ge 2) {
+                        foreach ($Row in $Rows) {
+                            $Weight = if ($ValueField) {
+                                @(& $ValueOf $Row $ValueField | ForEach-Object { $_ -as [double] } | Where-Object { $null -ne $_ }) | Select-Object -First 1
+                            } else { 1 }
+                            if ($null -eq $Weight -or $Weight -le 0) { continue }
+                            $Stages = @(foreach ($FieldName in $Fields) {
+                                    $Value = @(& $ValueOf $Row $FieldName | ForEach-Object { "$_" }) | Select-Object -First 1
+                                    if (-not $Value) { $Value = '(blank)' }
+                                    [pscustomobject]@{ Id = "$FieldName=$Value"; Label = $Value }
+                                })
+                            foreach ($Stage in $Stages) { & $AddNode $Stage.Id $Stage.Label $null }
+                            for ($i = 0; $i -lt $Stages.Count - 1; $i++) { & $AddLink $Stages[$i].Id $Stages[$i + 1].Id ([double]$Weight) }
+                        }
+                    }
+                }
+
+                if ($NodeOrder.Count -gt 0 -and $LinkValue.Count -gt 0) {
+                    $Nodes = @(foreach ($Id in $NodeOrder) { @{ id = $Id; label = $NodeLabel[$Id]; nodeColor = $NodeColour[$Id] } })
+                    $Links = @(foreach ($Key in $LinkValue.Keys) {
+                            $Parts = $Key -split "`n", 2
+                            @{ source = $Parts[0]; target = $Parts[1]; value = $LinkValue[$Key] }
+                        })
+                    & $SetProperty $Block 'nodes' @($Nodes)
+                    & $SetProperty $Block 'links' @($Links)
+                }
+            }
+        }
+
         # Every other string on the block, its rows and its items.
         if ($Block -is [System.Collections.IDictionary]) {
-            foreach ($Name in @($Block.Keys)) { if ($Name -notin 'chartSource', 'dataSource') { $Block[$Name] = & $Walk $Block[$Name] } }
+            foreach ($Name in @($Block.Keys)) { if ($Name -notin 'chartSource', 'dataSource', 'sankeySource') { $Block[$Name] = & $Walk $Block[$Name] } }
         } else {
-            foreach ($Property in @($Block.PSObject.Properties)) { if ($Property.Name -notin 'chartSource', 'dataSource') { $Block.($Property.Name) = & $Walk $Property.Value } }
+            foreach ($Property in @($Block.PSObject.Properties)) { if ($Property.Name -notin 'chartSource', 'dataSource', 'sankeySource') { $Block.($Property.Name) = & $Walk $Property.Value } }
         }
     }
 

@@ -143,3 +143,17 @@ function New-CippReportHero {
     if ($FooterText) { $n.footerText = $FooterText }
     $n
 }
+
+function New-CippReportSankey {
+    # A flow diagram (the dashboard CippSankey). -Nodes: @( @{ id; nodeColor; label }, ... ) - nodeColor
+    # accepts hex or hsl(); -Links: @( @{ source; target; value }, ... ) referencing node ids. Node columns
+    # and heights are derived from the link flow. -Height sets the plot height (default 240pt). Empty data
+    # draws a "No data available" frame.
+    param([string]$Title, [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Nodes,
+        [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Links, [string]$Caption, [double]$Height)
+    $n = [ordered]@{ type = 'sankey'; nodes = @($Nodes); links = @($Links) }
+    if ($Title) { $n.title = $Title }
+    if ($Caption) { $n.caption = $Caption }
+    if ($PSBoundParameters.ContainsKey('Height')) { $n.height = $Height }
+    $n
+}

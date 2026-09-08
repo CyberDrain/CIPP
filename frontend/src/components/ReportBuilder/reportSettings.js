@@ -137,6 +137,12 @@ export const serialiseBlock = (b) => ({
   coverAccent: b.coverAccent || null,
   chartSource: b.chartSource || null,
   dataSource: b.dataSource || null,
+  // Sankey (flow) block: its node/link graph, optional plot height, and a reporting-database source
+  // that builds the graph on the server when set (manual nodes/links otherwise).
+  nodes: b.nodes || null,
+  links: b.links || null,
+  height: b.height || null,
+  sankeySource: b.sankeySource || null,
   coverLabel: b.coverLabel || null,
   // A table's column list, or a callout grid's column count; either way the renderer's own field.
   columns: b.columns ?? null,

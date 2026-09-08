@@ -88,6 +88,8 @@ import {
   StructuredBlockCard,
   blockTypesFor,
   createStructuredBlock,
+  createPresetBlocks,
+  isPreset,
   isStructuredBlock,
 } from '../../../../components/ReportBuilder/ReportBuilderBlocks'
 import { PAGE_ORIENTATIONS, PAGE_SIZES } from '../../../../components/CippPdf'
@@ -1431,7 +1433,18 @@ const Page = () => {
     const type = addBlockForm.getValues('blockType')
     if (!type) return
 
-    if (isStructuredBlock(type.value)) {
+    if (isPreset(type.value)) {
+      const made = createPresetBlocks(type.value, `block-${Date.now()}`)
+      if (made.length) setBlocks((prev) => [...prev, ...made])
+      addBlockForm.reset({
+        blockCategory: addBlockForm.getValues('blockCategory'),
+        blockType: null,
+        testSuite: null,
+        selectedTest: [],
+        dbCacheType: null,
+        dbFormat: null,
+      })
+    } else if (isStructuredBlock(type.value)) {
       setBlocks((prev) => [
         ...prev,
         createStructuredBlock(type.value, `block-${Date.now()}`),

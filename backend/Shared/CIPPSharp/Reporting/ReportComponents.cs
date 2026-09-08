@@ -1245,6 +1245,228 @@ namespace CIPP.Reporting
                 AddT(dw, FmtNum(Math.Round(scaleMax * frac)), ox, oy + plotBottom - frac * plotHeight - 4, plotLeft - 5, 9, ChartLabelSize, ReportColours.Muted, OfficeTextAlignment.Right);
         }
 
+        // -- sankey (the dashboard CippSankey / nivo flow diagram) --
+        // A sankey is a layered DAG: nodes fall into columns (the longest path from a source, with sinks
+        // pushed to the last column - nivo align="justify"), a node's height is proportional to the flow
+        // through it, and links are ribbons whose thickness carries the value. Same OfficeDrawing canvas as
+        // the other charts (top-left origin, y down) so the geometry mirrors d3-sankey directly.
+        private sealed class SankeyNode
+        {
+            public string Id = string.Empty;
+            public string Label = string.Empty;
+            public string Colour = string.Empty;
+            public double Value;      // max(in, out)
+            public int Depth;
+            public double X, Y, H;    // laid-out position/size in plot coords
+            public readonly List<SankeyLink> Out = new();
+            public readonly List<SankeyLink> In = new();
+        }
+
+        private sealed class SankeyLink
+        {
+            public SankeyNode Src = null!;
+            public SankeyNode Tgt = null!;
+            public double Value, Width, Sy, Ty; // Sy/Ty = top edge of the ribbon at the source/target node
+        }
+
+        private const double SankeyNodeThickness = 12, SankeyNodeSpacing = 12, SankeyLabelGutter = 88;
+
+        public static void Sankey(ReportContext ctx, PdfContentBuilder item, List<object?> nodes, List<object?> links,
+            string? title = null, string? caption = null, double? height = null)
+        {
+            var w = ctx.ContentWidth - 2; // a drawing exactly the content width is rejected as too wide
+            const double pad = 16, titleH = 14, titleGap = 12, captionGap = 8, captionH = 10;
+            var hasTitle = !string.IsNullOrEmpty(title);
+            var hasCaption = !string.IsNullOrEmpty(caption);
+            var plotTop = pad + (hasTitle ? titleH + titleGap : 0);
+            var plotH = height is > 0 ? height!.Value : 240;
+            var totalH = plotTop + plotH + pad + (hasCaption ? captionGap + captionH : 0);
+
+            var dw = new OfficeDrawing(w, totalH);
+            var frame = OfficeShape.RoundedRectangle(w, totalH, 6);
+            frame.FillColor = OC(ReportColours.White); frame.StrokeColor = OC(ReportColours.Line); frame.StrokeWidth = 1;
+            dw.AddShape(frame, 0, 0);
+            if (hasTitle)
+                AddT(dw, San(title!), 0, pad, w, titleH, ChartTitleSize, ctx.Theme.Palette["body"], OfficeTextAlignment.Center, true);
+
+            var model = BuildSankey(ctx, nodes, links, w - 2 * SankeyLabelGutter, plotH);
+            if (model.Count == 0)
+                AddT(dw, "No data available for this chart.", 0, plotTop + plotH / 2 - 6, w, 12, ReportStyles.Body, ReportColours.Faint, OfficeTextAlignment.Center);
+            else
+                DrawSankey(dw, model, SankeyLabelGutter, plotTop, w - 2 * SankeyLabelGutter, w, totalH);
+
+            if (hasCaption)
+                AddT(dw, San(caption!), 0, plotTop + plotH + captionGap, w, captionH, ChartLabelSize, ctx.Theme.Palette["chart"], OfficeTextAlignment.Center);
+
+            item.Drawing(dw, PdfAlign.Left);
+            item.Spacer(12);
+        }
+
+        // Read the nodes/links payload, assign columns, scale node heights to the plot, and relax the vertical
+        // positions so linked nodes line up (fewer ribbon crossings). Returns the laid-out nodes, or empty when
+        // there is nothing to draw.
+        private static List<SankeyNode> BuildSankey(ReportContext ctx, List<object?> nodes, List<object?> links,
+            double plotW, double plotH)
+        {
+            var byId = new Dictionary<string, SankeyNode>(StringComparer.Ordinal);
+            SankeyNode NodeFor(string id) => byId.TryGetValue(id, out var n) ? n
+                : byId[id] = new SankeyNode { Id = id, Label = id, Colour = ctx.Theme.Palette["chart"] };
+
+            var order = 0;
+            var sequence = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var raw in nodes)
+            {
+                var id = ReportNode.RowStr(raw, "id");
+                if (string.IsNullOrEmpty(id)) continue;
+                var n = NodeFor(id!);
+                n.Label = ReportNode.RowStr(raw, "label") ?? id!;
+                var colour = ReportNode.RowStr(raw, "nodeColor") ?? ReportNode.RowStr(raw, "colour");
+                if (!string.IsNullOrEmpty(colour)) n.Colour = colour!;
+                if (!sequence.ContainsKey(id!)) sequence[id!] = order++;
+            }
+            foreach (var raw in links)
+            {
+                var s = ReportNode.RowStr(raw, "source"); var t = ReportNode.RowStr(raw, "target");
+                var v = ReportNode.RowNum(raw, "value");
+                if (string.IsNullOrEmpty(s) || string.IsNullOrEmpty(t) || v <= 0) continue;
+                var src = NodeFor(s!); var tgt = NodeFor(t!);
+                if (!sequence.ContainsKey(s!)) sequence[s!] = order++;
+                if (!sequence.ContainsKey(t!)) sequence[t!] = order++;
+                var link = new SankeyLink { Src = src, Tgt = tgt, Value = v };
+                src.Out.Add(link); tgt.In.Add(link);
+            }
+
+            var all = byId.Values.Where(n => n.Out.Count > 0 || n.In.Count > 0).ToList();
+            if (all.Count == 0) return all;
+            foreach (var n in all) n.Value = Math.Max(n.Out.Sum(l => l.Value), n.In.Sum(l => l.Value));
+
+            // Column (depth) = longest path from a source; then sinks jump to the last column (justify).
+            for (var i = 0; i < all.Count; i++)
+                foreach (var n in all)
+                    foreach (var l in n.Out)
+                        if (l.Tgt.Depth < n.Depth + 1) l.Tgt.Depth = n.Depth + 1;
+            var columnCount = all.Max(n => n.Depth) + 1;
+            foreach (var n in all) if (n.Out.Count == 0) n.Depth = columnCount - 1;
+
+            var columns = Enumerable.Range(0, columnCount)
+                .Select(d => all.Where(n => n.Depth == d).OrderBy(n => sequence[n.Id]).ToList())
+                .ToList();
+
+            // One vertical scale across every column - the tightest column (most flow / most nodes) sets it, so
+            // nothing overflows the plot. ky converts a value to points of height.
+            var ky = double.PositiveInfinity;
+            foreach (var col in columns)
+            {
+                var sum = col.Sum(n => n.Value);
+                if (sum <= 0) continue;
+                var available = plotH - (col.Count - 1) * SankeyNodeSpacing;
+                ky = Math.Min(ky, Math.Max(available, 1) / sum);
+            }
+            if (double.IsInfinity(ky) || ky <= 0) ky = 1;
+
+            foreach (var n in all)
+            {
+                n.H = Math.Max(n.Value * ky, 2);
+                n.X = columnCount == 1 ? 0 : (double)n.Depth / (columnCount - 1) * Math.Max(plotW - SankeyNodeThickness, 1);
+            }
+            // Initial y: stack each column and centre the stack in the plot.
+            foreach (var col in columns)
+            {
+                var stack = col.Sum(n => n.H) + (col.Count - 1) * SankeyNodeSpacing;
+                var y = Math.Max(0, (plotH - stack) / 2);
+                foreach (var n in col) { n.Y = y; y += n.H + SankeyNodeSpacing; }
+            }
+            // A few relaxation passes align a node with the weighted centre of what flows into/out of it, the
+            // way d3-sankey does, then collisions are resolved so nodes keep their spacing and stay on-plot.
+            for (var iter = 0; iter < 6; iter++)
+            {
+                var alpha = 0.9 * Math.Pow(0.99, iter);
+                foreach (var col in columns)
+                    foreach (var n in col)
+                    {
+                        var linked = n.In.Concat(n.Out).ToList();
+                        var weight = linked.Sum(l => l.Value);
+                        if (weight <= 0) continue;
+                        var target = linked.Sum(l => ((l.Src == n ? l.Tgt : l.Src).Y + (l.Src == n ? l.Tgt : l.Src).H / 2) * l.Value) / weight;
+                        n.Y += (target - (n.Y + n.H / 2)) * alpha;
+                    }
+                foreach (var col in columns) ResolveSankeyCollisions(col, plotH);
+            }
+
+            // Stack the ribbon endpoints on each node face, ordered by the counterpart's position so ribbons
+            // fan out without crossing at the node.
+            foreach (var n in all)
+            {
+                var oy = n.Y;
+                foreach (var l in n.Out.OrderBy(l => l.Tgt.Y)) { l.Width = l.Value * ky; l.Sy = oy; oy += l.Width; }
+                var iy = n.Y;
+                foreach (var l in n.In.OrderBy(l => l.Src.Y)) { l.Ty = iy; iy += l.Width; }
+            }
+            return all;
+        }
+
+        private static void ResolveSankeyCollisions(List<SankeyNode> col, double plotH)
+        {
+            if (col.Count == 0) return;
+            var ordered = col.OrderBy(n => n.Y).ToList();
+            var y = 0.0;
+            foreach (var n in ordered) { if (n.Y < y) n.Y = y; y = n.Y + n.H + SankeyNodeSpacing; }
+            var overflow = y - SankeyNodeSpacing - plotH;
+            if (overflow > 0)
+            {
+                y = plotH;
+                for (var i = ordered.Count - 1; i >= 0; i--)
+                {
+                    var n = ordered[i];
+                    if (n.Y + n.H > y) n.Y = y - n.H;
+                    y = n.Y - SankeyNodeSpacing;
+                }
+            }
+            foreach (var n in ordered) n.Y = Math.Max(0, Math.Min(n.Y, plotH - n.H));
+        }
+
+        private static void DrawSankey(OfficeDrawing dw, List<SankeyNode> nodes, double ox, double oy, double plotW,
+            double boxW, double boxH)
+        {
+            // Ribbons first (under the node bars): a horizontal cubic band from the source's right face to the
+            // target's left face, tinted the source colour so a node's outflow reads as one family.
+            foreach (var n in nodes)
+                foreach (var l in n.Out)
+                {
+                    double x0 = ox + l.Src.X + SankeyNodeThickness, x1 = ox + l.Tgt.X, xm = (x0 + x1) / 2;
+                    double t0 = oy + l.Sy, t1 = oy + l.Ty, b0 = t0 + l.Width, b1 = t1 + l.Width;
+                    var cmds = new List<OfficePathCommand>
+                    {
+                        OfficePathCommand.MoveTo(x0, t0),
+                        OfficePathCommand.CubicBezierTo(xm, t0, xm, t1, x1, t1),
+                        OfficePathCommand.LineTo(x1, b1),
+                        OfficePathCommand.CubicBezierTo(xm, b1, xm, b0, x0, b0),
+                        OfficePathCommand.Close(),
+                    };
+                    var ribbon = OfficeShape.Path(boxW, boxH, cmds);
+                    ribbon.FillColor = OC(l.Src.Colour); ribbon.FillOpacity = 0.45;
+                    dw.AddShape(ribbon, 0, 0);
+                }
+            // Node bars + labels: end columns label outward into the gutter, inner columns label to the right.
+            foreach (var n in nodes)
+            {
+                // A thin node (tiny flow) is shorter than twice the corner radius, which RoundedRectangle
+                // rejects - clamp the radius to what fits.
+                var radius = Math.Min(3, Math.Min(SankeyNodeThickness, n.H) / 2);
+                var bar = OfficeShape.RoundedRectangle(SankeyNodeThickness, n.H, radius);
+                bar.FillColor = OC(n.Colour); dw.AddShape(bar, ox + n.X, oy + n.Y);
+
+                var label = n.Label.Length > 22 ? n.Label.Substring(0, 21) + "…" : n.Label;
+                var midY = oy + n.Y + n.H / 2 - 4;
+                if (n.X <= 0.01)
+                    AddT(dw, San(label), ox - SankeyLabelGutter, midY, SankeyLabelGutter - 5, 12, ChartLabelSize, ReportColours.Body, OfficeTextAlignment.Right);
+                else if (n.X >= plotW - SankeyNodeThickness - 0.01)
+                    AddT(dw, San(label), ox + n.X + SankeyNodeThickness + 5, midY, SankeyLabelGutter - 5, 12, ChartLabelSize, ReportColours.Body, OfficeTextAlignment.Left);
+                else
+                    AddT(dw, San(label), ox + n.X + SankeyNodeThickness + 4, midY, 100, 12, ChartLabelSize, ReportColours.Muted, OfficeTextAlignment.Left);
+            }
+        }
+
         private static string RunsToPlain(IReadOnlyList<TextRun> runs)
         {
             var sb = new System.Text.StringBuilder();
@@ -1357,6 +1579,11 @@ namespace CIPP.Reporting
                     Chart(ctx, item, block.Str("chartKind"), block.ListOf("chartData") ?? new List<object?>(),
                         block.Str("title"), block.Str("caption") ?? block.Str("chartCaption"),
                         block.Num("max") ?? ParseNumber(block.Str("chartMax")), block.Str("centreLabel") ?? block.Str("chartCentreLabel"));
+                    return;
+                case "sankey":
+                    Sankey(ctx, item, block.ListOf("nodes") ?? new List<object?>(), block.ListOf("links") ?? new List<object?>(),
+                        block.Str("title"), block.Str("caption") ?? block.Str("chartCaption"),
+                        block.Num("height") ?? ParseNumber(block.Str("height")));
                     return;
             }
 

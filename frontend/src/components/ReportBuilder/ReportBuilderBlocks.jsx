@@ -63,6 +63,7 @@ export const BLOCK_CATEGORIES = [
     value: 'visuals',
     blocks: [
       { label: 'Chart', value: 'chart' },
+      { label: 'Flow (Sankey)', value: 'sankey' },
       { label: 'Score Cards', value: 'scorecard' },
       { label: 'Progress Bars', value: 'progress' },
     ],
@@ -77,7 +78,215 @@ export const BLOCK_CATEGORIES = [
       { label: 'Page Break', value: 'pagebreak' },
     ],
   },
+  // Pre-built components: one click drops a block already wired to the right reporting-database
+  // collection, so the common dashboard visuals don't have to be assembled by hand every time. Each
+  // value is a 'preset:<key>' resolved by createPresetBlocks below; the block it produces is an
+  // ordinary block (a chart/table with its source set), so it edits, saves and renders like any other.
+  {
+    label: 'Pre-built',
+    value: 'presets',
+    blocks: [
+      // The chart type is in each label so that when several visuals cover the same data (e.g. licence
+      // usage as a bar, a table, or a flow) the picker shows which is which.
+      { label: 'Secure Score (trend)', value: 'preset:securescore' },
+      { label: 'Licence usage (bar)', value: 'preset:licenseusage' },
+      { label: 'Licence summary (table)', value: 'preset:licensetable' },
+      { label: 'Licence flow (Sankey)', value: 'preset:licenseflow' },
+      { label: 'MFA registration (donut)', value: 'preset:mfaregistration' },
+      { label: 'MFA coverage flow (Sankey)', value: 'preset:mfaflow' },
+      { label: 'Conditional Access (donut)', value: 'preset:castate' },
+      { label: 'Device compliance (donut)', value: 'preset:devicecompliance' },
+      { label: 'Device compliance flow (Sankey)', value: 'preset:devicecomplianceflow' },
+      { label: 'Devices by OS (donut)', value: 'preset:deviceos' },
+      { label: 'Users by type (donut)', value: 'preset:usertype' },
+    ],
+  },
 ]
+
+// A chart source in the shape the picker saves + the server resolver reads. `field` is the "Per"
+// axis/label; `valueField` (with `aggregate`) plots a numeric field instead of counting rows.
+const source = (type, { field = null, valueField = null, aggregate = null, filter = null } = {}) => ({
+  type,
+  field,
+  valueField,
+  aggregate,
+  filter,
+})
+
+/**
+ * The pre-built components, keyed by preset name. A factory returns the block(s) to insert, already
+ * configured against the reporting database - no bespoke server code, they ride the same chartSource /
+ * dataSource resolver every hand-built chart uses (Resolve-CippReportDataToken). Collection Type names
+ * and field names match what the collectors store (New-CIPPDbRequest -Type). Add a pre-built component
+ * by adding a factory here and an entry to the 'Pre-built' category above.
+ *
+ * A tenant that has not cached a collection renders that block as "No data available" rather than
+ * failing, so a preset is always safe to drop in.
+ */
+export const BLOCK_PRESETS = {
+  // Microsoft Secure Score history: plot currentScore per day (a date field makes it a trend).
+  securescore: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Secure Score',
+    chartKind: 'trend',
+    chartSource: source('SecureScore', { field: 'createdDateTime', valueField: 'currentScore' }),
+    chartCaption: 'Microsoft Secure Score over time',
+    chartCentreLabel: '',
+    chartMax: '',
+  }),
+  // Assigned seats per licence (CountUsed is stored as a string; the resolver coerces it to a number).
+  licenseusage: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Licence usage',
+    chartKind: 'bar',
+    chartSource: source('LicenseOverview', {
+      field: 'License',
+      valueField: 'CountUsed',
+      aggregate: 'sum',
+    }),
+    chartCaption: 'Assigned seats per licence',
+    chartCentreLabel: '',
+    chartMax: '',
+  }),
+  // The full licence position as a table: assigned / available / total per SKU.
+  licensetable: () => ({
+    type: 'richtable',
+    static: true,
+    title: 'Licences',
+    dataSource: source('LicenseOverview'),
+    columns: [
+      { key: 'c1', header: 'Licence', field: 'License' },
+      { key: 'c2', header: 'Assigned', field: 'CountUsed' },
+      { key: 'c3', header: 'Available', field: 'CountAvailable' },
+      { key: 'c4', header: 'Total', field: 'TotalLicenses' },
+    ],
+    rows: [],
+  }),
+  // Registered vs not, among enabled users (MFAState.MFARegistration is a boolean -> True/False slices).
+  mfaregistration: () => ({
+    type: 'chart',
+    static: true,
+    title: 'MFA registration',
+    chartKind: 'donut',
+    chartSource: source('MFAState', {
+      field: 'MFARegistration',
+      filter: { field: 'AccountEnabled', op: '=', value: 'true' },
+    }),
+    chartCaption: 'Registered MFA methods (enabled users) - True = registered',
+    chartCentreLabel: 'Users',
+    chartMax: '',
+  }),
+  // Conditional Access policies by state: enabled / disabled / report-only.
+  castate: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Conditional Access policies',
+    chartKind: 'donut',
+    chartSource: source('ConditionalAccessPolicies', { field: 'state' }),
+    chartCaption: 'Policies by state',
+    chartCentreLabel: 'Policies',
+    chartMax: '',
+  }),
+  // Managed devices by Intune compliance state.
+  devicecompliance: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Device compliance',
+    chartKind: 'donut',
+    chartSource: source('ManagedDevices', { field: 'complianceState' }),
+    chartCaption: 'Managed devices by compliance state',
+    chartCentreLabel: 'Devices',
+    chartMax: '',
+  }),
+  // Managed devices by operating system.
+  deviceos: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Devices by OS',
+    chartKind: 'donut',
+    chartSource: source('ManagedDevices', { field: 'operatingSystem' }),
+    chartCaption: 'Managed devices by operating system',
+    chartCentreLabel: 'Devices',
+    chartMax: '',
+  }),
+  // Directory users split by member vs guest.
+  usertype: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Users by type',
+    chartKind: 'donut',
+    chartSource: source('Users', { field: 'userType' }),
+    chartCaption: 'Members vs guests',
+    chartCentreLabel: 'Users',
+    chartMax: '',
+  }),
+  // Assigned vs available seats per licence, as a flow (the dashboard LicenseSankey). Measures mode:
+  // one row per SKU with two numeric columns fanning out to Assigned / Available nodes.
+  licenseflow: () => ({
+    type: 'sankey',
+    static: true,
+    title: 'Licence flow',
+    chartCaption: 'Assigned vs available seats per licence',
+    sankeySource: {
+      type: 'LicenseOverview',
+      mode: 'measures',
+      field: 'License',
+      valueField: null,
+      fields: [],
+      filter: null,
+      limit: 6,
+      measures: [
+        { field: 'CountUsed', label: 'Assigned', colour: 'hsl(99, 70%, 45%)' },
+        { field: 'CountAvailable', label: 'Available', colour: 'hsl(28, 100%, 53%)' },
+      ],
+    },
+  }),
+  // Enabled users flowing type -> registered -> enforcement mechanism (the dashboard MFASankey).
+  mfaflow: () => ({
+    type: 'sankey',
+    static: true,
+    title: 'MFA coverage flow',
+    chartCaption: 'Enabled users: type to MFA registration to enforcement',
+    sankeySource: {
+      type: 'MFAState',
+      mode: 'flow',
+      fields: ['userType', 'MFARegistration', 'CoveredByCA'],
+      valueField: null,
+      field: null,
+      measures: [],
+      filter: { field: 'AccountEnabled', op: '=', value: 'true' },
+    },
+  }),
+  // Managed devices flowing operating system -> compliance state.
+  devicecomplianceflow: () => ({
+    type: 'sankey',
+    static: true,
+    title: 'Device compliance flow',
+    chartCaption: 'Managed devices: operating system to compliance state',
+    sankeySource: {
+      type: 'ManagedDevices',
+      mode: 'flow',
+      fields: ['operatingSystem', 'complianceState'],
+      valueField: null,
+      field: null,
+      measures: [],
+      filter: null,
+    },
+  }),
+}
+
+export const isPreset = (value) => typeof value === 'string' && value.startsWith('preset:')
+
+/** Build the block(s) a pre-built picker entry inserts, assigning each a unique id. */
+export const createPresetBlocks = (value, idBase) => {
+  const factory = BLOCK_PRESETS[String(value).replace(/^preset:/, '')]
+  if (!factory) return []
+  const made = factory()
+  const list = Array.isArray(made) ? made : [made]
+  return list.map((block, position) => ({ ...block, id: `${idBase}-${position}` }))
+}
 
 /** The blocks a category offers: the second step of the picker. */
 export const blockTypesFor = (category) =>
@@ -92,6 +301,7 @@ export const CALLOUT_STYLES = [
 
 const BLOCK_META = {
   chart: { label: 'Chart', Icon: CippIcons.BarChart, colour: 'primary' },
+  sankey: { label: 'Flow', Icon: CippIcons.AccountTree, colour: 'primary' },
   scorecard: { label: 'Score Cards', Icon: CippIcons.Assessment, colour: 'success' },
   progress: { label: 'Progress Bars', Icon: CippIcons.Speed, colour: 'info' },
   hero: { label: 'Infographic', Icon: CippIcons.ViewCarousel, colour: 'warning' },
@@ -136,6 +346,21 @@ export const createStructuredBlock = (type, id) => {
         chartCaption: '',
         chartCentreLabel: 'Total',
         chartMax: '',
+      }
+    case 'sankey':
+      return {
+        ...base,
+        title: 'Flow',
+        chartCaption: '',
+        nodes: [
+          { id: 'Licensed', nodeColor: 'hsl(210, 70%, 50%)' },
+          { id: 'Assigned', nodeColor: 'hsl(99, 70%, 45%)' },
+          { id: 'Available', nodeColor: 'hsl(28, 100%, 53%)' },
+        ],
+        links: [
+          { source: 'Licensed', target: 'Assigned', value: 80 },
+          { source: 'Licensed', target: 'Available', value: 20 },
+        ],
       }
     case 'scorecard':
       return {
@@ -625,6 +850,263 @@ export const ChartBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
             />
           ) : null}
         </Stack>
+      </Stack>
+    </BlockShell>
+  )
+}
+
+/* ── Flow (Sankey) ───────────────────────────────────────── */
+
+// A sankey's data source, defaulted for "flow" mode (the common case). The renderer builds nodes and
+// links from it on the server; manual nodes/links are used when this is null.
+const EMPTY_SANKEY_SOURCE = {
+  type: null,
+  mode: 'flow',
+  fields: [],
+  valueField: null,
+  field: null,
+  measures: [],
+  filter: null,
+}
+
+const SANKEY_MODES = [
+  { label: 'Flow between fields', value: 'flow' },
+  { label: 'Split by measures', value: 'measures' },
+]
+
+/**
+ * Where a sankey gets its flow from a reporting-database collection. Two shapes:
+ *  - flow: an ordered set of categorical fields; each adjacent pair becomes a stage of the diagram,
+ *    ribbons weighted by the number of rows (or a value field).
+ *  - measures: one category field on the left and numeric measure fields on the right (e.g. a licence
+ *    fanning out to Assigned / Available).
+ * Saved as { type, mode, fields, valueField, field, measures, filter } and resolved on the server.
+ */
+const SankeySourcePicker = ({ value, onChange, dataShape = [] }) => {
+  const source = value && typeof value === 'object' ? value : EMPTY_SANKEY_SOURCE
+  const mode = source.mode === 'measures' ? 'measures' : 'flow'
+  const collections = dataShape.map((entry) => ({
+    label: entry.count == null ? entry.type : `${entry.type} (${entry.count})`,
+    value: entry.type,
+  }))
+  const fields = (dataShape.find((entry) => entry.type === source.type)?.fields ?? []).map((f) => ({
+    label: f.type ? `${f.name} (${f.type})` : f.name,
+    value: f.name,
+  }))
+  const asOption = (name) =>
+    name ? (fields.find((f) => f.value === name) ?? { label: name, value: name }) : null
+  const patch = (next) => onChange({ ...EMPTY_SANKEY_SOURCE, ...source, ...next })
+  const stages = source.fields ?? []
+  const setStage = (position, name) => {
+    const next = [...stages]
+    if (name) next[position] = name
+    else next.splice(position, 1)
+    patch({ fields: next.filter(Boolean) })
+  }
+  const filter = source.filter ?? null
+
+  return (
+    <Stack spacing={1}>
+      <Stack direction="row" spacing={1}>
+        <Box sx={{ flex: 1 }}>
+          <CippAutoComplete
+            size="small"
+            label="Collection"
+            placeholder="Pick a collection"
+            multiple={false}
+            creatable={false}
+            options={collections}
+            value={collections.find((option) => option.value === source.type) ?? null}
+            onChange={(option) =>
+              onChange(option?.value ? { ...EMPTY_SANKEY_SOURCE, type: option.value } : EMPTY_SANKEY_SOURCE)
+            }
+          />
+        </Box>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          color="primary"
+          aria-label="Flow shape"
+          value={mode}
+          onChange={(event, next) => next && patch({ mode: next })}
+        >
+          {SANKEY_MODES.map((option) => (
+            <ToggleButton key={option.value} value={option.value}>
+              {option.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Stack>
+
+      {source.type && mode === 'flow' ? (
+        <Stack direction="row" spacing={1}>
+          {[0, 1, 2].map((position) => (
+            <Box key={position} sx={{ flex: 1 }}>
+              <CippAutoComplete
+                size="small"
+                label={position === 0 ? 'From field' : position === 1 ? 'To field' : 'Then (optional)'}
+                placeholder={position > 1 ? 'Optional stage' : 'Pick a field'}
+                multiple={false}
+                creatable={true}
+                options={fields}
+                value={asOption(stages[position])}
+                onChange={(option) => setStage(position, option?.value ?? null)}
+              />
+            </Box>
+          ))}
+        </Stack>
+      ) : null}
+
+      {source.type && mode === 'measures' ? (
+        <>
+          <Box sx={{ maxWidth: 320 }}>
+            <CippAutoComplete
+              size="small"
+              label="Category field"
+              placeholder="e.g. License"
+              multiple={false}
+              creatable={true}
+              options={fields}
+              value={asOption(source.field)}
+              onChange={(option) => patch({ field: option?.value ?? null })}
+            />
+          </Box>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Measures: each numeric field becomes a node the category flows into.
+          </Typography>
+          <RowsEditor
+            rows={source.measures ?? []}
+            columns={[
+              { key: 'field', label: 'Value field', width: 1 },
+              { key: 'label', label: 'Shown as', width: 1 },
+            ]}
+            onChange={(measures) => patch({ measures })}
+            addLabel="Add measure"
+          />
+        </>
+      ) : null}
+
+      {source.type ? (
+        <Stack direction="row" spacing={1}>
+          <Box sx={{ flex: 1 }}>
+            <CippAutoComplete
+              size="small"
+              label="Only rows where"
+              placeholder="Every row"
+              multiple={false}
+              creatable={true}
+              options={fields}
+              value={asOption(filter?.field)}
+              onChange={(option) =>
+                patch({
+                  filter: option?.value
+                    ? { field: option.value, op: filter?.op ?? '=', value: filter?.value ?? '' }
+                    : null,
+                })
+              }
+            />
+          </Box>
+          {filter?.field ? (
+            <>
+              <Box sx={{ minWidth: 130 }}>
+                <CippAutoComplete
+                  size="small"
+                  label="Condition"
+                  multiple={false}
+                  creatable={false}
+                  disableClearable={true}
+                  options={FILTER_OPS}
+                  value={FILTER_OPS.find((option) => option.value === filter.op) ?? FILTER_OPS[0]}
+                  onChange={(option) => patch({ filter: { ...filter, op: option?.value ?? '=' } })}
+                />
+              </Box>
+              <TextField
+                size="small"
+                label="Value"
+                placeholder="true, compliant, Win*"
+                value={filter.value ?? ''}
+                onChange={(event) => patch({ filter: { ...filter, value: event.target.value } })}
+                sx={{ flex: 1 }}
+              />
+            </>
+          ) : null}
+        </Stack>
+      ) : null}
+    </Stack>
+  )
+}
+
+export const SankeyBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) => {
+  const set = (patch) => onUpdate(index, { ...block, ...patch })
+  const nodes = block.nodes || []
+  const links = block.links || []
+
+  return (
+    <BlockShell
+      block={block}
+      index={index}
+      chips={
+        <Chip
+          label={block.sankeySource ? 'from data' : `${nodes.length} nodes`}
+          size="small"
+          variant="outlined"
+        />
+      }
+      {...shell}
+    >
+      <Stack spacing={2}>
+        <TitleField block={block} index={index} onUpdate={onUpdate} />
+        <SourceSwitch
+          value={block.sankeySource ? 'cache' : 'manual'}
+          onChange={(next) => set({ sankeySource: next === 'cache' ? EMPTY_SANKEY_SOURCE : null })}
+        />
+        {block.sankeySource ? (
+          <SankeySourcePicker
+            value={block.sankeySource}
+            onChange={(sankeySource) => set({ sankeySource })}
+            dataShape={dataShape}
+          />
+        ) : (
+          <>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Nodes are the boxes; links join them by node ID and their value sets the ribbon
+              thickness. Columns and heights are worked out from the flow. Colours accept hex or hsl().
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+              Nodes
+            </Typography>
+            <RowsEditor
+              rows={nodes}
+              columns={[
+                { key: 'id', label: 'Node ID', width: 2 },
+                { key: 'nodeColor', label: 'Colour', width: 1 },
+                { key: 'label', label: 'Label (optional)', width: 1 },
+              ]}
+              onChange={(next) => set({ nodes: next })}
+              addLabel="Add node"
+            />
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+              Links
+            </Typography>
+            <RowsEditor
+              rows={links}
+              columns={[
+                { key: 'source', label: 'From (node ID)', width: 2 },
+                { key: 'target', label: 'To (node ID)', width: 2 },
+                { key: 'value', label: 'Value', width: 1, type: 'number' },
+              ]}
+              onChange={(next) => set({ links: next })}
+              addLabel="Add link"
+            />
+          </>
+        )}
+        <TextField
+          size="small"
+          fullWidth
+          label="Caption"
+          value={block.chartCaption ?? ''}
+          onChange={(event) => set({ chartCaption: event.target.value })}
+        />
       </Stack>
     </BlockShell>
   )
@@ -1162,6 +1644,8 @@ export const StructuredBlockCard = ({ block, ...props }) => {
       return <TableBlockCard block={block} {...props} />
     case 'chart':
       return <ChartBlockCard block={block} {...props} />
+    case 'sankey':
+      return <SankeyBlockCard block={block} {...props} />
     case 'scorecard':
       return <ScorecardBlockCard block={block} {...props} />
     case 'progress':

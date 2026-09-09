@@ -1148,7 +1148,8 @@ namespace CIPP.Reporting
                 var height = Math.Max(e.value / maxValue * plotHeight, e.value > 0 ? 2 : 1);
                 var x = plotLeft + i * slot + (slot - barWidth) / 2;
                 var y = plotBottom - height;
-                var bar = OfficeShape.RoundedRectangle(barWidth, height, 2);
+                var barRadius = Math.Min(2, Math.Min(barWidth, height) / 2);
+                var bar = OfficeShape.RoundedRectangle(barWidth, height, barRadius);
                 bar.FillColor = OC(e.colour); dw.AddShape(bar, ox + x, oy + y);
                 AddT(dw, FmtNum(e.value), ox + plotLeft + i * slot, oy + y - 11, slot, 9, ChartLabelSize, ctx.Theme.Palette["body"], OfficeTextAlignment.Center);
                 var label = e.label.Length > 14 ? e.label.Substring(0, 13) + "…" : e.label;

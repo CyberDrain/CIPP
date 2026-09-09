@@ -64,9 +64,23 @@ export const PRESET_TOPICS = [
       { label: 'Compliance (donut)', preset: 'devicecompliance' },
       { label: 'Compliance flow (Sankey)', preset: 'devicecomplianceflow' },
       { label: 'By OS (donut)', preset: 'deviceos' },
+      { label: 'By manufacturer (donut)', preset: 'devicemanufacturer' },
+      { label: 'By ownership (donut)', preset: 'deviceownership' },
     ],
   },
   { label: 'Users', value: 'users', variants: [{ label: 'By type (donut)', preset: 'usertype' }] },
+  {
+    label: 'Mailboxes',
+    value: 'mailboxes',
+    variants: [
+      { label: 'By type (donut)', preset: 'mailboxesbytype' },
+      { label: 'Busiest (bar)', preset: 'mailboxbusiest' },
+    ],
+  },
+  { label: 'Groups', value: 'groups', variants: [{ label: 'By type (donut)', preset: 'groupsbytype' }] },
+  { label: 'Domains', value: 'domains', variants: [{ label: 'Mail security (table)', preset: 'domainsecurity' }] },
+  { label: 'Risky users', value: 'risk', variants: [{ label: 'By risk level (donut)', preset: 'riskyusers' }] },
+  { label: 'Tenant', value: 'tenant', variants: [{ label: 'Summary (cards)', preset: 'tenantsummary' }] },
 ]
 
 /**
@@ -318,6 +332,100 @@ export const BLOCK_PRESETS = {
     title: 'Device compliance',
     chartCaption: 'Managed devices by operating system and compliance state',
     sankeySource: { type: 'ManagedDevices', preset: 'deviceCompliance' },
+  }),
+  // Managed devices split other ways (same collection as compliance/OS).
+  devicemanufacturer: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Devices by manufacturer',
+    chartKind: 'donut',
+    chartSource: source('ManagedDevices', { field: 'manufacturer' }),
+    chartCaption: 'Managed devices by manufacturer',
+    chartCentreLabel: 'Devices',
+    chartMax: '',
+  }),
+  deviceownership: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Devices by ownership',
+    chartKind: 'donut',
+    chartSource: source('ManagedDevices', { field: 'managedDeviceOwnerType' }),
+    chartCaption: 'Corporate vs personal devices',
+    chartCentreLabel: 'Devices',
+    chartMax: '',
+  }),
+  // Mailboxes by recipient type (user / shared / room ...).
+  mailboxesbytype: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Mailboxes by type',
+    chartKind: 'donut',
+    chartSource: source('Mailboxes', { field: 'recipientTypeDetails' }),
+    chartCaption: 'Mailboxes by recipient type',
+    chartCentreLabel: 'Mailboxes',
+    chartMax: '',
+  }),
+  // Busiest mailboxes by item count (readable, unlike raw storage bytes).
+  mailboxbusiest: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Busiest mailboxes',
+    chartKind: 'bar',
+    chartSource: source('MailboxUsage', { field: 'displayName', valueField: 'itemCount', aggregate: 'max' }),
+    chartCaption: 'Top mailboxes by item count',
+    chartCentreLabel: '',
+    chartMax: '',
+  }),
+  // Groups by calculated type (security / Microsoft 365 / distribution ...).
+  groupsbytype: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Groups by type',
+    chartKind: 'donut',
+    chartSource: source('Groups', { field: 'calculatedGroupType' }),
+    chartCaption: 'Groups by type',
+    chartCentreLabel: 'Groups',
+    chartMax: '',
+  }),
+  // Domain mail-security posture (the dashboard "Mail hygiene" data) as a table.
+  domainsecurity: () => ({
+    type: 'richtable',
+    static: true,
+    title: 'Domain mail security',
+    dataSource: source('DomainAnalyser'),
+    limit: 50,
+    columns: [
+      { key: 'c1', header: 'Domain', field: 'Domain' },
+      { key: 'c2', header: 'SPF', field: 'SPFPassAll' },
+      { key: 'c3', header: 'DKIM', field: 'DKIMEnabled' },
+      { key: 'c4', header: 'DMARC', field: 'DMARCPresent' },
+      { key: 'c5', header: 'DNSSEC', field: 'DNSSECPresent' },
+      { key: 'c6', header: 'Score', field: 'ScorePercentage', align: 'right' },
+    ],
+    rows: [],
+  }),
+  // Risky users by risk level (Identity Protection).
+  riskyusers: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Risky users',
+    chartKind: 'donut',
+    chartSource: source('RiskyUsers', { field: 'riskLevel' }),
+    chartCaption: 'Users by risk level',
+    chartCentreLabel: 'Users',
+    chartMax: '',
+  }),
+  // Tenant headline counts as score cards, resolved from the reporting database via data tokens.
+  tenantsummary: () => ({
+    type: 'scorecard',
+    static: true,
+    title: 'Tenant summary',
+    stats: [
+      { label: 'Users', value: '&Users&' },
+      { label: 'Guests', value: '&Guests&' },
+      { label: 'Groups', value: '&Groups&' },
+      { label: 'Mailboxes', value: '&Mailboxes&' },
+    ],
   }),
 }
 

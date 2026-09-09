@@ -11,12 +11,49 @@ import {
 import { Layout as DashboardLayout } from '../../../layouts/index'
 import { CippTablePage } from '../../../components/CippComponents/CippTablePage.jsx'
 import { CippOffCanvas } from '../../../components/CippComponents/CippOffCanvas'
+import { CippDataTable } from '../../../components/CippTable/CippDataTable'
 import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
 import { CippApiResults } from '../../../components/CippComponents/CippApiResults'
 import { useBecEvidenceDownload } from '../../../components/CippComponents/CippBecEvidenceDownload'
 import { CippIcons } from '../../../utils/icon-registry'
 import { ApiGetCall, ApiPostCall } from '../../../api/ApiCall'
 import { useSettings } from '../../../hooks/use-settings'
+
+// Columns shown for a single run — used both by the flat "All runs" table and inside a
+// user's run-history drawer, so the two never drift.
+const RUN_COLUMNS = [
+  'Level',
+  'Score',
+  'Status',
+  'ExtractedAt',
+  'RequestedBy',
+  'ContainmentRuns',
+  'CaseId',
+]
+
+// The run history behind a per-user summary row: every run for that user, newest first,
+// with the same per-run actions as the flat view (open, download, delete a specific run).
+// Opened from the row's "View runs" action rather than the More-Info drawer, so a drawer
+// never stacks on top of another.
+const UserRunsDrawer = ({ row, actions, drawerVisible, setDrawerVisible }) => {
+  const runs = Array.isArray(row?.Runs) ? row.Runs : []
+  return (
+    <CippOffCanvas
+      title={`Runs for ${row?.UserPrincipalName ?? row?.DisplayName ?? 'user'}`}
+      size="xl"
+      visible={drawerVisible}
+      onClose={() => setDrawerVisible(false)}
+    >
+      <CippDataTable
+        noCard={true}
+        title={`${runs.length} ${runs.length === 1 ? 'run' : 'runs'}`}
+        data={runs}
+        actions={actions}
+        simpleColumns={RUN_COLUMNS}
+      />
+    </CippOffCanvas>
+  )
+}
 
 // Quick action: pick one or more users and queue a BEC investigation for each. Runs land in the
 // table below; each is its own case.
@@ -135,7 +172,8 @@ const Page = () => {
     })
     return [...byUser.values()]
       .map((list) => {
-        const latest = [...list].sort((a, b) => when(b) - when(a))[0]
+        const runsNewestFirst = [...list].sort((a, b) => when(b) - when(a))
+        const latest = runsNewestFirst[0]
         const worst = [...list].sort(
           (a, b) => (rank[b.Level] || 0) - (rank[a.Level] || 0)
         )[0]
@@ -143,6 +181,8 @@ const Page = () => {
           ...latest,
           Level: worst?.Level ?? latest?.Level,
           RunCount: list.length,
+          // Full run history for this user (newest first), powering the "View runs" drawer.
+          Runs: runsNewestFirst,
         }
       })
       .sort(
@@ -164,43 +204,76 @@ const Page = () => {
     </ToggleButtonGroup>
   )
 
-  const actions = [
+  // Actions on a single run — the flat "All runs" rows, and every row inside a user's
+  // run-history drawer. Open in any state (a queued/running case shows live progress, a
+  // failed one its error); download bundles both report PDFs client-side; delete removes
+  // one run and refreshes both views.
+  const runActions = [
     {
-      // Open in any state — a queued or running case shows live progress, a failed one its error.
-      label: isByUser ? 'Open latest case' : 'Open case',
+      label: 'Open case',
       icon: <CippIcons.Visibility />,
       link: '/identity/bec/case?userId=[UserId]&caseId=[CaseId]&tenantFilter=[Tenant]',
       multiPost: false,
     },
     {
-      // Renders both report PDFs in the browser and bundles them into the package, then downloads it
-      // with a case-named file. The server GET path cannot include the PDFs, so this is client-driven.
+      // The server GET path cannot include the PDFs, so this is client-driven.
       label: 'Download evidence (ZIP, with PDFs)',
       icon: <CippIcons.Archive />,
       noConfirm: true,
       customFunction: (row) => download(row),
       condition: (row) => row.Status === 'Completed',
     },
-    // Deleting one run only makes sense on an actual run, not a per-user rollup.
-    ...(isByUser
-      ? []
-      : [
-          {
-            label: 'Delete run',
-            icon: <CippIcons.DeleteForever />,
-            type: 'POST',
-            url: '/api/ExecBECReport',
-            data: {
-              Action: '!Delete',
-              caseId: 'CaseId',
-              tenantFilter: 'Tenant',
-            },
-            confirmText:
-              'Delete run [CaseId] for [UserPrincipalName] permanently, including its results and evidence package?',
-            multiPost: false,
-          },
-        ]),
+    {
+      label: 'Delete run',
+      icon: <CippIcons.DeleteForever />,
+      type: 'POST',
+      url: '/api/ExecBECReport',
+      data: {
+        Action: '!Delete',
+        caseId: 'CaseId',
+        tenantFilter: 'Tenant',
+      },
+      confirmText:
+        'Delete run [CaseId] for [UserPrincipalName] permanently, including its results and evidence package?',
+      // The grouped view derives from this same list, so refresh it too when a run is
+      // deleted from inside a run-history drawer (whose own data is a static snapshot).
+      relatedQueryKeys: [`ListBECReports-${currentTenant}`],
+      multiPost: false,
+    },
   ]
+
+  // Actions on a per-user summary row: drill into the whole run history, or act on the
+  // latest run directly.
+  const groupedRowActions = [
+    {
+      label: 'View runs',
+      icon: <CippIcons.History />,
+      multiPost: false,
+      customComponent: (row, { drawerVisible, setDrawerVisible }) => (
+        <UserRunsDrawer
+          row={row}
+          actions={runActions}
+          drawerVisible={drawerVisible}
+          setDrawerVisible={setDrawerVisible}
+        />
+      ),
+    },
+    {
+      label: 'Open latest case',
+      icon: <CippIcons.Visibility />,
+      link: '/identity/bec/case?userId=[UserId]&caseId=[CaseId]&tenantFilter=[Tenant]',
+      multiPost: false,
+    },
+    {
+      label: 'Download latest evidence (ZIP, with PDFs)',
+      icon: <CippIcons.Archive />,
+      noConfirm: true,
+      customFunction: (row) => download(row),
+      condition: (row) => row.Status === 'Completed',
+    },
+  ]
+
+  const actions = isByUser ? groupedRowActions : runActions
 
   const offCanvas = {
     extendedInfoFields: [
@@ -218,7 +291,11 @@ const Page = () => {
       'ContainmentRuns',
       'ErrorMessage',
     ],
-    actions: actions,
+    // The More-Info drawer offers the latest-run shortcuts; "View runs" opens its own
+    // drawer, so it is kept out of here to avoid stacking one drawer on another.
+    actions: isByUser
+      ? groupedRowActions.filter((a) => typeof a.customComponent !== 'function')
+      : runActions,
   }
 
   return (
@@ -237,14 +314,15 @@ const Page = () => {
       simpleColumns={
         isByUser
           ? [
+              // A per-user summary: worst level seen, how many runs, and the latest run's
+              // score/status/date. The individual runs live behind "View runs".
               'Tenant',
               'UserPrincipalName',
               'Level',
-              'Score',
               'RunCount',
+              'Score',
               'Status',
               'ExtractedAt',
-              'CaseId',
             ]
           : [
               'Tenant',
@@ -258,22 +336,21 @@ const Page = () => {
               'CaseId',
             ]
       }
-      filters={
-        isByUser
-          ? []
-          : [
-              {
-                filterName: 'High threat level',
-                value: [{ id: 'Level', value: 'High' }],
-                type: 'column',
-              },
-              {
-                filterName: 'Completed runs',
-                value: [{ id: 'Status', value: 'Completed' }],
-                type: 'column',
-              },
-            ]
-      }
+      filters={[
+        // Both apply to either view: in "By user" the columns hold the worst level seen
+        // and the latest run's status, so "High threat level" surfaces any user with a
+        // High run.
+        {
+          filterName: 'High threat level',
+          value: [{ id: 'Level', value: 'High' }],
+          type: 'column',
+        },
+        {
+          filterName: 'Completed runs',
+          value: [{ id: 'Status', value: 'Completed' }],
+          type: 'column',
+        },
+      ]}
     />
   )
 }

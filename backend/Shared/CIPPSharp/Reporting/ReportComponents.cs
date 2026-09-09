@@ -1399,15 +1399,17 @@ namespace CIPP.Reporting
             if (all.Count == 0) return all;
             foreach (var n in all) n.Value = Math.Max(n.Out.Sum(l => l.Value), n.In.Sum(l => l.Value));
 
-            // Column (depth) = longest path from a source, so a node sits one column right of every node
-            // that flows into it. Leaf nodes stay at their natural depth (NOT justified to the last
-            // column) - otherwise a stage-1 terminal like "Single factor" jumps to the output column and
-            // its users appear to skip the middle stage instead of flowing through it.
+            // Column (depth): longest path from a source, then leaf nodes (no outgoing link) are pushed to
+            // the LAST column - this is nivo align="justify", which the dashboard uses. Terminal buckets
+            // such as the auth-methods "Single factor" therefore land in the output column exactly as on
+            // the dashboard; input-order stacking (below, nivo sort="input") keeps them at the top so their
+            // ribbons run cleanly across rather than cutting through the middle stage.
             for (var i = 0; i < all.Count; i++)
                 foreach (var n in all)
                     foreach (var l in n.Out)
                         if (l.Tgt.Depth < n.Depth + 1) l.Tgt.Depth = n.Depth + 1;
             var columnCount = all.Max(n => n.Depth) + 1;
+            foreach (var n in all) if (n.Out.Count == 0) n.Depth = columnCount - 1;
 
             var columns = Enumerable.Range(0, columnCount)
                 .Select(d => all.Where(n => n.Depth == d).OrderBy(n => sequence[n.Id]).ToList())
@@ -1438,7 +1440,8 @@ namespace CIPP.Reporting
                 foreach (var n in col) { n.Y = y; y += n.H + SankeyNodeSpacing; }
             }
             // A few relaxation passes align a node with the weighted centre of what flows into/out of it, the
-            // way d3-sankey does, then collisions are resolved so nodes keep their spacing and stay on-plot.
+            // way d3-sankey does; collisions are then resolved IN THE FIXED INPUT ORDER (never re-sorted by
+            // Y), so the vertical order stays the data order - matching nivo sort="input" on the dashboard.
             for (var iter = 0; iter < 6; iter++)
             {
                 var alpha = 0.9 * Math.Pow(0.99, iter);
@@ -1469,21 +1472,23 @@ namespace CIPP.Reporting
         private static void ResolveSankeyCollisions(List<SankeyNode> col, double plotH)
         {
             if (col.Count == 0) return;
-            var ordered = col.OrderBy(n => n.Y).ToList();
+            // Resolve overlaps in the column's GIVEN order (input/sequence order), not by Y - re-sorting by
+            // Y would scramble the nivo sort="input" ordering the dashboard uses. Push down, then if the
+            // stack overruns the plot, push back up from the bottom.
             var y = 0.0;
-            foreach (var n in ordered) { if (n.Y < y) n.Y = y; y = n.Y + n.H + SankeyNodeSpacing; }
+            foreach (var n in col) { if (n.Y < y) n.Y = y; y = n.Y + n.H + SankeyNodeSpacing; }
             var overflow = y - SankeyNodeSpacing - plotH;
             if (overflow > 0)
             {
                 y = plotH;
-                for (var i = ordered.Count - 1; i >= 0; i--)
+                for (var i = col.Count - 1; i >= 0; i--)
                 {
-                    var n = ordered[i];
+                    var n = col[i];
                     if (n.Y + n.H > y) n.Y = y - n.H;
                     y = n.Y - SankeyNodeSpacing;
                 }
             }
-            foreach (var n in ordered) n.Y = Math.Max(0, Math.Min(n.Y, plotH - n.H));
+            foreach (var n in col) n.Y = Math.Max(0, Math.Min(n.Y, plotH - n.H));
         }
 
         private static void DrawSankey(OfficeDrawing dw, List<SankeyNode> nodes, double ox, double oy, double plotW,

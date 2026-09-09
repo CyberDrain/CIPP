@@ -15,8 +15,10 @@ function Resolve-CippReportDataToken {
         offers as sources; fields are case-insensitive and may reach into nested objects with dots.
         A chart with a chartSource of &Devices.operatingSystem& gets one slice per value of that field;
         a table with a dataSource of &Mailboxes& (a filter token works too) gets the rows, each column
-        reading the field it names (its `field`, else its header). A token that names nothing is left
-        as written, so the mistake shows in the report instead of silently blanking.
+        reading the field it names (its `field`, else its header). A score card block with a statsSource
+        gets one card per value of the field (a count, or an aggregate of a numeric field) and a progress
+        block with an itemsSource one bar each, filled by its share of the total. A token that names
+        nothing is left as written, so the mistake shows in the report instead of silently blanking.
     .PARAMETER Blocks
         The enriched blocks, as objects or hashtables. Returned with the tokens replaced in place.
     .PARAMETER TenantFilter
@@ -186,6 +188,37 @@ function Resolve-CippReportDataToken {
         , @($Rows)
     }
 
+    # Label/value pairs from a source, for score cards and progress bars: one entry per distinct value
+    # of the field (a count of rows, or an aggregate of a numeric field), or a single figure when no
+    # field is named. Sorted by value and capped so a row of cards or bars stays readable.
+    $CardsFrom = {
+        param($Spec, $Rows, [string]$SingleLabel)
+        $Field = $Spec.field
+        $Aggregate = { param($Numbers) if (@($Numbers).Count -eq 0) { return 0 }
+            $Measured = @($Numbers) | Measure-Object -Sum -Average -Minimum -Maximum
+            switch ($Spec.aggregate) { 'avg' { [math]::Round($Measured.Average, 2) } 'min' { $Measured.Minimum } 'max' { $Measured.Maximum } default { $Measured.Sum } } }
+        $Pairs = if ($Spec.valueField) {
+            if ($Field) {
+                @($Rows | Group-Object { @(& $ValueOf $_ $Field | ForEach-Object { "$_" }) | Select-Object -First 1 } | ForEach-Object {
+                        $Label = "$($_.Name)"
+                        if (-not $Label) { return }
+                        $Numbers = @($_.Group | ForEach-Object { @(& $ValueOf $_ $Spec.valueField | ForEach-Object { $_ -as [double] } | Where-Object { $null -ne $_ }) | Select-Object -First 1 } | Where-Object { $null -ne $_ })
+                        if ($Numbers.Count -eq 0) { return }
+                        @{ label = $Label; value = [double](& $Aggregate $Numbers) }
+                    })
+            } else {
+                $Numbers = @($Rows | ForEach-Object { @(& $ValueOf $_ $Spec.valueField | ForEach-Object { $_ -as [double] } | Where-Object { $null -ne $_ }) | Select-Object -First 1 } | Where-Object { $null -ne $_ })
+                @(@{ label = $(if ($SingleLabel) { $SingleLabel } else { $Spec.type }); value = [double](& $Aggregate $Numbers) })
+            }
+        } elseif ($Field) {
+            $Groups = @(foreach ($Row in $Rows) { @(& $ValueOf $Row $Field | ForEach-Object { "$_" }) }) | Group-Object { $_.ToLowerInvariant() }
+            @($Groups | ForEach-Object { @{ label = "$($_.Group[0])"; value = [double]$_.Count } })
+        } else {
+            @(@{ label = $(if ($SingleLabel) { $SingleLabel } else { $Spec.type }); value = [double]$Rows.Count })
+        }
+        @($Pairs | Sort-Object -Property @{ Expression = { $_.value }; Descending = $true }, @{ Expression = { $_.label } } | Select-Object -First $MaxSlices)
+    }
+
     foreach ($Block in @($Blocks)) {
         if ($null -eq $Block) { continue }
         $Type = "$($Block.type)"
@@ -253,6 +286,33 @@ function Resolve-CippReportDataToken {
                     })
                 & $SetProperty $Block 'rows' @($TableRows)
                 if (-not $Block.limit) { & $SetProperty $Block 'limit' $MaxRows }
+            }
+        }
+
+        # Score cards drawn from the data: one card per distinct value of the field, the figure a count
+        # of rows (or an aggregate of a numeric field). Manual stats stay hand-typed and can use tokens.
+        if ($Type -eq 'scorecard' -and $Block.statsSource) {
+            $Spec = & $SourceOf $Block.statsSource
+            $Rows = if ($Spec) { & $RowsFor $Spec }
+            if ($Spec -and $null -ne $Rows) {
+                $Cards = @(& $CardsFrom $Spec @($Rows) "$($Block.title)" | ForEach-Object { @{ value = (& $FormatNumber $_.value); label = $_.label } })
+                if ($Cards.Count -gt 0) { & $SetProperty $Block 'stats' @($Cards) }
+            }
+        }
+
+        # Progress bars drawn from the data: one bar per distinct value of the field, filled by its share
+        # of the total (counting rows) or of the largest bar (aggregating a numeric field).
+        if ($Type -eq 'progress' -and $Block.itemsSource) {
+            $Spec = & $SourceOf $Block.itemsSource
+            $Rows = if ($Spec) { & $RowsFor $Spec }
+            if ($Spec -and $null -ne $Rows) {
+                $Bars = @(& $CardsFrom $Spec @($Rows) "$($Block.title)")
+                if ($Bars.Count -gt 0) {
+                    $Max = if ($Spec.valueField) { [double](@($Bars | ForEach-Object { $_.value }) | Measure-Object -Maximum).Maximum } else { [double]@($Rows).Count }
+                    if ($Max -le 0) { $Max = [double](@($Bars | ForEach-Object { $_.value }) | Measure-Object -Maximum).Maximum }
+                    $Items = @($Bars | ForEach-Object { @{ label = $_.label; value = $_.value; max = $Max } })
+                    & $SetProperty $Block 'items' @($Items)
+                }
             }
         }
 
@@ -363,9 +423,9 @@ function Resolve-CippReportDataToken {
 
         # Every other string on the block, its rows and its items.
         if ($Block -is [System.Collections.IDictionary]) {
-            foreach ($Name in @($Block.Keys)) { if ($Name -notin 'chartSource', 'dataSource', 'sankeySource') { $Block[$Name] = & $Walk $Block[$Name] } }
+            foreach ($Name in @($Block.Keys)) { if ($Name -notin 'chartSource', 'dataSource', 'sankeySource', 'statsSource', 'itemsSource') { $Block[$Name] = & $Walk $Block[$Name] } }
         } else {
-            foreach ($Property in @($Block.PSObject.Properties)) { if ($Property.Name -notin 'chartSource', 'dataSource', 'sankeySource') { $Block.($Property.Name) = & $Walk $Property.Value } }
+            foreach ($Property in @($Block.PSObject.Properties)) { if ($Property.Name -notin 'chartSource', 'dataSource', 'sankeySource', 'statsSource', 'itemsSource') { $Block.($Property.Name) = & $Walk $Property.Value } }
         }
     }
 

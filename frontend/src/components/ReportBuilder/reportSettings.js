@@ -145,6 +145,10 @@ export const serialiseBlock = (b) => ({
   coverAccent: b.coverAccent || null,
   chartSource: b.chartSource || null,
   dataSource: b.dataSource || null,
+  // Score-card and progress blocks can also be reporting-database-driven: one card/bar per value of
+  // the chosen field, resolved on the server when the report renders.
+  statsSource: b.statsSource || null,
+  itemsSource: b.itemsSource || null,
   // Sankey (flow) block: its node/link graph, optional plot height, and a reporting-database source
   // that builds the graph on the server when set (manual nodes/links otherwise).
   nodes: b.nodes || null,

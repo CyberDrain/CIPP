@@ -683,7 +683,7 @@ export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
             }
           />
         </Box>
-        {mode === 'chart' && source?.type ? (
+        {mode !== 'table' && source?.type ? (
           <>
             <Box sx={{ flex: 1 }}>
               <CippAutoComplete
@@ -717,7 +717,7 @@ export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
           </>
         ) : null}
       </Stack>
-      {mode === 'chart' && plotting && source?.field ? (
+      {mode !== 'table' && plotting && source?.field ? (
         <Box sx={{ maxWidth: 320 }}>
           <CippAutoComplete
             size="small"
@@ -778,9 +778,13 @@ export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
         </Stack>
       ) : null}
       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-        {mode === 'chart'
-          ? 'Read from the reporting database when the report renders. Counting rows gives one slice per value of the field; a field\'s value per date field gives a trend, the last 30 points in date order.'
-          : 'The rows of the collection (those the condition keeps) fill the table when the report renders; each column reads the field it names.'}
+        {mode === 'table'
+          ? 'The rows of the collection (those the condition keeps) fill the table when the report renders; each column reads the field it names.'
+          : mode === 'scorecard'
+            ? 'Read from the reporting database when the report renders: one card per value of the field, showing a count of rows (or a field\'s value combined per label).'
+            : mode === 'progress'
+              ? 'Read from the reporting database when the report renders: one bar per value of the field, filled by its share of the total (or a field\'s value combined per label).'
+              : 'Read from the reporting database when the report renders. Counting rows gives one slice per value of the field; a field\'s value per date field gives a trend, the last 30 points in date order.'}
       </Typography>
     </Stack>
   )
@@ -1317,34 +1321,55 @@ export const SankeyBlockCard = ({ block, index, onUpdate, dataShape, ...shell })
 
 /* ── Score cards ─────────────────────────────────────────── */
 
-export const ScorecardBlockCard = ({ block, index, onUpdate, ...shell }) => {
+export const ScorecardBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) => {
+  const set = (patch) => onUpdate(index, { ...block, ...patch })
   const stats = block.stats || []
 
   return (
     <BlockShell block={block} index={index} chips={<Chip label={`${stats.length} cards`} size="small" variant="outlined" />} {...shell}>
       <Stack spacing={2}>
         <TitleField block={block} index={index} onUpdate={onUpdate} />
-        <RowsEditor
-          rows={stats}
-          columns={[
-            { key: 'value', label: 'Figure', width: 1 },
-            { key: 'label', label: 'Label', width: 2 },
-            { key: 'caption', label: 'Caption (optional)', width: 2 },
-            { key: 'colour', label: 'Colour (optional)', width: 1 },
-          ]}
-          onChange={(next) => onUpdate(index, { ...block, stats: next })}
-          addLabel="Add card"
+        <SourceSwitch
+          value={block.statsSource ? 'cache' : 'manual'}
+          onChange={(next) => set({ statsSource: next === 'cache' ? EMPTY_SOURCE : null })}
         />
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          {DATA_TOKEN_HINT}
-        </Typography>
-        {stats.length > 4 ? (
-          <Typography variant="caption" sx={{
-            color: "warning.main"
-          }}>
-            More than four cards on a row get too narrow to read in the PDF.
-          </Typography>
-        ) : null}
+        {block.statsSource ? (
+          <>
+            <DataSourcePicker
+              mode="scorecard"
+              value={block.statsSource}
+              onChange={(statsSource) => set({ statsSource })}
+              dataShape={dataShape}
+            />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Card colours and captions are set by hand — switch to Manual to add them.
+            </Typography>
+          </>
+        ) : (
+          <>
+            <RowsEditor
+              rows={stats}
+              columns={[
+                { key: 'value', label: 'Figure', width: 1 },
+                { key: 'label', label: 'Label', width: 2 },
+                { key: 'caption', label: 'Caption (optional)', width: 2 },
+                { key: 'colour', label: 'Colour (optional)', width: 1 },
+              ]}
+              onChange={(next) => set({ stats: next })}
+              addLabel="Add card"
+            />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {DATA_TOKEN_HINT}
+            </Typography>
+            {stats.length > 4 ? (
+              <Typography variant="caption" sx={{
+                color: "warning.main"
+              }}>
+                More than four cards on a row get too narrow to read in the PDF.
+              </Typography>
+            ) : null}
+          </>
+        )}
       </Stack>
     </BlockShell>
   );
@@ -1352,26 +1377,50 @@ export const ScorecardBlockCard = ({ block, index, onUpdate, ...shell }) => {
 
 /* ── Progress bars ───────────────────────────────────────── */
 
-export const ProgressBlockCard = ({ block, index, onUpdate, ...shell }) => (
-  <BlockShell block={block} index={index} {...shell}>
-    <Stack spacing={2}>
-      <TitleField block={block} index={index} onUpdate={onUpdate} />
-      <RowsEditor
-        rows={block.items || []}
-        columns={[
-          { key: 'label', label: 'Label', width: 2 },
-          { key: 'value', label: 'Value', width: 1, type: 'number' },
-          { key: 'max', label: 'Out of', width: 1, type: 'number' },
-        ]}
-        onChange={(items) => onUpdate(index, { ...block, items })}
-        addLabel="Add bar"
-      />
-      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-        {DATA_TOKEN_HINT}
-      </Typography>
-    </Stack>
-  </BlockShell>
-)
+export const ProgressBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) => {
+  const set = (patch) => onUpdate(index, { ...block, ...patch })
+  return (
+    <BlockShell block={block} index={index} {...shell}>
+      <Stack spacing={2}>
+        <TitleField block={block} index={index} onUpdate={onUpdate} />
+        <SourceSwitch
+          value={block.itemsSource ? 'cache' : 'manual'}
+          onChange={(next) => set({ itemsSource: next === 'cache' ? EMPTY_SOURCE : null })}
+        />
+        {block.itemsSource ? (
+          <>
+            <DataSourcePicker
+              mode="progress"
+              value={block.itemsSource}
+              onChange={(itemsSource) => set({ itemsSource })}
+              dataShape={dataShape}
+            />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Each bar is filled by its share of the total — switch to Manual to set each bar&apos;s
+              own target.
+            </Typography>
+          </>
+        ) : (
+          <>
+            <RowsEditor
+              rows={block.items || []}
+              columns={[
+                { key: 'label', label: 'Label', width: 2 },
+                { key: 'value', label: 'Value', width: 1, type: 'number' },
+                { key: 'max', label: 'Out of', width: 1, type: 'number' },
+              ]}
+              onChange={(items) => set({ items })}
+              addLabel="Add bar"
+            />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {DATA_TOKEN_HINT}
+            </Typography>
+          </>
+        )}
+      </Stack>
+    </BlockShell>
+  )
+}
 
 /* ── Infographic ─────────────────────────────────────── */
 

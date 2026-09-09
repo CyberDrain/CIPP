@@ -64,7 +64,12 @@ const StartInvestigationDrawer = ({ tenant }) => {
     mode: 'onChange',
     defaultValues: { users: [] },
   })
-  const queue = ApiPostCall({ relatedQueryKeys: [`ListBECReports-${tenant}`] })
+  const queue = ApiPostCall({
+    relatedQueryKeys: [
+      `ListBECReports-${tenant}`,
+      `ListBECReports-grouped-${tenant}`,
+    ],
+  })
 
   const handleStart = () => {
     const users = formControl.getValues('users') || []
@@ -153,10 +158,12 @@ const Page = () => {
 
   // Grouped mode: the same runs reduced to one row per user (their worst recent level, run count and
   // latest run) and fed to the table via `data` with no apiUrl — the Standards page's grouping pattern.
+  // Its own queryKey, separate from the flat table's: that one is an infinite-query cache ({pages}),
+  // and reading it here as a plain array yielded nothing, so the grouped view came up empty.
   const groupedCall = ApiGetCall({
     url: '/api/ListBECReports',
     data: { tenantFilter: currentTenant },
-    queryKey: `ListBECReports-${currentTenant}`,
+    queryKey: `ListBECReports-grouped-${currentTenant}`,
     waiting: isByUser,
   })
   const groupedByUser = useMemo(() => {
@@ -235,9 +242,12 @@ const Page = () => {
       },
       confirmText:
         'Delete run [CaseId] for [UserPrincipalName] permanently, including its results and evidence package?',
-      // The grouped view derives from this same list, so refresh it too when a run is
-      // deleted from inside a run-history drawer (whose own data is a static snapshot).
-      relatedQueryKeys: [`ListBECReports-${currentTenant}`],
+      // Refresh both the flat list and the grouped view's source fetch (its rows are a
+      // static snapshot, so it only updates when its own query is invalidated).
+      relatedQueryKeys: [
+        `ListBECReports-${currentTenant}`,
+        `ListBECReports-grouped-${currentTenant}`,
+      ],
       multiPost: false,
     },
   ]
@@ -304,7 +314,16 @@ const Page = () => {
       title="Business Email Compromise"
       apiUrl={isByUser ? undefined : '/api/ListBECReports'}
       data={isByUser ? groupedByUser : undefined}
-      queryKey={`ListBECReports-${currentTenant}`}
+      // Distinct key for the grouped view: it feeds the table static (collapsed) rows via
+      // `data`, but CippDataTable's internal query still reads whatever is cached under its
+      // queryKey. Sharing the flat view's key let the cached per-run list overwrite the
+      // grouped rows, so nothing ever collapsed. The page still fetches (and invalidates)
+      // the runs under the plain key via `groupedCall`.
+      queryKey={
+        isByUser
+          ? `ListBECReports-byUser-${currentTenant}`
+          : `ListBECReports-${currentTenant}`
+      }
       actions={actions}
       offCanvas={offCanvas}
       cardButton={[

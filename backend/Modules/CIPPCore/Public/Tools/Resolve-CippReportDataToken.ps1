@@ -177,6 +177,8 @@ function Resolve-CippReportDataToken {
             # a numeric field to plot instead of counting rows; aggregate combines rows sharing a label
             valueField = $(if ($Source.valueField -and "$($Source.valueField)" -ne '__count') { "$($Source.valueField)" })
             aggregate  = $(if ($Source.aggregate -and @('sum', 'avg', 'max', 'min') -contains "$($Source.aggregate)") { "$($Source.aggregate)" })
+            # divide plotted values by this before drawing, so bytes can be shown as GB and so on
+            scale      = $(if (($Source.scale -as [double]) -gt 0) { [double]$Source.scale })
             filter     = $Spec
         }
     }
@@ -195,7 +197,8 @@ function Resolve-CippReportDataToken {
         param($Spec, $Rows, [string]$SingleLabel)
         $Field = $Spec.field
         $Aggregate = { param($Numbers) if (@($Numbers).Count -eq 0) { return 0 }
-            $Measured = @($Numbers) | Measure-Object -Sum -Average -Minimum -Maximum
+            $Nums = if ($Spec.scale) { @($Numbers | ForEach-Object { $_ / $Spec.scale }) } else { @($Numbers) }
+            $Measured = $Nums | Measure-Object -Sum -Average -Minimum -Maximum
             switch ($Spec.aggregate) { 'avg' { [math]::Round($Measured.Average, 2) } 'min' { $Measured.Minimum } 'max' { $Measured.Maximum } default { $Measured.Sum } } }
         $Pairs = if ($Spec.valueField) {
             if ($Field) {
@@ -236,6 +239,7 @@ function Resolve-CippReportDataToken {
                     $Series = @(foreach ($Row in $Rows) {
                             $Number = @(& $ValueOf $Row $Spec.valueField | ForEach-Object { $_ -as [double] } | Where-Object { $null -ne $_ }) | Select-Object -First 1
                             if ($null -eq $Number) { continue }
+                            if ($Spec.scale) { $Number = [double]$Number / $Spec.scale }
                             $Raw = if ($Field) { @(& $ValueOf $Row $Field | ForEach-Object { "$_" }) | Select-Object -First 1 } else { $null }
                             $Date = [datetime]::MinValue
                             $IsDate = $null -ne $Raw -and [datetime]::TryParse("$Raw", [cultureinfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::AssumeUniversal, [ref]$Date)
@@ -269,13 +273,21 @@ function Resolve-CippReportDataToken {
         }
 
         # A table filled from the data: the rows (the ones the condition keeps), each column reading
-        # the field it names.
+        # the field it names. A dataSource with a preset instead calls a derived builder for data that a
+        # flat single-collection read cannot express (e.g. the Secure Score controls, nested per snapshot);
+        # either way the same column mapping fills the table.
         if ($Type -eq 'richtable' -and $Block.dataSource) {
-            $Spec = & $SourceOf $Block.dataSource
-            $Rows = if ($Spec) { & $RowsFor $Spec }
-            if ($Spec -and $null -ne $Rows) {
+            $TablePreset = "$($Block.dataSource.preset)"
+            $Rows = if ($TablePreset) {
+                $Source = & $RowsOf "$($Block.dataSource.type)"
+                if ($null -ne $Source) { try { @(Get-CippReportTableData -Preset $TablePreset -Rows @($Source)) } catch { $null } }
+            } else {
+                $Spec = & $SourceOf $Block.dataSource
+                if ($Spec) { & $RowsFor $Spec }
+            }
+            if ($null -ne $Rows) {
                 $Columns = @($Block.columns)
-                $TableRows = @(foreach ($Row in ($Rows | Select-Object -First $MaxRows)) {
+                $TableRows = @(foreach ($Row in (@($Rows) | Select-Object -First $MaxRows)) {
                         $Cells = [ordered]@{}
                         foreach ($Column in $Columns) {
                             $Key = "$($Column.key)"

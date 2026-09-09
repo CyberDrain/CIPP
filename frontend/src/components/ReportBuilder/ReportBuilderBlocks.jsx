@@ -66,6 +66,7 @@ export const PRESET_TOPICS = [
       { label: 'By OS (donut)', preset: 'deviceos' },
       { label: 'By manufacturer (donut)', preset: 'devicemanufacturer' },
       { label: 'By ownership (donut)', preset: 'deviceownership' },
+      { label: 'By encryption (donut)', preset: 'deviceencryption' },
     ],
   },
   { label: 'Users', value: 'users', variants: [{ label: 'By type (donut)', preset: 'usertype' }] },
@@ -74,12 +75,18 @@ export const PRESET_TOPICS = [
     value: 'mailboxes',
     variants: [
       { label: 'By type (donut)', preset: 'mailboxesbytype' },
-      { label: 'Busiest (bar)', preset: 'mailboxbusiest' },
+      { label: 'Busiest by items (bar)', preset: 'mailboxbusiest' },
+      { label: 'Largest by storage (bar)', preset: 'mailboxbusieststorage' },
     ],
   },
   { label: 'Groups', value: 'groups', variants: [{ label: 'By type (donut)', preset: 'groupsbytype' }] },
   { label: 'Domains', value: 'domains', variants: [{ label: 'Mail security (table)', preset: 'domainsecurity' }] },
   { label: 'Risky users', value: 'risk', variants: [{ label: 'By risk level (donut)', preset: 'riskyusers' }] },
+  {
+    label: 'Secure Score',
+    value: 'securescore',
+    variants: [{ label: 'Controls to improve (table)', preset: 'securescorefailing' }],
+  },
   { label: 'Tenant', value: 'tenant', variants: [{ label: 'Summary (cards)', preset: 'tenantsummary' }] },
 ]
 
@@ -181,12 +188,19 @@ export const CHART_WIDTHS = [
 
 // A chart source in the shape the picker saves + the server resolver reads. `field` is the "Per"
 // axis/label; `valueField` (with `aggregate`) plots a numeric field instead of counting rows.
-const source = (type, { field = null, valueField = null, aggregate = null, filter = null } = {}) => ({
+const source = (
+  type,
+  { field = null, valueField = null, aggregate = null, filter = null, scale = null, preset = null } = {}
+) => ({
   type,
   field,
   valueField,
   aggregate,
   filter,
+  // Optional: divide plotted values before drawing (bytes -> GB); or a derived builder for data a flat
+  // single-collection read cannot express (a table preset).
+  ...(scale ? { scale } : {}),
+  ...(preset ? { preset } : {}),
 })
 
 /**
@@ -354,6 +368,17 @@ export const BLOCK_PRESETS = {
     chartCentreLabel: 'Devices',
     chartMax: '',
   }),
+  // Managed devices split by disk-encryption state (BitLocker / FileVault reported by Intune).
+  deviceencryption: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Devices by encryption',
+    chartKind: 'donut',
+    chartSource: source('ManagedDevices', { field: 'isEncrypted' }),
+    chartCaption: 'Encrypted vs unencrypted devices',
+    chartCentreLabel: 'Devices',
+    chartMax: '',
+  }),
   // Mailboxes by recipient type (user / shared / room ...).
   mailboxesbytype: () => ({
     type: 'chart',
@@ -373,6 +398,22 @@ export const BLOCK_PRESETS = {
     chartKind: 'bar',
     chartSource: source('MailboxUsage', { field: 'displayName', valueField: 'itemCount', aggregate: 'max' }),
     chartCaption: 'Top mailboxes by item count',
+    chartCentreLabel: '',
+    chartMax: '',
+  }),
+  // Largest mailboxes by storage; scaled from bytes to GB so the bar labels read sensibly.
+  mailboxbusieststorage: () => ({
+    type: 'chart',
+    static: true,
+    title: 'Largest mailboxes',
+    chartKind: 'bar',
+    chartSource: source('MailboxUsage', {
+      field: 'displayName',
+      valueField: 'storageUsedInBytes',
+      aggregate: 'max',
+      scale: 1073741824,
+    }),
+    chartCaption: 'Top mailboxes by storage used (GB)',
     chartCentreLabel: '',
     chartMax: '',
   }),
@@ -426,6 +467,22 @@ export const BLOCK_PRESETS = {
       { label: 'Groups', value: '&Groups&' },
       { label: 'Mailboxes', value: '&Mailboxes&' },
     ],
+  }),
+  // Secure Score controls that are not fully achieved, from the latest snapshot. The per-control scores
+  // are nested in the snapshot, so a derived builder flattens them (dataSource preset), worst first.
+  securescorefailing: () => ({
+    type: 'richtable',
+    static: true,
+    title: 'Secure Score - controls to improve',
+    dataSource: source('SecureScore', { preset: 'secureScoreFailing' }),
+    limit: 25,
+    columns: [
+      { key: 'c1', header: 'Control', field: 'control' },
+      { key: 'c2', header: 'Category', field: 'category' },
+      { key: 'c3', header: 'Status', field: 'status' },
+      { key: 'c4', header: 'Score', field: 'percent', align: 'right' },
+    ],
+    rows: [],
   }),
 }
 
@@ -658,6 +715,8 @@ export const DataSourcePicker = ({ mode, value, onChange, dataShape = [] }) => {
   const plotting = Boolean(source?.valueField && source.valueField !== '__count')
   const patch = (next) =>
     onChange({
+      // Spread first so a preset's extra keys (scale, preset) survive edits to the visible controls.
+      ...(source || {}),
       type: source?.type ?? null,
       field: source?.field ?? null,
       valueField: source?.valueField ?? null,

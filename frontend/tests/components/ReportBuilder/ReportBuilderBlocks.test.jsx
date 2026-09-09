@@ -92,15 +92,20 @@ describe('block type registry', () => {
     expect(STRUCTURED_BLOCK_TYPES.map((t) => t.value)).toEqual([
       'note',
       'richbullets',
+      'numbered',
+      'paragraphindent',
+      'code',
       'infobox',
       'infoboxcolumns',
       'richtable',
       'chart',
+      'sankey',
       'scorecard',
       'progress',
       'cover',
       'page',
       'hero',
+      'hr',
       'pagebreak',
     ])
   })
@@ -109,7 +114,7 @@ describe('block type registry', () => {
     const values = BLOCK_CATEGORIES.flatMap((entry) => entry.blocks.map((b) => b.value))
     expect(new Set(values).size).toBe(values.length)
     expect(values).toEqual(expect.arrayContaining(['blank', 'test', 'database']))
-    expect(blockTypesFor('layout').map((b) => b.value)).toEqual(['cover', 'page', 'hero', 'pagebreak'])
+    expect(blockTypesFor('layout').map((b) => b.value)).toEqual(['cover', 'page', 'hero', 'hr', 'pagebreak'])
     expect(blockTypesFor(undefined)).toEqual([])
   })
 

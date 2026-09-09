@@ -37,7 +37,14 @@ const DATA_TOKEN_HINT =
  * is a key in BLOCK_PRESETS below.
  */
 export const PRESET_TOPICS = [
-  { label: 'Secure Score', value: 'securescore', variants: [{ label: 'Trend', preset: 'securescore' }] },
+  {
+    label: 'Secure Score',
+    value: 'securescore',
+    variants: [
+      { label: 'Trend', preset: 'securescore' },
+      { label: 'Controls to improve (table)', preset: 'securescorefailing' },
+    ],
+  },
   {
     label: 'Licences',
     value: 'licences',
@@ -84,11 +91,6 @@ export const PRESET_TOPICS = [
   { label: 'Groups', value: 'groups', variants: [{ label: 'By type (donut)', preset: 'groupsbytype' }] },
   { label: 'Domains', value: 'domains', variants: [{ label: 'Mail security (table)', preset: 'domainsecurity' }] },
   { label: 'Risky users', value: 'risk', variants: [{ label: 'By risk level (donut)', preset: 'riskyusers' }] },
-  {
-    label: 'Secure Score',
-    value: 'securescore',
-    variants: [{ label: 'Controls to improve (table)', preset: 'securescorefailing' }],
-  },
   { label: 'Tenant', value: 'tenant', variants: [{ label: 'Summary (cards)', preset: 'tenantsummary' }] },
 ]
 

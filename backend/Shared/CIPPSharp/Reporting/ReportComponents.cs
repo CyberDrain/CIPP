@@ -1578,7 +1578,7 @@ namespace CIPP.Reporting
                     RenderTableNode(ctx, item, node);
                     break;
                 case "code":
-                    Code(ctx, item, node.Str("text") ?? string.Empty);
+                    Code(ctx, item, node.Str("text") ?? node.Str("content") ?? string.Empty);
                     break;
                 case "hr":
                     Hr(ctx, item);
@@ -1601,7 +1601,13 @@ namespace CIPP.Reporting
         {
             var result = new List<string>();
             if (node.Get<List<string>>("items") is { } typed) return typed;
-            if (node.ListOf("items") is { } raw) foreach (var o in raw) result.Add(o?.ToString() ?? string.Empty);
+            // Items may be plain strings (markdown) or objects with a text/label/content field (the report
+            // builder's row editor saves objects), so read the field when an item is a dictionary.
+            if (node.ListOf("items") is { } raw)
+                foreach (var o in raw)
+                    result.Add(o is Dictionary<string, object?>
+                        ? (ReportNode.RowStr(o, "text") ?? ReportNode.RowStr(o, "label") ?? ReportNode.RowStr(o, "content") ?? string.Empty)
+                        : o?.ToString() ?? string.Empty);
             return result;
         }
 
@@ -1672,7 +1678,7 @@ namespace CIPP.Reporting
                     StatRow(ctx, item, block.ListOf("stats") ?? new List<object?>());
                     break;
                 case "richtable":
-                    RichTable(ctx, item, block.ListOf("columns") ?? new List<object?>(), block.ListOf("rows") ?? new List<object?>(), (int)(block.Num("limit") ?? 0));
+                    RichTable(ctx, item, block.ListOf("columns") ?? new List<object?>(), block.ListOf("rows") ?? new List<object?>(), (int)(block.Num("limit") ?? ParseNumber(block.Str("limit")) ?? 0));
                     break;
                 case "richbullets":
                     RichBullets(ctx, item, block.ListOf("items") ?? new List<object?>());

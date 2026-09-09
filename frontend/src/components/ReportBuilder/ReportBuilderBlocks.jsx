@@ -84,6 +84,9 @@ export const BLOCK_CATEGORIES = [
       { label: 'Custom Block', value: 'blank' },
       { label: 'Note', value: 'note' },
       { label: 'Bullet List', value: 'richbullets' },
+      { label: 'Numbered List', value: 'numbered' },
+      { label: 'Indented Text', value: 'paragraphindent' },
+      { label: 'Code Block', value: 'code' },
       { label: 'Callout', value: 'infobox' },
       { label: 'Callout Grid', value: 'infoboxcolumns' },
     ],
@@ -114,6 +117,7 @@ export const BLOCK_CATEGORIES = [
       { label: 'Cover', value: 'cover' },
       { label: 'Titled Page', value: 'page' },
       { label: 'Infographic', value: 'hero' },
+      { label: 'Divider', value: 'hr' },
       { label: 'Page Break', value: 'pagebreak' },
     ],
   },
@@ -350,6 +354,10 @@ const BLOCK_META = {
   page: { label: 'Titled Page', Icon: CippIcons.Description, colour: 'default' },
   note: { label: 'Note', Icon: CippIcons.InfoOutlined, colour: 'default' },
   richbullets: { label: 'Bullet List', Icon: CippIcons.List, colour: 'primary' },
+  numbered: { label: 'Numbered List', Icon: CippIcons.ListAlt, colour: 'primary' },
+  paragraphindent: { label: 'Indented Text', Icon: CippIcons.Description, colour: 'default' },
+  code: { label: 'Code Block', Icon: CippIcons.Code, colour: 'default' },
+  hr: { label: 'Divider', Icon: CippIcons.Remove, colour: 'default' },
   infobox: { label: 'Callout', Icon: CippIcons.Info, colour: 'info' },
   clearbox: { label: 'Callout', Icon: CippIcons.CheckCircle, colour: 'success' },
   alertbox: { label: 'Callout', Icon: CippIcons.Warning, colour: 'warning' },
@@ -434,6 +442,18 @@ export const createStructuredBlock = (type, id) => {
       return { ...base, title: 'New page', subtitle: '' }
     case 'note':
       return { ...base, content: 'A short aside for the reader.' }
+    case 'paragraphindent':
+      return { ...base, content: 'Indented body text, stepped in under a heading.' }
+    case 'code':
+      return { ...base, content: 'Sample-Command -Parameter Value' }
+    case 'hr':
+      return { ...base }
+    case 'numbered':
+      return {
+        ...base,
+        title: 'Steps',
+        items: [{ text: 'First step.' }, { text: 'Second step.' }],
+      }
     case 'richbullets':
       return {
         ...base,
@@ -1202,6 +1222,7 @@ export const ScorecardBlockCard = ({ block, index, onUpdate, ...shell }) => {
             { key: 'value', label: 'Figure', width: 1 },
             { key: 'label', label: 'Label', width: 2 },
             { key: 'caption', label: 'Caption (optional)', width: 2 },
+            { key: 'colour', label: 'Colour (optional)', width: 1 },
           ]}
           onChange={(next) => onUpdate(index, { ...block, stats: next })}
           addLabel="Add card"
@@ -1267,6 +1288,14 @@ export const HeroBlockCard = ({ block, index, onUpdate, ...shell }) => {
         }}>
           Takes a full page of its own, with the background image bleeding to the paper edge.
         </Typography>
+        <TextField
+          size="small"
+          fullWidth
+          label="Overtitle"
+          placeholder="Small line above the big figure"
+          value={block.heroOvertitle ?? ''}
+          onChange={(event) => set({ heroOvertitle: event.target.value })}
+        />
         <Stack direction="row" spacing={1}>
           <TextField
             size="small"
@@ -1423,6 +1452,75 @@ export const NoteBlockCard = ({ block, index, onUpdate, ...shell }) => (
   </BlockShell>
 )
 
+/* ── Indented text ───────────────────────────────────────── */
+
+export const IndentedBlockCard = ({ block, index, onUpdate, ...shell }) => (
+  <BlockShell block={block} index={index} {...shell}>
+    <TextField
+      size="small"
+      fullWidth
+      multiline
+      minRows={2}
+      label="Indented text"
+      helperText="Body text stepped in under a heading."
+      value={block.content ?? ''}
+      onChange={(event) => onUpdate(index, { ...block, content: event.target.value })}
+    />
+  </BlockShell>
+)
+
+/* ── Code block ──────────────────────────────────────────── */
+
+export const CodeBlockCard = ({ block, index, onUpdate, ...shell }) => (
+  <BlockShell block={block} index={index} {...shell}>
+    <TextField
+      size="small"
+      fullWidth
+      multiline
+      minRows={3}
+      label="Code / command"
+      helperText="Rendered in a monospaced block."
+      value={block.content ?? ''}
+      onChange={(event) => onUpdate(index, { ...block, content: event.target.value })}
+      slotProps={{ htmlInput: { style: { fontFamily: 'monospace' } } }}
+    />
+  </BlockShell>
+)
+
+/* ── Divider ─────────────────────────────────────────────── */
+
+export const DividerBlockCard = ({ block, index, ...shell }) => (
+  <BlockShell block={block} index={index} {...shell}>
+    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+      A horizontal rule to separate sections.
+    </Typography>
+  </BlockShell>
+)
+
+/* ── Numbered list ───────────────────────────────────────── */
+
+export const NumberedBlockCard = ({ block, index, onUpdate, ...shell }) => {
+  const items = block.items || []
+  return (
+    <BlockShell
+      block={block}
+      index={index}
+      chips={<Chip label={`${items.length} items`} size="small" variant="outlined" />}
+      {...shell}
+    >
+      <Stack spacing={2}>
+        <TitleField block={block} index={index} onUpdate={onUpdate} />
+        <RowsEditor
+          rows={items}
+          columns={[{ key: 'text', label: 'Item', width: 1 }]}
+          onChange={(next) => onUpdate(index, { ...block, items: next })}
+          addLabel="Add item"
+        />
+      </Stack>
+    </BlockShell>
+  )
+}
+
 /* ── Bullet list ─────────────────────────────────────────── */
 
 export const BulletsBlockCard = ({ block, index, onUpdate, ...shell }) => {
@@ -1452,6 +1550,13 @@ export const BulletsBlockCard = ({ block, index, onUpdate, ...shell }) => {
 
 /* ── Callout ─────────────────────────────────────────────── */
 
+// An info callout can be tinted to signal good/for-attention; the other styles carry their own colour.
+const CALLOUT_TONES = [
+  { label: 'Default', value: '' },
+  { label: 'Positive', value: 'ok' },
+  { label: 'Attention', value: 'warn' },
+]
+
 export const CalloutBlockCard = ({ block, index, onUpdate, ...shell }) => {
   const set = (patch) => onUpdate(index, { ...block, ...patch })
   const style = CALLOUT_STYLES.find((option) => option.value === block.type) ?? CALLOUT_STYLES[0]
@@ -1466,7 +1571,7 @@ export const CalloutBlockCard = ({ block, index, onUpdate, ...shell }) => {
       <Stack spacing={2}>
         <Stack direction="row" spacing={1}>
           <TitleField block={block} index={index} onUpdate={onUpdate} label="Callout title" />
-          <Box sx={{ minWidth: 180 }}>
+          <Box sx={{ minWidth: 160 }}>
             <CippAutoComplete
               size="small"
               label="Style"
@@ -1478,6 +1583,20 @@ export const CalloutBlockCard = ({ block, index, onUpdate, ...shell }) => {
               onChange={(option) => set({ type: option?.value ?? 'infobox' })}
             />
           </Box>
+          {block.type === 'infobox' ? (
+            <Box sx={{ minWidth: 150 }}>
+              <CippAutoComplete
+                size="small"
+                label="Tone"
+                multiple={false}
+                creatable={false}
+                disableClearable={true}
+                options={CALLOUT_TONES}
+                value={CALLOUT_TONES.find((option) => option.value === (block.tone || '')) ?? CALLOUT_TONES[0]}
+                onChange={(option) => set({ tone: option?.value || null })}
+              />
+            </Box>
+          ) : null}
         </Stack>
         <TextField
           size="small"
@@ -1485,10 +1604,24 @@ export const CalloutBlockCard = ({ block, index, onUpdate, ...shell }) => {
           multiline
           minRows={3}
           label="Text"
-          helperText="Markdown works here: **bold**, _italic_ and links."
+          helperText={
+            block.lines
+              ? 'One "Label: value" per line, kept as tight lines.'
+              : 'Markdown works here: **bold**, _italic_ and links.'
+          }
           value={block.content ?? ''}
           onChange={(event) => set({ content: event.target.value })}
         />
+        <Box>
+          <ToggleButton
+            size="small"
+            value="lines"
+            selected={!!block.lines}
+            onChange={() => set({ lines: block.lines ? null : true })}
+          >
+            Label : value lines
+          </ToggleButton>
+        </Box>
       </Stack>
     </BlockShell>
   )
@@ -1637,10 +1770,21 @@ export const TableBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
     >
       <Stack spacing={2}>
         <TitleField block={block} index={index} onUpdate={onUpdate} />
-        <SourceSwitch
-          value={block.dataSource ? 'cache' : 'manual'}
-          onChange={(next) => set({ dataSource: next === 'cache' ? EMPTY_SOURCE : null })}
-        />
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <SourceSwitch
+            value={block.dataSource ? 'cache' : 'manual'}
+            onChange={(next) => set({ dataSource: next === 'cache' ? EMPTY_SOURCE : null })}
+          />
+          <TextField
+            size="small"
+            type="number"
+            label="Row limit"
+            helperText="Blank = all"
+            value={block.limit ?? ''}
+            onChange={(event) => set({ limit: event.target.value })}
+            sx={{ maxWidth: 130 }}
+          />
+        </Stack>
         {block.dataSource ? (
           <>
             <DataSourcePicker
@@ -1655,13 +1799,16 @@ export const TableBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
               ))}
             </datalist>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Columns: the field each one reads (its header when blank)
+              Columns: the field each one reads (its header when blank). Align is left/center/right; a
+              status field colours the cell by its value (pass/warn/fail).
             </Typography>
             <RowsEditor
               rows={columns}
               columns={[
-                { key: 'header', label: 'Column header', width: 1 },
-                { key: 'field', label: 'Field', width: 1, inputProps: { list: fieldListId } },
+                { key: 'header', label: 'Column header', width: 2 },
+                { key: 'field', label: 'Field', width: 2, inputProps: { list: fieldListId } },
+                { key: 'align', label: 'Align', width: 1 },
+                { key: 'toneField', label: 'Status field', width: 1, inputProps: { list: fieldListId } },
               ]}
               onChange={setColumns}
               addLabel="Add column"
@@ -1670,11 +1817,14 @@ export const TableBlockCard = ({ block, index, onUpdate, dataShape, ...shell }) 
         ) : (
           <>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Columns
+              Columns (Align is left/center/right)
             </Typography>
             <RowsEditor
               rows={columns}
-              columns={[{ key: 'header', label: 'Column header', width: 1 }]}
+              columns={[
+                { key: 'header', label: 'Column header', width: 2 },
+                { key: 'align', label: 'Align', width: 1 },
+              ]}
               onChange={setColumns}
               addLabel="Add column"
             />
@@ -1707,6 +1857,14 @@ export const StructuredBlockCard = ({ block, ...props }) => {
       return <PageBlockCard block={block} {...props} />
     case 'note':
       return <NoteBlockCard block={block} {...props} />
+    case 'paragraphindent':
+      return <IndentedBlockCard block={block} {...props} />
+    case 'code':
+      return <CodeBlockCard block={block} {...props} />
+    case 'hr':
+      return <DividerBlockCard block={block} {...props} />
+    case 'numbered':
+      return <NumberedBlockCard block={block} {...props} />
     case 'richbullets':
       return <BulletsBlockCard block={block} {...props} />
     case 'infobox':

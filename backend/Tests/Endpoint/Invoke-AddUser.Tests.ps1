@@ -26,6 +26,7 @@ BeforeAll {
     function New-CIPPUserTask { param($UserObj, $APIName, $Headers) }
     function Add-CIPPScheduledTask { param($Task, $hidden, $Headers, $DisallowDuplicateName) }
     function Write-LogMessage { param($headers, $API, $tenant, $message, $Sev, $LogData) }
+    function Get-Tenants { param($TenantFilter) }
 
     . $FunctionPath
 
@@ -65,6 +66,8 @@ Describe 'Invoke-AddUser' {
         Mock -CommandName Write-LogMessage -MockWith { }
         Mock -CommandName Add-CIPPScheduledTask -MockWith { }
         Mock -CommandName New-CIPPUserTask -MockWith { New-CreationResult }
+        # Single-tenant guard: any tenant other than 'AllTenants' resolves to something truthy.
+        Mock -CommandName Get-Tenants -MockWith { [pscustomobject]@{ defaultDomainName = $TenantFilter } }
     }
 
     Context 'Creating the user now' {

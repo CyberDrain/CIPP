@@ -13,7 +13,7 @@ Opens a dialog that adds a shortcut to a chosen SharePoint site into the user's 
 | Field | Description |
 | ----- | ----------- |
 | Select a Site | The SharePoint site to link to. Existing sites can be picked, or a URL typed directly. |
-| Shortcut location | Where the shortcut is created: the OneDrive root, or the Shortcuts folder. Defaults to the OneDrive root. |
+| Shortcut location | Where the shortcut is created: the OneDrive root, or the Shortcuts folder. Defaults to the Shortcuts folder. |
 
 </details>
 

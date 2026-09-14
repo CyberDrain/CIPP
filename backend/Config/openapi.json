@@ -4429,6 +4429,15 @@
                   "defaultUseRoles": {
                     "type": "boolean"
                   },
+                  "defaultVacationCAPolicy": {
+                    "type": "string"
+                  },
+                  "defaultVacationExcludeAuditAlerts": {
+                    "type": "boolean"
+                  },
+                  "defaultVacationMode": {
+                    "type": "boolean"
+                  },
                   "generateTAPByDefault": {
                     "type": "boolean"
                   },
@@ -9321,6 +9330,15 @@
                     "type": "string"
                   },
                   "defaultUseRoles": {
+                    "type": "boolean"
+                  },
+                  "defaultVacationCAPolicy": {
+                    "type": "string"
+                  },
+                  "defaultVacationExcludeAuditAlerts": {
+                    "type": "boolean"
+                  },
+                  "defaultVacationMode": {
                     "type": "boolean"
                   },
                   "generateTAPByDefault": {

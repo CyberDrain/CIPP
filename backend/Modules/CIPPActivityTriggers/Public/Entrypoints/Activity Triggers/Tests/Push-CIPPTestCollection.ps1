@@ -16,8 +16,10 @@ function Push-CIPPTestCollection {
     param($Item)
 
     $TenantFilter = $Item.TenantFilter
-    # SuiteName may be a single suite ('Custom') or an array of grouped engine suites.
-    $SuiteName = @($Item.SuiteName)
+    # SuiteName arrives as a SCALAR string on the wire — either a single suite ('Custom') or a
+    # comma-joined group of engine suites ('ZTNA,ORCA,...'). Split it back to an array. (A nested
+    # array property does not survive Craft's batch serialization; a scalar string does.)
+    $SuiteName = @(($Item.SuiteName -split ',') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim() })
     $SuiteLabel = ($SuiteName -join '+')
     # Phase selects which work this activity does (Engine / LeftoverPS / Custom / All). Default 'All'
     # for back-compat with any caller that queues a task without a Phase.

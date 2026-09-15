@@ -69,13 +69,17 @@ function Push-CIPPTestsList {
         $Tasks = [System.Collections.Generic.List[object]]::new()
 
         if ($FilteredEngine.Count -gt 0) {
+            # SuiteName is carried on the wire as a SCALAR comma-joined string (suite names never
+            # contain commas). A nested array property does not survive Craft's two-phase
+            # activity->PostExecution batch serialization intact (it lands as invalid JSONL lines);
+            # a scalar string round-trips cleanly. Push-CIPPTestCollection splits it back.
             if ($GroupingMode -eq 'perSuite') {
                 # Backwards-compatible fan-out: one activity per suite (engine + its leftover PS).
                 foreach ($Suite in $FilteredEngine) {
                     $Tasks.Add([PSCustomObject]@{
                             FunctionName = 'CIPPTestCollection'
                             TenantFilter = $TenantFilter
-                            SuiteName    = @($Suite)
+                            SuiteName    = $Suite
                             Phase        = 'All'
                         })
                 }
@@ -84,7 +88,7 @@ function Push-CIPPTestsList {
                 $Tasks.Add([PSCustomObject]@{
                         FunctionName = 'CIPPTestCollection'
                         TenantFilter = $TenantFilter
-                        SuiteName    = @($FilteredEngine)
+                        SuiteName    = ($FilteredEngine -join ',')
                         Phase        = 'Engine'
                     })
                 # ... and a SEPARATE activity for the remaining unported PS tests, only if any exist
@@ -102,7 +106,7 @@ function Push-CIPPTestsList {
                     $Tasks.Add([PSCustomObject]@{
                             FunctionName = 'CIPPTestCollection'
                             TenantFilter = $TenantFilter
-                            SuiteName    = @($FilteredEngine)
+                            SuiteName    = ($FilteredEngine -join ',')
                             Phase        = 'LeftoverPS'
                         })
                 }

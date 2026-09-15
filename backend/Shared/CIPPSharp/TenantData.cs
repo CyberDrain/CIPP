@@ -95,7 +95,12 @@ namespace CIPP.Tests
 
             if (rows == null || rows.Count == 0) return EmptyArray;
 
-            var buffer = new ArrayBufferWriter<byte>();
+            // Pre-size the buffer to the combined row length so the writer neither doubles (transient
+            // over-allocation) nor leaves slack. The compact JSON we emit is ≤ the stored row text, so
+            // this is an upper bound and the writer never grows.
+            long estimate = 2;
+            foreach (var row in rows) estimate += (row?.Length ?? 0) + 1;
+            var buffer = new ArrayBufferWriter<byte>((int)Math.Min(estimate, int.MaxValue - 1024));
             using (var writer = new Utf8JsonWriter(buffer))
             {
                 writer.WriteStartArray();
@@ -126,12 +131,11 @@ namespace CIPP.Tests
                 writer.WriteEndArray();
             }
 
-            // ToArray gives a stable byte[] that the returned JsonDocument keeps rooted for its
-            // lifetime (Parse over ReadOnlyMemory does not copy), so the array is not collected
-            // out from under it.
-            var bytes = buffer.WrittenSpan.ToArray();
-            _typeBytes[type] = bytes.LongLength;
-            return JsonDocument.Parse(bytes);
+            // Parse the buffer's memory directly — no intermediate ToArray copy. Parse over
+            // ReadOnlyMemory is zero-copy and roots the backing array for the document's lifetime; the
+            // writer is not reused, so the bytes are never mutated under it.
+            _typeBytes[type] = buffer.WrittenCount;
+            return JsonDocument.Parse(buffer.WrittenMemory);
         }
 
         public void Dispose()

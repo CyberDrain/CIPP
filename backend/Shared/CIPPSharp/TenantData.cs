@@ -38,13 +38,19 @@ namespace CIPP.Tests
         private readonly ConcurrentDictionary<string, long> _typeBytes =
             new(StringComparer.OrdinalIgnoreCase);
 
+        // type -> the top-level fields to keep when parsing its records (the union of what its tests
+        // read). A type absent here is kept whole. Set by the engine from the registry's dataFields.
+        private readonly IReadOnlyDictionary<string, HashSet<string>>? _projections;
+
         private volatile bool _disposed;
 
-        public TenantData(string tenantFilter, ITableClient tables, ILogSink log)
+        public TenantData(string tenantFilter, ITableClient tables, ILogSink log,
+            IReadOnlyDictionary<string, HashSet<string>>? projections = null)
         {
             _tenantFilter = tenantFilter ?? throw new ArgumentNullException(nameof(tenantFilter));
             _tables = tables ?? throw new ArgumentNullException(nameof(tables));
             _log = log ?? throw new ArgumentNullException(nameof(log));
+            _projections = projections;
         }
 
         /// <summary>
@@ -95,12 +101,10 @@ namespace CIPP.Tests
 
             if (rows == null || rows.Count == 0) return EmptyArray;
 
-            // Pre-size the buffer to the combined row length so the writer neither doubles (transient
-            // over-allocation) nor leaves slack. The compact JSON we emit is ≤ the stored row text, so
-            // this is an upper bound and the writer never grows.
-            long estimate = 2;
-            foreach (var row in rows) estimate += (row?.Length ?? 0) + 1;
-            var buffer = new ArrayBufferWriter<byte>((int)Math.Min(estimate, int.MaxValue - 1024));
+            HashSet<string>? keep = null;
+            _projections?.TryGetValue(type, out keep);
+
+            var buffer = new ArrayBufferWriter<byte>();
             using (var writer = new Utf8JsonWriter(buffer))
             {
                 writer.WriteStartArray();
@@ -113,12 +117,12 @@ namespace CIPP.Tests
                         var root = doc.RootElement;
                         if (root.ValueKind == JsonValueKind.Array)
                         {
-                            foreach (var el in root.EnumerateArray()) el.WriteTo(writer);
+                            foreach (var el in root.EnumerateArray()) WriteRecord(writer, el, keep);
                         }
                         else if (root.ValueKind != JsonValueKind.Null &&
                                  root.ValueKind != JsonValueKind.Undefined)
                         {
-                            root.WriteTo(writer);
+                            WriteRecord(writer, root, keep);
                         }
                     }
                     catch (JsonException ex)
@@ -131,11 +135,27 @@ namespace CIPP.Tests
                 writer.WriteEndArray();
             }
 
-            // Parse the buffer's memory directly — no intermediate ToArray copy. Parse over
-            // ReadOnlyMemory is zero-copy and roots the backing array for the document's lifetime; the
-            // writer is not reused, so the bytes are never mutated under it.
-            _typeBytes[type] = buffer.WrittenCount;
-            return JsonDocument.Parse(buffer.WrittenMemory);
+            // ToArray trims to exact size (with a projection the written output is far smaller than the
+            // source rows), giving a right-sized backing array the document holds for its lifetime.
+            var bytes = buffer.WrittenSpan.ToArray();
+            _typeBytes[type] = bytes.LongLength;
+            return JsonDocument.Parse(bytes);
+        }
+
+        // Write one record, keeping only the projected top-level fields when a projection is set for
+        // the type. Nested data stays whole under a kept key (tests reach nested values only through a
+        // top-level field they name). No projection, or a non-object record, is written verbatim.
+        private static void WriteRecord(Utf8JsonWriter writer, JsonElement record, HashSet<string>? keep)
+        {
+            if (keep == null || record.ValueKind != JsonValueKind.Object)
+            {
+                record.WriteTo(writer);
+                return;
+            }
+            writer.WriteStartObject();
+            foreach (var prop in record.EnumerateObject())
+                if (keep.Contains(prop.Name)) prop.WriteTo(writer);
+            writer.WriteEndObject();
         }
 
         public void Dispose()

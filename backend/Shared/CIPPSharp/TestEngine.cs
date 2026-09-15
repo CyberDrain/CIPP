@@ -49,7 +49,7 @@ namespace CIPP.Tests
             var remaining = CountConsumers(metas);
             long freedSinceGc = 0;
 
-            using (var data = new TenantData(tenantFilter, tables, log))
+            using (var data = new TenantData(tenantFilter, tables, log, BuildProjections(metas)))
             {
                 foreach (var meta in ordered)
                 {
@@ -124,6 +124,31 @@ namespace CIPP.Tests
                     foreach (var t in m.DataTypes)
                         counts[t] = counts.TryGetValue(t, out var c) ? c + 1 : 1;
             return counts;
+        }
+
+        // Per-type field projection to load. A type is projected to the UNION of the fields its tests
+        // declare — but only if EVERY consumer declares its fields; if any consumer needs the type
+        // whole (no dataFields entry), it loads full. So projection tightens as tests are annotated,
+        // and a single un-annotated consumer keeps a type safely whole.
+        private static Dictionary<string, HashSet<string>>? BuildProjections(IReadOnlyList<TestMeta> metas)
+        {
+            var union = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            var needWhole = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var m in metas)
+            {
+                if (m.DataTypes == null) continue;
+                foreach (var t in m.DataTypes)
+                {
+                    IReadOnlyList<string>? fields = null;
+                    m.DataFields?.TryGetValue(t, out fields);
+                    if (fields == null || fields.Count == 0) { needWhole.Add(t); continue; }
+                    if (!union.TryGetValue(t, out var set))
+                    { set = new HashSet<string>(StringComparer.OrdinalIgnoreCase); union[t] = set; }
+                    foreach (var f in fields) set.Add(f);
+                }
+            }
+            foreach (var t in needWhole) union.Remove(t);
+            return union.Count > 0 ? union : null;
         }
 
         // Deterministic data-locality order: greedily run the pending test that pulls in the fewest NEW

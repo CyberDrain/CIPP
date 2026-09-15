@@ -125,7 +125,12 @@ namespace CIPP.Tests
         // their rule.type, class tests from static source analysis). Drives the deterministic
         // data-locality scheduler: tests are ordered by the data they share, and each type is
         // released once its last declared consumer has run. Empty = the test reads no cached data.
-        IReadOnlyList<string>? DataTypes = null);
+        IReadOnlyList<string>? DataTypes = null,
+        // Per-type field projection: type → the top-level fields this test reads from it. When EVERY
+        // consumer of a type declares its fields, the engine loads that type projected to the union —
+        // records keep only those fields, cutting parsed memory. A type any consumer leaves undeclared
+        // loads full (safe default), so this fills in per test incrementally.
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? DataFields = null);
 
     // ── config-rule model (drives PredicateTest) ─────────────────────────────────
     /// <summary>A single field/op/value clause. Deserialized from the registry (case-insensitive).</summary>

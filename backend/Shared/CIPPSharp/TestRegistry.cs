@@ -145,10 +145,21 @@ namespace CIPP.Tests
                             : null,
                         DataTypes: (t.DataTypes != null && t.DataTypes.Count > 0)
                             ? t.DataTypes
-                            : null));
+                            : null,
+                        DataFields: ConvertFields(t.DataFields)));
                 }
             }
             return result;
+        }
+
+        private static IReadOnlyDictionary<string, IReadOnlyList<string>>? ConvertFields(
+            Dictionary<string, List<string>>? fields)
+        {
+            if (fields == null || fields.Count == 0) return null;
+            var map = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in fields)
+                if (kv.Value != null && kv.Value.Count > 0) map[kv.Key] = kv.Value;
+            return map.Count > 0 ? map : null;
         }
 
         // Concrete, public-or-internal ICippTest implementations, keyed by type name. Excludes the
@@ -261,6 +272,7 @@ namespace CIPP.Tests
             [JsonPropertyName("rule")] public ConfigRule? Rule { get; set; }
             [JsonPropertyName("requiredCapabilities")] public List<string>? RequiredCapabilities { get; set; }
             [JsonPropertyName("dataTypes")] public List<string>? DataTypes { get; set; }
+            [JsonPropertyName("dataFields")] public Dictionary<string, List<string>>? DataFields { get; set; }
         }
     }
 }

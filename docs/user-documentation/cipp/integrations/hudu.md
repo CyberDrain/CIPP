@@ -16,9 +16,11 @@ User and device information is written to a rich text field named **Microsoft 36
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Enable Integration                                                              | Turns the integration on. Every other setting, the **Test** and **Force Sync** buttons, and the **Tenant Mapping** and **Field Mapping** tabs remain unavailable until this is enabled and saved. |
 | Please enter your Hudu URL                                                      | The full URL of your Hudu instance, such as `https://yourcompany.huducloud.com`, or your self-hosted address.                                                                                     |
-| Hudu API Key                                                                    | The API key generated in Hudu. Stored securely and masked once saved.                                                                                                                             |
+| Hudu API Key                                                                    | The API key generated in Hudu. Stored securely and masked once saved. Enable **Password Access** on the key when synchronising LAPS passwords or BitLocker recovery keys.                         |
 | Create missing users in Hudu                                                    | Creates an asset for any Microsoft 365 user without a matching record in the mapped user layout. Without this, CIPP only updates users that already exist in Hudu.                                |
 | Create missing devices in Hudu                                                  | Creates an asset for any Intune device without a matching record in the mapped device layout.                                                                                                     |
+| Sync Windows LAPS passwords to Hudu                                             | Adds the LAPS account, password and backup date to matching Windows device assets in the mapped device layout.                                                                                    |
+| Sync BitLocker recovery keys to Hudu                                             | Adds paired key ID and recovery-key fields for each BitLocker OS, fixed data, removable data or unknown drive to matching Windows device assets.                                                  |
 | Exclude device serials (comma separated)                                        | Additional serial numbers to skip when matching and creating devices. A set of common placeholder serials is always excluded regardless of this setting.                                          |
 | Import domains from M365                                                        | Creates a Hudu website record for each domain in the tenant that does not already exist.                                                                                                          |
 | Monitor domains in Hudu                                                         | Enables DNS, SSL and WHOIS monitoring on the website records created by the previous setting. Without it, records are created paused with monitoring disabled.                                    |
@@ -45,7 +47,7 @@ Sign in to Hudu as an Administrator, go to **Admin** > **Account Administration*
 {% step %}
 ### Configure the key
 
-Give it a name such as _CIPP Integration_, set **Limit scope to** to _Full Access_, and leave **Company** blank. None of the options under **Key can perform the following actions** are required.
+Give it a name such as _CIPP Integration_, set **Limit scope to** to _Full Access_, and leave **Company** blank. Enable **Password Access** under **Key can perform the following actions** when synchronising LAPS passwords or BitLocker recovery keys. The other actions are not required.
 
 Optionally restrict **Allowed IP Addresses** to your function app's outbound addresses. CyberDrain-hosted clients can find these at [management.cipp.app](https://management.cipp.app/).
 {% endstep %}

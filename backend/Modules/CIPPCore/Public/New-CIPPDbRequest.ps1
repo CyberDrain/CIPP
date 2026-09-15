@@ -74,8 +74,6 @@ function New-CIPPDbRequest {
             throw 'TenantFilter is required.'
         }
 
-        $Table = Get-CippTable -tablename 'CippReportingDB'
-
         if (-not $script:CIPPDbRequestTenantCache) {
             $script:CIPPDbRequestTenantCache = @{}
         }
@@ -95,23 +93,16 @@ function New-CIPPDbRequest {
             }
             throw "Tenant '$TenantFilter' not found"
         }
-        $SafeTenantFilter = ConvertTo-CIPPODataFilterValue -Value $Tenant -Type String
-        $SafeTypeFilter = if ($Type) { ConvertTo-CIPPODataFilterValue -Value $Type -Type String } else { $null }
-
-        if ($Type) {
-            $Filter = "PartitionKey eq '{0}' and RowKey ge '{1}-' and RowKey lt '{1}.'" -f $SafeTenantFilter, $SafeTypeFilter
-        } else {
-            $Filter = "PartitionKey eq '{0}'" -f $SafeTenantFilter
-        }
-
-        $Results = Get-CIPPAzDataTableEntity @Table -Filter $Filter
-
-        # CippJson replaces `$Results.Data | ConvertFrom-Json`. A row whose Data is a JSON array
-        # returns object[], which PowerShell unrolls into the output stream — the same shape the
-        # pipeline produced before. Bad rows are skipped rather than thrown, matching the
-        # -ErrorAction SilentlyContinue this replaced.
+        # Stream the reassembled rows from the vendored reader (CippTableClient.ReadRows) instead of
+        # materialising the whole result set with Get-CIPPAzDataTableEntity. Rows are parsed and
+        # projected one at a time, so the full type is never held twice (once as table entities, once
+        # parsed) — the same load-transient the C# engine's streaming path removed. Split reassembly
+        # (cross-row and cross-column) is handled inside ReadRows; a missing table yields empty. The
+        # per-row CippJson output semantics are unchanged, so this stays a drop-in for every caller.
+        $Prefix = if ($Type) { '{0}-' -f $Type } else { '' }
+        $Client = [CIPP.Tests.CippTableClient]::new()
         $Projection = if ($Fields) { [string[]]$Fields } else { $null }
-        $Output = foreach ($Row in $Results.Data) {
+        $Output = foreach ($Row in $Client.ReadRows('CippReportingDB', $Tenant, $Prefix)) {
             if ([string]::IsNullOrWhiteSpace($Row)) { continue }
             try {
                 [CIPP.CippJson]::ConvertFromJson($Row, $Projection)

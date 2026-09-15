@@ -124,9 +124,9 @@ Deploys Microsoft 365 Apps using Intune's built-in Office suite deployment.
 
 Deploys Microsoft Edge using Intune's built-in Edge deployment. Nothing is packaged or uploaded; Intune installs it from Microsoft's own source. Edge is a singleton per tenant, so a tenant that already has it is skipped rather than given a second copy.
 
-| Field            | Description                                                                                                              |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Edge Channel     | The servicing channel the installation follows: Stable, Beta or Dev. Required.                                            |
+| Field            | Description                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Edge Channel     | The servicing channel the installation follows: Stable, Beta or Dev. Required.                                      |
 | Display Language | The language the browser interface is shown in. Optional, and left to the device's own language when it is not set. |
 
 **Custom Application**
@@ -152,19 +152,19 @@ Packages a pair of PowerShell scripts as a Win32 application, for anything that 
 
 **Assignment Options**
 
-Every application type except the MSP apps offers the same assignment choices at the bottom of the form.
+Every application type offers the same assignment choices at the bottom of the form.
 
-| Option                          | Description                                                                                                                    |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Do Not Assign                   | Creates the application in Intune without targeting anyone.                                                                    |
-| Assign to All Users             | Targets all licensed users in each selected tenant.                                                                            |
-| Assign to All Devices           | Targets all devices in each selected tenant.                                                                                   |
-| Assign to All Users and Devices | Targets both of the above.                                                                                                     |
-| Assign to Custom Group          | Targets named groups. Enter the group display names separated by commas, where `*` may be used as a wildcard.                  |
-| Exclude Group Names             | Shown for every option except Do Not Assign. Excludes the named groups, again comma separated and accepting `*` as a wildcard. |
+| Option                          | Description                                                                                                                                                                                                                         |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Do Not Assign                   | Creates the application in Intune without targeting anyone.                                                                                                                                                                         |
+| Assign to All Users             | Targets all licensed users in each selected tenant.                                                                                                                                                                                 |
+| Assign to All Devices           | Targets all devices in each selected tenant.                                                                                                                                                                                        |
+| Assign to All Users and Devices | Targets both of the above.                                                                                                                                                                                                          |
+| Assign to Custom Group          | Targets groups. With a single tenant selected this is a picker of that tenant's groups. With several tenants or All Tenants it is a text field taking group display names separated by commas, where `*` may be used as a wildcard. |
+| Exclude group(s)                | Shown for every option except Do Not Assign. The same picker or name field as above, for the groups to exclude.                                                                                                                     |
 
 {% hint style="info" %}
-Group names here are matched by display name across every selected tenant, so a wildcard such as `SEC-Workstations*` lets one deployment target similarly named groups in each customer without listing them individually.
+With several tenants selected, group names are matched by display name in each tenant, so a wildcard such as `SEC-Workstations*` lets one deployment target similarly named groups in each customer without listing them individually. A picker is only offered for a single tenant because a group belongs to one tenant; picking also avoids a mistyped or renamed exclude group silently matching nothing. Changing the tenant selection clears any picked groups.
 {% endhint %}
 
 </details>

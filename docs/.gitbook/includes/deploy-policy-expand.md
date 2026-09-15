@@ -8,17 +8,19 @@ title: Deploy Policy Expand
 
 Opens a drawer that applies a saved policy template to one or more tenants.
 
-| Field                              | Description                                                                                                                                                             |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Select Tenants                     | The tenants to deploy to. Several can be selected, and the same template is applied to each.                                                                            |
-| Please choose a template to apply. | The policy template to deploy, chosen from those saved in Policy Templates. **Refresh Templates** reloads the list if a template was added since the drawer was opened. |
-| Assignment                         | Who the deployed policy is assigned to: Do Not Assign, Assign to All Users, Assign to All Devices, Assign to All Users and Devices, or Assign to Custom Group.          |
-| Custom Group Names                 | Shown when Assign to Custom Group is chosen. Group display names separated by commas, where `*` may be used as a wildcard.                                              |
-| Exclude Group Names                | Shown for every option except Do Not Assign. Group display names to exclude, again comma separated and accepting `*` as a wildcard.                                     |
-| Assignment Filter (Optional)       | An assignment filter from the tenant to narrow which devices the policy applies to.                                                                                     |
-| Assignment Filter Mode             | Whether the filter includes or excludes matching devices. Shown once a filter is chosen.                                                                                |
+| Field                              | Description                                                                                                                                                                                                                                                      |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Select Tenants                     | The tenants to deploy to. Several can be selected, and the same template is applied to each.                                                                                                                                                                     |
+| Please choose a template to apply. | The policy template to deploy, chosen from those saved in Policy Templates. **Refresh Templates** reloads the list if a template was added since the drawer was opened.                                                                                          |
+| Assignment                         | Who the deployed policy is assigned to: Do Not Assign, Assign to All Users, Assign to All Devices, Assign to All Users and Devices, or Assign to Custom Group.                                                                                                   |
+| Group(s)                           | Shown when Assign to Custom Group is chosen. With a single tenant selected this is a picker of that tenant's groups. With several tenants or All Tenants it is a text field taking group display names separated by commas, where `*` may be used as a wildcard. |
+| Exclude group(s)                   | Shown for every option except Do Not Assign. The same picker or name field as above, for the groups to exclude.                                                                                                                                                  |
+| Assignment Filter (Optional)       | An assignment filter from the tenant to narrow which devices the policy applies to.                                                                                                                                                                              |
+| Assignment Filter Mode             | Whether the filter includes or excludes matching devices. Shown once a filter is chosen.                                                                                                                                                                         |
 
 The template's configuration is displayed below the picker so it can be checked before deploying.
+
+Group pickers are only offered for a single tenant because a group belongs to one tenant. Picking groups also removes the failure mode of the name field, where a mistyped or renamed exclude group silently matched nothing and the policy was assigned without the exclusion. Changing the tenant selection clears any picked groups.
 
 {% hint style="info" %}
 Where the template contains variables written as `%name%`, the drawer asks for a value for each one, per tenant, before it will deploy. `%tenantid%` and `%tenantdomain%` are filled in automatically for each selected tenant.

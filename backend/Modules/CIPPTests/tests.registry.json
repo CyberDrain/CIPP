@@ -37,7 +37,6 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "IntuneConfigurationPolicies",
             "LicenseOverview"
           ],
           "dataFields": {
@@ -947,8 +946,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "ExoMalwareFilterPolicies",
-            "Roles"
+            "ExoMalwareFilterPolicies"
           ],
           "dataFields": {
             "ExoMalwareFilterPolicies": [
@@ -1089,8 +1087,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "ExoMalwareFilterPolicies",
-            "Roles"
+            "ExoMalwareFilterPolicies"
           ],
           "dataFields": {
             "ExoMalwareFilterPolicies": [
@@ -1835,8 +1832,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "AdminConsentRequestPolicy",
-            "Roles"
+            "AdminConsentRequestPolicy"
           ],
           "dataFields": {
             "AdminConsentRequestPolicy": [
@@ -8832,7 +8828,6 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneConfigurationPolicies",
             "IntuneDeviceConfigurations"
           ],
           "dataFields": {
@@ -9221,10 +9216,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneConfigurationPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneConfigurationPolicies"
           ],
           "dataFields": {
             "IntuneConfigurationPolicies": [
@@ -9246,10 +9238,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceCompliancePolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceCompliancePolicies"
           ],
           "dataFields": {
             "IntuneDeviceCompliancePolicies": [
@@ -9271,10 +9260,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceCompliancePolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceCompliancePolicies"
           ],
           "dataFields": {
             "IntuneDeviceCompliancePolicies": [
@@ -9296,10 +9282,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceCompliancePolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceCompliancePolicies"
           ],
           "dataFields": {
             "IntuneDeviceCompliancePolicies": [
@@ -9321,10 +9304,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceCompliancePolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceCompliancePolicies"
           ],
           "dataFields": {
             "IntuneDeviceCompliancePolicies": [
@@ -9346,10 +9326,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceCompliancePolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceCompliancePolicies"
           ],
           "dataFields": {
             "IntuneDeviceCompliancePolicies": [
@@ -9371,10 +9348,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneAppProtectionManagedAppPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneAppProtectionManagedAppPolicies"
           ],
           "dataFields": {
             "IntuneAppProtectionManagedAppPolicies": [
@@ -9396,10 +9370,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneAppProtectionManagedAppPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneAppProtectionManagedAppPolicies"
           ],
           "dataFields": {
             "IntuneAppProtectionManagedAppPolicies": [
@@ -9421,10 +9392,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneConfigurationPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneConfigurationPolicies"
           ],
           "dataFields": {
             "IntuneConfigurationPolicies": [
@@ -9447,10 +9415,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneConfigurationPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneConfigurationPolicies"
           ],
           "dataFields": {
             "IntuneConfigurationPolicies": [
@@ -9473,10 +9438,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceCompliancePolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceCompliancePolicies"
           ],
           "dataFields": {
             "IntuneDeviceCompliancePolicies": [
@@ -9566,10 +9528,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceConfigurations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceConfigurations"
           ],
           "dataFields": {
             "IntuneDeviceConfigurations": [
@@ -9638,10 +9597,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceConfigurations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceConfigurations"
           ],
           "dataFields": {
             "IntuneDeviceConfigurations": [
@@ -9686,10 +9642,7 @@
           "implementationEffort": "Medium",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceConfigurations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceConfigurations"
           ],
           "dataFields": {
             "IntuneDeviceConfigurations": [
@@ -9712,10 +9665,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceConfigurations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceConfigurations"
           ],
           "dataFields": {
             "IntuneDeviceConfigurations": [
@@ -9738,10 +9688,7 @@
           "implementationEffort": "Low",
           "testType": "Devices",
           "dataTypes": [
-            "IntuneDeviceConfigurations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceConfigurations"
           ],
           "dataFields": {
             "IntuneDeviceConfigurations": [
@@ -9765,9 +9712,6 @@
           "testType": "Identity",
           "dataTypes": [
             "Apps",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "ServicePrincipals"
           ],
           "dataFields": {
@@ -9796,9 +9740,6 @@
           "testType": "Identity",
           "dataTypes": [
             "Apps",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "ServicePrincipals"
           ],
           "dataFields": {
@@ -9826,9 +9767,6 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "ServicePrincipals"
           ],
           "dataFields": {
@@ -9895,10 +9833,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "Apps",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "Apps"
           ],
           "dataFields": {
             "Apps": [
@@ -9921,10 +9856,7 @@
           "implementationEffort": "High",
           "testType": "Identity",
           "dataTypes": [
-            "DirectoryRecommendations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "DirectoryRecommendations"
           ],
           "dataFields": {
             "DirectoryRecommendations": [
@@ -9983,8 +9915,6 @@
           "testType": "Identity",
           "dataTypes": [
             "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
             "Roles"
           ],
           "dataFields": {
@@ -10013,10 +9943,7 @@
           "testType": "Identity",
           "dataTypes": [
             "AuthenticationStrengths",
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "AuthenticationStrengths": [
@@ -10166,10 +10093,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -10193,10 +10117,7 @@
           "testType": "Identity",
           "dataTypes": [
             "AuthenticationMethodsPolicy",
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "AuthenticationMethodsPolicy": [
@@ -10223,10 +10144,7 @@
           "testType": "Identity",
           "dataTypes": [
             "AuthenticationMethodsPolicy",
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "AuthenticationMethodsPolicy": [
@@ -10321,10 +10239,7 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "AuthenticationMethodsPolicy",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "AuthenticationMethodsPolicy"
           ],
           "dataFields": {
             "AuthenticationMethodsPolicy": [
@@ -10344,10 +10259,7 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -10467,9 +10379,6 @@
           "testType": "Identity",
           "dataTypes": [
             "Domains",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "Users"
           ],
           "dataFields": {
@@ -10741,8 +10650,6 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
             "RoleManagementPolicies",
             "Roles"
           ],
@@ -10839,10 +10746,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -10868,8 +10772,6 @@
           "testType": "Identity",
           "dataTypes": [
             "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
             "Roles"
           ],
           "dataFields": {
@@ -10899,10 +10801,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -10928,10 +10827,7 @@
           "implementationEffort": "High",
           "testType": "Identity",
           "dataTypes": [
-            "Domains",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "Domains"
           ],
           "dataFields": {
             "Domains": [
@@ -10953,8 +10849,6 @@
           "testType": "Identity",
           "dataTypes": [
             "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
             "Roles"
           ],
           "dataFields": {
@@ -11088,10 +10982,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "AuthenticationMethodsPolicy",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "AuthenticationMethodsPolicy"
           ],
           "dataFields": {
             "AuthenticationMethodsPolicy": [
@@ -11357,10 +11248,7 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "Guests",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "Guests"
           ],
           "dataFields": {
             "Guests": [
@@ -11384,10 +11272,7 @@
           "implementationEffort": "High",
           "testType": "Identity",
           "dataTypes": [
-            "RiskyUsers",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "RiskyUsers"
           ],
           "dataFields": {
             "RiskyUsers": [
@@ -11413,9 +11298,6 @@
           "testType": "Identity",
           "dataTypes": [
             "RiskyServicePrincipals",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "ServicePrincipalRiskDetections"
           ],
           "dataFields": {
@@ -11449,10 +11331,7 @@
           "implementationEffort": "High",
           "testType": "Identity",
           "dataTypes": [
-            "RiskDetections",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "RiskDetections"
           ],
           "dataFields": {
             "RiskDetections": [
@@ -11501,10 +11380,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "NamedLocations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "NamedLocations"
           ],
           "dataFields": {
             "NamedLocations": [
@@ -11526,10 +11402,7 @@
           "implementationEffort": "High",
           "testType": "Identity",
           "dataTypes": [
-            "DirectoryRecommendations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "DirectoryRecommendations"
           ],
           "dataFields": {
             "DirectoryRecommendations": [
@@ -11554,9 +11427,6 @@
           "dataTypes": [
             "Apps",
             "Guests",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "ServicePrincipals"
           ],
           "dataFields": {
@@ -11585,9 +11455,6 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "ServicePrincipals"
           ],
           "dataFields": {
@@ -11612,10 +11479,7 @@
           "testType": "Identity",
           "dataTypes": [
             "ConditionalAccessPolicies",
-            "DeviceRegistrationPolicy",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "DeviceRegistrationPolicy"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -11662,9 +11526,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "RoleAssignmentScheduleInstances"
           ],
           "dataFields": {
             "RoleAssignmentScheduleInstances": [
@@ -11687,10 +11549,7 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "Guests",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "Guests"
           ],
           "dataFields": {
             "Guests": [
@@ -11712,10 +11571,7 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "Groups",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "Groups"
           ],
           "dataFields": {
             "Groups": [
@@ -11737,10 +11593,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -11764,10 +11617,7 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -11789,10 +11639,7 @@
           "implementationEffort": "High",
           "testType": "Identity",
           "dataTypes": [
-            "Apps",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "Apps"
           ],
           "dataFields": {
             "Apps": [
@@ -11815,9 +11662,6 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "ServicePrincipals"
           ],
           "dataFields": {
@@ -11860,10 +11704,7 @@
           "implementationEffort": "High",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -11909,10 +11750,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "RoleManagementPolicies",
-            "Roles"
+            "RoleManagementPolicies"
           ],
           "dataFields": {
             "RoleManagementPolicies": [
@@ -11934,10 +11772,7 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -12072,10 +11907,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "AuthenticationStrengths",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "AuthenticationStrengths"
           ],
           "dataFields": {
             "AuthenticationStrengths": [
@@ -12097,10 +11929,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "DirectoryRecommendations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "DirectoryRecommendations"
           ],
           "dataFields": {
             "DirectoryRecommendations": [
@@ -12124,10 +11953,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "DirectoryRecommendations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "DirectoryRecommendations"
           ],
           "dataFields": {
             "DirectoryRecommendations": [
@@ -12152,9 +11978,6 @@
           "testType": "Identity",
           "dataTypes": [
             "Apps",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "ServicePrincipals"
           ],
           "dataFields": {
@@ -12204,8 +12027,6 @@
           "testType": "Identity",
           "dataTypes": [
             "Guests",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
             "Roles"
           ],
           "dataFields": {
@@ -12256,9 +12077,6 @@
           "implementationEffort": "High",
           "testType": "Identity",
           "dataTypes": [
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles",
             "ServicePrincipals"
           ],
           "dataFields": {
@@ -12283,8 +12101,6 @@
           "testType": "Identity",
           "dataTypes": [
             "Organization",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
             "Roles"
           ],
           "dataFields": {
@@ -12310,10 +12126,7 @@
           "implementationEffort": "Low",
           "testType": "Identity",
           "dataTypes": [
-            "IntuneDeviceEnrollmentConfigurations",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "IntuneDeviceEnrollmentConfigurations"
           ],
           "dataFields": {
             "IntuneDeviceEnrollmentConfigurations": [
@@ -12336,10 +12149,7 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [
@@ -12362,10 +12172,7 @@
           "implementationEffort": "Medium",
           "testType": "Identity",
           "dataTypes": [
-            "ConditionalAccessPolicies",
-            "RoleAssignmentScheduleInstances",
-            "RoleEligibilitySchedules",
-            "Roles"
+            "ConditionalAccessPolicies"
           ],
           "dataFields": {
             "ConditionalAccessPolicies": [

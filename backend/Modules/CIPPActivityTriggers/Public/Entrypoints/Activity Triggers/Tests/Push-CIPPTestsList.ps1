@@ -56,60 +56,42 @@ function Push-CIPPTestsList {
         $RunCustom = 'Custom' -in $AllSuites
         $FilteredEngine = @($AllSuites | Where-Object { $_ -ne 'Custom' })
 
-        # Grouping mode. Default 'grouped': all C# suites run in ONE engine activity (one TenantData,
-        # each reporting type read/parsed once) — fewer activities, no redundant data loads. Each
-        # orchestrator activity is time-boxed (Function Apps: 10 min; Craft: 20 min), so the phases
-        # are emitted as SEPARATE tasks (Engine / LeftoverPS / Custom) — each gets its own budget and
-        # they fan out in parallel. If the grouped engine activity is ever too slow for a Function
-        # App tenant, set CIPPTestsEngineGrouping=perSuite to fall back to the old per-suite fan-out
-        # (one activity per suite, restoring cross-suite parallelism at the cost of re-reading shared
-        # data per suite).
-        $GroupingMode = if ([string]::IsNullOrWhiteSpace($env:CIPPTestsEngineGrouping)) { 'grouped' } else { $env:CIPPTestsEngineGrouping }
-
+        # All C# suites run in ONE engine activity (one TenantData, each reporting type read/parsed
+        # once). Each orchestrator activity is time-boxed (Function Apps 10 min, Craft 20 min), so the
+        # phases are emitted as SEPARATE tasks — Engine / LeftoverPS / Custom — each with its own
+        # budget, fanning out in parallel.
+        #
+        # SuiteName is carried on the wire as a SCALAR comma-joined string (suite names never contain
+        # commas). A nested array property does not survive Craft's two-phase activity->PostExecution
+        # batch serialization (it lands as invalid JSONL lines); a scalar round-trips cleanly.
+        # Push-CIPPTestCollection splits it back.
         $Tasks = [System.Collections.Generic.List[object]]::new()
 
         if ($FilteredEngine.Count -gt 0) {
-            # SuiteName is carried on the wire as a SCALAR comma-joined string (suite names never
-            # contain commas). A nested array property does not survive Craft's two-phase
-            # activity->PostExecution batch serialization intact (it lands as invalid JSONL lines);
-            # a scalar string round-trips cleanly. Push-CIPPTestCollection splits it back.
-            if ($GroupingMode -eq 'perSuite') {
-                # Backwards-compatible fan-out: one activity per suite (engine + its leftover PS).
-                foreach ($Suite in $FilteredEngine) {
-                    $Tasks.Add([PSCustomObject]@{
-                            FunctionName = 'CIPPTestCollection'
-                            TenantFilter = $TenantFilter
-                            SuiteName    = $Suite
-                            Phase        = 'All'
-                        })
+            $Tasks.Add([PSCustomObject]@{
+                    FunctionName = 'CIPPTestCollection'
+                    TenantFilter = $TenantFilter
+                    SuiteName    = ($FilteredEngine -join ',')
+                    Phase        = 'Engine'
+                })
+            # Separate activity for the remaining unported PS tests, only if any exist on disk (avoids
+            # a no-op activity per tenant). Discovery is via Get-Command.
+            $SuitePatterns = Get-CippTestSuitePatterns
+            $HasLeftover = $false
+            foreach ($Suite in $FilteredEngine) {
+                $Pattern = $SuitePatterns[$Suite]
+                if ($Pattern -and @(Get-Command -Name $Pattern -Module CIPPTests -ErrorAction SilentlyContinue).Count -gt 0) {
+                    $HasLeftover = $true
+                    break
                 }
-            } else {
-                # Grouped: one engine activity for all C# suites (shared TenantData) ...
+            }
+            if ($HasLeftover) {
                 $Tasks.Add([PSCustomObject]@{
                         FunctionName = 'CIPPTestCollection'
                         TenantFilter = $TenantFilter
                         SuiteName    = ($FilteredEngine -join ',')
-                        Phase        = 'Engine'
+                        Phase        = 'LeftoverPS'
                     })
-                # ... and a SEPARATE activity for the remaining unported PS tests, only if any exist
-                # on disk (avoids a no-op activity per tenant). Discovery is via Get-Command.
-                $SuitePatterns = Get-CippTestSuitePatterns
-                $HasLeftover = $false
-                foreach ($Suite in $FilteredEngine) {
-                    $Pattern = $SuitePatterns[$Suite]
-                    if ($Pattern -and @(Get-Command -Name $Pattern -Module CIPPTests -ErrorAction SilentlyContinue).Count -gt 0) {
-                        $HasLeftover = $true
-                        break
-                    }
-                }
-                if ($HasLeftover) {
-                    $Tasks.Add([PSCustomObject]@{
-                            FunctionName = 'CIPPTestCollection'
-                            TenantFilter = $TenantFilter
-                            SuiteName    = ($FilteredEngine -join ',')
-                            Phase        = 'LeftoverPS'
-                        })
-                }
             }
         }
 
@@ -122,7 +104,7 @@ function Push-CIPPTestsList {
                 })
         }
 
-        Write-Information "Built $($Tasks.Count) test task(s) for tenant $TenantFilter (grouping=$GroupingMode)"
+        Write-Information "Built $($Tasks.Count) test task(s) for tenant $TenantFilter"
         return @($Tasks)
 
     } catch {

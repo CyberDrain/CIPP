@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>CIPP.TableClient</AssemblyName>
+    <RootNamespace>CIPP.TableClient</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <OutputType>Library</OutputType>
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <!-- SYSLIB0014: Helpers.cs uses the obsolete WebRequest for the managed-identity token
+         call. Carried over verbatim from the vendored AzBobbyTables/RevealReports source; the
+         API still functions and the connection-string path is primary. -->
+    <NoWarn>$(NoWarn);SYSLIB0014</NoWarn>
+    <!-- Bundle the Azure SDK runtime assemblies into this assembly's output so both hosts
+         are self-contained. CIPP runs on two hosts: Craft (which vendors Azure.Data.Tables
+         12.11.0) AND dual-stack Azure Functions (which does NOT supply that DLL to the
+         worker). Copying the lock-file assemblies puts Azure.Data.Tables.dll + its transitive
+         graph (Azure.Core, System.ClientModel, System.Memory.Data, ...) in bin so the
+         Functions host has them. This is the OPPOSITE of the RevealReports vendoring, which
+         used ExcludeAssets="runtime" because its Craft-only host already supplied the graph. -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Pinned to 12.11.0 so it unifies with Craft's own copy: identical strong name +
+         version means one assembly in a shared load context (no FileLoadException, "the
+         located assembly's manifest definition does not match"), and it is the sole copy on
+         the Functions host. Runtime assets are INCLUDED (no ExcludeAssets) on purpose; see
+         CopyLocalLockFileAssemblies above. Do NOT bump this version independently of Craft. -->
+    <PackageReference Include="Azure.Data.Tables" Version="12.11.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="LICENSE.AzBobbyTables" Pack="true" PackagePath="." CopyToOutputDirectory="PreserveNewest" />
+    <None Include="NOTICE.md" Pack="true" PackagePath="." CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

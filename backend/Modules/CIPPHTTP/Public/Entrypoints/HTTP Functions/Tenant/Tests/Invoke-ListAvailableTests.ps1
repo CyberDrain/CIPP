@@ -28,66 +28,57 @@ function Invoke-ListAvailableTests {
             }
 
 
-        # Build identity tests array
-        $IdentityTests = foreach ($TestFolder in $TestFolders) {
-            $IdentityPath = Join-Path $TestFolder 'Identity'
-            if (-not [System.IO.Directory]::Exists($IdentityPath)) {
-                continue
-            }
-            $IdentityTestFiles = [System.IO.Directory]::EnumerateFiles($IdentityPath, '*.ps1', [System.IO.SearchOption]::TopDirectoryOnly)
-            foreach ($TestFile in $IdentityTestFiles) {
-                # Extract test ID from filename (e.g., Invoke-CippTestZTNA21772.ps1 -> ZTNA21772)
-                $BaseName = [System.IO.Path]::GetFileNameWithoutExtension($TestFile)
-                if ($BaseName -match 'Invoke-CippTest(.+)$') {
-                    $TestId = $Matches[1]
+        # Built-in tests: the C# engine's registry (tests.registry.json) is the source of truth for
+        # every ported test; a few unported tests still live as .ps1 on disk. Merge both, keyed by id
+        # (registry wins), then split into Identity/Devices by testType/folder for the UI.
+        $ById = [ordered]@{}
 
-                    # Try to get test metadata from the file
-                    $TestContent = [System.IO.File]::ReadAllText($TestFile)
-                    $TestName = $TestId
-
-                    # Try to extract Synopsis from comment-based help
-                    if ($TestContent -match '\.SYNOPSIS\s+(.+?)(?=\s+\.|\s+#>|\s+\[)') {
-                        $TestName = $Matches[1].Trim()
-                    }
-
-                    [PSCustomObject]@{
-                        id         = $TestId
-                        name       = $TestName
-                        category   = 'Identity'
-                        testFolder = [System.IO.Path]::GetFileName($TestFolder)
+        $RegistryPath = Join-Path $env:CIPPRootPath 'Modules\CIPPTests\tests.registry.json'
+        if (Test-Path $RegistryPath) {
+            $Registry = Get-Content -Path $RegistryPath -Raw | ConvertFrom-Json
+            foreach ($Suite in $Registry.suites) {
+                foreach ($Test in $Suite.tests) {
+                    if ([string]::IsNullOrWhiteSpace($Test.id)) { continue }
+                    $ById[$Test.id] = [PSCustomObject]@{
+                        id         = $Test.id
+                        name       = if ($Test.name) { $Test.name } else { $Test.id }
+                        category   = if ($Test.testType) { $Test.testType } else { 'Identity' }
+                        testFolder = $Suite.name
                     }
                 }
             }
         }
 
-        # Build device tests array
-        $DevicesTests = foreach ($TestFolder in $TestFolders) {
-            $DevicesPath = Join-Path $TestFolder 'Devices'
-            if (-not [System.IO.Directory]::Exists($DevicesPath)) {
-                continue
-            }
-            $DeviceTestFiles = [System.IO.Directory]::EnumerateFiles($DevicesPath, '*.ps1', [System.IO.SearchOption]::TopDirectoryOnly)
-            foreach ($TestFile in $DeviceTestFiles) {
-                $BaseName = [System.IO.Path]::GetFileNameWithoutExtension($TestFile)
-                if ($BaseName -match 'Invoke-CippTest(.+)$') {
+        # Remaining unported PS tests still on disk (skip Custom — surfaced separately below).
+        foreach ($TestFolder in $TestFolders) {
+            $SuiteName = [System.IO.Path]::GetFileName($TestFolder)
+            if ($SuiteName -eq 'Custom') { continue }
+            foreach ($Category in @('Identity', 'Devices')) {
+                $CatPath = Join-Path $TestFolder $Category
+                if (-not [System.IO.Directory]::Exists($CatPath)) { continue }
+                foreach ($TestFile in [System.IO.Directory]::EnumerateFiles($CatPath, 'Invoke-CippTest*.ps1', [System.IO.SearchOption]::TopDirectoryOnly)) {
+                    $BaseName = [System.IO.Path]::GetFileNameWithoutExtension($TestFile)
+                    if ($BaseName -notmatch 'Invoke-CippTest(.+)$') { continue }
                     $TestId = $Matches[1]
+                    if ($ById.Contains($TestId)) { continue }  # registry wins
 
                     $TestContent = [System.IO.File]::ReadAllText($TestFile)
                     $TestName = $TestId
-
                     if ($TestContent -match '\.SYNOPSIS\s+(.+?)(?=\s+\.|\s+#>|\s+\[)') {
                         $TestName = $Matches[1].Trim()
                     }
-
-                    [PSCustomObject]@{
+                    $ById[$TestId] = [PSCustomObject]@{
                         id         = $TestId
                         name       = $TestName
-                        category   = 'Devices'
-                        testFolder = [System.IO.Path]::GetFileName($TestFolder)
+                        category   = $Category
+                        testFolder = $SuiteName
                     }
                 }
             }
         }
+
+        $IdentityTests = @($ById.Values | Where-Object { $_.category -eq 'Identity' })
+        $DevicesTests = @($ById.Values | Where-Object { $_.category -eq 'Devices' })
 
         # Build custom tests array from latest custom scripts
         $CustomTestsList = foreach ($CustomTest in @($LatestCustomScripts)) {

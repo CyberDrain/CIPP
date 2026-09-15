@@ -196,9 +196,11 @@ COPY backend/Modules/PassPushPosh   /app/API/Modules/PassPushPosh/
 # at startup (non-root distroless) and CIPP modules read it back from the same path.
 COPY --chown=app:app backend/Config /app/API/Config/
 COPY backend/Shared                 /app/API/Shared/
-# Overwrite the committed CIPPSharp.dll with a freshly built one targeting the
-# runtime framework. Must run AFTER the Shared/ copy so it isn't clobbered.
-COPY --from=build-cippsharp /out/CIPPSharp.dll /app/API/Shared/CIPPSharp/bin/CIPPSharp.dll
+# Overwrite the committed engine binaries with freshly built ones targeting the runtime
+# framework. Must run AFTER the Shared/ copy so they aren't clobbered. Copies the whole build
+# output — CIPPSharp.dll plus the vendored CIPP.TableClient and its Azure.Data.Tables runtime
+# dependencies, which the dual-stack Azure Functions host does not otherwise provide.
+COPY --from=build-cippsharp /out/ /app/API/Shared/CIPPSharp/bin/
 COPY backend/AddChocoApp            /app/API/AddChocoApp/
 COPY backend/AddMSPApp              /app/API/AddMSPApp/
 COPY backend/ExecMaintenanceScripts /app/API/ExecMaintenanceScripts/

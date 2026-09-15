@@ -9,12 +9,23 @@
     <Optimize>true</Optimize>
     <DebugType>none</DebugType>
     <GenerateDependencyFile>false</GenerateDependencyFile>
+    <!-- Flow CIPP.TableClient's transitive runtime graph (Azure.Data.Tables 12.11.0 + Azure.Core,
+         System.ClientModel, System.Memory.Data, Microsoft.Bcl.AsyncInterfaces) into CIPPSharp's
+         flattened bin. Required because the dual-stack Azure Functions host does not supply
+         Azure.Data.Tables; on Craft the pinned 12.11.0 unifies with the host copy. -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\</OutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" />
+    <!-- Compile-time only: the PowerShell host provides System.Management.Automation at runtime.
+         ExcludeAssets=runtime keeps CopyLocalLockFileAssemblies from copying S.M.A.dll into the
+         output (shipping it would clash with the host's PowerShell). -->
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" ExcludeAssets="runtime" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CIPP.TableClient\CIPP.TableClient.csproj" />
   </ItemGroup>
 </Project>

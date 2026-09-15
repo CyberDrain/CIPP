@@ -156,62 +156,70 @@ function Invoke-CIPPTestCollection {
         }
     }
 
-    # Standard suites: discover functions by name pattern via Get-Command.
+    # ── Standard suites: C# engine for ported tests, then any remaining PS tests ──
+    # The bulk of every suite now runs in the C# engine (CIPPSharp/TestEngine): it reads each
+    # reporting type once, evaluates, gates on capabilities, and writes results itself. A few tests
+    # are not yet ported (currently GenericTest010/011). Their .ps1 remain on disk, so Get-Command
+    # finds only those leftovers here and we run them the old way. No double-run: the engine covers
+    # exactly the registry's tests, the PS pass covers exactly what is still on disk.
+    $EngineRan = 0
+    $EngineFailed = 0
+    try {
+        $EngineSummary = Invoke-CIPPTestEngineRun -TenantFilter $TenantFilter -SuiteName $SuiteName
+        $EngineRan = [int]$EngineSummary.Ran
+        $EngineFailed = [int]$EngineSummary.Failed
+        $SuccessCount += $EngineRan
+        $FailedCount += $EngineFailed
+        $Timings.Add(('[engine] {0} : {1}s ({2} ran, {3} failed)' -f $SuiteName, $EngineSummary.TotalSeconds, $EngineRan, $EngineFailed))
+    } catch {
+        # A suite with no registered C# tests, or a registry/engine problem: log and fall through to
+        # any PS leftovers so the suite still runs what it can.
+        Write-Information "Engine run skipped for $SuiteName / $TenantFilter : $($_.Exception.Message)"
+    }
+
+    # Remaining unported PS tests for this suite (only those still present on disk after the ported
+    # .ps1 were dropped).
     $Pattern = $SuitePatterns[$SuiteName]
-    $TestFunctions = @(Get-Command -Name $Pattern -Module CIPPTests -ErrorAction SilentlyContinue)
-    if ($TestFunctions.Count -eq 0) {
-        Write-Information "No test functions found for suite $SuiteName (pattern: $Pattern) — skipping"
-        return @{
-            SuiteName    = $SuiteName
-            TenantFilter = $TenantFilter
-            Success      = 0
-            Failed       = 0
-            Total        = 0
-            TotalSeconds = 0
-            Timings      = @()
-            Errors       = @()
-        }
-    }
+    $LeftoverFunctions = @(Get-Command -Name $Pattern -Module CIPPTests -ErrorAction SilentlyContinue)
 
-    Write-Information "Starting $SuiteName suite for $TenantFilter ($($TestFunctions.Count) tests)"
+    if ($LeftoverFunctions.Count -gt 0) {
+        Write-Information "Running $($LeftoverFunctions.Count) remaining PS test(s) for $SuiteName / $TenantFilter"
+        $Table = Get-CippTable -tablename 'CippTestResults'
+        $ResultBatch = [System.Collections.Generic.List[hashtable]]::new()
 
-    $Table = Get-CippTable -tablename 'CippTestResults'
-    $ResultBatch = [System.Collections.Generic.List[hashtable]]::new()
-
-    foreach ($TestFunction in $TestFunctions) {
-        $ItemStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-        try {
-            $TestOutput = @(& $TestFunction -Tenant $TenantFilter)
-            foreach ($Entity in $TestOutput) {
-                if ($Entity -is [hashtable] -and $Entity.PartitionKey) {
-                    $ResultBatch.Add($Entity)
+        foreach ($TestFunction in $LeftoverFunctions) {
+            $ItemStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+            try {
+                $TestOutput = @(& $TestFunction -Tenant $TenantFilter)
+                foreach ($Entity in $TestOutput) {
+                    if ($Entity -is [hashtable] -and $Entity.PartitionKey) {
+                        $ResultBatch.Add($Entity)
+                    }
                 }
+                if ($ResultBatch.Count -ge 100) {
+                    Add-CIPPAzDataTableEntity @Table -Entity @($ResultBatch) -Force
+                    $ResultBatch.Clear()
+                }
+                $ItemStopwatch.Stop()
+                $Timings.Add(('{0} : {1:N3}s' -f $TestFunction.Name, $ItemStopwatch.Elapsed.TotalSeconds))
+                $SuccessCount++
+            } catch {
+                $ItemStopwatch.Stop()
+                $FailedCount++
+                $Errors.Add("$($TestFunction.Name) : $($_.Exception.Message)")
+                $Timings.Add(('{0} : {1:N3}s (FAILED)' -f $TestFunction.Name, $ItemStopwatch.Elapsed.TotalSeconds))
             }
-            if ($ResultBatch.Count -ge 100) {
-                Add-CIPPAzDataTableEntity @Table -Entity @($ResultBatch) -Force
-                $ResultBatch.Clear()
-            }
-            $ItemStopwatch.Stop()
-            $Timings.Add(('{0} : {1:N3}s' -f $TestFunction.Name, $ItemStopwatch.Elapsed.TotalSeconds))
-            $SuccessCount++
-        } catch {
-            $ItemStopwatch.Stop()
-            $FailedCount++
-            $Errors.Add("$($TestFunction.Name) : $($_.Exception.Message)")
-            $Timings.Add(('{0} : {1:N3}s (FAILED)' -f $TestFunction.Name, $ItemStopwatch.Elapsed.TotalSeconds))
         }
-    }
 
-    # Final flush
-    if ($ResultBatch.Count -gt 0) {
-        Add-CIPPAzDataTableEntity @Table -Entity @($ResultBatch) -Force
-        Write-Information "  [$SuiteName] Flushed final $($ResultBatch.Count) results to table"
+        if ($ResultBatch.Count -gt 0) {
+            Add-CIPPAzDataTableEntity @Table -Entity @($ResultBatch) -Force
+        }
     }
 
     $SuiteStopwatch.Stop()
     $TotalElapsed = '{0:N3}' -f $SuiteStopwatch.Elapsed.TotalSeconds
-    $TestCount = $TestFunctions.Count
-    $Summary = "$SuiteName suite for $TenantFilter completed in ${TotalElapsed}s — $SuccessCount/$TestCount ran, $FailedCount errored"
+    $Total = $SuccessCount + $FailedCount
+    $Summary = "$SuiteName suite for $TenantFilter completed in ${TotalElapsed}s — $SuccessCount ran, $FailedCount errored (engine: $EngineRan ran / $EngineFailed failed)"
     Write-Information $Summary
     Write-Information "  Timings: $($Timings -join ' | ')"
 
@@ -224,7 +232,7 @@ function Invoke-CIPPTestCollection {
         TenantFilter = $TenantFilter
         Success      = $SuccessCount
         Failed       = $FailedCount
-        Total        = $TestFunctions.Count
+        Total        = $Total
         TotalSeconds = $TotalElapsed
         Timings      = @($Timings)
         Errors       = @($Errors)

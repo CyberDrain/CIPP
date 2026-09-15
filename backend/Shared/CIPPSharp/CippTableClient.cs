@@ -15,7 +15,7 @@ namespace CIPP.Tests
     {
         private readonly VendoredTableClient _inner = new();
 
-        public IReadOnlyList<string> ReadRows(string table, string partitionKey, string rowKeyPrefix)
+        public IEnumerable<string> ReadRows(string table, string partitionKey, string rowKeyPrefix)
             => _inner.ReadRows(table, partitionKey, rowKeyPrefix);
 
         public void WriteEntities(string table, IEnumerable<IDictionary<string, object>> entities)

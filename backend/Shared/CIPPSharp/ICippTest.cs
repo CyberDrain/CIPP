@@ -17,12 +17,13 @@ namespace CIPP.Tests
     public interface ITableClient
     {
         /// <summary>
-        /// Read every row for <paramref name="partitionKey"/> whose RowKey starts with
+        /// Stream every row for <paramref name="partitionKey"/> whose RowKey starts with
         /// <paramref name="rowKeyPrefix"/> from <paramref name="table"/>, reassembled from
-        /// AzBobbyTables split markers, returned as raw JSON strings (one per stored row —
-        /// each is a single JSON object or a JSON array).
+        /// AzBobbyTables split markers, as raw JSON strings (one per stored row — each a single JSON
+        /// object or array). Lazy: the caller parses and projects each row and lets it go, so the
+        /// separate full-type string copy is never built (peak drops from two full copies to one).
         /// </summary>
-        IReadOnlyList<string> ReadRows(string table, string partitionKey, string rowKeyPrefix);
+        IEnumerable<string> ReadRows(string table, string partitionKey, string rowKeyPrefix);
 
         /// <summary>Write result entities to <paramref name="table"/> (split-marker aware).</summary>
         void WriteEntities(string table, IEnumerable<IDictionary<string, object>> entities);

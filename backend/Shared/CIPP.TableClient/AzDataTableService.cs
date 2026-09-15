@@ -754,6 +754,82 @@ public class AzDataTableService
     }
 
     /// <summary>
+    /// Lazy equivalent of <see cref="GetLargeEntitiesFromTable"/> for the read path: plain
+    /// (non-split) rows are yielded as they page in, so the whole result set is never materialised;
+    /// only split-part rows (those carrying <see cref="EntitySplitter.OriginalEntityIdKey"/>, which
+    /// are rare) are buffered and reassembled at the end via the same recover+reassemble logic. A
+    /// plain row supersedes leftover parts of the same identity, so a reassembled group whose identity
+    /// a plain row already emitted is dropped — matching Reassemble's plain-precedence rule. No
+    /// ordering/skip/top/orderBy support (the read path does not use them).
+    /// </summary>
+    public IEnumerable<TableEntity> StreamLargeEntitiesFromTable(string query, string[] properties = null!, Action<string> onWarning = null!)
+    {
+        ValidateTableClient();
+
+        var maxPerPage = CalculatePageSize(null, null, null!);
+        IEnumerator<TableEntity> src;
+        try
+        {
+            src = TableClient!.Query<TableEntity>(query, maxPerPage, properties, CancellationToken).GetEnumerator();
+        }
+        catch (Exception ex)
+        {
+            throw new AzDataTableException("GetLargeEntitiesError", ex);
+        }
+
+        var plainKeys = new HashSet<(string, string)>();
+        var parts = new List<TableEntity>();
+        using (src)
+        {
+            while (true)
+            {
+                TableEntity entity;
+                var tableGone = false;
+                try
+                {
+                    if (!src.MoveNext()) break;
+                    entity = src.Current;
+                }
+                // A missing table surfaces here (pages are fetched lazily on MoveNext). Match the eager
+                // path: treat it as an empty result rather than throwing.
+                catch (RequestFailedException rfe) when (rfe.Status == 404 || string.Equals(rfe.ErrorCode, "TableNotFound", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableGone = true;
+                    entity = null!;
+                }
+                if (tableGone) yield break;
+
+                // A row needs reassembly if it is a cross-ROW split part (carries OriginalEntityId) OR
+                // a cross-COLUMN chunked row (carries the SplitOverProps marker; its Data is spread
+                // across Data/Data_1/... and must be rejoined). Only rows with neither marker are plain
+                // and safe to stream as-is.
+                if (entity.ContainsKey(EntitySplitter.OriginalEntityIdKey) ||
+                    entity.ContainsKey(EntitySplitter.SplitOverPropsKey))
+                {
+                    parts.Add(entity); // split/chunked row: buffer for reassembly
+                }
+                else
+                {
+                    plainKeys.Add((entity.PartitionKey, entity.RowKey));
+                    yield return entity;
+                }
+            }
+        }
+
+        if (parts.Count == 0)
+        {
+            yield break;
+        }
+
+        var recovered = RecoverMissingPartRows(parts, properties);
+        foreach (var reassembled in EntitySplitter.Reassemble(recovered, onWarning, inc => onWarning?.Invoke(inc.Message)))
+        {
+            if (plainKeys.Contains((reassembled.PartitionKey, reassembled.RowKey))) continue; // plain wins
+            yield return reassembled;
+        }
+    }
+
+    /// <summary>
     /// Fetch the rows of any entity in <paramref name="rows"/> that is only partly
     /// present, and return the set with them added.
     /// </summary>

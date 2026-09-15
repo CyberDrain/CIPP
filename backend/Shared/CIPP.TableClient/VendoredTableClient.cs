@@ -49,7 +49,7 @@ public sealed class VendoredTableClient
     /// <param name="partitionKey">The partition key (tenant default domain).</param>
     /// <param name="rowKeyPrefix">RowKey prefix to scope to, or null/empty for the whole partition.</param>
     /// <returns>The <c>Data</c> JSON string of each matching logical row.</returns>
-    public IReadOnlyList<string> ReadRows(string table, string partitionKey, string rowKeyPrefix)
+    public IEnumerable<string> ReadRows(string table, string partitionKey, string rowKeyPrefix)
     {
         if (string.IsNullOrEmpty(table))
         {
@@ -72,25 +72,21 @@ public sealed class VendoredTableClient
             return Array.Empty<string>();
         }
 
-        IEnumerable<TableEntity> rows;
-        try
-        {
-            rows = service.GetLargeEntitiesFromTable(filter);
-        }
-        catch (AzDataTableException ex) when (IsTableNotFound(ex))
-        {
-            return Array.Empty<string>();
-        }
+        // Lazy: plain rows stream as they page; the whole type is never materialised (only rare
+        // split-part rows are buffered and reassembled at the end). Iterator body is deferred, so a
+        // missing-table 404 surfaces during enumeration and is handled inside the stream (yields empty).
+        return StreamData(service.StreamLargeEntitiesFromTable(filter));
+    }
 
-        var results = new List<string>();
+    private static IEnumerable<string> StreamData(IEnumerable<TableEntity> rows)
+    {
         foreach (var row in rows)
         {
             if (row.TryGetValue(DataColumn, out var value) && value is string json && !string.IsNullOrWhiteSpace(json))
             {
-                results.Add(json);
+                yield return json;
             }
         }
-        return results;
     }
 
     /// <summary>

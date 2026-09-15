@@ -88,7 +88,7 @@ namespace CIPP.Tests
         // the output stream).
         private JsonDocument Build(string type)
         {
-            System.Collections.Generic.IReadOnlyList<string> rows;
+            IEnumerable<string> rows;
             try
             {
                 rows = _tables.ReadRows(ReportingTable, _tenantFilter, type + "-");
@@ -99,12 +99,11 @@ namespace CIPP.Tests
                 return EmptyArray;
             }
 
-            if (rows == null || rows.Count == 0) return EmptyArray;
-
             HashSet<string>? keep = null;
             _projections?.TryGetValue(type, out keep);
 
             var buffer = new ArrayBufferWriter<byte>();
+            int written = 0;
             using (var writer = new Utf8JsonWriter(buffer))
             {
                 writer.WriteStartArray();
@@ -117,12 +116,12 @@ namespace CIPP.Tests
                         var root = doc.RootElement;
                         if (root.ValueKind == JsonValueKind.Array)
                         {
-                            foreach (var el in root.EnumerateArray()) WriteRecord(writer, el, keep);
+                            foreach (var el in root.EnumerateArray()) { WriteRecord(writer, el, keep); written++; }
                         }
                         else if (root.ValueKind != JsonValueKind.Null &&
                                  root.ValueKind != JsonValueKind.Undefined)
                         {
-                            WriteRecord(writer, root, keep);
+                            WriteRecord(writer, root, keep); written++;
                         }
                     }
                     catch (JsonException ex)
@@ -134,6 +133,8 @@ namespace CIPP.Tests
                 }
                 writer.WriteEndArray();
             }
+
+            if (written == 0) return EmptyArray;
 
             // ToArray trims to exact size (with a projection the written output is far smaller than the
             // source rows), giving a right-sized backing array the document holds for its lifetime.

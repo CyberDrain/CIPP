@@ -5,9 +5,14 @@ function Get-CippSandboxData {
 
     .DESCRIPTION
         Runs on the trusted (FullLanguage) side before the script enters the sandbox.
-        Inspects the script AST for Get-CIPPTestData calls, resolves each requested -Type,
-        and fetches that data for the supplied tenant via the real Get-CIPPTestData. The
-        result is a hashtable keyed by Type that the sandbox proxy serves.
+        Inspects the script AST for Get-CIPPTestData calls, resolves each requested -Type
+        (and any literal -Fields), and fetches that data for the supplied tenant via
+        New-CIPPDbRequest directly. The result is a hashtable keyed by Type that the sandbox
+        proxy serves.
+
+        It bypasses Get-CIPPTestData's shared cache on purpose: custom-test reads would
+        otherwise sit in that cache as whole-record (or off-manifest) copies duplicating the
+        leftover PS tests' projected entries for the TTL. See the fetch loop below.
 
         Because only the requested types for THIS tenant are fetched and injected, the
         sandbox is structurally unable to read any other tenant's data.
@@ -106,12 +111,19 @@ function Get-CippSandboxData {
     foreach ($k in $FieldsByType.Keys) { [void]$Keys.Add($k) }
     foreach ($k in $FullTypes) { [void]$Keys.Add($k) }
 
+    # Read directly via New-CIPPDbRequest, NOT Get-CIPPTestData: custom tests must not populate the
+    # shared TestDataCache. Their reads are whole-record (or a per-script projection that differs
+    # from the manifest), so cached alongside the leftover PS tests' manifest-projected entries they
+    # duplicate every shared type — a second, near-full copy resident for the whole TTL (measured at
+    # ~87MB, mostly RoleManagementPolicies). The per-script pre-fetch below already dedupes types
+    # within a script; cross-script sharing is not worth that residency now the C# engine carries the
+    # class tests on its own data. Data here lives only for this script's execution, then is released.
     foreach ($Key in $Keys) {
         if ($FullTypes.Contains($Key) -or -not $FieldsByType.ContainsKey($Key)) {
-            $Data[$Key] = @(Get-CIPPTestData -TenantFilter $TenantFilter -Type $Key -NoProjection)
+            $Data[$Key] = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Key)
         } else {
             $Fields = @($FieldsByType[$Key])
-            $Data[$Key] = @(Get-CIPPTestData -TenantFilter $TenantFilter -Type $Key -Fields $Fields)
+            $Data[$Key] = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Key -Fields $Fields)
         }
     }
 

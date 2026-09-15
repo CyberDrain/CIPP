@@ -30,8 +30,11 @@ function New-CippSandboxInitialSessionState {
     }
 
     # CLM-safe data proxy. No script-level .NET — indexes the injected hashtable only.
+    # -Fields / -NoProjection are accepted but ignored: projection is applied host-side by
+    # Get-CippSandboxData (which reads them from the AST and pre-fetches the projected set),
+    # so the proxy only needs to tolerate the parameters and return the pre-fetched data.
     $ProxyBody = @'
-param([string]$TenantFilter, [string]$Type)
+param([string]$TenantFilter, [string]$Type, [string[]]$Fields, [switch]$NoProjection)
 $Key = if ($Type) { $Type } else { '' }
 if ($CIPPSandboxData -and $CIPPSandboxData.ContainsKey($Key)) {
     return $CIPPSandboxData[$Key]

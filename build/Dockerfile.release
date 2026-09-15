@@ -63,11 +63,17 @@ RUN pwsh -File /build/build-single-module.ps1 -Module CIPPTests -KeepPublic
 # SDK the last committer happened to have installed.
 FROM ${DOTNET_REGISTRY}/dotnet/sdk:8.0-bookworm-slim AS build-cippsharp
 WORKDIR /src
-COPY backend/Shared/CIPPSharp/CIPPSharp.csproj ./
-RUN dotnet restore CIPPSharp.csproj
-COPY backend/Shared/CIPPSharp/ ./
-RUN dotnet build CIPPSharp.csproj -c Release --no-restore -o /out && \
-    test -f /out/CIPPSharp.dll
+# CIPPSharp references the sibling CIPP.TableClient project, so both csprojs must be
+# present for `dotnet restore` to resolve the ProjectReference, and both source trees
+# must sit side by side (CIPPSharp/ + CIPP.TableClient/) so the ..\CIPP.TableClient
+# relative reference resolves during build.
+COPY backend/Shared/CIPPSharp/CIPPSharp.csproj CIPPSharp/
+COPY backend/Shared/CIPP.TableClient/CIPP.TableClient.csproj CIPP.TableClient/
+RUN dotnet restore CIPPSharp/CIPPSharp.csproj
+COPY backend/Shared/CIPPSharp/ CIPPSharp/
+COPY backend/Shared/CIPP.TableClient/ CIPP.TableClient/
+RUN dotnet build CIPPSharp/CIPPSharp.csproj -c Release --no-restore -o /out && \
+    test -f /out/CIPPSharp.dll && test -f /out/CIPP.TableClient.dll
 
 # ── Function parameter cache ──
 # Pregenerated help cache served by Invoke-ListFunctionParameters, extracted

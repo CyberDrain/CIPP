@@ -142,6 +142,9 @@ namespace CIPP.Tests
                         Rule: t.Rule,
                         RequiredCapabilities: (t.RequiredCapabilities != null && t.RequiredCapabilities.Count > 0)
                             ? t.RequiredCapabilities
+                            : null,
+                        DataTypes: (t.DataTypes != null && t.DataTypes.Count > 0)
+                            ? t.DataTypes
                             : null));
                 }
             }
@@ -257,6 +260,7 @@ namespace CIPP.Tests
             [JsonPropertyName("testType")] public string? TestType { get; set; }
             [JsonPropertyName("rule")] public ConfigRule? Rule { get; set; }
             [JsonPropertyName("requiredCapabilities")] public List<string>? RequiredCapabilities { get; set; }
+            [JsonPropertyName("dataTypes")] public List<string>? DataTypes { get; set; }
         }
     }
 }

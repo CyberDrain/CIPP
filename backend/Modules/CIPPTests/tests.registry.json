@@ -13,7 +13,10 @@
           "category": "Copilot Readiness",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "LicenseOverview"
+          ]
         },
         {
           "id": "CopilotReady002",
@@ -24,7 +27,11 @@
           "category": "Copilot Readiness",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "IntuneConfigurationPolicies",
+            "LicenseOverview"
+          ]
         },
         {
           "id": "CopilotReady003",
@@ -35,7 +42,11 @@
           "category": "Copilot Readiness",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "OfficeActivations",
+            "Users"
+          ]
         },
         {
           "id": "CopilotReady004",
@@ -46,7 +57,11 @@
           "category": "Copilot Readiness",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CopilotReadinessActivity",
+            "Users"
+          ]
         },
         {
           "id": "CopilotReady005",
@@ -57,7 +72,11 @@
           "category": "Copilot Readiness",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CopilotReadinessActivity",
+            "Users"
+          ]
         },
         {
           "id": "CopilotReady006",
@@ -68,7 +87,11 @@
           "category": "Copilot Readiness",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CopilotReadinessActivity",
+            "Users"
+          ]
         },
         {
           "id": "CopilotReady007",
@@ -79,7 +102,11 @@
           "category": "Copilot Readiness",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CopilotReadinessActivity",
+            "Users"
+          ]
         },
         {
           "id": "CopilotReady008",
@@ -90,7 +117,11 @@
           "category": "Copilot Readiness",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CopilotReadinessActivity",
+            "Users"
+          ]
         },
         {
           "id": "CopilotReady009",
@@ -101,7 +132,11 @@
           "category": "Copilot Readiness",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CopilotReadinessActivity",
+            "Users"
+          ]
         },
         {
           "id": "CopilotReady010",
@@ -112,7 +147,11 @@
           "category": "Copilot Readiness",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "UserRegistrationDetails",
+            "Users"
+          ]
         },
         {
           "id": "CopilotReady011",
@@ -123,7 +162,10 @@
           "category": "Copilot Readiness",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CopilotReady012",
@@ -134,7 +176,10 @@
           "category": "Copilot Readiness",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "CopilotReady013",
@@ -145,7 +190,10 @@
           "category": "Copilot Readiness",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "SensitivityLabels"
+          ]
         },
         {
           "id": "CopilotReady014",
@@ -156,7 +204,10 @@
           "category": "Copilot Readiness",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DlpCompliancePolicies"
+          ]
         },
         {
           "id": "CopilotReady015",
@@ -167,7 +218,10 @@
           "category": "Copilot Readiness",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CopilotUsageUserDetail"
+          ]
         },
         {
           "id": "CopilotReady016",
@@ -178,7 +232,10 @@
           "category": "Copilot Readiness",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CopilotUserCountSummary"
+          ]
         },
         {
           "id": "CopilotReady017",
@@ -189,7 +246,10 @@
           "category": "Copilot Readiness",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CopilotUserCountTrend"
+          ]
         }
       ]
     },
@@ -230,7 +290,10 @@
               "id",
               "passwordValidityPeriodInDays"
             ]
-          }
+          },
+          "dataTypes": [
+            "Domains"
+          ]
         },
         {
           "id": "CIS_6_1_3",
@@ -259,7 +322,10 @@
             "failTable": [
               "UserPrincipalName"
             ]
-          }
+          },
+          "dataTypes": [
+            "Mailboxes"
+          ]
         },
         {
           "id": "CIS_5_1_2_2",
@@ -286,7 +352,10 @@
             "pass": "Users cannot create app registrations (allowedToCreateApps: false).",
             "fail": "Users can register applications (allowedToCreateApps is not restricted).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "CIS_1_1_1",
@@ -298,7 +367,12 @@
           "category": "Privileged Access",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "CIS_1_1_2",
@@ -310,7 +384,12 @@
           "category": "Privileged Access",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "CIS_1_1_3",
@@ -322,7 +401,11 @@
           "category": "Privileged Access",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_1_1_4",
@@ -334,7 +417,12 @@
           "category": "Privileged Access",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "CIS_1_2_1",
@@ -346,7 +434,10 @@
           "category": "Group Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Groups"
+          ]
         },
         {
           "id": "CIS_1_2_2",
@@ -358,7 +449,11 @@
           "category": "Identity",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Mailboxes",
+            "Users"
+          ]
         },
         {
           "id": "CIS_1_3_2",
@@ -370,7 +465,10 @@
           "category": "Session Management",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_1_3_3",
@@ -382,7 +480,10 @@
           "category": "Data Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoSharingPolicy"
+          ]
         },
         {
           "id": "CIS_1_3_4",
@@ -394,7 +495,11 @@
           "category": "Application Management",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AppsAndServices",
+            "Settings"
+          ]
         },
         {
           "id": "CIS_1_3_5",
@@ -406,7 +511,11 @@
           "category": "Phishing Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "FormsSettings",
+            "Settings"
+          ]
         },
         {
           "id": "CIS_1_3_6",
@@ -434,7 +543,10 @@
             "pass": "Customer Lockbox is enabled.",
             "fail": "Customer Lockbox is disabled. Requires E5 or Compliance add-on.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "CIS_1_3_7",
@@ -446,7 +558,10 @@
           "category": "Data Protection",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "CIS_1_3_8",
@@ -458,7 +573,8 @@
           "category": "Data Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_1_3_9",
@@ -486,7 +602,10 @@
             "pass": "Bookings is disabled at the organisation level (BookingsEnabled: false) \u2014 a more restrictive and compliant configuration.",
             "fail": "Bookings is enabled at the organisation level (BookingsEnabled: true). Either disable it organisation-wide, or set BookingsMailboxCreationEnabled = false on the default OWA mailbox policy and assign Bookings access to specific users via a separate policy.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "CIS_2_1_1",
@@ -498,7 +617,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
+          ]
         },
         {
           "id": "CIS_2_1_2",
@@ -510,7 +632,11 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoMalwareFilterPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_2_1_3",
@@ -522,7 +648,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoMalwareFilterPolicies"
+          ]
         },
         {
           "id": "CIS_2_1_4",
@@ -534,7 +663,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoSafeAttachmentPolicies"
+          ]
         },
         {
           "id": "CIS_2_1_5",
@@ -546,7 +678,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAtpPolicyForO365"
+          ]
         },
         {
           "id": "CIS_2_1_6",
@@ -558,7 +693,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedOutboundSpamFilterPolicy"
+          ]
         },
         {
           "id": "CIS_2_1_9",
@@ -570,7 +708,11 @@
           "category": "Email Authentication",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoDkimSigningConfig"
+          ]
         },
         {
           "id": "CIS_2_1_11",
@@ -582,7 +724,11 @@
           "category": "Email Protection",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoMalwareFilterPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_2_1_12",
@@ -594,7 +740,8 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_2_1_13",
@@ -606,7 +753,8 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_2_1_14",
@@ -618,7 +766,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "CIS_2_1_15",
@@ -630,7 +781,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedOutboundSpamFilterPolicy"
+          ]
         },
         {
           "id": "CIS_2_2_1",
@@ -642,7 +796,8 @@
           "category": "Privileged Access",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_2_4_1",
@@ -654,7 +809,8 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_2_4_2",
@@ -666,7 +822,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoPresetSecurityPolicy"
+          ]
         },
         {
           "id": "CIS_2_4_3",
@@ -678,7 +837,8 @@
           "category": "Cloud Apps",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_2_4_4",
@@ -690,7 +850,8 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_2_4_5",
@@ -702,7 +863,8 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_3_1_1",
@@ -730,7 +892,10 @@
             "pass": "Unified Audit Log ingestion is enabled.",
             "fail": "Unified Audit Log ingestion is disabled.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "ExoAdminAuditLogConfig"
+          ]
         },
         {
           "id": "CIS_3_2_1",
@@ -742,7 +907,10 @@
           "category": "Data Protection",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DlpCompliancePolicies"
+          ]
         },
         {
           "id": "CIS_3_2_2",
@@ -754,7 +922,10 @@
           "category": "Data Protection",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DlpCompliancePolicies"
+          ]
         },
         {
           "id": "CIS_3_2_3",
@@ -766,7 +937,10 @@
           "category": "Data Protection",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DlpCompliancePolicies"
+          ]
         },
         {
           "id": "CIS_3_3_1",
@@ -778,7 +952,10 @@
           "category": "Information Protection",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "SensitivityLabels"
+          ]
         },
         {
           "id": "CIS_4_1",
@@ -806,7 +983,10 @@
             "pass": "Devices without a compliance policy are marked Not compliant (secureByDefault: true).",
             "fail": "Devices without a compliance policy are marked Compliant by default (secureByDefault: false).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "DeviceSettings"
+          ]
         },
         {
           "id": "CIS_4_2",
@@ -818,7 +998,10 @@
           "category": "Device Management",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "IntuneDeviceEnrollmentConfigurations"
+          ]
         },
         {
           "id": "CIS_5_1_2_1",
@@ -830,7 +1013,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "MFAState"
+          ]
         },
         {
           "id": "CIS_5_1_2_3",
@@ -858,7 +1044,10 @@
             "pass": "Non-admin users cannot create new tenants (allowedToCreateTenants: false).",
             "fail": "Non-admin users can create new tenants (allowedToCreateTenants: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_2_4",
@@ -870,7 +1059,8 @@
           "category": "Identity",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_1_2_5",
@@ -882,7 +1072,8 @@
           "category": "Identity",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_1_2_6",
@@ -894,7 +1085,8 @@
           "category": "Identity",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_1_3_1",
@@ -922,7 +1114,10 @@
             "pass": "Users cannot create security groups (allowedToCreateSecurityGroups: false).",
             "fail": "Users can create security groups (allowedToCreateSecurityGroups: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_3_2",
@@ -934,7 +1129,8 @@
           "category": "Group Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_1_3_3",
@@ -946,7 +1142,8 @@
           "category": "Group Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_1_3_4",
@@ -958,7 +1155,10 @@
           "category": "Group Management",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "CIS_5_1_4_1",
@@ -970,7 +1170,10 @@
           "category": "Device Management",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DeviceRegistrationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_4_2",
@@ -1003,7 +1206,10 @@
             "pass": "userDeviceQuota is within the CIS recommendation of 10 or less.",
             "fail": "userDeviceQuota is not within the CIS recommendation of 10 or less.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "DeviceRegistrationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_4_3",
@@ -1015,7 +1221,10 @@
           "category": "Privileged Access",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DeviceRegistrationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_4_4",
@@ -1027,7 +1236,10 @@
           "category": "Privileged Access",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DeviceRegistrationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_4_5",
@@ -1055,7 +1267,10 @@
             "pass": "LAPS (cloud) is enabled at the tenant (localAdminPassword.isEnabled: true).",
             "fail": "LAPS is disabled at the tenant (localAdminPassword.isEnabled: false).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "DeviceRegistrationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_4_6",
@@ -1083,7 +1298,10 @@
             "pass": "Users cannot self-service recover BitLocker keys (allowedToReadBitLockerKeysForOwnedDevice: false).",
             "fail": "Users can self-service recover BitLocker keys (allowedToReadBitLockerKeysForOwnedDevice: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_5_1",
@@ -1095,7 +1313,10 @@
           "category": "Application Management",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_5_2",
@@ -1107,7 +1328,11 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AdminConsentRequestPolicy",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_5_1_5_3",
@@ -1119,7 +1344,10 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DefaultAppManagementPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_5_4",
@@ -1131,7 +1359,10 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DefaultAppManagementPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_5_5",
@@ -1143,7 +1374,10 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DefaultAppManagementPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_5_6",
@@ -1155,7 +1389,10 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DefaultAppManagementPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_6_1",
@@ -1167,7 +1404,11 @@
           "category": "External Collaboration",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "B2BManagementPolicy",
+            "CrossTenantAccessPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_6_2",
@@ -1195,7 +1436,10 @@
             "pass": "Guest users are assigned the most restricted role (Restricted Guest).",
             "fail": "Guest users are not on the Restricted Guest role.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "CIS_5_1_6_3",
@@ -1223,7 +1467,10 @@
             "pass": "Guest invitations restricted to Admins and Guest Inviters (allowInvitesFrom: adminsAndGuestInviters).",
             "fail": "Guest invitations are not limited to the Guest Inviter role. Set to 'adminsAndGuestInviters'.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "CIS_5_2_2_1",
@@ -1235,7 +1482,11 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_5_2_2_10",
@@ -1247,7 +1498,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_11",
@@ -1259,7 +1513,10 @@
           "category": "Device Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_12",
@@ -1271,7 +1528,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_13",
@@ -1283,7 +1543,10 @@
           "category": "Session Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_2",
@@ -1295,7 +1558,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_3",
@@ -1307,7 +1573,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_4",
@@ -1319,7 +1588,11 @@
           "category": "Session Management",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_5_2_2_5",
@@ -1331,7 +1604,11 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_5_2_2_6",
@@ -1343,7 +1620,10 @@
           "category": "Identity Protection",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_7",
@@ -1355,7 +1635,10 @@
           "category": "Identity Protection",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_8",
@@ -1367,7 +1650,10 @@
           "category": "Identity Protection",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_9",
@@ -1379,7 +1665,10 @@
           "category": "Device Management",
           "userImpact": "High",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_14",
@@ -1391,7 +1680,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_15",
@@ -1403,7 +1695,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_16",
@@ -1415,7 +1710,10 @@
           "category": "Session Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_2_17",
@@ -1427,7 +1725,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "CIS_5_2_3_1",
@@ -1439,7 +1740,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "CIS_5_2_3_2",
@@ -1451,7 +1755,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "CIS_5_2_3_3",
@@ -1463,7 +1770,11 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Organization",
+            "Settings"
+          ]
         },
         {
           "id": "CIS_5_2_3_4",
@@ -1475,7 +1786,11 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "UserRegistrationDetails",
+            "Users"
+          ]
         },
         {
           "id": "CIS_5_2_3_5",
@@ -1487,7 +1802,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "CIS_5_2_3_6",
@@ -1499,7 +1817,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "CIS_5_2_3_7",
@@ -1511,7 +1832,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "CIS_5_2_3_8",
@@ -1523,7 +1847,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "CIS_5_2_3_9",
@@ -1535,7 +1862,10 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "CIS_5_2_3_10",
@@ -1547,7 +1877,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "CIS_5_2_4_1",
@@ -1559,7 +1892,8 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_2_4_2",
@@ -1571,7 +1905,8 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_2_4_3",
@@ -1583,7 +1918,8 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_2_4_4",
@@ -1595,7 +1931,8 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_2_4_5",
@@ -1607,7 +1944,8 @@
           "category": "Authentication",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_3_1",
@@ -1619,7 +1957,11 @@
           "category": "Privileged Access",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_5_3_2",
@@ -1631,7 +1973,8 @@
           "category": "External Collaboration",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_3_3",
@@ -1643,7 +1986,8 @@
           "category": "Privileged Access",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_5_3_4",
@@ -1655,7 +1999,11 @@
           "category": "Privileged Access",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleManagementPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_5_3_5",
@@ -1667,7 +2015,11 @@
           "category": "Privileged Access",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleManagementPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "CIS_6_1_1",
@@ -1695,7 +2047,10 @@
             "pass": "Mailbox auditing is enabled organisation-wide (AuditDisabled: false).",
             "fail": "Mailbox auditing is disabled organisation-wide (AuditDisabled is not false).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "CIS_6_1_2",
@@ -1707,7 +2062,10 @@
           "category": "Audit & Compliance",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Mailboxes"
+          ]
         },
         {
           "id": "CIS_6_2_1",
@@ -1719,7 +2077,11 @@
           "category": "Data Protection",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedOutboundSpamFilterPolicy",
+            "ExoRemoteDomain"
+          ]
         },
         {
           "id": "CIS_6_2_2",
@@ -1731,7 +2093,10 @@
           "category": "Email Protection",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoTransportRules"
+          ]
         },
         {
           "id": "CIS_6_2_3",
@@ -1759,7 +2124,10 @@
             "pass": "External sender callouts are enabled in Outlook (ExternalInOutlookEnabled: true).",
             "fail": "External sender callouts are disabled. Run Set-ExternalInOutlook -Enabled $true.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "CIS_6_3_1",
@@ -1771,7 +2139,8 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_6_3_2",
@@ -1783,7 +2152,10 @@
           "category": "Data Protection",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "OwaMailboxPolicy"
+          ]
         },
         {
           "id": "CIS_6_5_1",
@@ -1811,7 +2183,10 @@
             "pass": "Modern authentication is enabled for Exchange Online (OAuth2ClientProfileEnabled: true).",
             "fail": "Modern authentication is disabled (OAuth2ClientProfileEnabled: false).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "CIS_6_5_2",
@@ -1859,7 +2234,10 @@
             "pass": "All MailTips are enabled with a large-audience threshold between 1 and 25.",
             "fail": "MailTips are not fully enabled (AllTipsEnabled, ExternalRecipientsTipsEnabled, GroupMetricsEnabled must all be true and LargeAudienceThreshold between 1 and 25).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "CIS_6_5_3",
@@ -1871,7 +2249,10 @@
           "category": "Data Protection",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "OwaMailboxPolicy"
+          ]
         },
         {
           "id": "CIS_6_5_4",
@@ -1899,7 +2280,10 @@
             "pass": "SMTP AUTH is disabled organisation-wide (SmtpClientAuthenticationDisabled: true).",
             "fail": "SMTP AUTH is enabled organisation-wide (SmtpClientAuthenticationDisabled: false).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "ExoTransportConfig"
+          ]
         },
         {
           "id": "CIS_6_5_5",
@@ -1927,7 +2311,10 @@
             "pass": "Direct Send submissions are rejected (RejectDirectSend: true).",
             "fail": "Direct Send submissions are accepted (RejectDirectSend: false). Migrate scan-to-mail / app senders to authenticated SMTP relay or to a connector before enabling.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "CIS_7_2_1",
@@ -1955,7 +2342,10 @@
             "pass": "SharePoint legacy auth protocols are disabled (LegacyAuthProtocolsEnabled: false).",
             "fail": "SharePoint legacy auth protocols are enabled (LegacyAuthProtocolsEnabled: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_2_2",
@@ -1983,7 +2373,10 @@
             "pass": "SharePoint / OneDrive Entra B2B integration is enabled.",
             "fail": "SharePoint / OneDrive Entra B2B integration is disabled (EnableAzureADB2BIntegration: false).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_2_3",
@@ -1995,7 +2388,10 @@
           "category": "External Collaboration",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_2_4",
@@ -2007,7 +2403,10 @@
           "category": "External Collaboration",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_2_5",
@@ -2035,7 +2434,10 @@
             "pass": "External users cannot reshare (PreventExternalUsersFromResharing: true).",
             "fail": "External users can reshare (PreventExternalUsersFromResharing: false).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_2_6",
@@ -2047,7 +2449,10 @@
           "category": "External Collaboration",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_2_7",
@@ -2059,7 +2464,10 @@
           "category": "External Collaboration",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_2_8",
@@ -2071,7 +2479,8 @@
           "category": "External Collaboration",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "CIS_7_2_9",
@@ -2109,7 +2518,10 @@
             "pass": "External user expiration is enforced within 30 days.",
             "fail": "External user expiration is not enforced (ExternalUserExpirationRequired must be true and ExternalUserExpireInDays between 1 and 30).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_2_10",
@@ -2147,7 +2559,10 @@
             "pass": "Email attestation re-auth is enforced within 15 days.",
             "fail": "Email attestation re-auth is not enforced (EmailAttestationRequired must be true and EmailAttestationReAuthDays between 1 and 15).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_2_11",
@@ -2159,7 +2574,10 @@
           "category": "Data Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_7_3_1",
@@ -2187,7 +2605,10 @@
             "pass": "Infected files cannot be downloaded (DisallowInfectedFileDownload: true).",
             "fail": "Infected files are still downloadable (DisallowInfectedFileDownload: false).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "SPOTenant"
+          ]
         },
         {
           "id": "CIS_8_1_1",
@@ -2199,7 +2620,10 @@
           "category": "Data Protection",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CsTeamsClientConfiguration"
+          ]
         },
         {
           "id": "CIS_8_1_2",
@@ -2227,7 +2651,10 @@
             "pass": "Email-into-channel is disabled (AllowEmailIntoChannel: false).",
             "fail": "Email-into-channel is enabled (AllowEmailIntoChannel: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTeamsClientConfiguration"
+          ]
         },
         {
           "id": "CIS_8_2_1",
@@ -2239,7 +2666,11 @@
           "category": "External Collaboration",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CsExternalAccessPolicy",
+            "CsTenantFederationConfiguration"
+          ]
         },
         {
           "id": "CIS_8_2_2",
@@ -2251,7 +2682,11 @@
           "category": "External Collaboration",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CsExternalAccessPolicy",
+            "CsTenantFederationConfiguration"
+          ]
         },
         {
           "id": "CIS_8_2_3",
@@ -2279,7 +2714,10 @@
             "pass": "External users cannot initiate Teams chats via email (UseB2BInvitesToAddExternalUsers: false).",
             "fail": "External users can initiate Teams chats via email (UseB2BInvitesToAddExternalUsers: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTeamsMessagingPolicy"
+          ]
         },
         {
           "id": "CIS_8_2_4",
@@ -2307,7 +2745,10 @@
             "pass": "Trial Teams tenant communication is blocked (AllowTeamsConsumer: false).",
             "fail": "Trial Teams tenant communication is allowed (AllowTeamsConsumer: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTenantFederationConfiguration"
+          ]
         },
         {
           "id": "CIS_8_4_1",
@@ -2319,7 +2760,10 @@
           "category": "Application Management",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CsTeamsAppPermissionPolicy"
+          ]
         },
         {
           "id": "CIS_8_5_1",
@@ -2347,7 +2791,10 @@
             "pass": "Anonymous users cannot join meetings (AllowAnonymousUsersToJoinMeeting: false).",
             "fail": "Anonymous users can join meetings (AllowAnonymousUsersToJoinMeeting: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTeamsMeetingPolicy"
+          ]
         },
         {
           "id": "CIS_8_5_2",
@@ -2375,7 +2822,10 @@
             "pass": "Anonymous users cannot start meetings (AllowAnonymousUsersToStartMeeting: false).",
             "fail": "Anonymous users can start meetings (AllowAnonymousUsersToStartMeeting: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTeamsMeetingPolicy"
+          ]
         },
         {
           "id": "CIS_8_5_3",
@@ -2387,7 +2837,10 @@
           "category": "Meetings",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CsTeamsMeetingPolicy"
+          ]
         },
         {
           "id": "CIS_8_5_4",
@@ -2415,7 +2868,10 @@
             "pass": "Dial-in users cannot bypass the lobby (AllowPSTNUsersToBypassLobby: false).",
             "fail": "Dial-in users can bypass the lobby (AllowPSTNUsersToBypassLobby: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTeamsMeetingPolicy"
+          ]
         },
         {
           "id": "CIS_8_5_5",
@@ -2427,7 +2883,10 @@
           "category": "Meetings",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CsTeamsMeetingPolicy"
+          ]
         },
         {
           "id": "CIS_8_5_6",
@@ -2455,7 +2914,10 @@
             "pass": "Only organizers / co-organizers can present.",
             "fail": "Anyone can present by default (DesignatedPresenterRoleMode is not OrganizerOnlyUserOverride).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTeamsMeetingPolicy"
+          ]
         },
         {
           "id": "CIS_8_5_7",
@@ -2483,7 +2945,10 @@
             "pass": "External participants cannot give or request control.",
             "fail": "External participants can give or request control (AllowExternalParticipantGiveRequestControl: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTeamsMeetingPolicy"
+          ]
         },
         {
           "id": "CIS_8_5_8",
@@ -2511,7 +2976,10 @@
             "pass": "External non-trusted meeting chat is disabled.",
             "fail": "External non-trusted meeting chat is enabled (AllowExternalNonTrustedMeetingChat: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTeamsMeetingPolicy"
+          ]
         },
         {
           "id": "CIS_8_5_9",
@@ -2539,7 +3007,10 @@
             "pass": "Cloud recording is disabled in the global meeting policy.",
             "fail": "Cloud recording is enabled in the global meeting policy (AllowCloudRecording: true).",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "CsTeamsMeetingPolicy"
+          ]
         },
         {
           "id": "CIS_8_6_1",
@@ -2551,7 +3022,11 @@
           "category": "Reporting",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CsTeamsMessagingPolicy",
+            "ReportSubmissionPolicy"
+          ]
         },
         {
           "id": "CIS_2_1_8",
@@ -2563,7 +3038,10 @@
           "category": "Email Authentication",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DomainAnalyser"
+          ]
         },
         {
           "id": "CIS_2_1_10",
@@ -2575,7 +3053,10 @@
           "category": "Email Authentication",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DomainAnalyser"
+          ]
         },
         {
           "id": "CIS_5_1_8_1",
@@ -2587,7 +3068,11 @@
           "category": "Identity",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Domains",
+            "Organization"
+          ]
         },
         {
           "id": "CIS_2_1_7",
@@ -2605,6 +3090,10 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoAntiPhishPolicies",
+            "ExoAntiPhishRules"
           ]
         }
       ]
@@ -2642,7 +3131,10 @@
               "DomainName",
               "AutoForwardEnabled"
             ]
-          }
+          },
+          "dataTypes": [
+            "ExoRemoteDomain"
+          ]
         },
         {
           "id": "CISAMSEXO31",
@@ -2654,7 +3146,11 @@
           "category": "Email Authentication",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoDkimSigningConfig"
+          ]
         },
         {
           "id": "CISAMSEXO51",
@@ -2666,7 +3162,10 @@
           "category": "Email Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CASMailbox"
+          ]
         },
         {
           "id": "CISAMSEXO61",
@@ -2678,7 +3177,10 @@
           "category": "Data Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoSharingPolicy"
+          ]
         },
         {
           "id": "CISAMSEXO62",
@@ -2690,7 +3192,10 @@
           "category": "Data Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoSharingPolicy"
+          ]
         },
         {
           "id": "CISAMSEXO71",
@@ -2702,7 +3207,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "CISAMSEXO95",
@@ -2714,7 +3222,10 @@
           "category": "Email Protection",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoMalwareFilterPolicies"
+          ]
         },
         {
           "id": "CISAMSEXO101",
@@ -2726,7 +3237,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoMalwareFilterPolicies"
+          ]
         },
         {
           "id": "CISAMSEXO102",
@@ -2738,7 +3252,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoMalwareFilterPolicies"
+          ]
         },
         {
           "id": "CISAMSEXO103",
@@ -2750,7 +3267,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoMalwareFilterPolicies"
+          ]
         },
         {
           "id": "CISAMSEXO111",
@@ -2762,7 +3282,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoPresetSecurityPolicy"
+          ]
         },
         {
           "id": "CISAMSEXO112",
@@ -2774,7 +3297,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoPresetSecurityPolicy"
+          ]
         },
         {
           "id": "CISAMSEXO113",
@@ -2786,7 +3312,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoPresetSecurityPolicy"
+          ]
         },
         {
           "id": "CISAMSEXO121",
@@ -2798,7 +3327,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoTenantAllowBlockList"
+          ]
         },
         {
           "id": "CISAMSEXO122",
@@ -2829,7 +3361,10 @@
               "Name",
               "EnableSafeList"
             ]
-          }
+          },
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "CISAMSEXO131",
@@ -2841,7 +3376,10 @@
           "category": "Audit & Compliance",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "CISAMSEXO141",
@@ -2872,7 +3410,10 @@
               "Name",
               "HighConfidenceSpamAction"
             ]
-          }
+          },
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "CISAMSEXO142",
@@ -2884,7 +3425,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "CISAMSEXO143",
@@ -2896,7 +3440,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "CISAMSEXO151",
@@ -2908,7 +3455,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
+          ]
         },
         {
           "id": "CISAMSEXO152",
@@ -2920,7 +3470,10 @@
           "category": "Email Protection",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
+          ]
         },
         {
           "id": "CISAMSEXO153",
@@ -2951,7 +3504,10 @@
               "Name",
               "TrackUserClicks"
             ]
-          }
+          },
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
+          ]
         },
         {
           "id": "CISAMSEXO171",
@@ -2963,7 +3519,10 @@
           "category": "Audit & Compliance",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAdminAuditLogConfig"
+          ]
         },
         {
           "id": "CISAMSEXO173",
@@ -2975,7 +3534,10 @@
           "category": "Audit & Compliance",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAdminAuditLogConfig"
+          ]
         }
       ]
     },
@@ -2993,7 +3555,10 @@
           "category": "E8 ML1 - Application Control",
           "userImpact": "High",
           "implementationEffort": "High",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_AppCtrl_02",
@@ -3005,7 +3570,8 @@
           "category": "E8 ML2 - Application Control",
           "userImpact": "High",
           "implementationEffort": "High",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_AppCtrl_03",
@@ -3017,7 +3583,8 @@
           "category": "E8 ML2 - Application Control",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_AppCtrl_04",
@@ -3029,7 +3596,8 @@
           "category": "E8 ML2 - Application Control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_AppCtrl_05",
@@ -3041,7 +3609,8 @@
           "category": "E8 ML3 - Application Control",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_AppHard_01",
@@ -3053,7 +3622,8 @@
           "category": "E8 ML1 - User Application Hardening",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_AppHard_02",
@@ -3065,7 +3635,8 @@
           "category": "E8 ML1 - User Application Hardening",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_AppHard_03",
@@ -3077,7 +3648,8 @@
           "category": "E8 ML1 - User Application Hardening",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_AppHard_04",
@@ -3089,7 +3661,8 @@
           "category": "E8 ML1 - User Application Hardening",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_AppHard_05",
@@ -3101,7 +3674,8 @@
           "category": "E8 ML1 - User Application Hardening",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_AppHard_06",
@@ -3113,7 +3687,10 @@
           "category": "E8 ML2 - User Application Hardening",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_AppHard_07",
@@ -3125,7 +3702,10 @@
           "category": "E8 ML2 - User Application Hardening",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_AppHard_08",
@@ -3137,7 +3717,10 @@
           "category": "E8 ML2 - User Application Hardening",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_AppHard_09",
@@ -3149,7 +3732,10 @@
           "category": "E8 ML2 - User Application Hardening",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_AppHard_10",
@@ -3161,7 +3747,10 @@
           "category": "E8 ML3 - User Application Hardening",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_AppHard_11",
@@ -3173,7 +3762,10 @@
           "category": "E8 ML3 - User Application Hardening",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_AppHard_12",
@@ -3185,7 +3777,10 @@
           "category": "E8 ML3 - User Application Hardening",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_AppHard_13",
@@ -3197,7 +3792,10 @@
           "category": "E8 ML3 - User Application Hardening",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_AppHard_14",
@@ -3209,7 +3807,10 @@
           "category": "E8 ML3 - User Application Hardening",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_Macro_01",
@@ -3221,7 +3822,10 @@
           "category": "E8 ML1 - Configure Office Macros",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_Macro_02",
@@ -3233,7 +3837,10 @@
           "category": "E8 ML1 - Configure Office Macros",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_Macro_03",
@@ -3245,7 +3852,10 @@
           "category": "E8 ML1 - Configure Office Macros",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_Macro_04",
@@ -3257,7 +3867,10 @@
           "category": "E8 ML2 - Configure Office Macros",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_Macro_05",
@@ -3269,7 +3882,10 @@
           "category": "E8 ML2 - Configure Office Macros",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "E8_Macro_06",
@@ -3281,7 +3897,8 @@
           "category": "E8 ML2 - Configure Office Macros",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_Macro_07",
@@ -3293,7 +3910,8 @@
           "category": "E8 ML3 - Configure Office Macros",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_PatchApp_01",
@@ -3305,7 +3923,8 @@
           "category": "E8 ML1 - Patch Applications",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_PatchApp_02",
@@ -3317,7 +3936,10 @@
           "category": "E8 ML1 - Patch Applications",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "ManagedDevices"
+          ]
         },
         {
           "id": "E8_PatchApp_03",
@@ -3329,7 +3951,8 @@
           "category": "E8 ML2 - Patch Applications",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_PatchApp_04",
@@ -3341,7 +3964,8 @@
           "category": "E8 ML3 - Patch Applications",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_PatchOS_01",
@@ -3353,7 +3977,11 @@
           "category": "E8 ML1 - Patch Operating Systems",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies",
+            "IntuneDeviceConfigurations"
+          ]
         },
         {
           "id": "E8_PatchOS_02",
@@ -3365,7 +3993,10 @@
           "category": "E8 ML1 - Patch Operating Systems",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "ManagedDevices"
+          ]
         },
         {
           "id": "E8_PatchOS_03",
@@ -3377,7 +4008,10 @@
           "category": "E8 ML1 - Patch Operating Systems",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceCompliancePolicies"
+          ]
         },
         {
           "id": "E8_PatchOS_04",
@@ -3389,7 +4023,10 @@
           "category": "E8 ML2 - Patch Operating Systems",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceConfigurations"
+          ]
         },
         {
           "id": "E8_PatchOS_05",
@@ -3401,7 +4038,8 @@
           "category": "E8 ML2 - Patch Operating Systems",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "E8_PatchOS_06",
@@ -3413,7 +4051,10 @@
           "category": "E8 ML3 - Patch Operating Systems",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceCompliancePolicies"
+          ]
         },
         {
           "id": "E8_Admin_01",
@@ -3425,7 +4066,12 @@
           "category": "E8 ML1 - Restrict Admin Privileges",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "E8_Admin_02",
@@ -3437,7 +4083,12 @@
           "category": "E8 ML1 - Restrict Admin Privileges",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "E8_Admin_03",
@@ -3449,7 +4100,11 @@
           "category": "E8 ML1 - Restrict Admin Privileges",
           "userImpact": "High",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "E8_Admin_04",
@@ -3461,7 +4116,10 @@
           "category": "E8 ML1 - Restrict Admin Privileges",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "E8_Admin_05",
@@ -3473,7 +4131,12 @@
           "category": "E8 ML2 - Restrict Admin Privileges",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "E8_Admin_06",
@@ -3485,7 +4148,8 @@
           "category": "E8 ML2 - Restrict Admin Privileges",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "E8_Admin_07",
@@ -3497,7 +4161,13 @@
           "category": "E8 ML2 - Restrict Admin Privileges",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "E8_Admin_08",
@@ -3509,7 +4179,11 @@
           "category": "E8 ML3 - Restrict Admin Privileges",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles"
+          ]
         },
         {
           "id": "E8_Admin_09",
@@ -3521,7 +4195,8 @@
           "category": "E8 ML3 - Restrict Admin Privileges",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "E8_Admin_10",
@@ -3533,7 +4208,8 @@
           "category": "E8 ML3 - Restrict Admin Privileges",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "E8_Admin_11",
@@ -3545,7 +4221,10 @@
           "category": "E8 ML3 - Restrict Admin Privileges",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleEligibilitySchedules"
+          ]
         },
         {
           "id": "E8_Admin_12",
@@ -3557,7 +4236,11 @@
           "category": "E8 ML1 - Restrict Admin Privileges",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles"
+          ]
         },
         {
           "id": "E8_Admin_13",
@@ -3569,7 +4252,8 @@
           "category": "E8 ML2 - Restrict Admin Privileges",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "E8_Backup_01",
@@ -3581,7 +4265,10 @@
           "category": "E8 ML1 - Regular Backups",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Mailboxes"
+          ]
         },
         {
           "id": "E8_Backup_02",
@@ -3593,7 +4280,8 @@
           "category": "E8 ML1 - Regular Backups",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "E8_Backup_03",
@@ -3605,7 +4293,8 @@
           "category": "E8 ML1 - Regular Backups",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "E8_Backup_04",
@@ -3617,7 +4306,8 @@
           "category": "E8 ML2 - Regular Backups",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "E8_MFA_01",
@@ -3629,7 +4319,11 @@
           "category": "E8 ML1 - MFA",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "UserRegistrationDetails",
+            "Users"
+          ]
         },
         {
           "id": "E8_MFA_02",
@@ -3641,7 +4335,10 @@
           "category": "E8 ML1 - MFA",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "E8_MFA_03",
@@ -3653,7 +4350,10 @@
           "category": "E8 ML1 - MFA",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "E8_MFA_04",
@@ -3665,7 +4365,10 @@
           "category": "E8 ML2 - MFA",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "E8_MFA_05",
@@ -3677,7 +4380,10 @@
           "category": "E8 ML2 - MFA",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "E8_MFA_06",
@@ -3689,7 +4395,11 @@
           "category": "E8 ML2 - MFA",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "E8_MFA_07",
@@ -3701,7 +4411,12 @@
           "category": "E8 ML2 - MFA",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "UserRegistrationDetails"
+          ]
         },
         {
           "id": "E8_MFA_08",
@@ -3713,7 +4428,11 @@
           "category": "E8 ML3 - MFA",
           "userImpact": "High",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "UserRegistrationDetails",
+            "Users"
+          ]
         },
         {
           "id": "E8_MFA_09",
@@ -3725,7 +4444,10 @@
           "category": "E8 ML3 - MFA",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "E8_MFA_10",
@@ -3737,7 +4459,10 @@
           "category": "E8 ML3 - MFA",
           "userImpact": "High",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         }
       ]
     },
@@ -3755,7 +4480,10 @@
           "category": "Authentication Methods",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAF02",
@@ -3767,7 +4495,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAF03",
@@ -3779,7 +4510,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAF04",
@@ -3791,7 +4525,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAF05",
@@ -3803,7 +4540,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAF06",
@@ -3815,7 +4555,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAG01",
@@ -3827,7 +4570,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAG02",
@@ -3839,7 +4585,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAG03",
@@ -3851,7 +4600,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAM01",
@@ -3863,7 +4615,10 @@
           "category": "Authentication Methods",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAM02",
@@ -3875,7 +4630,10 @@
           "category": "Authentication Methods",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAM03",
@@ -3887,7 +4645,10 @@
           "category": "Authentication Methods",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAM04",
@@ -3899,7 +4660,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAM06",
@@ -3911,7 +4675,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAM07",
@@ -3923,7 +4690,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAM09",
@@ -3935,7 +4705,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAM10",
@@ -3947,7 +4720,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAP01",
@@ -3959,7 +4735,10 @@
           "category": "Authorization Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "EIDSCAAP04",
@@ -3971,7 +4750,10 @@
           "category": "Authorization Policy",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "EIDSCAAP05",
@@ -3983,7 +4765,10 @@
           "category": "Authorization Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "EIDSCAAP06",
@@ -3995,7 +4780,10 @@
           "category": "Authorization Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "EIDSCAAP07",
@@ -4007,7 +4795,10 @@
           "category": "Authorization Policy",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "EIDSCAAP08",
@@ -4019,7 +4810,10 @@
           "category": "Authorization Policy",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "EIDSCAAP09",
@@ -4031,7 +4825,10 @@
           "category": "Authorization Policy",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "EIDSCAAP10",
@@ -4043,7 +4840,10 @@
           "category": "Authorization Policy",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "EIDSCAAP14",
@@ -4055,7 +4855,10 @@
           "category": "Authorization Policy",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "EIDSCAAS04",
@@ -4067,7 +4870,10 @@
           "category": "Authentication Methods",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAT01",
@@ -4079,7 +4885,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAT02",
@@ -4091,7 +4900,10 @@
           "category": "Authentication Methods",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCAAV01",
@@ -4103,7 +4915,10 @@
           "category": "Authentication Methods",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "EIDSCACP01",
@@ -4115,7 +4930,10 @@
           "category": "Consent Policy",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "EIDSCACP03",
@@ -4127,7 +4945,10 @@
           "category": "Consent Policy",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "EIDSCACP04",
@@ -4139,7 +4960,10 @@
           "category": "Consent Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "EIDSCACR01",
@@ -4151,7 +4975,10 @@
           "category": "Consent Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AdminConsentRequestPolicy"
+          ]
         },
         {
           "id": "EIDSCACR02",
@@ -4163,7 +4990,10 @@
           "category": "Consent Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AdminConsentRequestPolicy"
+          ]
         },
         {
           "id": "EIDSCACR03",
@@ -4175,7 +5005,10 @@
           "category": "Consent Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AdminConsentRequestPolicy"
+          ]
         },
         {
           "id": "EIDSCACR04",
@@ -4187,7 +5020,10 @@
           "category": "Consent Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AdminConsentRequestPolicy"
+          ]
         },
         {
           "id": "EIDSCAPR01",
@@ -4199,7 +5035,10 @@
           "category": "Password Policy",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "EIDSCAPR02",
@@ -4211,7 +5050,10 @@
           "category": "Password Policy",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "EIDSCAPR03",
@@ -4223,7 +5065,10 @@
           "category": "Password Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "EIDSCAPR05",
@@ -4235,7 +5080,10 @@
           "category": "Password Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "EIDSCAPR06",
@@ -4247,7 +5095,10 @@
           "category": "Password Policy",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "EIDSCAST08",
@@ -4259,7 +5110,10 @@
           "category": "Group Settings",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "EIDSCAST09",
@@ -4271,7 +5125,10 @@
           "category": "Group Settings",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         }
       ]
     },
@@ -4289,7 +5146,10 @@
           "category": "Tenant Overview",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "LicenseOverview"
+          ]
         },
         {
           "id": "GenericTest002",
@@ -4301,7 +5161,10 @@
           "category": "Tenant Overview",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "LicenseOverview"
+          ]
         },
         {
           "id": "GenericTest003",
@@ -4313,7 +5176,10 @@
           "category": "Tenant Overview",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "LicenseOverview"
+          ]
         },
         {
           "id": "GenericTest004",
@@ -4325,7 +5191,10 @@
           "category": "Tenant Overview",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "MFAState"
+          ]
         },
         {
           "id": "GenericTest005",
@@ -4337,7 +5206,10 @@
           "category": "Tenant Overview",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "MFAState"
+          ]
         },
         {
           "id": "GenericTest006",
@@ -4349,7 +5221,10 @@
           "category": "Tenant Overview",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "MFAState"
+          ]
         },
         {
           "id": "GenericTest007",
@@ -4361,7 +5236,10 @@
           "category": "Tenant Overview",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "MFAState"
+          ]
         },
         {
           "id": "GenericTest008",
@@ -4373,7 +5251,10 @@
           "category": "Tenant Overview",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "MFAState"
+          ]
         },
         {
           "id": "GenericTest009",
@@ -4385,7 +5266,10 @@
           "category": "Tenant Overview",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "SecureScore"
+          ]
         }
       ]
     },
@@ -4403,7 +5287,10 @@
           "category": "Anti-Spam",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA101",
@@ -4415,7 +5302,10 @@
           "category": "Anti-Spam",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA102",
@@ -4427,7 +5317,10 @@
           "category": "Anti-Spam",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA103",
@@ -4439,7 +5332,10 @@
           "category": "Anti-Spam",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedOutboundSpamFilterPolicy"
+          ]
         },
         {
           "id": "ORCA104",
@@ -4451,7 +5347,10 @@
           "category": "Anti-Spam",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA105",
@@ -4469,6 +5368,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
           ]
         },
         {
@@ -4481,7 +5383,10 @@
           "category": "Anti-Spam",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA107",
@@ -4493,7 +5398,10 @@
           "category": "Quarantine",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoGlobalQuarantinePolicy"
+          ]
         },
         {
           "id": "ORCA108",
@@ -4505,7 +5413,11 @@
           "category": "DKIM",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoDkimSigningConfig"
+          ]
         },
         {
           "id": "ORCA108_1",
@@ -4517,7 +5429,11 @@
           "category": "DKIM",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoDkimSigningConfig"
+          ]
         },
         {
           "id": "ORCA109",
@@ -4529,7 +5445,10 @@
           "category": "Anti-Spam",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA110",
@@ -4541,7 +5460,10 @@
           "category": "Anti-Spam",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA111",
@@ -4553,7 +5475,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA112",
@@ -4565,7 +5490,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA113",
@@ -4583,6 +5511,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
           ]
         },
         {
@@ -4595,7 +5526,10 @@
           "category": "Anti-Spam",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA115",
@@ -4607,7 +5541,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA116",
@@ -4619,7 +5556,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA118_1",
@@ -4631,7 +5571,10 @@
           "category": "Anti-Spam",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA118_2",
@@ -4643,7 +5586,10 @@
           "category": "Transport Rules",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoTransportRules"
+          ]
         },
         {
           "id": "ORCA118_3",
@@ -4655,7 +5601,11 @@
           "category": "Anti-Spam",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA118_4",
@@ -4667,7 +5617,11 @@
           "category": "Transport Rules",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoTransportRules"
+          ]
         },
         {
           "id": "ORCA119",
@@ -4679,7 +5633,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA120_malware",
@@ -4691,7 +5648,10 @@
           "category": "Malware",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoMalwareFilterPolicies"
+          ]
         },
         {
           "id": "ORCA120_phish",
@@ -4703,7 +5663,10 @@
           "category": "Anti-Spam",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA120_spam",
@@ -4715,7 +5678,10 @@
           "category": "Anti-Spam",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA121",
@@ -4727,7 +5693,10 @@
           "category": "Quarantine",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA123",
@@ -4739,7 +5708,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA124",
@@ -4757,6 +5729,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoSafeAttachmentPolicies"
           ]
         },
         {
@@ -4769,7 +5744,10 @@
           "category": "Anti-Spam",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA140",
@@ -4781,7 +5759,10 @@
           "category": "Anti-Spam",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA141",
@@ -4793,7 +5774,10 @@
           "category": "Anti-Spam",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA142",
@@ -4805,7 +5789,10 @@
           "category": "Anti-Spam",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA143",
@@ -4817,7 +5804,10 @@
           "category": "Anti-Spam",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA156",
@@ -4835,6 +5825,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
           ]
         },
         {
@@ -4853,6 +5846,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoAtpPolicyForO365"
           ]
         },
         {
@@ -4871,6 +5867,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
           ]
         },
         {
@@ -4883,7 +5882,10 @@
           "category": "Anti-Phish",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA189",
@@ -4895,7 +5897,10 @@
           "category": "Safe Attachments",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoTransportRules"
+          ]
         },
         {
           "id": "ORCA189_2",
@@ -4907,7 +5912,10 @@
           "category": "Safe Links",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoTransportRules"
+          ]
         },
         {
           "id": "ORCA205",
@@ -4919,7 +5927,10 @@
           "category": "Malware",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoMalwareFilterPolicies"
+          ]
         },
         {
           "id": "ORCA220",
@@ -4931,7 +5942,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA221",
@@ -4943,7 +5957,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA222",
@@ -4955,7 +5972,10 @@
           "category": "Anti-Phish",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA223",
@@ -4967,7 +5987,10 @@
           "category": "Anti-Phish",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA224",
@@ -4979,7 +6002,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA225",
@@ -4997,6 +6023,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoAtpPolicyForO365"
           ]
         },
         {
@@ -5015,6 +6044,10 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoSafeLinksRules"
           ]
         },
         {
@@ -5033,6 +6066,10 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoSafeAttachmentRules"
           ]
         },
         {
@@ -5045,7 +6082,10 @@
           "category": "Anti-Phish",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA229",
@@ -5057,7 +6097,10 @@
           "category": "Anti-Phish",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA230",
@@ -5069,7 +6112,11 @@
           "category": "Anti-Phish",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoAntiPhishRules"
+          ]
         },
         {
           "id": "ORCA231",
@@ -5081,7 +6128,11 @@
           "category": "Anti-Spam",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoHostedContentFilterRule"
+          ]
         },
         {
           "id": "ORCA232",
@@ -5093,7 +6144,11 @@
           "category": "Malware",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains",
+            "ExoMalwareFilterRules"
+          ]
         },
         {
           "id": "ORCA233",
@@ -5105,7 +6160,10 @@
           "category": "Configuration",
           "userImpact": "High",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains"
+          ]
         },
         {
           "id": "ORCA233_1",
@@ -5117,7 +6175,10 @@
           "category": "Connectors",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoInboundConnector"
+          ]
         },
         {
           "id": "ORCA234",
@@ -5135,6 +6196,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoAtpPolicyForO365"
           ]
         },
         {
@@ -5147,7 +6211,10 @@
           "category": "Configuration",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DomainAnalyser"
+          ]
         },
         {
           "id": "ORCA236",
@@ -5165,6 +6232,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
           ]
         },
         {
@@ -5183,6 +6253,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
           ]
         },
         {
@@ -5201,6 +6274,9 @@
             "ATP_ENTERPRISE_GOV",
             "THREAT_INTELLIGENCE",
             "THREAT_INTELLIGENCE_GOV"
+          ],
+          "dataTypes": [
+            "ExoSafeLinksPolicies"
           ]
         },
         {
@@ -5213,7 +6289,11 @@
           "category": "Configuration",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies",
+            "ExoHostedContentFilterPolicy"
+          ]
         },
         {
           "id": "ORCA240",
@@ -5225,7 +6305,10 @@
           "category": "Configuration",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoOrganizationConfig"
+          ]
         },
         {
           "id": "ORCA241",
@@ -5237,7 +6320,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         },
         {
           "id": "ORCA242",
@@ -5249,7 +6335,10 @@
           "category": "Configuration",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoProtectionAlert"
+          ]
         },
         {
           "id": "ORCA243",
@@ -5261,7 +6350,10 @@
           "category": "Configuration",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAcceptedDomains"
+          ]
         },
         {
           "id": "ORCA244",
@@ -5273,7 +6365,10 @@
           "category": "Anti-Phish",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ExoAntiPhishPolicies"
+          ]
         }
       ]
     },
@@ -5291,7 +6386,10 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "SMB1001_1_3",
@@ -5303,7 +6401,10 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "SMB1001_1_4",
@@ -5315,7 +6416,11 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies",
+            "IntuneDeviceConfigurations"
+          ]
         },
         {
           "id": "SMB1001_1_8",
@@ -5327,7 +6432,10 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "SMB1001_1_9",
@@ -5339,7 +6447,8 @@
           "category": "Device",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "SMB1001_1_10",
@@ -5351,7 +6460,10 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "SMB1001_1_12",
@@ -5363,7 +6475,10 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "MDEOnboarding"
+          ]
         },
         {
           "id": "SMB1001_2_2",
@@ -5375,7 +6490,11 @@
           "category": "Device",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "DeviceRegistrationPolicy",
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "SMB1001_4_7",
@@ -5387,7 +6506,8 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": []
         },
         {
           "id": "SMB1001_1_11",
@@ -5399,7 +6519,8 @@
           "category": "Security Testing",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": []
         },
         {
           "id": "SMB1001_2_1",
@@ -5411,7 +6532,10 @@
           "category": "Password Hygiene",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "SMB1001_2_3",
@@ -5423,7 +6547,11 @@
           "category": "Account Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Mailboxes",
+            "Users"
+          ]
         },
         {
           "id": "SMB1001_2_5",
@@ -5435,7 +6563,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "MFAState"
+          ]
         },
         {
           "id": "SMB1001_2_5_L4",
@@ -5447,7 +6578,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "SMB1001_2_6",
@@ -5459,7 +6593,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "MFAState"
+          ]
         },
         {
           "id": "SMB1001_2_8",
@@ -5471,7 +6608,10 @@
           "category": "Privileged Access",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "SMB1001_2_9",
@@ -5483,7 +6623,10 @@
           "category": "Authentication",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "MFAState"
+          ]
         },
         {
           "id": "SMB1001_2_12",
@@ -5495,7 +6638,12 @@
           "category": "Email Authentication",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DomainAnalyser",
+            "ExoAcceptedDomains",
+            "ExoDkimSigningConfig"
+          ]
         },
         {
           "id": "SMB1001_3_1",
@@ -5507,7 +6655,10 @@
           "category": "Data Protection",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Mailboxes"
+          ]
         }
       ]
     },
@@ -5525,7 +6676,13 @@
           "category": "Device",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24541",
@@ -5537,7 +6694,13 @@
           "category": "Tenant",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceCompliancePolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24542",
@@ -5549,7 +6712,13 @@
           "category": "Tenant",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceCompliancePolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24543",
@@ -5561,7 +6730,13 @@
           "category": "Tenant",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceCompliancePolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24545",
@@ -5573,7 +6748,13 @@
           "category": "Tenant",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceCompliancePolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24547",
@@ -5585,7 +6766,13 @@
           "category": "Tenant",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceCompliancePolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24548",
@@ -5597,7 +6784,13 @@
           "category": "Tenant",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneAppProtectionManagedAppPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24549",
@@ -5609,7 +6802,13 @@
           "category": "Tenant",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneAppProtectionManagedAppPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24550",
@@ -5621,7 +6820,13 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24552",
@@ -5633,7 +6838,13 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24553",
@@ -5645,7 +6856,13 @@
           "category": "Tenant",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceCompliancePolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24560",
@@ -5657,7 +6874,10 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "ZTNA24564",
@@ -5669,7 +6889,10 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "ZTNA24568",
@@ -5681,7 +6904,10 @@
           "category": "Tenant",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "ZTNA24569",
@@ -5693,7 +6919,13 @@
           "category": "Device",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceConfigurations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24574",
@@ -5705,7 +6937,10 @@
           "category": "Device",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "ZTNA24575",
@@ -5717,7 +6952,10 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "ZTNA24576",
@@ -5729,7 +6967,13 @@
           "category": "Tenant",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceConfigurations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24784",
@@ -5741,7 +6985,10 @@
           "category": "Device",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneConfigurationPolicies"
+          ]
         },
         {
           "id": "ZTNA24839",
@@ -5753,7 +7000,13 @@
           "category": "Data",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceConfigurations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24840",
@@ -5765,7 +7018,13 @@
           "category": "Data",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceConfigurations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24870",
@@ -5777,7 +7036,13 @@
           "category": "Data",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Devices"
+          "testType": "Devices",
+          "dataTypes": [
+            "IntuneDeviceConfigurations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21772",
@@ -5789,7 +7054,14 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Apps",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA21773",
@@ -5801,7 +7073,14 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Apps",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA21774",
@@ -5813,7 +7092,13 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA21775",
@@ -5825,7 +7110,10 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DefaultAppManagementPolicy"
+          ]
         },
         {
           "id": "ZTNA21776",
@@ -5837,7 +7125,10 @@
           "category": "Application Management",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "ZTNA21777",
@@ -5849,7 +7140,13 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Apps",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21780",
@@ -5861,7 +7158,13 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DirectoryRecommendations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21782",
@@ -5873,7 +7176,12 @@
           "category": "Privileged Access",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "UserRegistrationDetails"
+          ]
         },
         {
           "id": "ZTNA21783",
@@ -5885,7 +7193,13 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21784",
@@ -5897,7 +7211,14 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationStrengths",
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21786",
@@ -5909,7 +7230,10 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "ZTNA21787",
@@ -5921,7 +7245,10 @@
           "category": "Privileged Access",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "ZTNA21790",
@@ -5933,7 +7260,10 @@
           "category": "Application Management",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CrossTenantAccessPolicy"
+          ]
         },
         {
           "id": "ZTNA21791",
@@ -5945,7 +7275,10 @@
           "category": "External Collaboration",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "ZTNA21792",
@@ -5957,7 +7290,10 @@
           "category": "External Collaboration",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "ZTNA21793",
@@ -5969,7 +7305,10 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "CrossTenantAccessPolicy"
+          ]
         },
         {
           "id": "ZTNA21796",
@@ -5981,7 +7320,13 @@
           "category": "Access Control",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21797",
@@ -5993,7 +7338,14 @@
           "category": "Conditional Access",
           "userImpact": "High",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy",
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21799",
@@ -6005,7 +7357,14 @@
           "category": "Conditional Access",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy",
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21801",
@@ -6017,7 +7376,11 @@
           "category": "Credential Management",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "UserRegistrationDetails",
+            "Users"
+          ]
         },
         {
           "id": "ZTNA21802",
@@ -6029,7 +7392,10 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "ZTNA21803",
@@ -6041,7 +7407,10 @@
           "category": "Credential Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "ZTNA21804",
@@ -6053,7 +7422,13 @@
           "category": "Conditional Access",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21806",
@@ -6065,7 +7440,13 @@
           "category": "Conditional Access",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21807",
@@ -6091,7 +7472,10 @@
             },
             "pass": "Tenant is configured to prevent users from registering applications",
             "fail": "Tenant allows all non-privileged users to register applications"
-          }
+          },
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "ZTNA21808",
@@ -6103,7 +7487,10 @@
           "category": "Access Control",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "ZTNA21809",
@@ -6115,7 +7502,10 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AdminConsentRequestPolicy"
+          ]
         },
         {
           "id": "ZTNA21810",
@@ -6127,7 +7517,10 @@
           "category": "Application Management",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "ZTNA21811",
@@ -6139,7 +7532,14 @@
           "category": "Credential Management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Domains",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "ZTNA21812",
@@ -6151,7 +7551,12 @@
           "category": "Privileged access",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21813",
@@ -6163,7 +7568,13 @@
           "category": "Privileged access",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "ZTNA21814",
@@ -6175,7 +7586,13 @@
           "category": "Privileged access",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "ZTNA21815",
@@ -6187,7 +7604,12 @@
           "category": "Privileged access",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "ZTNA21816",
@@ -6199,7 +7621,14 @@
           "category": "Identity",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Groups",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "ZTNA21817",
@@ -6211,7 +7640,10 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleManagementPolicies"
+          ]
         },
         {
           "id": "ZTNA21818",
@@ -6223,7 +7655,11 @@
           "category": "Monitoring",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleManagementPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21819",
@@ -6235,7 +7671,13 @@
           "category": "Privileged access",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "RoleManagementPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21820",
@@ -6247,7 +7689,11 @@
           "category": "Privileged access",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleManagementPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21822",
@@ -6259,7 +7705,10 @@
           "category": "Access control",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "B2BManagementPolicy"
+          ]
         },
         {
           "id": "ZTNA21823",
@@ -6271,7 +7720,10 @@
           "category": "External collaboration",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationFlowsPolicy"
+          ]
         },
         {
           "id": "ZTNA21824",
@@ -6283,7 +7735,13 @@
           "category": "Conditional Access",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21825",
@@ -6295,7 +7753,13 @@
           "category": "Access control",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21828",
@@ -6307,7 +7771,13 @@
           "category": "Conditional Access",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21829",
@@ -6319,7 +7789,13 @@
           "category": "Access control",
           "userImpact": "High",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Domains",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21830",
@@ -6331,7 +7807,13 @@
           "category": "Application management",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21835",
@@ -6343,7 +7825,14 @@
           "category": "Application management",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "Users"
+          ]
         },
         {
           "id": "ZTNA21836",
@@ -6355,7 +7844,12 @@
           "category": "Application management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21837",
@@ -6367,7 +7861,10 @@
           "category": "Devices",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DeviceRegistrationPolicy"
+          ]
         },
         {
           "id": "ZTNA21838",
@@ -6379,7 +7876,13 @@
           "category": "Access control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21839",
@@ -6391,7 +7894,10 @@
           "category": "Credential management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "ZTNA21840",
@@ -6403,7 +7909,10 @@
           "category": "Credential management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "ZTNA21841",
@@ -6415,7 +7924,10 @@
           "category": "Credential management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "ZTNA21842",
@@ -6441,7 +7953,10 @@
             },
             "pass": "\u2705 Administrators are properly blocked from using Self-Service Password Reset, ensuring password changes go through controlled processes.",
             "fail": "\u274c Administrators have access to Self-Service Password Reset, which bypasses security controls and administrative oversight."
-          }
+          },
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "ZTNA21844",
@@ -6453,7 +7968,10 @@
           "category": "Access control",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA21845",
@@ -6465,7 +7983,11 @@
           "category": "Credential management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy",
+            "ConditionalAccessPolicies"
+          ]
         },
         {
           "id": "ZTNA21846",
@@ -6477,7 +7999,10 @@
           "category": "Credential management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "ZTNA21847",
@@ -6489,7 +8014,10 @@
           "category": "Credential management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Organization"
+          ]
         },
         {
           "id": "ZTNA21848",
@@ -6501,7 +8029,10 @@
           "category": "Credential management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "ZTNA21849",
@@ -6513,7 +8044,10 @@
           "category": "Credential management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "ZTNA21850",
@@ -6525,7 +8059,10 @@
           "category": "Credential management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Settings"
+          ]
         },
         {
           "id": "ZTNA21858",
@@ -6537,7 +8074,13 @@
           "category": "External collaboration",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Guests",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21861",
@@ -6549,7 +8092,13 @@
           "category": "Monitoring",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RiskyUsers",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21862",
@@ -6561,7 +8110,14 @@
           "category": "Monitoring",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RiskyServicePrincipals",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "ServicePrincipalRiskDetections"
+          ]
         },
         {
           "id": "ZTNA21863",
@@ -6573,7 +8129,13 @@
           "category": "Monitoring",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RiskDetections",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21864",
@@ -6585,7 +8147,10 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RiskDetections"
+          ]
         },
         {
           "id": "ZTNA21865",
@@ -6597,7 +8162,13 @@
           "category": "Application management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "NamedLocations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21866",
@@ -6609,7 +8180,13 @@
           "category": "Monitoring",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DirectoryRecommendations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21868",
@@ -6621,7 +8198,15 @@
           "category": "External collaboration",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Apps",
+            "Guests",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA21869",
@@ -6633,7 +8218,13 @@
           "category": "Application management",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA21872",
@@ -6645,7 +8236,14 @@
           "category": "Access control",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "DeviceRegistrationPolicy",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21874",
@@ -6657,7 +8255,10 @@
           "category": "External collaboration",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "B2BManagementPolicy"
+          ]
         },
         {
           "id": "ZTNA21876",
@@ -6669,7 +8270,12 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21877",
@@ -6681,7 +8287,13 @@
           "category": "Application management",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Guests",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21882",
@@ -6693,7 +8305,13 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Groups",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21883",
@@ -6705,7 +8323,13 @@
           "category": "Access control",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21884",
@@ -6717,7 +8341,13 @@
           "category": "External collaboration",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21885",
@@ -6729,7 +8359,13 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Apps",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21886",
@@ -6741,7 +8377,13 @@
           "category": "Applications management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA21889",
@@ -6753,7 +8395,10 @@
           "category": "Access control",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationMethodsPolicy"
+          ]
         },
         {
           "id": "ZTNA21892",
@@ -6765,7 +8410,13 @@
           "category": "Access control",
           "userImpact": "High",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21896",
@@ -6777,7 +8428,10 @@
           "category": "Application management",
           "userImpact": "Low",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA21899",
@@ -6789,7 +8443,13 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "RoleManagementPolicies",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21941",
@@ -6801,7 +8461,13 @@
           "category": "Access control",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21953",
@@ -6830,7 +8496,10 @@
             "pass": "LAPS is deployed. Local administrator passwords are automatically managed and rotated on Entra joined and hybrid Entra joined Windows devices.",
             "fail": "LAPS is not deployed. Local administrator passwords may be weak, shared, or unchanged, increasing security risk.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "DeviceRegistrationPolicy"
+          ]
         },
         {
           "id": "ZTNA21954",
@@ -6859,7 +8528,10 @@
             "pass": "Non-admin users cannot read BitLocker recovery keys, reducing the risk of unauthorized access.",
             "fail": "Non-admin users can read BitLocker recovery keys for their own devices, which may allow unauthorized access.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "AuthorizationPolicy"
+          ]
         },
         {
           "id": "ZTNA21955",
@@ -6888,7 +8560,10 @@
             "pass": "Global Administrators are automatically added as local administrators on Entra joined devices.",
             "fail": "Global Administrators are not automatically added as local administrators, which may limit emergency access capabilities.",
             "failTable": []
-          }
+          },
+          "dataTypes": [
+            "DeviceRegistrationPolicy"
+          ]
         },
         {
           "id": "ZTNA21964",
@@ -6900,7 +8575,13 @@
           "category": "Access control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "AuthenticationStrengths",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21983",
@@ -6912,7 +8593,13 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DirectoryRecommendations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21984",
@@ -6924,7 +8611,13 @@
           "category": "Access Control",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DirectoryRecommendations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA21992",
@@ -6936,7 +8629,14 @@
           "category": "Application management",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Apps",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA22124",
@@ -6948,7 +8648,10 @@
           "category": "Governance",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "DirectoryRecommendations"
+          ]
         },
         {
           "id": "ZTNA22128",
@@ -6960,7 +8663,13 @@
           "category": "Application management",
           "userImpact": "Low",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Guests",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA22659",
@@ -6972,7 +8681,10 @@
           "category": "Identity protection",
           "userImpact": "High",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ServicePrincipalRiskDetections"
+          ]
         },
         {
           "id": "ZTNA23183",
@@ -6984,7 +8696,13 @@
           "category": "Application Management",
           "userImpact": "Low",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles",
+            "ServicePrincipals"
+          ]
         },
         {
           "id": "ZTNA24570",
@@ -6996,7 +8714,13 @@
           "category": "Access control",
           "userImpact": "Medium",
           "implementationEffort": "High",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "Organization",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24572",
@@ -7008,7 +8732,13 @@
           "category": "Tenant",
           "userImpact": "Medium",
           "implementationEffort": "Low",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "IntuneDeviceEnrollmentConfigurations",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24824",
@@ -7020,7 +8750,13 @@
           "category": "Device security",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         },
         {
           "id": "ZTNA24827",
@@ -7032,7 +8768,13 @@
           "category": "Application security",
           "userImpact": "Medium",
           "implementationEffort": "Medium",
-          "testType": "Identity"
+          "testType": "Identity",
+          "dataTypes": [
+            "ConditionalAccessPolicies",
+            "RoleAssignmentScheduleInstances",
+            "RoleEligibilitySchedules",
+            "Roles"
+          ]
         }
       ]
     }

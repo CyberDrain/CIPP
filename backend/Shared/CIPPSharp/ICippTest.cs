@@ -120,7 +120,12 @@ namespace CIPP.Tests
         // Service-plan names the tenant must have at least one of (already expanded from any
         // preset at registry-authoring time). Empty = no license gate. The engine emits
         // TestStatus.Unlicensed for a test whose caps aren't met, before running its body.
-        IReadOnlyList<string>? RequiredCapabilities = null);
+        IReadOnlyList<string>? RequiredCapabilities = null,
+        // The cached reporting types this test reads (declared in the registry — config tests from
+        // their rule.type, class tests from static source analysis). Drives the deterministic
+        // data-locality scheduler: tests are ordered by the data they share, and each type is
+        // released once its last declared consumer has run. Empty = the test reads no cached data.
+        IReadOnlyList<string>? DataTypes = null);
 
     // ── config-rule model (drives PredicateTest) ─────────────────────────────────
     /// <summary>A single field/op/value clause. Deserialized from the registry (case-insensitive).</summary>

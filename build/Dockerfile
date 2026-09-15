@@ -196,9 +196,16 @@ COPY backend/Modules/PassPushPosh   /app/API/Modules/PassPushPosh/
 # at startup (non-root distroless) and CIPP modules read it back from the same path.
 COPY --chown=app:app backend/Config /app/API/Config/
 COPY backend/Shared                 /app/API/Shared/
-# Overwrite the committed CIPPSharp.dll with a freshly built one targeting the
-# runtime framework. Must run AFTER the Shared/ copy so it isn't clobbered.
-COPY --from=build-cippsharp /out/CIPPSharp.dll /app/API/Shared/CIPPSharp/bin/CIPPSharp.dll
+# Overwrite the committed CIPPSharp.dll (and its OfficeIMO PDF dependencies) with freshly built ones
+# targeting the runtime framework. Must run AFTER the Shared/ copy so they aren't clobbered. The
+# OfficeIMO DLLs must sit beside CIPPSharp.dll - CIPPSharp is loaded via RequiredAssemblies and .NET
+# resolves its dependencies from the same directory (there is no deps.json).
+COPY --from=build-cippsharp /out/CIPPSharp.dll     /app/API/Shared/CIPPSharp/bin/CIPPSharp.dll
+COPY --from=build-cippsharp /out/OfficeIMO.Pdf.dll  /app/API/Shared/CIPPSharp/bin/OfficeIMO.Pdf.dll
+COPY --from=build-cippsharp /out/OfficeIMO.Core.dll /app/API/Shared/CIPPSharp/bin/OfficeIMO.Core.dll
+# emoji-fallback.ttf (monochrome fallback font) and the twemoji/ colour-emoji PNG set the renderer places
+# inline are committed assets, not build outputs, so they ship via the `COPY backend/Shared` above and need
+# no rebuild here.
 COPY backend/AddChocoApp            /app/API/AddChocoApp/
 COPY backend/AddMSPApp              /app/API/AddMSPApp/
 COPY backend/ExecMaintenanceScripts /app/API/ExecMaintenanceScripts/

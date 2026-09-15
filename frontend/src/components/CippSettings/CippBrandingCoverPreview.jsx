@@ -10,10 +10,10 @@ import {
   SAMPLE_TENANT_NAME,
 } from "../CippPdf/previewSampleData";
 
-// The people and figures shown on the mock come from the same sample data the full-report preview
-// renders, not from a second set invented here. They used to disagree — the mock named "Jane Doe"
-// while the real preview of the same report named "Sample User" — which makes the two previews look
-// like different reports rather than two views of one.
+// The people and figures shown on the mock are the headline values of the sample data the live
+// preview renders server-side, not a second set invented here. They used to disagree — the mock
+// named "Jane Doe" while the real preview of the same report named "Sample User" — which makes the
+// two previews look like different reports rather than two views of one.
 const SAMPLE_ANALYSIS_DATE = new Date(SAMPLE_BEC.becData.ExtractedAt).toLocaleString("en-US", {
   year: "numeric",
   month: "short",
@@ -40,7 +40,7 @@ export const REPORT_COVER_PRESETS = [
   {
     id: "executive",
     label: "Executive Report",
-    // Must match `reportName` on ExecutiveReportDocument — cover-mock `%reportname%` uses this.
+    // Must match the name ExecPreviewBrandingReportPdf renders — cover-mock `%reportname%` uses this.
     reportName: "Executive Summary",
     coverLabel: "Security Assessment",
     title: "Executive",

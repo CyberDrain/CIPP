@@ -16,18 +16,23 @@ function Push-CIPPTestCollection {
     param($Item)
 
     $TenantFilter = $Item.TenantFilter
-    $SuiteName = $Item.SuiteName
+    # SuiteName may be a single suite ('Custom') or an array of grouped engine suites.
+    $SuiteName = @($Item.SuiteName)
+    $SuiteLabel = ($SuiteName -join '+')
+    # Phase selects which work this activity does (Engine / LeftoverPS / Custom / All). Default 'All'
+    # for back-compat with any caller that queues a task without a Phase.
+    $Phase = if ([string]::IsNullOrWhiteSpace($Item.Phase)) { 'All' } else { $Item.Phase }
 
     try {
-        Write-Information "Running $SuiteName suite for tenant $TenantFilter"
+        Write-Information "Running [$Phase] $SuiteLabel for tenant $TenantFilter"
 
-        $Result = Invoke-CIPPTestCollection -SuiteName $SuiteName -TenantFilter $TenantFilter
+        $Result = Invoke-CIPPTestCollection -SuiteName $SuiteName -TenantFilter $TenantFilter -Phase $Phase
 
-        Write-Information "Completed $SuiteName suite for $TenantFilter - $($Result.Success)/$($Result.Total) tests ran in $($Result.TotalSeconds)s"
-        return "Successfully executed $SuiteName suite for $TenantFilter ($($Result.Success)/$($Result.Total) ran, $($Result.Failed) errored)"
+        Write-Information "Completed [$Phase] $SuiteLabel for $TenantFilter - $($Result.Success)/$($Result.Total) tests ran in $($Result.TotalSeconds)s"
+        return "Successfully executed [$Phase] $SuiteLabel for $TenantFilter ($($Result.Success)/$($Result.Total) ran, $($Result.Failed) errored)"
 
     } catch {
-        $ErrorMsg = "Failed to execute $SuiteName suite for tenant $TenantFilter : $($_.Exception.Message)"
+        $ErrorMsg = "Failed to execute [$Phase] $SuiteLabel for tenant $TenantFilter : $($_.Exception.Message)"
         Write-LogMessage -API 'Tests' -tenant $TenantFilter -message $ErrorMsg -sev Error
         throw $ErrorMsg
     }

@@ -4,13 +4,15 @@ function Push-CIPPTestsList {
         Build the list of test suite activities for a single tenant (Phase 1)
 
     .DESCRIPTION
-        Checks whether the tenant has cached data and returns one task per test suite.
-        Suite tasks are executed by Push-CIPPTestCollection, which discovers individual
-        test functions at runtime via Get-Command — no filesystem paths are used, so this
-        works correctly with ModuleBuilder compiled modules.
+        Checks whether the tenant has cached data and returns the test tasks for the tenant.
+        Tasks are executed by Push-CIPPTestCollection, which runs the C# engine (path-independent,
+        ModuleBuilder compatible) plus any leftover PS tests.
 
-        Reduces activity count from ~262 per tenant (one per test) to 6 per tenant
-        (one per suite), dramatically cutting orchestrator replay overhead.
+        All C#-engine suites are grouped into a SINGLE task so they run under one TenantData —
+        each reporting type (Users, CAPolicies, …) is read and parsed once for the whole tenant
+        instead of once per suite. The PS-only 'Custom' suite is emitted as its own task. This
+        reduces the per-tenant activity count from ~262 (one per test) to 2 (engine group + Custom),
+        cutting both orchestrator replay overhead and redundant per-suite data loads.
 
     .FUNCTIONALITY
         Entrypoint
@@ -35,31 +37,88 @@ function Push-CIPPTestsList {
             }
         }
 
-        # Emit one task per suite — suite names must match the ValidateSet in Invoke-CIPPTestCollection.
-        # Function discovery happens inside Invoke-CIPPTestCollection via Get-Command (path-independent).
-        $Suites = @('ZTNA', 'ORCA', 'EIDSCA', 'CISA', 'CIS', 'SMB1001', 'CopilotReadiness', 'GenericTests', 'Custom', 'E8')
+        # Suite names must match the ValidateSet in Invoke-CIPPTestCollection.
+        $EngineSuites = @('ZTNA', 'ORCA', 'EIDSCA', 'CISA', 'CIS', 'SMB1001', 'CopilotReadiness', 'GenericTests', 'E8')
+        $AllSuites = @($EngineSuites) + 'Custom'
 
         # Optional caller-supplied suite filter (e.g. a Custom-only run). When present, restrict
         # the emitted suites to the requested subset so we don't spin up every suite unnecessarily.
         if ($Item.Suites) {
             $Requested = @($Item.Suites)
-            $Suites = @($Suites | Where-Object { $_ -in $Requested })
-            if ($Suites.Count -eq 0) {
+            $AllSuites = @($AllSuites | Where-Object { $_ -in $Requested })
+            if ($AllSuites.Count -eq 0) {
                 Write-Information "No suites matched the requested filter ($($Requested -join ', ')) for tenant $TenantFilter. Skipping."
                 return @()
             }
-            Write-Information "Suite filter applied for $TenantFilter — running: $($Suites -join ', ')"
+            Write-Information "Suite filter applied for $TenantFilter — running: $($AllSuites -join ', ')"
         }
 
-        $Tasks = foreach ($Suite in $Suites) {
-            [PSCustomObject]@{
-                FunctionName = 'CIPPTestCollection'
-                TenantFilter = $TenantFilter
-                SuiteName    = $Suite
+        $RunCustom = 'Custom' -in $AllSuites
+        $FilteredEngine = @($AllSuites | Where-Object { $_ -ne 'Custom' })
+
+        # Grouping mode. Default 'grouped': all C# suites run in ONE engine activity (one TenantData,
+        # each reporting type read/parsed once) — fewer activities, no redundant data loads. Each
+        # orchestrator activity is time-boxed (Function Apps: 10 min; Craft: 20 min), so the phases
+        # are emitted as SEPARATE tasks (Engine / LeftoverPS / Custom) — each gets its own budget and
+        # they fan out in parallel. If the grouped engine activity is ever too slow for a Function
+        # App tenant, set CIPPTestsEngineGrouping=perSuite to fall back to the old per-suite fan-out
+        # (one activity per suite, restoring cross-suite parallelism at the cost of re-reading shared
+        # data per suite).
+        $GroupingMode = if ([string]::IsNullOrWhiteSpace($env:CIPPTestsEngineGrouping)) { 'grouped' } else { $env:CIPPTestsEngineGrouping }
+
+        $Tasks = [System.Collections.Generic.List[object]]::new()
+
+        if ($FilteredEngine.Count -gt 0) {
+            if ($GroupingMode -eq 'perSuite') {
+                # Backwards-compatible fan-out: one activity per suite (engine + its leftover PS).
+                foreach ($Suite in $FilteredEngine) {
+                    $Tasks.Add([PSCustomObject]@{
+                            FunctionName = 'CIPPTestCollection'
+                            TenantFilter = $TenantFilter
+                            SuiteName    = @($Suite)
+                            Phase        = 'All'
+                        })
+                }
+            } else {
+                # Grouped: one engine activity for all C# suites (shared TenantData) ...
+                $Tasks.Add([PSCustomObject]@{
+                        FunctionName = 'CIPPTestCollection'
+                        TenantFilter = $TenantFilter
+                        SuiteName    = @($FilteredEngine)
+                        Phase        = 'Engine'
+                    })
+                # ... and a SEPARATE activity for the remaining unported PS tests, only if any exist
+                # on disk (avoids a no-op activity per tenant). Discovery is via Get-Command.
+                $SuitePatterns = Get-CippTestSuitePatterns
+                $HasLeftover = $false
+                foreach ($Suite in $FilteredEngine) {
+                    $Pattern = $SuitePatterns[$Suite]
+                    if ($Pattern -and @(Get-Command -Name $Pattern -Module CIPPTests -ErrorAction SilentlyContinue).Count -gt 0) {
+                        $HasLeftover = $true
+                        break
+                    }
+                }
+                if ($HasLeftover) {
+                    $Tasks.Add([PSCustomObject]@{
+                            FunctionName = 'CIPPTestCollection'
+                            TenantFilter = $TenantFilter
+                            SuiteName    = @($FilteredEngine)
+                            Phase        = 'LeftoverPS'
+                        })
+                }
             }
         }
 
-        Write-Information "Built $($Tasks.Count) suite tasks for tenant $TenantFilter"
+        if ($RunCustom) {
+            $Tasks.Add([PSCustomObject]@{
+                    FunctionName = 'CIPPTestCollection'
+                    TenantFilter = $TenantFilter
+                    SuiteName    = 'Custom'
+                    Phase        = 'Custom'
+                })
+        }
+
+        Write-Information "Built $($Tasks.Count) test task(s) for tenant $TenantFilter (grouping=$GroupingMode)"
         return @($Tasks)
 
     } catch {

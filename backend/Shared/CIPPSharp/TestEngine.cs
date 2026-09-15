@@ -42,6 +42,49 @@ namespace CIPP.Tests
             return RunCore(tenantFilter, "(selected tests)", metas, tables, log, capabilities);
         }
 
+        /// <summary>
+        /// Run every test across <b>all</b> of <paramref name="suiteNames"/> against
+        /// <paramref name="tenantFilter"/> under a <b>single</b> <see cref="TenantData"/>: each
+        /// reporting type is read from the table and parsed exactly once for the whole group, then
+        /// shared by every test in every suite. This is the cross-suite counterpart to RunSuite's
+        /// within-suite sharing — the PS dispatcher groups a tenant's suites into one call so the fat
+        /// Users set (read by CIS, CISA, E8, EIDSCA, ZTNA, …) is not re-read and re-parsed per suite.
+        /// A suite name the registry does not know (a PS-only suite) is skipped, not fatal; a test that
+        /// appears in more than one suite runs once (deduped by id). See <see cref="RunSuite"/> for
+        /// <paramref name="capabilities"/>.
+        /// </summary>
+        public static SuiteRunSummary RunSuites(string tenantFilter, string[] suiteNames, ITableClient tables, ILogSink log,
+            IReadOnlyDictionary<string, bool>? capabilities = null)
+        {
+            var registry = Registry.Value;
+            var metas = new List<TestMeta>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var included = new List<string>();
+
+            foreach (var suite in suiteNames ?? Array.Empty<string>())
+            {
+                if (string.IsNullOrWhiteSpace(suite)) continue;
+                IReadOnlyList<TestMeta> suiteMetas;
+                try
+                {
+                    suiteMetas = registry.GetSuite(suite);
+                }
+                catch (KeyNotFoundException)
+                {
+                    // A suite with no registered C# tests (still PS-only on disk). Not an error: the
+                    // dispatcher runs its leftover .ps1 separately. Skip it in the engine group.
+                    log.Info($"No registered C# tests for suite '{suite}' — skipping in engine group", tenantFilter, null);
+                    continue;
+                }
+                included.Add(suite);
+                foreach (var m in suiteMetas)
+                    if (seen.Add(m.Id)) metas.Add(m);
+            }
+
+            var label = included.Count > 0 ? string.Join("+", included) : "(no engine suites)";
+            return RunCore(tenantFilter, label, metas, tables, log, capabilities);
+        }
+
         // True when the tenant has at least one of the test's required service plans enabled. A test
         // with no RequiredCapabilities is never gated; a null capability map disables gating.
         private static bool IsLicensed(TestMeta meta, IReadOnlyDictionary<string, bool>? capabilities)

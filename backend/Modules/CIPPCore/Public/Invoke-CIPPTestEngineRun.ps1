@@ -21,7 +21,11 @@ function Invoke-CIPPTestEngineRun {
         Tenant domain, GUID, or customerId to run the suite against.
 
     .PARAMETER SuiteName
-        Suite to run (must exist in tests.registry.json), e.g. 'CopilotReadiness'.
+        One or more suites to run (each must exist in tests.registry.json), e.g. 'CopilotReadiness'
+        or @('CIS','CISA','E8',...). When several are passed they run under a SINGLE TenantData: each
+        reporting type (Users, CAPolicies, …) is read from the table and parsed exactly once for the
+        whole group instead of once per suite. A suite with no registered C# tests is skipped by the
+        engine (its leftover .ps1 run separately).
 
     .FUNCTIONALITY
         Internal
@@ -32,7 +36,7 @@ function Invoke-CIPPTestEngineRun {
         [string]$TenantFilter,
 
         [Parameter(Mandatory)]
-        [string]$SuiteName
+        [string[]]$SuiteName
     )
 
     # Resolve the partition key HERE (the engine does not). Fall back to the raw value so a caller
@@ -83,12 +87,14 @@ function Invoke-CIPPTestEngineRun {
         Write-LogMessage -API 'Tests' -tenant $Tenant -message "Could not resolve tenant capabilities; license gating disabled for this run: $($_.Exception.Message)" -sev Warning
     }
 
+    $SuiteLabel = ($SuiteName -join '+')
     try {
-        $Summary = [CIPP.Tests.TestEngine]::RunSuite($Tenant, $SuiteName, $Client, $Log, $Capabilities)
-        Write-Information "TestEngine $SuiteName for $($Tenant): $($Summary.Ran) ran, $($Summary.Failed) failed, $($Summary.TotalSeconds)s"
+        # RunSuites: all requested suites under one TenantData (one read+parse of each type total).
+        $Summary = [CIPP.Tests.TestEngine]::RunSuites($Tenant, [string[]]$SuiteName, $Client, $Log, $Capabilities)
+        Write-Information "TestEngine $SuiteLabel for $($Tenant): $($Summary.Ran) ran, $($Summary.Failed) failed, $($Summary.TotalSeconds)s"
         return $Summary
     } catch {
-        Write-LogMessage -API 'Tests' -tenant $Tenant -message "TestEngine $SuiteName failed: $($_.Exception.Message)" -sev Error
+        Write-LogMessage -API 'Tests' -tenant $Tenant -message "TestEngine $SuiteLabel failed: $($_.Exception.Message)" -sev Error
         throw
     }
 }

@@ -5,7 +5,7 @@ Function Invoke-ExecExtensionTest {
     .ROLE
         CIPP.Extension.Read
     .DESCRIPTION
-        Tests the stored credentials for a configured third-party integration and reports whether CIPP can connect. extensionName selects which one: HaloPSA, Gradient, NinjaOne, PWPush, Hudu, Sherweb, HIBP or GitHub.
+        Tests the stored credentials for a configured third-party integration and reports whether CIPP can connect. extensionName selects which one: HaloPSA, Gradient, NinjaOne, PWPush, OneTimeSecret, Hudu, Sherweb, HIBP or GitHub.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -67,6 +67,26 @@ Function Invoke-ExecExtensionTest {
                     $Results = [pscustomobject]@{Results = @(@{'resultText' = 'Successfully generated PWPush, hit the Copy to Clipboard button to retrieve the test.'; 'copyField' = $PasswordLink; 'state' = 'success' }) }
                 } else {
                     $Results = [pscustomobject]@{'Results' = 'PWPush did not return a link. Check the CIPP logbook (API: PwPush) for details.' }
+                }
+            }
+            'OneTimeSecret' {
+                if ($Configuration.OneTimeSecret.Enabled -ne $true) {
+                    $Results = [pscustomobject]@{ Results = 'One-Time Secret is not enabled. Enable the integration and save the configuration, then test again.' }
+                    break
+                }
+                try {
+                    $PasswordLink = New-OneTimeSecretLink -Payload 'This is a test from CIPP' -Configuration $Configuration.OneTimeSecret -ThrowOnError
+                    if ($PasswordLink) {
+                        $Results = [pscustomobject]@{ Results = @(@{
+                                    resultText = 'Successfully generated a One-Time Secret link. Copy the link to test its single-use reveal.'
+                                    copyField  = $PasswordLink
+                                    state      = 'success'
+                                }) }
+                    } else {
+                        $Results = [pscustomobject]@{ Results = 'One-Time Secret did not return a link. Check the CIPP logbook (API: OneTimeSecret) for details.' }
+                    }
+                } catch {
+                    $Results = [pscustomobject]@{ Results = "One-Time Secret test failed: $($_.Exception.Message)" }
                 }
             }
             'Hudu' {

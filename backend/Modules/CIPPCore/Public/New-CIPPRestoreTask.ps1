@@ -164,15 +164,15 @@ function New-CIPPRestoreTask {
                             $JSON = $cleanedUser | ConvertTo-Json -Depth 100 -Compress
 
                             $null = New-GraphPOSTRequest -uri 'https://graph.microsoft.com/beta/users' -tenantid $TenantFilter -body $JSON -type POST
-                            # Try to wrap password in PwPush link
+                            # Try to wrap password in a password sharing link
                             $displayPassword = $tempPassword
                             try {
-                                $PasswordLink = New-PwPushLink -Payload $tempPassword
+                                $PasswordLink = New-CIPPPasswordLink -Payload $tempPassword
                                 if ($PasswordLink) {
                                     $displayPassword = $PasswordLink
                                 }
                             } catch {
-                                # If PwPush fails, use plain password
+                                # If link creation fails, use plain password
                             }
                             Write-LogMessage -message "Restored $($UPN) from backup by creating a new object with temporary password. Password: $displayPassword" -Sev 'info' -tenant $TenantFilter
                             $restorationStats['Users'].success++
@@ -191,15 +191,15 @@ function New-CIPPRestoreTask {
                             }
                             $JSON = $cleanedUser | ConvertTo-Json -Depth 100 -Compress
                             $null = New-GraphPOSTRequest -uri 'https://graph.microsoft.com/beta/users' -tenantid $TenantFilter -body $JSON -type POST
-                            # Try to wrap password in PwPush link
+                            # Try to wrap password in a password sharing link
                             $displayPassword = $tempPassword
                             try {
-                                $PasswordLink = New-PwPushLink -Payload $tempPassword
+                                $PasswordLink = New-CIPPPasswordLink -Payload $tempPassword
                                 if ($PasswordLink) {
                                     $displayPassword = $PasswordLink
                                 }
                             } catch {
-                                # If PwPush fails, use plain password
+                                # If link creation fails, use plain password
                             }
                             Write-LogMessage -message "Restored $($UPN) from backup with temporary password. Password: $displayPassword" -Sev 'info'
                             $restorationStats['Users'].success++

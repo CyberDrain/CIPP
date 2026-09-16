@@ -444,6 +444,7 @@
     * [NinjaOne](user-documentation/cipp/integrations/ninjaone.md)
     * [Hudu](user-documentation/cipp/integrations/hudu.md)
     * [Password Pusher](user-documentation/cipp/integrations/passwordpusher.md)
+    * [One-Time Secret](user-documentation/cipp/integrations/onetimesecret.md)
     * [Have I Been Pwned?](user-documentation/cipp/integrations/have-i-been-pwned.md)
     * [Cloudflare](user-documentation/cipp/integrations/cloudflare.md)
     * [GitHub](user-documentation/cipp/integrations/github.md)

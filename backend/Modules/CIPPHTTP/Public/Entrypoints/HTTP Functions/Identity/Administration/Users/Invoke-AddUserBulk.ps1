@@ -109,7 +109,7 @@ function Invoke-AddUserBulk {
                     })
 
                 # Create password link
-                $PasswordLink = New-PwPushLink -Payload $password
+                $PasswordLink = New-CIPPPasswordLink -Payload $password
                 if ($PasswordLink) {
                     $password = $PasswordLink
                 }

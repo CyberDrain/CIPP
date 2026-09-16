@@ -100,6 +100,7 @@ function Start-CIPPStatsTimer {
             haloPSA                = $RawExt.haloPSA.Enabled
             HIBP                   = $RawExt.HIBP.Enabled
             PWPush                 = $RawExt.PWPush.Enabled
+            OneTimeSecret          = $RawExt.OneTimeSecret.Enabled
             CFZTNA                 = $RawExt.CFZTNA.Enabled
             GitHub                 = $RawExt.GitHub.Enabled
             BestPracticeAnalyser   = $FeatureFlags.BestPracticeAnalyser

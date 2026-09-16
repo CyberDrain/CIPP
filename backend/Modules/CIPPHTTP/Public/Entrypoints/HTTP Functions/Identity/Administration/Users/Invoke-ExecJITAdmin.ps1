@@ -204,7 +204,7 @@ function Invoke-ExecJITAdmin {
             $TempPass = $TapRequest.temporaryAccessPass
             $PasswordExpiration = $TapRequest.LifetimeInMinutes
 
-            $PasswordLink = New-PwPushLink -Payload $TempPass
+            $PasswordLink = New-CIPPPasswordLink -Payload $TempPass
             $Password = $PasswordLink ? $PasswordLink : $TempPass
 
             Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message "Created Temporary Access Pass for $Username (lifetime: $PasswordExpiration minutes)" -Sev 'Info'

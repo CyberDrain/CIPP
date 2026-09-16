@@ -4,6 +4,8 @@ The Password Pusher integration replaces plain text passwords in CIPP with singl
 
 Both the hosted service at [pwpush.com](https://pwpush.com) and self-hosted instances are supported.
 
+If [One-Time Secret](onetimesecret.md) is also enabled, Password Pusher takes priority for generated password links, preserving existing behavior. Disable Password Pusher to use One-Time Secret. The Password Pusher Test button still tests Password Pusher directly.
+
 {% hint style="info" %}
 If your Password Pusher instance sits behind a Cloudflare Zero Trust tunnel, set up the [cloudflare.md](cloudflare.md "mention") integration as well and enable **Behind a CF-ZTNA Tunnel**. That toggle only appears on this page once the Cloudflare integration is enabled.
 {% endhint %}

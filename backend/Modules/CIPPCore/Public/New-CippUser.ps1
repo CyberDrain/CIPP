@@ -75,7 +75,7 @@ function New-CIPPUser {
         Write-LogMessage -headers $Headers -API $APIName -tenant $($UserObj.tenantFilter) -message "Created user $($UserObj.displayName) with id $($GraphRequest.id)" -Sev 'Info'
 
         try {
-            $PasswordLink = New-PwPushLink -Payload $password
+            $PasswordLink = New-CIPPPasswordLink -Payload $password
             if ($PasswordLink) {
                 $password = $PasswordLink
             }

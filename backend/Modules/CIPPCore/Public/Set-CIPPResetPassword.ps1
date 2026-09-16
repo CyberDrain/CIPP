@@ -29,16 +29,16 @@ function Set-CIPPResetPassword {
             $null = New-GraphPostRequest -uri "https://graph.microsoft.com/v1.0/users/$($UserID)" -tenantid $TenantFilter -type PATCH -body $passwordProfile -verbose
         }
 
-        #PWPush
+        # Password sharing integration
         $PasswordLink = $null
         try {
-            $PasswordLink = New-PwPushLink -Payload $password
+            $PasswordLink = New-CIPPPasswordLink -Payload $password
             if ($PasswordLink -and $PasswordLink -ne $false) {
                 $password = $PasswordLink
             }
         }
         catch {
-            Write-LogMessage -headers $Headers -API $APIName -message "Failed to create PwPush link, using plain password. Error: $($_.Exception.Message)" -sev 'Warning' -tenant $TenantFilter
+            Write-LogMessage -headers $Headers -API $APIName -message "Failed to create password sharing link, using plain password. Error: $($_.Exception.Message)" -sev 'Warning' -tenant $TenantFilter
         }
         if ($IsSynced) {
             Write-LogMessage -headers $Headers -API $APIName -message "Submitted a password writeback reset for $DisplayName, $($UserID). This user is directory synced, so the reset was sent via password writeback and the user must change password at next logon regardless of the requested setting ($forceChangePasswordNextSignIn)." -Sev 'Info' -tenant $TenantFilter

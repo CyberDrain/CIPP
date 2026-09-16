@@ -786,7 +786,7 @@
     "logoDark": "/assets/integrations/pwpush_dark.png",
     "forceSyncButton": false,
     "description": "Enable the PasswordPusher integration to generate password links instead of plain text passwords.",
-    "helpText": "This integration allows you to generate password links instead of plain text passwords. Configure authentication and expiration settings that will apply to all generated passwords. If you are a Hosted PWPush Pro customer you can also select an account for branding if you enable Bearer Authentication. Self-Hosted must use the Email Address and API Key method for authenticated pushes.",
+    "helpText": "This integration allows you to generate password links instead of plain text passwords. Configure authentication and expiration settings that will apply to all generated passwords. If you are a Hosted PWPush Pro customer you can also select an account for branding if you enable Bearer Authentication. Self-Hosted must use the Email Address and API Key method for authenticated pushes. If One-Time Secret is also enabled, Password Pusher takes priority for generated password links.",
     "links": [
       {
         "name": "PWPush Documentation",
@@ -935,6 +935,99 @@
           "field": "CFZTNA.Enabled",
           "compareType": "is",
           "compareValue": true
+        }
+      }
+    ],
+    "mappingRequired": false
+  },
+  {
+    "name": "One-Time Secret",
+    "id": "OneTimeSecret",
+    "type": "OneTimeSecret",
+    "cat": "Passwords",
+    "logo": "/assets/integrations/onetimesecret.png",
+    "forceSyncButton": false,
+    "description": "Generate single-use password links with One-Time Secret.",
+    "helpText": "Create password links that can be revealed once, using your regional or self-hosted One-Time Secret v2 service. An account email and API key are required. If both password integrations are enabled, Password Pusher takes priority. Disable Password Pusher to use One-Time Secret. If link creation fails, CIPP returns the plain text password, as with Password Pusher.",
+    "links": [
+      {
+        "name": "One-Time Secret API documentation",
+        "url": "https://api.onetimesecret.com/doc/api-v2"
+      },
+      {
+        "name": "GitHub Project",
+        "url": "https://github.com/onetimesecret/onetimesecret"
+      }
+    ],
+    "SettingOptions": [
+      {
+        "type": "switch",
+        "name": "OneTimeSecret.Enabled",
+        "label": "Enable Integration"
+      },
+      {
+        "type": "textField",
+        "name": "OneTimeSecret.BaseUrl",
+        "label": "One-Time Secret URL",
+        "placeholder": "https://nz.onetimesecret.com",
+        "helperText": "Enter the HTTPS URL for your account region or self-hosted v2 instance, without /api/v2.",
+        "condition": {
+          "field": "OneTimeSecret.Enabled",
+          "compareType": "is",
+          "compareValue": true,
+          "action": "disable"
+        }
+      },
+      {
+        "type": "textField",
+        "name": "OneTimeSecret.EmailAddress",
+        "label": "Account email address",
+        "placeholder": "Enter your One-Time Secret account email",
+        "helperText": "Use the account registered in the selected region.",
+        "condition": {
+          "field": "OneTimeSecret.Enabled",
+          "compareType": "is",
+          "compareValue": true,
+          "action": "disable"
+        }
+      },
+      {
+        "type": "password",
+        "name": "OneTimeSecret.APIKey",
+        "label": "API Key",
+        "placeholder": "Enter your One-Time Secret API key",
+        "helperText": "Required. Stored in Key Vault after saving.",
+        "condition": {
+          "field": "OneTimeSecret.Enabled",
+          "compareType": "is",
+          "compareValue": true,
+          "action": "disable"
+        }
+      },
+      {
+        "type": "number",
+        "name": "OneTimeSecret.ExpireAfterHours",
+        "label": "Expiration in hours",
+        "placeholder": "24",
+        "helperText": "Whole number from 1 to 168. Defaults to 24 hours; your server or account may impose a lower limit.",
+        "condition": {
+          "field": "OneTimeSecret.Enabled",
+          "compareType": "is",
+          "compareValue": true,
+          "action": "disable"
+        }
+      },
+      {
+        "type": "password",
+        "name": "OneTimeSecret.DefaultPassphrase",
+        "label": "Default passphrase",
+        "placeholder": "Optional",
+        "helperText": "Required to reveal each secret when set. Share it separately from the link.",
+        "condition": {
+          "field": "OneTimeSecret.Enabled",
+          "compareType": "is",
+          "compareValue": true,
+          "action": "disable"
         }
       }
     ],

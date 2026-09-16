@@ -88,8 +88,8 @@ function Set-CIPPUserJITAdmin {
                 $Json = ConvertTo-Json -Depth 5 -InputObject $Body
                 try {
                     $NewUser = New-GraphPOSTRequest -type POST -Uri 'https://graph.microsoft.com/beta/users' -Body $Json -tenantid $TenantFilter
-                    #PWPush
-                    $PasswordLink = New-PwPushLink -Payload $Password
+                    # Password sharing integration
+                    $PasswordLink = New-CIPPPasswordLink -Payload $Password
                     if ($PasswordLink) {
                         $Password = $PasswordLink
                     }

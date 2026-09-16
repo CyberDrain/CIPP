@@ -17,7 +17,7 @@ function Get-CIPPBaselineDefenderExclusionPolicyState {
         $TenantFilter
     )
 
-    $Policies = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'IntuneConfigurationPolicies')
+    $Policies = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'IntuneConfigurationPolicies' -Fields 'name', 'settings', 'id')
     if ($Policies.Count -eq 0 -and -not (Test-CIPPBaselineCacheCollected -TenantFilter $TenantFilter -Type 'IntuneConfigurationPolicies')) {
         return @{ Current = $null }
     }

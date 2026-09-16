@@ -60,7 +60,7 @@ function Get-CIPPBaselineDetectCADriftState {
 
     $Expected = [PSCustomObject]@{}
     $Current = [PSCustomObject]@{}
-    $Policies = @($(try { New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'ConditionalAccessPolicies' } catch { $null }) | Where-Object { $_ })
+    $Policies = @($(try { New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'ConditionalAccessPolicies' -Fields 'displayName', 'state', 'id' } catch { $null }) | Where-Object { $_ })
     foreach ($Policy in $Policies) {
         $PolicyName = "$($Policy.displayName)"
         if (-not $PolicyName) { continue }

@@ -17,7 +17,7 @@ function Get-CIPPBaselineAppDeployState {
         $TenantFilter
     )
 
-    $ServicePrincipals = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'ServicePrincipals')
+    $ServicePrincipals = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'ServicePrincipals' -Fields 'appId', 'displayName', 'applicationTemplateId')
     if ($ServicePrincipals.Count -eq 0 -and -not (Test-CIPPBaselineCacheCollected -TenantFilter $TenantFilter -Type 'ServicePrincipals')) {
         return @{ Current = $null }
     }

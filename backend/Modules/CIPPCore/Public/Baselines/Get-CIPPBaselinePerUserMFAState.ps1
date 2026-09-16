@@ -14,7 +14,7 @@ function Get-CIPPBaselinePerUserMFAState {
         $TenantFilter
     )
 
-    $Users = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Users' | Where-Object { $_ })
+    $Users = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Users' -Fields 'userType', 'accountEnabled', 'displayName', 'perUserMfaState', 'userPrincipalName' | Where-Object { $_ })
     if ($Users.Count -eq 0) { return @{ Current = $null } }
 
     $WithoutMFA = @($Users | Where-Object {

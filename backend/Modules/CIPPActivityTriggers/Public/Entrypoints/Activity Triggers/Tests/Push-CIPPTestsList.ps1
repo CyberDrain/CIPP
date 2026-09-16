@@ -65,13 +65,18 @@ function Push-CIPPTestsList {
         # commas). A nested array property does not survive Craft's two-phase activity->PostExecution
         # batch serialization (it lands as invalid JSONL lines); a scalar round-trips cleanly.
         # Push-CIPPTestCollection splits it back.
+        #
+        # The Engine and LeftoverPS tasks carry the SAME suite list, so Craft (which builds the job id
+        # from SuiteName + tenant) would give them the same id and disambiguate the second with a bare
+        # '_2'. Append a phase suffix (_engine / _ps) so each gets a self-describing id instead;
+        # Push-CIPPTestCollection strips it before use. Custom already has a distinct SuiteName.
         $Tasks = [System.Collections.Generic.List[object]]::new()
 
         if ($FilteredEngine.Count -gt 0) {
             $Tasks.Add([PSCustomObject]@{
                     FunctionName = 'CIPPTestCollection'
                     TenantFilter = $TenantFilter
-                    SuiteName    = ($FilteredEngine -join ',')
+                    SuiteName    = ('{0}_engine' -f ($FilteredEngine -join ','))
                     Phase        = 'Engine'
                 })
             # Separate activity for the remaining unported PS tests, only if any exist on disk (avoids
@@ -89,7 +94,7 @@ function Push-CIPPTestsList {
                 $Tasks.Add([PSCustomObject]@{
                         FunctionName = 'CIPPTestCollection'
                         TenantFilter = $TenantFilter
-                        SuiteName    = ($FilteredEngine -join ',')
+                        SuiteName    = ('{0}_ps' -f ($FilteredEngine -join ','))
                         Phase        = 'LeftoverPS'
                     })
             }

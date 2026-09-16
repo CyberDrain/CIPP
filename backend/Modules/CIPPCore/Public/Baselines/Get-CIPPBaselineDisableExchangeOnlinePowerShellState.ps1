@@ -21,7 +21,7 @@ function Get-CIPPBaselineDisableExchangeOnlinePowerShellState {
         $TenantFilter
     )
 
-    $Mailboxes = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Mailboxes' | Where-Object { $_ })
+    $Mailboxes = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Mailboxes' -Fields 'RemotePowerShellEnabled', 'UPN', 'Guid' | Where-Object { $_ })
     if ($Mailboxes.Count -eq 0) { return @{ Current = $null } }
 
     try {

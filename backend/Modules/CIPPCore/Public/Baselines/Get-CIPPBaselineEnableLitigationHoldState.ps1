@@ -13,7 +13,7 @@ function Get-CIPPBaselineEnableLitigationHoldState {
     [CmdletBinding()]
     param($Item, $TenantFilter)
 
-    $Mailboxes = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Mailboxes' | Where-Object { $_ })
+    $Mailboxes = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Mailboxes' -Fields 'LicensedForLitigationHold', 'LitigationHoldEnabled', 'UPN' | Where-Object { $_ })
     if ($Mailboxes.Count -eq 0) { return @{ Current = $null } }
 
     $Offending = @($Mailboxes | Where-Object {

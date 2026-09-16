@@ -33,10 +33,16 @@ function Get-CIPPBaselineCacheRows {
         [Parameter(Mandatory = $true)]
         [string]$Type,
         [string]$CollectorType,
-        [hashtable]$CollectorArgs = @{}
+        [hashtable]$CollectorArgs = @{},
+        # Project the read to these top-level fields. Omit for the whole record. A kept field keeps
+        # its entire subtree; an unlisted field reads back $null, so pass every field the hook uses.
+        [string[]]$Fields
     )
 
-    $Rows = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type | Where-Object { $_ })
+    $ReadParams = @{ TenantFilter = $TenantFilter; Type = $Type }
+    if ($Fields) { $ReadParams['Fields'] = $Fields }
+
+    $Rows = @(New-CIPPDbRequest @ReadParams | Where-Object { $_ })
     if ($Rows.Count -gt 0) { return $Rows }
 
     $CollectorFor = if ([string]::IsNullOrWhiteSpace($CollectorType)) { $Type } else { $CollectorType }
@@ -55,5 +61,5 @@ function Get-CIPPBaselineCacheRows {
         return @()
     }
 
-    @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type | Where-Object { $_ })
+    @(New-CIPPDbRequest @ReadParams | Where-Object { $_ })
 }

@@ -27,7 +27,7 @@ function Get-CIPPBaselineDisableSharedMailboxState {
     # collect-on-misses that one. Reading Users directly meant a tenant that had never
     # collected it returned No Data on every run, permanently, blaming Mailboxes.
     $Users = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'Users')
-    $Mailboxes = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Mailboxes' | Where-Object { $_ })
+    $Mailboxes = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Mailboxes' -Fields 'recipientTypeDetails', 'ExternalDirectoryObjectId', 'UPN', 'primarySmtpAddress' | Where-Object { $_ })
     if ($Users.Count -eq 0 -or $Mailboxes.Count -eq 0) { return @{ Current = $null } }
 
     $Candidates = @{}

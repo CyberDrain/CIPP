@@ -20,7 +20,7 @@ function Get-CIPPBaselineEnableOnlineArchivingState {
         $TenantFilter
     )
 
-    $Mailboxes = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Mailboxes' | Where-Object { $_ })
+    $Mailboxes = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Mailboxes' -Fields 'recipientTypeDetails', 'ArchiveEnabled', 'MailboxPlan', 'UPN' | Where-Object { $_ })
     if ($Mailboxes.Count -eq 0) { return @{ Current = $null } }
 
     $ArchivePlans = @('ExchangeOnline', 'ExchangeOnlineEnterprise')

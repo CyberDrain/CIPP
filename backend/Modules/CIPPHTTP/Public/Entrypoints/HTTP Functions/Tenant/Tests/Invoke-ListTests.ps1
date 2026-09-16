@@ -232,16 +232,21 @@ function Invoke-ListTests {
 
         $TestResultsData | Add-Member -NotePropertyName 'TestCounts' -NotePropertyValue $TestCounts -Force
 
-        $SecureScoreData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'SecureScore'
+        # Projected reads: these three feed the dashboard cards ONLY (SecureScoreCard, AuthMethodCard,
+        # MFACard, LicenseCard), which is a closed consumer set — no table renders the full record. So
+        # fetch only the fields those cards read and never materialise the big dropped subtrees
+        # (SecureScore.controlScores, MFAState.CAPolicies). If a card starts reading another field, add
+        # it here first — projection returns $null for unlisted fields with no error.
+        $SecureScoreData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'SecureScore' -Fields 'currentScore', 'maxScore', 'createdDateTime'
         if ($SecureScoreData) {
             $TestResultsData | Add-Member -NotePropertyName 'SecureScore' -NotePropertyValue @($SecureScoreData) -Force
         }
-        $MFAStateData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'MFAState'
+        $MFAStateData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'MFAState' -Fields 'AccountEnabled', 'CoveredByCA', 'CoveredBySD', 'MFAMethods', 'MFARegistration', 'PerUser'
         if ($MFAStateData) {
             $TestResultsData | Add-Member -NotePropertyName 'MFAState' -NotePropertyValue @($MFAStateData) -Force
         }
 
-        $LicenseData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'LicenseOverview'
+        $LicenseData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'LicenseOverview' -Fields 'License', 'TotalLicenses', 'CountUsed', 'CountAvailable'
         if ($LicenseData) {
             $TestResultsData | Add-Member -NotePropertyName 'LicenseData' -NotePropertyValue @($LicenseData) -Force
         }

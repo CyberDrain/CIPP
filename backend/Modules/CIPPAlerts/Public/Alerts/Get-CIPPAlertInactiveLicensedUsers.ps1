@@ -49,7 +49,7 @@ function Get-CIPPAlertInactiveLicensedUsers {
 
             $LicenseOverview = @()
             try {
-                $LicenseOverview = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'LicenseOverview')
+                $LicenseOverview = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'LicenseOverview' -Fields 'skuId', 'License')
             } catch {
                 Write-Information "Could not get the license overview from the reporting DB, license names will fall back to SKU IDs: $($_.Exception.Message)"
             }

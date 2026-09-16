@@ -15,7 +15,7 @@ function Get-CIPPAlertAppCertificateExpiry {
     $AlertData = @()
 
     try {
-        $appList = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Apps'
+        $appList = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Apps' -Fields 'displayName', 'keyCredentials', 'appId'
     } catch {
         $appList = @()
     }
@@ -37,7 +37,7 @@ function Get-CIPPAlertAppCertificateExpiry {
     }
 
     try {
-        $servicePrincipals = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'ServicePrincipals'
+        $servicePrincipals = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'ServicePrincipals' -Fields 'displayName', 'preferredTokenSigningKeyEndDateTime', 'appId', 'id'
     } catch {
         $servicePrincipals = @()
     }

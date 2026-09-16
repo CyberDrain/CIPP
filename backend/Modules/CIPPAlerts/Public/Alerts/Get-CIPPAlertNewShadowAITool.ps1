@@ -49,8 +49,8 @@ function Get-CIPPAlertNewShadowAITool {
 
         $DetectedApps = @()
         $ServicePrincipals = @()
-        try { $DetectedApps = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'DetectedApps') } catch {}
-        try { $ServicePrincipals = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'ServicePrincipals') } catch {}
+        try { $DetectedApps = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'DetectedApps' -Fields 'displayName', 'publisher', 'managedDevices') } catch {}
+        try { $ServicePrincipals = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'ServicePrincipals' -Fields 'displayName') } catch {}
 
         # No cached data at all means the caches have not synced (yet) - leave the baseline
         # untouched instead of treating every tool as gone and re-alerting when data returns.

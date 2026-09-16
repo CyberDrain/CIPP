@@ -39,7 +39,7 @@ function Get-CIPPAlertInactiveTeamsSites {
 
         $Lookup = (Get-Date).AddDays(-$DaysSinceActivity).Date
 
-        $SiteActivityRows = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'SiteActivity')
+        $SiteActivityRows = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'SiteActivity' -Fields 'isDeleted', 'siteType', 'effectiveLastActivityDate', 'webUrl', 'teamsTeamName', 'displayName', 'ownerDisplayName', 'ownerPrincipalName', 'siteId', 'teamsTeamId', 'sharePointLastActivityDate', 'teamLinkResolutionStatus', 'cachedAt', 'reportPeriod')
         if (-not $SiteActivityRows) {
             return
         }

@@ -40,7 +40,7 @@ function Get-CIPPAlertOneDriveLongPaths {
             }
         }
 
-        $Rows = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'OneDriveLongPaths')
+        $Rows = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'OneDriveLongPaths' -Fields 'ownerPrincipalName', 'id', 'countOver260', 'countOver400')
         if (-not $Rows) {
             return
         }

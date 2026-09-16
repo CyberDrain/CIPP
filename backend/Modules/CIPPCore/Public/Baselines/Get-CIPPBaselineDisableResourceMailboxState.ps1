@@ -22,7 +22,7 @@ function Get-CIPPBaselineDisableResourceMailboxState {
 
     # Users is the SECOND cache - see Get-CIPPBaselineCacheRows for why reading it directly
     # parks the standard at No Data forever on a tenant that never collected it.
-    $Users = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'Users')
+    $Users = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'Users' -Fields 'accountEnabled', 'onPremisesSyncEnabled', 'userType', 'assignedLicenses', 'id')
     $Mailboxes = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'Mailboxes' -Fields 'recipientTypeDetails', 'ExternalDirectoryObjectId', 'UPN', 'primarySmtpAddress' | Where-Object { $_ })
     if ($Users.Count -eq 0 -or $Mailboxes.Count -eq 0) { return @{ Current = $null } }
 

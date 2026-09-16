@@ -40,7 +40,7 @@ function Get-CIPPBaselineGroupTemplateState {
         return @{ Current = $null }
     }
 
-    $Groups = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'Groups')
+    $Groups = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'Groups' -Fields 'displayName')
     if ($Groups.Count -eq 0 -and -not (Test-CIPPBaselineCacheCollected -TenantFilter $TenantFilter -Type 'Groups')) {
         return @{ Current = $null }
     }

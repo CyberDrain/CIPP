@@ -41,7 +41,7 @@ function Get-CIPPBaselineEnableAppConsentRequestsState {
     $UserNames = @(@($Item.Variables.ReviewerUsers) | ForEach-Object { "$($_.value ?? $_)" } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     $MissingUsers = @()
     if ($UserNames.Count -gt 0) {
-        $Users = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'Users')
+        $Users = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'Users' -Fields 'displayName', 'id', 'userPrincipalName')
         $MissingUsers = @($UserNames | Where-Object {
                 $Name = $_
                 $Covered = @($Users) | Where-Object { $_.displayName -eq $Name } | Where-Object {

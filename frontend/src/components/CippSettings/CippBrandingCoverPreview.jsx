@@ -10,10 +10,10 @@ import {
   SAMPLE_TENANT_NAME,
 } from "../CippPdf/previewSampleData";
 
-// The people and figures shown on the mock come from the same sample data the full-report preview
-// renders, not from a second set invented here. They used to disagree — the mock named "Jane Doe"
-// while the real preview of the same report named "Sample User" — which makes the two previews look
-// like different reports rather than two views of one.
+// The people and figures shown on the mock are the headline values of the sample data the live
+// preview renders server-side, not a second set invented here. They used to disagree — the mock
+// named "Jane Doe" while the real preview of the same report named "Sample User" — which makes the
+// two previews look like different reports rather than two views of one.
 const SAMPLE_ANALYSIS_DATE = new Date(SAMPLE_BEC.becData.ExtractedAt).toLocaleString("en-US", {
   year: "numeric",
   month: "short",
@@ -40,7 +40,7 @@ export const REPORT_COVER_PRESETS = [
   {
     id: "executive",
     label: "Executive Report",
-    // Must match `reportName` on ExecutiveReportDocument — cover-mock `%reportname%` uses this.
+    // Must match the name ExecPreviewBrandingReportPdf renders — cover-mock `%reportname%` uses this.
     reportName: "Executive Summary",
     coverLabel: "Security Assessment",
     title: "Executive",
@@ -64,8 +64,10 @@ export const REPORT_COVER_PRESETS = [
     footer: "Confidential & Proprietary",
   },
   {
+    // The full BEC report - every page. The C-suite summary of the same investigation is `becSummary`
+    // below; both render from the same builder, so branding applied here should be checked on both.
     id: "bec",
-    label: "BEC Remediation",
+    label: "BEC Full Report",
     reportName: "BEC Analysis Report",
     coverLabel: "Security Incident Report",
     title: "BEC Compromise",
@@ -73,6 +75,22 @@ export const REPORT_COVER_PRESETS = [
     subtitle: `Business Email Compromise Investigation Report for ${SAMPLE_TENANT_NAME}`,
     // This cover names the compromised user rather than the tenant, and carries a third line the
     // others do not.
+    metaPrimary: SAMPLE_BEC.userData.displayName,
+    metaSecondary: SAMPLE_BEC.userData.userPrincipalName,
+    metaTertiary: `Analysis Date: ${SAMPLE_ANALYSIS_DATE}`,
+    footer: "Confidential & Proprietary - For Internal Use Only",
+  },
+  {
+    // The C-suite summary variant of the BEC report: the executive pages only (cover + Executive
+    // Summary). It renders from the same builder as `bec` with -Variant summary, off the same sample
+    // data, so its cover matches the full report but the body is the boardroom read.
+    id: "becSummary",
+    label: "BEC C-Suite Summary",
+    reportName: "BEC Executive Summary",
+    coverLabel: "Security Incident Summary",
+    title: "BEC Compromise",
+    accent: "Summary",
+    subtitle: `Executive summary of the Business Email Compromise investigation for ${SAMPLE_TENANT_NAME}`,
     metaPrimary: SAMPLE_BEC.userData.displayName,
     metaSecondary: SAMPLE_BEC.userData.userPrincipalName,
     metaTertiary: `Analysis Date: ${SAMPLE_ANALYSIS_DATE}`,

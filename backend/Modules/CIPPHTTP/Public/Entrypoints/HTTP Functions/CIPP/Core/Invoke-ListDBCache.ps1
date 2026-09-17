@@ -22,6 +22,7 @@ function Invoke-ListDBCache {
                         get an estate-wide inventory and per-tenant cache freshness in one call. Pass a
                         type alongside it to restrict the result to a single collection.
 
+        Use type=_shape for every collection's row count and fields (recorded when the cache was written).
         Use type=_availableTypes to discover which cache collections exist for a given tenant. Omitting the
         type parameter also returns the available types.
 
@@ -117,6 +118,27 @@ function Invoke-ListDBCache {
             return ([HttpResponseContext]@{
                     StatusCode = [HttpStatusCode]::OK
                     Body       = @{ Results = $Results }
+                })
+        }
+
+        # type=_shape: every collection with its row count and the fields (and types) its rows were seen
+        # to carry, as recorded when the cache was written. What the report builder offers to pick from.
+        if ($Type -eq '_shape') {
+            $ShapeRows = @(Get-CIPPDbItem -CountsOnly -IncludeShape -TenantFilter $Tenant)
+            if ($null -ne $AllowedDomains) {
+                $ShapeRows = @($ShapeRows | Where-Object { $AllowedDomains.Contains([string]$_.PartitionKey) })
+            }
+            $Shapes = @($ShapeRows | Sort-Object -Property RowKey | ForEach-Object {
+                    $Fields = try { @((ConvertFrom-Json -InputObject "$($_.Shape)" -ErrorAction Stop).fields) } catch { @() }
+                    [PSCustomObject]@{
+                        Type   = $_.RowKey -replace '-Count$', ''
+                        Count  = $_.DataCount
+                        Fields = @($Fields | Where-Object { $_.name } | ForEach-Object { [PSCustomObject]@{ name = [string]$_.name; type = [string]$_.type } })
+                    }
+                })
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::OK
+                    Body       = @{ Results = $Shapes }
                 })
         }
 

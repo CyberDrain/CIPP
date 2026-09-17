@@ -30082,7 +30082,7 @@
                   },
                   "reportType": {
                     "type": "string",
-                    "description": "Which report to preview: executive, reportBuilder, shadowAI, bec, sharing, permissions or mailFlow."
+                    "description": "Which report to preview: executive, reportBuilder, shadowAI, bec, becSummary, sharing, permissions or mailFlow."
                   },
                   "tenantFilter": {
                     "type": "string",

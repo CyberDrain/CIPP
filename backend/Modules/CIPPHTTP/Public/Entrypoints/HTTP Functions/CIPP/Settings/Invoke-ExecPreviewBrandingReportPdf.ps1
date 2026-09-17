@@ -19,16 +19,20 @@ function Invoke-ExecPreviewBrandingReportPdf {
 
     $ReportNames = @{
         executive = 'Executive Summary'; reportBuilder = 'Quarterly Security Review'; shadowAI = 'Shadow AI Report'
-        bec = 'BEC Analysis Report'; sharing = 'Sharing Report'; permissions = 'Permissions Report'; mailFlow = 'Mail Flow Report'
+        bec = 'BEC Analysis Report'; becSummary = 'BEC Executive Summary'; sharing = 'Sharing Report'; permissions = 'Permissions Report'; mailFlow = 'Mail Flow Report'
     }
+    # Report types that reuse another type's sample file (the BEC C-suite summary is the same
+    # investigation as the full report, rendered from the same sample, just a shorter variant).
+    $SampleAliases = @{ becSummary = 'bec' }
 
     try {
-        # Which report to preview: executive, reportBuilder, shadowAI, bec, sharing, permissions or mailFlow.
+        # Which report to preview: executive, reportBuilder, shadowAI, bec, becSummary, sharing, permissions or mailFlow.
         $ReportType = [string]($Request.Body.reportType ?? 'executive')
         if (-not $ReportNames.ContainsKey($ReportType)) {
             return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = "Unknown report type '$ReportType'. Use one of: $($ReportNames.Keys -join ', ')." })
         }
-        $Sample = Get-Content (Join-Path $env:CIPPRootPath "Config\ReportSamples\$ReportType.json") -Raw | ConvertFrom-Json -AsHashtable
+        $SampleType = if ($SampleAliases.ContainsKey($ReportType)) { $SampleAliases[$ReportType] } else { $ReportType }
+        $Sample = Get-Content (Join-Path $env:CIPPRootPath "Config\ReportSamples\$SampleType.json") -Raw | ConvertFrom-Json -AsHashtable
         # The branding to render against, in the shape Get-CIPPBrandingSettings returns: colours (flat or
         # under roleColours), a data-URL logo and cover or a coverStock path, footer, watermark and
         # tenantLabel. Omitted -> the saved branding settings.
@@ -43,7 +47,8 @@ function Invoke-ExecPreviewBrandingReportPdf {
         $Report = switch ($ReportType) {
             'reportBuilder' { @{ Blocks = @($Sample.blocks); Variables = @{} } }
             'shadowAI' { Build-CippShadowAIReportTree -Data $Data }
-            'bec' { Build-CippBecReportTree -UserData $Sample.userData -BecData $Sample.becData -TenantName $TenantName }
+            'bec' { Build-CippBecReportTree -UserData $Sample.userData -BecData $Sample.becData -TenantName $TenantName -Variant full }
+            'becSummary' { Build-CippBecReportTree -UserData $Sample.userData -BecData $Sample.becData -TenantName $TenantName -Variant summary }
             'sharing' { Build-CippSharingReportTree -Data $Data }
             'permissions' { Build-CippPermissionsReportTree -Data $Data }
             'mailFlow' { Build-CippMailFlowReportTree -Data $Data }

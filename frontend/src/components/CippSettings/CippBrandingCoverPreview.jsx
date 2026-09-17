@@ -64,8 +64,10 @@ export const REPORT_COVER_PRESETS = [
     footer: "Confidential & Proprietary",
   },
   {
+    // The full BEC report - every page. The C-suite summary of the same investigation is `becSummary`
+    // below; both render from the same builder, so branding applied here should be checked on both.
     id: "bec",
-    label: "BEC Remediation",
+    label: "BEC Full Report",
     reportName: "BEC Analysis Report",
     coverLabel: "Security Incident Report",
     title: "BEC Compromise",
@@ -73,6 +75,22 @@ export const REPORT_COVER_PRESETS = [
     subtitle: `Business Email Compromise Investigation Report for ${SAMPLE_TENANT_NAME}`,
     // This cover names the compromised user rather than the tenant, and carries a third line the
     // others do not.
+    metaPrimary: SAMPLE_BEC.userData.displayName,
+    metaSecondary: SAMPLE_BEC.userData.userPrincipalName,
+    metaTertiary: `Analysis Date: ${SAMPLE_ANALYSIS_DATE}`,
+    footer: "Confidential & Proprietary - For Internal Use Only",
+  },
+  {
+    // The C-suite summary variant of the BEC report: the executive pages only (cover + Executive
+    // Summary). It renders from the same builder as `bec` with -Variant summary, off the same sample
+    // data, so its cover matches the full report but the body is the boardroom read.
+    id: "becSummary",
+    label: "BEC C-Suite Summary",
+    reportName: "BEC Executive Summary",
+    coverLabel: "Security Incident Summary",
+    title: "BEC Compromise",
+    accent: "Summary",
+    subtitle: `Executive summary of the Business Email Compromise investigation for ${SAMPLE_TENANT_NAME}`,
     metaPrimary: SAMPLE_BEC.userData.displayName,
     metaSecondary: SAMPLE_BEC.userData.userPrincipalName,
     metaTertiary: `Analysis Date: ${SAMPLE_ANALYSIS_DATE}`,

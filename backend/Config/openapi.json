@@ -4446,6 +4446,9 @@
                   "defaultVacationCAPolicy": {
                     "type": "string"
                   },
+                  "defaultVacationExcludeAllCAPolicies": {
+                    "type": "boolean"
+                  },
                   "defaultVacationExcludeAuditAlerts": {
                     "type": "boolean"
                   },
@@ -9412,6 +9415,9 @@
                   },
                   "defaultVacationCAPolicy": {
                     "type": "string"
+                  },
+                  "defaultVacationExcludeAllCAPolicies": {
+                    "type": "boolean"
                   },
                   "defaultVacationExcludeAuditAlerts": {
                     "type": "boolean"

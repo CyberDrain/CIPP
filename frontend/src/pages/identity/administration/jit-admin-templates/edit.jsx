@@ -1,4 +1,4 @@
-import { Box, Divider, Typography } from "@mui/material";
+import { Alert, Box, Divider, Typography } from "@mui/material";
 import { Grid } from "@mui/system";
 import CippFormPage from "../../../../components/CippFormPages/CippFormPage";
 import { Layout as DashboardLayout } from "../../../../layouts/index";
@@ -48,6 +48,10 @@ const Page = () => {
     control: formControl.control,
     name: "defaultVacationExcludeAuditAlerts",
   });
+  const defaultVacationExcludeAllCAPolicies = useWatch({
+    control: formControl.control,
+    name: "defaultVacationExcludeAllCAPolicies",
+  });
 
   // Clear fields when switches are toggled off
   useEffect(() => {
@@ -80,10 +84,15 @@ const Page = () => {
     }
   }, [useRoles, useGroups]);
 
-  // Vacation mode defaults only make sense for a specific-tenant template targeting an
-  // existing user (AllTenants templates are forced to "New User" - see the radio options below)
+  // Vacation mode defaults apply to a specific-tenant template targeting an existing user
+  // (hand-picked CA policies), or an AllTenants template (forced to "New User" - see the radio
+  // options below), where the only meaningful option is excluding from every CA policy in
+  // whichever tenant the template is actually applied against
   useEffect(() => {
-    if (isAllTenants || defaultUserAction !== "select") {
+    const vacationModeApplies =
+      (!isAllTenants && defaultUserAction === "select") ||
+      (isAllTenants && defaultUserAction === "create");
+    if (!vacationModeApplies) {
       formControl.setValue("defaultVacationMode", false);
     }
   }, [isAllTenants, defaultUserAction]);
@@ -92,6 +101,7 @@ const Page = () => {
     if (!defaultVacationMode) {
       formControl.setValue("defaultVacationCAPolicy", []);
       formControl.setValue("defaultVacationExcludeAuditAlerts", false);
+      formControl.setValue("defaultVacationExcludeAllCAPolicies", false);
     }
   }, [defaultVacationMode]);
 
@@ -433,6 +443,65 @@ const Page = () => {
                   formControl={formControl}
                 />
               </Grid>
+              {isAllTenants && (
+                <Grid size={{ xs: 12 }}>
+                  <Divider sx={{ my: 2 }} />
+                  <CippFormComponent
+                    type="switch"
+                    label="Enable Vacation Mode by Default"
+                    name="defaultVacationMode"
+                    formControl={formControl}
+                  />
+                  <Box sx={{ color: "text.secondary", fontSize: "0.875rem", mt: 0.5 }}>
+                    Excludes the newly-created user from Conditional Access policies and/or
+                    location-based audit alerts for the same window as the JIT Admin access, plus
+                    a 1 hour buffer. Since an AllTenants template's policies can't be known in
+                    advance, this offers only the &quot;exclude from all&quot; option rather than
+                    hand-picked policies.
+                  </Box>
+                  <CippFormCondition
+                    formControl={formControl}
+                    field="defaultVacationMode"
+                    compareType="is"
+                    compareValue={true}
+                    clearOnHide={false}
+                  >
+                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                      <Grid size={{ xs: 12 }}>
+                        <Alert severity="warning">
+                          This excludes the newly created user from every Conditional Access
+                          policy in whichever tenant the template is applied against, not just
+                          selected ones. Use with caution.
+                        </Alert>
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <CippFormComponent
+                          type="switch"
+                          label="Exclude from all CA policies in the tenant"
+                          name="defaultVacationExcludeAllCAPolicies"
+                          formControl={formControl}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <CippFormComponent
+                          type="switch"
+                          label="Exclude from location-based audit log alerts"
+                          name="defaultVacationExcludeAuditAlerts"
+                          formControl={formControl}
+                        />
+                      </Grid>
+                      {!defaultVacationExcludeAllCAPolicies && !defaultVacationExcludeAuditAlerts && (
+                        <Grid size={{ xs: 12 }}>
+                          <Box sx={{ color: "error.main", fontSize: "0.875rem" }}>
+                            Enable &quot;Exclude from all CA policies&quot; or audit alert
+                            exclusion.
+                          </Box>
+                        </Grid>
+                      )}
+                    </Grid>
+                  </CippFormCondition>
+                </Grid>
+              )}
             </CippFormCondition>
 
             <CippFormCondition

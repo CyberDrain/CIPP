@@ -1,4 +1,4 @@
-import { Box, Divider } from '@mui/material'
+import { Alert, Box, Divider } from '@mui/material'
 import { Grid } from '@mui/system'
 import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
@@ -62,9 +62,28 @@ const Page = () => {
     control: formControl.control,
     name: 'vacationExcludeAuditAlerts',
   })
+  const vacationExcludeAllCAPolicies = useWatch({
+    control: formControl.control,
+    name: 'vacationExcludeAllCAPolicies',
+  })
 
   const caExclusion = ApiPostCall({ relatedQueryKeys: ['JIT Admin Table'] })
   const auditExclusion = ApiPostCall({ relatedQueryKeys: ['JIT Admin Table'] })
+
+  // Only fetched when the "exclude from all CA policies" toggle is on, so the tenant's full
+  // policy list is resolved once at submit time rather than pre-fetched unconditionally.
+  const allCAPoliciesForVacation = ApiGetCall({
+    url: selectedTenant && vacationExcludeAllCAPolicies ? '/api/ListGraphRequest' : undefined,
+    data: {
+      tenantFilter: selectedTenant?.value,
+      Endpoint: 'conditionalAccess/policies',
+      AsApp: true,
+    },
+    queryKey: selectedTenant
+      ? `ListConditionalAccessPolicies-${selectedTenant.value}`
+      : 'ListConditionalAccessPolicies',
+    waiting: !!(selectedTenant && vacationExcludeAllCAPolicies),
+  })
 
   useEffect(() => {
     if (!useTAP || !startDate || !endDate) {
@@ -95,11 +114,22 @@ const Page = () => {
     }
   }, [useGroups])
 
-  // Vacation mode only applies to an existing user's identity (CA/audit exclusions
-  // act on Graph objects that don't exist yet when creating a new user)
+  // Vacation mode applies to an existing user (userAction 'select', hand-picked CA policies)
+  // or a newly-created one (userAction 'create', exclude-from-all-policies only - the account
+  // creation itself always happens synchronously in Invoke-ExecJITAdmin.ps1, even when the
+  // role/group grant is deferred, so the user already exists by the time these calls fire)
   useEffect(() => {
-    if (userAction !== 'select') {
+    if (userAction !== 'select' && userAction !== 'create') {
       formControl.setValue('enableVacationMode', false)
+    }
+  }, [userAction])
+
+  // Clear the fields specific to the other userAction's vacation-mode flow when switching
+  useEffect(() => {
+    if (userAction === 'create') {
+      formControl.setValue('vacationCAPolicy', [])
+    } else if (userAction === 'select') {
+      formControl.setValue('vacationExcludeAllCAPolicies', false)
     }
   }, [userAction])
 
@@ -107,6 +137,7 @@ const Page = () => {
     if (!enableVacationMode) {
       formControl.setValue('vacationCAPolicy', [])
       formControl.setValue('vacationExcludeAuditAlerts', false)
+      formControl.setValue('vacationExcludeAllCAPolicies', false)
     }
   }, [enableVacationMode])
 
@@ -247,6 +278,11 @@ const Page = () => {
       template.defaultVacationExcludeAuditAlerts ?? false,
       { shouldDirty: true }
     )
+    formControl.setValue(
+      'vacationExcludeAllCAPolicies',
+      template.defaultVacationExcludeAllCAPolicies ?? false,
+      { shouldDirty: true }
+    )
 
     // User action and user details
     if (template.defaultUserAction) {
@@ -310,30 +346,58 @@ const Page = () => {
     if (!enableVacationMode) return
 
     const tenantFilter = selectedTenant?.value
-    const users = [formControl.getValues('existingUser')]
     const startDate = formControl.getValues('startDate')
     const endDate = formControl.getValues('endDate')
     const vacationEndDate = endDate ? endDate + 3600 : endDate
     const reference = formControl.getValues('reason') || null
     const postExecution = formControl.getValues('postExecution') || []
 
-    const policies = Array.isArray(vacationCAPolicy)
-      ? vacationCAPolicy
-      : vacationCAPolicy
-      ? [vacationCAPolicy]
-      : []
-    if (policies.length > 0) {
-      const policyData = policies.map((policy) => ({
-        tenantFilter,
-        Users: users,
-        PolicyId: policy?.value ?? policy,
-        StartDate: startDate,
-        EndDate: vacationEndDate,
-        vacation: true,
-        reference,
-        postExecution,
-      }))
-      caExclusion.mutate({ url: '/api/ExecCAExclusion', data: policyData, bulkRequest: true })
+    let users
+    if (userAction === 'create') {
+      const userName = formControl.getValues('userName')
+      const domain = formControl.getValues('domain')
+      const domainValue = domain?.value ?? domain
+      const upn = userName && domainValue ? `${userName}@${domainValue}` : null
+      users = upn ? [{ value: upn, addedFields: { userPrincipalName: upn } }] : []
+    } else {
+      users = [formControl.getValues('existingUser')]
+    }
+    if (users.length === 0 || !users[0]) return
+
+    if (userAction === 'select') {
+      const policies = Array.isArray(vacationCAPolicy)
+        ? vacationCAPolicy
+        : vacationCAPolicy
+        ? [vacationCAPolicy]
+        : []
+      if (policies.length > 0) {
+        const policyData = policies.map((policy) => ({
+          tenantFilter,
+          Users: users,
+          PolicyId: policy?.value ?? policy,
+          StartDate: startDate,
+          EndDate: vacationEndDate,
+          vacation: true,
+          reference,
+          postExecution,
+        }))
+        caExclusion.mutate({ url: '/api/ExecCAExclusion', data: policyData, bulkRequest: true })
+      }
+    } else if (userAction === 'create' && vacationExcludeAllCAPolicies) {
+      const allPolicies = allCAPoliciesForVacation.data?.Results || []
+      if (allPolicies.length > 0) {
+        const policyData = allPolicies.map((policy) => ({
+          tenantFilter,
+          Users: users,
+          PolicyId: policy.id,
+          StartDate: startDate,
+          EndDate: vacationEndDate,
+          vacation: true,
+          reference,
+          postExecution,
+        }))
+        caExclusion.mutate({ url: '/api/ExecCAExclusion', data: policyData, bulkRequest: true })
+      }
     }
 
     if (vacationExcludeAuditAlerts) {
@@ -684,7 +748,7 @@ const Page = () => {
                 formControl={formControl}
               />
             </Grid>
-            {userAction === 'select' && (
+            {(userAction === 'select' || userAction === 'create') && (
               <Grid size={{ md: 12, xs: 12 }}>
                 <Divider sx={{ my: 2 }} />
                 <CippFormComponent
@@ -694,8 +758,11 @@ const Page = () => {
                   formControl={formControl}
                 />
                 <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mt: 0.5 }}>
-                  Excludes this user from a Conditional Access policy and/or location-based audit
-                  alerts for the same window as this JIT Admin access, plus a 1 hour buffer.
+                  Excludes this user from Conditional Access polic{userAction === 'create'
+                    ? 'ies'
+                    : 'y'}{' '}
+                  and/or location-based audit alerts for the same window as this JIT Admin access,
+                  plus a 1 hour buffer.
                 </Box>
                 <CippFormCondition
                   formControl={formControl}
@@ -705,38 +772,58 @@ const Page = () => {
                   clearOnHide={false}
                 >
                   <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                    <Grid size={{ md: 12, xs: 12 }}>
-                      <CippFormComponent
-                        type="autoComplete"
-                        label={
-                          selectedTenant
-                            ? `Conditional Access Policies in ${selectedTenant.value}`
-                            : 'Select a tenant first'
-                        }
-                        name="vacationCAPolicy"
-                        api={
-                          selectedTenant
-                            ? {
-                                queryKey: `ListConditionalAccessPolicies-${selectedTenant.value}`,
-                                url: '/api/ListGraphRequest',
-                                data: {
-                                  tenantFilter: selectedTenant.value,
-                                  Endpoint: 'conditionalAccess/policies',
-                                  AsApp: true,
-                                },
-                                dataKey: 'Results',
-                                labelField: (option) => `${option.displayName}`,
-                                valueField: 'id',
-                                showRefresh: true,
-                              }
-                            : null
-                        }
-                        multiple={true}
-                        creatable={false}
-                        formControl={formControl}
-                        disabled={!selectedTenant}
-                      />
-                    </Grid>
+                    {userAction === 'select' && (
+                      <Grid size={{ md: 12, xs: 12 }}>
+                        <CippFormComponent
+                          type="autoComplete"
+                          label={
+                            selectedTenant
+                              ? `Conditional Access Policies in ${selectedTenant.value}`
+                              : 'Select a tenant first'
+                          }
+                          name="vacationCAPolicy"
+                          api={
+                            selectedTenant
+                              ? {
+                                  queryKey: `ListConditionalAccessPolicies-${selectedTenant.value}`,
+                                  url: '/api/ListGraphRequest',
+                                  data: {
+                                    tenantFilter: selectedTenant.value,
+                                    Endpoint: 'conditionalAccess/policies',
+                                    AsApp: true,
+                                  },
+                                  dataKey: 'Results',
+                                  labelField: (option) => `${option.displayName}`,
+                                  valueField: 'id',
+                                  showRefresh: true,
+                                }
+                              : null
+                          }
+                          multiple={true}
+                          creatable={false}
+                          formControl={formControl}
+                          disabled={!selectedTenant}
+                        />
+                      </Grid>
+                    )}
+                    {userAction === 'create' && (
+                      <>
+                        <Grid size={{ md: 12, xs: 12 }}>
+                          <Alert severity="warning">
+                            This excludes the newly created user from every Conditional Access
+                            policy in the tenant, not just selected ones. Use with caution.
+                          </Alert>
+                        </Grid>
+                        <Grid size={{ md: 12, xs: 12 }}>
+                          <CippFormComponent
+                            type="switch"
+                            label="Exclude from all CA policies in the tenant"
+                            name="vacationExcludeAllCAPolicies"
+                            formControl={formControl}
+                          />
+                        </Grid>
+                      </>
+                    )}
                     <Grid size={{ md: 12, xs: 12 }}>
                       <CippFormComponent
                         type="switch"
@@ -745,14 +832,26 @@ const Page = () => {
                         formControl={formControl}
                       />
                     </Grid>
-                    {!vacationCAPolicy?.length && !vacationExcludeAuditAlerts && (
-                      <Grid size={{ md: 12, xs: 12 }}>
-                        <Box sx={{ color: 'error.main', fontSize: '0.875rem' }}>
-                          Select at least one Conditional Access policy or enable audit alert
-                          exclusion.
-                        </Box>
-                      </Grid>
-                    )}
+                    {userAction === 'select' &&
+                      !vacationCAPolicy?.length &&
+                      !vacationExcludeAuditAlerts && (
+                        <Grid size={{ md: 12, xs: 12 }}>
+                          <Box sx={{ color: 'error.main', fontSize: '0.875rem' }}>
+                            Select at least one Conditional Access policy or enable audit alert
+                            exclusion.
+                          </Box>
+                        </Grid>
+                      )}
+                    {userAction === 'create' &&
+                      !vacationExcludeAllCAPolicies &&
+                      !vacationExcludeAuditAlerts && (
+                        <Grid size={{ md: 12, xs: 12 }}>
+                          <Box sx={{ color: 'error.main', fontSize: '0.875rem' }}>
+                            Enable &quot;Exclude from all CA policies&quot; or audit alert
+                            exclusion.
+                          </Box>
+                        </Grid>
+                      )}
                     <Grid size={{ md: 12, xs: 12 }}>
                       <CippApiResults apiObject={caExclusion} />
                       <CippApiResults apiObject={auditExclusion} />

@@ -14679,6 +14679,9 @@
                     "colour": {
                       "x-cipp-field-source": "storage"
                     },
+                    "CountdownSeconds": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "coverFooterText": {
                       "x-cipp-field-source": "storage"
                     },
@@ -14754,6 +14757,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "StandardsExcludeAllTenants": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Threshold": {
                       "x-cipp-field-source": "storage"
                     },
                     "Timestamp": {
@@ -15524,6 +15530,9 @@
                     "colour": {
                       "x-cipp-field-source": "storage"
                     },
+                    "CountdownSeconds": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "coverFooterText": {
                       "x-cipp-field-source": "storage"
                     },
@@ -15599,6 +15608,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "StandardsExcludeAllTenants": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Threshold": {
                       "x-cipp-field-source": "storage"
                     },
                     "Timestamp": {
@@ -15699,6 +15711,184 @@
           }
         ],
         "x-cipp-role": "CIPP.Core.Read"
+      }
+    },
+    "/api/ExecBulkActionConfirmConfig": {
+      "post": {
+        "summary": "ExecBulkActionConfirmConfig",
+        "operationId": "ExecBulkActionConfirmConfig",
+        "tags": [
+          "CIPP > Settings"
+        ],
+        "description": "Reads or saves the global bulk-action confirmation countdown setting: whether the\nconfirm button on bulk actions is gated behind a countdown once the selection exceeds\na configurable item threshold. Disabled by default.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "CountdownSeconds": {
+                    "type": "string"
+                  },
+                  "Enabled": {
+                    "type": "boolean"
+                  },
+                  "Threshold": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "List",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                  "properties": {
+                    "ApplicationId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "colour": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "CountdownSeconds": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "coverFooterText": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "coverImage": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "coverImageId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "coverImageIds": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "coverStock": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "coverUploads": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Enabled": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ETag": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "footerText": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "logo": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "logoImageId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "logoImageIds": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "logoUploads": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "MaxDuration": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "PartitionKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "reportDefaults": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Resolver": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Results": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "RetentionDays": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "roleColours": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "RowKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "secondaryColour": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "showFooter": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "showPageNumbers": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "StandardsExcludeAllTenants": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Threshold": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Timestamp": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Timezone": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "TimezoneSource": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Value": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "watermarkEnabled": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "watermarkText": {
+                      "x-cipp-field-source": "storage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.AppSettings.ReadWrite",
+        "x-cipp-any-tenant": true
       }
     },
     "/api/ExecBulkLicense": {
@@ -24109,6 +24299,9 @@
                     "colour": {
                       "x-cipp-field-source": "storage"
                     },
+                    "CountdownSeconds": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "coverFooterText": {
                       "x-cipp-field-source": "storage"
                     },
@@ -24181,6 +24374,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "StandardsExcludeAllTenants": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Threshold": {
                       "x-cipp-field-source": "storage"
                     },
                     "Timestamp": {
@@ -24782,6 +24978,9 @@
                     "colour": {
                       "x-cipp-field-source": "storage"
                     },
+                    "CountdownSeconds": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "coverFooterText": {
                       "x-cipp-field-source": "storage"
                     },
@@ -24857,6 +25056,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "StandardsExcludeAllTenants": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Threshold": {
                       "x-cipp-field-source": "storage"
                     },
                     "Timestamp": {
@@ -28551,6 +28753,9 @@
                     "colour": {
                       "x-cipp-field-source": "storage"
                     },
+                    "CountdownSeconds": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "coverFooterText": {
                       "x-cipp-field-source": "storage"
                     },
@@ -28629,6 +28834,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "StandardsExcludeAllTenants": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Threshold": {
                       "x-cipp-field-source": "storage"
                     },
                     "Timestamp": {

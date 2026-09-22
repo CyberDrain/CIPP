@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Divider, Stack, Typography } from '@mui/material'
+import { Box, Divider, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { Grid } from '@mui/system'
 import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
@@ -18,35 +18,41 @@ import { CippJitRoleTemplateApply } from '../../../../components/CippComponents/
 import { useEffect, useRef, useState } from 'react'
 import { resolveJitTemplateVariables } from '../../../../utils/jit-template-variables'
 
+// initialize hour shortcuts
 const HOUR_SHORTCUTS = [4, 8, 12, 24]
 
+// parse duration string into object
 const parseDuration = (duration) => {
   if (!duration) return null
-  const matches = duration.match(
-    /P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/
-  )
-  if (!matches) return null
+  const matches = String(duration)
+    .trim()
+    .match(
+      /^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+    )
+  if (!matches || matches.slice(1).every((group) => group == null)) return null
   return {
-    years: parseInt(matches[1] || 0),
-    months: parseInt(matches[2] || 0),
-    weeks: parseInt(matches[3] || 0),
-    days: parseInt(matches[4] || 0),
-    hours: parseInt(matches[5] || 0),
-    minutes: parseInt(matches[6] || 0),
-    seconds: parseInt(matches[7] || 0),
+    years: Number(matches[1] || 0),
+    months: Number(matches[2] || 0),
+    weeks: Number(matches[3] || 0),
+    days: Number(matches[4] || 0),
+    hours: Number(matches[5] || 0),
+    minutes: Number(matches[6] || 0),
+    seconds: Number(matches[7] || 0),
   }
 }
 
-const durationPhrase = (seconds) => {
-  if (!seconds || seconds <= 0) return null
-  const days = Math.floor(seconds / 86400)
-  const hours = Math.floor((seconds % 86400) / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
+const durationPhrase = (totalSeconds) => {
+  if (totalSeconds == null || totalSeconds < 0) return null
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const leftover = totalSeconds % 60
   const part = (count, singular) =>
     count ? `${count} ${count === 1 ? singular : `${singular}s`}` : null
   return (
-    [part(days, 'day'), part(hours, 'hour'), part(minutes, 'minute')].filter(Boolean).join(' ') ||
-    '0 minutes'
+    [part(days, 'day'), part(hours, 'hour'), part(minutes, 'minute'), part(leftover, 'second')]
+      .filter(Boolean)
+      .join(' ') || '0 seconds'
   )
 }
 
@@ -70,13 +76,6 @@ const matchingHours = (startUnix, endUnix) => {
   if (!startUnix || !endUnix || endUnix <= startUnix) return null
   const hours = (endUnix - startUnix) / 3600
   return HOUR_SHORTCUTS.includes(hours) ? hours : null
-}
-
-const roundedNowUnix = () => {
-  const now = new Date()
-  const minutes = now.getMinutes()
-  now.setMinutes(minutes % 15 === 0 ? minutes : Math.floor(minutes / 15) * 15, 0, 0)
-  return Math.floor(now.getTime() / 1000)
 }
 
 const Page = () => {
@@ -135,11 +134,8 @@ const Page = () => {
     queryKey: 'jitAdminSettings',
   })
   const durationCapSeconds = maxDurationSeconds(jitSettings.data?.MaxDuration)
-  const windowSeconds = startDate && endDate ? endDate - startDate : null
-  const lasts = durationPhrase(windowSeconds)
+  const lasts = durationPhrase(startDate && endDate ? endDate - startDate : null)
   const durationCapLabel = durationPhrase(durationCapSeconds)
-  const overMax =
-    windowSeconds !== null && durationCapSeconds !== null && windowSeconds > durationCapSeconds
   const selectedHours = matchingHours(startDate, endDate)
   const hourPickStartRef = useRef(null)
 
@@ -362,8 +358,15 @@ const Page = () => {
   }, [watcher.jitAdminTemplate, lastTemplate])
 
   const fillFromNow = (hours) => {
-    const startUnix = roundedNowUnix()
-    hourPickStartRef.current = startUnix
+    const now = new Date()
+    const minutes = now.getMinutes()
+    now.setMinutes(minutes % 15 === 0 ? minutes : Math.floor(minutes / 15) * 15, 0, 0)
+    const startUnix = Math.floor(now.getTime() / 1000)
+    // Same rounded start does not re-run the effect below, so arming the ref would
+    // stick and skip a later template duration for that exact timestamp.
+    if (formControl.getValues('startDate') !== startUnix) {
+      hourPickStartRef.current = startUnix
+    }
     formControl.setValue('startDate', startUnix, { shouldDirty: true, shouldValidate: true })
     formControl.setValue('endDate', startUnix + hours * 3600, {
       shouldDirty: true,
@@ -374,7 +377,9 @@ const Page = () => {
   // A template duration follows the start date, except when that start was just written
   // by an hour shortcut. The shortcut already chose the length.
   useEffect(() => {
-    if (hourPickStartRef.current === watcher.startDate) return
+    const fromShortcut = hourPickStartRef.current === watcher.startDate
+    hourPickStartRef.current = null
+    if (fromShortcut) return
     if (watcher.startDate && selectedTemplate?.defaultDuration) {
       const durationValue =
         typeof selectedTemplate.defaultDuration === 'object' &&
@@ -391,7 +396,7 @@ const Page = () => {
   }, [watcher.startDate])
 
   useEffect(() => {
-    if (durationCapSeconds && formControl.getValues('endDate')) {
+    if (durationCapSeconds !== null && formControl.getValues('endDate')) {
       formControl.trigger('endDate')
     }
   }, [durationCapSeconds, formControl])
@@ -588,49 +593,18 @@ const Page = () => {
               </Grid>
             </CippFormCondition>
             <Grid size={{ md: 12, xs: 12 }}>
-              <Stack spacing={1}>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  From now
-                </Typography>
-                <Stack
-                  direction="row"
-                  useFlexGap
-                  flexWrap="wrap"
-                  spacing={1}
-                  role="group"
-                  aria-label="Set access from now"
-                >
-                  {HOUR_SHORTCUTS.map((hours) => {
-                    const selected = selectedHours === hours
-                    return (
-                      <Button
-                        key={hours}
-                        type="button"
-                        variant={selected ? 'contained' : 'outlined'}
-                        size="small"
-                        aria-pressed={selected}
-                        onClick={() => fillFromNow(hours)}
-                        sx={{
-                          minHeight: 44,
-                          minWidth: 52,
-                          px: 1.5,
-                          touchAction: 'manipulation',
-                          transitionProperty: 'background-color, color, border-color, box-shadow',
-                          transitionDuration: '150ms',
-                          transitionTimingFunction: 'ease-out',
-                          '&:active': { transform: 'scale(0.96)' },
-                          '@media (prefers-reduced-motion: reduce)': {
-                            transition: 'none',
-                            '&:active': { transform: 'none' },
-                          },
-                        }}
-                      >
-                        +{hours}h
-                      </Button>
-                    )
-                  })}
-                </Stack>
-              </Stack>
+              <ToggleButtonGroup
+                size="small"
+                exclusive
+                value={selectedHours}
+                onChange={(event, value) => value && fillFromNow(value)}
+              >
+                {HOUR_SHORTCUTS.map((hours) => (
+                  <ToggleButton key={hours} value={hours}>
+                    +{hours}h
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
             </Grid>
             <Grid size={{ md: 6, xs: 12 }}>
               <CippFormComponent
@@ -661,7 +635,7 @@ const Page = () => {
                     if (
                       value &&
                       start &&
-                      durationCapSeconds &&
+                      durationCapSeconds !== null &&
                       value - start > durationCapSeconds
                     ) {
                       return `This window is ${durationPhrase(value - start)}. The maximum allowed is ${durationCapLabel}.`
@@ -673,23 +647,9 @@ const Page = () => {
             </Grid>
             {lasts && (
               <Grid size={{ md: 12, xs: 12 }}>
-                <Typography
-                  variant="body2"
-                  aria-live="polite"
-                  sx={{
-                    fontVariantNumeric: 'tabular-nums',
-                    color: overMax ? 'error.main' : 'text.secondary',
-                  }}
-                >
+                <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                   Lasts {lasts}
-                </Typography>
-              </Grid>
-            )}
-            {overMax && durationCapLabel && (
-              <Grid size={{ md: 12, xs: 12 }}>
-                <Alert severity="error">
-                  This window is {lasts}. The maximum allowed is {durationCapLabel}.
-                </Alert>
+                </Box>
               </Grid>
             )}
             <Grid size={{ md: 12, xs: 12 }}>

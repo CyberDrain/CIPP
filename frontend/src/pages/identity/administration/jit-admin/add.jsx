@@ -1,4 +1,4 @@
-import { Box, Divider } from '@mui/material'
+import { Alert, Box, Button, Divider, Stack, Typography } from '@mui/material'
 import { Grid } from '@mui/system'
 import CippFormPage from '../../../../components/CippFormPages/CippFormPage'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
@@ -15,8 +15,69 @@ import { ApiGetCall, ApiPostCall } from '../../../../api/ApiCall'
 import { CippApiResults } from '../../../../components/CippComponents/CippApiResults'
 import { useJitAllowedRoles } from '../../../../hooks/use-jit-allowed-roles'
 import { CippJitRoleTemplateApply } from '../../../../components/CippComponents/CippJitRoleTemplateApply'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { resolveJitTemplateVariables } from '../../../../utils/jit-template-variables'
+
+const HOUR_SHORTCUTS = [4, 8, 12, 24]
+
+const parseDuration = (duration) => {
+  if (!duration) return null
+  const matches = duration.match(
+    /P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/
+  )
+  if (!matches) return null
+  return {
+    years: parseInt(matches[1] || 0),
+    months: parseInt(matches[2] || 0),
+    weeks: parseInt(matches[3] || 0),
+    days: parseInt(matches[4] || 0),
+    hours: parseInt(matches[5] || 0),
+    minutes: parseInt(matches[6] || 0),
+    seconds: parseInt(matches[7] || 0),
+  }
+}
+
+const durationPhrase = (seconds) => {
+  if (!seconds || seconds <= 0) return null
+  const days = Math.floor(seconds / 86400)
+  const hours = Math.floor((seconds % 86400) / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const part = (count, singular) =>
+    count ? `${count} ${count === 1 ? singular : `${singular}s`}` : null
+  return (
+    [part(days, 'day'), part(hours, 'hour'), part(minutes, 'minute')].filter(Boolean).join(' ') ||
+    '0 minutes'
+  )
+}
+
+// ExecJITAdmin caps the window with XmlConvert.ToTimeSpan: a year is 365 days, a month is 30.
+// That parser rejects the week designator, and the API then skips the cap.
+const maxDurationSeconds = (iso) => {
+  if (typeof iso !== 'string' || !iso.trim() || iso.includes('W')) return null
+  const parsed = parseDuration(iso.trim())
+  if (!parsed) return null
+  return (
+    parsed.years * 365 * 86400 +
+    parsed.months * 30 * 86400 +
+    parsed.days * 86400 +
+    parsed.hours * 3600 +
+    parsed.minutes * 60 +
+    parsed.seconds
+  )
+}
+
+const matchingHours = (startUnix, endUnix) => {
+  if (!startUnix || !endUnix || endUnix <= startUnix) return null
+  const hours = (endUnix - startUnix) / 3600
+  return HOUR_SHORTCUTS.includes(hours) ? hours : null
+}
+
+const roundedNowUnix = () => {
+  const now = new Date()
+  const minutes = now.getMinutes()
+  now.setMinutes(minutes % 15 === 0 ? minutes : Math.floor(minutes / 15) * 15, 0, 0)
+  return Math.floor(now.getTime() / 1000)
+}
 
 const Page = () => {
   const formControl = useForm({ mode: 'onChange' })
@@ -69,6 +130,18 @@ const Page = () => {
 
   const caExclusion = ApiPostCall({ relatedQueryKeys: ['JIT Admin Table'] })
   const auditExclusion = ApiPostCall({ relatedQueryKeys: ['JIT Admin Table'] })
+  const jitSettings = ApiGetCall({
+    url: '/api/ExecJITAdminSettings?Action=Get',
+    queryKey: 'jitAdminSettings',
+  })
+  const durationCapSeconds = maxDurationSeconds(jitSettings.data?.MaxDuration)
+  const windowSeconds = startDate && endDate ? endDate - startDate : null
+  const lasts = durationPhrase(windowSeconds)
+  const durationCapLabel = durationPhrase(durationCapSeconds)
+  const overMax =
+    windowSeconds !== null && durationCapSeconds !== null && windowSeconds > durationCapSeconds
+  const selectedHours = matchingHours(startDate, endDate)
+  const hourPickStartRef = useRef(null)
 
   useEffect(() => {
     if (!useTAP || !startDate || !endDate) {
@@ -131,24 +204,6 @@ const Page = () => {
       formControl.setValue('expireAction', null)
     }
   }, [useRoles, useGroups])
-
-  // Simple duration parser for basic ISO 8601 durations
-  const parseDuration = (duration) => {
-    if (!duration) return null
-    const matches = duration.match(
-      /P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/
-    )
-    if (!matches) return null
-    return {
-      years: parseInt(matches[1] || 0),
-      months: parseInt(matches[2] || 0),
-      weeks: parseInt(matches[3] || 0),
-      days: parseInt(matches[4] || 0),
-      hours: parseInt(matches[5] || 0),
-      minutes: parseInt(matches[6] || 0),
-      seconds: parseInt(matches[7] || 0),
-    }
-  }
 
   const addDurationToDate = (date, duration) => {
     if (!date || !duration) return null
@@ -306,8 +361,20 @@ const Page = () => {
     }
   }, [watcher.jitAdminTemplate, lastTemplate])
 
-  // Recalculate end date when start date changes and template has default duration
+  const fillFromNow = (hours) => {
+    const startUnix = roundedNowUnix()
+    hourPickStartRef.current = startUnix
+    formControl.setValue('startDate', startUnix, { shouldDirty: true, shouldValidate: true })
+    formControl.setValue('endDate', startUnix + hours * 3600, {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+  }
+
+  // A template duration follows the start date, except when that start was just written
+  // by an hour shortcut. The shortcut already chose the length.
   useEffect(() => {
+    if (hourPickStartRef.current === watcher.startDate) return
     if (watcher.startDate && selectedTemplate?.defaultDuration) {
       const durationValue =
         typeof selectedTemplate.defaultDuration === 'object' &&
@@ -322,6 +389,12 @@ const Page = () => {
       }
     }
   }, [watcher.startDate])
+
+  useEffect(() => {
+    if (durationCapSeconds && formControl.getValues('endDate')) {
+      formControl.trigger('endDate')
+    }
+  }, [durationCapSeconds, formControl])
 
   // Fires only after the JIT Admin submission itself succeeds (ApiPostCall's onResult
   // is never invoked on error), then schedules the vacation-mode exclusions for the
@@ -514,6 +587,51 @@ const Page = () => {
                 </Grid>
               </Grid>
             </CippFormCondition>
+            <Grid size={{ md: 12, xs: 12 }}>
+              <Stack spacing={1}>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  From now
+                </Typography>
+                <Stack
+                  direction="row"
+                  useFlexGap
+                  flexWrap="wrap"
+                  spacing={1}
+                  role="group"
+                  aria-label="Set access from now"
+                >
+                  {HOUR_SHORTCUTS.map((hours) => {
+                    const selected = selectedHours === hours
+                    return (
+                      <Button
+                        key={hours}
+                        type="button"
+                        variant={selected ? 'contained' : 'outlined'}
+                        size="small"
+                        aria-pressed={selected}
+                        onClick={() => fillFromNow(hours)}
+                        sx={{
+                          minHeight: 44,
+                          minWidth: 52,
+                          px: 1.5,
+                          touchAction: 'manipulation',
+                          transitionProperty: 'background-color, color, border-color, box-shadow',
+                          transitionDuration: '150ms',
+                          transitionTimingFunction: 'ease-out',
+                          '&:active': { transform: 'scale(0.96)' },
+                          '@media (prefers-reduced-motion: reduce)': {
+                            transition: 'none',
+                            '&:active': { transform: 'none' },
+                          },
+                        }}
+                      >
+                        +{hours}h
+                      </Button>
+                    )
+                  })}
+                </Stack>
+              </Stack>
+            </Grid>
             <Grid size={{ md: 6, xs: 12 }}>
               <CippFormComponent
                 type="datePicker"
@@ -536,15 +654,44 @@ const Page = () => {
                 validators={{
                   required: 'End date is required',
                   validate: (value) => {
-                    const startDate = formControl.getValues('startDate')
-                    if (value && startDate && new Date(value) < new Date(startDate)) {
+                    const start = formControl.getValues('startDate')
+                    if (value && start && new Date(value) < new Date(start)) {
                       return 'End date must be after start date'
+                    }
+                    if (
+                      value &&
+                      start &&
+                      durationCapSeconds &&
+                      value - start > durationCapSeconds
+                    ) {
+                      return `This window is ${durationPhrase(value - start)}. The maximum allowed is ${durationCapLabel}.`
                     }
                     return true
                   },
                 }}
               />
             </Grid>
+            {lasts && (
+              <Grid size={{ md: 12, xs: 12 }}>
+                <Typography
+                  variant="body2"
+                  aria-live="polite"
+                  sx={{
+                    fontVariantNumeric: 'tabular-nums',
+                    color: overMax ? 'error.main' : 'text.secondary',
+                  }}
+                >
+                  Lasts {lasts}
+                </Typography>
+              </Grid>
+            )}
+            {overMax && durationCapLabel && (
+              <Grid size={{ md: 12, xs: 12 }}>
+                <Alert severity="error">
+                  This window is {lasts}. The maximum allowed is {durationCapLabel}.
+                </Alert>
+              </Grid>
+            )}
             <Grid size={{ md: 12, xs: 12 }}>
               <CippFormComponent
                 type="switch"

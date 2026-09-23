@@ -63,7 +63,7 @@ CIPP is a comprehensive, open source platform (supported by Microsoft themselves
 
 As we consider the implementation of CIPP at **\[Company Name]**, it's important to take a close look at the costs and benefits associated with each deployment option:
 
-* **Sponsored Model ($99/month)**:
+* **Sponsored Model (€99/month)**:
   * Immediate access to CIPP's features without the need for extensive technical knowledge.
   * Monthly cost covers hosting, support, and automated updates.
   * Higher convenience with consistent updates and user-friendly management.
@@ -76,7 +76,7 @@ As we consider the implementation of CIPP at **\[Company Name]**, it's important
 
 1. **Community Engagement**: Join the [CyberDrain Discord](https://discord.gg/cyberdrain) community to collaborate, share insights, and stay updated on industry developments. Engaging with the community will provide us with valuable insights and knowledge from other professionals using CIPP, enhancing our understanding and usage of the platform.
 2. **Deployment Decision**: Choose between the sponsored and self-hosted models based on our preferences and resources. The two deployment options offer distinct advantages:
-   * **Sponsored Model ($99/month)**:
+   * **Sponsored Model (€99/month)**:
      * Opting for the sponsored model provides access to a hosted version of CIPP at a reasonable cost. This hassle-free approach eliminates the need for additional setup and technical know-how. We can simply fill out a form and follow the provided instructions on GitHub to get started.
      * The hosted version ensures automated updates, support, and a user-friendly management backend, allowing us to focus on Microsoft 365 management tasks without the overhead of infrastructure management.
    * **Self-Hosted Model**:

@@ -127,6 +127,49 @@ Each result comes back labelled with the `id` you gave it. Only `GET` requests a
 Heavy sustained use can still slow the portal down even while you stay under the rate limit, since both share the same backend. These patterns are the difference between an integration nobody notices and one that generates support tickets.
 {% endhint %}
 
+## Response Compression
+
+CIPP compresses `/api` responses on the fly — Brotli preferred, gzip as a fallback — whenever your client says which encodings it accepts. Text-heavy responses are often **5–10× smaller** on the wire: a user or group list that runs to tens of KB of JSON typically arrives in a few KB. That's faster for you to receive and lighter on the shared backend, so it's worth making sure your client asks for it.
+
+There's nothing to enable on the server. It's negotiated per request from the `Accept-Encoding` header you send:
+
+* **Most HTTP clients and SDKs do this automatically.** Anything built on a modern HTTP stack — including `Invoke-RestMethod` in PowerShell 7 and the CIPP API PowerShell module — advertises `Accept-Encoding` and transparently decompresses the reply. You still get plain JSON back; there are just fewer bytes on the wire.
+* **If you call the API directly, send the header yourself:**
+
+  ```
+  Accept-Encoding: br, gzip
+  ```
+
+  With `curl`, `--compressed` does both at once — it sends the header and decompresses the response.
+* **A client that advertises nothing is served uncompressed.** That still works; it just costs you the full payload on every call.
+
+{% hint style="info" %}
+Compression is transparent to the response body — the JSON you parse is byte-for-byte the same either way. The only thing that changes is the number of bytes transferred, which is also what a hosted egress budget (below) measures.
+{% endhint %}
+
+## Daily Egress Budget
+
+Hosted CIPP instances may apply a **daily egress budget** — a ceiling on the total volume of API response data served to app-only clients across the whole instance in a UTC day. It's a bandwidth safeguard that complements the rate limit: a caller can move a large amount of data with slow, big requests while sitting comfortably under 100 requests per 10 seconds, and this keeps that in check. It applies **only to app-only API clients** — people working in the CIPP portal are never counted and never affected.
+
+When a budget is in force and the instance has served its allowance for the day, further app-only API requests are refused:
+
+* You get `HTTP 429 Too Many Requests` back immediately.
+* A `Retry-After` header — and a `resetUtc` field in the response body — tell you when the budget resets, which is the next **UTC midnight**.
+* The response body identifies the reason:
+
+  ```json
+  { "error": "egress_quota_exceeded", "retryAfterSeconds": 54058, "resetUtc": "2026-01-01T00:00:00Z" }
+  ```
+
+Two habits keep you comfortably inside a budget, and they're the same ones that keep you under the rate limit:
+
+* **Advertise `Accept-Encoding`** so your responses are compressed. The budget counts the bytes actually sent over the wire, so a client that receives compressed responses spends its allowance many times more slowly than one taking identity.
+* **Ask for more data in fewer, leaner calls** — the report database, `AllTenants`, and bulk Graph patterns above all reduce the volume you pull for the same result.
+
+{% hint style="info" %}
+Not every instance enforces a budget — many run in accounting-only mode, where usage is measured but nothing is refused. Treat a `429` with `egress_quota_exceeded` the same way you treat a rate-limit `429`: honour the `Retry-After` and resume afterwards.
+{% endhint %}
+
 ## Endpoint documentation
 
 {% content-ref url="endpoints.md" %}

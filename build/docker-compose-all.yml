@@ -87,6 +87,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - CRAFT_VERBOSE=true
+      - CRAFT_API_EGRESS_LIMIT_ENABLED=true
       - App__Setup__Enabled=false
       # Where the SearchDocs MCP tool finds the docs. Only needed in dev: the image puts them
       # at $CIPPRootPath/Docs, which Get-CippDocsRoot probes by default.

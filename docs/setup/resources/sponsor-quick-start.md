@@ -12,12 +12,12 @@ If you've started the sponsorship process and are ready to enhance your manageme
 
 ## **Initial Sponsorship Actions**
 
-1. **Subscription Activation**: Start by signing up for the $99 subscription using your GitHub account on the [GitHub Sponsorship](https://github.com/sponsors/KelvinTegelaar/sponsorships?tier_id=101398) page.
+1. **Subscription Activation**: Start by signing up for the €99/month subscription through our [secure checkout](https://pay.cyberdrain.com/b/4gM7sLa003Sldjn6nu6wE01).
 2. **Welcome Email**: Upon subscription, you will receive an email with detailed instructions to kickstart your deployment. This email will guide you to the [CIPP management portal ](https://management.cipp.app)for deployment steps.
 
 ## Deployment & Service Account Creation
 
-3. **Configure CIPP Deployment:** Log in to your [management portal](https://management.cipp.app) using the GitHub credentials you used to initiate the sponsorship. This is where you can kick off your deployment, add custom domain names, and begin inviting users into CIPP. See [install.md](../setting-up-cipp/install.md "mention") for a walkthrough of this process. <mark style="color:yellow;">NOTE: If you sponsor with an organisation GitHub account, please send in a message to helpdesk@cyberdrain.com with your personal GitHub username so that we can manually add that user to the portal. You cannot log in to the management portal with organisation accounts.</mark>
+3. **Configure CIPP Deployment:** Log in to your [management portal](https://management.cipp.app) using the email address you signed up with if you subscribed through Stripe, or your GitHub account if you are still using GitHub Sponsors before October 1, 2026. This is where you can kick off your deployment, add custom domain names, and begin inviting users into CIPP. See [install.md](../setting-up-cipp/install.md "mention") for a walkthrough of this process. <mark style="color:yellow;">NOTE: If you are still using GitHub Sponsors and signed up with an organisation account, please send a message to helpdesk@cyberdrain.com with your personal GitHub username so we can help you access the portal. If you have any other trouble accessing the management portal after subscribing, please contact helpdesk@cyberdrain.com.</mark>
 4. **Service Account Creation**: Follow the instructions carefully on the [creating-the-cipp-service-account-gdap-ready.md](../installation/creating-the-cipp-service-account-gdap-ready.md "mention") page to ensure there are no permission issues when connecting your tenants within CIPP in the subsequent steps.
 
 ## Accessing CIPP & Executing Setup Wizard
@@ -36,10 +36,10 @@ If you are unsure about whether your clients' environments are GDAP ready, or ne
 
 ## Sponsorship Billing
 
-Sponsorship is billed by GitHub, not by CyberDrain, and GitHub Sponsors has no billing cycle of its own. A sponsorship always takes the billing date, payment method and receipt already set on the GitHub account that starts it. If that account's paid plan is billed annually, the sponsorship is billed annually on the same renewal date, and it appears on the same receipt as your other GitHub charges. If the account is billed monthly, the sponsorship is billed monthly.
+Hosted CIPP subscriptions are €99/month. New subscriptions use the secure checkout above, while existing GitHub Sponsors subscribers can continue using their current billing path until October 1, 2026.
 
-This catches people out when a sponsorship started from an account on annual billing produces a single yearly charge rather than the monthly one they expected. Check your account's billing date and payment method at [github.com/settings/billing](https://github.com/settings/billing) before you subscribe, and change the account's billing frequency first if you want the sponsorship charged differently.
+If you need help with billing after subscribing, contact [helpdesk@cyberdrain.com](mailto:helpdesk@cyberdrain.com).
 
 {% hint style="info" %}
-Changing a sponsorship amount later applies from the next renewal rather than adjusting the period already paid for.
+Keep your confirmation email handy for future billing reference, or refer to your existing GitHub Sponsors billing details if you are still on that path before October 1, 2026.
 {% endhint %}

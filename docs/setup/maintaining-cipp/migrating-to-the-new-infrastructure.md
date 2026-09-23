@@ -1,9 +1,4 @@
----
-hidden: true
-noIndex: true
----
-
-# Migrating to the New Infrastructure
+# Migrating Self Hosted to the New Infrastructure
 
 This migration moves a self-hosted CIPP instance off the Function App and Static Web App architecture onto a single Linux container Web App. Your storage account and Key Vault are kept, so credentials and configuration carry across, and the old compute resources are removed as part of the cutover.
 

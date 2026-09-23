@@ -6,6 +6,24 @@ description: Define Privileged Identity Management role settings once and deploy
 
 The **PIM Templates** tab of the Roles & PIM page lists the role settings templates. Besides building one by hand, the **Create template from role settings** action on the Roles & Assignments tab captures a role's current settings from a tenant into a new template; values below the secure floor are raised to the closest allowed value and every raise is reported. A PIM template describes how a set of Entra directory roles must behave in Privileged Identity Management: how long an activation may last, what an administrator has to prove and write down to activate, whether someone has to approve, how long eligible and active assignments may exist, and who is notified. The **PIM Role Settings Template** standard deploys a template to a tenant and reports drift from it.
 
+## Action Buttons
+
+{% content-ref url="add.md" %}
+[add.md](add.md)
+{% endcontent-ref %}
+
+<details>
+
+<summary>Browse Catalog</summary>
+
+Opens a drawer listing the PIM role settings templates published in the community repositories you have configured, so you can bring one into CIPP.
+
+{% hint style="info" %}
+Be sure to check out [community-repos](../../../../tools/community-repos/ "mention") for more on setting up repositories.
+{% endhint %}
+
+</details>
+
 ## The secure floor
 
 Templates are validated when they are saved and again every time the standard runs. A template that falls below CIPP's secure floor is refused with the list of problems; it is never silently adjusted.

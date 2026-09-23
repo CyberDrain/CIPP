@@ -28,6 +28,19 @@ At the top of the page, a bar of key indicators gives an at-a-glance view of the
 
 Below the indicator bar, a compact stats panel breaks the same areas down in more detail: the HTTP and BG pools (size, busy count, invocations, utilisation, average duration, and faults); Jobs (running, queued, completed, failed, and skipped); the Limiter (active/maximum, waiting, and throttle status); Memory (container used and limit, application RSS, other processes, GC heap, committed, GC limit, usage percentage, and garbage-collection counts); and CPU (container, application, and other). Any figure that crosses a warning threshold is shown in red. Skipped is never one of them, because a skipped job is a stale queue entry rather than a failure.
 
+## Threads
+
+A card between the status panel and the worker tables reports the container process's OS thread count, alongside the pooled workers and processors it is measured against. The header repeats the thread count as a chip, next to a summary of pooled workers across the available processors.
+
+| Statistic     | Description                                            |
+| ------------- | ------------------------------------------------------- |
+| Processors    | The number of processors available to the container.    |
+| HTTP Workers  | The size of the HTTP worker pool.                        |
+| BG Workers    | The size of the background worker pool.                  |
+| Total Workers | The combined size of both worker pools.                  |
+
+Where the process reports a state breakdown, a row of chips below shows how many threads are currently in each state, for example Wait or Running. A thread count far above the combined worker pool size is worth investigating as a possible leak.
+
 ## Worker Pools
 
 Two tables list every worker in the container: one for the HTTP pool, which handles interactive and API requests, and one for the Background pool, which runs queued and scheduled jobs. Both tables share the same columns.

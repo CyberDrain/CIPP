@@ -15,7 +15,7 @@ body:
 
         Before creating a request, please:
 
-        1. Check that you have an active sponsorship, only users that are sponsoring CIPP at the $99,- sponsorship level can create feature requests.
+        1. Check that you have an active sponsorship, only users that are sponsoring CIPP at the €99/month sponsorship level can create feature requests.
         1. Search existing **open and closed** feature requests to avoid duplicates.
         2. Note that **repeat feature requests** are permitted if a previous request was closed more than 30 days ago.
         3. Consider implementing the feature yourself by reviewing the [development documentation](https://docs.cipp.app/dev-documentation/cipp-dev-guide/setting-up-for-local-development).
@@ -33,7 +33,7 @@ body:
       options:
         - label: "**I have searched existing feature requests** (open and closed) and found no duplicates."
           required: true
-        - label: "**Me or my organization is currently an active sponsor of the product at the $99,- level."
+        - label: "**Me or my organization is currently an active sponsor of the product at the €99/month level."
           required: true
 
   - type: textarea

@@ -14,6 +14,10 @@ Apart from the profile photo, the MFA method controls and the role removal actio
 [exchange.md](exchange.md)
 {% endcontent-ref %}
 
+{% content-ref url="onedrive-shortcuts.md" %}
+[onedrive-shortcuts.md](onedrive-shortcuts.md)
+{% endcontent-ref %}
+
 {% content-ref url="bec.md" %}
 [bec.md](bec.md)
 {% endcontent-ref %}

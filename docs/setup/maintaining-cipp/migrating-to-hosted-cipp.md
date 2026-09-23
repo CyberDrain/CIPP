@@ -37,10 +37,10 @@ Go to **Application Settings** → click **Run Backup**.
 
 {% stepper %}
 {% step %}
-**Go to** CIPP's [Management Portal](https://management.cipp.app/) and log in with the GitHub account you used to sponsor.
+**Go to** CIPP's [Management Portal](https://management.cipp.app/) and log in using the email address you signed up with if you subscribed through Stripe, or your GitHub account if you are still using GitHub Sponsors before October 1, 2026.
 
 {% hint style="warning" %}
-NOTE: If you sponsor with an organisation GitHub account, please send in a message to helpdesk@cyberdrain.com with your personal GitHub username so that we can manually add that user to the portal. You cannot log in to the management portal with organisation accounts.
+NOTE: If you are still using GitHub Sponsors and signed up with an organisation account, please send a message to helpdesk@cyberdrain.com with your personal GitHub username so we can help you access the portal. If you have any other trouble accessing the management portal after subscribing, please contact helpdesk@cyberdrain.com.
 {% endhint %}
 {% endstep %}
 
@@ -71,7 +71,7 @@ Click **Go to Keyvault**. This opens the Azure portal on your Key Vault's **Over
 {% step %}
 **Grant yourself permission to read the secrets.**
 
-By default, even the user who deployed CIPP does not have data plane access to the secret values; only management plane access to the vault itself. Add yourself under **Access policies** — not under **Access control (IAM)**.
+By default, even the user who deployed CIPP does not have data plane access to the secret values; only management plane access to the vault itself. Add yourself under **Access policies**, not under **Access control (IAM)**.
 
 1. In the Key Vault's left navigation, click **Access policies**.
 2. Click **+ Create**.
@@ -100,7 +100,7 @@ In the Key Vault's left navigation, expand **Objects** and click **Secrets**. Yo
 
 For each of the four secrets:
 
-1. Click the secret name (e.g. `ApplicationID`).
+1. Click the secret name (for example `ApplicationID`).
 2. Click the row for the **current version** (the GUID shown under "Current Version").
 3. At the bottom of the version page, click **Show Secret Value**.
 4. Click the **copy** icon to the right of the revealed value.
@@ -135,7 +135,7 @@ In your **hosted** CIPP instance, navigate to **Application Settings** → **Res
 {% endstep %}
 
 {% step %}
-Wait for the restore to complete—CIPP will import your original configuration and data.
+Wait for the restore to complete. CIPP will import your original configuration and data.
 {% endstep %}
 {% endstepper %}
 

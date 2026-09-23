@@ -43,19 +43,19 @@ Yes. Hosted CIPP is maintained by an expert team of Azure Administrators and run
 
 Assuming you're running on the click-to-deploy configuration and average usage patterns CIPP has a cost of about €25 a month. You can check the costs, and estimated costs, for the resource group on the Azure Portal.
 
-Hosted CIPP is €99,- and comes with unlimited support, weekly live training sessions, and more benefits.
+Hosted CIPP is €99/month and comes with unlimited support, weekly live training sessions, and more benefits.
 
 </details>
 
 <details>
 
-<summary>Why is my GitHub Sponsors charge annual when I expected it monthly?</summary>
+<summary>How is hosted CIPP billed?</summary>
 
-GitHub Sponsors has no billing cycle of its own. A sponsorship takes the billing date, payment method and receipt already set on the GitHub account that started it, so the frequency follows that account's existing plan rather than anything chosen during sponsorship.
+Hosted CIPP subscriptions are €99/month. New subscriptions use the secure checkout linked in the setup guide, while existing GitHub Sponsors subscribers can continue using that billing path until October 1, 2026.
 
-If the GitHub account is on annual billing, the sponsorship is billed annually on the same renewal date and lands on the same receipt as the account's other GitHub charges. If the account is on monthly billing, the sponsorship is billed monthly.
+If you subscribed through Stripe, your billing details and receipt information are provided during checkout and in your confirmation email. If you are still on GitHub Sponsors before October 1, 2026, billing continues through your GitHub account.
 
-Review your account's billing date and payment method at [github.com/settings/billing](https://github.com/settings/billing). Changing the account's billing frequency changes how the sponsorship is billed from the next renewal onwards. See [sponsor-quick-start.md](../../setup/resources/sponsor-quick-start.md "mention") for the rest of the sponsorship process.
+If you need help with billing after subscribing, contact [helpdesk@cyberdrain.com](mailto:helpdesk@cyberdrain.com). See [sponsor-quick-start.md](../../setup/resources/sponsor-quick-start.md "mention") for the rest of the setup process.
 
 </details>
 
@@ -276,7 +276,7 @@ See the instructions to switch the tenant mode [here](../../setup/installation/o
 
 <summary>Does CIPP require a specific licence?</summary>
 
-No, CIPP can work with any M365 licence in your partner tenant. For specific features CIPP will of course only function if the tenant is licensed correctly, e.g. to manage Intune, the tenant must have Intune Licensing.
+No, CIPP can work with any M365 licence in your partner tenant. For specific features CIPP will of course only function if the tenant is licensed correctly, for example to manage Intune, the tenant must have Intune Licensing.
 
 </details>
 
@@ -380,9 +380,9 @@ This is one of the most common points of confusion for newly onboarded partners,
 It's important to understand that there are **two different identities** at play in CIPP:
 
 * **The CIPP service account (CIPP-SAM).** This is what CIPP itself uses to read and manage tenants in the background. The onboarding wizard, the 15 [recommended-roles.md](../../setup/maintaining-cipp/recommended-roles.md "mention"), CPV refreshes, and the Permissions Check all relate to _this_ account. If CIPP is displaying tenant data, this account is working.
-* **Your individual technician's account.** The **Portals Quick Access** links on the [dashboard](../../user-documentation/dashboard/ "mention") and the portal jump-ins on [tenant-select.md](../../user-documentation/shared-features/menu-bar/tenant-select.md "mention") leave CIPP entirely and open the Microsoft portal **as the signed-in technician** — not as the service account. For these to work, the technician's _own_ account must have a GDAP path into that tenant.
+* **Your individual technician's account.** The **Portals Quick Access** links on the [dashboard](../../user-documentation/dashboard/ "mention") and the portal jump-ins on [tenant-select.md](../../user-documentation/shared-features/menu-bar/tenant-select.md "mention") leave CIPP entirely and open the Microsoft portal **as the signed-in technician**, not as the service account. For these to work, the technician's _own_ account must have a GDAP path into that tenant.
 
-So if CIPP works but a technician can't use the portal links, refreshing CPV, re-running the Permissions Check, or confirming the 15 roles **will not help** — those only affect the service account.
+So if CIPP works but a technician can't use the portal links, refreshing CPV, re-running the Permissions Check, or confirming the 15 roles **will not help**: those only affect the service account.
 
 **Typical symptoms, all from the same cause:**
 
@@ -404,7 +404,7 @@ Adding a user to the M365 GDAP groups grants that user delegated access to **eve
 {% endhint %}
 
 {% hint style="info" %}
-GDAP delegated access is also bounded by the roles in each relationship. If a role (for example SharePoint Administrator) was never part of the relationship for that client, no one — service account or technician — will have that access until a new relationship containing the role is established. See [recommended-roles.md](../../setup/maintaining-cipp/recommended-roles.md "mention") and the [gdap-management](../../user-documentation/tenant/gdap-management/ "mention") section. [Microsoft GDAP Documentation](https://learn.microsoft.com/en-us/partner-center/customers/gdap-introduction)
+GDAP delegated access is also bounded by the roles in each relationship. If a role (for example SharePoint Administrator) was never part of the relationship for that client, no one, service account or technician, will have that access until a new relationship containing the role is established. See [recommended-roles.md](../../setup/maintaining-cipp/recommended-roles.md "mention") and the [gdap-management](../../user-documentation/tenant/gdap-management/ "mention") section. [Microsoft GDAP Documentation](https://learn.microsoft.com/en-us/partner-center/customers/gdap-introduction)
 {% endhint %}
 
 </details>
@@ -451,4 +451,3 @@ Auto Extend is only available for relationships without the Global Administrator
 You don't need to do anything. The personal access token was only needed for initial deployment.
 
 </details>
-

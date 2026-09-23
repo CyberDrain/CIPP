@@ -241,7 +241,7 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "scope": "[resourceId('Microsoft.Web/sites', variables('webAppName'))]",
-      "name": "[guid(resourceGroup().id, variables('webAppName'), 'Contributor')]",
+      "name": "[guid(resourceId('Microsoft.Web/sites', variables('webAppName')), 'Contributor', 'cipp')]",
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
         "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('webAppName')), '2024-11-01', 'full').identity.principalId]",

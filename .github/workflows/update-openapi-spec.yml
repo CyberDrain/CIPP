@@ -1,0 +1,192 @@
+name: Update OpenAPI Spec
+
+# Regenerates backend/Config/openapi.json (and the public frontend/public/openapi.json
+# copy) from the HTTP entrypoint AST with build/tools/build-openapi.ps1, and opens a PR
+# against dev when the committed spec has drifted. openapi_spec.yml already fails a PR
+# when the spec drifts; this is the counterpart that produces the fix instead of only
+# reporting it. Requires "Allow GitHub Actions to create and approve pull requests" in
+# the repository's Actions settings.
+
+on:
+  schedule:
+    - cron: '0 5 * * *' # Daily 05:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-openapi-spec
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.repository == 'CyberDrain/CIPP'
+    name: Update OpenAPI spec
+    # ubuntu on purpose: the generator emits LF and a deterministic key order that
+    # match the committed file exactly. On Windows CRLF makes -Check false-positive,
+    # so a Windows runner would open PRs for line endings that never really changed.
+    runs-on: ubuntu-latest
+    env:
+      BASE_BRANCH: dev
+      BRANCH_PREFIX: chore/openapi-spec-update
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          # Full history: pushing a new branch from a shallow clone is rejected.
+          fetch-depth: 0
+
+      - name: Clean up temp branches from earlier runs
+        shell: pwsh
+        run: |
+          # A prefixed branch with no open PR has been merged, closed, or orphaned.
+          # Best effort - a failure here must not block today's update.
+          $Branches = git ls-remote --heads origin |
+            ForEach-Object { ($_ -split "`t")[1] -replace '^refs/heads/', '' } |
+            Where-Object { $_ -like "$env:BRANCH_PREFIX-*" }
+
+          foreach ($Branch in $Branches) {
+            $OpenPrs = @(gh pr list --head $Branch --state open --json number | ConvertFrom-Json)
+            if ($OpenPrs.Count -eq 0) {
+              Write-Host "Deleting merged/closed branch $Branch"
+              git push origin --delete $Branch
+              if ($LASTEXITCODE -ne 0) { Write-Warning "Could not delete $Branch." }
+            } else {
+              Write-Host "Keeping $Branch (PR #$($OpenPrs[0].number) is still open)"
+            }
+          }
+          exit 0
+
+      - name: Regenerate the OpenAPI spec
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Snapshot the current spec so the PR body can say which operations changed.
+          Copy-Item ./backend/Config/openapi.json "$env:RUNNER_TEMP/openapi.before.json"
+          ./build/tools/build-openapi.ps1
+
+      - name: Validate the regenerated spec
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # The generator is deterministic, but a partial/empty run must never open a PR
+          # that guts the tool contract Get-CippMcpToolList projects from this file.
+          $Spec = Get-Content -Path ./backend/Config/openapi.json -Raw | ConvertFrom-Json -AsHashtable -Depth 100
+          if (-not $Spec.paths -or $Spec.paths.Count -lt 100) {
+            throw "openapi.json has only $($Spec.paths.Count) paths - refusing to continue."
+          }
+          Write-Host "Validated $($Spec.paths.Count) OpenAPI operations."
+
+      - name: Stage changes
+        id: stage
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git add -- 'backend/Config/openapi.json' 'frontend/public/openapi.json'
+          $Staged = @(git diff --cached --name-only)
+          if ($Staged.Count -eq 0) {
+            Write-Host 'OpenAPI spec is already up to date.'
+            'changed=false' | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+          Write-Host "Changed files:`n$($Staged -join "`n")"
+          'changed=true' | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Build the PR body
+        if: steps.stage.outputs.changed == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Before = Get-Content -Path "$env:RUNNER_TEMP/openapi.before.json" -Raw | ConvertFrom-Json -AsHashtable -Depth 100
+          $After = Get-Content -Path ./backend/Config/openapi.json -Raw | ConvertFrom-Json -AsHashtable -Depth 100
+
+          $BeforePaths = if ($Before.paths) { $Before.paths } else { @{} }
+          $AfterPaths = if ($After.paths) { $After.paths } else { @{} }
+
+          $Added = $AfterPaths.Keys | Where-Object { -not $BeforePaths.ContainsKey($_) } | Sort-Object
+          $Removed = $BeforePaths.Keys | Where-Object { -not $AfterPaths.ContainsKey($_) } | Sort-Object
+          # Deterministic key order (see build-openapi.ps1) makes a compact re-serialise a
+          # stable equality test, so a changed operation is a genuine schema change.
+          $Changed = $AfterPaths.Keys |
+            Where-Object {
+              $BeforePaths.ContainsKey($_) -and
+              (($BeforePaths[$_] | ConvertTo-Json -Depth 100 -Compress) -cne ($AfterPaths[$_] | ConvertTo-Json -Depth 100 -Compress))
+            } | Sort-Object
+
+          function Format-PathList {
+            param($Paths, $Heading)
+            $Count = @($Paths).Count
+            if ($Count -eq 0) { return @() }
+            $Lines = @('', "### $Heading ($Count)", '')
+            $Lines += @($Paths) | Select-Object -First 25 | ForEach-Object { '- `{0}`' -f $_ }
+            if ($Count -gt 25) { $Lines += '- ...and {0} more' -f ($Count - 25) }
+            return $Lines
+          }
+
+          $Body = @(
+            'Automated regeneration of the CIPP OpenAPI spec, generated by `build/tools/build-openapi.ps1` from the PowerShell AST of the HTTP entrypoints.'
+            ''
+            'The spec is not documentation-only: `Get-CippMcpSpec` loads it at runtime and `Get-CippMcpToolList` projects every read operation in it into an MCP tool, so a stale committed spec ships a stale tool contract.'
+            ''
+            '**Operations:** {0:N0} -> {1:N0}' -f $BeforePaths.Count, $AfterPaths.Count
+          )
+          $Body += Format-PathList -Paths $Added -Heading 'Added operations'
+          $Body += Format-PathList -Paths $Removed -Heading 'Removed operations'
+          $Body += Format-PathList -Paths $Changed -Heading 'Changed operations'
+          $Body += @(
+            ''
+            '<details><summary>Files changed</summary>'
+            ''
+            '```'
+            (git diff --cached --stat)
+            '```'
+            ''
+            '</details>'
+            ''
+            '---'
+            ''
+            '_Opened by the [Update OpenAPI Spec]({0}/{1}/actions/runs/{2}) workflow. The `{3}-*` branch is deleted on the next run once this PR is merged or closed._' -f $env:GITHUB_SERVER_URL, $env:GITHUB_REPOSITORY, $env:GITHUB_RUN_ID, $env:BRANCH_PREFIX
+          )
+          $Body -join "`n" | Set-Content -Path "$env:RUNNER_TEMP/pr-body.md" -Encoding utf8
+
+      - name: Commit, push and open the PR
+        if: steps.stage.outputs.changed == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          # Reuse the branch of an already-open PR so a run of daily updates does not
+          # stack up one PR per day; otherwise cut a fresh dated branch.
+          $OpenPrs = @(gh pr list --state open --base $env:BASE_BRANCH --limit 100 --json number,headRefName | ConvertFrom-Json)
+          $Existing = $OpenPrs | Where-Object { $_.headRefName -like "$env:BRANCH_PREFIX-*" } | Select-Object -First 1
+
+          if ($Existing) {
+            $Branch = $Existing.headRefName
+            Write-Host "Updating PR #$($Existing.number) on $Branch"
+          } else {
+            $Branch = '{0}-{1}' -f $env:BRANCH_PREFIX, (Get-Date -Format 'yyyyMMdd')
+            Write-Host "Creating $Branch"
+          }
+
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git switch -c $Branch
+          git commit -m 'chore(openapi): regenerate API spec'
+          # Force: the branch is disposable and always one commit on top of dev.
+          git push --force origin $Branch
+
+          if (-not $Existing) {
+            gh pr create `
+              --base $env:BASE_BRANCH `
+              --head $Branch `
+              --title ('chore(openapi): regenerate API spec ({0})' -f (Get-Date -Format 'yyyy-MM-dd')) `
+              --body-file "$env:RUNNER_TEMP/pr-body.md"
+          } else {
+            gh pr edit $Existing.number --body-file "$env:RUNNER_TEMP/pr-body.md"
+          }

@@ -1,4 +1,8 @@
-# Migrating to the Latest Version of CIPP
+# Migrating CyberDrain Hosted to the New Infrastructure
+
+{% hint style="success" %}
+The hosted migration process was completed in late August. All new deployments had been on the new infrastructure from the start of the migration. Your instance is on the new infrastructure at this point. This documentation will remain for reference purposes.
+{% endhint %}
 
 In July of 2026, we were pleased to announce new infrastructure for CIPP. Migrating to the new infrastructure gains speed and controlled cost. Newly deployed CIPP instances are already on the new infrastructure.
 
@@ -25,12 +29,12 @@ Two messages mean there is nothing for you to do here:
 {% step %}
 ### Complete the Form
 
-| Field                   | Description                                                                                                                   |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| First Name              | Required.                                                                                                                     |
-| Email                   | Required.                                                                                                                     |
-| Your Company's Domain   | Required. Asked separately from your email address, because some MSPs sign up on a different domain from the one they trade as. |
-| Discord Username        | Optional. Used to add you to the early opt-in role automatically, so you can reach the **#early-opt-in** channel.              |
+| Field                 | Description                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| First Name            | Required.                                                                                                                       |
+| Email                 | Required.                                                                                                                       |
+| Your Company's Domain | Required. Asked separately from your email address, because some MSPs sign up on a different domain from the one they trade as. |
+| Discord Username      | Optional. Used to add you to the early opt-in role automatically, so you can reach the **#early-opt-in** channel.               |
 
 {% hint style="info" %}
 The Discord username is the one shown beneath your display name on your profile, not the display name itself. You also need to be a member of the [CyberDrain Discord server](https://discord.gg/cyberdrain) for the role to be applied.
@@ -78,8 +82,12 @@ Users who load your pre-existing custom domain prior to the certificate being pr
 {% endstep %}
 {% endstepper %}
 
-{% @storylane/embed subdomain="app" linkValue="d3kcpzf2efuj" url="https://app.storylane.io/share/d3kcpzf2efuj" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/d3kcpzf2efuj" linkValue="d3kcpzf2efuj" %}
 
 ## Self-Hosted Clients
 
-More information coming at a future date. We are only handling CyberDrain hosted migrations at this time.
+Please see this document for the migration script and instructions:
+
+{% content-ref url="migrating-to-the-new-infrastructure.md" %}
+[migrating-to-the-new-infrastructure.md](migrating-to-the-new-infrastructure.md)
+{% endcontent-ref %}

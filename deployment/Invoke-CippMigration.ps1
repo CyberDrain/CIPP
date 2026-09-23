@@ -772,6 +772,69 @@ try {
     Write-Warning "  Could not enumerate file shares: $($_.Exception.Message)"
 }
 
+# ── Remove stale role assignments on the target site scope ───────────────────
+# The legacy template granted the function app Contributor on itself, and Azure removes
+# a deleted site's role assignments asynchronously - often minutes after the delete
+# returns. Deploying a same-named site while that row lingers fails the deploy
+# (RoleAssignmentUpdateNotPermitted) or loses the new grant to the late cleanup.
+# The site is about to be (re)created, so any assignment scoped exactly to it is
+# stale; inherited (resource group / subscription) rows are left alone.
+if (-not $SkipDeployment) {
+    $targetSiteScope = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$TargetWebAppName"
+    $targetSiteExists = [bool](Get-AzWebApp -ResourceGroupName $ResourceGroupName -Name $TargetWebAppName -ErrorAction SilentlyContinue)
+    if ($targetSiteExists) {
+        Write-Information "Web app '$TargetWebAppName' already exists - keeping its role assignments."
+    } else {
+        Write-Information "Checking for stale role assignments on '$TargetWebAppName'..."
+        $staleAssignments = @()
+        try {
+            $staleAssignments = @(Invoke-AzWithRetry -OperationName 'Listing role assignments' -ScriptBlock {
+                    Get-AzRoleAssignment -Scope $targetSiteScope -ErrorAction Stop
+                } | Where-Object { $_.Scope -eq $targetSiteScope })
+        } catch {
+            # Some Az versions 404 the list when the resource behind the scope is gone —
+            # that just means nothing lingers. Anything else: warn and proceed; aborting
+            # here (old apps deleted, nothing deployed) is guaranteed downtime.
+            if ($_.Exception.Message -notmatch 'NotFound') {
+                Write-Warning "  Could not list role assignments on '$TargetWebAppName': $($_.Exception.Message) — continuing; the deploy may fail if a stale assignment lingers."
+            }
+        }
+        foreach ($assignment in $staleAssignments) {
+            Write-Information "  Removing stale '$($assignment.RoleDefinitionName)' assignment for $($assignment.ObjectType) $($assignment.ObjectId)"
+            if ($PSCmdlet.ShouldProcess($assignment.RoleAssignmentId, 'Remove stale role assignment')) {
+                try {
+                    Invoke-AzWithRetry -OperationName 'Removing stale role assignment' -ScriptBlock {
+                        Remove-AzRoleAssignment -InputObject $assignment -ErrorAction Stop
+                    }
+                } catch {
+                    # NotFound: Azure's own cleanup beat us to it. Anything else: warn —
+                    # aborting here is guaranteed downtime, a lingering row only might fail the deploy.
+                    if ($_.Exception.Message -notmatch 'does not exist|NotFound') {
+                        Write-Warning "  Could not remove stale assignment $($assignment.RoleAssignmentId): $($_.Exception.Message) — continuing."
+                    }
+                }
+            }
+        }
+        if ($staleAssignments.Count -eq 0) {
+            Write-Information '  None found.'
+        } elseif (-not $WhatIfPreference) {
+            # Deletes are eventually consistent on the ARM side too - confirm they are gone
+            # before the deploy re-creates the scope.
+            $sweepAttempts = 0
+            do {
+                Start-Sleep -Seconds 5
+                $sweepAttempts++
+                $remainingAssignments = @(Get-AzRoleAssignment -Scope $targetSiteScope -ErrorAction SilentlyContinue | Where-Object { $_.Scope -eq $targetSiteScope })
+            } while ($remainingAssignments.Count -gt 0 -and $sweepAttempts -lt 12)
+            if ($remainingAssignments.Count -gt 0) {
+                Write-Warning "Stale role assignment(s) on '$TargetWebAppName' are still listed after $($sweepAttempts * 5)s - the deploy may fail with RoleAssignmentUpdateNotPermitted; re-run if it does."
+            } else {
+                Write-Information '  Stale role assignments removed.'
+            }
+        }
+    }
+}
+
 # ── Deploy cipp ─────────────────────────────────────────────────────────────
 $Deployment = $null
 if ($SkipDeployment) {
@@ -815,16 +878,68 @@ if ($NewHostname) {
 }
 Write-Information "Key Vault        : $NewKvName"
 
+# ── Verify the web app identity's grants ─────────────────────────────────────
+# The template creates both grants, but the deploy can capture a principal that MSI
+# later replaces, and Azure's late cleanup of the deleted function app can remove a
+# fresh role assignment. Without Contributor the setup wizard cannot write app
+# settings; without the vault policy the backend cannot read its SAM credentials.
+# Re-check against the live identity and repair; a brand-new principal is rejected
+# for a minute or two while Entra replicates it, hence the retries.
+$liveWebApp = if (-not $WhatIfPreference) { Get-AzWebApp -ResourceGroupName $ResourceGroupName -Name $NewWebAppName -ErrorAction SilentlyContinue }
+$livePrincipalId = $liveWebApp.Identity.PrincipalId
+if ($livePrincipalId) {
+    Write-Information "Verifying grants for the web app identity ($livePrincipalId)..."
+    $siteScope = $liveWebApp.Id
+    $grants = @(
+        @{
+            Name  = "Contributor on '$NewWebAppName'"
+            Test  = { [bool](Get-AzRoleAssignment -Scope $siteScope -ObjectId $livePrincipalId -ErrorAction SilentlyContinue | Where-Object { $_.Scope -eq $siteScope -and $_.RoleDefinitionName -eq 'Contributor' }) }
+            Grant = { $null = New-AzRoleAssignment -ObjectId $livePrincipalId -RoleDefinitionName Contributor -Scope $siteScope -ObjectType ServicePrincipal -ErrorAction Stop }
+            Fix   = "New-AzRoleAssignment -ObjectId $livePrincipalId -RoleDefinitionName Contributor -Scope $siteScope"
+        }
+        @{
+            Name  = "secrets access on Key Vault '$NewKvName'"
+            Test  = { [bool]((Get-AzKeyVault -VaultName $NewKvName -ResourceGroupName $ResourceGroupName).AccessPolicies | Where-Object { $_.ObjectId -eq $livePrincipalId -and ($_.PermissionsToSecrets -contains 'all' -or $_.PermissionsToSecrets -contains 'get') }) }
+            Grant = { Set-AzKeyVaultAccessPolicy -VaultName $NewKvName -ResourceGroupName $ResourceGroupName -ObjectId $livePrincipalId -PermissionsToSecrets all -ErrorAction Stop }
+            Fix   = "Set-AzKeyVaultAccessPolicy -VaultName $NewKvName -ObjectId $livePrincipalId -PermissionsToSecrets all"
+        }
+    )
+    foreach ($grant in $grants) {
+        # A Test throw (e.g. Graph 404 on a not-yet-replicated principal) = not verified;
+        # fall through to the grant ladder rather than abort post-deploy.
+        try { $ok = & $grant.Test } catch { $ok = $false }
+        foreach ($delay in @(10, 20, 30, 60, 60)) {
+            if ($ok) { break }
+            if (-not $PSCmdlet.ShouldProcess($NewWebAppName, "Grant $($grant.Name)")) { break }
+            Write-Information "  $($grant.Name) missing - granting..."
+            try { & $grant.Grant; $ok = $true } catch {
+                if ($_.Exception.Message -match 'already exists') { $ok = $true; break }
+                Write-Information "  Failed: $($_.Exception.Message -split "`n" | Select-Object -First 1) - retrying in ${delay}s"
+                Start-Sleep -Seconds $delay
+            }
+        }
+        if ($ok) { Write-Information "  $($grant.Name): OK" } else { Write-Warning "Missing $($grant.Name). CIPP will not work until it is granted: $($grant.Fix)" }
+    }
+} elseif (-not $WhatIfPreference) {
+    Write-Warning "Could not read the managed identity of '$NewWebAppName' - verify its Contributor assignment and Key Vault access policy manually."
+}
+
 # ── Remove custom domains from SWA before deletion ───────────────────────────
 if ($swaCustomDomains.Count -gt 0) {
     Write-Information "Removing custom domains from '$SwaName' before deletion..."
     foreach ($domain in $swaCustomDomains) {
         Write-Information "  Removing custom domain: $($domain.DomainName)"
         if ($PSCmdlet.ShouldProcess($domain.DomainName, 'Remove SWA custom domain')) {
-            $null = Invoke-AzRestMethodWithRetry `
-                -OperationName "Removing custom domain '$($domain.DomainName)'" `
-                -Method DELETE `
-                -Uri "https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/staticSites/$SwaName/customDomains/$($domain.DomainName)?api-version=2022-09-01"
+            # Post-deploy: the instance is up, so SWA cleanup failures warn instead of
+            # aborting (the summary's DNS instructions must still print).
+            try {
+                $null = Invoke-AzRestMethodWithRetry `
+                    -OperationName "Removing custom domain '$($domain.DomainName)'" `
+                    -Method DELETE `
+                    -Uri "https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/staticSites/$SwaName/customDomains/$($domain.DomainName)?api-version=2022-09-01"
+            } catch {
+                Write-Warning "  Failed to remove custom domain '$($domain.DomainName)': $($_.Exception.Message)"
+            }
         }
     }
 
@@ -853,11 +968,15 @@ if ($swaCustomDomains.Count -gt 0) {
 if ($swa) {
     Write-Information "Deleting Static Web App '$SwaName'..."
     if ($PSCmdlet.ShouldProcess($SwaName, 'Delete Static Web App')) {
-        $null = Invoke-AzRestMethodWithRetry `
-            -OperationName "Deleting Static Web App '$SwaName'" `
-            -Method DELETE `
-            -Uri "https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/staticSites/$SwaName`?api-version=2022-09-01"
-        Write-Information "  '$SwaName' deleted."
+        try {
+            $null = Invoke-AzRestMethodWithRetry `
+                -OperationName "Deleting Static Web App '$SwaName'" `
+                -Method DELETE `
+                -Uri "https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/staticSites/$SwaName`?api-version=2022-09-01"
+            Write-Information "  '$SwaName' deleted."
+        } catch {
+            Write-Warning "Failed to delete Static Web App '$SwaName': $($_.Exception.Message) — delete it in the portal; it no longer serves CIPP."
+        }
     }
 }
 

@@ -235,7 +235,12 @@ resource tenantIdSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = if (upd
 
 // Role Assignment - Web App as Contributor on itself
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, webApp.name, 'Contributor')
+  // Seeded differently from the legacy function-app template on purpose: that template
+  // used guid(resourceGroup().id, <name>, 'Contributor') on a site of the same name, and
+  // Azure removes a deleted site's role assignments asynchronously. Sharing the id made
+  // the deploy race that cleanup (RoleAssignmentUpdateNotPermitted, or a grant deleted
+  // from under the new identity).
+  name: guid(webApp.id, 'Contributor', 'cipp')
   scope: webApp
   properties: {
     roleDefinitionId: subscriptionResourceId(

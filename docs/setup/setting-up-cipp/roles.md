@@ -58,6 +58,44 @@ CIPP features a role management system which utilises the [Roles feature of Azur
 
 You can assign these roles to Entra groups or users using the [cipp-roles](../../user-documentation/cipp/advanced/authentication/cipp-roles/ "mention") page, so you no longer have to add users manually.
 
+## Legacy Self-Hosted (Static Web App) Role Management
+
+Instances still running the earlier Function App and Static Web App architecture, from before the [migrating-to-the-new-infrastructure.md](../maintaining-cipp/migrating-to-the-new-infrastructure.md "mention") migration, invite users and assign built-in roles from the Static Web App resource rather than from an Entra group mapping.
+
+{% stepper %}
+{% step %}
+### Go to the Azure Portal
+{% endstep %}
+
+{% step %}
+### Go to your CIPP resource group
+{% endstep %}
+
+{% step %}
+### Select your CIPP Static Web App, `CIPP-SWA-XXXX`
+{% endstep %}
+
+{% step %}
+### Under Settings, select Role Management
+
+Not IAM Role Management.
+{% endstep %}
+
+{% step %}
+### Select Invite User and add the roles for the user
+
+Multiple roles can be applied to the same user.
+{% endstep %}
+{% endstepper %}
+
+{% hint style="info" %}
+After the invite link is sent to the user, they must click on it to accept the invite and gain access to the app. The invite expires after a set amount of time, and the link is not emailed to them automatically, so send it manually.
+{% endhint %}
+
+{% hint style="danger" %}
+Roles added or changed this way can take a long time to propagate, up to 24 hours in some cases. Map CIPP roles to Entra ID groups instead wherever you can: permission changes made through a group membership apply in minutes rather than hours.
+{% endhint %}
+
 ## Custom Roles
 
 {% hint style="info" %}

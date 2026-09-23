@@ -19,6 +19,7 @@ The actions available on the [.](./ "mention") page are available here from the 
 | Model            | The device's model.                                                                                           |
 | Serial Number    | The device's serial number.                                                                                   |
 | Compliance State | Whether the device currently meets the compliance policies applied to it.                                     |
+| Grace period expires | When the device will leave the compliance grace period and become non-compliant. Only shown when Intune reports a grace period expiry. |
 | Enrolled Date    | When the device was enrolled in Intune.                                                                       |
 | Last Sync        | When the device last checked in with Intune.                                                                  |
 | Owner Type       | Whether the device is company owned or personal.                                                              |
@@ -32,11 +33,11 @@ A refresh control on this card reloads the device's details and the sections bel
 
 ## Compliance Policies
 
-Lists the compliance policies applied to the device, one entry per policy. Each entry shows the policy's name and the state the device is in against it, marked as compliant or flagged for attention, and expands to show the number of settings in the policy and how many setting states were returned.
+Lists the compliance policies applied to the device, one entry per policy. Each entry shows the policy's name and the state the device is in against it, marked as compliant or flagged for attention. Expanding an entry shows the policy's setting count and loads the individual setting states for that policy, including the setting name, state, current value, contributing sources, and any error description. The list defaults to non-compliant, error, and conflict settings; use **Show all settings** to include compliant and not-applicable rows.
 
 ## Configuration Policies
 
-Lists the configuration policies applied to the device in the same form as compliance policies: the policy name, the device's state against it, and the setting counts on expansion.
+Lists the configuration policies applied to the device in the same form as compliance policies: the policy name, the device's state against it, and on expansion the setting count plus the per-setting states with the same failures-first filter and sources column.
 
 ## Detected Applications
 

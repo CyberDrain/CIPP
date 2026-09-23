@@ -30,6 +30,14 @@ The IP Range list supports both IPv4 and IPv6 addresses as standalone IP address
 Custom Roles will limit which API endpoints each API Client can access. This can be used to limit all API calls to read only for example.
 {% endhint %}
 
+## API Egress
+
+{% hint style="info" %}
+Visible to SuperAdmins only. The card is hidden entirely on instances where egress accounting isn't enabled, such as most self-hosted deployments.
+{% endhint %}
+
+At the top of the CIPP-API page, on hosted instances with egress accounting enabled, a card shows how much data your API clients have served today against the instance's daily cap, with a per-client trend you can switch between 24h, 3d and 7d windows. The API Client table below it also gets an **EgressToday** column with each client's own total for today.
+
 ## Using an API Client
 
 After creating your first API client, the page will update to include additional information that is necessary for your automation:
@@ -198,7 +206,7 @@ In your agent: **Tools → Add a tool → Model Context Protocol**. Set:
 - `<cipp-backend-host>` is CIPP's backend host: the `…azurewebsites.net` **Application ID URI** shown under **Expose an API** on the MCP client's app registration. It's the host in the `scope=` of the sign-in challenge, **not** your vanity `cipp.app` domain.
 
 {% hint style="warning" %}
-**Keep `offline_access` in the Scopes field.** It's what makes Entra issue a refresh token; without it, Copilot Studio re-prompts users to sign in roughly every hour.
+**Keep `offline_access` in the Scopes field.** It's what makes Entra issue a refresh token; without it, Copilot Studio re-prompts users to sign in roughly every hour. CIPP admin-consents `offline_access` on the MCP client's app registration for you when you enable MCP on the client, so a refresh token is issued even in tenants that disable user consent to applications: you don't need to grant consent by hand.
 {% endhint %}
 
 {% endstep %}

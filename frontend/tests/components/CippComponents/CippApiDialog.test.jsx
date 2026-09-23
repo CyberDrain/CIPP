@@ -5,7 +5,7 @@ import { renderWithProviders } from '../../test-utils'
 import { CippApiDialog } from '../../../src/components/CippComponents/CippApiDialog'
 
 // capture the action payload, network layer is not under test here
-const apiState = vi.hoisted(() => ({ mutate: null }))
+const apiState = vi.hoisted(() => ({ mutate: null, bulkActionConfirmConfig: undefined }))
 
 vi.mock('../../../src/api/ApiCall', () => ({
   ApiPostCall: () => ({
@@ -18,13 +18,24 @@ vi.mock('../../../src/api/ApiCall', () => ({
     data: undefined,
     reset: () => {},
   }),
-  ApiGetCall: () => ({
-    isSuccess: false,
-    isPending: true,
-    isFetching: false,
-    isError: false,
-    data: undefined,
-  }),
+  ApiGetCall: ({ url } = {}) => {
+    if (url === '/api/ExecBulkActionConfirmConfig?list=true') {
+      return {
+        isSuccess: apiState.bulkActionConfirmConfig !== undefined,
+        isPending: apiState.bulkActionConfirmConfig === undefined,
+        isFetching: false,
+        isError: false,
+        data: apiState.bulkActionConfirmConfig,
+      }
+    }
+    return {
+      isSuccess: false,
+      isPending: true,
+      isFetching: false,
+      isError: false,
+      data: undefined,
+    }
+  },
 }))
 
 const row = {
@@ -57,6 +68,7 @@ const renderDialog = (overrides = {}) => {
 describe('CippApiDialog', () => {
   beforeEach(() => {
     apiState.mutate = vi.fn()
+    apiState.bulkActionConfirmConfig = undefined
   })
 
   it('substitutes row values into the confirm text', () => {
@@ -148,6 +160,39 @@ describe('CippApiDialog', () => {
         childId: 'member-1',
         parentId: 'group-1',
       },
+    })
+  })
+
+  describe('bulk action confirmation countdown', () => {
+    const manyRows = Array.from({ length: 12 }, (_, i) => ({ ...row, id: `user-${i}` }))
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('does not gate confirm when the setting is disabled (default)', () => {
+      renderDialog({ row: manyRows })
+
+      expect(screen.getByRole('button', { name: 'Confirm' })).toBeEnabled()
+    })
+
+    it('does not gate confirm when the selection is at or below the threshold', () => {
+      apiState.bulkActionConfirmConfig = { Results: { Enabled: true, Threshold: 10, CountdownSeconds: 5 } }
+      renderDialog({ row: manyRows.slice(0, 10) })
+
+      expect(screen.getByRole('button', { name: 'Confirm' })).toBeEnabled()
+    })
+
+    it('disables confirm with a countdown when enabled and over threshold, then enables it', async () => {
+      vi.useFakeTimers()
+      apiState.bulkActionConfirmConfig = { Results: { Enabled: true, Threshold: 10, CountdownSeconds: 5 } }
+      renderDialog({ row: manyRows })
+
+      expect(screen.getByRole('button', { name: 'Confirm (5)' })).toBeDisabled()
+
+      await vi.advanceTimersByTimeAsync(5000)
+
+      expect(screen.getByRole('button', { name: 'Confirm' })).toBeEnabled()
     })
   })
 })

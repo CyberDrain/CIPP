@@ -1,12 +1,67 @@
 # Pricing
 
-The License Pricing tab holds the monthly per-seat price of every licence, which the [optimization.md](optimization.md "mention") tab uses to cost a tenant's licences and value its suggestions. CIPP ships with estimated prices, and you can override any of them with what you actually pay. Prices are shared by every tenant, so the page is the same whichever tenant is selected.
+The License Pricing tab lets you set the monthly price you pay for each licence. The [optimization.md](optimization.md "mention") tab uses these prices to calculate licence costs and potential savings. CIPP includes estimated prices to start with. A price you enter replaces the estimate and is labelled **Override**. Prices apply to all tenants in your CIPP instance.
+
+Saved prices remain after you refresh the page. Each currency has its own prices, so switching back to a currency shows the prices you saved for it.
 
 ## Action Buttons
 
-### Currency
+<details>
 
-Chooses the currency the prices are shown and set in. The list offers every currency that has prices, either shipped estimates or your own overrides. Prices are held separately per currency and are never converted, so a licence priced only in another currency shows no price here. The choice is remembered in this browser and shared with the Optimization tab.
+<summary>Currency</summary>
+
+Select the currency you want to view or edit. Changing currency does not convert prices: a licence with a USD price may have no GBP price. The list includes currencies with estimated or saved prices. CIPP remembers your choice in this browser and uses it on the Optimization tab too.
+
+</details>
+
+<details>
+
+<summary>Export pricing CSV</summary>
+
+Downloads all licence prices for the selected currency as a CSV file. Open it in Excel, change the prices, then upload the edited file using **Import CSV**. Licences without a price are included with an empty price cell.
+
+Keep these required columns: `Product_Display_Name`, `skuPartNumber`, `skuId`, `MonthlyPrice`, and `Currency`. The `skuId` identifies which licence to update. The optional `Source` column shows where the current price came from; changing it has no effect.
+
+</details>
+
+<details>
+
+<summary>Import CSV</summary>
+
+Uploads your edited CSV so you can change several prices at once. You review the changes before saving them.
+
+{% stepper %}
+{% step %}
+
+### Edit the export
+
+Choose **Export pricing CSV** and open the downloaded file in Excel. Change the values in the `MonthlyPrice` column and leave the other columns unchanged. Enter zero or a positive number, for example `19.25`, using a decimal point without a currency symbol or thousands separator. Save the file as **CSV UTF-8 (Comma delimited)**.
+{% endstep %}
+
+{% step %}
+
+### Upload and review
+
+In CIPP, select the same currency as the file. Choose **Import CSV**, then **Choose CSV**, and select your edited file.
+
+CIPP checks every row. It reports missing required fields, invalid or unknown SKU IDs, currencies it does not support or that differ from the selected currency, prices that are not numbers or are below zero, and repeated rows for the same SKU and currency. If any row has an error, nothing is saved. Correct the errors in the file, save it, and choose it again.
+
+The review shows only the prices you changed, with the licence name, SKU ID, old price, and new price. For example: Microsoft 365 Business Premium, GBP 18.10 to GBP 19.25. Prices you left unchanged keep their existing value and source.
+
+A price cell can be blank only if the licence already has no price. To remove a saved price, use **Remove override** on the pricing page. Deleting a price from the CSV does not remove it from CIPP.
+{% endstep %}
+
+{% step %}
+
+### Confirm the changes
+
+Choose **Confirm** to save. If a current price has changed since you opened the review, CIPP asks you to upload the file again and review the latest prices.
+
+CIPP shows how many prices were updated, left unchanged, or failed to save. The pricing table refreshes automatically. If some updates fail, the successful ones stay saved. Correct the reported problems and import the file again; prices already saved are skipped.
+{% endstep %}
+{% endstepper %}
+
+</details>
 
 ## Table Details
 

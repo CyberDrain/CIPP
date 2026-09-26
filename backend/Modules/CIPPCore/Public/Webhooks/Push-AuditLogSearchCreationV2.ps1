@@ -33,7 +33,28 @@ function Push-AuditLogSearchCreationV2 {
 
     try {
         $Ledger = Get-CippTable -TableName 'AuditLogCoverage'
-        $Rows = @(Get-CIPPAzDataTableEntity @Ledger -Filter "PartitionKey eq '$TenantFilter'")
+
+        # Regular windows use a fixed 14-digit UTC RowKey; reconciliation rows use RECON-*.
+        # Query each keyed range separately so Azure Table can use PartitionKey + RowKey indexes
+        # instead of reading the tenant's full ledger partition every cycle.
+        #
+        # Do not restrict the regular range by age: an old Planned retry remains eligible until
+        # it succeeds or dead-letters, even if it falls outside the planner's normal horizon.
+        $TenantKey = ([string]$TenantFilter).Replace("'", "''")
+        # Project only fields consumed by the planners/retry queue. Keep the AzBobbyTables
+        # LargeEntity markers so projected reads can still recognize and reassemble split rows.
+        $LedgerProjection = @(
+            'PartitionKey', 'RowKey', 'WindowStart', 'WindowEnd', 'State', 'NextAttemptUtc',
+            'Attempts', 'RetryCount', 'ThrottleCount',
+            'OriginalEntityId', 'PartIndex', 'PartCount', 'SplitOverProps'
+        )
+        $RegularRows = @(Get-CIPPAzDataTableEntity @Ledger `
+            -Filter "PartitionKey eq '$TenantKey' and RowKey ge '0' and RowKey lt ':'" `
+            -Property $LedgerProjection)
+        $ReconRows = @(Get-CIPPAzDataTableEntity @Ledger `
+            -Filter "PartitionKey eq '$TenantKey' and RowKey ge 'RECON-' and RowKey lt 'RECON.'" `
+            -Property $LedgerProjection)
+        $Rows = @($RegularRows) + @($ReconRows)
         $Now = (Get-Date).ToUniversalTime()
 
         # 1) Seed owed regular + reconciliation windows as Planned.

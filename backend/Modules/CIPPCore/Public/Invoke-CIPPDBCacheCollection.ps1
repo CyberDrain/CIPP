@@ -64,6 +64,7 @@ function Invoke-CIPPDBCacheCollection {
             'DirectoryRecommendations'
             'CrossTenantAccessPolicy'
             'DefaultAppManagementPolicy'
+            'ActivityBasedTimeoutPolicy'
             'Settings'
             'SecureScore'
             'PIMSettings'
@@ -132,6 +133,7 @@ function Invoke-CIPPDBCacheCollection {
         )
         ExchangeData       = @(
             'CASMailboxes'
+            'ExoCASMailboxSmtpAuth'
             'MailboxUsage'
             'MailTrafficSummary'
             'OfficeActivations'

@@ -1,7 +1,7 @@
 function Set-CIPPDBCacheCopilotUserCountSummary {
     <#
     .SYNOPSIS
-        Caches Microsoft 365 Copilot active user count summary by app for a tenant (30-day period)
+        Caches Microsoft 365 Copilot active user count summary by app for a tenant (30-day period, 28-day on report v2)
 
     .PARAMETER TenantFilter
         The tenant to cache Copilot user count summary for
@@ -19,7 +19,8 @@ function Set-CIPPDBCacheCopilotUserCountSummary {
     try {
         Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message 'Caching Copilot user count summary' -sev Debug
 
-        $Data = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/reports/getMicrosoft365CopilotUserCountSummary(period='D30')" -tenantid $TenantFilter -AsApp $true
+        # D30 on report v1, D28 on v2 tenants - Get-CopilotReportPeriod falls back between them.
+        $Data = Get-CopilotReportPeriod -UriTemplate "https://graph.microsoft.com/beta/reports/getMicrosoft365CopilotUserCountSummary(period='{0}')" -Period 'D30' -TenantFilter $TenantFilter -AsApp $true
 
         if ($Data) {
             Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'CopilotUserCountSummary' -Data $Data -AddCount

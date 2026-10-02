@@ -19,29 +19,6 @@ function Invoke-ListCopilotUsage {
     # and wants D28 (RL28) instead. Get-CopilotReportPeriod falls back on that Graph error.
     $Period = $Request.Query.period ?? $Request.Body.period ?? 'D30'
 
-    function Get-CopilotReportPeriod {
-        param(
-            [Parameter(Mandatory)][string]$UriTemplate,
-            [Parameter(Mandatory)][string]$Period,
-            [Parameter(Mandatory)][string]$TenantFilter
-        )
-        try {
-            return New-GraphGetRequest -Uri ($UriTemplate -f $Period) -tenantid $TenantFilter
-        } catch {
-            $Alternate = switch ($Period) {
-                'D30' { 'D28' }
-                'D28' { 'D30' }
-                default { $null }
-            }
-            $Message = "$($_.Exception.Message)"
-            if ($Alternate -and $Message -match "period value 'RL(30|28)' is not supported|Use 'RL(28|30)' instead") {
-                Write-Information "Copilot report period '$Period' rejected for $TenantFilter; retrying with '$Alternate'."
-                return New-GraphGetRequest -Uri ($UriTemplate -f $Alternate) -tenantid $TenantFilter
-            }
-            throw
-        }
-    }
-
     # Copilot usage reports support delegated auth with Reports.Read.All (granted to the SAM app);
     # CIPP's delegated identity carries the required usage-reports role via GDAP.
     try {

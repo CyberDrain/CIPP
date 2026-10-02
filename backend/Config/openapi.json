@@ -29946,38 +29946,19 @@
     },
     "/api/ExecOneDriveShortCut": {
       "post": {
-        "summary": "ExecOneDriveShortCut",
+        "summary": "Creates a OneDrive shortcut to a SharePoint library for one or more users.",
         "operationId": "ExecOneDriveShortCut",
         "tags": [
           "Identity > Administration > Users"
         ],
+        "description": "Accepts one { username, userid, siteUrl, destination, tenantFilter } object or an array of them (the Users table bulk action). Every user is attempted: a failure for one user (for example a shortcut that already exists) is reported in its place and does not stop the remaining users, so a bulk rollout never has to be re-run to find out where it got to. The response is one result per user plus a summary line, and only returns an error status when no user succeeded.",
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {
-                  "destination": {
-                    "$ref": "#/components/schemas/LabelValue"
-                  },
-                  "siteUrl": {
-                    "$ref": "#/components/schemas/LabelValue"
-                  },
-                  "tenantFilter": {
-                    "type": "string",
-                    "description": "Interact with the body of the request"
-                  },
-                  "userid": {
-                    "type": "string"
-                  },
-                  "username": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "tenantFilter"
-                ]
+                "properties": {}
               }
             }
           }
@@ -29992,6 +29973,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"

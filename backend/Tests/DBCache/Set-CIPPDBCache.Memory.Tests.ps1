@@ -85,6 +85,7 @@ BeforeAll {
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPAutoExpandingArchiveState.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/ConvertTo-SPOUsageRootWebTemplate.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPSharePointSiteUsageRows.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/Get-CopilotReportPeriod.ps1')
 
     . (Get-CollectorPath 'Set-CIPPDBCacheGroups')
     . (Get-CollectorPath 'Set-CIPPDBCacheTeams')

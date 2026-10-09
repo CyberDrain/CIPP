@@ -18,6 +18,7 @@
 * [Maintaining CIPP](setup/maintaining-cipp/README.md)
   * [Updating Versions](setup/maintaining-cipp/updating.md)
   * [Recommended Roles](setup/maintaining-cipp/recommended-roles.md)
+  * [Emergency Access Revocation](setup/maintaining-cipp/emergency-access-revocation.md)
   * [Migrating to Hosted CIPP](setup/maintaining-cipp/migrating-to-hosted-cipp.md)
   * [Migrating CyberDrain Hosted to the New Infrastructure](setup/maintaining-cipp/migrating-to-the-latest-version-of-cipp.md)
   * [Migrating Self-Hosted to the New Infrastructure](setup/maintaining-cipp/migrating-to-the-new-infrastructure.md)

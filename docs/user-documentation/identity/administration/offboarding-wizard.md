@@ -67,7 +67,7 @@ Deleting the user removes the mailbox with it, so it cannot be combined with con
 {% endhint %}
 
 {% hint style="warning" %}
-Converting a mailbox that is at or near 50 GB may fail, and a converted mailbox over that size stops receiving mail once its licence is removed unless an Exchange Online Plan 2 licence is assigned. The wizard checks the size of the selected mailboxes and warns before you submit.
+Converting a mailbox that is at or near 50 GB may fail, and a converted mailbox over that size stops receiving mail once its licence is removed unless an Exchange Online Plan 2 licence is assigned. An archive over 50 GB, or a litigation hold, also needs the mailbox to keep a licence. The wizard checks the selected mailboxes against the overnight mailbox data and warns before you submit.
 {% endhint %}
 
 {% hint style="info" %}

@@ -80,6 +80,11 @@ function createAdapter() {
           if (rows[rows.length - 1] === '') break
         }
       })
+      // Rows pushed straight into coll.data bypass Loki's indexes; without a rebuild, key lookups miss and upserts duplicate.
+      dbref.collections.forEach((coll) => {
+        coll.ensureId()
+        coll.ensureAllIndexes(true)
+      })
       saved = manifest || null
       callback(dbref)
     },

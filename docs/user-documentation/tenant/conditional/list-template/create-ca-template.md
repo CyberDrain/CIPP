@@ -150,6 +150,8 @@ Use **Add Named Location** to add an entry, and the delete icon on any entry to 
 | Display Name  | The name of the location. This is the name you reference under Conditions. Required. |
 | Location Type | Either Countries / Regions or IP Ranges. Required.                                   |
 
+Countries and IP ranges can come from a List variable per tenant; see the example under Custom Variables.
+
 ### IP Ranges
 
 | Field                          | Description                                                                                                |
@@ -189,8 +191,35 @@ Substitution happens before CIPP matches names in the target tenant, so a named 
 
 Values are set for every tenant in [global-variables.md](../../administration/tenants/global-variables.md "mention"), or for one tenant in the Custom Variables box on [edit.md](../../manage/edit.md "mention"), where the tenant's own value wins.
 
+A **List** variable used in Include or Exclude Users, Groups or Locations expands into one entry per value, so a single `%breakglassaccounts%` can exclude two accounts in one tenant and three in another. User, group and location values may be display names: names are resolved to IDs in the target tenant on deployment, whichever group and user option is chosen in the deploy drawer, and a location name is matched to the tenant's existing named location when the template does not define it. A name that matches nothing stops the deployment with an error naming it, rather than being dropped.
+
+For example, a policy that blocks sign-ins from outside a client's countries and offices embeds two named locations and excludes both under Conditions. Their values come from List variables rather than being typed into the template:
+
+| Named Location    | Type                | Field               | Value                |
+| ----------------- | ------------------- | ------------------- | -------------------- |
+| Allowed Countries | Countries / Regions | Countries / Regions | `%allowedcountries%` |
+| Office IPs        | IP Ranges           | IP Ranges           | `%officeips%`        |
+
+Each tenant then sets its own values, one per line. `allowedcountries` takes two-letter country codes:
+
+```
+NL
+BE
+```
+
+and `officeips` takes CIDR ranges, IPv4 or IPv6:
+
+```
+203.0.113.0/24
+198.51.100.10/32
+```
+
+On deployment each tenant's locations are created, or updated in place, with that tenant's countries and ranges, so one template covers every client. Changing a tenant's variable takes effect on the next deployment or standard run.
+
+Type `%` in the Users, Groups and Locations fields to pick from the [variable-auto-complete.md](../../../shared-features/variable-auto-complete.md "mention") list.
+
 {% hint style="warning" %}
-The fields in this editor do not offer the [variable-auto-complete.md](../../../shared-features/variable-auto-complete.md "mention") list, so the variable name has to be typed in full. A name that matches nothing for the tenant being deployed to is left in place as literal text, which is covered under Unresolved Variables on [global-variables.md](../../administration/tenants/global-variables.md "mention").
+A variable with no value for the tenant being deployed to stops the deployment with an error naming it. See Unresolved Variables on [global-variables.md](../../administration/tenants/global-variables.md "mention").
 {% endhint %}
 
 {% include "../../../../../.gitbook/includes/feature-request.md" %}

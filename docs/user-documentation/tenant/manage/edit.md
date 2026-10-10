@@ -83,7 +83,7 @@ Use **Add Variable** to create one. The name picker offers variables already def
 | Row Key       | The variable name, used in templates as `%variablename%`.                                                                                                                                                             |
 | Value         | The value substituted into templates for this tenant.                                                                                                                                                                 |
 | Scope         | Where the value comes from. Tenant is a variable defined only on this tenant, Global is inherited from the global list, and Overridden is a tenant value replacing a global one of the same name.                     |
-| Variable Type | How the value is written into a template. String is the default and reproduces the original behaviour. Integer, Boolean and JSON are written as raw JSON values, so a numeric setting receives 300 rather than "300". |
+| Variable Type | How the value is written into a template. String is the default and reproduces the original behaviour. Integer, Boolean and JSON are written as raw JSON values, so a numeric setting receives 300 rather than "300". List is entered one value per line and expands into one entry per value where it is used in a list, such as a Conditional Access policy's exclusions. See [global-variables.md](../administration/tenants/global-variables.md "mention"). |
 | Description   | The optional note recorded against the variable.                                                                                                                                                                      |
 
 ### Table Actions

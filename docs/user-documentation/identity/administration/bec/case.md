@@ -122,7 +122,7 @@ A check that failed outright shows **Couldn't check** with the reason. When any 
 Most checks depend on the unified audit log. When it is disabled for the tenant, the warning above the groups says so and the checks that read from it come back empty rather than clean. An empty result in that state means nothing was available to search, not that nothing happened.
 {% endhint %}
 
-Every check covers the seven days before the analysis ran, apart from the MFA methods, the Intune and registered device lists, the delegations, consents and add-ins, and the trusted and blocked sender lists, which show the account's current state regardless of age. Nothing is cut to a row count: every list is read to the end of the window, and a check that could not read its whole window says so. The **Report check** column gives the number each finding carries in the [PDF report](case.md#pdf-report).
+Every check covers the seven days before the analysis ran, or 30 days for a tenant with Entra ID P1 or P2, whose sign-in and audit logs are kept that long. The exceptions are the MFA methods, the Intune and registered device lists, the delegations, consents and add-ins, and the trusted and blocked sender lists, which show the account's current state regardless of age. Nothing is cut to a row count: every list is read to the end of the window, and a check that could not read its whole window says so. The **Report check** column gives the number each finding carries in the [PDF report](case.md#pdf-report).
 
 ### Attacker IPs & activity
 

@@ -27,9 +27,35 @@ function Invoke-ListSiteRecycleBin {
         $JsonAccept = $RestContext.Headers
         $BaseUri = $RestContext.BaseUri
 
-        $Items = New-GraphGetRequest -uri "$BaseUri/site/RecycleBin?`$top=500&`$orderby=DeletedDate desc" -tenantid $TenantFilter -scope $Scope -extraHeaders $JsonAccept -UseCertificate -AsApp $true
+        $AllItems = [System.Collections.Generic.List[object]]::new()
+        $Skip = 0
+        $PageSize = 500
+        $Guard = 0
+        
+        while ($Guard -lt 100) {
+            $Guard++
+            $Uri = "$BaseUri/site/RecycleBin?`$top=$PageSize&`$skip=$Skip&`$orderby=DeletedDate desc"
+            $Page = New-GraphGetRequest -uri $Uri -tenantid $TenantFilter -scope $Scope -extraHeaders $JsonAccept -UseCertificate -AsApp $true -noPagination $true -SkipValueExtraction
+            $Items = @()
+            if ($null -ne $Page.value) {
+                $Items = @($Page.value)
+            } elseif ($Page -is [System.Array]) {
+                $Items = @($Page)
+            } elseif ($Page.PSObject.Properties.Name -contains 'Id') {
+                $Items = @($Page)
+            }
+            
+            if ($Items.Count -eq 0) { break }
+            
+            foreach ($Item in $Items) {
+                $AllItems.Add($Item)
+            }
+            
+            $Skip += $PageSize
+            if ($Items.Count -lt $PageSize) { break }
+        }
 
-        $Body = @($Items | ForEach-Object {
+        $Body = @($AllItems | ForEach-Object {
                 [PSCustomObject]@{
                     Id            = $_.Id
                     Title         = $_.Title

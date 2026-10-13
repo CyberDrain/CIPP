@@ -38,6 +38,11 @@ BeforeAll {
 Describe 'Invoke-ExecEmptySiteRecycleBin' {
     BeforeEach {
         $script:GraphPostCalls = 0
+        $script:GraphGetCalls = 0
+        $script:RecycleBinItems = @(
+            [PSCustomObject]@{ Id = '1'; Size = 100; ItemState = 1 }
+            [PSCustomObject]@{ Id = '2'; Size = 200; ItemState = 1 }
+        )
         function global:New-GraphPostRequest {
             param(
                 $uri, $tenantid, $scope, $type, $body, $contentType, $AddedHeaders,
@@ -45,6 +50,9 @@ Describe 'Invoke-ExecEmptySiteRecycleBin' {
                 $AsApp
             )
             $script:GraphPostCalls++
+            if ($uri -like '*deleteAll*') {
+                $script:RecycleBinItems = @()
+            }
         }
         function global:New-GraphGetRequest {
             param(
@@ -53,6 +61,10 @@ Describe 'Invoke-ExecEmptySiteRecycleBin' {
                 [bool]$noPagination,
                 [switch]$SkipValueExtraction
             )
+            $script:GraphGetCalls++
+            [PSCustomObject]@{
+                value = @($script:RecycleBinItems)
+            }
         }
     }
 
@@ -81,25 +93,54 @@ Describe 'Invoke-ExecEmptySiteRecycleBin' {
         $Response.Body.Results | Should -Match 'Invalid Stage'
     }
 
-    It 'calls deleteAll endpoints for Both' {
+    It 'verifies deletion and returns accurate counts' {
         $Response = Invoke-ExecEmptySiteRecycleBin -Request ([pscustomobject]@{
                 Params  = @{ CIPPEndpoint = 'ExecEmptySiteRecycleBin' }
                 Headers = @{}
                 Body    = [pscustomobject]@{
                     tenantFilter = 'contoso.onmicrosoft.com'
                     SiteUrl      = 'https://contoso.sharepoint.com/sites/a'
-                    Stage        = 'Both'
+                    Stage        = 'First'
                 }
             })
 
         $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
-        $script:GraphPostCalls | Should -Be 2
-        $Response.Body.Results | Should -Match 'Emptied recycle bin'
+        $script:GraphGetCalls | Should -BeGreaterThan 0
+        $Response.Body.itemsBefore | Should -Be 2
+        $Response.Body.itemsDeleted | Should -Be 2
+        $Response.Body.itemsRemaining | Should -Be 0
+        $Response.Body.bytesFreed | Should -Be 300
+        $Response.Body.Results | Should -Match 'Successfully emptied'
+    }
+
+    It 'reports partial success when items remain' {
+        $script:RecycleBinItems = @(
+            [PSCustomObject]@{ Id = '1'; Size = 100; ItemState = 1 }
+        )
+        function global:New-GraphPostRequest {
+            param($uri, $tenantid, $scope, $type, $body, $contentType, $AddedHeaders, [switch]$UseCertificate, $AsApp)
+            $script:GraphPostCalls++
+        }
+        
+        $Response = Invoke-ExecEmptySiteRecycleBin -Request ([pscustomobject]@{
+                Params  = @{ CIPPEndpoint = 'ExecEmptySiteRecycleBin' }
+                Headers = @{}
+                Body    = [pscustomobject]@{
+                    tenantFilter = 'contoso.onmicrosoft.com'
+                    SiteUrl      = 'https://contoso.sharepoint.com/sites/a'
+                    Stage        = 'First'
+                }
+            })
+
+        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
+        $Response.Body.itemsRemaining | Should -BeGreaterThan 0
+        $Response.Body.Results | Should -Match 'may be held by retention policy'
     }
 }
 
 Describe 'Invoke-ListSiteRecycleBinSummary' {
     BeforeEach {
+        $script:GetRequestCount = 0
         function global:New-GraphGetRequest {
             param(
                 $uri, $tenantid, $scope, $AsApp, $extraHeaders,
@@ -107,12 +148,18 @@ Describe 'Invoke-ListSiteRecycleBinSummary' {
                 [bool]$noPagination,
                 [switch]$SkipValueExtraction
             )
-            [PSCustomObject]@{
-                value             = @(
-                    [PSCustomObject]@{ Id = '1'; Size = 100; ItemState = 1 }
-                    [PSCustomObject]@{ Id = '2'; Size = 50; ItemState = 2 }
-                )
-                '@odata.nextLink' = $null
+            $script:GetRequestCount++
+            if ($uri -match '\$skip=0') {
+                [PSCustomObject]@{
+                    value = @(
+                        [PSCustomObject]@{ Id = '1'; Size = 100; ItemState = 1 }
+                        [PSCustomObject]@{ Id = '2'; Size = 50; ItemState = 2 }
+                    )
+                }
+            } else {
+                [PSCustomObject]@{
+                    value = @()
+                }
             }
         }
     }
@@ -145,5 +192,41 @@ Describe 'Invoke-ListSiteRecycleBinSummary' {
         $Response.Body.Results.secondStageBytes | Should -Be 50
         ($Response.Body.Results.PSObject.Properties.Name -contains 'Title') | Should -BeFalse
         ($Response.Body.Results.PSObject.Properties.Name -contains 'LeafName') | Should -BeFalse
+    }
+
+    It 'uses skip-based pagination beyond first page' {
+        $script:GetRequestCount = 0
+        $script:RequestUris = @()
+        function global:New-GraphGetRequest {
+            param($uri, $tenantid, $scope, $AsApp, $extraHeaders, [switch]$UseCertificate, [bool]$noPagination, [switch]$SkipValueExtraction)
+            $script:GetRequestCount++
+            $script:RequestUris += $uri
+            
+            if ($uri -match '\$skip=0') {
+                $Items = 1..500 | ForEach-Object { [PSCustomObject]@{ Id = $_; Size = 100; ItemState = 1 } }
+                [PSCustomObject]@{ value = @($Items) }
+            } elseif ($uri -match '\$skip=500') {
+                $Items = 501..550 | ForEach-Object { [PSCustomObject]@{ Id = $_; Size = 100; ItemState = 1 } }
+                [PSCustomObject]@{ value = @($Items) }
+            } else {
+                [PSCustomObject]@{ value = @() }
+            }
+        }
+        
+        $Response = Invoke-ListSiteRecycleBinSummary -Request ([pscustomobject]@{
+                Params  = @{ CIPPEndpoint = 'ListSiteRecycleBinSummary' }
+                Headers = @{}
+                Query   = @{
+                    tenantFilter = 'contoso.onmicrosoft.com'
+                    SiteUrl      = 'https://contoso.sharepoint.com/sites/a'
+                    MaxItems     = 600
+                }
+                Body    = @{}
+            })
+
+        $script:GetRequestCount | Should -BeGreaterThan 1
+        $Response.Body.Results.itemCount | Should -Be 550
+        $Response.Body.Results.capped | Should -BeFalse
+        ($script:RequestUris | Where-Object { $_ -match '\$skip=500' }).Count | Should -BeGreaterThan 0
     }
 }

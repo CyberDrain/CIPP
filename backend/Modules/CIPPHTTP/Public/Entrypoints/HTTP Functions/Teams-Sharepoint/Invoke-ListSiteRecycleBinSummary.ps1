@@ -37,20 +37,24 @@ function Invoke-ListSiteRecycleBinSummary {
         $SecondBytes = [int64]0
         $Seen = 0
         $Capped = $false
-        $NextUri = "$BaseUri/site/RecycleBin?`$select=Id,Size,ItemState&`$top=500&`$orderby=DeletedDate desc"
+        $Skip = 0
+        $PageSize = 500
+        $Guard = 0
 
-        while ($NextUri) {
-            $Page = New-GraphGetRequest -uri $NextUri -tenantid $TenantFilter -scope $Scope -extraHeaders $JsonAccept -UseCertificate -AsApp $true -noPagination $true -SkipValueExtraction
+        while ($Guard -lt 100) {
+            $Guard++
+            $Uri = "$BaseUri/site/RecycleBin?`$select=Id,Size,ItemState&`$top=$PageSize&`$skip=$Skip&`$orderby=DeletedDate desc"
+            $Page = New-GraphGetRequest -uri $Uri -tenantid $TenantFilter -scope $Scope -extraHeaders $JsonAccept -UseCertificate -AsApp $true -noPagination $true -SkipValueExtraction
             $Items = @()
-            $NextLink = $null
             if ($null -ne $Page.value) {
                 $Items = @($Page.value)
-                $NextLink = $Page.'@odata.nextLink'
             } elseif ($Page -is [System.Array]) {
                 $Items = @($Page)
             } elseif ($Page.PSObject.Properties.Name -contains 'Id') {
                 $Items = @($Page)
             }
+
+            if ($Items.Count -eq 0) { break }
 
             foreach ($Item in $Items) {
                 if ($Seen -ge $MaxItems) {
@@ -71,8 +75,10 @@ function Invoke-ListSiteRecycleBinSummary {
                 }
             }
 
-            if ($Capped -or [string]::IsNullOrWhiteSpace($NextLink)) { break }
-            $NextUri = $NextLink
+            if ($Capped) { break }
+            
+            $Skip += $PageSize
+            if ($Items.Count -lt $PageSize) { break }
         }
 
         $Body = [PSCustomObject]@{

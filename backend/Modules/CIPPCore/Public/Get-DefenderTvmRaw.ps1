@@ -24,6 +24,8 @@ function Get-DefenderTvmRaw {
         $Buffer = if ($Stream) { $null } else { [System.Collections.Generic.List[object]]::new() }
         $Client = [System.Net.Http.HttpClient]::new()
         $Client.Timeout = [TimeSpan]::FromMinutes(30)
+        # Disposing the client aborts a stalled download when Craft stops the pipeline (PS 7.6+).
+        $OnStop = $PSCmdlet.PipelineStopToken?.Register([Action]$Client.Dispose)
         try {
             foreach ($Url in $Files) {
                 $NetStream = $Client.GetStreamAsync($Url).GetAwaiter().GetResult()
@@ -40,6 +42,7 @@ function Get-DefenderTvmRaw {
                 }
             }
         } finally {
+            if ($OnStop) { $OnStop.Dispose() }
             $Client.Dispose()
         }
 

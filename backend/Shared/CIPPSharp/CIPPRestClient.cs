@@ -710,10 +710,11 @@ namespace CIPP
             string?                     contentType        = null,
             bool                        skipErrorCheck     = false,
             int                         timeoutSec         = 100,
-            int                         maximumRedirection = -1)
+            int                         maximumRedirection = -1,
+            CancellationToken?          cancellationToken  = null)
         {
             return SendAsync(uri, method, body, headers, contentType,
-                             skipErrorCheck, timeoutSec, maximumRedirection)
+                             skipErrorCheck, timeoutSec, maximumRedirection, cancellationToken ?? default)
                    .GetAwaiter().GetResult();
         }
 
@@ -728,7 +729,8 @@ namespace CIPP
             string?                     contentType        = null,
             bool                        skipErrorCheck     = false,
             int                         timeoutSec         = 100,
-            int                         maximumRedirection = -1)
+            int                         maximumRedirection = -1,
+            CancellationToken           cancellationToken  = default)
         {
             await EnsureClientsAsync().ConfigureAwait(false);
 
@@ -743,7 +745,7 @@ namespace CIPP
             var rateWaited = TimeSpan.Zero;
             while (rateWait > TimeSpan.Zero && rateWaited < CIPPRateLimiter.MaxWait)
             {
-                await Task.Delay(rateWait).ConfigureAwait(false);
+                await Task.Delay(rateWait, cancellationToken).ConfigureAwait(false);
                 rateWaited += rateWait;
                 rateWait = CIPPRateLimiter.Recheck(rateClaim);
             }
@@ -833,10 +835,9 @@ namespace CIPP
             // Instead we create a CancellationTokenSource per request with the
             // caller-specified timeout. timeoutSec = 0 means no timeout.
             // ----------------------------------------------------------
-            using var cts = timeoutSec > 0
-                ? new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSec))
-                : null;
-            var token = cts?.Token ?? CancellationToken.None;
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            if (timeoutSec > 0) cts.CancelAfter(TimeSpan.FromSeconds(timeoutSec));
+            var token = cts.Token;
 
             // ----------------------------------------------------------
             // Send
@@ -851,7 +852,11 @@ namespace CIPP
                 // defensive body read below — masking the HTTP status the caller needs.
                 response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) when (cts is not null && cts.IsCancellationRequested)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested)
             {
                 // Our per-request timeout CTS actually fired — this is a genuine
                 // client-side timeout after timeoutSec. Let it propagate as an
@@ -979,16 +984,18 @@ namespace CIPP
         public static CIPPConcurrentResult[] SendConcurrent(
             IEnumerable<CIPPConcurrentRequest> requests,
             int maxConcurrency = 8,
-            int maxRetries     = 3)
+            int maxRetries     = 3,
+            CancellationToken? cancellationToken = null)
         {
-            return SendConcurrentAsync(requests, maxConcurrency, maxRetries)
+            return SendConcurrentAsync(requests, maxConcurrency, maxRetries, cancellationToken ?? default)
                    .GetAwaiter().GetResult();
         }
 
         public static async Task<CIPPConcurrentResult[]> SendConcurrentAsync(
             IEnumerable<CIPPConcurrentRequest> requests,
             int maxConcurrency = 8,
-            int maxRetries     = 3)
+            int maxRetries     = 3,
+            CancellationToken cancellationToken = default)
         {
             var list = requests is null ? new List<CIPPConcurrentRequest>() : requests.ToList();
             if (list.Count == 0) return Array.Empty<CIPPConcurrentResult>();
@@ -1003,8 +1010,8 @@ namespace CIPP
                 var req   = list[i];
                 tasks[i] = Task.Run(async () =>
                 {
-                    await gate.WaitAsync().ConfigureAwait(false);
-                    try   { return await SendOneWithRetryAsync(index, req, maxRetries).ConfigureAwait(false); }
+                    await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    try   { return await SendOneWithRetryAsync(index, req, maxRetries, cancellationToken).ConfigureAwait(false); }
                     finally { gate.Release(); }
                 });
             }
@@ -1012,7 +1019,7 @@ namespace CIPP
         }
 
         private static async Task<CIPPConcurrentResult> SendOneWithRetryAsync(
-            int index, CIPPConcurrentRequest req, int maxRetries)
+            int index, CIPPConcurrentRequest req, int maxRetries, CancellationToken cancellationToken)
         {
             var attempt = 0;
             while (true)
@@ -1025,12 +1032,13 @@ namespace CIPP
                     var res = await SendAsync(req.Uri, req.Method, req.Body, req.Headers,
                                               req.ContentType, skipErrorCheck: true,
                                               timeoutSec: req.TimeoutSec,
-                                              maximumRedirection: req.MaximumRedirection).ConfigureAwait(false);
+                                              maximumRedirection: req.MaximumRedirection,
+                                              cancellationToken: cancellationToken).ConfigureAwait(false);
 
                     var retryable = res.StatusCode == 429 || (res.StatusCode >= 500 && res.StatusCode <= 599);
                     if (retryable && attempt <= maxRetries)
                     {
-                        await Task.Delay(RetryDelay(res, attempt)).ConfigureAwait(false);
+                        await Task.Delay(RetryDelay(res, attempt), cancellationToken).ConfigureAwait(false);
                         continue;
                     }
                     return new CIPPConcurrentResult
@@ -1039,11 +1047,11 @@ namespace CIPP
                         Result = res, Attempts = attempt,
                     };
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
                 {
                     if (attempt <= maxRetries)
                     {
-                        await Task.Delay(RetryDelay(null, attempt)).ConfigureAwait(false);
+                        await Task.Delay(RetryDelay(null, attempt), cancellationToken).ConfigureAwait(false);
                         continue;
                     }
                     return new CIPPConcurrentResult

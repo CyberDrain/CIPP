@@ -13,7 +13,7 @@ ARG DOTNET_REGISTRY=ghcr.io/cyberdrain
 ARG CRAFT_BASE=ghcr.io/cyberdrain/craft:latest
 
 # ── Base: PowerShell SDK + ModuleBuilder (cached, rarely changes) ──
-FROM ${DOTNET_REGISTRY}/dotnet/sdk:8.0-bookworm-slim AS ps-base
+FROM ${DOTNET_REGISTRY}/dotnet/sdk:10.0-noble AS ps-base
 COPY build/Metadata/1.5.7 /usr/local/share/powershell/Modules/Metadata/1.5.7
 COPY build/Configuration/1.6.0 /usr/local/share/powershell/Modules/Configuration/1.6.0
 COPY build/ModuleBuilder/3.1.8 /usr/local/share/powershell/Modules/ModuleBuilder/3.1.8
@@ -69,7 +69,7 @@ RUN pwsh -File /build/build-single-module.ps1 -Module CIPPTests -KeepPublic
 # `func start` and is overwritten in the final image. This guarantees the DLL
 # in the container matches the SDK pinned by this stage, regardless of which
 # SDK the last committer happened to have installed.
-FROM ${DOTNET_REGISTRY}/dotnet/sdk:8.0-bookworm-slim AS build-cippsharp
+FROM ${DOTNET_REGISTRY}/dotnet/sdk:10.0-noble AS build-cippsharp
 WORKDIR /src
 COPY backend/Shared/CIPPSharp/CIPPSharp.csproj ./
 RUN dotnet restore CIPPSharp.csproj

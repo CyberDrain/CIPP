@@ -174,7 +174,8 @@ function Invoke-CIPPRestMethod {
             $(if ($ContentType) { $ContentType } else { $null }),
             $true,
             $TimeoutSec,
-            $MaximumRedirection
+            $MaximumRedirection,
+            $PSCmdlet.PipelineStopToken
         )
     } catch {
         # PowerShell wraps .NET static method exceptions in MethodInvocationException.

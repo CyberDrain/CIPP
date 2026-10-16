@@ -150,6 +150,29 @@ A helper must let its caller tell an input problem apart from an upstream failur
   explicit `[HttpStatusCode]::BadRequest` / `NotFound` returns where you can.
 - Ask the maintainer before regenerating the spec.
 
+### Permissions
+
+Each function that calls Microsoft Graph lists the permissions those calls need in its help `.NOTES`, one line per
+operation and permission type:
+
+```
+.NOTES
+    Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All
+    Permission: Exchange | Set-Mailbox | Delegated | Mail Recipients | Organization Management | only when archiving
+```
+
+Columns: API | operation | `Delegated` or `Application` | least privileged | higher privileged [| condition].
+
+- `pwsh build/tools/Update-PermissionAnnotations.ps1` writes the Graph lines from the code: the URI, method and
+  `-AsApp`, least privileged from Microsoft's permissions map and higher privileged from the Learn page. Run it after
+  changing a Graph call; CI runs it with `-Check`. `-Refresh` re-downloads Microsoft's data.
+- Write a line by hand only for what the script cannot derive: other APIs (Exchange, SharePoint, Partner Center),
+  or a Graph call whose URI is built at runtime. The script keeps those, and keeps a condition you add to a line it writes.
+- Never add a new help keyword such as `.PERMISSIONS`: an unknown keyword stops PowerShell reading the whole help block,
+  `.ROLE` and `.FUNCTIONALITY` included, and the endpoint stops routing.
+- `build-openapi.ps1` rolls the lines up through every helper and queued activity an endpoint reaches into
+  `x-cipp-permissions`, and indexes them by permission in the top-level `x-cipp-permission-index`.
+
 ---
 
 ## Tests

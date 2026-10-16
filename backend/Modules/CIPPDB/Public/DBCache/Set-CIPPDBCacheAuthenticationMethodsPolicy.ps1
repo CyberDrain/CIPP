@@ -8,6 +8,9 @@ function Set-CIPPDBCacheAuthenticationMethodsPolicy {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/authenticationMethodsPolicy | Delegated | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod, Policy.Read.All
+        Permission: Graph | GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/fido2 | Application | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod
     #>
     [CmdletBinding()]
     param(

@@ -30,6 +30,8 @@ function Invoke-CIPPStandardCopilotSettings {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /copilot/admin/policySettings/{id} | Delegated | CopilotPolicySettings.Read | CopilotPolicySettings.ReadWrite
+        Permission: Graph | PATCH /copilot/admin/policySettings/{id} | Delegated | CopilotPolicySettings.ReadWrite
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

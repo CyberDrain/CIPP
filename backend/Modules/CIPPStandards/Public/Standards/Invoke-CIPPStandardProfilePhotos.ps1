@@ -32,6 +32,9 @@ function Invoke-CIPPStandardProfilePhotos {
             "EXCHANGE_LITE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | DELETE /admin/people/photoUpdateSettings | Application | PeopleSettings.ReadWrite.All
+        Permission: Graph | GET /admin/people/photoUpdateSettings | Delegated | PeopleSettings.Read.All | PeopleSettings.ReadWrite.All
+        Permission: Graph | PATCH /admin/people/photoUpdateSettings | Application | PeopleSettings.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

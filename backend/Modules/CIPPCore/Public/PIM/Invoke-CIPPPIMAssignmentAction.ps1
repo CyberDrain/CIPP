@@ -40,6 +40,8 @@ function Invoke-CIPPPIMAssignmentAction {
 
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /roleManagement/directory/roleEligibilitySchedules | Application | RoleEligibilitySchedule.Read.Directory | RoleEligibilitySchedule.ReadWrite.Directory, RoleManagement.Read.All, RoleManagement.Read.Directory, RoleManagement.ReadWrite.Directory
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
@@ -170,41 +172,6 @@ function Invoke-CIPPPIMAssignmentAction {
         }
     }
 
-    function Send-ScheduleRequest {
-        param($Request)
-        $Json = ConvertTo-Json -InputObject $Request.Body -Depth 10 -Compress
-        return New-GraphPOSTRequest -uri $Request.Uri -body $Json -tenantid $TenantFilter -AsApp $true
-    }
-
-    function Invoke-ActiveAssignmentRemoval {
-        # adminRemove covers PIM-created and legacy direct assignments alike; the unified RBAC
-        # delete is only a fallback for the rare record PIM does not recognise.
-        $Request = New-CIPPPIMScheduleRequest -Kind Assignment -Action adminRemove -PrincipalId $PrincipalId -RoleDefinitionId $RoleDefinitionId -DirectoryScopeId $DirectoryScopeId -Justification $Justification
-        try {
-            $null = Send-ScheduleRequest -Request $Request
-        } catch {
-            # Entra refuses to retire an active assignment younger than five minutes
-            # ("The Active duration is too short. Minimum Required is 5 minutes").
-            if ($_.Exception.Message -match 'duration is too short') {
-                throw [System.ArgumentException]::new("Entra requires an active assignment to exist for at least 5 minutes before it can be removed; $PrincipalLabel's $RoleName assignment was created too recently. Try again in a few minutes.")
-            }
-            if ($_.Exception.Message -notmatch 'RoleAssignmentDoesNotExist|does not exist|NotFound|not found') { throw }
-            $Existing = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignments?`$filter=principalId eq '$PrincipalId' and roleDefinitionId eq '$RoleDefinitionId'" -tenantid $TenantFilter | Where-Object { ($_.directoryScopeId ?? '/') -eq $DirectoryScopeId })
-            if ($Existing.Count -eq 0) { throw }
-            foreach ($Assignment in $Existing) {
-                $null = New-GraphPOSTRequest -type DELETE -uri "https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignments/$($Assignment.id)" -tenantid $TenantFilter
-            }
-        }
-        # Graph accepts the removal (status Revoked) and retires the instance a few seconds later;
-        # wait for that so the reported state - and the table refresh behind it - is the real one.
-        for ($Attempt = 0; $Attempt -lt 8; $Attempt++) {
-            $Remaining = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignmentScheduleInstances?`$filter=principalId eq '$PrincipalId' and roleDefinitionId eq '$RoleDefinitionId'" -tenantid $TenantFilter -AsApp $true | Where-Object { ($_.directoryScopeId ?? '/') -eq $DirectoryScopeId })
-            if ($Remaining.Count -eq 0) { return $true }
-            Start-Sleep -Seconds 3
-        }
-        return $false
-    }
-
     $DurationParams = @{}
     if (-not [string]::IsNullOrWhiteSpace($Duration)) { $DurationParams.Duration = $Duration }
     if ($PSBoundParameters.ContainsKey('EndDateTime') -and $null -ne $EndDateTime) { $DurationParams.EndDateTime = $EndDateTime }
@@ -223,7 +190,7 @@ function Invoke-CIPPPIMAssignmentAction {
             if (-not $EligibleRow) {
                 $Request = New-CIPPPIMScheduleRequest -Kind Eligibility -Action adminAssign -PrincipalId $PrincipalId -RoleDefinitionId $RoleDefinitionId -DirectoryScopeId $DirectoryScopeId -Justification $Justification -MaxDuration $EligibilityCap @DurationParams
                 try {
-                    $null = Send-ScheduleRequest -Request $Request
+                    $null = Send-CIPPPIMScheduleRequest -Request $Request -TenantFilter $TenantFilter
                 } catch {
                     if ($_.Exception.Message -notmatch 'RoleAssignmentExists|already exists') { throw }
                 }
@@ -242,7 +209,7 @@ function Invoke-CIPPPIMAssignmentAction {
                 throw "The eligibility for $PrincipalLabel on $RoleName could not be confirmed; the active assignment was left in place."
             }
 
-            $RemovalSeen = Invoke-ActiveAssignmentRemoval
+            $RemovalSeen = Invoke-CIPPPIMActiveAssignmentRemoval -TenantFilter $TenantFilter -PrincipalId $PrincipalId -RoleDefinitionId $RoleDefinitionId -DirectoryScopeId $DirectoryScopeId -Justification $Justification -PrincipalLabel $PrincipalLabel -RoleName $RoleName
             $After = "Eligible$(if ($ResultEnd) { " until $(& $FormatEnd $ResultEnd)" })"
             $ResultText = "Converted $PrincipalLabel on $RoleName from $Before to $After.$(if (-not $RemovalSeen) { ' The removal of the active assignment was accepted by Entra and is still propagating; refresh in a minute.' })"
         }
@@ -250,7 +217,7 @@ function Invoke-CIPPPIMAssignmentAction {
             if ($DurationParams.Count -eq 0) { throw [System.ArgumentException]::new('GrantActive needs a Duration or EndDateTime.') }
             if ($ActiveRow -and $ActiveRow.AssignmentType -eq 'Permanent') { throw [System.ArgumentException]::new("$PrincipalLabel already holds $RoleName permanently; convert it to eligible instead.") }
             $Request = New-CIPPPIMScheduleRequest -Kind Assignment -Action adminAssign -PrincipalId $PrincipalId -RoleDefinitionId $RoleDefinitionId -DirectoryScopeId $DirectoryScopeId -Justification $Justification -MaxDuration $AssignmentCap @DurationParams
-            $null = Send-ScheduleRequest -Request $Request
+            $null = Send-CIPPPIMScheduleRequest -Request $Request -TenantFilter $TenantFilter
             $ResultEnd = $Request.EndDateTime
             $After = "Active until $(& $FormatEnd $ResultEnd)"
             $ResultText = "Granted $PrincipalLabel a time-bound active $RoleName assignment until $(& $FormatEnd $ResultEnd)."
@@ -263,7 +230,7 @@ function Invoke-CIPPPIMAssignmentAction {
             $Cap = if ($Kind -eq 'Eligibility') { $EligibilityCap } else { $AssignmentCap }
             $GraphAction = if ($Action -eq 'Extend') { 'adminExtend' } else { 'adminRenew' }
             $Request = New-CIPPPIMScheduleRequest -Kind $Kind -Action $GraphAction -PrincipalId $PrincipalId -RoleDefinitionId $RoleDefinitionId -DirectoryScopeId $DirectoryScopeId -Justification $Justification -MaxDuration $Cap @DurationParams
-            $null = Send-ScheduleRequest -Request $Request
+            $null = Send-CIPPPIMScheduleRequest -Request $Request -TenantFilter $TenantFilter
             $ResultEnd = $Request.EndDateTime
             $After = "$($TargetRow.AssignmentType) until $(& $FormatEnd $ResultEnd)"
             $ResultText = "$($Action)ed $PrincipalLabel's $($TargetRow.AssignmentType.ToLower()) $RoleName assignment until $(& $FormatEnd $ResultEnd)."
@@ -273,10 +240,10 @@ function Invoke-CIPPPIMAssignmentAction {
             $RemovalSeen = $true
             if ($TargetRow.AssignmentType -eq 'Eligible') {
                 $Request = New-CIPPPIMScheduleRequest -Kind Eligibility -Action adminRemove -PrincipalId $PrincipalId -RoleDefinitionId $RoleDefinitionId -DirectoryScopeId $DirectoryScopeId -Justification $Justification
-                $null = Send-ScheduleRequest -Request $Request
+                $null = Send-CIPPPIMScheduleRequest -Request $Request -TenantFilter $TenantFilter
             } else {
                 Test-LastGlobalAdmin
-                $RemovalSeen = Invoke-ActiveAssignmentRemoval
+                $RemovalSeen = Invoke-CIPPPIMActiveAssignmentRemoval -TenantFilter $TenantFilter -PrincipalId $PrincipalId -RoleDefinitionId $RoleDefinitionId -DirectoryScopeId $DirectoryScopeId -Justification $Justification -PrincipalLabel $PrincipalLabel -RoleName $RoleName
             }
             $After = 'None'
             $ResultText = "Removed $PrincipalLabel's $($TargetRow.AssignmentType.ToLower()) $RoleName assignment.$(if (-not $RemovalSeen) { ' Entra accepted the removal and is still propagating it; refresh in a minute.' })"

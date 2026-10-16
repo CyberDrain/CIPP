@@ -17,6 +17,10 @@ function Get-CIPPSharePointSiteUsageRows {
 
     .PARAMETER LogApi
         API name passed to Write-LogMessage for warnings and errors.
+    .NOTES
+        Permission: Graph | GET /sites/{id}:{id} | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/lists | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/getAllSites | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

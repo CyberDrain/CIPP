@@ -15,6 +15,8 @@ function Set-CIPPDBCacheMoeraDmarc {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /domains | Delegated | Domain.Read.All | Domain.ReadWrite.All, Directory.Read.All
     #>
     [CmdletBinding()]
     param(

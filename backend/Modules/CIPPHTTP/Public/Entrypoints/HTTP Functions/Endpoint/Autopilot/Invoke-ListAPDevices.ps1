@@ -6,6 +6,8 @@ Function Invoke-ListAPDevices {
         Endpoint.Autopilot.Read
     .DESCRIPTION
         Lists Windows Autopilot device identities registered in a tenant.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/windowsAutopilotDeviceIdentities | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

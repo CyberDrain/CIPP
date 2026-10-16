@@ -8,6 +8,8 @@ function Set-CIPPDBCacheOfficeActivations {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /reports/getOffice365ActivationsUserDetail | Delegated | Reports.Read.All
     #>
     [CmdletBinding()]
     param(

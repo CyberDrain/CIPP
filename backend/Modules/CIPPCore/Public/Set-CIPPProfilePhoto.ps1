@@ -1,4 +1,10 @@
 function Set-CIPPProfilePhoto {
+    <#
+    .NOTES
+        Permission: Graph | PUT /groups/{id}/photo/$value | Delegated | ProfilePhoto.ReadWrite.All | User.ReadWrite, User.ReadWrite.All
+        Permission: Graph | PUT /teams/{id}/photo/$value | Delegated | User.ReadWrite | User.ReadWrite.All
+        Permission: Graph | PUT /users/{id}/photo/$value | Delegated | User.ReadWrite | User.ReadWrite.All
+    #>
     [CmdletBinding()]
     param(
         $TenantFilter,

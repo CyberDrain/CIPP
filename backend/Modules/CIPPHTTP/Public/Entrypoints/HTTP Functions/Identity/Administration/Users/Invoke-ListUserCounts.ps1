@@ -6,6 +6,9 @@ Function Invoke-ListUserCounts {
         Identity.User.Read
     .DESCRIPTION
         Returns summary counts of total users, licensed users, and global administrators for a tenant.
+    .NOTES
+        Permission: Graph | GET /directoryRoles/roleTemplateId=62e90394-69f5-4237-9190-012177145e10/members/$count | Delegated | RoleManagement.Read.Directory | RoleManagement.ReadWrite.Directory, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/$count | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

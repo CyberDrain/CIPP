@@ -12,6 +12,10 @@ Function Invoke-ListSiteMembers {
         the real people are returned. Falls back to the site's hidden User Information List
         via Graph when the SharePoint REST API is unavailable (e.g. the tenant does not have
         the SharePoint application permission consented yet).
+    .NOTES
+        Permission: Graph | GET /sites/{id} | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/lists | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/lists/{id}/items | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

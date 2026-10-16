@@ -1,4 +1,14 @@
 function Add-CIPPDelegatedPermission {
+    <#
+    .NOTES
+        Permission: Graph | POST /oauth2PermissionGrants | Delegated | DelegatedPermissionGrant.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | DELETE /oauth2PermissionGrants/{id} | Delegated | DelegatedPermissionGrant.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | PATCH /oauth2PermissionGrants/{id} | Delegated | DelegatedPermissionGrant.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}') | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id}/oauth2PermissionGrants | Delegated | Directory.Read.All | DelegatedPermissionGrant.ReadWrite.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param(
         $RequiredResourceAccess,

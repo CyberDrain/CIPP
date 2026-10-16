@@ -26,6 +26,8 @@ function Invoke-CIPPStandardAnonReportDisable {
             "CIPP"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /admin/reportSettings | Application | ReportSettings.Read.All | ReportSettings.ReadWrite.All
+        Permission: Graph | PATCH /admin/reportSettings | Application | ReportSettings.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

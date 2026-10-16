@@ -27,6 +27,9 @@ function Invoke-CIPPStandardCopilotLimitedMode {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /copilot/admin/settings/limitedMode | Delegated | CopilotSettings-LimitedMode.Read | CopilotSettings-LimitedMode.ReadWrite
+        Permission: Graph | PATCH /copilot/admin/settings/limitedMode | Delegated | CopilotSettings-LimitedMode.ReadWrite
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

@@ -8,6 +8,8 @@ function Set-CIPPDBCacheRiskyServicePrincipals {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /identityProtection/riskyServicePrincipals | Delegated | IdentityRiskyServicePrincipal.Read.All | IdentityRiskyServicePrincipal.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

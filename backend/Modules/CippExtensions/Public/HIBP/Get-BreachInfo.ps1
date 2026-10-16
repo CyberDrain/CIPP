@@ -1,4 +1,8 @@
 function Get-BreachInfo {
+    <#
+    .NOTES
+        Permission: Graph | GET /domains | Delegated | Domain.Read.All | Domain.ReadWrite.All, Directory.Read.All
+    #>
     [CmdletBinding()]
     param(
         [Parameter()]

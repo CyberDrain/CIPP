@@ -37,6 +37,9 @@ function Invoke-CIPPStandardCustomBannedPasswordList {
             "AAD_PREMIUM_P2"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /settings | Delegated | GroupSettings.Read.All | GroupSettings.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadWrite.All
+        Permission: Graph | POST /settings | Delegated | GroupSettings.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | PATCH /settings/{id} | Delegated | GroupSettings.ReadWrite.All | Directory.ReadWrite.All, Policy.ReadWrite.Authorization
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

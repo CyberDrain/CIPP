@@ -34,6 +34,11 @@ function Set-CIPPSharePointSiteMember {
 
     .PARAMETER MemberType
     The member type from ListSiteMembers, used on removals to target the SharePoint role group
+    .NOTES
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | DELETE /groups/{id}/owners/{id}/$ref | Delegated | Group.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | POST /groups/{id}/owners/$ref | Delegated | Group.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

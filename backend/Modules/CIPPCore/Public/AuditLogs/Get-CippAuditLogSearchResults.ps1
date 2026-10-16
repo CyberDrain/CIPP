@@ -8,6 +8,8 @@ function Get-CippAuditLogSearchResults {
         The tenant to filter on.
     .PARAMETER QueryId
         The ID of the query to get the results for.
+    .NOTES
+        Permission: Graph | GET /security/auditLog/queries/{id}/records | Application | AuditLogsQuery.Read.All | AuditLogsQuery-CRM.Read.All, AuditLogsQuery-Endpoint.Read.All, AuditLogsQuery-Exchange.Read.All, AuditLogsQuery-OneDrive.Read.All, AuditLogsQuery-SharePoint.Read.All
     #>
     param (
         [Parameter(Mandatory = $true)]

@@ -3,6 +3,9 @@
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPCAPolicyIdentityCoverage.ps1')
+    foreach ($Helper in 'Add-CIPPCACoverageReason', 'New-CIPPCACoverageReason', 'Expand-CIPPCACoverageGuestBlock', 'Get-CIPPCACoverageGuestCategory', 'Get-CIPPCACoverageGuestHomeTenantId', 'Test-CIPPCACoverageExternalTenantMatch') {
+        . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper.ps1")
+    }
 
     function New-GraphGetRequest { param($uri, $tenantid, $AsApp, $ErrorAction, $noPagination, $ComplexFilter) }
     function New-GraphBulkRequest { param($Requests, $tenantid, $asapp, $Version) }

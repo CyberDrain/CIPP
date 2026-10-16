@@ -14,6 +14,8 @@ function Set-CIPPDBCacheRoleDefinitions {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /roleManagement/directory/roleDefinitions | Delegated | RoleManagement.Read.Directory | RoleManagement.Read.All, RoleManagement.ReadWrite.Exchange
     #>
     [CmdletBinding()]
     param(

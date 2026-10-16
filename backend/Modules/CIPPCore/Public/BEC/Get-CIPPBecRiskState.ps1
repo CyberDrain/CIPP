@@ -14,6 +14,9 @@ function Get-CIPPBecRiskState {
         Window start (UTC) for detections.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /identityProtection/riskDetections | Delegated | IdentityRiskEvent.Read.All
+        Permission: Graph | GET /identityProtection/riskyUsers/{id} | Delegated | IdentityRiskyUser.Read.All
     #>
     [CmdletBinding()]
     param(

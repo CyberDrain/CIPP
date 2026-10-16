@@ -1,4 +1,10 @@
 function Set-CIPPGDAPInviteGroups {
+    <#
+    .NOTES
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships/{id}/accessAssignments | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | POST /tenantRelationships/delegatedAdminRelationships/{id}/accessAssignments | Delegated | DelegatedAdminRelationship.ReadWrite.All
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     Param($Relationship)
     $Table = Get-CIPPTable -TableName 'GDAPInvites'

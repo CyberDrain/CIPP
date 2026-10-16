@@ -19,6 +19,12 @@ function Update-CIPPSSOPreconsent {
 
     Only covers the home tenant. A multi-tenant SSO app still prompts users from other
     tenants, because the grant can only be written where CIPP holds credentials.
+    .NOTES
+        Permission: Graph | POST /oauth2PermissionGrants | Application | Directory.ReadWrite.All
+        Permission: Graph | PATCH /oauth2PermissionGrants/{id} | Application | Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='00000003-0000-0000-c000-000000000000') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Directory.Read.All, Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id}/oauth2PermissionGrants | Application | Directory.Read.All | DelegatedPermissionGrant.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param()

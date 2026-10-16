@@ -7,6 +7,9 @@ function Update-CIPPSAMRedirectUri {
     Checks the SAM app's web.redirectUris and adds any
     missing URIs for the current CIPP instance. Requires
     $env:ApplicationID, $env:TenantID, and WEBSITE_HOSTNAME to be set.
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
     #>
     [CmdletBinding()]
     param()

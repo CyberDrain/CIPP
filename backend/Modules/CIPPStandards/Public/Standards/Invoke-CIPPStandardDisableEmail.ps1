@@ -27,6 +27,7 @@ function Invoke-CIPPStandardDisableEmail {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/authenticationmethodspolicy/authenticationMethodConfigurations/Email | Delegated | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

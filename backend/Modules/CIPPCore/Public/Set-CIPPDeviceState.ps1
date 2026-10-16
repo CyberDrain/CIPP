@@ -35,6 +35,9 @@
     Set-CIPPDeviceState -Action Delete -DeviceID "1234abcd-5678-efgh-ijkl-9012mnopqrst" -TenantFilter "contoso.onmicrosoft.com"
 
     This command removes the specified device from the tenant.
+    .NOTES
+        Permission: Graph | DELETE /devices/{id} | Delegated | Directory.AccessAsUser.All
+        Permission: Graph | PATCH /devices/{id} | Delegated | Directory.AccessAsUser.All
 #>
     param (
         [Parameter(Mandatory = $true)][ValidateSet('Enable', 'Disable', 'Delete')]$Action,

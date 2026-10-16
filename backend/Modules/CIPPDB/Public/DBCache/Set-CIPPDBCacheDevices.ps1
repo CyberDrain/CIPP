@@ -8,6 +8,8 @@ function Set-CIPPDBCacheDevices {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /devices | Delegated | Device.Read.All | Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

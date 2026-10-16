@@ -3,6 +3,8 @@ function Get-CippAlertSecureScore {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /security/secureScores | Delegated | SecurityEvents.Read.All | SecurityEvents.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

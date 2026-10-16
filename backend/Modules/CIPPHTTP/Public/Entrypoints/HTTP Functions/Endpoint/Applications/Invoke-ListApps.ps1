@@ -6,6 +6,9 @@ function Invoke-ListApps {
         Endpoint.Application.Read
     .DESCRIPTION
         Lists Intune managed applications for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

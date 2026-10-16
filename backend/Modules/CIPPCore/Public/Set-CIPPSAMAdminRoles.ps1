@@ -8,6 +8,12 @@ function Set-CIPPSAMAdminRoles {
         Tenant to apply the SAM roles to
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /directoryRoles | Delegated | RoleManagement.ReadWrite.Directory
+        Permission: Graph | POST /directoryRoles(roleTemplateId='{id}')/members/$ref | Application | RoleManagement.ReadWrite.Directory
+        Permission: Graph | POST /directoryRoles(roleTemplateId='{id}')/members/$ref | Delegated | RoleManagement.ReadWrite.Directory
+        Permission: Graph | GET /servicePrincipals(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}')/memberOf | Application | Application.Read.All | Application.ReadWrite.All, Application.ReadWrite.OwnedBy, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

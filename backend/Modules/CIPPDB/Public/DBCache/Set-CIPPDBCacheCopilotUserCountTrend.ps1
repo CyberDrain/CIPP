@@ -8,6 +8,8 @@ function Set-CIPPDBCacheCopilotUserCountTrend {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /reports/getMicrosoft365CopilotUserCountTrend(period='D7') | Application | Reports.Read.All
     #>
     [CmdletBinding()]
     param(

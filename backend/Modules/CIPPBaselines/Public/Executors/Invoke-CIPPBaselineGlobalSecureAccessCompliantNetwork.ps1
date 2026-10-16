@@ -7,6 +7,25 @@ function Invoke-CIPPBaselineGlobalSecureAccessCompliantNetwork {
         fingerprint and are only redeployed when it changes.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | DELETE /deviceAppManagement/mobileApps/{id} | Delegated | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/configurationPolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceConfigurations | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceShellScripts | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementScripts.ReadWrite.All
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations | Application | Policy.Read.All
+        Permission: Graph | POST /identity/conditionalAccess/namedLocations | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /identity/conditionalAccess/policies | Application | Policy.Read.All
+        Permission: Graph | GET /networkAccess/forwardingProfiles | Application | NetworkAccess.Read.All | NetworkAccess.ReadWrite.All
+        Permission: Graph | PATCH /networkAccess/forwardingProfiles/{id} | Application | NetworkAccess.ReadWrite.All
+        Permission: Graph | PATCH /networkAccess/forwardingProfiles/{id}/policies/{id} | Application | NetworkAccess.ReadWrite.All
+        Permission: Graph | GET /networkAccess/settings/conditionalAccess | Application | NetworkAccess.Read.All | NetworkAccess.ReadWrite.All
+        Permission: Graph | PATCH /networkAccess/settings/conditionalAccess | Application | NetworkAccess.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /servicePrincipals/{id} | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /servicePrincipals/{id} | Application | Application.ReadWrite.OwnedBy | AgentIdentity.ReadWrite.All, Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Remediate, $TenantFilter, $Current)

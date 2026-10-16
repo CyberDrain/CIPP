@@ -14,6 +14,8 @@ function Invoke-ListObjectHistory {
         Entrypoint
     .ROLE
         Identity.AuditLog.Read
+    .NOTES
+        Permission: Graph | GET /auditLogs/directoryAudits | Delegated | AuditLog.Read.All | Directory.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

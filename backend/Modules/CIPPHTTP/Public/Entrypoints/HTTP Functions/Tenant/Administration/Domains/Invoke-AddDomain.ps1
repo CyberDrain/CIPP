@@ -4,6 +4,8 @@ function Invoke-AddDomain {
         Entrypoint
     .ROLE
         Tenant.Administration.ReadWrite
+    .NOTES
+        Permission: Graph | POST /domains | Application | Domain.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

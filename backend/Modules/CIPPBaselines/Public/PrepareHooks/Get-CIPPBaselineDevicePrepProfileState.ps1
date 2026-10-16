@@ -20,6 +20,8 @@ function Get-CIPPBaselineDevicePrepProfileState {
         recreating the profile.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /groups//owners | Delegated | Application.Read.All | Directory.Read.All, Application.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

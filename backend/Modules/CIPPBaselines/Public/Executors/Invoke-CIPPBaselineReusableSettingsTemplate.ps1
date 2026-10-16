@@ -8,6 +8,8 @@ function Invoke-CIPPBaselineReusableSettingsTemplate {
         setting is a settingInstance tree that only round-trips whole.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /deviceManagement/reusablePolicySettings | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

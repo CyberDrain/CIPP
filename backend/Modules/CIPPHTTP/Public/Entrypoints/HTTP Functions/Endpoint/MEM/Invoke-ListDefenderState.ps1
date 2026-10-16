@@ -6,6 +6,9 @@ Function Invoke-ListDefenderState {
         Endpoint.MEM.Read
     .DESCRIPTION
         Lists Microsoft Defender antivirus state and detected threats for Intune-managed devices in a tenant.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/managedDevices | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/managedDevices/{id} | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

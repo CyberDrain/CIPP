@@ -21,6 +21,8 @@ function Get-CIPPBaselineOauthConsentState {
         detection already covers.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /policies/permissionGrantPolicies/cipp-consent-policy/includes | Delegated | Policy.Read.PermissionGrant | Directory.Read.All
     #>
     [CmdletBinding()]
     param(

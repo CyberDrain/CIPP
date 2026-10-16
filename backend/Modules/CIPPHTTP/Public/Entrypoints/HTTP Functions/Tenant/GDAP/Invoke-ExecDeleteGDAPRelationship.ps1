@@ -4,6 +4,8 @@ function Invoke-ExecDeleteGDAPRelationship {
         Entrypoint,AnyTenant
     .ROLE
         Tenant.Relationship.ReadWrite
+    .NOTES
+        Permission: Graph | POST /tenantRelationships/delegatedAdminRelationships/{id}/requests | Delegated | DelegatedAdminRelationship.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

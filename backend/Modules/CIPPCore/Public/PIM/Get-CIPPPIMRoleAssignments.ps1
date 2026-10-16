@@ -46,6 +46,13 @@ function Get-CIPPPIMRoleAssignments {
 
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /directory/administrativeUnits/{id} | Delegated | AdministrativeUnit.Read.All | AdministrativeUnit.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /directoryObjects/getByIds | Delegated | Directory.Read.All
+        Permission: Graph | GET /roleManagement/directory/roleAssignments | Delegated | RoleManagement.Read.Directory | EntitlementManagement.ReadWrite.All
+        Permission: Graph | GET /roleManagement/directory/roleAssignmentScheduleInstances | Application | RoleAssignmentSchedule.Read.Directory | RoleAssignmentSchedule.ReadWrite.Directory, RoleManagement.Read.All, RoleManagement.Read.Directory, RoleManagement.ReadWrite.Directory
+        Permission: Graph | GET /roleManagement/directory/roleDefinitions | Delegated | RoleManagement.Read.Directory | RoleManagement.Read.All, RoleManagement.ReadWrite.Exchange
+        Permission: Graph | GET /roleManagement/directory/roleEligibilitySchedules | Application | RoleEligibilitySchedule.Read.Directory | RoleEligibilitySchedule.ReadWrite.Directory, RoleManagement.Read.All, RoleManagement.Read.Directory, RoleManagement.ReadWrite.Directory
     #>
     [CmdletBinding()]
     param(

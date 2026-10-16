@@ -5,6 +5,10 @@ function Add-CIPPMacOSShellScript {
         script's id and assignments.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/deviceShellScripts | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementScripts.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/deviceShellScripts | Delegated | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/deviceShellScripts/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

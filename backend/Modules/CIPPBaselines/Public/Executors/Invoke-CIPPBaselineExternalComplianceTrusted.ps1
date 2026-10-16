@@ -9,6 +9,9 @@ function Invoke-CIPPBaselineExternalComplianceTrusted {
         isCompliantDeviceAccepted body would silently reset the MFA and hybrid-join trust flags.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /policies/crossTenantAccessPolicy/default | Delegated | Policy.Read.All | Policy.ReadWrite.CrossTenantAccess
+        Permission: Graph | PATCH /policies/crossTenantAccessPolicy/default | Delegated | Policy.ReadWrite.CrossTenantAccess
     #>
     [CmdletBinding()]
     param(

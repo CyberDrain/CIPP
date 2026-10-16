@@ -1,4 +1,12 @@
 function Add-CIPPApplicationPermission {
+    <#
+    .NOTES
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}') | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals/{id}/appRoleAssignedTo | Delegated | Application.Read.All | Directory.Read.All, Application.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id}/appRoleAssignments | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param(
         $RequiredResourceAccess,

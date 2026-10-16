@@ -13,6 +13,8 @@ function Set-CIPPDBCacheCopilotPolicySettings {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /copilot/admin/policySettings/{id} | Delegated | CopilotPolicySettings.Read | CopilotPolicySettings.ReadWrite
     #>
     [CmdletBinding()]
     param(

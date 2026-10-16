@@ -28,6 +28,8 @@ function New-CippAuditLogSearch {
         The administrative units to filter on.
     .PARAMETER ProcessLogs
         Store the search in the CIPP AuditLogSearches table for alert processing.
+    .NOTES
+        Permission: Graph | POST /security/auditLog/queries | Application | AuditLogsQuery.Read.All | AuditLogsQuery-CRM.Read.All, AuditLogsQuery-Endpoint.Read.All, AuditLogsQuery-Exchange.Read.All, AuditLogsQuery-OneDrive.Read.All, AuditLogsQuery-SharePoint.Read.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

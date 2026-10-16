@@ -8,6 +8,8 @@ function Set-CIPPDBCacheAuthorizationPolicy {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/authorizationPolicy | Delegated | Policy.Read.All | Policy.ReadWrite.Authorization
     #>
     [CmdletBinding()]
     param(

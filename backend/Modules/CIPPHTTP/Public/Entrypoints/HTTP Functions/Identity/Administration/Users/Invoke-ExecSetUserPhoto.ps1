@@ -4,6 +4,9 @@ function Invoke-ExecSetUserPhoto {
         Entrypoint
     .ROLE
         Identity.User.ReadWrite
+    .NOTES
+        Permission: Graph | DELETE /users/{id}/photo/$value | Delegated | User.ReadWrite | Group.ReadWrite.All
+        Permission: Graph | PUT /users/{id}/photo/$value | Delegated | User.ReadWrite | User.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

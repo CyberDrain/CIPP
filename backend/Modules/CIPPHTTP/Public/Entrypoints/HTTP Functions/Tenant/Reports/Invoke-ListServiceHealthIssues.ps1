@@ -6,6 +6,8 @@ function Invoke-ListServiceHealthIssues {
         Tenant.Administration.Read
     .DESCRIPTION
         Lists Microsoft 365 service health issues for a tenant: the incidents and advisories Microsoft has posted about service outages, degradations and their status, impact, affected services and timeline. For AllTenants each issue is returned once with the tenants it affects (Tenants, TenantCount). Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants. Pass Open=true to return only unresolved issues.
+    .NOTES
+        Permission: Graph | GET /admin/serviceAnnouncement/issues | Delegated | ServiceHealth.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

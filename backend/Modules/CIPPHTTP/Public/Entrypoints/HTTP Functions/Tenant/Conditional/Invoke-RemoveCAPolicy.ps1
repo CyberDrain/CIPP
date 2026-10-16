@@ -4,6 +4,8 @@ Function Invoke-RemoveCAPolicy {
         Entrypoint
     .ROLE
         Tenant.ConditionalAccess.ReadWrite
+    .NOTES
+        Permission: Graph | DELETE /identity/conditionalAccess/policies/{id} | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -10,6 +10,8 @@ function Invoke-CIPPBaselineRestrictThirdPartyStorageServices {
         where it never existed.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /servicePrincipals(appId='c1f33bc0-bdb4-4248-ba9b-096807ddb43e') | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

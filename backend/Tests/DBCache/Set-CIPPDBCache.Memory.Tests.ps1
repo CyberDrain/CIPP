@@ -89,6 +89,7 @@ BeforeAll {
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Start-CIPPMailboxDataStage.ps1')
 
     . (Get-CollectorPath 'Set-CIPPDBCacheGroups')
+    . (Get-CollectorPath 'Write-CIPPDBCacheGroupBatch')
     . (Get-CollectorPath 'Set-CIPPDBCacheTeams')
     . (Get-CollectorPath 'Set-CIPPDBCacheSiteActivity')
     . (Get-CollectorPath 'Set-CIPPDBCacheSharePointSiteUsage')

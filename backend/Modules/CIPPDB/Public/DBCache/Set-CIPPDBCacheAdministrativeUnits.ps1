@@ -12,6 +12,8 @@ function Set-CIPPDBCacheAdministrativeUnits {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /directory/administrativeUnits | Delegated | AdministrativeUnit.Read.All | AdministrativeUnit.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -49,6 +49,9 @@ function Invoke-CIPPBecContainment {
         Logging API name.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /servicePrincipals/{id} | Application | Application.ReadWrite.OwnedBy | AgentIdentity.ReadWrite.All, Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

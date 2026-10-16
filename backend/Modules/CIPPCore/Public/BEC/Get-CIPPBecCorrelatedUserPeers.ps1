@@ -25,6 +25,8 @@ function Get-CIPPBecCorrelatedUserPeers {
         The start of the investigation window (UTC).
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Application | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param(

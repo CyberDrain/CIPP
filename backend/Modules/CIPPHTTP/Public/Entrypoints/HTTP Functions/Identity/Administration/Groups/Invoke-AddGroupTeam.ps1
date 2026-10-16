@@ -4,6 +4,8 @@ function Invoke-AddGroupTeam {
         Entrypoint
     .ROLE
         Identity.Group.ReadWrite
+    .NOTES
+        Permission: Graph | PUT /groups/{id}/team | Application | Group.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

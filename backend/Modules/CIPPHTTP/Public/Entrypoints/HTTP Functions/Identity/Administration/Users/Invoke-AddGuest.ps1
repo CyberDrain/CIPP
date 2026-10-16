@@ -4,6 +4,8 @@ function Invoke-AddGuest {
         Entrypoint
     .ROLE
         Identity.User.ReadWrite
+    .NOTES
+        Permission: Graph | POST /invitations | Application | User.Invite.All | Directory.ReadWrite.All, User.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

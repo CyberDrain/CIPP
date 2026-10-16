@@ -14,6 +14,9 @@ function Get-CIPPBaselineDisableExchangeOnlinePowerShellState {
         an empty admin list would sweep every administrator in the tenant.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /groups/{id}/transitiveMembers/microsoft.graph.user | Delegated | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
+        Permission: Graph | GET /roleManagement/directory/roleAssignments | Delegated | RoleManagement.Read.Directory | EntitlementManagement.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

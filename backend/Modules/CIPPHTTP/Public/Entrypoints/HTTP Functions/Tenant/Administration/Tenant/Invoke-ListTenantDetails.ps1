@@ -6,6 +6,8 @@ Function Invoke-ListTenantDetails {
         CIPP.Core.Read
     .DESCRIPTION
         Retrieves detailed organization information for a tenant, including addresses, assigned plans, sync status, and custom properties.
+    .NOTES
+        Permission: Graph | GET /organization | Delegated | DeviceManagementServiceConfig.Read.All | Organization.Read.All, Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

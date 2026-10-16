@@ -1,4 +1,9 @@
 function Set-CIPPCAPolicyServiceException {
+    <#
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/policies/{id} | Application | Policy.Read.All
+        Permission: Graph | PATCH /identity/conditionalAccess/policies/{id} | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         $TenantFilter,

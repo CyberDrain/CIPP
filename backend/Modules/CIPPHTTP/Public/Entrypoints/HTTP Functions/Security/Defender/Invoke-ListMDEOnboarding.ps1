@@ -6,6 +6,8 @@ function Invoke-ListMDEOnboarding {
         Security.Defender.Read
     .DESCRIPTION
         Lists Microsoft Defender for Endpoint onboarding status for devices in a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance. Automatically uses the reporting database when querying AllTenants.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/mobileThreatDefenseConnectors/fc780465-2017-40d4-a0c5-307022471b92 | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

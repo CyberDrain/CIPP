@@ -6,6 +6,8 @@ Function Invoke-ListConditionalAccessPolicyChanges {
         Tenant.ConditionalAccess.Read
     .DESCRIPTION
         Lists audit log entries showing changes to a specific Conditional Access policy, including before/after values.
+    .NOTES
+        Permission: Graph | GET /auditLogs/directoryAudits | Delegated | AuditLog.Read.All | Directory.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -4,6 +4,8 @@ Function Invoke-ExecAssignAPDevice {
         Entrypoint
     .ROLE
         Endpoint.Autopilot.ReadWrite
+    .NOTES
+        Permission: Graph | POST /deviceManagement/windowsAutopilotDeviceIdentities/{id}/UpdateDeviceProperties | Delegated | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

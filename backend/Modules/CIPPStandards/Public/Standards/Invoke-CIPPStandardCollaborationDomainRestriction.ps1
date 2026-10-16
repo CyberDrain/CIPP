@@ -29,6 +29,9 @@ function Invoke-CIPPStandardCollaborationDomainRestriction {
         REQUIREDCAPABILITIES
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/b2bManagementPolicies | Delegated | Policy.Read.B2BManagementPolicy | Policy.ReadWrite.B2BManagementPolicy
+        Permission: Graph | POST /policies/b2bManagementPolicies | Delegated | Policy.ReadWrite.B2BManagementPolicy
+        Permission: Graph | PATCH /policies/b2bManagementPolicies/{id} | Delegated | Policy.ReadWrite.B2BManagementPolicy
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/list-standards
     #>

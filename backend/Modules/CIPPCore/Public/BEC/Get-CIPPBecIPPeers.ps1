@@ -33,6 +33,8 @@ function Get-CIPPBecIPPeers {
         The investigated user's UPN: excluded from the audit log history (it names users by UPN) and its anchor mailbox.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Application | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param(

@@ -8,6 +8,8 @@ function Set-CIPPDBCacheServiceHealthOverviews {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /admin/serviceAnnouncement/healthOverviews | Delegated | ServiceHealth.Read.All
     #>
     [CmdletBinding()]
     param(

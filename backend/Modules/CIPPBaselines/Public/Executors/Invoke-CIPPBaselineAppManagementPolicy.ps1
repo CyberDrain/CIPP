@@ -8,6 +8,8 @@ function Invoke-CIPPBaselineAppManagementPolicy {
         App-only, v1.0, matching the classic's write.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /policies/defaultAppManagementPolicy | Application | Policy.ReadWrite.ApplicationConfiguration
     #>
     [CmdletBinding()]
     param(

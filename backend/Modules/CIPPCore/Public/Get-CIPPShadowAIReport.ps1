@@ -11,6 +11,8 @@ function Get-CIPPShadowAIReport {
         sources, the AI software found on managed devices and the AI applications in Entra. No live
         Graph enumeration is performed (refresh via ExecCIPPDBCache); the only live call is a bounded,
         best-effort 7-day sign-in lookup for the matched AI applications.
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Delegated | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param(

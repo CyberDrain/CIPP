@@ -28,6 +28,12 @@ function Grant-CippAppGraphConsent {
         client (SSO app) on the MCP resource app's user_impersonation scope.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /oauth2PermissionGrants | Application | Directory.ReadWrite.All
+        Permission: Graph | PATCH /oauth2PermissionGrants/{id} | Application | Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='00000003-0000-0000-c000-000000000000') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Directory.Read.All, Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id}/oauth2PermissionGrants | Application | Directory.Read.All | DelegatedPermissionGrant.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

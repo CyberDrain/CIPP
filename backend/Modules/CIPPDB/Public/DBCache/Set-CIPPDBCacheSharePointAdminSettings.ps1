@@ -8,6 +8,8 @@ function Set-CIPPDBCacheSharePointAdminSettings {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /admin/sharepoint/settings | Application | SharePointTenantSettings.Read.All | SharePointTenantSettings.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

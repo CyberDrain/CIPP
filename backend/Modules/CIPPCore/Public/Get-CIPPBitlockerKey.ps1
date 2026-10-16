@@ -26,6 +26,9 @@
     - state: Status of the operation ('success')
 
     Or a string message if no keys are found.
+.NOTES
+    Permission: Graph | GET /informationProtection/bitlocker/recoveryKeys | Delegated | BitlockerKey.ReadBasic.All | BitlockerKey.Read.All
+    Permission: Graph | GET /informationProtection/bitlocker/recoveryKeys/{id} | Delegated | BitlockerKey.ReadBasic.All | BitlockerKey.Read.All
 #>
 
 function Get-CIPPBitLockerKey {

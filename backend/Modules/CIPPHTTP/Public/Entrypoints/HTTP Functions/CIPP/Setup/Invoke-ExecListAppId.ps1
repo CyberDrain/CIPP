@@ -4,6 +4,11 @@ function Invoke-ExecListAppId {
         Entrypoint
     .ROLE
         CIPP.Core.ReadWrite
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Delegated | Application.ReadWrite.All
+        Permission: Graph | GET /me | Delegated | User.Read | User.ReadWrite, User.ReadBasic.All, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /organization | Delegated | DeviceManagementServiceConfig.Read.All | Organization.Read.All, Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

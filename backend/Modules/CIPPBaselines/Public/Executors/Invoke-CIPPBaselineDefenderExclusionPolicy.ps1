@@ -8,6 +8,8 @@ function Invoke-CIPPBaselineDefenderExclusionPolicy {
         Set-CIPPDefenderExclusionPolicy helper with only the configured collections.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | DELETE /deviceManagement/configurationPolicies/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

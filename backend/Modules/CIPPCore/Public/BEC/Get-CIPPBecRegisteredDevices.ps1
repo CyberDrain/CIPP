@@ -15,6 +15,8 @@ function Get-CIPPBecRegisteredDevices {
         Window start (UTC).
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /users/{id}/registeredDevices/microsoft.graph.device | Application | User.Read.All | Directory.Read.All, Directory.ReadWrite.All, User.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

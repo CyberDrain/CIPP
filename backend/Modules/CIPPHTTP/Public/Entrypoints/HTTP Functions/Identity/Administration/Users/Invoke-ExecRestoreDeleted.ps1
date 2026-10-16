@@ -4,6 +4,8 @@ function Invoke-ExecRestoreDeleted {
         Entrypoint
     .ROLE
         Tenant.Directory.ReadWrite
+    .NOTES
+        Permission: Graph | POST /directory/deletedItems/{id}/restore | Delegated | User.DeleteRestore.All | User.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

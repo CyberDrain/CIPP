@@ -1,4 +1,12 @@
 function Test-CIPPGDAPRelationships {
+    <#
+    .NOTES
+        Permission: Graph | GET /groups/{id}/memberOf | Delegated | GroupMember.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadBasic.All, GroupMember.Read.All
+        Permission: Graph | GET /groups/$count | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /me | Delegated | User.Read | User.ReadWrite, User.ReadBasic.All, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /me/memberOf | Delegated | User.Read | Directory.Read.All, Directory.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $TenantFilter,

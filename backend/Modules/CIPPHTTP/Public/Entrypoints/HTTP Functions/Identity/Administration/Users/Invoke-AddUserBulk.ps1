@@ -4,6 +4,8 @@ function Invoke-AddUserBulk {
         Entrypoint
     .ROLE
         Identity.User.ReadWrite
+    .NOTES
+        Permission: Graph | POST /users | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

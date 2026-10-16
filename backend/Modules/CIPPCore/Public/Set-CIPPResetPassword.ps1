@@ -1,4 +1,10 @@
 function Set-CIPPResetPassword {
+    <#
+    .NOTES
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | POST /users/{id}/authentication/methods/28c10230-6103-485e-b985-444c60001490/resetPassword | Delegated | UserAuthenticationMethod.ReadWrite.All
+    #>
     [CmdletBinding()]
     param(
         $UserID,

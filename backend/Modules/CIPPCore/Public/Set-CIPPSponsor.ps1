@@ -1,4 +1,8 @@
 function Set-CIPPSponsor {
+    <#
+    .NOTES
+        Permission: Graph | PUT /users/{id}/sponsors/$ref | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         [Alias('User')]

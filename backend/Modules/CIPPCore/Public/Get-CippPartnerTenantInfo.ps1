@@ -12,6 +12,8 @@ function Get-CippPartnerTenantInfo {
         not about a tenant the user is asking to act on.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /organization | Delegated | DeviceManagementServiceConfig.Read.All | Organization.Read.All, Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param()

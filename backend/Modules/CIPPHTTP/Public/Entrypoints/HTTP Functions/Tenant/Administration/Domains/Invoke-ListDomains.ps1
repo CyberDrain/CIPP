@@ -6,6 +6,8 @@ Function Invoke-ListDomains {
         Tenant.Administration.Read
     .DESCRIPTION
         Lists verified domains for a tenant, showing default and initial domain status.
+    .NOTES
+        Permission: Graph | GET /domains | Delegated | Domain.Read.All | Domain.ReadWrite.All, Directory.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

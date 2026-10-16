@@ -13,6 +13,10 @@ function Invoke-CIPPBaselineActivityBasedTimeout {
         with the existing org default. The spec arrives fully rendered.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /policies/activityBasedTimeoutPolicies | Application | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | POST /policies/activityBasedTimeoutPolicies | Application | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | PATCH /policies/activityBasedTimeoutPolicies/{id} | Application | Policy.ReadWrite.ApplicationConfiguration
     #>
     [CmdletBinding()]
     param(

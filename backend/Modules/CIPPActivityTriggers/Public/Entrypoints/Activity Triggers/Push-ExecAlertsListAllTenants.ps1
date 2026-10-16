@@ -2,6 +2,8 @@ function Push-ExecAlertsListAllTenants {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /security/alerts_v2 | Delegated | SecurityAlert.Read.All | SecurityAlert.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Item)

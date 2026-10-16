@@ -6,6 +6,12 @@ function Invoke-ListGroups {
         Identity.Group.Read
     .DESCRIPTION
         Lists Entra ID groups for a tenant, including group members and owners. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants. When manualPagination is also set on a cached read, one page is returned per request as { Results, Metadata } with a continuation token in Metadata.nextLink.
+    .NOTES
+        Permission: Graph | POST /directoryObjects/getByIds | Application | Directory.Read.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /groups/{id} | Application | Group.Read.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group-XTenantIdentitySync.Read.All, Group.ManageProtection.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /groups/{id}/members | Application | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
+        Permission: Graph | GET /groups/{id}/owners | Application | Group.Read.All | Group.ReadWrite.All, Directory.Read.All, GroupMember.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

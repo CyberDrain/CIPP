@@ -18,6 +18,8 @@ function Get-CIPPBecColleagueSample {
         How many colleagues to pick.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Application | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param(

@@ -13,6 +13,8 @@ function Set-CIPPDBCacheSecureScoreControlProfiles {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /security/secureScoreControlProfiles | Delegated | SecurityEvents.Read.All | SecurityEvents.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

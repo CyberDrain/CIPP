@@ -1,4 +1,11 @@
 function Set-CIPPAssignedApplication {
+    <#
+    .NOTES
+        Permission: Graph | POST /deviceAppManagement/mobileApps/{id}/assign | Delegated | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceAppManagement/mobileApps/{id}/assignments | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/assignmentFilters | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         $GroupName,

@@ -19,6 +19,10 @@ function Set-CIPPDBCacheOneDriveLongPaths {
 
     .PARAMETER QueueId
         Optional queue ID for progress tracking
+    .NOTES
+        Permission: Graph | GET /organization | Application | DeviceManagementServiceConfig.Read.All | Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /reports/getOneDriveUsageAccountDetail(period='D7') | Application | Reports.Read.All
+        Permission: Graph | GET /sites/getAllSites | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -12,6 +12,9 @@ function Set-CIPPDBCacheIntuneAppleUserInitiatedEnrollmentProfiles {
 
     .PARAMETER TenantFilter
         The tenant to cache Apple enrollment type profiles for
+    .NOTES
+        Permission: Graph | GET /deviceManagement/appleUserInitiatedEnrollmentProfiles | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/appleUserInitiatedEnrollmentProfiles/{id}/assignments | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

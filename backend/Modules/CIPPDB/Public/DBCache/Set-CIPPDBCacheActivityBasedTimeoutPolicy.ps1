@@ -8,6 +8,8 @@ function Set-CIPPDBCacheActivityBasedTimeoutPolicy {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/activityBasedTimeoutPolicies | Delegated | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
     #>
     [CmdletBinding()]
     param(

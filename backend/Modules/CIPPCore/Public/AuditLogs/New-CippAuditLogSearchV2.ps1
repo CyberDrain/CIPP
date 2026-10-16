@@ -17,6 +17,8 @@ function New-CippAuditLogSearchV2 {
         order. Outcome is 'Created', 'AuditingDisabled', 'AccessDenied' or 'Transient'.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /security/auditLog/queries | Delegated | AuditLogsQuery.Read.All | AuditLogsQuery-CRM.Read.All, AuditLogsQuery-Endpoint.Read.All, AuditLogsQuery-Exchange.Read.All, AuditLogsQuery-OneDrive.Read.All, AuditLogsQuery-SharePoint.Read.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

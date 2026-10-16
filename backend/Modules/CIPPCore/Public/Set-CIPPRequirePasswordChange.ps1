@@ -5,6 +5,9 @@ function Set-CIPPRequirePasswordChange {
     .DESCRIPTION
         Sets passwordProfile.forceChangePasswordNextSignIn via Graph. Directory-synced users
         are rejected: that flag is not managed for on-premises password authority.
+    .NOTES
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -1,4 +1,8 @@
 function New-CIPPDeviceAction {
+    <#
+    .NOTES
+        Permission: Graph | DELETE /deviceManagement/managedDevices/{id} | Delegated | DeviceManagementManagedDevices.ReadWrite.All
+    #>
     [CmdletBinding()]
     param(
         $Action,

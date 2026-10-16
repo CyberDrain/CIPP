@@ -12,6 +12,11 @@ function Invoke-ListMessageTrace {
         (8bd644d1-64a1-4d4b-ae52-2e0cbf64e373) in the tenant; it is provisioned on demand. Until
         that SP activates (which can take hours), or where the Graph permission is not yet
         consented, the request falls back to Get-MessageTraceV2 so results are returned immediately.
+    .NOTES
+        Permission: Graph | GET /admin/exchange/tracing/messageTraces | Application | ExchangeMessageTrace.Read.All
+        Permission: Graph | GET /admin/exchange/tracing/messageTraces/{id}/getDetailsByRecipient(recipientAddress='{id}') | Application | ExchangeMessageTrace.Read.All
+        Permission: Graph | POST /servicePrincipals | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='8bd644d1-64a1-4d4b-ae52-2e0cbf64e373') | Delegated | Application.Read.All | Directory.Read.All, Application.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

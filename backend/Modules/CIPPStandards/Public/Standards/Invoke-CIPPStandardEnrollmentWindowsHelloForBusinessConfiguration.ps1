@@ -45,6 +45,8 @@ function Invoke-CIPPStandardEnrollmentWindowsHelloForBusinessConfiguration {
             "MICROSOFTINTUNEPLAN1"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /deviceManagement/deviceEnrollmentConfigurations | Application | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/deviceEnrollmentConfigurations/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All | DeviceManagementConfiguration.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

@@ -8,6 +8,8 @@ function Set-CIPPDBCacheDirectoryRecommendations {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /directory/recommendations | Delegated | DirectoryRecommendations.Read.All | DirectoryRecommendations.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

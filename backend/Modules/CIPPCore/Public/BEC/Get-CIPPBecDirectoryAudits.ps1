@@ -19,6 +19,8 @@ function Get-CIPPBecDirectoryAudits {
         The BEC heuristics object (directoryAudit.flaggedActivities).
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /auditLogs/directoryAudits | Application | AuditLog.Read.All | Directory.Read.All
     #>
     [CmdletBinding()]
     param(

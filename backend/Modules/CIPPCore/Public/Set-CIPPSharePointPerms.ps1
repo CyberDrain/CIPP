@@ -33,6 +33,8 @@ function Set-CIPPSharePointPerms {
 
     .OUTPUTS
     One { resultText, state } item per user. A user that fails gets state 'error' and does not stop the rest.
+    .NOTES
+        Permission: Graph | GET /users/{id}/drive/root | Application | Files.Read.All | Files.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

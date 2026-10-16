@@ -10,6 +10,8 @@ function Invoke-ExecBulkRemoveSharingLinks {
         are revoked: Anonymous (anyone links only), External (anonymous + external), or All
         (every cached link on the site, including internal). Because the source is the cache,
         links created after the last sharing sync are not covered.
+    .NOTES
+        Permission: Graph | DELETE /drives/{id}/items/{id}/permissions/{id} | Application | Files.ReadWrite.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

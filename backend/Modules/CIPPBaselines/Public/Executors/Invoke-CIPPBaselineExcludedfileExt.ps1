@@ -7,6 +7,8 @@ function Invoke-CIPPBaselineExcludedfileExt {
         admin center's own semantics and the classic's write.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /admin/sharepoint/settings | Application | SharePointTenantSettings.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

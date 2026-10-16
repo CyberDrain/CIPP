@@ -4,6 +4,8 @@ function Invoke-AddNamedLocation {
         Entrypoint,AnyTenant
     .ROLE
         Tenant.ConditionalAccess.ReadWrite
+    .NOTES
+        Permission: Graph | POST /identity/conditionalAccess/namedLocations | Delegated | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

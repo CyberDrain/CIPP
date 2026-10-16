@@ -1,4 +1,8 @@
 function Set-CIPPOneDriveSharing {
+    <#
+    .NOTES
+        Permission: Graph | GET /users/{id}/drive | Application | Files.Read.All | Files.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $UserId,

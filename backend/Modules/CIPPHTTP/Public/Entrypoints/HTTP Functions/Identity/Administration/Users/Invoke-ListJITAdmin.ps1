@@ -7,6 +7,10 @@
 
     .DESCRIPTION
         List Just-in-time admin users for a tenant or all tenants.
+    .NOTES
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id}/memberOf | Delegated | User.Read | Directory.Read.All, Directory.ReadWrite.All, Group.ReadBasic.All, GroupMember.Read.All, GroupMember.ReadBasic.All
+        Permission: Graph | GET /users/{id}/memberOf/microsoft.graph.directoryRole | Delegated | User.Read | Directory.Read.All, Directory.ReadWrite.All, Group.ReadBasic.All, GroupMember.Read.All, GroupMember.ReadBasic.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

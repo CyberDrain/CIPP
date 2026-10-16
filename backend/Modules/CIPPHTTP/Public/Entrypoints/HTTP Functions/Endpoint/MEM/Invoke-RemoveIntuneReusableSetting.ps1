@@ -4,6 +4,8 @@ function Invoke-RemoveIntuneReusableSetting {
         Entrypoint
     .ROLE
         Endpoint.MEM.ReadWrite
+    .NOTES
+        Permission: Graph | DELETE /deviceManagement/reusablePolicySettings/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

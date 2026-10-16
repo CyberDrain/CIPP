@@ -24,6 +24,8 @@ function Get-CIPPOmaSettingDecryptedValue {
 
     .FUNCTIONALITY
     Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/deviceConfigurations/{id}/getOmaSettingPlainTextValue(secretReferenceValueId='{id}') | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

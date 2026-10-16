@@ -20,6 +20,8 @@ function Set-CIPPPerUserMFA {
 
     .EXAMPLE
     Set-CIPPPerUserMFA -TenantFilter 'contoso.onmicrosoft.com' -userId user@contoso.onmicrosoft.com -State 'disabled' -Headers 'mspuser@partner.com'
+    .NOTES
+        Permission: Graph | PATCH /users/{id}/authentication/requirements | Application | Policy.ReadWrite.AuthenticationMethod | UserAuthenticationMethod.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -2,6 +2,8 @@ function Get-CIPPAlertAppleTerms {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /deviceManagement/depOnboardingSettings | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

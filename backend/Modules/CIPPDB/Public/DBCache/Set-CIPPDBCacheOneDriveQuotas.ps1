@@ -14,6 +14,8 @@ function Set-CIPPDBCacheOneDriveQuotas {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /users/{id}/drive | Application | Files.Read.All | Files.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

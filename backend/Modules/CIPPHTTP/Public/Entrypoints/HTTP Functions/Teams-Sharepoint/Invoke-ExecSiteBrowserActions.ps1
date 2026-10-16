@@ -9,6 +9,8 @@ function Invoke-ExecSiteBrowserActions {
         Body.Action selects the operation. SiteUrl + tenantFilter are always required.
         Version cleanup: StartVersionCleanup, GetVersionCleanupStatus.
         Site admin properties (incl. version policy): GetSiteProperties.
+    .NOTES
+        Permission: Graph | GET /sites/{id} | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

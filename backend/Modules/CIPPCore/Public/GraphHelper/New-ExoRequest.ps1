@@ -2,6 +2,11 @@ function New-ExoRequest {
     <#
     .FUNCTIONALITY
     Internal
+    .NOTES
+        Permission: Graph | GET /users/APP:SystemMailbox{8cc370d3-822a-4ab8-a926-bb94bd0641a9}@{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/APP:SystemMailbox{bb558c35-97f1-4cb9-8ff7-d53741dc928c}@{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/UPN:SystemMailbox{8cc370d3-822a-4ab8-a926-bb94bd0641a9}@{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/UPN:SystemMailbox{bb558c35-97f1-4cb9-8ff7-d53741dc928c}@{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding(DefaultParameterSetName = 'ExoRequest')]
     param(

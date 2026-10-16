@@ -1,4 +1,10 @@
 function Remove-CIPPAutopilotProfile {
+    <#
+    .NOTES
+        Permission: Graph | DELETE /deviceManagement/windowsAutopilotDeploymentProfiles/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsAutopilotDeploymentProfiles/{id}/assignments | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementConfiguration.Read.All, DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/windowsAutopilotDeploymentProfiles/{id}/assignments/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All | DeviceManagementConfiguration.ReadWrite.All
+    #>
     param(
         $ProfileId,
         $DisplayName,

@@ -8,6 +8,8 @@ function Get-CIPPAlertHuntressRogueApps {
         Entrypoint
     .LINK
         https://huntresslabs.github.io/rogueapps/
+    .NOTES
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

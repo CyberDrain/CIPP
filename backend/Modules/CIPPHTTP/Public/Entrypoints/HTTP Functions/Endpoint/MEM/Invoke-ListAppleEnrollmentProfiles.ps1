@@ -6,6 +6,9 @@ function Invoke-ListAppleEnrollmentProfiles {
         Endpoint.Autopilot.Read
     .DESCRIPTION
         Lists Apple Automated Device Enrollment tokens and enrollment profiles.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/depOnboardingSettings | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/depOnboardingSettings/{id}/enrollmentProfiles | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -6,6 +6,8 @@ function Invoke-ListGDAPServicePrincipals {
         Tenant.Relationship.Read
     .DESCRIPTION
         Lists service principals in a customer tenant owned by the partner or specified vendor tenant IDs, useful for identifying GDAP-related app registrations.
+    .NOTES
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

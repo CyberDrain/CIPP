@@ -4,6 +4,8 @@ function Invoke-AddTenant {
         Entrypoint,AnyTenant
     .ROLE
         Tenant.Config.ReadWrite
+    .NOTES
+        Permission: Graph | GET /organization | Delegated | DeviceManagementServiceConfig.Read.All | Organization.Read.All, Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

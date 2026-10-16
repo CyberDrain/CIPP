@@ -8,6 +8,8 @@ function Set-CIPPDBCacheUserRegistrationDetails {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /reports/authenticationMethods/userRegistrationDetails | Delegated | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param(

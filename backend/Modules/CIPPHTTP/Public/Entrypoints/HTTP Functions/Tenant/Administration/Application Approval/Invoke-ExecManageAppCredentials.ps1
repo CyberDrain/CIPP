@@ -27,22 +27,6 @@ function Invoke-ExecManageAppCredentials {
     $IdPath = if ($Id) { "/$Id" } else { "(appId='$AppId')" }
     $Uri = "https://graph.microsoft.com/beta/$AppType$IdPath"
 
-    # Max credential end date allowed by the tenant default app management policy's passwordLifetime
-    # restriction, or $null when not enforced/readable. Custom per-app policies aren't read here.
-    function Get-PasswordPolicyMaxEnd {
-        param([datetime]$From)
-        try {
-            $Policy = New-GraphGetRequest -uri 'https://graph.microsoft.com/v1.0/policies/defaultAppManagementPolicy' -tenantid $TenantFilter -AsApp $true
-            $Lifetime = $Policy.applicationRestrictions.passwordCredentials | Where-Object { $_.restrictionType -eq 'passwordLifetime' }
-            if ($Lifetime -and -not ($Lifetime.state -eq 'disabled' -or $null -eq $Lifetime.state) -and $Lifetime.maxLifetime) {
-                return $From.Add([System.Xml.XmlConvert]::ToTimeSpan($Lifetime.maxLifetime))
-            }
-        } catch {
-            Write-LogMessage -API $APIName -tenant $TenantFilter -headers $Headers -message "Could not read app management policy for expiry clamping: $($_.Exception.Message)" -sev Debug
-        }
-        return $null
-    }
-
     try {
         $Results = switch ($Action) {
             'Remove' {
@@ -81,7 +65,7 @@ function Invoke-ExecManageAppCredentials {
 
                     # Clamp the expiry to the tenant policy maximum so the add isn't rejected outright.
                     $ClampNote = ''
-                    $MaxAllowedEnd = Get-PasswordPolicyMaxEnd -From $Now
+                    $MaxAllowedEnd = Get-CIPPAppPasswordPolicyMaxEnd -From $Now -TenantFilter $TenantFilter -APIName $APIName -Headers $Headers
                     if ($MaxAllowedEnd -and $RequestedEnd -gt $MaxAllowedEnd) {
                         $RequestedEnd = $MaxAllowedEnd
                         $ClampNote = " Expiry was reduced to the tenant policy maximum of $([math]::Round(($MaxAllowedEnd - $Now).TotalDays)) day(s)."
@@ -116,7 +100,7 @@ function Invoke-ExecManageAppCredentials {
                         $Now = (Get-Date).ToUniversalTime()
                         $RequestedEnd = $Now.AddMonths(12)
                         $ClampNote = ''
-                        $MaxAllowedEnd = Get-PasswordPolicyMaxEnd -From $Now
+                        $MaxAllowedEnd = Get-CIPPAppPasswordPolicyMaxEnd -From $Now -TenantFilter $TenantFilter -APIName $APIName -Headers $Headers
                         if ($MaxAllowedEnd -and $RequestedEnd -gt $MaxAllowedEnd) {
                             $RequestedEnd = $MaxAllowedEnd
                             $ClampNote = " New secret expiry was set to the tenant policy maximum of $([math]::Round(($MaxAllowedEnd - $Now).TotalDays)) day(s)."

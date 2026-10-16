@@ -27,6 +27,8 @@ function Invoke-CIPPStandardSecureScoreRemediation {
             New-GraphPostRequest to /beta/security/secureScoreControlProfiles/{id}
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /security/secureScoreControlProfiles | Delegated | SecurityEvents.Read.All | SecurityEvents.ReadWrite.All
+        Permission: Graph | PATCH /security/secureScoreControlProfiles/{id} | Delegated | SecurityEvents.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

@@ -27,6 +27,8 @@ function Invoke-CIPPStandardintuneRequireMFA {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/deviceRegistrationPolicy | Delegated | Policy.Read.DeviceConfiguration | Policy.Read.All, Policy.ReadWrite.DeviceConfiguration
+        Permission: Graph | PUT /policies/deviceRegistrationPolicy | Delegated | Policy.ReadWrite.DeviceConfiguration
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

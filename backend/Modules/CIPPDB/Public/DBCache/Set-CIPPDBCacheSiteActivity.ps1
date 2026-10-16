@@ -43,6 +43,13 @@ function Set-CIPPDBCacheSiteActivity {
 
     .PARAMETER QueueId
         Optional queue context passed by orchestrators; reserved for queue-aware cache flows.
+    .NOTES
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /groups/{id}/sites/root | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /reports/getOneDriveUsageAccountDetail(period='D180') | Application | Reports.Read.All
+        Permission: Graph | GET /reports/getSharePointSiteUsageDetail(period='D180') | Application | Reports.Read.All
+        Permission: Graph | GET /reports/getTeamsTeamActivityDetail(period='D180') | Application | Reports.Read.All
+        Permission: Graph | GET /sites/getAllSites | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

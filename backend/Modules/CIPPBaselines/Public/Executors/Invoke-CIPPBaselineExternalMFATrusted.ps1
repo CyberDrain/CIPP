@@ -10,6 +10,9 @@ function Invoke-CIPPBaselineExternalMFATrusted {
         The classic did the same read-merge-write for the same reason.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /policies/crossTenantAccessPolicy/default | Delegated | Policy.Read.All | Policy.ReadWrite.CrossTenantAccess
+        Permission: Graph | PATCH /policies/crossTenantAccessPolicy/default | Delegated | Policy.ReadWrite.CrossTenantAccess
     #>
     [CmdletBinding()]
     param(

@@ -4,6 +4,8 @@ Function Invoke-AddTeam {
         Entrypoint
     .ROLE
         Teams.Group.ReadWrite
+    .NOTES
+        Permission: Graph | POST /teams | Application | Team.Create | Directory.ReadWrite.All, Group.ReadWrite.All, Teamwork.Migrate.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

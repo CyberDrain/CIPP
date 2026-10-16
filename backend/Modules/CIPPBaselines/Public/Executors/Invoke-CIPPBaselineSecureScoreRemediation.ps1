@@ -9,6 +9,8 @@ function Invoke-CIPPBaselineSecureScoreRemediation {
         for the same reason. Per-control failures log and continue.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /security/secureScoreControlProfiles/{id} | Delegated | SecurityEvents.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

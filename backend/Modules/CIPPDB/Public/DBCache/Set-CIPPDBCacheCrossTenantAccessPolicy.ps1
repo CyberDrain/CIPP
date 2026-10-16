@@ -8,6 +8,8 @@ function Set-CIPPDBCacheCrossTenantAccessPolicy {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/crossTenantAccessPolicy/default | Delegated | Policy.Read.All | Policy.ReadWrite.CrossTenantAccess
     #>
     [CmdletBinding()]
     param(

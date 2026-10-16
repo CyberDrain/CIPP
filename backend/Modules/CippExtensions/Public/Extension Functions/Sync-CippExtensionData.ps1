@@ -2,6 +2,24 @@ function Sync-CippExtensionData {
     <#
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceCompliancePolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceCompliancePolicies/{0}/deviceStatuses | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/managedDevices | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
+        Permission: Graph | GET /directory/subscriptions | Delegated | Organization.Read.All | Directory.Read.All
+        Permission: Graph | GET /directoryRoles | Delegated | RoleManagement.Read.Directory | RoleManagement.ReadWrite.Directory, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /directoryRoles/{0}/members | Delegated | RoleManagement.Read.Directory | RoleManagement.ReadWrite.Directory, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /domains | Delegated | Domain.Read.All | Domain.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /groups/{0}/members | Delegated | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
+        Permission: Graph | GET /identity/conditionalAccess/policies | Delegated | Policy.Read.All
+        Permission: Graph | GET /organization | Delegated | DeviceManagementServiceConfig.Read.All | Organization.Read.All, Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /reports/getMailboxUsageDetail(period='D7') | Delegated | Reports.Read.All
+        Permission: Graph | GET /reports/getOneDriveUsageAccountDetail(period='D7') | Delegated | Reports.Read.All
+        Permission: Graph | GET /security/secureScoreControlProfiles | Delegated | SecurityEvents.Read.All | SecurityEvents.ReadWrite.All
+        Permission: Graph | GET /subscribedSkus | Delegated | LicenseAssignment.Read.All | Directory.Read.All, Directory.ReadWrite.All, Organization.Read.All, Organization.ReadWrite.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -35,6 +35,8 @@ function Invoke-CIPPStandardRestrictThirdPartyStorageServices {
             "ONEDRIVE_ENTERPRISE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /servicePrincipals(appId='c1f33bc0-bdb4-4248-ba9b-096807ddb43e') | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

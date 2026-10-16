@@ -13,6 +13,11 @@ function New-CIPPMFAConnectorToken {
 
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /servicePrincipals | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | POST /servicePrincipals | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals/{id}/addPassword | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals/{id}/removePassword | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'The connector secret must be written to Key Vault as a SecureString and is encrypted at rest.')]

@@ -8,6 +8,8 @@ function Set-CIPPDBCacheAdminReportSettings {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /admin/reportSettings | Application | ReportSettings.Read.All | ReportSettings.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -2,6 +2,8 @@ function Push-ExecIncidentsListAllTenants {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /security/incidents | Application | SecurityIncident.Read.All | SecurityIncident.ReadWrite.All
     #>
     param($Item)
 

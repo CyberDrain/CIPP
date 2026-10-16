@@ -8,6 +8,8 @@ function Set-CIPPDBCacheAutopilotDeploymentProfiles {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /deviceManagement/windowsAutopilotDeploymentProfiles | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

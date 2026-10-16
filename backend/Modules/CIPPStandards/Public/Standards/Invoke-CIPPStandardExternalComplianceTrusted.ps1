@@ -26,6 +26,8 @@ function Invoke-CIPPStandardExternalComplianceTrusted {
             "AAD_PREMIUM_P2"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/crossTenantAccessPolicy/default | Delegated | Policy.Read.All | Policy.ReadWrite.CrossTenantAccess
+        Permission: Graph | PATCH /policies/crossTenantAccessPolicy/default | Delegated | Policy.ReadWrite.CrossTenantAccess
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

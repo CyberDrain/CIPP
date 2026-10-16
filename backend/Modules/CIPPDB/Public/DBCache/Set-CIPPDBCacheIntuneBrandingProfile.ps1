@@ -8,6 +8,8 @@ function Set-CIPPDBCacheIntuneBrandingProfile {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /deviceManagement/intuneBrandingProfiles | Application | DeviceManagementApps.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

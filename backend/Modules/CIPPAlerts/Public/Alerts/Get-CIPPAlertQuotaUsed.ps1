@@ -2,6 +2,8 @@ function Get-CIPPAlertQuotaUsed {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /reports/getMailboxUsageDetail(period='D7') | Delegated | Reports.Read.All
     #>
     [CmdletBinding()]
     param (

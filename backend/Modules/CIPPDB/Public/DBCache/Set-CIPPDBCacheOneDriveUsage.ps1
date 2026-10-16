@@ -8,6 +8,9 @@ function Set-CIPPDBCacheOneDriveUsage {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /reports/getOneDriveUsageAccountDetail(period='D7') | Application | Reports.Read.All
+        Permission: Graph | GET /sites/getAllSites | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

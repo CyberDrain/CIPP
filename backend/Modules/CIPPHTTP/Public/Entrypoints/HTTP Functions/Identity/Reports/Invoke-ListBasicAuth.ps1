@@ -6,6 +6,8 @@ Function Invoke-ListBasicAuth {
         Identity.AuditLog.Read
     .DESCRIPTION
         Lists sign-in events using basic authentication (legacy protocols) for a tenant from the audit logs.
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Delegated | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

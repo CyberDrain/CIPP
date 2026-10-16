@@ -4,6 +4,9 @@ function Invoke-AddIntuneReusableSetting {
         Entrypoint
     .ROLE
         Endpoint.MEM.ReadWrite
+    .NOTES
+        Permission: Graph | GET /deviceManagement/reusablePolicySettings | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/reusablePolicySettings | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

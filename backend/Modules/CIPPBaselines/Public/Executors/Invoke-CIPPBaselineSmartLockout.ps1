@@ -12,6 +12,10 @@ function Invoke-CIPPBaselineSmartLockout {
         on, EnableBannedPasswordCheck is written True (EIDSCA PR03) on both paths.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /settings | Delegated | GroupSettings.Read.All | GroupSettings.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadWrite.All
+        Permission: Graph | POST /settings | Delegated | GroupSettings.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | PATCH /settings/{id} | Delegated | GroupSettings.ReadWrite.All | Directory.ReadWrite.All, Policy.ReadWrite.Authorization
     #>
     [CmdletBinding()]
     param(

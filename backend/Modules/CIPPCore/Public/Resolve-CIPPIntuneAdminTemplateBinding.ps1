@@ -31,6 +31,10 @@ function Resolve-CIPPIntuneAdminTemplateBinding {
         The payload as a JSON string, ready to post to updateDefinitionValues.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/groupPolicyDefinitions | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/groupPolicyDefinitions/{id} | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/groupPolicyDefinitions/{id}/presentations | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

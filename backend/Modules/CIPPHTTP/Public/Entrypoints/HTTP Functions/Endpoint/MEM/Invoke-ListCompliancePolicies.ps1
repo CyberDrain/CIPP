@@ -6,6 +6,9 @@ function Invoke-ListCompliancePolicies {
         Endpoint.MEM.Read
     .DESCRIPTION
         Lists Intune device compliance policies for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/deviceCompliancePolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

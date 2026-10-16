@@ -21,6 +21,10 @@ function Get-CIPPBecUserGrants {
         Start of the analysis window. Without it every high-risk grant is flagged.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /servicePrincipals | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /users/{id}/appRoleAssignments | Application | Directory.Read.All | AppRoleAssignment.ReadWrite.All
+        Permission: Graph | GET /users/{id}/oauth2PermissionGrants | Application | Directory.Read.All
     #>
     [CmdletBinding()]
     param(

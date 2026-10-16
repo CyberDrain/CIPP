@@ -6,6 +6,8 @@ function Invoke-ExecAlertsList {
         Security.Alert.Read
     .DESCRIPTION
         Lists Microsoft 365 Defender security alerts for a tenant. tenantFilter=AllTenants reads the cached alert table instead of querying each tenant live, so those results are as fresh as the last cache run.
+    .NOTES
+        Permission: Graph | GET /security/alerts_v2 | Delegated | SecurityAlert.Read.All | SecurityAlert.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

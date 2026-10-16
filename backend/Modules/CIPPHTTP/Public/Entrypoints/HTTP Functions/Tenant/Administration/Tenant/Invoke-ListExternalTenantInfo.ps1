@@ -6,6 +6,8 @@ function Invoke-ListExternalTenantInfo {
         CIPP.Core.Read
     .DESCRIPTION
         Looks up publicly available tenant information for an external Entra ID tenant by domain or tenant ID.
+    .NOTES
+        Permission: Graph | GET /tenantRelationships/findTenantInformationByTenantId(tenantId='{id}') | Delegated | CrossTenantInformation.ReadBasic.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

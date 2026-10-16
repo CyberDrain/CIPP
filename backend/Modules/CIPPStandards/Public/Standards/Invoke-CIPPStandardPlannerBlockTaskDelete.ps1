@@ -29,6 +29,8 @@ function Invoke-CIPPStandardPlannerBlockTaskDelete {
             "PROJECTWORKMANAGEMENT"
         UPDATECOMMENTBLOCK
             Run the tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /groups/{id}/transitiveMembers/microsoft.graph.user | Application | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

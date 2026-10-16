@@ -22,6 +22,8 @@ function Remove-CIPPGroupOwner {
 
     .PARAMETER APIName
     The API operation name for logging. Default: 'Remove Group Owner'.
+    .NOTES
+        Permission: Graph | DELETE /groups/{id}/owners/{id}/$ref | Delegated | Group.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

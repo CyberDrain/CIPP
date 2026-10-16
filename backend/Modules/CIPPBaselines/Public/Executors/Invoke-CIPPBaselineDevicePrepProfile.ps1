@@ -14,6 +14,14 @@ function Invoke-CIPPBaselineDevicePrepProfile {
         Provisioning Client as owner gets it added through owners/$ref, never by recreating.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /deviceManagement/configurationPolicies | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/configurationPolicies/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/configurationPolicies/{id}/assign | Delegated | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | POST /groups | Delegated | Group.ReadWrite.All | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All
+        Permission: Graph | POST /groups//owners/$ref | Delegated | Directory.Read.All | Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

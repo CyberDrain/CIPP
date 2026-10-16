@@ -8,6 +8,8 @@ function Set-CIPPDBCacheDeviceRegistrationPolicy {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/deviceRegistrationPolicy | Delegated | Policy.Read.DeviceConfiguration | Policy.Read.All, Policy.ReadWrite.DeviceConfiguration
     #>
     [CmdletBinding()]
     param(

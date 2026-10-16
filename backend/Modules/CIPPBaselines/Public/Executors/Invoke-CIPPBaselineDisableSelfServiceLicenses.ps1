@@ -10,6 +10,8 @@ function Invoke-CIPPBaselineDisableSelfServiceLicenses {
         failures log and continue; a round where everything failed throws.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /policies/authorizationPolicy | Delegated | Policy.ReadWrite.Authorization
     #>
     [CmdletBinding()]
     param(

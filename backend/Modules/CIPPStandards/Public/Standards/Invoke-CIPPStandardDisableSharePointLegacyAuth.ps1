@@ -42,6 +42,8 @@ function Invoke-CIPPStandardDisableSharePointLegacyAuth {
             "ONEDRIVE_ENTERPRISE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /admin/sharepoint/settings | Application | SharePointTenantSettings.Read.All | SharePointTenantSettings.ReadWrite.All
+        Permission: Graph | PATCH /admin/sharepoint/settings | Application | SharePointTenantSettings.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

@@ -2,6 +2,11 @@ using namespace System.Net
 using namespace System.Collections.Generic
 
 function Remove-CIPPUserTeamsPhoneDIDs {
+    <#
+    .NOTES
+        Permission: Graph | GET /admin/teams/telephoneNumberManagement/numberAssignments | Delegated | TeamsTelephoneNumber.Read.All | TeamsTelephoneNumber.ReadWrite.All
+        Permission: Graph | POST /admin/teams/telephoneNumberManagement/numberAssignments/unassignNumber | Delegated | TeamsTelephoneNumber.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $Headers,

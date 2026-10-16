@@ -24,6 +24,7 @@ function New-CIPPAssignmentFilter {
 
     .NOTES
     Supports all platform types: Windows10AndLater, iOS, Android, macOS, etc.
+    Permission: Graph | POST /deviceManagement/assignmentFilters | Delegated | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

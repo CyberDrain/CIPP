@@ -2,6 +2,8 @@ function Get-CIPPAlertDeviceComplianceGracePeriod {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /deviceManagement/managedDevices | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

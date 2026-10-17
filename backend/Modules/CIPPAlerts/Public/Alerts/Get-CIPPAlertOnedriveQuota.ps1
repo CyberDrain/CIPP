@@ -2,6 +2,8 @@ function Get-CIPPAlertOneDriveQuota {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /reports/getOneDriveUsageAccountDetail(period='D7') | Application | Reports.Read.All
     #>
     [CmdletBinding()]
     param (

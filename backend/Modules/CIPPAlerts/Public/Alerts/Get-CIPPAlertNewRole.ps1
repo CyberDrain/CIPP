@@ -2,6 +2,8 @@ function Get-CIPPAlertNewRole {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /directoryRoles | Delegated | RoleManagement.Read.Directory | RoleManagement.ReadWrite.Directory, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

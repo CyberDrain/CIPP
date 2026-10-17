@@ -5,6 +5,8 @@ function Add-CIPPWinGetApp {
 
     .DESCRIPTION
         Creates a new WinGet app using the provided app body.
+    .NOTES
+        Permission: Graph | POST /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

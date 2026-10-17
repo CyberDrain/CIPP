@@ -2,6 +2,8 @@ function Get-CIPPAlertAppSecretExpiry {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /applications | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.ReadWrite.All, Directory.Read.All
     #>
     [CmdletBinding()]
     param (

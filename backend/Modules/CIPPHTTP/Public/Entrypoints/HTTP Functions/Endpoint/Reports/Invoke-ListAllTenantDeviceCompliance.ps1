@@ -6,6 +6,8 @@ Function Invoke-ListAllTenantDeviceCompliance {
         Tenant.DeviceCompliance.Read
     .DESCRIPTION
         Lists device compliance summary across all managed tenants using the Lighthouse managedDeviceCompliances API, or for a single tenant via Intune.
+    .NOTES
+        Permission: Graph | GET /tenantRelationships/managedTenants/managedDeviceCompliances | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -25,6 +25,8 @@ function Invoke-CIPPSharePointTemplateDeploy {
     .PARAMETER DeploymentId
     Optional async deployment job id (from New-CIPPAsyncDeployment). When provided, per-site
     progress is written to the CacheAsyncDeployments row so the frontend can poll it live.
+    .NOTES
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
     #>
     [CmdletBinding()]
     param(

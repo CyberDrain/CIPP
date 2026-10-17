@@ -2,6 +2,9 @@ function Get-CIPPAlertMFAAlertUsers {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /reports/authenticationMethods/userRegistrationDetails | Application | AuditLog.Read.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

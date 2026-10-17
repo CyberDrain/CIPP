@@ -1,4 +1,8 @@
 function Set-CIPPDBCacheIntuneReusableSettings {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceManagement/reusablePolicySettings | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]

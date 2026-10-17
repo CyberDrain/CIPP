@@ -6,6 +6,8 @@ function Set-CIPPDBCacheMDEOnboarding {
         The tenant to cache MDE onboarding status for
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /deviceManagement/mobileThreatDefenseConnectors/fc780465-2017-40d4-a0c5-307022471b92 | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

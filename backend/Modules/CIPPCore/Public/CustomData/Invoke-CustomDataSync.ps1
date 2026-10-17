@@ -1,4 +1,9 @@
 function Invoke-CustomDataSync {
+    <#
+    .NOTES
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+    #>
     param(
         $TenantFilter
     )

@@ -2,6 +2,8 @@ function Get-CIPPAlertUserReportedPhishing {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /security/threatSubmission/emailThreats | Application | ThreatSubmission.Read.All | ThreatSubmission.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

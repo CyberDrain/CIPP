@@ -4,6 +4,8 @@ function Invoke-ExecDeviceAction {
         Entrypoint
     .ROLE
         Endpoint.MEM.ReadWrite
+    .NOTES
+        Permission: Graph | GET /deviceManagement/managedDevices/{id} | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

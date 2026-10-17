@@ -25,6 +25,8 @@ function Add-CIPPGroupMember {
 
     .PARAMETER APIName
     The name of the API operation being performed. Defaults to 'Add Group Member'.
+    .NOTES
+        Permission: Graph | POST /groups/{id}/members/$ref | Delegated | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

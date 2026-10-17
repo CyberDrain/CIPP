@@ -33,6 +33,16 @@ function Set-CIPPUserJITAdmin {
     .EXAMPLE
     Set-CIPPUserJITAdmin -TenantFilter 'contoso.onmicrosoft.com' -Headers@{UserPrincipalName = 'jit@contoso.onmicrosoft.com'} -Roles @('62e90394-69f5-4237-9190-012177145e10') -Action 'AddRoles' -Expiration (Get-Date).AddDays(1) -Reason 'Emergency access'
 
+    .NOTES
+        Permission: Graph | POST /directoryRoles | Delegated | RoleManagement.ReadWrite.Directory
+        Permission: Graph | DELETE /directoryRoles(roleTemplateId='{id}')/members/{id}/$ref | Delegated | RoleManagement.ReadWrite.Directory
+        Permission: Graph | POST /directoryRoles(roleTemplateId='{id}')/members/$ref | Delegated | RoleManagement.ReadWrite.Directory
+        Permission: Graph | DELETE /groups/{id}/members/{id}/$ref | Delegated | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | POST /groups/{id}/members/$ref | Delegated | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | POST /users | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | DELETE /users/{id} | Delegated | User.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

@@ -12,6 +12,13 @@ function Push-BECRun {
         incomplete check, and the phases after it still run. The last phase scores the run and writes
         it to the BecReports table (metadata) and the BecResults table (payload), keyed by the case id.
         Metadata only - no message bodies, attachments or file contents.
+        .NOTES
+            Permission: Graph | POST /directoryObjects/getByIds | Application | Directory.Read.All
+            Permission: Graph | GET /servicePrincipals | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+            Permission: Graph | GET /users | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+            Permission: Graph | GET /users/{id} | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+            Permission: Graph | GET /users/{id}/authentication/methods | Application | UserAuthenticationMethod.Read.All | UserAuthenticationMethod.ReadWrite.All
+            Permission: Graph | GET /users/{id}/managedDevices | Application | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
     #>
     param($Item)
 

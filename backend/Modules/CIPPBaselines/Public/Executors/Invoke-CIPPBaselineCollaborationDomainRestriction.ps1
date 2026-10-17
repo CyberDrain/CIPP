@@ -10,6 +10,9 @@ function Invoke-CIPPBaselineCollaborationDomainRestriction {
         as the classic wrote it.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /policies/b2bManagementPolicies | Delegated | Policy.ReadWrite.B2BManagementPolicy
+        Permission: Graph | PATCH /policies/b2bManagementPolicies/{id} | Delegated | Policy.ReadWrite.B2BManagementPolicy
     #>
     [CmdletBinding()]
     param(

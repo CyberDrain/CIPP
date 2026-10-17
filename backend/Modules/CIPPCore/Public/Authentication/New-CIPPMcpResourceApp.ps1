@@ -22,6 +22,13 @@ function New-CIPPMcpResourceApp {
         appId/objectId/scopeId to the table and returns @{ AppId; ObjectId; ScopeId }.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /applications | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | POST /applications | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param($Headers)

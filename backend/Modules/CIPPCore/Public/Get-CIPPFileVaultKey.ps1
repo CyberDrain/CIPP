@@ -27,6 +27,8 @@
 
     Or a string message if no key is found.
 
+.NOTES
+    Permission: Graph | GET /deviceManagement/managedDevices/{id}/getFileVaultKey | Delegated | DeviceManagementConfiguration.Read.All
 #>
 
 function Get-CIPPFileVaultKey {

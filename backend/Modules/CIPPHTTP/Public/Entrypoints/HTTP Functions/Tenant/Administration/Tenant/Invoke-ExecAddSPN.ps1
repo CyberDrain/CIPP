@@ -4,6 +4,8 @@ Function Invoke-ExecAddSPN {
         Entrypoint
     .ROLE
         Tenant.Administration.ReadWrite
+    .NOTES
+        Permission: Graph | POST /servicePrincipals | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

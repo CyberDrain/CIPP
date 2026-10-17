@@ -6,6 +6,8 @@ function Invoke-ListDetectedAppDevices {
         Identity.Device.Read
     .DESCRIPTION
         Lists Intune-managed devices that have a specific detected application installed, identified by App ID.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/detectedApps/{id}/managedDevices | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -28,6 +28,9 @@ function New-CIPPBecTargetedCAPolicy {
         Logging API name.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/policies | Application | Policy.Read.All
+        Permission: Graph | POST /identity/conditionalAccess/policies | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

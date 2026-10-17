@@ -1,4 +1,9 @@
 function Set-CIPPAuthenticationPolicy {
+    <#
+    .NOTES
+        Permission: Graph | GET /policies/authenticationmethodspolicy/authenticationMethodConfigurations/{id} | Application | Policy.Read.AuthenticationMethod | Policy.Read.All, Policy.ReadWrite.AuthenticationMethod
+        Permission: Graph | PATCH /policies/authenticationmethodspolicy/authenticationMethodConfigurations/{id} | Application | Policy.ReadWrite.AuthenticationMethod
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         # TenantFilter (not Tenant) so the scheduler treats this as the protected tenant scope;

@@ -14,6 +14,9 @@ function Invoke-CIPPBaselineEnableFIDO2 {
         aligned, not forced. Only state is graded.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Fido2 | Application | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod
+        Permission: Graph | PATCH /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Fido2 | Application | Policy.ReadWrite.AuthenticationMethod
     #>
     [CmdletBinding()]
     param(

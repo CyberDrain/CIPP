@@ -24,6 +24,11 @@ function Invoke-CIPPBaselineEnableAppConsentRequests {
         No role configured defaults to Global Administrator, matching the hook's grade.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /policies/adminConsentRequestPolicy | Delegated | Policy.Read.All | Policy.ReadWrite.ConsentRequest, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PUT /policies/adminConsentRequestPolicy | Delegated | Policy.ReadWrite.ConsentRequest | Directory.ReadWrite.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

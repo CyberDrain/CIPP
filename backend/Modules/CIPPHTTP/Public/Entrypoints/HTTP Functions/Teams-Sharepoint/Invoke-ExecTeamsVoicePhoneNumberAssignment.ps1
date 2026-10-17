@@ -7,6 +7,10 @@ Function Invoke-ExecTeamsVoicePhoneNumberAssignment {
     .DESCRIPTION
         Assigns a phone number to a user or resource account, or sets the emergency location on a
         number, via the Teams administration Graph API.
+    .NOTES
+        Permission: Graph | POST /admin/teams/telephoneNumberManagement/numberAssignments/assignNumber | Delegated | TeamsTelephoneNumber.ReadWrite.All
+        Permission: Graph | POST /admin/teams/telephoneNumberManagement/numberAssignments/updateNumber | Delegated | TeamsTelephoneNumber.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

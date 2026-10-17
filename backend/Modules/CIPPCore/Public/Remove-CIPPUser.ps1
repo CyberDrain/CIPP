@@ -1,4 +1,8 @@
 function Remove-CIPPUser {
+    <#
+    .NOTES
+        Permission: Graph | DELETE /users/{id} | Delegated | User.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $Headers,

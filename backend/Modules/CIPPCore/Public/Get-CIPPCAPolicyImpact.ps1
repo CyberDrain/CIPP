@@ -10,6 +10,9 @@ function Get-CIPPCAPolicyImpact {
 
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Delegated | AuditLog.Read.All
+        Permission: Graph | GET /identity/conditionalAccess/policies/{id} | Delegated | Policy.Read.All
     #>
     [CmdletBinding()]
     param (

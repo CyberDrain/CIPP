@@ -23,6 +23,8 @@ function Push-DBCacheStorageCleanupScanBatch {
 
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /sites/{id}/lists | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Item)

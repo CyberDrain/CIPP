@@ -4,6 +4,12 @@ function Invoke-ExecCustomData {
         Entrypoint,AnyTenant
     .ROLE
         CIPP.AppSettings.ReadWrite
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}')/extensionProperties | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /applications(appId='{id}')/extensionProperties | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | DELETE /applications(appId='{id}')/extensionProperties/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /applications(appId='{id}')/extensionProperties/{id} | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All
+        Permission: Graph | DELETE /schemaExtensions/{id} | Application | Application.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

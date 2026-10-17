@@ -29,6 +29,9 @@ function Invoke-CIPPBaselineDeviceRegistrationPolicy {
         supported with application permissions.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /policies/deviceRegistrationPolicy | Delegated | Policy.Read.DeviceConfiguration | Policy.Read.All, Policy.ReadWrite.DeviceConfiguration
+        Permission: Graph | PUT /policies/deviceRegistrationPolicy | Delegated | Policy.ReadWrite.DeviceConfiguration
     #>
     [CmdletBinding()]
     param(

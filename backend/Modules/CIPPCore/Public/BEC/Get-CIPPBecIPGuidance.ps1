@@ -19,6 +19,8 @@ function Get-CIPPBecIPGuidance {
         Anchor mailbox for the Exchange requests.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations | Application | Policy.Read.All
     #>
     [CmdletBinding()]
     param(

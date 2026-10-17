@@ -10,6 +10,11 @@ function Get-CIPPEwsPermissionApps {
         come from the cache with a live lookup for any holder it lacks.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /oauth2PermissionGrants | Delegated | Directory.Read.All | DelegatedPermissionGrant.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id} | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id}/appRoleAssignedTo | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

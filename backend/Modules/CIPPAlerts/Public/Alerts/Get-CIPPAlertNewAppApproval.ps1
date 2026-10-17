@@ -3,6 +3,9 @@ function Get-CIPPAlertNewAppApproval {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /identityGovernance/appConsent/appConsentRequests | Delegated | ConsentRequest.Read.All | ConsentRequest.ReadWrite.All
+        Permission: Graph | GET /identityGovernance/appConsent/appConsentRequests/{id}/userConsentRequests | Delegated | ConsentRequest.Read.All | ConsentRequest.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -376,31 +376,6 @@ function Invoke-ExecSiteBrowserPermissions {
         return "Successfully restored permission inheritance on $TargetLabel. The permissions that were unique to it have been discarded and it now follows the site."
     }
 
-    function Invoke-BrowserRemoveGraphSitePermission {
-        $PermissionId = $Request.Body.PermissionId
-        if ([string]::IsNullOrWhiteSpace($PermissionId)) {
-            $Outcome.Status = [HttpStatusCode]::BadRequest
-            throw 'PermissionId is required.'
-        }
-
-        $ResolvedSiteId = $SiteId
-        if ([string]::IsNullOrWhiteSpace($ResolvedSiteId)) {
-            $ParsedUrl = [System.Uri]$SiteUrl
-            $SiteSegment = if ($ParsedUrl.AbsolutePath -in @('', '/')) {
-                $ParsedUrl.Host
-            } else {
-                "$($ParsedUrl.Host):$($ParsedUrl.AbsolutePath):"
-            }
-            $SiteMeta = New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/sites/$SiteSegment`?`$select=id" -tenantid $TenantFilter -asapp $true
-            $ResolvedSiteId = $SiteMeta.id
-        }
-        if ([string]::IsNullOrWhiteSpace($ResolvedSiteId)) { throw 'Could not resolve Graph site id.' }
-
-        $null = New-GraphPostRequest -uri "https://graph.microsoft.com/v1.0/sites/$ResolvedSiteId/permissions/$PermissionId" -tenantid $TenantFilter -type DELETE -asapp $true
-        $Label = $Request.Body.PrincipalName ?? $PermissionId
-        return "Successfully removed Graph site permission for $Label."
-    }
-
     if ([string]::IsNullOrWhiteSpace($TenantFilter)) {
         return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ 'Results' = 'tenantFilter is required.' } })
     }
@@ -424,7 +399,13 @@ function Invoke-ExecSiteBrowserPermissions {
             'RemoveSiteAdmin' { Invoke-BrowserSiteAdmin -Add $false }
             'BreakInheritance' { Invoke-BrowserInheritance -Mode 'Break' }
             'RestoreInheritance' { Invoke-BrowserInheritance -Mode 'Reset' }
-            'RemoveGraphSitePermission' { Invoke-BrowserRemoveGraphSitePermission }
+            'RemoveGraphSitePermission' {
+                if ([string]::IsNullOrWhiteSpace($Request.Body.PermissionId)) {
+                    $Outcome.Status = [HttpStatusCode]::BadRequest
+                    throw 'PermissionId is required.'
+                }
+                Remove-CIPPGraphSitePermission -TenantFilter $TenantFilter -SiteUrl $SiteUrl -SiteId $SiteId -PermissionId $Request.Body.PermissionId -PrincipalName $Request.Body.PrincipalName
+            }
             default {
                 $Outcome.Status = [HttpStatusCode]::BadRequest
                 throw "Unknown Action '$Action'. Supported: GrantAccess, ReplaceAccess, RemoveAccess, AddGroupMember, RemoveGroupMember, AddSiteAdmin, RemoveSiteAdmin, BreakInheritance, RestoreInheritance, RemoveGraphSitePermission."

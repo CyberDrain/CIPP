@@ -13,6 +13,11 @@ function Invoke-CIPPBaselineOauthConsent {
         used -AsApp here.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /policies/authorizationPolicy/authorizationPolicy | Delegated | Policy.ReadWrite.Authorization
+        Permission: Graph | GET /policies/permissionGrantPolicies | Delegated | Policy.Read.PermissionGrant | Policy.ReadWrite.PermissionGrant
+        Permission: Graph | POST /policies/permissionGrantPolicies | Delegated | Policy.ReadWrite.PermissionGrant
+        Permission: Graph | POST /policies/permissionGrantPolicies/cipp-consent-policy/includes | Delegated | Policy.ReadWrite.PermissionGrant
     #>
     [CmdletBinding()]
     param(

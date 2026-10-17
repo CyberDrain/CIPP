@@ -29,6 +29,8 @@ function Select-CIPPIntuneAvailableSetting {
         fine with a subset, so they are never validated. The comparison and drift paths never set it.
     .EXAMPLE
         $Template = Select-CIPPIntuneAvailableSetting -Policy $Template -TenantFilter $TenantFilter
+    .NOTES
+        Permission: Graph | GET /deviceManagement/configurationPolicyTemplates/{id}/settingTemplates | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -6,6 +6,9 @@ function Invoke-ExecSyncDEP {
         Endpoint.MEM.ReadWrite
     .DESCRIPTION
         Syncs devices from Apple Business Manager to Intune
+    .NOTES
+        Permission: Graph | GET /deviceManagement/depOnboardingSettings | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/depOnboardingSettings/{id}/syncWithAppleDeviceEnrollmentProgram | Delegated | DeviceManagementServiceConfig.ReadWrite.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

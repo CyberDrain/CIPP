@@ -11,6 +11,11 @@ function Invoke-CIPPBaselineConsentPolicySettings {
         identity's GDAP roles rarely carry the right this object demands.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /directorySettingTemplates/dffd5d46-495d-40a9-8e21-954ff55e198a | Delegated | GroupSettings.Read.All | Directory.Read.All, Directory.ReadWrite.All, GroupSettings.ReadWrite.All
+        Permission: Graph | GET /settings | Delegated | GroupSettings.Read.All | GroupSettings.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadWrite.All
+        Permission: Graph | POST /settings | Application | GroupSettings.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | PATCH /settings/{id} | Application | GroupSettings.ReadWrite.All | Directory.ReadWrite.All, Policy.ReadWrite.Authorization
     #>
     [CmdletBinding()]
     param(

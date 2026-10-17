@@ -4,6 +4,10 @@ function Invoke-ExecDomainAction {
         Entrypoint
     .ROLE
         Tenant.Administration.ReadWrite
+    .NOTES
+        Permission: Graph | DELETE /domains/{id} | Application | Domain.ReadWrite.All
+        Permission: Graph | PATCH /domains/{id} | Application | Domain.ReadWrite.All
+        Permission: Graph | POST /domains/{id}/verify | Application | Domain.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

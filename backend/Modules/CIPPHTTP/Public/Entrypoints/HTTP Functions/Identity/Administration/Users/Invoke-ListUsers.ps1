@@ -6,6 +6,8 @@ Function Invoke-ListUsers {
         Identity.User.Read
     .DESCRIPTION
         Lists Entra ID users for a tenant with license and sign-in details, or retrieves a specific user by ID. Supports UseReportDB=true to serve cached users from the reporting database; AllTenants always uses the cache. When manualPagination is set on a cached read, one page is returned per request as { Results, Metadata } with a continuation token in Metadata.nextLink.
+    .NOTES
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

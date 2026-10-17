@@ -6,6 +6,9 @@ function Invoke-ListAssignmentFilters {
         Endpoint.MEM.Read
     .DESCRIPTION
         Lists Intune assignment filters for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/assignmentFilters | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/assignmentFilters/{id} | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

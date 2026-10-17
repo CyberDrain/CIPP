@@ -1,4 +1,12 @@
 function Set-CIPPDBCacheIntuneScripts {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceManagement/configurationPolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceHealthScripts | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementScripts.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceManagementScripts | Delegated | DeviceManagementScripts.Read.All | DeviceManagementScripts.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceShellScripts | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementScripts.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]

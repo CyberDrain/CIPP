@@ -1,4 +1,8 @@
 function Revoke-CIPPSessions {
+    <#
+    .NOTES
+        Permission: Graph | POST /users/{id}/invalidateAllRefreshTokens | Delegated | User.RevokeSessions.All | Directory.ReadWrite.All, User.ReadWrite
+    #>
     [CmdletBinding()]
     param (
         $Headers,

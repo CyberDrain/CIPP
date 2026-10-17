@@ -1,5 +1,9 @@
 
 function Get-CIPPTenantCapabilities {
+    <#
+    .NOTES
+        Permission: Graph | GET /subscribedSkus | Delegated | LicenseAssignment.Read.All | Directory.Read.All, Directory.ReadWrite.All, Organization.Read.All, Organization.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $TenantFilter,

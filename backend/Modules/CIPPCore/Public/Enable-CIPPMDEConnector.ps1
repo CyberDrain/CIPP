@@ -11,6 +11,9 @@ function Enable-CIPPMDEConnector {
         The tenant domain or ID to provision the connector for.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/mobileThreatDefenseConnectors/fc780465-2017-40d4-a0c5-307022471b92 | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /organization | Delegated | DeviceManagementServiceConfig.Read.All | Organization.Read.All, Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

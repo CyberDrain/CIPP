@@ -1,4 +1,11 @@
 function New-CIPPApplicationCopy {
+    <#
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}')/appRoleAssignments | Application | Application.Read.All | Application.ReadWrite.All, Application.ReadWrite.OwnedBy, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}')/oauth2PermissionGrants | Application | Directory.Read.All | DelegatedPermissionGrant.ReadWrite.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param(
         $App,

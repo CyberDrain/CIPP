@@ -11,6 +11,12 @@ function Update-AppManagementPolicy {
 
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /policies/appManagementPolicies | Application | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | POST /policies/appManagementPolicies | Application | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | PATCH /policies/appManagementPolicies/{id} | Application | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | GET /policies/appManagementPolicies/{id}/appliesTo | Application | Application.Read.All
+        Permission: Graph | GET /policies/defaultAppManagementPolicy | Application | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
     #>
     [CmdletBinding()]
     param(

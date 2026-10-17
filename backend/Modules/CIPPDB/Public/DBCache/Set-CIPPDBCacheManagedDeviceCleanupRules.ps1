@@ -12,6 +12,8 @@ function Set-CIPPDBCacheManagedDeviceCleanupRules {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /deviceManagement/managedDeviceCleanupRules | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

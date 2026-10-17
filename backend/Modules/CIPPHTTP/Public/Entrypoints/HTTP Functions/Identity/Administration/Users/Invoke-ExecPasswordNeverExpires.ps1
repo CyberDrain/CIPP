@@ -5,6 +5,8 @@ function Invoke-ExecPasswordNeverExpires {
 
     .ROLE
     Identity.User.ReadWrite
+    .NOTES
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
     #>
     Param($Request, $TriggerMetadata)
 

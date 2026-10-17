@@ -1,4 +1,8 @@
 function New-CIPPUser {
+    <#
+    .NOTES
+        Permission: Graph | POST /users | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $UserObj,

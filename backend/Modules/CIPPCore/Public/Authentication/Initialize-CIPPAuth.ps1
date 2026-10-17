@@ -9,6 +9,8 @@ function Initialize-CIPPAuth {
     and configures EasyAuth if SSO credentials are provisioned but
     EasyAuth is not yet enabled. On a fresh deployment with nothing
     configured, requests Craft's setup wizard mode.
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param()

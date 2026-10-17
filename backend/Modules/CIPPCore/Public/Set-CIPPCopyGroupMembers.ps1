@@ -1,4 +1,10 @@
 function Set-CIPPCopyGroupMembers {
+    <#
+    .NOTES
+        Permission: Graph | POST /groups/{id}/members/$ref | Delegated | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id}/memberOf | Delegated | User.Read | Directory.Read.All, Directory.ReadWrite.All, Group.ReadBasic.All, GroupMember.Read.All, GroupMember.ReadBasic.All
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         $Headers,

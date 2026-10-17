@@ -6,6 +6,8 @@ function Invoke-ListUserGroups {
         Identity.User.Read
     .DESCRIPTION
         Lists Entra ID group memberships for a specific user.
+    .NOTES
+        Permission: Graph | GET /users/{id}/memberOf/$/microsoft.graph.group | Delegated | User.Read
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -6,6 +6,8 @@ Function Invoke-ListUserSigninLogs {
         Identity.User.Read
     .DESCRIPTION
         Lists recent sign-in log entries for a specific Entra ID user, ordered by most recent.
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Delegated | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

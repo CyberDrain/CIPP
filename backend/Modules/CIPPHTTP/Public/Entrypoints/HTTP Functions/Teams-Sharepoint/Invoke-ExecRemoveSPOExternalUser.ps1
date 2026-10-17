@@ -11,6 +11,9 @@ function Invoke-ExecRemoveSPOExternalUser {
         SharePoint external-store entry cannot be deleted (Microsoft deprecated
         RemoveExternalUsers) and ages out on its own; sharing links the user received are
         revoked separately via the Sharing Report.
+    .NOTES
+        Permission: Graph | DELETE /users/{id} | Application | User.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

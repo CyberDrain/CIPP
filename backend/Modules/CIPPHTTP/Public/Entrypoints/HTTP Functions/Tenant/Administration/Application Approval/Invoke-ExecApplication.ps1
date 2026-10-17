@@ -4,6 +4,8 @@ function Invoke-ExecApplication {
         Entrypoint
     .ROLE
         Tenant.Application.ReadWrite
+    .NOTES
+        Permission: Graph | GET /policies/defaultAppManagementPolicy | Application | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

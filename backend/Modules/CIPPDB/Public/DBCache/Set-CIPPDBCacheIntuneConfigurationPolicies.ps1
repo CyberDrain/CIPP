@@ -12,6 +12,8 @@ function Set-CIPPDBCacheIntuneConfigurationPolicies {
 
     .PARAMETER TenantFilter
         The tenant to cache settings catalog policies for
+    .NOTES
+        Permission: Graph | GET /deviceManagement/configurationPolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

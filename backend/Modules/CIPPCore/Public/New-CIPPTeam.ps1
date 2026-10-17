@@ -22,6 +22,9 @@ function New-CIPPTeam {
 
     .PARAMETER TenantFilter
     The tenant to create the team in
+    .NOTES
+        Permission: Graph | GET /groups/{id}/sites/root | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | POST /teams | Application | Team.Create | Directory.ReadWrite.All, Group.ReadWrite.All, Teamwork.Migrate.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

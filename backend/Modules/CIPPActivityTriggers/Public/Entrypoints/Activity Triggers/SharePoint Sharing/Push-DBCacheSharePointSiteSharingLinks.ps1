@@ -69,6 +69,10 @@ function Push-DBCacheSharePointSiteSharingLinks {
 
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /drives/{id}/root | Application | Files.Read.All | Files.ReadWrite.All, Group.Read.All, Group.ReadWrite.All, Sites.Read.All, Sites.ReadWrite.All
+        Permission: Graph | GET /drives/{id}/root/delta | Application | Files.Read.All | Files.ReadWrite.All, Sites.Read.All, Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/drives | Application | Files.Read.All | Files.ReadWrite.All, Sites.Read.All, Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Item)
@@ -83,126 +87,6 @@ function Push-DBCacheSharePointSiteSharingLinks {
 
     $InternalDomains = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($Domain in @($Item.InternalDomains)) { if ($Domain) { [void]$InternalDomains.Add([string]$Domain) } }
-
-    # Returns $true when an identity (link recipient or direct grant) is external to the tenant.
-    function Test-CIPPExternalIdentity {
-        param($Identity, $InternalDomains)
-        $LoginName = [string]($Identity.siteUser.loginName ?? $Identity.user.loginName ?? '')
-        if ($LoginName -match '#ext#' -or $LoginName -match 'urn%3aspo%3aguest' -or $LoginName -match 'urn:spo:guest') { return $true }
-        $Email = [string]($Identity.user.email ?? $Identity.user.userPrincipalName ?? $Identity.siteUser.email ?? '')
-        if ($Email -match '#EXT#') { return $true }
-        if ($Email -and $Email.Contains('@') -and $InternalDomains.Count -gt 0) {
-            return -not $InternalDomains.Contains($Email.Split('@')[-1])
-        }
-        return $false
-    }
-
-    # Friendly display value for an identity, preferring email over display name.
-    function Get-CIPPIdentityLabel {
-        param($Identity)
-        $Identity.user.email ?? $Identity.user.userPrincipalName ?? $Identity.siteUser.email ?? $Identity.user.displayName ?? $Identity.siteUser.displayName ?? $Identity.group.email ?? $Identity.group.displayName ?? $Identity.siteGroup.displayName
-    }
-
-    # Converts one item's permission array into report rows. Shared by every scan mode; the only
-    # difference between modes is where the permissions came from.
-    function ConvertTo-CIPPSharingRow {
-        param($Permissions, $DriveItem, $Drive, $Site, $InternalDomains, $RowsOut)
-        foreach ($Permission in @($Permissions)) {
-            # Only permissions set on the item itself; inherited ones are reported on their parent.
-            if ($Permission.inheritedFrom) { continue }
-
-            if ($Permission.link) {
-                $Recipients = @($Permission.grantedToIdentitiesV2 ?? $Permission.grantedToIdentities)
-                $LinkScope = $Permission.link.scope ?? 'users'
-                $Classification = switch ($LinkScope) {
-                    'anonymous' { 'Anonymous' }
-                    'organization' { 'Internal' }
-                    'existingAccess' { 'Internal' }
-                    default {
-                        $HasExternal = $false
-                        foreach ($Recipient in $Recipients) {
-                            if (Test-CIPPExternalIdentity -Identity $Recipient -InternalDomains $InternalDomains) { $HasExternal = $true; break }
-                        }
-                        if ($HasExternal) { 'External' } else { 'Internal' }
-                    }
-                }
-                $LinkType = $Permission.link.type ?? 'link'
-                $LinkUrl = $Permission.link.webUrl
-            } else {
-                # Direct grant (no sharing link): only report grants to external users.
-                $Recipients = @($Permission.grantedToV2 ?? $Permission.grantedTo)
-                if ($Permission.roles -contains 'owner') { continue }
-                $HasExternal = $false
-                foreach ($Recipient in $Recipients) {
-                    if (Test-CIPPExternalIdentity -Identity $Recipient -InternalDomains $InternalDomains) { $HasExternal = $true; break }
-                }
-                if (-not $HasExternal) { continue }
-                $Classification = 'External'
-                $LinkScope = 'direct'
-                $LinkType = 'directGrant'
-                $LinkUrl = $null
-            }
-
-            $SharedWith = @($Recipients | ForEach-Object { Get-CIPPIdentityLabel -Identity $_ } | Where-Object { $_ } | Sort-Object -Unique)
-
-            $Id = "$($Drive.id)_$($DriveItem.id)_$($Permission.id)"
-            $RowsOut.Add(@{
-                    PartitionKey         = $TenantFilter
-                    RowKey               = ([string]$Id -replace '[/\\#?]', '_' -replace '[\u0000-\u001F\u007F-\u009F]', '')
-                    ScanId               = $PassId
-                    id                   = $Id
-                    siteId               = [string]$Site.SiteId
-                    siteName             = [string]$Site.SiteName
-                    siteUrl              = [string]$Site.SiteUrl
-                    workload             = if ($Site.IsPersonalSite) { 'OneDrive' } else { 'SharePoint' }
-                    driveId              = [string]$Drive.id
-                    driveName            = [string]$Drive.name
-                    itemId               = [string]$DriveItem.id
-                    fileName             = [string]$DriveItem.name
-                    itemUrl              = [string]$DriveItem.webUrl
-                    itemType             = if ($DriveItem.folder) { 'Folder' } else { 'File' }
-                    size                 = [int64]($DriveItem.size ?? 0)
-                    lastModifiedDateTime = if ($DriveItem.lastModifiedDateTime -is [datetime]) { $DriveItem.lastModifiedDateTime.ToUniversalTime().ToString('o') } else { [string]$DriveItem.lastModifiedDateTime }
-                    permissionId         = [string]$Permission.id
-                    linkType             = [string]$LinkType
-                    linkScope            = [string]$LinkScope
-                    classification       = [string]$Classification
-                    roles                = [string](ConvertTo-Json -InputObject @($Permission.roles) -Compress)
-                    sharedWith           = [string](ConvertTo-Json -InputObject @($SharedWith) -Compress)
-                    linkUrl              = [string]$LinkUrl
-                    hasPassword          = [bool]($Permission.hasPassword ?? $false)
-                    expirationDateTime   = if ($Permission.expirationDateTime -is [datetime]) { $Permission.expirationDateTime.ToUniversalTime().ToString('o') } else { [string]$Permission.expirationDateTime }
-                })
-        }
-    }
-
-    # Fetch permissions for a buffer of shared delta items and append their rows to $RowsOut.
-    # Failed batch responses are counted into $DropCounter: a full scan that lost reads must not
-    # prune the unread items' still-valid rows afterwards.
-    function Add-CIPPSharingRows {
-        param($Buffer, $Drive, $Site, $InternalDomains, $TenantFilter, $RowsOut, [ref]$DropCounter)
-        if (@($Buffer).Count -eq 0) { return }
-        $ItemByRequestId = @{}
-        $RequestId = 0
-        $PermissionRequests = foreach ($SharedItem in $Buffer) {
-            $ItemByRequestId["$RequestId"] = $SharedItem
-            @{
-                id     = "$RequestId"
-                method = 'GET'
-                url    = "drives/$($Drive.id)/items/$($SharedItem.id)/permissions"
-            }
-            $RequestId++
-        }
-        $PermissionResponses = New-GraphBulkRequest -tenantid $TenantFilter -Requests @($PermissionRequests) -asapp $true
-        foreach ($Response in $PermissionResponses) {
-            if ($Response.status -and $Response.status -ne 200) {
-                if ($DropCounter) { $DropCounter.Value++ }
-                continue
-            }
-            $DriveItem = $ItemByRequestId["$($Response.id)"]
-            ConvertTo-CIPPSharingRow -Permissions @($Response.body.value) -DriveItem $DriveItem -Drive $Drive -Site $Site -InternalDomains $InternalDomains -RowsOut $RowsOut
-        }
-    }
 
     # --- scan-state plumbing --------------------------------------------------------------------
     # These read the surrounding activity's variables directly; they exist to keep the call sites
@@ -569,7 +453,7 @@ function Push-DBCacheSharePointSiteSharingLinks {
             # Rows for this page: permission lookups happen per page so the checkpoint below
             # never advances past work that has not been persisted.
             $PageRows = [System.Collections.Generic.List[object]]::new()
-            Add-CIPPSharingRows -Buffer $Buffer -Drive $Drive -Site $SiteContext -InternalDomains $InternalDomains -TenantFilter $TenantFilter -RowsOut $PageRows -DropCounter ([ref]$DroppedReads)
+            Add-CIPPSharingRows -Buffer $Buffer -Drive $Drive -Site $SiteContext -InternalDomains $InternalDomains -TenantFilter $TenantFilter -PassId $PassId -RowsOut $PageRows -DropCounter ([ref]$DroppedReads)
 
             if ($TombstoneRows.Count -gt 0) {
                 $null = Remove-CIPPAzDataTableEntity @LinksTable -Entity $TombstoneRows.ToArray() -Force

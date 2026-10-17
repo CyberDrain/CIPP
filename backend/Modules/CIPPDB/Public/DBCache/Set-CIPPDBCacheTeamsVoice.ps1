@@ -1,4 +1,8 @@
 function Set-CIPPDBCacheTeamsVoice {
+    <#
+    .NOTES
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]

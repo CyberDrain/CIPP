@@ -6,6 +6,8 @@ function Invoke-CIPPCAWhatIf {
         One body is a single POST to v1.0 identity/conditionalAccess/evaluate.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /identity/conditionalAccess/evaluate | Application | Policy.Read.ConditionalAccess | Policy.Read.All, Policy.ReadWrite.ConditionalAccess
     #>
     [CmdletBinding()]
     param(

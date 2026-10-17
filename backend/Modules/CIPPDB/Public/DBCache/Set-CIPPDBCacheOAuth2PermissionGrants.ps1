@@ -8,6 +8,8 @@ function Set-CIPPDBCacheOAuth2PermissionGrants {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /oauth2PermissionGrants | Delegated | Directory.Read.All | DelegatedPermissionGrant.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

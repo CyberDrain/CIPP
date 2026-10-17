@@ -6,6 +6,8 @@ function Invoke-ListGDAPContracts {
         Tenant.Relationship.Read
     .DESCRIPTION
         Lists Microsoft partner contracts (customer tenant relationships) from the Graph API.
+    .NOTES
+        Permission: Graph | GET /contracts | Delegated | Directory.Read.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

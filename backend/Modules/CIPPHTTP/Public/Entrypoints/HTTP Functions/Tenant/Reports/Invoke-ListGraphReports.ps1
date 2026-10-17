@@ -6,6 +6,8 @@ function Invoke-ListGraphReports {
         Tenant.Reports.Read
     .DESCRIPTION
         Retrieves Microsoft 365 usage reports (Graph or Office reports) for a tenant, such as email activity, OneDrive usage, or Teams device usage.
+    .NOTES
+        Permission: Graph | GET /reports | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

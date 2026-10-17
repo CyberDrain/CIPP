@@ -1,4 +1,8 @@
 function New-CIPPIntuneTemplate {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps/{id} | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+    #>
     param(
         $urlname,
         $id,

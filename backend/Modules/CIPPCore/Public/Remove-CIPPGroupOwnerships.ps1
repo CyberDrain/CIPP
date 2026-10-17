@@ -30,6 +30,9 @@ function Remove-CIPPGroupOwnerships {
 
     .PARAMETER Headers
     Request headers for logging. Supplied automatically by the API.
+    .NOTES
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id}/ownedObjects/microsoft.graph.group | Delegated | User.Read | AgentIdUser.ReadWrite.All, AgentIdUser.ReadWrite.IdentityParentedBy, Directory.Read.All, Directory.ReadWrite.All, User.Read.All, User.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

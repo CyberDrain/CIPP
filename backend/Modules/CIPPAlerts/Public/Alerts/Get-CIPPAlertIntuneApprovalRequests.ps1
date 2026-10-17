@@ -2,6 +2,8 @@ function Get-CIPPAlertIntuneApprovalRequests {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /deviceManagement/operationApprovalRequests | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementRBAC.Read.All, DeviceManagementRBAC.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

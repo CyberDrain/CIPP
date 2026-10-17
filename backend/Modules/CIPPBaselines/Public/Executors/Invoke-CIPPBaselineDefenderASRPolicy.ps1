@@ -7,6 +7,8 @@ function Invoke-CIPPBaselineDefenderASRPolicy {
         Set-CIPPDefenderASRPolicy helper which owns the rules group and the assignment.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | DELETE /deviceManagement/configurationPolicies/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

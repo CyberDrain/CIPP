@@ -2,6 +2,8 @@ function Get-CIPPAlertGlobalAdminNoAltEmail {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /directoryRoles/roleTemplateId=62e90394-69f5-4237-9190-012177145e10/members | Application | RoleManagement.Read.Directory | RoleManagement.ReadWrite.Directory, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

@@ -6,6 +6,10 @@ Function Invoke-ListDeviceDetails {
         Identity.Device.Read
     .DESCRIPTION
         Retrieves detailed information about a specific Intune-managed device by ID, name, or serial number.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/managedDevices | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/managedDevices/{id} | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
+        Permission: Graph | GET /devices(deviceID='{id}')/memberOf | Delegated | Device.Read.All | Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -21,6 +21,8 @@ function Get-CIPPBaselineUsageLocationState {
         value at all', for tenants where locations were set by hand per user.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /groups/{id}/transitiveMembers/microsoft.graph.user | Application | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

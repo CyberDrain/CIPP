@@ -7,6 +7,9 @@ function New-CIPPIntuneAppDeployment {
         and standards. Handles app existence check, type routing, and assignment.
         Accepts either a pre-built AppConfig (with IntuneBody, from queue) or raw template
         config (appType + raw fields) and builds the deployment config internally.
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | POST /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

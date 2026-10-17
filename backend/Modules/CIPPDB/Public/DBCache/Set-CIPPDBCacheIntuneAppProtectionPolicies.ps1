@@ -1,4 +1,10 @@
 function Set-CIPPDBCacheIntuneAppProtectionPolicies {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/managedAppPolicies | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceAppManagement/mobileAppConfigurations | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]

@@ -6,6 +6,8 @@ Function Invoke-ListUserPhoto {
         Identity.User.Read
     .DESCRIPTION
         Retrieves the profile photo for a specific Entra ID user, returned as a base64-encoded image.
+    .NOTES
+        Permission: Graph | GET /users/{id}/photo/$value | Delegated | User.Read | ProfilePhoto.ReadWrite.All, User.ReadBasic.All, User.Read.All, User.ReadWrite, User.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

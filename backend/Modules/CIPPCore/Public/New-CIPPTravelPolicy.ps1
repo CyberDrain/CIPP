@@ -29,6 +29,8 @@ function New-CIPPTravelPolicy {
 
     .PARAMETER APIName
     The name of the API operation being performed. Defaults to 'New-CIPPTravelPolicy'.
+    .NOTES
+        Permission: Graph | GET /users/{id} | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

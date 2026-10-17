@@ -2,6 +2,8 @@ function Get-CIPPAlertEntraLicenseUtilization {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /reports/azureADPremiumLicenseInsight | Delegated | Reports.Read.All
     #>
     [CmdletBinding()]
     param (

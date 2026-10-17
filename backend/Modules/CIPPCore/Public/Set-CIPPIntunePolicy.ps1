@@ -1,4 +1,8 @@
 function Set-CIPPIntunePolicy {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceManagement/depOnboardingSettings | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+    #>
     param (
         [Parameter(Mandatory = $true)]
         $TemplateType,

@@ -6,6 +6,8 @@ Function Invoke-ListServiceHealth {
         Tenant.Administration.Read
     .DESCRIPTION
         Lists active Microsoft 365 service health issues and advisories for a tenant or all tenants.
+    .NOTES
+        Permission: Graph | GET /admin/serviceAnnouncement/issues | Delegated | ServiceHealth.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

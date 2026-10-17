@@ -11,6 +11,9 @@ function Invoke-ListSiteBrowserPermissions {
         (Sites.Selected / app-only grants). Partial failures are returned in Errors so the UI
         can still show what was collected. SiteUrl is required; ListId targets a library.
         Sharing links / Graph drive permissions are intentionally out of scope (handled elsewhere).
+    .NOTES
+        Permission: Graph | GET /sites/{id} | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/permissions | Application | Sites.FullControl.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

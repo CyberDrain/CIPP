@@ -1,5 +1,9 @@
 
 function Get-CIPPLapsPassword {
+    <#
+    .NOTES
+        Permission: Graph | GET /directory/deviceLocalCredentials/{id} | Delegated | DeviceLocalCredential.ReadBasic.All | DeviceLocalCredential.Read.All
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]

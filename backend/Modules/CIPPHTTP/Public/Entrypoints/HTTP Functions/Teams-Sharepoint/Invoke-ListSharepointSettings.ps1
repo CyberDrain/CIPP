@@ -6,6 +6,8 @@ Function Invoke-ListSharepointSettings {
         Sharepoint.Admin.Read
     .DESCRIPTION
         Retrieves SharePoint Online tenant-level settings and configuration.
+    .NOTES
+        Permission: Graph | GET /admin/sharepoint/settings | Application | SharePointTenantSettings.Read.All | SharePointTenantSettings.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

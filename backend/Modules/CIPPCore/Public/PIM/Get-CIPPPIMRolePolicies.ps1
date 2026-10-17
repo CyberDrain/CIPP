@@ -22,6 +22,8 @@ function Get-CIPPPIMRolePolicies {
 
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /policies/roleManagementPolicyAssignments | Application | RoleManagement.Read.All | RoleManagementPolicy.ReadWrite.AzureADGroup
     #>
     [CmdletBinding()]
     param(

@@ -8,6 +8,8 @@ function Invoke-ExecRemoveSharingLink {
         Revokes a sharing link (or direct sharing grant) on a SharePoint or OneDrive item by
         deleting the permission from the drive item. Also removes the revoked link from the
         cached sharing links so the sharing report reflects it immediately.
+    .NOTES
+        Permission: Graph | DELETE /drives/{id}/items/{id}/permissions/{id} | Application | Files.ReadWrite.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

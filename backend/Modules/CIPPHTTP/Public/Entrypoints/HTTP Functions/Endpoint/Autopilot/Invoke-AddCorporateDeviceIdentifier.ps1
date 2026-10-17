@@ -6,6 +6,8 @@ function Invoke-AddCorporateDeviceIdentifier {
         Endpoint.Autopilot.ReadWrite
     .DESCRIPTION
         Uploads corporate device identifiers (manufacturer, model and serial number) for Windows Autopilot device preparation via the Graph importedDeviceIdentities API
+    .NOTES
+        Permission: Graph | POST /deviceManagement/importedDeviceIdentities/importDeviceIdentityList | Delegated | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

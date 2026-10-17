@@ -6,6 +6,9 @@ function Invoke-ListAndroidEnrollmentProfiles {
         Endpoint.Autopilot.Read
     .DESCRIPTION
         Lists Android Enterprise enrollment profiles and hydrates token fields when Graph omits them from the list response.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/androidDeviceOwnerEnrollmentProfiles | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/androidDeviceOwnerEnrollmentProfiles/{id} | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

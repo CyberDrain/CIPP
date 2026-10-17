@@ -6,6 +6,9 @@ function Invoke-ListUserMailboxDetails {
         Exchange.Mailbox.Read
     .DESCRIPTION
         Retrieves detailed Exchange Online mailbox properties for a specific user, including quotas, archive status, and protocols.
+    .NOTES
+        Permission: Graph | GET /contacts | Delegated | OrgContact.Read.All | Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

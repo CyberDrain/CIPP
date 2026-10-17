@@ -24,6 +24,8 @@ function Remove-CIPPGroupMember {
 
     .PARAMETER APIName
     The API operation name for logging purposes. Default: 'Remove Group Member'.
+    .NOTES
+        Permission: Graph | DELETE /groups/{id}/members/{id}/$ref | Delegated | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

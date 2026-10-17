@@ -28,6 +28,8 @@ function Get-CIPPGroupType {
 
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /groups/{id} | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group-XTenantIdentitySync.Read.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
     #>
     [CmdletBinding()]
     param(

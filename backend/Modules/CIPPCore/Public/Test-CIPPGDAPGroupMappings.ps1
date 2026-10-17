@@ -22,6 +22,9 @@ function Test-CIPPGDAPGroupMappings {
 
     .FUNCTIONALITY
     Internal
+    .NOTES
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | POST /groups | Application | Group.Create | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

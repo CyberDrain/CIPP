@@ -18,6 +18,8 @@ function Invoke-CIPPBaselineGroupTemplate {
         Exchange deploying pure Graph groups.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /groups/{id} | Delegated | Group.ManageProtection.All | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

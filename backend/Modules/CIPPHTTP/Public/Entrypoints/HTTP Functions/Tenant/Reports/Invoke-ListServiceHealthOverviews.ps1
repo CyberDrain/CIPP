@@ -6,6 +6,8 @@ function Invoke-ListServiceHealthOverviews {
         Tenant.Administration.Read
     .DESCRIPTION
         Lists the Microsoft 365 service health overview for a tenant: the current health status of each cloud service (Exchange Online, SharePoint Online, Microsoft Teams, Entra ID, Intune and others), for example serviceOperational, serviceDegradation or serviceInterruption. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
+    .NOTES
+        Permission: Graph | GET /admin/serviceAnnouncement/healthOverviews | Delegated | ServiceHealth.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

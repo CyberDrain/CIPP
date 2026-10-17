@@ -4,6 +4,9 @@ function Invoke-ExecSyncVPP {
         Entrypoint
     .ROLE
         Endpoint.Application.ReadWrite
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/vppTokens | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementApps.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | POST /deviceAppManagement/vppTokens/{id}/syncLicenses | Delegated | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

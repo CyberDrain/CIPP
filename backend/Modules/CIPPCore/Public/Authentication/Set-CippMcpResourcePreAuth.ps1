@@ -25,6 +25,9 @@ function Set-CippMcpResourcePreAuth {
         The id of the resource's user_impersonation oauth2PermissionScope.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /applications/{id} | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(

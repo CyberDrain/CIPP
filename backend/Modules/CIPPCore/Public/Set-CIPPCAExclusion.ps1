@@ -1,4 +1,10 @@
 function Set-CIPPCAExclusion {
+    <#
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/policies/{id} | Application | Policy.Read.All
+        Permission: Graph | PATCH /identity/conditionalAccess/policies/{id} | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         $TenantFilter,

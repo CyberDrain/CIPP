@@ -10,6 +10,8 @@ function Get-CIPPBaselinePhishProtectionState {
         the classic read. A tenant without premium branding reads as no CSS.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /organization/{id}/branding/localizations/0/customCSS | Delegated | OrganizationalBranding.Read.All | Organization.Read.All, Organization.ReadWrite.All, OrganizationalBranding.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

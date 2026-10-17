@@ -8,6 +8,9 @@ function Update-CIPPDynamicTenantGroups {
         The specific group ID to update. If not provided, all dynamic groups will be updated
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /subscribedSkus | Delegated | LicenseAssignment.Read.All | Directory.Read.All, Directory.ReadWrite.All, Organization.Read.All, Organization.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

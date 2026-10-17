@@ -1,4 +1,9 @@
 function Invoke-NinjaOneDeviceWebhook {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceManagement/managedDevices | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
+        Permission: Graph | GET /devices/{id} | Delegated | Device.Read.All | Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $Data,

@@ -2,6 +2,9 @@ function Get-CIPPAlertSecDefaultsDisabled {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/policies | Delegated | Policy.Read.All
+        Permission: Graph | GET /policies/identitySecurityDefaultsEnforcementPolicy | Delegated | Policy.Read.All
     #>
     [CmdletBinding()]
     param (

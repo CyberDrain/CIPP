@@ -87,6 +87,10 @@ function Get-CIPPLicenseRecommendation {
 
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /reports/getM365AppUserDetail(period='D180') | Delegated | Reports.Read.All
+        Permission: Graph | GET /reports/getOffice365ActiveUserDetail(period='D180') | Delegated | Reports.Read.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

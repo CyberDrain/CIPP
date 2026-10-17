@@ -7,6 +7,8 @@ function Invoke-ListSharedMailboxAccountEnabled {
     .DESCRIPTION
         Lists shared mailboxes that have direct sign-in enabled (account not disabled), which is a security concern.
         Supports UseReportDB=true to read cached data from the reporting database (required for AllTenants).
+    .NOTES
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

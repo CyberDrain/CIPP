@@ -39,6 +39,8 @@ function Set-CIPPDBCacheOneDriveRootPermissions {
 
     .PARAMETER QueueId
         Optional queue ID for progress tracking
+    .NOTES
+        Permission: Graph | GET /sites/getAllSites | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

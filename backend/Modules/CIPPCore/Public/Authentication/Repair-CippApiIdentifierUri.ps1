@@ -17,6 +17,10 @@ function Repair-CippApiIdentifierUri {
         - PreviousUri: the previous identifier URI (if any)
         - CurrentUri: the current/fixed identifier URI
         - Message: description of what happened
+    .NOTES
+        Permission: Graph | GET /applications | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /applications/{id} | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(

@@ -16,6 +16,8 @@ function Invoke-CIPPBaselineDeviceEnrollmentConfiguration {
         per write with asApp, but none currently needs to.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /deviceManagement/deviceEnrollmentConfigurations/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

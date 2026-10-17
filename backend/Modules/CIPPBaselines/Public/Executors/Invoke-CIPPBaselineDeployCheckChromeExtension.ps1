@@ -11,6 +11,11 @@ function Invoke-CIPPBaselineDeployCheckChromeExtension {
         remediation run, exactly as the classic's remediate block did.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | DELETE /deviceAppManagement/mobileApps/{id} | Delegated | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceConfigurations | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/deviceConfigurations/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

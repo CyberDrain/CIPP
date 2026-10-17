@@ -1,4 +1,9 @@
 function Test-CIPPAccessPermissions {
+    <#
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /auditLogs/signIns | Delegated | AuditLog.Read.All
+    #>
     [CmdletBinding()]
     param (
         $TenantFilter,

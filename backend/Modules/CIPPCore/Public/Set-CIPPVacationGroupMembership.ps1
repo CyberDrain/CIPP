@@ -20,6 +20,8 @@ function Set-CIPPVacationGroupMembership {
         Shared key linking the Add and Remove runs of one vacation.
     .PARAMETER Headers
         The headers to include in the request. This is supplied automatically by the API.
+    .NOTES
+        Permission: Graph | GET /groups/{id}/members | Delegated | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

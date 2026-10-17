@@ -2,6 +2,8 @@ function Get-CIPPAlertDefenderStatus {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /tenantRelationships/managedTenants/windowsProtectionStates | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

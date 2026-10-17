@@ -4,6 +4,16 @@ function Invoke-ExecOffboardTenant {
         Entrypoint
     .ROLE
         Tenant.Administration.ReadWrite
+    .NOTES
+        Permission: Graph | GET /domains | Delegated | Domain.Read.All | Domain.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /organization | Delegated | DeviceManagementServiceConfig.Read.All | Organization.Read.All, Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /organization/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | DELETE /serviceprincipals/{id} | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | POST /tenantRelationships/delegatedAdminRelationships/{id}/requests | Delegated | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | DELETE /users/{id} | Delegated | User.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

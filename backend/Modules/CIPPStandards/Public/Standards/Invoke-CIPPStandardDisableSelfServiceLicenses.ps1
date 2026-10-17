@@ -27,6 +27,8 @@ function Invoke-CIPPStandardDisableSelfServiceLicenses {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/authorizationPolicy | Delegated | Policy.Read.All | Policy.ReadWrite.Authorization
+        Permission: Graph | PATCH /policies/authorizationPolicy | Delegated | Policy.ReadWrite.Authorization
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

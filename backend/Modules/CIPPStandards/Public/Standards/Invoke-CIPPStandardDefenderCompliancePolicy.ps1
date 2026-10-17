@@ -45,6 +45,9 @@ function Invoke-CIPPStandardDefenderCompliancePolicy {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | POST /deviceManagement/mobileThreatDefenseConnectors | Application | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/mobileThreatDefenseConnectors/fc780465-2017-40d4-a0c5-307022471b92 | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/mobileThreatDefenseConnectors/fc780465-2017-40d4-a0c5-307022471b92 | Application | DeviceManagementServiceConfig.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

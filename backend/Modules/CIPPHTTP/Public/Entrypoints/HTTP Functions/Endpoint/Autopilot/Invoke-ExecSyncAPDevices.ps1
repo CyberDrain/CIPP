@@ -4,6 +4,8 @@ Function Invoke-ExecSyncAPDevices {
         Entrypoint
     .ROLE
         Endpoint.Autopilot.ReadWrite
+    .NOTES
+        Permission: Graph | POST /deviceManagement/windowsAutopilotSettings/sync | Delegated | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

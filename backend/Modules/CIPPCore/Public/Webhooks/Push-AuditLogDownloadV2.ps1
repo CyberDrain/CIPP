@@ -17,6 +17,8 @@ function Push-AuditLogDownloadV2 {
         an earlier one, so an empty or unready window costs no further orchestration.
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /security/auditLog/queries/{id} | Application | AuditLogsQuery.Read.All
     #>
     [CmdletBinding()]
     param($Item)

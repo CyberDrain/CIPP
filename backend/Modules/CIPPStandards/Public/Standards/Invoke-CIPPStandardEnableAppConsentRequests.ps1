@@ -46,6 +46,9 @@ function Invoke-CIPPStandardEnableAppConsentRequests {
             "CIS"
         UPDATECOMMENTBLOCK
             Run the tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/adminConsentRequestPolicy | Delegated | Policy.Read.All | Policy.ReadWrite.ConsentRequest, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PUT /policies/adminConsentRequestPolicy | Delegated | Policy.ReadWrite.ConsentRequest | Directory.ReadWrite.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

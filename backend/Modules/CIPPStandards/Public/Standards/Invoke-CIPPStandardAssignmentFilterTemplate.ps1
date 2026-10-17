@@ -32,6 +32,8 @@ function Invoke-CIPPStandardAssignmentFilterTemplate {
             "MICROSOFTINTUNEPLAN1"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /deviceManagement/assignmentFilters | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/assignmentFilters/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

@@ -6,6 +6,10 @@ function Invoke-ListAutopilotconfig {
         Endpoint.Autopilot.Read
     .DESCRIPTION
         Lists Windows Autopilot deployment profiles, Enrollment Status Page configurations, or Windows Hello for Business policies for a tenant.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/deviceEnrollmentConfigurations | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsAutopilotDeploymentProfiles | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

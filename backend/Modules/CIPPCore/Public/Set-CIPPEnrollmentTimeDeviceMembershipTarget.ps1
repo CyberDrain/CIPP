@@ -25,6 +25,8 @@ function Set-CIPPEnrollmentTimeDeviceMembershipTarget {
         The tenant to write to.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /deviceManagement/configurationPolicies/{id}/setEnrollmentTimeDeviceMembershipTarget | Delegated | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

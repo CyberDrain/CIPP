@@ -8,6 +8,9 @@ function Set-CIPPDBCachePIMSettings {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/roleManagementPolicyAssignments | Delegated | RoleManagementPolicy.Read.Directory | RoleManagementPolicy.ReadWrite.AzureADGroup
+        Permission: Graph | GET /roleManagement/directory/roleEligibilityScheduleInstances | Delegated | RoleEligibilitySchedule.Read.Directory | RoleEligibilitySchedule.ReadWrite.Directory, RoleManagement.Read.All, RoleManagement.Read.Directory, RoleManagement.ReadWrite.Directory
     #>
     [CmdletBinding()]
     param(

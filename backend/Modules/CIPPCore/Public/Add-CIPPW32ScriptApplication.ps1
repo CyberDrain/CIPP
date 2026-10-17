@@ -34,6 +34,9 @@ function Add-CIPPW32ScriptApplication {
             detectionFile = 'app.exe'
         }
         Add-CIPPW32ScriptApplication -TenantFilter 'contoso.com' -Properties $Properties
+    .NOTES
+        Permission: Graph | POST /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | PATCH /deviceAppManagement/mobileApps/{id} | Delegated | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

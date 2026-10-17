@@ -1,4 +1,9 @@
 function Get-CIPPIntunePolicy {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/androidManagedAppProtections | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceAppManagement/iosManagedAppProtections | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+    #>
     param (
         [Parameter(Mandatory = $true)]
         $TemplateType,

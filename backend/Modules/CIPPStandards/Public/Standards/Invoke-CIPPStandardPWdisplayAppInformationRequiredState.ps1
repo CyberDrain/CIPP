@@ -41,6 +41,7 @@ function Invoke-CIPPStandardPWdisplayAppInformationRequiredState {
             "CIS"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/microsoftAuthenticator | Application | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

@@ -2,6 +2,8 @@ function Get-CIPPAlertNewMFADevice {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /auditLogs/directoryAudits | Delegated | AuditLog.Read.All | Directory.Read.All
     #>
     [CmdletBinding()]
     param (

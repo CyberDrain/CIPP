@@ -4,6 +4,9 @@ Function Invoke-EditPolicy {
         Entrypoint
     .ROLE
         Endpoint.MEM.ReadWrite
+    .NOTES
+        Permission: Graph | PATCH /deviceManagement/groupPolicyConfigurations/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/groupPolicyConfigurations/{id}/assign | Delegated | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -19,6 +19,8 @@ function Invoke-CIPPBaselineCreateSharedMailbox {
         enabled.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

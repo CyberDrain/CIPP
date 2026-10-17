@@ -2,6 +2,8 @@ function Get-CIPPAlertSmtpAuthSuccess {
     <#
     .FUNCTIONALITY
         Entrypoint – Check sign-in logs for SMTP AUTH with success status
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Delegated | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param (

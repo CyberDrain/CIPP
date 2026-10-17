@@ -28,6 +28,8 @@ function Get-CIPPBecReceivedMailFindings {
         Also query Defender analysedEmails metadata.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /security/collaboration/analyzedEmails | Application | SecurityAnalyzedMessage.Read.All | SecurityAnalyzedMessage.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -4,6 +4,8 @@ function Invoke-ExecDismissRiskyUser {
         Entrypoint
     .ROLE
         Identity.User.ReadWrite
+    .NOTES
+        Permission: Graph | POST /riskyUsers/dismiss | Delegated | IdentityRiskyUser.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

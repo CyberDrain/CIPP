@@ -6,14 +6,16 @@ on:
       - main
       - dev
     paths:
-      - 'backend/Modules/CIPPHTTP/**'
-      # entrypoints hand the body to these, and the generator follows the call
-      - 'backend/Modules/CIPPCore/**'
+      # entrypoints hand the body to CIPPCore helpers, and permissions roll up through every module
+      - 'backend/Modules/**'
       - 'backend/Config/openapi.json'
       - 'backend/Config/openapi-overrides/**'
+      - 'backend/Config/SAMManifest.json'
       # simpleColumns declarations type the list responses
       - 'frontend/src/**'
       - 'build/tools/build-openapi.ps1'
+      - 'build/tools/Update-PermissionAnnotations.ps1'
+      - 'build/tools/graph-*permissions.json'
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
   cancel-in-progress: true
@@ -28,6 +30,18 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+
+      # Each function's .NOTES lists the Graph permissions its calls need; the spec rolls them up per endpoint.
+      - name: Check the Permission lines match the Graph calls
+        shell: pwsh
+        run: |
+          try {
+            ./build/tools/Update-PermissionAnnotations.ps1 -Check
+          } catch {
+            Write-Host "::error::$($_.Exception.Message)"
+            Write-Host 'Regenerate with: pwsh build/tools/Update-PermissionAnnotations.ps1'
+            exit 1
+          }
 
       # backend/Config/openapi.json is loaded at runtime by Get-CippMcpSpec and
       # projected into the MCP tool list, so a stale committed spec ships a tool

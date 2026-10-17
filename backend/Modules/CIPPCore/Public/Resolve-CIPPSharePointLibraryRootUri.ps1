@@ -2,6 +2,8 @@ function Resolve-CIPPSharePointLibraryRootUri {
     <#
     .SYNOPSIS
         Resolves a document library list GUID to its absolute root folder URI via SPO REST.
+    .NOTES
+        Permission: Graph | GET /sites/{id} | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

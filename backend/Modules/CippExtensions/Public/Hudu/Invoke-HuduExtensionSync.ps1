@@ -2,6 +2,8 @@ function Invoke-HuduExtensionSync {
     <#
         .FUNCTIONALITY
         Internal
+        .NOTES
+            Permission: Graph | GET /directory/deviceLocalCredentials | Delegated | DeviceLocalCredential.ReadBasic.All | DeviceLocalCredential.Read.All
     #>
     [CmdletBinding()]
     param(

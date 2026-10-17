@@ -19,6 +19,10 @@ function Remove-CIPPTravelPolicy {
 
     .PARAMETER APIName
     The name of the API operation being performed. Defaults to 'Remove-CIPPTravelPolicy'.
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations | Application | Policy.Read.All
+        Permission: Graph | GET /identity/conditionalAccess/policies | Application | Policy.Read.All
+        Permission: Graph | DELETE /identity/conditionalAccess/policies/{id} | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
     #>
     [CmdletBinding()]
     param(

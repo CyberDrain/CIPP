@@ -10,6 +10,10 @@ function Invoke-CIPPBaselinePhishProtection {
         operator's existing custom CSS.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /organization/{id}/branding/localizations | Application | OrganizationalBranding.Read.All | Organization.Read.All, Organization.ReadWrite.All, OrganizationalBranding.ReadWrite.All
+        Permission: Graph | POST /organization/{id}/branding/localizations | Application | OrganizationalBranding.ReadWrite.All | Organization.ReadWrite.All
+        Permission: Graph | PUT /organization/{id}/branding/localizations/0/customCSS | Application | OrganizationalBranding.ReadWrite.All | Organization.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

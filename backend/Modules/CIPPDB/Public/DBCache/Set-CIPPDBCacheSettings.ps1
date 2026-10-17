@@ -8,6 +8,9 @@ function Set-CIPPDBCacheSettings {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /admin/appsAndServices | Delegated | OrgSettings-AppsAndServices.Read.All | OrgSettings-AppsAndServices.ReadWrite.All
+        Permission: Graph | GET /settings | Delegated | GroupSettings.Read.All | GroupSettings.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

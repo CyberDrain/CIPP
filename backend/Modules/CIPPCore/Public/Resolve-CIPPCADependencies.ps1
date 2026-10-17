@@ -18,6 +18,13 @@ function Resolve-CIPPCADependencies {
         LocationInfo / AuthContextInfo) so per-template template-ids never collide across policies.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/authenticationContextClassReferences | Application | AuthenticationContext.Read.All | AuthenticationContext.ReadWrite.All, Policy.Read.ConditionalAccess, Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | POST /identity/conditionalAccess/authenticationContextClassReferences | Application | AuthenticationContext.ReadWrite.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations | Application | Policy.Read.All
+        Permission: Graph | POST /identity/conditionalAccess/namedLocations | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations/{id} | Application | Policy.Read.All
+        Permission: Graph | PATCH /identity/conditionalAccess/namedLocations/{id} | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
     #>
     [CmdletBinding()]
     param(

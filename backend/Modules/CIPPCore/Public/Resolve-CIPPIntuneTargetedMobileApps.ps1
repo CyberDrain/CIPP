@@ -25,6 +25,8 @@ function Resolve-CIPPIntuneTargetedMobileApps {
         The resolved mobileApp ids for the target tenant.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

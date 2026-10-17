@@ -8,6 +8,8 @@ function Set-CIPPDBCacheManagedDeviceEncryptionStates {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /deviceManagement/managedDeviceEncryptionStates | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

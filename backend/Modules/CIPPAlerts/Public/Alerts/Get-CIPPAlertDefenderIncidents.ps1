@@ -3,6 +3,8 @@ function Get-CIPPAlertDefenderIncidents {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /security/incidents | Delegated | SecurityIncident.Read.All | SecurityIncident.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

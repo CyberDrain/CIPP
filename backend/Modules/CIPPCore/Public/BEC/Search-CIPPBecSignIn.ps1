@@ -22,6 +22,8 @@ function Search-CIPPBecSignIn {
         Read with the application token (the default) or the delegated one.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Application | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param(

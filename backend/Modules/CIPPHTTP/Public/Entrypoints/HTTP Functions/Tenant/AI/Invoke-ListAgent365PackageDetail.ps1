@@ -8,6 +8,8 @@ function Invoke-ListAgent365PackageDetail {
         Gets the full detail for a single Microsoft Agent 365 / Copilot package by id, including the
         allowedUsersAndGroups, acquireUsersAndGroups and elementDetails that the list endpoint omits.
         Uses delegated auth: this call returns 424 Failed Dependency under application context.
+    .NOTES
+        Permission: Graph | GET /copilot/admin/catalog/packages/{id} | Delegated | CopilotPackages.Read.All | CopilotPackages.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -31,6 +31,7 @@ function Invoke-CIPPStandardDisableTenantCreation {
             "CIPP"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | PATCH /policies/authorizationPolicy/authorizationPolicy | Delegated | Policy.ReadWrite.Authorization
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

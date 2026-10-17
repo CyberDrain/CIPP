@@ -1,4 +1,11 @@
 function Remove-CIPPLicense {
+    <#
+    .NOTES
+        Permission: Graph | DELETE /groups/{id}/members/{id}/$ref | Delegated | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /users/{id}/assignlicense | Delegated | LicenseAssignment.ReadWrite.All | AgentIdUser.ReadWrite.All, AgentIdUser.ReadWrite.IdentityParentedBy, Directory.ReadWrite.All, User.ReadWrite.All
+        Permission: Graph | GET /users/{id}/memberOf/microsoft.graph.group | Delegated | User.Read | Directory.Read.All, Directory.ReadWrite.All, Group.ReadBasic.All, GroupMember.Read.All, GroupMember.ReadBasic.All
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         $Headers,

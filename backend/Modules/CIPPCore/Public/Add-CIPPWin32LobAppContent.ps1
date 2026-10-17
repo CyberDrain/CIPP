@@ -53,6 +53,8 @@ function Add-CIPPWin32LobAppContent {
             FileDigestAlgorithm = 'SHA256'
         }
         Add-CIPPWin32LobAppContent -AppId '12345' -FilePath 'C:\app.intunewin' -FileName 'app.intunewin' -UnencryptedSize 1024000 -EncryptionInfo $EncryptionInfo -TenantFilter 'contoso.com'
+    .NOTES
+        Permission: Graph | PATCH /deviceAppManagement/mobileApps/{id} | Delegated | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

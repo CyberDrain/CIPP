@@ -9,6 +9,9 @@ function Invoke-CIPPBaselineProfilePhotos {
         when disabling. Both must move or users keep a side door.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | DELETE /admin/people/photoUpdateSettings | Application | PeopleSettings.ReadWrite.All
+        Permission: Graph | PATCH /admin/people/photoUpdateSettings | Application | PeopleSettings.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

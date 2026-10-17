@@ -8,6 +8,8 @@ function Invoke-ListSiteLibraries {
         Lists the visible document libraries of a SharePoint site via the Graph API. The site can
         be addressed by SiteId or by SiteUrl (hostname:path addressing). Returns the SharePoint
         list GUID as Id so the result can be used directly against the SharePoint REST API.
+    .NOTES
+        Permission: Graph | GET /sites/{id}/lists | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

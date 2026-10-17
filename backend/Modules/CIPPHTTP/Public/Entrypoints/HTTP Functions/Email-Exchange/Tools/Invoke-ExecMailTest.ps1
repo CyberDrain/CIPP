@@ -6,6 +6,9 @@ Function Invoke-ExecMailTest {
         CIPP.Core.Read
     .DESCRIPTION
         Checks the mailbox configuration behind CIPP's message trace tooling. Action=CheckConfig reports whether the CIPP-SAM app holds the delegated Mail.Read permission and which mailbox the current token resolves to.
+    .NOTES
+        Permission: Graph | GET /me | Delegated | User.Read | User.ReadWrite, User.ReadBasic.All, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /me/mailFolders/Inbox/messages | Delegated | Mail.ReadBasic | Mail.ReadWrite, Mail.Read
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

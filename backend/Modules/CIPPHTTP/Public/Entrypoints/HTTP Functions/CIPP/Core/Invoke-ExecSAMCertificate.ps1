@@ -10,6 +10,8 @@ function Invoke-ExecSAMCertificate {
         Entrypoint
     .ROLE
         CIPP.AppSettings.ReadWrite
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

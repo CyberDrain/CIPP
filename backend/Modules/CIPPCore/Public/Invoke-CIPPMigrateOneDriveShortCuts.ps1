@@ -8,6 +8,10 @@ function Invoke-CIPPMigrateOneDriveShortCuts {
         each remoteItem shortcut that is not already under Shortcuts into special/shortcuts.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /users/{id}/drive/items/{id} | Application | Files.ReadWrite.All | Sites.ReadWrite.All
+        Permission: Graph | GET /users/{id}/drive/root/children | Application | Files.Read.All | Files.ReadWrite.All
+        Permission: Graph | GET /users/{id}/drive/special/shortcuts | Application | Files.Read.All | Files.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

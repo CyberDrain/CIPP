@@ -2,6 +2,9 @@ function Get-CIPPAlertNoCAConfig {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/policies | Delegated | Policy.Read.All
+        Permission: Graph | GET /subscribedSkus | Delegated | LicenseAssignment.Read.All | Directory.Read.All, Directory.ReadWrite.All, Organization.Read.All, Organization.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

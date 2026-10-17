@@ -8,6 +8,8 @@ function Start-UserSyncTimer {
         Manual role assignments are preserved in a separate column and merged at compute time.
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /groups/{id}/transitiveMembers | Application | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
     #>
 
     [CmdletBinding(SupportsShouldProcess = $true)]

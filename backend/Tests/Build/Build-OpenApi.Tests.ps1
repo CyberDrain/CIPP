@@ -717,3 +717,104 @@ Describe 'determinism and drift checking' {
         { & $script:GeneratorPath -PublicPath $script:PublicCopy -EntrypointPath $script:FixtureRoot -ModulesPath $script:ModulesRoot -OverridePath (Join-Path $TestDrive 'empty') -OutputPath $Path -Check } | Should -Throw -ExpectedMessage '*stale*'
     }
 }
+
+Describe 'permission rollup' {
+    BeforeAll {
+        $Root = Join-Path $TestDrive 'perm'
+        $Http = Join-Path $Root 'Entrypoints'
+        $Core = Join-Path $Root 'Modules/CIPPCore/Public'
+        $Queue = Join-Path $Root 'Modules/CIPPActivityTriggers/Public'
+        $null = New-Item -ItemType Directory -Path $Http, $Core, $Queue -Force
+        Set-Content -Path (Join-Path $Http 'Invoke-ListPermFixture.ps1') -Value @'
+function Invoke-ListPermFixture {
+    <#
+    .FUNCTIONALITY
+        Entrypoint
+    .ROLE
+        Identity.User.Read
+    .NOTES
+        Permission: Graph | GET /groups | Delegated | Group.Read.All | Directory.Read.All
+    #>
+    param($Request)
+    $User = Get-PermFixtureUser
+    $null = Get-Tenants
+    $null = @{ FunctionName = 'PermFixtureQueued'; TenantFilter = 'x' }
+}
+'@
+        Set-Content -Path (Join-Path $Core 'Get-PermFixtureUser.ps1') -Value @'
+function Get-PermFixtureUser {
+    <#
+    .NOTES
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All
+    #>
+    param()
+}
+'@
+        Set-Content -Path (Join-Path $Core 'Get-Tenants.ps1') -Value @'
+function Get-Tenants {
+    <#
+    .NOTES
+        Permission: Graph | GET /contracts | Delegated | Directory.Read.All
+    #>
+    param()
+}
+'@
+        Set-Content -Path (Join-Path $Queue 'Push-PermFixtureQueued.ps1') -Value @'
+function Push-PermFixtureQueued {
+    <#
+    .NOTES
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All
+        Permission: Exchange | Set-Mailbox | Delegated | Mail Recipients | Organization Management | only when archiving
+    #>
+    param($Item)
+}
+'@
+        $Out = Join-Path $Root 'openapi.json'
+        & $script:GeneratorPath -EntrypointPath $Http -ModulesPath (Join-Path $Root 'Modules') -OverridePath (Join-Path $TestDrive 'empty') `
+            -FrontendPath (Join-Path $TestDrive 'none') -PublicPath $script:PublicCopy -OutputPath $Out | Out-Null
+        $script:PermSpec = Get-Content $Out -Raw | ConvertFrom-Json -AsHashtable
+        $script:Perms = $script:PermSpec.paths['/api/ListPermFixture'].get.'x-cipp-permissions'
+        $script:PermRoot = $Root
+    }
+
+    It 'rolls up the entrypoint, its helpers and the activities it queues' {
+        $Perms.operation | Should -Be @('Set-Mailbox', 'GET /groups', 'GET /users/{id}')
+        $Perms.Where({ $_.operation -eq 'GET /users/{id}' })[0].via | Should -Be @('Get-PermFixtureUser', 'Push-PermFixtureQueued')
+    }
+
+    It 'splits least and higher into lists and keeps the condition' {
+        $User = $Perms.Where({ $_.operation -eq 'GET /users/{id}' })[0]
+        $User.least | Should -Be @('User.ReadBasic.All')
+        $User.higher | Should -Be @('User.Read.All', 'User.ReadWrite.All')
+        $Perms.Where({ $_.api -eq 'Exchange' })[0].condition | Should -Be 'only when archiving'
+    }
+
+    It 'skips partner-tenant plumbing' {
+        $Perms.operation | Should -Not -Contain 'GET /contracts'
+    }
+
+    It 'indexes each least-privileged permission to its endpoints' {
+        $PermSpec.'x-cipp-permission-index'.Graph.Delegated.'User.ReadBasic.All' | Should -Be @('ListPermFixture')
+        $PermSpec.'x-cipp-permission-index'.Exchange.Delegated.'Mail Recipients' | Should -Be @('ListPermFixture')
+    }
+
+    It 'rejects a malformed Permission line' {
+        $Bad = Join-Path $PermRoot 'bad'
+        $null = New-Item -ItemType Directory -Path $Bad -Force
+        Set-Content -Path (Join-Path $Bad 'Invoke-ListBadPerm.ps1') -Value @'
+function Invoke-ListBadPerm {
+    <#
+    .FUNCTIONALITY
+        Entrypoint
+    .ROLE
+        Identity.User.Read
+    .NOTES
+        Permission: Graph | GET /users | AppOnly | User.Read.All
+    #>
+    param($Request)
+}
+'@
+        { & $script:GeneratorPath -EntrypointPath $Bad -ModulesPath (Join-Path $PermRoot 'Modules') -OverridePath (Join-Path $TestDrive 'empty') `
+                -FrontendPath (Join-Path $TestDrive 'none') -PublicPath $script:PublicCopy -OutputPath (Join-Path $Bad 'openapi.json') } | Should -Throw -ExpectedMessage '*Malformed Permission line in Invoke-ListBadPerm*'
+    }
+}

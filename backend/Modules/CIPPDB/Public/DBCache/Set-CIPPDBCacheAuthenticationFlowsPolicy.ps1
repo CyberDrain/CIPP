@@ -8,6 +8,8 @@ function Set-CIPPDBCacheAuthenticationFlowsPolicy {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/authenticationFlowsPolicy | Application | Policy.Read.All | Policy.ReadWrite.AuthenticationFlows
     #>
     [CmdletBinding()]
     param(

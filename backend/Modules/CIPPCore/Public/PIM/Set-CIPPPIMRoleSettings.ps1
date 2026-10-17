@@ -14,6 +14,8 @@ function Set-CIPPPIMRoleSettings {
 
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /policies/roleManagementPolicies/{id}/rules/{id} | Application | RoleManagementPolicy.ReadWrite.AzureADGroup
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

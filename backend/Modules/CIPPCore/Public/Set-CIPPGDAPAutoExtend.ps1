@@ -1,4 +1,9 @@
 function Set-CIPPGDAPAutoExtend {
+    <#
+    .NOTES
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | PATCH /tenantRelationships/delegatedAdminRelationships/{id} | Delegated | DelegatedAdminRelationship.ReadWrite.All
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         $RelationShipid,

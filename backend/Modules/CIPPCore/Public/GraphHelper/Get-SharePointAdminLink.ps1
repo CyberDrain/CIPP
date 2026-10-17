@@ -2,6 +2,8 @@ function Get-SharePointAdminLink {
     <#
     .FUNCTIONALITY
     Internal
+    .NOTES
+        Permission: Graph | GET /sites/root | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param ($Public, $TenantFilter)

@@ -1,5 +1,12 @@
 
 function Get-CIPPLicenseOverview {
+    <#
+    .NOTES
+        Permission: Graph | GET /directory/subscriptions | Application | Organization.Read.All | Directory.Read.All, Organization.ReadWrite.All
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /subscribedSkus | Application | LicenseAssignment.Read.All | Directory.Read.All, Directory.ReadWrite.All, Organization.Read.All, Organization.ReadWrite.All
+        Permission: Graph | GET /users | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $TenantFilter,

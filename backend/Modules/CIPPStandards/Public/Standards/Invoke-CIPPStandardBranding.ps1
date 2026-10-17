@@ -35,6 +35,9 @@ function Invoke-CIPPStandardBranding {
             "OFFICE_BUSINESS"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /organization/{id}/branding/localizations | Application | OrganizationalBranding.Read.All | Organization.Read.All, Organization.ReadWrite.All, OrganizationalBranding.ReadWrite.All
+        Permission: Graph | POST /organization/{id}/branding/localizations | Application | OrganizationalBranding.ReadWrite.All | Organization.ReadWrite.All
+        Permission: Graph | GET /organization/{id}/branding/localizations/0 | Application | OrganizationalBranding.Read.All | Organization.Read.All, Organization.ReadWrite.All, OrganizationalBranding.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

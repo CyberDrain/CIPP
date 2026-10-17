@@ -12,6 +12,8 @@ function Get-CIPPPartnerUserLookup {
         The audit-log pipeline (Test-CIPPAuditLogRules) and the BEC run share it.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /users | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param()

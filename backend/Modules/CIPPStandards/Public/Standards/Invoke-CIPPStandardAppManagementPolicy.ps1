@@ -29,6 +29,8 @@ function Invoke-CIPPStandardAppManagementPolicy {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/defaultAppManagementPolicy | Application | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | PATCH /policies/defaultAppManagementPolicy | Application | Policy.ReadWrite.ApplicationConfiguration
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

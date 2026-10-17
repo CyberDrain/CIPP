@@ -2,6 +2,12 @@ function Push-ExecOnboardTenantQueue {
     <#
     .FUNCTIONALITY
     Entrypoint
+    .NOTES
+        Permission: Graph | POST /groups/{id}/members/$ref | Application | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | GET /me | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships/{id} | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships/{id}/accessAssignments | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Item)

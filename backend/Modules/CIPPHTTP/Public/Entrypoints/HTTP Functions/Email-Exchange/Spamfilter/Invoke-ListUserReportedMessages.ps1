@@ -7,6 +7,8 @@ function Invoke-ListUserReportedMessages {
     .DESCRIPTION
         Lists user reported messages (Outlook Report button) for a tenant. Source=AuditLog (default) reads the unified
         audit log two weeks per page, Source=Submissions reads the Defender Submissions list from Graph.
+    .NOTES
+        Permission: Graph | GET /security/threatSubmission/emailThreats | Application | ThreatSubmission.Read.All | ThreatSubmission.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

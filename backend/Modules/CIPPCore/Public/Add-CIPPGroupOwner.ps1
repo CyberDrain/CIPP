@@ -22,6 +22,8 @@ function Add-CIPPGroupOwner {
 
     .PARAMETER APIName
     The API operation name for logging. Default: 'Add Group Owner'.
+    .NOTES
+        Permission: Graph | POST /groups/{id}/owners/$ref | Delegated | Group.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

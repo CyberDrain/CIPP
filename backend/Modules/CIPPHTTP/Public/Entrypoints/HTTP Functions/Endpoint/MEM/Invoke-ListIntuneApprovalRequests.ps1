@@ -10,6 +10,8 @@ function Invoke-ListIntuneApprovalRequests {
         Lists the multi-admin approval (MAA) requests raised in a tenant. When an access policy protects
         a resource type, Intune defers the change and records it here until a second administrator
         approves it, so this is where a change made from CIPP that appears to have done nothing ends up.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/operationApprovalRequests | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementRBAC.Read.All, DeviceManagementRBAC.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

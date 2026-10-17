@@ -4,6 +4,8 @@ Function Invoke-AddSensitivityLabelTemplate {
         Entrypoint
     .ROLE
         Security.SensitivityLabel.ReadWrite
+    .NOTES
+        Permission: Graph | GET /domains | Delegated | Domain.Read.All | Domain.ReadWrite.All, Directory.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -57,6 +57,8 @@ function Get-GraphRequestList {
     .PARAMETER UseBatchExpand
     Perform a batch lookup using the $expand query parameter to avoid 20 item max
 
+    .NOTES
+        Permission: Graph | GET /tenantRelationships/findTenantInformationByTenantId(tenantId='{id}') | Application | CrossTenantInformation.ReadBasic.All
     #>
     [CmdletBinding()]
     param(

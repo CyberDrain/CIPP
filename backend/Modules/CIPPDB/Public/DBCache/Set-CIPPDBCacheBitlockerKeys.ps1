@@ -8,6 +8,8 @@ function Set-CIPPDBCacheBitlockerKeys {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /informationProtection/bitlocker/recoveryKeys | Delegated | BitlockerKey.ReadBasic.All | BitlockerKey.Read.All
     #>
     [CmdletBinding()]
     param(

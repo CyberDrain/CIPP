@@ -6,6 +6,8 @@ function Invoke-ListDirectoryObjects {
         CIPP.Core.Read
     .DESCRIPTION
         Resolves Entra ID directory objects by their IDs using the directoryObjects/getByIds batch endpoint. Accepts an array of object IDs in the request body.
+    .NOTES
+        Permission: Graph | POST /directoryObjects/getByIds | Delegated | Directory.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -6,6 +6,8 @@ function Invoke-ExecMailQuarantineSubmit {
         Exchange.SpamFilter.ReadWrite
     .DESCRIPTION
         Submits a quarantined email message to Microsoft for review (threat submission) via the Graph API.
+    .NOTES
+        Permission: Graph | POST /security/threatSubmission/emailThreats | Application | ThreatSubmission.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

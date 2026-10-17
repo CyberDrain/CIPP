@@ -4,6 +4,9 @@ function Invoke-AddEdgeApp {
         Entrypoint,AnyTenant
     .ROLE
         Endpoint.Application.ReadWrite
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | POST /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -989,5 +989,83 @@
         }
       ]
     }
+  },
+  {
+    "value": "AppGrantedItselfAccess",
+    "name": "An application granted itself permissions, credentials or ownership",
+    "template": {
+      "preset": {
+        "value": "AppGrantedItselfAccess",
+        "label": "An application granted itself permissions, credentials or ownership"
+      },
+      "logbook": {
+        "value": "Audit.AzureActiveDirectory",
+        "label": "Azure AD"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "in",
+            "label": "In"
+          },
+          "Input": [
+            {
+              "value": "Add app role assignment to service principal.",
+              "label": "Add app role assignment to service principal."
+            },
+            {
+              "value": "Add delegated permission grant.",
+              "label": "Add delegated permission grant."
+            },
+            {
+              "value": "Add service principal credentials.",
+              "label": "Add service principal credentials."
+            },
+            {
+              "value": "Update application – Certificates and secrets management ",
+              "label": "Update application – Certificates and secrets management "
+            },
+            {
+              "value": "Add owner to service principal.",
+              "label": "Add owner to service principal."
+            },
+            {
+              "value": "Add owner to application.",
+              "label": "Add owner to application."
+            }
+          ]
+        },
+        {
+          "Property": {
+            "value": "String",
+            "label": "CIPPActorType"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "ServicePrincipal"
+          }
+        },
+        {
+          "Property": {
+            "value": "String",
+            "label": "CIPPActorIsTarget"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "True"
+          }
+        }
+      ]
+    }
   }
 ]

@@ -37,11 +37,12 @@ function Start-AuditLogIngestionV2 {
 
         $Active = @(Get-CIPPAzDataTableEntity @Ledger `
                 -Filter "State eq 'Created' or State eq 'Downloaded' or State eq 'Processing'" `
-                -Property @('PartitionKey', 'State', 'NextAttemptUtc', 'Timestamp'))
+                -Property @('PartitionKey', 'State', 'NextAttemptUtc', 'Timestamp', 'Type'))
         $Stale = $Now.AddHours(-2)
 
         foreach ($Row in $Active) {
-            if (-not $Row.PartitionKey) { continue }
+            # Feed windows are processed by Start-AuditLogFeedV3.
+            if (-not $Row.PartitionKey -or $Row.Type -eq 'Feed') { continue }
             if ($Row.State -eq 'Created') {
                 if ($Row.NextAttemptUtc -and ([datetimeoffset]$Row.NextAttemptUtc).UtcDateTime -gt $Now) { continue }
                 [void]$DownloadTenants.Add([string]$Row.PartitionKey)

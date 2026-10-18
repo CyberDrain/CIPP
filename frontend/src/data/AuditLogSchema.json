@@ -22,7 +22,10 @@
     "CIPPUsername": "String",
     "CIPPAddedKeyTypes": "String",
     "CIPPAddedKeys": "String",
-    "CIPPActor": "String"
+    "CIPPActor": "String",
+    "CIPPActorIsTarget": "String",
+    "CIPPActorType": "String",
+    "CIPPTargetType": "String"
   },
   "Audit.Exchange": {
     "Id": "Combination GUID",

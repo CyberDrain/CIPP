@@ -14,8 +14,6 @@ function New-CIPPAlertTemplate {
         $CustomSubject
     )
     $AppName = Get-CIPPMicrosoftFirstPartyApp -AppId "$($data.applicationId)"
-    $TemplatePath = Join-Path $env:CIPPRootPath 'Config\TemplateEmail.html'
-    $HTMLTemplate = Get-Content $TemplatePath -Raw | Out-String
     $Title = ''
     $IntroText = ''
     $ButtonUrl = ''
@@ -23,7 +21,9 @@ function New-CIPPAlertTemplate {
     $AfterButtonText = ''
     $RuleTable = ''
     $Table = ''
-    $LocationInfo = $LocationInfo ?? $Data.CIPPLocationInfo | ConvertFrom-Json -ErrorAction SilentlyContinue | Select-Object * -ExcludeProperty Etag, PartitionKey, TimeStamp
+    # The json format's only reader (Invoke-CippWebhookProcessing) keeps the title, so no HTML body is rendered for it.
+    $RenderBody = $Format -ne 'json'
+    $LocationInfo = if ($RenderBody) { $LocationInfo ?? $Data.CIPPLocationInfo | ConvertFrom-Json -ErrorAction SilentlyContinue | Select-Object * -ExcludeProperty Etag, PartitionKey, TimeStamp }
     if ($Data -is [string]) {
         $Data = @{ message = $Data }
     }
@@ -233,7 +233,7 @@ function New-CIPPAlertTemplate {
                 } else {
                     $Title = "$($Tenant) - New Rule Detected for $($data.UserId)"
                 }
-                $RuleTable = ($Data.CIPPParameters | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">')
+                $RuleTable = if ($RenderBody) { ($Data.CIPPParameters | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">') }
 
                 $IntroText = "<p>A new rule has been created for the user $($data.UserId). You should check if this rule is not malicious. The rule information can be found in the table below.</p>$RuleTable"
                 if ($ActionResults) { $IntroText = $IntroText + "<p>Based on the rule, the following actions have been taken: $($ActionResults -join '<br/>' )</p>" }
@@ -247,7 +247,7 @@ function New-CIPPAlertTemplate {
             }
             'Set-InboxRule' {
                 $Title = "$($Tenant) - Rule Edit Detected for $($data.UserId)"
-                $RuleTable = ($Data.CIPPParameters | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">')
+                $RuleTable = if ($RenderBody) { ($Data.CIPPParameters | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">') }
                 $IntroText = "<p>A rule has been edited for the user $($data.UserId). You should check if this rule is not malicious. The rule information can be found in the table below.</p>$RuleTable"
                 if ($ActionResults) { $IntroText = $IntroText + "<p>Based on the rule, the following actions have been taken: $($ActionResults -join '<br/>' )</p>" }
                 if ($LocationInfo) {
@@ -260,7 +260,7 @@ function New-CIPPAlertTemplate {
             }
             'Add member to role.' {
                 $Title = "$($Tenant) - Role change detected for $($data.ObjectId)"
-                $Table = ($data.CIPPModifiedProperties | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">')
+                $Table = if ($RenderBody) { ($data.CIPPModifiedProperties | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">') }
                 $IntroText = "<p>$($data.UserId) has added $($data.ObjectId) to the $(($data.'Role.DisplayName')) role. The information about the role can be found in the table below.</p>$Table"
                 if ($ActionResults) { $IntroText = $IntroText + "<p>Based on the rule, the following actions have been taken: $($ActionResults -join '<br/>' )</p>" }
                 if ($LocationInfo) {
@@ -322,7 +322,7 @@ function New-CIPPAlertTemplate {
             }
             { $_ -in @('Remove member from role.', 'Remove Member from a role.') } {
                 $Title = "$($Tenant) - Role change detected for $($data.ObjectId)"
-                $Table = ($data.CIPPModifiedProperties | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">')
+                $Table = if ($RenderBody) { ($data.CIPPModifiedProperties | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">') }
                 $IntroText = "<p>$($data.UserId) has removed $($data.ObjectId) from the $(($data.ModifiedProperties | Where-Object -Property Name -EQ 'Role.DisplayName').OldValue) role. The information about the role can be found in the table below.</p>$Table"
                 if ($ActionResults) { $IntroText = $IntroText + "<p>Based on the rule, the following actions have been taken: $($ActionResults -join '<br/>' )</p>" }
                 if ($LocationInfo) {
@@ -351,7 +351,7 @@ function New-CIPPAlertTemplate {
             'Add service principal.' {
                 if (-not $AppName) { $AppName = $data.ApplicationId }
                 $Title = "$($Tenant) - Service Principal $($data.ObjectId) has been added."
-                $Table = ($data.ModifiedProperties | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">')
+                $Table = if ($RenderBody) { ($data.ModifiedProperties | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">') }
                 if ($ActionResults) { $IntroText = $IntroText + "<p>Based on the rule, the following actions have been taken: $($ActionResults -join '<br/>' )</p>" }
                 if ($LocationInfo) {
                     $LocationTable = ($LocationInfo | ConvertTo-Html -Fragment -As List | Out-String).Replace('<table>', ' <table class="table-modern">')
@@ -364,7 +364,7 @@ function New-CIPPAlertTemplate {
             'Remove service principal.' {
                 if (-not $AppName) { $AppName = $data.ApplicationId }
                 $Title = "$($Tenant) - Service Principal $($data.ObjectId) has been removed."
-                $Table = ($data.CIPPModifiedProperties | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">')
+                $Table = if ($RenderBody) { ($data.CIPPModifiedProperties | ConvertFrom-Json | ConvertTo-Html -Fragment | Out-String).Replace('<table>', ' <table class="table-modern">') }
                 if ($ActionResults) { $IntroText = $IntroText + "<p>Based on the rule, the following actions have been taken: $($ActionResults -join '<br/>' )</p>" }
                 if ($LocationInfo) {
                     $LocationTable = ($LocationInfo | ConvertTo-Html -Fragment -As List | Out-String).Replace('<table>', ' <table class="table-modern">')
@@ -375,7 +375,7 @@ function New-CIPPAlertTemplate {
                 $ButtonText = 'Enterprise Apps'
             }
             'UserLoggedIn' {
-                $Table = ($data | ConvertTo-Html -Fragment -As List | Out-String).Replace('<table>', ' <table class="table-modern">')
+                $Table = if ($RenderBody) { ($data | ConvertTo-Html -Fragment -As List | Out-String).Replace('<table>', ' <table class="table-modern">') }
                 if (-not $AppName) { $AppName = $data.ApplicationId }
                 $Title = "$($Tenant) - a user has logged on from a location you've set up to receive alerts for."
                 $IntroText = "$($data.UserId) ($($data.Userkey)) has logged on from IP $($data.ClientIP) to the application $($Appname). According to our database this is located in $($LocationInfo.CountryOrRegion) - $($LocationInfo.City). <br/><br> You have set up alerts to be notified when this happens. See the table below for more info.$Table"
@@ -390,12 +390,15 @@ function New-CIPPAlertTemplate {
             }
             default {
                 $Title = 'A custom alert has occured'
-                $Table = ($data | ConvertTo-Html -Fragment -As List | Out-String).Replace('<table>', ' <table class="table-modern">')
-                $IntroText = "<p>You have setup CIPP to send you a custom alert for the audit events that follow this filter: $($data.cippclause) </p>$Table"
-                if ($ActionResults) { $IntroText = $IntroText + "<p>Based on the rule, the following actions have been taken: $($ActionResults -join '<br/>' )</p>" }
-                if ($LocationInfo) {
-                    $LocationTable = ($LocationInfo | ConvertTo-Html -Fragment -As List | Out-String).Replace('<table>', ' <table class="table-modern">')
-                    $IntroText = $IntroText + "<p>The (potential) location information for this IP is as follows:</p>$LocationTable"
+                # The json format's only reader (Invoke-CippWebhookProcessing) keeps the title, so the body is not rendered for it.
+                if ($Format -ne 'json') {
+                    $Table = ($data | ConvertTo-Html -Fragment -As List | Out-String).Replace('<table>', ' <table class="table-modern">')
+                    $IntroText = "<p>You have setup CIPP to send you a custom alert for the audit events that follow this filter: $($data.cippclause) </p>$Table"
+                    if ($ActionResults) { $IntroText = $IntroText + "<p>Based on the rule, the following actions have been taken: $($ActionResults -join '<br/>' )</p>" }
+                    if ($LocationInfo) {
+                        $LocationTable = ($LocationInfo | ConvertTo-Html -Fragment -As List | Out-String).Replace('<table>', ' <table class="table-modern">')
+                        $IntroText = $IntroText + "<p>The (potential) location information for this IP is as follows:</p>$LocationTable"
+                    }
                 }
                 $ButtonUrl = "$CIPPURL/identity/administration/users?tenantFilter=$Tenant"
                 $ButtonText = 'User Management'
@@ -437,6 +440,7 @@ function New-CIPPAlertTemplate {
     }
 
     if ($Format -eq 'html') {
+        $HTMLTemplate = Get-Content (Join-Path $env:CIPPRootPath 'Config\TemplateEmail.html') -Raw | Out-String
         $AssembledHtml = $HTMLTemplate -f $Title, $IntroText, $ButtonUrl, $ButtonText, $AfterButtonText, $AuditLogLink
         $AssembledHtml = $AssembledHtml -replace '\r\n', '' -replace '\n', ''
         return [pscustomobject]@{

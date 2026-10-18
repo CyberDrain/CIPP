@@ -52,7 +52,7 @@ function Push-AuditLogDownloadV2 {
         }
 
         $CacheTable = Get-CippTable -TableName 'CacheWebhooks'
-        $OperationFilter = $null
+        $Prefilter = $null
         $FilterLoaded = $false
 
         foreach ($Row in $Rows) {
@@ -63,21 +63,7 @@ function Push-AuditLogDownloadV2 {
             if ($Status -eq 'succeeded') {
                 try {
                     if (-not $FilterLoaded) {
-                        # The operations the tenant's rules can match, or $null when a rule can match any operation.
-                        # Culture-aware like the engine's -eq/-in, which ignores characters such as a trailing U+200B.
-                        $OperationFilter = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
-                        foreach ($Rule in (Get-CIPPAuditLogRuleSet -TenantFilter $TenantFilter)) {
-                            if ($TenantFilter -in $Rule.Excluded.value) { continue }
-                            $Conditions = @($Rule.Conditions | ConvertFrom-Json -ErrorAction SilentlyContinue | Where-Object { $_.Input.value -ne '' })
-                            $OperationValues = @(foreach ($Condition in $Conditions) {
-                                    if ($Condition.Property.label -eq 'Operation' -and [string]$Condition.Operator.value -in @('eq', 'in')) { $Condition.Input.value }
-                                })
-                            if ($Conditions.Count -gt 0 -and $OperationValues.Count -eq 0) {
-                                $OperationFilter = $null
-                                break
-                            }
-                            foreach ($Value in $OperationValues) { [void]$OperationFilter.Add([string]$Value) }
-                        }
+                        $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter $TenantFilter
                         $FilterLoaded = $true
                     }
                     # Streamed, not collected: each record is written to CacheWebhooks and
@@ -102,7 +88,7 @@ function Push-AuditLogDownloadV2 {
                     $Buffer = [System.Collections.Generic.List[object]]::new()
                     Get-CippAuditLogSearchResults -TenantFilter $TenantFilter -QueryId $SearchId | ForEach-Object {
                         $WindowCount++
-                        if ($null -ne $OperationFilter -and -not $OperationFilter.Contains([string]($_.auditData.Operation ?? $_.operation))) { return }
+                        if ($null -ne $Prefilter -and $null -eq (Select-CIPPAuditLogCandidate -Prefilter $Prefilter -Records @($_))) { return }
                         $Buffer.Add(@{
                                 RowKey                = [string]$_.id
                                 PartitionKey          = [string]$CachePartition

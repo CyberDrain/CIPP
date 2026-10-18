@@ -17,33 +17,12 @@ function Invoke-CippWebhookProcessing {
         [System.Collections.Generic.List[object]]$PendingAuditLogWrites
     )
 
-    $AuditLogTable = Get-CIPPTable -TableName 'AuditLogs'
+    # Once per invocation, not per matched record.
+    $script:WebhookAuditLogTable ??= Get-CIPPTable -TableName 'AuditLogs'
+    $AuditLogTable = $script:WebhookAuditLogTable
 
-    # The record Id alone does not identify an event: Entra sign-in records reuse the same Id for
-    # the same user weeks apart, so a claim from an old sign-in would swallow every later one. The
-    # claim therefore carries the event's own time, and a key conflict only yields to a strictly
-    # newer event. Empty when the record has no CreationTime - that falls back to
-    # dedupe on the Id alone. The RowKey stays the bare Id so the audit-log link, the Saved Logs
-    # list endpoint and the split-row OriginalEntityId lookup all keep working unchanged.
-    $EventStamp = ''
-    $CreationTime = $Data.CreationTime ?? $Data.RawData.CreationTime ?? $Data.createdDateTime
-    if ($CreationTime -is [datetime]) {
-        $EventStamp = $CreationTime.ToUniversalTime().ToString('yyyyMMddHHmmss')
-    } elseif ($CreationTime) {
-        $ParsedCreation = [datetime]::MinValue
-        $CreationStyles = [System.Globalization.DateTimeStyles]::AdjustToUniversal -bor [System.Globalization.DateTimeStyles]::AssumeUniversal
-        if ([datetime]::TryParse([string]$CreationTime, [cultureinfo]::InvariantCulture, $CreationStyles, [ref]$ParsedCreation)) {
-            $EventStamp = $ParsedCreation.ToString('yyyyMMddHHmmss')
-        }
-    }
-
-    $ClaimRow = @{
-        PartitionKey      = $TenantFilter
-        RowKey            = $Data.Id
-        Title             = 'Processing'
-        Tenant            = $TenantFilter
-        EventCreationTime = $EventStamp
-    }
+    $ClaimRow = New-CippAuditLogClaimRow -TenantFilter $TenantFilter -Data $Data
+    $EventStamp = $ClaimRow.EventCreationTime
 
     # Claim the event ID immediately, with no read first. The claim is an Insert without -Force, so
     # a conflict already tells us another worker (or an earlier run) owns this event - the read that
@@ -108,9 +87,8 @@ function Invoke-CippWebhookProcessing {
             Tenant  = $Tenant
         }
     }
-    Write-Host "Received data. Our Action List is $($Data.CIPPAction)"
 
-    $ActionList = ($Data.CIPPAction | ConvertFrom-Json -ErrorAction SilentlyContinue).value
+    $ActionList = $(try { [CIPP.CippJson]::ConvertFromJson([string]$Data.CIPPAction) } catch { $null }).value
     $ActionResults = foreach ($action in $ActionList) {
         # Serialising every action at depth 15 just to print it, once per action per MATCHED
         # record, is not worth paying for at alerting volume. Left in place rather than deleted
@@ -153,6 +131,10 @@ function Invoke-CippWebhookProcessing {
                 if ($CommandSplat['username']) { $CommandSplat['username'] = $Data.UserId }
                 & $action.command.value @CommandSplat
             }#>
+            # Sent once the alert is built, below.
+            'generatemail' { }
+            'generatePSA' { }
+            'generateWebhook' { }
             default {
                 Write-Host "Unknown action: $action"
             }
@@ -160,8 +142,8 @@ function Invoke-CippWebhookProcessing {
     }
 
     # Save audit log entry to table
-    $LocationInfo = $Data.CIPPLocationInfo | ConvertFrom-Json -ErrorAction SilentlyContinue
-    $AuditRecord = $Data.AuditRecord | ConvertFrom-Json -ErrorAction SilentlyContinue
+    $LocationInfo = try { [CIPP.CippJson]::ConvertFromJson([string]$Data.CIPPLocationInfo) } catch { $null }
+    $AuditRecord = try { [CIPP.CippJson]::ConvertFromJson([string]$Data.AuditRecord) } catch { $null }
     $GenerateJSON = New-CIPPAlertTemplate -format 'json' -data $Data -ActionResults $ActionResults -CIPPURL $CIPPURL -AlertComment $AlertComment -CustomSubject $Data.CIPPCustomSubject -Tenant $Tenant.defaultDomainName
     $JsonContent = @{
         Title                 = $GenerateJSON.Title
@@ -173,7 +155,8 @@ function Invoke-CippWebhookProcessing {
         ActionsTaken          = $ActionResults
         AuditRecord           = $AuditRecord
         AlertComment          = $AlertComment
-    } | ConvertTo-Json -Depth 15 -Compress
+    }
+    $JsonContent = [CIPP.CippJson]::ToJson($JsonContent, 15) ?? (ConvertTo-Json -InputObject $JsonContent -Depth 15 -Compress)
 
     # Built here, written at the very bottom - after the alerts have gone out. See the note there.
     # EventCreationTime rides along: this row replaces the claim under the same key, so dropping it
@@ -226,7 +209,6 @@ function Invoke-CippWebhookProcessing {
         }
     }
 
-    Write-Host 'Going to create the content'
     foreach ($action in $ActionList ) {
         switch ($action) {
             'generatemail' {

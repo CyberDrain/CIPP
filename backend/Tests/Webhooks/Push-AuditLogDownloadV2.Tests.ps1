@@ -37,6 +37,9 @@ BeforeAll {
     }
 
     . $FunctionPath
+    foreach ($Helper in 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
+        . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
+    }
 }
 
 Describe 'Push-AuditLogDownloadV2' {
@@ -158,7 +161,7 @@ Describe 'Push-AuditLogDownloadV2' {
 
         It 'stores only the records an eq or in rule could match, case-insensitively' {
             $script:Rules = @(
-                New-Rule @((New-Condition 'Operation' 'eq' 'new-inboxrule'), (New-Condition 'ForwardTo' 'like' '*@*'))
+                New-Rule @((New-Condition 'Operation' 'eq' 'new-inboxrule'), (New-Condition 'ResultStatus' 'eq' 'success'))
                 New-Rule @(New-Condition 'Operation' 'in' @('Add member to role.', 'set-mailbox'))
             )
             $result = Push-AuditLogDownloadV2 -Item @{ TenantFilter = 'contoso.com' }
@@ -170,15 +173,41 @@ Describe 'Push-AuditLogDownloadV2' {
             $ledger.State | Should -Be 'Downloaded'
         }
 
-        It 'keeps every record when a rule tests Operation with <Operator>' -ForEach @(
-            @{ Operator = 'ne' }, @{ Operator = 'notin' }, @{ Operator = 'like' }, @{ Operator = 'match' }
+        It 'narrows by an Operation <Operator> rule exactly as the engine evaluates it' -ForEach @(
+            @{ Operator = 'ne'; Expected = @('rec-2', 'rec-3') }
+            @{ Operator = 'notin'; Expected = @('rec-2', 'rec-3') }
+            @{ Operator = 'notlike'; Expected = @('rec-2', 'rec-3') }
+            @{ Operator = 'match'; Expected = @('rec-1', 'rec-3') }
         ) {
             $script:Rules = @(
                 New-Rule @(New-Condition 'Operation' 'eq' 'New-InboxRule')
                 New-Rule @(New-Condition 'Operation' $Operator 'Set-Mailbox')
             )
             $null = Push-AuditLogDownloadV2 -Item @{ TenantFilter = 'contoso.com' }
+            ($script:CacheWrites.RowKey | Sort-Object) | Should -Be $Expected
+        }
+
+        It 'keeps every record when a rule tests only a name the engine derives' {
+            $script:Rules = @(
+                New-Rule @(New-Condition 'Operation' 'eq' 'New-InboxRule')
+                New-Rule @(New-Condition 'CIPPGeoLocation' 'notin' @('AU'))
+            )
+            $null = Push-AuditLogDownloadV2 -Item @{ TenantFilter = 'contoso.com' }
             $script:CacheWrites.Count | Should -Be 3
+        }
+
+        It 'stores what a like rule could match, as a case-insensitive pattern, alongside eq names' {
+            $script:SearchResults = @(
+                New-AuditRecord 'rec-1' -Operation "Update application $([char]0x2013) Certificates and secrets management "
+                New-AuditRecord 'rec-2' -Operation 'Update application.'
+                New-AuditRecord 'rec-3' -Operation 'UserLoggedIn'
+            )
+            $script:Rules = @(
+                New-Rule @(New-Condition 'Operation' 'like' 'update application*certificates and secrets management*')
+                New-Rule @(New-Condition 'Operation' 'eq' 'UserLoggedIn')
+            )
+            $null = Push-AuditLogDownloadV2 -Item @{ TenantFilter = 'contoso.com' }
+            ($script:CacheWrites.RowKey | Sort-Object) | Should -Be @('rec-1', 'rec-3')
         }
 
         It 'ignores rules that exclude the tenant or have only empty conditions' {

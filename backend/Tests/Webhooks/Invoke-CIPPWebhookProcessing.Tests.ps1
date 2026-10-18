@@ -10,6 +10,7 @@
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     $FunctionPath = Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Invoke-CIPPWebhookProcessing.ps1'
+    Add-Type -Path (Join-Path $RepoRoot 'Shared/CIPPSharp/bin/CIPPSharp.dll')
 
     function Get-CIPPTable { param($TableName) }
     function Get-CIPPAzDataTableEntity { param($TableName, $Context, $Filter, $Property, $First) }
@@ -37,6 +38,7 @@ BeforeAll {
     }
 
     . $FunctionPath
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/New-CippAuditLogClaimRow.ps1')
 
     # Dispatching helper for the event-identity tests: an action is needed so Send-CIPPAlert fires.
     function Invoke-Record {

@@ -124,6 +124,58 @@ namespace CIPP
         public bool        TimedOut   { get; init; }
     }
 
+    /// <summary>
+    /// A request queue PowerShell fills while it drains it. Each added request starts as soon as a slot is free and
+    /// <see cref="Next"/> returns results in the order they finish, so the caller works on one result while the rest
+    /// are in flight, and can add follow-up requests (a next page, the downloads a listing names) as results arrive.
+    /// Requests are sent and retried exactly as <see cref="CIPPRestClient.SendConcurrent"/> sends them. A slot is
+    /// released when the caller takes its result, so at most maxConcurrency responses are in flight or waiting.
+    /// One caller: Add and Next are not safe to call from several threads.
+    /// </summary>
+    public sealed class CIPPConcurrentQueue
+    {
+        private readonly SemaphoreSlim _slots;
+        private readonly BlockingCollection<CIPPConcurrentResult> _done = new();
+        private readonly int _maxRetries;
+        private int _added;
+        private int _taken;
+
+        public CIPPConcurrentQueue(int maxConcurrency = 8, int maxRetries = 3)
+        {
+            if (maxConcurrency < 1) maxConcurrency = 1;
+            _slots = new SemaphoreSlim(maxConcurrency, maxConcurrency);
+            _maxRetries = maxRetries < 0 ? 0 : maxRetries;
+        }
+
+        /// <summary>Requests added whose results have not been taken yet.</summary>
+        public int Pending => _added - _taken;
+
+        /// <summary>Starts the request and returns the index its result carries.</summary>
+        public int Add(CIPPConcurrentRequest request)
+        {
+            var index = _added++;
+            _ = Task.Run(async () =>
+            {
+                await _slots.WaitAsync().ConfigureAwait(false);
+                CIPPConcurrentResult result;
+                try { result = await CIPPRestClient.SendOneWithRetryAsync(index, request, _maxRetries).ConfigureAwait(false); }
+                catch (Exception ex) { result = new CIPPConcurrentResult { Index = index, Error = ex.Message, Attempts = 1 }; }
+                _done.Add(result);
+            });
+            return index;
+        }
+
+        /// <summary>The next finished result, waiting for one if none has finished; null once every result was taken.</summary>
+        public CIPPConcurrentResult? Next()
+        {
+            if (Pending == 0) return null;
+            var result = _done.Take();
+            _taken++;
+            _slots.Release();
+            return result;
+        }
+    }
+
     // =====================================================================
     // CIPPResponseHeaders / CIPPHttpResponse / CIPPHttpRequestException
     // =====================================================================
@@ -1014,7 +1066,7 @@ namespace CIPP
             return await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
-        private static async Task<CIPPConcurrentResult> SendOneWithRetryAsync(
+        internal static async Task<CIPPConcurrentResult> SendOneWithRetryAsync(
             int index, CIPPConcurrentRequest req, int maxRetries)
         {
             var attempt = 0;

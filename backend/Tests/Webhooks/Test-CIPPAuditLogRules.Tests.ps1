@@ -21,6 +21,8 @@ BeforeAll {
     function Expand-CIPPTenantGroups { param($TenantFilter) }
     function Test-CIPPConditionFilter { param($Condition) }
     function Invoke-CippWebhookProcessing { param($Data, $CIPPURL, $TenantFilter, $AlertComment, $PendingAuditLogWrites) }
+    # The atomic insert the batch claim uses.
+    function Add-AzDataTableEntity { param($TableName, $Context, $Entity, [switch]$Force) }
     function Get-CIPPGeoIPLocationBatch { param($IPs) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     function Get-CippException { param($Exception) [pscustomobject]@{ NormalizedError = "$Exception" } }
@@ -39,6 +41,7 @@ BeforeAll {
             'Authentication/ConvertTo-CIPPIPRange.ps1'
             'BEC/ConvertTo-CIPPBecHostAddress.ps1'
             'Webhooks/Get-CIPPAuditLogRuleSet.ps1'
+            'Webhooks/New-CippAuditLogClaimRow.ps1'
         )) {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
@@ -271,6 +274,12 @@ Describe 'Test-CIPPAuditLogRules record shaping' {
             $data.CIPPPsaTicketPriority | Should -Be '5'
         }
 
+        It 'stores the matched record as its AuditRecord JSON for the Saved Logs raw view' {
+            $data = @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(New-AuditRow -Id 'rec-1')).DataToProcess)[0]
+            $data.AuditRecord | Should -BeOfType [string]
+            ($data.AuditRecord | ConvertFrom-Json).id | Should -Be 'rec-1'
+        }
+
         It 'dispatches the matched record to webhook processing' {
             $null = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(New-AuditRow)
             Should -Invoke Invoke-CippWebhookProcessing -Times 1
@@ -328,6 +337,74 @@ Describe 'Test-CIPPAuditLogRules record shaping' {
             $Row = New-KeyRow -OldKeys @() -NewKeys @($script:NewSigningCert)
             $data = @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @($Row)).DataToProcess)[0]
             $data.CIPPAddedKeyTypes | Should -Be ''
+        }
+    }
+
+    Context 'per-alert claims' {
+
+        It 'leaves each claim to the dispatch of its own alert' {
+            # One atomic insert per alert, taken just before its send: no claim is ever held for an alert not yet sent.
+            Mock -CommandName Add-AzDataTableEntity -MockWith { }
+            $null = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @((New-AuditRow -Id 'r1' -AuditId 'a1'), (New-AuditRow -Id 'r2' -AuditId 'a2'))
+            Should -Invoke Add-AzDataTableEntity -Times 0 -Exactly
+            Should -Invoke Invoke-CippWebhookProcessing -Times 2 -Exactly
+        }
+    }
+
+    Context 'partner user mapping' {
+
+        BeforeEach {
+            Mock -CommandName Get-CIPPPartnerUserLookup -MockWith { @{ '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d' = [pscustomobject]@{ userPrincipalName = 'tech@partner.example' } } }
+        }
+
+        It 'maps a partner Exchange identity to the partner user' {
+            $Row = (New-AuditRow).auditData
+            $Row | Add-Member -NotePropertyName 'Id' -NotePropertyValue 'rec-1'
+            $Row | Add-Member -NotePropertyName 'UserId' -NotePropertyValue 'contoso.onmicrosoft.com\tenant: 11111111-2222-4333-8444-555555555555, object: 0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
+            $data = @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @($Row)).DataToProcess)[0]
+            $data.CIPPUserId | Should -Be 'tech@partner.example'
+        }
+
+        It 'maps a partner UPN to the partner user' {
+            $Row = (New-AuditRow).auditData
+            $Row | Add-Member -NotePropertyName 'Id' -NotePropertyValue 'rec-1'
+            $Row | Add-Member -NotePropertyName 'UserId' -NotePropertyValue 'user_0a1b2c3d4e5f4a6b8c7d9e0f1a2b3c4d@contoso.onmicrosoft.com'
+            $data = @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @($Row)).DataToProcess)[0]
+            $data.CIPPUserId | Should -Be 'tech@partner.example'
+        }
+
+        It 'leaves an unknown partner identity unmapped' {
+            $Row = (New-AuditRow).auditData
+            $Row | Add-Member -NotePropertyName 'Id' -NotePropertyValue 'rec-1'
+            $Row | Add-Member -NotePropertyName 'UserId' -NotePropertyValue 'user_ffffffffffffffffffffffffffffffff@contoso.onmicrosoft.com'
+            $data = @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @($Row)).DataToProcess)[0]
+            $data.CIPPUserId | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'a feed record stored without the Graph auditData wrapper' {
+
+        BeforeEach {
+            $script:FeedRow = (New-AuditRow).auditData
+            $script:FeedRow | Add-Member -NotePropertyName 'Id' -NotePropertyValue 'rec-1'
+        }
+
+        It 'matches the same rule a Graph record matches' {
+            $result = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @($script:FeedRow)
+            $result.MatchedLogs | Should -Be 1
+        }
+
+        It 'flattens the record the same way' {
+            $data = @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @($script:FeedRow)).DataToProcess)[0]
+            $data.ExtProp | Should -Be 'ExtValue'
+            $data.ParamProp | Should -Be 'ParamValue'
+            $data.ModProp | Should -Be 'NewVal'
+            $data.CIPPIPDetected | Should -Be '203.0.113.10'
+        }
+
+        It 'removes the cache row by the record Id' {
+            $null = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @($script:FeedRow)
+            Should -Invoke Remove-CIPPAzDataTableEntity -ParameterFilter { @($Entity).RowKey -contains 'rec-1' }
         }
     }
 
@@ -599,16 +676,17 @@ Describe 'Test-CIPPAuditLogRules record shaping' {
         # told it may take the cheap route. Both halves of that are pinned: the plain delete for
         # processed rows, and skipping the id-resolution pass entirely.
 
-        It 'stores one audit log row per key, keeping the newest event' {
-            # Completed rows are batched, and two records of one pass can share an Id - Entra
-            # sign-in records reuse them. The table module silently keeps one of the duplicates, so
-            # a batch carrying both could store the OLDER stamp; the newer event would then be
-            # replayable as 'newer' again and re-alert on every reconciliation pass.
+        It 'writes each alert row as soon as its alert has gone out, ending on the newest event' {
+            # One write per alert, so a crash leaves at most the alert being sent without its row. Two records of one pass
+            # can share an Id (Entra sign-in records reuse them); the older one never overwrites a newer stored row, since
+            # Invoke-CippWebhookProcessing's claim check skips it.
             $script:StoredAuditRows = [System.Collections.Generic.List[object]]::new()
+            $script:AuditRowWrites = 0
             Mock -CommandName Add-CIPPAzDataTableEntity -MockWith {
                 param($TableName, $Context, $Entity, [switch]$Force, $OperationType)
                 if ($TableName -eq 'AuditLogs') {
-                    foreach ($e in @($Entity)) { $script:StoredAuditRows.Add($e) }
+                    $script:AuditRowWrites++
+                    foreach ($e in @($Entity)) { if ($e.Title -ne 'Processing') { $script:StoredAuditRows.Add($e) } }
                 }
             }
             Mock -CommandName Invoke-CippWebhookProcessing -MockWith {
@@ -631,18 +709,16 @@ Describe 'Test-CIPPAuditLogRules record shaping' {
             )
 
             $Stored = @($script:StoredAuditRows | Where-Object { $_.RowKey -eq 'reused-id' })
-            $Stored.Count | Should -Be 1
-            $Stored[0].EventCreationTime | Should -Be '20260922100000'
+            $script:AuditRowWrites | Should -Be 2
+            $Stored[-1].EventCreationTime | Should -Be '20260922100000'
         }
 
-        It 'uses the plain delete, not the part-aware one' {
-            # Remove-CIPPAzDataTableEntity also removes the -partN rows of split entities and costs
-            # ~2.7x per row for it. The caller's sweep covers those instead. 150 rows so a full
-            # 100-row batch actually flushes.
+        It 'leaves every row to the caller''s sweep' {
+            # Rows are only deleted once their alerts are out; the caller's partition sweep after the last slice does that.
             $null = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' `
                 -Rows @(1..150 | ForEach-Object { New-AuditRow -Id "rec-$_" }) `
                 -CachePartitionKey 'contoso.com|search-1' -CallerSweepsCachePartition
-            Should -Invoke Remove-AzDataTableEntity -Times 1 -Exactly
+            Should -Invoke Remove-AzDataTableEntity -Times 0 -Exactly
             Should -Invoke Remove-CIPPAzDataTableEntity -Times 0 -Exactly
         }
 
@@ -653,15 +729,6 @@ Describe 'Test-CIPPAuditLogRules record shaping' {
             $null = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(New-AuditRow -Id 'rec-1') `
                 -CachePartitionKey 'contoso.com|search-1' -CallerSweepsCachePartition
             Should -Invoke Get-AzDataTableEntity -Times 0 -Exactly
-        }
-
-        It 'deletes each full batch as it fills' {
-            $null = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' `
-                -Rows @(1..150 | ForEach-Object { New-AuditRow -Id "rec-$_" }) `
-                -CachePartitionKey 'contoso.com|search-1' -CallerSweepsCachePartition
-            @($script:PlainRemovedRows).Count | Should -Be 100
-            @($script:PlainRemovedRows).RowKey | Should -Contain 'rec-1'
-            @($script:PlainRemovedRows).PartitionKey | Should -Contain 'contoso.com|search-1'
         }
 
         It 'leaves the trailing partial batch to the sweep' {

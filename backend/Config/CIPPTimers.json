@@ -18,9 +18,9 @@
     "PreferredProcessor": "usertasks"
   },
   {
-    "Id": "44a40668-ed71-403c-8c26-b32e320086ad",
-    "Command": "Start-AuditLogPlannerV2",
-    "Description": "Audit log V2 planner: create searches, download and process",
+    "Id": "97f720ea-9afc-4771-80fc-36b51bce705c",
+    "Command": "Start-AuditLogFeedV3",
+    "Description": "Audit log feed: poll the Management Activity API, process new records, and download and process created Graph audit searches",
     "Cron": "0 */15 * * * *",
     "Priority": 2,
     "RunOnProcessor": true,

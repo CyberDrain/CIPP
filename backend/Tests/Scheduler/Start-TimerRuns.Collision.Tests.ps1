@@ -10,6 +10,7 @@ BeforeAll {
     . (Join-Path $Orchestrators 'Start-DomainOrchestrator.ps1')
     . (Join-Path $Orchestrators 'Start-ApplicationOrchestrator.ps1')
     . (Join-Path $Orchestrators 'Start-AuditLogSearchCreationV2.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/AuditLogs/Get-CIPPAuditLogTenantScope.ps1')
     . (Join-Path $Orchestrators 'Start-CIPPDBTestsRun.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Entrypoints/Timer Functions/Start-TableCleanup.ps1')
     . (Join-Path $Http 'CIPP/Core/Invoke-ExecCPVRefresh.ps1')

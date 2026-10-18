@@ -1,13 +1,16 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Management.Automation;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace CIPP
 {
     // Enumerating PSObject.Properties builds reserved member sets and caches that stay attached to every row (~3 KB each).
-    internal static class PSMembers
+    // Public so PowerShell can walk a record's own properties the same way: [CIPP.PSMembers]::InstanceProperties($Row).
+    public static class PSMembers
     {
         private static readonly Func<object, IEnumerable<PSMemberInfo>?>? s_instanceMembers = Build();
         // Enumerating Properties once adds the reserved pstypenames to the instance members, marked hidden.
@@ -106,6 +109,118 @@ namespace CIPP
                 if (m is PSPropertyInfo p && !s_isHidden!(p)) yield return p;
         }
 
+        /// <summary>
+        /// The record's own string properties whose value is a key of one of <paramref name="lookups"/> (a 36-character
+        /// value, checked in order, first hit wins) or, for any other length, contains one of <paramref name="markers"/>
+        /// (ordinal). One call per record in place of a PowerShell walk over every property; what a match maps to stays
+        /// with the caller.
+        /// </summary>
+        public static List<PropertyMatch> MatchStringProperties(PSObject pso, IDictionary[] lookups, string[] markers)
+        {
+            var matches = new List<PropertyMatch>();
+            foreach (var property in InstanceProperties(pso))
+            {
+                var value = property.Value is PSObject wrapped ? wrapped.BaseObject : property.Value;
+                if (value is not string text || text.Length == 0) continue;
+                if (text.Length == 36)
+                {
+                    for (int i = 0; i < lookups.Length; i++)
+                    {
+                        if (lookups[i].Contains(text)) { matches.Add(new PropertyMatch(property.Name, text, i)); break; }
+                    }
+                    continue;
+                }
+                foreach (var marker in markers)
+                {
+                    if (text.Contains(marker, StringComparison.Ordinal)) { matches.Add(new PropertyMatch(property.Name, text, -1)); break; }
+                }
+            }
+            return matches;
+        }
+
+        /// <summary>
+        /// Joins the record's own string properties against <paramref name="lookups"/> in one call: each 36-character
+        /// value that is a key of a lookup (checked in order) gets a note property <paramref name="prefix"/> + name, holding
+        /// that entry's <paramref name="fields"/>[i] value, or the whole entry when the field is null or empty. An existing
+        /// property of that name is replaced and the new one appended, as Properties.Remove + Add does. Values containing
+        /// one of <paramref name="markers"/> are returned for the caller to map; they are not touched here.
+        /// </summary>
+        public static List<PropertyMatch> MapStringProperties(PSObject pso, IDictionary[] lookups, string[] fields, string prefix, string[] markers)
+        {
+            var unresolved = new List<PropertyMatch>();
+            List<KeyValuePair<string, object?>>? mapped = null;
+            foreach (var match in MatchStringProperties(pso, lookups, markers))
+            {
+                if (match.LookupIndex < 0) { unresolved.Add(match); continue; }
+                var entry = lookups[match.LookupIndex][match.Value];
+                var field = match.LookupIndex < fields.Length ? fields[match.LookupIndex] : null;
+                (mapped ??= new()).Add(new(prefix + match.Name, string.IsNullOrEmpty(field) ? entry : ReadMember(entry, field)));
+            }
+            if (mapped != null)
+            {
+                foreach (var pair in mapped)
+                {
+                    pso.Properties.Remove(pair.Key);
+                    AddNoteProperty(pso, pair.Key, pair.Value);
+                }
+            }
+            return unresolved;
+        }
+
+        // What $entry.<name> reads for a dictionary or an object entry.
+        private static object? ReadMember(object? entry, string name)
+        {
+            switch (entry is PSObject wrapped && wrapped.BaseObject is not PSCustomObject ? wrapped.BaseObject : entry)
+            {
+                case IDictionary dictionary: return dictionary.Contains(name) ? dictionary[name] : null;
+                case PSObject pso: return pso.Properties[name]?.Value;
+                case null: return null;
+                case var other: return PSObject.AsPSObject(other).Properties[name]?.Value;
+            }
+        }
+
+        /// <summary>Adds to <paramref name="target"/> each of the record's own string property values that <paramref name="pattern"/> matches.</summary>
+        public static void CollectStringValues(PSObject pso, Regex pattern, ICollection<string> target)
+        {
+            foreach (var property in InstanceProperties(pso))
+            {
+                var value = property.Value is PSObject wrapped ? wrapped.BaseObject : property.Value;
+                if (value is string text && pattern.IsMatch(text)) target.Add(text);
+            }
+        }
+
+        /// <summary>$Object.PSObject.Copy() less the named properties, in one call: each Properties.Remove made from PowerShell costs ~25 us.</summary>
+        public static PSObject CopyExcept(PSObject pso, string[] names)
+        {
+            var copy = pso.Copy();
+            foreach (var name in names) copy.Properties.Remove(name);
+            return copy;
+        }
+
+        /// <summary>
+        /// Add-Member -NotePropertyMembers in one call, in the dictionary's order. A name that is already a member is
+        /// replaced (removed, then appended) when <paramref name="force"/>, else left as it is; a name Add-Member would
+        /// refuse is skipped, as -ErrorAction SilentlyContinue does.
+        /// </summary>
+        public static void AddNoteProperties(PSObject pso, IDictionary members, bool force)
+        {
+            foreach (DictionaryEntry entry in members)
+            {
+                var name = entry.Key as string ?? entry.Key?.ToString();
+                if (string.IsNullOrEmpty(name)) continue;
+                try
+                {
+                    if (pso.Members[name] != null)
+                    {
+                        if (!force) continue;
+                        pso.Members.Remove(name);
+                    }
+                    AddNoteProperty(pso, name, entry.Value);
+                }
+                catch (Exception ex) when (ex is ExtendedTypeSystemException or ArgumentException) { }
+            }
+        }
+
         public static bool HasNoteProperty(PSObject pso)
         {
             var members = s_instanceMembers!(pso);
@@ -115,4 +230,7 @@ namespace CIPP
             return false;
         }
     }
+
+    /// <summary>A property found by PSMembers.MatchStringProperties: LookupIndex is the matching lookup, or -1 for a marker.</summary>
+    public sealed record PropertyMatch(string Name, string Value, int LookupIndex);
 }

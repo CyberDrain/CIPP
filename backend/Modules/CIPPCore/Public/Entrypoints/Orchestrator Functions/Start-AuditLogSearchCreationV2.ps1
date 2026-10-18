@@ -27,72 +27,7 @@ function Start-AuditLogSearchCreationV2 {
         [int]$TenantsPerTask = 100
     )
     try {
-        # --- Tenant selection (same source as V1) ---
-        $ConfigTable = Get-CippTable -TableName 'WebhookRules'
-        $ConfigEntries = Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'Webhookv2'" | Where-Object { $_.Disabled -ne $true } | ForEach-Object {
-            $ConfigEntry = $_
-            if (!$ConfigEntry.excludedTenants) {
-                $ConfigEntry | Add-Member -MemberType NoteProperty -Name 'excludedTenants' -Value @() -Force
-            } else {
-                # Expand tenant groups in exclusions so group members match on defaultDomainName
-                $Excluded = $ConfigEntry.excludedTenants | ConvertFrom-Json -ErrorAction SilentlyContinue
-                $ConfigEntry.excludedTenants = if ($Excluded) { @(Expand-CIPPTenantGroups -TenantFilter $Excluded) } else { @() }
-            }
-            $ConfigEntry.Tenants = $ConfigEntry.Tenants | ConvertFrom-Json
-            $ConfigEntry | Add-Member -MemberType NoteProperty -Name 'ExpandedTenants' -Value (Expand-CIPPTenantGroups -TenantFilter ($ConfigEntry.Tenants)).value -Force
-            $ConfigEntry
-        }
-        if (($ConfigEntries | Measure-Object).Count -eq 0) {
-            Write-Information 'AuditLogV2: no webhook rules defined; nothing to create'
-            return
-        }
-
-        $TenantList = Get-Tenants -IncludeErrors
-
-        # Auditing-disabled skip set (reuse existing table + expiry semantics)
-        $AuditDisabledTable = Get-CIPPTable -TableName 'AuditLogDisabledTenants'
-        $NowUnix = [int64]([datetimeoffset]::UtcNow.ToUnixTimeSeconds())
-        $AuditDisabledTenants = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-        foreach ($DisabledRow in @(Get-CIPPAzDataTableEntity @AuditDisabledTable -Filter "PartitionKey eq 'AuditDisabledTenant'")) {
-            [int64]$ExpiresAtUnix = 0
-            if ([int64]::TryParse([string]$DisabledRow.ExpiresAtUnix, [ref]$ExpiresAtUnix) -and $ExpiresAtUnix -gt $NowUnix) {
-                [void]$AuditDisabledTenants.Add([string]$DisabledRow.RowKey)
-            }
-        }
-
-        # Hoisted into hash sets once per rule, rather than an array -contains per tenant per rule.
-        # -contains is a linear scan, so the original was tenants x rules x tenants-per-rule string
-        # comparisons every cycle - at a few hundred tenants and a handful of AllTenants rules that
-        # is millions of comparisons to answer a question that is a set membership test.
-        # AllTenants is resolved once here too, since it does not depend on the tenant being tested.
-        $RuleScopes = foreach ($ConfigEntry in $ConfigEntries) {
-            $Included = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-            foreach ($Name in @($ConfigEntry.ExpandedTenants)) {
-                if ($Name) { [void]$Included.Add([string]$Name) }
-            }
-            $Excluded = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-            foreach ($Name in @($ConfigEntry.excludedTenants.value)) {
-                if ($Name) { [void]$Excluded.Add([string]$Name) }
-            }
-            [PSCustomObject]@{
-                Included   = $Included
-                Excluded   = $Excluded
-                AllTenants = $Included.Contains('AllTenants')
-            }
-        }
-        $RuleScopes = @($RuleScopes)
-
-        $InScope = foreach ($Tenant in $TenantList) {
-            if ($AuditDisabledTenants.Contains($Tenant.defaultDomainName) -or $AuditDisabledTenants.Contains([string]$Tenant.customerId)) { continue }
-            $Match = $false
-            $DomainName = [string]$Tenant.defaultDomainName
-            foreach ($Scope in $RuleScopes) {
-                if ($Scope.Excluded.Contains($DomainName)) { continue }
-                if ($Scope.AllTenants -or $Scope.Included.Contains($DomainName)) { $Match = $true; break }
-            }
-            if ($Match) { $Tenant }
-        }
-        $InScope = @($InScope)
+        $InScope = @(Get-CIPPAuditLogTenantScope)
         if ($InScope.Count -eq 0) {
             Write-Information 'AuditLogV2: no in-scope tenants'
             return

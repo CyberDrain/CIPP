@@ -80,17 +80,17 @@ function Push-AuditLogTenantProcessV2 {
 
             $Chunk = [System.Collections.Generic.List[object]]::new()
 
+            # The whole page in one call; a null, empty or unparseable JSON column gives $null and the poison path below.
+            $Texts = [string[]]::new($Entities.Count)
+            for ($i = 0; $i -lt $Entities.Count; $i++) { if ($null -ne $Entities[$i]) { $Texts[$i] = $Entities[$i].JSON } }
+            $ParsedRows = [CIPP.CippJson]::ConvertFromJsonEach($Texts)
+            $Texts = $null
+
             for ($i = 0; $i -lt $Entities.Count; $i++) {
                 $Entity = $Entities[$i]
                 if ($null -eq $Entity) { continue }
-                # try/catch, not -ErrorAction: ConvertFrom-Json parse failures are terminating, so
-                # without the catch one garbled row aborts the whole batch via the outer catch.
-                try {
-                    # CippJson reads like ConvertFrom-Json; a null or empty JSON column gives $null and the poison path below.
-                    $Parsed = [CIPP.CippJson]::ConvertFromJson([string]$Entity.JSON)
-                } catch {
-                    $Parsed = $null
-                }
+                $Parsed = $ParsedRows[$i]
+                $ParsedRows[$i] = $null
                 if ($null -eq $Parsed) {
                     # A row whose JSON can never parse can never be drained; left in place it
                     # re-enters every claim cycle forever. Delete it.
@@ -99,7 +99,7 @@ function Push-AuditLogTenantProcessV2 {
                 } else {
                     $Chunk.Add($Parsed)
                 }
-                # Release the raw row as soon as it is parsed. The entity holds the JSON string and
+                # Release the raw row before the engine runs. The entity holds the JSON string and
                 # the parsed object holds an expanded copy of the same data; without this both are
                 # live at once for the whole page.
                 $Entities[$i] = $null

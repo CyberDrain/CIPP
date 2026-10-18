@@ -54,13 +54,17 @@ BeforeAll {
             'Tools/Test-CIPPConditionFilter.ps1'
             'Webhooks/Get-CIPPAuditLogRuleSet.ps1'
             'Webhooks/Test-CIPPAuditLogRules.ps1'
+            'Webhooks/Get-CIPPAuditLogPrefilter.ps1'
+            'Webhooks/Select-CIPPAuditLogCandidate.ps1'
         )) {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
 
-    # Runs one preset against one sample and returns the records that were dispatched for alerting.
+    # Runs one preset against one sample and returns the records that were dispatched for alerting. -Feed takes the
+    # Management Activity feed path instead: the raw record (no auditData wrapper) through the prefilter and the feed's
+    # -EvaluateOnly pass, then the stored AuditRecord through the post-exec evaluation that dispatches.
     function Invoke-PresetSample {
-        param([string]$Preset, [string]$Sample)
+        param([string]$Preset, [string]$Sample, [switch]$Feed)
         $Template = $script:Templates.Where({ $_.value -eq $Preset }, 'First')[0]
         $Case = @($script:Fixture.cases).Where({ $_.preset -eq $Preset }, 'First')[0]
         $Record = $script:Fixture.samples.$Sample
@@ -101,6 +105,18 @@ BeforeAll {
         $script:AuditRuleListCache = @{}
         $script:PartnerUserMemo = $null
         $script:Dispatched = [System.Collections.Generic.List[object]]::new()
+
+        if ($Feed) {
+            $Raw = [CIPP.CippJson]::ConvertFromJson(($Record.auditData | ConvertTo-Json -Depth 20 -Compress))
+            $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter $script:Tenant
+            if ($null -ne $Prefilter -and $null -eq (Select-CIPPAuditLogCandidate -Prefilter $Prefilter -Records @($Raw))) { return , @() }
+            $Evaluated = Test-CIPPAuditLogRules -TenantFilter $script:Tenant -Rows @($Raw) -EvaluateOnly 3>$null 6>$null
+            $Stored = @(foreach ($Data in @($Evaluated.DataToProcess)) { if ($Data.AuditRecord) { [CIPP.CippJson]::ConvertFromJson([string]$Data.AuditRecord) } })
+            if ($Stored.Count -eq 0) { return , @() }
+            $script:AuditRuleSearchLookups = $null
+            $null = Test-CIPPAuditLogRules -TenantFilter $script:Tenant -Rows $Stored -CachePartitionKey "$($script:Tenant)|feed" -CallerSweepsCachePartition 3>$null 6>$null
+            return , $script:Dispatched.ToArray()
+        }
 
         # The pipeline stores each record as JSON in CacheWebhooks and parses it back with CippJson before matching.
         $Row = [CIPP.CippJson]::ConvertFromJson(($Record | ConvertTo-Json -Depth 20 -Compress))
@@ -147,6 +163,17 @@ Describe 'Audit log presets on real audit records' {
 
     It '<Preset> ignores <Sample>' -ForEach $QuietCases {
         $Dispatched = Invoke-PresetSample -Preset $Preset -Sample $Sample
+        @($Dispatched).Count | Should -Be 0 -Because "'$Sample' is a near miss the preset must not alert on"
+    }
+
+    It '<Preset> alerts on <Sample> from the activity feed' -ForEach $TriggerCases {
+        $Dispatched = Invoke-PresetSample -Preset $Preset -Sample $Sample -Feed
+        @($Dispatched).Count | Should -Be 1 -Because "the feed must neither prefilter out nor fail to store the real '$Sample' record"
+        @($Dispatched)[0].Id | Should -Be $script:Fixture.samples.$Sample.auditData.Id
+    }
+
+    It '<Preset> ignores <Sample> from the activity feed' -ForEach $QuietCases {
+        $Dispatched = Invoke-PresetSample -Preset $Preset -Sample $Sample -Feed
         @($Dispatched).Count | Should -Be 0 -Because "'$Sample' is a near miss the preset must not alert on"
     }
 

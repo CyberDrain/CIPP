@@ -126,3 +126,34 @@ Describe 'CippJson.ConvertFromJson records behave like records built with Proper
         ([CIPP.CippJson]::ConvertFromJson('{"a":1,"A":2}') | ConvertTo-Json -Compress) | Should -Be ($Record | ConvertTo-Json -Compress)
     }
 }
+
+Describe 'CippJson.ConvertFromJsonEach' {
+    It 'parses each text like ConvertFromJson, with null for a null, empty or unparseable one' {
+        $Rows = [CIPP.CippJson]::ConvertFromJsonEach([string[]]@('{"Id":"1","When":"2025-05-05T05:05:05Z"}', $null, '', '{"Id":', '[1,2]'))
+        $Rows | Should -HaveCount 5
+        $Rows[0].Id | Should -Be '1'
+        Get-Shape $Rows[0].When | Should -Be (Get-Shape ([CIPP.CippJson]::ConvertFromJson('{"When":"2025-05-05T05:05:05Z"}')).When)
+        $null -eq $Rows[1] -and $null -eq $Rows[2] -and $null -eq $Rows[3] | Should -BeTrue
+        $Rows[4] | Should -Be @(1, 2)
+    }
+}
+
+Describe 'CippJson.SelectMembers' {
+    It 'keeps only the named top-level members, nested values whole, and parses back to the same entries' {
+        $Json = '{"a":{"id":"a","tags":["x"],"name":"Zoë } {"},"b":{"id":"b"},"c":{"id":"c"}}'
+        $Selected = [CIPP.CippJson]::SelectMembers($Json, [System.Collections.Generic.HashSet[string]]@('c', 'a', 'missing'))
+        $Subset = $Selected | ConvertFrom-Json -AsHashtable
+        @($Subset.Keys) | Should -Be @('a', 'c')
+        $Subset.a.name | Should -Be ($Json | ConvertFrom-Json -AsHashtable).a.name
+        $Subset.a.tags | Should -Be @('x')
+    }
+
+    It 'matches names ordinally' {
+        [CIPP.CippJson]::SelectMembers('{"Abc":1}', [System.Collections.Generic.HashSet[string]]@('abc')) | Should -Be '{}'
+    }
+
+    It 'returns null for a JSON value that is not an object, and throws on invalid JSON' {
+        [CIPP.CippJson]::SelectMembers('[1]', [System.Collections.Generic.HashSet[string]]@('a')) | Should -BeNullOrEmpty
+        { [CIPP.CippJson]::SelectMembers('{"a":', [System.Collections.Generic.HashSet[string]]@('a')) } | Should -Throw
+    }
+}

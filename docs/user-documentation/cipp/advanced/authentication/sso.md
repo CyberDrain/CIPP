@@ -246,6 +246,10 @@ This is also the way out of a forced authentication setup prompt you cannot get 
 
 **Self-hosted instances** achieve the same thing by adding the application setting `CIPP_SSO_RESET` with a value of `true` to the App Service hosting CIPP, then restarting it. CIPP removes the setting itself once new sign-in credentials have been stored.
 
+{% hint style="warning" %} If CIPP_SSO_RESET is removed after restart but CIPP continues to redirect to the existing SSO provider, remove the Microsoft identity provider from the App Service Authentication settings. Then back up and delete the SSOAppId, SSOAppSecret, and SSOMultiTenant secrets from the CIPP Key Vault. Do not remove the CIPP-SAM credentials.
+
+Add CIPP_SSO_RESET with a value of true to the App Service again, then restart the App Service. CIPP should start in setup mode and allow SSO to be configured again. {% endhint %}
+
 ## Recovering Login Credentials
 
 If the SSO client secret expires, single sign-on stops working and users may be unable to log in.

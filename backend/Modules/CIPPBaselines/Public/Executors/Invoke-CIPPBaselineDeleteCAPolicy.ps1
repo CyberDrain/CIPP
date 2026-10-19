@@ -10,6 +10,8 @@ function Invoke-CIPPBaselineDeleteCAPolicy {
         row pending instead of reporting a deletion that did not happen.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | DELETE /identity/conditionalAccess/policies/{id} | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
     #>
     [CmdletBinding()]
     param(

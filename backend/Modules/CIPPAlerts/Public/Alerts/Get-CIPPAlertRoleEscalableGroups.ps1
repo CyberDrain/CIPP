@@ -11,6 +11,11 @@ function Get-CIPPAlertRoleEscalableGroups {
 
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /groups/{id}/transitiveMembers/microsoft.graph.group | Delegated | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
+        Permission: Graph | GET /roleManagement/directory/roleAssignments | Delegated | RoleManagement.Read.Directory | RoleManagement.Read.All, RoleManagement.ReadWrite.Exchange
+        Permission: Graph | GET /roleManagement/directory/roleDefinitions | Delegated | RoleManagement.Read.Directory | RoleManagement.Read.All, RoleManagement.ReadWrite.Exchange
     #>
     [CmdletBinding()]
     param (

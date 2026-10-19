@@ -6,6 +6,8 @@ function Get-CippAuditLogSearches {
         Query the Graph API for available audit log searches.
     .PARAMETER TenantFilter
         The tenant to filter on.
+    .NOTES
+        Permission: Graph | GET /security/auditLog/queries/{id} | Application | AuditLogsQuery.Read.All
     #>
     param (
         [Parameter(Mandatory = $true)]

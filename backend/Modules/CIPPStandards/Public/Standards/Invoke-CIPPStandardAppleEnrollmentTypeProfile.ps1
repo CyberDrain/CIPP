@@ -42,6 +42,13 @@ function Invoke-CIPPStandardAppleEnrollmentTypeProfile {
             "MICROSOFTINTUNEPLAN1"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /deviceManagement/appleUserInitiatedEnrollmentProfiles | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/appleUserInitiatedEnrollmentProfiles | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/appleUserInitiatedEnrollmentProfiles/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/appleUserInitiatedEnrollmentProfiles/{id}/assignments | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/appleUserInitiatedEnrollmentProfiles/{id}/assignments | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/appleUserInitiatedEnrollmentProfiles/{id}/assignments/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

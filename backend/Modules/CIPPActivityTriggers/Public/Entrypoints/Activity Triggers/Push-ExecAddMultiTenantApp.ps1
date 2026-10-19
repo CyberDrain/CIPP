@@ -2,6 +2,8 @@ function Push-ExecAddMultiTenantApp {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Item)

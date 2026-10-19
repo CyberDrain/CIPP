@@ -2,6 +2,9 @@ function Start-CIPPSharePointLibraryCopy {
     <#
     .SYNOPSIS
         Preflights or starts a SharePoint library-to-library copy operation.
+    .NOTES
+        Permission: Graph | GET /sites/{id} | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/lists/{id} | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

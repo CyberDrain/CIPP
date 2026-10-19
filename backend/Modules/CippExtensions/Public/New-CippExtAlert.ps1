@@ -1,4 +1,8 @@
 function New-CippExtAlert {
+    <#
+    .NOTES
+        Permission: Graph | GET /users/{id} | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         [switch]$TestRun = $false,

@@ -3,6 +3,10 @@ function Get-Tenants {
     <#
     .FUNCTIONALITY
     Internal
+    .NOTES
+        Permission: Graph | GET /domains | Delegated | Domain.Read.All | Domain.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/findTenantInformationByTenantId(tenantId='{id}') | Delegated | CrossTenantInformation.ReadBasic.All
     #>
     [CmdletBinding(DefaultParameterSetName = 'Standard')]
     param (

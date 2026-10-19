@@ -8,6 +8,8 @@ function Set-CIPPDBCacheRoleEligibilitySchedules {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /roleManagement/directory/roleEligibilitySchedules | Application | RoleEligibilitySchedule.Read.Directory | RoleEligibilitySchedule.ReadWrite.Directory, RoleManagement.Read.All, RoleManagement.Read.Directory, RoleManagement.ReadWrite.Directory
     #>
     [CmdletBinding()]
     param(

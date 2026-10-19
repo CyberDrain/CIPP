@@ -8,6 +8,8 @@ function Invoke-CIPPBaselineDefenderAVPolicy {
         patched. The helper owns the settingInstance tree and the assignment.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | DELETE /deviceManagement/configurationPolicies/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

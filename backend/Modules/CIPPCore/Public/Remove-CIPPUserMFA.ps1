@@ -21,6 +21,8 @@ function Remove-CIPPUserMFA {
     .EXAMPLE
     Remove-CIPPUserMFA -UserPrincipalName testuser@contoso.com -TenantFilter contoso.com -MethodId 3179e48a-750b-4051-897c-87b9720928f7
 
+    .NOTES
+        Permission: Graph | GET /users/{id}/authentication/methods | Application | UserAuthenticationMethod.Read.All | UserAuthenticationMethod.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

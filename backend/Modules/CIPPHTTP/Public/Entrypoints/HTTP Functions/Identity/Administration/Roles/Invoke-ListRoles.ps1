@@ -6,6 +6,11 @@ function Invoke-ListRoles {
         Identity.Role.Read
     .DESCRIPTION
         Lists a tenant's Entra ID role definitions along with the active members of each, via the unified RBAC API. Unlike the legacy /directoryRoles endpoint this includes every built-in and custom role definition, even ones with no assignments.
+    .NOTES
+        Permission: Graph | POST /directoryObjects/getByIds | Delegated | Directory.Read.All
+        Permission: Graph | GET /directoryRoles | Delegated | RoleManagement.Read.Directory | RoleManagement.ReadWrite.Directory, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /roleManagement/directory/roleAssignments | Delegated | RoleManagement.Read.Directory | EntitlementManagement.ReadWrite.All
+        Permission: Graph | GET /roleManagement/directory/roleDefinitions | Delegated | RoleManagement.Read.Directory | EntitlementManagement.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

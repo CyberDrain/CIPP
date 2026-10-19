@@ -24,6 +24,9 @@ function Get-CippSamPermissions {
 
     .FUNCTIONALITY
     Internal
+    .NOTES
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id} | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding(DefaultParameterSetName = 'Default')]
     param(

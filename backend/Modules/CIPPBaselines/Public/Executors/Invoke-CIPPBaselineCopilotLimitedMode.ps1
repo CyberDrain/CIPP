@@ -8,6 +8,8 @@ function Invoke-CIPPBaselineCopilotLimitedMode {
         the delegated token. Disabling clears the group id, matching the classic.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /copilot/admin/settings/limitedMode | Delegated | CopilotSettings-LimitedMode.ReadWrite
     #>
     [CmdletBinding()]
     param(

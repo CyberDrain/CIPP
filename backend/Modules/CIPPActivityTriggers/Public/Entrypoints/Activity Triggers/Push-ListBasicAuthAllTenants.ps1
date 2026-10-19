@@ -2,6 +2,8 @@ function Push-ListBasicAuthAllTenants {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Delegated | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param($Item)

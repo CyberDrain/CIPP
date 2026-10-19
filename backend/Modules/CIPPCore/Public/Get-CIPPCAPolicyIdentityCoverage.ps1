@@ -8,6 +8,15 @@ function Get-CIPPCAPolicyIdentityCoverage {
         for status; include+exclude rows stay in the result with both reason arrays.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /directoryObjects/getByIds | Application | Directory.Read.All
+        Permission: Graph | GET /groups/{id} | Application | Group.Read.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group-XTenantIdentitySync.Read.All, Group.ManageProtection.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /groups/{id}/members/microsoft.graph.user | Application | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
+        Permission: Graph | GET /groups/{id}/transitiveMembers/microsoft.graph.user | Application | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
+        Permission: Graph | GET /identity/conditionalAccess/policies/{id} | Application | Policy.Read.All
+        Permission: Graph | GET /roleManagement/directory/roleAssignments | Application | RoleManagement.Read.Directory | EntitlementManagement.ReadWrite.All
+        Permission: Graph | GET /roleManagement/directory/roleDefinitions | Application | RoleManagement.Read.Directory | EntitlementManagement.ReadWrite.All
+        Permission: Graph | GET /users | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param (
@@ -25,54 +34,6 @@ function Get-CIPPCAPolicyIdentityCoverage {
     $IncludesAllUsers = $false
     $GroupNameLookup = @{}
     $RoleNameLookup = @{}
-
-    function Add-CoverageReason {
-        param (
-            [hashtable]$Map,
-            [string]$UserId,
-            [hashtable]$Reason
-        )
-        if ([string]::IsNullOrWhiteSpace($UserId) -or $null -eq $Reason) { return }
-        if (-not $Map.ContainsKey($UserId)) {
-            $Map[$UserId] = [System.Collections.Generic.List[object]]::new()
-        }
-        $Existing = $Map[$UserId] | Where-Object { $_.value -eq $Reason.value }
-        if ($Existing) { return }
-        $Map[$UserId].Add([pscustomobject]$Reason) | Out-Null
-    }
-
-    function New-CoverageReason {
-        param (
-            [string]$Type,
-            [string]$Id,
-            [string]$Token,
-            [string]$Label,
-            [bool]$Transitive = $false,
-            [string]$ViaGroupId,
-            [string]$ViaGroupLabel
-        )
-        $ValueKey = if ($Id -and $ViaGroupId) {
-            "$Type`:$Id`:group:$ViaGroupId"
-        } elseif ($Id) {
-            "$Type`:$Id"
-        } elseif ($Token) {
-            "$Type`:$Token"
-        } else {
-            $Type
-        }
-        $Reason = @{
-            type  = $Type
-            value = $ValueKey
-            label = $Label
-        }
-        if ($Id) { $Reason.id = $Id }
-        if ($Transitive) { $Reason.transitive = $true }
-        if ($ViaGroupId) {
-            $Reason.viaGroupId = $ViaGroupId
-            if ($ViaGroupLabel) { $Reason.viaGroupLabel = $ViaGroupLabel }
-        }
-        return $Reason
-    }
 
     function Test-IsGuid {
         param ([string]$Value)
@@ -102,7 +63,7 @@ function Get-CIPPCAPolicyIdentityCoverage {
             try {
                 $GuestUsers = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/users?`$filter=userType eq 'Guest'&`$select=id,displayName,userPrincipalName,userType&`$top=999" -tenantid $TenantFilter -AsApp $true)
                 foreach ($Guest in $GuestUsers) {
-                    Add-CoverageReason -Map $IncludeMap -UserId $Guest.id -Reason (New-CoverageReason -Type 'includeUsers' -Token 'GuestsOrExternalUsers' -Label 'Guests or external users')
+                    Add-CIPPCACoverageReason -Map $IncludeMap -UserId $Guest.id -Reason (New-CIPPCACoverageReason -Type 'includeUsers' -Token 'GuestsOrExternalUsers' -Label 'Guests or external users')
                 }
             } catch {
                 $Unresolved.Add([pscustomobject]@{ field = 'includeUsers'; id = 'GuestsOrExternalUsers'; error = $_.Exception.Message }) | Out-Null
@@ -110,7 +71,7 @@ function Get-CIPPCAPolicyIdentityCoverage {
             continue
         }
         if (Test-IsGuid $UserRef) {
-            Add-CoverageReason -Map $IncludeMap -UserId $UserRef -Reason (New-CoverageReason -Type 'includeUsers' -Id $UserRef -Label 'User inclusion')
+            Add-CIPPCACoverageReason -Map $IncludeMap -UserId $UserRef -Reason (New-CIPPCACoverageReason -Type 'includeUsers' -Id $UserRef -Label 'User inclusion')
         }
     }
 
@@ -120,7 +81,7 @@ function Get-CIPPCAPolicyIdentityCoverage {
             try {
                 $GuestUsers = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/users?`$filter=userType eq 'Guest'&`$select=id,displayName,userPrincipalName,userType&`$top=999" -tenantid $TenantFilter -AsApp $true)
                 foreach ($Guest in $GuestUsers) {
-                    Add-CoverageReason -Map $ExcludeMap -UserId $Guest.id -Reason (New-CoverageReason -Type 'excludeUsers' -Token 'GuestsOrExternalUsers' -Label 'Guests or external users')
+                    Add-CIPPCACoverageReason -Map $ExcludeMap -UserId $Guest.id -Reason (New-CIPPCACoverageReason -Type 'excludeUsers' -Token 'GuestsOrExternalUsers' -Label 'Guests or external users')
                 }
             } catch {
                 $Unresolved.Add([pscustomobject]@{ field = 'excludeUsers'; id = 'GuestsOrExternalUsers'; error = $_.Exception.Message }) | Out-Null
@@ -128,7 +89,7 @@ function Get-CIPPCAPolicyIdentityCoverage {
             continue
         }
         if (Test-IsGuid $UserRef) {
-            Add-CoverageReason -Map $ExcludeMap -UserId $UserRef -Reason (New-CoverageReason -Type 'excludeUsers' -Id $UserRef -Label 'User exclusion')
+            Add-CIPPCACoverageReason -Map $ExcludeMap -UserId $UserRef -Reason (New-CIPPCACoverageReason -Type 'excludeUsers' -Id $UserRef -Label 'User exclusion')
         }
     }
 
@@ -251,10 +212,10 @@ function Get-CIPPCAPolicyIdentityCoverage {
                     $IsNested = -not $DirectMembers.Contains($MemberId)
                     $ReasonLabel = if ($IsNested) { "Group: $GroupLabel (nested)" } else { "Group: $GroupLabel" }
                     if ($IsInclude) {
-                        Add-CoverageReason -Map $IncludeMap -UserId $MemberId -Reason (New-CoverageReason -Type 'includeGroups' -Id $GroupId -Label $ReasonLabel -Transitive $IsNested)
+                        Add-CIPPCACoverageReason -Map $IncludeMap -UserId $MemberId -Reason (New-CIPPCACoverageReason -Type 'includeGroups' -Id $GroupId -Label $ReasonLabel -Transitive $IsNested)
                     }
                     if ($IsExclude) {
-                        Add-CoverageReason -Map $ExcludeMap -UserId $MemberId -Reason (New-CoverageReason -Type 'excludeGroups' -Id $GroupId -Label $ReasonLabel -Transitive $IsNested)
+                        Add-CIPPCACoverageReason -Map $ExcludeMap -UserId $MemberId -Reason (New-CIPPCACoverageReason -Type 'excludeGroups' -Id $GroupId -Label $ReasonLabel -Transitive $IsNested)
                     }
                 }
             }
@@ -365,10 +326,10 @@ function Get-CIPPCAPolicyIdentityCoverage {
             $ReasonLabel = "Role: $($Job.RoleLabel) via group $($Job.GroupLabel)"
             foreach ($MemberId in $Members) {
                 if ($Job.IsInclude) {
-                    Add-CoverageReason -Map $IncludeMap -UserId $MemberId -Reason (New-CoverageReason -Type 'includeRoles' -Id $Job.TemplateId -Label $ReasonLabel -ViaGroupId $Job.GroupId -ViaGroupLabel $Job.GroupLabel)
+                    Add-CIPPCACoverageReason -Map $IncludeMap -UserId $MemberId -Reason (New-CIPPCACoverageReason -Type 'includeRoles' -Id $Job.TemplateId -Label $ReasonLabel -ViaGroupId $Job.GroupId -ViaGroupLabel $Job.GroupLabel)
                 }
                 if ($Job.IsExclude) {
-                    Add-CoverageReason -Map $ExcludeMap -UserId $MemberId -Reason (New-CoverageReason -Type 'excludeRoles' -Id $Job.TemplateId -Label $ReasonLabel -ViaGroupId $Job.GroupId -ViaGroupLabel $Job.GroupLabel)
+                    Add-CIPPCACoverageReason -Map $ExcludeMap -UserId $MemberId -Reason (New-CIPPCACoverageReason -Type 'excludeRoles' -Id $Job.TemplateId -Label $ReasonLabel -ViaGroupId $Job.GroupId -ViaGroupLabel $Job.GroupLabel)
                 }
             }
         }
@@ -391,136 +352,24 @@ function Get-CIPPCAPolicyIdentityCoverage {
                 }
 
                 if ($IncludeRoles -contains $TemplateId) {
-                    Add-CoverageReason -Map $IncludeMap -UserId $PrincipalId -Reason (New-CoverageReason -Type 'includeRoles' -Id $TemplateId -Label "Role: $RoleLabel")
+                    Add-CIPPCACoverageReason -Map $IncludeMap -UserId $PrincipalId -Reason (New-CIPPCACoverageReason -Type 'includeRoles' -Id $TemplateId -Label "Role: $RoleLabel")
                 }
                 if ($ExcludeRoles -contains $TemplateId) {
-                    Add-CoverageReason -Map $ExcludeMap -UserId $PrincipalId -Reason (New-CoverageReason -Type 'excludeRoles' -Id $TemplateId -Label "Role: $RoleLabel")
+                    Add-CIPPCACoverageReason -Map $ExcludeMap -UserId $PrincipalId -Reason (New-CIPPCACoverageReason -Type 'excludeRoles' -Id $TemplateId -Label "Role: $RoleLabel")
                 }
             }
         }
     }
 
     # --- Guests / external user blocks ---
-    function Get-CoverageGuestHomeTenantId {
-        param ($User)
-        foreach ($Identity in @($User.identities)) {
-            $Issuer = [string]$Identity.issuer
-            if ($Issuer -match $GuidPattern) { return $Issuer }
-        }
-        return $null
-    }
-
-    function Get-CoverageGuestCategory {
-        param ($User)
-        $Upn = [string]$User.userPrincipalName
-        $IsExt = $Upn -like '*#EXT#*'
-        $UserType = [string]$User.userType
-        if ($UserType -eq 'Guest' -and $IsExt) { return 'b2bCollaborationGuest' }
-        if ($UserType -eq 'Member' -and $IsExt) { return 'b2bCollaborationMember' }
-        if ($UserType -eq 'Guest' -and -not $IsExt) { return 'internalGuest' }
-        return $null
-    }
-
-    function Test-CoverageExternalTenantMatch {
-        param (
-            $User,
-            $ExternalTenants
-        )
-        if ($null -eq $ExternalTenants) { return $true }
-        $Kind = [string]$ExternalTenants.membershipKind
-        if ([string]::IsNullOrWhiteSpace($Kind) -or $Kind -eq 'all') { return $true }
-        if ($Kind -ne 'enumerated') { return $true }
-
-        $Allowed = @($ExternalTenants.members | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-        if ($Allowed.Count -eq 0) { return $false }
-
-        $HomeTenantId = Get-CoverageGuestHomeTenantId -User $User
-        if (-not $HomeTenantId) { return $false }
-        return ($Allowed -contains $HomeTenantId)
-    }
-
-    function Expand-GuestBlock {
-        param (
-            $GuestConfig,
-            [hashtable]$Map,
-            [string]$Type,
-            [string]$Field
-        )
-        if ($null -eq $GuestConfig) { return }
-        $TypesRaw = $GuestConfig.guestOrExternalUserTypes
-        if ([string]::IsNullOrWhiteSpace($TypesRaw) -or $TypesRaw -eq 'none') { return }
-
-        $SelectedTypes = @(
-            $TypesRaw -split ',' |
-                ForEach-Object { $_.Trim() } |
-                Where-Object { $_ -and $_ -ne 'none' -and $_ -ne 'unknownFutureValue' } |
-                Select-Object -Unique
-        )
-        if ($SelectedTypes.Count -eq 0) { return }
-
-        # These CA categories are not reliably enumerable from directory user objects.
-        $NonEnumerableTypes = @(
-            'b2bDirectConnectUser'
-            'otherExternalUser'
-            'serviceProvider'
-        )
-        foreach ($GuestType in $SelectedTypes) {
-            if ($NonEnumerableTypes -contains $GuestType) {
-                $Unresolved.Add([pscustomobject]@{
-                        field = $Field
-                        id    = $GuestType
-                        error = 'This guest or external user type cannot be expanded from directory users'
-                    }) | Out-Null
-            }
-        }
-
-        $EnumerableTypes = @(
-            $SelectedTypes | Where-Object {
-                $_ -in @('b2bCollaborationGuest', 'b2bCollaborationMember', 'internalGuest')
-            }
-        )
-        if ($EnumerableTypes.Count -eq 0) { return }
-
-        $Candidates = [System.Collections.Generic.List[object]]::new()
-        try {
-            if ($EnumerableTypes -contains 'b2bCollaborationGuest' -or $EnumerableTypes -contains 'internalGuest') {
-                $GuestUsers = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/users?`$filter=userType eq 'Guest'&`$select=id,displayName,userPrincipalName,userType,identities&`$top=999" -tenantid $TenantFilter -AsApp $true)
-                foreach ($Guest in $GuestUsers) { $Candidates.Add($Guest) | Out-Null }
-            }
-            if ($EnumerableTypes -contains 'b2bCollaborationMember') {
-                # B2B collaboration members keep the #EXT# UPN pattern with userType Member.
-                $MemberExtUsers = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/users?`$count=true&`$filter=userType eq 'Member' and contains(userPrincipalName,'#EXT#')&`$select=id,displayName,userPrincipalName,userType,identities&`$top=999" -tenantid $TenantFilter -AsApp $true -ComplexFilter)
-                foreach ($Member in $MemberExtUsers) { $Candidates.Add($Member) | Out-Null }
-            }
-        } catch {
-            $Unresolved.Add([pscustomobject]@{ field = $Field; id = $TypesRaw; error = $_.Exception.Message }) | Out-Null
-            return
-        }
-
-        $Seen = [System.Collections.Generic.HashSet[string]]::new()
-        $Label = "Guest types: $TypesRaw"
-        foreach ($Candidate in $Candidates) {
-            if (-not $Candidate.id) { continue }
-            if (-not $Seen.Add([string]$Candidate.id)) { continue }
-
-            $Category = Get-CoverageGuestCategory -User $Candidate
-            if (-not $Category -or ($EnumerableTypes -notcontains $Category)) { continue }
-            if (-not (Test-CoverageExternalTenantMatch -User $Candidate -ExternalTenants $GuestConfig.externalTenants)) {
-                continue
-            }
-
-            Add-CoverageReason -Map $Map -UserId $Candidate.id -Reason (New-CoverageReason -Type $Type -Token $TypesRaw -Label $Label)
-        }
-    }
-
-    Expand-GuestBlock -GuestConfig $Users.includeGuestsOrExternalUsers -Map $IncludeMap -Type 'includeGuestsOrExternalUsers' -Field 'includeGuestsOrExternalUsers'
-    Expand-GuestBlock -GuestConfig $Users.excludeGuestsOrExternalUsers -Map $ExcludeMap -Type 'excludeGuestsOrExternalUsers' -Field 'excludeGuestsOrExternalUsers'
+    Expand-CIPPCACoverageGuestBlock -GuestConfig $Users.includeGuestsOrExternalUsers -Map $IncludeMap -Type 'includeGuestsOrExternalUsers' -Field 'includeGuestsOrExternalUsers' -TenantFilter $TenantFilter -Unresolved $Unresolved
+    Expand-CIPPCACoverageGuestBlock -GuestConfig $Users.excludeGuestsOrExternalUsers -Map $ExcludeMap -Type 'excludeGuestsOrExternalUsers' -Field 'excludeGuestsOrExternalUsers' -TenantFilter $TenantFilter -Unresolved $Unresolved
 
     # --- All token: annotate touched users only ---
-    $AllReason = New-CoverageReason -Type 'includeUsers' -Token 'All' -Label 'All users'
+    $AllReason = New-CIPPCACoverageReason -Type 'includeUsers' -Token 'All' -Label 'All users'
     if ($IncludesAllUsers) {
         foreach ($UserId in @($IncludeMap.Keys + $ExcludeMap.Keys | Select-Object -Unique)) {
-            Add-CoverageReason -Map $IncludeMap -UserId $UserId -Reason $AllReason
+            Add-CIPPCACoverageReason -Map $IncludeMap -UserId $UserId -Reason $AllReason
         }
     }
 

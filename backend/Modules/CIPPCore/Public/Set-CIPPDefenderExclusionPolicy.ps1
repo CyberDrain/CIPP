@@ -2,6 +2,10 @@ function Set-CIPPDefenderExclusionPolicy {
     <#
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/configurationPolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/configurationPolicies | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/configurationPolicies/{id}/assign | Delegated | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

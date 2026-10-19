@@ -1,4 +1,8 @@
 function Set-CIPPDBCacheIntuneAssignmentFilters {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceManagement/assignmentFilters | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]

@@ -1,4 +1,9 @@
 function Set-CIPPUserLicense {
+    <#
+    .NOTES
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | POST /users/{id}/assignLicense | Delegated | LicenseAssignment.ReadWrite.All | AgentIdUser.ReadWrite.All, AgentIdUser.ReadWrite.IdentityParentedBy, Directory.ReadWrite.All, User.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         [Parameter(ParameterSetName = 'Single', Mandatory)][string]$UserId,

@@ -15,6 +15,8 @@ function Set-CIPPDBCacheSecurityDefaults {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/identitySecurityDefaultsEnforcementPolicy | Application | Policy.Read.All
     #>
     [CmdletBinding()]
     param(

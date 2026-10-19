@@ -6,6 +6,10 @@ Function Invoke-ListUserOneDriveShortcuts {
         Identity.User.Read
     .DESCRIPTION
         Lists OneDrive remoteItem shortcuts for a user from the drive root and the Shortcuts folder.
+    .NOTES
+        Permission: Graph | GET /users/{id} | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id}/drive/root/children | Application | Files.Read.All | Files.ReadWrite.All
+        Permission: Graph | GET /users/{id}/drive/special/shortcuts/children | Application | Files.Read.All | Files.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

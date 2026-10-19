@@ -24,6 +24,8 @@ function Get-CIPPEnrollmentTimeDeviceMembershipTarget {
         'Retrieved' or 'None'.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /deviceManagement/configurationPolicies/{id}/retrieveEnrollmentTimeDeviceMembershipTarget | Delegated | DeviceManagementConfiguration.Read.All
     #>
     [CmdletBinding()]
     param(

@@ -40,6 +40,7 @@ function Invoke-CIPPStandardAutopilotStatusPage {
             "MICROSOFTINTUNEPLAN1"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /deviceManagement/deviceEnrollmentConfigurations | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

@@ -8,6 +8,8 @@ function Invoke-ListPIMRoles {
         List Entra directory roles grouped with their PIM assignment breakdown.
     .DESCRIPTION
         Returns one row per role (per tenant when AllTenants is selected) with the role's definition details, how many principals hold it permanently, eligibly or with a time-bound active assignment, the role's PIM policy summary, a slim Members list and the full assignment rows for drill-in. Roles nobody holds are included for a single tenant so the result is also the role catalogue. Supports UseReportDB=true to read a single tenant from the reporting database cache (sync with ExecCIPPDBCache Name=RolesAndAssignments); AllTenants always reads the cache. Powers the Roles & PIM page; ListRoles keeps its original per-definition shape and ListRoleAssignments stays one flat row per assignment.
+    .NOTES
+        Permission: Graph | GET /directoryRoles | Delegated | RoleManagement.Read.Directory | RoleManagement.ReadWrite.Directory, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -27,6 +27,9 @@ function New-CIPPTeamChannel {
 
     .PARAMETER TenantFilter
     The tenant the Team belongs to
+    .NOTES
+        Permission: Graph | GET /teams/{id}/channels | Application | ChannelSettings.Read.Group | Channel.ReadBasic.All, ChannelSettings.Read.All, ChannelSettings.ReadWrite.All, ChannelSettings.ReadWrite.Group, Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadWrite.All
+        Permission: Graph | POST /teams/{id}/channels | Application | Channel.Create.Group | Channel.Create, Directory.ReadWrite.All, Group.ReadWrite.All, Teamwork.Migrate.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

@@ -9,6 +9,9 @@ function Invoke-CIPPBaselineEmailAsAlternateLoginId {
         round-trip as a unit.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /policies/homeRealmDiscoveryPolicies | Delegated | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | PATCH /policies/homeRealmDiscoveryPolicies/{id} | Delegated | Policy.ReadWrite.ApplicationConfiguration
     #>
     [CmdletBinding()]
     param(

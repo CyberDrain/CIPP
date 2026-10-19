@@ -8,6 +8,8 @@ function Set-CIPPDBCacheB2BManagementPolicy {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/b2bManagementPolicies | Delegated | Policy.Read.B2BManagementPolicy | Policy.ReadWrite.B2BManagementPolicy
     #>
     [CmdletBinding()]
     param(

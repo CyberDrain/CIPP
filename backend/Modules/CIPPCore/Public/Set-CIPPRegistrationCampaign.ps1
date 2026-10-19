@@ -13,6 +13,9 @@ function Set-CIPPRegistrationCampaign {
     .PARAMETER ExcludeTargets
         Array of @{ id; targetType } targets. $null keeps the current exclusions, an empty
         array clears them.
+    .NOTES
+        Permission: Graph | GET /policies/authenticationMethodsPolicy | Delegated | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod, Policy.Read.All
+        Permission: Graph | PATCH /policies/authenticationMethodsPolicy | Delegated | Policy.ReadWrite.AuthenticationMethod
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

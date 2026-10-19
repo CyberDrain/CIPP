@@ -41,6 +41,8 @@ function Invoke-CIPPStandardintuneBrandingProfile {
             "MICROSOFTINTUNEPLAN1"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /deviceManagement/intuneBrandingProfiles/c3a59481-1bf2-46ce-94b3-66eec07a8d60 | Application | DeviceManagementApps.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/intuneBrandingProfiles/c3a59481-1bf2-46ce-94b3-66eec07a8d60 | Application | DeviceManagementApps.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

@@ -1,4 +1,8 @@
 function New-CIPPTAP {
+    <#
+    .NOTES
+        Permission: Graph | POST /users/{id}/authentication/temporaryAccessPassMethods | Delegated | UserAuthenticationMethod.ReadWrite.All | UserAuthenticationMethod.Read, UserAuthenticationMethod.Read.All, UserAuthenticationMethod.ReadWrite, UserAuthMethod-TAP.Read.All, UserAuthMethod-TAP.ReadWrite, UserAuthMethod-TAP.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $UserID,

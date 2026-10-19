@@ -2,6 +2,8 @@ function Get-CIPPAlertApnCertExpiry {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /deviceManagement/applePushNotificationCertificate | Delegated | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     Param (

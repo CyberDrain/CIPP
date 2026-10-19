@@ -4,6 +4,8 @@ Function Invoke-RemoveApp {
         Entrypoint
     .ROLE
         Endpoint.Application.ReadWrite
+    .NOTES
+        Permission: Graph | DELETE /deviceAppManagement/mobileApps/{id} | Delegated | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

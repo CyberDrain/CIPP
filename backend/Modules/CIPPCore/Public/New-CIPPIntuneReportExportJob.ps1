@@ -14,6 +14,8 @@ function New-CIPPIntuneReportExportJob {
 
     .PARAMETER ReportName
         The Intune report to export.
+    .NOTES
+        Permission: Graph | POST /deviceManagement/reports/exportJobs | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementApps.ReadWrite.All, DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

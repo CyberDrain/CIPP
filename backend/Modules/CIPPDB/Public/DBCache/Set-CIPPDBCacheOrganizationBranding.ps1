@@ -8,6 +8,8 @@ function Set-CIPPDBCacheOrganizationBranding {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /organization/{id}/branding/localizations | Application | OrganizationalBranding.Read.All | Organization.Read.All, Organization.ReadWrite.All, OrganizationalBranding.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -8,6 +8,10 @@ function Set-CIPPDBCacheConditionalAccessPolicies {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations | Delegated | Policy.Read.All
+        Permission: Graph | GET /identity/conditionalAccess/policies | Delegated | Policy.Read.All
+        Permission: Graph | GET /policies/identitySecurityDefaultsEnforcementPolicy | Application | Policy.Read.All
     #>
     [CmdletBinding()]
     param(

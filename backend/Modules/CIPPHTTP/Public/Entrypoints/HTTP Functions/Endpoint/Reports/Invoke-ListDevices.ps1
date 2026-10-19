@@ -6,6 +6,8 @@ Function Invoke-ListDevices {
         Endpoint.Device.Read
     .DESCRIPTION
         Lists Intune-managed devices for a tenant, including device compliance and configuration status.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/managedDevices | Delegated | DeviceManagementManagedDevices.Read.All | DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

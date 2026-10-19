@@ -21,6 +21,9 @@ function Get-CIPPBaselineDisableGuestsState {
         Missing/blank/0 deleteGraceDays leaves guestsToDelete empty so existing templates stay disable-only.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /auditLogs/directoryAudits | Delegated | AuditLog.Read.All | Directory.Read.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

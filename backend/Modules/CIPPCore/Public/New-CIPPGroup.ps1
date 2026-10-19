@@ -24,6 +24,7 @@ function New-CIPPGroup {
 
     .NOTES
     Supports all group types: Generic, Security, AzureRole, Dynamic, M365, Distribution, DynamicDistribution
+    Permission: Graph | POST /groups | Delegated | Group.ReadWrite.All | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(

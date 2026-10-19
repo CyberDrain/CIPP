@@ -6,6 +6,8 @@ function Invoke-ExecSendPush {
         Identity.User.Read
     .DESCRIPTION
         Sends a test MFA push notification to a user's authenticator app and reports whether it was approved, or - when an OTP code is supplied - verifies that typed code without sending a push. Used to confirm a user's MFA registration works. The push path causes a real prompt on the user's device.
+    .NOTES
+        Permission: Graph | GET /users/{id}/authentication/methods | Delegated | UserAuthenticationMethod.Read.All | UserAuthenticationMethod.ReadWrite, UserAuthenticationMethod.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

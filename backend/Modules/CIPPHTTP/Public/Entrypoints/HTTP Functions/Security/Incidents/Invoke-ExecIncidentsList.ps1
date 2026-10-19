@@ -6,6 +6,8 @@ function Invoke-ExecIncidentsList {
         Security.Incident.Read
     .DESCRIPTION
         Lists Microsoft 365 Defender security incidents for a tenant, optionally bounded by StartDate and EndDate (both YYYYMMDD). tenantFilter=AllTenants reads the cached incident table rather than querying each tenant live.
+    .NOTES
+        Permission: Graph | GET /security/incidents | Application | SecurityIncident.Read.All | SecurityIncident.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

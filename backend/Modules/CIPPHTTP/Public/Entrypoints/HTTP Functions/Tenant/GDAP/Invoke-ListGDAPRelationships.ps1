@@ -6,6 +6,9 @@ function Invoke-ListGDAPRelationships {
         Tenant.Relationship.Read
     .DESCRIPTION
         Lists GDAP delegated admin relationships with customer tenants, with optional filtering by relationship ID or OData filter.
+    .NOTES
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships/{id} | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

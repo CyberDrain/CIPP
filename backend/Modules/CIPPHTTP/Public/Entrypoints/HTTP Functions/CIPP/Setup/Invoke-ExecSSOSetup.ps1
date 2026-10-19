@@ -4,6 +4,9 @@ function Invoke-ExecSSOSetup {
         Entrypoint,AnyTenant
     .ROLE
         CIPP.AppSettings.ReadWrite
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
     #>
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '')]
     [CmdletBinding()]

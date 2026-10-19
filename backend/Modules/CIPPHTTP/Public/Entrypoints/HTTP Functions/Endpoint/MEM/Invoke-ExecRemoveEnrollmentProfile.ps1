@@ -6,6 +6,9 @@ function Invoke-ExecRemoveEnrollmentProfile {
         Endpoint.MEM.ReadWrite
     .DESCRIPTION
         Deletes an Apple ADE or Android Enterprise enrollment profile.
+    .NOTES
+        Permission: Graph | DELETE /deviceManagement/androidDeviceOwnerEnrollmentProfiles/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/depOnboardingSettings/{id}/enrollmentProfiles/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

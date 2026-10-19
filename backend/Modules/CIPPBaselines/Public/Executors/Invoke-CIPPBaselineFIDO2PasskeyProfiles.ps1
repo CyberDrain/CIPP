@@ -9,6 +9,8 @@ function Invoke-CIPPBaselineFIDO2PasskeyProfiles {
         wrote it.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /policies/authenticationmethodspolicy/authenticationMethodConfigurations/Fido2 | Application | Policy.ReadWrite.AuthenticationMethod
     #>
     [CmdletBinding()]
     param(

@@ -2,6 +2,14 @@
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /applications | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations | Application | Policy.Read.All
+        Permission: Graph | GET /identity/conditionalAccess/policies | Application | Policy.Read.All
+        Permission: Graph | GET /roleManagement/directory/roleDefinitions | Application | RoleManagement.Read.Directory | RoleManagement.Read.All, RoleManagement.ReadWrite.Exchange
+        Permission: Graph | GET /servicePrincipals | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /users | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     param($Item)
 

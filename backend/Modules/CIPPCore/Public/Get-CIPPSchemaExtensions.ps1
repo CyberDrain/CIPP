@@ -1,4 +1,11 @@
 function Get-CIPPSchemaExtensions {
+    <#
+    .NOTES
+        Permission: Graph | GET /schemaExtensions | Application | Application.Read.All
+        Permission: Graph | POST /schemaExtensions | Application | Application.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /schemaExtensions/{id} | Application | Application.Read.All
+        Permission: Graph | PATCH /schemaExtensions/{id} | Application | Application.ReadWrite.All | Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     Param(
         [switch]$Update,

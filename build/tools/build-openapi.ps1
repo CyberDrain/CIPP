@@ -800,6 +800,106 @@ function Get-HelperDefinition {
     return $Result
 }
 
+# Partner-tenant plumbing every request passes through; not work done in the customer tenant.
+$PermissionStopList = @('Get-Tenants', 'Get-GraphToken', 'Update-AppManagementPolicy', 'Update-CIPPSAMCertificate', 'Get-CIPPSchemaExtensions', 'Test-CIPPAccessUserRole', 'Write-LogMessage')
+$FunctionPermissionCache = @{}
+
+function Get-FunctionPermission {
+    # The Permission: lines in a function's .NOTES (Update-PermissionAnnotations.ps1 writes them) and the
+    # functions it hands work to: direct calls, queued activities (FunctionName = 'X' runs Push-X) and
+    # scheduled or offboarding commands (Command / Cmdlet = 'X').
+    param($Definition, [hashtable]$Index)
+
+    $Name = $Definition.Name
+    if ($FunctionPermissionCache.ContainsKey($Name)) { return $FunctionPermissionCache[$Name] }
+
+    $Lines = foreach ($Line in ("$($Definition.GetHelpContent().Notes)" -split '\r?\n')) {
+        if ($Line -notmatch '^\s*Permission:\s*(.+)$') { continue }
+        $Cols = @($Matches[1] -split '\|').ForEach({ $_.Trim() })
+        if ($Cols.Count -lt 4 -or -not $Cols[0] -or -not $Cols[1] -or $Cols[2] -notin 'Delegated', 'Application' -or -not $Cols[3]) {
+            throw "Malformed Permission line in ${Name}: '$($Line.Trim())'. Expected 'Permission: API | operation | Delegated or Application | least | higher [| condition]'."
+        }
+        [pscustomobject]@{
+            Api       = $Cols[0]
+            Operation = $Cols[1]
+            Type      = $Cols[2]
+            Least     = @(($Cols[3] -split ',').ForEach({ $_.Trim() }).Where({ $_ }))
+            Higher    = @(("$($Cols[4])" -split ',').ForEach({ $_.Trim() }).Where({ $_ }))
+            Condition = $Cols[5]
+        }
+    }
+
+    $Callees = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($Command in $Definition.FindAll({ param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true)) {
+        $CommandName = $Command.GetCommandName()
+        if ($CommandName -and $CommandName -ne $Name -and $Index.ContainsKey($CommandName)) { $null = $Callees.Add($CommandName) }
+    }
+    foreach ($Table in $Definition.FindAll({ param($n) $n -is [System.Management.Automation.Language.HashtableAst] }, $true)) {
+        foreach ($Pair in $Table.KeyValuePairs) {
+            if ($Pair.Item1 -isnot [System.Management.Automation.Language.StringConstantExpressionAst]) { continue }
+            $Value = Get-UnwrappedAst -Ast $Pair.Item2
+            if ($Value -is [System.Management.Automation.Language.HashtableAst]) {
+                $Value = Get-UnwrappedAst -Ast $Value.KeyValuePairs.Where({ "$($_.Item1.Value)" -eq 'value' })[0].Item2
+            }
+            if ($Value -isnot [System.Management.Automation.Language.StringConstantExpressionAst]) { continue }
+            $Target = switch ($Pair.Item1.Value) {
+                'FunctionName' { "Push-$($Value.Value)" }
+                { $_ -in 'Command', 'Cmdlet' } { $Value.Value }
+            }
+            if ($Target -and $Index.ContainsKey($Target)) { $null = $Callees.Add($Target) }
+        }
+    }
+
+    $Result = [pscustomobject]@{ Lines = @($Lines); Callees = @($Callees) }
+    $FunctionPermissionCache[$Name] = $Result
+    return $Result
+}
+
+function Get-PermissionRollup {
+    # Every Permission: line of an entrypoint and of everything it reaches, once per API, operation and
+    # type, with the functions that carry it.
+    param($Definition, [hashtable]$Index)
+
+    $Entries = @{}
+    $Seen = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    $null = $Seen.Add($Definition.Name)
+    $Queue = [System.Collections.Generic.Queue[object]]::new()
+    $Queue.Enqueue($Definition)
+    while ($Queue.Count) {
+        $Current = $Queue.Dequeue()
+        $Info = Get-FunctionPermission -Definition $Current -Index $Index
+        foreach ($Line in $Info.Lines) {
+            $Key = ('{0}|{1}|{2}' -f $Line.Api, $Line.Operation, $Line.Type).ToLowerInvariant()
+            if (-not $Entries.ContainsKey($Key)) {
+                $Entries[$Key] = [pscustomobject]@{ Line = $Line; Condition = $Line.Condition; Via = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal) }
+            } elseif (-not $Line.Condition) {
+                # needed unconditionally somewhere, so the condition no longer holds
+                $Entries[$Key].Condition = $null
+            }
+            $null = $Entries[$Key].Via.Add($Current.Name)
+        }
+        foreach ($Callee in $Info.Callees) {
+            if ($Callee -in $PermissionStopList -or -not $Seen.Add($Callee)) { continue }
+            $Helper = Get-HelperDefinition -Name $Callee -Index $Index
+            if ($Helper) { $Queue.Enqueue($Helper.Definition) }
+        }
+    }
+
+    foreach ($Key in ($Entries.Keys | Sort-Object -CaseSensitive)) {
+        $Entry = $Entries[$Key]
+        $Out = [ordered]@{
+            api       = $Entry.Line.Api
+            operation = $Entry.Line.Operation
+            type      = $Entry.Line.Type
+            least     = @($Entry.Line.Least)
+            higher    = @($Entry.Line.Higher)
+        }
+        if ($Entry.Condition) { $Out['condition'] = $Entry.Condition }
+        $Out['via'] = @($Entry.Via)
+        $Out
+    }
+}
+
 function Get-CommentMap {
     # A comment block above a statement documents it; a comment trailing code on the
     # same line documents that line. Telling them apart needs the source, since both
@@ -994,7 +1094,7 @@ function Add-MemberAccess {
 }
 
 function Get-EndpointContract {
-    param([string]$Path, [string]$RootPath, [hashtable]$HelperIndex, [hashtable]$ColumnMap, [int]$FollowDepth = 2)
+    param([string]$Path, [string]$RootPath, [hashtable]$HelperIndex, [hashtable]$ColumnMap, [hashtable]$FunctionIndex, [int]$FollowDepth = 2)
 
     $Tokens = $null
     $Errors = $null
@@ -1108,6 +1208,7 @@ function Get-EndpointContract {
         GraphRefs     = @(Get-GraphEntityReference -FunctionAst $Definition)
         GraphSelect   = @(Get-GraphSelectField -FunctionAst $Definition)
         OutputNames   = @(Get-OutputMemberName -FunctionAst $Definition)
+        Permissions   = @(if ($FunctionIndex) { Get-PermissionRollup -Definition $Definition -Index $FunctionIndex })
         Path         = $Path
     }
 }
@@ -2047,6 +2148,7 @@ function ConvertTo-OasOperation {
         # entrypoint; recorded so a surprising field can be traced back to its source
         $Operation['x-cipp-reads-via'] = @($Contract.Downstream | Sort-Object -CaseSensitive)
     }
+    if ($Contract.Permissions.Count -gt 0) { $Operation['x-cipp-permissions'] = @($Contract.Permissions) }
 
     return $Operation
 }
@@ -2086,6 +2188,9 @@ if ($ModulesPath -and (Test-Path $ModulesPath)) {
         Where-Object { Test-Path $_ }
     if ($HelperRoots) { $HelperIndex = Get-HelperSourceIndex -SearchPath $HelperRoots }
 }
+# Permissions roll up through every module an endpoint reaches, queued Push-* activities included.
+$FunctionIndex = $null
+if ($ModulesPath -and (Test-Path $ModulesPath)) { $FunctionIndex = Get-HelperSourceIndex -SearchPath @($ModulesPath) }
 # Storage tables are written all over the backend (CIPPDB's cache writers, CIPPCore's
 # settings and scheduler code), so the writer scan covers every module rather than the
 # handful searched for request helpers.
@@ -2123,7 +2228,7 @@ $ParseErrors = [System.Collections.Generic.List[string]]::new()
 $Skipped = [System.Collections.Generic.List[string]]::new()
 
 foreach ($File in $Files) {
-    $Contract = Get-EndpointContract -Path $File.FullName -RootPath $RootPath -HelperIndex $HelperIndex -ColumnMap $ColumnMap
+    $Contract = Get-EndpointContract -Path $File.FullName -RootPath $RootPath -HelperIndex $HelperIndex -ColumnMap $ColumnMap -FunctionIndex $FunctionIndex
     if ($null -eq $Contract) { $Skipped.Add($File.Name); continue }
     if ($Contract.PSObject.Properties.Name -contains 'ParseError') {
         $ParseErrors.Add("$($File.Name): $($Contract.ParseError)")
@@ -2237,6 +2342,25 @@ foreach ($Contract in ($Contracts | Sort-Object Name -CaseSensitive)) {
         })
 }
 
+# The central index: for each API, permission type and least-privileged permission, the endpoints that need it.
+$PermissionEndpoints = @{}
+foreach ($Contract in $Contracts) {
+    foreach ($Permission in $Contract.Permissions) {
+        foreach ($Least in $Permission.least) {
+            $Key = '{0}|{1}|{2}' -f $Permission.api, $Permission.type, $Least
+            if (-not $PermissionEndpoints.ContainsKey($Key)) { $PermissionEndpoints[$Key] = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal) }
+            $null = $PermissionEndpoints[$Key].Add($Contract.Name)
+        }
+    }
+}
+$PermissionIndex = [ordered]@{}
+foreach ($Key in ($PermissionEndpoints.Keys | Sort-Object -CaseSensitive)) {
+    $Api, $Type, $Least = $Key -split '\|', 3
+    if (-not $PermissionIndex.Contains($Api)) { $PermissionIndex[$Api] = [ordered]@{} }
+    if (-not $PermissionIndex[$Api].Contains($Type)) { $PermissionIndex[$Api][$Type] = [ordered]@{} }
+    $PermissionIndex[$Api][$Type][$Least] = @($PermissionEndpoints[$Key])
+}
+
 $Spec = [ordered]@{
     openapi    = '3.1.0'
     info       = [ordered]@{
@@ -2322,6 +2446,7 @@ backend and must be sent as an object, not a bare string.
         }
     }
     paths      = $Paths
+    'x-cipp-permission-index' = $PermissionIndex
 }
 
 if ($Endpoint) {

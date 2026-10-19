@@ -26,6 +26,7 @@ function Invoke-CIPPStandardIntuneAppTemplateDeploy {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

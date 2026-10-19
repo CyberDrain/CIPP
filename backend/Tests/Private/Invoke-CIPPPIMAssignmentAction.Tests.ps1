@@ -12,6 +12,8 @@ BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/PIM/New-CIPPPIMScheduleRequest.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/PIM/Invoke-CIPPPIMAssignmentAction.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/PIM/Send-CIPPPIMScheduleRequest.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/PIM/Invoke-CIPPPIMActiveAssignmentRemoval.ps1')
 
     function Test-CIPPStandardLicense { param($StandardName, $TenantFilter, $Preset, [switch]$SkipLog) $true }
     function Get-CIPPPIMRoleAssignments { param($TenantFilter, $PrincipalId, $RoleDefinitionId, [switch]$FromCache, [switch]$IncludePolicy) }

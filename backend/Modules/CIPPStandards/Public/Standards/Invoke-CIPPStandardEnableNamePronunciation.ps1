@@ -24,6 +24,8 @@ function Invoke-CIPPStandardEnableNamePronunciation {
             "CIPP"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /admin/people/namePronunciation | Delegated | PeopleSettings.Read.All | PeopleSettings.ReadWrite.All
+        Permission: Graph | PATCH /admin/people/namePronunciation | Application | PeopleSettings.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

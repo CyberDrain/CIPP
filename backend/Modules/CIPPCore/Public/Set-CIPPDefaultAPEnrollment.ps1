@@ -1,4 +1,9 @@
 function Set-CIPPDefaultAPEnrollment {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceManagement/deviceEnrollmentConfigurations | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/deviceEnrollmentConfigurations/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All | DeviceManagementConfiguration.ReadWrite.All
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         $TenantFilter,

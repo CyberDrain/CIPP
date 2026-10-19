@@ -2,6 +2,8 @@ function Get-CIPPAlertTenantAccess {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /roleManagement/directory/roleAssignments | Delegated | RoleManagement.Read.Directory | RoleManagement.Read.All, RoleManagement.ReadWrite.Exchange
     #>
     [CmdletBinding()]
     param(

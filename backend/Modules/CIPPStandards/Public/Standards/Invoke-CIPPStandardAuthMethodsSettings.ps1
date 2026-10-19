@@ -32,6 +32,8 @@ function Invoke-CIPPStandardAuthMethodsSettings {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/authenticationMethodsPolicy | Application | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod, Policy.Read.All
+        Permission: Graph | PATCH /policies/authenticationMethodsPolicy | Application | Policy.ReadWrite.AuthenticationMethod
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

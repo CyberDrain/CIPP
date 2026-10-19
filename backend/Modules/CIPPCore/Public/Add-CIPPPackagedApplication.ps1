@@ -40,6 +40,8 @@ function Add-CIPPPackagedApplication {
         $AppBody = @{ '@odata.type' = '#microsoft.graph.win32LobApp'; displayName = 'My App' }
         $EncryptionInfo = @{ EncryptionKey = '...'; MacKey = '...'; ... }
         Add-CIPPPackagedApplication -AppBody $AppBody -TenantFilter 'contoso.com' -AppType 'Choco' -FilePath 'app.intunewin' -FileName 'app.intunewin' -UnencryptedSize 1024000 -EncryptionInfo $EncryptionInfo
+    .NOTES
+        Permission: Graph | POST /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

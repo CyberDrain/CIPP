@@ -10,6 +10,11 @@ function Invoke-ListSiteBrowser {
         StorageUsed / NumOfFiles / TemplateName in one paged call.
         Graph getAllSites joins only for Graph site.id (drill-in).
         With SiteId/SiteUrl: root document/page libraries (Graph lists + SPO StorageMetrics).
+    .NOTES
+        Permission: Graph | GET /sites/{id} | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}:{id} | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/lists | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/getAllSites | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

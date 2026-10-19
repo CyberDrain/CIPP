@@ -4,6 +4,8 @@ function Invoke-PatchUser {
         Entrypoint
     .ROLE
         Identity.User.ReadWrite
+    .NOTES
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

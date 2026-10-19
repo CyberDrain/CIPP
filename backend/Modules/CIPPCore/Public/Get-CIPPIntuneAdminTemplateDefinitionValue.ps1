@@ -25,6 +25,11 @@ function Get-CIPPIntuneAdminTemplateDefinitionValue {
         so they are not read twice.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/groupPolicyConfigurations/{id}/definitionValues | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/groupPolicyConfigurations/{id}/definitionValues/{id}/presentationValues | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/groupPolicyDefinitions/{id} | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/groupPolicyDefinitions/{id}/presentations | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

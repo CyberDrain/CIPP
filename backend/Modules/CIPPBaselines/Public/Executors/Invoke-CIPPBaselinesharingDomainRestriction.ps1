@@ -8,6 +8,8 @@ function Invoke-CIPPBaselinesharingDomainRestriction {
         the classic's write.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /admin/sharepoint/settings | Application | SharePointTenantSettings.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

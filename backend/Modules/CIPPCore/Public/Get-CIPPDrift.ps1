@@ -16,6 +16,18 @@ function Get-CIPPDrift {
         Get-CIPPDrift -TenantFilter "contoso.onmicrosoft.com"
     .EXAMPLE
         Get-CIPPDrift -TenantFilter "contoso.onmicrosoft.com" -TemplateId "12345-67890-abcdef"
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/managedAppPolicies | Application | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/configurationPolicies | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceCompliancePolicies | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceConfigurations | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/groupPolicyConfigurations | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/hardwareConfigurations | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsDriverUpdateProfiles | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsFeatureUpdateProfiles | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsQualityUpdatePolicies | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsQualityUpdateProfiles | Application | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /identity/conditionalAccess/policies | Application | Policy.Read.All
     #>
     [CmdletBinding()]
     param(

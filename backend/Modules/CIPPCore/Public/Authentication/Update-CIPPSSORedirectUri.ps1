@@ -22,6 +22,9 @@ function Update-CIPPSSORedirectUri {
     .PARAMETER PassThru
     Emit a result object describing what happened. Off by default so warmup callers
     (Initialize-CIPPAuth) don't pick up stray pipeline output.
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

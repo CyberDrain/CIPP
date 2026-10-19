@@ -4,6 +4,11 @@ function Invoke-ExecServicePrincipals {
         Entrypoint,AnyTenant
     .ROLE
         Tenant.Application.ReadWrite
+    .NOTES
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}') | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id} | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

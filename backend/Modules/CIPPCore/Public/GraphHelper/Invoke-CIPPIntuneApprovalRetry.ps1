@@ -30,6 +30,8 @@ function Invoke-CIPPIntuneApprovalRetry {
         not been processed within 3 days, so there is nothing left to complete after that.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/operationApprovalRequests | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementRBAC.Read.All, DeviceManagementRBAC.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

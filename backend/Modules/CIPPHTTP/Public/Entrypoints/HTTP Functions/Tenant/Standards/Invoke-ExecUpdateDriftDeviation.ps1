@@ -4,6 +4,8 @@ function Invoke-ExecUpdateDriftDeviation {
         Entrypoint
     .ROLE
         Tenant.Standards.ReadWrite
+    .NOTES
+        Permission: Graph | DELETE /identity/conditionalAccess/policies/{id} | Delegated | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

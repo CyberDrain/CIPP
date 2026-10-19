@@ -6,6 +6,8 @@ Function Invoke-ListNamedLocations {
         Tenant.ConditionalAccess.Read
     .DESCRIPTION
         Lists Conditional Access named locations (IP ranges and country-based locations) configured in a tenant.
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations | Delegated | Policy.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

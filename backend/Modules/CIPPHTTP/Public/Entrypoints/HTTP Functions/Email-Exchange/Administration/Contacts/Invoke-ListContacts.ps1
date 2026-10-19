@@ -6,6 +6,8 @@ function Invoke-ListContacts {
         Exchange.Contact.Read
     .DESCRIPTION
         Lists Exchange Online mail contacts for a tenant, with optional filtering by contact ID for detailed view.
+    .NOTES
+        Permission: Graph | GET /contacts | Delegated | OrgContact.Read.All | Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

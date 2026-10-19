@@ -2,6 +2,9 @@ function Get-CIPPSharePointLibraryRootChildUris {
     <#
     .SYNOPSIS
         Enumerates eligible immediate children of a document library root for CreateCopyJobs.
+    .NOTES
+        Permission: Graph | GET /sites/{id} | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/lists/{id}/drive/root/children | Application | Files.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

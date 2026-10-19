@@ -6,6 +6,8 @@ function Invoke-ExecCopilotSettings {
         Tenant.AI.ReadWrite
     .DESCRIPTION
         Sets a single Microsoft 365 Copilot policy setting to Enabled (1), Disabled (0) or Not configured (cleared).
+    .NOTES
+        Permission: Graph | PATCH /copilot/admin/policySettings/{id} | Delegated | CopilotPolicySettings.ReadWrite
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -4,6 +4,8 @@ function Invoke-ExecUpdateSecureScore {
         Entrypoint
     .ROLE
         Tenant.Administration.ReadWrite
+    .NOTES
+        Permission: Graph | PATCH /security/secureScoreControlProfiles/{id} | Delegated | SecurityEvents.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

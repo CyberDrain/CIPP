@@ -42,6 +42,11 @@ function Invoke-CIPPStandardOauthConsent {
             "CIPP"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | PATCH /policies/authorizationPolicy/authorizationPolicy | Delegated | Policy.ReadWrite.Authorization
+        Permission: Graph | GET /policies/permissionGrantPolicies | Delegated | Policy.Read.PermissionGrant | Policy.ReadWrite.PermissionGrant
+        Permission: Graph | POST /policies/permissionGrantPolicies | Delegated | Policy.ReadWrite.PermissionGrant
+        Permission: Graph | GET /policies/permissionGrantPolicies/cipp-consent-policy/includes | Delegated | Policy.Read.PermissionGrant | Directory.Read.All
+        Permission: Graph | POST /policies/permissionGrantPolicies/cipp-consent-policy/includes | Delegated | Policy.ReadWrite.PermissionGrant
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

@@ -8,6 +8,8 @@ function Set-CIPPDBCacheSensitivityLabels {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /security/informationProtection/sensitivityLabels | Application | InformationProtectionPolicy.Read.All
     #>
     [CmdletBinding()]
     param(

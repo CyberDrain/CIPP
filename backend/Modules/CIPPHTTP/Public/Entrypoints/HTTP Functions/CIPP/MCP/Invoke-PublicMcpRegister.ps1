@@ -21,6 +21,9 @@ function Invoke-PublicMcpRegister {
         Entrypoint,AnyTenant
     .ROLE
         Public
+    .NOTES
+        Permission: Graph | GET /applications | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -6,6 +6,9 @@ function Invoke-ListUserReportedMessage {
         Exchange.SpamFilter.Read
     .DESCRIPTION
         Retrieves the raw EML content of a user reported message by its Internet Message ID. Tries the quarantine store first (Export-QuarantineMessage), then falls back to reading the message from the recipient's or reporter's mailbox via Graph.
+    .NOTES
+        Permission: Graph | GET /users/{id}/messages | Delegated | Mail.ReadBasic | Mail.ReadWrite, Mail.Read
+        Permission: Graph | GET /users/{id}/messages/{id}/$value | Delegated | Mail.Read
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

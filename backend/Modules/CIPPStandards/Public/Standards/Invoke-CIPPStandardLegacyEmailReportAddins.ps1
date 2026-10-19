@@ -27,6 +27,8 @@ function Invoke-CIPPStandardLegacyEmailReportAddins {
             "Microsoft"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /applications | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.ReadWrite.All, Directory.Read.All
+        Permission: Graph | DELETE /applications/{id} | Delegated | Application.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

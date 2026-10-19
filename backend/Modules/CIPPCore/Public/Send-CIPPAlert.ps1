@@ -1,5 +1,9 @@
 
 function Send-CIPPAlert {
+    <#
+    .NOTES
+        Permission: Graph | POST /me/sendMail | Delegated | Mail.Send
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         $Type,

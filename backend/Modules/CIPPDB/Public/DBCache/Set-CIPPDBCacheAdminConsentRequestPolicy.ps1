@@ -8,6 +8,8 @@ function Set-CIPPDBCacheAdminConsentRequestPolicy {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/adminConsentRequestPolicy | Delegated | Policy.Read.All | Policy.ReadWrite.ConsentRequest, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

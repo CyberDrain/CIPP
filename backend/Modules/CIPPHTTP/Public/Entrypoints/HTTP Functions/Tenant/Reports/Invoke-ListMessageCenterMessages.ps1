@@ -6,6 +6,8 @@ function Invoke-ListMessageCenterMessages {
         Tenant.Administration.Read
     .DESCRIPTION
         Lists Microsoft 365 message center messages for a tenant: the change notices, announcements of new and retiring features, planned changes and action-required posts Microsoft publishes, with category, severity, services, tags and action-required-by dates. For AllTenants each message is returned once with the tenants it was posted to (Tenants, TenantCount). Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
+    .NOTES
+        Permission: Graph | GET /admin/serviceAnnouncement/messages | Delegated | ServiceMessage.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

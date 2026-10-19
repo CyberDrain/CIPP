@@ -4,6 +4,15 @@ function Invoke-EditGroup {
         Entrypoint
     .ROLE
         Identity.Group.ReadWrite
+    .NOTES
+        Permission: Graph | GET /devices(deviceId='{id}') | Delegated | Device.Read.All | Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /groups/{id} | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group-XTenantIdentitySync.Read.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | PATCH /groups/{id} | Application | Group.ManageProtection.All | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | PATCH /groups/{id} | Delegated | Group.ManageProtection.All | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | DELETE /groups/{id}/members/{id}/$ref | Application | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | DELETE /groups/{id}/owners/{id}/$ref | Application | Group.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | POST /groups/{id}/owners/$ref | Application | Group.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

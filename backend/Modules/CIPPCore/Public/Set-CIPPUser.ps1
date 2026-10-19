@@ -1,4 +1,12 @@
 function Set-CIPPUser {
+    <#
+    .NOTES
+        Permission: Graph | GET /groups/{id} | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group-XTenantIdentitySync.Read.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | DELETE /groups/{id}/members/{id}/$ref | Delegated | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | POST /groups/{id}/members/$ref | Delegated | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $UserObj,

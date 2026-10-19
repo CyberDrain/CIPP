@@ -1,4 +1,8 @@
 function Set-CIPPManager {
+    <#
+    .NOTES
+        Permission: Graph | PUT /users/{id}/manager/$ref | Delegated | User.ReadWrite.All | AgentIdUser.ReadWrite.All, AgentIdUser.ReadWrite.IdentityParentedBy, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         [Alias('User')]

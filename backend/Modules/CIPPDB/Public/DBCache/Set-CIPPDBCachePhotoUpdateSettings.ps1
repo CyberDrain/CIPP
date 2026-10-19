@@ -8,6 +8,8 @@ function Set-CIPPDBCachePhotoUpdateSettings {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /admin/people/photoUpdateSettings | Delegated | PeopleSettings.Read.All | PeopleSettings.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

@@ -56,6 +56,10 @@ function Invoke-CIPPStandardDeployCheckChromeExtension {
             "MICROSOFTINTUNEPLAN1"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | DELETE /deviceAppManagement/mobileApps/{id} | Delegated | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceConfigurations | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/deviceConfigurations/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

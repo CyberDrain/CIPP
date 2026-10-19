@@ -37,6 +37,11 @@ function Invoke-CIPPStandardDisableM365GroupUsers {
             "ONEDRIVE_ENTERPRISE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /directorySettingTemplates/62375ab9-6b52-47ed-826b-58e47e0e304b | Delegated | GroupSettings.Read.All | Directory.Read.All, Directory.ReadWrite.All, GroupSettings.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /settings | Delegated | GroupSettings.Read.All | GroupSettings.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadWrite.All
+        Permission: Graph | POST /settings | Application | GroupSettings.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | PATCH /settings/{id} | Application | GroupSettings.ReadWrite.All | Directory.ReadWrite.All, Policy.ReadWrite.Authorization
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

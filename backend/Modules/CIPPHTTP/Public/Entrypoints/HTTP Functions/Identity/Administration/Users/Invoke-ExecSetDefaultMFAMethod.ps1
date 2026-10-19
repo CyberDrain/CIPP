@@ -9,6 +9,8 @@ function Invoke-ExecSetDefaultMFAMethod {
     .DESCRIPTION
     Sets the default second factor a user is prompted with, by patching signInPreferences.
     Note this is ignored at sign-in while system-preferred MFA is enabled for the user.
+    .NOTES
+        Permission: Graph | PATCH /users/{id}/authentication/signInPreferences | Application | UserAuthenticationMethod.ReadWrite | UserAuthenticationMethod.ReadWrite.All
     #>
     param($Request, $TriggerMetadata)
 

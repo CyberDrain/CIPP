@@ -9,6 +9,8 @@ function Invoke-CIPPBaselineMFAPushApps {
         configured state.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /servicePrincipals(appId='{id}') | Delegated | Application.ReadWrite.All | AgentIdentity.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

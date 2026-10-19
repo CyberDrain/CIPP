@@ -42,6 +42,9 @@ function New-CIPPSharepointSite {
     .PARAMETER TenantFilter
     The tenant associated with the site
 
+    .NOTES
+        Permission: Graph | POST /groups | Application | Group.Create | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | GET /groups/{id}/sites/root | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

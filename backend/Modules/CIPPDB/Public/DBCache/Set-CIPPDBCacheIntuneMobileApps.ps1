@@ -13,6 +13,8 @@ function Set-CIPPDBCacheIntuneMobileApps {
 
     .PARAMETER TenantFilter
         The tenant to cache mobile apps for
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

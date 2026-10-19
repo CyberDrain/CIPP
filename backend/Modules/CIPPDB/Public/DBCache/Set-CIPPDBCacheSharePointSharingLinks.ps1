@@ -31,6 +31,9 @@
 
     .PARAMETER ForceFullSync
         Ignore stored delta tokens and rescan every drive in full.
+    .NOTES
+        Permission: Graph | GET /domains | Application | Domain.Read.All | Domain.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /sites/getAllSites | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

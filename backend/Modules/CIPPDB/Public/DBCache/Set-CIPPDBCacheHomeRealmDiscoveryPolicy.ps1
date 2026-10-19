@@ -13,6 +13,8 @@ function Set-CIPPDBCacheHomeRealmDiscoveryPolicy {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/homeRealmDiscoveryPolicies | Delegated | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
     #>
     [CmdletBinding()]
     param(

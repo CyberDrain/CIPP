@@ -7,6 +7,8 @@ function Invoke-ListCopilotSettings {
     .DESCRIPTION
         Lists the Microsoft 365 Copilot admin policy settings for a tenant, one row per setting,
         with the current raw value and a friendly state (Enabled / Disabled / Not configured).
+    .NOTES
+        Permission: Graph | GET /copilot/admin/policySettings/{id} | Delegated | CopilotPolicySettings.Read | CopilotPolicySettings.ReadWrite
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

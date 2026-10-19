@@ -11,6 +11,12 @@ function Invoke-CIPPBaselineAppDeploy {
         permissions. Per-app failures log and continue, as the classic continued.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /applications | Delegated | AppRegistration.Create | Application.ReadWrite.All
+        Permission: Graph | GET /applications(appId='{id}') | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications(appId='{id}') | Delegated | Application.ReadWrite.All
+        Permission: Graph | POST /applicationTemplates/{id}/instantiate | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

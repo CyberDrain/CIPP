@@ -4,6 +4,11 @@ function Invoke-ExecApiClient {
         Entrypoint
     .ROLE
         CIPP.Extension.ReadWrite
+    .NOTES
+        Permission: Graph | GET /applications | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | DELETE /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

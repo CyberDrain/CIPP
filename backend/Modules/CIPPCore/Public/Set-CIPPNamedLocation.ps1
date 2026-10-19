@@ -1,4 +1,10 @@
 function Set-CIPPNamedLocation {
+    <#
+    .NOTES
+        Permission: Graph | DELETE /identity/conditionalAccess/namedLocations/{id} | Delegated | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations/{id} | Delegated | Policy.Read.All
+        Permission: Graph | PATCH /identity/conditionalAccess/namedLocations/{id} | Delegated | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         $NamedLocationId,

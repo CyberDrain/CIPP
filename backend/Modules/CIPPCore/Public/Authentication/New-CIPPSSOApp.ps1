@@ -9,6 +9,11 @@ function New-CIPPSSOApp {
         creates a new one. Does NOT create a client secret — call Add-CIPPSSOAppSecret
         for that as a separate step so the AppId can be persisted before the (sometimes
         flaky) secret creation runs.
+    .NOTES
+        Permission: Graph | POST /applications | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

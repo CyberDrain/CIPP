@@ -14,6 +14,8 @@ function Test-CIPPAccessUserRole {
 
     .FUNCTIONALITY
     Internal
+    .NOTES
+        Permission: Graph | GET /users/{id}/transitiveMemberOf | Application | User.Read.All | Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadBasic.All, GroupMember.Read.All, GroupMember.ReadBasic.All
     #>
     [CmdletBinding()]
     param(

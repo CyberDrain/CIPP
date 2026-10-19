@@ -6,6 +6,8 @@ Function Invoke-ListOrg {
         CIPP.Core.Read
     .DESCRIPTION
         Retrieves the Entra ID organization profile for a tenant, including display name, addresses, and tenant metadata.
+    .NOTES
+        Permission: Graph | GET /organization | Delegated | DeviceManagementServiceConfig.Read.All | Organization.Read.All, Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

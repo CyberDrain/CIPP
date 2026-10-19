@@ -15,6 +15,9 @@ function Push-DBCacheOneDriveLongPaths {
 
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /drives/{id}/root/delta | Application | Files.Read.All | Files.ReadWrite.All, Sites.Read.All, Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/drive | Application | Files.Read.All | Files.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Item)

@@ -4,6 +4,8 @@ function Invoke-ExecSetSecurityIncident {
         Entrypoint
     .ROLE
         Security.Incident.ReadWrite
+    .NOTES
+        Permission: Graph | PATCH /security/incidents/{id} | Application | SecurityIncident.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

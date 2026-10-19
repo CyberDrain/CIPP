@@ -2,6 +2,18 @@ function Push-CIPPStandardsList {
     <#
     .FUNCTIONALITY
     Entrypoint
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/managedAppPolicies | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceAppManagement/mobileAppConfigurations | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/configurationPolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceCompliancePolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceConfigurations | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/groupPolicyConfigurations | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/hardwareConfigurations | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsDriverUpdateProfiles | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsFeatureUpdateProfiles | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsQualityUpdatePolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsQualityUpdateProfiles | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     param($Item)
 

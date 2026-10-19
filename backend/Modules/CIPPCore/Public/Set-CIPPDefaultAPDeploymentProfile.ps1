@@ -1,4 +1,14 @@
 function Set-CIPPDefaultAPDeploymentProfile {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceManagement/windowsAutopilotDeploymentProfiles | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/windowsAutopilotDeploymentProfiles | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/windowsAutopilotDeploymentProfiles/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/windowsAutopilotDeploymentProfiles/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/windowsAutopilotDeploymentProfiles/{id}/assignments | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementConfiguration.Read.All, DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/windowsAutopilotDeploymentProfiles/{id}/assignments | Delegated | DeviceManagementServiceConfig.ReadWrite.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/windowsAutopilotDeploymentProfiles/{id}/assignments/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All | DeviceManagementConfiguration.ReadWrite.All
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         $TenantFilter,

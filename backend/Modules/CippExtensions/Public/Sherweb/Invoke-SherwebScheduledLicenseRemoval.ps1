@@ -22,6 +22,8 @@ function Invoke-SherwebScheduledLicenseRemoval {
 
     .PARAMETER Headers
         Optional headers for logging context. Supplied by the scheduler.
+    .NOTES
+        Permission: Graph | GET /subscribedSkus | Delegated | LicenseAssignment.Read.All | Directory.Read.All, Directory.ReadWrite.All, Organization.Read.All, Organization.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

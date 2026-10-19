@@ -4,6 +4,8 @@ function Invoke-EditAssignmentFilter {
         Entrypoint
     .ROLE
         Endpoint.MEM.ReadWrite
+    .NOTES
+        Permission: Graph | PATCH /deviceManagement/assignmentFilters/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

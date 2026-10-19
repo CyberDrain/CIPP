@@ -7,6 +7,8 @@ function Invoke-CIPPBaselineDefenderEDRPolicy {
         Set-CIPPDefenderEDRPolicy helper which owns the settings tree and the assignment.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | DELETE /deviceManagement/configurationPolicies/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

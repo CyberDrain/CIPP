@@ -2,6 +2,15 @@ function Push-ExecAppApprovalTemplate {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | POST /applications | Delegated | AppRegistration.Create | Application.ReadWrite.All
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /applications(appId='{id}') | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications(appId='{id}') | Delegated | Application.ReadWrite.All
+        Permission: Graph | POST /applicationTemplates/{id}/instantiate | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /servicePrincipals | Delegated | Application.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | PATCH /servicePrincipals/{id} | Delegated | Application.ReadWrite.All | AgentIdentity.ReadWrite.All, Directory.ReadWrite.All
     #>
     param($Item)
 

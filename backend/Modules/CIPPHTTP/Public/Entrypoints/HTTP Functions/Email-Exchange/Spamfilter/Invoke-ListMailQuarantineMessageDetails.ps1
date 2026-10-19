@@ -9,6 +9,8 @@ function Invoke-ListMailQuarantineMessageDetails {
         for a quarantined message via the Graph beta security/collaboration/analyzedEmails API.
         Falls back to parsing the message headers (Authentication-Results and X-Forefront-Antispam-Report)
         for tenants without Defender for Office 365 Plan 2.
+    .NOTES
+        Permission: Graph | GET /security/collaboration/analyzedEmails | Application | SecurityAnalyzedMessage.Read.All | SecurityAnalyzedMessage.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -1,4 +1,12 @@
 function New-CIPPTemplateRun {
+    <#
+    .NOTES
+        Permission: Graph | GET /conditionalAccess/policies | Application | Policy.Read.All
+        Permission: Graph | GET /deviceAppManagement/managedAppPolicies | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceCompliancePolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /users | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $TemplateSettings,

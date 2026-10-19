@@ -25,6 +25,8 @@ function Get-CIPPAlertDeletedUserOneDriveAccess {
 
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /admin/sharepoint/settings | Application | SharePointTenantSettings.Read.All | SharePointTenantSettings.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

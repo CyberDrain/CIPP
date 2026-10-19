@@ -4,6 +4,11 @@ function Invoke-ExecGDAPInvite {
         Entrypoint,AnyTenant
     .ROLE
         Tenant.Relationship.ReadWrite
+    .NOTES
+        Permission: Graph | GET /roleManagement/directory/roleDefinitions | Delegated | RoleManagement.Read.Directory | EntitlementManagement.ReadWrite.All
+        Permission: Graph | POST /tenantRelationships/delegatedAdminRelationships | Delegated | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships/{id} | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | POST /tenantRelationships/delegatedAdminRelationships/{id}/requests | Delegated | DelegatedAdminRelationship.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -8,6 +8,8 @@ function Invoke-CIPPBaselineMailContacts {
         general contact lands on the privacy profile.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /organization/{id} | Application | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

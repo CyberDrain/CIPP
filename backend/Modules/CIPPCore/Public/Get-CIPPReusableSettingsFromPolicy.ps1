@@ -1,4 +1,8 @@
 function Get-CIPPReusableSettingsFromPolicy {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceManagement/reusablePolicySettings/{id} | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+    #>
     param(
         [string]$PolicyJson,
         [string]$Tenant,

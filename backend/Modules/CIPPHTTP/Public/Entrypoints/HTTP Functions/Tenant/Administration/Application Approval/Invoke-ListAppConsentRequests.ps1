@@ -6,6 +6,9 @@ function Invoke-ListAppConsentRequests {
         Tenant.Administration.Read
     .DESCRIPTION
         Lists pending application consent requests in a tenant, filterable by request status.
+    .NOTES
+        Permission: Graph | GET /identityGovernance/appConsent/appConsentRequests | Delegated | ConsentRequest.Read.All | ConsentRequest.ReadWrite.All
+        Permission: Graph | GET /identityGovernance/appConsent/appConsentRequests/{id}/userConsentRequests | Delegated | ConsentRequest.Read.All | ConsentRequest.ReadWrite.All
     #>
     param($Request, $TriggerMetadata)
     # Interact with query parameters or the body of the request.

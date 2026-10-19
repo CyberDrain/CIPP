@@ -10,6 +10,10 @@ function Set-CIPPDBCacheNetworkAccess {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /networkAccess/forwardingProfiles | Application | NetworkAccess.Read.All | NetworkAccess.ReadWrite.All
+        Permission: Graph | GET /networkAccess/settings/conditionalAccess | Application | NetworkAccess.Read.All | NetworkAccess.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id} | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

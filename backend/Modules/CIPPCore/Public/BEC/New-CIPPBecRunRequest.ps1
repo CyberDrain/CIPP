@@ -26,6 +26,8 @@ function New-CIPPBecRunRequest {
         technician's, never the user's or the attacker's.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /users/{id} | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

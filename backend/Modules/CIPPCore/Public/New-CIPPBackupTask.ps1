@@ -1,4 +1,13 @@
 function New-CIPPBackupTask {
+    <#
+    .NOTES
+        Permission: Graph | GET /admin/teams/telephoneNumberManagement/numberAssignments | Delegated | TeamsTelephoneNumber.Read.All | TeamsTelephoneNumber.ReadWrite.All
+        Permission: Graph | GET /conditionalAccess/policies | Application | Policy.Read.All
+        Permission: Graph | GET /deviceAppManagement/managedAppPolicies | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/deviceCompliancePolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $Task,

@@ -6,6 +6,12 @@ Function Invoke-ListTeams {
         Teams.Group.Read
     .DESCRIPTION
         Lists Microsoft Teams teams for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
+    .NOTES
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /teams/{id} | Application | TeamSettings.Read.Group | TeamSettings.ReadWrite.Group, Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadWrite.All, Team.ReadBasic.All, TeamSettings.Read.All, TeamSettings.ReadWrite.All
+        Permission: Graph | GET /teams/{id}/Channels | Application | ChannelSettings.Read.Group | Channel.ReadBasic.All, ChannelSettings.Read.All, ChannelSettings.ReadWrite.All, ChannelSettings.ReadWrite.Group, Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadWrite.All
+        Permission: Graph | GET /teams/{id}/installedApps | Application | TeamsAppInstallation.Read.Group | TeamsAppInstallation.ReadWriteSelfForTeam.All, Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadWrite.All, TeamsAppInstallation.ManageSelectedForTeam.All, TeamsAppInstallation.Read.All, TeamsAppInstallation.ReadForTeam.All, TeamsAppInstallation.ReadWriteAndConsentForTeam.All, TeamsAppInstallation.ReadWriteAndConsentSelfForTeam.All, TeamsAppInstallation.ReadWriteForTeam.All
+        Permission: Graph | GET /teams/{id}/Members | Application | TeamMember.Read.Group | TeamMember.ReadWrite.All, TeamMember.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

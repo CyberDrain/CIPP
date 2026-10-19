@@ -4,6 +4,9 @@ Function Invoke-ExecGDAPRemoveGArole {
         Entrypoint,AnyTenant
     .ROLE
         Tenant.Relationship.ReadWrite
+    .NOTES
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships/{id} | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | PATCH /tenantRelationships/delegatedAdminRelationships/{id} | Delegated | DelegatedAdminRelationship.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

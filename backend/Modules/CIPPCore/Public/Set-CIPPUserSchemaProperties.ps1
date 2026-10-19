@@ -15,6 +15,8 @@ function Set-CIPPUserSchemaProperties {
     .PARAMETER Properties
     Hashtable of properties to set
 
+    .NOTES
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     Param(

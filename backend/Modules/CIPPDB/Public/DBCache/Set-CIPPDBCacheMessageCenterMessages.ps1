@@ -8,6 +8,8 @@ function Set-CIPPDBCacheMessageCenterMessages {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /admin/serviceAnnouncement/messages | Delegated | ServiceMessage.Read.All
     #>
     [CmdletBinding()]
     param(

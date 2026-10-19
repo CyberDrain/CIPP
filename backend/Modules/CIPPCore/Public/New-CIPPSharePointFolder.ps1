@@ -16,6 +16,10 @@ function New-CIPPSharePointFolder {
 
     .PARAMETER TenantFilter
     The tenant the Team belongs to
+    .NOTES
+        Permission: Graph | GET /groups/{id}/drive | Application | Files.Read.All | Files.ReadWrite.All
+        Permission: Graph | GET /groups/{id}/drive/root:/{id} | Application | Files.Read.All | Files.ReadWrite.All, Group.Read.All, Group.ReadWrite.All, Sites.Read.All, Sites.ReadWrite.All
+        Permission: Graph | POST /groups/{id}/drive/root/children | Application | Files.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

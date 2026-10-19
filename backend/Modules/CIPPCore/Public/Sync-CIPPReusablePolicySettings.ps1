@@ -1,4 +1,9 @@
 function Sync-CIPPReusablePolicySettings {
+    <#
+    .NOTES
+        Permission: Graph | GET /deviceManagement/reusablePolicySettings | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/reusablePolicySettings | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
+    #>
     param(
         [psobject]$TemplateInfo,
         [string]$Tenant

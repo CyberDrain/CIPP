@@ -1,4 +1,8 @@
 function Set-CIPPDBCacheTeamsActivity {
+    <#
+    .NOTES
+        Permission: Graph | GET /reports/getTeamsUserActivityUserDetail(period='D30') | Delegated | Reports.Read.All
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]

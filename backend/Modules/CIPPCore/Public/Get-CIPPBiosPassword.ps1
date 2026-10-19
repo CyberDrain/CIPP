@@ -29,6 +29,8 @@
 
     Or a string message if no password is found.
 
+.NOTES
+    Permission: Graph | GET /deviceManagement/hardwarePasswordDetails | Delegated | DeviceManagementManagedDevices.PrivilegedOperations.All
 #>
 
 function Get-CIPPBiosPassword {

@@ -8,6 +8,8 @@ function Set-CIPPDBCacheNamePronunciation {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /admin/people/namePronunciation | Delegated | PeopleSettings.Read.All | PeopleSettings.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

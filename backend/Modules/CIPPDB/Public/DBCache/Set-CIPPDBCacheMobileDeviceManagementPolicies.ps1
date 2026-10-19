@@ -13,6 +13,8 @@ function Set-CIPPDBCacheMobileDeviceManagementPolicies {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000 | Delegated | Policy.Read.All | Policy.ReadWrite.MobilityManagement
     #>
     [CmdletBinding()]
     param(

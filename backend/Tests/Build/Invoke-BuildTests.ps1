@@ -20,7 +20,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $toolsRoot = Join-Path (Split-Path -Parent $repoRoot) 'build' 'tools'
 
-$generators = @('build-function-parameters.ps1', 'build-openapi.ps1') |
+$generators = @('build-function-parameters.ps1', 'build-openapi.ps1', 'Update-PermissionAnnotations.ps1') |
     ForEach-Object { Join-Path $toolsRoot $_ }
 
 $missing = @($generators | Where-Object { -not (Test-Path $_) })

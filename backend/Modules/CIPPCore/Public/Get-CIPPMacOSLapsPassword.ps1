@@ -8,6 +8,8 @@ function Get-CIPPMacOSLapsPassword {
         admin account have one. Graph does not return the account name; it is set in the ADE profile.
     .PARAMETER Device
         The Intune managedDevice ID, not the Entra device ID used by Windows LAPS.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/managedDevices/{id}/retrieveMacOSManagedDeviceLocalAdminAccountDetail | Delegated | DeviceManagementManagedDevices.PrivilegedOperations.All
     #>
     [CmdletBinding()]
     param (

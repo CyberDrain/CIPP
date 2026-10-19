@@ -32,6 +32,8 @@ function Invoke-CIPPStandardMDMEnrollmentDuringRegistration {
             "MICROSOFTINTUNEPLAN1"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000 | Delegated | Policy.Read.All | Policy.ReadWrite.MobilityManagement
+        Permission: Graph | PATCH /policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000 | Delegated | Policy.ReadWrite.MobilityManagement
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

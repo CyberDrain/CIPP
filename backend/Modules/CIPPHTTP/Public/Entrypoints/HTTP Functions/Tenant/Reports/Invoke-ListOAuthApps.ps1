@@ -6,6 +6,9 @@ function Invoke-ListOAuthApps {
         Tenant.Application.Read
     .DESCRIPTION
         Lists OAuth application consent grants and permissions for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
+    .NOTES
+        Permission: Graph | GET /oauth2PermissionGrants | Delegated | Directory.Read.All | DelegatedPermissionGrant.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals | Delegated | Application.Read.All | Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

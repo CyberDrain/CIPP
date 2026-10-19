@@ -14,6 +14,8 @@ function Set-CIPPDBCacheDeviceEnrollmentConfigurations {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /deviceManagement/deviceEnrollmentConfigurations | Application | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

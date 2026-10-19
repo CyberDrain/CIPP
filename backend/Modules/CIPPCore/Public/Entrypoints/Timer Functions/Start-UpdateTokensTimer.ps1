@@ -2,6 +2,11 @@ function Start-UpdateTokensTimer {
     <#
     .SYNOPSIS
     Start the Update Tokens Timer
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
+        Permission: Graph | POST /applications/{id}/addPassword | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | POST /applications/{id}/removePassword | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
     #>
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '')]
     [CmdletBinding(SupportsShouldProcess = $true)]

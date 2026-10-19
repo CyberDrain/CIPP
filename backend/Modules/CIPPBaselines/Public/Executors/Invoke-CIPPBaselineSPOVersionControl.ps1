@@ -11,6 +11,8 @@ function Invoke-CIPPBaselineSPOVersionControl {
         per-site fan-out that continues past individual site failures, as the classic did.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /sites/getAllSites | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

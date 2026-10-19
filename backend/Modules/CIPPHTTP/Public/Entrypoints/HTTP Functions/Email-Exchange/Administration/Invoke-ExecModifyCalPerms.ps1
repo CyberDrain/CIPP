@@ -4,6 +4,8 @@ function Invoke-ExecModifyCalPerms {
         Entrypoint
     .ROLE
         Exchange.Mailbox.ReadWrite
+    .NOTES
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

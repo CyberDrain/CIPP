@@ -26,6 +26,9 @@ function Remove-CIPPBecSharingLinks {
         Logging API name.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | DELETE /drives/{id}/items/{id}/permissions/{id} | Application | Files.ReadWrite.All | Sites.ReadWrite.All
+        Permission: Graph | GET /shares/{id}/driveItem | Application | Files.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

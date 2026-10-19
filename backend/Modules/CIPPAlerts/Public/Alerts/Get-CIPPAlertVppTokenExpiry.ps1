@@ -2,6 +2,8 @@ function Get-CIPPAlertVppTokenExpiry {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/vppTokens | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementApps.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

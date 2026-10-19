@@ -55,6 +55,9 @@ function Compare-CIPPIntuneAssignments {
             Reasons              - one readable line per difference
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/assignmentFilters | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
     #>
     param(
         [object[]]$ExistingAssignments,

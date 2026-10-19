@@ -155,9 +155,9 @@ BeforeAll {
         . $HelperFile.FullName
     }
     . (Join-Path $RepoRoot 'Modules/CIPPDB/Public/DBCache/Set-CIPPDBCacheSharePointSharingLinks.ps1')
-    . (Join-Path $RepoRoot 'Modules/CIPPActivityTriggers/Public/Entrypoints/Activity Triggers/SharePoint Sharing/Push-DBCacheSharePointSiteSharingLinks.ps1')
-    . (Join-Path $RepoRoot 'Modules/CIPPActivityTriggers/Public/Entrypoints/Activity Triggers/SharePoint Sharing/Push-StoreSharePointSharingLinks.ps1')
-    . (Join-Path $RepoRoot 'Modules/CIPPActivityTriggers/Public/Entrypoints/Activity Triggers/SharePoint Sharing/Push-SharingLinksDispatchDrives.ps1')
+    foreach ($HelperFile in (Get-ChildItem (Join-Path $RepoRoot 'Modules/CIPPActivityTriggers/Public/Entrypoints/Activity Triggers/SharePoint Sharing') -Filter '*.ps1')) {
+        . $HelperFile.FullName
+    }
 
     # --- shared builders ------------------------------------------------------------------------
     function New-SiteItem {

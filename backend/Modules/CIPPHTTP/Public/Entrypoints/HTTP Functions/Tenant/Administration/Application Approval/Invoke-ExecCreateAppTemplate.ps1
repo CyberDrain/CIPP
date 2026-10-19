@@ -6,6 +6,15 @@ function Invoke-ExecCreateAppTemplate {
         Entrypoint
     .ROLE
         Tenant.Application.ReadWrite
+    .NOTES
+        Permission: Graph | GET /applications | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | POST /applications | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | POST /servicePrincipals | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}')/appRoleAssignments | Application | Application.Read.All | Application.ReadWrite.All, Application.ReadWrite.OwnedBy, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}')/oauth2PermissionGrants | Application | Directory.Read.All | DelegatedPermissionGrant.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals/{id} | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

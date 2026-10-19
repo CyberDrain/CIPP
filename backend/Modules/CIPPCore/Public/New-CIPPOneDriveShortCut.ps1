@@ -1,5 +1,14 @@
 
 function New-CIPPOneDriveShortCut {
+    <#
+    .NOTES
+        Permission: Graph | GET /drives/{id}/root | Application | Files.Read.All | Files.ReadWrite.All, Group.Read.All, Group.ReadWrite.All, Sites.Read.All, Sites.ReadWrite.All
+        Permission: Graph | GET /drives/{id}/root:/{id} | Application | Files.Read.All | Files.ReadWrite.All, Group.Read.All, Group.ReadWrite.All, Sites.Read.All, Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}:{id} | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/drive | Application | Files.Read.All | Files.ReadWrite.All
+        Permission: Graph | GET /sites/{id}/drives | Application | Files.Read.All | Files.ReadWrite.All, Sites.Read.All, Sites.ReadWrite.All
+        Permission: Graph | PATCH /users/{id}/drive/items/{id} | Application | Files.ReadWrite.All | Sites.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $Username,

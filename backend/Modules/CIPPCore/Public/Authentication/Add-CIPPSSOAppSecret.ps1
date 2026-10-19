@@ -21,6 +21,10 @@ function Add-CIPPSSOAppSecret {
         Display name to set on the password credential. Defaults to 'CIPP-SSO-Secret'.
     .PARAMETER MaxRetries
         Number of secret-creation attempts before giving up. Defaults to 6.
+    .NOTES
+        Permission: Graph | GET /applications/{id} | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /applications/{id}/addPassword | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /policies/defaultAppManagementPolicy | Application | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
     #>
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '')]
     [CmdletBinding()]

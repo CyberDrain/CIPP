@@ -4,6 +4,9 @@ function Invoke-ExecAddTenant {
         Entrypoint,AnyTenant
     .ROLE
         CIPP.AppSettings.ReadWrite
+    .NOTES
+        Permission: Graph | GET /domains | Delegated | Domain.Read.All | Domain.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /organization | Delegated | DeviceManagementServiceConfig.Read.All | Organization.Read.All, Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

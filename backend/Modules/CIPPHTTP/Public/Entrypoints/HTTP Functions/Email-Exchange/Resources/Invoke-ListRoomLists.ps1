@@ -6,6 +6,8 @@ Function Invoke-ListRoomLists {
         Exchange.Room.Read
     .DESCRIPTION
         Lists room list distribution groups and their members in Exchange Online.
+    .NOTES
+        Permission: Graph | POST /directoryObjects/getByIds | Delegated | Directory.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

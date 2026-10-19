@@ -12,6 +12,8 @@ function Set-CIPPDBCacheMailboxes {
     .PARAMETER Types
         Optional array of types to cache. Valid values: 'All', 'Permissions', 'CalendarPermissions', 'Rules'
         If not specified, defaults to 'All' which caches all types.
+    .NOTES
+        Permission: Graph | GET /reports/getMailboxUsageDetail(period='D7') | Delegated | Reports.Read.All
     #>
     [CmdletBinding()]
     param(

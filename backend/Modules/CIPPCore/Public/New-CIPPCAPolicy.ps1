@@ -1,4 +1,21 @@
 function New-CIPPCAPolicy {
+    <#
+    .NOTES
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /identity/conditionalAccess/authenticationContextClassReferences | Application | AuthenticationContext.Read.All | AuthenticationContext.ReadWrite.All, Policy.Read.ConditionalAccess, Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | POST /identity/conditionalAccess/authenticationContextClassReferences | Application | AuthenticationContext.ReadWrite.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations | Application | Policy.Read.All
+        Permission: Graph | POST /identity/conditionalAccess/namedLocations | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations/{id} | Application | Policy.Read.All
+        Permission: Graph | PATCH /identity/conditionalAccess/namedLocations/{id} | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /identity/conditionalAccess/policies | Application | Policy.Read.All
+        Permission: Graph | POST /identity/conditionalAccess/policies | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | PATCH /identity/conditionalAccess/policies/{id} | Application | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /policies/identitySecurityDefaultsEnforcementPolicy | Application | Policy.Read.All
+        Permission: Graph | PATCH /policies/identitySecurityDefaultsEnforcementPolicy | Application | Policy.Read.All
+        Permission: Graph | GET /servicePrincipals | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
+        Permission: Graph | GET /users | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $RawJSON,

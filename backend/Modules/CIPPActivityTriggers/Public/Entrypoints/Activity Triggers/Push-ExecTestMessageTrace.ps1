@@ -7,6 +7,9 @@ function Push-ExecTestMessageTrace {
         evaluating the rules, and the dropped message's trace carries one event per rule that acted.
         Waits for that trace to appear, reads its detail, lines it up against every mail flow rule in
         the tenant, and records the verdict on the async deployment job so the page gets it live.
+    .NOTES
+        Permission: Graph | GET /admin/exchange/tracing/messageTraces | Application | ExchangeMessageTrace.Read.All
+        Permission: Graph | GET /admin/exchange/tracing/messageTraces/{id}/getDetailsByRecipient(recipientAddress='{id}') | Application | ExchangeMessageTrace.Read.All
     #>
     param($Item)
     $Item = $Item | ConvertTo-Json -Depth 10 | ConvertFrom-Json

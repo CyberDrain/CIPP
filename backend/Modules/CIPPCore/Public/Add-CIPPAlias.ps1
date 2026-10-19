@@ -1,4 +1,8 @@
 function Add-CIPPAlias {
+    <#
+    .NOTES
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $User,

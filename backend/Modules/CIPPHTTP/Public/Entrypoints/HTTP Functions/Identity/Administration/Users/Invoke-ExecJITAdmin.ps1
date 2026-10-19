@@ -7,6 +7,10 @@ function Invoke-ExecJITAdmin {
 
     .DESCRIPTION
         Just-in-time admin management API endpoint. This function can create users, add roles, remove roles, delete, or disable a user.
+    .NOTES
+        Permission: Graph | GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/TemporaryAccessPass | Delegated | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /users/{id}@{id}/authentication/temporaryAccessPassMethods | Delegated | UserAuthenticationMethod.ReadWrite.All | UserAuthenticationMethod.Read, UserAuthenticationMethod.Read.All, UserAuthenticationMethod.ReadWrite, UserAuthMethod-TAP.Read.All, UserAuthMethod-TAP.ReadWrite, UserAuthMethod-TAP.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

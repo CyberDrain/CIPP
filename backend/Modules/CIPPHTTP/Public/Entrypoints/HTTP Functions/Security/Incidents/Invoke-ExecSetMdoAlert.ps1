@@ -4,6 +4,8 @@ function Invoke-ExecSetMdoAlert {
         Entrypoint
     .ROLE
         Security.Incident.ReadWrite
+    .NOTES
+        Permission: Graph | PATCH /security/alerts_v2/{id} | Application | SecurityAlert.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

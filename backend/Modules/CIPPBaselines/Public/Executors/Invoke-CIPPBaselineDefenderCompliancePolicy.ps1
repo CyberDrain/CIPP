@@ -9,6 +9,9 @@ function Invoke-CIPPBaselineDefenderCompliancePolicy {
         classic wrote it.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /deviceManagement/mobileThreatDefenseConnectors | Application | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/mobileThreatDefenseConnectors/fc780465-2017-40d4-a0c5-307022471b92 | Application | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

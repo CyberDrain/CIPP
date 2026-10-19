@@ -12,6 +12,14 @@ function Invoke-CIPPBaselineAppleEnrollmentTypeProfile {
         a snapshot another remediation may already have changed.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/appleUserInitiatedEnrollmentProfiles | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/appleUserInitiatedEnrollmentProfiles | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/appleUserInitiatedEnrollmentProfiles/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/appleUserInitiatedEnrollmentProfiles/{id}/assignments | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/appleUserInitiatedEnrollmentProfiles/{id}/assignments | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/appleUserInitiatedEnrollmentProfiles/{id}/assignments/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
     #>
     [CmdletBinding()]
     param(

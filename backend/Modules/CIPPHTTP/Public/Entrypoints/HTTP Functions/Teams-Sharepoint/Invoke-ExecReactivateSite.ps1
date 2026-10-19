@@ -13,6 +13,9 @@ function Invoke-ExecReactivateSite {
         Reactivation is asynchronous (can take up to 24 hours) and, for fully-archived
         accounts, may incur Microsoft 365 Archive charges and require Unlicensed OneDrive
         billing to be enabled on the tenant.
+    .NOTES
+        Permission: Graph | POST /sites/{id},{id},{id}/unarchive | Application | Sites.Archive.All | Sites.FullControl.All
+        Permission: Graph | GET /sites/{id}:/{id} | Application | Sites.Read.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

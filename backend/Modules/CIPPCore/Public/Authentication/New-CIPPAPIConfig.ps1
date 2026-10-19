@@ -1,4 +1,14 @@
 function New-CIPPAPIConfig {
+    <#
+    .NOTES
+        Permission: Graph | POST /applications | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
+        Permission: Graph | GET /applications(appid='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
+        Permission: Graph | POST /applications/{id}/addPassword | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /policies/defaultAppManagementPolicy | Application | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | POST /serviceprincipals | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All, Directory.ReadWrite.All
+        Permission: Graph | GET /servicePrincipals(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
 
     [CmdletBinding(SupportsShouldProcess)]
     param (

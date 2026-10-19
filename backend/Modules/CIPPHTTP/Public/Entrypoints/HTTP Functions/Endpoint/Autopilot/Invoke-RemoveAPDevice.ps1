@@ -4,6 +4,9 @@ Function Invoke-RemoveAPDevice {
         Entrypoint
     .ROLE
         Endpoint.Autopilot.ReadWrite
+    .NOTES
+        Permission: Graph | DELETE /deviceManagement/windowsAutopilotDeviceIdentities/{id} | Delegated | DeviceManagementServiceConfig.ReadWrite.All
+        Permission: Graph | POST /deviceManagement/windowsAutopilotSettings/sync | Delegated | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

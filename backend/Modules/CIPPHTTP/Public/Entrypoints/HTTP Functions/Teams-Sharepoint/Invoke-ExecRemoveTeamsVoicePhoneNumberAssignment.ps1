@@ -6,6 +6,8 @@ Function Invoke-ExecRemoveTeamsVoicePhoneNumberAssignment {
         Teams.Voice.ReadWrite
     .DESCRIPTION
         Unassigns a phone number from a user or resource account via the Teams administration Graph API.
+    .NOTES
+        Permission: Graph | POST /admin/teams/telephoneNumberManagement/numberAssignments/unassignNumber | Delegated | TeamsTelephoneNumber.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

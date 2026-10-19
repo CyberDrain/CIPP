@@ -1,4 +1,11 @@
 function Remove-CIPPGroups {
+    <#
+    .NOTES
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | DELETE /groups/{id}/members/{id}/$ref | Application | GroupMember.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id}/memberOf/microsoft.graph.group | Application | User.Read.All | Directory.ReadWrite.All, Group.ReadBasic.All, GroupMember.ReadBasic.All
+    #>
     [CmdletBinding()]
     param(
         $Username,

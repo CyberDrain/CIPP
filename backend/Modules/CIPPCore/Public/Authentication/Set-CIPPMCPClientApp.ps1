@@ -20,6 +20,9 @@ function Set-CIPPMCPClientApp {
         Application (client) ID of the MCPAllowed API client to configure as an MCP OAuth client.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /applications(appId='{id}') | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /applications/{id} | Application | Application.ReadWrite.OwnedBy | Application.ReadWrite.All
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(

@@ -2,6 +2,8 @@ function Get-CIPPAlertLongLivedAppCredentials {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /applications | Application | Application.Read.All | Application.ReadWrite.OwnedBy, Application.ReadWrite.All, Directory.Read.All
     #>
     [CmdletBinding()]
     Param (

@@ -1,4 +1,9 @@
 function Set-CIPPGroupLicense {
+    <#
+    .NOTES
+        Permission: Graph | GET /groups/{id} | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group-XTenantIdentitySync.Read.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | POST /groups/{id}/assignLicense | Delegated | LicenseAssignment.ReadWrite.All | Directory.ReadWrite.All, Group.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)][string]$GroupId,

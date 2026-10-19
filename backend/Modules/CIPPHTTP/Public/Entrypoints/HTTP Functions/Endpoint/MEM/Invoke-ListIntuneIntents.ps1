@@ -6,6 +6,8 @@ Function Invoke-ListIntuneIntents {
         Endpoint.MEM.Read
     .DESCRIPTION
         Lists Intune security baseline and endpoint protection intents (legacy template-based policies) with their settings and categories.
+    .NOTES
+        Permission: Graph | GET /deviceManagement/Intents | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

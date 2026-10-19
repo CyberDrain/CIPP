@@ -15,6 +15,8 @@ function Get-CippReportTenantName {
         thing, and finally to the tenant filter itself, so a report always has something to say.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /organization | Application | DeviceManagementServiceConfig.Read.All | Directory.Read.All, Organization.ReadWrite.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

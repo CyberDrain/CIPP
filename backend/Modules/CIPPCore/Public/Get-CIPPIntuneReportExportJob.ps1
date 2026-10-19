@@ -4,6 +4,8 @@ function Get-CIPPIntuneReportExportJob {
         Returns a tenant's completed Intune report export, or nothing if it is not ready. Never waits.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /deviceManagement/reports/exportJobs/{id} | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementApps.Read.All, DeviceManagementApps.ReadWrite.All, DeviceManagementManagedDevices.Read.All, DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

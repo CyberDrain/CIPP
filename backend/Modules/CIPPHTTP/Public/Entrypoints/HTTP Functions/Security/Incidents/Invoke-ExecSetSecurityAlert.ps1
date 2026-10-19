@@ -4,6 +4,8 @@ Function Invoke-ExecSetSecurityAlert {
         Entrypoint
     .ROLE
         Security.Alert.ReadWrite
+    .NOTES
+        Permission: Graph | PATCH /security/alerts_v2/{id} | Delegated | SecurityAlert.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

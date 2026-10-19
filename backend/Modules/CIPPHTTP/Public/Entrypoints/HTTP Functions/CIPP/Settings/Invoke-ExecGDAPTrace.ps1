@@ -39,6 +39,13 @@ function Invoke-ExecGDAPTrace {
         Entrypoint
     .ROLE
         CIPP.AppSettings.Read
+    .NOTES
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /groups/{id}/members | Application | GroupMember.ReadBasic.All | Directory.Read.All, Group.Read.All, Group.ReadBasic.All, Group.ReadWrite.All, GroupMember.Read.All, GroupMember.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | GET /tenantRelationships/delegatedAdminRelationships/{id}/accessAssignments | Delegated | DelegatedAdminRelationship.Read.All | DelegatedAdminRelationship.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id}/transitiveMemberOf | Application | User.Read.All | Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadBasic.All, GroupMember.Read.All, GroupMember.ReadBasic.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -212,104 +219,6 @@ function Invoke-ExecGDAPTrace {
             }
         } catch {
             Write-LogMessage -Headers $Headers -API $APIName -message "Could not get user group memberships: $($_.Exception.Message)" -sev 'Warning'
-        }
-
-        # ============================================================================
-        # HELPER FUNCTION: Find complete transitive path from user to target group
-        # ============================================================================
-        # This recursive function finds the complete path through nested groups,
-        # handling any depth of nesting (User → Group A → Group B → ... → Target Group)
-        #
-        # Examples of paths it can trace:
-        # - User → Target Group (direct membership)
-        # - User → Group A → Target Group (2 levels)
-        # - User → Group A → Group B → Target Group (3 levels)
-        # - User → Group A → Group B → Group C → Target Group (4 levels)
-        # - And so on, up to MaxDepth (10 levels)
-        #
-        # The function recursively traverses the group membership hierarchy by:
-        # 1. Checking if user is directly in the target group
-        # 2. If not, checking each group that is a member of the target group
-        # 3. Recursively checking if the user is in those intermediate groups
-        # 4. Building the complete path from user to target group
-        # ============================================================================
-        function Find-TransitiveGroupPath {
-            param(
-                [string]$UserId,
-                [string]$TargetGroupId,
-                [string]$TargetGroupName,
-                [hashtable]$VisitedGroups = @{},
-                [int]$MaxDepth = 10
-            )
-
-            # Prevent infinite loops and excessive depth
-            if ($VisitedGroups.ContainsKey($TargetGroupId) -or $MaxDepth -le 0) {
-                return $null
-            }
-            $VisitedGroups[$TargetGroupId] = $true
-
-            try {
-                # Check if user is directly in target group
-                $DirectMembers = New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/groups/$TargetGroupId/members?`$select=id,displayName,userPrincipalName" -tenantid $env:TenantID -NoAuthCheck $true -AsApp $true -ErrorAction SilentlyContinue
-                if ($DirectMembers.value | Where-Object { $_.id -eq $UserId }) {
-                    # User is directly in target group
-                    return @(
-                        @{
-                            sequence        = 0
-                            groupId         = $TargetGroupId
-                            groupName       = $TargetGroupName
-                            membershipType  = 'direct'
-                        }
-                    )
-                }
-
-                # User is not directly in target group, check nested groups
-                $GroupMembers = New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/groups/$TargetGroupId/members?`$select=id,displayName,@odata.type" -tenantid $env:TenantID -NoAuthCheck $true -AsApp $true -ErrorAction SilentlyContinue
-
-                if ($GroupMembers.value) {
-                    foreach ($Member in $GroupMembers.value) {
-                        # Only check groups, not users
-                        if ($Member.'@odata.type' -eq '#microsoft.graph.group') {
-                            $IntermediateGroupId = $Member.id
-                            $IntermediateGroupName = $Member.displayName
-
-                            # Recursively check if user is in this intermediate group
-                            $SubPath = Find-TransitiveGroupPath -UserId $UserId -TargetGroupId $IntermediateGroupId -TargetGroupName $IntermediateGroupName -VisitedGroups $VisitedGroups -MaxDepth ($MaxDepth - 1)
-
-                            if ($SubPath) {
-                                # Found a path! Build the complete chain
-                                $Path = @()
-                                $Sequence = 0
-
-                                # Add intermediate groups from sub-path
-                                foreach ($PathItem in $SubPath) {
-                                    $Path += @{
-                                        sequence        = $Sequence++
-                                        groupId         = $PathItem.groupId
-                                        groupName       = $PathItem.groupName
-                                        membershipType  = $PathItem.membershipType  # Preserve membership type from sub-path
-                                    }
-                                }
-
-                                # Add target group at the end (intermediate group is nested in target)
-                                $Path += @{
-                                    sequence        = $Sequence
-                                    groupId         = $TargetGroupId
-                                    groupName       = $TargetGroupName
-                                    membershipType  = 'nested'
-                                }
-
-                                return $Path
-                            }
-                        }
-                    }
-                }
-            } catch {
-                # If we can't check (permissions, API error), return null
-                # Silently fail - errors are expected when checking group memberships
-            }
-
-            return $null
         }
 
         # ============================================================================
@@ -544,7 +453,7 @@ function Invoke-ExecGDAPTrace {
                         # nested, try to find the path through intermediate groups.
                         # ============================================================
                         $IsPathComplete = $true
-                        # Path will be determined by Find-TransitiveGroupPath function
+                        # Path will be determined by Find-CIPPGDAPTransitiveGroupPath function
                         # Initialize empty - will be populated below
                         $MembershipPath = @()
 
@@ -558,7 +467,7 @@ function Invoke-ExecGDAPTrace {
                         # ============================================================
                         try {
                             # Use recursive function to find the complete path
-                            $FullPath = Find-TransitiveGroupPath -UserId $UserId -TargetGroupId $GroupId -TargetGroupName $Group.displayName
+                            $FullPath = Find-CIPPGDAPTransitiveGroupPath -UserId $UserId -TargetGroupId $GroupId -TargetGroupName $Group.displayName
 
                             if ($FullPath) {
                                 # Found the complete path - use it

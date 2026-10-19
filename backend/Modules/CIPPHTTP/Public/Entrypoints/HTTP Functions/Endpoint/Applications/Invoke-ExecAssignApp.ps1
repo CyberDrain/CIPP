@@ -4,6 +4,8 @@ function Invoke-ExecAssignApp {
         Entrypoint
     .ROLE
         Endpoint.Application.ReadWrite
+    .NOTES
+        Permission: Graph | GET /deviceAppManagement/mobileApps/{id} | Delegated | DeviceManagementApps.Read.All | DeviceManagementApps.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

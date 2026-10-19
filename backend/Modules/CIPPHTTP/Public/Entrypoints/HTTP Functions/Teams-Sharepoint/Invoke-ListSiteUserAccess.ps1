@@ -28,6 +28,9 @@ function Invoke-ListSiteUserAccess {
         Limited Access is reported but flagged, because on its own it grants no ability to open
         or list anything - SharePoint adds it so a user can traverse to an item they were given
         access to further down.
+    .NOTES
+        Permission: Graph | GET /users/{id} | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /users/{id}/transitiveMemberOf | Application | User.Read.All | Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, Group.ReadBasic.All, GroupMember.Read.All, GroupMember.ReadBasic.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

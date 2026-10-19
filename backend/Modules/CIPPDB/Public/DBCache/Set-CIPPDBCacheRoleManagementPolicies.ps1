@@ -31,6 +31,7 @@ function Set-CIPPDBCacheRoleManagementPolicies {
 
         A tenant that has never onboarded PIM returns "MissingProvider: The provider is missing"
         regardless of query or permissions. That is tenant state, not a bug in this call.
+        Permission: Graph | GET /policies/roleManagementPolicyAssignments | Application | RoleManagement.Read.All | RoleManagementPolicy.ReadWrite.AzureADGroup
     #>
     [CmdletBinding()]
     param(

@@ -11,6 +11,8 @@ function Set-CIPPDBCacheIntuneWindowsAutopilotDeploymentProfiles {
 
     .PARAMETER TenantFilter
         The tenant to cache Autopilot deployment profiles for
+    .NOTES
+        Permission: Graph | GET /deviceManagement/windowsAutopilotDeploymentProfiles | Delegated | DeviceManagementServiceConfig.Read.All | DeviceManagementServiceConfig.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

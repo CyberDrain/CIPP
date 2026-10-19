@@ -2,6 +2,8 @@ function Get-CIPPAlertSecDefaultsUpsell {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /policies/identitySecurityDefaultsEnforcementPolicy | Delegated | Policy.Read.All
     #>
     [CmdletBinding()]
     param (

@@ -9,6 +9,8 @@ function Invoke-CIPPBaselineAssignmentFilterTemplate {
         update; displayName is the identity and is never rewritten.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | PATCH /deviceManagement/assignmentFilters/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

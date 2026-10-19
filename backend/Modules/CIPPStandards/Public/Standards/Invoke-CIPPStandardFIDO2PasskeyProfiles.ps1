@@ -29,6 +29,8 @@ function Invoke-CIPPStandardFIDO2PasskeyProfiles {
             {"report":false,"warn":false,"remediate":false}
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/authenticationmethodspolicy/authenticationMethodConfigurations/Fido2 | Application | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod
+        Permission: Graph | PATCH /policies/authenticationmethodspolicy/authenticationMethodConfigurations/Fido2 | Application | Policy.ReadWrite.AuthenticationMethod
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

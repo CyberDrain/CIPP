@@ -1,4 +1,11 @@
 function New-CIPPCATemplate {
+    <#
+    .NOTES
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | GET /identity/conditionalAccess/authenticationContextClassReferences | Delegated | AuthenticationContext.Read.All | AuthenticationContext.ReadWrite.All, Policy.Read.ConditionalAccess, Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /identity/conditionalAccess/namedLocations | Delegated | Policy.Read.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $TenantFilter,

@@ -1,4 +1,11 @@
 function Test-CIPPAccessTenant {
+    <#
+    .NOTES
+        Permission: Graph | GET /me | Delegated | User.Read | User.ReadWrite, User.ReadBasic.All, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | GET /me/transitiveMemberOf | Delegated | User.Read | Directory.Read.All, Directory.ReadWrite.All, Group.Read.All, GroupMember.Read.All, User.Read.All
+        Permission: Graph | GET /roleManagement/directory/roleAssignments | Delegated | RoleManagement.Read.Directory | RoleManagement.Read.All, RoleManagement.ReadWrite.Exchange
+        Permission: Graph | GET /roleManagement/exchange/roleDefinitions | Delegated | RoleManagement.Read.Exchange | RoleManagement.Read.All, RoleManagement.ReadWrite.Exchange
+    #>
     [CmdletBinding()]
     param (
         $Tenant = 'AllTenants',

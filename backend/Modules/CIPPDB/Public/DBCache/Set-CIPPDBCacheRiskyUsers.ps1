@@ -8,6 +8,8 @@ function Set-CIPPDBCacheRiskyUsers {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /identityProtection/riskyUsers | Delegated | IdentityRiskyUser.Read.All
     #>
     [CmdletBinding()]
     param(

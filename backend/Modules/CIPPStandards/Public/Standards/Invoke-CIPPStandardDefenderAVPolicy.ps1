@@ -55,6 +55,9 @@ function Invoke-CIPPStandardDefenderAVPolicy {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /deviceManagement/configurationPolicies | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | DELETE /deviceManagement/configurationPolicies/{id} | Delegated | DeviceManagementConfiguration.ReadWrite.All | DeviceManagementEndpointSecurity.ReadWrite.All
+        Permission: Graph | GET /deviceManagement/configurationPolicies/{id} | Delegated | DeviceManagementConfiguration.Read.All | DeviceManagementConfiguration.ReadWrite.All, DeviceManagementEndpointSecurity.Read.All, DeviceManagementEndpointSecurity.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

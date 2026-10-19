@@ -33,6 +33,9 @@ function Invoke-CIPPStandardActivityBasedTimeout {
             "CIS"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/activityBasedTimeoutPolicies | Delegated | Policy.Read.All | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | POST /policies/activityBasedTimeoutPolicies | Delegated | Policy.ReadWrite.ApplicationConfiguration
+        Permission: Graph | PATCH /policies/activityBasedTimeoutPolicies/{id} | Delegated | Policy.ReadWrite.ApplicationConfiguration
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

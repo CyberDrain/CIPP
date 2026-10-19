@@ -4,6 +4,10 @@ function Invoke-ExecHVEUser {
         Entrypoint
     .ROLE
         Exchange.Mailbox.ReadWrite
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/policies | Delegated | Policy.Read.All
+        Permission: Graph | PATCH /identity/conditionalAccess/policies/{id} | Delegated | Policy.Read.All | Policy.ReadWrite.ConditionalAccess
+        Permission: Graph | GET /policies/identitySecurityDefaultsEnforcementPolicy | Delegated | Policy.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -2,6 +2,10 @@ function Get-CIPPAlertMFAAdmins {
     <#
     .FUNCTIONALITY
         Entrypoint
+    .NOTES
+        Permission: Graph | GET /identity/conditionalAccess/policies | Delegated | Policy.Read.All
+        Permission: Graph | GET /reports/authenticationMethods/userRegistrationDetails | Application | AuditLog.Read.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

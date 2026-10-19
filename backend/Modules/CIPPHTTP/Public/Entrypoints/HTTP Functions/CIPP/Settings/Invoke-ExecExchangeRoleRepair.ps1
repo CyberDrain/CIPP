@@ -4,6 +4,9 @@ function Invoke-ExecExchangeRoleRepair {
         Entrypoint
     .ROLE
         CIPP.AppSettings.ReadWrite
+    .NOTES
+        Permission: Graph | POST /roleManagement/exchange/roleAssignments | Application | RoleManagement.ReadWrite.Exchange
+        Permission: Graph | GET /roleManagement/exchange/roleDefinitions | Delegated | RoleManagement.Read.Exchange | RoleManagement.Read.All, RoleManagement.ReadWrite.Exchange
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

@@ -8,6 +8,9 @@ function Invoke-CIPPBaselineIntuneDeviceRetirementDays {
         exact branch, including its fixed 'Default Policy' rule body.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | POST /deviceManagement/managedDeviceCleanupRules | Delegated | DeviceManagementManagedDevices.ReadWrite.All
+        Permission: Graph | PATCH /deviceManagement/managedDeviceCleanupRules/{id} | Delegated | DeviceManagementManagedDevices.ReadWrite.All
     #>
     [CmdletBinding()]
     param(

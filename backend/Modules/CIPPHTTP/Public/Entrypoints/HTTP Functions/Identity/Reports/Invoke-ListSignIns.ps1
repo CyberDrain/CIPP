@@ -10,6 +10,8 @@ Function Invoke-ListSignIns {
         Deprecated: use ListGraphRequest with Endpoint=auditLogs/signIns instead, which supports $filter, $top,
         $orderby, and manualPagination with nextLink continuation. This endpoint returns at most one page of
         results and will be removed in a future release.
+    .NOTES
+        Permission: Graph | GET /auditLogs/signIns | Delegated | AuditLog.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

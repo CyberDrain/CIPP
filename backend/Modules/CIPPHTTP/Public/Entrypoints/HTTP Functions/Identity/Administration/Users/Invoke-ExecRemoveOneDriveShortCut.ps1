@@ -4,6 +4,8 @@ Function Invoke-ExecRemoveOneDriveShortCut {
         Entrypoint
     .ROLE
         Identity.User.ReadWrite
+    .NOTES
+        Permission: Graph | DELETE /users/{id}/drive/items/{id} | Application | Files.ReadWrite.All | Sites.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

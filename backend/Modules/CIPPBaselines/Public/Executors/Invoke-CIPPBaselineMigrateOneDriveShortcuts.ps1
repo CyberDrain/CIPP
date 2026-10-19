@@ -11,6 +11,8 @@ function Invoke-CIPPBaselineMigrateOneDriveShortcuts {
         resolve, it throws.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /users/{id}/drive/special/shortcuts | Application | Files.Read.All | Files.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Remediate, $TenantFilter, $Current)

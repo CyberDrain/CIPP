@@ -11,6 +11,9 @@ function Invoke-ListSharePointExternalUsers {
         Every entry is classified against Entra: 'Entra B2B' (live Entra guest), 'Orphaned B2B'
         (the Entra guest was deleted but SharePoint still references them) or 'SharePoint-only'
         (legacy email-authenticated guest that never had an Entra object).
+    .NOTES
+        Permission: Graph | GET /sites/getAllSites | Application | Sites.Read.All | Sites.ReadWrite.All
+        Permission: Graph | GET /users | Application | User.Read.All | User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

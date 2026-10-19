@@ -10,6 +10,10 @@ function Invoke-CIPPBaselineMDMScope {
         write.
     .FUNCTIONALITY
         Internal
+    .NOTES
+        Permission: Graph | GET /groups | Application | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | PATCH /policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000 | Delegated | Policy.ReadWrite.MobilityManagement
+        Permission: Graph | POST /policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000/includedGroups/$ref | Delegated | Policy.ReadWrite.MobilityManagement
     #>
     [CmdletBinding()]
     param(

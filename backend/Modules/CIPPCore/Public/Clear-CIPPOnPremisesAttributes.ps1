@@ -7,6 +7,10 @@ function Clear-CIPPOnPremisesAttributes {
         updated (Graph rejects synced ones). The values being cleared are written to the log entry as the
         rollback record Microsoft recommends keeping.
         https://learn.microsoft.com/entra/identity/hybrid/connect/tshoot-clear-on-premises-attributes
+    .NOTES
+        Permission: Graph | POST /directory/deletedItems/{id}/restore | Delegated | User.DeleteRestore.All | User.ReadWrite.All
+        Permission: Graph | GET /users/{id} | Delegated | User.ReadBasic.All | User.ReadWrite, User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | PATCH /users/{id} | Application | User.ReadWrite.All | Directory.ReadWrite.All
     #>
     [CmdletBinding()]
     param (

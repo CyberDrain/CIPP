@@ -18,6 +18,8 @@ function Set-CIPPDBCacheActiveUserDetail {
 
     .PARAMETER QueueId
         The queue ID to update with total tasks (optional)
+    .NOTES
+        Permission: Graph | GET /reports/getOffice365ActiveUserDetail(period='D180') | Delegated | Reports.Read.All
     #>
     [CmdletBinding()]
     param(

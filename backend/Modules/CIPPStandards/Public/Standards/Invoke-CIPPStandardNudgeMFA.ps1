@@ -32,6 +32,7 @@ function Invoke-CIPPStandardNudgeMFA {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/authenticationMethodsPolicy | Delegated | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod, Policy.Read.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
@@ -43,38 +44,6 @@ function Invoke-CIPPStandardNudgeMFA {
     # against the raw string) never matches; 'valueEq' compares against the object's .value property
     # and is supported by CippFormCondition. Changing state to a 'select' field would allow 'is', but
     # would break existing saved NudgeMFA templates that already store the object shape.
-
-    # Resolves comma separated group name entries to registration campaign targets
-    function Resolve-NudgeMFATarget {
-        param($Entries, $TenantFilter)
-        $Resolved = [System.Collections.Generic.List[hashtable]]::new()
-        $Failed = $false
-        foreach ($Entry in $Entries) {
-            try {
-                if ($Entry -match '^(all_users|allusers|all users)$') {
-                    $Resolved.Add(@{ id = 'all_users'; targetType = 'group' })
-                } else {
-                    $EscapedName = $Entry -replace "'", "''"
-                    $GroupFilter = [System.Uri]::EscapeDataString("startsWith(displayName,'$EscapedName')")
-                    $MatchedGroups = @(New-GraphGetRequest -uri "https://graph.microsoft.com/beta/groups?`$select=id,displayName&`$filter=$GroupFilter" -tenantid $TenantFilter)
-                    if ($MatchedGroups.Count -gt 0) {
-                        foreach ($Group in $MatchedGroups) { $Resolved.Add(@{ id = $Group.id; targetType = 'group' }) }
-                        if ($MatchedGroups.Count -gt 1) {
-                            Write-LogMessage -API 'Standards' -tenant $TenantFilter -message "NudgeMFA: Multiple groups matched '$Entry': $($MatchedGroups.displayName -join ', ')" -sev Info
-                        }
-                    } else {
-                        Write-LogMessage -API 'Standards' -tenant $TenantFilter -message "NudgeMFA: No group found matching '$Entry'" -sev Warning
-                        $Failed = $true
-                    }
-                }
-            } catch {
-                $ErrorMessage = Get-CippException -Exception $_
-                Write-LogMessage -API 'Standards' -tenant $TenantFilter -message "NudgeMFA: Failed to resolve target '$Entry'. Error: $($ErrorMessage.NormalizedError)" -sev Error -LogData $ErrorMessage
-                $Failed = $true
-            }
-        }
-        return [PSCustomObject]@{ Targets = $Resolved; Failed = $Failed }
-    }
 
     # Get state value using null-coalescing operator
     $State = $Settings.state.value ?? $Settings.state
@@ -103,7 +72,7 @@ function Invoke-CIPPStandardNudgeMFA {
     # $Remediation*Targets are passed to Set-CIPPRegistrationCampaign ($null = keep current targets);
     # $Desired*Targets are the fully resolved lists used for the compliance comparison below.
     if ($IncludeEntries.Count -gt 0) {
-        $IncludeResolution = Resolve-NudgeMFATarget -Entries $IncludeEntries -TenantFilter $Tenant
+        $IncludeResolution = Resolve-CIPPNudgeMFATarget -Entries $IncludeEntries -TenantFilter $Tenant
         if ($IncludeResolution.Failed -or $IncludeResolution.Targets.Count -eq 0) {
             Write-LogMessage -API 'Standards' -tenant $Tenant -message 'NudgeMFA: Could not resolve all include groups, skipping to avoid removing intended targets.' -sev Error
             return
@@ -120,7 +89,7 @@ function Invoke-CIPPStandardNudgeMFA {
 
     $ManageExcludeTargets = $ExcludeEntries.Count -gt 0
     if ($ManageExcludeTargets) {
-        $ExcludeResolution = Resolve-NudgeMFATarget -Entries $ExcludeEntries -TenantFilter $Tenant
+        $ExcludeResolution = Resolve-CIPPNudgeMFATarget -Entries $ExcludeEntries -TenantFilter $Tenant
         if ($ExcludeResolution.Failed) {
             Write-LogMessage -API 'Standards' -tenant $Tenant -message 'NudgeMFA: Could not resolve all exclude groups, skipping to avoid excluding the wrong groups.' -sev Error
             return

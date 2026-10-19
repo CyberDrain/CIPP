@@ -27,6 +27,8 @@ function Invoke-CIPPStandardPWcompanionAppAllowedState {
         RECOMMENDEDBY
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/microsoftAuthenticator | Delegated | Policy.Read.AuthenticationMethod | Policy.ReadWrite.AuthenticationMethod
+        Permission: Graph | PATCH /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/microsoftAuthenticator | Delegated | Policy.ReadWrite.AuthenticationMethod
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>

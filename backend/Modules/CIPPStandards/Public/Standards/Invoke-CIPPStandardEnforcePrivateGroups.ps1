@@ -36,6 +36,8 @@ function Invoke-CIPPStandardEnforcePrivateGroups {
             "ONEDRIVE_ENTERPRISE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | PATCH /groups/{id} | Delegated | Group.ManageProtection.All | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ReadWrite.All
     .LINK
         https://docs.cipp.app/user-documentation/tenant/standards/list-standards
     #>

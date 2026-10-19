@@ -4,6 +4,8 @@ function Invoke-ExecAuditLogSearch {
         Entrypoint
     .ROLE
         Tenant.Alert.ReadWrite
+    .NOTES
+        Permission: Graph | GET /security/auditLog/queries/{id} | Application | AuditLogsQuery.Read.All
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

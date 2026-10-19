@@ -1,4 +1,17 @@
 function New-CIPPRestoreTask {
+    <#
+    .NOTES
+        Permission: Graph | GET /admin/teams/telephoneNumberManagement/numberAssignments | Delegated | TeamsTelephoneNumber.Read.All | TeamsTelephoneNumber.ReadWrite.All
+        Permission: Graph | POST /admin/teams/telephoneNumberManagement/numberAssignments/assignNumber | Delegated | TeamsTelephoneNumber.ReadWrite.All
+        Permission: Graph | POST /admin/teams/telephoneNumberManagement/numberAssignments/unassignNumber | Delegated | TeamsTelephoneNumber.ReadWrite.All
+        Permission: Graph | POST /admin/teams/telephoneNumberManagement/numberAssignments/updateNumber | Delegated | TeamsTelephoneNumber.ReadWrite.All
+        Permission: Graph | GET /groups | Delegated | Group.ReadBasic.All | Directory.Read.All, Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ManageProtection.All, Group.Read.All, Group.ReadWrite.All, GroupMember.Read.All
+        Permission: Graph | POST /groups | Delegated | Group.ReadWrite.All | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All
+        Permission: Graph | PATCH /groups/{id} | Delegated | Group.ManageProtection.All | Directory.ReadWrite.All, Group-PreferredDataLocation.ReadWrite.All, Group.ReadWrite.All
+        Permission: Graph | GET /users | Delegated | User.ReadBasic.All | User.Read.All, User.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All
+        Permission: Graph | POST /users | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+        Permission: Graph | PATCH /users/{id} | Delegated | User.ReadWrite.All | Directory.ReadWrite.All
+    #>
     [CmdletBinding()]
     param (
         $Task,

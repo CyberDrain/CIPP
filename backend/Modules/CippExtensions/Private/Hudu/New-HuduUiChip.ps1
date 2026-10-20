@@ -10,7 +10,8 @@ function New-HuduUiChip {
         [switch]$Strong,
         [switch]$Small,
         [string]$Suffix,
-        [switch]$NoWrap
+        [switch]$NoWrap,
+        [ValidateSet('', 'ServicePrincipal', 'User', 'Group')][string]$Icon = ''
     )
     # Hudu strips the CSS gap property, so spacing is done with margins
     $T = Get-HuduUiTone $Tone
@@ -19,5 +20,5 @@ function New-HuduUiChip {
     $Nw = if ($NoWrap) { 'white-space:nowrap;' } else { '' }
     $Tt = if ($Title) { " title=`"$(ConvertTo-HuduUiText $Title)`"" } else { '' }
     $Sx = if ($Suffix) { "<span style=`"opacity:.65;margin-left:5px`">$(ConvertTo-HuduUiText $Suffix)</span>" } else { '' }
-    "<span$Tt style=`"display:inline-flex;align-items:center;margin:2px 4px 2px 0;$Size;border-radius:12px;$Weight$($Nw)background:$($T.Bg);border:1px solid $($T.Bd)`">$(ConvertTo-HuduUiText $Text)$Sx</span>"
+    "<span$Tt style=`"display:inline-flex;align-items:center;margin:2px 4px 2px 0;$Size;border-radius:6px;$Weight$($Nw)background:$($T.Bg);border:1px solid $($T.Bd)`">$(if ($Icon) { Get-HuduUiIcon -Name $Icon })$(ConvertTo-HuduUiText $Text)$Sx</span>"
 }

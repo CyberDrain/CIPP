@@ -1,7 +1,7 @@
 function Get-HuduUserViewModel {
     <#
         .SYNOPSIS
-        Turns the data the Hudu sync has for one user into a display-ready model for Get-HuduUserBody.
+        Turns one user's data into a display-ready model for Get-HuduUserBody.
 
         .DESCRIPTION
         The model holds plain strings, numbers, bools and lists only, never HTML; the renderer encodes every value.
@@ -22,7 +22,8 @@ function Get-HuduUserViewModel {
         [bool]$EnableCIPP = $true,
         [object[]]$PsaLinks,
         [datetime]$AsOf = (Get-Date),
-        [cultureinfo]$Culture = [cultureinfo]::GetCultureInfo('en-US'),
+        [cultureinfo]$Culture = [cultureinfo]::GetCultureInfo('en-GB'),
+        [TimeZoneInfo]$TimeZone = [TimeZoneInfo]::Utc,
         [int]$StaleAfterDays = 30,
         [double]$StorageWarnPct = 90,
         [double]$StorageCritPct = 98
@@ -32,7 +33,14 @@ function Get-HuduUserViewModel {
     $Now = ConvertTo-HuduUiDate $AsOf
     $Domain = $Tenant.defaultDomainName
     $Dot = [string][char]0x00B7
-    $fmtDate = { param($d) if ($d) { $d.ToString('MMM d, yyyy', $Culture) } else { '' } }
+    $DatePattern = Get-HuduUiDatePattern $Culture
+    # Timestamps are shown in the instance time zone; date-only values are not converted. Staleness is worked out in UTC.
+    $fmtDate = {
+        param($v)
+        if ($v -is [string] -and $v -match '^\d{4}-\d{2}-\d{2}$') { return ([datetime]::ParseExact($v, 'yyyy-MM-dd', $Inv)).ToString($DatePattern, $Culture) }
+        $d = ConvertTo-HuduUiDate $v
+        if ($d) { [TimeZoneInfo]::ConvertTimeFromUtc($d, $TimeZone).ToString($DatePattern, $Culture) } else { '' }
+    }
     $fmtGb = { param([double]$bytes) ([math]::Round($bytes / 1GB, 2)).ToString('#,##0.##', $Culture) }
     $toneFor = { param([double]$p) if ($p -ge $StorageCritPct) { 'err' } elseif ($p -ge $StorageWarnPct) { 'warn' } else { 'ok' } }
 
@@ -150,7 +158,7 @@ function Get-HuduUserViewModel {
             FlagTip       = $(if ($OTone -eq 'err') { "Usage is above $([math]::Round($StorageCritPct))%" } else { "Usage is above $([math]::Round($StorageWarnPct))%" })
             Files         = ([double]$OneDrive.fileCount).ToString('N0', $Culture)
             ActiveFiles   = ([double]$OneDrive.activeFileCount).ToString('N0', $Culture)
-            LastActivity  = (& $fmtDate (ConvertTo-HuduUiDate $OneDrive.lastActivityDate))
+            LastActivity  = (& $fmtDate $OneDrive.lastActivityDate)
             SiteUrl       = [string]$OneDrive.siteUrl
             IsDeleted     = [bool]$OneDrive.isDeleted
         }
@@ -240,7 +248,7 @@ function Get-HuduUserViewModel {
                 Os             = [string]$D.operatingSystem
                 OsVersion      = [string]$D.osVersion
                 LastSync       = (& $fmtDate $Last)
-                Enrolled       = (& $fmtDate (ConvertTo-HuduUiDate $D.enrolledDateTime))
+                Enrolled       = (& $fmtDate $D.enrolledDateTime)
                 IsStale        = ($null -ne $Days -and $Days -gt $StaleAfterDays)
                 StaleText      = "Over $StaleAfterDays days"
                 StaleTip       = "No sync in over $StaleAfterDays days"
@@ -254,10 +262,10 @@ function Get-HuduUserViewModel {
 
     # Groups by type, each type de-duplicated
     $Cats = [ordered]@{
-        m365 = @{ Title = 'Microsoft 365 groups'; Short = 'Microsoft 365'; Color = '#635dff'; Rows = [System.Collections.Generic.List[string]]::new() }
-        sec  = @{ Title = 'Security groups'; Short = 'security'; Color = '#06AED4'; Rows = [System.Collections.Generic.List[string]]::new() }
-        dist = @{ Title = 'Distribution lists'; Short = 'distribution'; Color = '#F79009'; Rows = [System.Collections.Generic.List[string]]::new() }
-        mes  = @{ Title = 'Mail-enabled security groups'; Short = 'mail-enabled security'; Color = '#10B981'; Rows = [System.Collections.Generic.List[string]]::new() }
+        m365 = @{ Title = 'Microsoft 365 groups'; Short = 'Microsoft 365'; Color = '#f77f00'; Rows = [System.Collections.Generic.List[string]]::new() }
+        sec  = @{ Title = 'Security groups'; Short = 'security'; Color = '#005c63'; Rows = [System.Collections.Generic.List[string]]::new() }
+        dist = @{ Title = 'Distribution lists'; Short = 'distribution'; Color = '#3e5c66'; Rows = [System.Collections.Generic.List[string]]::new() }
+        mes  = @{ Title = 'Mail-enabled security groups'; Short = 'mail-enabled security'; Color = '#8a8f98'; Rows = [System.Collections.Generic.List[string]]::new() }
     }
     $GroupList = @($Groups | Where-Object { $_ })
     foreach ($G in $GroupList) {

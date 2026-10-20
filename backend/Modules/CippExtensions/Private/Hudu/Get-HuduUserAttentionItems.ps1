@@ -4,7 +4,7 @@ function Get-HuduUserAttentionItems {
         Lists what needs a human on a user, from a Get-HuduUserViewModel model.
 
         .DESCRIPTION
-        Returns plain sentences; **text** marks emphasis for ConvertTo-HuduUiRich. Storage tones and device
+        Returns plain sentences; **text** marks emphasis. Storage tones and device
         staleness use the thresholds the model was built with.
     #>
     param([Parameter(Mandatory)][System.Collections.IDictionary]$Model)

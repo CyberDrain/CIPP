@@ -6,6 +6,7 @@ BeforeAll {
     . "$PSScriptRoot/../../Modules/CippExtensions/Public/Hudu/Get-HuduBitLockerSyncField.ps1"
     . "$PSScriptRoot/../../Modules/CippExtensions/Public/Hudu/Invoke-HuduExtensionSync.ps1"
     Get-ChildItem "$PSScriptRoot/../../Modules/CippExtensions/Private/Hudu/*.ps1" | ForEach-Object { . $_.FullName }
+    . "$PSScriptRoot/../../Modules/CippExtensions/Private/Get-CippExtensionCulture.ps1"
 
     function Connect-HuduAPI { param($Configuration) }
     function Get-HuduAppInfo { [CmdletBinding()] param() [PSCustomObject]@{ version = '2.46.1'; date = '2026-09-01' } }
@@ -34,6 +35,8 @@ BeforeAll {
     function New-HuduAsset { param($Name, $CompanyId, $AssetLayoutId, $Fields, $PrimarySerial) }
     function New-HuduRelation { param($FromableType, $FromableID, $ToableType, $ToableID) }
     function Set-HuduMagicDash { param($Title, $CompanyName, $Message, $Icon, $Content, $Shade) }
+    function Get-HuduMagicDashes { param($CompanyId) }
+    function Remove-HuduMagicDash { [CmdletBinding(SupportsShouldProcess)] param($Id) }
     function Get-HuduWebsites { param($Name) }
     function New-HuduWebsite { param($Name, $Notes, $Paused, $CompanyId, $DisableDNS, $DisableSSL, $DisableWhois) }
     function Write-LogMessage { param($Tenant, $TenantId, $API, $Message, $Level, $Sev) }
@@ -340,7 +343,7 @@ Describe 'Invoke-HuduExtensionSync user license sync' {
     }
 }
 
-Describe 'Invoke-HuduExtensionSync roles table' {
+Describe 'Invoke-HuduExtensionSync Magic Dash' {
     BeforeEach {
         $env:CIPPRootPath = (Resolve-Path "$PSScriptRoot/../..").Path
         $script:MagicDash = $null
@@ -393,18 +396,124 @@ Describe 'Invoke-HuduExtensionSync roles table' {
         Mock Get-CIPPDbItem { @() }
         Mock Add-CIPPAzDataTableEntity { }
         Mock Set-HuduMagicDash { $script:MagicDash = $Content }
+        Mock Get-HuduMagicDashes {
+            @(
+                [PSCustomObject]@{ id = 1; title = 'Microsoft 365 - Contoso'; content = 'tenant-1' }
+                [PSCustomObject]@{ id = 2; title = 'Microsoft 365 - Contoso Old'; content = '<code>tenant-1</code>' }
+                [PSCustomObject]@{ id = 3; title = 'Microsoft 365 - Contoso Older'; content = '<code>tenant-1</code>' }
+                [PSCustomObject]@{ id = 4; title = 'Microsoft 365 - Fabrikam'; content = '<code>tenant-2</code>' }
+            )
+        }
+        Mock Remove-HuduMagicDash { }
         Mock Write-LogMessage { }
+    }
+
+    It 'formats dates with the Locale setting, day first by default' {
+        $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+        $script:MagicDash | Should -Match '>Synced \d{1,2} [A-Z][a-z]{2} \d{4} \d\d:\d\d UTC<'
+
+        $Configuration.Hudu | Add-Member -NotePropertyName Locale -NotePropertyValue ([PSCustomObject]@{ label = 'English (US)'; value = 'en-US' })
+        $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+        $script:MagicDash | Should -Match '>Synced [A-Z][a-z]{2} \d{1,2} \d{4} \d\d:\d\d UTC<'
+    }
+
+    It 'shows the dash sync time in the instance time zone, falling back to UTC' {
+        $SavedZone = $env:CIPP_TIMEZONE
+        try {
+            $env:CIPP_TIMEZONE = 'America/New_York'
+            $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+            $script:MagicDash | Should -Match '>Synced [^<]+ \(UTC-0[45]:00\)<'
+
+            foreach ($Zone in 'Not/AZone', '') {
+                $env:CIPP_TIMEZONE = $Zone
+                $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+                $script:MagicDash | Should -Match '>Synced [^<]+ \d\d:\d\d UTC<'
+            }
+        } finally {
+            $env:CIPP_TIMEZONE = $SavedZone
+        }
+    }
+
+    It 'lists licensed users on the dash when no People layout is mapped' {
+        Mock Get-CippExtensionReportingData {
+            [PSCustomObject]@{
+                Users    = @([PSCustomObject]@{ id = 'user-1'; displayName = 'Jane Doe'; userPrincipalName = 'jane@contoso.onmicrosoft.com'; accountEnabled = $true; proxyAddresses = @(); businessPhones = @(); assignedLicenses = @([PSCustomObject]@{ skuId = 'sku-1' }) })
+                Domains  = @(); Devices = @(); AllRoles = @()
+                Licenses = @([PSCustomObject]@{ skuId = 'sku-1'; skuPartNumber = 'Business Premium'; consumedUnits = 1; prepaidUnits = @{ enabled = 5 } })
+                DeviceCompliancePolicies = @(); Groups = @(); ConditionalAccess = @()
+                OneDriveUsage = @(); CASMailbox = @(); Mailboxes = @(); MailboxUsage = @(); MailboxPermissions = @()
+            }
+        }
+        $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        $script:MagicDash | Should -Match '>Jane Doe<'
+        $script:MagicDash | Should -Match 'jane@contoso\.onmicrosoft\.com'
+        Should -Invoke Set-HuduMagicDash -Times 1 -Exactly -ParameterFilter { $Message -eq '1 licensed user' -and $Shade -eq 'success' }
+    }
+
+    It 'removes dashes left under an old tenant name after the dash is written' {
+        $Result = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        Should -Invoke Get-HuduMagicDashes -Times 1 -Exactly -ParameterFilter { $CompanyId -eq 20 }
+        Should -Invoke Remove-HuduMagicDash -Times 2 -Exactly
+        Should -Invoke Remove-HuduMagicDash -Times 1 -Exactly -ParameterFilter { $Id -eq 2 }
+        Should -Invoke Remove-HuduMagicDash -Times 1 -Exactly -ParameterFilter { $Id -eq 3 }
+        $Result.Logs | Should -Contain "Removed stale Magic Dash 'Microsoft 365 - Contoso Old'"
+        @($Result.Errors) -match 'Magic Dash' | Should -BeNullOrEmpty
+    }
+
+    It 'skips the cleanup when the dash could not be written' {
+        Mock Set-HuduMagicDash { throw 'Hudu said no' }
+        $Result = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        Should -Invoke Get-HuduMagicDashes -Times 0 -Exactly
+        Should -Invoke Remove-HuduMagicDash -Times 0 -Exactly
+        @($Result.Errors) -match 'Failed to add Magic Dash' | Should -Not -BeNullOrEmpty
+    }
+
+    It 'reports a failed removal and carries on' {
+        Mock Remove-HuduMagicDash { if ($Id -eq 2) { throw 'delete refused' } }
+        $Result = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        Should -Invoke Remove-HuduMagicDash -Times 1 -Exactly -ParameterFilter { $Id -eq 3 }
+        @(@($Result.Errors) -match 'Magic Dash') | Should -Be @("Company: Failed to remove stale Magic Dash 'Microsoft 365 - Contoso Old': delete refused")
+        $Result.Logs | Should -Contain "Removed stale Magic Dash 'Microsoft 365 - Contoso Older'"
+    }
+
+    It 'warns once and stops when the key may not delete' {
+        Mock Remove-HuduMagicDash { throw '{"error": "Key does not have Delete Permissions!"}' }
+        $Result = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        Should -Invoke Remove-HuduMagicDash -Times 1 -Exactly
+        @(@($Result.Errors) -match 'Magic Dash') | Should -BeNullOrEmpty
+        $Expected = "Stale Magic Dash not removed: 'Microsoft 365 - Contoso Old', 'Microsoft 365 - Contoso Older'. Removing them needs a Hudu API key with the delete action; key actions cannot be changed, so create a new key, or remove them with the HuduAPI module."
+        @($Result.Logs) -eq $Expected | Should -HaveCount 1
+        Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $message -eq $Expected -and $sev -eq 'Warning' }
+    }
+
+    It 'reports a failed dash lookup without failing the sync' {
+        Mock Get-HuduMagicDashes { throw 'lookup failed' }
+        $Result = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        @(@($Result.Errors) -match 'Magic Dash') | Should -Be @('Company: Failed to check for stale Magic Dashes: lookup failed')
+        $Result.Logs | Should -Contain 'Updated Magic Dash for Contoso'
     }
 
     It 'lists PIM-eligible members in their own column, drops expired eligibilities and empty roles' {
         $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
 
         Should -Invoke Get-CippDbRoleMembers -ParameterFilter { $RoleTemplateId -eq '62e90394-69f5-4237-9190-012177145e10' -and $TenantFilter -eq 'contoso.onmicrosoft.com' }
-        $script:MagicDash | Should -Match '<th>EligibleMembers</th>'
-        $script:MagicDash | Should -Match 'Direct Admin'
-        $script:MagicDash | Should -Match 'Eligible Admin \(until 2030-01-15\)'
+        $script:MagicDash | Should -Match '>Direct Admin<'
+        $script:MagicDash | Should -Match 'Eligible:</span><span[^>]*>Eligible Admin \(until 2030-01-15\)</span>'
         $script:MagicDash | Should -Not -Match 'Expired Admin'
         $script:MagicDash | Should -Not -Match 'Empty Role'
+    }
+
+    It 'keeps empty roles when HideEmptyRoles is off' {
+        $Configuration.Hudu.HideEmptyRoles = $false
+        $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        $script:MagicDash | Should -Match '>Empty Role<'
     }
 }
 

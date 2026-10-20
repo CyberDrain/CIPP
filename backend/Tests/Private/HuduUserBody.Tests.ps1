@@ -59,9 +59,9 @@ Describe 'Get-HuduUserBody' {
         $Params = New-TestModelParams
         $Body = Get-HuduUserBody -Model (Get-HuduUserViewModel @Params) -SyncedAt $script:AsOf
         foreach ($Heading in 'Contact', 'Mailbox', 'OneDrive', 'Mailbox access', 'Mailbox settings', 'Licenses', 'Conditional Access', 'Intune devices', 'Groups', 'Service plans') {
-            $Body | Should -Match ">$Heading( <span|</h3>)"
+            $Body | Should -Match ">$Heading( <span|</span></h3>)"
         }
-        foreach ($Text in 'Ada Lovelace', 'Aliases', 'ada.l@fabrikam.example', 'x500:/o=Test/cn=ada', 'Team Alpha', 'Badge Readers', 'Require MFA', 'LAPTOP-1', 'Exchange Online', 'grace@fabrikam.example', 'Business Premium', 'Halo PSA', 'BEC tool', 'Synced Oct 20, 2026 12:00 UTC') {
+        foreach ($Text in 'Ada Lovelace', 'Aliases', 'ada.l@fabrikam.example', 'x500:/o=Test/cn=ada', 'Team Alpha', 'Badge Readers', 'Require MFA', 'LAPTOP-1', 'Exchange Online', 'grace@fabrikam.example', 'Business Premium', 'Halo PSA', 'BEC tool', 'Synced 20 Oct 2026 12:00 UTC', 'Exchange Online: 2 assignments, most recent 4 Mar 2026') {
             $Body | Should -Match ([regex]::Escape($Text))
         }
         $Body | Should -Not -Match 'Needs attention'
@@ -72,7 +72,7 @@ Describe 'Get-HuduUserBody' {
     It 'leaves out sections that have no data' {
         $Params = New-TestModelParams -Minimal
         $Body = Get-HuduUserBody -Model (Get-HuduUserViewModel @Params)
-        $Body | Should -Match '>Contact</h3>'
+        $Body | Should -Match '>Contact</span></h3>'
         foreach ($Heading in 'Mailbox', 'OneDrive', 'Mailbox access', 'Mailbox settings', 'Conditional Access', 'Intune devices', 'Groups', 'Needs attention') {
             $Body | Should -Not -Match ">$Heading( <span|</h3>|<)"
         }
@@ -96,6 +96,19 @@ Describe 'Get-HuduUserBody' {
         $Body | Should -Not -Match '<svg'
         $Body | Should -Not -Match 'aria-hidden'
         $Body | Should -Not -Match '<details'
+    }
+
+    It 'uses the CIPP brand without orange text' {
+        $Params = New-TestModelParams
+        $Body = Get-HuduUserBody -Model (Get-HuduUserViewModel @Params) -SyncedAt $script:AsOf
+        $Body | Should -Match '^<div style="overflow:hidden"><div style="border:1px solid rgba\(128,128,128,.3\);border-top:3px solid #f77f00;'
+        $Body | Should -Match 'background:rgba\(247,127,0,.12\);[^"]*"><i class="fas fa-envelope" style="color:#f77f00;font-size:12px"></i></span><span>Mailbox</span></h3>'
+        $Body | Should -Match 'width:20%;background:#f77f00'
+        $Body | Should -Match 'width:50%;background:#f77f00'
+        $Body | Should -Not -Match 'border-radius:1[02]px'
+        foreach ($Use in [regex]::Matches($Body, '(?<![-\w])color:#f77f00')) {
+            $Body.Substring(0, $Use.Index) | Should -Match '<i class="[^"]*" style="[^"]*$'
+        }
     }
 
     It 'encodes every data value, including attributes' {
@@ -188,6 +201,71 @@ Describe 'Get-HuduUserAttentionItems' {
         $Body = Get-HuduUserBody -Model (Get-HuduUserViewModel @Params)
         $Body | Should -Match 'Needs attention'
         $Body | Should -Match '<strong>1 Conditional Access policy</strong> is report-only'
-        $Body.IndexOf('Needs attention') | Should -BeLessThan $Body.IndexOf('>Contact</h3>')
+        $Body.IndexOf('Needs attention') | Should -BeLessThan $Body.IndexOf('>Contact</span></h3>')
+    }
+}
+
+Describe 'Hudu locale' {
+    It 'derives a short month-name date pattern from the culture' -ForEach @(
+        @{ Name = 'en-GB'; Pattern = 'd MMM yyyy' }
+        @{ Name = 'en-US'; Pattern = 'MMM d yyyy' }
+        @{ Name = 'de-DE'; Pattern = 'd. MMM yyyy' }
+    ) {
+        Get-HuduUiDatePattern ([cultureinfo]::GetCultureInfo($Name)) | Should -BeExactly $Pattern
+    }
+
+    It 'orders rendered dates by the culture' {
+        $Params = New-TestModelParams
+        $GbParams = New-TestModelParams
+        $Params.Culture = [cultureinfo]::GetCultureInfo('en-US')
+        $Us = Get-HuduUserBody -Model (Get-HuduUserViewModel @Params) -SyncedAt $script:AsOf -Culture $Params.Culture
+        $Gb = Get-HuduUserBody -Model (Get-HuduUserViewModel @GbParams) -SyncedAt $script:AsOf
+        $Us | Should -Match 'Synced Oct 20 2026 12:00 UTC'
+        $Us | Should -Match 'Last activity</span><span[^>]*>Oct 18 2026<'
+        $Gb | Should -Match 'Synced 20 Oct 2026 12:00 UTC'
+        $Gb | Should -Match 'Last activity</span><span[^>]*>18 Oct 2026<'
+    }
+}
+
+Describe 'Hudu time zone' {
+    It 'shows the Synced time in <Zone> with its offset and keeps the tooltip in UTC' -ForEach @(
+        @{ Zone = 'UTC'; Expected = 'Synced 20 Oct 2026 12:00 UTC' }
+        @{ Zone = 'Europe/London'; Expected = 'Synced 20 Oct 2026 13:00 (UTC+01:00)' }
+        @{ Zone = 'America/New_York'; Expected = 'Synced 20 Oct 2026 08:00 (UTC-04:00)' }
+    ) {
+        $Html = New-HuduUiSynced -SyncedAt $script:AsOf -TimeZone ([TimeZoneInfo]::FindSystemTimeZoneById($Zone))
+        $Html | Should -Match ([regex]::Escape(">$Expected<"))
+        $Html | Should -Match 'title="Last Updated: 2026-10-20 12:00:00 UTC"'
+    }
+
+    It 'uses the offset in effect on the day' {
+        $Winter = [datetime]::new(2026, 1, 15, 12, 0, 0, [System.DateTimeKind]::Utc)
+        New-HuduUiSynced -SyncedAt $Winter -TimeZone ([TimeZoneInfo]::FindSystemTimeZoneById('Europe/London')) | Should -Match '>Synced 15 Jan 2026 12:00 UTC<'
+    }
+
+    It 'puts a late-evening UTC date on the local day' {
+        $Params = New-TestModelParams
+        $Params.Devices[0].lastSyncDateTime = '2026-10-19T23:30:00Z'
+        (Get-HuduUserViewModel @Params).Devices.Items[0].LastSync | Should -Be '19 Oct 2026'
+        $Params.TimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('Europe/London')
+        (Get-HuduUserViewModel @Params).Devices.Items[0].LastSync | Should -Be '20 Oct 2026'
+    }
+
+    It 'converts timestamps but leaves date-only values on their own day' {
+        $Params = New-TestModelParams
+        $Params.TimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('America/New_York')
+        $Params.OneDrive.lastActivityDate = '2026-10-17'
+        $Params.Devices[0].enrolledDateTime = '2026-10-17T02:00:00Z'
+        $Model = Get-HuduUserViewModel @Params
+        $Model.OneDrive.LastActivity | Should -Be '17 Oct 2026'
+        $Model.Devices.Items[0].Enrolled | Should -Be '16 Oct 2026'
+    }
+
+    It 'renders the body in the zone it is given' {
+        $Params = New-TestModelParams
+        $Params.TimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('America/New_York')
+        $Body = Get-HuduUserBody -Model (Get-HuduUserViewModel @Params) -SyncedAt $script:AsOf -TimeZone $Params.TimeZone
+        $Body | Should -Match '>Synced 20 Oct 2026 08:00 \(UTC-04:00\)<'
+        Get-HuduUserBody -Model (Get-HuduUserViewModel @Params) -TimeZone $Params.TimeZone | Should -Not -Match 'Synced'
     }
 }

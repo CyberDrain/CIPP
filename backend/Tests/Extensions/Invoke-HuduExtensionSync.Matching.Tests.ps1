@@ -3,6 +3,8 @@ BeforeAll {
     . "$PSScriptRoot/../../Modules/CippExtensions/Public/Hudu/Find-HuduDeviceMatch.ps1"
     . "$PSScriptRoot/../../Modules/CippExtensions/Public/Hudu/Get-HuduDeviceMatchKey.ps1"
     . "$PSScriptRoot/../../Modules/CippExtensions/Public/Hudu/Invoke-HuduExtensionSync.ps1"
+    Get-ChildItem "$PSScriptRoot/../../Modules/CippExtensions/Private/Hudu/*.ps1" | ForEach-Object { . $_.FullName }
+    . "$PSScriptRoot/../../Modules/CippExtensions/Private/Get-CippExtensionCulture.ps1"
 
     function Connect-HuduAPI { param($Configuration) }
     function Get-HuduAppInfo { [CmdletBinding()] param() [PSCustomObject]@{ version = '2.46.1' } }
@@ -29,13 +31,15 @@ BeforeAll {
     function New-HuduAsset { param($Name, $company_id, $asset_layout_id, $Fields, $PrimarySerial) }
     function New-HuduRelation { param($FromableType, $FromableID, $ToableType, $ToableID) }
     function Set-HuduMagicDash { param($Title, $company_name, $Message, $Icon, $Content, $Shade) }
+    function Get-HuduMagicDashes { param($CompanyId) }
+    function Remove-HuduMagicDash { [CmdletBinding(SupportsShouldProcess)] param($Id) }
     function Write-LogMessage { param($Tenant, $TenantId, $API, $Message, $Level) }
     function Get-CippException { param($Exception) [PSCustomObject]@{ NormalizedError = $Exception.Exception.Message } }
     function Get-CippDbRoleMembers { param($TenantFilter, $RoleTemplateId) }
 
     # The section of the asset body between <Heading> and </Heading>, as Get-HuduFormattedBlock is mocked below
-    function Get-HuduUserViewModel { param($User, $Tenant, $Groups, $Policies, $MailSettings, $Devices, $OneDrive, $LicenseNames, $AssignedNameMap, $CippUrl, $EnableCIPP, $PsaLinks) }
-    function Get-HuduUserBody { param($Model, $SyncedAt) }
+    function Get-HuduUserViewModel { param($User, $Tenant, $Groups, $Policies, $MailSettings, $Devices, $OneDrive, $LicenseNames, $AssignedNameMap, $CippUrl, $EnableCIPP, $PsaLinks, $Culture, $TimeZone) }
+    function Get-HuduUserBody { param($Model, $SyncedAt, $Culture, $TimeZone) }
 
     function Get-Block($Body, $Heading) { if ($Body -match "(?s)<$Heading>(.*?)</$Heading>") { $Matches[1] } }
 }
@@ -157,6 +161,7 @@ Describe 'Invoke-HuduExtensionSync matching' {
         }
         Mock New-HuduRelation { $script:NewRelations.Add("$FromableID->$ToableID") }
         Mock Set-HuduMagicDash { }
+        Mock Get-HuduMagicDashes { @() }
         # People assets: capture the matched data handed to the view model, keyed by UPN
         $script:UserInputs = @{}
         Mock Get-HuduUserViewModel {

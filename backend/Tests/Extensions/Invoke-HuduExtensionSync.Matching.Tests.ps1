@@ -34,6 +34,9 @@ BeforeAll {
     function Get-CippDbRoleMembers { param($TenantFilter, $RoleTemplateId) }
 
     # The section of the asset body between <Heading> and </Heading>, as Get-HuduFormattedBlock is mocked below
+    function Get-HuduUserViewModel { param($User, $Tenant, $Groups, $Policies, $MailSettings, $Devices, $OneDrive, $LicenseNames, $AssignedNameMap, $CippUrl, $EnableCIPP, $PsaLinks) }
+    function Get-HuduUserBody { param($Model, $SyncedAt) }
+
     function Get-Block($Body, $Heading) { if ($Body -match "(?s)<$Heading>(.*?)</$Heading>") { $Matches[1] } }
 }
 
@@ -154,55 +157,62 @@ Describe 'Invoke-HuduExtensionSync matching' {
         }
         Mock New-HuduRelation { $script:NewRelations.Add("$FromableID->$ToableID") }
         Mock Set-HuduMagicDash { }
+        # People assets: capture the matched data handed to the view model, keyed by UPN
+        $script:UserInputs = @{}
+        Mock Get-HuduUserViewModel {
+            $script:UserInputs[$User.userPrincipalName] = @{ Groups = @($Groups); Policies = @($Policies); MailSettings = $MailSettings; OneDrive = $OneDrive }
+            [ordered]@{ Upn = $User.userPrincipalName }
+        }
+        Mock Get-HuduUserBody { "body-$($Model.Upn)" }
         Mock Get-CippDbRoleMembers { if ($RoleTemplateId -eq 'T-1') { [PSCustomObject]@{ id = 'U-1'; displayName = 'Alice'; userPrincipalName = 'alice@contoso.com'; AssignmentType = 'Direct' } } }
         Mock Write-LogMessage { }
 
         $script:Result = Invoke-HuduExtensionSync -Configuration $script:Configuration -TenantFilter 'contoso.onmicrosoft.com'
-        $script:Alice = ($script:SetAssets | Where-Object Id -EQ 101).Body
-        $script:Bob = ($script:SetAssets | Where-Object Id -EQ 102).Body
+        $script:Alice = $script:UserInputs['alice@contoso.com']
+        $script:Bob = $script:UserInputs['bob@contoso.com']
     }
 
     It 'lists the groups a user is a member of, matching member ids case-insensitively, once each' {
-        $Groups = Get-Block $script:Alice 'User Groups'
-        $Groups | Should -Match '<td>Sales</td>'
-        ([regex]::Matches($Groups, '<td>All Staff</td>')).Count | Should -Be 1
-        $Groups | Should -Not -Match 'Empty|Carol Only'
-        Get-Block $script:Bob 'User Groups' | Should -Match '<td>Sales</td>'
-        Get-Block $script:Bob 'User Groups' | Should -Not -Match 'All Staff'
+        $Groups = @($script:Alice.Groups.'Display Name')
+        $Groups | Should -Contain 'Sales'
+        @($Groups -eq 'All Staff').Count | Should -Be 1
+        $Groups | Should -Not -Contain 'Empty'
+        $Groups | Should -Not -Contain 'Carol Only'
+        @($script:Bob.Groups.'Display Name') | Should -Contain 'Sales'
+        @($script:Bob.Groups.'Display Name') | Should -Not -Contain 'All Staff'
     }
 
     It 'lists the conditional access policies that include a user, after exclusions' {
-        $AlicePolicies = Get-Block $script:Alice 'Assigned Conditional Access Policies'
-        $AlicePolicies | Should -Match 'All but Bob'
-        $AlicePolicies | Should -Match 'Sales members'
-        $AlicePolicies | Should -Not -Match 'Carol by id'
-        $BobPolicies = Get-Block $script:Bob 'Assigned Conditional Access Policies'
-        $BobPolicies | Should -Not -Match 'All but Bob'
-        $BobPolicies | Should -Match 'Sales members'
+        $AlicePolicies = @($script:Alice.Policies.displayName)
+        $AlicePolicies | Should -Contain 'All but Bob'
+        $AlicePolicies | Should -Contain 'Sales members'
+        $AlicePolicies | Should -Not -Contain 'Carol by id'
+        $BobPolicies = @($script:Bob.Policies.displayName)
+        $BobPolicies | Should -Not -Contain 'All but Bob'
+        $BobPolicies | Should -Contain 'Sales members'
     }
 
     It 'adds the members of included roles and removes the members of excluded roles, by role template id' {
-        $AlicePolicies = Get-Block $script:Alice 'Assigned Conditional Access Policies'
-        $AlicePolicies | Should -Match 'Helpdesk role'
-        $AlicePolicies | Should -Not -Match 'Everyone but helpdesk'
-        $AlicePolicies | Should -Not -Match 'Role instance id'
-        $BobPolicies = Get-Block $script:Bob 'Assigned Conditional Access Policies'
-        $BobPolicies | Should -Match 'Everyone but helpdesk'
-        $BobPolicies | Should -Not -Match 'Helpdesk role'
+        $AlicePolicies = @($script:Alice.Policies.displayName)
+        $AlicePolicies | Should -Contain 'Helpdesk role'
+        $AlicePolicies | Should -Not -Contain 'Everyone but helpdesk'
+        $AlicePolicies | Should -Not -Contain 'Role instance id'
+        $BobPolicies = @($script:Bob.Policies.displayName)
+        $BobPolicies | Should -Contain 'Everyone but helpdesk'
+        $BobPolicies | Should -Not -Contain 'Helpdesk role'
     }
 
     It 'finds mailbox settings, statistics and OneDrive by id or UPN regardless of case' {
-        $script:Alice | Should -Match '\[EWS Enabled=EWS-ALICE\]'
-        $script:Alice | Should -Match '\[Item Count=4242\]'
-        $script:Alice | Should -Match 'https://od/alice'
-        $script:Bob | Should -Match '\[EWS Enabled=\]'
+        $script:Alice.MailSettings.EWSEnabled | Should -Be 'EWS-ALICE'
+        $script:Alice.MailSettings.ItemCount | Should -Be 4242
+        $script:Alice.OneDrive.siteUrl | Should -Be 'https://od/alice'
+        # No mailbox, CAS or usage row for Bob, so no mailbox sections are shown for him
+        $script:Bob.MailSettings | Should -BeNullOrEmpty
     }
 
     It 'lists the permissions on any of the mailbox identities, once each, in permission order, without SELF' {
-        $Perms = [regex]::Match($script:Alice, '(?s)\[Permissions=(.*?)\]\[Item Count=').Groups[1].Value
-        $Order = @([regex]::Matches($Perms, 'perm-\w+').Value)
-        $Order | Should -Be @('perm-bob', 'perm-carol', 'perm-dave')
-        $Perms | Should -Not -Match 'SELF'
+        $Perms = @($script:Alice.MailSettings.Permissions.User)
+        $Perms | Should -Be @('perm-bob', 'perm-carol', 'perm-dave')
     }
 
     It 'links a user to the Hudu person matched by field, primary mail or ConnectWise Manage email, and flags ambiguity' {

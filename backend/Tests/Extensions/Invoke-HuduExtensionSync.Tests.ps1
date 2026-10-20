@@ -5,6 +5,7 @@ BeforeAll {
     . "$PSScriptRoot/../../Modules/CippExtensions/Public/Hudu/Get-HuduBitLockerKeySlot.ps1"
     . "$PSScriptRoot/../../Modules/CippExtensions/Public/Hudu/Get-HuduBitLockerSyncField.ps1"
     . "$PSScriptRoot/../../Modules/CippExtensions/Public/Hudu/Invoke-HuduExtensionSync.ps1"
+    Get-ChildItem "$PSScriptRoot/../../Modules/CippExtensions/Private/Hudu/*.ps1" | ForEach-Object { . $_.FullName }
 
     function Connect-HuduAPI { param($Configuration) }
     function Get-HuduAppInfo { [CmdletBinding()] param() [PSCustomObject]@{ version = '2.46.1'; date = '2026-09-01' } }
@@ -303,7 +304,7 @@ Describe 'Invoke-HuduExtensionSync user license sync' {
         Mock Get-CIPPDbItem { @() }
         Mock Get-HuduFormattedField { [PSCustomObject]@{ title = $Title; value = $Value } }
         Mock Get-HuduFormattedBlock { "<$Heading>$Body</$Heading>" }
-        Mock Get-StringHash { 'user-hash' }
+        Mock Get-StringHash { $script:HashedUserBody = $String; 'user-hash' }
         Mock Get-HuduFormattedField { "<p>$Title`: $Value</p>" }
         Mock Add-CIPPAzDataTableEntity { }
         Mock Set-HuduAsset { $script:ObservedUserFields = $Fields }
@@ -321,6 +322,14 @@ Describe 'Invoke-HuduExtensionSync user license sync' {
         $script:ObservedUserFields.licenses | Should -Be 'Microsoft 365 Business Premium, Microsoft Defender for Office 365 (Plan 1)'
         $script:ObservedUserFields.email_address | Should -Be 'jane@contoso.onmicrosoft.com'
         $script:ObservedUserFields.microsoft_365 | Should -Match 'Microsoft 365 Business Premium'
+    }
+
+    It 'hashes the People body without the sync timestamp and writes it with one' {
+        $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        $script:HashedUserBody | Should -Match 'Jane Doe'
+        $script:HashedUserBody | Should -Not -Match 'Synced '
+        $script:ObservedUserFields.microsoft_365 | Should -Match 'Synced '
     }
 
     It 'falls back to the raw SKU IDs when the license cache is empty' {

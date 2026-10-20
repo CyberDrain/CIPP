@@ -32,7 +32,6 @@ function Invoke-HuduExtensionSync {
         }
 
         $AssignedNameMap = Get-AssignedNameMap
-        $AssignedMap = Get-AssignedMap
 
         # Get mapping configuration
         $MappingTable = Get-CIPPTable -TableName 'CippMapping'
@@ -715,7 +714,6 @@ function Invoke-HuduExtensionSync {
             # Permissions are found by list position so a row matching several of a mailbox's identities is listed once, in order
             $PermissionList = @($Permissions)
             $PermissionPositionsByIdentity = [CIPP.CippIndex]::Build([object[]]@(for ($p = 0; $p -lt $PermissionList.Count; $p++) { $p }), @(foreach ($Perm in $PermissionList) { , ($($Perm.Identity) ?? $null) }))
-            $AssignedMapServices = ($AssignedMap | Get-Member -MemberType NoteProperty).name
             $OutputUsers = foreach ($user in $licensedUsers) {
                 try {
                     $HuduUser = $null
@@ -786,228 +784,59 @@ function Invoke-HuduExtensionSync {
 
                     $userDevices = ($DevicesByUpn.Find($user.userPrincipalName) | Select-Object @{N = 'Name'; E = { "<a target='_blank' href=https://intune.microsoft.com/$($Tenant.defaultDomainName)/#blade/Microsoft_Intune_Devices/DeviceSettingsBlade/overview/mdmDeviceId/$($_.id)>$($_.deviceName) ($($_.operatingSystem))" } }).name -join '<br/>'
 
-                    $UserDevicesDetailsRaw = $DevicesByUpn.Find($user.userPrincipalName) | Select-Object @{N = 'Name'; E = { "<a target='_blank' href=https://intune.microsoft.com/$($Tenant.defaultDomainName)/#blade/Microsoft_Intune_Devices/DeviceSettingsBlade/overview/mdmDeviceId/$($_.id)>$($_.deviceName)</a>" } }, @{n = 'Owner'; e = { $_.managedDeviceOwnerType } }, `
-                    @{n = 'Enrolled'; e = { $_.enrolledDateTime } }, `
-                    @{n = 'Last Sync'; e = { $_.lastSyncDateTime } }, `
-                    @{n = 'OS'; e = { $_.operatingSystem } }, `
-                    @{n = 'OS Version'; e = { $_.osVersion } }, `
-                    @{n = 'State'; e = { $_.complianceState } }, `
-                    @{n = 'Model'; e = { $_.model } }, `
-                    @{n = 'Manufacturer'; e = { $_.manufacturer } },
-                    deviceName,
-                    @{n = 'url'; e = { "https://intune.microsoft.com/$($Tenant.defaultDomainName)/#blade/Microsoft_Intune_Devices/DeviceSettingsBlade/overview/mdmDeviceId/$($_.id)" } }
-
                     $aliases = (($user.proxyAddresses | Where-Object { $_ -cnotmatch 'SMTP' -and $_ -notmatch '.onmicrosoft.com' }) -replace 'SMTP:', ' ') -join ', '
 
                     # The license cache already carries the admin-portal display name and has excluded SKUs removed,
                     # so SKUs missing from it are excluded and dropped. Fall back to the raw SKU ID only when there is no cache.
-                    $userLicenses = ($user.AssignedLicenses.SkuID | ForEach-Object {
+                    $userLicenseNames = @($user.AssignedLicenses.SkuID | ForEach-Object {
                             $UserLic = ([string]$_).ToLowerInvariant()
                             if ($LicenseNamesBySku.Count -eq 0) {
                                 $UserLic
                             } elseif ($LicenseNamesBySku.ContainsKey($UserLic)) {
                                 $LicenseNamesBySku[$UserLic]
                             }
-                        } | Where-Object { $_ } | Sort-Object -Unique) -join ', '
+                        } | Where-Object { $_ } | Sort-Object -Unique)
+                    $userLicenses = $userLicenseNames -join ', '
 
                     $UserOneDriveDetails = $OneDriveByUpn.Find($user.userPrincipalName)
 
 
 
-                    [System.Collections.Generic.List[PSCustomObject]]$OneDriveFormatted = @()
-                    if ($UserOneDriveDetails) {
-                        try {
-                            $OneDriveUsePercent = [math]::Round([float](($UserOneDriveDetails.storageUsedInBytes / $UserOneDriveDetails.storageAllocatedInBytes) * 100), 2)
-                            $StorageUsed = [math]::Round($UserOneDriveDetails.storageUsedInBytes / 1024 / 1024 / 1024, 2)
-                            $StorageAllocated = [math]::Round($UserOneDriveDetails.storageAllocatedInBytes / 1024 / 1024 / 1024, 2)
-                        } catch {
-                            $OneDriveUsePercent = 100
-                            $StorageUsed = 0
-                            $StorageAllocated = 0
-                        }
-
-                        $OneDriveFormatted.add($(Get-HuduFormattedField -Title 'Owner Principal Name' -Value "$($UserOneDriveDetails.ownerPrincipalName)"))
-                        $OneDriveFormatted.add($(Get-HuduFormattedField -Title 'One Drive URL' -Value "<a href=$($UserOneDriveDetails.siteUrl)>$($UserOneDriveDetails.siteUrl)</a>"))
-                        $OneDriveFormatted.add($(Get-HuduFormattedField -Title 'Is Deleted' -Value "$($UserOneDriveDetails.isDeleted)"))
-                        $OneDriveFormatted.add($(Get-HuduFormattedField -Title 'Last Activity Date' -Value "$($UserOneDriveDetails.lastActivityDate)"))
-                        $OneDriveFormatted.add($(Get-HuduFormattedField -Title 'File Count' -Value "$($UserOneDriveDetails.fileCount)"))
-                        $OneDriveFormatted.add($(Get-HuduFormattedField -Title 'Active File Count' -Value "$($UserOneDriveDetails.activeFileCount)"))
-                        $OneDriveFormatted.add($(Get-HuduFormattedField -Title 'Storage Used (Byte)' -Value "$($UserOneDriveDetails.storageUsedInBytes)"))
-                        $OneDriveFormatted.add($(Get-HuduFormattedField -Title 'Storage Allocated (Byte)' -Value "$($UserOneDriveDetails.storageAllocatedInBytes)"))
-                        $OneDriveUserUsage = @"
-                        <div class="o365-usage">
-                        <div class="o365-mailbox">
-                            <div class="o365-used" style="width: $OneDriveUsePercent%;"></div>
-                        </div>
-                        <div><b>$($StorageUsed) GB</b> used, <b>$OneDriveUsePercent%</b> of <b>$($StorageAllocated) GB</b></div>
-                    </div>
-"@
-
-                        $OneDriveFormatted.add($(Get-HuduFormattedField -Title 'One Drive Usage' -Value $OneDriveUserUsage))
-                    }
-
-                    [System.Collections.Generic.List[PSCustomObject]]$UserMailSettingsFormatted = @()
-                    [System.Collections.Generic.List[PSCustomObject]]$UserMailboxDetailsFormatted = @()
-                    if ($UserMailSettings) {
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'Forward and Deliver' -Value "$($UserMailSettings.ForwardAndDeliver)"))
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'Forwarding Address' -Value "$($UserMailSettings.ForwardingAddress)"))
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'Litiation Hold' -Value "$($UserMailSettings.LitiationHold)"))
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'Hidden From Address Lists' -Value "$($UserMailSettings.HiddenFromAddressLists)"))
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'EWS Enabled' -Value "$($UserMailSettings.EWSEnabled)"))
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'MAPI Enabled' -Value "$($UserMailSettings.MailboxMAPIEnabled)"))
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'OWA Enabled' -Value "$($UserMailSettings.MailboxOWAEnabled)"))
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'IMAP Enabled' -Value "$($UserMailSettings.MailboxImapEnabled)"))
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'POP Enabled' -Value "$($UserMailSettings.MailboxPopEnabled)"))
-                        $UserMailSettingsFormatted.add($(Get-HuduFormattedField -Title 'Active Sync Enabled' -Value "$($UserMailSettings.MailboxActiveSyncEnabled)"))
-
-
-                        $UserMailboxDetailsFormatted.add($(Get-HuduFormattedField -Title 'Permissions' -Value "$($UserMailSettings.Permissions | ConvertTo-Html -Fragment | Out-String)"))
-
-                        $UserMailboxDetailsFormatted.add($(Get-HuduFormattedField -Title 'Item Count' -Value "$($UserMailSettings.ItemCount)"))
-
-                        try {
-                            $UserMailboxUsePercent = [math]::Round([float](($UserMailSettings.StorageUsedInBytes / $UserMailSettings.prohibitSendReceiveQuota) * 100), 2)
-                            $MailboxStorageUsed = [math]::Round($UserMailSettings.StorageUsedInBytes / 1024 / 1024 / 1024, 2)
-                            $MailboxStorageAllocated = [math]::Round($UserMailSettings.prohibitSendReceiveQuota / 1024 / 1024 / 1024, 2)
-                            $MailboxProhibitSendQuota = [math]::Round($UserMailSettings.ProhibitSendQuota / 1024 / 1024 / 1024, 2)
-                        } catch {
-                            $UserMailboxUsePercent = 100
-                            $MailboxStorageUsed = 0
-                            $MailboxStorageAllocated = 0
-                        }
-
-                        $UserMailboxDetailsFormatted.add($(Get-HuduFormattedField -Title 'Prohibit Send Quota' -Value "$($MailboxProhibitSendQuota) GB"))
-                        $UserMailboxDetailsFormatted.add($(Get-HuduFormattedField -Title 'Prohibit Send Receive Quota' -Value "$($MailboxStorageAllocated) GB"))
-                        $UserMailboxDetailsFormatted.add($(Get-HuduFormattedField -Title 'Total Mailbox Size' -Value "$($MailboxStorageUsed) GB"))
-
-                        $UserMailboxUsage = @"
-                            <div class="o365-usage">
-                        <div class="o365-mailbox">
-                            <div class="o365-used" style="width: $UserMailboxUsePercent%;"></div>
-                        </div>
-                        <div><b>$MailboxStorageUsed GB</b> used, <b>$UserMailboxUsePercent%</b> of <b>$MailboxStorageAllocated GB</b></div>
-                    </div>
-"@
-                        $UserMailboxDetailsFormatted.add($(Get-HuduFormattedField -Title 'Mailbox Usage' -Value $UserMailboxUsage))
-
-                    }
-
-                    # Enhanced Conditional Access Policy formatting
-                    if ($UserPolicies) {
-                        $UserPoliciesFormatted = $UserPolicies | ConvertTo-Html -Fragment -Property @(
-                            @{ Name = 'Policy Name'; Expression = { $_.displayName } },
-                            @{ Name = 'State'; Expression = { $_.state } },
-                            @{ Name = 'MFA Requirement'; Expression = { $_.authenticationStrength } },
-                            @{ Name = 'Client Apps'; Expression = { $_.clientAppTypes } },
-                            @{ Name = 'Sign-in Frequency'; Expression = { $_.signInFrequency } },
-                            @{ Name = 'User Risk'; Expression = { $_.userRiskLevels } },
-                            @{ Name = 'Sign-in Risk'; Expression = { $_.signInRiskLevels } }
-                        ) | Out-String
-                    } else {
-                        $UserPoliciesFormatted = '<p>No Conditional Access policies assigned to this user.</p>'
-                    }
-
-                    [System.Collections.Generic.List[PSCustomObject]]$UserOverviewFormatted = @()
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'User Name' -Value "$($User.displayName)"))
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'User Principal Name' -Value "$($User.userPrincipalName)"))
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'User ID' -Value "$($User.ID)"))
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'User Enabled' -Value "$($User.accountEnabled)"))
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'Job Title' -Value "$($User.jobTitle)"))
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'Mobile Phone' -Value "$($User.mobilePhone)"))
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'Business Phones' -Value "$($User.businessPhones -join ', ')"))
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'Office Location' -Value "$($User.officeLocation)"))
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'Aliases' -Value "$aliases"))
-                    $UserOverviewFormatted.add($(Get-HuduFormattedField -Title 'Licenses' -Value "$($userLicenses)"))
-
-                    $AssignedPlans = $User.assignedplans | Where-Object { $_.capabilityStatus -eq 'Enabled' } | Select-Object @{n = 'Assigned'; e = { $_.assignedDateTime } }, @{n = 'Service'; e = { $_.service } } -Unique
-                    [System.Collections.Generic.List[PSCustomObject]]$AssignedPlansFormatted = @()
-                    foreach ($AssignedPlan in $AssignedPlans) {
-                        if ($AssignedPlan.service -in $AssignedMapServices) {
-                            $CSSClass = $AssignedMap."$($AssignedPlan.service)"
-                            $PlanDisplayName = $AssignedNameMap."$($AssignedPlan.service)"
-                            $ParsedDate = Get-Date($AssignedPlan.Assigned) -Format 'yyyy-MM-dd HH:mm:ss'
-                            $AssignedPlansFormatted.add("<div class='o365__app $CSSClass' style='text-align:center'><strong>$PlanDisplayName</strong><font style='font-size: .72rem;'>Assigned $($ParsedDate)</font></div>")
-                        }
-                    }
-                    $AssignedPlansBlock = "<div class='o365'>$($AssignedPlansFormatted -join '')</div>"
-
-                    if ($UserMailSettingsFormatted) {
-                        $UserMailSettingsBlock = Get-HuduFormattedBlock -Heading 'Mailbox Settings' -Body ($UserMailSettingsFormatted -join '')
-                    } else {
-                        $UserMailSettingsBlock = $null
-                    }
-
-                    if ($UserMailboxDetailsFormatted) {
-                        $UserMailDetailsBlock = Get-HuduFormattedBlock -Heading 'Mailbox Details' -Body ($UserMailboxDetailsFormatted -join '')
-                    } else {
-                        $UserMailDetailsBlock = $null
-                    }
-
-                    if ($UserGroups) {
-                        $UserGroupsBlock = Get-HuduFormattedBlock -Heading 'User Groups' -Body $($UserGroups | ConvertTo-Html -Fragment -As Table | Out-String)
-                    } else {
-                        $UserGroupsBlock = $null
-                    }
-
-                    if ($UserPoliciesFormatted) {
-                        $UserPoliciesBlock = Get-HuduFormattedBlock -Heading 'Assigned Conditional Access Policies' -Body $UserPoliciesFormatted
-                    } else {
-                        $UserPoliciesBlock = $null
-                    }
-
-                    if ($OneDriveFormatted) {
-                        $OneDriveBlock = Get-HuduFormattedBlock -Heading 'One Drive Details' -Body ($OneDriveFormatted -join '')
-                    } else {
-                        $OneDriveBlock = $null
-                    }
-
-                    if ($UserOverviewFormatted) {
-                        $UserOverviewBlock = Get-HuduFormattedBlock -Heading 'User Details' -Body $UserOverviewFormatted
-                    } else {
-                        $UserOverviewBlock = $null
-                    }
-
-                    if ($UserDevicesDetailsRaw) {
-                        $UserDevicesDetailsBlock = Get-HuduFormattedBlock -Heading 'Intune Devices' -Body $($UserDevicesDetailsRaw | Select-Object -ExcludeProperty deviceName, url | ConvertTo-Html -Fragment | ForEach-Object { $tmp = $_ -replace '&lt;', '<'; $tmp -replace '&gt;', '>'; } | Out-String)
-                    } else {
-                        $UserDevicesDetailsBlock = $null
-                    }
-
                     $HuduUser = & $MatchPeople $user.userPrincipalName
 
-                    [System.Collections.Generic.List[PSCustomObject]]$CIPPLinksFormatted = @()
-                    if ($EnableCIPP) {
-                        $CIPPLinksFormatted.add((Get-HuduLinkBlock -URL "$($CIPPURL)/identity/administration/users/user?tenantFilter=$($Tenant.defaultDomainName)&userId=$($User.id)" -Icon 'far fa-eye' -Title 'CIPP - View User'))
-                        $CIPPLinksFormatted.add((Get-HuduLinkBlock -URL "$($CIPPURL)/identity/administration/users/user/edit?tenantFilter=$($Tenant.defaultDomainName)&userId=$($User.id)" -Icon 'fas fa-user-cog' -Title 'CIPP - Edit User'))
-                        $CIPPLinksFormatted.add((Get-HuduLinkBlock -URL "$($CIPPURL)/identity/administration/bec/case?tenantFilter=$($Tenant.defaultDomainName)&userId=$($User.id)" -Icon 'fas fa-user-secret' -Title 'CIPP - BEC Tool'))
-                    }
-
-                    [System.Collections.Generic.List[PSCustomObject]]$UserLinksFormatted = @()
-                    $UserLinksFormatted.add((Get-HuduLinkBlock -URL "https://entra.microsoft.com/$($Tenant.defaultDomainName)/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/Profile/userId/$($User.id)" -Icon 'fas fa-users-cog' -Title 'Entra ID'))
-                    $UserLinksFormatted.add((Get-HuduLinkBlock -URL "https://entra.microsoft.com/$($Tenant.defaultDomainName)/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/SignIns/userId/$($User.id)" -Icon 'fas fa-history' -Title 'Sign Ins'))
-                    $UserLinksFormatted.add((Get-HuduLinkBlock -URL "https://admin.teams.microsoft.com/users/$($User.id)/account?delegatedOrg=$($Tenant.defaultDomainName)" -Icon 'fas fa-users' -Title 'Teams Admin'))
-                    $UserLinksFormatted.add((Get-HuduLinkBlock -URL "https://intune.microsoft.com/$($Tenant.defaultDomainName)/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/Profile/userId/$($User.ID)" -Icon 'fas fa-laptop' -Title 'Intune (User)'))
-                    $UserLinksFormatted.add((Get-HuduLinkBlock -URL "https://intune.microsoft.com/$($Tenant.defaultDomainName)/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/Devices/userId/$($User.ID)" -Icon 'fas fa-laptop' -Title 'Intune (Devices)'))
-
+                    $PsaLinks = $null
                     if ($HuduUser) {
                         $HaloCard = $HuduUser.cards | Where-Object { $_.integrator_name -eq 'halo' }
                         if ($HaloCard) {
-                            $UserLinksFormatted.add((Get-HuduLinkBlock -URL "$($PSAUserUrl)$($HaloCard.sync_id)" -Icon 'far fa-id-card' -Title 'Halo PSA'))
+                            $PsaLinks = @{ Label = 'Halo PSA'; Tip = 'Open this user in Halo PSA'; Url = "$($PSAUserUrl)$($HaloCard.sync_id)" }
                         }
                     }
 
-                    $UserLinksBlock = "<div>Management Links</div><div class='o365'>$($UserLinksFormatted -join '')$($CIPPLinksFormatted -join '')</div>"
-
-                    $UserBody = "<div>$AssignedPlansBlock<br />$UserLinksBlock<br /><div class=`"nasa__content`">$($UserOverviewBlock)$($UserMailDetailsBlock)$($OneDriveBlock)$($UserMailSettingsBlock)$($UserPoliciesBlock)</div><div class=`"nasa__content`">$($UserDevicesDetailsBlock)</div><div class=`"nasa__content`">$($UserGroupsBlock)</div></div>"
+                    $UserModelParams = @{
+                        User            = $User
+                        Tenant          = $Tenant
+                        Groups          = $UserGroups
+                        Policies        = $UserPolicies
+                        MailSettings    = $(if ($CASRequest -or $MailboxDetailedRequest -or $StatsRequest) { $UserMailSettings })
+                        Devices         = $DevicesByUpn.Find($user.userPrincipalName)
+                        OneDrive        = $UserOneDriveDetails
+                        LicenseNames    = $userLicenseNames
+                        AssignedNameMap = $AssignedNameMap
+                        CippUrl         = $CIPPURL
+                        EnableCIPP      = [bool]$EnableCIPP
+                        PsaLinks        = $PsaLinks
+                    }
+                    $UserModel = Get-HuduUserViewModel @UserModelParams
+                    $UserBody = Get-HuduUserBody -Model $UserModel
 
                     if (![string]::IsNullOrEmpty($PeopleLayoutId)) {
                         # Hash is calculated before the timestamp is added, otherwise every asset would be rewritten on every sync
                         $NewHash = Get-StringHash -String $UserBody
-                        $UserAssetFields = @{
-                            microsoft_365 = "<div>Last Updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</div>$UserBody"
+                        $UserAssetFields = { @{
+                            microsoft_365 = Get-HuduUserBody -Model $UserModel -SyncedAt (Get-Date)
                             email_address = $user.userPrincipalName
                             licenses      = $userLicenses
-                        }
+                        } }
                         $HuduUserCount = ($HuduUser | Measure-Object).Count
 
                         if ($HuduUserCount -eq 1) {
@@ -1016,7 +845,7 @@ function Invoke-HuduExtensionSync {
 
                             if (!$ExistingAsset -or $ExistingHash -ne $NewHash) {
                                 $CompanyResult.Logs.Add("Updating $($HuduUser.name) in Hudu")
-                                $null = Set-HuduAsset -asset_id $HuduUser.id -Name $HuduUser.name -company_id $company_id -asset_layout_id $PeopleLayout.id -Fields $UserAssetFields -ExistingAsset $HuduUser
+                                $null = Set-HuduAsset -asset_id $HuduUser.id -Name $HuduUser.name -company_id $company_id -asset_layout_id $PeopleLayout.id -Fields (& $UserAssetFields) -ExistingAsset $HuduUser
                                 $AssetCache = [PSCustomObject]@{
                                     PartitionKey = 'HuduUser'
                                     RowKey       = [string]$HuduUser.id
@@ -1029,7 +858,7 @@ function Invoke-HuduExtensionSync {
                         } elseif ($HuduUserCount -eq 0) {
                             if ($CreateUsers -eq $true) {
                                 $CompanyResult.Logs.Add("Creating $($User.displayName) in Hudu")
-                                $CreateHuduUser = (New-HuduAsset -Name $User.displayName -company_id $company_id -asset_layout_id $PeopleLayout.id -Fields $UserAssetFields).asset
+                                $CreateHuduUser = (New-HuduAsset -Name $User.displayName -company_id $company_id -asset_layout_id $PeopleLayout.id -Fields (& $UserAssetFields)).asset
                                 if (!$CreateHuduUser) {
                                     $CompanyResult.Errors.add("User $($User.userPrincipalName): Unable to create user in Hudu. Check the User asset fields for 'Email Address'")
                                 } else {

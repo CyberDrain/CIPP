@@ -336,6 +336,30 @@ Describe 'Invoke-HuduExtensionSync user license sync' {
         $script:ObservedUserFields.microsoft_365 | Should -Match 'Synced '
     }
 
+    It 'shows internal forwarding by the recipient address, not its object id' {
+        Mock Get-CippExtensionReportingData {
+            [PSCustomObject]@{
+                Users    = @(
+                    [PSCustomObject]@{
+                        id = 'user-1'; displayName = 'Jane Doe'; userPrincipalName = 'jane@contoso.onmicrosoft.com'; accountEnabled = $true
+                        proxyAddresses = @('SMTP:jane@contoso.onmicrosoft.com'); businessPhones = @()
+                        assignedLicenses = @([PSCustomObject]@{ skuId = 'cbdc14ab-d96c-4c30-b9f4-6ada7cdc1d46' })
+                    }
+                    [PSCustomObject]@{ id = '588700ea-706d-4084-82ec-7fbd30b0a87d'; displayName = 'Bob'; userPrincipalName = 'bob@contoso.onmicrosoft.com'; assignedLicenses = @() }
+                )
+                AllRoles = @(); Domains = @(); Licenses = $script:LicenseCache; Devices = @()
+                DeviceCompliancePolicies = @(); Groups = @(); ConditionalAccess = @()
+                OneDriveUsage = @(); CASMailbox = @(); MailboxUsage = @(); MailboxPermissions = @()
+                Mailboxes = @([PSCustomObject]@{ ExternalDirectoryObjectId = 'user-1'; UPN = 'jane@contoso.onmicrosoft.com'; InternalForwardingAddress = '588700ea-706d-4084-82ec-7fbd30b0a87d'; DeliverToMailboxAndForward = $true })
+            }
+        }
+
+        $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        $script:ObservedUserFields.microsoft_365 | Should -Match 'bob@contoso\.onmicrosoft\.com'
+        $script:ObservedUserFields.microsoft_365 | Should -Not -Match '588700ea'
+    }
+
     It 'falls back to the raw SKU IDs when the license cache is empty' {
         $script:LicenseCache = @()
         $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'

@@ -684,9 +684,18 @@ function Invoke-HuduExtensionSync {
                         }
                     }
 
+                    # Internal forwarding comes back as a directory object id; show the recipient's address instead
+                    $InternalForward = [string]$MailboxDetailedRequest.InternalForwardingAddress
+                    if ($InternalForward -and $InternalForward -notmatch '@') {
+                        $ForwardMailbox = @($MailboxById.Find($InternalForward))[0]
+                        $ForwardUser = if (-not $ForwardMailbox) { @($Users | Where-Object { $_.id -eq $InternalForward })[0] }
+                        $ForwardGroup = if (-not $ForwardMailbox -and -not $ForwardUser) { @($AllGroupsById.Find($InternalForward))[0] }
+                        $InternalForward = $ForwardMailbox.UPN ?? $ForwardMailbox.primarySmtpAddress ?? $ForwardUser.userPrincipalName ?? $ForwardGroup.mail ?? $InternalForward
+                    }
+
                     $UserMailSettings = [pscustomobject]@{
                         ForwardAndDeliver        = $MailboxDetailedRequest.DeliverToMailboxAndForward
-                        ForwardingAddress        = (@($MailboxDetailedRequest.InternalForwardingAddress, $MailboxDetailedRequest.ForwardingSmtpAddress) | Where-Object { $_ }) -join ' '
+                        ForwardingAddress        = (@($InternalForward, ([string]$MailboxDetailedRequest.ForwardingSmtpAddress -replace '^smtp:', '')) | Where-Object { $_ }) -join ' '
                         LitiationHold            = $MailboxDetailedRequest.LitigationHoldEnabled
                         HiddenFromAddressLists   = $MailboxDetailedRequest.HiddenFromAddressListsEnabled
                         EWSEnabled               = $CASRequest.EwsEnabled

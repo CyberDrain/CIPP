@@ -189,11 +189,11 @@ Describe 'Get-HuduMagicDashViewModel' {
         $Dash.Tile.Message | Should -Be '3 licensed users'
     }
 
-    It 'sets a warning tile when something needs attention' {
+    It 'sets a danger tile when something needs attention' {
         $Params = New-DashParams
         $Params.Licenses = @(New-License 'Business Premium' 10 10)
         $Dash = Get-TestDash $Params
-        $Dash.Tile.Shade | Should -Be 'warning'
+        $Dash.Tile.Shade | Should -Be 'danger'
         $Dash.Tile.Message | Should -Be "3 licensed users $([char]0x00B7) 1 item needs attention"
     }
 

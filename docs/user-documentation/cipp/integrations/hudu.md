@@ -173,7 +173,7 @@ Once a tenant is mapped, CIPP schedules a daily synchronisation for it. User and
 
 ### Magic Dash
 
-The card is titled **Microsoft 365 -&#x20;**_**tenant name**_. Its tile shows the licensed user count and, when something needs attention, how many items need it, and turns amber. Opening it shows:
+The card is titled **Microsoft 365 -&#x20;**_**tenant name**_. Its tile shows the licensed user count and, when something needs attention, how many items need it, and turns red. Opening it shows:
 
 * the tenant name, default domain, tenant ID and portal links, followed by a **Needs attention** strip for licenses that are fully or at least 90% assigned and for five or more Global Administrators
 * tiles for licensed users, license SKUs, Global Administrators and verified domains
@@ -187,6 +187,10 @@ When a tenant is renamed, the next synchronisation removes the dash left under t
 ### User assets
 
 The **Microsoft 365** field on each user asset opens with a header showing the user's name, account status, job title and links to Entra, Teams, Intune and CIPP. A **Needs attention** strip follows when the mailbox or OneDrive is at least 90% full, a device is non-compliant or has not synced in over 30 days, a Conditional Access policy is report-only, mail is being forwarded, or the account is disabled. Below it are cards for contact details, mailbox and OneDrive usage, mailbox access and settings, licenses and aliases, Conditional Access, Intune devices, groups and service plans. Cards with nothing to show are left out. The asset is only rewritten when this content changes.
+
+### Device assets
+
+The **Microsoft 365** field on each device asset opens with a header showing the device name, compliance state, operating system and version, primary user and links to Intune and, where the Hudu asset has Datto RMM or ConnectWise cards, to Datto RMM, Datto RMM Remote, CW Automate and CW Control. A **Needs attention** strip follows when the device is non-compliant, has not synced in over 30 days, or its storage is at least 90% full. Below it are cards for device details, hardware with a storage usage bar, enrollment and security (including Device Guard, virtualization-based security and Credential Guard), compliance policies and groups. As with users, the asset is only rewritten when this content changes.
 
 Each tenant's synchronisation first checks that CIPP can reach Hudu with the saved API key. If it cannot, that tenant's run stops straight away and the Hudu error is recorded in the logbook. Select **Test** to confirm the connection.
 

@@ -821,40 +821,6 @@ function Invoke-HuduExtensionSync {
             Write-Information "### Processing Devices for $($Tenant.defaultDomainName)"
             foreach ($Device in $Devices) {
                 try {
-                    [System.Collections.Generic.List[PSCustomObject]]$DeviceOverviewFormatted = @()
-                    $DeviceOverviewFormatted.add($(Get-HuduFormattedField -Title 'Device Name' -Value "$($Device.deviceName)"))
-                    $DeviceOverviewFormatted.add($(Get-HuduFormattedField -Title 'User' -Value "$($Device.userDisplayName)"))
-                    $DeviceOverviewFormatted.add($(Get-HuduFormattedField -Title 'User Email' -Value "$($Device.userPrincipalName)"))
-                    $DeviceOverviewFormatted.add($(Get-HuduFormattedField -Title 'Owner' -Value "$($Device.ownerType)"))
-                    $DeviceOverviewFormatted.add($(Get-HuduFormattedField -Title 'Enrolled' -Value "$($Device.enrolledDateTime)"))
-                    $DeviceOverviewFormatted.add($(Get-HuduFormattedField -Title 'Last Checkin' -Value "$($Device.lastSyncDateTime)"))
-                    if ($Device.complianceState -eq 'compliant') {
-                        $CompliantSymbol = '<font color=green><em class="fas fa-check-circle">&nbsp;&nbsp;&nbsp;</em></font>'
-                    } else {
-                        $CompliantSymbol = '<font color=red><em class="fas fa-times-circle">&nbsp;&nbsp;&nbsp;</em></font>'
-                    }
-                    $DeviceOverviewFormatted.add($(Get-HuduFormattedField -Title 'Compliant' -Value "$($CompliantSymbol)$($Device.complianceState)"))
-                    $DeviceOverviewFormatted.add($(Get-HuduFormattedField -Title 'Management Type' -Value "$($Device.managementAgent)"))
-
-                    [System.Collections.Generic.List[PSCustomObject]]$DeviceHardwareFormatted = @()
-                    $DeviceHardwareFormatted.add($(Get-HuduFormattedField -Title 'Serial Number' -Value "$($Device.serialNumber)"))
-                    $DeviceHardwareFormatted.add($(Get-HuduFormattedField -Title 'OS' -Value "$($Device.operatingSystem)"))
-                    $DeviceHardwareFormatted.add($(Get-HuduFormattedField -Title 'OS Versions' -Value "$($Device.osVersion)"))
-                    $DeviceHardwareFormatted.add($(Get-HuduFormattedField -Title 'Chassis' -Value "$($Device.chassisType)"))
-                    $DeviceHardwareFormatted.add($(Get-HuduFormattedField -Title 'Model' -Value "$($Device.model)"))
-                    $DeviceHardwareFormatted.add($(Get-HuduFormattedField -Title 'Manufacturer' -Value "$($Device.manufacturer)"))
-                    $DeviceHardwareFormatted.add($(Get-HuduFormattedField -Title 'Total Storage' -Value "$([math]::Round($Device.totalStorageSpaceInBytes /1024 /1024 /1024, 2))"))
-                    $DeviceHardwareFormatted.add($(Get-HuduFormattedField -Title 'Free Storage' -Value "$([math]::Round($Device.freeStorageSpaceInBytes /1024 /1024 /1024, 2))"))
-
-                    [System.Collections.Generic.List[PSCustomObject]]$DeviceEnrollmentFormatted = @()
-                    $DeviceEnrollmentFormatted.add($(Get-HuduFormattedField -Title 'Enrollment Type' -Value "$($Device.deviceEnrollmentType)"))
-                    $DeviceEnrollmentFormatted.add($(Get-HuduFormattedField -Title 'Join Type' -Value "$($Device.joinType)"))
-                    $DeviceEnrollmentFormatted.add($(Get-HuduFormattedField -Title 'Registration State' -Value "$($Device.deviceRegistrationState)"))
-                    $DeviceEnrollmentFormatted.add($(Get-HuduFormattedField -Title 'Autopilot Enrolled' -Value "$($Device.autopilotEnrolled)"))
-                    $DeviceEnrollmentFormatted.add($(Get-HuduFormattedField -Title 'Device Guard Requirements' -Value "$($Device.hardwareinformation.deviceGuardVirtualizationBasedSecurityHardwareRequirementState)"))
-                    $DeviceEnrollmentFormatted.add($(Get-HuduFormattedField -Title 'Virtualistation Based Security' -Value "$($Device.hardwareinformation.deviceGuardVirtualizationBasedSecurityState)"))
-                    $DeviceEnrollmentFormatted.add($(Get-HuduFormattedField -Title 'Credential Guard' -Value "$($Device.hardwareinformation.deviceGuardLocalSystemAuthorityCredentialGuardState)"))
-
                     $DevicePoliciesTable = foreach ($Policy in $DeviceComplianceDetails) {
                         # Handle DeviceStatuses as either array or single object
                         $DeviceStatuses = $Policy.DeviceStatuses
@@ -888,47 +854,18 @@ function Invoke-HuduExtensionSync {
                                 Write-Information "Processing Status for Device $($device.deviceName), Policy $($Policy.displayName)"
                                 # Filter out invalid statuses
                                 if ($Status.status -and $Status.status -ne 'unknown' -and $null -ne $Status.status) {
-                                    try {
-                                        $LastReport = if ($Status.lastReportedDateTime) {
-                                            (Get-Date $Status.lastReportedDateTime -Format 'yyyy-MM-dd HH:mm:ss')
-                                        } else { 'N/A' }
-
-                                        $GraceExpiry = if ($Status.complianceGracePeriodExpirationDateTime) {
-                                            (Get-Date $Status.complianceGracePeriodExpirationDateTime -Format 'yyyy-MM-dd HH:mm:ss')
-                                        } else { 'N/A' }
-
-                                        [PSCustomObject]@{
-                                            Name           = $Policy.displayName
-                                            Status         = $Status.status
-                                            'Last Report'  = $LastReport
-                                            'Grace Expiry' = $GraceExpiry
-                                            'Match Method' = if ($Status.deviceDisplayName -eq $device.deviceName) { 'Device Name' }
-                                            elseif ($Status.deviceDisplayName -eq $device.managedDeviceName) { 'Managed Name' }
-                                            else { 'Device ID' }
-                                        }
-                                    } catch {
-                                        # Log but continue processing if date parsing fails
-                                        Write-Warning "Failed to parse compliance policy dates for device $($device.deviceName), policy $($Policy.displayName): $_"
-                                        [PSCustomObject]@{
-                                            Name           = $Policy.displayName
-                                            Status         = $Status.status
-                                            'Last Report'  = 'Parse Error'
-                                            'Grace Expiry' = 'Parse Error'
-                                            'Match Method' = 'Error'
-                                        }
+                                    [PSCustomObject]@{
+                                        Name         = $Policy.displayName
+                                        Status       = $Status.status
+                                        LastReported = $Status.lastReportedDateTime
+                                        GraceExpiry  = $Status.complianceGracePeriodExpirationDateTime
                                     }
                                 }
                             }
                         }
                     }
-                    $DevicePoliciesFormatted = $DevicePoliciesTable | ConvertTo-Html -Fragment | Out-String
 
-                    $DeviceGroupsTable = foreach ($Group in $GroupsByDeviceId.Find($device.azureADDeviceId)) {
-                        [PSCustomObject]@{
-                            Name = $Group.displayName
-                        }
-                    }
-                    $DeviceGroupsFormatted = $DeviceGroupsTable | ConvertTo-Html -Fragment | Out-String
+                    $DeviceGroupNames = @(foreach ($Group in $GroupsByDeviceId.Find($device.azureADDeviceId)) { $Group.displayName })
                     <#
                 $DeviceAppsTable = foreach ($App in $DeviceAppInstallDetails) {
                     if ($device.id -in $App.InstalledAppDetails.deviceId) {
@@ -941,40 +878,37 @@ function Invoke-HuduExtensionSync {
                 }
                 $DeviceAppsFormatted = $DeviceAppsTable | ConvertTo-Html -Fragment | Out-String
 #>
-                    $DeviceOverviewBlock = Get-HuduFormattedBlock -Heading 'Device Details' -Body ($DeviceOverviewFormatted -join '')
-                    $DeviceHardwareBlock = Get-HuduFormattedBlock -Heading 'Hardware Details' -Body ($DeviceHardwareFormatted -join '')
-                    $DeviceEnrollmentBlock = Get-HuduFormattedBlock -Heading 'Device Enrollment Details' -Body ($DeviceEnrollmentFormatted -join '')
-                    $DevicePolicyBlock = Get-HuduFormattedBlock -Heading 'Compliance Policies' -Body ($DevicePoliciesFormatted -join '')
-                    #$DeviceAppsBlock = Get-HuduFormattedBlock -Heading 'App Details' -Body ($DeviceAppsFormatted -join '')
-                    $DeviceGroupsBlock = Get-HuduFormattedBlock -Heading 'Device Groups' -Body ($DeviceGroupsFormatted -join '')
-
                     $HuduDevice = Find-HuduDeviceMatch -Device $Device -HuduDevices $HuduDevices -ExcludeSerials $ExcludeSerials -SerialIndex $HuduDevicesBySerial -NameIndex $HuduDevicesByName
 
-                    [System.Collections.Generic.List[PSCustomObject]]$DeviceLinksFormatted = @()
-                    $DeviceLinksFormatted.add((Get-HuduLinkBlock -URL "https://intune.microsoft.com/$($Tenant.defaultDomainName)/#blade/Microsoft_Intune_Devices/DeviceSettingsBlade/overview/mdmDeviceId/$($Device.id)" -Icon 'fas fa-laptop' -Title 'Endpoint Manager'))
-
+                    $RmmLinks = [System.Collections.Generic.List[object]]::new()
                     if ($HuduDevice) {
                         $DRMMCard = $HuduDevice.cards | Where-Object { $_.integrator_name -eq 'dattormm' }
                         if ($DRMMCard) {
-                            $DeviceLinksFormatted.add((Get-HuduLinkBlock -URL "$($RMMDeviceURL)$($DRMMCard.data.id)" -Icon 'fas fa-laptop-code' -Title 'Datto RMM'))
-                            $DeviceLinksFormatted.add((Get-HuduLinkBlock -URL "$($RMMRemoteURL)$($DRMMCard.data.id)" -Icon 'fas fa-desktop' -Title 'Datto RMM Remote'))
+                            $RmmLinks.Add(@{ Label = 'Datto RMM'; Tip = 'Open this device in Datto RMM'; Url = "$($RMMDeviceURL)$($DRMMCard.data.id)" })
+                            $RmmLinks.Add(@{ Label = 'Datto RMM Remote'; Tip = 'Start a Datto RMM remote session'; Url = "$($RMMRemoteURL)$($DRMMCard.data.id)" })
                         }
                         $ManageCard = $HuduDevice.cards | Where-Object { $_.integrator_name -eq 'cw_manage' }
                         if ($ManageCard) {
-                            $DeviceLinksFormatted.add((Get-HuduLinkBlock -URL $ManageCard.data.managementLink -Icon 'fas fa-laptop-code' -Title 'CW Automate'))
-                            $DeviceLinksFormatted.add((Get-HuduLinkBlock -URL $ManageCard.data.remoteLink -Icon 'fas fa-desktop' -Title 'CW Control'))
+                            $RmmLinks.Add(@{ Label = 'CW Automate'; Tip = 'Open this device in CW Automate'; Url = [string]$ManageCard.data.managementLink })
+                            $RmmLinks.Add(@{ Label = 'CW Control'; Tip = 'Start a CW Control session'; Url = [string]$ManageCard.data.remoteLink })
                         }
                     }
 
-                    $DeviceLinksBlock = "<div>Management Links</div><div class='o365'>$($DeviceLinksFormatted -join '')</div>"
-
-                    $DeviceIntuneDetailshtml = "<div><div>$DeviceLinksBlock<br /><div class=`"nasa__content`">$($DeviceOverviewBlock)$($DeviceHardwareBlock)$($DeviceEnrollmentBlock)$($DevicePolicyBlock)$($DeviceAppsBlock)$($DeviceGroupsBlock)</div></div>"
-
+                    $DeviceModelParams = @{
+                        Device   = $Device
+                        Tenant   = $Tenant
+                        Policies = $DevicePoliciesTable
+                        Groups   = $DeviceGroupNames
+                        RmmLinks = $RmmLinks
+                        Culture  = $Culture
+                        TimeZone = $TimeZone
+                    }
+                    $DeviceModel = Get-HuduDeviceViewModel @DeviceModelParams
                     $DeviceAssetFields = @{
-                        microsoft_365 = "<div>Last Updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</div>$DeviceIntuneDetailshtml"
+                        microsoft_365 = Get-HuduDeviceBody -Model $DeviceModel -SyncedAt (Get-Date) -Culture $Culture -TimeZone $TimeZone
                     }
                     # Exclude the timestamp from the hash so unchanged assets are not rewritten on every sync.
-                    $DeviceHashMaterial = [System.Collections.Generic.List[string]]@($DeviceIntuneDetailshtml)
+                    $DeviceHashMaterial = [System.Collections.Generic.List[string]]@(Get-HuduDeviceBody -Model $DeviceModel -Culture $Culture -TimeZone $TimeZone)
                     $CredentialRetrievalFailed = $false
                     $CredentialFailureReasons = [System.Collections.Generic.List[string]]::new()
                     $CredentialFieldsChanged = $false

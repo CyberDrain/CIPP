@@ -21,11 +21,8 @@ BeforeAll {
     function Get-HuduRelations { }
     function Remove-CIPPAzDataTableEntity { param($Entity, [switch]$Force) }
     function Add-CIPPAzDataTableEntity { param($Entity, [switch]$Force) }
-    function Get-HuduLinkBlock { param($Title, $URL, $Icon) }
     function New-GraphGetRequest { param($Uri, $TenantId, [switch]$NoAuthCheck) }
     function Get-CIPPDbItem { param($TenantFilter, $Type) }
-    function Get-HuduFormattedField { param($Title, $Value) }
-    function Get-HuduFormattedBlock { param($Heading, $Body) }
     function Get-StringHash { param($String) }
     function Set-HuduAsset { param($asset_id, $Name, $company_id, $asset_layout_id, $Fields, $PrimarySerial, $ExistingAsset) }
     function New-HuduAsset { param($Name, $company_id, $asset_layout_id, $Fields, $PrimarySerial) }
@@ -37,11 +34,8 @@ BeforeAll {
     function Get-CippException { param($Exception) [PSCustomObject]@{ NormalizedError = $Exception.Exception.Message } }
     function Get-CippDbRoleMembers { param($TenantFilter, $RoleTemplateId) }
 
-    # The section of the asset body between <Heading> and </Heading>, as Get-HuduFormattedBlock is mocked below
     function Get-HuduUserViewModel { param($User, $Tenant, $Groups, $Policies, $MailSettings, $Devices, $OneDrive, $LicenseNames, $AssignedNameMap, $CippUrl, $EnableCIPP, $PsaLinks, $Culture, $TimeZone) }
     function Get-HuduUserBody { param($Model, $SyncedAt, $Culture, $TimeZone) }
-
-    function Get-Block($Body, $Heading) { if ($Body -match "(?s)<$Heading>(.*?)</$Heading>") { $Matches[1] } }
 }
 
 # Pins how users, groups, policies, mailboxes, permissions, devices, compliance statuses, Hudu people, Hudu devices
@@ -148,10 +142,14 @@ Describe 'Invoke-HuduExtensionSync matching' {
         Mock Get-HuduAssetLayouts { if ($Id -eq 11) { [PSCustomObject]@{ id = 11; fields = @() } } else { [PSCustomObject]@{ id = 12; fields = @([PSCustomObject]@{ label = 'Microsoft 365'; field_type = 'RichText'; position = 0 }) } } }
         Mock Get-HuduAssets { if ($AssetLayoutId -eq 11) { $script:People } else { $script:HuduDevices } }
         Mock Get-HuduRelations { @([PSCustomObject]@{ id = 1; fromable_type = 'Asset'; fromable_id = 101; toable_type = 'Asset'; toable_id = 201 }) }
-        Mock Get-HuduLinkBlock { $Title }
         Mock Get-CIPPDbItem { if ($Type -eq 'IntuneDeviceCompliancePolicies_cp1') { foreach ($S in $Statuses) { [PSCustomObject]@{ RowKey = "x-$($S.id)"; Data = ($S | ConvertTo-Json -Compress) } } } }
-        Mock Get-HuduFormattedField { "[$Title=$Value]" }
-        Mock Get-HuduFormattedBlock { "<$Heading>$Body</$Heading>" }
+        # Device assets: capture the matched data handed to the view model, keyed by device name
+        $script:DeviceInputs = @{}
+        Mock Get-HuduDeviceViewModel {
+            $script:DeviceInputs[$Device.deviceName] = @{ Policies = @($Policies); Groups = @($Groups) }
+            [ordered]@{ Name = $Device.deviceName }
+        }
+        Mock Get-HuduDeviceBody { "device-$($Model.Name)" }
         Mock Get-StringHash { [System.Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::UTF8.GetBytes($String))) }
         Mock Set-HuduAsset { $script:SetAssets.Add([PSCustomObject]@{ Id = $asset_id; Body = $Fields.microsoft_365 }) }
         Mock New-HuduAsset {
@@ -229,20 +227,21 @@ Describe 'Invoke-HuduExtensionSync matching' {
     }
 
     It 'matches compliance statuses by device name, id suffix, Entra id and missing names' {
-        $PC1 = Get-Block ($script:SetAssets | Where-Object Id -EQ 201).Body 'Compliance Policies'
-        foreach ($S in 'compliant', 'inGracePeriod', 'conflict') { $PC1 | Should -Match "<td>$S</td>" }
-        $PC1 | Should -Not -Match '<td>noncompliant</td>|<td>error</td>'
-        $PC2 = Get-Block ($script:SetAssets | Where-Object Id -EQ 202).Body 'Compliance Policies'
-        foreach ($S in 'noncompliant', 'conflict') { $PC2 | Should -Match "<td>$S</td>" }
-        $PC2 | Should -Not -Match '<td>compliant</td>|<td>inGracePeriod</td>|<td>error</td>'
+        @($script:SetAssets.Body) | Should -Contain 'device-PC-1'
+        @($script:SetAssets.Body) | Should -Contain 'device-PC-2'
+        $PC1 = @($script:DeviceInputs['PC-1'].Policies.Status)
+        foreach ($S in 'compliant', 'inGracePeriod', 'conflict') { $PC1 | Should -Contain $S }
+        $PC1 | Should -Not -Contain 'noncompliant'
+        $PC1 | Should -Not -Contain 'error'
+        $PC2 = @($script:DeviceInputs['PC-2'].Policies.Status)
+        foreach ($S in 'noncompliant', 'conflict') { $PC2 | Should -Contain $S }
+        foreach ($S in 'compliant', 'inGracePeriod', 'error') { $PC2 | Should -Not -Contain $S }
     }
 
     It 'lists device groups by Entra device id, and every group with a member lacking one for a device without an id' {
-        $PC1 = Get-Block ($script:SetAssets | Where-Object Id -EQ 201).Body 'Device Groups'
-        $PC1 | Should -Match '<td>All Staff</td>'
-        $PC1 | Should -Not -Match 'Sales|Empty|Carol Only'
-        $PC2 = Get-Block ($script:SetAssets | Where-Object Id -EQ 202).Body 'Device Groups'
-        foreach ($G in 'Sales', 'All Staff', 'Empty', 'Carol Only') { $PC2 | Should -Match "<td>$G</td>" }
+        @($script:DeviceInputs['PC-1'].Groups) | Should -Be @('All Staff')
+        $PC2 = @($script:DeviceInputs['PC-2'].Groups)
+        foreach ($G in 'Sales', 'All Staff', 'Empty', 'Carol Only') { $PC2 | Should -Contain $G }
     }
 
     It 'matches Hudu devices by serial then name, and matches a later device to one created earlier in the run' {

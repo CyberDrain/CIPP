@@ -142,7 +142,7 @@ function Get-HuduMagicDashViewModel {
     $Model.Attention = Get-HuduMagicDashAttentionItems -Model $Model
     $Model.Tile = [ordered]@{
         Message = "$(& $Plural $AllUsers.Count 'licensed user' 'licensed users')$(if ($Model.Attention.Count) { " $Dot $(& $Plural $Model.Attention.Count 'item needs attention' 'items need attention')" })"
-        Shade   = $(if ($Model.Attention.Count) { 'warning' } else { 'success' })
+        Shade   = $(if ($Model.Attention.Count) { 'danger' } else { 'success' })
     }
     $Model
 }

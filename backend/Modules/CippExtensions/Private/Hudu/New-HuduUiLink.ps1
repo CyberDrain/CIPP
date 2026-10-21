@@ -3,6 +3,9 @@ function New-HuduUiLink {
         .SYNOPSIS
         A link opening in a new tab. Url, label and tip are encoded here.
 
+        .DESCRIPTION
+        Only http and https URLs become links; anything else renders as the plain label.
+
         .PARAMETER Variant
         button: outlined Microsoft/PSA button. cipp: orange CIPP button. strong: bold inline link. text: underlined inline link.
     #>
@@ -10,6 +13,7 @@ function New-HuduUiLink {
         [string]$Url, [string]$Label, [string]$Tip,
         [ValidateSet('button', 'cipp', 'strong', 'text')][string]$Variant = 'button'
     )
+    if ($Url -notmatch '^https?://') { return "<span>$(ConvertTo-HuduUiText $Label)</span>" }
     $Common = "href=`"$(ConvertTo-HuduUiText $Url)`" target=`"_blank`" rel=`"noopener noreferrer nofollow`" title=`"$(ConvertTo-HuduUiText $Tip)`""
     $Button = 'display:inline-flex;align-items:center;margin:0 6px 6px 0;padding:4px 7px;border-radius:6px;font-size:13px;font-weight:500;color:inherit;text-decoration:none;line-height:20px'
     switch ($Variant) {

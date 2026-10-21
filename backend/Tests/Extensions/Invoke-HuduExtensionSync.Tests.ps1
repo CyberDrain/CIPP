@@ -23,13 +23,10 @@ BeforeAll {
     function Get-HuduRelations { }
     function Remove-CIPPAzDataTableEntity { param($Entity, [switch]$Force) }
     function Add-CIPPAzDataTableEntity { param($Entity, [switch]$Force) }
-    function Get-HuduLinkBlock { param($Title, $URL, $Icon) }
     function New-GraphGetRequest { param($Uri, $TenantId, [switch]$NoAuthCheck) }
     function Get-CIPPDbItem { param($TenantFilter, $Type) }
     function Get-CIPPLapsPassword { param($Device, $TenantFilter) }
     function Get-CIPPBitLockerKey { param($Device, $TenantFilter) }
-    function Get-HuduFormattedField { param($Title, $Value) }
-    function Get-HuduFormattedBlock { param($Heading, $Body) }
     function Get-StringHash { param($String) }
     function Set-HuduAsset { param($AssetId, $Name, $CompanyId, $AssetLayoutId, $Fields, $PrimarySerial, $ExistingAsset) }
     function New-HuduAsset { param($Name, $CompanyId, $AssetLayoutId, $Fields, $PrimarySerial) }
@@ -123,7 +120,6 @@ Describe 'Invoke-HuduExtensionSync credential integration' {
             return @($script:HuduDevice)
         }
         Mock Get-HuduRelations { @() }
-        Mock Get-HuduLinkBlock { [PSCustomObject]@{ html = $Title } }
         Mock New-GraphGetRequest { [PSCustomObject]@{ id = 'device-1'; deviceName = 'DEVICE-01'; lastBackupDateTime = '2026-09-10T12:00:00Z' } }
         Mock Get-CIPPDbItem {
             if ($Type -eq 'BitlockerKeys') {
@@ -136,8 +132,6 @@ Describe 'Invoke-HuduExtensionSync credential integration' {
         }
         Mock Get-CIPPLapsPassword { [PSCustomObject]@{ state = 'success'; accountName = 'Administrator'; copyField = 'laps-secret'; backupDateTime = '2026-09-10T12:00:00Z' } }
         Mock Get-CIPPBitLockerKey { [PSCustomObject]@{ state = 'success'; keyId = 'key-1'; copyField = 'bitlocker-secret' } }
-        Mock Get-HuduFormattedField { [PSCustomObject]@{ title = $Title; value = $Value } }
-        Mock Get-HuduFormattedBlock { "<$Heading>$Body</$Heading>" }
         Mock Get-StringHash { 'device-hash' }
         Mock Add-CIPPAzDataTableEntity {
             if ($Entity.PartitionKey -eq 'HuduDevice') { $script:CachedHash = $Entity.Hash }
@@ -179,6 +173,17 @@ Describe 'Invoke-HuduExtensionSync credential integration' {
         Should -Invoke Find-HuduDeviceMatch -Times 2 -Exactly -ParameterFilter {
             'SystemSerialNumber' -in $ExcludeSerials -and 'CUSTOM-PLACEHOLDER' -in $ExcludeSerials
         }
+    }
+
+    It 'hashes the device body without the sync timestamp and writes it with one' {
+        Mock Get-StringHash { $script:HashedDevice = $String; 'device-hash' }
+        Mock Set-HuduAsset { $script:ObservedDeviceFields = $Fields }
+        $null = Invoke-HuduExtensionSync -Configuration $Configuration -TenantFilter 'contoso.onmicrosoft.com'
+
+        $script:HashedDevice | Should -Match '>DEVICE-01<'
+        $script:HashedDevice | Should -Not -Match '>Synced '
+        $script:HashedDevice | Should -Match 'LAPS Account:Administrator'
+        $script:ObservedDeviceFields.microsoft_365 | Should -Match '>Synced '
     }
 
     It 'skips password retrieval and blanks stored secrets for a tenant opted out by mapping' {
@@ -303,12 +308,8 @@ Describe 'Invoke-HuduExtensionSync user license sync' {
         Mock Get-HuduAssetLayouts { $script:PeopleLayout }
         Mock Get-HuduAssets { @($script:HuduPerson) }
         Mock Get-HuduRelations { @() }
-        Mock Get-HuduLinkBlock { [PSCustomObject]@{ html = $Title } }
         Mock Get-CIPPDbItem { @() }
-        Mock Get-HuduFormattedField { [PSCustomObject]@{ title = $Title; value = $Value } }
-        Mock Get-HuduFormattedBlock { "<$Heading>$Body</$Heading>" }
         Mock Get-StringHash { $script:HashedUserBody = $String; 'user-hash' }
-        Mock Get-HuduFormattedField { "<p>$Title`: $Value</p>" }
         Mock Add-CIPPAzDataTableEntity { }
         Mock Set-HuduAsset { $script:ObservedUserFields = $Fields }
         Mock Set-HuduMagicDash { }
@@ -392,7 +393,6 @@ Describe 'Invoke-HuduExtensionSync Magic Dash' {
         }
         Mock Get-HuduCompanies { [PSCustomObject]@{ id = 20; name = 'Contoso'; archived = $false } }
         Mock Get-HuduRelations { @() }
-        Mock Get-HuduLinkBlock { [PSCustomObject]@{ html = $Title } }
         Mock Get-CIPPDbItem { @() }
         Mock Add-CIPPAzDataTableEntity { }
         Mock Set-HuduMagicDash { $script:MagicDash = $Content }

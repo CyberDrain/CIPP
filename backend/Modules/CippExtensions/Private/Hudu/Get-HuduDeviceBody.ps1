@@ -86,7 +86,7 @@ function Get-HuduDeviceBody {
         (New-HuduUiRow -Label 'Device Guard requirements' -Value $e.DeviceGuard) +
         (New-HuduUiRow -Label 'Virtualization-based security' -Value $e.Vbs) +
         (New-HuduUiRow -Label 'Credential Guard' -Value $e.CredentialGuard))
-    $RowOne = & $Columns @($DetailsCard, $HardwareCard, $EnrollmentCard) 280
+    $RowOne = & $Columns @($DetailsCard, $HardwareCard, $EnrollmentCard) 320
 
     # Compliance policies
     $PolicyCard = if ($m.Policies.Count) {

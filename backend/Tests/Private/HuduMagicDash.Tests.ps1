@@ -92,6 +92,12 @@ Describe 'Get-HuduMagicDashBody' {
         }
     }
 
+    It 'underlines people linked to Hudu so they read as links' {
+        $Body = Get-HuduMagicDashBody -Model (Get-TestDash (New-DashParams))
+
+        $Body | Should -Match '<a href="https://hudu\.example/a/1"[^>]*style="font-weight:600;color:inherit;text-decoration:underline[^"]*">Ada Admin</a>'
+    }
+
     It 'encodes every data value' {
         $Evil = '<script>alert(1)</script>"x'
         $Params = New-DashParams

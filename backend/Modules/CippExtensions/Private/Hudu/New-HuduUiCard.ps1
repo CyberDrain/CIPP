@@ -23,7 +23,7 @@ function New-HuduUiCard {
     $Row = (Get-HuduUiTableStyle).Row
     $Body = [regex]::Replace($Body, '(?s)(?<!<tbody>|</tr>)<tr>.*?</tr>(?!<tr>)', { param($r) "<table style=`"$Row`"><tbody>$($r.Value)</tbody></table>" })
     $Margin = if ($Spaced) { ';margin-top:12px' } else { '' }
-    $Cnt = if ($Count) { " <span style=`"font-weight:400;opacity:.65;font-size:13px`">$(ConvertTo-HuduUiText $Count)</span>" } else { '' }
+    $Cnt = if ($Count) { ' ' + (New-HuduUiChip -Text $Count -Small -Strong) } else { '' }
     $Badge = if ($Icon) { Get-HuduUiIcon -Name $Icon -Badge } else { '' }
     $Text = "<span style=`"vertical-align:middle`">$(ConvertTo-HuduUiText $Title)$Cnt</span>"
     $RightHtml = if ($Right) { "<span style=`"display:inline-block;vertical-align:middle;font-size:12px;opacity:.7`">$(ConvertTo-HuduUiText $Right)</span>" } else { $Flag }

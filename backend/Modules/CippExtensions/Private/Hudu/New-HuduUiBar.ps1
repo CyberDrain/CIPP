@@ -3,6 +3,9 @@ function New-HuduUiBar {
         .SYNOPSIS
         A horizontal usage bar. Pct is an invariant-culture number.
 
+        .DESCRIPTION
+        Hudu's mobile app does not paint the fill, so callers show the percentage as text beside or above the bar.
+
         .PARAMETER Tone
         ok and neutral bars are brand orange; warn, err and info keep their status colour.
     #>

@@ -71,12 +71,20 @@ Describe 'Get-HuduMagicDashBody' {
         $Body | Should -Match '<td style="border-width:0 0 1px;background:transparent;vertical-align:top'
     }
 
+    It 'uses no layout CSS that Hudu or its mobile app drops' {
+        $Params = New-DashParams
+        $Params.Licenses = @((New-License 'Business Premium' 10 10), (New-License 'Copilot' 5 0))
+        $Body = Get-HuduMagicDashBody -Model (Get-TestDash $Params) -SyncedAt $script:AsOf
+        $Body | Should -Match 'Needs attention'
+        $Body | Should -Not -Match 'display:(inline-)?flex|justify-content|float:|gap:'
+    }
+
     It 'uses the CIPP brand without orange text' {
         $Params = New-DashParams
         $Body = Get-HuduMagicDashBody -Model (Get-TestDash $Params) -SyncedAt $script:AsOf
         $Body | Should -Match '^<div style="overflow:hidden"><div style="border:1px solid rgba\(128,128,128,.3\);border-top:3px solid #f77f00;'
-        $Body | Should -Match '<i class="fas fa-user-shield" style="color:#f77f00;font-size:12px"></i></span><div style="min-width:0"><div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:.7">Global Administrators</div><div style="margin-top:2px;font-size:20px;font-weight:600'
-        $Body | Should -Match '<i class="fas fa-key" style="color:#f77f00;font-size:12px"></i></span><span>Licenses '
+        $Body | Should -Match '<i class="fas fa-user-shield" style="color:#f77f00;font-size:12px"></i></span><span style="vertical-align:middle;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:.7">Global Administrators</span></div><div style="margin-top:6px;font-size:20px;font-weight:600'
+        $Body | Should -Match '<i class="fas fa-key" style="color:#f77f00;font-size:12px"></i></span><span style="vertical-align:middle">Licenses '
         $Body | Should -Match 'width:60%;background:#f77f00'
         $Body | Should -Not -Match 'border-radius:1[02]px'
         foreach ($Use in [regex]::Matches($Body, '(?<![-\w])color:#f77f00')) {
@@ -106,7 +114,7 @@ Describe 'Get-HuduMagicDashBody' {
     It 'shows PIM-eligible members with their end date and keeps empty roles it is given' {
         $Params = New-DashParams
         $Body = Get-HuduMagicDashBody -Model (Get-TestDash $Params)
-        $Body | Should -Match 'Eligible:</span><span[^>]*>Ola Oncall \(until 2030-01-15\)</span>'
+        $Body | Should -Match 'Eligible:</span> <span[^>]*>Ola Oncall \(until 2030-01-15\)</span>'
         $Body | Should -Match '>Unused Role</td><td[^>]*><span style="opacity:.55">&ndash;</span>'
     }
 }

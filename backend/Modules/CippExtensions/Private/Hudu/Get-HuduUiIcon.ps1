@@ -8,11 +8,11 @@ function Get-HuduUiIcon {
         Name is one of the named icons below or a Font Awesome solid icon name such as envelope.
 
         .PARAMETER Badge
-        Draws the icon in brand orange on a 24px rounded square.
+        Draws the icon in brand orange on a 24px rounded square, inline-block so following text keeps its place when the icon is blank.
     #>
     param([Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9-]+$')][string]$Name, [switch]$Badge)
     if ($Badge) {
-        return "<span style=`"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:rgba(247,127,0,.12);margin-right:8px;flex:none`"><i class=`"fas fa-$($Name.ToLowerInvariant())`" style=`"color:#f77f00;font-size:12px`"></i></span>"
+        return "<span style=`"display:inline-block;vertical-align:middle;width:24px;height:24px;line-height:24px;text-align:center;border-radius:6px;background:rgba(247,127,0,.12);margin-right:8px`"><i class=`"fas fa-$($Name.ToLowerInvariant())`" style=`"color:#f77f00;font-size:12px`"></i></span>"
     }
     switch ($Name) {
         'External' { '<i class="fas fa-external-link-alt" style="opacity:.6;font-size:11px;margin-left:6px"></i>' }

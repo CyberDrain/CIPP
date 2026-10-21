@@ -2,6 +2,9 @@ function New-HuduUiChip {
     <#
         .SYNOPSIS
         A pill with a tone. Text, title and suffix are encoded here.
+
+        .DESCRIPTION
+        Inline-block; callers put a space between adjacent chips because Hudu's mobile app drops their margins.
     #>
     param(
         [string]$Text,
@@ -19,6 +22,6 @@ function New-HuduUiChip {
     $Size = if ($Small) { 'padding:0 7px;font-size:11px;line-height:18px' } else { 'padding:1px 9px;font-size:12px;line-height:20px' }
     $Nw = if ($NoWrap) { 'white-space:nowrap;' } else { '' }
     $Tt = if ($Title) { " title=`"$(ConvertTo-HuduUiText $Title)`"" } else { '' }
-    $Sx = if ($Suffix) { "<span style=`"opacity:.65;margin-left:5px`">$(ConvertTo-HuduUiText $Suffix)</span>" } else { '' }
-    "<span$Tt style=`"display:inline-flex;align-items:center;margin:2px 4px 2px 0;$Size;border-radius:6px;$Weight$($Nw)background:$($T.Bg);border:1px solid $($T.Bd)`">$(if ($Icon) { Get-HuduUiIcon -Name $Icon })$(ConvertTo-HuduUiText $Text)$Sx</span>"
+    $Sx = if ($Suffix) { " <span style=`"opacity:.65;margin-left:2px`">$(ConvertTo-HuduUiText $Suffix)</span>" } else { '' }
+    "<span$Tt style=`"display:inline-block;vertical-align:middle;margin:2px 4px 2px 0;$Size;border-radius:6px;$Weight$($Nw)background:$($T.Bg);border:1px solid $($T.Bd)`">$(if ($Icon) { Get-HuduUiIcon -Name $Icon })$(ConvertTo-HuduUiText $Text)$Sx</span>"
 }

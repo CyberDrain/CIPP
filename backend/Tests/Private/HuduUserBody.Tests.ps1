@@ -98,11 +98,19 @@ Describe 'Get-HuduUserBody' {
         $Body | Should -Not -Match '<details'
     }
 
+    It 'uses no layout CSS that Hudu or its mobile app drops' {
+        $Params = New-TestModelParams
+        $Params.Policies[0].state = 'enabledForReportingButNotEnforced'
+        $Body = Get-HuduUserBody -Model (Get-HuduUserViewModel @Params) -SyncedAt $script:AsOf
+        $Body | Should -Match 'Needs attention'
+        $Body | Should -Not -Match 'display:(inline-)?flex|justify-content|float:|gap:'
+    }
+
     It 'uses the CIPP brand without orange text' {
         $Params = New-TestModelParams
         $Body = Get-HuduUserBody -Model (Get-HuduUserViewModel @Params) -SyncedAt $script:AsOf
         $Body | Should -Match '^<div style="overflow:hidden"><div style="border:1px solid rgba\(128,128,128,.3\);border-top:3px solid #f77f00;'
-        $Body | Should -Match 'background:rgba\(247,127,0,.12\);[^"]*"><i class="fas fa-envelope" style="color:#f77f00;font-size:12px"></i></span><span>Mailbox</span></h3>'
+        $Body | Should -Match 'background:rgba\(247,127,0,.12\);[^"]*"><i class="fas fa-envelope" style="color:#f77f00;font-size:12px"></i></span><span style="vertical-align:middle">Mailbox</span></h3>'
         $Body | Should -Match 'width:20%;background:#f77f00'
         $Body | Should -Match 'width:50%;background:#f77f00'
         $Body | Should -Not -Match 'border-radius:1[02]px'
@@ -221,9 +229,9 @@ Describe 'Hudu locale' {
         $Us = Get-HuduUserBody -Model (Get-HuduUserViewModel @Params) -SyncedAt $script:AsOf -Culture $Params.Culture
         $Gb = Get-HuduUserBody -Model (Get-HuduUserViewModel @GbParams) -SyncedAt $script:AsOf
         $Us | Should -Match 'Synced Oct 20 2026 12:00 UTC'
-        $Us | Should -Match 'Last activity</span><span[^>]*>Oct 18 2026<'
+        $Us | Should -Match 'Last activity</td><td[^>]*>Oct 18 2026<'
         $Gb | Should -Match 'Synced 20 Oct 2026 12:00 UTC'
-        $Gb | Should -Match 'Last activity</span><span[^>]*>18 Oct 2026<'
+        $Gb | Should -Match 'Last activity</td><td[^>]*>18 Oct 2026<'
     }
 }
 

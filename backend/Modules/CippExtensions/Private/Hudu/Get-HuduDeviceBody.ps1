@@ -19,18 +19,19 @@ function Get-HuduDeviceBody {
     )
 
     $m = $Model
-    # Hudu strips the CSS gap property, so spacing is done with margins
+    # Hudu strips the CSS gap property and its mobile app ignores flex and margins on inline-blocks,
+    # so rows are inline flow with margins plus a literal space between inline-block items
     $TableStyle = Get-HuduUiTableStyle
     $Th = $TableStyle.Th
     $Td = $TableStyle.Td
     $Table = $TableStyle.Table
-    $Wrap = 'display:flex;flex-wrap:wrap'
-    $Sep = '<span style="width:1px;height:20px;background:rgba(128,128,128,.4);margin:0 8px 6px 2px"></span>'
-    $LinkLabel = { param($t) "<span style=`"font-size:12px;opacity:.7;margin:0 8px 6px 0`">$t</span>" }
+    $Sep = '<span style="display:inline-block;vertical-align:middle;width:1px;height:20px;background:rgba(128,128,128,.4);margin:0 8px 6px 2px"></span>'
+    $LinkLabel = { param($t) "<span style=`"display:inline-block;vertical-align:middle;font-size:12px;opacity:.7;margin:0 8px 6px 0`">$t</span>" }
+    # Hudu's mobile app ignores grid and stacks the cells, which suits a phone
     $Columns = {
         param($Cards, $Basis)
-        $Cells = @(foreach ($c in $Cards) { if ($c) { '<div style="flex:1 1 {0}px;min-width:0;margin:6px">{1}</div>' -f $Basis, $c } }) -join ''
-        "<div style=`"$Wrap;margin:6px -6px -6px`">$Cells</div>"
+        $Cells = @(foreach ($c in $Cards) { if ($c) { "<div style=`"min-width:0;margin:6px`">$c</div>" } }) -join ''
+        "<div style=`"display:grid;grid-template-columns:repeat(auto-fit,minmax($($Basis)px,1fr));margin:6px -6px -6px`">$Cells</div>"
     }
     $Muted = '<span style="opacity:.55">&ndash;</span>'
     $h = $m.Header
@@ -47,18 +48,18 @@ function Get-HuduDeviceBody {
     $User = if ($h.UserName -and $h.UserPrincipal) { "$(ConvertTo-HuduUiText $h.UserName) ($(ConvertTo-HuduUiText $h.UserPrincipal))" } else { ConvertTo-HuduUiText "$($h.UserName)$($h.UserPrincipal)" }
     $Sub = (@($Os, $User) | Where-Object { $_ }) -join ' &middot; '
     $Synced = if ($SyncedAt) { New-HuduUiSynced -SyncedAt $SyncedAt -Culture $Culture -TimeZone $TimeZone }
-    $HeaderCard = "<div style=`"border:1px solid rgba(128,128,128,.3);border-top:3px solid #f77f00;border-radius:6px;padding:14px 16px 8px;box-sizing:border-box;$Wrap;align-items:center`">" +
-    "<div style=`"flex:1 1 320px;min-width:0;margin:0 16px 8px 0`"><div style=`"$Wrap;align-items:center`"><span style=`"font-size:18px;font-weight:600;line-height:1.3;margin-right:8px`">$(ConvertTo-HuduUiText $h.Name)</span>$(New-HuduUiChip -Text $h.Compliance -Tone $h.ComplianceTone -Strong)</div>" +
-    "<div style=`"font-size:13px;opacity:.75`">$Sub</div></div>$Synced" +
-    "<div style=`"flex:1 1 100%;$Wrap;align-items:center;padding-top:12px;border-top:1px solid rgba(128,128,128,.2)`">$($LinkHtml -join '')</div></div>"
+    $HeaderCard = "<div style=`"border:1px solid rgba(128,128,128,.3);border-top:3px solid #f77f00;border-radius:6px;padding:14px 16px 8px;box-sizing:border-box`">" +
+    "<div><span style=`"vertical-align:middle;font-size:18px;font-weight:600;line-height:1.3;margin-right:8px`">$(ConvertTo-HuduUiText $h.Name)</span> $(New-HuduUiChip -Text $h.Compliance -Tone $h.ComplianceTone -Strong)</div>" +
+    "<div style=`"font-size:13px;opacity:.75`">$Sub</div>$Synced" +
+    "<div style=`"margin-top:10px;padding-top:12px;border-top:1px solid rgba(128,128,128,.2)`">$($LinkHtml -join ' ')</div></div>"
 
     # Needs attention
     $Attention = Get-HuduDeviceAttentionItems -Model $m
     $AttentionHtml = if ($Attention.Count) {
-        $Items = @(foreach ($a in $Attention) { "<span style=`"margin:4px 24px 0 0`">$(ConvertTo-HuduUiRich $a)</span>" }) -join ''
+        $Items = @(foreach ($a in $Attention) { "<span style=`"display:inline-block;margin:4px 24px 0 0`">$(ConvertTo-HuduUiRich $a)</span>" }) -join ' '
         "<div style=`"margin-top:12px;padding:10px 14px;border-radius:6px;background:rgba(247,144,9,.12);border:1px solid rgba(247,144,9,.5)`">" +
-        "<div style=`"display:flex;align-items:center;font-size:13px;font-weight:600`">$(Get-HuduUiIcon -Name Warning)Needs attention <span style=`"font-weight:400;opacity:.7;margin-left:6px`">$($Attention.Count)</span></div>" +
-        "<div style=`"$Wrap;margin-top:2px;font-size:13px`">$Items</div></div>"
+        "<div style=`"font-size:13px;font-weight:600`">$(Get-HuduUiIcon -Name Warning)Needs attention <span style=`"font-weight:400;opacity:.7;margin-left:6px`">$($Attention.Count)</span></div>" +
+        "<div style=`"margin-top:2px;font-size:13px`">$Items</div></div>"
     }
 
     # Device details, hardware, enrollment and security
@@ -69,8 +70,8 @@ function Get-HuduDeviceBody {
 
     $S = $m.Hardware.Storage
     $StorageHtml = if ($S.Present) {
-        "<div style=`"padding:7px 0;border-top:1px solid rgba(128,128,128,.2);font-size:13px`"><div style=`"display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px`"><span style=`"opacity:.7;margin-right:12px;white-space:nowrap`">Storage</span><span>$(ConvertTo-HuduUiText $S.UsedText) <span style=`"opacity:.7`">of $(ConvertTo-HuduUiText $S.AllocatedText), $(ConvertTo-HuduUiText $S.FreeText) free</span></span></div>" +
-        (New-HuduUiBar -Pct $S.Pct -Tone $S.Tone -Title "Storage usage $($S.PctText)") + '</div>'
+        "<tr><td style=`"$($TableStyle.RowLabel);$($TableStyle.RowSep)`">Storage</td><td style=`"$($TableStyle.RowValue);$($TableStyle.RowSep)`">$(ConvertTo-HuduUiText $S.UsedText) <span style=`"opacity:.7`">of $(ConvertTo-HuduUiText $S.AllocatedText), $(ConvertTo-HuduUiText $S.FreeText) free, $(ConvertTo-HuduUiText $S.PctText) used</span></td></tr>" +
+        "<tr><td colspan=`"2`" style=`"$($TableStyle.RowCell);padding:0 0 7px`">$(New-HuduUiBar -Pct $S.Pct -Tone $S.Tone -Title "Storage usage $($S.PctText)")</td></tr>"
     }
     $HardwareCard = New-HuduUiCard -Title 'Hardware' -Icon 'microchip' -Body ((New-HuduUiRow -Label 'Serial number' -Value $m.Hardware.Serial) +
         (New-HuduUiRow -Label 'Chassis' -Value $m.Hardware.Chassis) +
@@ -100,8 +101,8 @@ function Get-HuduDeviceBody {
 
     # Groups
     $GroupCard = if ($m.Groups.Count) {
-        $Chips = @(foreach ($g in $m.Groups) { New-HuduUiChip -Text $g }) -join ''
-        New-HuduUiCard -Title 'Groups' -Icon 'users' -Count $m.Groups.Count -Spaced -Body "<div style=`"$Wrap`">$Chips</div>"
+        $Chips = @(foreach ($g in $m.Groups) { New-HuduUiChip -Text $g }) -join ' '
+        New-HuduUiCard -Title 'Groups' -Icon 'users' -Count $m.Groups.Count -Spaced -Body "<div>$Chips</div>"
     }
 
     "<div style=`"overflow:hidden`">$HeaderCard$AttentionHtml$RowOne$PolicyCard$GroupCard</div>"

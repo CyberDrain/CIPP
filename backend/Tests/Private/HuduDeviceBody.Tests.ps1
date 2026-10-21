@@ -61,6 +61,14 @@ Describe 'Get-HuduDeviceBody' {
         $Body | Should -Match '<table style="width:100%;border:0;margin:0;table-layout:auto'
     }
 
+    It 'uses no layout CSS that Hudu or its mobile app drops' {
+        $Params = New-TestDeviceParams
+        $Params.Device.complianceState = 'noncompliant'
+        $Body = Get-HuduDeviceBody -Model (Get-HuduDeviceViewModel @Params) -SyncedAt $script:AsOf
+        $Body | Should -Match 'Needs attention'
+        $Body | Should -Not -Match 'display:(inline-)?flex|justify-content|float:|gap:'
+    }
+
     It 'encodes every data value and only links http and https URLs' {
         $Evil = '<script>alert(1)</script>"x'
         $Params = New-TestDeviceParams
@@ -124,11 +132,29 @@ Describe 'Hudu labels' {
     }
 
     It 'keeps row labels on one line' {
-        New-HuduUiRow -Label 'Storage' -Value 'x' | Should -Match '<span style="opacity:.7;margin-right:12px;white-space:nowrap">Storage</span>'
+        New-HuduUiRow -Label 'Storage' -Value 'x' | Should -Match '<td style="[^"]*white-space:nowrap[^"]*">Storage</td>'
         $Params = New-TestDeviceParams
         $Body = Get-HuduDeviceBody -Model (Get-HuduDeviceViewModel @Params)
-        $Body | Should -Not -Match 'opacity:.7;margin-right:12px">'
-        $Body | Should -Match 'white-space:nowrap">Storage</span>'
+        $Body | Should -Match '<td style="[^"]*white-space:nowrap[^"]*">Storage</td>'
+    }
+}
+
+Describe 'New-HuduUiCard row tables' {
+    It 'wraps each run of rows in one table and leaves other tables alone' {
+        $Inner = '<table style="x"><tbody><tr><td>a</td></tr><tr><td>b</td></tr></tbody></table>'
+        $Body = (New-HuduUiRow -Label 'A' -Value '1') + (New-HuduUiRow -Label 'B' -Value '2') + '<div>mid</div>' + (New-HuduUiRow -Label 'C' -Value '3') + $Inner
+        $Card = New-HuduUiCard -Title 'T' -Body $Body
+        [regex]::Matches($Card, '<table').Count | Should -Be 3
+        $Card | Should -Match '<table style="width:100%[^"]*"><tbody><tr><td[^>]*>A</td><td[^>]*>1</td></tr><tr><td[^>]*>B</td>'
+        $Card | Should -Match ([regex]::Escape($Inner))
+    }
+
+    It 'renders each device card, storage included, as one table' {
+        $Params = New-TestDeviceParams
+        $Params.Policies = @()
+        $Body = Get-HuduDeviceBody -Model (Get-HuduDeviceViewModel @Params)
+        [regex]::Matches($Body, '<table').Count | Should -Be 3
+        $Body | Should -Match '>Manufacturer</td>(?:(?!</table>).)*>Storage</td>'
     }
 }
 

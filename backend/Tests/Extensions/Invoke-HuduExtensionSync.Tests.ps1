@@ -504,7 +504,7 @@ Describe 'Invoke-HuduExtensionSync Magic Dash' {
 
         Should -Invoke Get-CippDbRoleMembers -ParameterFilter { $RoleTemplateId -eq '62e90394-69f5-4237-9190-012177145e10' -and $TenantFilter -eq 'contoso.onmicrosoft.com' }
         $script:MagicDash | Should -Match '>Direct Admin<'
-        $script:MagicDash | Should -Match 'Eligible:</span><span[^>]*>Eligible Admin \(until 2030-01-15\)</span>'
+        $script:MagicDash | Should -Match 'Eligible:</span> <span[^>]*>Eligible Admin \(until 2030-01-15\)</span>'
         $script:MagicDash | Should -Not -Match 'Expired Admin'
         $script:MagicDash | Should -Not -Match 'Empty Role'
     }

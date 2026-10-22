@@ -1,6 +1,6 @@
 # Group Templates
 
-Group templates hold the settings for a group so the same group can be created repeatedly, in one tenant or across many. A template records the group's name, description, type and the settings that apply to that type, and is then applied from the deploy page. Templates are stored in CIPP rather than in a tenant, so the list is the same whichever tenant is selected.
+Group templates hold the settings for a group so the same group can be created repeatedly, in one tenant or across many. A template records the group's name, description, type and the settings that apply to that type, and is then applied from the Deploy Group Template drawer on this page or the Groups page. Templates are stored in CIPP rather than in a tenant, so the list is the same whichever tenant is selected.
 
 ## Action Buttons
 

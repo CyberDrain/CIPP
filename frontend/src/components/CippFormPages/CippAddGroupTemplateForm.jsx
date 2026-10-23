@@ -4,6 +4,7 @@ import { Grid } from "@mui/system";
 import CippFormComponent from "../CippComponents/CippFormComponent";
 import { CippFormCondition } from "../CippComponents/CippFormCondition";
 import { CippFormLicenseSelector } from "../CippComponents/CippFormLicenseSelector";
+import { CippFormLicensePlanSelector } from "../CippComponents/CippFormLicensePlanSelector";
 
 const CippAddGroupTemplateForm = (props) => {
   const { formControl } = props;
@@ -80,6 +81,11 @@ const CippAddGroupTemplateForm = (props) => {
             multiple={true}
           />
         </Grid>
+        <CippFormLicensePlanSelector
+          formControl={formControl}
+          licenseField="licenses"
+          name="licensesDisabledPlans"
+        />
       </CippFormCondition>
       <CippFormCondition
         formControl={formControl}

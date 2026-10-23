@@ -540,7 +540,7 @@ function Invoke-EditGroup {
 
         if ($AddLicenses.Count -gt 0 -or $RemoveLicenses.Count -gt 0) {
             try {
-                $LicResults = Set-CIPPGroupLicense -GroupId $GroupId -GroupName $GroupName -AddLicenses $AddLicenses -RemoveLicenses $RemoveLicenses -TenantFilter $TenantId -Headers $Headers -APIName $APIName
+                $LicResults = Set-CIPPGroupLicense -GroupId $GroupId -GroupName $GroupName -AddLicenses $AddLicenses -RemoveLicenses $RemoveLicenses -DisabledPlans $UserObj.AddLicensesDisabledPlans -TenantFilter $TenantId -Headers $Headers -APIName $APIName
                 foreach ($LicResult in $LicResults) { $Results.Add("Success - $LicResult") }
             } catch {
                 $Results.Add("Error - $($_.Exception.Message)")

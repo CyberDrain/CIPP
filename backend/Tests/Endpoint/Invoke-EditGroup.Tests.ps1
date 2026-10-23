@@ -32,7 +32,7 @@ BeforeAll {
     function Write-LogMessage { param($headers, $API, $tenant, $message, $Sev, $LogData) }
     function Get-NormalizedError { param($message) $message }
     function Get-CippException { param($Exception) @{ NormalizedError = "$Exception" } }
-    function Set-CIPPGroupLicense { param($GroupId, $TenantFilter, $AddLicenses, $RemoveLicenses, $Headers, $APIName) }
+    function Set-CIPPGroupLicense { param($GroupId, $GroupName, $TenantFilter, $AddLicenses, $RemoveLicenses, $DisabledPlans, $Headers, $APIName) }
     function Resolve-CIPPDirectoryId { param($Identity, $TenantFilter) }
 
     # Real helper, not a stub: matching Exchange bulk results back to operations is exactly what
@@ -296,6 +296,33 @@ Describe 'Invoke-EditGroup - membership' {
                 $Requests.method -contains 'PATCH' -and
                 $Requests.method -contains 'DELETE'
             }
+        }
+    }
+
+    Context 'Licenses' {
+        # The form posts the SKUs as options plus a sibling map skuId -> disabled service plan options;
+        # Set-CIPPGroupLicense does the per-SKU grouping, this endpoint only has to hand the map over intact.
+        It 'passes the disabled service plans map through to Set-CIPPGroupLicense' {
+            $Request = New-GroupRequest -GroupType 'Security' -Body @{
+                AddLicenses              = @([pscustomobject]@{ label = 'Microsoft 365 E3'; value = 'sku-e3' })
+                AddLicensesDisabledPlans = [pscustomobject]@{ 'sku-e3' = @([pscustomobject]@{ label = 'Teams'; value = 'plan-teams' }) }
+            }
+
+            $null = Invoke-EditGroup -Request $Request
+
+            Should -Invoke Set-CIPPGroupLicense -Times 1 -Exactly -ParameterFilter {
+                @($AddLicenses) -eq 'sku-e3' -and @($DisabledPlans.'sku-e3'.value) -eq 'plan-teams'
+            }
+        }
+
+        It 'does not call Set-CIPPGroupLicense when no license change was posted' {
+            $Request = New-GroupRequest -GroupType 'Security' -Body @{
+                AddLicensesDisabledPlans = [pscustomobject]@{ 'sku-e3' = @([pscustomobject]@{ value = 'plan-teams' }) }
+            }
+
+            $null = Invoke-EditGroup -Request $Request
+
+            Should -Invoke Set-CIPPGroupLicense -Times 0 -Exactly
         }
     }
 

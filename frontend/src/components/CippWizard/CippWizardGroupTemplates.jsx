@@ -43,6 +43,7 @@ export const CippWizardGroupTemplates = (props) => {
         formControl.setValue("licenses", watcher.addedFields.licenses || [], {
           shouldValidate: true,
         });
+        formControl.setValue("licensesDisabledPlans", watcher.addedFields.licensesDisabledPlans || {});
         formControl.setValue("aliases", watcher.addedFields.aliases, {
           shouldValidate: true,
         });
@@ -80,6 +81,7 @@ export const CippWizardGroupTemplates = (props) => {
                 allowExternal: "allowExternal",
                 membershipRules: "membershipRules",
                 licenses: "licenses",
+                licensesDisabledPlans: "licensesDisabledPlans",
                 aliases: "aliases",
                 hideFromGAL: "hideFromGAL",
               },

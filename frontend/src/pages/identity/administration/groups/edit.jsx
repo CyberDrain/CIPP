@@ -13,6 +13,7 @@ import { useSettings } from "../../../../hooks/use-settings";
 import { CippFormContactSelector } from "../../../../components/CippComponents/CippFormContactSelector";
 import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
 import { CippFormLicenseSelector } from '../../../../components/CippComponents/CippFormLicenseSelector'
+import { CippFormLicensePlanSelector } from '../../../../components/CippComponents/CippFormLicensePlanSelector'
 import { getCippLicenseTranslation } from '../../../../utils/get-cipp-license-translation'
 
 const EditGroup = () => {
@@ -49,6 +50,8 @@ const EditGroup = () => {
       RemoveContact: [],
       AddDevice: [],
       AddLicenses: [],
+      AddLicensesDisabledPlans: {},
+      ExistingLicensesDisabledPlans: {},
       RemoveLicenses: [],
       AddSendAs: [],
       RemoveSendAs: [],
@@ -76,6 +79,10 @@ const EditGroup = () => {
           })) || []),
         ]
         setCombinedData(combinedData)
+
+        const existingDisabledPlans = Object.fromEntries(
+          (group.assignedLicenses || []).map((lic) => [lic.skuId, lic.disabledPlans || []])
+        )
 
         // Create initial values object
         const formValues = {
@@ -120,6 +127,9 @@ const EditGroup = () => {
           RemoveContact: [],
           AddDevice: [],
           AddLicenses: [],
+          AddLicensesDisabledPlans: {},
+          // skuId -> plan ids disabled today; the plan selector resolves the labels from its options
+          ExistingLicensesDisabledPlans: existingDisabledPlans,
           RemoveLicenses: [],
           AddSendAs: [],
           RemoveSendAs: [],
@@ -134,6 +144,7 @@ const EditGroup = () => {
           hideFromOutlookClients: groupInfo?.data?.hideFromOutlookClients,
           securityEnabled: group.securityEnabled,
           visibility: group.visibility ?? 'Public',
+          existingDisabledPlans,
         })
 
         // Reset the form with all values
@@ -160,6 +171,26 @@ const EditGroup = () => {
         delete cleanedData[property]
       }
     })
+
+    // Graph updates disabledPlans on a SKU the group already has by re-adding it, so an existing
+    // license whose plan set changed is posted as an add. SKUs being removed are left alone.
+    const planIds = (plans) =>
+      (plans || [])
+        .map((plan) => plan?.value ?? plan)
+        .sort()
+        .join(',')
+    const removed = new Set((formData.RemoveLicenses || []).map((lic) => lic?.value ?? lic))
+    const addLicenses = [...(formData.AddLicenses || [])]
+    const addPlans = { ...(formData.AddLicensesDisabledPlans || {}) }
+    Object.entries(formData.ExistingLicensesDisabledPlans || {}).forEach(([skuId, plans]) => {
+      if (removed.has(skuId)) return
+      if (planIds(plans) === planIds(initialValues.existingDisabledPlans?.[skuId])) return
+      addLicenses.push({ label: getCippLicenseTranslation([{ skuId }])[0], value: skuId })
+      addPlans[skuId] = plans || []
+    })
+    cleanedData.AddLicenses = addLicenses
+    cleanedData.AddLicensesDisabledPlans = addPlans
+    delete cleanedData.ExistingLicensesDisabledPlans
 
     return cleanedData
   }
@@ -633,21 +664,27 @@ const EditGroup = () => {
                         mb: 1
                       }}>
                       Licenses assigned to this group are automatically applied to all members.
-                      Changes can take 2-5 minutes to propagate.
+                      Changes can take 2-5 minutes to propagate. Service plans left out of a
+                      license's disabled list stay enabled.
                     </Typography>
                   </Grid>
 
                   {groupInfo.data?.groupInfo?.assignedLicenses?.length > 0 && (
-                    <Grid size={{ xs: 12 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                        Currently assigned licenses:
-                      </Typography>
-                      {groupInfo.data.groupInfo.assignedLicenses.map((lic) => (
-                        <Typography key={lic.skuId} variant="body2">
-                          - {getCippLicenseTranslation([lic])}
-                        </Typography>
-                      ))}
-                    </Grid>
+                    <>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="subtitle2">Currently assigned licenses</Typography>
+                      </Grid>
+                      <CippFormLicensePlanSelector
+                        // The autocomplete reads its value at mount only; remount once the fetched
+                        // disabled plans have been reset into the form (and again after a refetch).
+                        key={JSON.stringify(initialValues.existingDisabledPlans ?? null)}
+                        formControl={formControl}
+                        name="ExistingLicensesDisabledPlans"
+                        licenses={groupInfo.data.groupInfo.assignedLicenses}
+                        isFetching={groupInfo.isFetching}
+                        disabled={groupInfo.isFetching}
+                      />
+                    </>
                   )}
 
                   <Grid size={{ xs: 12 }}>
@@ -660,6 +697,13 @@ const EditGroup = () => {
                       disabled={groupInfo.isFetching}
                     />
                   </Grid>
+                  <CippFormLicensePlanSelector
+                    formControl={formControl}
+                    licenseField="AddLicenses"
+                    name="AddLicensesDisabledPlans"
+                    isFetching={groupInfo.isFetching}
+                    disabled={groupInfo.isFetching}
+                  />
 
                   <Grid size={{ xs: 12 }}>
                     <CippFormComponent

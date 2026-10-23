@@ -6,6 +6,9 @@ function Set-CIPPGroupLicense {
         [array]$AddLicenses = @(),
         [array]$RemoveLicenses = @(),
         [switch]$Replace,
+        # skuId -> service plans to disable on that SKU. Arrives as the JSON body object (PSCustomObject) from
+        # the forms or a hashtable from scripts; values are bare plan ids or autocomplete options ({ value = id }).
+        $DisabledPlans,
         [Parameter(Mandatory = $true)][string]$TenantFilter,
         $Headers,
         $APIName = 'Set Group License'
@@ -26,7 +29,9 @@ function Set-CIPPGroupLicense {
         $GroupName = $GroupId
     }
 
-    # fetch current assigned licenses, calculate the diff and replace with licenses
+    # fetch current assigned licenses, calculate the diff and replace with licenses.
+    # Diffs by skuId only: a SKU that is already assigned is dropped from the add list even if its
+    # disabled plans differ. No caller passes -Replace today.
     if ($Replace.IsPresent) {
         try {
             $Current = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/groups/$($GroupId)?`$select=assignedLicenses" -tenantid $TenantFilter
@@ -45,7 +50,19 @@ function Set-CIPPGroupLicense {
     }
 
     $AddLicensesArray = foreach ($SkuId in $AddLicenses) {
-        @{ disabledPlans = @(); skuId = $SkuId }
+        # Graph GUIDs are lowercase, the forms post whatever casing the dropdown carried: match the key case-insensitively
+        $PlanEntry = if ($DisabledPlans -is [System.Collections.IDictionary]) {
+            $DisabledPlans.Keys | Where-Object { $_ -eq $SkuId } | ForEach-Object { $DisabledPlans[$_] }
+        } elseif ($null -ne $DisabledPlans) {
+            $DisabledPlans.PSObject.Properties | Where-Object { $_.Name -eq $SkuId } | ForEach-Object { $_.Value }
+        }
+        $Plans = @(
+            $PlanEntry |
+                Where-Object { $_ } |
+                ForEach-Object { [string]($_.value ?? $_) } |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        )
+        @{ disabledPlans = @($Plans); skuId = $SkuId }
     }
     $LicenseBody = @{
         addLicenses = @($AddLicensesArray)
@@ -68,7 +85,10 @@ function Set-CIPPGroupLicense {
         }
 
         if ($AddLicenses.Count -gt 0) {
-            $Message = "Assigned licenses to group $GroupName. Added: $($AddLicenses -join ', ')"
+            $Added = foreach ($Lic in $AddLicensesArray) {
+                if ($Lic.disabledPlans.Count -gt 0) { "$($Lic.skuId) ($($Lic.disabledPlans.Count) service plans disabled)" } else { $Lic.skuId }
+            }
+            $Message = "Assigned licenses to group $GroupName. Added: $($Added -join ', ')"
             [void]$Results.Add("$Message. It may take 2-5 minutes for changes to apply to members.")
             Write-LogMessage -API $APIName -tenant $TenantFilter -Headers $Headers -message $Message -Sev Info
         }

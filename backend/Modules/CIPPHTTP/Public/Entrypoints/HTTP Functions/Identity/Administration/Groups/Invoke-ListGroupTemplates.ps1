@@ -43,18 +43,19 @@ function Invoke-ListGroupTemplates {
             }
 
             [PSCustomObject]@{
-                displayName     = $data.displayName
-                description     = $data.description
-                groupType       = $normalizedGroupType
-                membershipRules = $data.membershipRules
-                allowExternal   = $data.allowExternal
-                username        = $data.username
-                licenses        = $data.licenses
-                aliases         = $data.aliases
-                hideFromGAL     = $data.hideFromGAL
-                GUID            = $_.RowKey
-                source          = $_.Source
-                isSynced        = (![string]::IsNullOrEmpty($_.SHA))
+                displayName           = $data.displayName
+                description           = $data.description
+                groupType             = $normalizedGroupType
+                membershipRules       = $data.membershipRules
+                allowExternal         = $data.allowExternal
+                username              = $data.username
+                licenses              = $data.licenses
+                licensesDisabledPlans = $data.licensesDisabledPlans
+                aliases               = $data.aliases
+                hideFromGAL           = $data.hideFromGAL
+                GUID                  = $_.RowKey
+                source                = $_.Source
+                isSynced              = (![string]::IsNullOrEmpty($_.SHA))
             }
         } catch {
             Write-Information "Could not parse group template $($_.RowKey): $($_.Exception.Message)"

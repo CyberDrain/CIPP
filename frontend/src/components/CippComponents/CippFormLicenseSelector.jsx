@@ -2,6 +2,18 @@ import { CippFormComponent } from './CippFormComponent'
 import { getCippLicenseTranslation } from '../../utils/get-cipp-license-translation'
 import { useSettings } from '../../hooks/use-settings'
 
+// The ListLicenses query behind the dropdown. CippFormLicensePlanSelector reuses it to read each SKU's
+// service plans out of the same react-query entry, so keep url/queryKey/data defined here only.
+export const getLicenseSelectorApi = (tenant) => ({
+  url: '/api/ListLicenses',
+  queryKey: `ListLicenses-${tenant ?? undefined}`,
+  data: {
+    Endpoint: 'subscribedSkus',
+    $count: true,
+    IncludeExcluded: true,
+  },
+})
+
 export const CippFormLicenseSelector = ({
   formControl,
   name,
@@ -13,6 +25,7 @@ export const CippFormLicenseSelector = ({
   ...other
 }) => {
   const userSettingsDefaults = useSettings()
+  const licenseApi = getLicenseSelectorApi(userSettingsDefaults?.currentTenant)
   return (
     <CippFormComponent
       name={name}
@@ -24,16 +37,10 @@ export const CippFormLicenseSelector = ({
       api={{
         addedField: addedField,
         tenantFilter: userSettingsDefaults.currentTenant ?? undefined,
-        url: '/api/ListLicenses',
+        ...licenseApi,
         labelField: (option) =>
           `${getCippLicenseTranslation([option])} (${option?.availableUnits} available)`,
         valueField: 'skuId',
-        queryKey: `ListLicenses-${userSettingsDefaults?.currentTenant ?? undefined}`,
-        data: {
-          Endpoint: 'subscribedSkus',
-          $count: true,
-          IncludeExcluded: true,
-        },
         showRefresh,
       }}
     />

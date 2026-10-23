@@ -44,6 +44,26 @@ const getCatalog = () => {
   return catalogCache || [];
 };
 
+/** Catalog entry for one SKU (skuId, skuPartNumber, displayName, servicePlans[]), or undefined. */
+export const getCatalogSku = (skuId) =>
+  skuId ? getCatalog().find((entry) => entry.skuId.toLowerCase() === skuId.toLowerCase()) : undefined;
+
+// servicePlanId -> Service_Plans_Included_Friendly_Names, built once from the catalog.
+let planNameCache = null;
+export const getServicePlanFriendlyName = (servicePlanId) => {
+  if (!servicePlanId) return undefined;
+  if (!planNameCache && getCatalog().length) {
+    planNameCache = new Map();
+    for (const entry of getCatalog()) {
+      for (const plan of entry.servicePlans) {
+        const key = plan.servicePlanId.toLowerCase();
+        if (plan.friendlyName && !planNameCache.has(key)) planNameCache.set(key, plan.friendlyName);
+      }
+    }
+  }
+  return planNameCache?.get(servicePlanId.toLowerCase());
+};
+
 /**
  * Search the local M365 license catalog. Matches against skuId (GUID),
  * skuPartNumber (String_Id), display name, and any service plan name or

@@ -3643,6 +3643,9 @@
                     },
                     "description": "Assign licenses for Security groups"
                   },
+                  "licensesDisabledPlans": {
+                    "type": "string"
+                  },
                   "members": {
                     "type": "array",
                     "items": {
@@ -4046,6 +4049,10 @@
                   },
                   "licenses": {
                     "type": "string"
+                  },
+                  "licensesDisabledPlans": {
+                    "type": "string",
+                    "description": "skuId -> service plan ids to disable"
                   },
                   "membershipRules": {
                     "type": "string",
@@ -9258,6 +9265,9 @@
                     "items": {
                       "$ref": "#/components/schemas/LabelValue"
                     }
+                  },
+                  "AddLicensesDisabledPlans": {
+                    "type": "string"
                   },
                   "AddMember": {
                     "type": "array",
@@ -53522,6 +53532,9 @@
                         "x-cipp-field-source": "storage"
                       },
                       "licenses": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "licensesDisabledPlans": {
                         "x-cipp-field-source": "backend"
                       },
                       "membershipRules": {

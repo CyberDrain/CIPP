@@ -5,6 +5,7 @@ import { CippFormCondition } from "../CippComponents/CippFormCondition";
 import { CippFormDomainSelector } from "../CippComponents/CippFormDomainSelector";
 import { CippFormUserSelector } from "../CippComponents/CippFormUserSelector";
 import { CippFormLicenseSelector } from "../CippComponents/CippFormLicenseSelector";
+import { CippFormLicensePlanSelector } from "../CippComponents/CippFormLicensePlanSelector";
 
 const DynamicMembershipRules = ({ formControl }) => (
   <Grid size={{ xs: 12 }}>
@@ -127,6 +128,11 @@ const CippAddGroupForm = (props) => {
             multiple={true}
           />
         </Grid>
+        <CippFormLicensePlanSelector
+          formControl={formControl}
+          licenseField="licenses"
+          name="licensesDisabledPlans"
+        />
       </CippFormCondition>
       <CippFormCondition
         formControl={formControl}

@@ -47,6 +47,7 @@ const Page = () => {
           aliases: templateData.aliases,
           hideFromGAL: templateData.hideFromGAL,
           licenses: templateData.licenses || [],
+          licensesDisabledPlans: templateData.licensesDisabledPlans || {},
           tenantFilter: userSettingsDefaults.currentTenant,
         });
         formControl.trigger();

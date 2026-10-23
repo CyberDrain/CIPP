@@ -202,7 +202,7 @@ function New-CIPPGroup {
                 $LicenseSkuIds = @($GroupObject.licenses | Where-Object { $_ } | ForEach-Object { $_.value ?? $_ })
                 if ($LicenseSkuIds.Count -gt 0) {
                     try {
-                        $null = Set-CIPPGroupLicense -GroupId $GraphRequest.id -GroupName $GroupObject.displayName -AddLicenses $LicenseSkuIds -TenantFilter $TenantFilter -APIName $APIName
+                        $null = Set-CIPPGroupLicense -GroupId $GraphRequest.id -GroupName $GroupObject.displayName -AddLicenses $LicenseSkuIds -DisabledPlans $GroupObject.licensesDisabledPlans -TenantFilter $TenantFilter -APIName $APIName
                     } catch {
                         Write-Warning "Failed to assign licenses to group $($GroupObject.displayName): $($_.Exception.Message)"
                     }

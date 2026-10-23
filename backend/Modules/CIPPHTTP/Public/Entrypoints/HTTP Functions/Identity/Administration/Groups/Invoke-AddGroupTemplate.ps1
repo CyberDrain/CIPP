@@ -46,16 +46,17 @@ function Invoke-AddGroupTemplate {
         $MembershipRules = ([string]::IsNullOrEmpty($Request.Body.membershipRules) -or $Request.Body.membershipRules -eq 'membershipRule') ? $null : $Request.Body.membershipRules
 
         $object = [PSCustomObject]@{
-            displayName     = $displayName
-            description     = $description
-            groupType       = $groupType
-            membershipRules = $MembershipRules
-            allowExternal   = $Request.Body.allowExternal
-            username        = $Request.Body.username  # Can contain variables like @%tenantfilter%
-            licenses        = $Request.Body.licenses
-            aliases         = $Request.Body.aliases # One per line, variables allowed
-            hideFromGAL     = $Request.Body.hideFromGAL
-            GUID            = $GUID
+            displayName           = $displayName
+            description           = $description
+            groupType             = $groupType
+            membershipRules       = $MembershipRules
+            allowExternal         = $Request.Body.allowExternal
+            username              = $Request.Body.username  # Can contain variables like @%tenantfilter%
+            licenses              = $Request.Body.licenses
+            licensesDisabledPlans = $Request.Body.licensesDisabledPlans # skuId -> service plan ids to disable
+            aliases               = $Request.Body.aliases # One per line, variables allowed
+            hideFromGAL           = $Request.Body.hideFromGAL
+            GUID                  = $GUID
         } | ConvertTo-Json -Depth 10
         $Table = Get-CippTable -tablename 'templates'
         $Table.Force = $true

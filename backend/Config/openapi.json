@@ -9309,6 +9309,28 @@
                       }
                     }
                   },
+                  "AddSendAs": {
+                    "type": "string"
+                  },
+                  "AddSendOnBehalf": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "addedFields": {
+                          "type": "object",
+                          "properties": {
+                            "userPrincipalName": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "allowExternal": {
                     "type": "boolean",
                     "description": "Only process allowExternal if it was explicitly sent"
@@ -9425,6 +9447,28 @@
                             "type": "string"
                           },
                           "description": "Keep unresolved ManagedBy entries so a failed lookup cannot strip an owner."
+                        }
+                      }
+                    }
+                  },
+                  "RemoveSendAs": {
+                    "type": "string"
+                  },
+                  "RemoveSendOnBehalf": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "addedFields": {
+                          "type": "object",
+                          "properties": {
+                            "userPrincipalName": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "value": {
+                          "type": "string"
                         }
                       }
                     }
@@ -20502,6 +20546,7 @@
                     "type": "string",
                     "enum": [
                       "createDeviceLogCollectionRequest",
+                      "initiateOnDemandProactiveRemediation",
                       "setDeviceName",
                       "users",
                       "wipe"
@@ -20520,6 +20565,14 @@
                   },
                   "macOsUnlockCode": {
                     "type": "string"
+                  },
+                  "scriptPolicyId": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/LabelValue"
+                      }
+                    ],
+                    "description": "Graph takes only the remediation script id, not the rest of the request body"
                   },
                   "tenantFilter": {
                     "type": "string"
@@ -53096,6 +53149,15 @@
             }
           },
           {
+            "name": "sendPermissions",
+            "in": "query",
+            "description": "Return who holds Send As and Send on Behalf on the group named by groupID. Mail-enabled groups only.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "$ref": "#/components/parameters/tenantFilter"
           },
           {
@@ -53219,7 +53281,13 @@
                         "type": "boolean",
                         "x-cipp-field-source": "graph"
                       },
+                      "sendAs": {
+                        "x-cipp-field-source": "backend"
+                      },
                       "sendCopies": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "sendOnBehalf": {
                         "x-cipp-field-source": "backend"
                       },
                       "SID": {

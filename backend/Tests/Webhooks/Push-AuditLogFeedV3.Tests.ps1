@@ -15,8 +15,8 @@ BeforeAll {
     function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly) }
 
     function New-FeedItem {
-        param([hashtable]$Cursors = @{}, [string[]]$ContentTypes = @('Audit.Exchange'))
-        [pscustomobject]@{ Tenants = @([pscustomobject]@{ TenantFilter = 'contoso.com'; TenantId = 'tid-1'; ContentTypes = $ContentTypes; Cursors = $Cursors }) }
+        param([hashtable]$Cursors = @{}, [string[]]$ContentTypes = @('Audit.Exchange'), [string]$CycleId)
+        [pscustomobject]@{ CycleId = $CycleId; Tenants = @([pscustomobject]@{ TenantFilter = 'contoso.com'; TenantId = 'tid-1'; ContentTypes = $ContentTypes; Cursors = $Cursors }) }
     }
     function New-Listing {
         param($Query, [object[]]$Blobs = @(), $ErrorCode, $ErrorMessage)
@@ -138,6 +138,27 @@ Describe 'Push-AuditLogFeedV3' {
         $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
         $Cursor.LastEndUtc | Should -Be $script:Queries[0].EndTime
         $Cursor.Attempts | Should -Be 0
+    }
+
+    It 'records the task under its cycle, tags the window with it, and keeps the read''s counts on the cursor' {
+        Push-AuditLogFeedV3 -Item (New-FeedItem -CycleId '202610241200')
+        $Cycle = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCycles' }).Entity)[0]
+        $Cycle.RowKey | Should -Be '202610241200-tid-1'
+        $Cycle.Tenants | Should -Be 1
+        $Cycle.Blobs | Should -Be 1
+        $Cycle.Records | Should -Be 2
+        $Cycle.Stored | Should -Be 2
+        $Cycle.Failed | Should -Be 0
+        @($script:Writes.Where({ $_.Table -eq 'AuditLogCoverage' }).Entity)[-1].CycleId | Should -Be '202610241200'
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
+        $Cursor.Records | Should -Be 2
+        $Cursor.Stored | Should -Be 2
+        $Cursor.LastSuccessUtc | Should -Not -BeNullOrEmpty
+    }
+
+    It 'writes no cycle row for an item without a cycle' {
+        Push-AuditLogFeedV3 -Item (New-FeedItem)
+        $script:Writes.Where({ $_.Table -eq 'AuditLogFeedCycles' }) | Should -HaveCount 0
     }
 
     It 'reads the last hour for a new cursor' {

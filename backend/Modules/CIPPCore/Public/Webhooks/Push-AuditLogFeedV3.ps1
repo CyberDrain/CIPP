@@ -14,7 +14,8 @@ function Push-AuditLogFeedV3 {
         and sends the alerts; Start-AuditLogFeedV3's sweep recovers it if that never happens.
 
         Returns one [pscustomobject]@{ TenantFilter; SearchId; WindowRowKey; RecordCount } per stored window, for the
-        AuditLogFeedProcessV3 post-execution to queue without reading the ledger back.
+        AuditLogFeedProcessV3 post-execution to queue without reading the ledger back. The task's totals and timing are
+        written to AuditLogFeedCycles under the item's CycleId, and each cursor keeps its last read's counts.
 
         A cursor advances only when its listing and every blob downloaded, so a failure re-reads the same range next
         cycle; the record-Id upsert and the AuditLogs claim keep that from alerting twice. AF20022 (no subscription) and
@@ -58,7 +59,7 @@ function Push-AuditLogFeedV3 {
     $Failures = [System.Collections.Generic.List[object]]::new()
     # One entry per query, keyed '<tenant id>|<content type>', so the cursor decision never depends on arrival order.
     $Progress = @{}
-    foreach ($Query in $Queries) { $Progress['{0}|{1}' -f $Query.TenantId, $Query.ContentType] = @{ Query = $Query; Blobs = 0; Failure = $null; Subscribed = $false } }
+    foreach ($Query in $Queries) { $Progress['{0}|{1}' -f $Query.TenantId, $Query.ContentType] = @{ Query = $Query; Blobs = 0; Records = 0; Stored = 0; Failure = $null; Subscribed = $false } }
     $Totals = @{}
     $Prefilters = @{}
     foreach ($Tenant in $Item.Tenants) {
@@ -107,6 +108,7 @@ function Push-AuditLogFeedV3 {
             }
             $Total = $Totals[$TenantId]
             $Total.Records += $_.RecordCount
+            $Progress[$Key].Records += $_.RecordCount
             $Records = [System.Collections.Generic.List[object]]::new([object[]]$_.Records)
             if ($Records.Count -eq 0) { return }
             $Total.Evaluated += $Records.Count
@@ -142,11 +144,12 @@ function Push-AuditLogFeedV3 {
                 # A tenant's window is in the ledger before its first row is stored, so a crash mid-store leaves the
                 # sweep a window to process rather than rows nothing reads; this run's final ledger write replaces it.
                 if (-not $Total.Opened) {
-                    $null = Add-CIPPAzDataTableEntity @Ledger -Entity @{ PartitionKey = $Total.TenantFilter; RowKey = "FEED-$Stamp"; Type = 'Feed'; State = 'Storing'; SearchId = "feed-$Stamp"; CreatedUtc = $Now; Attempts = 0 } -Force
+                    $null = Add-CIPPAzDataTableEntity @Ledger -Entity @{ PartitionKey = $Total.TenantFilter; RowKey = "FEED-$Stamp"; Type = 'Feed'; State = 'Storing'; SearchId = "feed-$Stamp"; CycleId = [string]$Item.CycleId; CreatedUtc = $Now; Attempts = 0 } -Force
                     $Total.Opened = $true
                 }
                 $null = Add-CIPPAzDataTableEntity @CacheTable -Entity @($Rows) -Force
                 $Total.Stored += $Matched.Count
+                $Progress[$Key].Stored += $Matched.Count
             } catch {
                 $Progress[$Key].Failure ??= @{ Code = 'Store'; Message = $_.Exception.Message }
             }
@@ -163,7 +166,7 @@ function Push-AuditLogFeedV3 {
         if ($Total.Stored -gt 0) {
             try {
                 $null = Add-CIPPAzDataTableEntity @Ledger -Entity @{
-                    PartitionKey = $Total.TenantFilter; RowKey = "FEED-$Stamp"; Type = 'Feed'; State = 'Processing'; SearchId = "feed-$Stamp"
+                    PartitionKey = $Total.TenantFilter; RowKey = "FEED-$Stamp"; Type = 'Feed'; State = 'Processing'; SearchId = "feed-$Stamp"; CycleId = [string]$Item.CycleId
                     WindowStart  = ($TenantProgress.Query.StartTime | Measure-Object -Minimum).Minimum; WindowEnd = ($TenantProgress.Query.EndTime | Measure-Object -Maximum).Maximum
                     RecordCount  = [int]$Total.Records; EvaluatedCount = [int]$Total.Evaluated; CandidateCount = [int]$Total.Stored; CreatedUtc = $Now; DownloadedUtc = $Now; Attempts = 0
                 } -Force
@@ -176,7 +179,7 @@ function Push-AuditLogFeedV3 {
             if ($Entry.Failure) {
                 $Failures.Add(@{ Listing = $Entry.Query; Code = $Entry.Failure.Code; Message = $Entry.Failure.Message })
             } else {
-                $CursorUpdates.Add(@{ PartitionKey = $Total.TenantFilter; RowKey = $Entry.Query.ContentType; LastEndUtc = $Entry.Query.EndTime; LastPolledUtc = $Now; Blobs = $Entry.Blobs; Attempts = 0; NextAttemptUtc = $Now; LastErrorCode = ''; LastError = '' })
+                $CursorUpdates.Add(@{ PartitionKey = $Total.TenantFilter; RowKey = $Entry.Query.ContentType; LastEndUtc = $Entry.Query.EndTime; LastPolledUtc = $Now; LastSuccessUtc = $Now; Blobs = $Entry.Blobs; Records = $Entry.Records; Stored = $Entry.Stored; Attempts = 0; NextAttemptUtc = $Now; LastErrorCode = ''; LastError = '' })
             }
         }
         Write-Information "AuditLogFeedV3: $($Total.TenantFilter) read $($Total.Records) record(s) from $(($TenantProgress.Blobs | Measure-Object -Sum).Sum) blob(s), stored $($Total.Stored)"
@@ -199,5 +202,25 @@ function Push-AuditLogFeedV3 {
     }
     if ($CursorUpdates.Count -gt 0) {
         $null = Add-CIPPAzDataTableEntity @CursorTable -Entity $CursorUpdates.ToArray() -OperationType UpsertMerge
+    }
+
+    if ($Item.CycleId) {
+        try {
+            $CycleTable = Get-CippTable -TableName 'AuditLogFeedCycles'
+            $Finished = [datetime]::UtcNow
+            $null = Add-CIPPAzDataTableEntity @CycleTable -Entity @{
+                PartitionKey = 'Feed'; RowKey = '{0}-{1}' -f $Item.CycleId, @($Item.Tenants)[0].TenantId; CycleId = [string]$Item.CycleId
+                StartedUtc   = $Now; FinishedUtc = $Finished; DurationSeconds = [Math]::Round(($Finished - $Now).TotalSeconds, 1)
+                Tenants      = $Totals.Count; Feeds = $Queries.Count
+                Failed       = @($Failures.Where({ $_.Code -notin @('AuditLogDisabled', 'NoAuditLog') })).Count
+                Parked       = @($Failures.Where({ $_.Code -in @('AuditLogDisabled', 'NoAuditLog') })).Count
+                Blobs        = [int](($Progress.Values.Blobs | Measure-Object -Sum).Sum)
+                Records      = [int](($Totals.Values.Records | Measure-Object -Sum).Sum)
+                Evaluated    = [int](($Totals.Values.Evaluated | Measure-Object -Sum).Sum)
+                Stored       = [int](($Totals.Values.Stored | Measure-Object -Sum).Sum)
+            } -Force
+        } catch {
+            Write-Information "AuditLogFeedV3: could not record the cycle: $($_.Exception.Message)"
+        }
     }
 }

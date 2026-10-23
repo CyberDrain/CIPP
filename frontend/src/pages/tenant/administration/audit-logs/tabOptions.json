@@ -15,7 +15,7 @@
     "icon": "ManageSearch"
   },
   {
-    "label": "Search Coverage",
+    "label": "Feed Status",
     "path": "/tenant/administration/audit-logs/coverage",
     "icon": "Timeline",
     "advanced": true

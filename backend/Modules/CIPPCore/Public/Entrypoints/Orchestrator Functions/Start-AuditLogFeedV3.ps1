@@ -14,6 +14,7 @@ function Start-AuditLogFeedV3 {
              fanned out in chunks of -TenantsPerTask as AuditLogFeedV3 tasks, each carrying the tenant's content types
              and their AuditLogFeedCursor rows. Content types in backoff (NextAttemptUtc in the future) are left out, as
              are tenants with none due. The run's post-execution, AuditLogFeedProcessV3, processes what the tasks stored.
+             Every task carries the tick's CycleId, which its AuditLogFeedCycles row and feed windows are recorded under.
           3. Graph searches: Start-AuditLogIngestionV2 downloads and processes searches that already exist, which are
              manual searches and scheduled windows created before the feed. No scheduled searches are created.
     .FUNCTIONALITY
@@ -71,7 +72,7 @@ function Start-AuditLogFeedV3 {
             $Due = @($Due)
             if ($Due.Count -gt 0) {
                 $Batch = for ($i = 0; $i -lt $Due.Count; $i += $TenantsPerTask) {
-                    [pscustomobject]@{ FunctionName = 'AuditLogFeedV3'; Tenants = @($Due[$i..([Math]::Min($i + $TenantsPerTask - 1, $Due.Count - 1))]) }
+                    [pscustomobject]@{ FunctionName = 'AuditLogFeedV3'; CycleId = $Now.ToString('yyyyMMddHHmm'); Tenants = @($Due[$i..([Math]::Min($i + $TenantsPerTask - 1, $Due.Count - 1))]) }
                 }
                 Write-Information "AuditLogFeedV3: $($Due.Count) tenant(s) in $(@($Batch).Count) task(s)"
                 if ($PSCmdlet.ShouldProcess('Start-AuditLogFeedV3', 'Poll the audit log feed')) {

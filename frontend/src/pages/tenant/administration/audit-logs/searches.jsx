@@ -9,7 +9,7 @@ import { useSettings } from "../../../../hooks/use-settings";
 import { ApiGetCall } from "../../../../api/ApiCall";
 
 // Log Searches lists the V2 audit-log coverage ledger - one row per search window the pipeline runs.
-// The full diagnostic dashboard lives on the advanced "Search Coverage" tab; this is the everyday view.
+// The audit log feed's per-tenant status and polling cycles live on the advanced "Feed Status" tab.
 const simpleColumns = [
   "Tenant",
   "Type",

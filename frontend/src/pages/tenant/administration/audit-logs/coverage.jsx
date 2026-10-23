@@ -57,9 +57,8 @@ const TenantFeedDetail = ({ row }) => {
   )
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} sx={{ mt: 2 }}>
       <CippDataTable
-        noCard
         title="Feed windows (7 days)"
         data={windows}
         simpleColumns={[
@@ -76,7 +75,6 @@ const TenantFeedDetail = ({ row }) => {
         refreshFunction={windowsQuery.refetch}
       />
       <CippDataTable
-        noCard
         title="Feed logs (7 days)"
         api={{
           url: `/api/ListLogs?Filter=true&API=AuditLogFeedV3&Tenant=${row.Tenant}&Days=7`,
@@ -269,16 +267,17 @@ const Page = () => {
                     </Typography>
                   )}
                 </CardContent>
-                <Divider />
-                <CippDataTable
-                  noCard
-                  title="Cycles"
-                  data={cycles}
-                  simpleColumns={cycleColumns}
-                  isFetching={cyclesQuery.isFetching}
-                  refreshFunction={cyclesQuery.refetch}
-                />
               </Card>
+            )}
+
+            {!cyclesQuery.isError && (
+              <CippDataTable
+                title="Cycles"
+                data={cycles}
+                simpleColumns={cycleColumns}
+                isFetching={cyclesQuery.isFetching}
+                refreshFunction={cyclesQuery.refetch}
+              />
             )}
 
             <CippDataTable

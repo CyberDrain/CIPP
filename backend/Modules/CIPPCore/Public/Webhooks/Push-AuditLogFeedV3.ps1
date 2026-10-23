@@ -17,8 +17,11 @@ function Push-AuditLogFeedV3 {
         AuditLogFeedProcessV3 post-execution to queue without reading the ledger back.
 
         A cursor advances only when its listing and every blob downloaded, so a failure re-reads the same range next
-        cycle; the record-Id upsert and the AuditLogs claim keep that from alerting twice. AF20022 (no subscription)
-        starts one. Other failures back off with Get-CippAuditLogNextAttempt.
+        cycle; the record-Id upsert and the AuditLogs claim keep that from alerting twice. AF20022 (no subscription) and
+        AF20023 (subscription disabled) start one. A tenant with no audit log to read - the start call reports the
+        tenant missing (unified audit log ingestion off), or the token fails with AADSTS500014 (the Office 365
+        Management APIs service principal is disabled, as in unlicensed tenants) - is parked for a day with the reason
+        on the cursor row. Other failures back off with Get-CippAuditLogNextAttempt.
     .FUNCTIONALITY
         Entrypoint
     #>
@@ -74,15 +77,21 @@ function Push-AuditLogFeedV3 {
 
             if ($_.Kind -eq 'Listing') {
                 $Entry = $Progress['{0}|{1}' -f $TenantId, $_.ContentType]
-                if ($_.ErrorCode -eq 'AF20022') {
+                if ($_.ErrorCode -in @('AF20022', 'AF20023')) {
                     try {
                         $null = New-GraphPOSTRequest -type POST -uri ('https://manage.office.com/api/v1.0/{0}/activity/feed/subscriptions/start?contentType={1}&PublisherIdentifier={2}' -f $TenantId, $_.ContentType, $env:TenantID) -body '{}' -scope 'https://manage.office.com/.default' -tenantid $TenantId -NoAuthCheck $true
                         Write-LogMessage -API 'AuditLogFeedV3' -tenant $_.TenantFilter -message "Started the $($_.ContentType) audit log subscription. Microsoft can take up to 12 hours to publish the first content." -sev Info
                         $Entry.Subscribed = $true
                         $CursorUpdates.Add(@{ PartitionKey = $_.TenantFilter; RowKey = $_.ContentType; LastEndUtc = $_.EndTime; LastPolledUtc = $Now; SubscriptionStartedUtc = $Now; Attempts = 0; NextAttemptUtc = $Now; LastErrorCode = ''; LastError = '' })
                     } catch {
-                        $Entry.Failure ??= @{ Code = 'SubscriptionStart'; Message = $_.Exception.Message }
+                        $Entry.Failure ??= if ($_.Exception.Message -match 'Tenant .+ does not exist') {
+                            @{ Code = 'AuditLogDisabled'; Message = 'Unified audit logging is turned off for this tenant. Turn it on with the AuditLog standard; Microsoft can take up to 12 hours to publish content after the subscription starts.' }
+                        } else {
+                            @{ Code = 'SubscriptionStart'; Message = $_.Exception.Message }
+                        }
                     }
+                } elseif ($_.ErrorCode -eq 'Token' -and $_.Error -match 'AADSTS500014') {
+                    $Entry.Failure ??= @{ Code = 'NoAuditLog'; Message = 'The Office 365 Management APIs service principal is disabled in this tenant, which usually means it has no licence with an audit log.' }
                 } elseif ($_.Error) {
                     $Entry.Failure ??= @{ Code = $_.ErrorCode; Message = $_.Error }
                 } else {
@@ -178,12 +187,13 @@ function Push-AuditLogFeedV3 {
         $ContentType = $Listing.ContentType
         $Cursor = ($Item.Tenants.Where({ $_.TenantFilter -eq $Listing.TenantFilter }, 'First'))[0].Cursors.$ContentType
         $Attempts = [int]$Cursor.Attempts + 1
+        $Parked = $Failure.Code -in @('AuditLogDisabled', 'NoAuditLog')
         if ($Attempts -eq 1 -or [string]$Cursor.LastErrorCode -ne [string]$Failure.Code) {
-            Write-LogMessage -API 'AuditLogFeedV3' -tenant $Listing.TenantFilter -message "Could not read the $ContentType audit log feed: $($Failure.Message)" -sev Error
+            Write-LogMessage -API 'AuditLogFeedV3' -tenant $Listing.TenantFilter -message "Could not read the $ContentType audit log feed: $($Failure.Message)" -sev ($Parked ? 'Warning' : 'Error')
         }
         $CursorUpdates.Add(@{
                 PartitionKey = $Listing.TenantFilter; RowKey = $ContentType; LastPolledUtc = $Now
-                Attempts = $Attempts; NextAttemptUtc = (Get-CippAuditLogNextAttempt -Attempts $Attempts)
+                Attempts = $Attempts; NextAttemptUtc = ($Parked ? $Now.AddDays(1) : (Get-CippAuditLogNextAttempt -Attempts $Attempts))
                 LastErrorCode = [string]$Failure.Code; LastError = [string]$Failure.Message; LastErrorUtc = $Now
             })
     }

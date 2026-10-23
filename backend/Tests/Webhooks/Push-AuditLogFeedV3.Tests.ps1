@@ -165,13 +165,28 @@ Describe 'Push-AuditLogFeedV3' {
         $script:Writes.Where({ $_.Table -eq 'CacheWebhooks' }) | Should -HaveCount 0
     }
 
-    It 'starts the subscription on AF20022 and moves the cursor to the listing end' {
-        Mock Get-CIPPAuditLogContent { $script:Queries = $Queries; foreach ($Query in $Queries) { New-Listing -Query $Query -ErrorCode 'AF20022' -ErrorMessage 'No subscription found' } }
+    It 'starts the subscription on <Code> and moves the cursor to the listing end' -ForEach @(@{ Code = 'AF20022' }, @{ Code = 'AF20023' }) {
+        Mock Get-CIPPAuditLogContent { $script:Queries = $Queries; foreach ($Query in $Queries) { New-Listing -Query $Query -ErrorCode $Code -ErrorMessage 'No subscription found' } }
         Push-AuditLogFeedV3 -Item (New-FeedItem)
         Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*/subscriptions/start?contentType=Audit.Exchange&PublisherIdentifier=*' }
         $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
         $Cursor.LastEndUtc | Should -Be $script:Queries[0].EndTime
         $Cursor.SubscriptionStartedUtc | Should -Not -BeNullOrEmpty
+    }
+
+    It 'parks the cursor for a day with a warning when the tenant has no audit log (<Case>)' -ForEach @(
+        @{ Case = 'audit log off'; Code = 'AuditLogDisabled'; ErrorCode = 'AF20023'; ErrorMessage = 'The subscription was disabled.'; StartError = 'DataServiceException: Tenant tid-1 does not exist.' }
+        @{ Case = 'service principal disabled'; Code = 'NoAuditLog'; ErrorCode = 'Token'; ErrorMessage = 'Could not get token: invalid_resource:AADSTS500014: The service principal for resource is disabled.'; StartError = $null }
+    ) {
+        Mock Get-CIPPAuditLogContent { foreach ($Query in $Queries) { New-Listing -Query $Query -ErrorCode $ErrorCode -ErrorMessage $ErrorMessage } }
+        if ($StartError) { Mock New-GraphPOSTRequest { throw $StartError } }
+        Push-AuditLogFeedV3 -Item (New-FeedItem)
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
+        $Cursor.Keys | Should -Not -Contain 'LastEndUtc'
+        $Cursor.LastErrorCode | Should -Be $Code
+        ($Cursor.NextAttemptUtc - [datetime]::UtcNow).TotalHours | Should -BeGreaterThan 23
+        Should -Invoke Get-CippAuditLogNextAttempt -Times 0 -Exactly
+        Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $sev -eq 'Warning' }
     }
 
     It 'keeps the cursor when the records cannot be stored' {

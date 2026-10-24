@@ -12,7 +12,7 @@ BeforeAll {
     function New-GraphPOSTRequest { param($type, $uri, $body, $scope, $tenantid, $NoAuthCheck) }
     function Start-CIPPOrchestrator { param($InputObject) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
-    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly) }
+    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$CallerSweepsCachePartition) }
 
     function New-FeedItem {
         param([hashtable]$Cursors = @{}, [string[]]$ContentTypes = @('Audit.Exchange'), [string]$CycleId)
@@ -50,8 +50,8 @@ Describe 'Push-AuditLogFeedV3' {
         Mock New-GraphPOSTRequest {}
         Mock Get-CippAuditLogNextAttempt { [datetime]'2030-01-01' }
         Mock Get-CIPPAuditLogPrefilter { $null }
-        # Every candidate matches unless a test says otherwise; a match carries its raw record as AuditRecord JSON.
-        Mock Test-CIPPAuditLogRules { [pscustomobject]@{ Error = $null; DataToProcess = @(foreach ($Row in $Rows) { [pscustomobject]@{ Id = $Row.Id; AuditRecord = [CIPP.CippJson]::ToJson($Row, 10) } }) } }
+        # Every candidate matches unless a test says otherwise.
+        Mock Test-CIPPAuditLogRules { [pscustomobject]@{ Error = $null; MatchedLogs = @($Rows).Count } }
         # A listing and then its one blob per query; the real stream interleaves them in completion order.
         Mock Get-CIPPAuditLogContent {
             $script:Queries = $Queries
@@ -63,50 +63,57 @@ Describe 'Push-AuditLogFeedV3' {
         }
     }
 
-    It 'stores the records unchanged, keyed by Id, in one feed partition' {
-        Push-AuditLogFeedV3 -Item (New-FeedItem)
-        $Rows = @($script:Writes.Where({ $_.Table -eq 'CacheWebhooks' }).Entity)
-        $Rows.RowKey | Should -Be @('rec-1', 'rec-2')
-        @($Rows.PartitionKey | Select-Object -Unique) | Should -HaveCount 1
-        $Rows[0].PartitionKey | Should -Match '^contoso\.com\|feed-\d{14}$'
-        ($Rows[0].JSON | ConvertFrom-Json).Operation | Should -Be 'New-InboxRule'
-        ($Rows[0].JSON | ConvertFrom-Json).PSObject.Properties.Name | Should -Not -Contain 'auditData'
-    }
-
-    It 'writes the feed window already Processing and returns it for the post-execution' {
+    It 'sends the alerts in place: the whole engine runs on each blob, nothing is staged or queued' {
         $Returned = @(Push-AuditLogFeedV3 -Item (New-FeedItem))
-        $Ledger = @($script:Writes.Where({ $_.Table -eq 'AuditLogCoverage' }).Entity)[-1]
-        $Ledger.State | Should -Be 'Processing'
-        $Ledger.Type | Should -Be 'Feed'
-        $Ledger.CandidateCount | Should -Be 2
-        $Cache = @($script:Writes.Where({ $_.Table -eq 'CacheWebhooks' }).Entity)[0]
-        $Cache.PartitionKey | Should -Be ('contoso.com|{0}' -f $Ledger.SearchId)
-        $Returned.TenantFilter | Should -Be @('contoso.com')
-        $Returned[0].SearchId | Should -Be $Ledger.SearchId
-        $Returned[0].WindowRowKey | Should -Be $Ledger.RowKey
-        $Returned[0].RecordCount | Should -Be 2
+        Should -Invoke Test-CIPPAuditLogRules -Times 1 -Exactly -ParameterFilter { $CallerSweepsCachePartition -and -not $EvaluateOnly -and $TenantFilter -eq 'contoso.com' -and @($Rows).Count -eq 2 }
+        @($script:Writes.Where({ $_.Table -in @('CacheWebhooks', 'AuditLogCoverage') })) | Should -HaveCount 0
+        $Returned | Should -HaveCount 0
         Should -Invoke Start-CIPPOrchestrator -Times 0 -Exactly
     }
 
-    It 'hands each tenant its prefilter for the download to apply' {
+    It 'hands each tenant its prefilter for the download to apply, a few blobs at a time' {
         Mock Get-CIPPAuditLogPrefilter { [pscustomobject]@{ Rules = @(); Operations = $null; Tenant = $TenantFilter } }
         Push-AuditLogFeedV3 -Item (New-FeedItem)
         Should -Invoke Get-CIPPAuditLogPrefilter -Times 1 -Exactly
-        Should -Invoke Get-CIPPAuditLogContent -Times 1 -Exactly -ParameterFilter { $Prefilters['tid-1'].Tenant -eq 'contoso.com' }
+        Should -Invoke Get-CIPPAuditLogContent -Times 1 -Exactly -ParameterFilter { $Prefilters['tid-1'].Tenant -eq 'contoso.com' -and $MaxConcurrency -eq 4 }
     }
 
-    It 'stores blobs that arrive before their listing, and counts every blob' {
+    It 'counts blobs that arrive before their listing, and reaches the end of the range' {
         Mock Get-CIPPAuditLogContent {
+            $script:Queries = $Queries
             $Query = $Queries[0]
             $Blobs = @(foreach ($n in 1..70) { New-Blob $Query.TenantId $Query.ContentType "b$n" })
             foreach ($Blob in $Blobs) { New-Download $Blob @(New-Record "rec-$($Blob.contentId)") }
             New-Listing -Query $Query -Blobs $Blobs
         }
-        $Returned = @(Push-AuditLogFeedV3 -Item (New-FeedItem))
-        @($script:Writes.Where({ $_.Table -eq 'CacheWebhooks' }).Entity) | Should -HaveCount 70
-        @($script:Writes.Where({ $_.Table -eq 'AuditLogCoverage' }).Entity)[-1].CandidateCount | Should -Be 70
-        @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0].Blobs | Should -Be 70
-        $Returned.TenantFilter | Should -Be @('contoso.com')
+        Push-AuditLogFeedV3 -Item (New-FeedItem)
+        Should -Invoke Test-CIPPAuditLogRules -Times 70 -Exactly
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[-1]
+        $Cursor.Blobs | Should -Be 70
+        $Cursor.Matched | Should -Be 70
+        $Cursor.LastEndUtc | Should -Be $script:Queries[0].EndTime
+    }
+
+    It 'skips the engine for a blob the prefilter emptied, and still counts it finished' {
+        Mock Get-CIPPAuditLogContent { $script:Queries = $Queries; $Query = $Queries[0]; $Blob = New-Blob $Query.TenantId $Query.ContentType; New-Listing -Query $Query -Blobs @($Blob); New-Download $Blob @() }
+        Push-AuditLogFeedV3 -Item (New-FeedItem)
+        Should -Invoke Test-CIPPAuditLogRules -Times 0 -Exactly
+        @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[-1].LastEndUtc | Should -Be $script:Queries[0].EndTime
+    }
+
+    It 'stops the cursor just short of a blob the rule engine failed on, and backs off' {
+        Mock Test-CIPPAuditLogRules { if (@($Rows)[0].Id -eq 'r2') { [pscustomobject]@{ Error = 'lookup table unavailable' } } else { [pscustomobject]@{ Error = $null; MatchedLogs = 1 } } }
+        Mock Get-CIPPAuditLogContent {
+            $script:Queries = $Queries
+            $Query = $Queries[0]
+            $Blobs = @(foreach ($n in 1..3) { New-Blob $Query.TenantId $Query.ContentType "b$n" $Query.StartTime.AddMinutes($n) })
+            New-Listing -Query $Query -Blobs $Blobs
+            foreach ($n in 0..2) { New-Download $Blobs[$n] @(New-Record "r$($n + 1)") }
+        }
+        Push-AuditLogFeedV3 -Item (New-FeedItem)
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[-1]
+        $Cursor.LastErrorCode | Should -Be 'Rules'
+        $Cursor.LastEndUtc | Should -Be $script:Queries[0].StartTime.AddMinutes(2).AddSeconds(-1)
     }
 
     It 'evaluates interleaved blobs against each tenant''s own directory memo, dropping it after the tenant''s last blob' {
@@ -115,7 +122,7 @@ Describe 'Push-AuditLogFeedV3' {
         Mock Test-CIPPAuditLogRules {
             $script:SeenMemos.Add(('{0}>{1}>{2}' -f $TenantFilter, $script:AuditRuleSearchLookups.Tenant, [int]$script:AuditRuleSearchLookups.UserLookup.Count))
             $script:AuditRuleSearchLookups.UserLookup = @{ $TenantFilter = 1 }
-            [pscustomobject]@{ Error = $null; DataToProcess = @() }
+            [pscustomobject]@{ Error = $null; MatchedLogs = 0 }
         }
         Mock Get-CIPPAuditLogContent {
             $A = New-Blob 'tid-1' 'Audit.Exchange' 'a'; $B = New-Blob 'tid-2' 'Audit.Exchange' 'b'
@@ -140,19 +147,20 @@ Describe 'Push-AuditLogFeedV3' {
         $Cursor.Attempts | Should -Be 0
     }
 
-    It 'records the task under its cycle, tags the window with it, and keeps the read''s counts on the cursor' {
-        Push-AuditLogFeedV3 -Item (New-FeedItem -CycleId '202610241200')
+    It 'records the task under its cycle and keeps the read''s counts on the cursor' {
+        Push-AuditLogFeedV3 -Item (New-FeedItem -CycleId '20261024120000' -ContentTypes @('Audit.AzureActiveDirectory', 'Audit.Exchange'))
         $Cycle = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCycles' }).Entity)[0]
-        $Cycle.RowKey | Should -Be '202610241200-tid-1'
+        $Cycle.RowKey | Should -Be '20261024120000-tid-1'
         $Cycle.Tenants | Should -Be 1
-        $Cycle.Blobs | Should -Be 1
-        $Cycle.Records | Should -Be 2
-        $Cycle.Stored | Should -Be 2
+        $Cycle.Feeds | Should -Be 2
+        $Cycle.Blobs | Should -Be 2
+        $Cycle.Records | Should -Be 4
+        $Cycle.Evaluated | Should -Be 4
+        $Cycle.Matched | Should -Be 4
         $Cycle.Failed | Should -Be 0
-        @($script:Writes.Where({ $_.Table -eq 'AuditLogCoverage' }).Entity)[-1].CycleId | Should -Be '202610241200'
         $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
         $Cursor.Records | Should -Be 2
-        $Cursor.Stored | Should -Be 2
+        $Cursor.Matched | Should -Be 2
         $Cursor.LastSuccessUtc | Should -Not -BeNullOrEmpty
     }
 
@@ -179,7 +187,7 @@ Describe 'Push-AuditLogFeedV3' {
         Should -Invoke Write-LogMessage -ParameterFilter { $message -like '*older than 7 days*' }
     }
 
-    It 'saves the cursor every 20 stored blobs, just before the oldest listed blob not yet stored' {
+    It 'saves the cursor every 10 finished blobs, just before the oldest listed blob not yet finished' {
         Mock Get-CIPPAuditLogContent {
             $script:Queries = $Queries
             $Query = $Queries[0]
@@ -190,14 +198,15 @@ Describe 'Push-AuditLogFeedV3' {
         }
         Push-AuditLogFeedV3 -Item (New-FeedItem)
         $Cursors = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }))
+        # At 10 finished b11 is the oldest left, at 20 b21, which then holds the cursor until it arrives.
         $Checkpoints = @($Cursors.Where({ $_.Entity[0].CheckpointUtc }))
-        $Checkpoints | Should -HaveCount 1
+        $Checkpoints | Should -HaveCount 2
         $Checkpoints[0].OperationType | Should -Be 'UpsertMerge'
-        $Checkpoints[0].Entity[0].LastEndUtc | Should -Be $script:Queries[0].StartTime.AddSeconds(20)
+        $Checkpoints.ForEach({ $_.Entity[0].LastEndUtc }) | Should -Be @($script:Queries[0].StartTime.AddSeconds(10), $script:Queries[0].StartTime.AddSeconds(20))
         $Cursors[-1].Entity[0].LastEndUtc | Should -Be $script:Queries[0].EndTime
     }
 
-    It 'keeps the blobs stored before a failed one: the cursor stops just short of it and backs off' {
+    It 'keeps the blobs finished before a failed one: the cursor stops just short of it and backs off' {
         Mock Get-CIPPAuditLogContent {
             $script:Queries = $Queries
             $Query = $Queries[0]
@@ -223,7 +232,6 @@ Describe 'Push-AuditLogFeedV3' {
         $Cursors[1].Attempts | Should -Be 2
         $Cursors[1].NextAttemptUtc | Should -Be ([datetime]'2030-01-01')
         Should -Invoke Write-LogMessage -Times 1 -Exactly
-        $script:Writes.Where({ $_.Table -eq 'CacheWebhooks' }) | Should -HaveCount 0
     }
 
     It 'starts the subscription on <Code> and moves the cursor to the listing end' -ForEach @(@{ Code = 'AF20022' }, @{ Code = 'AF20023' }) {
@@ -250,19 +258,7 @@ Describe 'Push-AuditLogFeedV3' {
         Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $sev -eq 'Warning' }
     }
 
-    It 'keeps the cursor when the records cannot be stored' {
-        Mock Add-CIPPAzDataTableEntity {
-            if ($TableName -eq 'CacheWebhooks') { throw 'table unavailable' }
-            $script:Writes.Add([pscustomobject]@{ Table = $TableName; Entity = @($Entity); OperationType = $OperationType })
-        }
-        $Returned = @(Push-AuditLogFeedV3 -Item (New-FeedItem))
-        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
-        $Cursor.Keys | Should -Not -Contain 'LastEndUtc'
-        $Cursor.LastErrorCode | Should -Be 'Store'
-        $Returned | Should -HaveCount 0
-    }
-
-    It 'downloads every tenant in one call and stores each tenant in its own partition' {
+    It 'downloads every tenant in one call and evaluates each against its own rules' {
         Mock Get-CIPPAuditLogContent {
             foreach ($Query in $Queries) { $Blob = New-Blob $Query.TenantId $Query.ContentType; New-Listing -Query $Query -Blobs @($Blob); New-Download $Blob @(New-Record "rec-$($Query.TenantId)") }
         }
@@ -270,12 +266,10 @@ Describe 'Push-AuditLogFeedV3' {
                 [pscustomobject]@{ TenantFilter = 'contoso.com'; TenantId = 'tid-1'; ContentTypes = @('Audit.Exchange'); Cursors = @{} }
                 [pscustomobject]@{ TenantFilter = 'fabrikam.com'; TenantId = 'tid-2'; ContentTypes = @('Audit.Exchange'); Cursors = @{} }
             ) }
-        $Returned = @(Push-AuditLogFeedV3 -Item $Item)
+        $null = Push-AuditLogFeedV3 -Item $Item
         Should -Invoke Get-CIPPAuditLogContent -Times 1 -Exactly
-        $Rows = @($script:Writes.Where({ $_.Table -eq 'CacheWebhooks' }).Entity)
-        ($Rows.Where({ $_.RowKey -eq 'rec-tid-2' }))[0].PartitionKey | Should -Match '^fabrikam\.com\|feed-'
-        ($Rows.Where({ $_.RowKey -eq 'rec-tid-1' }))[0].PartitionKey | Should -Match '^contoso\.com\|feed-'
-        $Returned.TenantFilter | Sort-Object | Should -Be @('contoso.com', 'fabrikam.com')
+        Should -Invoke Test-CIPPAuditLogRules -Times 1 -Exactly -ParameterFilter { $TenantFilter -eq 'contoso.com' -and @($Rows)[0].Id -eq 'rec-tid-1' }
+        Should -Invoke Test-CIPPAuditLogRules -Times 1 -Exactly -ParameterFilter { $TenantFilter -eq 'fabrikam.com' -and @($Rows)[0].Id -eq 'rec-tid-2' }
     }
 
     It 'holds back only the content type whose blob failed' {
@@ -291,46 +285,14 @@ Describe 'Push-AuditLogFeedV3' {
         $Cursors = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)
         ($Cursors.Where({ $_.RowKey -eq 'Audit.AzureActiveDirectory' }))[0].Keys | Should -Contain 'LastEndUtc'
         ($Cursors.Where({ $_.RowKey -eq 'Audit.Exchange' }))[0].LastErrorCode | Should -Be 'AF20051'
-        @($script:Writes.Where({ $_.Table -eq 'CacheWebhooks' }).Entity).RowKey | Should -Be @('rec-9')
+        Should -Invoke Test-CIPPAuditLogRules -Times 1 -Exactly
     }
 
-    It 'stores only the records the rule engine matches, evaluated once per tenant without dispatch' {
-        Mock Test-CIPPAuditLogRules { [pscustomobject]@{ Error = $null; DataToProcess = @(foreach ($Row in $Rows) { if ($Row.Operation -eq 'New-InboxRule') { [pscustomobject]@{ Id = $Row.Id; AuditRecord = [CIPP.CippJson]::ToJson($Row, 10) }; [pscustomobject]@{ Id = $Row.Id; AuditRecord = [CIPP.CippJson]::ToJson($Row, 10) } } }) } }
-        $Returned = @(Push-AuditLogFeedV3 -Item (New-FeedItem))
-        @($script:Writes.Where({ $_.Table -eq 'CacheWebhooks' }).Entity.RowKey) | Should -Be @('rec-1')
-        Should -Invoke Test-CIPPAuditLogRules -Times 1 -Exactly -ParameterFilter { $EvaluateOnly -and $TenantFilter -eq 'contoso.com' -and @($Rows).Count -eq 2 }
-        $Ledger = @($script:Writes.Where({ $_.Table -eq 'AuditLogCoverage' }).Entity)[-1]
-        $Ledger.EvaluatedCount | Should -Be 2
-        $Ledger.CandidateCount | Should -Be 1
-        $Returned[0].RecordCount | Should -Be 1
-    }
-
-    It 'stores no window when no rule matches' {
-        Mock Test-CIPPAuditLogRules { [pscustomobject]@{ Error = $null; DataToProcess = @() } }
-        $Returned = @(Push-AuditLogFeedV3 -Item (New-FeedItem))
-        $Returned | Should -HaveCount 0
-        @($script:Writes.Where({ $_.Table -eq 'CacheWebhooks' })) | Should -HaveCount 0
-        @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' })) | Should -Not -BeNullOrEmpty
-    }
-
-    It 'stores every candidate when the rule engine fails, so processing decides' {
-        Mock Test-CIPPAuditLogRules { [pscustomobject]@{ Error = 'lookup table unavailable'; DataToProcess = @() } }
-        $null = Push-AuditLogFeedV3 -Item (New-FeedItem)
-        (@($script:Writes.Where({ $_.Table -eq 'CacheWebhooks' }).Entity.RowKey) | Sort-Object) | Should -Be @('rec-1', 'rec-2')
-    }
-
-    It 'puts the window in the ledger as Storing before its first record is stored, so a crash leaves it for the sweep' {
-        $null = Push-AuditLogFeedV3 -Item (New-FeedItem)
-        $Tables = @($script:Writes.Table)
-        $FirstLedger = [array]::IndexOf($Tables, 'AuditLogCoverage')
-        $FirstLedger | Should -BeLessThan ([array]::IndexOf($Tables, 'CacheWebhooks'))
-        $script:Writes[$FirstLedger].Entity[0].State | Should -Be 'Storing'
-        @($script:Writes.Where({ $_.Table -eq 'AuditLogCoverage' }).Entity)[-1].State | Should -Be 'Processing'
-    }
-
-    It 'opens no window for a tenant nothing matched' {
-        Mock Test-CIPPAuditLogRules { [pscustomobject]@{ Error = $null; DataToProcess = @() } }
-        $null = Push-AuditLogFeedV3 -Item (New-FeedItem)
-        @($script:Writes.Where({ $_.Table -eq 'AuditLogCoverage' })) | Should -HaveCount 0
+    It 'advances the cursor with nothing matched when no rule matches' {
+        Mock Test-CIPPAuditLogRules { [pscustomobject]@{ Error = $null; MatchedLogs = 0 } }
+        Push-AuditLogFeedV3 -Item (New-FeedItem)
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[-1]
+        $Cursor.LastEndUtc | Should -Be $script:Queries[0].EndTime
+        $Cursor.Matched | Should -Be 0
     }
 }

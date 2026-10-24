@@ -9,7 +9,7 @@ function Invoke-ListAuditLogFeedStatus {
     .DESCRIPTION
         One row per tenant in audit log alert scope and content type, from its AuditLogFeedCursor row: Status (Healthy,
         Behind, Backing off, Parked, Not started), CoveredUntil, LagMinutes, the last poll and success, the next attempt,
-        the last error, and the last read's blob, record and stored counts. Parked means the tenant has no audit log to
+        the last error, and the last read's blob, record and matched counts. Parked means the tenant has no audit log to
         read and is checked once a day. Honours the tenant selector and CIPP tenant access control.
     #>
     [CmdletBinding()]
@@ -53,7 +53,7 @@ function Invoke-ListAuditLogFeedStatus {
                     SubscriptionStartedUtc = $Cursor.SubscriptionStartedUtc
                     Blobs                  = $Cursor.Blobs
                     Records                = $Cursor.Records
-                    Stored                 = $Cursor.Stored
+                    Matched                = $Cursor.Matched
                 }
             }
         }

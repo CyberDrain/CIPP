@@ -1,4 +1,4 @@
-# Pester tests for the audit log feed timer: tenant scope, cursor backoff, the missed-window sweep and Graph search ingestion.
+# Pester tests for the audit log feed timer: tenant scope, cursor backoff, feed rounds and Graph search ingestion.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
@@ -14,7 +14,6 @@ BeforeAll {
     function Get-CippException { param($Exception) }
     function Start-AuditLogSearchCreationV2 {}
     function Start-AuditLogIngestionV2 {}
-    function Push-AuditLogFeedProcessV3 { param($Item) }
 
     function New-Rule([object[]]$Tenants, [object[]]$Excluded, [string]$Type) {
         [pscustomobject]@{
@@ -83,26 +82,22 @@ Describe 'Start-AuditLogFeedV3' {
     BeforeEach {
         $script:Started = [System.Collections.Generic.List[object]]::new()
         $script:CursorRows = @()
-        $script:LedgerRows = @()
         Mock Get-CIPPAuditLogTenantScope { [pscustomobject]@{ defaultDomainName = 'contoso.com'; customerId = 'tid-1'; ContentTypes = @('Audit.AzureActiveDirectory', 'Audit.Exchange') } }
-        Mock Get-CIPPAzDataTableEntity { if ($TableName -eq 'AuditLogCoverage') { $script:LedgerRows } else { $script:CursorRows } }
+        Mock Get-CIPPAzDataTableEntity { $script:CursorRows }
         Mock Start-CIPPOrchestrator { $script:Started.Add($InputObject) }
-        Mock Push-AuditLogFeedProcessV3 {}
         Mock Start-AuditLogIngestionV2 {}
         Mock Start-AuditLogSearchCreationV2 {}
         Mock Write-LogMessage {}
         [Craft.Services.OrchestratorBridge]::ActiveNames.Clear()
     }
 
-    It 'skips the feed while a processing run is active, but still sweeps and ingests' {
-        [void][Craft.Services.OrchestratorBridge]::ActiveNames.Add('AuditLogProcessV3')
+    It 'leaves a feed round that is still running be, but still ingests Graph searches' {
+        [void][Craft.Services.OrchestratorBridge]::ActiveNames.Add('AuditLogFeedV3')
         Start-AuditLogFeedV3
         $script:Started | Should -HaveCount 0
         Should -Invoke Get-CIPPAuditLogTenantScope -Times 0 -Exactly
-        Should -Invoke Get-CIPPAzDataTableEntity -Times 1 -Exactly -ParameterFilter { $TableName -eq 'AuditLogCoverage' }
         Should -Invoke Start-AuditLogIngestionV2 -Times 1 -Exactly
     }
-
     It 'leaves out a content type in backoff and passes the other cursor along' {
         $script:CursorRows = @(
             [pscustomobject]@{ PartitionKey = 'contoso.com'; RowKey = 'Audit.Exchange'; NextAttemptUtc = [datetime]::UtcNow.AddHours(1) }
@@ -124,7 +119,7 @@ Describe 'Start-AuditLogFeedV3' {
         Start-AuditLogFeedV3
         $script:Started[0].OrchestratorName | Should -Be 'AuditLogFeedV3'
         $script:Started[0].AllowCollision | Should -BeFalse
-        $script:Started[0].PostExecution.FunctionName | Should -Be 'AuditLogFeedProcessV3'
+        $script:Started[0].PostExecution.FunctionName | Should -Be 'AuditLogFeedRoundV3'
     }
 
     It 'queues one task per tenant in an uncapped run, as round 0 with its start for the post-execution' {
@@ -136,7 +131,6 @@ Describe 'Start-AuditLogFeedV3' {
         $Run.Batch.Tenants.TenantFilter | Should -Be @('t1.com', 't2.com', 't3.com')
         $Run.PSObject.Properties.Name | Should -Not -Contain 'MaxConcurrency'
         $Run.PostExecution.Parameters.Round | Should -Be 0
-        $Run.PostExecution.Parameters.CycleId | Should -Be $Run.Batch[0].CycleId
         ([datetimeoffset]$Run.PostExecution.Parameters.RoundStartUtc).UtcDateTime | Should -BeLessOrEqual ([datetime]::UtcNow)
     }
 
@@ -145,43 +139,6 @@ Describe 'Start-AuditLogFeedV3' {
         $script:Started[0].OrchestratorName | Should -Match '^AuditLogFeedV3-[0-9a-f-]{36}$'
         $script:Started[0].AllowCollision | Should -BeTrue
         $script:Started[0].PostExecution.Parameters.Round | Should -Be 2
-    }
-
-    It 'sweeps windows older than 5 minutes once no feed, processing or sweep run is active' {
-        $Now = [datetimeoffset]::UtcNow
-        $script:LedgerRows = @(
-            [pscustomobject]@{ PartitionKey = 'failed.com'; RowKey = 'FEED-1'; SearchId = 'feed-1'; CandidateCount = 9; State = 'Downloaded'; Timestamp = $Now.AddMinutes(-6) }
-            [pscustomobject]@{ PartitionKey = 'lost.com'; RowKey = 'FEED-2'; SearchId = 'feed-2'; CandidateCount = 4; State = 'Processing'; Timestamp = $Now.AddMinutes(-6) }
-            [pscustomobject]@{ PartitionKey = 'fresh.com'; RowKey = 'FEED-3'; SearchId = 'feed-3'; CandidateCount = 1; State = 'Processing'; Timestamp = $Now.AddMinutes(-2) }
-            [pscustomobject]@{ PartitionKey = 'crashed.com'; RowKey = 'FEED-4'; SearchId = 'feed-4'; State = 'Storing'; Timestamp = $Now.AddMinutes(-6) }
-        )
-        Start-AuditLogFeedV3
-        Should -Invoke Push-AuditLogFeedProcessV3 -Times 1 -Exactly -ParameterFilter {
-            $Lost = @($Item.Results).Where({ $_.TenantFilter -eq 'lost.com' })[0]
-            (@($Item.Results.TenantFilter) | Sort-Object) -join ',' -eq 'crashed.com,failed.com,lost.com' -and $Item.Parameters.RunName -eq 'AuditLogSweepV3' -and
-            $Lost.WindowRowKey -eq 'FEED-2' -and $Lost.SearchId -eq 'feed-2' -and $Lost.RecordCount -eq 4
-        }
-    }
-
-    It 'leaves windows to an active run unless they have been Processing for over 2 hours' {
-        $Now = [datetimeoffset]::UtcNow
-        $script:LedgerRows = @(
-            [pscustomobject]@{ PartitionKey = 'waiting.com'; RowKey = 'FEED-1'; SearchId = 'feed-1'; State = 'Processing'; Timestamp = $Now.AddMinutes(-40) }
-            [pscustomobject]@{ PartitionKey = 'queued.com'; RowKey = 'FEED-2'; SearchId = 'feed-2'; State = 'Downloaded'; Timestamp = $Now.AddMinutes(-40) }
-            [pscustomobject]@{ PartitionKey = 'stuck.com'; RowKey = 'FEED-3'; SearchId = 'feed-3'; State = 'Processing'; Timestamp = $Now.AddHours(-3) }
-        )
-        foreach ($Run in 'AuditLogFeedV3', 'AuditLogProcessV3', 'AuditLogSweepV3') {
-            [Craft.Services.OrchestratorBridge]::ActiveNames.Clear()
-            [void][Craft.Services.OrchestratorBridge]::ActiveNames.Add($Run)
-            Start-AuditLogFeedV3
-        }
-        Should -Invoke Push-AuditLogFeedProcessV3 -Times 3 -Exactly -ParameterFilter { @($Item.Results.TenantFilter) -join ',' -eq 'stuck.com' }
-    }
-
-    It 'still polls the feed while only a sweep run is active' {
-        [void][Craft.Services.OrchestratorBridge]::ActiveNames.Add('AuditLogSweepV3')
-        Start-AuditLogFeedV3
-        $script:Started[0].OrchestratorName | Should -Be 'AuditLogFeedV3'
     }
 
     It 'still downloads created Graph searches when the feed stage fails' {

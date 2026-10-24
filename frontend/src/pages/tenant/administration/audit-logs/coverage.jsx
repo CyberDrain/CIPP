@@ -30,50 +30,25 @@ const statusColumns = [
   'LastSuccessUtc',
   'NextAttemptUtc',
   'Records',
-  'Stored',
+  'Matched',
   'LastError',
 ]
 
 const cycleColumns = [
   'StartedUtc',
-  'FeedSeconds',
-  'ProcessingSeconds',
+  'Seconds',
+  'Tasks',
   'Tenants',
   'Records',
-  'Stored',
-  'Alerts',
+  'Evaluated',
+  'Matched',
   'Failed',
   'Parked',
 ]
 
 const TenantFeedDetail = ({ row }) => {
-  const windowsQuery = ApiGetCall({
-    url: '/api/ListAuditLogCoverage',
-    data: { tenantFilter: row.Tenant, RelativeTime: '7d' },
-    queryKey: `AuditLogFeedWindows-${row.Tenant}`,
-  })
-  const windows = (windowsQuery.data?.Results ?? []).filter(
-    (w) => w.Type === 'Feed'
-  )
-
   return (
     <Stack spacing={2} sx={{ mt: 2 }}>
-      <CippDataTable
-        title="Feed windows (7 days)"
-        data={windows}
-        simpleColumns={[
-          'WindowStart',
-          'WindowEnd',
-          'State',
-          'RecordCount',
-          'MatchedCount',
-          'DownloadedUtc',
-          'ProcessedUtc',
-          'LastError',
-        ]}
-        isFetching={windowsQuery.isFetching}
-        refreshFunction={windowsQuery.refetch}
-      />
       <CippDataTable
         title="Feed logs (7 days)"
         api={{
@@ -104,7 +79,7 @@ const offCanvas = {
     'SubscriptionStartedUtc',
     'Blobs',
     'Records',
-    'Stored',
+    'Matched',
   ],
   children: (row) => <TenantFeedDetail row={row} />,
 }
@@ -185,22 +160,15 @@ const Page = () => {
     if (cycles.length === 0) return null
     const ordered = [...cycles].reverse()
     return {
-      series: [
-        { name: 'Feed', data: ordered.map((c) => c.FeedSeconds ?? 0) },
-        {
-          name: 'Processing',
-          data: ordered.map((c) => c.ProcessingSeconds ?? 0),
-        },
-      ],
+      series: [{ name: 'Round', data: ordered.map((c) => c.Seconds ?? 0) }],
       options: {
         chart: {
           type: 'bar',
-          stacked: true,
           background: 'transparent',
           toolbar: { show: false },
         },
         theme: { mode: theme.palette.mode },
-        colors: [theme.palette.primary.main, theme.palette.success.main],
+        colors: [theme.palette.primary.main],
         dataLabels: { enabled: false },
         xaxis: {
           categories: ordered.map((c) =>
@@ -223,7 +191,7 @@ const Page = () => {
           title: { text: 'Seconds' },
           labels: { formatter: (v) => Math.round(v) },
         },
-        legend: { show: true, position: 'top' },
+        legend: { show: false },
         grid: { borderColor: theme.palette.divider },
         tooltip: { y: { formatter: (v) => `${v}s` } },
       },
@@ -242,7 +210,7 @@ const Page = () => {
               <Card>
                 <CardHeader
                   title="Polling cycles"
-                  subheader={`Feed and processing time per timer tick, last ${hours} hours`}
+                  subheader={`Time per feed round, reading and alerting included, last ${hours} hours`}
                 />
                 <Divider />
                 <CardContent>

@@ -5,12 +5,12 @@ function Start-CIPPAuditLogFeedRun {
     .DESCRIPTION
         Each task carries the tenant's due content types and their AuditLogFeedCursor rows; a content type in backoff
         (NextAttemptUtc in the future) is left out, as is a tenant with none due. A task checkpoints its cursors as it
-        works, so the run's post-execution, AuditLogFeedProcessV3, queues this again for every tenant whose task saved a
+        works, so the run's post-execution, AuditLogFeedRoundV3, queues this again for every tenant whose task saved a
         checkpoint but did not finish, round after round while they progress.
 
         Round 0 is the timer's run, named AuditLogFeedV3 so a tick never starts while one is going. Later rounds are named
-        AuditLogFeedV3-<guid>, the same run family, so the timer and its sweep still see the feed as active. The run is
-        uncapped, like processing: Craft's background pool bounds how many tasks run at once.
+        AuditLogFeedV3-<guid>, the same run family, so the timer still sees the feed as active. The run is uncapped:
+        Craft's background pool bounds how many tasks run at once.
 
         Returns the number of tasks queued.
     .FUNCTIONALITY
@@ -57,7 +57,7 @@ function Start-CIPPAuditLogFeedRun {
             Batch            = $Batch
             SkipLog          = $true
             Priority         = 3
-            PostExecution    = @{ FunctionName = 'AuditLogFeedProcessV3'; Parameters = @{ RoundStartUtc = $Now.ToString('o'); CycleId = $CycleId; Round = $Round } }
+            PostExecution    = @{ FunctionName = 'AuditLogFeedRoundV3'; Parameters = @{ RoundStartUtc = $Now.ToString('o'); Round = $Round } }
         })
     $Batch.Count
 }

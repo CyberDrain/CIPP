@@ -16,7 +16,9 @@ function Get-CIPPAuditLogPrefilter {
         out. A rule with no condition that can be tested matches anything, so the result is $null.
 
         Operations lists the eq/in/like values on Operation, for the blob check in Get-CIPPAuditLogContent; it is $null
-        when a rule has none, since that rule can match a blob holding none of them. Anything unreadable keeps every record.
+        when a rule has none, since that rule can match a blob holding none of them. Index holds each rule's Operation
+        values (eq/in) and patterns (like), so Select-CIPPAuditLogCandidate runs a record only through the rules its
+        Operation can satisfy; ByOperation memoises that choice per Operation. Anything unreadable keeps every record.
     .FUNCTIONALITY
         Internal
     #>
@@ -28,12 +30,15 @@ function Get-CIPPAuditLogPrefilter {
         $Operations = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
         $EveryRuleNamesOperations = $true
         $Rules = [System.Collections.Generic.List[scriptblock]]::new()
+        $Index = [System.Collections.Generic.List[object]]::new()
         foreach ($Rule in (Get-CIPPAuditLogRuleSet -TenantFilter $TenantFilter)) {
             if ($TenantFilter -in $Rule.Excluded.value) { continue }
             # The engine's own selection of a rule's conditions.
             $Conditions = $Rule.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' }
             $Terms = [System.Collections.Generic.List[string]]::new()
             $RuleOperations = [System.Collections.Generic.List[string]]::new()
+            $Literals = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
+            $Patterns = [System.Collections.Generic.List[System.Management.Automation.WildcardPattern]]::new()
             $Skipped = $false
             $Count = 0
             foreach ($Condition in $Conditions) {
@@ -47,18 +52,27 @@ function Get-CIPPAuditLogPrefilter {
                 } elseif ($Root -match $Untested) { continue }
                 $Terms.Add("(($Sanitized) -or `$_.ExtendedProperties.Name -contains '$Root' -or `$_.DeviceProperties.Name -contains '$Root' -or `$_.parameters.Name -contains '$Root' -or `$_.ModifiedProperties.Name -contains '$Root')")
                 if ($Root -eq 'Operation' -and [string]$Condition.Operator.value -in @('eq', 'in', 'like')) {
-                    foreach ($Value in @($Condition.Input.value)) { $RuleOperations.Add([string]$Value) }
+                    foreach ($Value in @($Condition.Input.value)) {
+                        $RuleOperations.Add([string]$Value)
+                        if ([string]$Condition.Operator.value -eq 'like') { $Patterns.Add([System.Management.Automation.WildcardPattern]::new([string]$Value, [System.Management.Automation.WildcardOptions]::IgnoreCase)) }
+                        else { [void]$Literals.Add([string]$Value) }
+                    }
                 }
             }
             if ($Skipped -or $Count -eq 0) { continue }
             if ($Terms.Count -eq 0) { return $null }
             if ($RuleOperations.Count -eq 0) { $EveryRuleNamesOperations = $false }
             foreach ($Value in $RuleOperations) { [void]$Operations.Add($Value) }
-            $Rules.Add([scriptblock]::Create($Terms -join ' -and '))
+            $Block = [scriptblock]::Create($Terms -join ' -and ')
+            $Rules.Add($Block)
+            $Index.Add([pscustomobject]@{ Rule = $Block; Indexed = $RuleOperations.Count -gt 0; Literals = $Literals; Patterns = $Patterns.ToArray() })
         }
         [pscustomobject]@{
-            Rules      = $Rules.ToArray()
-            Operations = if ($EveryRuleNamesOperations) { , $Operations } else { $null }
+            Rules       = $Rules.ToArray()
+            Operations  = if ($EveryRuleNamesOperations) { , $Operations } else { $null }
+            Index       = $Index.ToArray()
+            # Operation -> the rules a record with that Operation can match, filled by Select-CIPPAuditLogCandidate.
+            ByOperation = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
         }
     } catch {
         Write-Information "Audit log prefilter for $TenantFilter could not be built, keeping every record: $($_.Exception.Message)"

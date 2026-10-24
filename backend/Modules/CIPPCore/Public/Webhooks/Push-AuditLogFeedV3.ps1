@@ -116,16 +116,14 @@ function Push-AuditLogFeedV3 {
             if (-not $_.TenantDone) { $Memos[$TenantId] = $Memo }
             $script:AuditRuleSearchLookups = $Memo
             $Matched = [System.Collections.Generic.Dictionary[string, string]]::new()
-            for ($i = 0; $i -lt $Records.Count; $i += 500) {
-                $Slice = $Records.GetRange($i, [Math]::Min(500, $Records.Count - $i))
-                $Result = Test-CIPPAuditLogRules -TenantFilter $Total.TenantFilter -Rows $Slice -EvaluateOnly
-                if ($Result.Error) {
-                    Write-Information "AuditLogFeedV3: rule evaluation failed for $($Total.TenantFilter), storing every candidate: $($Result.Error)"
-                    foreach ($Record in $Slice) { if ($Record.Id) { $Matched[[string]$Record.Id] = [CIPP.CippJson]::ToJson($Record, 20) ?? (ConvertTo-Json -InputObject $Record -Compress -Depth 20) } }
-                } else {
-                    # A matched record carries its raw record as AuditRecord JSON; a record two rules match appears twice.
-                    foreach ($Data in @($Result.DataToProcess)) { if ($Data.Id) { $Matched[[string]$Data.Id] = [string]$Data.AuditRecord } }
-                }
+            # One call per blob: a blob holds a few hundred records and the prefilter leaves a handful of them.
+            $Result = Test-CIPPAuditLogRules -TenantFilter $Total.TenantFilter -Rows $Records -EvaluateOnly
+            if ($Result.Error) {
+                Write-Information "AuditLogFeedV3: rule evaluation failed for $($Total.TenantFilter), storing every candidate: $($Result.Error)"
+                foreach ($Record in $Records) { if ($Record.Id) { $Matched[[string]$Record.Id] = [CIPP.CippJson]::ToJson($Record, 20) ?? (ConvertTo-Json -InputObject $Record -Compress -Depth 20) } }
+            } else {
+                # A matched record carries its raw record as AuditRecord JSON; a record two rules match appears twice.
+                foreach ($Data in @($Result.DataToProcess)) { if ($Data.Id) { $Matched[[string]$Data.Id] = [string]$Data.AuditRecord } }
             }
             $script:AuditRuleSearchLookups = $null
             if ($Matched.Count -eq 0) { return }

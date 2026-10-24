@@ -299,6 +299,37 @@ Describe 'Get-CIPPAuditLogPrefilter against the engine: several rules over the s
         $script:AuditRuleSetCache = $null
         (Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com').Operations | Should -BeNullOrEmpty
     }
+
+    It 'runs a record only through the rules its Operation can satisfy (eq, in, like, any case), and rules naming none through every record' {
+        $Like = @((New-Condition 'Operation' 'like' 'Add member to*'), (New-Condition 'ResultStatus' 'eq' 'Failed'))
+        $NoOperation = @(New-Condition 'UserId' 'like' 'ServicePrincipal_*')
+        Set-Rules @($script:RuleA, $script:RuleB, $Like, $NoOperation)
+        $script:AuditRuleSetCache = $null
+        $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
+        $Records = @(ConvertTo-Records @(
+                [ordered]@{ Id = '1'; Operation = 'new-inboxrule'; ResultStatus = 'Success'; UserId = 'a' }
+                [ordered]@{ Id = '2'; Operation = 'Set-InboxRule'; ResultStatus = 'Success'; UserId = 'a' }
+                [ordered]@{ Id = '3'; Operation = 'Add member to role.'; ResultStatus = 'Success'; UserId = 'a' }
+                [ordered]@{ Id = '4'; Operation = 'Update user.'; ResultStatus = 'Success'; UserId = 'a' }
+            ))
+        $null = Select-CIPPAuditLogCandidate -Prefilter $Prefilter -Records $Records
+        $Rules = $Prefilter.Rules
+        $Prefilter.ByOperation['New-InboxRule'] | Should -Be @($Rules[0], $Rules[1], $Rules[3])
+        $Prefilter.ByOperation['Set-InboxRule'] | Should -Be @($Rules[1], $Rules[3])
+        $Prefilter.ByOperation['Add member to role.'] | Should -Be @($Rules[2], $Rules[3])
+        $Prefilter.ByOperation['Update user.'] | Should -Be @($Rules[3])
+    }
+
+    It 'keeps exactly what running every rule on every record keeps, over every preset at once' {
+        Set-Rules @($script:PresetConditions.Values | ForEach-Object { , @($_) })
+        $script:AuditRuleSetCache = $null
+        $Indexed = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
+        $Unindexed = [pscustomobject]@{ Rules = $Indexed.Rules; Operations = $Indexed.Operations }
+        $Records = @(ConvertTo-Records $script:PresetCorpus)
+        $Kept = @(Select-CIPPAuditLogCandidate -Prefilter $Indexed -Records $Records).Id
+        $Kept | Should -Not -BeNullOrEmpty
+        $Kept | Should -Be @(Select-CIPPAuditLogCandidate -Prefilter $Unindexed -Records $Records).Id
+    }
 }
 
 Describe 'Test-CIPPAuditLogRules -EvaluateOnly' {
@@ -321,6 +352,27 @@ Describe 'Test-CIPPAuditLogRules -EvaluateOnly' {
         Should -Invoke Remove-AzDataTableEntity -Times 0 -Exactly
         Should -Invoke Remove-CIPPAzDataTableEntity -Times 0 -Exactly
         Should -Invoke Get-AzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'compiles the rules once per rule set and exclusion list, and again when either is reloaded' {
+        foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
+        $Records = @([ordered]@{ Id = 'r1'; Operation = 'New-InboxRule' }, [ordered]@{ Id = 'r2'; Operation = 'Set-Mailbox' })
+        Set-Rules @(, @(New-Condition 'Operation' 'eq' 'New-InboxRule'))
+        $First = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null
+        $Compiled = $script:AuditRuleClauseCache['contoso.com']
+        $null = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null
+        [object]::ReferenceEquals($script:AuditRuleClauseCache['contoso.com'], $Compiled) | Should -BeTrue
+        # An edited rule arrives with the next rule set; new exclusions with the next list read.
+        Set-Rules @(, @(New-Condition 'Operation' 'eq' 'Set-Mailbox'))
+        $script:AuditRuleSetCache = $null
+        $Edited = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null
+        $Recompiled = $script:AuditRuleClauseCache['contoso.com']
+        $script:AuditRuleListCache = $null
+        $null = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null
+        @(@($First.DataToProcess).Id) | Should -Be @('r1')
+        @(@($Edited.DataToProcess).Id) | Should -Be @('r2')
+        [object]::ReferenceEquals($Recompiled, $Compiled) | Should -BeFalse
+        [object]::ReferenceEquals($script:AuditRuleClauseCache['contoso.com'], $Recompiled) | Should -BeFalse
     }
 }
 

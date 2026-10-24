@@ -322,10 +322,45 @@ Describe 'Get-CIPPAuditLogPrefilter against the engine: several rules over the s
         $null = Select-CIPPAuditLogCandidate -Prefilter $Prefilter -Records $Records
         $Rules = $Prefilter.Rules
         $Rules.Count | Should -Be 3
-        $Prefilter.ByOperation['New-InboxRule'] | Should -Be @($Rules[0], $Rules[1])
-        $Prefilter.ByOperation['Set-InboxRule'] | Should -Be @($Rules[1])
-        $Prefilter.ByOperation['Add member to role.'] | Should -Be @($Rules[2])
-        $Prefilter.ByOperation['Update user.'].Count | Should -Be 0
+        $Prefilter.ByOperation['New-InboxRule'].Rules | Should -Be @($Rules[0], $Rules[1])
+        $Prefilter.ByOperation['Set-InboxRule'].Rules | Should -Be @($Rules[1])
+        $Prefilter.ByOperation['Add member to role.'].Rules | Should -Be @($Rules[2])
+        $Prefilter.ByOperation['Update user.'].Rules.Count | Should -Be 0
+    }
+
+    It 'keeps the same records from an index as from built records, over every preset at once' {
+        Set-Rules @($script:PresetConditions.Values | ForEach-Object { , @($_) })
+        $script:AuditRuleSetCache = $null
+        $Json = ConvertTo-Json -InputObject @($script:PresetCorpus) -Depth 8 -Compress
+        $FromRecords = @(Select-CIPPAuditLogCandidate -Prefilter (Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com') -Records @(ConvertTo-Records $script:PresetCorpus)).Id
+        $FromIndex = @(Select-CIPPAuditLogCandidate -Prefilter (Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com') -Index ([CIPP.CippJson]::IndexRecords($Json, [string[]]@('Operation', 'ClientIP')))).Id
+        $FromIndex | Should -Not -BeNullOrEmpty
+        @($FromIndex | Where-Object { $_ -notin $FromRecords }) | Should -BeNullOrEmpty
+        # The index also drops a sign-in no location rule can match (every UserLoggedIn preset needs a location, and no
+        # address in the corpus resolves).
+        $Operations = @{}; foreach ($Record in $script:PresetCorpus) { $Operations[$Record.Id] = $Record.Operation }
+        @($FromRecords | Where-Object { $_ -notin $FromIndex -and $Operations[$_] -ne 'UserLoggedIn' }) | Should -BeNullOrEmpty
+    }
+
+    It 'builds a record whose every rule needs a location only when its address can satisfy one' {
+        Mock Get-CIPPGeoIPLocationBatch { @{ '198.51.100.7' = [pscustomobject]@{ CountryOrRegion = 'US'; Proxy = $false; Hosting = $false }; '203.0.113.9' = [pscustomobject]@{ CountryOrRegion = 'AU'; Proxy = $false; Hosting = $false } } }
+        Set-Rules @(, @((New-Condition 'Operation' 'eq' 'UserLoginFailed'), (New-Condition 'CIPPGeoLocation' 'notin' @('AU'))))
+        $script:AuditRuleSetCache = $null
+        $Records = @(
+            [ordered]@{ Id = 'abroad'; Operation = 'UserLoginFailed'; ClientIP = '198.51.100.7:443' }
+            [ordered]@{ Id = 'home'; Operation = 'UserLoginFailed'; ClientIP = '203.0.113.9' }
+            [ordered]@{ Id = 'private'; Operation = 'UserLoginFailed'; ClientIP = '10.0.0.4' }
+            [ordered]@{ Id = 'none'; Operation = 'UserLoginFailed' }
+            [ordered]@{ Id = 'other'; Operation = 'UserLoggedIn'; ClientIP = '198.51.100.7' }
+        )
+        $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
+        $Json = ConvertTo-Json -InputObject $Records -Depth 5 -Compress
+        @(Select-CIPPAuditLogCandidate -Prefilter $Prefilter -Index ([CIPP.CippJson]::IndexRecords($Json, [string[]]@('Operation', 'ClientIP')))).Id | Should -Be @('abroad')
+        # Addresses are resolved once per prefilter.
+        $null = Select-CIPPAuditLogCandidate -Prefilter $Prefilter -Index ([CIPP.CippJson]::IndexRecords($Json, [string[]]@('Operation', 'ClientIP')))
+        Should -Invoke Get-CIPPGeoIPLocationBatch -Times 1 -Exactly
+        foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
+        @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null).DataToProcess).Id | Should -Be @('abroad')
     }
 
     It 'keeps exactly what running every rule on every record keeps, over every preset at once' {

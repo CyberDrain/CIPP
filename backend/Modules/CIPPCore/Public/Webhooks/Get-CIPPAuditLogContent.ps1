@@ -160,16 +160,25 @@ function Get-CIPPAuditLogContent {
         } elseif ($Done.Result.HasContent) {
             try {
                 $Found = $true
+                $Shadowed = $true
                 if ($null -ne $RawChecks[$Result.TenantId]) {
                     # Methods called ON the blob are free; passing it INTO a .NET method copies it about three times.
                     $Json = $Done.Result.Content
-                    $Found = $Json.IndexOf('"Name":"Operation"', [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+                    # An item named Operation or ClientIP is flattened over the record's own by the engine.
+                    $Shadowed = $Json.IndexOf('"Name":"Operation"', [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -or $Json.IndexOf('"Name":"ClientIP"', [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+                    $Found = $Shadowed
                     foreach ($Needle in $RawChecks[$Result.TenantId]) {
                         if ($Json.IndexOf($Needle, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) { $Found = $true; break }
                     }
                     $Json = $null
                 }
-                if ($Found) {
+                # Only the records worth building are built, from the response's bytes; a body that is not an array has no index.
+                $Indexed = if ($Found -and -not $Shadowed) { [CIPP.CippJson]::IndexRecords($Done.Result, [string[]]@('Operation', 'ClientIP')) }
+                if ($null -ne $Indexed) {
+                    $Result.RecordCount = $Indexed.Count
+                    $Result.Records = @(Select-CIPPAuditLogCandidate -Prefilter $Prefilters[$Result.TenantId] -Index $Indexed)
+                    $Indexed = $null
+                } elseif ($Found) {
                     # The response object, not its text, so the blob is parsed from its bytes without a string copy.
                     $Records = @([CIPP.CippJson]::ConvertFromResponse($Done.Result))
                     $Result.RecordCount = $Records.Count

@@ -85,6 +85,87 @@ namespace CIPP
             return ReadRoot(doc.RootElement, null);
         }
 
+        /// <summary>
+        /// Indexes the records of a JSON array without building them: where each one is, and the values of a few of its
+        /// top-level string fields (Values[field][record], null when absent or not a plain string). The caller decides
+        /// from those which records it needs and builds only them with <see cref="ConvertFromIndex"/>. Null when the
+        /// root is not an array.
+        /// </summary>
+        public static JsonRecordIndex? IndexRecords(HttpResult response, string[] fields)
+        {
+            var json = response.ContentBytes is { } bytes ? HttpBody.Utf8(bytes) : null;
+            return json is null ? IndexRecords(response.Content, fields) : IndexRecords(json.Value, fields);
+        }
+
+        public static JsonRecordIndex? IndexRecords(string json, string[] fields)
+            => string.IsNullOrEmpty(json) ? null : IndexRecords(Encoding.UTF8.GetBytes(json), fields);
+
+        private static JsonRecordIndex? IndexRecords(ReadOnlyMemory<byte> json, string[] fields)
+        {
+            var reader = new Utf8JsonReader(json.Span, new JsonReaderOptions { MaxDepth = 1024 });
+            if (!reader.Read() || reader.TokenType != JsonTokenType.StartArray) return null;
+            var names = new byte[fields.Length][];
+            for (int f = 0; f < fields.Length; f++) names[f] = Encoding.UTF8.GetBytes(fields[f]);
+            var starts = new List<int>();
+            var lengths = new List<int>();
+            var values = new List<string?>[fields.Length];
+            for (int f = 0; f < fields.Length; f++) values[f] = new List<string?>();
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+            {
+                int start = (int)reader.TokenStartIndex;
+                var row = new string?[fields.Length];
+                if (reader.TokenType == JsonTokenType.StartObject)
+                {
+                    while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+                    {
+                        int match = -1;
+                        for (int f = 0; f < names.Length && match < 0; f++)
+                            if (NameEquals(ref reader, names[f])) match = f;
+                        reader.Read();
+                        if (match >= 0 && reader.TokenType == JsonTokenType.String) row[match] = reader.GetString();
+                        else reader.Skip();
+                    }
+                }
+                else reader.Skip();
+                starts.Add(start);
+                lengths.Add((int)reader.BytesConsumed - start);
+                for (int f = 0; f < fields.Length; f++) values[f].Add(row[f]);
+            }
+            var columns = new string?[fields.Length][];
+            for (int f = 0; f < fields.Length; f++) columns[f] = values[f].ToArray();
+            return new JsonRecordIndex(json, starts.ToArray(), lengths.ToArray(), columns);
+        }
+
+        // Property names compared without case, as ConvertFrom-Json's PSObjects resolve them; ASCII names only.
+        private static bool NameEquals(ref Utf8JsonReader reader, byte[] name)
+        {
+            if (reader.ValueIsEscaped || reader.HasValueSequence)
+                return string.Equals(reader.GetString(), Encoding.UTF8.GetString(name), StringComparison.OrdinalIgnoreCase);
+            var span = reader.ValueSpan;
+            if (span.Length != name.Length) return false;
+            for (int i = 0; i < span.Length; i++)
+            {
+                int a = span[i], b = name[i];
+                if (a == b) continue;
+                int la = a | 0x20;
+                if (la != (b | 0x20) || la < 'a' || la > 'z') return false;
+            }
+            return true;
+        }
+
+        /// <summary>The records at <paramref name="indices"/> of an indexed array, built as ConvertFromJson builds them.</summary>
+        public static object?[] ConvertFromIndex(JsonRecordIndex index, int[] indices)
+        {
+            var rows = new object?[indices.Length];
+            for (int i = 0; i < indices.Length; i++)
+            {
+                int r = indices[i];
+                using var doc = JsonDocument.Parse(index.Json.Slice(index.Starts[r], index.Lengths[r]), Opts);
+                rows[i] = ReadRecord(doc.RootElement, null);
+            }
+            return rows;
+        }
+
         // Records live at the root, or one level down if the root is an array.
         private static object? ReadRoot(JsonElement root, HashSet<string>? keep)
         {
@@ -333,5 +414,20 @@ namespace CIPP
                     return false;
             }
         }
+    }
+
+    /// <summary>A JSON array's records located by <see cref="CippJson.IndexRecords(HttpResult, string[])"/>.</summary>
+    public sealed class JsonRecordIndex
+    {
+        internal JsonRecordIndex(ReadOnlyMemory<byte> json, int[] starts, int[] lengths, string?[][] values)
+        {
+            Json = json; Starts = starts; Lengths = lengths; Values = values;
+        }
+        internal ReadOnlyMemory<byte> Json { get; }
+        internal int[] Starts { get; }
+        internal int[] Lengths { get; }
+        /// <summary>Values[field][record]: the indexed fields, in the order asked for.</summary>
+        public string?[][] Values { get; }
+        public int Count => Starts.Length;
     }
 }

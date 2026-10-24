@@ -17,8 +17,10 @@ function Get-CIPPAuditLogPrefilter {
 
         Needles holds every kept rule's anchor needles, for the blob check in Get-CIPPAuditLogContent; with no rules it is
         empty and every blob is skipped. Index holds each rule's anchor, so Select-CIPPAuditLogCandidate runs a record
-        only through the rules its Operation can satisfy; ByOperation memoises that choice per Operation. Anything
-        unreadable keeps every record.
+        only through the rules its Operation can satisfy; ByOperation memoises that choice per Operation. Each entry's
+        Location is the rule's location conditions (CIPPGeoLocation, CIPPBadRepIP, CIPPHostedIP), or $null when it has
+        none, so a record whose every possible rule needs a location its address does not have is dropped before it is
+        built; Geo and Gates memoise the addresses and answers. Anything unreadable keeps every record.
     .FUNCTIONALITY
         Internal
     #>
@@ -39,12 +41,14 @@ function Get-CIPPAuditLogPrefilter {
             if ($null -eq $Anchor) { continue }
             $Skipped = $false
             $Count = 0
+            $LocationTerms = [System.Collections.Generic.List[string]]::new()
             foreach ($Condition in $Conditions) {
                 $Sanitized = Test-CIPPConditionFilter -Condition $Condition
                 if ($null -eq $Sanitized) { $Skipped = $true; break }
                 $Count++
                 # The sanitiser allows only [A-Za-z0-9_.] in a label, so the root name is safe inside quotes.
                 $Root = ([string]$Condition.Property.label -split '\.', 2)[0]
+                if ($Root -match '^CIPP(GeoLocation|BadRepIP|HostedIP)$') { $LocationTerms.Add("($Sanitized)") }
                 if ($Condition.Property.label -eq 'CIPPActor') {
                     $Sanitized = $Sanitized.Replace('$($_.CIPPActor)', '$(if ($_.Actor) { @(foreach ($ActorEntry in $_.Actor) { [string]$ActorEntry.ID }) -join '', '' } else { $null })')
                 } elseif ($Root -match $Untested) { continue }
@@ -55,14 +59,20 @@ function Get-CIPPAuditLogPrefilter {
             # The anchor is an Operation condition, which is always tested, so Terms is never empty here.
             $Block = [scriptblock]::Create($Terms -join ' -and ')
             $Rules.Add($Block)
-            $Index.Add([pscustomobject]@{ Rule = $Block; Literals = $Anchor.Literals; Patterns = $Anchor.Patterns })
+            # As the engine does, a location condition needs location data, which no reserved or unresolved address has.
+            $Location = if ($LocationTerms.Count -gt 0) { [scriptblock]::Create('$_.HasLocationData -eq $true -and ' + ($LocationTerms -join ' -and ')) }
+            $Index.Add([pscustomobject]@{ Rule = $Block; Literals = $Anchor.Literals; Patterns = $Anchor.Patterns; Location = $Location })
         }
         [pscustomobject]@{
             Rules       = $Rules.ToArray()
             Needles     = @($Needles)
             Index       = $Index.ToArray()
-            # Operation -> the rules a record with that Operation can match, filled by Select-CIPPAuditLogCandidate.
+            # Operation -> the Index entries a record with that Operation can match, and whether every one of them needs a
+            # location, filled by Select-CIPPAuditLogCandidate.
             ByOperation = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
+            # Normalised address -> what the engine will see of its location ($null for none); "<operation>`n<address>" -> kept.
+            Geo         = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            Gates       = [System.Collections.Generic.Dictionary[string, bool]]::new([System.StringComparer]::OrdinalIgnoreCase)
         }
     } catch {
         Write-Information "Audit log prefilter for $TenantFilter could not be built, keeping every record: $($_.Exception.Message)"

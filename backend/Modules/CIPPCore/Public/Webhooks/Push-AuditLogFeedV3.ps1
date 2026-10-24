@@ -6,7 +6,7 @@ function Push-AuditLogFeedV3 {
         Per content type, lists the blobs published since the AuditLogFeedCursor row (the last hour for a new cursor,
         never more than 7 days back) in 6-hour ranges: the API takes up to 24 hours a call but is slow and unreliable at
         that size, and a shorter range lets the cursor move on sooner. Get-CIPPAuditLogContent
-        downloads them a few at a time and hands each over as it arrives; records Get-CIPPAuditLogPrefilter rules out
+        downloads 16 at a time and hands each over as it arrives; records Get-CIPPAuditLogPrefilter rules out
         are dropped, and the rest go through the whole engine in place: Test-CIPPAuditLogRules matches them, claims
         each alert by record Id, sends it and stores its AuditLogs row. Nothing is staged and no processing run follows.
 
@@ -116,8 +116,8 @@ function Push-AuditLogFeedV3 {
     $Memos = @{}
 
     try {
-        # A few downloads run ahead of the blob being evaluated, so evaluation is not waiting on Microsoft's latency.
-        Get-CIPPAuditLogContent -Queries $Queries -Prefilters $Prefilters -MaxConcurrency 4 | ForEach-Object {
+        # Downloads are almost all of a task's time (median 2.7 s a blob), so 16 run ahead of the blob being evaluated.
+        Get-CIPPAuditLogContent -Queries $Queries -Prefilters $Prefilters -MaxConcurrency 16 | ForEach-Object {
             $TenantId = [string]$_.TenantId
             $Memo = $Memos[$TenantId]
             if ($_.TenantDone) { $Memos.Remove($TenantId) }

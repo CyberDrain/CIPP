@@ -6,10 +6,11 @@ function Select-CIPPAuditLogCandidate {
         Records: a Graph search record is tested on its auditData, which is what Test-CIPPAuditLogRules matches; a feed
         record is the audit record itself. A rule that throws on a record keeps it. A $null prefilter keeps every record.
 
-        Index (a [CIPP.CippJson]::IndexRecords index of Operation and ClientIP): only the records worth building are
-        built, then tested as above. A record is worth building when its Operation can satisfy a rule's anchor and, if
-        every such rule has location conditions, its address resolves to a location one of them accepts (addresses are
-        resolved once per prefilter, in one batch per call). The caller must not index a blob in which an item named
+        Index (a [CIPP.CippJson]::IndexRecords index of Operation and ClientIP, with the prefilter's RecordNeedles):
+        only the records worth building are built, then tested as above. A record is worth building when some rule's
+        anchor allows its Operation and its text holds every needle group of that rule, and, if every such rule has
+        location conditions, its address resolves to a location one of them accepts (addresses are resolved once per
+        prefilter, in one batch per call). The caller must not index a blob in which an item named
         Operation or ClientIP could replace the record's own, since the engine flattens such items over them.
     .FUNCTIONALITY
         Internal
@@ -39,6 +40,8 @@ function Select-CIPPAuditLogCandidate {
         $IpRegex = [regex]'^(?<IP>(?:\d{1,3}(?:\.\d{1,3}){3}|\[[0-9a-fA-F:]+\]|[0-9a-fA-F:]+))(?::\d+)?$'
         $Ops = $Index.Values[0]
         $Ips = $Index.Values[1]
+        $Masks = $Index.Masks
+        $Keys = [string[]]::new($Index.Count)
         $Keep = [bool[]]::new($Index.Count)
         $Pending = [System.Collections.Generic.List[int]]::new()
         $Lookup = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
@@ -47,6 +50,24 @@ function Select-CIPPAuditLogCandidate {
             $Choice = $null
             if (-not $Prefilter.ByOperation.TryGetValue($Operation, [ref]$Choice)) { $Choice = & $Choose $Operation }
             if ($Choice.Entries.Count -eq 0) { continue }
+            if ($null -ne $Masks) {
+                # Only the rules whose needles the record's text holds: "<operation>`n<mask>" -> those entries.
+                $Key = "$Operation`n$($Masks[$i])"
+                $Narrowed = $null
+                if (-not $Prefilter.Masked.TryGetValue($Key, [ref]$Narrowed)) {
+                    $Mask = $Masks[$i]
+                    $Entries = @(foreach ($Entry in $Choice.Entries) {
+                            $Holds = $true
+                            foreach ($Group in $Entry.Groups) { if (($Mask -band $Group) -eq 0) { $Holds = $false; break } }
+                            if ($Holds) { $Entry }
+                        })
+                    $Narrowed = [pscustomobject]@{ Entries = $Entries; Gated = $Entries.Count -gt 0 -and $Entries.Where({ $null -eq $_.Location }, 'First').Count -eq 0 }
+                    $Prefilter.Masked[$Key] = $Narrowed
+                }
+                $Choice = $Narrowed
+                if ($Choice.Entries.Count -eq 0) { continue }
+                $Keys[$i] = $Key
+            } else { $Keys[$i] = $Operation }
             if (-not $Choice.Gated) { $Keep[$i] = $true; continue }
             # Every rule needs a location: no address, or one the engine cannot place, cannot match.
             $Ip = [string]$Ips[$i]
@@ -64,11 +85,12 @@ function Select-CIPPAuditLogCandidate {
             }
         }
         foreach ($i in $Pending) {
-            $Key = "$($Ops[$i])`n$($Ips[$i])"
+            $Key = "$($Keys[$i])`n$($Ips[$i])"
             $Kept = $false
             if (-not $Prefilter.Gates.TryGetValue($Key, [ref]$Kept)) {
                 $Seen = $Prefilter.Geo[$Ips[$i]]
-                $Kept = $null -ne $Seen -and $Prefilter.ByOperation[[string]$Ops[$i]].Entries.Where({ @($Seen).Where($_.Location, 'First').Count -gt 0 }, 'First').Count -gt 0
+                $Entries = if ($null -ne $Masks) { $Prefilter.Masked[$Keys[$i]].Entries } else { $Prefilter.ByOperation[[string]$Ops[$i]].Entries }
+                $Kept = $null -ne $Seen -and $Entries.Where({ @($Seen).Where($_.Location, 'First').Count -gt 0 }, 'First').Count -gt 0
                 $Prefilter.Gates[$Key] = $Kept
             }
             $Keep[$i] = $Kept

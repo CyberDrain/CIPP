@@ -91,16 +91,24 @@ namespace CIPP
         /// from those which records it needs and builds only them with <see cref="ConvertFromIndex"/>. Null when the
         /// root is not an array.
         /// </summary>
-        public static JsonRecordIndex? IndexRecords(HttpResult response, string[] fields)
+        public static JsonRecordIndex? IndexRecords(HttpResult response, string[] fields) => IndexRecords(response, fields, null);
+
+        /// <summary>
+        /// As IndexRecords, also noting which of up to 64 ASCII <paramref name="needles"/> occur, ignoring case, in each
+        /// record's raw text: bit n of Masks[record] is set when needles[n] does.
+        /// </summary>
+        public static JsonRecordIndex? IndexRecords(HttpResult response, string[] fields, string[]? needles)
         {
             var json = response.ContentBytes is { } bytes ? HttpBody.Utf8(bytes) : null;
-            return json is null ? IndexRecords(response.Content, fields) : IndexRecords(json.Value, fields);
+            return json is null ? IndexRecords(response.Content, fields, needles) : IndexRecords(json.Value, fields, needles);
         }
 
-        public static JsonRecordIndex? IndexRecords(string json, string[] fields)
-            => string.IsNullOrEmpty(json) ? null : IndexRecords(Encoding.UTF8.GetBytes(json), fields);
+        public static JsonRecordIndex? IndexRecords(string json, string[] fields) => IndexRecords(json, fields, null);
 
-        private static JsonRecordIndex? IndexRecords(ReadOnlyMemory<byte> json, string[] fields)
+        public static JsonRecordIndex? IndexRecords(string json, string[] fields, string[]? needles)
+            => string.IsNullOrEmpty(json) ? null : IndexRecords(Encoding.UTF8.GetBytes(json), fields, needles);
+
+        private static JsonRecordIndex? IndexRecords(ReadOnlyMemory<byte> json, string[] fields, string[]? needles)
         {
             var reader = new Utf8JsonReader(json.Span, new JsonReaderOptions { MaxDepth = 1024 });
             if (!reader.Read() || reader.TokenType != JsonTokenType.StartArray) return null;
@@ -133,7 +141,40 @@ namespace CIPP
             }
             var columns = new string?[fields.Length][];
             for (int f = 0; f < fields.Length; f++) columns[f] = values[f].ToArray();
-            return new JsonRecordIndex(json, starts.ToArray(), lengths.ToArray(), columns);
+            var startArray = starts.ToArray();
+            var lengthArray = lengths.ToArray();
+            ulong[]? masks = null;
+            if (needles is { Length: > 0 })
+            {
+                masks = new ulong[startArray.Length];
+                // One lower-cased copy of the text, then each needle found everywhere it occurs and charged to its record.
+                var lower = ArrayPool<byte>.Shared.Rent(json.Length);
+                try
+                {
+                    var text = lower.AsSpan(0, json.Length);
+                    json.Span.CopyTo(text);
+                    for (int i = 0; i < text.Length; i++) { byte c = text[i]; if (c >= 'A' && c <= 'Z') text[i] = (byte)(c | 0x20); }
+                    for (int n = 0; n < Math.Min(needles.Length, 64); n++)
+                    {
+                        if (string.IsNullOrEmpty(needles[n])) continue;
+                        var needle = Encoding.ASCII.GetBytes(needles[n].ToLowerInvariant());
+                        ulong bit = 1UL << n;
+                        int at = 0, record = 0;
+                        while (at < text.Length)
+                        {
+                            int found = text.Slice(at).IndexOf(needle);
+                            if (found < 0) break;
+                            found += at;
+                            while (record < startArray.Length && startArray[record] + lengthArray[record] <= found) record++;
+                            if (record >= startArray.Length) break;
+                            if (found >= startArray[record]) { masks[record] |= bit; at = startArray[record] + lengthArray[record]; }
+                            else at = found + 1;
+                        }
+                    }
+                }
+                finally { ArrayPool<byte>.Shared.Return(lower); }
+            }
+            return new JsonRecordIndex(json, startArray, lengthArray, columns, masks);
         }
 
         // Property names compared without case, as ConvertFrom-Json's PSObjects resolve them; ASCII names only.
@@ -419,15 +460,17 @@ namespace CIPP
     /// <summary>A JSON array's records located by <see cref="CippJson.IndexRecords(HttpResult, string[])"/>.</summary>
     public sealed class JsonRecordIndex
     {
-        internal JsonRecordIndex(ReadOnlyMemory<byte> json, int[] starts, int[] lengths, string?[][] values)
+        internal JsonRecordIndex(ReadOnlyMemory<byte> json, int[] starts, int[] lengths, string?[][] values, ulong[]? masks)
         {
-            Json = json; Starts = starts; Lengths = lengths; Values = values;
+            Json = json; Starts = starts; Lengths = lengths; Values = values; Masks = masks;
         }
         internal ReadOnlyMemory<byte> Json { get; }
         internal int[] Starts { get; }
         internal int[] Lengths { get; }
         /// <summary>Values[field][record]: the indexed fields, in the order asked for.</summary>
         public string?[][] Values { get; }
+        /// <summary>Per record, the needles found in its text (bit n = needles[n]); null when none were asked for.</summary>
+        public ulong[]? Masks { get; }
         public int Count => Starts.Length;
     }
 }

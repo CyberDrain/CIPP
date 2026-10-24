@@ -20,7 +20,10 @@ function Get-CIPPAuditLogPrefilter {
         only through the rules its Operation can satisfy; ByOperation memoises that choice per Operation. Each entry's
         Location is the rule's location conditions (CIPPGeoLocation, CIPPBadRepIP, CIPPHostedIP), or $null when it has
         none, so a record whose every possible rule needs a location its address does not have is dropped before it is
-        built; Geo and Gates memoise the addresses and answers. Anything unreadable keeps every record.
+        built; Geo and Gates memoise the addresses and answers. Groups are the rule's needle groups: each positive
+        condition on a raw name (eq, like or in) needs that name, and, when its values hold letters, their longest plain
+        run of text (for in, one of its values'), somewhere in the record's raw text, so RecordNeedles (up to 64) lets an index rule a record
+        out without building it. Anything unreadable keeps every record.
     .FUNCTIONALITY
         Internal
     #>
@@ -32,6 +35,9 @@ function Get-CIPPAuditLogPrefilter {
         $Needles = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         $Rules = [System.Collections.Generic.List[scriptblock]]::new()
         $Index = [System.Collections.Generic.List[object]]::new()
+        $RecordNeedles = [System.Collections.Generic.List[string]]::new()
+        # Text JSON writes as is and every serialiser leaves alone.
+        $PlainRun = [regex]'[A-Za-z0-9 ._@:-]{3,}'
         foreach ($Rule in (Get-CIPPAuditLogRuleSet -TenantFilter $TenantFilter)) {
             if ($TenantFilter -in $Rule.Excluded.value) { continue }
             # The engine's own selection of a rule's conditions.
@@ -42,6 +48,7 @@ function Get-CIPPAuditLogPrefilter {
             $Skipped = $false
             $Count = 0
             $LocationTerms = [System.Collections.Generic.List[string]]::new()
+            $Groups = [System.Collections.Generic.List[uint64]]::new()
             foreach ($Condition in $Conditions) {
                 $Sanitized = Test-CIPPConditionFilter -Condition $Condition
                 if ($null -eq $Sanitized) { $Skipped = $true; break }
@@ -49,6 +56,29 @@ function Get-CIPPAuditLogPrefilter {
                 # The sanitiser allows only [A-Za-z0-9_.] in a label, so the root name is safe inside quotes.
                 $Root = ([string]$Condition.Property.label -split '\.', 2)[0]
                 if ($Root -match '^CIPP(GeoLocation|BadRepIP|HostedIP)$') { $LocationTerms.Add("($Sanitized)") }
+                $Operator = ([string]$Condition.Operator.value).ToLowerInvariant()
+                if ($Root -ne 'Operation' -and $Operator -in 'eq', 'like', 'in' -and ($Root -notmatch $Untested -or $Root -in 'CIPPActor', 'CIPPAddedKeyTypes')) {
+                    $Group = [uint64]0
+                    foreach ($Value in @($Condition.Input.value)) {
+                        $Longest = ''
+                        if ([string]$Value -match '[A-Za-z]') {
+                            foreach ($Run in $PlainRun.Matches(([string]$Value -replace '[*?\[\]]', "`n"))) { if ($Run.Value.Length -gt $Longest.Length) { $Longest = $Run.Value } }
+                        }
+                        # A value with no usable text leaves the condition without a needle.
+                        if (-not $Longest) { $Group = 0; break }
+                        $At = $RecordNeedles.IndexOf($Longest.ToLowerInvariant())
+                        if ($At -lt 0 -and $RecordNeedles.Count -lt 64) { $RecordNeedles.Add($Longest.ToLowerInvariant()); $At = $RecordNeedles.Count - 1 }
+                        if ($At -lt 0) { $Group = 0; break }
+                        $Group = $Group -bor ([uint64]1 -shl $At)
+                    }
+                    if ($Group) { $Groups.Add($Group) }
+                    # The engine only has a value for a raw name the record carries, as a field or as an item's Name.
+                    if ($Root -notmatch $Untested -and $Root.Length -ge 3) {
+                        $At = $RecordNeedles.IndexOf($Root.ToLowerInvariant())
+                        if ($At -lt 0 -and $RecordNeedles.Count -lt 64) { $RecordNeedles.Add($Root.ToLowerInvariant()); $At = $RecordNeedles.Count - 1 }
+                        if ($At -ge 0) { $Groups.Add([uint64]1 -shl $At) }
+                    }
+                }
                 if ($Condition.Property.label -eq 'CIPPActor') {
                     $Sanitized = $Sanitized.Replace('$($_.CIPPActor)', '$(if ($_.Actor) { @(foreach ($ActorEntry in $_.Actor) { [string]$ActorEntry.ID }) -join '', '' } else { $null })')
                 } elseif ($Root -match $Untested) { continue }
@@ -61,11 +91,12 @@ function Get-CIPPAuditLogPrefilter {
             $Rules.Add($Block)
             # As the engine does, a location condition needs location data, which no reserved or unresolved address has.
             $Location = if ($LocationTerms.Count -gt 0) { [scriptblock]::Create('$_.HasLocationData -eq $true -and ' + ($LocationTerms -join ' -and ')) }
-            $Index.Add([pscustomobject]@{ Rule = $Block; Literals = $Anchor.Literals; Patterns = $Anchor.Patterns; Location = $Location })
+            $Index.Add([pscustomobject]@{ Rule = $Block; Literals = $Anchor.Literals; Patterns = $Anchor.Patterns; Location = $Location; Groups = $Groups.ToArray() })
         }
         [pscustomobject]@{
             Rules       = $Rules.ToArray()
             Needles     = @($Needles)
+            RecordNeedles = $RecordNeedles.ToArray()
             Index       = $Index.ToArray()
             # Operation -> the Index entries a record with that Operation can match, and whether every one of them needs a
             # location, filled by Select-CIPPAuditLogCandidate.
@@ -73,6 +104,8 @@ function Get-CIPPAuditLogPrefilter {
             # Normalised address -> what the engine will see of its location ($null for none); "<operation>`n<address>" -> kept.
             Geo         = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
             Gates       = [System.Collections.Generic.Dictionary[string, bool]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            # "<operation>`n<needle mask>" -> the entries a record with that Operation and text can match.
+            Masked      = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
         }
     } catch {
         Write-Information "Audit log prefilter for $TenantFilter could not be built, keeping every record: $($_.Exception.Message)"

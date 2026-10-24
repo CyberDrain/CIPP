@@ -173,7 +173,7 @@ function Get-CIPPAuditLogContent {
                     $Json = $null
                 }
                 # Only the records worth building are built, from the response's bytes; a body that is not an array has no index.
-                $Indexed = if ($Found -and -not $Shadowed) { [CIPP.CippJson]::IndexRecords($Done.Result, [string[]]@('Operation', 'ClientIP')) }
+                $Indexed = if ($Found -and -not $Shadowed) { [CIPP.CippJson]::IndexRecords($Done.Result, [string[]]@('Operation', 'ClientIP'), [string[]]$Prefilters[$Result.TenantId].RecordNeedles) }
                 if ($null -ne $Indexed) {
                     $Result.RecordCount = $Indexed.Count
                     $Result.Records = @(Select-CIPPAuditLogCandidate -Prefilter $Prefilters[$Result.TenantId] -Index $Indexed)

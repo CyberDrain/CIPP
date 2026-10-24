@@ -342,6 +342,27 @@ Describe 'Get-CIPPAuditLogPrefilter against the engine: several rules over the s
         @($FromRecords | Where-Object { $_ -notin $FromIndex -and $Operations[$_] -ne 'UserLoggedIn' }) | Should -BeNullOrEmpty
     }
 
+    It 'builds only the records whose text holds the names and values a rule needs' {
+        Set-Rules @(
+            @((New-Condition 'Operation' 'eq' 'Set-Mailbox'), (New-Condition 'ForwardingSmtpAddress' 'like' '*@*')),
+            @((New-Condition 'Operation' 'eq' 'Update user.'), (New-Condition 'SecuredAccessPassData' 'like' '*PassId*'))
+        )
+        $script:AuditRuleSetCache = $null
+        $Records = @(
+            [ordered]@{ Id = 'fwd'; Operation = 'Set-Mailbox'; Parameters = @(@{ Name = 'ForwardingSmtpAddress'; Value = 'smtp:x@evil.com' }) }
+            [ordered]@{ Id = 'quota'; Operation = 'Set-Mailbox'; Parameters = @(@{ Name = 'ProhibitSendQuota'; Value = '50GB' }) }
+            [ordered]@{ Id = 'tap'; Operation = 'Update user.'; ModifiedProperties = @(@{ Name = 'SecuredAccessPassData'; NewValue = '[{"PassId":"1"}]'; OldValue = '[]' }) }
+            [ordered]@{ Id = 'rename'; Operation = 'Update user.'; ModifiedProperties = @(@{ Name = 'DisplayName'; NewValue = 'B'; OldValue = 'A' }) }
+        )
+        $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
+        $Prefilter.RecordNeedles | Should -Contain 'forwardingsmtpaddress'
+        $Prefilter.RecordNeedles | Should -Contain 'passid'
+        $Index = [CIPP.CippJson]::IndexRecords((ConvertTo-Json -InputObject $Records -Depth 5 -Compress), [string[]]@('Operation', 'ClientIP'), [string[]]$Prefilter.RecordNeedles)
+        @(Select-CIPPAuditLogCandidate -Prefilter $Prefilter -Index $Index).Id | Should -Be @('fwd', 'tap')
+        foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
+        @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null).DataToProcess).Id | Should -Be @('fwd', 'tap')
+    }
+
     It 'builds a record whose every rule needs a location only when its address can satisfy one' {
         Mock Get-CIPPGeoIPLocationBatch { @{ '198.51.100.7' = [pscustomobject]@{ CountryOrRegion = 'US'; Proxy = $false; Hosting = $false }; '203.0.113.9' = [pscustomobject]@{ CountryOrRegion = 'AU'; Proxy = $false; Hosting = $false } } }
         Set-Rules @(, @((New-Condition 'Operation' 'eq' 'UserLoginFailed'), (New-Condition 'CIPPGeoLocation' 'notin' @('AU'))))

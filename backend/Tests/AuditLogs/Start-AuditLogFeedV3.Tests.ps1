@@ -44,6 +44,7 @@ namespace Craft.Services {
     }
 
     . (Join-Path $Public 'AuditLogs/Get-CIPPAuditLogTenantScope.ps1')
+    . (Join-Path $Public 'Webhooks/Start-CIPPAuditLogFeedRun.ps1')
     . (Join-Path $Public 'Entrypoints/Orchestrator Functions/Start-AuditLogFeedV3.ps1')
 }
 
@@ -124,6 +125,26 @@ Describe 'Start-AuditLogFeedV3' {
         $script:Started[0].OrchestratorName | Should -Be 'AuditLogFeedV3'
         $script:Started[0].AllowCollision | Should -BeFalse
         $script:Started[0].PostExecution.FunctionName | Should -Be 'AuditLogFeedProcessV3'
+    }
+
+    It 'queues one task per tenant in an uncapped run, as round 0 with its start for the post-execution' {
+        Mock Get-CIPPAuditLogTenantScope { foreach ($n in 1..3) { [pscustomobject]@{ defaultDomainName = "t$n.com"; customerId = "tid-$n"; ContentTypes = @('Audit.Exchange') } } }
+        Start-AuditLogFeedV3
+        $Run = $script:Started[0]
+        $Run.Batch | Should -HaveCount 3
+        @($Run.Batch.ForEach({ @($_.Tenants).Count })) | Should -Be @(1, 1, 1)
+        $Run.Batch.Tenants.TenantFilter | Should -Be @('t1.com', 't2.com', 't3.com')
+        $Run.PSObject.Properties.Name | Should -Not -Contain 'MaxConcurrency'
+        $Run.PostExecution.Parameters.Round | Should -Be 0
+        $Run.PostExecution.Parameters.CycleId | Should -Be $Run.Batch[0].CycleId
+        ([datetimeoffset]$Run.PostExecution.Parameters.RoundStartUtc).UtcDateTime | Should -BeLessOrEqual ([datetime]::UtcNow)
+    }
+
+    It 'names a later round into the same run family and lets it start while its own round finishes' {
+        $null = Start-CIPPAuditLogFeedRun -Tenants @([pscustomobject]@{ defaultDomainName = 'contoso.com'; customerId = 'tid-1'; ContentTypes = @('Audit.Exchange') }) -Round 2
+        $script:Started[0].OrchestratorName | Should -Match '^AuditLogFeedV3-[0-9a-f-]{36}$'
+        $script:Started[0].AllowCollision | Should -BeTrue
+        $script:Started[0].PostExecution.Parameters.Round | Should -Be 2
     }
 
     It 'sweeps windows older than 5 minutes once no feed, processing or sweep run is active' {

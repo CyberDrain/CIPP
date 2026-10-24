@@ -1,10 +1,10 @@
 function Push-AuditLogFeedV3 {
     <#
     .SYNOPSIS
-        Polls the Management Activity API feed for a chunk of tenants and stages new records for processing.
+        Polls the Management Activity API feed for a tenant and stages new records for processing.
     .DESCRIPTION
         Per tenant and content type, lists the blobs published since the AuditLogFeedCursor row (the last hour for a new
-        cursor, at most 24 hours per poll, never more than 7 days back). Get-CIPPAuditLogContent lists and downloads the
+        cursor, never more than 7 days back), in 24-hour ranges, the most one listing call takes. Get-CIPPAuditLogContent lists and downloads the
         chunk's blobs through one request queue and hands each blob over as it arrives, so evaluating and storing one
         blob overlaps the network time of the rest. Records Get-CIPPAuditLogPrefilter rules out are dropped; the rest of
         a blob are run through Test-CIPPAuditLogRules -EvaluateOnly, and only the records a rule matches are stored
@@ -17,8 +17,10 @@ function Push-AuditLogFeedV3 {
         AuditLogFeedProcessV3 post-execution to queue without reading the ledger back. The task's totals and timing are
         written to AuditLogFeedCycles under the item's CycleId, and each cursor keeps its last read's counts.
 
-        A cursor advances only when its listing and every blob downloaded, so a failure re-reads the same range next
-        cycle; the record-Id upsert and the AuditLogs claim keep that from alerting twice. AF20022 (no subscription) and
+        Every 20 stored blobs the cursor is saved (LastEndUtc, CheckpointUtc) at the oldest point anything listed is still
+        unstored, so a task stopped at the platform limit resumes there, and AuditLogFeedProcessV3 runs it again while it
+        progresses. A failure keeps the cursor at that point and re-reads the rest next cycle; the record-Id upsert and the
+        AuditLogs claim keep a re-read from alerting twice. AF20022 (no subscription) and
         AF20023 (subscription disabled) start one. A tenant with no audit log to read - the start call reports the
         tenant missing (unified audit log ingestion off), or the token fails with AADSTS500014 (the Office 365
         Management APIs service principal is disabled, as in unlicensed tenants) - is parked for a day with the reason
@@ -46,9 +48,10 @@ function Push-AuditLogFeedV3 {
                 Write-LogMessage -API 'AuditLogFeedV3' -tenant $Tenant.TenantFilter -message "The $ContentType feed was last read at $($Start.ToString('o')). Content older than 7 days is no longer available and was skipped." -sev Warning
                 $Start = $Floor
             }
-            $QueryEnd = if ($Start.AddHours(24) -lt $End) { $Start.AddHours(24) } else { $End }
-            if ($QueryEnd -gt $Start) {
-                @{ TenantFilter = $Tenant.TenantFilter; TenantId = $Tenant.TenantId; ContentType = $ContentType; StartTime = $Start; EndTime = $QueryEnd }
+            # The API lists at most 24 hours per call, so a longer backlog is listed in consecutive ranges.
+            for ($RangeStart = $Start; $RangeStart -lt $End; $RangeStart = $RangeEnd) {
+                $RangeEnd = if ($RangeStart.AddHours(24) -lt $End) { $RangeStart.AddHours(24) } else { $End }
+                @{ TenantFilter = $Tenant.TenantFilter; TenantId = $Tenant.TenantId; ContentType = $ContentType; StartTime = $RangeStart; EndTime = $RangeEnd }
             }
         }
     }
@@ -57,9 +60,55 @@ function Push-AuditLogFeedV3 {
 
     $CursorUpdates = [System.Collections.Generic.List[object]]::new()
     $Failures = [System.Collections.Generic.List[object]]::new()
-    # One entry per query, keyed '<tenant id>|<content type>', so the cursor decision never depends on arrival order.
+    # One entry per cursor, keyed '<tenant id>|<content type>', so the cursor decision never depends on arrival order.
+    # Each listing range keeps the blobs listed and not yet stored; blobs that finish before their listing arrives wait
+    # in Done.
     $Progress = @{}
-    foreach ($Query in $Queries) { $Progress['{0}|{1}' -f $Query.TenantId, $Query.ContentType] = @{ Query = $Query; Blobs = 0; Records = 0; Stored = 0; Failure = $null; Subscribed = $false } }
+    foreach ($Query in $Queries) {
+        $Key = '{0}|{1}' -f $Query.TenantId, $Query.ContentType
+        if (-not $Progress[$Key]) {
+            $Progress[$Key] = @{
+                Query = @{ TenantFilter = $Query.TenantFilter; TenantId = $Query.TenantId; ContentType = $Query.ContentType; StartTime = $Query.StartTime; EndTime = $Query.EndTime }
+                Ranges = [System.Collections.Generic.List[object]]::new(); Saved = $Query.StartTime; SinceSave = 0
+                Blobs = 0; Records = 0; Stored = 0; Failure = $null; Subscribed = $false
+            }
+        }
+        $Entry = $Progress[$Key]
+        $Entry.Query.EndTime = $Query.EndTime
+        $Entry.Ranges.Add(@{ Start = $Query.StartTime; End = $Query.EndTime; Listed = $false; Pending = [System.Collections.Generic.Dictionary[string, datetime]]::new(); Done = [System.Collections.Generic.HashSet[string]]::new() })
+    }
+    # Where the cursor can safely stand: the start of the first range not yet listed, or just before the oldest listed
+    # blob not yet stored. Listings come back oldest first, so everything before that point is in.
+    $Frontier = {
+        param($Entry)
+        foreach ($Range in $Entry.Ranges) {
+            if (-not $Range.Listed) { return $Range.Start }
+            if ($Range.Pending.Count -gt 0) {
+                $Oldest = [datetime]::MaxValue
+                foreach ($Created in $Range.Pending.Values) { if ($Created -lt $Oldest) { $Oldest = $Created } }
+                $Before = $Oldest.AddSeconds(-1)
+                return $(if ($Before -gt $Range.Start) { $Before } else { $Range.Start })
+            }
+        }
+        $Entry.Ranges[-1].End
+    }
+    # A cursor is saved every 20 stored blobs, so a task stopped at the platform limit resumes from there.
+    $BlobStored = {
+        param($Entry, $Blob)
+        $Id = [string]$Blob.contentId
+        $Range = $Entry.Ranges.Where({ $_.Pending.ContainsKey($Id) }, 'First')[0]
+        if ($Range) { $null = $Range.Pending.Remove($Id) } else { foreach ($Unlisted in $Entry.Ranges) { $null = $Unlisted.Done.Add($Id) } }
+        if (++$Entry.SinceSave -lt 20) { return }
+        $Entry.SinceSave = 0
+        $Checkpoint = & $Frontier $Entry
+        if ($Checkpoint -le $Entry.Saved) { return }
+        try {
+            $null = Add-CIPPAzDataTableEntity @CursorTable -Entity @{ PartitionKey = $Entry.Query.TenantFilter; RowKey = $Entry.Query.ContentType; LastEndUtc = $Checkpoint; CheckpointUtc = [datetime]::UtcNow } -OperationType UpsertMerge
+            $Entry.Saved = $Checkpoint
+        } catch {
+            Write-Information "AuditLogFeedV3: could not save the $($Entry.Query.ContentType) checkpoint for $($Entry.Query.TenantFilter): $($_.Exception.Message)"
+        }
+    }
     $Totals = @{}
     $Prefilters = @{}
     foreach ($Tenant in $Item.Tenants) {
@@ -78,6 +127,7 @@ function Push-AuditLogFeedV3 {
 
             if ($_.Kind -eq 'Listing') {
                 $Entry = $Progress['{0}|{1}' -f $TenantId, $_.ContentType]
+                if ($Entry.Subscribed) { return }
                 if ($_.ErrorCode -in @('AF20022', 'AF20023')) {
                     try {
                         $null = New-GraphPOSTRequest -type POST -uri ('https://manage.office.com/api/v1.0/{0}/activity/feed/subscriptions/start?contentType={1}&PublisherIdentifier={2}' -f $TenantId, $_.ContentType, $env:TenantID) -body '{}' -scope 'https://manage.office.com/.default' -tenantid $TenantId -NoAuthCheck $true
@@ -96,21 +146,31 @@ function Push-AuditLogFeedV3 {
                 } elseif ($_.Error) {
                     $Entry.Failure ??= @{ Code = $_.ErrorCode; Message = $_.Error }
                 } else {
-                    $Entry.Blobs = $_.Blobs.Count
+                    $Entry.Blobs += @($_.Blobs).Count
+                    $ListingStart = $_.StartTime
+                    $Range = $Entry.Ranges.Where({ $_.Start -eq $ListingStart }, 'First')[0]
+                    if ($Range) {
+                        foreach ($Blob in @($_.Blobs)) {
+                            if ($Range.Done.Contains([string]$Blob.contentId)) { continue }
+                            $Range.Pending[[string]$Blob.contentId] = if ($Blob.contentCreated) { ([datetimeoffset]$Blob.contentCreated).UtcDateTime } else { $Range.Start }
+                        }
+                        $Range.Listed = $true
+                    }
                 }
                 return
             }
 
             $Key = '{0}|{1}' -f $TenantId, $_.Blob.contentType
+            $Entry = $Progress[$Key]
             if ($_.Error) {
-                $Progress[$Key].Failure ??= @{ Code = $_.ErrorCode ?? 'Download'; Message = $_.Error }
+                $Entry.Failure ??= @{ Code = $_.ErrorCode ?? 'Download'; Message = $_.Error }
                 return
             }
             $Total = $Totals[$TenantId]
             $Total.Records += $_.RecordCount
-            $Progress[$Key].Records += $_.RecordCount
+            $Entry.Records += $_.RecordCount
             $Records = [System.Collections.Generic.List[object]]::new([object[]]$_.Records)
-            if ($Records.Count -eq 0) { return }
+            if ($Records.Count -eq 0) { & $BlobStored $Entry $_.Blob; return }
             $Total.Evaluated += $Records.Count
             $Memo ??= [pscustomobject]@{ Tenant = $Total.TenantFilter; UserLookup = $null; GroupLookup = $null; DeviceLookup = $null; ServicePrincipalLookup = $null }
             if (-not $_.TenantDone) { $Memos[$TenantId] = $Memo }
@@ -126,7 +186,8 @@ function Push-AuditLogFeedV3 {
                 foreach ($Data in @($Result.DataToProcess)) { if ($Data.Id) { $Matched[[string]$Data.Id] = [string]$Data.AuditRecord } }
             }
             $script:AuditRuleSearchLookups = $null
-            if ($Matched.Count -eq 0) { return }
+            if ($Matched.Count -eq 0) { & $BlobStored $Entry $_.Blob; return }
+            $Blob = $_.Blob
             $Rows = foreach ($Pair in $Matched.GetEnumerator()) {
                 @{
                     PartitionKey          = "$($Total.TenantFilter)|feed-$Stamp"
@@ -147,10 +208,12 @@ function Push-AuditLogFeedV3 {
                 }
                 $null = Add-CIPPAzDataTableEntity @CacheTable -Entity @($Rows) -Force
                 $Total.Stored += $Matched.Count
-                $Progress[$Key].Stored += $Matched.Count
+                $Entry.Stored += $Matched.Count
             } catch {
-                $Progress[$Key].Failure ??= @{ Code = 'Store'; Message = $_.Exception.Message }
+                $Entry.Failure ??= @{ Code = 'Store'; Message = $_.Exception.Message }
+                return
             }
+            & $BlobStored $Entry $Blob
         }
     } catch {
         foreach ($Entry in $Progress.Values) { $Entry.Failure ??= @{ Code = 'Download'; Message = $_.Exception.Message } }
@@ -174,10 +237,12 @@ function Push-AuditLogFeedV3 {
             }
         }
         foreach ($Entry in $TenantProgress) {
+            # A failure keeps the blobs stored before it: the cursor stops just short of the first one not stored.
+            $Reached = & $Frontier $Entry
             if ($Entry.Failure) {
-                $Failures.Add(@{ Listing = $Entry.Query; Code = $Entry.Failure.Code; Message = $Entry.Failure.Message })
+                $Failures.Add(@{ Listing = $Entry.Query; Code = $Entry.Failure.Code; Message = $Entry.Failure.Message; Reached = $(if ($Reached -gt $Entry.Query.StartTime) { $Reached }) })
             } else {
-                $CursorUpdates.Add(@{ PartitionKey = $Total.TenantFilter; RowKey = $Entry.Query.ContentType; LastEndUtc = $Entry.Query.EndTime; LastPolledUtc = $Now; LastSuccessUtc = $Now; Blobs = $Entry.Blobs; Records = $Entry.Records; Stored = $Entry.Stored; Attempts = 0; NextAttemptUtc = $Now; LastErrorCode = ''; LastError = '' })
+                $CursorUpdates.Add(@{ PartitionKey = $Total.TenantFilter; RowKey = $Entry.Query.ContentType; LastEndUtc = $Reached; LastPolledUtc = $Now; LastSuccessUtc = $Now; Blobs = $Entry.Blobs; Records = $Entry.Records; Stored = $Entry.Stored; Attempts = 0; NextAttemptUtc = $Now; LastErrorCode = ''; LastError = '' })
             }
         }
         Write-Information "AuditLogFeedV3: $($Total.TenantFilter) read $($Total.Records) record(s) from $(($TenantProgress.Blobs | Measure-Object -Sum).Sum) blob(s), stored $($Total.Stored)"
@@ -192,11 +257,13 @@ function Push-AuditLogFeedV3 {
         if ($Attempts -eq 1 -or [string]$Cursor.LastErrorCode -ne [string]$Failure.Code) {
             Write-LogMessage -API 'AuditLogFeedV3' -tenant $Listing.TenantFilter -message "Could not read the $ContentType audit log feed: $($Failure.Message)" -sev ($Parked ? 'Warning' : 'Error')
         }
-        $CursorUpdates.Add(@{
-                PartitionKey = $Listing.TenantFilter; RowKey = $ContentType; LastPolledUtc = $Now
-                Attempts = $Attempts; NextAttemptUtc = ($Parked ? $Now.AddDays(1) : (Get-CippAuditLogNextAttempt -Attempts $Attempts))
-                LastErrorCode = [string]$Failure.Code; LastError = [string]$Failure.Message; LastErrorUtc = $Now
-            })
+        $Update = @{
+            PartitionKey = $Listing.TenantFilter; RowKey = $ContentType; LastPolledUtc = $Now
+            Attempts = $Attempts; NextAttemptUtc = ($Parked ? $Now.AddDays(1) : (Get-CippAuditLogNextAttempt -Attempts $Attempts))
+            LastErrorCode = [string]$Failure.Code; LastError = [string]$Failure.Message; LastErrorUtc = $Now
+        }
+        if ($Failure.Reached) { $Update.LastEndUtc = $Failure.Reached }
+        $CursorUpdates.Add($Update)
     }
     if ($CursorUpdates.Count -gt 0) {
         $null = Add-CIPPAzDataTableEntity @CursorTable -Entity $CursorUpdates.ToArray() -OperationType UpsertMerge

@@ -10,18 +10,16 @@ function Start-AuditLogFeedV3 {
              processing or sweep run active, or Processing for more than 2 hours whatever is running. It runs before
              the feed stage, which would otherwise always look active.
           2. Feed: skipped while an AuditLogProcessV3 run is still going, so polling never competes with processing for
-             background slots; the cursors carry the skipped range to the next tick. Otherwise the in-scope tenants are
-             fanned out in chunks of -TenantsPerTask as AuditLogFeedV3 tasks, each carrying the tenant's content types
-             and their AuditLogFeedCursor rows. Content types in backoff (NextAttemptUtc in the future) are left out, as
-             are tenants with none due. The run's post-execution, AuditLogFeedProcessV3, processes what the tasks stored.
-             Every task carries the tick's CycleId, which its AuditLogFeedCycles row and feed windows are recorded under.
+             background slots; the cursors carry the skipped range to the next tick. Otherwise Start-CIPPAuditLogFeedRun
+             queues one AuditLogFeedV3 task per in-scope tenant with a content type due; its post-execution processes
+             what the tasks stored and runs the tenants that checkpointed but did not finish again.
           3. Graph searches: Start-AuditLogIngestionV2 downloads and processes searches that already exist, which are
              manual searches and scheduled windows created before the feed. No scheduled searches are created.
     .FUNCTIONALITY
         Entrypoint
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param([int]$TenantsPerTask = 25)
+    param()
 
     $Now = [datetime]::UtcNow
 
@@ -49,44 +47,9 @@ function Start-AuditLogFeedV3 {
         Write-Information 'AuditLogFeedV3: feed skipped, audit log processing is still running'
     } else {
         try {
-            $CursorTable = Get-CippTable -TableName 'AuditLogFeedCursor'
-            $Cursors = @{}
-            foreach ($Row in @(Get-CIPPAzDataTableEntity @CursorTable)) {
-                $Cursors['{0}|{1}' -f $Row.PartitionKey, $Row.RowKey] = $Row
-            }
-
-            $Due = foreach ($Tenant in @(Get-CIPPAuditLogTenantScope)) {
-                $TenantCursors = @{}
-                $ContentTypes = foreach ($ContentType in $Tenant.ContentTypes) {
-                    $Cursor = $Cursors['{0}|{1}' -f $Tenant.defaultDomainName, $ContentType]
-                    if ($Cursor.NextAttemptUtc -and ([datetimeoffset]$Cursor.NextAttemptUtc).UtcDateTime -gt $Now) { continue }
-                    if ($Cursor) {
-                        $TenantCursors[$ContentType] = @{ LastEndUtc = $Cursor.LastEndUtc; Attempts = [int]$Cursor.Attempts; LastErrorCode = [string]$Cursor.LastErrorCode }
-                    }
-                    $ContentType
-                }
-                if ($ContentTypes) {
-                    [pscustomobject]@{ TenantFilter = $Tenant.defaultDomainName; TenantId = $Tenant.customerId; ContentTypes = @($ContentTypes); Cursors = $TenantCursors }
-                }
-            }
-            $Due = @($Due)
-            if ($Due.Count -gt 0) {
-                $Batch = for ($i = 0; $i -lt $Due.Count; $i += $TenantsPerTask) {
-                    [pscustomobject]@{ FunctionName = 'AuditLogFeedV3'; CycleId = $Now.ToString('yyyyMMddHHmm'); Tenants = @($Due[$i..([Math]::Min($i + $TenantsPerTask - 1, $Due.Count - 1))]) }
-                }
-                Write-Information "AuditLogFeedV3: $($Due.Count) tenant(s) in $(@($Batch).Count) task(s)"
-                if ($PSCmdlet.ShouldProcess('Start-AuditLogFeedV3', 'Poll the audit log feed')) {
-                    Start-CIPPOrchestrator -InputObject ([pscustomobject]@{
-                            OrchestratorName = 'AuditLogFeedV3'
-                            AllowCollision   = $false
-                            Batch            = @($Batch)
-                            SkipLog          = $true
-                            Priority         = 3
-                            PostExecution    = @{ FunctionName = 'AuditLogFeedProcessV3'; Parameters = @{} }
-                        })
-                }
-            } else {
-                Write-Information 'AuditLogFeedV3: no tenants due'
+            if ($PSCmdlet.ShouldProcess('Start-AuditLogFeedV3', 'Poll the audit log feed')) {
+                $Queued = Start-CIPPAuditLogFeedRun -Tenants @(Get-CIPPAuditLogTenantScope)
+                Write-Information "AuditLogFeedV3: $Queued tenant task(s) queued"
             }
         } catch {
             Write-LogMessage -API 'AuditLogFeedV3' -message 'Audit log feed stage failed' -sev Error -LogData (Get-CippException -Exception $_)

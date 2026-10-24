@@ -26,8 +26,8 @@ BeforeAll {
             StartTime = $Query.StartTime; EndTime = $Query.EndTime; Blobs = $Blobs; StatusCode = 200; ErrorCode = $ErrorCode; Error = $ErrorMessage
         }
     }
-    function New-Blob([string]$TenantId, [string]$ContentType, [string]$Id = 'x') {
-        [pscustomobject]@{ contentId = $Id; contentType = $ContentType; contentUri = "https://manage.office.com/api/v1.0/$TenantId/activity/feed/audit/$Id" }
+    function New-Blob([string]$TenantId, [string]$ContentType, [string]$Id = 'x', $Created) {
+        [pscustomobject]@{ contentId = $Id; contentType = $ContentType; contentUri = "https://manage.office.com/api/v1.0/$TenantId/activity/feed/audit/$Id"; contentCreated = $(if ($Created) { $Created.ToString('o') }) }
     }
     function New-Download($Blob, [object[]]$Records = @(), $ErrorMessage, $ErrorCode) {
         [pscustomobject]@{ Kind = 'Blob'; TenantDone = $false; TenantId = ([uri]$Blob.contentUri).Segments[3].TrimEnd('/'); Blob = $Blob; RecordCount = $Records.Count; Records = $Records; Error = $ErrorMessage; ErrorCode = $ErrorCode }
@@ -166,12 +166,52 @@ Describe 'Push-AuditLogFeedV3' {
         ($script:Queries[0].EndTime - $script:Queries[0].StartTime).TotalMinutes | Should -Be 60
     }
 
-    It 'reads at most 24 hours from an old cursor and never past 7 days' {
+    It 'lists an old backlog in consecutive 24-hour ranges up to now, never past 7 days' {
         Push-AuditLogFeedV3 -Item (New-FeedItem -Cursors @{ 'Audit.Exchange' = @{ LastEndUtc = [datetime]::UtcNow.AddDays(-10) } })
-        $Query = $script:Queries[0]
-        $Query.StartTime | Should -BeGreaterThan ([datetime]::UtcNow.AddDays(-7))
-        ($Query.EndTime - $Query.StartTime).TotalHours | Should -Be 24
+        $script:Queries | Should -HaveCount 7
+        $script:Queries[0].StartTime | Should -BeGreaterThan ([datetime]::UtcNow.AddDays(-7))
+        foreach ($i in 0..5) {
+            ($script:Queries[$i].EndTime - $script:Queries[$i].StartTime).TotalHours | Should -Be 24
+            $script:Queries[$i + 1].StartTime | Should -Be $script:Queries[$i].EndTime
+        }
+        $script:Queries[-1].EndTime | Should -BeGreaterThan ([datetime]::UtcNow.AddMinutes(-6))
+        @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[-1].LastEndUtc | Should -Be $script:Queries[-1].EndTime
         Should -Invoke Write-LogMessage -ParameterFilter { $message -like '*older than 7 days*' }
+    }
+
+    It 'saves the cursor every 20 stored blobs, just before the oldest listed blob not yet stored' {
+        Mock Get-CIPPAuditLogContent {
+            $script:Queries = $Queries
+            $Query = $Queries[0]
+            $Blobs = @(foreach ($n in 1..45) { New-Blob $Query.TenantId $Query.ContentType "b$n" $Query.StartTime.AddSeconds($n) })
+            New-Listing -Query $Query -Blobs $Blobs
+            # b21 arrives last, so it holds the cursor back until the end.
+            foreach ($Blob in @($Blobs.Where({ $_.contentId -ne 'b21' })) + @($Blobs.Where({ $_.contentId -eq 'b21' }))) { New-Download $Blob @(New-Record "rec-$($Blob.contentId)") }
+        }
+        Push-AuditLogFeedV3 -Item (New-FeedItem)
+        $Cursors = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }))
+        $Checkpoints = @($Cursors.Where({ $_.Entity[0].CheckpointUtc }))
+        $Checkpoints | Should -HaveCount 1
+        $Checkpoints[0].OperationType | Should -Be 'UpsertMerge'
+        $Checkpoints[0].Entity[0].LastEndUtc | Should -Be $script:Queries[0].StartTime.AddSeconds(20)
+        $Cursors[-1].Entity[0].LastEndUtc | Should -Be $script:Queries[0].EndTime
+    }
+
+    It 'keeps the blobs stored before a failed one: the cursor stops just short of it and backs off' {
+        Mock Get-CIPPAuditLogContent {
+            $script:Queries = $Queries
+            $Query = $Queries[0]
+            $Blobs = @(foreach ($n in 1..3) { New-Blob $Query.TenantId $Query.ContentType "b$n" $Query.StartTime.AddMinutes($n) })
+            New-Listing -Query $Query -Blobs $Blobs
+            New-Download $Blobs[0] @(New-Record 'r1')
+            New-Download $Blobs[1] -ErrorMessage 'blob expired' -ErrorCode 'AF20051'
+            New-Download $Blobs[2] @(New-Record 'r3')
+        }
+        Push-AuditLogFeedV3 -Item (New-FeedItem)
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[-1]
+        $Cursor.LastErrorCode | Should -Be 'AF20051'
+        $Cursor.LastEndUtc | Should -Be $script:Queries[0].StartTime.AddMinutes(2).AddSeconds(-1)
+        $Cursor.NextAttemptUtc | Should -Be ([datetime]'2030-01-01')
     }
 
     It 'keeps the cursor and backs off when the listing fails, logging the first failure only' {

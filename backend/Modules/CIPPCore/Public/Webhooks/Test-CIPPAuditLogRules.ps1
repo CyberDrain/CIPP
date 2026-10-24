@@ -636,12 +636,14 @@ function Test-CIPPAuditLogRules {
                         $Class = $IPClass[$ClientIp] ?? $(if ($script:ReservedIpRegex.IsMatch($ClientIp)) { 'Reserved' } else { 'Geo' })
                         if ($Class -ne 'Trusted') {
                             if ($Class -eq 'Reserved') {
-                                $Data.CIPPGeoLocation = 'Unknown'
-                                $Data.CIPPBadRepIP = 'Unknown'
-                                $Data.CIPPHostedIP = 'Unknown'
+                                # A private or loopback address (e.g. ::1 on server-side Exchange cmdlets) has no location,
+                                # so location rules skip it rather than treat it as outside every allowed country.
+                                $Data.CIPPGeoLocation = 'Reserved'
+                                $Data.CIPPBadRepIP = 'Reserved'
+                                $Data.CIPPHostedIP = 'Reserved'
                                 $Data.CIPPIPDetected = $ClientIp
                                 $Data.CIPPLocationInfo = $null
-                                $HasLocationData = $true
+                                $HasLocationData = $false
                             } else {
                                 $Loc = $GeoLookup[$ClientIp]
                                 if ($Loc) {

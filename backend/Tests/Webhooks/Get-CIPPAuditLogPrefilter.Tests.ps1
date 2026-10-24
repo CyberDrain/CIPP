@@ -383,6 +383,24 @@ Describe 'Test-CIPPAuditLogRules -EvaluateOnly' {
         [object]::ReferenceEquals($script:AuditRuleClauseCache['contoso.com'], $Recompiled) | Should -BeFalse
     }
 
+    It 'marks a reserved address Reserved and leaves it to no location rule' {
+        foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
+        Mock Get-CIPPGeoIPLocationBatch { @{ '198.51.100.7' = [pscustomobject]@{ CountryOrRegion = 'US'; Proxy = $false; Hosting = $false } } }
+        Set-Rules @(
+            @((New-Condition 'Operation' 'eq' 'Set-Mailbox'), (New-Condition 'CIPPGeoLocation' 'notin' @('AU'))),
+            @(, (New-Condition 'Operation' 'eq' 'New-InboxRule'))
+        )
+        $Records = @(
+            [ordered]@{ Id = 'loopback'; Operation = 'Set-Mailbox'; ClientIP = '::1' }
+            [ordered]@{ Id = 'private'; Operation = 'Set-Mailbox'; ClientIP = '10.1.2.3:443' }
+            [ordered]@{ Id = 'abroad'; Operation = 'Set-Mailbox'; ClientIP = '198.51.100.7' }
+            [ordered]@{ Id = 'rule'; Operation = 'New-InboxRule'; ClientIP = '::1' }
+        )
+        $Result = @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null).DataToProcess)
+        $Result.Id | Should -Be @('abroad', 'rule')
+        $Result.Where({ $_.Id -eq 'rule' })[0].CIPPGeoLocation | Should -Be 'Reserved'
+    }
+
     It 'alerts on a record once, for the first rule it matches, and skips a rule without an anchor' {
         foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
         Set-Rules @(

@@ -4,7 +4,8 @@ function Push-AuditLogFeedV3 {
         Reads a tenant's Management Activity API feed and sends the alerts its rules match, checkpointing as it goes.
     .DESCRIPTION
         Per content type, lists the blobs published since the AuditLogFeedCursor row (the last hour for a new cursor,
-        never more than 7 days back) in 24-hour ranges, the most one listing call takes. Get-CIPPAuditLogContent
+        never more than 7 days back) in 6-hour ranges: the API takes up to 24 hours a call but is slow and unreliable at
+        that size, and a shorter range lets the cursor move on sooner. Get-CIPPAuditLogContent
         downloads them a few at a time and hands each over as it arrives; records Get-CIPPAuditLogPrefilter rules out
         are dropped, and the rest go through the whole engine in place: Test-CIPPAuditLogRules matches them, claims
         each alert by record Id, sends it and stores its AuditLogs row. Nothing is staged and no processing run follows.
@@ -40,9 +41,9 @@ function Push-AuditLogFeedV3 {
                 Write-LogMessage -API 'AuditLogFeedV3' -tenant $Tenant.TenantFilter -message "The $ContentType feed was last read at $($Start.ToString('o')). Content older than 7 days is no longer available and was skipped." -sev Warning
                 $Start = $Floor
             }
-            # The API lists at most 24 hours per call, so a longer backlog is listed in consecutive ranges.
+            # A longer backlog is listed in consecutive 6-hour ranges.
             for ($RangeStart = $Start; $RangeStart -lt $End; $RangeStart = $RangeEnd) {
-                $RangeEnd = if ($RangeStart.AddHours(24) -lt $End) { $RangeStart.AddHours(24) } else { $End }
+                $RangeEnd = if ($RangeStart.AddHours(6) -lt $End) { $RangeStart.AddHours(6) } else { $End }
                 @{ TenantFilter = $Tenant.TenantFilter; TenantId = $Tenant.TenantId; ContentType = $ContentType; StartTime = $RangeStart; EndTime = $RangeEnd }
             }
         }

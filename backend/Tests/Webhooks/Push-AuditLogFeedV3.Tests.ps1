@@ -174,12 +174,12 @@ Describe 'Push-AuditLogFeedV3' {
         ($script:Queries[0].EndTime - $script:Queries[0].StartTime).TotalMinutes | Should -Be 60
     }
 
-    It 'lists an old backlog in consecutive 24-hour ranges up to now, never past 7 days' {
+    It 'lists an old backlog in consecutive 6-hour ranges up to now, never past 7 days' {
         Push-AuditLogFeedV3 -Item (New-FeedItem -Cursors @{ 'Audit.Exchange' = @{ LastEndUtc = [datetime]::UtcNow.AddDays(-10) } })
-        $script:Queries | Should -HaveCount 7
+        $script:Queries | Should -HaveCount 28
         $script:Queries[0].StartTime | Should -BeGreaterThan ([datetime]::UtcNow.AddDays(-7))
         foreach ($i in 0..5) {
-            ($script:Queries[$i].EndTime - $script:Queries[$i].StartTime).TotalHours | Should -Be 24
+            ($script:Queries[$i].EndTime - $script:Queries[$i].StartTime).TotalHours | Should -Be 6
             $script:Queries[$i + 1].StartTime | Should -Be $script:Queries[$i].EndTime
         }
         $script:Queries[-1].EndTime | Should -BeGreaterThan ([datetime]::UtcNow.AddMinutes(-6))

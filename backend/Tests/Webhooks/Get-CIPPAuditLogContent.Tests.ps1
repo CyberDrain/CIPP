@@ -8,7 +8,7 @@ BeforeAll {
     function Get-GraphToken { param($tenantid, $scope, $AsApp) if ($tenantid -eq 'tid-notoken') { throw 'AADSTS65001 consent missing' }; @{ Authorization = 'Bearer test' } }
     function Get-CippUserAgent { 'CIPP-Test' }
     function Get-CIPPAuditLogRuleSet { param($TenantFilter) $script:Rules }
-    foreach ($Helper in 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
+    foreach ($Helper in 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
 
@@ -92,11 +92,12 @@ Describe 'Get-CIPPAuditLogContent' {
         $Result.RecordCount | Should -Be 0
     }
 
-    It 'parses every blob when a pattern starts with a wildcard, and still keeps only matches' {
-        $Prefilter = New-Prefilter @(, @(New-Condition 'Operation' 'like' '*credentials.'))
+    It 'checks a pattern that starts with a wildcard by its text anywhere in the blob, and still keeps only matches' {
+        $Prefilter = New-Prefilter @(, @(New-Condition 'Operation' 'like' '*principal credentials.'))
         $Result = Invoke-Download (New-Blob 'tid-1' 'leading' @('UserLoggedIn', 'Add service principal credentials.')) @{ 'tid-1' = $Prefilter }
         $Result.Skipped | Should -BeFalse
         $Result.Records.Id | Should -Be @('leading-1')
+        (Invoke-Download (New-Blob 'tid-1' 'other' @('UserLoggedIn', 'Add service principal.')) @{ 'tid-1' = $Prefilter }).Skipped | Should -BeTrue
     }
 
     It 'does not skip a blob holding an item named Operation, which the engine flattens over the record''s own' {
@@ -107,11 +108,10 @@ Describe 'Get-CIPPAuditLogContent' {
         $Result.Records.Id | Should -Be @('shadow-0')
     }
 
-    It 'filters on a rule with no Operation condition without the raw check' {
+    It 'skips every blob when the only rule has no anchor, since the engine skips that rule' {
         $Prefilter = New-Prefilter @(, @(New-Condition 'UserId' 'like' 'ServicePrincipal_*'))
-        $Result = Invoke-Download (New-Blob 'tid-1' 'actors' @(@{ Operation = 'Add owner to application.'; UserId = 'ServicePrincipal_1' }, @{ Operation = 'Add owner to application.'; UserId = 'admin@contoso.com' })) @{ 'tid-1' = $Prefilter }
-        $Result.Skipped | Should -BeFalse
-        $Result.Records.Id | Should -Be @('actors-0')
+        $Result = Invoke-Download (New-Blob 'tid-1' 'actors' @(@{ Operation = 'Add owner to application.'; UserId = 'ServicePrincipal_1' })) @{ 'tid-1' = $Prefilter }
+        $Result.Skipped | Should -BeTrue
     }
 
     It 'keeps every record for a tenant with no prefilter' {

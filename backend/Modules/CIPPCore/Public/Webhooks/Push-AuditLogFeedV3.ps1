@@ -9,8 +9,8 @@ function Push-AuditLogFeedV3 {
         are dropped, and the rest go through the whole engine in place: Test-CIPPAuditLogRules matches them, claims
         each alert by record Id, sends it and stores its AuditLogs row. Nothing is staged and no processing run follows.
 
-        Every 10 finished blobs the cursor is saved (LastEndUtc, CheckpointUtc) just before the oldest listed blob not
-        yet finished, so a task stopped at the platform limit resumes there, and AuditLogFeedRoundV3 runs the tenant
+        Whenever a finished blob moves it, the cursor is saved (LastEndUtc, CheckpointUtc) just before the oldest listed
+        blob not yet finished, so a task stopped at the platform limit resumes there, and AuditLogFeedRoundV3 runs the tenant
         again while it progresses. A blob evaluated again after a stop sends nothing twice: its alerts are already
         claimed. A failure keeps the cursor at that point and the rest is read again next cycle.
 
@@ -61,25 +61,24 @@ function Push-AuditLogFeedV3 {
         if (-not $Progress[$Key]) {
             $Progress[$Key] = @{
                 Query = @{ TenantFilter = $Query.TenantFilter; TenantId = $Query.TenantId; ContentType = $Query.ContentType; StartTime = $Query.StartTime; EndTime = $Query.EndTime }
-                Ranges = [System.Collections.Generic.List[object]]::new(); Saved = $Query.StartTime; SinceSave = 0
+                Ranges = [System.Collections.Generic.List[object]]::new(); Saved = $Query.StartTime
                 Blobs = 0; Records = 0; Matched = 0; Failure = $null; Subscribed = $false
             }
         }
         $Entry = $Progress[$Key]
         $Entry.Query.EndTime = $Query.EndTime
-        $Entry.Ranges.Add(@{ Start = $Query.StartTime; End = $Query.EndTime; Listed = $false; ListedThrough = $Query.StartTime; Pending = [System.Collections.Generic.Dictionary[string, datetime]]::new(); Done = [System.Collections.Generic.HashSet[string]]::new() })
+        $Entry.Ranges.Add(@{ Start = $Query.StartTime; End = $Query.EndTime; Listed = $false; ListedThrough = $Query.StartTime; Pending = [System.Collections.Generic.Dictionary[string, string]]::new(); Order = [System.Collections.Generic.SortedSet[string]]::new([System.StringComparer]::Ordinal); Done = [System.Collections.Generic.HashSet[string]]::new() })
     }
     # Where the cursor can safely stand: just before the oldest listed blob not yet finished, and in a range whose
     # listing is still paging, no later than just before the newest blob listed so far. Listings come back oldest
-    # first, so everything before that point is in.
+    # first, so everything before that point is in. Pending maps a blob id to its key in Order, '<created ticks>|<id>',
+    # so the oldest is Order.Min rather than a scan of every pending blob.
     $Frontier = {
         param($Entry)
         foreach ($Range in $Entry.Ranges) {
             $Point = $null
-            if ($Range.Pending.Count -gt 0) {
-                $Oldest = [datetime]::MaxValue
-                foreach ($Created in $Range.Pending.Values) { if ($Created -lt $Oldest) { $Oldest = $Created } }
-                $Point = $Oldest.AddSeconds(-1)
+            if ($Range.Order.Count -gt 0) {
+                $Point = [datetime]::new([long]$Range.Order.Min.Substring(0, 19), [System.DateTimeKind]::Utc).AddSeconds(-1)
             }
             if (-not $Range.Listed) {
                 $Listed = $Range.ListedThrough.AddSeconds(-1)
@@ -93,9 +92,10 @@ function Push-AuditLogFeedV3 {
         param($Entry, $Blob)
         $Id = [string]$Blob.contentId
         $Range = $Entry.Ranges.Where({ $_.Pending.ContainsKey($Id) }, 'First')[0]
-        if ($Range) { $null = $Range.Pending.Remove($Id) } else { foreach ($Unlisted in $Entry.Ranges) { $null = $Unlisted.Done.Add($Id) } }
-        if (++$Entry.SinceSave -lt 10) { return }
-        $Entry.SinceSave = 0
+        if ($Range) {
+            $null = $Range.Order.Remove($Range.Pending[$Id])
+            $null = $Range.Pending.Remove($Id)
+        } else { foreach ($Unlisted in $Entry.Ranges) { $null = $Unlisted.Done.Add($Id) } }
         $Checkpoint = & $Frontier $Entry
         if ($Checkpoint -le $Entry.Saved) { return }
         try {
@@ -149,8 +149,10 @@ function Push-AuditLogFeedV3 {
                         foreach ($Blob in @($_.Blobs)) {
                             $Created = if ($Blob.contentCreated) { ([datetimeoffset]$Blob.contentCreated).UtcDateTime } else { $Range.Start }
                             if ($Created -gt $Range.ListedThrough) { $Range.ListedThrough = $Created }
-                            if ($Range.Done.Contains([string]$Blob.contentId)) { continue }
-                            $Range.Pending[[string]$Blob.contentId] = $Created
+                            if ($Range.Done.Contains([string]$Blob.contentId) -or $Range.Pending.ContainsKey([string]$Blob.contentId)) { continue }
+                            $Key = '{0:D19}|{1}' -f $Created.Ticks, $Blob.contentId
+                            $Range.Pending[[string]$Blob.contentId] = $Key
+                            $null = $Range.Order.Add($Key)
                         }
                         $Range.Listed = $_.Complete -ne $false
                     }

@@ -32,7 +32,7 @@ BeforeAll {
     function Invoke-CippWebhookProcessing { param($Data, $CIPPURL, $TenantFilter, $AlertComment, $PendingAuditLogWrites) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     function Get-CippException { param($Exception) }
-    foreach ($Helper in 'Webhooks/Test-CIPPAuditLogRules.ps1', 'Webhooks/Get-CIPPAuditLogRuleSet.ps1', 'Webhooks/New-CippAuditLogClaimRow.ps1', 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
+    foreach ($Helper in 'Webhooks/Test-CIPPAuditLogRules.ps1', 'Webhooks/Get-CIPPAuditLogRuleSet.ps1', 'Webhooks/New-CippAuditLogClaimRow.ps1', 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
 
@@ -180,7 +180,10 @@ Describe 'Get-CIPPAuditLogPrefilter against the engine: every operator' {
             foreach ($Property in 'Operation', 'UserId', 'ResultStatus') { @{ Property = $Property; Operator = $Case.Operator; Value = $Case.Value } }
         }
     ) {
-        $Comparison = Compare-Prefilter -Rules (, @(New-Condition $Property $Operator $Value)) -Records $script:OperatorCorpus
+        # A condition that is not an anchor itself is paired with one every record satisfies, or the engine skips the rule.
+        $Conditions = @(New-Condition $Property $Operator $Value)
+        if ($Property -ne 'Operation' -or $Operator -notin 'eq', 'in', 'like') { $Conditions = @((New-Condition 'Operation' 'in' @($script:OperatorCorpus.Operation)), $Conditions[0]) }
+        $Comparison = Compare-Prefilter -Rules (, $Conditions) -Records $script:OperatorCorpus
         ($Comparison.Kept -join ',') | Should -Be ($Comparison.Matched -join ',')
     }
 
@@ -201,20 +204,19 @@ Describe 'Get-CIPPAuditLogPrefilter against the engine: names the engine derives
         )
     }
 
-    It 'keeps every record when the only condition is on <Label>, which the raw record cannot answer' -ForEach @(
+    It 'keeps every anchored record when the other condition is on <Label>, which the raw record cannot answer' -ForEach @(
         @{ Label = 'CIPPGeoLocation'; Operator = 'notin'; Value = @('AU') }, @{ Label = 'CIPPUserKey'; Operator = 'eq'; Value = 'u@contoso.com' }
         @{ Label = 'clientip'; Operator = 'eq'; Value = '185.1.2.3' }, @{ Label = 'HasLocationData'; Operator = 'eq'; Value = 'True' }
         @{ Label = 'AuditRecord'; Operator = 'like'; Value = '*Send*' }, @{ Label = 'ExtendedProperties'; Operator = 'like'; Value = '*' }
         @{ Label = 'Previous_Value_ModProp'; Operator = 'eq'; Value = 'old' }, @{ Label = 'CIPPExtendedProperties'; Operator = 'like'; Value = '*curl*' }
     ) {
-        $Comparison = Compare-Prefilter -Rules (, @(New-Condition $Label $Operator $Value)) -Records $script:ShapedCorpus
-        $Comparison.Prefilter | Should -BeNullOrEmpty
+        $Comparison = Compare-Prefilter -Rules (, @((New-Condition 'Operation' 'in' @('UserLoggedIn', 'Set-Mailbox', 'Send')), (New-Condition $Label $Operator $Value))) -Records $script:ShapedCorpus
         $Comparison.Kept | Should -Be @('s1', 's2', 's3', 's4')
         Assert-NoMissed $Comparison
     }
 
     It 'tests a flattened name only on the records that carry it, and keeps those' {
-        $Comparison = Compare-Prefilter -Rules (, @(New-Condition 'UserAgent' 'like' 'curl*')) -Records $script:ShapedCorpus
+        $Comparison = Compare-Prefilter -Rules (, @((New-Condition 'Operation' 'in' @('UserLoggedIn', 'Set-Mailbox', 'Send')), (New-Condition 'UserAgent' 'like' 'curl*'))) -Records $script:ShapedCorpus
         $Comparison.Matched | Should -Be @('s1')
         $Comparison.Kept | Should -Be @('s1', 's2')
     }
@@ -236,7 +238,9 @@ Describe 'Get-CIPPAuditLogPrefilter against the engine: a raw name a sub-object 
         $Shadowed = [ordered]@{ Id = 'shadowed'; Operation = 'Set-Mailbox'; ResultStatus = 'Success' }
         $Shadowed[$Container] = @($Item)
         $Plain = [ordered]@{ Id = 'plain'; Operation = 'Set-Mailbox'; ResultStatus = 'Success' }
-        $Comparison = Compare-Prefilter -Rules (, @(New-Condition ($Name.Substring(0, 1).ToUpper() + $Name.Substring(1)) 'eq' 'Target')) -Records @($Shadowed, $Plain)
+        $Condition = New-Condition ($Name.Substring(0, 1).ToUpper() + $Name.Substring(1)) 'eq' 'Target'
+        $Conditions = if ($Name -eq 'Operation') { @($Condition) } else { @((New-Condition 'Operation' 'eq' 'Set-Mailbox'), $Condition) }
+        $Comparison = Compare-Prefilter -Rules (, $Conditions) -Records @($Shadowed, $Plain)
         $Comparison.Matched | Should -Be @('shadowed')
         $Comparison.Kept | Should -Be @('shadowed')
     }
@@ -279,28 +283,31 @@ Describe 'Get-CIPPAuditLogPrefilter against the engine: several rules over the s
         $Comparison.Kept | Should -Be @('both', 'only-a')
     }
 
-    It 'keeps every record once a rule can match anything' {
-        $Comparison = Compare-Prefilter -Rules @($script:RuleA, @(New-Condition 'CIPPGeoLocation' 'notin' @('AU'))) -Records $script:MultiCorpus
-        $Comparison.Prefilter | Should -BeNullOrEmpty
-        $Comparison.Kept.Count | Should -Be 5
+    It 'skips a rule without an anchor, as the engine does' {
+        $Comparison = Compare-Prefilter -Rules @($script:RuleA, @(New-Condition 'CIPPGeoLocation' 'notin' @('AU')), @(New-Condition 'Operation' 'like' '*-*')) -Records $script:MultiCorpus
+        $Comparison.Prefilter.Rules.Count | Should -Be 1
+        $Comparison.Kept | Should -Be @('both', 'only-a')
+        ($Comparison.Kept -join ',') | Should -Be ($Comparison.Matched -join ',')
     }
 
     It 'keeps a record a rule throws on, where the engine matches nothing for that rule' {
-        $Comparison = Compare-Prefilter -Rules @(, @(New-Condition 'ResultStatus' 'gt' 5)) -Records @([ordered]@{ Id = 'odd'; Operation = 'X'; ResultStatus = [datetime]'2026-01-01' })
+        $Comparison = Compare-Prefilter -Rules @(, @((New-Condition 'Operation' 'eq' 'X'), (New-Condition 'ResultStatus' 'gt' 5))) -Records @([ordered]@{ Id = 'odd'; Operation = 'X'; ResultStatus = [datetime]'2026-01-01' })
         Assert-NoMissed $Comparison
         $Comparison.Kept | Should -Be @('odd')
     }
 
-    It 'lists every rule operation for the blob check only while every rule names one' {
-        Set-Rules @($script:RuleA, $script:RuleB)
+    It 'gives the blob check the needles of every rule it keeps' {
+        Set-Rules @($script:RuleA, $script:RuleB, @(New-Condition 'UserId' 'like' 'ServicePrincipal_*'))
         $script:AuditRuleSetCache = $null
-        @((Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com').Operations | Sort-Object) | Should -Be @('New-InboxRule', 'Set-InboxRule')
-        Set-Rules @($script:RuleA, @(New-Condition 'UserId' 'like' 'ServicePrincipal_*'))
+        @((Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com').Needles | Sort-Object) | Should -Be @('"Operation":"New-InboxRule', '"Operation":"Set-InboxRule')
+        Set-Rules @(, @(New-Condition 'UserId' 'like' 'ServicePrincipal_*'))
         $script:AuditRuleSetCache = $null
-        (Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com').Operations | Should -BeNullOrEmpty
+        $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
+        $Prefilter | Should -Not -BeNullOrEmpty
+        $Prefilter.Needles.Count | Should -Be 0
     }
 
-    It 'runs a record only through the rules its Operation can satisfy (eq, in, like, any case), and rules naming none through every record' {
+    It 'runs a record only through the rules its Operation can satisfy (eq, in, like, any case)' {
         $Like = @((New-Condition 'Operation' 'like' 'Add member to*'), (New-Condition 'ResultStatus' 'eq' 'Failed'))
         $NoOperation = @(New-Condition 'UserId' 'like' 'ServicePrincipal_*')
         Set-Rules @($script:RuleA, $script:RuleB, $Like, $NoOperation)
@@ -314,17 +321,18 @@ Describe 'Get-CIPPAuditLogPrefilter against the engine: several rules over the s
             ))
         $null = Select-CIPPAuditLogCandidate -Prefilter $Prefilter -Records $Records
         $Rules = $Prefilter.Rules
-        $Prefilter.ByOperation['New-InboxRule'] | Should -Be @($Rules[0], $Rules[1], $Rules[3])
-        $Prefilter.ByOperation['Set-InboxRule'] | Should -Be @($Rules[1], $Rules[3])
-        $Prefilter.ByOperation['Add member to role.'] | Should -Be @($Rules[2], $Rules[3])
-        $Prefilter.ByOperation['Update user.'] | Should -Be @($Rules[3])
+        $Rules.Count | Should -Be 3
+        $Prefilter.ByOperation['New-InboxRule'] | Should -Be @($Rules[0], $Rules[1])
+        $Prefilter.ByOperation['Set-InboxRule'] | Should -Be @($Rules[1])
+        $Prefilter.ByOperation['Add member to role.'] | Should -Be @($Rules[2])
+        $Prefilter.ByOperation['Update user.'].Count | Should -Be 0
     }
 
     It 'keeps exactly what running every rule on every record keeps, over every preset at once' {
         Set-Rules @($script:PresetConditions.Values | ForEach-Object { , @($_) })
         $script:AuditRuleSetCache = $null
         $Indexed = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
-        $Unindexed = [pscustomobject]@{ Rules = $Indexed.Rules; Operations = $Indexed.Operations }
+        $Unindexed = [pscustomobject]@{ Rules = $Indexed.Rules }
         $Records = @(ConvertTo-Records $script:PresetCorpus)
         $Kept = @(Select-CIPPAuditLogCandidate -Prefilter $Indexed -Records $Records).Id
         $Kept | Should -Not -BeNullOrEmpty
@@ -373,6 +381,23 @@ Describe 'Test-CIPPAuditLogRules -EvaluateOnly' {
         @(@($Edited.DataToProcess).Id) | Should -Be @('r2')
         [object]::ReferenceEquals($Recompiled, $Compiled) | Should -BeFalse
         [object]::ReferenceEquals($script:AuditRuleClauseCache['contoso.com'], $Recompiled) | Should -BeFalse
+    }
+
+    It 'alerts on a record once, for the first rule it matches, and skips a rule without an anchor' {
+        foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
+        Set-Rules @(
+            @((New-Condition 'Operation' 'eq' 'New-InboxRule'), (New-Condition 'ResultStatus' 'eq' 'Failed')),
+            @(, (New-Condition 'Operation' 'like' 'New-Inbox*')),
+            @(, (New-Condition 'UserId' 'eq' 'u@contoso.com'))
+        )
+        $Records = @(
+            [ordered]@{ Id = 'both'; Operation = 'New-InboxRule'; ResultStatus = 'Failed'; UserId = 'u@contoso.com' }
+            [ordered]@{ Id = 'second'; Operation = 'New-InboxRule'; ResultStatus = 'Success'; UserId = 'u@contoso.com' }
+            [ordered]@{ Id = 'unanchored'; Operation = 'Set-Mailbox'; UserId = 'u@contoso.com' }
+        )
+        $Result = Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null
+        @($Result.DataToProcess).Id | Should -Be @('both', 'second')
+        @($Result.DataToProcess).CIPPClause | Should -Be @('Operation is eq New-InboxRule and ResultStatus is eq Failed', 'Operation is like New-Inbox*')
     }
 }
 
@@ -427,7 +452,7 @@ Describe 'Test-CIPPAuditLogRules actor and target fields' {
     }
 
     It 'derives CIPPActorType and CIPPTargetType from the prefixed ids' {
-        $Comparison = Compare-Prefilter -Rules (, @((New-Condition 'CIPPActorType' 'eq' 'ServicePrincipal'), (New-Condition 'CIPPTargetType' 'eq' 'Application'))) -Records $script:ActorCorpus
+        $Comparison = Compare-Prefilter -Rules (, @((New-Condition 'Operation' 'eq' 'Add app role assignment to service principal.'), (New-Condition 'CIPPActorType' 'eq' 'ServicePrincipal'), (New-Condition 'CIPPTargetType' 'eq' 'Application'))) -Records $script:ActorCorpus
         $Comparison.Matched | Should -Be @('self-app')
         Assert-NoMissed $Comparison
     }
@@ -451,15 +476,13 @@ Describe 'Test-CIPPAuditLogRules actor and target fields' {
         @{ Operator = 'eq'; Value = 'User_u-1, u1@contoso.com' }, @{ Operator = 'ne'; Value = 'User_u-1, u1@contoso.com' }
         @{ Operator = 'match'; Value = 'Shared Name' }, @{ Operator = 'in'; Value = @('User_u-1, u1@contoso.com', 'x') }
     ) {
-        # A rule on CIPPActor alone: before, the prefilter could test nothing and kept every record of the tenant.
-        $Comparison = Compare-Prefilter -Rules (, @(New-Condition 'CIPPActor' $Operator $Value)) -Records $script:ActorCorpus
-        $Comparison.Prefilter | Should -Not -BeNullOrEmpty
+        $Comparison = Compare-Prefilter -Rules (, @((New-Condition 'Operation' 'eq' 'Add app role assignment to service principal.'), (New-Condition 'CIPPActor' $Operator $Value))) -Records $script:ActorCorpus
         ($Comparison.Kept -join ',') | Should -Be ($Comparison.Matched -join ',')
     }
 
     It 'keeps a record whose flattened properties shadow CIPPActor' {
         $Records = @([ordered]@{ Id = 'flat'; Operation = 'Op'; ExtendedProperties = @(@{ Name = 'CIPPActor'; Value = 'MS-PIM' }) })
-        $Comparison = Compare-Prefilter -Rules (, @(New-Condition 'CIPPActor' 'like' '*MS-PIM*')) -Records $Records
+        $Comparison = Compare-Prefilter -Rules (, @((New-Condition 'Operation' 'eq' 'Op'), (New-Condition 'CIPPActor' 'like' '*MS-PIM*'))) -Records $Records
         Assert-NoMissed $Comparison
         $Comparison.Kept | Should -Be @('flat')
     }

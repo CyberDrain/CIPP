@@ -142,7 +142,7 @@ Describe 'Push-AuditLogFeedV3' {
 
     It 'advances the cursor to the listing end and clears the backoff' {
         Push-AuditLogFeedV3 -Item (New-FeedItem)
-        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity.Where({ -not $_.CheckpointUtc }))[0]
         $Cursor.LastEndUtc | Should -Be $script:Queries[0].EndTime
         $Cursor.Attempts | Should -Be 0
     }
@@ -158,7 +158,7 @@ Describe 'Push-AuditLogFeedV3' {
         $Cycle.Evaluated | Should -Be 4
         $Cycle.Matched | Should -Be 4
         $Cycle.Failed | Should -Be 0
-        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity.Where({ -not $_.CheckpointUtc }))[0]
         $Cursor.Records | Should -Be 2
         $Cursor.Matched | Should -Be 2
         $Cursor.LastSuccessUtc | Should -Not -BeNullOrEmpty
@@ -187,7 +187,7 @@ Describe 'Push-AuditLogFeedV3' {
         Should -Invoke Write-LogMessage -ParameterFilter { $message -like '*older than 7 days*' }
     }
 
-    It 'saves the cursor every 10 finished blobs, just before the oldest listed blob not yet finished' {
+    It 'saves the cursor whenever a finished blob moves it, just before the oldest listed blob not yet finished' {
         Mock Get-CIPPAuditLogContent {
             $script:Queries = $Queries
             $Query = $Queries[0]
@@ -198,11 +198,10 @@ Describe 'Push-AuditLogFeedV3' {
         }
         Push-AuditLogFeedV3 -Item (New-FeedItem)
         $Cursors = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }))
-        # At 10 finished b11 is the oldest left, at 20 b21, which then holds the cursor until it arrives.
+        # Each of b1..b20 moves it a second; b21 then holds it until it arrives last and the range is done.
         $Checkpoints = @($Cursors.Where({ $_.Entity[0].CheckpointUtc }))
-        $Checkpoints | Should -HaveCount 2
         $Checkpoints[0].OperationType | Should -Be 'UpsertMerge'
-        $Checkpoints.ForEach({ $_.Entity[0].LastEndUtc }) | Should -Be @($script:Queries[0].StartTime.AddSeconds(10), $script:Queries[0].StartTime.AddSeconds(20))
+        $Checkpoints.ForEach({ $_.Entity[0].LastEndUtc }) | Should -Be @((1..20).ForEach({ $script:Queries[0].StartTime.AddSeconds($_) }) + $script:Queries[0].EndTime)
         $Cursors[-1].Entity[0].LastEndUtc | Should -Be $script:Queries[0].EndTime
     }
 
@@ -220,7 +219,7 @@ Describe 'Push-AuditLogFeedV3' {
         Push-AuditLogFeedV3 -Item (New-FeedItem)
         $Writes = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }))
         # Page 2 may still hold blobs published in the same second as b10, so the checkpoint stops a second short of it.
-        @($Writes.Where({ $_.Entity[0].CheckpointUtc })).ForEach({ $_.Entity[0].LastEndUtc }) | Should -Be @($script:Queries[0].StartTime.AddSeconds(9))
+        @($Writes.Where({ $_.Entity[0].CheckpointUtc })).ForEach({ $_.Entity[0].LastEndUtc }) | Should -Be @((1..9).ForEach({ $script:Queries[0].StartTime.AddSeconds($_) }) + $script:Queries[0].EndTime)
         $Writes[-1].Entity[0].LastEndUtc | Should -Be $script:Queries[0].EndTime
         $Writes[-1].Entity[0].Blobs | Should -Be 11
     }
@@ -257,7 +256,7 @@ Describe 'Push-AuditLogFeedV3' {
         Mock Get-CIPPAuditLogContent { $script:Queries = $Queries; foreach ($Query in $Queries) { New-Listing -Query $Query -ErrorCode $Code -ErrorMessage 'No subscription found' } }
         Push-AuditLogFeedV3 -Item (New-FeedItem)
         Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*/subscriptions/start?contentType=Audit.Exchange&PublisherIdentifier=*' }
-        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity.Where({ -not $_.CheckpointUtc }))[0]
         $Cursor.LastEndUtc | Should -Be $script:Queries[0].EndTime
         $Cursor.SubscriptionStartedUtc | Should -Not -BeNullOrEmpty
     }
@@ -269,7 +268,7 @@ Describe 'Push-AuditLogFeedV3' {
         Mock Get-CIPPAuditLogContent { foreach ($Query in $Queries) { New-Listing -Query $Query -ErrorCode $ErrorCode -ErrorMessage $ErrorMessage } }
         if ($StartError) { Mock New-GraphPOSTRequest { throw $StartError } }
         Push-AuditLogFeedV3 -Item (New-FeedItem)
-        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity)[0]
+        $Cursor = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }).Entity.Where({ -not $_.CheckpointUtc }))[0]
         $Cursor.Keys | Should -Not -Contain 'LastEndUtc'
         $Cursor.LastErrorCode | Should -Be $Code
         ($Cursor.NextAttemptUtc - [datetime]::UtcNow).TotalHours | Should -BeGreaterThan 23

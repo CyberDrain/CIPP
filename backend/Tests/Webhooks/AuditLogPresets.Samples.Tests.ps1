@@ -56,6 +56,7 @@ BeforeAll {
             'Webhooks/Test-CIPPAuditLogRules.ps1'
             'Webhooks/Get-CIPPAuditLogPrefilter.ps1'
             'Webhooks/Select-CIPPAuditLogCandidate.ps1'
+            'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1'
         )) {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }

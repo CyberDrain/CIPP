@@ -37,7 +37,7 @@ BeforeAll {
     }
 
     . $FunctionPath
-    foreach ($Helper in 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
+    foreach ($Helper in 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
 }
@@ -94,7 +94,7 @@ Describe 'Push-AuditLogDownloadV2' {
         }
 
         Mock -CommandName Get-CippAuditLogNextAttempt -MockWith { (Get-Date).ToUniversalTime().AddMinutes(10).ToString('o') }
-        $script:Rules = @(New-Rule @(New-Condition 'ResultStatus' 'eq' 'Success'))
+        $script:Rules = @(New-Rule @((New-Condition 'Operation' 'eq' 'Set-Mailbox'), (New-Condition 'ResultStatus' 'eq' 'Success')))
         Mock -CommandName Get-CIPPAuditLogRuleSet -MockWith { $script:Rules }
         Mock -CommandName Start-CIPPOrchestrator -MockWith {}
     }
@@ -181,16 +181,16 @@ Describe 'Push-AuditLogDownloadV2' {
         ) {
             $script:Rules = @(
                 New-Rule @(New-Condition 'Operation' 'eq' 'New-InboxRule')
-                New-Rule @(New-Condition 'Operation' $Operator 'Set-Mailbox')
+                New-Rule @((New-Condition 'Operation' 'in' @('Set-Mailbox', 'UserLoggedIn', 'New-InboxRule')), (New-Condition 'Operation' $Operator 'Set-Mailbox'))
             )
             $null = Push-AuditLogDownloadV2 -Item @{ TenantFilter = 'contoso.com' }
             ($script:CacheWrites.RowKey | Sort-Object) | Should -Be $Expected
         }
 
-        It 'keeps every record when a rule tests only a name the engine derives' {
+        It 'keeps every anchored record when the other condition is on a name the engine derives' {
             $script:Rules = @(
                 New-Rule @(New-Condition 'Operation' 'eq' 'New-InboxRule')
-                New-Rule @(New-Condition 'CIPPGeoLocation' 'notin' @('AU'))
+                New-Rule @((New-Condition 'Operation' 'in' @('Set-Mailbox', 'UserLoggedIn')), (New-Condition 'CIPPGeoLocation' 'notin' @('AU')))
             )
             $null = Push-AuditLogDownloadV2 -Item @{ TenantFilter = 'contoso.com' }
             $script:CacheWrites.Count | Should -Be 3

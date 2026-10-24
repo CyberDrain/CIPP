@@ -18,14 +18,12 @@ function Get-CIPPAuditLogContent {
         TenantDone is true on the last object of a tenant, once nothing of it is left in flight. At most MaxConcurrency
         responses are held at once, and a pipeline consumer holds one blob's records at a time.
 
-        A blob whose raw JSON contains none of its tenant's rule operations is dropped without being parsed, and otherwise
-        it is parsed and only the records Select-CIPPAuditLogCandidate keeps are returned. The raw check is a
-        case-insensitive search for '"Operation":"<name>' (Microsoft writes compact JSON), a prefix so trailing characters
-        cannot hide a match; a like pattern searches for its text before the first wildcard. It only ever lets extra
-        blobs through. It is not used for a name JSON would escape (non-ASCII, quote, backslash) or a pattern that starts
-        with a wildcard, and never drops a blob holding an item named Operation, which the engine would flatten over the
-        record's own. Prefilters maps a tenant id to its Get-CIPPAuditLogPrefilter result; a tenant without one, or with
-        $null, keeps every record.
+        A blob whose raw JSON contains none of its tenant's anchor needles (Get-CIPPAuditLogRuleAnchor) is dropped without
+        being parsed, and otherwise it is parsed and only the records Select-CIPPAuditLogCandidate keeps are returned. The
+        raw check is a case-insensitive search (Microsoft writes compact JSON), so it only ever lets extra blobs through,
+        and it never drops a blob holding an item named Operation, which the engine would flatten over the record's own.
+        Prefilters maps a tenant id to its Get-CIPPAuditLogPrefilter result; a tenant without one, or with $null, keeps
+        every record.
 
         Tokens are delegated: the SAM app holds ActivityFeed.Read only as a delegated scope.
     .FUNCTIONALITY
@@ -106,9 +104,7 @@ function Get-CIPPAuditLogContent {
                 $Listing.Error = $Parsed.error.message ?? $Body ?? "HTTP $($Done.StatusCode)"
             } else {
                 if (-not $RawChecks.ContainsKey($TenantId)) {
-                    $Operations = $Prefilters[$TenantId].Operations
-                    $Needles = @(foreach ($Operation in $Operations) { ($Operation -split '[*?\[]', 2)[0] })
-                    $RawChecks[$TenantId] = if ($null -ne $Operations -and $Needles.Where({ $_ -notmatch '^[\x20-\x7E]+$' -or $_.Contains('"') -or $_.Contains('\') }, 'First').Count -eq 0) { , $Needles }
+                    $RawChecks[$TenantId] = if ($null -ne $Prefilters[$TenantId]) { , @($Prefilters[$TenantId].Needles) }
                 }
                 # The next page goes in ahead of this page's downloads, so a long listing is not read behind them.
                 $NextPage = $null
@@ -169,7 +165,7 @@ function Get-CIPPAuditLogContent {
                     $Json = $Done.Result.Content
                     $Found = $Json.IndexOf('"Name":"Operation"', [System.StringComparison]::OrdinalIgnoreCase) -ge 0
                     foreach ($Needle in $RawChecks[$Result.TenantId]) {
-                        if ($Json.IndexOf(('"Operation":"{0}' -f $Needle), [System.StringComparison]::OrdinalIgnoreCase) -ge 0) { $Found = $true; break }
+                        if ($Json.IndexOf($Needle, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) { $Found = $true; break }
                     }
                     $Json = $null
                 }

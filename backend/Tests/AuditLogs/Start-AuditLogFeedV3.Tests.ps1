@@ -44,6 +44,7 @@ namespace Craft.Services {
 
     . (Join-Path $Public 'AuditLogs/Get-CIPPAuditLogTenantScope.ps1')
     . (Join-Path $Public 'Webhooks/Start-CIPPAuditLogFeedRun.ps1')
+    . (Join-Path $Public 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1')
     . (Join-Path $Public 'Entrypoints/Orchestrator Functions/Start-AuditLogFeedV3.ps1')
 }
 
@@ -150,5 +151,32 @@ Describe 'Start-AuditLogFeedV3' {
     It 'never creates scheduled Graph searches' {
         Start-AuditLogFeedV3
         Should -Invoke Start-AuditLogSearchCreationV2 -Times 0 -Exactly
+    }
+}
+
+Describe 'Start-AuditLogFeedV3 unanchored rule check' {
+    BeforeEach {
+        [Craft.Services.OrchestratorBridge]::ActiveNames.Clear()
+        [void][Craft.Services.OrchestratorBridge]::ActiveNames.Add('AuditLogFeedV3')
+        $script:CheckRow = $null
+        $Operation = '[{"Property":{"label":"Operation"},"Operator":{"value":"eq"},"Input":{"value":"New-InboxRule"}}]'
+        $UserOnly = '[{"Property":{"label":"UserId"},"Operator":{"value":"like"},"Input":{"value":"ServicePrincipal_*"}}]'
+        $script:RuleRows = @(
+            [pscustomobject]@{ RowKey = 'anchored'; Tenants = '[{"value":"AllTenants"}]'; Conditions = $Operation; AlertComment = 'Inbox rules' }
+            [pscustomobject]@{ RowKey = 'unanchored'; Tenants = '[{"value":"AllTenants"}]'; Conditions = $UserOnly; AlertComment = 'App actors' }
+            [pscustomobject]@{ RowKey = 'disabled'; Tenants = '[{"value":"AllTenants"}]'; Conditions = $UserOnly; Disabled = $true }
+        )
+        Mock Get-CIPPAzDataTableEntity { if ($TableName -eq 'WebhookRules') { $script:RuleRows } elseif ($TableName -eq 'Config') { $script:CheckRow } }
+        Mock Add-CIPPAzDataTableEntity { if ($TableName -eq 'Config') { $script:CheckRow = [pscustomobject]$Entity } }
+        Mock Start-AuditLogIngestionV2 {}
+        Mock Write-LogMessage {}
+    }
+
+    It 'raises one alert a day for each enabled rule without an anchor' {
+        Start-AuditLogFeedV3
+        Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $sev -eq 'Alert' }
+        Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $sev -eq 'Alert' -and $message -like "*'App actors' is skipped*" }
+        Start-AuditLogFeedV3
+        Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $sev -eq 'Alert' }
     }
 }

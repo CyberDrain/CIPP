@@ -30,6 +30,12 @@ function Invoke-AddAlert {
                     })
             }
         }
+        if ($null -eq (Get-CIPPAuditLogRuleAnchor -Conditions $Conditions)) {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = @{ error = 'An audit log alert needs an Operation condition using Equals, In, or Like with at least three characters of text. It lets CIPP skip the logs the alert cannot match.' }
+                })
+        }
 
         $Tenants = $Request.Body.tenantFilter
         $Conditions = $Request.Body.conditions | ConvertTo-Json -Compress -Depth 10 | Out-String

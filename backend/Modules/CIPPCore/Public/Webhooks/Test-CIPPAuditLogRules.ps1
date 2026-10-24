@@ -739,8 +739,12 @@ function Test-CIPPAuditLogRules {
                         if (-not $validClause -or $conditionStrings.Count -eq 0) {
                             continue
                         }
+                        # A rule without an anchor would be tested on every record; Start-AuditLogFeedV3 warns about it.
+                        $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $conditions
+                        if ($null -eq $Anchor) { continue }
                         [PSCustomObject]@{
                             WhereBlock         = [ScriptBlock]::Create($conditionStrings -join ' -and ')
+                            Anchor             = $Anchor
                             expectedAction     = $Config.Actions
                             expectedBecActions = $Config.BecActions
                             CIPPClause         = $CIPPClause -join ' and '
@@ -752,33 +756,46 @@ function Test-CIPPAuditLogRules {
                         Write-Warning "Error processing conditions: $($CIPPClause -join ' and '): $($_.Exception.Message)"
                     }
                 }
-                $Compiled = [PSCustomObject]@{ RuleSet = $script:AuditRuleSetCache; Lists = $ListEntry; Clauses = @($Clauses) }
+                # ByOperation: Operation -> the clauses whose anchor allows it, in rule order, filled as records arrive.
+                $Compiled = [PSCustomObject]@{
+                    RuleSet     = $script:AuditRuleSetCache
+                    Lists       = $ListEntry
+                    Clauses     = @($Clauses)
+                    ByOperation = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
+                }
                 $script:AuditRuleClauseCache[$TenantFilter] = $Compiled
             }
 
             $MatchedRules = [System.Collections.Generic.List[string]]::new()
-            # No per-rule log lines: three per rule on every call came to hundreds per call once tenants had dozens of rules.
-            $DataToProcess = foreach ($clause in $Compiled.Clauses) {
-                try {
-                    $ReturnedData = @($ProcessedData).Where($clause.WhereBlock)
-                    if ($ReturnedData) {
-                        Write-Warning "Webhook: There is matching data: $(($ReturnedData.operation | Select-Object -Unique) -join ', ')"
-                        $ReturnedData = foreach ($item in $ReturnedData) {
-                            $item.CIPPAction = $clause.expectedAction
-                            $item.CIPPBecActions = $clause.expectedBecActions
-                            $item.CIPPClause = $clause.CIPPClause
-                            $item | Add-Member -NotePropertyMembers ([ordered]@{
-                                    CIPPAlertComment      = $clause.AlertComment
-                                    CIPPCustomSubject     = $clause.CustomSubject
-                                    CIPPPsaTicketPriority = $clause.PsaTicketPriority
-                                }) -Force -ErrorAction SilentlyContinue
-                            $MatchedRules.Add($clause.CIPPClause)
-                            $item
-                        }
+            # Each record goes through only the rules its Operation can satisfy, in rule order, and the first rule it
+            # matches is the one it alerts on.
+            $DataToProcess = foreach ($item in $ProcessedData) {
+                $Operation = [string]$item.Operation
+                $Candidates = $null
+                if (-not $Compiled.ByOperation.TryGetValue($Operation, [ref]$Candidates)) {
+                    $Candidates = @(foreach ($clause in $Compiled.Clauses) {
+                            if ($clause.Anchor.Literals.Contains($Operation) -or $clause.Anchor.Patterns.Where({ $_.IsMatch($Operation) }, 'First').Count -gt 0) { $clause }
+                        })
+                    $Compiled.ByOperation[$Operation] = $Candidates
+                }
+                foreach ($clause in $Candidates) {
+                    try {
+                        if (@($item).Where($clause.WhereBlock, 'First').Count -eq 0) { continue }
+                    } catch {
+                        Write-Warning "Error processing conditions: $($clause.CIPPClause): $($_.Exception.Message)"
+                        continue
                     }
-                    $ReturnedData
-                } catch {
-                    Write-Warning "Error processing conditions: $($clause.CIPPClause): $($_.Exception.Message)"
+                    $item.CIPPAction = $clause.expectedAction
+                    $item.CIPPBecActions = $clause.expectedBecActions
+                    $item.CIPPClause = $clause.CIPPClause
+                    $item | Add-Member -NotePropertyMembers ([ordered]@{
+                            CIPPAlertComment      = $clause.AlertComment
+                            CIPPCustomSubject     = $clause.CustomSubject
+                            CIPPPsaTicketPriority = $clause.PsaTicketPriority
+                        }) -Force -ErrorAction SilentlyContinue
+                    $MatchedRules.Add($clause.CIPPClause)
+                    $item
+                    break
                 }
             }
             foreach ($Matched in $DataToProcess) {

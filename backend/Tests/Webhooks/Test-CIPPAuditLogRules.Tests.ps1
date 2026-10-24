@@ -42,6 +42,7 @@ BeforeAll {
             'BEC/ConvertTo-CIPPBecHostAddress.ps1'
             'Webhooks/Get-CIPPAuditLogRuleSet.ps1'
             'Webhooks/New-CippAuditLogClaimRow.ps1'
+            'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1'
         )) {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
@@ -127,7 +128,7 @@ Describe 'Test-CIPPAuditLogRules record shaping' {
                         Conditions        = (@(
                                 @{
                                     Property = @{ label = 'Operation' }
-                                    Operator = @{ label = 'eq' }
+                                    Operator = @{ label = 'eq'; value = 'eq' }
                                     Input    = @{ value = 'Set-Mailbox' }
                                 }
                             ) | ConvertTo-Json -Compress -Depth 5)
@@ -465,7 +466,7 @@ Describe 'Test-CIPPAuditLogRules record shaping' {
                         [pscustomobject]@{
                             PartitionKey = 'WebhookRules'; RowKey = 'contoso-only'; Type = 'Audit'
                             Tenants      = '[{"label":"Contoso","value":"contoso.com","type":"Tenant"}]'
-                            Conditions   = '[{"Property":{"label":"Operation"},"Operator":{"label":"eq"},"Input":{"value":"Set-Mailbox"}}]'
+                            Conditions   = '[{"Property":{"label":"Operation"},"Operator":{"label":"eq","value":"eq"},"Input":{"value":"Set-Mailbox"}}]'
                             Actions      = '["generatemail"]'
                         }
                     }
@@ -491,7 +492,7 @@ Describe 'Test-CIPPAuditLogRules record shaping' {
                             PartitionKey    = 'WebhookRules'; RowKey = 'fabrikam-only'; Type = 'Audit'
                             Tenants         = '[{"label":"Fabrikam","value":"fabrikam.com","type":"Tenant"}]'
                             excludedTenants = '[{"label":"Group","value":"group-1","type":"Group"}]'
-                            Conditions      = '[{"Property":{"label":"Operation"},"Operator":{"label":"eq"},"Input":{"value":"Set-Mailbox"}}]'
+                            Conditions      = '[{"Property":{"label":"Operation"},"Operator":{"label":"eq","value":"eq"},"Input":{"value":"Set-Mailbox"}}]'
                             Actions         = '["generatemail"]'
                         }
                     }
@@ -898,7 +899,7 @@ Describe 'Test-CIPPAuditLogRules record shaping' {
                             Conditions      = (@(
                                     @{
                                         Property = @{ label = 'Operation' }
-                                        Operator = @{ label = 'eq' }
+                                        Operator = @{ label = 'eq'; value = 'eq' }
                                         Input    = @{ value = 'Set-Mailbox' }
                                     }
                                 ) | ConvertTo-Json -Compress -Depth 5)

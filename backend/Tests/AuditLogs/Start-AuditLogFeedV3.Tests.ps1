@@ -69,9 +69,16 @@ Describe 'Get-CIPPAuditLogTenantScope' {
         ($Scope.Where({ $_.defaultDomainName -eq 'fabrikam.com' }))[0].ContentTypes | Should -Be @('Audit.AzureActiveDirectory')
     }
 
-    It 'treats a rule without a type as both content types' {
+    It 'treats a rule without a type as Exchange and Azure AD' {
         $script:Rules = @(New-Rule -Tenants @(@{ value = 'contoso.com' }))
         (@(Get-CIPPAuditLogTenantScope)[0].ContentTypes | Sort-Object) | Should -Be @('Audit.AzureActiveDirectory', 'Audit.Exchange')
+    }
+
+    It 'reads SharePoint and General only for rules of that type' {
+        $script:Rules = @((New-Rule -Tenants @(@{ value = 'contoso.com' }) -Type 'Audit.SharePoint'), (New-Rule -Tenants @(@{ value = 'fabrikam.com' }) -Type 'Audit.General'))
+        $Scope = @(Get-CIPPAuditLogTenantScope)
+        ($Scope.Where({ $_.defaultDomainName -eq 'contoso.com' }))[0].ContentTypes | Should -Be @('Audit.SharePoint')
+        ($Scope.Where({ $_.defaultDomainName -eq 'fabrikam.com' }))[0].ContentTypes | Should -Be @('Audit.General')
     }
 
     It 'leaves out excluded and auditing-disabled tenants' {

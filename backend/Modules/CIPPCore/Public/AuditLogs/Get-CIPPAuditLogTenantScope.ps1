@@ -6,14 +6,16 @@ function Get-CIPPAuditLogTenantScope {
         Tenants covered by an enabled Webhookv2 rule (tenant groups expanded), minus each rule's exclusions and minus
         tenants in AuditLogDisabledTenants whose disable has not expired. Returns
         [pscustomobject]@{ defaultDomainName; customerId; ContentTypes }, where ContentTypes holds the rules' Type
-        values (Audit.Exchange / Audit.AzureActiveDirectory); a rule without a Type counts as both.
+        values (Audit.Exchange, Audit.AzureActiveDirectory, and Audit.SharePoint / Audit.General for backend-only rules);
+        a rule without a Type counts as Exchange and Azure AD.
     .FUNCTIONALITY
         Internal
     #>
     [CmdletBinding()]
     param()
 
-    $AllContentTypes = @('Audit.AzureActiveDirectory', 'Audit.Exchange')
+    $AllContentTypes = @('Audit.AzureActiveDirectory', 'Audit.Exchange', 'Audit.SharePoint', 'Audit.General')
+    $DefaultContentTypes = @('Audit.AzureActiveDirectory', 'Audit.Exchange')
     $ConfigTable = Get-CippTable -TableName 'WebhookRules'
     $ConfigEntries = @(Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'Webhookv2'").Where({ $_.Disabled -ne $true })
     if ($ConfigEntries.Count -eq 0) { return @() }
@@ -37,7 +39,7 @@ function Get-CIPPAuditLogTenantScope {
             Included     = $Included
             Excluded     = $Excluded
             AllTenants   = $Included.Contains('AllTenants')
-            ContentTypes = if ($ConfigEntry.Type -in $AllContentTypes) { @([string]$ConfigEntry.Type) } else { $AllContentTypes }
+            ContentTypes = if ($ConfigEntry.Type -in $AllContentTypes) { @([string]$ConfigEntry.Type) } else { $DefaultContentTypes }
         }
     }
 

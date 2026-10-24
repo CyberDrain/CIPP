@@ -703,7 +703,8 @@ function Test-CIPPAuditLogRules {
                 $UnsafeValueRegex = [regex]'[;|`\$\{\}]'
                 $LocationExcludedUserKeys = @(@($ExcludedUsers | Where-Object { $_.Type -eq 'Location' }).RowKey)
                 $Clauses = foreach ($Config in $Configuration) {
-                    if ($TenantFilter -in $Config.Excluded.value) {
+                    # Threshold rules alert on a count of records (Push-AuditLogFeedBlobsV3), never on one.
+                    if ($TenantFilter -in $Config.Excluded.value -or $Config.Threshold) {
                         continue
                     }
                     $CIPPClause = [System.Collections.Generic.List[string]]::new()

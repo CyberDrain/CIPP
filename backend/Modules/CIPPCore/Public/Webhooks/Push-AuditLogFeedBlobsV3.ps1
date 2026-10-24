@@ -9,6 +9,12 @@ function Push-AuditLogFeedBlobsV3 {
         A finished blob's row is deleted; a failed one stays, with LastError, for the next tick (its attempt was counted
         when it was queued). A blob evaluated
         again sends nothing twice, since its alerts are already claimed. The task's totals go to AuditLogFeedCycles.
+
+        Threshold rules (Get-CIPPAuditLogPrefilter Thresholds) are counted, never matched record by record: the counts per
+        identity and 10-minute bucket that Get-CIPPAuditLogContent takes from each blob's index are summed over the task,
+        and an identity whose records reach a rule's Count within its Minutes gets one alert, carrying the count and up to
+        5 sample records, claimed as 'threshold-<rule>-<identity>-<hour>' so the same burst alerts once however its blobs
+        were split.
     .FUNCTIONALITY
         Entrypoint
     #>
@@ -32,6 +38,9 @@ function Push-AuditLogFeedBlobsV3 {
     $Totals = @{ Records = 0; Evaluated = 0; Matched = 0 }
     # The engine's directory memo, one per tenant, dropped once the tenant's last blob is in.
     $Memos = @{}
+    # '<tenant id>`n<threshold>`n<identity>' -> 10-minute bucket -> records; and the first blob index holding each, for samples.
+    $Tallies = @{}
+    $SampleIndex = @{}
 
     try {
         $WaitSw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -44,6 +53,15 @@ function Push-AuditLogFeedBlobsV3 {
             if ($_.Error) {
                 $Failed.Add(@{ PartitionKey = $Blob.TenantFilter; RowKey = $Blob.RowKey; LastError = [string]$_.Error })
                 return
+            }
+            foreach ($Count in @($_.Counts)) {
+                if ($null -eq $Count) { continue }
+                foreach ($Pair in $Count.Counts.GetEnumerator()) {
+                    $Who, $Bucket = $Pair.Key -split '\|', 2
+                    $Key = "$TenantId`n$($Count.Threshold)`n$Who"
+                    if (-not $Tallies.ContainsKey($Key)) { $Tallies[$Key] = @{}; $SampleIndex[$Key] = @{ Index = $Count.Index; Key = $Pair.Key } }
+                    $Tallies[$Key][$Bucket] = [int]$Tallies[$Key][$Bucket] + $Pair.Value
+                }
             }
             $Totals.Records += $_.RecordCount
             $Records = [System.Collections.Generic.List[object]]::new([object[]]$_.Records)
@@ -70,6 +88,59 @@ function Push-AuditLogFeedBlobsV3 {
         Write-Information "AuditLogFeedBlobsV3: the batch stopped: $($_.Exception.Message)"
     }
     $script:AuditRuleSearchLookups = $null
+
+    $CIPPURL = $null
+    foreach ($Key in $Tallies.Keys) {
+        $TenantId, $T, $Who = $Key -split "`n", 3
+        $Threshold = $Prefilters[$TenantId].Thresholds[[int]$T]
+        # The busiest run of buckets that fits in the rule's window.
+        $Span = [Math]::Ceiling($Threshold.Minutes / 10)
+        $Times = @(foreach ($Bucket in $Tallies[$Key].Keys) { [pscustomobject]@{ At = [datetime]::ParseExact("$($Bucket)0", 'yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture); Count = $Tallies[$Key][$Bucket] } })
+        $Best = $null
+        foreach ($End in $Times) {
+            $Sum = 0
+            foreach ($Other in $Times) { if ($Other.At -le $End.At -and $Other.At -gt $End.At.AddMinutes(-10 * $Span)) { $Sum += $Other.Count } }
+            if ($Sum -ge $Threshold.Count -and ($null -eq $Best -or $Sum -gt $Best.Count)) { $Best = [pscustomobject]@{ At = $End.At; Count = $Sum } }
+        }
+        if (-not $Best) { continue }
+        try {
+            $TenantFilter = $Tenants[$TenantId]
+            $Sample = $SampleIndex[$Key]
+            $SampleRecords = @([CIPP.CippJson]::ConvertFromIndex($Sample.Index, $Sample.Index.IndicesWhere(0, $Threshold.Operations, [int[]]@(2, 3), [int[]]@(-1, 15), $Sample.Key, 5)))
+            $Rule = $Threshold.Rule
+            if (-not $CIPPURL) {
+                $ConfigTable = Get-CippTable -tablename Config
+                $CIPPURL = 'https://{0}' -f (Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'InstanceProperties' and RowKey eq 'CIPPURL'").Value
+            }
+            $Data = [pscustomobject]@{
+                Id                    = 'threshold-{0}-{1}-{2:yyyyMMddHH}' -f $Rule.RowKey, ($Who -replace '[\\/#?]', '_'), $Best.At
+                CreationTime          = $Best.At.AddMinutes(10).ToString('yyyy-MM-ddTHH:mm:ss')
+                Operation             = "$($Best.Count) x $($Threshold.Operations -join ' / ')"
+                UserId                = $Who
+                Workload              = $SampleRecords[0].Workload
+                RecordType            = $SampleRecords[0].RecordType
+                ClientIP              = $SampleRecords[0].ClientIP
+                ObjectId              = @($SampleRecords.ObjectId) -join ', '
+                CIPPAction            = $Rule.Actions
+                CIPPBecActions        = $Rule.BecActions
+                CIPPClause            = '{0} of {1} by {2} within {3} minutes (threshold {4})' -f $Best.Count, ($Threshold.Operations -join ', '), $Who, $Threshold.Minutes, $Threshold.Count
+                CIPPAlertComment      = $Rule.AlertComment
+                CIPPCustomSubject     = $Rule.CustomSubject
+                CIPPPsaTicketPriority = $Rule.PsaTicketPriority
+                CIPPThresholdCount    = $Best.Count
+                AuditRecord           = [string]([CIPP.CippJson]::ToJson($SampleRecords, 10) ?? (ConvertTo-Json -InputObject $SampleRecords -Depth 10 -Compress))
+            }
+            $Rows = [System.Collections.Generic.List[object]]::new()
+            Invoke-CippWebhookProcessing -Data $Data -CIPPURL $CIPPURL -TenantFilter $TenantFilter -AlertComment $Rule.AlertComment -PendingAuditLogWrites $Rows
+            if ($Rows.Count -gt 0) {
+                $AuditLogTable = Get-CIPPTable -TableName 'AuditLogs'
+                Add-CIPPAzDataTableEntity @AuditLogTable -Entity $Rows.ToArray() -Force
+            }
+            $Totals.Matched++
+        } catch {
+            Write-Information "AuditLogFeedBlobsV3: could not send the threshold alert for $Who in $($Tenants[$TenantId]): $($_.Exception.Message)"
+        }
+    }
 
     if ($Finished.Count -gt 0) { Remove-CIPPAzDataTableEntity @BlobTable -Entity $Finished.ToArray() -Force }
     if ($Failed.Count -gt 0) { $null = Add-CIPPAzDataTableEntity @BlobTable -Entity $Failed.ToArray() -OperationType UpsertMerge }

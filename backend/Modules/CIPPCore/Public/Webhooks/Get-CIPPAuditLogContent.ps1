@@ -94,7 +94,7 @@ function Get-CIPPAuditLogContent {
     }
     foreach ($Blob in $Blobs) {
         $TenantId = [string]$Blob.TenantId
-        $Result = [pscustomobject]@{ Kind = 'Blob'; TenantId = $TenantId; Blob = $Blob; Skipped = $false; RecordCount = 0; Records = @(); ParseMs = 0; StatusCode = 0; ErrorCode = $null; Error = $null; TenantDone = $false }
+        $Result = [pscustomobject]@{ Kind = 'Blob'; TenantId = $TenantId; Blob = $Blob; Skipped = $false; RecordCount = 0; Records = @(); ParseMs = 0; Counts = $null; StatusCode = 0; ErrorCode = $null; Error = $null; TenantDone = $false }
         if (-not $Tokens[$TenantId]) {
             $Result.ErrorCode = 'Token'
             $Result.Error = $TokenErrors[$TenantId] ?? 'No token for the Office 365 Management API'
@@ -156,7 +156,7 @@ function Get-CIPPAuditLogContent {
                         $Request.Headers['Authorization'] = $Tokens[$TenantId]
                         $Request.Headers['User-Agent'] = $UserAgent
                         $Open[$TenantId]++
-                        $Work[$Queue.Add($Request)] = @{ Result = [pscustomobject]@{ Kind = 'Blob'; TenantId = $TenantId; Blob = $Blob; Skipped = $false; RecordCount = 0; Records = @(); ParseMs = 0; StatusCode = 0; ErrorCode = $null; Error = $null; TenantDone = $false } }
+                        $Work[$Queue.Add($Request)] = @{ Result = [pscustomobject]@{ Kind = 'Blob'; TenantId = $TenantId; Blob = $Blob; Skipped = $false; RecordCount = 0; Records = @(); ParseMs = 0; Counts = $null; StatusCode = 0; ErrorCode = $null; Error = $null; TenantDone = $false } }
                     }
                 }
                 if ($HasNext) {
@@ -201,12 +201,13 @@ function Get-CIPPAuditLogContent {
                     }
                     $Json = $null
                 }
-                # Only the records worth building are built, from the response's bytes; a body that is not an array has no index.
-                $Indexed = if ($Found -and -not $Shadowed) { [CIPP.CippJson]::IndexRecords($Done.Result, [string[]]@('Operation', 'ClientIP'), [string[]]$Prefilters[$Result.TenantId].RecordNeedles) }
-                if ($null -ne $Indexed) {
+                # Only the records worth building are built, from the response's bytes, and threshold rules count from the
+                # index without building any; a body that is not an array has no index.
+                $Thresholds = $Prefilters[$Result.TenantId].Thresholds
+                $Indexed = if ($Found -and (-not $Shadowed -or $Thresholds)) { [CIPP.CippJson]::IndexRecords($Done.Result, [string[]]@('Operation', 'ClientIP', 'UserId', 'CreationTime'), [string[]]$Prefilters[$Result.TenantId].RecordNeedles) }
+                if ($null -ne $Indexed -and -not $Shadowed) {
                     $Result.RecordCount = $Indexed.Count
                     $Result.Records = @(Select-CIPPAuditLogCandidate -Prefilter $Prefilters[$Result.TenantId] -Index $Indexed)
-                    $Indexed = $null
                 } elseif ($Found) {
                     # The response object, not its text, so the blob is parsed from its bytes without a string copy.
                     $Records = @([CIPP.CippJson]::ConvertFromResponse($Done.Result))
@@ -216,6 +217,15 @@ function Get-CIPPAuditLogContent {
                 } else {
                     $Result.Skipped = $true
                 }
+                if ($Thresholds -and $null -ne $Indexed) {
+                    # Per threshold rule: records of its operations per identity and 10-minute bucket (CreationTime cut to
+                    # 'yyyy-MM-ddTHH:m'), with the index kept for sample records.
+                    $Result.Counts = @(for ($t = 0; $t -lt $Thresholds.Count; $t++) {
+                            $Counted = $Indexed.CountWhere(0, $Thresholds[$t].Operations, [int[]]@(2, 3), [int[]]@(-1, 15))
+                            if ($Counted.Count -gt 0) { [pscustomobject]@{ Threshold = $t; Counts = $Counted; Index = $Indexed } }
+                        })
+                }
+                $Indexed = $null
             } catch {
                 $Result.Error = "Could not parse the blob: $($_.Exception.Message)"
             }

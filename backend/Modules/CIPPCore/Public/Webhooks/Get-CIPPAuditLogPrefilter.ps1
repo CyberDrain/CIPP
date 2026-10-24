@@ -23,7 +23,9 @@ function Get-CIPPAuditLogPrefilter {
         built; Geo and Gates memoise the addresses and answers. Groups are the rule's needle groups: each positive
         condition on a raw name (eq, like or in) needs that name, and, when its values hold letters, their longest plain
         run of text (for in, one of its values'), somewhere in the record's raw text, so RecordNeedles (up to 64) lets an index rule a record
-        out without building it. Anything unreadable keeps every record.
+        out without building it. Thresholds holds the backend-only threshold rules (a Threshold of '{"Count":N,"Minutes":M}' and an
+        Operation eq/in anchor): they never match a record on its own, so they are not in Index, but their operations are
+        needles, and Push-AuditLogFeedBlobsV3 counts them per identity. Anything unreadable keeps every record.
     .FUNCTIONALITY
         Internal
     #>
@@ -36,6 +38,7 @@ function Get-CIPPAuditLogPrefilter {
         $Rules = [System.Collections.Generic.List[scriptblock]]::new()
         $Index = [System.Collections.Generic.List[object]]::new()
         $RecordNeedles = [System.Collections.Generic.List[string]]::new()
+        $Thresholds = [System.Collections.Generic.List[object]]::new()
         # Text JSON writes as is and every serialiser leaves alone.
         $PlainRun = [regex]'[A-Za-z0-9 ._@:-]{3,}'
         foreach ($Rule in (Get-CIPPAuditLogRuleSet -TenantFilter $TenantFilter)) {
@@ -45,6 +48,15 @@ function Get-CIPPAuditLogPrefilter {
             $Terms = [System.Collections.Generic.List[string]]::new()
             $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $Conditions
             if ($null -eq $Anchor) { continue }
+            if ($Rule.Threshold) {
+                $Setting = try { [string]$Rule.Threshold | ConvertFrom-Json -ErrorAction Stop } catch { $null }
+                # Counting needs the exact operations, so a like anchor cannot be a threshold rule.
+                if ([int]$Setting.Count -gt 0 -and $Anchor.Patterns.Count -eq 0) {
+                    foreach ($Needle in $Anchor.Needles) { [void]$Needles.Add($Needle) }
+                    $Thresholds.Add([pscustomobject]@{ Rule = $Rule; Operations = [string[]]@($Anchor.Literals); Count = [int]$Setting.Count; Minutes = [Math]::Max(10, [int]($Setting.Minutes ?? 20)) })
+                }
+                continue
+            }
             $Skipped = $false
             $Count = 0
             $LocationTerms = [System.Collections.Generic.List[string]]::new()
@@ -97,6 +109,7 @@ function Get-CIPPAuditLogPrefilter {
             Rules       = $Rules.ToArray()
             Needles     = @($Needles)
             RecordNeedles = $RecordNeedles.ToArray()
+            Thresholds  = $Thresholds.ToArray()
             Index       = $Index.ToArray()
             # Operation -> the Index entries a record with that Operation can match, and whether every one of them needs a
             # location, filled by Select-CIPPAuditLogCandidate.

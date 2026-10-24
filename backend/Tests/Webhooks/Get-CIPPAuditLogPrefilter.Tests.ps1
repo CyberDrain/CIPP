@@ -439,6 +439,24 @@ Describe 'Test-CIPPAuditLogRules -EvaluateOnly' {
         [object]::ReferenceEquals($script:AuditRuleClauseCache['contoso.com'], $Recompiled) | Should -BeFalse
     }
 
+    It 'keeps a threshold rule out of record matching, and gives the blob check its operations' {
+        foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
+        Set-Rules @(
+            @(, (New-Condition 'Operation' 'in' @('FileRecycled', 'FileDeletedSecondStageRecycleBin'))),
+            @(, (New-Condition 'Operation' 'eq' 'New-InboxRule'))
+        )
+        $script:RuleRows[0] | Add-Member -NotePropertyName Threshold -NotePropertyValue '{"Count":3,"Minutes":20}'
+        $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
+        $Prefilter.Thresholds | Should -HaveCount 1
+        @($Prefilter.Thresholds[0].Operations | Sort-Object) | Should -Be @('FileDeletedSecondStageRecycleBin', 'FileRecycled')
+        $Prefilter.Thresholds[0].Count | Should -Be 3
+        $Prefilter.Thresholds[0].Minutes | Should -Be 20
+        $Prefilter.Rules | Should -HaveCount 1
+        $Prefilter.Needles | Should -Contain '"Operation":"FileRecycled'
+        $Records = @([ordered]@{ Id = 'recycled'; Operation = 'FileRecycled' }, [ordered]@{ Id = 'rule'; Operation = 'New-InboxRule' })
+        @((Test-CIPPAuditLogRules -TenantFilter 'contoso.com' -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null).DataToProcess).Id | Should -Be @('rule')
+    }
+
     It 'marks a reserved address Reserved and leaves it to no location rule' {
         foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
         Mock Get-CIPPGeoIPLocationBatch { @{ '198.51.100.7' = [pscustomobject]@{ CountryOrRegion = 'US'; Proxy = $false; Hosting = $false } } }

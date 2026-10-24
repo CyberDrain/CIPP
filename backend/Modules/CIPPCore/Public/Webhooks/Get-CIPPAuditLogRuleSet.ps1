@@ -5,7 +5,7 @@ function Get-CIPPAuditLogRuleSet {
     .DESCRIPTION
         Reads WebhookRules, expands tenant groups and returns one object per rule that applies to
         TenantFilter (Tenants, Excluded, Conditions, Actions, BecActions, LogType, AlertComment,
-        CustomSubject, PsaTicketPriority). Exclusions are expanded only for rules that cover the tenant,
+        CustomSubject, PsaTicketPriority, RowKey, Threshold). Exclusions are expanded only for rules that cover the tenant,
         since each expansion reads the tenant list.
 
         The expanded rule set is memoised for two minutes. Script scope lasts one worker invocation, so
@@ -46,6 +46,10 @@ function Get-CIPPAuditLogRuleSet {
                     AlertComment      = $ConfigEntry.AlertComment
                     CustomSubject     = $ConfigEntry.CustomSubject
                     PsaTicketPriority = $ConfigEntry.PsaTicketPriority
+                    RowKey            = $ConfigEntry.RowKey
+                    # Backend-only threshold rules: '{"Count":100,"Minutes":20}' alerts once one identity's records of the
+                    # rule's operations reach Count within Minutes, instead of on each record.
+                    Threshold         = $ConfigEntry.Threshold
                 }
             }
         }

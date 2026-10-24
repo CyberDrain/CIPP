@@ -77,6 +77,27 @@ AfterAll {
 }
 
 Describe 'Get-CIPPAuditLogContent' {
+    It 'counts a threshold rule''s operations per identity and 10-minute bucket, alongside the records other rules keep' {
+        $script:Rules = @(
+            [pscustomobject]@{ Conditions = (ConvertTo-Json -Compress -Depth 5 -InputObject @(New-Condition 'Operation' 'in' @('FileRecycled', 'FileDeleted'))); Excluded = $null; Threshold = '{"Count":2,"Minutes":20}' }
+            [pscustomobject]@{ Conditions = (ConvertTo-Json -Compress -Depth 5 -InputObject @(New-Condition 'Operation' 'eq' 'New-InboxRule')); Excluded = $null }
+        )
+        $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
+        $Records = @(
+            @{ Operation = 'FileRecycled'; UserId = 'bob@x'; CreationTime = '2026-10-24T17:01:00' }
+            @{ Operation = 'FileRecycled'; UserId = 'bob@x'; CreationTime = '2026-10-24T17:12:00' }
+            @{ Operation = 'FileDeleted'; UserId = 'bob@x'; CreationTime = '2026-10-24T17:13:00' }
+            'New-InboxRule'
+        )
+        $Result = Invoke-Download (New-Blob 'tid-t' 'deletes' $Records) @{ 'tid-t' = $Prefilter }
+        $Result.Records.Id | Should -Be @('deletes-3')
+        @($Result.Counts) | Should -HaveCount 1
+        $Result.Counts[0].Threshold | Should -Be 0
+        $Result.Counts[0].Counts['bob@x|2026-10-24T17:0'] | Should -Be 1
+        $Result.Counts[0].Counts['bob@x|2026-10-24T17:1'] | Should -Be 2
+        $Result.Counts[0].Index.Count | Should -Be 4
+    }
+
     It 'lists without downloading when asked to list only' {
         Set-Listing 'tid-l1' @((New-Blob 'tid-l1' 'l1a' @('UserLoggedIn')), (New-Blob 'tid-l1' 'l1b' @('Set-Mailbox')))
         $Out = @(Get-CIPPAuditLogContent -Queries @(New-Query 'tid-l1') -ListOnly)

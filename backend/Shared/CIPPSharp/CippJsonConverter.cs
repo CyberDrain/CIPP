@@ -472,5 +472,50 @@ namespace CIPP
         /// <summary>Per record, the needles found in its text (bit n = needles[n]); null when none were asked for.</summary>
         public ulong[]? Masks { get; }
         public int Count => Starts.Length;
+
+        /// <summary>
+        /// Counts the records whose Values[filterField] is one of <paramref name="values"/> (ignoring case), per key: the
+        /// key fields joined with '|', each cut to its keyLengths entry when that is positive (a time cut to a prefix is
+        /// a time bucket). A record missing a key field counts under an empty part.
+        /// </summary>
+        public Dictionary<string, int> CountWhere(int filterField, ICollection<string> values, int[] keyFields, int[] keyLengths)
+        {
+            var set = new HashSet<string>(values, StringComparer.OrdinalIgnoreCase);
+            var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var filter = Values[filterField];
+            for (int i = 0; i < filter.Length; i++)
+            {
+                if (filter[i] is null || !set.Contains(filter[i]!)) continue;
+                var key = KeyOf(i, keyFields, keyLengths);
+                counts[key] = counts.TryGetValue(key, out var n) ? n + 1 : 1;
+            }
+            return counts;
+        }
+
+        /// <summary>The first <paramref name="max"/> records CountWhere counts under <paramref name="key"/>.</summary>
+        public int[] IndicesWhere(int filterField, ICollection<string> values, int[] keyFields, int[] keyLengths, string key, int max)
+        {
+            var set = new HashSet<string>(values, StringComparer.OrdinalIgnoreCase);
+            var found = new List<int>();
+            var filter = Values[filterField];
+            for (int i = 0; i < filter.Length && found.Count < max; i++)
+            {
+                if (filter[i] is null || !set.Contains(filter[i]!)) continue;
+                if (string.Equals(KeyOf(i, keyFields, keyLengths), key, StringComparison.OrdinalIgnoreCase)) found.Add(i);
+            }
+            return found.ToArray();
+        }
+
+        private string KeyOf(int record, int[] keyFields, int[] keyLengths)
+        {
+            var parts = new string[keyFields.Length];
+            for (int k = 0; k < keyFields.Length; k++)
+            {
+                var v = Values[keyFields[k]][record] ?? "";
+                int cut = k < keyLengths.Length ? keyLengths[k] : -1;
+                parts[k] = cut > 0 && v.Length > cut ? v.Substring(0, cut) : v;
+            }
+            return string.Join("|", parts);
+        }
     }
 }

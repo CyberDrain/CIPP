@@ -34,6 +34,8 @@ $ErrorActionPreference = 'Stop'
 # This script lives in build/tools/, so the repo root is two levels up.
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $TranslatorPath = Join-Path $RepoRoot 'backend/Config/PermissionsTranslator.json'
+# The frontend translates permission GUIDs to names from this byte-identical copy.
+$FrontendTranslatorPath = Join-Path $RepoRoot 'frontend/public/permissionsTranslator.json'
 
 # AzAdvertizer serves this gzipped; Invoke-RestMethod negotiates and decompresses automatically.
 $SourceUrl = 'https://www.azadvertizer.net/azEntraIdAPIpermissionsAdvertizer.json'
@@ -112,4 +114,5 @@ $All = foreach ($Entry in $Sorted) {
 # Write LF explicitly (no BOM, single trailing newline) so host platform cannot affect the bytes.
 $Json = (@($All) | ConvertTo-Json -Depth 100) -replace "`r`n", "`n"
 [System.IO.File]::WriteAllText($TranslatorPath, $Json + "`n", [System.Text.UTF8Encoding]::new($false))
-Write-Host "Wrote $(@($All).Count) entries to $TranslatorPath." -ForegroundColor Green
+[System.IO.File]::WriteAllText($FrontendTranslatorPath, $Json + "`n", [System.Text.UTF8Encoding]::new($false))
+Write-Host "Wrote $(@($All).Count) entries to $TranslatorPath and $FrontendTranslatorPath." -ForegroundColor Green

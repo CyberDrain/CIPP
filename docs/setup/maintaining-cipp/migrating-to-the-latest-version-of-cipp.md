@@ -62,7 +62,7 @@ If you receive an error during migration rest assured that the helpdesk has been
 
 If you have not already completed SSO setup, you are prompted to when you next open CIPP.
 
-Your instance answers on a new hostname after the migration, and sign-in needs a redirect URI of `https://<hostname>/.auth/login/aad/callback` to match it. Creating the app from the SSO page adds that for you. A hostname without one fails sign-in with `AADSTS50011`.
+Your instance answers on a new hostname after the migration, and sign-in needs a redirect URI of `https://<hostname>/.auth/login/aad/callback` to match it. Creating the app from the SSO App Registration card on the Credentials page adds that for you. A hostname without one fails sign-in with `AADSTS50011`.
 
 See [sso.md](../../user-documentation/cipp/advanced/authentication/sso.md "mention") for the full process, including what CIPP creates in your tenant and what to do if you cannot sign in at all, or [roles.md](../setting-up-cipp/roles.md "mention") if you are setting up your first user at the same time.
 {% endstep %}
@@ -73,7 +73,7 @@ See [sso.md](../../user-documentation/cipp/advanced/authentication/sso.md "menti
 If you had a custom domain on your old version of CIPP, you'll need to migrate it too. To migrate a domain to the new generation of CIPP, point its existing CNAME record at CIPPXXXX.azurewebsites.net, then add the domain here. It will move over automatically. If a TXT record named `asuid.<your domain>` exists from your previous setup, remove it — domain-verification TXT records are no longer used, and a leftover one blocks validation. This step must be performed in the [management portal](https://management.cipp.app/).
 
 {% hint style="warning" %}
-Add the custom domain **after** completing SSO setup and the new hostname has no redirect URI of its own yet, so sign-in on it fails with `AADSTS50011`. Select **Refresh Sign-in URLs** on the CIPP SSO page to add one. The action is additive and never removes an existing URI.
+Add the custom domain **after** completing SSO setup and the new hostname has no redirect URI of its own yet, so sign-in on it fails with `AADSTS50011`. Select **Refresh Sign-in URLs** on the SSO App Registration card (**CIPP** → **Advanced** → **Authentication** → **Credentials**) to add one. The action is additive and never removes an existing URI.
 {% endhint %}
 
 {% hint style="warning" %}

@@ -94,6 +94,20 @@ The first time the monitor runs it only records what it sees, so enabling it on 
 
 The **Use certificate authentication** option in the [sam-setup-wizard.md](../../sam-setup-wizard.md "mention") switches CIPP-SAM between the certificate and the client secret. Both changes are logged at Alert severity like any other credential change.
 
+Turning certificate authentication on also changes the CIPP Exemption Policy so that adding client secrets to the CIPP-SAM application is blocked. Nobody, CIPP included, can mint a new secret on it until certificate authentication is turned off again, which lifts the block.
+
+### The CIPP Exemption Policy
+
+Entra ID has **app management policies**: rules that control what credentials an application may carry, such as blocking new client secrets, capping their lifetime, or requiring certificates from a trusted authority. A tenant can set a default policy for every application, and individual applications can be assigned their own policy that overrides the default.
+
+CIPP creates one such policy in your partner tenant, named **CIPP Exemption Policy**, and assigns it to the CIPP-SAM application. It exists so CIPP can keep managing its own credentials when your tenant default forbids it: without it, a tenant that blocks client secrets or restricts certificate lifetimes would also stop CIPP from rotating its secret or renewing its certificate, and CIPP would eventually lose access. CIPP creates or updates it only when it needs to, during setup, rotation and renewal, and only ever assigns it to CIPP-SAM. Other applications CIPP works with, such as the Azure MFA client, get their own separately named policies.
+
+In certificate mode the policy does the opposite job for secrets: it is set to block adding client secrets to CIPP-SAM, whatever the tenant default says, while still allowing the certificate to be renewed. Switching back to secret mode sets it to allow secrets again.
+
+The policy only exists in your partner tenant. In customer tenants CIPP-SAM is a service principal protected by the service principal lock that CIPP enables on the application, and CIPP never creates policies there.
+
+App management policies are not shown in the Entra admin centre. You can inspect them with Graph, for example through the Graph Explorer in CIPP at `/policies/appManagementPolicies`, where the CIPP policy shows which restriction types are enabled or disabled for CIPP-SAM.
+
 Turning certificate authentication off needs a working client secret to fall back to. On an install that never had one, CIPP creates a secret for you, using the certificate, and tracks it like a manual rotation. It then waits for Microsoft to activate the new secret before switching; if that takes longer than the request allows, certificate authentication stays on and you are asked to try again in a few minutes. The secret is already in place at that point, so the second attempt completes straight away.
 
 {% include "../../../../../.gitbook/includes/feature-request.md" %}

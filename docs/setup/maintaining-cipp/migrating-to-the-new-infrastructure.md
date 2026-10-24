@@ -20,7 +20,7 @@ In CIPP, go to **Application Settings**, then select **Manage Backups** on the B
 
 ### Finish SSO migration
 
-SSO must be at **`secrets_stored`** or **`complete`** before you cut over. You can find the SSO setup and its state under **CIPP → Advanced → Authentication → SSO**. If it is not set up yet, complete it there before going any further: see [sso.md](../../user-documentation/cipp/advanced/authentication/sso.md "mention").
+SSO must be at **`secrets_stored`** or **`complete`** before you cut over. You can find the SSO setup and its state on the SSO App Registration card under **CIPP → Advanced → Authentication → Credentials**. If it is not set up yet, complete it there before going any further: see [sso.md](../../user-documentation/cipp/advanced/authentication/sso.md "mention").
 
 {% hint style="warning" %}
 A test run only **warns** about incomplete SSO, it does not stop. A clean-looking `-TestOnly` result is not confirmation that SSO is ready, so check the warnings in the output rather than the exit alone.
@@ -119,7 +119,7 @@ To add the domain in Azure:
 
 The instance now answers on a different hostname from the Static Web App it replaced, and each hostname needs its own sign-in redirect URI of `https://<hostname>/.auth/login/aad/callback`. Any hostname without one fails sign-in with `AADSTS50011`, including the custom domain you have just added.
 
-In CIPP, go to **CIPP** → **Advanced** → **Authentication** → **SSO** and select **Refresh Sign-in URLs**. It adds a redirect URI for every hostname currently bound to the instance and never removes an existing one, so it is safe to run again after any later domain change.
+In CIPP, go to **CIPP** → **Advanced** → **Authentication** → **Credentials** and select **Refresh Sign-in URLs**. It adds a redirect URI for every hostname currently bound to the instance and never removes an existing one, so it is safe to run again after any later domain change.
 
 {% hint style="info" %}
 The **Sign-in URLs** list on that page shows every hostname bound to the instance. One shown in orange is bound but has no matching redirect URI yet.

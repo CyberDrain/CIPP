@@ -90,6 +90,8 @@ For a **Scripted CIPP Alert**, this is how the alert is delivered:
 * Email - Delivers an HTML-formatted table to the email address provided in [notifications.md](../../../cipp/settings/notifications.md "mention").
 * Push (notify me) - Sends a push notification to the devices you registered under [user-settings.md](../../../shared-features/menu-bar/user-settings.md "mention"). It reaches only the person who created the alert. The option is only offered once you have registered at least one device there; until then, the helper text under the field says where to enrol, and afterwards it says how many devices will be notified.
 
+By default a scripted alert notifies you once when an item first appears or comes back, and stays quiet while the item is still there on later runs. Turn on **Notify on every run while the alert is still active** if you want still-active items sent again on every run. Items you have snoozed stay silent either way, and the switch is saved with the alert, so it is set again when you edit it.
+
 For an **Audit Log Alert**, this is what CIPP does when a matching log entry arrives, and it can include remediation as well as notification:
 
 * Execute a BEC Remediate - Runs the business email compromise remediation against the user in the log entry.

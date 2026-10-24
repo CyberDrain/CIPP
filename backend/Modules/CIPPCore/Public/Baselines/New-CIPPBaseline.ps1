@@ -60,9 +60,11 @@ function New-CIPPBaseline {
     # The editor round-trips the tenant selector's own option objects ({label, value,
     # type}) verbatim via assignedTo/excludedTo; the flat excludedTenants values keep
     # the exclusion logic simple. Raw string values are accepted everywhere too.
+    $TenantLookup = Get-CIPPTenantLookup
     $ExcludedValues = @($Baseline.excludedTenants | ForEach-Object {
-            if ($null -eq $_) { } elseif ($_ -is [string]) { $_ } else { "$($_.value)" }
-        } | Where-Object { $_ })
+            $Value = if ($null -eq $_) { } elseif ($_ -is [string]) { $_ } else { "$($_.value)" }
+            if ($Value) { $TenantLookup[$Value].customerId ?? $Value }
+        })
     $RolloutEntity = @{
         PartitionKey    = 'rollout'
         RowKey          = "$GUID"
@@ -120,7 +122,8 @@ function New-CIPPBaseline {
             if ($Group) {
                 @{ scope = 'group'; scopeId = "$($Group.Id)"; scopeName = "$($Group.Name)"; segment = "group_$($Group.Id)" }
             } else {
-                @{ scope = 'tenant'; scopeId = $Value; scopeName = $Value; segment = "tenant_$Value" }
+                $TenantId = $TenantLookup[$Value].customerId ?? $Value
+                @{ scope = 'tenant'; scopeId = $TenantId; scopeName = $TenantLookup[$Value].defaultDomainName ?? $Value; segment = "tenant_$TenantId" }
             }
         }
     }
@@ -169,8 +172,13 @@ function New-CIPPBaseline {
             $Instances.Add($(if ($Config -is [string]) { $Config } else { $Config.instance ?? $Config.standard }))
         }
     }
+    # Package members resolve as '<Member>#p<package suffix>-<template>' (Expand-CIPPBaselineTemplatePackage).
+    $PackagePrefixes = @($Instances | ForEach-Object { if ($_ -match '#(.+)$') { "#p$($Matches[1])-" } else { '#ppkg-' } })
     $ResolvedTable = Get-CippTable -tablename 'BaselineAlignment'
-    $Orphans = @(Get-CIPPAzDataTableEntity @ResolvedTable -Filter "TemplateId eq '$SafeGuid'" | Where-Object { $Instances -notcontains $_.StandardName })
+    $Orphans = @(Get-CIPPAzDataTableEntity @ResolvedTable -Filter "TemplateId eq '$SafeGuid'" | Where-Object {
+            $Name = "$($_.StandardName)"
+            $Instances -notcontains $Name -and -not ($PackagePrefixes | Where-Object { $Name.Contains($_) })
+        })
     if ($Orphans) {
         Remove-CIPPAzDataTableEntity -Force @ResolvedTable -Entity $Orphans
     }

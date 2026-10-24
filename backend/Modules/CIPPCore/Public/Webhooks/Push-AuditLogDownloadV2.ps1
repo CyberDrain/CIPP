@@ -172,6 +172,7 @@ function Push-AuditLogDownloadV2 {
             # Push-AuditLogProcessingBatchV2 claims the Downloaded windows and returns nothing when another run holds them.
             Start-CIPPOrchestrator -InputObject ([PSCustomObject]@{
                     OrchestratorName = "AuditLogProcessV2-$TenantFilter"
+                    AllowCollision   = $false
                     QueueFunction    = [PSCustomObject]@{ FunctionName = 'AuditLogProcessingBatchV2'; Parameters = @{ TenantFilter = $TenantFilter } }
                     SkipLog          = $true
                     Priority         = 3

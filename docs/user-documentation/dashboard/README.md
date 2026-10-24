@@ -267,7 +267,7 @@ Open Microsoft 365 incidents and advisories for the tenant, read live from Micro
 
 <summary>Secure Score</summary>
 
-The historical trend of the Microsoft Secure Score collected for the tenant.
+The historical trend of the Microsoft Secure Score collected for the tenant. The **%** / **Points** toggle switches the chart between the score as a percentage of the maximum (the default) and the score in points.
 
 </details>
 

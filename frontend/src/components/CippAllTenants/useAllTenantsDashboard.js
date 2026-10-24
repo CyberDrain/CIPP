@@ -75,16 +75,18 @@ export const deriveSecureScoreSummary = (rows, displayNameByDomain = new Map()) 
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, value]) => ({
       date,
-      percent: value.count ? Math.round((value.total / value.count) * 10) / 10 : 0,
+      percent: value.count ? Math.round((value.total / value.count) * 100) / 100 : 0,
     }))
 
   const delta =
     trend.length > 1
-      ? Math.round((trend[trend.length - 1].percent - trend[0].percent) * 10) / 10
+      ? Math.round((trend[trend.length - 1].percent - trend[0].percent) * 100) / 100
       : null
 
   return {
-    average: Math.round(withNames.reduce((sum, row) => sum + row.percent, 0) / withNames.length),
+    average:
+      Math.round((withNames.reduce((sum, row) => sum + row.percent, 0) / withNames.length) * 100) /
+      100,
     worst: sorted[0],
     best: sorted[sorted.length - 1],
     scored: withNames.length,
@@ -122,8 +124,8 @@ const ADHOC_CACHE_TYPES = new Set([
 const RETIRED_CACHE_TYPES = new Set(['CredentialUserRegistrationDetails', 'DeviceSettings'])
 
 // The nightly orchestrator runs at 03:00, so a tenant that collected yesterday is still healthy;
-// past 30 hours it has missed a run, and past 72 it has missed three.
-const STALE_HOURS = 30
+// past 48 hours it has missed two runs, and past 72 it has missed three.
+const STALE_HOURS = 48
 const CRITICAL_HOURS = 72
 
 /**

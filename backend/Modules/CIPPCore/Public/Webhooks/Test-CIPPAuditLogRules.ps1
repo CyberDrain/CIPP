@@ -82,6 +82,7 @@ function Test-CIPPAuditLogRules {
             MatchedRules  = @()
             DataToProcess = @()
             Error         = $null
+            AlertMs       = 0
         }
 
         # Get the CacheWebhooks table for removing processed rows
@@ -822,6 +823,7 @@ function Test-CIPPAuditLogRules {
             $PendingAlertRows = [System.Collections.Generic.List[object]]::new()
             $PendingAlertBytes = 0
             $AuditLogTable = Get-CIPPTable -TableName 'AuditLogs'
+            $AlertSw = [System.Diagnostics.Stopwatch]::StartNew()
 
             $FlushAlertRows = {
                 if ($PendingAlertRows.Count -eq 0) { return }
@@ -872,6 +874,7 @@ function Test-CIPPAuditLogRules {
                 # In a finally so an exception mid-loop still stores the rows for alerts that did
                 # go out; only a hard process kill loses them.
                 & $FlushAlertRows
+                $Results.AlertMs = $AlertSw.Elapsed.TotalMilliseconds
             }
         }
 

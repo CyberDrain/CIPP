@@ -77,6 +77,31 @@ AfterAll {
 }
 
 Describe 'Get-CIPPAuditLogContent' {
+    It 'lists without downloading when asked to list only' {
+        Set-Listing 'tid-l1' @((New-Blob 'tid-l1' 'l1a' @('UserLoggedIn')), (New-Blob 'tid-l1' 'l1b' @('Set-Mailbox')))
+        $Out = @(Get-CIPPAuditLogContent -Queries @(New-Query 'tid-l1') -ListOnly)
+        $Out | Should -HaveCount 1
+        $Out[0].Kind | Should -Be 'Listing'
+        @($Out[0].Blobs).Count | Should -Be 2
+        $Out[0].Complete | Should -BeTrue
+        $Out[0].TenantDone | Should -BeTrue
+    }
+
+    It 'downloads the blobs it is given, of several tenants, without listing, and hands back what rode along' {
+        $Given = foreach ($Tenant in 'tid-g1', 'tid-g2') {
+            foreach ($n in 1..2) {
+                $Blob = New-Blob $Tenant "$Tenant-$n" @('UserLoggedIn', 'Set-Mailbox')
+                [pscustomobject]@{ TenantId = $Tenant; contentUri = $Blob.contentUri; RowKey = "row-$Tenant-$n" }
+            }
+        }
+        $Out = @(Get-CIPPAuditLogContent -Blobs @($Given) -MaxConcurrency 2)
+        $Out | Should -HaveCount 4
+        @($Out.Where({ $_.Kind -ne 'Blob' })) | Should -HaveCount 0
+        @($Out.Blob.RowKey | Sort-Object) | Should -Be @('row-tid-g1-1', 'row-tid-g1-2', 'row-tid-g2-1', 'row-tid-g2-2')
+        @($Out.Where({ $_.TenantDone }).TenantId | Sort-Object) | Should -Be @('tid-g1', 'tid-g2')
+        @($Out.Records).Count | Should -Be 8
+    }
+
     It 'keeps the records a like or eq rule matches, case-insensitively' {
         $Prefilter = New-Prefilter @(, @(New-Condition 'Operation' 'like' 'update application*certificates and secrets management*')), @(, @(New-Condition 'Operation' 'eq' 'userloggedin'))
         $Result = Invoke-Download (New-Blob 'tid-1' 'mixed' @($script:CredentialOperation, 'Update application.', 'UserLoggedIn', 'Set-Mailbox')) @{ 'tid-1' = $Prefilter }

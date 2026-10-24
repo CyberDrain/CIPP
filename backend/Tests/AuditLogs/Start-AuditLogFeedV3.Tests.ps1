@@ -43,7 +43,8 @@ namespace Craft.Services {
     }
 
     . (Join-Path $Public 'AuditLogs/Get-CIPPAuditLogTenantScope.ps1')
-    . (Join-Path $Public 'Webhooks/Start-CIPPAuditLogFeedRun.ps1')
+    . (Join-Path $Public 'Webhooks/Start-CIPPAuditLogFeedListRun.ps1')
+    function Push-AuditLogFeedFanOutV3 { param($Item) }
     . (Join-Path $Public 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1')
     . (Join-Path $Public 'Entrypoints/Orchestrator Functions/Start-AuditLogFeedV3.ps1')
 }
@@ -86,60 +87,49 @@ Describe 'Start-AuditLogFeedV3' {
         Mock Get-CIPPAuditLogTenantScope { [pscustomobject]@{ defaultDomainName = 'contoso.com'; customerId = 'tid-1'; ContentTypes = @('Audit.AzureActiveDirectory', 'Audit.Exchange') } }
         Mock Get-CIPPAzDataTableEntity { $script:CursorRows }
         Mock Start-CIPPOrchestrator { $script:Started.Add($InputObject) }
+        Mock Push-AuditLogFeedFanOutV3 {}
         Mock Start-AuditLogIngestionV2 {}
         Mock Start-AuditLogSearchCreationV2 {}
         Mock Write-LogMessage {}
         [Craft.Services.OrchestratorBridge]::ActiveNames.Clear()
     }
 
-    It 'leaves a feed round that is still running be, but still ingests Graph searches' {
-        [void][Craft.Services.OrchestratorBridge]::ActiveNames.Add('AuditLogFeedV3')
+    It 'leaves a cycle that is still <Active> be, but still ingests Graph searches' -ForEach @(@{ Active = 'AuditLogFeedListV3' }, @{ Active = 'AuditLogFeedBlobsV3' }) {
+        [void][Craft.Services.OrchestratorBridge]::ActiveNames.Add($Active)
         Start-AuditLogFeedV3
         $script:Started | Should -HaveCount 0
         Should -Invoke Get-CIPPAuditLogTenantScope -Times 0 -Exactly
         Should -Invoke Start-AuditLogIngestionV2 -Times 1 -Exactly
     }
+
     It 'leaves out a content type in backoff and passes the other cursor along' {
         $script:CursorRows = @(
             [pscustomobject]@{ PartitionKey = 'contoso.com'; RowKey = 'Audit.Exchange'; NextAttemptUtc = [datetime]::UtcNow.AddHours(1) }
-            [pscustomobject]@{ PartitionKey = 'contoso.com'; RowKey = 'Audit.AzureActiveDirectory'; LastEndUtc = [datetime]'2026-10-17T05:00:00Z'; Attempts = 0 }
+            [pscustomobject]@{ PartitionKey = 'contoso.com'; RowKey = 'Audit.AzureActiveDirectory'; LastEndUtc = [datetime]'2026-10-17T05:00:00Z'; ListedThroughUtc = [datetime]'2026-10-17T06:00:00Z'; Attempts = 0 }
         )
         Start-AuditLogFeedV3
         $Tenant = $script:Started[0].Batch[0].Tenants[0]
         $Tenant.ContentTypes | Should -Be @('Audit.AzureActiveDirectory')
-        $Tenant.Cursors['Audit.AzureActiveDirectory'].LastEndUtc | Should -Be ([datetime]'2026-10-17T05:00:00Z')
+        $Tenant.Cursors['Audit.AzureActiveDirectory'].ListedThroughUtc | Should -Be ([datetime]'2026-10-17T06:00:00Z')
     }
 
-    It 'skips a tenant with every content type in backoff' {
+    It 'fans out the blobs left from an earlier cycle when no tenant is due' {
         $script:CursorRows = foreach ($Ct in 'Audit.Exchange', 'Audit.AzureActiveDirectory') { [pscustomobject]@{ PartitionKey = 'contoso.com'; RowKey = $Ct; NextAttemptUtc = [datetime]::UtcNow.AddHours(1) } }
         Start-AuditLogFeedV3
         $script:Started | Should -HaveCount 0
+        Should -Invoke Push-AuditLogFeedFanOutV3 -Times 1 -Exactly -ParameterFilter { $Item.Parameters.Run -eq 0 -and $Item.Parameters.CycleStartUtc }
     }
 
-    It 'queues one feed run at a time, processed by its post-execution' {
-        Start-AuditLogFeedV3
-        $script:Started[0].OrchestratorName | Should -Be 'AuditLogFeedV3'
-        $script:Started[0].AllowCollision | Should -BeFalse
-        $script:Started[0].PostExecution.FunctionName | Should -Be 'AuditLogFeedRoundV3'
-    }
-
-    It 'queues one task per tenant in an uncapped run, as round 0 with its start for the post-execution' {
-        Mock Get-CIPPAuditLogTenantScope { foreach ($n in 1..3) { [pscustomobject]@{ defaultDomainName = "t$n.com"; customerId = "tid-$n"; ContentTypes = @('Audit.Exchange') } } }
+    It 'lists 50 tenants a task in one listing run, fanned out by its post-execution as the cycle''s first run' {
+        Mock Get-CIPPAuditLogTenantScope { foreach ($n in 1..120) { [pscustomobject]@{ defaultDomainName = "t$n.com"; customerId = "tid-$n"; ContentTypes = @('Audit.Exchange') } } }
         Start-AuditLogFeedV3
         $Run = $script:Started[0]
-        $Run.Batch | Should -HaveCount 3
-        @($Run.Batch.ForEach({ @($_.Tenants).Count })) | Should -Be @(1, 1, 1)
-        $Run.Batch.Tenants.TenantFilter | Should -Be @('t1.com', 't2.com', 't3.com')
-        $Run.PSObject.Properties.Name | Should -Not -Contain 'MaxConcurrency'
-        $Run.PostExecution.Parameters.Round | Should -Be 0
-        ([datetimeoffset]$Run.PostExecution.Parameters.RoundStartUtc).UtcDateTime | Should -BeLessOrEqual ([datetime]::UtcNow)
-    }
-
-    It 'names a later round into the same run family and lets it start while its own round finishes' {
-        $null = Start-CIPPAuditLogFeedRun -Tenants @([pscustomobject]@{ defaultDomainName = 'contoso.com'; customerId = 'tid-1'; ContentTypes = @('Audit.Exchange') }) -Round 2
-        $script:Started[0].OrchestratorName | Should -Match '^AuditLogFeedV3-[0-9a-f-]{36}$'
-        $script:Started[0].AllowCollision | Should -BeTrue
-        $script:Started[0].PostExecution.Parameters.Round | Should -Be 2
+        $Run.OrchestratorName | Should -Be 'AuditLogFeedListV3'
+        @($Run.Batch.ForEach({ @($_.Tenants).Count })) | Should -Be @(50, 50, 20)
+        $Run.Batch[0].FunctionName | Should -Be 'AuditLogFeedListV3'
+        $Run.PostExecution.FunctionName | Should -Be 'AuditLogFeedFanOutV3'
+        $Run.PostExecution.Parameters.Run | Should -Be 0
+        ([datetimeoffset]$Run.PostExecution.Parameters.CycleStartUtc).UtcDateTime | Should -BeLessOrEqual ([datetime]::UtcNow)
     }
 
     It 'still downloads created Graph searches when the feed stage fails' {
@@ -157,7 +147,7 @@ Describe 'Start-AuditLogFeedV3' {
 Describe 'Start-AuditLogFeedV3 unanchored rule check' {
     BeforeEach {
         [Craft.Services.OrchestratorBridge]::ActiveNames.Clear()
-        [void][Craft.Services.OrchestratorBridge]::ActiveNames.Add('AuditLogFeedV3')
+        [void][Craft.Services.OrchestratorBridge]::ActiveNames.Add('AuditLogFeedListV3')
         $script:CheckRow = $null
         $Operation = '[{"Property":{"label":"Operation"},"Operator":{"value":"eq"},"Input":{"value":"New-InboxRule"}}]'
         $UserOnly = '[{"Property":{"label":"UserId"},"Operator":{"value":"like"},"Input":{"value":"ServicePrincipal_*"}}]'

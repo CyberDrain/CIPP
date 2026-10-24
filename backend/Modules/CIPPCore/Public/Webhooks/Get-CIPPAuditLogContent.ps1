@@ -25,13 +25,18 @@ function Get-CIPPAuditLogContent {
         Prefilters maps a tenant id to its Get-CIPPAuditLogPrefilter result; a tenant without one, or with $null, keeps
         every record.
 
+        ListOnly lists without downloading. Blobs downloads the given blobs (listing entries of any tenants, each with
+        TenantId, contentUri and contentId; other properties ride along on the result's Blob) without listing.
+
         Tokens are delegated: the SAM app holds ActivityFeed.Read only as a delegated scope.
     .FUNCTIONALITY
         Internal
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)][object[]]$Queries,
+        [object[]]$Queries = @(),
+        [object[]]$Blobs = @(),
+        [switch]$ListOnly,
         [hashtable]$Prefilters = @{},
         [int]$MaxConcurrency = 32
     )
@@ -47,6 +52,15 @@ function Get-CIPPAuditLogContent {
     $RawChecks = @{}
 
     foreach ($Query in $Queries) { $Open[[string]$Query.TenantId] = 1 + [int]$Open[[string]$Query.TenantId] }
+    foreach ($Blob in $Blobs) { $Open[[string]$Blob.TenantId] = 1 + [int]$Open[[string]$Blob.TenantId] }
+    foreach ($TenantId in @($Open.Keys)) {
+        try {
+            $Tokens[$TenantId] = (Get-GraphToken -tenantid $TenantId -scope 'https://manage.office.com/.default').Authorization
+        } catch {
+            $Tokens[$TenantId] = $null
+            $TokenErrors[$TenantId] = $_.Exception.Message
+        }
+    }
     foreach ($Query in $Queries) {
         $TenantId = [string]$Query.TenantId
         $Listing = [pscustomobject]@{
@@ -63,14 +77,6 @@ function Get-CIPPAuditLogContent {
             Error        = $null
             TenantDone   = $false
         }
-        if (-not $Tokens.ContainsKey($TenantId)) {
-            try {
-                $Tokens[$TenantId] = (Get-GraphToken -tenantid $TenantId -scope 'https://manage.office.com/.default').Authorization
-            } catch {
-                $Tokens[$TenantId] = $null
-                $TokenErrors[$TenantId] = $_.Exception.Message
-            }
-        }
         if (-not $Tokens[$TenantId]) {
             $Listing.ErrorCode = 'Token'
             $Listing.Error = $TokenErrors[$TenantId] ?? 'No token for the Office 365 Management API'
@@ -85,6 +91,27 @@ function Get-CIPPAuditLogContent {
         $Request.Headers['Authorization'] = $Tokens[$TenantId]
         $Request.Headers['User-Agent'] = $UserAgent
         $Work[$Queue.Add($Request)] = @{ Listing = $Listing }
+    }
+    foreach ($Blob in $Blobs) {
+        $TenantId = [string]$Blob.TenantId
+        $Result = [pscustomobject]@{ Kind = 'Blob'; TenantId = $TenantId; Blob = $Blob; Skipped = $false; RecordCount = 0; Records = @(); ParseMs = 0; StatusCode = 0; ErrorCode = $null; Error = $null; TenantDone = $false }
+        if (-not $Tokens[$TenantId]) {
+            $Result.ErrorCode = 'Token'
+            $Result.Error = $TokenErrors[$TenantId] ?? 'No token for the Office 365 Management API'
+            $Open[$TenantId]--
+            $Result.TenantDone = $Open[$TenantId] -eq 0
+            $Result
+            continue
+        }
+        if (-not $RawChecks.ContainsKey($TenantId)) {
+            $RawChecks[$TenantId] = if ($null -ne $Prefilters[$TenantId]) { , @($Prefilters[$TenantId].Needles) }
+        }
+        $Request = [CIPP.CIPPConcurrentRequest]::new()
+        $Request.Uri = '{0}?PublisherIdentifier={1}' -f $Blob.contentUri, $env:TenantID
+        $Request.Headers = [System.Collections.Generic.Dictionary[string, string]]::new()
+        $Request.Headers['Authorization'] = $Tokens[$TenantId]
+        $Request.Headers['User-Agent'] = $UserAgent
+        $Work[$Queue.Add($Request)] = @{ Result = $Result }
     }
 
     while ($null -ne ($Done = $Queue.Next())) {
@@ -122,13 +149,14 @@ function Get-CIPPAuditLogContent {
                 if ($Done.Result.HasContent) {
                     foreach ($Blob in [CIPP.CippJson]::ConvertFromResponse($Done.Result)) {
                         $PageBlobs.Add($Blob)
+                        if ($ListOnly) { continue }
                         $Request = [CIPP.CIPPConcurrentRequest]::new()
                         $Request.Uri = '{0}?PublisherIdentifier={1}' -f $Blob.contentUri, $env:TenantID
                         $Request.Headers = [System.Collections.Generic.Dictionary[string, string]]::new()
                         $Request.Headers['Authorization'] = $Tokens[$TenantId]
                         $Request.Headers['User-Agent'] = $UserAgent
                         $Open[$TenantId]++
-                        $Work[$Queue.Add($Request)] = @{ Result = [pscustomobject]@{ Kind = 'Blob'; TenantId = $TenantId; Blob = $Blob; Skipped = $false; RecordCount = 0; Records = @(); StatusCode = 0; ErrorCode = $null; Error = $null; TenantDone = $false } }
+                        $Work[$Queue.Add($Request)] = @{ Result = [pscustomobject]@{ Kind = 'Blob'; TenantId = $TenantId; Blob = $Blob; Skipped = $false; RecordCount = 0; Records = @(); ParseMs = 0; StatusCode = 0; ErrorCode = $null; Error = $null; TenantDone = $false } }
                     }
                 }
                 if ($HasNext) {
@@ -158,6 +186,7 @@ function Get-CIPPAuditLogContent {
             $Result.ErrorCode = $Parsed.error.code
             $Result.Error = $Parsed.error.message ?? $Body ?? "HTTP $($Done.StatusCode)"
         } elseif ($Done.Result.HasContent) {
+            $ParseSw = [System.Diagnostics.Stopwatch]::StartNew()
             try {
                 $Found = $true
                 $Shadowed = $true
@@ -190,6 +219,7 @@ function Get-CIPPAuditLogContent {
             } catch {
                 $Result.Error = "Could not parse the blob: $($_.Exception.Message)"
             }
+            $Result.ParseMs = $ParseSw.Elapsed.TotalMilliseconds
         }
         $Done = $null
         $Open[$Result.TenantId]--

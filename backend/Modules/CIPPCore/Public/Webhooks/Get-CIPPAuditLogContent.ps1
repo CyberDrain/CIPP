@@ -10,9 +10,9 @@ function Get-CIPPAuditLogContent {
         network time of the rest. Pages are followed through the NextPageUri header.
 
         Emits, as each completes:
-          - Kind 'Listing', once per query when all its pages are read: TenantFilter, TenantId, ContentType, StartTime,
-            EndTime, Blobs, StatusCode, ErrorCode (the AF code from the error body, or 'Token' when no token could be
-            issued) and Error;
+          - Kind 'Listing', once per listing page: TenantFilter, TenantId, ContentType, StartTime, EndTime, Blobs (that
+            page's), Complete (true on a query's last page, or on its error), StatusCode, ErrorCode (the AF code from the
+            error body, or 'Token' when no token could be issued) and Error;
           - Kind 'Blob', once per blob: TenantId, Blob, Skipped (dropped by the raw check), RecordCount (records in a
             parsed blob), Records (the kept raw records), StatusCode, ErrorCode and Error.
         TenantDone is true on the last object of a tenant, once nothing of it is left in flight. At most MaxConcurrency
@@ -59,6 +59,7 @@ function Get-CIPPAuditLogContent {
             StartTime    = $Query.StartTime
             EndTime      = $Query.EndTime
             Blobs        = [System.Collections.Generic.List[object]]::new()
+            Complete     = $true
             StatusCode   = 0
             ErrorCode    = $null
             Error        = $null
@@ -109,9 +110,22 @@ function Get-CIPPAuditLogContent {
                     $Needles = @(foreach ($Operation in $Operations) { ($Operation -split '[*?\[]', 2)[0] })
                     $RawChecks[$TenantId] = if ($null -ne $Operations -and $Needles.Where({ $_ -notmatch '^[\x20-\x7E]+$' -or $_.Contains('"') -or $_.Contains('\') }, 'First').Count -eq 0) { , $Needles }
                 }
+                # The next page goes in ahead of this page's downloads, so a long listing is not read behind them.
+                $NextPage = $null
+                $HasNext = $Done.Result.ResponseHeaders.TryGetValue('NextPageUri', [ref]$NextPage) -and $NextPage
+                if ($HasNext) {
+                    $Request = [CIPP.CIPPConcurrentRequest]::new()
+                    $Request.Uri = [string]$NextPage[0]
+                    if ($Request.Uri -notmatch 'PublisherIdentifier=') { $Request.Uri = '{0}&PublisherIdentifier={1}' -f $Request.Uri, $env:TenantID }
+                    $Request.Headers = [System.Collections.Generic.Dictionary[string, string]]::new()
+                    $Request.Headers['Authorization'] = $Tokens[$TenantId]
+                    $Request.Headers['User-Agent'] = $UserAgent
+                    $Work[$Queue.Add($Request)] = $Entry
+                }
+                $PageBlobs = [System.Collections.Generic.List[object]]::new()
                 if ($Done.Result.HasContent) {
                     foreach ($Blob in [CIPP.CippJson]::ConvertFromResponse($Done.Result)) {
-                        $Listing.Blobs.Add($Blob)
+                        $PageBlobs.Add($Blob)
                         $Request = [CIPP.CIPPConcurrentRequest]::new()
                         $Request.Uri = '{0}?PublisherIdentifier={1}' -f $Blob.contentUri, $env:TenantID
                         $Request.Headers = [System.Collections.Generic.Dictionary[string, string]]::new()
@@ -121,18 +135,17 @@ function Get-CIPPAuditLogContent {
                         $Work[$Queue.Add($Request)] = @{ Result = [pscustomobject]@{ Kind = 'Blob'; TenantId = $TenantId; Blob = $Blob; Skipped = $false; RecordCount = 0; Records = @(); StatusCode = 0; ErrorCode = $null; Error = $null; TenantDone = $false } }
                     }
                 }
-                $NextPage = $null
-                if ($Done.Result.ResponseHeaders.TryGetValue('NextPageUri', [ref]$NextPage) -and $NextPage) {
-                    $Request = [CIPP.CIPPConcurrentRequest]::new()
-                    $Request.Uri = [string]$NextPage[0]
-                    if ($Request.Uri -notmatch 'PublisherIdentifier=') { $Request.Uri = '{0}&PublisherIdentifier={1}' -f $Request.Uri, $env:TenantID }
-                    $Request.Headers = [System.Collections.Generic.Dictionary[string, string]]::new()
-                    $Request.Headers['Authorization'] = $Tokens[$TenantId]
-                    $Request.Headers['User-Agent'] = $UserAgent
-                    $Work[$Queue.Add($Request)] = $Entry
+                if ($HasNext) {
+                    [pscustomobject]@{
+                        Kind = 'Listing'; TenantFilter = $Listing.TenantFilter; TenantId = $Listing.TenantId; ContentType = $Listing.ContentType
+                        StartTime = $Listing.StartTime; EndTime = $Listing.EndTime; Blobs = $PageBlobs; Complete = $false
+                        StatusCode = $Done.StatusCode; ErrorCode = $null; Error = $null; TenantDone = $false
+                    }
                     continue
                 }
+                $Listing.Blobs = $PageBlobs
             }
+            $Listing.Complete = $true
             $Open[$TenantId]--
             $Listing.TenantDone = $Open[$TenantId] -eq 0
             $Listing

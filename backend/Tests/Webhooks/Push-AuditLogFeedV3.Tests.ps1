@@ -19,9 +19,9 @@ BeforeAll {
         [pscustomobject]@{ CycleId = $CycleId; Tenants = @([pscustomobject]@{ TenantFilter = 'contoso.com'; TenantId = 'tid-1'; ContentTypes = $ContentTypes; Cursors = $Cursors }) }
     }
     function New-Listing {
-        param($Query, [object[]]$Blobs = @(), $ErrorCode, $ErrorMessage)
+        param($Query, [object[]]$Blobs = @(), $ErrorCode, $ErrorMessage, [bool]$Complete = $true)
         [pscustomobject]@{
-            Kind = 'Listing'; TenantDone = $false
+            Kind = 'Listing'; TenantDone = $false; Complete = $Complete
             TenantFilter = $Query.TenantFilter; TenantId = $Query.TenantId; ContentType = $Query.ContentType
             StartTime = $Query.StartTime; EndTime = $Query.EndTime; Blobs = $Blobs; StatusCode = 200; ErrorCode = $ErrorCode; Error = $ErrorMessage
         }
@@ -204,6 +204,25 @@ Describe 'Push-AuditLogFeedV3' {
         $Checkpoints[0].OperationType | Should -Be 'UpsertMerge'
         $Checkpoints.ForEach({ $_.Entity[0].LastEndUtc }) | Should -Be @($script:Queries[0].StartTime.AddSeconds(10), $script:Queries[0].StartTime.AddSeconds(20))
         $Cursors[-1].Entity[0].LastEndUtc | Should -Be $script:Queries[0].EndTime
+    }
+
+    It 'checkpoints a range whose listing is still paging, up to just before the newest blob listed so far' {
+        Mock Get-CIPPAuditLogContent {
+            $script:Queries = $Queries
+            $Query = $Queries[0]
+            $Page1 = @(foreach ($n in 1..10) { New-Blob $Query.TenantId $Query.ContentType "b$n" $Query.StartTime.AddSeconds($n) })
+            New-Listing -Query $Query -Blobs $Page1 -Complete $false
+            foreach ($Blob in $Page1) { New-Download $Blob @(New-Record "rec-$($Blob.contentId)") }
+            $Page2 = @(New-Blob $Query.TenantId $Query.ContentType 'b11' $Query.StartTime.AddSeconds(11))
+            New-Listing -Query $Query -Blobs $Page2
+            New-Download $Page2[0] @(New-Record 'rec-b11')
+        }
+        Push-AuditLogFeedV3 -Item (New-FeedItem)
+        $Writes = @($script:Writes.Where({ $_.Table -eq 'AuditLogFeedCursor' }))
+        # Page 2 may still hold blobs published in the same second as b10, so the checkpoint stops a second short of it.
+        @($Writes.Where({ $_.Entity[0].CheckpointUtc })).ForEach({ $_.Entity[0].LastEndUtc }) | Should -Be @($script:Queries[0].StartTime.AddSeconds(9))
+        $Writes[-1].Entity[0].LastEndUtc | Should -Be $script:Queries[0].EndTime
+        $Writes[-1].Entity[0].Blobs | Should -Be 11
     }
 
     It 'keeps the blobs finished before a failed one: the cursor stops just short of it and backs off' {

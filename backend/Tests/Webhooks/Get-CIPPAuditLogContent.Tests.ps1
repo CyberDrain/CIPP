@@ -125,13 +125,17 @@ Describe 'Get-CIPPAuditLogContent' {
         $Result.Skipped | Should -BeTrue
     }
 
-    It 'follows NextPageUri, downloads the blobs of every page and emits the listing once, after its last page' {
+    It 'follows NextPageUri, downloads the blobs of every page and emits each page as it is read, the last one Complete' {
         Set-Listing 'tid-4' @(New-Blob 'tid-4' 'p1' @('UserLoggedIn')) -NextPage '/page2'
         Set-Listing 'tid-4' @(New-Blob 'tid-4' 'p2' @('Set-Mailbox')) -Page '/page2'
         $Out = @(Get-CIPPAuditLogContent -Queries @(New-Query 'tid-4') -Prefilters @{ 'tid-4' = $null })
         $Listings = @($Out.Where({ $_.Kind -eq 'Listing' }))
-        $Listings | Should -HaveCount 1
-        $Listings[0].Blobs.contentId | Should -Be @('p1', 'p2')
+        $Listings | Should -HaveCount 2
+        $Listings[0].Blobs.contentId | Should -Be @('p1')
+        $Listings[0].Complete | Should -BeFalse
+        $Listings[0].TenantDone | Should -BeFalse
+        $Listings[1].Blobs.contentId | Should -Be @('p2')
+        $Listings[1].Complete | Should -BeTrue
         (@($Out.Where({ $_.Kind -eq 'Blob' })).Records.Id | Sort-Object) | Should -Be @('p1-0', 'p2-0')
         @($Out.Where({ $_.TenantDone })) | Should -HaveCount 1
         $Out[-1].TenantDone | Should -BeTrue

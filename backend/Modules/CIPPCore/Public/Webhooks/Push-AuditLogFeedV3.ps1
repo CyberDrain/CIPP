@@ -67,20 +67,25 @@ function Push-AuditLogFeedV3 {
         }
         $Entry = $Progress[$Key]
         $Entry.Query.EndTime = $Query.EndTime
-        $Entry.Ranges.Add(@{ Start = $Query.StartTime; End = $Query.EndTime; Listed = $false; Pending = [System.Collections.Generic.Dictionary[string, datetime]]::new(); Done = [System.Collections.Generic.HashSet[string]]::new() })
+        $Entry.Ranges.Add(@{ Start = $Query.StartTime; End = $Query.EndTime; Listed = $false; ListedThrough = $Query.StartTime; Pending = [System.Collections.Generic.Dictionary[string, datetime]]::new(); Done = [System.Collections.Generic.HashSet[string]]::new() })
     }
-    # Where the cursor can safely stand: the start of the first range not yet listed, or just before the oldest listed
-    # blob not yet finished. Listings come back oldest first, so everything before that point is in.
+    # Where the cursor can safely stand: just before the oldest listed blob not yet finished, and in a range whose
+    # listing is still paging, no later than just before the newest blob listed so far. Listings come back oldest
+    # first, so everything before that point is in.
     $Frontier = {
         param($Entry)
         foreach ($Range in $Entry.Ranges) {
-            if (-not $Range.Listed) { return $Range.Start }
+            $Point = $null
             if ($Range.Pending.Count -gt 0) {
                 $Oldest = [datetime]::MaxValue
                 foreach ($Created in $Range.Pending.Values) { if ($Created -lt $Oldest) { $Oldest = $Created } }
-                $Before = $Oldest.AddSeconds(-1)
-                return $(if ($Before -gt $Range.Start) { $Before } else { $Range.Start })
+                $Point = $Oldest.AddSeconds(-1)
             }
+            if (-not $Range.Listed) {
+                $Listed = $Range.ListedThrough.AddSeconds(-1)
+                if ($null -eq $Point -or $Listed -lt $Point) { $Point = $Listed }
+            }
+            if ($null -ne $Point) { return $(if ($Point -gt $Range.Start) { $Point } else { $Range.Start }) }
         }
         $Entry.Ranges[-1].End
     }
@@ -142,10 +147,12 @@ function Push-AuditLogFeedV3 {
                     $Range = $Entry.Ranges.Where({ $_.Start -eq $ListingStart }, 'First')[0]
                     if ($Range) {
                         foreach ($Blob in @($_.Blobs)) {
+                            $Created = if ($Blob.contentCreated) { ([datetimeoffset]$Blob.contentCreated).UtcDateTime } else { $Range.Start }
+                            if ($Created -gt $Range.ListedThrough) { $Range.ListedThrough = $Created }
                             if ($Range.Done.Contains([string]$Blob.contentId)) { continue }
-                            $Range.Pending[[string]$Blob.contentId] = if ($Blob.contentCreated) { ([datetimeoffset]$Blob.contentCreated).UtcDateTime } else { $Range.Start }
+                            $Range.Pending[[string]$Blob.contentId] = $Created
                         }
-                        $Range.Listed = $true
+                        $Range.Listed = $_.Complete -ne $false
                     }
                 }
                 return

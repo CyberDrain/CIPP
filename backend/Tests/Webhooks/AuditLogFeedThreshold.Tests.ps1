@@ -119,7 +119,7 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
         $script:Sent | Should -HaveCount 1
     }
 
-    It 'counts every identity of a busy blob, in one count row and one records row per 10-minute bucket' {
+    It 'counts every identity of a busy blob, in one count row per 10-minute bucket' {
         $Rows = @(foreach ($n in 1..1500) { , @('FileRecycled', "user$n@a.com", ('17:{0:00}:{1:00}' -f [int][Math]::Floor($n / 160), ($n % 60))) }) + @(foreach ($s in 1..5) { , @('FileRecycled', 'bob@a.com', "17:0$($s):30") })
         $script:BlobJson = @{ busy = New-BlobJson $Rows }
         Push-AuditLogFeedBlobsV3 -Item (New-Task 'busy')
@@ -128,7 +128,6 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
         $Map = ConvertFrom-Json -InputObject $CountRows[0].Counts -AsHashtable
         $Map.Count | Should -Be 1501
         $Map['bob@a.com'] | Should -Be 5
-        @($script:Store.Values).Where({ $_.PartitionKey -eq 'id-a|records' }) | Should -HaveCount 1
         $script:Sent | Should -HaveCount 1
         $script:Sent[0].UserId | Should -Be 'bob@a.com'
     }
@@ -152,24 +151,21 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
         $Alert.Id | Should -Be 'threshold-rule-1-bob@a.com-202610241720'
         $Alert.CIPPClause | Should -BeLike '5 of FileRecycled, FileDeletedSecondStageRecycleBin by bob@a.com within 20 minutes*'
         $Alert.CIPPAction | Should -Be $script:Rule.Actions
-        @([CIPP.CippJson]::ConvertFromJson($Alert.AuditRecord)).Count | Should -BeGreaterThan 0
-        # Every record of the burst is kept beside the alert, in time order, not only the samples.
-        $script:RelatedRows | Should -HaveCount 1
-        $script:RelatedRows[0].RowKey | Should -Be $Alert.Id
-        $Kept = @([CIPP.CippJson]::ConvertFromJson($script:RelatedRows[0].Records))
-        $Kept | Should -HaveCount 5
-        @($Kept.Time | ForEach-Object { if ($_ -is [datetime]) { $_.ToString('yyyy-MM-ddTHH:mm:ss') } else { $_ } }) | Should -Be @('2026-10-24T17:01:00', '2026-10-24T17:02:00', '2026-10-24T17:12:00', '2026-10-24T17:13:00', '2026-10-24T17:14:00')
-        $Kept[0].Item | Should -BeLike '*f-17:01:00.docx'
-        $Kept.Operation | Should -Contain 'FileDeletedSecondStageRecycleBin'
+        # The alert carries one record: the identity's latest, which took the count over the threshold. Nothing else is kept.
+        $Records = @([CIPP.CippJson]::ConvertFromJson($Alert.AuditRecord))
+        $Records | Should -HaveCount 1
+        $Records[0].ObjectId | Should -BeLike '*f-17:14:00.docx'
+        $script:RelatedRows | Should -HaveCount 0
+        @($script:Store.Values).Where({ $_.PartitionKey -like '*|records' }) | Should -HaveCount 0
     }
 
-    It 'keeps the related records of an identity whose name has characters a row key cannot hold' {
+    It 'alerts on an identity whose name has characters a row key cannot hold' {
         $Who = 'contoso.onmicrosoft.com\tenant: 1, object: 2'
         $script:BlobJson = @{ r1 = New-BlobJson @(foreach ($Minute in 1..5) { , @('FileRecycled', $Who, ('17:0{0}:00' -f $Minute)) }) }
         Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1')
         $script:Sent | Should -HaveCount 1
-        $script:RelatedRows | Should -HaveCount 1
-        @([CIPP.CippJson]::ConvertFromJson($script:RelatedRows[0].Records)) | Should -HaveCount 5
+        $script:Sent[0].UserId | Should -Be $Who.ToLowerInvariant()
+        @([CIPP.CippJson]::ConvertFromJson($script:Sent[0].AuditRecord))[0].ObjectId | Should -BeLike '*f-17:05:00.docx'
     }
 
     It 'sums an identity''s counts across runs, alerts the run that reaches the count, and never again for that burst' {

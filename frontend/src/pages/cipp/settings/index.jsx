@@ -44,7 +44,7 @@ const Page = () => {
             endpoint="ExecAuditLogRetentionConfig"
             defaultDays={180}
             minDays={30}
-            description="Configure how long saved audit logs are kept, along with the related records kept with repeated activity alerts. Download any logs you need to keep longer from the Saved Logs page before they are deleted."
+            description="Configure how long saved audit logs are kept. Download any logs you need to keep longer from the Saved Logs page before they are deleted."
           />
         </Grid>
         <Grid size={{ lg: 4, md: 6, sm: 12, xs: 12 }}>

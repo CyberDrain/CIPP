@@ -253,7 +253,7 @@ const Page = () => {
               <CippAuditLogRuleCheck tenant={logData.Tenant} logId={id} />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <CippAuditRecordView raw={raw} related={logData.RelatedRecords} />
+              <CippAuditRecordView raw={raw} />
             </Grid>
           </Grid>
         </Paper>

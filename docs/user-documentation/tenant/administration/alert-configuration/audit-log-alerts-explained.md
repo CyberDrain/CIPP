@@ -170,7 +170,7 @@ Turn on **Only alert when one identity does this repeatedly** to alert when one 
 
 * **How it counts.** Records of the alert's operations, in the log the alert reads, are counted per identity (the record's `UserId`) in 10-minute buckets that start on the hour and every 10 minutes after it. Counts are shared across every batch and every collection task, so a burst split across batches or workers is still counted once. The alert fires when the buckets in any window reach the count. A window is a run of whole buckets, its length rounded up to a multiple of 10 minutes, so a burst that straddles a bucket boundary can need up to one bucket more than the window's length.
 * **Once per burst.** After firing for an identity, the alert stays quiet for that identity for an hour or the window's length, whichever is longer. It reports the busiest window of the burst.
-* **What it shows.** The alert carries the count and up to 5 sample records. The saved log also lists the burst's records under **Related records**, summed up by IP address and device: the time, operation, item, IP address and device of each. Up to 60 records are kept per identity for each 10-minute bucket of each batch, and up to 500 per alert, so a very large burst shows a sample of it.
+* **What it shows.** The alert carries the user or app, the count, and the record that reached the count: the latest of that user's records in the batch that took the count over the threshold. CIPP keeps only counts while counting, not the records behind them; to see the rest of the activity, search the tenant's audit log for that user and time.
 * **Limits.**
   * The count must be from 2 to 10,000.
   * The window must be from 10 to 60 minutes. Counts are kept only a few hours, and an alert saved with a longer window is counted over 60 minutes.
@@ -208,9 +208,9 @@ Each alert has an **Edit alert** link, so you can adjust it and check again. A s
 
 Every record that raises an alert is saved and listed under **Saved Logs**, with its full record (in sections, as changes, and as raw JSON), its location, and the alert check.
 
-Saved logs, and the related records of repeated activity alerts, are kept for the **Saved Audit Log Retention** period under CIPP settings: 30 to 365 days, 180 by default. Older ones are deleted once a day.
+Saved logs are kept for the **Saved Audit Log Retention** period under CIPP settings: 30 to 365 days, 180 by default. Older ones are deleted once a day.
 
-To keep a copy, download it as JSON: **Download (JSON)** on the Saved Logs table downloads one log or all the selected ones, and **Download** on a saved log's page includes its related records. The table's CSV and PDF exports hold only the visible columns, not the full record.
+To keep a copy, download it as JSON: **Download (JSON)** on the Saved Logs table downloads one log or all the selected ones, and **Download** on a saved log's page downloads that log. The table's CSV and PDF exports hold only the visible columns, not the full record.
 
 ## Log Collection and Diagnostics
 

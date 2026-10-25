@@ -5,8 +5,7 @@ function Invoke-ExecAuditLogRetentionConfig {
     .ROLE
         CIPP.AppSettings.ReadWrite
     .DESCRIPTION
-        Reads (List) or sets how many days saved audit logs, and the related records kept with repeated activity alerts,
-        are kept: 30 to 365, 180 when not set.
+        Reads (List) or sets how many days saved audit logs are kept: 30 to 365, 180 when not set.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)

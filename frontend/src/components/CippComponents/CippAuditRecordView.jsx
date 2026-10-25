@@ -363,81 +363,12 @@ const SectionBlock = ({ title, children }) => (
   </Box>
 )
 
-const countBy = (records, key) =>
-  Object.entries(
-    records.reduce((counts, record) => {
-      if (record[key]) counts[record[key]] = (counts[record[key]] ?? 0) + 1
-      return counts
-    }, {})
-  ).sort((a, b) => b[1] - a[1])
-
-// Every record kept with a repeated activity alert: where it came from, then each one in time order.
-const RelatedRecords = ({ records }) => {
-  const [showAll, setShowAll] = useState(false)
-  const shown = showAll ? records : records.slice(0, 20)
-  return (
-    <SectionBlock title={`Related records (${records.length})`}>
-      {[
-        ['IP', 'From IP address'],
-        ['Device', 'From device or app'],
-      ].map(([key, label]) => {
-        const counts = countBy(records, key)
-        return (
-          counts.length > 0 && (
-            <Box key={key} sx={{ py: 0.75 }}>
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', mb: 0.5 }}
-              >
-                {label}
-              </Typography>
-              <Stack
-                direction="row"
-                spacing={0.5}
-                useFlexGap
-                sx={{ flexWrap: 'wrap' }}
-              >
-                {counts.map(([value, count]) => (
-                  <Chip
-                    key={value}
-                    size="small"
-                    variant="outlined"
-                    label={`${value} · ${count}`}
-                    title={value}
-                    sx={{ maxWidth: '100%' }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-          )
-        )
-      })}
-      {shown.map((record, index) => (
-        <FieldRow
-          key={index}
-          name={new Date(
-            /(Z|[+-]\d\d:\d\d)$/.test(record.Time)
-              ? record.Time
-              : `${record.Time}Z`
-          ).toLocaleString()}
-          value={[record.Operation, record.Item].filter(Boolean).join('  ·  ')}
-        />
-      ))}
-      {records.length > shown.length && (
-        <Button size="small" onClick={() => setShowAll(true)}>
-          Show all {records.length}
-        </Button>
-      )}
-    </SectionBlock>
-  )
-}
-
-const Sections = ({ raw, related }) => {
+const Sections = ({ raw }) => {
   const fields = Object.fromEntries(fieldsOf(raw))
   const changes = changesOf(raw)
   const placed = new Set(sections.flatMap((section) => section.fields))
   const others = Object.entries(fields).filter(([key]) => !placed.has(key))
-  // A repeated activity alert keeps a few of the records it counted.
+  // A repeated activity alert keeps the record that reached its count.
   const samples = parseJson(raw.AuditRecord)
   return (
     <Stack spacing={2}>
@@ -460,25 +391,28 @@ const Sections = ({ raw, related }) => {
           ))}
         </SectionBlock>
       )}
-      {related?.length > 0 && <RelatedRecords records={related} />}
-      {!(related?.length > 0) &&
-        Array.isArray(samples) &&
-        samples.length > 0 && (
-          <SectionBlock title={`Sample records (${samples.length})`}>
-            {samples.map((sample, index) => (
-              <FieldRow
-                key={sample.Id ?? index}
-                name={sample.Operation ?? 'Record'}
-                value={[
-                  sample.CreationTime,
-                  sample.ObjectId ?? sample.SourceFileName,
-                ]
-                  .filter(Boolean)
-                  .join('  ·  ')}
-              />
-            ))}
-          </SectionBlock>
-        )}
+      {Array.isArray(samples) && samples.length > 0 && (
+        <SectionBlock
+          title={
+            samples.length === 1
+              ? 'The record that reached the count'
+              : `Sample records (${samples.length})`
+          }
+        >
+          {samples.map((sample, index) => (
+            <FieldRow
+              key={sample.Id ?? index}
+              name={sample.Operation ?? 'Record'}
+              value={[
+                sample.CreationTime,
+                sample.ObjectId ?? sample.SourceFileName,
+              ]
+                .filter(Boolean)
+                .join('  ·  ')}
+            />
+          ))}
+        </SectionBlock>
+      )}
       {others.length > 0 && (
         <SectionBlock title="Other details">
           {others.map(([key, value]) => (
@@ -609,7 +543,7 @@ const views = [
 ]
 
 // The full audit record of a saved log, in a few ways to read it.
-export const CippAuditRecordView = ({ raw, related }) => {
+export const CippAuditRecordView = ({ raw }) => {
   const [view, setView] = useState('sections')
   const record = useMemo(() => raw ?? {}, [raw])
   return (
@@ -633,7 +567,7 @@ export const CippAuditRecordView = ({ raw, related }) => {
       />
       <Divider />
       <CardContent>
-        {view === 'sections' && <Sections raw={record} related={related} />}
+        {view === 'sections' && <Sections raw={record} />}
         {view === 'search' && <ChangesAndSearch raw={record} />}
         {view === 'json' && <RawJson raw={record} />}
       </CardContent>

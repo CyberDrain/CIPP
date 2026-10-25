@@ -120,12 +120,12 @@ function Start-LogRetentionCleanup {
             }
         }
 
-        # Saved audit logs and the records kept beside repeated activity alerts have their own setting: 30 to 365 days, 180 by default.
+        # Saved audit logs have their own setting: 30 to 365 days, 180 by default.
         $AuditRetention = Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'AuditLogRetention' and RowKey eq 'Settings'"
         $AuditRetentionDays = [Math]::Min(365, [Math]::Max(30, [int]($AuditRetention.RetentionDays ?? 180)))
         $AuditCutoff = "Timestamp lt datetime'$((Get-Date).ToUniversalTime().AddDays(-$AuditRetentionDays).ToString('yyyy-MM-ddTHH:mm:ssZ'))'"
         $AuditDeleted = @{}
-        foreach ($AuditTableName in 'AuditLogs', 'AuditLogRelatedRecords') {
+        foreach ($AuditTableName in @('AuditLogs')) {
             if (-not $PSCmdlet.ShouldProcess($AuditTableName, 'Cleaning up old saved audit logs')) { continue }
             $AuditTable = Get-CippTable -tablename $AuditTableName
             $AuditDeleted[$AuditTableName] = 0
@@ -141,7 +141,7 @@ function Start-LogRetentionCleanup {
             }
         }
 
-        Write-LogMessage -API 'LogRetentionCleanup' -message "Log cleanup completed. Total logs deleted: $TotalDeletedCount, coverage ledger rows deleted: $CoverageDeletedCount (retention: $RetentionDays days); saved audit logs deleted: $([int]$AuditDeleted['AuditLogs']), related audit records deleted: $([int]$AuditDeleted['AuditLogRelatedRecords']) (retention: $AuditRetentionDays days)" -Sev 'Info'
+        Write-LogMessage -API 'LogRetentionCleanup' -message "Log cleanup completed. Total logs deleted: $TotalDeletedCount, coverage ledger rows deleted: $CoverageDeletedCount (retention: $RetentionDays days); saved audit logs deleted: $([int]$AuditDeleted['AuditLogs']) (retention: $AuditRetentionDays days)" -Sev 'Info'
 
     } catch {
         $ErrorMessage = Get-CippException -Exception $_

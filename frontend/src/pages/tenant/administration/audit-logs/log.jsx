@@ -22,7 +22,7 @@ import { getCippFormatting } from "../../../../utils/get-cipp-formatting";
 import { getCippTranslation } from "../../../../utils/get-cipp-translation";
 import CippGeoLocation from "../../../../components/CippComponents/CippGeoLocation";
 import { CippTimeAgo } from "../../../../components/CippComponents/CippTimeAgo";
-import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
+import { CippPropertyListCard } from "../../../../components/CippCards/CippPropertyListCard";
 import { Grid } from "@mui/system";
 import auditLogTranslation from "../../../../data/audit-log-translations.json";
 import { ArrowLeftIcon } from "@mui/x-date-pickers";
@@ -129,23 +129,13 @@ const Page = () => {
   const conditions = String(raw.CIPPClause ?? "")
     .split(" and ")
     .filter(Boolean);
-  // Every field of the audit record as a searchable table of field and value.
+  // Every field of the audit record, formatted as the rest of CIPP formats it.
   const auditFields = Object.entries(raw)
     .filter(([key]) => !excludeProperties.includes(key))
-    .map(([key, value]) => {
-      const translated = translateAuditLogValue(key, value);
-      return {
-        Field: getCippTranslation(key),
-        Value:
-          typeof translated === "boolean"
-            ? translated
-              ? "Yes"
-              : "No"
-            : translated !== null && typeof translated === "object"
-              ? JSON.stringify(translated)
-              : String(translated ?? ""),
-      };
-    });
+    .map(([key, value]) => ({
+      label: getCippTranslation(key),
+      value: getCippFormatting(translateAuditLogValue(key, value), key) ?? "N/A",
+    }));
 
   return (
     <Box sx={{ p: 3 }}>
@@ -283,11 +273,13 @@ const Page = () => {
               <CippAuditLogRuleCheck tenant={logData.Tenant} logId={id} />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <CippDataTable
+              <CippPropertyListCard
                 title="Everything in the audit record"
-                data={auditFields}
-                simpleColumns={["Field", "Value"]}
-                queryKey={`AuditLogFields-${id}`}
+                propertyItems={auditFields}
+                isFetching={logRequest.isLoading}
+                layout="multiple"
+                showDivider={false}
+                variant="outlined"
               />
             </Grid>
           </Grid>

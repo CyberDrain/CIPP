@@ -12,7 +12,7 @@ BeforeAll {
     function Get-CIPPAuditLogContent { param($Queries, $Blobs, [switch]$ListOnly, $Prefilters, $MaxConcurrency) }
     function Get-CIPPAuditLogPrefilter { param($TenantFilter) }
     function Get-CIPPAuditLogRuleSet { param($TenantFilter) }
-    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$CallerSweepsCachePartition) }
+    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$CallerSweepsCachePartition, $AlertCounts) }
     function Invoke-CippWebhookProcessing { param($TenantFilter, $Data, $CIPPURL, $AlertComment, $PendingAuditLogWrites) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Push-AuditLogFeedBlobsV3.ps1')
@@ -108,6 +108,15 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
             r2 = New-BlobJson @(@('FileDeletedSecondStageRecycleBin', 'bob@a.com', '17:12:00'), @('FileRecycled', 'Bob@a.com', '17:13:00'), @('FileRecycled', 'bob@a.com', '17:14:00'))
             r3 = New-BlobJson @(@('FileRecycled', 'bob@a.com', '17:45:00'), @('FileRecycled', 'bob@a.com', '17:46:00'), @('FileRecycled', 'eve@a.com', '17:47:00'))
         }
+    }
+
+    It 'counts only the busiest 1,000 identities of a sprayed blob, and still alerts on the busy one' {
+        $Rows = @(foreach ($n in 1..1500) { , @('FileRecycled', "sprayed$n@a.com", ('17:{0:00}:{1:00}' -f [int][Math]::Floor($n / 160), ($n % 60))) }) + @(foreach ($s in 1..5) { , @('FileRecycled', 'bob@a.com', "17:0$($s):30") })
+        $script:BlobJson = @{ spray = New-BlobJson $Rows }
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'spray')
+        @($script:Store.Keys).Where({ $_ -like 'id-a*rule-1|*' -and $_ -notlike 'id-a|alert*' }).Count | Should -BeLessOrEqual 1000
+        $script:Sent | Should -HaveCount 1
+        $script:Sent[0].UserId | Should -Be 'bob@a.com'
     }
 
     It 'alerts once when one identity''s deletions across the batch''s blobs reach the count within the window' {

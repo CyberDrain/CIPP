@@ -20,7 +20,9 @@ function Test-CIPPAuditLogRules {
         # Shape and match only: no cache deletes, claims or alerts. The feed uses it to keep only the records a rule matches.
         [switch]$EvaluateOnly,
         # With EvaluateOnly: also test every rule group on every record, each condition on its own, into RuleReports.
-        [switch]$AllMatches
+        [switch]$AllMatches,
+        # Alerts so far per tenant and rule, shared across one caller's calls: a rule alerts at most 50 times in it.
+        [hashtable]$AlertCounts
     )
     if (-not $CachePartitionKey) { $CachePartitionKey = $TenantFilter }
 
@@ -851,6 +853,16 @@ function Test-CIPPAuditLogRules {
                     } catch {
                         Write-Warning "Error processing conditions: $($clause.CIPPClause): $($_.Exception.Message)"
                         continue
+                    }
+                    if ($null -ne $AlertCounts) {
+                        $CountKey = "$TenantFilter|$($clause.RuleKey)"
+                        $AlertCounts[$CountKey] = 1 + [int]$AlertCounts[$CountKey]
+                        if ($AlertCounts[$CountKey] -gt 50) {
+                            if ($AlertCounts[$CountKey] -eq 51) {
+                                Write-LogMessage -API 'Webhooks' -tenant $TenantFilter -sev Warning -message "The alert '$($clause.AlertComment)' matched more than 50 records in one collection run, so only the first 50 were sent. Narrow its conditions, or use a repeated activity alert to hear when something happens many times."
+                            }
+                            break
+                        }
                     }
                     $item.CIPPAction = $clause.expectedAction
                     $item.CIPPBecActions = $clause.expectedBecActions

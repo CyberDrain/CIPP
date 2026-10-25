@@ -112,6 +112,51 @@ Describe 'Invoke-AddAlert' {
         (Invoke-AddAlert -Request ([pscustomobject]@{ Body = (& $Body '22:00-06:00') })).StatusCode | Should -Be 200
     }
 
+    It 'refuses a wildcard on Operation that covers <Covers>' -ForEach @(@{ Pattern = '*ser*'; Covers = 'UserLoggedIn' }, @{ Pattern = 'File*'; Covers = 'FileAccessed' }) {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'like' $Pattern); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.SharePoint' } } })
+        $Response.StatusCode | Should -Be 400
+        $Response.Body.error | Should -BeLike "*$Covers*"
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'saves every preset' {
+        $Templates = Get-Content -Raw (Join-Path (Split-Path -Parent $RepoRoot) 'frontend/src/data/AuditLogTemplates.json') | ConvertFrom-Json
+        $Refused = foreach ($Template in $Templates) {
+            $Conditions = foreach ($Condition in $Template.template.conditions) {
+                if ($null -eq $Condition.Input -or ($Condition.Input -isnot [array] -and [string]::IsNullOrEmpty($Condition.Input.value))) { $Condition | Add-Member -NotePropertyName Input -NotePropertyValue @{ value = 'x' } -Force }
+                $Condition
+            }
+            $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @($Conditions); tenantFilter = @(@{ value = 'AllTenants' }); logbook = $Template.template.logbook } })
+            if ($Response.StatusCode -ne 200) { '{0}: {1}' -f $Template.value, $Response.Body.error }
+        }
+        @($Refused) | Should -BeNullOrEmpty
+    }
+
+    It 'refuses <Case>' -ForEach @(
+        @{ Case = 'a list of more than 500 values'; Extra = { New-Condition 'UserId' 'notin' @(1..501 | ForEach-Object { "u$_@a.com" }) }; Says = '*at most 500 values*' }
+        @{ Case = 'a value longer than 1,024 characters'; Extra = { New-Condition 'UserId' 'eq' ('a' * 1025) }; Says = '*1,024 characters*' }
+        @{ Case = 'a Like value with more than 8 wildcards'; Extra = { New-Condition 'UserAgent' 'like' ('*a' * 9) }; Says = '*8 wildcards*' }
+        @{ Case = 'a regular expression longer than 200 characters'; Extra = { New-Condition 'UserAgent' 'match' ('a' * 201) }; Says = '*200 characters*' }
+        @{ Case = 'a regular expression with a back-reference'; Extra = { New-Condition 'UserAgent' 'match' '(a)\1' }; Says = '*back-references*' }
+    ) {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @((New-Condition 'Operation' 'eq' 'UserLoginFailed'), (& $Extra)); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.AzureActiveDirectory' } } })
+        $Response.StatusCode | Should -Be 400
+        $Response.Body.error | Should -BeLike $Says
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'refuses more than 30 conditions' {
+        $Conditions = @(New-Condition 'Operation' 'eq' 'UserLoginFailed') + @(foreach ($n in 1..30) { New-Condition 'UserId' 'ne' "u$n@a.com" })
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = $Conditions; tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.AzureActiveDirectory' } } })
+        $Response.StatusCode | Should -Be 400
+    }
+
+    It 'refuses a regular expression that does not parse' {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @((New-Condition 'Operation' 'eq' 'UserLoginFailed'), (New-Condition 'UserAgent' 'notmatch' '(curl')); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.AzureActiveDirectory' } } })
+        $Response.StatusCode | Should -Be 400
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
     It 'refuses a log source that is not a feed content type' {
         $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'eq' 'FileDeleted'); logbook = @{ value = 'Audit.Teams' } } })
         $Response.StatusCode | Should -Be 400

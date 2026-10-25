@@ -85,5 +85,13 @@ function Test-CIPPConditionFilter {
         $value = "'$($valueStr -replace "'", "''")'"
     }
 
+    # A regex runs without backtracking, in time linear in the value, so a crafted value (a sign-in's user agent) cannot
+    # hold the worker; the cache keeps every rule's pattern built, and the time limit is only a backstop.
+    if ($operatorValue -in 'match', 'notmatch') {
+        if ([regex]::CacheSize -lt 256) { [regex]::CacheSize = 256 }
+        $Not = if ($operatorValue -eq 'notmatch') { '-not ' } else { '' }
+        return "`$(try { $Not[regex]::IsMatch([string]`$(`$_.$propertyName), $value, 'IgnoreCase, NonBacktracking', [timespan]::FromMilliseconds(50)) } catch { `$false })"
+    }
+
     return "`$(`$_.$propertyName) -$operatorValue $value"
 }

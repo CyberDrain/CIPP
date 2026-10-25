@@ -48,6 +48,7 @@ function Push-AuditLogFeedBlobsV3 {
     $CountRows = @{}
     $Touched = @{}
     $SampleIndex = @{}
+    $AlertCounts = @{}
 
     try {
         $WaitSw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -67,7 +68,23 @@ function Push-AuditLogFeedBlobsV3 {
                 $Operations = $Prefilters[$TenantId].Thresholds[$Count.Threshold].Operations
                 $Group = "$TenantId`n$($Count.Threshold)"
                 if (-not $Touched.ContainsKey($Group)) { $Touched[$Group] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase) }
-                foreach ($Pair in $Count.Counts.GetEnumerator()) {
+                # Each identity's first 60 records, in one pass: a password spray has a different username on every record.
+                $Counted = [System.Collections.Generic.HashSet[string]]::new([string[]]$Operations, [System.StringComparer]::OrdinalIgnoreCase)
+                $ByKey = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[int]]]::new([System.StringComparer]::OrdinalIgnoreCase)
+                $Values = $Count.Index.Values
+                for ($i = 0; $i -lt $Values[0].Length; $i++) {
+                    if ($null -eq $Values[0][$i] -or -not $Counted.Contains($Values[0][$i])) { continue }
+                    $When = [string]$Values[3][$i]
+                    $Key = '{0}|{1}' -f [string]$Values[2][$i], $(if ($When.Length -gt 15) { $When.Substring(0, 15) } else { $When })
+                    $List = $null
+                    if (-not $ByKey.TryGetValue($Key, [ref]$List)) { $List = [System.Collections.Generic.List[int]]::new(); $ByKey[$Key] = $List }
+                    if ($List.Count -lt 60) { $List.Add($i) }
+                }
+                # ponytail: only the 1,000 busiest identities of a blob are counted; past that a blob is a spray of names that each
+                # appear a few times, which no per-identity threshold reaches. Count the spray itself if that needs alerting.
+                $Pairs = @($Count.Counts.GetEnumerator())
+                if ($Pairs.Count -gt 1000) { $Pairs = @($Pairs | Sort-Object Value -Descending)[0..999] }
+                foreach ($Pair in $Pairs) {
                     $Who, $Bucket = $Pair.Key -split '\|', 2
                     $Who = $Who.ToLowerInvariant()
                     if ($Touched[$Group].Add($Who)) { $SampleIndex["$Group`n$Who"] = @{ Index = $Count.Index; Key = $Pair.Key } }
@@ -75,7 +92,7 @@ function Push-AuditLogFeedBlobsV3 {
                     # The records behind the count, compact and at most 60 a row, so an alert can list what one identity did.
                     $Kept = [System.Collections.Generic.List[object]]::new()
                     if ($CountRows["$TenantId`n$RowKey"].Records) { $Kept.AddRange([object[]]@([CIPP.CippJson]::ConvertFromJson($CountRows["$TenantId`n$RowKey"].Records))) }
-                    foreach ($Record in @([CIPP.CippJson]::ConvertFromIndex($Count.Index, $Count.Index.IndicesWhere(0, $Operations, [int[]]@(2, 3), [int[]]@(-1, 15), $Pair.Key, 60)))) {
+                    foreach ($Record in @([CIPP.CippJson]::ConvertFromIndex($Count.Index, $ByKey[$Pair.Key].ToArray()))) {
                         $Item = [string]($Record.ObjectId ?? $Record.SourceFileName)
                         $Device = [string]($Record.UserAgent ?? $Record.ClientInfoString ?? $Record.ApplicationDisplayName)
                         $Kept.Add([ordered]@{
@@ -100,7 +117,7 @@ function Push-AuditLogFeedBlobsV3 {
                 $Memo ??= [pscustomobject]@{ Tenant = $Blob.TenantFilter; UserLookup = $null; GroupLookup = $null; DeviceLookup = $null; ServicePrincipalLookup = $null }
                 if (-not $_.TenantDone) { $Memos[$TenantId] = $Memo }
                 $script:AuditRuleSearchLookups = $Memo
-                $Result = Test-CIPPAuditLogRules -TenantFilter $Blob.TenantFilter -Rows $Records -CallerSweepsCachePartition
+                $Result = Test-CIPPAuditLogRules -TenantFilter $Blob.TenantFilter -Rows $Records -CallerSweepsCachePartition -AlertCounts $AlertCounts
                 $script:AuditRuleSearchLookups = $null
                 if ($Result.Error) {
                     $Failed.Add(@{ PartitionKey = $Blob.TenantFilter; RowKey = $Blob.RowKey; LastError = [string]$Result.Error })

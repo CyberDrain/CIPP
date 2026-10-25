@@ -29,6 +29,28 @@ function Invoke-AddAlert {
                         Body       = @{ error = "A time window needs a start and end time in UTC, such as 07:00-19:00, not '$($condition.Input.value)'." }
                     })
             }
+            # Limits that keep one alert from slowing the checks of every record it could match.
+            $Values = @($condition.Input.value)
+            $Problem = if ($Values.Count -gt 500) {
+                "A condition can list at most 500 values; this one has $($Values.Count)."
+            } elseif ($Values.Where({ ([string]$_).Length -gt 1024 }, 'First').Count -gt 0) {
+                'A condition value can be at most 1,024 characters long.'
+            } elseif ([string]$condition.Operator.value -in 'like', 'notlike' -and $Values.Where({ ([string]$_ -replace '[^*?]', '').Length -gt 8 }, 'First').Count -gt 0) {
+                'A Like value can have at most 8 wildcards (* or ?).'
+            } elseif ([string]$condition.Operator.value -in 'match', 'notmatch') {
+                if (([string]$condition.Input.value).Length -gt 200) {
+                    'A regular expression can be at most 200 characters long.'
+                } else {
+                    try { $null = [regex]::new([string]$condition.Input.value, 'IgnoreCase, NonBacktracking') } catch [System.NotSupportedException] {
+                        "'$($condition.Input.value)' uses back-references, look-arounds or atomic groups, which alerts do not support."
+                    } catch {
+                        "'$($condition.Input.value)' is not a valid regular expression."
+                    }
+                }
+            }
+            if ($Problem) {
+                return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ error = $Problem } })
+            }
             if ($condition.Property.label -and -not $SafePropertyRegex.IsMatch($condition.Property.label)) {
                 return ([HttpResponseContext]@{
                         StatusCode = [HttpStatusCode]::BadRequest
@@ -38,6 +60,14 @@ function Invoke-AddAlert {
         }
         # The alert matches when every condition of any one group matches; conditions without a Group are group 0.
         $Groups = @(Split-CIPPAuditLogConditions -Conditions $Conditions)
+        if (@($Conditions).Count -gt 30 -or $Groups.Count -gt 10) {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = @{ error = 'An alert can have at most 30 conditions in at most 10 groups.' }
+                })
+        }
+        # Operations Microsoft logs all the time: an alert can name them, but a wildcard covering one would have every such record checked.
+        $HighVolumeOperations = @('UserLoggedIn', 'UserLoginFailed', 'MailItemsAccessed', 'MailboxLogin', 'Send', 'MessageSent', 'MessageRead', 'MessagesListed', 'ChatRetrieved', 'TeamsSessionStarted', 'CopilotInteraction', 'SearchQueryPerformed', 'FileAccessed', 'FileAccessedExtended', 'FileDownloaded', 'FileModified', 'FileModifiedExtended', 'FilePreviewed', 'FileUploaded', 'FileSyncDownloadedFull', 'FileSyncUploadedFull', 'PageViewed', 'PageViewedExtended')
         foreach ($Group in $Groups) {
             # A record has one Operation, so a second Operation condition in a group could only narrow or contradict the first.
             if (@($Group.Conditions).Where({ [string]$_.Property.label -eq 'Operation' }).Count -gt 1) {
@@ -51,6 +81,13 @@ function Invoke-AddAlert {
                 return ([HttpResponseContext]@{
                         StatusCode = [HttpStatusCode]::BadRequest
                         Body       = @{ error = $(if ($Groups.Count -gt 1) { 'Each group of conditions needs an Operation condition using Equals, In, or Like with at least three characters of text.' } else { 'An audit log alert needs an Operation condition using Equals, In, or Like with at least three characters of text.' }) }
+                    })
+            }
+            $Busy = @($HighVolumeOperations.Where({ $Operation = $_; $Anchor.Patterns.Where({ $_.IsMatch($Operation) }, 'First').Count -gt 0 }))
+            if ($Busy.Count -gt 0) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = "The Like condition on Operation also covers $($Busy -join ', '), which Microsoft logs very often, so CIPP would have to check almost every record. Name the operations you want with Equals or In instead." }
                     })
             }
         }

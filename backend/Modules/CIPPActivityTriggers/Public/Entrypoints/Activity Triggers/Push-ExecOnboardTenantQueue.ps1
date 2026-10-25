@@ -302,7 +302,9 @@ function Push-ExecOnboardTenantQueue {
                 $BulkResults = New-GraphBulkRequest -Requests $BulkRequests -NoAuthCheck $true -tenantid $PartnerTenantId
                 $SamUserId = ($BulkResults | Where-Object { $_.id -eq 'samUserId' }).body.id
                 $CurrentMemberships = ($BulkResults | Where-Object { $_.id -eq 'currentMemberships' }).body.value
-                $ExpectedCippRoles = $Item.Roles | Where-Object { $_.roleDefinitionId -in $ExpectedRoles.Id }
+                # A CIPP-created invite carries the mappings; the request body has none in that flow
+                $SamUserRoles = if (($Item.Roles | Measure-Object).Count -gt 0) { $Item.Roles } elseif ($InviteRow.RoleMappings) { $InviteRow.RoleMappings | ConvertFrom-Json } else { @() }
+                $ExpectedCippRoles = $SamUserRoles | Where-Object { $_.roleDefinitionId -in $ExpectedRoles.Id }
 
                 # Build bulk requests for missing group memberships
                 $GroupMembershipRequests = [System.Collections.Generic.List[object]]::new()

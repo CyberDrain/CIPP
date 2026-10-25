@@ -96,4 +96,16 @@ Describe 'Invoke-ListGDAPRoles' {
         $Response.Body.GroupStatus | Should -Be @('Unknown', 'Unknown')
         Should -Invoke Write-LogMessage -Times 1 -ParameterFilter { $Sev -eq 'Warning' }
     }
+
+    # The template editor filters mappings by partner from the validated list, so a row that loses
+    # its partner on annotation would be reused for every partner instead of a new group created.
+    It 'keeps the partner attribution on validated rows' {
+        $Response = Invoke-ListGDAPRoles -Request (New-Request -Validate $true) -TriggerMetadata $null
+        $Response.Body.partnerTenantId | Should -Be @($env:TenantID, $env:TenantID)
+        $Response.Body[0].PSObject.Properties.Name | Should -Contain 'partnerDisplayName'
+
+        Mock -CommandName Test-CIPPGDAPGroupMappings -MockWith { throw 'graph is down' }
+        $Degraded = Invoke-ListGDAPRoles -Request (New-Request -Validate $true) -TriggerMetadata $null
+        $Degraded.Body.partnerTenantId | Should -Be @($env:TenantID, $env:TenantID)
+    }
 }

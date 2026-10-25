@@ -54,6 +54,8 @@ Function Invoke-ListGDAPRoles {
                     GroupId            = $Group.GroupId
                     RoleName           = $Group.RoleName
                     roleDefinitionId   = $Group.roleDefinitionId
+                    partnerTenantId    = $Group.partnerTenantId
+                    partnerDisplayName = $Group.partnerDisplayName
                     GroupStatus        = $Status.Status ?? 'Unknown'
                     GroupStatusMessage = $Status.Message ?? ''
                 }
@@ -67,6 +69,8 @@ Function Invoke-ListGDAPRoles {
                     GroupId            = $Group.GroupId
                     RoleName           = $Group.RoleName
                     roleDefinitionId   = $Group.roleDefinitionId
+                    partnerTenantId    = $Group.partnerTenantId
+                    partnerDisplayName = $Group.partnerDisplayName
                     GroupStatus        = 'Unknown'
                     GroupStatusMessage = ''
                 }

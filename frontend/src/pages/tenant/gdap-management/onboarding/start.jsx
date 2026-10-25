@@ -25,6 +25,7 @@ import { WizardSteps } from "../../../../components/CippWizard/wizard-steps";
 import CippPageCard from "../../../../components/CippCards/CippPageCard";
 import { getCippTranslation } from "../../../../utils/get-cipp-translation";
 import CippDataTableButton from "../../../../components/CippTable/CippDataTableButton";
+import { useMultiPartner } from "../../../../hooks/use-multi-partner";
 
 const Page = () => {
   const [currentRelationship, setCurrentRelationship] = useState(null);
@@ -87,6 +88,17 @@ const Page = () => {
     control: formControl.control,
     name: "gdapRoles",
   });
+
+  // Optional partner filter for the relationship list; empty means every partner.
+  const { hasMultiplePartners, partnerOptions } = useMultiPartner();
+  const selectedPartner = useWatch({ control: formControl.control, name: "partnerTenant" });
+  const partnerFilterId = selectedPartner?.value;
+  useEffect(() => {
+    const relationshipPartner = currentRelationship?.addedFields?.partnerTenantId;
+    if (partnerFilterId && relationshipPartner && relationshipPartner !== partnerFilterId) {
+      formControl.setValue("id", null);
+    }
+  }, [partnerFilterId]);
 
   useEffect(() => {
     if (
@@ -313,6 +325,17 @@ const Page = () => {
                     select a different relationship.
                   </Alert>
                 )}
+                {hasMultiplePartners && (
+                  <CippFormComponent
+                    formControl={formControl}
+                    name="partnerTenant"
+                    label="Filter relationships by Partner Tenant"
+                    type="autoComplete"
+                    options={partnerOptions}
+                    multiple={false}
+                    creatable={false}
+                  />
+                )}
                 <CippFormComponent
                   formControl={formControl}
                   name="id"
@@ -321,12 +344,9 @@ const Page = () => {
                   api={{
                     url: "/api/ListGDAPRelationships",
                     excludeTenantFilter: true,
-                    queryKey: "GDAPRelationships",
+                    // The filter is applied when the data lands, so the partner is part of the key
+                    queryKey: `GDAPRelationships-${partnerFilterId ?? "all"}`,
                     dataKey: "Results",
-                    addedField: {
-                      partnerTenantId: "partnerTenantId",
-                      partnerIsPrimary: "partnerIsPrimary",
-                    },
                     labelField: (option) =>
                       (option?.customer?.displayName ?? "Pending Invite") +
                       " - (" +
@@ -342,13 +362,17 @@ const Page = () => {
                       status: "status",
                       autoExtendDuration: "autoExtendDuration",
                       lastModifiedDateTime: "lastModifiedDateTime",
+                      partnerTenantId: "partnerTenantId",
+                      partnerIsPrimary: "partnerIsPrimary",
                     },
                     dataFilter: (data) => {
                       return data?.filter(
                         (relationship) =>
                           (relationship?.addedFields?.status === "active" ||
                             relationship?.addedFields?.status === "approvalPending") &&
-                          !relationship?.addedFields?.displayName?.startsWith("MLT_")
+                          !relationship?.addedFields?.displayName?.startsWith("MLT_") &&
+                          (!partnerFilterId ||
+                            relationship?.addedFields?.partnerTenantId === partnerFilterId)
                       );
                     },
                     showRefresh: true,

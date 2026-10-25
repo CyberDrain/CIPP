@@ -11,7 +11,7 @@ import {
 import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
 import { CIPPM365OAuthButton } from "../../../../components/CippComponents/CIPPM365OAuthButton";
 import { CippApiResults } from "../../../../components/CippComponents/CippApiResults";
-import { Layout as DashboardLayout } from "../../../../layouts/index.js";
+import { Layout as DashboardLayout } from "../../../../layouts/index";
 import { TabbedLayout } from "../../../../layouts/TabbedLayout";
 import tabOptions from "./tabOptions";
 import { CippIcons } from "../../../../utils/icon-registry";

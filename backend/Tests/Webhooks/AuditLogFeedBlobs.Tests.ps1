@@ -249,10 +249,13 @@ Describe 'Push-AuditLogFeedCursorV3' {
         Should -Invoke Push-AuditLogFeedFanOutV3 -Times 0 -Exactly
     }
 
-    It 'removes threshold rows older than 12 hours' {
+    It 'removes threshold rows only once they are older than the longest window (25 hours)' {
         $script:Expired = @([pscustomobject]@{ PartitionKey = 'id-a'; RowKey = 'rule-1|bob|2026-10-24T17:0|r1' })
         Push-AuditLogFeedCursorV3 -Item @{ Parameters = @{ CycleId = 'c1' } }
-        Should -Invoke Get-CIPPAzDataTableEntity -ParameterFilter { $TableName -eq 'AuditLogFeedThresholds' -and $Filter -like 'Timestamp lt datetime*' } -Times 1 -Exactly
+        Should -Invoke Get-CIPPAzDataTableEntity -ParameterFilter {
+            $Cut = [regex]::Match([string]$Filter, "^Timestamp lt datetime'([^']+)'").Groups[1].Value
+            $TableName -eq 'AuditLogFeedThresholds' -and $Cut -and [math]::Abs(([datetime]::UtcNow - ([datetimeoffset]$Cut).UtcDateTime).TotalHours - 25) -lt 0.1
+        } -Times 1 -Exactly
         Should -Invoke Remove-CIPPAzDataTableEntity -ParameterFilter { $TableName -eq 'AuditLogFeedThresholds' -and @($Entity).Count -eq 1 } -Times 1 -Exactly
     }
 

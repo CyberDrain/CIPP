@@ -126,6 +126,7 @@
       * [Global Variables](user-documentation/tenant/administration/tenants/global-variables.md)
     * [Alert Configuration](user-documentation/tenant/administration/alert-configuration/README.md)
       * [Add Alert](user-documentation/tenant/administration/alert-configuration/alert.md)
+      * [How Audit Log Alerts Work](user-documentation/tenant/administration/alert-configuration/audit-log-alerts-explained.md)
       * [Rogue Apps](user-documentation/tenant/administration/alert-configuration/rogue-apps.md)
       * [Alert History](user-documentation/tenant/administration/alert-configuration/alert-history.md)
       * [Snoozed Alerts](user-documentation/tenant/administration/alert-configuration/snoozed-alerts.md)

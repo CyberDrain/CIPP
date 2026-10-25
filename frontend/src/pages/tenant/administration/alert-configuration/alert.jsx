@@ -961,7 +961,12 @@ const AlertWizard = () => {
             ]}
           >
             <CippFormComponent
-              type="textField"
+              type={
+                propertyWatcher?.[event.id]?.Property?.label === 'Operation'
+                  ? 'textField'
+                  : 'textFieldWithVariables'
+              }
+              includeSystemVariables={true}
               name={`conditions.${event.id}.Input.value`}
               formControl={formControl}
               label="Input"
@@ -971,7 +976,8 @@ const AlertWizard = () => {
                     propertyWatcher?.[event.id]?.Input?.value
                   ),
                   CIPPDateUtc: 'A date in UTC, as YYYY-MM-DD',
-                }[propertyWatcher?.[event.id]?.Property?.label]
+                }[propertyWatcher?.[event.id]?.Property?.label] ??
+                'Type % to use a variable, such as %breakglass%, which takes the value set for each tenant.'
               }
             />
           </CippFormCondition>

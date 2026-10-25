@@ -721,7 +721,7 @@ function Test-CIPPAuditLogRules {
                     }
                     # A rule that excludes the tenant never alerts here; its clauses are kept only for -AllMatches reports.
                     $RuleExcluded = $TenantFilter -in $Config.Excluded.value
-                    $RuleConditions = try { $Config.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' } } catch {
+                    $RuleConditions = try { Resolve-CIPPAuditLogConditionVariable -TenantFilter $TenantFilter -Conditions ($Config.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' }) } catch {
                         Write-Warning "Error reading the conditions of audit log rule $($Config.RowKey): $($_.Exception.Message)"
                         continue
                     }

@@ -126,7 +126,7 @@ Describe 'Invoke-AddAlert' {
                 if ($null -eq $Condition.Input -or ($Condition.Input -isnot [array] -and [string]::IsNullOrEmpty($Condition.Input.value))) { $Condition | Add-Member -NotePropertyName Input -NotePropertyValue @{ value = 'x' } -Force }
                 $Condition
             }
-            $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @($Conditions); tenantFilter = @(@{ value = 'AllTenants' }); logbook = $Template.template.logbook } })
+            $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @($Conditions); tenantFilter = @(@{ value = 'AllTenants' }); logbook = $Template.template.logbook; thresholdEnabled = [bool]$Template.template.threshold; threshold = $Template.template.threshold } })
             if ($Response.StatusCode -ne 200) { '{0}: {1}' -f $Template.value, $Response.Body.error }
         }
         @($Refused) | Should -BeNullOrEmpty
@@ -155,6 +155,21 @@ Describe 'Invoke-AddAlert' {
         $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @((New-Condition 'Operation' 'eq' 'UserLoginFailed'), (New-Condition 'UserAgent' 'notmatch' '(curl')); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.AzureActiveDirectory' } } })
         $Response.StatusCode | Should -Be 400
         Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'refuses a busy operation on its own, but not with another condition or as repeated activity' {
+        $Body = { param($Conditions, $Threshold) [pscustomobject]@{ conditions = $Conditions; tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = [bool]$Threshold; threshold = @{ Count = 50; Minutes = 20 } } }
+        $Alone = Invoke-AddAlert -Request ([pscustomobject]@{ Body = (& $Body @(New-Condition 'Operation' 'in' @('FileDownloaded', 'FileDeleted'))) })
+        $Alone.StatusCode | Should -Be 400
+        $Alone.Body.error | Should -BeLike 'FileDownloaded happens all the time*'
+        (Invoke-AddAlert -Request ([pscustomobject]@{ Body = (& $Body @((New-Condition 'Operation' 'eq' 'FileDownloaded'), (New-Condition 'UserId' 'in' @('%breakglass%')))) })).StatusCode | Should -Be 200
+        (Invoke-AddAlert -Request ([pscustomobject]@{ Body = (& $Body @(New-Condition 'Operation' 'eq' 'FileDownloaded') $true) })).StatusCode | Should -Be 200
+    }
+
+    It 'refuses a variable in the Operation condition' {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'eq' '%myoperation%'); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.Exchange' } } })
+        $Response.StatusCode | Should -Be 400
+        $Response.Body.error | Should -BeLike '*cannot use a variable*'
     }
 
     It 'refuses a log source that is not a feed content type' {

@@ -45,7 +45,7 @@ function Get-CIPPAuditLogPrefilter {
         foreach ($Rule in (Get-CIPPAuditLogRuleSet -TenantFilter $TenantFilter)) {
             if ($TenantFilter -in $Rule.Excluded.value) { continue }
             # The engine's own selection of a rule's conditions, split into its OR groups.
-            $Branches = @(Split-CIPPAuditLogConditions -Conditions ($Rule.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' }))
+            $Branches = @(Split-CIPPAuditLogConditions -Conditions (Resolve-CIPPAuditLogConditionVariable -TenantFilter $TenantFilter -Conditions ($Rule.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' })))
             if ($Rule.Threshold) {
                 # A threshold rule counts the operations of its one group.
                 $Anchor = if ($Branches.Count -eq 1) { Get-CIPPAuditLogRuleAnchor -Conditions $Branches[0].Conditions }

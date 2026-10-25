@@ -31,7 +31,9 @@ function Invoke-AddAlert {
             }
             # Limits that keep one alert from slowing the checks of every record it could match.
             $Values = @($condition.Input.value)
-            $Problem = if ($Values.Count -gt 500) {
+            $Problem = if ([string]$condition.Property.label -eq 'Operation' -and $Values.Where({ [string]$_ -match '%[A-Za-z][A-Za-z0-9_]*%' }, 'First').Count -gt 0) {
+                'The Operation condition cannot use a variable; name the operations themselves.'
+            } elseif ($Values.Count -gt 500) {
                 "A condition can list at most 500 values; this one has $($Values.Count)."
             } elseif ($Values.Where({ ([string]$_).Length -gt 1024 }, 'First').Count -gt 0) {
                 'A condition value can be at most 1,024 characters long.'
@@ -88,6 +90,14 @@ function Invoke-AddAlert {
                 return ([HttpResponseContext]@{
                         StatusCode = [HttpStatusCode]::BadRequest
                         Body       = @{ error = "The Like condition on Operation also covers $($Busy -join ', '), which Microsoft logs very often, so CIPP would have to check almost every record. Name the operations you want with Equals or In instead." }
+                    })
+            }
+            # On its own a busy operation alerts on nearly every record of it; counting one is what a repeated activity alert is for.
+            $Named = @($HighVolumeOperations.Where({ $Anchor.Literals.Contains($_) }))
+            if ($Named.Count -gt 0 -and -not [bool]$Request.Body.thresholdEnabled -and @($Group.Conditions).Where({ [string]$_.Property.label -ne 'Operation' }, 'First').Count -eq 0) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = "$($Named -join ', ') happens all the time, so an alert on it needs at least one more condition, such as a user, a location or a time. To be told when it happens many times, turn on repeated activity instead." }
                     })
             }
         }

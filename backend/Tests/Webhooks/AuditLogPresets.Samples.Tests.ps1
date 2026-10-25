@@ -44,6 +44,7 @@ BeforeAll {
     function New-GraphBulkRequest { param($Requests, $AsApp, $TenantId) }
     function New-GraphGetRequest { param($uri, $tenantid, $AsApp, [switch]$Stream, $ComplexFilter, $NoPagination) }
     function Get-CIPPPartnerUserLookup { @{} }
+    function Get-CIPPTextReplacement { param($TenantFilter, $Text) }
 
     foreach ($Helper in @(
             'Authentication/Get-CIPPIPAllowBlockList.ps1'
@@ -57,7 +58,7 @@ BeforeAll {
             'Webhooks/Get-CIPPAuditLogPrefilter.ps1'
             'Webhooks/Select-CIPPAuditLogCandidate.ps1'
             'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1'
-            'Webhooks/Split-CIPPAuditLogConditions.ps1'
+            'Webhooks/Split-CIPPAuditLogConditions.ps1', 'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1'
         )) {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
@@ -242,6 +243,19 @@ Describe 'Audit log presets on real audit records' {
         & $Holds 'notmatch' (('a' * 40) + '!') | Should -BeTrue
         & $Holds 'match' (('a' * 40) + '!') | Should -BeFalse
         $Sw.Elapsed.TotalSeconds | Should -BeLessThan 2
+    }
+
+    It 'alerts on a tenant''s break glass account through a variable (<Sample>)' -ForEach @(@{ Sample = 'aad-user-logged-in' }) {
+        $Who = [string]$script:Fixture.samples.$Sample.auditData.UserId
+        $For = [pscustomobject]@{ Property = @{ value = 'String'; label = 'UserId' }; Operator = @{ value = 'in'; label = 'In' }; Input = @(@{ value = '%breakglass%'; label = '%breakglass%' }); Group = -1 }
+        foreach ($Case in @(@{ Value = "someone@else.com, $Who"; Alerts = 1 }, @{ Value = 'someone@else.com'; Alerts = 0 }, @{ Value = $null; Alerts = 0 })) {
+            $script:BreakGlass = $Case.Value
+            Mock Get-CIPPTextReplacement { if ($null -eq $script:BreakGlass) { [string]$Text } else { ([string]$Text).Replace('%breakglass%', $script:BreakGlass) } }
+            foreach ($Feed in $false, $true) {
+                $Dispatched = Invoke-PresetSample -Preset 'UserLoggedInFromUnknownLocation' -Sample $Sample -Feed:$Feed -Extra @($For)
+                @($Dispatched).Count | Should -Be $Case.Alerts -Because "breakglass = '$($Case.Value)', feed $Feed"
+            }
+        }
     }
 
     It 'alerts only on records inside a UTC time window, day or date (<Sample>)' -ForEach @(@{ Sample = 'exo-new-inboxrule-forward' }) {

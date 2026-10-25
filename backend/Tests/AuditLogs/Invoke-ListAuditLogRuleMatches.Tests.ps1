@@ -19,6 +19,7 @@ BeforeAll {
     function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$AllMatches) }
     function Get-CIPPAuditLogRuleSet { param($TenantFilter) }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Split-CIPPAuditLogConditions.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Get-CIPPAuditLogRuleAnchor.ps1')
     . $FunctionPath
 

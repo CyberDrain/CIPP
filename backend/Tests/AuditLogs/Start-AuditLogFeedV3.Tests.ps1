@@ -47,6 +47,7 @@ namespace Craft.Services {
     function Push-AuditLogFeedFanOutV3 { param($Item) }
     . (Join-Path $Public 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1')
     . (Join-Path $Public 'Webhooks/Split-CIPPAuditLogConditions.ps1')
+    . (Join-Path $Public 'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1')
     . (Join-Path $Public 'Entrypoints/Orchestrator Functions/Start-AuditLogFeedV3.ps1')
 }
 

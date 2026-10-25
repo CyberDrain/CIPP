@@ -43,7 +43,7 @@ BeforeAll {
             'Webhooks/Get-CIPPAuditLogRuleSet.ps1'
             'Webhooks/New-CippAuditLogClaimRow.ps1'
             'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1'
-            'Webhooks/Split-CIPPAuditLogConditions.ps1'
+            'Webhooks/Split-CIPPAuditLogConditions.ps1', 'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1'
         )) {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }

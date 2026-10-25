@@ -5,6 +5,7 @@ import { TabbedLayout } from "../../../../layouts/TabbedLayout";
 import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
 import { CippDateRangeFilter } from "../../../../components/CippComponents/CippDateRangeFilter";
 import tabOptions from "./tabOptions.json";
+import { useSettings } from "../../../../hooks/use-settings";
 
 // Saved Logs Configuration
 const savedLogsColumns = [
@@ -60,6 +61,7 @@ const savedLogsFilters = [
 ];
 
 const Page = () => {
+  const tenant = useSettings().currentTenant;
   // Preserves the previous behaviour: RelativeTime defaults to "7d" and is always sent.
   const [apiParams, setApiParams] = useState({ RelativeTime: "7d" });
 
@@ -87,7 +89,7 @@ const Page = () => {
       apiUrl={savedLogsApiUrl}
       apiDataKey="Results"
       simpleColumns={savedLogsColumns}
-      queryKey={`SavedLogs-${apiParams.RelativeTime ?? ""}-${apiParams.StartDate ?? ""}-${
+      queryKey={`SavedLogs-${tenant}-${apiParams.RelativeTime ?? ""}-${apiParams.StartDate ?? ""}-${
         apiParams.EndDate ?? ""
       }`}
       apiData={apiParams}

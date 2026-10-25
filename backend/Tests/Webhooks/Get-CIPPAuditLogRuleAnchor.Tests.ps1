@@ -105,6 +105,13 @@ Describe 'Invoke-AddAlert' {
         Should -Invoke Add-CIPPAzDataTableEntity -Times 1 -Exactly
     }
 
+    It 'saves a UTC time window and refuses <Window>' -ForEach @(@{ Window = '7:00-19:00' }, @{ Window = '07:00-24:00' }, @{ Window = '07:00' }) {
+        $Body = { param($Value) [pscustomobject]@{ conditions = @((New-Condition 'Operation' 'eq' 'UserLoggedIn'), (New-Condition 'CIPPTimeUtc' 'notbetween' $Value)); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.AzureActiveDirectory' } } }
+        (Invoke-AddAlert -Request ([pscustomobject]@{ Body = (& $Body $Window) })).StatusCode | Should -Be 400
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+        (Invoke-AddAlert -Request ([pscustomobject]@{ Body = (& $Body '22:00-06:00') })).StatusCode | Should -Be 200
+    }
+
     It 'refuses a log source that is not a feed content type' {
         $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'eq' 'FileDeleted'); logbook = @{ value = 'Audit.Teams' } } })
         $Response.StatusCode | Should -Be 400

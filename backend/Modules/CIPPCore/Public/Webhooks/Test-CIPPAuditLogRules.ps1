@@ -124,6 +124,7 @@ function Test-CIPPAuditLogRules {
         # The actor/target fields cost a pass over two arrays per record, so they are only derived when a rule names one.
         $DeriveActorTarget = @($Configuration.Conditions).Where({ $_ -match 'CIPP(ActorIsTarget|ActorType|TargetType)' }, 'First').Count -gt 0
         $JoinActor = @($Configuration.Conditions).Where({ $_ -match '"label"\s*:\s*"CIPPActor"' }, 'First').Count -gt 0
+        $DeriveTime = @($Configuration.Conditions).Where({ $_ -match 'CIPP(TimeUtc|DayUtc|DateUtc)' }, 'First').Count -gt 0
 
         # Only the referenced entries of a cached blob, as the same hashtable a full ConvertFrom-Json -AsHashtable gives.
         # One pass over the blob picks the entries; a blob that is not a valid JSON object takes the full parse instead.
@@ -608,6 +609,14 @@ function Test-CIPPAuditLogRules {
                     if ($JoinActor -and $Data.Actor) {
                         # One string so a rule can test who acted (e.g. MS-PIM); -notlike against the Actor array itself is always true.
                         $Flattened['CIPPActor'] = @(foreach ($ActorEntry in $Data.Actor) { [string]$ActorEntry.ID }) -join ', '
+                    }
+                    if ($DeriveTime -and $Data.CreationTime) {
+                        # When it happened in UTC, as text that sorts in time order, for rules on hours, days and dates.
+                        $When = if ($Data.CreationTime -is [datetime]) { $Data.CreationTime } else { [datetime]::Parse([string]$Data.CreationTime, [cultureinfo]::InvariantCulture, 'AssumeUniversal,AdjustToUniversal') }
+                        if ($When.Kind -eq 'Local') { $When = $When.ToUniversalTime() }
+                        $Flattened['CIPPTimeUtc'] = $When.ToString('HH:mm', [cultureinfo]::InvariantCulture)
+                        $Flattened['CIPPDayUtc'] = $When.DayOfWeek.ToString()
+                        $Flattened['CIPPDateUtc'] = $When.ToString('yyyy-MM-dd', [cultureinfo]::InvariantCulture)
                     }
                     if ($Flattened.Count -gt 0) {
                         [CIPP.PSMembers]::AddNoteProperties($Data, $Flattened, $true)

@@ -211,6 +211,49 @@ Describe 'Audit log presets on real audit records' {
         }
     }
 
+    It 'a UTC time window holds the times inside it, including one that crosses midnight' {
+        $Record = [pscustomobject]@{ CIPPTimeUtc = '23:30' }
+        $Holds = {
+            param($Operator, $Window)
+            $Test = Test-CIPPConditionFilter -Condition ([pscustomobject]@{ Property = @{ label = 'CIPPTimeUtc' }; Operator = @{ value = $Operator }; Input = @{ value = $Window } }) 3>$null
+            if ($null -eq $Test) { return 'blocked' }
+            @($Record).Where([scriptblock]::Create($Test)).Count -gt 0
+        }
+        & $Holds 'between' '22:00-06:00' | Should -BeTrue
+        & $Holds 'between' '07:00-19:00' | Should -BeFalse
+        & $Holds 'notbetween' '07:00-19:00' | Should -BeTrue
+        & $Holds 'notbetween' '22:00-06:00' | Should -BeFalse
+        & $Holds 'between' '23:30-23:45' | Should -BeTrue
+        & $Holds 'between' '23:00-23:30' | Should -BeFalse
+        & $Holds 'between' '7:00-19:00' | Should -Be 'blocked'
+        & $Holds 'between' "07:00-19:00') -or ('" | Should -Be 'blocked'
+    }
+
+    It 'alerts only on records inside a UTC time window, day or date (<Sample>)' -ForEach @(@{ Sample = 'exo-new-inboxrule-forward' }) {
+        $When = $script:Fixture.samples.$Sample.auditData.CreationTime
+        $When = if ($When -is [datetime]) { if ($When.Kind -eq 'Local') { $When.ToUniversalTime() } else { $When } } else { [datetime]::Parse([string]$When, [cultureinfo]::InvariantCulture, 'AssumeUniversal,AdjustToUniversal') }
+        $For = { param($Label, $Operator, $Value) [pscustomobject]@{ Property = @{ value = 'String'; label = $Label }; Operator = @{ value = $Operator; label = $Operator }; Input = @{ value = $Value }; Group = -1 } }
+        $Around = '{0:HH:mm}-{1:HH:mm}' -f $When.AddMinutes(-30), $When.AddMinutes(30)
+        $OtherDay = $When.AddDays(1).DayOfWeek.ToString()
+        foreach ($Feed in $false, $true) {
+            $Dispatched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample $Sample -Feed:$Feed -Extra @(& $For 'CIPPTimeUtc' 'between' $Around)
+            @($Dispatched).Count | Should -Be 1
+            $Dispatched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample $Sample -Feed:$Feed -Extra @(& $For 'CIPPTimeUtc' 'notbetween' $Around)
+            @($Dispatched).Count | Should -Be 0
+            $Dispatched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample $Sample -Feed:$Feed -Extra @(& $For 'CIPPDayUtc' 'eq' $When.DayOfWeek.ToString())
+            @($Dispatched).Count | Should -Be 1
+            $Dispatched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample $Sample -Feed:$Feed -Extra @(& $For 'CIPPDayUtc' 'eq' $OtherDay)
+            @($Dispatched).Count | Should -Be 0
+            $Dispatched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample $Sample -Feed:$Feed -Extra @(& $For 'CIPPDateUtc' 'gt' $When.AddDays(-1).ToString('yyyy-MM-dd'))
+            @($Dispatched).Count | Should -Be 1
+            $Dispatched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample $Sample -Feed:$Feed -Extra @(& $For 'CIPPDateUtc' 'lt' $When.ToString('yyyy-MM-dd'))
+            @($Dispatched).Count | Should -Be 0
+        }
+        # The evaluation shows the record's UTC time against the window.
+        $Reports = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample $Sample -Report -Extra @(& $For 'CIPPTimeUtc' 'between' $Around)
+        @(@($Reports[0].Clauses)[0].Conditions).Where({ $_.Property -eq 'CIPPTimeUtc' })[0].Actual | Should -Be $When.ToString('HH:mm')
+    }
+
     It 'reports, for every group of every alert, whether each condition holds on a record' {
         $Reports = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample 'exo-set-inboxrule-plain' -Report
         $Reports | Should -HaveCount 1

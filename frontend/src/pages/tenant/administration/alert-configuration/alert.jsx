@@ -63,6 +63,29 @@ const conditionOperators = [
 const operationOperators = conditionOperators.filter((op) =>
   ['eq', 'in', 'like'].includes(op.value)
 )
+const timeOperators = [
+  { value: 'between', label: 'Between (UTC)' },
+  { value: 'notbetween', label: 'Not between (UTC)' },
+]
+
+// The audit log is in UTC; show a HH:mm-HH:mm window in the viewer's time as of today.
+const localWindow = (value) => {
+  const match = /^(\d\d):(\d\d)-(\d\d):(\d\d)$/.exec(value ?? '')
+  if (!match)
+    return 'A time window in UTC, such as 07:00-19:00. One that crosses midnight, such as 22:00-06:00, works too.'
+  const now = new Date()
+  const local = (hours, minutes) =>
+    new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        hours,
+        minutes
+      )
+    ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return `${local(+match[1], +match[2])} to ${local(+match[3], +match[4])} in your time today`
+}
 
 const AlertWizard = () => {
   const apiRequest = ApiPostCall({
@@ -911,9 +934,11 @@ const AlertWizard = () => {
           formControl={formControl}
           label="is"
           options={
-            propertyWatcher?.[event.id]?.Property?.label === 'Operation'
-              ? operationOperators
-              : conditionOperators
+            {
+              Operation: operationOperators,
+              CIPPTimeUtc: timeOperators,
+            }[propertyWatcher?.[event.id]?.Property?.label] ??
+            conditionOperators
           }
         />
       </Grid>
@@ -940,6 +965,14 @@ const AlertWizard = () => {
               name={`conditions.${event.id}.Input.value`}
               formControl={formControl}
               label="Input"
+              helperText={
+                {
+                  CIPPTimeUtc: localWindow(
+                    propertyWatcher?.[event.id]?.Input?.value
+                  ),
+                  CIPPDateUtc: 'A date in UTC, as YYYY-MM-DD',
+                }[propertyWatcher?.[event.id]?.Property?.label]
+              }
             />
           </CippFormCondition>
         </CippFormCondition>

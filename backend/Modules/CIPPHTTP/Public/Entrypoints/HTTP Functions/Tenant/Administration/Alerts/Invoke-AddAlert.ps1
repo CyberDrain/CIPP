@@ -14,13 +14,19 @@ function Invoke-AddAlert {
         Write-Information "Received request to add alert with conditions: $($Conditions | ConvertTo-Json -Compress -Depth 10)"
 
         # Validate conditions to prevent code injection via operator/property fields
-        $AllowedOperators = @('eq', 'ne', 'like', 'notlike', 'match', 'notmatch', 'gt', 'lt', 'ge', 'le', 'in', 'notin', 'contains', 'notcontains')
+        $AllowedOperators = @('eq', 'ne', 'like', 'notlike', 'match', 'notmatch', 'gt', 'lt', 'ge', 'le', 'in', 'notin', 'contains', 'notcontains', 'between', 'notbetween')
         $SafePropertyRegex = [regex]'^[a-zA-Z0-9_.]+$'
         foreach ($condition in $Conditions) {
             if ($condition.Operator.value -and $condition.Operator.value.ToLower() -notin $AllowedOperators) {
                 return ([HttpResponseContext]@{
                         StatusCode = [HttpStatusCode]::BadRequest
                         Body       = @{ error = "Invalid operator: $($condition.Operator.value)" }
+                    })
+            }
+            if ([string]$condition.Operator.value -in 'between', 'notbetween' -and [string]$condition.Input.value -notmatch '^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d$') {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = "A time window needs a start and end time in UTC, such as 07:00-19:00, not '$($condition.Input.value)'." }
                     })
             }
             if ($condition.Property.label -and -not $SafePropertyRegex.IsMatch($condition.Property.label)) {

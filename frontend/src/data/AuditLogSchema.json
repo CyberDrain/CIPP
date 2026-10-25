@@ -25,7 +25,10 @@
     "CIPPActor": "String",
     "CIPPActorIsTarget": "String",
     "CIPPActorType": "String",
-    "CIPPTargetType": "String"
+    "CIPPTargetType": "String",
+    "CIPPTimeUtc": "String",
+    "CIPPDayUtc": "List:DayOfWeek",
+    "CIPPDateUtc": "String"
   },
   "Audit.Exchange": {
     "Id": "Combination GUID",
@@ -615,6 +618,15 @@
       "Membername": "DelegatedAdmin",
       "label": "A delegated administrator."
     }
+  ],
+  "List:DayOfWeek": [
+    { "value": "Monday", "label": "Monday" },
+    { "value": "Tuesday", "label": "Tuesday" },
+    { "value": "Wednesday", "label": "Wednesday" },
+    { "value": "Thursday", "label": "Thursday" },
+    { "value": "Friday", "label": "Friday" },
+    { "value": "Saturday", "label": "Saturday" },
+    { "value": "Sunday", "label": "Sunday" }
   ],
   "List:UserType": [
     {

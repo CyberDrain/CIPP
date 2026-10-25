@@ -26,7 +26,7 @@ function Test-CIPPConditionFilter {
     $AllowedOperators = @(
         'eq', 'ne', 'like', 'notlike', 'match', 'notmatch',
         'gt', 'lt', 'ge', 'le', 'in', 'notin',
-        'contains', 'notcontains'
+        'contains', 'notcontains', 'between', 'notbetween'
     )
 
     # Property name validation - only alphanumeric, underscores, and dots allowed
@@ -49,6 +49,17 @@ function Test-CIPPConditionFilter {
     if (-not $SafePropertyRegex.IsMatch($propertyName)) {
         Write-Warning "Blocked invalid property name '$propertyName' in condition"
         return $null
+    }
+
+    # A time of day window, HH:mm-HH:mm; one that crosses midnight holds the times after its start or before its end.
+    if ($operatorValue -in 'between', 'notbetween') {
+        if ([string]$inputValue -notmatch '^((?:[01]\d|2[0-3]):[0-5]\d)-((?:[01]\d|2[0-3]):[0-5]\d)$') {
+            Write-Warning "Blocked invalid time window '$inputValue' for property '$propertyName'"
+            return $null
+        }
+        $Join = if ($Matches[1] -le $Matches[2]) { 'and' } else { 'or' }
+        $Window = "(`$_.$propertyName -ge '$($Matches[1])' -$Join `$_.$propertyName -lt '$($Matches[2])')"
+        return $(if ($operatorValue -eq 'between') { $Window } else { "(`$_.$propertyName -and -not $Window)" })
     }
 
     # Build sanitized condition string

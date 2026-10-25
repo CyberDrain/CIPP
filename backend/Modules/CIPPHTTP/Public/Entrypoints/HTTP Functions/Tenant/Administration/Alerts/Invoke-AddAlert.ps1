@@ -34,7 +34,7 @@ function Invoke-AddAlert {
         if ($null -eq $Anchor) {
             return ([HttpResponseContext]@{
                     StatusCode = [HttpStatusCode]::BadRequest
-                    Body       = @{ error = 'An audit log alert needs an Operation condition using Equals, In, or Like with at least three characters of text. It lets CIPP skip the logs the alert cannot match.' }
+                    Body       = @{ error = 'An audit log alert needs an Operation condition using Equals, In, or Like with at least three characters of text.' }
                 })
         }
         # The log the alert reads: one of the Management Activity API content types.

@@ -42,6 +42,22 @@ const recurrenceSeconds = (value) => {
 
 const defaultThreshold = { Count: 100, Minutes: 20 }
 
+const conditionOperators = [
+  { value: 'eq', label: 'Equals to' },
+  { value: 'ne', label: 'Not Equals to' },
+  { value: 'like', label: 'Like' },
+  { value: 'notlike', label: 'Not like' },
+  { value: 'notmatch', label: 'Does not match' },
+  { value: 'gt', label: 'Greater than' },
+  { value: 'lt', label: 'Less than' },
+  { value: 'in', label: 'In' },
+  { value: 'notIn', label: 'Not In' },
+]
+// An alert must name the operations it is about, so the Operation row only offers the operators that do.
+const operationOperators = conditionOperators.filter((op) =>
+  ['eq', 'in', 'like'].includes(op.value)
+)
+
 const AlertWizard = () => {
   const apiRequest = ApiPostCall({
     relatedQueryKeys: ['ListAlertsQueue', 'ListCurrentAlerts'],
@@ -987,20 +1003,12 @@ const AlertWizard = () => {
                                   name={`conditions.${event.id}.Operator`}
                                   formControl={formControl}
                                   label="is"
-                                  options={[
-                                    { value: 'eq', label: 'Equals to' },
-                                    { value: 'ne', label: 'Not Equals to' },
-                                    { value: 'like', label: 'Like' },
-                                    { value: 'notlike', label: 'Not like' },
-                                    {
-                                      value: 'notmatch',
-                                      label: 'Does not match',
-                                    },
-                                    { value: 'gt', label: 'Greater than' },
-                                    { value: 'lt', label: 'Less than' },
-                                    { value: 'in', label: 'In' },
-                                    { value: 'notIn', label: 'Not In' },
-                                  ]}
+                                  options={
+                                    propertyWatcher?.[event.id]?.Property
+                                      ?.label === 'Operation'
+                                      ? operationOperators
+                                      : conditionOperators
+                                  }
                                 />
                               </Grid>
                               <Grid size={{ xs: 12, md: 3 }}>

@@ -44883,7 +44883,7 @@
         "tags": [
           "Tenant > Administration > Alerts"
         ],
-        "description": "Takes the audit record a saved alert (Saved Logs) was sent for, runs it through the alert engine as it is now\nwithout sending anything, and returns one row per audit log alert that applies to the tenant: WouldAlert (Sent,\nMatches but another alert is sent first, Counts toward it for a repeated activity alert, or No), Reason in plain\nlanguage, and Conditions, each condition with whether the record meets it. A repeated activity alert is shown\nas counting the record when the record's operation is one it counts. Metadata names the record's operation, user\nand time.",
+        "description": "Takes the audit record a saved alert (Saved Logs) was sent for, runs it through the alert engine as it is now\nwithout sending anything, and returns one row per audit log alert that applies to the tenant: WouldAlert (Sent,\nMatches but another alert is sent first, Counts toward it for a repeated activity alert, or No), Reason in plain\nlanguage, Outcome (Fires, AlsoMatches, CountsToward, Close, OtherActivity, Excluded or NotChecked) and Groups: each\nOR group of the alert, whether it looks at this record's operation and matches, and each condition's property,\noperator, expected value, the record's actual value and whether it is met. A repeated activity alert is shown as\ncounting the record when the record's operation is one it counts. Metadata names the record's operation, user\nand time.",
         "parameters": [
           {
             "name": "LogId",
@@ -44919,7 +44919,22 @@
                         "type": "string",
                         "x-cipp-field-source": "storage"
                       },
+                      "Group": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "Groups": {
+                        "x-cipp-field-source": "backend"
+                      },
                       "Log": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "LooksAtThisActivity": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "Matched": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "Outcome": {
                         "x-cipp-field-source": "backend"
                       },
                       "Reason": {

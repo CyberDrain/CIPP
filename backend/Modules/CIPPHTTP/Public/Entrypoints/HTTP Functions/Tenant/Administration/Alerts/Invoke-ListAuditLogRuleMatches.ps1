@@ -100,7 +100,7 @@ function Invoke-ListAuditLogRuleMatches {
                     @{ Code = 'OtherActivity'; WouldAlert = 'No'; Reason = "A repeated activity alert that counts other operations, not '$(@($Operations) -join "', '")'." }
                 }
             } elseif ($Clauses.Count -eq 0) {
-                @{ Code = 'NotChecked'; WouldAlert = 'No'; Reason = 'The alert is not checked: each group of its conditions needs an Operation condition using Equals, In or Like.' }
+                @{ Code = 'NotChecked'; WouldAlert = 'No'; Reason = 'The alert is not checked for this tenant: none of its groups can run. A group needs an Operation condition using Equals, In or Like, a value for each variable it uses in this tenant, and values without ; | ` $ { }.' }
             } elseif ($TenantFilter -in $Rule.Excluded.value -and $Anchored) {
                 if ($Hit) {
                     @{ Code = 'Excluded'; WouldAlert = 'Would match, but this tenant is excluded'; Reason = 'Every condition matches, but this tenant is excluded from the alert, so nothing is sent.' }

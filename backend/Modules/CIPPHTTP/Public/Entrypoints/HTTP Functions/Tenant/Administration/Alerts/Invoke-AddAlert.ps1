@@ -41,6 +41,8 @@ function Invoke-AddAlert {
                 'A condition value can be at most 1,024 characters long.'
             } elseif ([string]$condition.Operator.value -in 'like', 'notlike' -and $Values.Where({ ([string]$_ -replace '[^*?]', '').Length -gt 8 }, 'First').Count -gt 0) {
                 'A Like value can have at most 8 wildcards (* or ?).'
+            } elseif ([string]$condition.Operator.value -in 'like', 'notlike' -and $Values.Where({ $Pattern = [string]$_; try { $null = [System.Management.Automation.WildcardPattern]::new($Pattern).IsMatch(''); $false } catch { $true } }, 'First').Count -gt 0) {
+                "'$($condition.Input.value)' is not a valid Like pattern: a [ needs a closing ]."
             } elseif ([string]$condition.Operator.value -in 'match', 'notmatch') {
                 if (([string]$condition.Input.value).Length -gt 200) {
                     'A regular expression can be at most 200 characters long.'
@@ -128,6 +130,13 @@ function Invoke-AddAlert {
                         Body       = @{ error = 'A repeated activity alert counts one set of operations, so it cannot have more than one group of conditions.' }
                     })
             }
+            # Counting reads only each record's operation, user and time (Get-CIPPAuditLogContent CountWhere).
+            if (@($Groups[0].Conditions).Where({ [string]$_.Property.label -ne 'Operation' }, 'First').Count -gt 0) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = 'A repeated activity alert counts its operations for every user, so it can only have the Operation condition.' }
+                    })
+            }
             if ($Anchor.Patterns.Count -gt 0) {
                 return ([HttpResponseContext]@{
                         StatusCode = [HttpStatusCode]::BadRequest
@@ -140,7 +149,7 @@ function Invoke-AddAlert {
             if ($NotAllowed.Count -gt 0) {
                 return ([HttpResponseContext]@{
                         StatusCode = [HttpStatusCode]::BadRequest
-                        Body       = @{ error = "A repeated activity alert can't count $($NotAllowed -join ', '). It counts operations such as deletions, downloads, sharing and failed sign-ins, where many in a short time means something." }
+                        Body       = @{ error = "A repeated activity alert can't count $($NotAllowed -join ', '). It counts operations such as deletions, downloads, sharing and permission changes, where many in a short time means something." }
                     })
             }
             $Threshold = [string](ConvertTo-Json -Compress -InputObject ([ordered]@{ Count = $Count; Minutes = $Minutes }))

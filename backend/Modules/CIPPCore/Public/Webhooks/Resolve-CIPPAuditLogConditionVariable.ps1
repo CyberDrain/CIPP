@@ -8,7 +8,7 @@ function Resolve-CIPPAuditLogConditionVariable {
         Get-CIPPTextReplacement. For In and Not In, a value that held a variable is split on commas, so one variable can
         list several accounts. A rule with a variable the tenant does not define returns nothing, so it is not checked for
         that tenant rather than compared against the variable's name; so does one whose variable breaks the limits
-        Invoke-AddAlert puts on typed values (500 values, 1,024 characters).
+        Invoke-AddAlert puts on typed values (500 values, 1,024 characters, none of ; | ` $ { }).
     .FUNCTIONALITY
         Internal
     #>
@@ -34,8 +34,8 @@ function Resolve-CIPPAuditLogConditionVariable {
             }
             if ($List) { foreach ($Part in $Text -split ',') { if ($Part.Trim()) { $New.Add($Part.Trim()) } } } else { $New.Add($Text) }
         }
-        if ($New.Count -gt 500 -or $New.Where({ $_.Length -gt 1024 }, 'First').Count -gt 0) {
-            Write-Warning "An audit log alert variable for $TenantFilter gives more than 500 values or a value over 1,024 characters; the alert is not checked for this tenant."
+        if ($New.Count -gt 500 -or $New.Where({ $_.Length -gt 1024 -or $_ -match '[;|`$\{\}]' }, 'First').Count -gt 0) {
+            Write-Warning "An audit log alert variable for $TenantFilter gives more than 500 values, a value over 1,024 characters, or one of ; | `` $ { }; the alert is not checked for this tenant."
             return
         }
         $Copy = $Condition | Select-Object -Property *

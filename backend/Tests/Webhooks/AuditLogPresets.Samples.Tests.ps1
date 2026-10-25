@@ -258,6 +258,13 @@ Describe 'Audit log presets on real audit records' {
         }
     }
 
+    It 'matches a record only against alerts on the log it came from' {
+        $null = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample 'exo-new-inboxrule-forward' -Report
+        $Row = [CIPP.CippJson]::ConvertFromJson(($script:Fixture.samples.'exo-new-inboxrule-forward'.auditData | ConvertTo-Json -Depth 20 -Compress))
+        (Test-CIPPAuditLogRules -TenantFilter $script:Tenant -Rows @($Row) -EvaluateOnly -LogType 'Audit.Exchange' 3>$null 6>$null).MatchedLogs | Should -Be 1
+        (Test-CIPPAuditLogRules -TenantFilter $script:Tenant -Rows @($Row) -EvaluateOnly -LogType 'Audit.General' 3>$null 6>$null).MatchedLogs | Should -Be 0
+    }
+
     It 'alerts only on records inside a UTC time window, day or date (<Sample>)' -ForEach @(@{ Sample = 'exo-new-inboxrule-forward' }) {
         $When = $script:Fixture.samples.$Sample.auditData.CreationTime
         $When = if ($When -is [datetime]) { if ($When.Kind -eq 'Local') { $When.ToUniversalTime() } else { $When } } else { [datetime]::Parse([string]$When, [cultureinfo]::InvariantCulture, 'AssumeUniversal,AdjustToUniversal') }

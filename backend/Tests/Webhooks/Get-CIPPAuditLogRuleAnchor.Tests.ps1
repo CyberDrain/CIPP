@@ -146,6 +146,18 @@ Describe 'Invoke-AddAlert' {
         Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
     }
 
+    It 'refuses a repeated activity alert with conditions besides Operation, which counting would ignore' {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @((New-Condition 'Operation' 'eq' 'FileDeleted'), (New-Condition 'UserId' 'ne' 'svc@a.com')); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $true; threshold = @{ Count = 50; Minutes = 20 } } })
+        $Response.StatusCode | Should -Be 400
+        $Response.Body.error | Should -BeLike '*only have the Operation condition*'
+    }
+
+    It 'refuses a Like pattern that cannot be read' {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @((New-Condition 'Operation' 'eq' 'UserLoginFailed'), (New-Condition 'UserAgent' 'like' '*[abc*')); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.AzureActiveDirectory' } } })
+        $Response.StatusCode | Should -Be 400
+        $Response.Body.error | Should -BeLike '*not a valid Like pattern*'
+    }
+
     It 'refuses more than 30 conditions' {
         $Conditions = @(New-Condition 'Operation' 'eq' 'UserLoginFailed') + @(foreach ($n in 1..30) { New-Condition 'UserId' 'ne' "u$n@a.com" })
         $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = $Conditions; tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.AzureActiveDirectory' } } })

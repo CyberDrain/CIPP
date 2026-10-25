@@ -12,7 +12,7 @@ BeforeAll {
     function Get-CIPPAuditLogContent { param($Queries, $Blobs, [switch]$ListOnly, $Prefilters, $MaxConcurrency) }
     function Get-CIPPAuditLogPrefilter { param($TenantFilter) }
     function Get-CIPPAuditLogRuleSet { param($TenantFilter) }
-    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$CallerSweepsCachePartition) }
+    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$CallerSweepsCachePartition, $LogType) }
     function Invoke-CippWebhookProcessing { param($TenantFilter, $Data, $CIPPURL, $AlertComment, $PendingAuditLogWrites) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Push-AuditLogFeedBlobsV3.ps1')
@@ -108,6 +108,15 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
             r2 = New-BlobJson @(@('FileDeletedSecondStageRecycleBin', 'bob@a.com', '17:12:00'), @('FileRecycled', 'Bob@a.com', '17:13:00'), @('FileRecycled', 'bob@a.com', '17:14:00'))
             r3 = New-BlobJson @(@('FileRecycled', 'bob@a.com', '17:45:00'), @('FileRecycled', 'bob@a.com', '17:46:00'), @('FileRecycled', 'eve@a.com', '17:47:00'))
         }
+    }
+
+    It 'counts only the blobs of the log the rule reads' {
+        $script:Rule | Add-Member -NotePropertyName LogType -NotePropertyValue 'Audit.Exchange' -Force
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1', 'r2')
+        $script:Sent | Should -HaveCount 0
+        $script:Rule.LogType = 'Audit.SharePoint'
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1', 'r2')
+        $script:Sent | Should -HaveCount 1
     }
 
     It 'counts only the busiest 1,000 identities of a sprayed blob, and still alerts on the busy one' {

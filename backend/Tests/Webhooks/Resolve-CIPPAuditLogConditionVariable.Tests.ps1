@@ -40,6 +40,11 @@ Describe 'Resolve-CIPPAuditLogConditionVariable' {
         @(Resolve-CIPPAuditLogConditionVariable -TenantFilter 'contoso.com' -Conditions @((New-Condition 'Operation' 'eq' 'UserLoggedIn'), (New-Condition 'UserId' 'in' @('%breakglass%'))) 3>$null) | Should -HaveCount 0
     }
 
+    It 'gives nothing when a variable holds a character the engine will not run' {
+        $script:Values = @{ '%breakglass%' = 'a$b@contoso.com' }
+        @(Resolve-CIPPAuditLogConditionVariable -TenantFilter 'contoso.com' -Conditions @(New-Condition 'UserId' 'in' @('%breakglass%')) 3>$null) | Should -HaveCount 0
+    }
+
     It 'gives nothing when a variable lists more than 500 values' {
         $script:Values = @{ '%breakglass%' = (@(1..501 | ForEach-Object { "u$_@contoso.com" }) -join ',') }
         @(Resolve-CIPPAuditLogConditionVariable -TenantFilter 'contoso.com' -Conditions @(New-Condition 'UserId' 'in' @('%breakglass%')) 3>$null) | Should -HaveCount 0

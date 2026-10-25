@@ -63,6 +63,8 @@ function Push-AuditLogFeedBlobsV3 {
             }
             foreach ($Count in @($_.Counts)) {
                 if ($null -eq $Count) { continue }
+                # A threshold rule counts only the log it reads, as a single-record rule matches only its own.
+                if ([string]$Prefilters[$TenantId].Thresholds[$Count.Threshold].Rule.LogType -notin '', $Blob.ContentType) { continue }
                 $RuleKey = [string]$Prefilters[$TenantId].Thresholds[$Count.Threshold].Rule.RowKey
                 $Operations = $Prefilters[$TenantId].Thresholds[$Count.Threshold].Operations
                 $Group = "$TenantId`n$($Count.Threshold)"
@@ -116,7 +118,7 @@ function Push-AuditLogFeedBlobsV3 {
                 $Memo ??= [pscustomobject]@{ Tenant = $Blob.TenantFilter; UserLookup = $null; GroupLookup = $null; DeviceLookup = $null; ServicePrincipalLookup = $null }
                 if (-not $_.TenantDone) { $Memos[$TenantId] = $Memo }
                 $script:AuditRuleSearchLookups = $Memo
-                $Result = Test-CIPPAuditLogRules -TenantFilter $Blob.TenantFilter -Rows $Records -CallerSweepsCachePartition
+                $Result = Test-CIPPAuditLogRules -TenantFilter $Blob.TenantFilter -Rows $Records -CallerSweepsCachePartition -LogType $Blob.ContentType
                 $script:AuditRuleSearchLookups = $null
                 if ($Result.Error) {
                     $Failed.Add(@{ PartitionKey = $Blob.TenantFilter; RowKey = $Blob.RowKey; LastError = [string]$Result.Error })

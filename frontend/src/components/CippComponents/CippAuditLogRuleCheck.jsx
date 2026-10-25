@@ -407,7 +407,7 @@ export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
               />
               <NoteList
                 title="Not checked"
-                description="These alerts never run: each group of their conditions needs an Operation condition using Equals, In or Like. Edit them to fix this."
+                description="These alerts never run for this tenant. Each group needs an Operation condition using Equals, In or Like, and a value for every variable it uses in this tenant. Edit the alert, or set the variable for this tenant."
                 rows={notChecked}
                 icon={<CippIcons.Warning color="warning" fontSize="small" />}
               />

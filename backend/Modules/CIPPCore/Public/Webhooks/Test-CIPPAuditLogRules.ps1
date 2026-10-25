@@ -20,7 +20,9 @@ function Test-CIPPAuditLogRules {
         # Shape and match only: no cache deletes, claims or alerts. The feed uses it to keep only the records a rule matches.
         [switch]$EvaluateOnly,
         # With EvaluateOnly: also test every rule group on every record, each condition on its own, into RuleReports.
-        [switch]$AllMatches
+        [switch]$AllMatches,
+        # The log (content type) the rows came from: only rules reading that log match them. Unset, every rule may.
+        [string]$LogType
     )
     if (-not $CachePartitionKey) { $CachePartitionKey = $TenantFilter }
 
@@ -788,6 +790,7 @@ function Test-CIPPAuditLogRules {
                                 expectedBecActions = $Config.BecActions
                                 CIPPClause         = $CIPPClause -join ' and '
                                 AlertComment       = $Config.AlertComment
+                                LogType            = [string]$Config.LogType
                                 CustomSubject      = $Config.CustomSubject
                                 PsaTicketPriority  = $Config.PsaTicketPriority
                             }
@@ -846,6 +849,7 @@ function Test-CIPPAuditLogRules {
                     $Compiled.ByOperation[$Operation] = $Candidates
                 }
                 foreach ($clause in $Candidates) {
+                    if ($LogType -and $clause.LogType -and $clause.LogType -ne $LogType) { continue }
                     try {
                         if (@($item).Where($clause.WhereBlock, 'First').Count -eq 0) { continue }
                     } catch {

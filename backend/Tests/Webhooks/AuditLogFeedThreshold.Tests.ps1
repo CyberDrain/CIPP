@@ -119,13 +119,28 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
         $script:Sent | Should -HaveCount 1
     }
 
-    It 'counts only the busiest 1,000 identities of a sprayed blob, and still alerts on the busy one' {
-        $Rows = @(foreach ($n in 1..1500) { , @('FileRecycled', "sprayed$n@a.com", ('17:{0:00}:{1:00}' -f [int][Math]::Floor($n / 160), ($n % 60))) }) + @(foreach ($s in 1..5) { , @('FileRecycled', 'bob@a.com', "17:0$($s):30") })
-        $script:BlobJson = @{ spray = New-BlobJson $Rows }
-        Push-AuditLogFeedBlobsV3 -Item (New-Task 'spray')
-        @($script:Store.Keys).Where({ $_ -like 'id-a*rule-1|*' -and $_ -notlike 'id-a|alert*' }).Count | Should -BeLessOrEqual 1000
+    It 'counts every identity of a busy blob, in one count row and one records row per 10-minute bucket' {
+        $Rows = @(foreach ($n in 1..1500) { , @('FileRecycled', "user$n@a.com", ('17:{0:00}:{1:00}' -f [int][Math]::Floor($n / 160), ($n % 60))) }) + @(foreach ($s in 1..5) { , @('FileRecycled', 'bob@a.com', "17:0$($s):30") })
+        $script:BlobJson = @{ busy = New-BlobJson $Rows }
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'busy')
+        $CountRows = @($script:Store.Values).Where({ $_.PartitionKey -eq 'id-a' -and $_.RowKey -like 'rule-1|*' })
+        $CountRows | Should -HaveCount 1
+        $Map = ConvertFrom-Json -InputObject $CountRows[0].Counts -AsHashtable
+        $Map.Count | Should -Be 1501
+        $Map['bob@a.com'] | Should -Be 5
+        @($script:Store.Values).Where({ $_.PartitionKey -eq 'id-a|records' }) | Should -HaveCount 1
         $script:Sent | Should -HaveCount 1
         $script:Sent[0].UserId | Should -Be 'bob@a.com'
+    }
+
+    It 'sums one identity''s records from many blobs and buckets' {
+        $script:BlobJson = @{}
+        $Times = @('17:05:00', '17:08:00', '17:11:00', '17:14:00', '17:17:00')
+        foreach ($b in 1..5) { $script:BlobJson["b$b"] = New-BlobJson @(, @('FileRecycled', 'carol@a.com', $Times[$b - 1])) }
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'b1', 'b2', 'b3', 'b4', 'b5')
+        $script:Sent | Should -HaveCount 1
+        $script:Sent[0].UserId | Should -Be 'carol@a.com'
+        $script:Sent[0].CIPPThresholdCount | Should -Be 5
     }
 
     It 'alerts once when one identity''s deletions across the batch''s blobs reach the count within the window' {

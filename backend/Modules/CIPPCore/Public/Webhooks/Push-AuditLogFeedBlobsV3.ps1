@@ -10,17 +10,17 @@ function Push-AuditLogFeedBlobsV3 {
         when it was queued). A blob evaluated
         again sends nothing twice, since its alerts are already claimed. The task's totals go to AuditLogFeedCycles.
 
-        Threshold rules (Get-CIPPAuditLogPrefilter Thresholds) are counted, never matched record by record. The counts per
-        identity and 10-minute bucket that Get-CIPPAuditLogContent takes from each blob's index are stored in
-        AuditLogFeedThresholds, one row per blob, so a blob evaluated twice counts once, and the identity's counts from
-        every task and run are summed from there. A window reaching the rule's Count within its Minutes is alerted by the
+        Threshold rules (Get-CIPPAuditLogPrefilter Thresholds) are counted, never matched record by record. Each blob's
+        counts per identity and 10-minute bucket go to AuditLogFeedThresholds as one row per rule, bucket and blob (a map of
+        identity to count), so a blob evaluated twice counts once however many identities it holds, and the identity's counts
+        from every task and run are summed from there. A window reaching the rule's Count within its Minutes is alerted by the
         task that moves the identity's '<tenant id>|alert' row (AlertedThroughUtc) forward: an insert, or an ETag-checked
         update, so of two tasks seeing the same burst only one write lands, and the other re-reads and finds it covered.
         An alert carries the count and up to 5 sample records, and quiets the identity for the rule for an hour or the
-        rule's Minutes, whichever is longer. Each count row also keeps up to 60 of its records in compact form (time,
-        operation, item, IP address, device); when an alert is saved, the records in its window, up to 500, go to
-        AuditLogRelatedRecords beside it, out of the notification, and are removed with the other logs under the log
-        retention setting.
+        rule's Minutes, whichever is longer. Beside each count row, in the '<tenant id>|records' partition, a row keeps up to
+        60 records per identity in compact form (time, operation, item, IP address, device), read only for an identity that
+        alerts; the records in its window, up to 500, go to AuditLogRelatedRecords beside the saved alert, out of the
+        notification, under the saved audit log retention setting.
     .FUNCTIONALITY
         Entrypoint
     #>
@@ -69,34 +69,41 @@ function Push-AuditLogFeedBlobsV3 {
                 $Operations = $Prefilters[$TenantId].Thresholds[$Count.Threshold].Operations
                 $Group = "$TenantId`n$($Count.Threshold)"
                 if (-not $Touched.ContainsKey($Group)) { $Touched[$Group] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase) }
-                # Each identity's first 60 records, in one pass: a password spray has a different username on every record.
+                # Per 10-minute bucket: each identity's count and its first 60 records, in one pass over the blob's index.
                 $Counted = [System.Collections.Generic.HashSet[string]]::new([string[]]$Operations, [System.StringComparer]::OrdinalIgnoreCase)
-                $ByKey = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[int]]]::new([System.StringComparer]::OrdinalIgnoreCase)
+                $ByBucket = @{}
                 $Values = $Count.Index.Values
                 for ($i = 0; $i -lt $Values[0].Length; $i++) {
                     if ($null -eq $Values[0][$i] -or -not $Counted.Contains($Values[0][$i])) { continue }
                     $When = [string]$Values[3][$i]
-                    $Key = '{0}|{1}' -f [string]$Values[2][$i], $(if ($When.Length -gt 15) { $When.Substring(0, 15) } else { $When })
-                    $List = $null
-                    if (-not $ByKey.TryGetValue($Key, [ref]$List)) { $List = [System.Collections.Generic.List[int]]::new(); $ByKey[$Key] = $List }
-                    if ($List.Count -lt 60) { $List.Add($i) }
+                    $Bucket = if ($When.Length -gt 15) { $When.Substring(0, 15) } else { $When }
+                    $Who = ([string]$Values[2][$i]).ToLowerInvariant()
+                    $Slot = $ByBucket[$Bucket]
+                    if ($null -eq $Slot) {
+                        $Slot = @{ Counts = [System.Collections.Generic.Dictionary[string, int]]::new(); Kept = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[int]]]::new() }
+                        $ByBucket[$Bucket] = $Slot
+                    }
+                    $Seen = 0
+                    $null = $Slot.Counts.TryGetValue($Who, [ref]$Seen)
+                    $Slot.Counts[$Who] = $Seen + 1
+                    if ($Seen -eq 0) { $Slot.Kept[$Who] = [System.Collections.Generic.List[int]]::new() }
+                    if ($Seen -lt 60) { $Slot.Kept[$Who].Add($i) }
+                    if ($Touched[$Group].Add($Who)) { $SampleIndex["$Group`n$Who"] = @{ Index = $Count.Index; Key = "$($Values[2][$i])|$Bucket" } }
                 }
-                # ponytail: only the 1,000 busiest identities of a blob are counted; past that a blob is a spray of names that each
-                # appear a few times, which no per-identity threshold reaches. Count the spray itself if that needs alerting.
-                $Pairs = @($Count.Counts.GetEnumerator())
-                if ($Pairs.Count -gt 1000) { $Pairs = @($Pairs | Sort-Object Value -Descending)[0..999] }
-                foreach ($Pair in $Pairs) {
-                    $Who, $Bucket = $Pair.Key -split '\|', 2
-                    $Who = $Who.ToLowerInvariant()
-                    if ($Touched[$Group].Add($Who)) { $SampleIndex["$Group`n$Who"] = @{ Index = $Count.Index; Key = $Pair.Key } }
-                    $RowKey = '{0}|{1}|{2}|{3}' -f $RuleKey, ($Who -replace '[\\/#?|\x00-\x1f]', '_'), $Bucket, $Blob.RowKey
-                    # The records behind the count, compact and at most 60 a row, so an alert can list what one identity did.
-                    $Kept = [System.Collections.Generic.List[object]]::new()
-                    if ($CountRows["$TenantId`n$RowKey"].Records) { $Kept.AddRange([object[]]@([CIPP.CippJson]::ConvertFromJson($CountRows["$TenantId`n$RowKey"].Records))) }
-                    foreach ($Record in @([CIPP.CippJson]::ConvertFromIndex($Count.Index, $ByKey[$Pair.Key].ToArray()))) {
+                # One count row and one records row per rule, bucket and blob, however many identities the blob holds.
+                foreach ($Bucket in $ByBucket.Keys) {
+                    $Slot = $ByBucket[$Bucket]
+                    $Owners = [System.Collections.Generic.List[string]]::new()
+                    $Indices = [System.Collections.Generic.List[int]]::new()
+                    foreach ($Pair in $Slot.Kept.GetEnumerator()) { foreach ($i in $Pair.Value) { $Owners.Add($Pair.Key); $Indices.Add($i) } }
+                    $Built = [CIPP.CippJson]::ConvertFromIndex($Count.Index, $Indices.ToArray())
+                    $Kept = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[object]]]::new()
+                    for ($k = 0; $k -lt $Built.Length; $k++) {
+                        $Record = $Built[$k]
                         $Item = [string]($Record.ObjectId ?? $Record.SourceFileName)
                         $Device = [string]($Record.UserAgent ?? $Record.ClientInfoString ?? $Record.ApplicationDisplayName)
-                        $Kept.Add([ordered]@{
+                        if (-not $Kept.ContainsKey($Owners[$k])) { $Kept[$Owners[$k]] = [System.Collections.Generic.List[object]]::new() }
+                        $Kept[$Owners[$k]].Add([ordered]@{
                                 Time      = $Record.CreationTime
                                 Operation = $Record.Operation
                                 Item      = if ($Item.Length -gt 200) { $Item.Substring(0, 200) } else { $Item }
@@ -104,10 +111,9 @@ function Push-AuditLogFeedBlobsV3 {
                                 Device    = if ($Device.Length -gt 120) { $Device.Substring(0, 120) } else { $Device }
                             })
                     }
-                    $CountRows["$TenantId`n$RowKey"] = @{
-                        PartitionKey = $TenantId; RowKey = $RowKey; Who = $Who; Bucket = $Bucket; Count = [int]$Pair.Value + [int]$CountRows["$TenantId`n$RowKey"].Count
-                        Records      = [string]([CIPP.CippJson]::ToJson($Kept.ToArray(), 4) ?? (ConvertTo-Json -InputObject $Kept.ToArray() -Depth 4 -Compress))
-                    }
+                    $RowKey = '{0}|{1}|{2}' -f $RuleKey, $Bucket, $Blob.RowKey
+                    $CountRows["$TenantId`n$RowKey"] = @{ PartitionKey = $TenantId; RowKey = $RowKey; Bucket = $Bucket; Counts = [string]([CIPP.CippJson]::ToJson($Slot.Counts, 2) ?? (ConvertTo-Json -InputObject $Slot.Counts -Compress)) }
+                    $CountRows["$TenantId|records`n$RowKey"] = @{ PartitionKey = "$TenantId|records"; RowKey = $RowKey; Bucket = $Bucket; Records = [string]([CIPP.CippJson]::ToJson($Kept, 4) ?? (ConvertTo-Json -InputObject $Kept -Depth 4 -Compress)) }
                 }
             }
             $Totals.Records += $_.RecordCount
@@ -153,11 +159,18 @@ function Push-AuditLogFeedBlobsV3 {
                     if ($Row.PartitionKey -eq $TenantId -and $Row.RowKey.StartsWith("$($Threshold.Rule.RowKey)|") -and ($null -eq $From -or [string]::CompareOrdinal($Row.Bucket, $From) -lt 0)) { $From = $Row.Bucket }
                 }
                 $From = [datetime]::ParseExact("$($From)0", 'yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture, [System.Globalization.DateTimeStyles]'AssumeUniversal, AdjustToUniversal').AddMinutes(-10 * $Span).ToString('yyyy-MM-ddTHH:mm').Substring(0, 15)
+                # One row per bucket and blob (RowKey '<rule>|<bucket>|<blob>'), each a map of identity to count.
                 $Buckets = @{}
-                foreach ($Row in @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "PartitionKey eq '$TenantId' and RowKey ge '$RuleKey|' and RowKey lt '$RuleKey}' and Bucket ge '$From'" -Property @('RowKey', 'Who', 'Bucket', 'Count'))) {
-                    if (-not $Touched[$Group].Contains([string]$Row.Who)) { continue }
-                    if (-not $Buckets.ContainsKey($Row.Who)) { $Buckets[$Row.Who] = @{} }
-                    $Buckets[$Row.Who][$Row.Bucket] = [int]$Buckets[$Row.Who][$Row.Bucket] + [int]$Row.Count
+                foreach ($Row in @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "PartitionKey eq '$TenantId' and RowKey ge '$RuleKey|$From' and RowKey lt '$RuleKey|~'")) {
+                    # A hashtable: member lookup by name on an object with thousands of members is a scan each time.
+                    $Map = try { ConvertFrom-Json -InputObject ([string]$Row.Counts) -AsHashtable } catch { $null }
+                    if ($null -eq $Map) { continue }
+                    foreach ($Who in $Touched[$Group]) {
+                        $Seen = $Map[$Who]
+                        if (-not $Seen) { continue }
+                        if (-not $Buckets.ContainsKey($Who)) { $Buckets[$Who] = @{} }
+                        $Buckets[$Who][$Row.Bucket] = [int]$Buckets[$Who][$Row.Bucket] + [int]$Seen
+                    }
                 }
                 foreach ($Who in $Buckets.Keys) {
                     $Times = @(foreach ($Bucket in $Buckets[$Who].Keys) { [pscustomobject]@{ At = [datetime]::ParseExact("$($Bucket)0", 'yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture, [System.Globalization.DateTimeStyles]'AssumeUniversal, AdjustToUniversal'); Count = $Buckets[$Who][$Bucket] } }) | Sort-Object At
@@ -195,8 +208,10 @@ function Push-AuditLogFeedBlobsV3 {
                             continue
                         }
                         # The records kept with the counts, read only for an identity that alerts.
-                        $WhoKey = ($Who -replace '[\\/#?|\x00-\x1f]', '_') -replace "'", "''"
-                        $Related = @(foreach ($Row in @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "PartitionKey eq '$TenantId' and RowKey ge '$RuleKey|$WhoKey|' and RowKey lt '$RuleKey|$WhoKey}' and Bucket ge '$From'")) { if ($Row.Records) { [string]$Row.Records } })
+                        $Related = @(foreach ($Row in @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "PartitionKey eq '$TenantId|records' and RowKey ge '$RuleKey|$From' and RowKey lt '$RuleKey|~'")) {
+                                $Map = try { ConvertFrom-Json -InputObject ([string]$Row.Records) -AsHashtable } catch { $null }
+                                if ($null -ne $Map -and $Map.Contains($Who)) { @($Map[$Who]) }
+                            })
                         foreach ($Burst in $Fired) { $Alerts.Add([pscustomobject]@{ TenantId = $TenantId; Threshold = $Threshold; Who = $Who; Sample = $SampleIndex["$Group`n$Who"]; End = $Burst.End; Count = $Burst.Count; Related = $Related }) }
                         break
                     }
@@ -247,12 +262,11 @@ function Push-AuditLogFeedBlobsV3 {
                 $From = $Alert.End.AddMinutes(-10 * [Math]::Ceiling($Threshold.Minutes / 10)).ToString('yyyy-MM-ddTHH:mm:ss')
                 $To = $Alert.End.ToString('yyyy-MM-ddTHH:mm:ss')
                 $InWindow = [System.Collections.Generic.List[object]]::new()
-                foreach ($Json in @($Alert.Related)) {
-                    foreach ($Record in @([CIPP.CippJson]::ConvertFromJson($Json))) {
-                        # CippJson reads the ISO time back as a DateTime; compare and keep it as the audit log writes it.
-                        if ($Record.Time -is [datetime]) { $Record.Time = $Record.Time.ToString('yyyy-MM-ddTHH:mm:ss') }
-                        if ([string]::CompareOrdinal([string]$Record.Time, $From) -ge 0 -and [string]::CompareOrdinal([string]$Record.Time, $To) -lt 0) { $InWindow.Add($Record) }
-                    }
+                foreach ($Record in @($Alert.Related)) {
+                    if ($null -eq $Record) { continue }
+                    # CippJson reads the ISO time back as a DateTime; compare and keep it as the audit log writes it.
+                    if ($Record.Time -is [datetime]) { $Record.Time = $Record.Time.ToString('yyyy-MM-ddTHH:mm:ss') }
+                    if ([string]::CompareOrdinal([string]$Record.Time, $From) -ge 0 -and [string]::CompareOrdinal([string]$Record.Time, $To) -lt 0) { $InWindow.Add($Record) }
                 }
                 $InWindow.Sort([System.Comparison[object]] { param($A, $B) [string]::CompareOrdinal([string]$A.Time, [string]$B.Time) })
                 $Kept = @(if ($InWindow.Count -gt 500) { $InWindow.GetRange(0, 500) } else { $InWindow })

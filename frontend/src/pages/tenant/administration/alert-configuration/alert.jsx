@@ -1342,8 +1342,8 @@ const AlertWizard = () => {
                                   validators={{
                                     min: { value: 2, message: 'At least 2' },
                                     max: {
-                                      value: 100000,
-                                      message: 'At most 100000',
+                                      value: 10000,
+                                      message: 'At most 10000',
                                     },
                                   }}
                                 />
@@ -1360,8 +1360,8 @@ const AlertWizard = () => {
                                       message: 'At least 10 minutes',
                                     },
                                     max: {
-                                      value: 1440,
-                                      message: 'At most 1440 minutes',
+                                      value: 60,
+                                      message: 'At most 60 minutes',
                                     },
                                   }}
                                 />

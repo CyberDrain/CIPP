@@ -32,9 +32,9 @@ function Push-AuditLogFeedCursorV3 {
         $Updates = @($Updates)
         if ($Updates.Count -gt 0) { $null = Add-CIPPAzDataTableEntity @CursorTable -Entity $Updates -OperationType UpsertMerge }
         Write-Information "AuditLogFeedCursorV3: $($Updates.Count) cursor(s) moved, $($Oldest.Count) feed(s) with blobs pending"
-        # Counts and claims outlive the longest repeated activity window (1,440 minutes) and its quiet period, plus a bucket.
+        # Counts and claims outlive the furthest back the feed reads (6 hours) plus the longest window (60 minutes).
         $ThresholdTable = Get-CippTable -TableName 'AuditLogFeedThresholds'
-        $Expired = @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "Timestamp lt datetime'$($Now.AddHours(-25).ToString('yyyy-MM-ddTHH:mm:ssZ'))'" -Property @('PartitionKey', 'RowKey'))
+        $Expired = @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "Timestamp lt datetime'$($Now.AddHours(-7).ToString('yyyy-MM-ddTHH:mm:ssZ'))'" -Property @('PartitionKey', 'RowKey'))
         if ($Expired.Count -gt 0) { Remove-CIPPAzDataTableEntity @ThresholdTable -Entity $Expired -Force }
     } catch {
         Write-LogMessage -API 'AuditLogFeedV3' -message 'Could not move the audit log feed cursors; the next run does' -sev Error -LogData (Get-CippException -Exception $_)

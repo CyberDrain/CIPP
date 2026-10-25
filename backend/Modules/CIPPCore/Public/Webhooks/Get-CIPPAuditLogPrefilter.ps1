@@ -54,7 +54,7 @@ function Get-CIPPAuditLogPrefilter {
                 # Counting needs the exact operations, so a like anchor cannot be a threshold rule.
                 if ([int]$Setting.Count -gt 0 -and $Anchor.Patterns.Count -eq 0) {
                     foreach ($Needle in $Anchor.Needles) { [void]$Needles.Add($Needle) }
-                    $Thresholds.Add([pscustomobject]@{ Rule = $Rule; Operations = [string[]]@($Anchor.Literals); Count = [int]$Setting.Count; Minutes = [Math]::Max(10, [int]($Setting.Minutes ?? 20)) })
+                    $Thresholds.Add([pscustomobject]@{ Rule = $Rule; Operations = [string[]]@($Anchor.Literals); Count = [int]$Setting.Count; Minutes = [Math]::Min(60, [Math]::Max(10, [int]($Setting.Minutes ?? 20))) })
                 }
                 continue
             }

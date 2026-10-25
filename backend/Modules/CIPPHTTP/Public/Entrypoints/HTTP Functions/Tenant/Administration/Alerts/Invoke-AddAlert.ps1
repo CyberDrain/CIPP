@@ -118,10 +118,10 @@ function Invoke-AddAlert {
         if ([bool]$Request.Body.thresholdEnabled) {
             $Count = $Request.Body.threshold.Count -as [int]
             $Minutes = $Request.Body.threshold.Minutes -as [int]
-            if ($Count -lt 2 -or $Count -gt 100000 -or $Minutes -lt 10 -or $Minutes -gt 1440) {
+            if ($Count -lt 2 -or $Count -gt 10000 -or $Minutes -lt 10 -or $Minutes -gt 60) {
                 return ([HttpResponseContext]@{
                         StatusCode = [HttpStatusCode]::BadRequest
-                        Body       = @{ error = 'A threshold needs a count from 2 to 100000 and a window from 10 to 1440 minutes.' }
+                        Body       = @{ error = 'A repeated activity alert needs a count from 2 to 10,000 and a window from 10 to 60 minutes.' }
                     })
             }
             if ($Groups.Count -gt 1) {

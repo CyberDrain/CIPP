@@ -150,10 +150,10 @@ CIPP checks these when you save an alert. Each one exists because breaking it wo
 | --- | --- |
 | Each group has exactly **one Operation condition**, using Equals, In or Like. | The operation is what lets CIPP skip batches and records no alert can match (step 3 above). A record has one operation, so a second Operation condition could only repeat or contradict the first. |
 | A **Like** on Operation needs at least three characters of plain text, such as `*InboxRule`. | Without text, every record would be a candidate. |
-| A **Like** on Operation cannot cover a busy operation (listed below). Name those with Equals or In. | A wildcard such as `*ser*` also covers every sign-in. In testing, one such alert made CIPP check 22 times as many records and matched over 130,000 records in a sample of 240,000. |
+| A **Like** on Operation cannot cover a busy operation (listed below). Name those with Equals or In. | A wildcard such as `*ser*` also covers every sign-in, so the alert would check, and likely match, nearly every record of the tenant. |
 | An alert on a **busy operation** needs at least one more condition, such as a user, a location or a time. | On its own it alerts on nearly every record of that operation. To be told when something busy happens many times, use a repeated activity alert. |
 | The Operation condition cannot use a **variable**. | The operation text is used before any tenant's variables are known. |
-| Lists of at most **500** values; values of at most **1,024** characters; Like values with at most **8** wildcards; regular expressions of at most **200** characters. | Each of these is evaluated for every candidate record. Measured on long values, a 50,000-value list cost 11 ms per record and a 30-wildcard pattern 2 ms. Within the limits, conditions cost microseconds. |
+| Lists of at most **500** values; values of at most **1,024** characters; Like values with at most **8** wildcards; regular expressions of at most **200** characters. | Each of these is evaluated for every record the alert checks, so a very long list or a heavily wildcarded pattern slows every record down. Within the limits they cost next to nothing. |
 | At most **30** conditions in at most **10** groups. | Keeps an alert readable, and each condition costs time on every candidate record. |
 | Values cannot contain `;` `|` `` ` `` `$` `{` `}`, and a Like value's `[` needs a closing `]`. | CIPP refuses to run such a value, so the alert would never fire. |
 | A repeated activity alert has **only** the Operation condition. | Counting reads only each record's operation, user and time, so any other condition would be ignored. |
@@ -172,12 +172,12 @@ Turn on **Only alert when one identity does this repeatedly** to alert when one 
 * **Once per burst.** After firing for an identity, the alert stays quiet for that identity for an hour or the window's length, whichever is longer. It reports the busiest window of the burst.
 * **What it shows.** The alert carries the count and up to 5 sample records. The saved log also lists the burst's records under **Related records**, summed up by IP address and device: the time, operation, item, IP address and device of each. Up to 60 records are kept per identity for each 10-minute bucket of each batch, and up to 500 per alert, so a very large burst shows a sample of it.
 * **Limits.**
-  * The count must be from 2 to 100,000.
-  * The window must be from 10 to 1,440 minutes.
+  * The count must be from 2 to 10,000.
+  * The window must be from 10 to 60 minutes. Counts are kept only a few hours, and an alert saved with a longer window is counted over 60 minutes.
   * There can be one group of conditions only, holding just the Operation condition.
   * The Operation condition must use Equals or In (counting needs the exact operations).
   * Only the operations below can be counted.
-* **Busy batches.** In one batch, each alert counts at most the 1,000 identity and 10-minute bucket pairs with the most records. Past that, a batch holds many names that each appear a few times, and no single-identity threshold reaches them.
+* **Every identity counts.** A batch with thousands of users doing the operation is counted in full: CIPP stores one small count per 10-minute bucket, not one per user.
 
 | Log | Operations that can be counted |
 | --- | --- |
@@ -226,20 +226,18 @@ To keep a copy, download it as JSON: **Download (JSON)** on the Saved Logs table
 
 **Diagnostics** shows each 15-minute cycle: how long it took, how many tenants and batches it covered, how many records were read and checked, and how many alerts were sent, including repeated activity alerts. It covers every tenant, so it needs access to all tenants.
 
-## Writing efficient alerts
+## Writing alerts that stay fast
 
-What an alert costs is driven by how many records it makes CIPP fully check, not by how many alerts you have. Measured on a sample of 243,000 real records with 61 alerts, on one CPU:
+Every record of every tenant is checked against your alerts, so the shape of an alert decides how much work it adds. Most of that work goes into records CIPP has to build and check in full; anything that lets it rule a record out early keeps alerting fast for every tenant.
 
-| Change | Records checked | Time |
-| --- | --- | --- |
-| The 61 alerts | 6,150 | 61 s |
-| Plus 100 more alerts on sign-ins | 12,000 | 64 s |
-| Plus one Like on Operation covering sign-ins | 138,000 | 139 s |
-| Plus eight OR groups of broad wildcards | 200,000 | 185 s |
-
-* **Name operations exactly.** Equals and In on Operation let CIPP skip whole batches. A Like matches many more operations than it seems to.
-* **Prefer positive conditions.** Equals, In and Like on other properties also help CIPP skip records early, when their values contain letters (up to 64 such values per tenant across all alerts). Values without letters, such as IP addresses and error codes, CIPP's own fields, and Not Equals, Not In, Not like and Does not match cannot, so the record is built and checked in full.
-* **Use repeated activity for volume.** If the question is "how many", a repeated activity alert counts without building records.
-* **Location conditions narrow early.** When every alert a record could match has a location condition, CIPP looks up the record's IP address before building it and skips it if no alert's location condition can hold.
+* **Start from the operation.** Name the exact operations with Equals or In. CIPP uses them to skip whole batches, and records within a batch, before anything else runs. A Like on Operation is fine for a family of operations such as `*InboxRule`, but check what else it covers: a short or common fragment pulls in unrelated activity.
+* **Narrow with something positive.** After the operation, add a condition that says who or what you care about, with Equals, In or Like: a user, an app, a site, a country. When its value contains text, CIPP can rule out records that do not hold that text before building them. Not Equals, Not In, Not like and Does not match only leave things out once a record is built; use them for a few known exceptions, next to a positive condition.
+* **Use In rather than many groups.** If OR groups differ only by operation, one In list does the same job more simply.
+* **Use variables for per-tenant lists.** A variable such as `%breakglass%` keeps each tenant's list short and relevant, instead of one long list every tenant checks.
+* **Prefer Like to regular expressions.** Like covers most matching and is easier to read. Keep regular expressions for patterns Like cannot express.
+* **Count instead of matching when the question is "how many".** A repeated activity alert counts records without building them, and sends one alert per burst instead of one per record.
+* **Location conditions narrow early.** When every alert a record could match has a `CIPPGeoLocation` condition, CIPP looks up the record's address first and skips the record if no alert's location condition can hold.
+* **Avoid overlapping alerts.** A record raises only the first alert it matches. Merge overlapping alerts, or give them a priority, so the one you expect is the one that fires.
+* **Check before you rely on it.** Open a saved log and use **Would your alerts fire on this log?** to see, condition by condition, how each alert treats a real record.
 
 {% include "../../../../../.gitbook/includes/feature-request.md" %}

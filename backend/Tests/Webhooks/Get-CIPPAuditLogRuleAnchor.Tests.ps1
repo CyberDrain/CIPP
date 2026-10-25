@@ -214,6 +214,8 @@ Describe 'Invoke-AddAlert' {
     It 'refuses a threshold of <Case>' -ForEach @(
         @{ Case = 'a count below 2'; Op = 'eq'; Value = 'FileDeleted'; Threshold = @{ Count = 1; Minutes = 20 } }
         @{ Case = 'a window under 10 minutes'; Op = 'eq'; Value = 'FileDeleted'; Threshold = @{ Count = 50; Minutes = 5 } }
+        @{ Case = 'a count over 10,000'; Op = 'eq'; Value = 'FileDeleted'; Threshold = @{ Count = 10001; Minutes = 20 } }
+        @{ Case = 'a window over 60 minutes'; Op = 'eq'; Value = 'FileDeleted'; Threshold = @{ Count = 50; Minutes = 61 } }
         @{ Case = 'a Like anchor'; Op = 'like'; Value = 'File*'; Threshold = @{ Count = 50; Minutes = 20 } }
     ) {
         $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' $Op $Value); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $true; threshold = $Threshold } })

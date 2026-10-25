@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import {
   Accordion,
   AccordionDetails,
@@ -9,7 +9,9 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  Collapse,
   Divider,
+  IconButton,
   Skeleton,
   Stack,
   Typography,
@@ -155,8 +157,35 @@ const Section = ({ title, description, rows }) =>
     </Stack>
   )
 
+// A short list of alerts with an icon, for the outcomes worth acting on that have no conditions to show.
+const NoteList = ({ title, description, rows, icon }) =>
+  rows.length > 0 && (
+    <Stack spacing={1}>
+      <Box>
+        <Typography variant="h6">{title}</Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {description}
+        </Typography>
+      </Box>
+      {rows.map((row) => (
+        <Stack
+          key={row.RuleKey}
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: 'center' }}
+        >
+          {icon}
+          <Typography variant="body2">
+            <strong>{row.Alert}</strong> ({row.Log})
+          </Typography>
+        </Stack>
+      ))}
+    </Stack>
+  )
+
 // Which of the audit log alerts set up now would fire on a saved log, shown condition by condition.
 export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
+  const [open, setOpen] = useState(true)
   const request = ApiGetCall({
     url: '/api/ListAuditLogRuleMatches',
     data: { tenantFilter: tenant, LogId: logId },
@@ -171,138 +200,185 @@ export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
   const also = pick('AlsoMatches')
   const close = pick('Close')
   const counts = pick('CountsToward')
-  const others = pick('OtherActivity', 'Excluded', 'NotChecked')
+  const excluded = pick('Excluded')
+  const notChecked = pick('NotChecked')
+  const others = pick('OtherActivity')
+  // The alerts for other activity, by the log they read.
+  const othersByLog = others.reduce((byLog, row) => {
+    ;(byLog[row.Log] = byLog[row.Log] ?? []).push(row)
+    return byLog
+  }, {})
 
   return (
     <Card variant="outlined">
       <CardHeader
         title="Would your alerts fire on this log?"
-        subheader="Checked against your audit log alerts as they are set up now. Nothing is sent."
+        subheader="Checked against the audit log alerts assigned to this tenant, as they are set up now. Nothing is sent."
+        action={
+          <IconButton
+            onClick={() => setOpen(!open)}
+            aria-label={
+              open ? 'Collapse the alert check' : 'Expand the alert check'
+            }
+          >
+            <CippIcons.ExpandMore
+              sx={{
+                transform: open ? 'rotate(180deg)' : 'none',
+                transition: 'transform 0.2s',
+              }}
+            />
+          </IconButton>
+        }
       />
-      <Divider />
-      <CardContent>
-        {request.isFetching ? (
-          <Skeleton variant="rounded" sx={{ height: 200 }} />
-        ) : request.isError || typeof request.data?.Results === 'string' ? (
-          <Alert severity="error">
-            {typeof request.data?.Results === 'string'
-              ? request.data.Results
-              : 'Could not check this log against your alerts.'}
-          </Alert>
-        ) : (
-          <Stack spacing={3}>
-            <Stack
-              direction="row"
-              spacing={1}
-              useFlexGap
-              sx={{ flexWrap: 'wrap', alignItems: 'center' }}
-            >
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', mr: 1 }}
+      <Collapse in={open}>
+        <Divider />
+        <CardContent>
+          {request.isFetching ? (
+            <Skeleton variant="rounded" sx={{ height: 200 }} />
+          ) : request.isError || typeof request.data?.Results === 'string' ? (
+            <Alert severity="error">
+              {typeof request.data?.Results === 'string'
+                ? request.data.Results
+                : 'Could not check this log against your alerts.'}
+            </Alert>
+          ) : (
+            <Stack spacing={3}>
+              <Stack
+                direction="row"
+                spacing={1}
+                useFlexGap
+                sx={{ flexWrap: 'wrap', alignItems: 'center' }}
               >
-                This log: <strong>{meta.Operation}</strong>
-                {meta.User ? ` by ${meta.User}` : ''}
-              </Typography>
-              <Chip
-                size="small"
-                color={fires.length ? 'success' : 'default'}
-                icon={<CippIcons.NotificationsActive fontSize="small" />}
-                label={`${fires.length} ${fires.length === 1 ? 'alert fires' : 'alerts fire'}`}
-              />
-              {also.length > 0 && (
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', mr: 1 }}
+                >
+                  This log: <strong>{meta.Operation}</strong>
+                  {meta.User ? ` by ${meta.User}` : ''}
+                </Typography>
                 <Chip
                   size="small"
-                  color="info"
-                  icon={<CippIcons.Notifications fontSize="small" />}
-                  label={`${also.length} also ${also.length === 1 ? 'matches' : 'match'}`}
+                  color={fires.length ? 'success' : 'default'}
+                  icon={<CippIcons.NotificationsActive fontSize="small" />}
+                  label={`${fires.length} ${fires.length === 1 ? 'alert fires' : 'alerts fire'}`}
                 />
-              )}
-              {close.length > 0 && (
+                {also.length > 0 && (
+                  <Chip
+                    size="small"
+                    color="info"
+                    icon={<CippIcons.Notifications fontSize="small" />}
+                    label={`${also.length} also ${also.length === 1 ? 'matches' : 'match'}`}
+                  />
+                )}
+                {close.length > 0 && (
+                  <Chip
+                    size="small"
+                    color="warning"
+                    icon={<CippIcons.NotificationsOff fontSize="small" />}
+                    label={`${close.length} close`}
+                  />
+                )}
                 <Chip
                   size="small"
-                  color="warning"
-                  icon={<CippIcons.NotificationsOff fontSize="small" />}
-                  label={`${close.length} close`}
+                  variant="outlined"
+                  label={`${others.length} look for other activity`}
                 />
-              )}
-              <Chip
-                size="small"
-                variant="outlined"
-                label={`${others.length} look for other activity`}
-              />
-            </Stack>
-
-            {fires.length === 0 && (
-              <Alert severity="info">
-                None of your alerts would fire on this log now.
-                {close.length > 0 &&
-                  ' The close matches below show which conditions stop them.'}
-              </Alert>
-            )}
-            <Section
-              title="Fires"
-              description="Every condition is met, so this alert is sent."
-              rows={fires}
-            />
-            <Section
-              title="Also matches"
-              description="Every condition is met too, but only one alert is sent per log, and an earlier alert fires first."
-              rows={also}
-            />
-            <Section
-              title="Close"
-              description="These alerts look at this activity, but at least one condition is not met. The red lines show what stops them."
-              rows={close}
-            />
-
-            {counts.length > 0 && (
-              <Stack spacing={1}>
-                <Typography variant="h6">Repeated activity alerts</Typography>
-                {counts.map((row) => (
-                  <Stack
-                    key={row.RuleKey}
-                    direction="row"
-                    spacing={1}
-                    sx={{ alignItems: 'center' }}
-                  >
-                    <CippIcons.CheckCircle color="success" fontSize="small" />
-                    <Typography variant="body2">
-                      <strong>{row.Alert}</strong>: {row.Reason}
-                    </Typography>
-                  </Stack>
-                ))}
               </Stack>
-            )}
 
-            {others.length > 0 && (
-              <Accordion variant="outlined" disableGutters>
-                <AccordionSummary expandIcon={<CippIcons.ExpandMore />}>
-                  <Typography variant="body2">
-                    {others.length} other{' '}
-                    {others.length === 1 ? 'alert looks' : 'alerts look'} for
-                    different activity, or {others.length === 1 ? 'does' : 'do'}{' '}
-                    not apply here
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Stack spacing={0.75}>
-                    {others.map((row) => (
+              {fires.length === 0 && (
+                <Alert severity="info">
+                  None of your alerts would fire on this log now.
+                  {close.length > 0 &&
+                    ' The close matches below show which conditions stop them.'}
+                </Alert>
+              )}
+              <Section
+                title="Fires"
+                description="Every condition is met, so this alert is sent."
+                rows={fires}
+              />
+              <Section
+                title="Also matches"
+                description="Every condition is met here too. Only one alert is sent for each log entry: the first matching alert in your alert list, shown above."
+                rows={also}
+              />
+              <Section
+                title="Close"
+                description="These alerts look at this activity, but at least one condition is not met. The red lines show what stops them."
+                rows={close}
+              />
+              <NoteList
+                title="Repeated activity alerts"
+                description="This log counts toward these. They alert when one user or app does it often enough."
+                rows={counts}
+                icon={
+                  <CippIcons.CheckCircle color="success" fontSize="small" />
+                }
+              />
+              <NoteList
+                title="Excluded for this tenant"
+                description="These alerts would otherwise check this log, but this tenant is excluded from them."
+                rows={excluded}
+                icon={
+                  <CippIcons.InfoOutlined color="action" fontSize="small" />
+                }
+              />
+              <NoteList
+                title="Not checked"
+                description="These alerts never run: each group of their conditions needs an Operation condition using Equals, In or Like. Edit them to fix this."
+                rows={notChecked}
+                icon={<CippIcons.Warning color="warning" fontSize="small" />}
+              />
+
+              {others.length > 0 && (
+                <Accordion variant="outlined" disableGutters>
+                  <AccordionSummary expandIcon={<CippIcons.ExpandMore />}>
+                    <Typography variant="body2">
+                      {others.length} other{' '}
+                      {others.length === 1 ? 'alert looks' : 'alerts look'} for
+                      different activity
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Stack spacing={2}>
                       <Typography
-                        key={row.RuleKey}
                         variant="body2"
                         sx={{ color: 'text.secondary' }}
                       >
-                        <strong>{row.Alert}</strong> ({row.Log}): {row.Reason}
+                        These alerts look for activity other than{' '}
+                        <strong>{meta.Operation}</strong>, so they never check
+                        this log.
                       </Typography>
-                    ))}
-                  </Stack>
-                </AccordionDetails>
-              </Accordion>
-            )}
-          </Stack>
-        )}
-      </CardContent>
+                      {Object.entries(othersByLog).map(([log, logRows]) => (
+                        <Box key={log}>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                            {log} ({logRows.length})
+                          </Typography>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            useFlexGap
+                            sx={{ flexWrap: 'wrap' }}
+                          >
+                            {logRows.map((row) => (
+                              <Chip
+                                key={row.RuleKey}
+                                size="small"
+                                variant="outlined"
+                                label={row.Alert}
+                              />
+                            ))}
+                          </Stack>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+              )}
+            </Stack>
+          )}
+        </CardContent>
+      </Collapse>
     </Card>
   )
 }

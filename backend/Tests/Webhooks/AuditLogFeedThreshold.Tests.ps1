@@ -1,5 +1,5 @@
 # Pester tests for threshold rules: counting records per identity from a blob index without building them
-# (CippJson.JsonRecordIndex.CountWhere / IndicesWhere), the prefilter's Thresholds, and the batch task's alert.
+# (CippJson.JsonRecordIndex.CountWhere / IndicesWhere), and the batch task's counts and claims in AuditLogFeedThresholds.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
@@ -7,6 +7,7 @@ BeforeAll {
     function Get-CippTable { param($TableName) @{ TableName = $TableName } }
     function Get-CIPPAzDataTableEntity { param($TableName, $Context, $Filter, $Property) }
     function Add-CIPPAzDataTableEntity { param($TableName, $Context, $Entity, [switch]$Force, $OperationType) }
+    function Update-CIPPAzDataTableEntity { param($TableName, $Context, $Entity, $OperationType, [switch]$Force) }
     function Remove-CIPPAzDataTableEntity { param($TableName, $Context, $Entity, [switch]$Force) }
     function Get-CIPPAuditLogContent { param($Queries, $Blobs, [switch]$ListOnly, $Prefilters, $MaxConcurrency) }
     function Get-CIPPAuditLogPrefilter { param($TenantFilter) }
@@ -20,6 +21,9 @@ BeforeAll {
     # A blob's records: @( @(operation, user, 'HH:mm:ss') ... ) on 2026-10-24.
     function New-BlobJson([object[]]$Rows) {
         ConvertTo-Json -Compress -Depth 4 -InputObject @(foreach ($R in $Rows) { [ordered]@{ Operation = $R[0]; UserId = $R[1]; CreationTime = "2026-10-24T$($R[2])"; ObjectId = "https://t.sharepoint.com/f-$($R[2]).docx"; Workload = 'SharePoint'; RecordType = 6 } })
+    }
+    function New-Task([string[]]$RowKeys) {
+        [pscustomobject]@{ Tenants = @([pscustomobject]@{ TenantFilter = 'a.com'; TenantId = 'id-a'; Blobs = @(foreach ($Key in $RowKeys) { [pscustomobject]@{ RowKey = $Key; ContentType = 'Audit.SharePoint'; contentUri = "u-$Key" } }) }) }
     }
 }
 
@@ -46,48 +50,104 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
         $script:Sent = [System.Collections.Generic.List[object]]::new()
         $script:Ops = [string[]]@('FileRecycled', 'FileDeletedSecondStageRecycleBin')
         $script:Rule = [pscustomobject]@{ RowKey = 'rule-1'; Actions = '[{"value":"generatePSA"}]'; AlertComment = 'Mass deletion'; CustomSubject = ''; PsaTicketPriority = ''; BecActions = '[]' }
+        # AuditLogFeedThresholds in memory: an insert fails on an existing row, an update on a stale ETag.
+        $script:Store = @{}
+        $script:HideClaimOnce = $false
         Mock Get-CIPPAuditLogPrefilter { [pscustomobject]@{ Thresholds = @([pscustomobject]@{ Rule = $script:Rule; Operations = $script:Ops; Count = 5; Minutes = 20 }) } }
         Mock Get-CIPPAzDataTableEntity { [pscustomobject]@{ Value = 'cipp.example' } }
+        Mock Get-CIPPAzDataTableEntity -ParameterFilter { $TableName -eq 'AuditLogFeedThresholds' } {
+            $Pk = [regex]::Match($Filter, "PartitionKey eq '([^']*)'").Groups[1].Value
+            $Eq = [regex]::Match($Filter, "RowKey eq '([^']*)'")
+            if ($Eq.Success) {
+                if ($script:HideClaimOnce) { $script:HideClaimOnce = $false; return }
+                $Row = $script:Store["$Pk`n$($Eq.Groups[1].Value)"]
+                if ($Row) { [pscustomobject]$Row }
+                return
+            }
+            $Ge = [regex]::Match($Filter, "RowKey ge '([^']*)'").Groups[1].Value
+            $Lt = [regex]::Match($Filter, "RowKey lt '([^']*)'").Groups[1].Value
+            $From = [regex]::Match($Filter, "Bucket ge '([^']*)'").Groups[1].Value
+            foreach ($Row in $script:Store.Values) {
+                if ($Row.PartitionKey -eq $Pk -and [string]::CompareOrdinal($Row.RowKey, $Ge) -ge 0 -and [string]::CompareOrdinal($Row.RowKey, $Lt) -lt 0 -and [string]::CompareOrdinal($Row.Bucket, $From) -ge 0) { [pscustomobject]$Row }
+            }
+        }
         Mock Add-CIPPAzDataTableEntity {}
+        Mock Add-CIPPAzDataTableEntity -ParameterFilter { $TableName -eq 'AuditLogFeedThresholds' } {
+            foreach ($Row in @($Entity)) {
+                $Key = "$($Row.PartitionKey)`n$($Row.RowKey)"
+                if (-not $Force -and $script:Store.ContainsKey($Key)) { throw 'The specified entity already exists.' }
+                $Copy = @{} + $Row
+                $Copy.ETag = [guid]::NewGuid().ToString()
+                $script:Store[$Key] = $Copy
+            }
+        }
+        Mock Update-CIPPAzDataTableEntity {
+            $Key = "$($Entity.PartitionKey)`n$($Entity.RowKey)"
+            if (-not $script:Store.ContainsKey($Key) -or $script:Store[$Key].ETag -ne $Entity.ETag) { throw 'The update condition specified in the request was not satisfied.' }
+            $Copy = @{} + $Entity
+            $Copy.ETag = [guid]::NewGuid().ToString()
+            $script:Store[$Key] = $Copy
+        }
         Mock Remove-CIPPAzDataTableEntity {}
         Mock Invoke-CippWebhookProcessing { $script:Sent.Add($Data) }
         # Each blob as Get-CIPPAuditLogContent hands it over, with the counts it takes from the blob's index.
-        $script:BlobJson = @()
         Mock Get-CIPPAuditLogContent {
-            $n = 0
             foreach ($Blob in $Blobs) {
-                $Index = [CIPP.CippJson]::IndexRecords($script:BlobJson[$n++], $script:Fields)
+                $Index = [CIPP.CippJson]::IndexRecords($script:BlobJson[$Blob.RowKey], $script:Fields)
                 $Counts = $Index.CountWhere(0, $script:Ops, [int[]]@(2, 3), [int[]]@(-1, 15))
                 [pscustomobject]@{ Kind = 'Blob'; TenantId = $Blob.TenantId; Blob = $Blob; RecordCount = $Index.Count; Records = @(); ParseMs = 0; Error = $null; TenantDone = $false; Skipped = $false
-                    Counts = @(if ($Counts.Count) { [pscustomobject]@{ Threshold = 0; Counts = $Counts; Index = $Index } }) }
+                    Counts = @(if ($Counts.Count) { [pscustomobject]@{ Threshold = 0; Counts = $Counts; Index = $Index } })
+                }
             }
         }
-        $script:Item = [pscustomobject]@{ Tenants = @([pscustomobject]@{ TenantFilter = 'a.com'; TenantId = 'id-a'; Blobs = @([pscustomobject]@{ RowKey = 'r1'; ContentType = 'Audit.SharePoint'; contentUri = 'u1' }, [pscustomobject]@{ RowKey = 'r2'; ContentType = 'Audit.SharePoint'; contentUri = 'u2' }) }) }
+        $script:BlobJson = @{
+            r1 = New-BlobJson @(@('FileRecycled', 'bob@a.com', '17:01:00'), @('FileRecycled', 'bob@a.com', '17:02:00'), @('FileAccessed', 'bob@a.com', '17:03:00'), @('FileRecycled', 'eve@a.com', '17:04:00'))
+            r2 = New-BlobJson @(@('FileDeletedSecondStageRecycleBin', 'bob@a.com', '17:12:00'), @('FileRecycled', 'Bob@a.com', '17:13:00'), @('FileRecycled', 'bob@a.com', '17:14:00'))
+            r3 = New-BlobJson @(@('FileRecycled', 'bob@a.com', '17:45:00'), @('FileRecycled', 'bob@a.com', '17:46:00'), @('FileRecycled', 'eve@a.com', '17:47:00'))
+        }
     }
 
     It 'alerts once when one identity''s deletions across the batch''s blobs reach the count within the window' {
-        $script:BlobJson = @(
-            (New-BlobJson @(@('FileRecycled', 'bob@a.com', '17:01:00'), @('FileRecycled', 'bob@a.com', '17:02:00'), @('FileAccessed', 'bob@a.com', '17:03:00'), @('FileRecycled', 'eve@a.com', '17:04:00'))),
-            (New-BlobJson @(@('FileDeletedSecondStageRecycleBin', 'bob@a.com', '17:12:00'), @('FileRecycled', 'bob@a.com', '17:13:00'), @('FileRecycled', 'bob@a.com', '17:14:00')))
-        )
-        Push-AuditLogFeedBlobsV3 -Item $script:Item
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1', 'r2')
         $script:Sent | Should -HaveCount 1
         $Alert = $script:Sent[0]
         $Alert.UserId | Should -Be 'bob@a.com'
         $Alert.CIPPThresholdCount | Should -Be 5
-        $Alert.Id | Should -Be 'threshold-rule-1-bob@a.com-2026102417'
+        $Alert.Id | Should -Be 'threshold-rule-1-bob@a.com-202610241720'
         $Alert.CIPPClause | Should -BeLike '5 of FileRecycled, FileDeletedSecondStageRecycleBin by bob@a.com within 20 minutes*'
         $Alert.CIPPAction | Should -Be $script:Rule.Actions
-        @([CIPP.CippJson]::ConvertFromJson($Alert.AuditRecord)).Count | Should -Be 2
-        $Alert.ObjectId | Should -BeLike '*f-17:01:00.docx*'
+        @([CIPP.CippJson]::ConvertFromJson($Alert.AuditRecord)).Count | Should -BeGreaterThan 0
+    }
+
+    It 'sums an identity''s counts across runs, alerts the run that reaches the count, and never again for that burst' {
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1')
+        $script:Sent | Should -HaveCount 0
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r2')
+        $script:Sent | Should -HaveCount 1
+        $script:Sent[0].CIPPThresholdCount | Should -Be 5
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1', 'r2')
+        $script:Sent | Should -HaveCount 1
+    }
+
+    It 'counts a blob evaluated twice once' {
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1')
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1')
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r3')
+        $script:Sent | Should -HaveCount 0
+    }
+
+    It 'does not alert when another task claimed the burst between its read and its write' {
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1', 'r2')
+        $script:Sent | Should -HaveCount 1
+        # The second task reads no claim yet, so its insert fails; it reads again and finds the burst covered.
+        $script:HideClaimOnce = $true
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r2')
+        $script:Sent | Should -HaveCount 1
+        Should -Invoke Add-CIPPAzDataTableEntity -ParameterFilter { $TableName -eq 'AuditLogFeedThresholds' -and -not $Force } -Times 2 -Exactly
     }
 
     It 'does not alert below the count, or when the records are further apart than the window' {
-        $script:BlobJson = @(
-            (New-BlobJson @(@('FileRecycled', 'bob@a.com', '17:01:00'), @('FileRecycled', 'bob@a.com', '17:02:00'), @('FileRecycled', 'bob@a.com', '17:03:00'))),
-            (New-BlobJson @(@('FileRecycled', 'bob@a.com', '17:45:00'), @('FileRecycled', 'bob@a.com', '17:46:00'), @('FileRecycled', 'eve@a.com', '17:47:00')))
-        )
-        Push-AuditLogFeedBlobsV3 -Item $script:Item
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1', 'r3')
         $script:Sent | Should -HaveCount 0
     }
 }

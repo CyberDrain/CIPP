@@ -10,11 +10,14 @@ function Push-AuditLogFeedBlobsV3 {
         when it was queued). A blob evaluated
         again sends nothing twice, since its alerts are already claimed. The task's totals go to AuditLogFeedCycles.
 
-        Threshold rules (Get-CIPPAuditLogPrefilter Thresholds) are counted, never matched record by record: the counts per
-        identity and 10-minute bucket that Get-CIPPAuditLogContent takes from each blob's index are summed over the task,
-        and an identity whose records reach a rule's Count within its Minutes gets one alert, carrying the count and up to
-        5 sample records, claimed as 'threshold-<rule>-<identity>-<hour>' so the same burst alerts once however its blobs
-        were split.
+        Threshold rules (Get-CIPPAuditLogPrefilter Thresholds) are counted, never matched record by record. The counts per
+        identity and 10-minute bucket that Get-CIPPAuditLogContent takes from each blob's index are stored in
+        AuditLogFeedThresholds, one row per blob, so a blob evaluated twice counts once, and the identity's counts from
+        every task and run are summed from there. A window reaching the rule's Count within its Minutes is alerted by the
+        task that moves the identity's '<tenant id>|alert' row (AlertedThroughUtc) forward: an insert, or an ETag-checked
+        update, so of two tasks seeing the same burst only one write lands, and the other re-reads and finds it covered.
+        An alert carries the count and up to 5 sample records, and quiets the identity for the rule for an hour or the
+        rule's Minutes, whichever is longer.
     .FUNCTIONALITY
         Entrypoint
     #>
@@ -38,8 +41,9 @@ function Push-AuditLogFeedBlobsV3 {
     $Totals = @{ Records = 0; Evaluated = 0; Matched = 0 }
     # The engine's directory memo, one per tenant, dropped once the tenant's last blob is in.
     $Memos = @{}
-    # '<tenant id>`n<threshold>`n<identity>' -> 10-minute bucket -> records; and the first blob index holding each, for samples.
-    $Tallies = @{}
+    # Threshold count rows by key; '<tenant id>`n<threshold>' -> identities counted; and a blob index holding each, for samples.
+    $CountRows = @{}
+    $Touched = @{}
     $SampleIndex = @{}
 
     try {
@@ -56,11 +60,15 @@ function Push-AuditLogFeedBlobsV3 {
             }
             foreach ($Count in @($_.Counts)) {
                 if ($null -eq $Count) { continue }
+                $RuleKey = [string]$Prefilters[$TenantId].Thresholds[$Count.Threshold].Rule.RowKey
+                $Group = "$TenantId`n$($Count.Threshold)"
+                if (-not $Touched.ContainsKey($Group)) { $Touched[$Group] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase) }
                 foreach ($Pair in $Count.Counts.GetEnumerator()) {
                     $Who, $Bucket = $Pair.Key -split '\|', 2
-                    $Key = "$TenantId`n$($Count.Threshold)`n$Who"
-                    if (-not $Tallies.ContainsKey($Key)) { $Tallies[$Key] = @{}; $SampleIndex[$Key] = @{ Index = $Count.Index; Key = $Pair.Key } }
-                    $Tallies[$Key][$Bucket] = [int]$Tallies[$Key][$Bucket] + $Pair.Value
+                    $Who = $Who.ToLowerInvariant()
+                    if ($Touched[$Group].Add($Who)) { $SampleIndex["$Group`n$Who"] = @{ Index = $Count.Index; Key = $Pair.Key } }
+                    $RowKey = '{0}|{1}|{2}|{3}' -f $RuleKey, ($Who -replace '[\\/#?|\x00-\x1f]', '_'), $Bucket, $Blob.RowKey
+                    $CountRows["$TenantId`n$RowKey"] = @{ PartitionKey = $TenantId; RowKey = $RowKey; Who = $Who; Bucket = $Bucket; Count = [int]$Pair.Value + [int]$CountRows["$TenantId`n$RowKey"].Count }
                 }
             }
             $Totals.Records += $_.RecordCount
@@ -89,23 +97,80 @@ function Push-AuditLogFeedBlobsV3 {
     }
     $script:AuditRuleSearchLookups = $null
 
-    $CIPPURL = $null
-    foreach ($Key in $Tallies.Keys) {
-        $TenantId, $T, $Who = $Key -split "`n", 3
-        $Threshold = $Prefilters[$TenantId].Thresholds[[int]$T]
-        # The busiest run of buckets that fits in the rule's window.
-        $Span = [Math]::Ceiling($Threshold.Minutes / 10)
-        $Times = @(foreach ($Bucket in $Tallies[$Key].Keys) { [pscustomobject]@{ At = [datetime]::ParseExact("$($Bucket)0", 'yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture); Count = $Tallies[$Key][$Bucket] } })
-        $Best = $null
-        foreach ($End in $Times) {
-            $Sum = 0
-            foreach ($Other in $Times) { if ($Other.At -le $End.At -and $Other.At -gt $End.At.AddMinutes(-10 * $Span)) { $Sum += $Other.Count } }
-            if ($Sum -ge $Threshold.Count -and ($null -eq $Best -or $Sum -gt $Best.Count)) { $Best = [pscustomobject]@{ At = $End.At; Count = $Sum } }
+    $Alerts = [System.Collections.Generic.List[object]]::new()
+    if ($Touched.Count -gt 0) {
+        try {
+            $ThresholdTable = Get-CippTable -TableName 'AuditLogFeedThresholds'
+            Add-CIPPAzDataTableEntity @ThresholdTable -Entity @($CountRows.Values) -Force
+            foreach ($Group in $Touched.Keys) {
+                $TenantId, $T = $Group -split "`n", 2
+                $Threshold = $Prefilters[$TenantId].Thresholds[[int]$T]
+                $RuleKey = [string]$Threshold.Rule.RowKey -replace "'", "''"
+                $Span = [Math]::Ceiling($Threshold.Minutes / 10)
+                $Quiet = [Math]::Max(60, $Threshold.Minutes)
+                # Every task's counts for the rule in this tenant, ours included, from a window before the oldest we added.
+                $From = $null
+                foreach ($Row in $CountRows.Values) {
+                    if ($Row.PartitionKey -eq $TenantId -and $Row.RowKey.StartsWith("$($Threshold.Rule.RowKey)|") -and ($null -eq $From -or [string]::CompareOrdinal($Row.Bucket, $From) -lt 0)) { $From = $Row.Bucket }
+                }
+                $From = [datetime]::ParseExact("$($From)0", 'yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture, [System.Globalization.DateTimeStyles]'AssumeUniversal, AdjustToUniversal').AddMinutes(-10 * $Span).ToString('yyyy-MM-ddTHH:mm').Substring(0, 15)
+                $Buckets = @{}
+                foreach ($Row in @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "PartitionKey eq '$TenantId' and RowKey ge '$RuleKey|' and RowKey lt '$RuleKey}' and Bucket ge '$From'" -Property @('RowKey', 'Who', 'Bucket', 'Count'))) {
+                    if (-not $Touched[$Group].Contains([string]$Row.Who)) { continue }
+                    if (-not $Buckets.ContainsKey($Row.Who)) { $Buckets[$Row.Who] = @{} }
+                    $Buckets[$Row.Who][$Row.Bucket] = [int]$Buckets[$Row.Who][$Row.Bucket] + [int]$Row.Count
+                }
+                foreach ($Who in $Buckets.Keys) {
+                    $Times = @(foreach ($Bucket in $Buckets[$Who].Keys) { [pscustomobject]@{ At = [datetime]::ParseExact("$($Bucket)0", 'yyyy-MM-ddTHH:mm', [cultureinfo]::InvariantCulture, [System.Globalization.DateTimeStyles]'AssumeUniversal, AdjustToUniversal'); Count = $Buckets[$Who][$Bucket] } }) | Sort-Object At
+                    # The windows, ending at each bucket, that reach the count; in time order.
+                    $Windows = @(foreach ($End in $Times) {
+                            $Sum = 0
+                            foreach ($Other in $Times) { if ($Other.At -le $End.At -and $Other.At -gt $End.At.AddMinutes(-10 * $Span)) { $Sum += $Other.Count } }
+                            if ($Sum -ge $Threshold.Count) { [pscustomobject]@{ End = $End.At.AddMinutes(10); Count = $Sum } }
+                        })
+                    if ($Windows.Count -eq 0) { continue }
+                    $AlertKey = $Who -replace "[\\/#?|\x00-\x1f']", '_'
+                    for ($Attempt = 1; $Attempt -le 5; $Attempt++) {
+                        $State = Get-CIPPAzDataTableEntity @ThresholdTable -Filter "PartitionKey eq '$TenantId|alert' and RowKey eq '$RuleKey|$AlertKey'"
+                        $Through = if ($State.AlertedThroughUtc) { ([datetimeoffset]$State.AlertedThroughUtc).UtcDateTime } else { [datetime]::MinValue }
+                        $Fired = [System.Collections.Generic.List[object]]::new()
+                        foreach ($Window in $Windows) {
+                            if ($Window.End -le $Through) { continue }
+                            # Reported at its busiest window before the identity goes quiet.
+                            $Burst = $Window
+                            foreach ($Later in $Windows) { if ($Later.End -ge $Window.End -and $Later.End -lt $Window.End.AddMinutes($Quiet) -and $Later.Count -gt $Burst.Count) { $Burst = $Later } }
+                            $Fired.Add($Burst)
+                            $Through = $Window.End.AddMinutes($Quiet)
+                        }
+                        if ($Fired.Count -eq 0) { break }
+                        $Claim = @{ PartitionKey = "$TenantId|alert"; RowKey = "$($Threshold.Rule.RowKey)|$AlertKey"; AlertedThroughUtc = $Through; Count = $Fired[-1].Count }
+                        try {
+                            if ($State) {
+                                $Claim.ETag = $State.ETag
+                                Update-CIPPAzDataTableEntity @ThresholdTable -Entity $Claim -OperationType UpdateReplace
+                            } else {
+                                Add-CIPPAzDataTableEntity @ThresholdTable -Entity $Claim
+                            }
+                        } catch {
+                            # Another task moved the row first: read it again and alert only what it left.
+                            continue
+                        }
+                        foreach ($Burst in $Fired) { $Alerts.Add([pscustomobject]@{ TenantId = $TenantId; Threshold = $Threshold; Who = $Who; Sample = $SampleIndex["$Group`n$Who"]; End = $Burst.End; Count = $Burst.Count }) }
+                        break
+                    }
+                }
+            }
+        } catch {
+            Write-Information "AuditLogFeedBlobsV3: could not count the threshold rules: $($_.Exception.Message)"
         }
-        if (-not $Best) { continue }
+    }
+
+    $CIPPURL = $null
+    foreach ($Alert in $Alerts) {
+        $TenantId, $Threshold, $Who = $Alert.TenantId, $Alert.Threshold, $Alert.Who
         try {
             $TenantFilter = $Tenants[$TenantId]
-            $Sample = $SampleIndex[$Key]
+            $Sample = $Alert.Sample
             $SampleRecords = @([CIPP.CippJson]::ConvertFromIndex($Sample.Index, $Sample.Index.IndicesWhere(0, $Threshold.Operations, [int[]]@(2, 3), [int[]]@(-1, 15), $Sample.Key, 5)))
             $Rule = $Threshold.Rule
             if (-not $CIPPURL) {
@@ -113,9 +178,9 @@ function Push-AuditLogFeedBlobsV3 {
                 $CIPPURL = 'https://{0}' -f (Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'InstanceProperties' and RowKey eq 'CIPPURL'").Value
             }
             $Data = [pscustomobject]@{
-                Id                    = 'threshold-{0}-{1}-{2:yyyyMMddHH}' -f $Rule.RowKey, ($Who -replace '[\\/#?]', '_'), $Best.At
-                CreationTime          = $Best.At.AddMinutes(10).ToString('yyyy-MM-ddTHH:mm:ss')
-                Operation             = "$($Best.Count) x $($Threshold.Operations -join ' / ')"
+                Id                    = 'threshold-{0}-{1}-{2:yyyyMMddHHmm}' -f $Rule.RowKey, ($Who -replace '[\\/#?]', '_'), $Alert.End
+                CreationTime          = $Alert.End.ToString('yyyy-MM-ddTHH:mm:ss')
+                Operation             = "$($Alert.Count) x $($Threshold.Operations -join ' / ')"
                 UserId                = $Who
                 Workload              = $SampleRecords[0].Workload
                 RecordType            = $SampleRecords[0].RecordType
@@ -123,11 +188,11 @@ function Push-AuditLogFeedBlobsV3 {
                 ObjectId              = @($SampleRecords.ObjectId) -join ', '
                 CIPPAction            = $Rule.Actions
                 CIPPBecActions        = $Rule.BecActions
-                CIPPClause            = '{0} of {1} by {2} within {3} minutes (threshold {4})' -f $Best.Count, ($Threshold.Operations -join ', '), $Who, $Threshold.Minutes, $Threshold.Count
+                CIPPClause            = '{0} of {1} by {2} within {3} minutes (threshold {4})' -f $Alert.Count, ($Threshold.Operations -join ', '), $Who, $Threshold.Minutes, $Threshold.Count
                 CIPPAlertComment      = $Rule.AlertComment
                 CIPPCustomSubject     = $Rule.CustomSubject
                 CIPPPsaTicketPriority = $Rule.PsaTicketPriority
-                CIPPThresholdCount    = $Best.Count
+                CIPPThresholdCount    = $Alert.Count
                 AuditRecord           = [string]([CIPP.CippJson]::ToJson($SampleRecords, 10) ?? (ConvertTo-Json -InputObject $SampleRecords -Depth 10 -Compress))
             }
             $Rows = [System.Collections.Generic.List[object]]::new()

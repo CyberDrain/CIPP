@@ -6,7 +6,8 @@ function Push-AuditLogFeedCursorV3 {
     .DESCRIPTION
         A feed's alerts are complete up to just before its oldest AuditLogFeedBlobs row still pending (a row's RowKey
         starts with its blob's created ticks), or up to ListedThroughUtc when none is left. After a blob run (Run set),
-        AuditLogFeedFanOutV3 queues the rows of the cycle not yet queued, if any.
+        AuditLogFeedFanOutV3 queues the rows of the cycle not yet queued, if any. Threshold counts and alert rows older
+        than 12 hours are removed from AuditLogFeedThresholds.
     .FUNCTIONALITY
         Entrypoint
     #>
@@ -31,6 +32,10 @@ function Push-AuditLogFeedCursorV3 {
         $Updates = @($Updates)
         if ($Updates.Count -gt 0) { $null = Add-CIPPAzDataTableEntity @CursorTable -Entity $Updates -OperationType UpsertMerge }
         Write-Information "AuditLogFeedCursorV3: $($Updates.Count) cursor(s) moved, $($Oldest.Count) feed(s) with blobs pending"
+        # ponytail: threshold counts live 12 hours, so records of one identity published further apart are never summed.
+        $ThresholdTable = Get-CippTable -TableName 'AuditLogFeedThresholds'
+        $Expired = @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "Timestamp lt datetime'$($Now.AddHours(-12).ToString('yyyy-MM-ddTHH:mm:ssZ'))'" -Property @('PartitionKey', 'RowKey'))
+        if ($Expired.Count -gt 0) { Remove-CIPPAzDataTableEntity @ThresholdTable -Entity $Expired -Force }
     } catch {
         Write-LogMessage -API 'AuditLogFeedV3' -message 'Could not move the audit log feed cursors; the next run does' -sev Error -LogData (Get-CippException -Exception $_)
     }

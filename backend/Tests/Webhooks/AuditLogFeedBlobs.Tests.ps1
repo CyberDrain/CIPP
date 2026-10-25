@@ -222,8 +222,10 @@ Describe 'Push-AuditLogFeedCursorV3' {
         $script:Writes = [System.Collections.Generic.List[object]]::new()
         $script:Pending = @()
         $script:Cursors = @()
-        Mock Get-CIPPAzDataTableEntity { if ($TableName -eq 'AuditLogFeedBlobs') { $script:Pending } else { $script:Cursors } }
+        $script:Expired = @()
+        Mock Get-CIPPAzDataTableEntity { switch ($TableName) { 'AuditLogFeedBlobs' { $script:Pending } 'AuditLogFeedThresholds' { $script:Expired } default { $script:Cursors } } }
         Mock Add-CIPPAzDataTableEntity { $script:Writes.Add(@($Entity)) }
+        Mock Remove-CIPPAzDataTableEntity {}
         Mock Push-AuditLogFeedFanOutV3 {}
     }
 
@@ -245,6 +247,13 @@ Describe 'Push-AuditLogFeedCursorV3' {
         $Updates.Where({ $_.PartitionKey -eq 'a.com' })[0].LastEndUtc.Kind | Should -Be 'Utc'
         $Updates.Where({ $_.PartitionKey -eq 'b.com' })[0].LastEndUtc | Should -Be $Listed.ToUniversalTime()
         Should -Invoke Push-AuditLogFeedFanOutV3 -Times 0 -Exactly
+    }
+
+    It 'removes threshold rows older than 12 hours' {
+        $script:Expired = @([pscustomobject]@{ PartitionKey = 'id-a'; RowKey = 'rule-1|bob|2026-10-24T17:0|r1' })
+        Push-AuditLogFeedCursorV3 -Item @{ Parameters = @{ CycleId = 'c1' } }
+        Should -Invoke Get-CIPPAzDataTableEntity -ParameterFilter { $TableName -eq 'AuditLogFeedThresholds' -and $Filter -like 'Timestamp lt datetime*' } -Times 1 -Exactly
+        Should -Invoke Remove-CIPPAzDataTableEntity -ParameterFilter { $TableName -eq 'AuditLogFeedThresholds' -and @($Entity).Count -eq 1 } -Times 1 -Exactly
     }
 
     It 'queues the cycle''s next run after a blob run' {

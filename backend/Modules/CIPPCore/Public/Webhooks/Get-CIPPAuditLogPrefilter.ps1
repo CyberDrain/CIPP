@@ -12,7 +12,8 @@ function Get-CIPPAuditLogPrefilter {
             which is tested as the engine builds it: the record's Actor ids joined with ', ';
           - any other name counts as true on a record whose ExtendedProperties, DeviceProperties, parameters or
             ModifiedProperties hold an item of that Name, because the engine flattens that item over it.
-        A rule the engine skips (a condition the sanitiser rejects, no non-empty condition, or no anchor from
+        Each OR group of a rule (Split-CIPPAuditLogConditions) is handled as a rule of its own, as the engine does. A group
+        the engine skips (a condition the sanitiser rejects, no non-empty condition, or no anchor from
         Get-CIPPAuditLogRuleAnchor) matches nothing and is left out.
 
         Needles holds every kept rule's anchor needles, for the blob check in Get-CIPPAuditLogContent; with no rules it is
@@ -43,12 +44,12 @@ function Get-CIPPAuditLogPrefilter {
         $PlainRun = [regex]'[A-Za-z0-9 ._@:-]{3,}'
         foreach ($Rule in (Get-CIPPAuditLogRuleSet -TenantFilter $TenantFilter)) {
             if ($TenantFilter -in $Rule.Excluded.value) { continue }
-            # The engine's own selection of a rule's conditions.
-            $Conditions = $Rule.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' }
-            $Terms = [System.Collections.Generic.List[string]]::new()
-            $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $Conditions
-            if ($null -eq $Anchor) { continue }
+            # The engine's own selection of a rule's conditions, split into its OR groups.
+            $Branches = @(Split-CIPPAuditLogConditions -Conditions ($Rule.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' }))
             if ($Rule.Threshold) {
+                # A threshold rule counts the operations of its one group.
+                $Anchor = if ($Branches.Count -eq 1) { Get-CIPPAuditLogRuleAnchor -Conditions $Branches[0].Conditions }
+                if ($null -eq $Anchor) { continue }
                 $Setting = try { [string]$Rule.Threshold | ConvertFrom-Json -ErrorAction Stop } catch { $null }
                 # Counting needs the exact operations, so a like anchor cannot be a threshold rule.
                 if ([int]$Setting.Count -gt 0 -and $Anchor.Patterns.Count -eq 0) {
@@ -57,53 +58,60 @@ function Get-CIPPAuditLogPrefilter {
                 }
                 continue
             }
-            $Skipped = $false
-            $Count = 0
-            $LocationTerms = [System.Collections.Generic.List[string]]::new()
-            $Groups = [System.Collections.Generic.List[uint64]]::new()
-            foreach ($Condition in $Conditions) {
-                $Sanitized = Test-CIPPConditionFilter -Condition $Condition
-                if ($null -eq $Sanitized) { $Skipped = $true; break }
-                $Count++
-                # The sanitiser allows only [A-Za-z0-9_.] in a label, so the root name is safe inside quotes.
-                $Root = ([string]$Condition.Property.label -split '\.', 2)[0]
-                if ($Root -match '^CIPP(GeoLocation|BadRepIP|HostedIP)$') { $LocationTerms.Add("($Sanitized)") }
-                $Operator = ([string]$Condition.Operator.value).ToLowerInvariant()
-                if ($Root -ne 'Operation' -and $Operator -in 'eq', 'like', 'in' -and ($Root -notmatch $Untested -or $Root -in 'CIPPActor', 'CIPPAddedKeyTypes')) {
-                    $Group = [uint64]0
-                    foreach ($Value in @($Condition.Input.value)) {
-                        $Longest = ''
-                        if ([string]$Value -match '[A-Za-z]') {
-                            foreach ($Run in $PlainRun.Matches(([string]$Value -replace '[*?\[\]]', "`n"))) { if ($Run.Value.Length -gt $Longest.Length) { $Longest = $Run.Value } }
+            # Each OR group is a rule of its own here, as it is in the engine.
+            foreach ($Branch in $Branches) {
+                $Conditions = $Branch.Conditions
+                $Terms = [System.Collections.Generic.List[string]]::new()
+                $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $Conditions
+                if ($null -eq $Anchor) { continue }
+                $Skipped = $false
+                $Count = 0
+                $LocationTerms = [System.Collections.Generic.List[string]]::new()
+                $Groups = [System.Collections.Generic.List[uint64]]::new()
+                foreach ($Condition in $Conditions) {
+                    $Sanitized = Test-CIPPConditionFilter -Condition $Condition
+                    if ($null -eq $Sanitized) { $Skipped = $true; break }
+                    $Count++
+                    # The sanitiser allows only [A-Za-z0-9_.] in a label, so the root name is safe inside quotes.
+                    $Root = ([string]$Condition.Property.label -split '\.', 2)[0]
+                    if ($Root -match '^CIPP(GeoLocation|BadRepIP|HostedIP)$') { $LocationTerms.Add("($Sanitized)") }
+                    $Operator = ([string]$Condition.Operator.value).ToLowerInvariant()
+                    if ($Root -ne 'Operation' -and $Operator -in 'eq', 'like', 'in' -and ($Root -notmatch $Untested -or $Root -in 'CIPPActor', 'CIPPAddedKeyTypes')) {
+                        $Group = [uint64]0
+                        foreach ($Value in @($Condition.Input.value)) {
+                            $Longest = ''
+                            if ([string]$Value -match '[A-Za-z]') {
+                                foreach ($Run in $PlainRun.Matches(([string]$Value -replace '[*?\[\]]', "`n"))) { if ($Run.Value.Length -gt $Longest.Length) { $Longest = $Run.Value } }
+                            }
+                            # A value with no usable text leaves the condition without a needle.
+                            if (-not $Longest) { $Group = 0; break }
+                            $At = $RecordNeedles.IndexOf($Longest.ToLowerInvariant())
+                            if ($At -lt 0 -and $RecordNeedles.Count -lt 64) { $RecordNeedles.Add($Longest.ToLowerInvariant()); $At = $RecordNeedles.Count - 1 }
+                            if ($At -lt 0) { $Group = 0; break }
+                            $Group = $Group -bor ([uint64]1 -shl $At)
                         }
-                        # A value with no usable text leaves the condition without a needle.
-                        if (-not $Longest) { $Group = 0; break }
-                        $At = $RecordNeedles.IndexOf($Longest.ToLowerInvariant())
-                        if ($At -lt 0 -and $RecordNeedles.Count -lt 64) { $RecordNeedles.Add($Longest.ToLowerInvariant()); $At = $RecordNeedles.Count - 1 }
-                        if ($At -lt 0) { $Group = 0; break }
-                        $Group = $Group -bor ([uint64]1 -shl $At)
+                        if ($Group) { $Groups.Add($Group) }
+                        # The engine only has a value for a raw name the record carries, as a field or as an item's Name.
+                        if ($Root -notmatch $Untested -and $Root.Length -ge 3) {
+                            $At = $RecordNeedles.IndexOf($Root.ToLowerInvariant())
+                            if ($At -lt 0 -and $RecordNeedles.Count -lt 64) { $RecordNeedles.Add($Root.ToLowerInvariant()); $At = $RecordNeedles.Count - 1 }
+                            if ($At -ge 0) { $Groups.Add([uint64]1 -shl $At) }
+                        }
                     }
-                    if ($Group) { $Groups.Add($Group) }
-                    # The engine only has a value for a raw name the record carries, as a field or as an item's Name.
-                    if ($Root -notmatch $Untested -and $Root.Length -ge 3) {
-                        $At = $RecordNeedles.IndexOf($Root.ToLowerInvariant())
-                        if ($At -lt 0 -and $RecordNeedles.Count -lt 64) { $RecordNeedles.Add($Root.ToLowerInvariant()); $At = $RecordNeedles.Count - 1 }
-                        if ($At -ge 0) { $Groups.Add([uint64]1 -shl $At) }
-                    }
+                    if ($Condition.Property.label -eq 'CIPPActor') {
+                        $Sanitized = $Sanitized.Replace('$($_.CIPPActor)', '$(if ($_.Actor) { @(foreach ($ActorEntry in $_.Actor) { [string]$ActorEntry.ID }) -join '', '' } else { $null })')
+                    } elseif ($Root -match $Untested) { continue }
+                    $Terms.Add("(($Sanitized) -or `$_.ExtendedProperties.Name -contains '$Root' -or `$_.DeviceProperties.Name -contains '$Root' -or `$_.parameters.Name -contains '$Root' -or `$_.ModifiedProperties.Name -contains '$Root')")
                 }
-                if ($Condition.Property.label -eq 'CIPPActor') {
-                    $Sanitized = $Sanitized.Replace('$($_.CIPPActor)', '$(if ($_.Actor) { @(foreach ($ActorEntry in $_.Actor) { [string]$ActorEntry.ID }) -join '', '' } else { $null })')
-                } elseif ($Root -match $Untested) { continue }
-                $Terms.Add("(($Sanitized) -or `$_.ExtendedProperties.Name -contains '$Root' -or `$_.DeviceProperties.Name -contains '$Root' -or `$_.parameters.Name -contains '$Root' -or `$_.ModifiedProperties.Name -contains '$Root')")
+                if ($Skipped -or $Count -eq 0) { continue }
+                foreach ($Needle in $Anchor.Needles) { [void]$Needles.Add($Needle) }
+                # The anchor is an Operation condition, which is always tested, so Terms is never empty here.
+                $Block = [scriptblock]::Create($Terms -join ' -and ')
+                $Rules.Add($Block)
+                # As the engine does, a location condition needs location data, which no reserved or unresolved address has.
+                $Location = if ($LocationTerms.Count -gt 0) { [scriptblock]::Create('$_.HasLocationData -eq $true -and ' + ($LocationTerms -join ' -and ')) }
+                $Index.Add([pscustomobject]@{ Rule = $Block; Literals = $Anchor.Literals; Patterns = $Anchor.Patterns; Location = $Location; Groups = $Groups.ToArray() })
             }
-            if ($Skipped -or $Count -eq 0) { continue }
-            foreach ($Needle in $Anchor.Needles) { [void]$Needles.Add($Needle) }
-            # The anchor is an Operation condition, which is always tested, so Terms is never empty here.
-            $Block = [scriptblock]::Create($Terms -join ' -and ')
-            $Rules.Add($Block)
-            # As the engine does, a location condition needs location data, which no reserved or unresolved address has.
-            $Location = if ($LocationTerms.Count -gt 0) { [scriptblock]::Create('$_.HasLocationData -eq $true -and ' + ($LocationTerms -join ' -and ')) }
-            $Index.Add([pscustomobject]@{ Rule = $Block; Literals = $Anchor.Literals; Patterns = $Anchor.Patterns; Location = $Location; Groups = $Groups.ToArray() })
         }
         [pscustomobject]@{
             Rules       = $Rules.ToArray()

@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { Fragment, useState, useEffect, useRef } from 'react'
 import { CippIcons } from '../../../../utils/icon-registry'
 import {
   Box,
   Button,
+  Chip,
   Container,
+  Divider,
   Stack,
   Typography,
   Card,
@@ -30,7 +32,10 @@ import { ApiGetCall, ApiPostCall } from '../../../../api/ApiCall'
 import { CippFormCondition } from '../../../../components/CippComponents/CippFormCondition'
 import { CippHead } from '../../../../components/CippComponents/CippHead'
 import { useSettings } from '../../../../hooks/use-settings'
-import { pushEnrolmentHint, usePushDevices } from '../../../../hooks/use-push-subscription'
+import {
+  pushEnrolmentHint,
+  usePushDevices,
+} from '../../../../hooks/use-push-subscription'
 
 // Recurrences are 30m, 4h, 1d and so on; a bare number is a day count, as the scheduler reads it.
 const recurrenceSeconds = (value) => {
@@ -184,7 +189,9 @@ const AlertWizard = () => {
     { label: 'Webhook', value: 'Webhook' },
     { label: 'Email', value: 'Email' },
     { label: 'PSA', value: 'PSA' },
-    ...(pushDevices.devices.length > 0 ? [{ label: 'Push (notify me)', value: 'Push' }] : []),
+    ...(pushDevices.devices.length > 0
+      ? [{ label: 'Push (notify me)', value: 'Push' }]
+      : []),
   ]
   const logbookOptions = [
     { value: 'Audit.AzureActiveDirectory', label: 'Azure AD' },
@@ -227,10 +234,15 @@ const AlertWizard = () => {
 
   useEffect(() => {
     if (router.query.id || !router.query.preset) return
-    const template = auditLogTemplates.find((entry) => entry.value === router.query.preset)
+    const template = auditLogTemplates.find(
+      (entry) => entry.value === router.query.preset
+    )
     if (!template) return
     setAlertType('audit')
-    formControl.setValue('preset', { value: template.value, label: template.name })
+    formControl.setValue('preset', {
+      value: template.value,
+      label: template.name,
+    })
   }, [router.query.preset, router.query.id])
 
   // Clear input value only on actual operator transitions, skip while preset loading
@@ -442,6 +454,7 @@ const AlertWizard = () => {
             Property: cond.Property,
             Operator: normalizedOperator,
             Input,
+            Group: cond.Group ?? 0,
           }
         })
         const resetData = {
@@ -519,6 +532,7 @@ const AlertWizard = () => {
               Property: cond.Property,
               Operator: cond.Operator,
               Input: finalInput,
+              Group: cond.Group ?? 0,
             }
           })
 
@@ -657,7 +671,12 @@ const AlertWizard = () => {
       } else {
         Input = condition.Input ?? (isList ? [] : '')
       }
-      return { Property: condition.Property, Operator: normalizedOp, Input }
+      return {
+        Property: condition.Property,
+        Operator: normalizedOp,
+        Input,
+        Group: condition.Group ?? 0,
+      }
     })
     formControl.setValue('conditions', formattedConditions)
     if (selectedTemplate.template.logbook) {
@@ -788,10 +807,15 @@ const AlertWizard = () => {
     )
   }
 
-  const handleAddCondition = () => {
+  const handleAddCondition = (group = 0) => {
     const currentConditions = formControl.getValues('conditions') || []
     // Append a blank condition placeholder so indices align immediately
-    currentConditions.push({ Property: null, Operator: null, Input: null })
+    currentConditions.push({
+      Property: null,
+      Operator: null,
+      Input: null,
+      Group: group,
+    })
     formControl.setValue('conditions', currentConditions, {
       shouldValidate: false,
     })
@@ -809,6 +833,189 @@ const AlertWizard = () => {
     // Rebuild addedEvent to keep ids aligned with new indices
     setAddedEvent(updatedConditions.map((_, idx) => ({ id: idx })))
   }
+
+  const handleRemoveGroup = (group) => {
+    const kept = (formControl.getValues('conditions') || []).filter(
+      (condition) => Number(condition?.Group ?? 0) !== group
+    )
+    formControl.setValue('conditions', kept, { shouldValidate: false })
+    setAddedEvent(kept.map((_, idx) => ({ id: idx })))
+  }
+
+  // An alert matches when every condition of any one group matches; a condition in group -1 applies to every group.
+  const rowGroup = (id) => Number(propertyWatcher?.[id]?.Group ?? 0)
+  const usedGroups = [
+    ...new Set(addedEvent.map((event) => rowGroup(event.id))),
+  ].filter((group) => group >= 0)
+  const groupNumbers = usedGroups.length
+    ? usedGroups.sort((a, b) => a - b)
+    : [0]
+  const sharedRows = addedEvent.filter((event) => rowGroup(event.id) < 0)
+  // A record has one Operation, so a group offers it only until one of its rows uses it.
+  const propertyOptions = (id) => {
+    const group = rowGroup(id)
+    const groupHasOperation = addedEvent.some(
+      (event) =>
+        event.id !== id &&
+        rowGroup(event.id) === group &&
+        propertyWatcher?.[event.id]?.Property?.label === 'Operation'
+    )
+    return getAuditLogSchema(logbookWatcher?.value).filter(
+      (option) =>
+        option.label !== 'Operation' || (group >= 0 && !groupHasOperation)
+    )
+  }
+
+  const conditionRow = (event) => (
+    <Grid
+      container
+      spacing={2}
+      key={event.id}
+      sx={{
+        justifyContent: 'space-around',
+        mb: 2,
+      }}
+    >
+      <Grid size={{ xs: 12, md: 4 }}>
+        <CippFormComponent
+          type="autoComplete"
+          multiple={false}
+          name={`conditions.${event.id}.Property`}
+          formControl={formControl}
+          label="Select property"
+          options={propertyOptions(event.id)}
+          creatable={true}
+          onCreateOption={(option) => {
+            const propertyName = option.label || option
+
+            // Return the option with String type for immediate use
+            const newOption = {
+              label: propertyName,
+              value: 'String', // Always set to String for custom properties
+            }
+
+            return newOption
+          }}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <CippFormComponent
+          type="autoComplete"
+          multiple={false}
+          name={`conditions.${event.id}.Operator`}
+          formControl={formControl}
+          label="is"
+          options={
+            propertyWatcher?.[event.id]?.Property?.label === 'Operation'
+              ? operationOperators
+              : conditionOperators
+          }
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 3 }}>
+        {/* Show textField for String properties when NOT using in/notIn operators */}
+        <CippFormCondition
+          field={`conditions.${event.id}.Property`}
+          formControl={formControl}
+          compareType="contains"
+          compareValue={'String'}
+          clearOnHide={false}
+        >
+          <CippFormCondition
+            field={`conditions.${event.id}.Operator`}
+            formControl={formControl}
+            compareType="isNotOneOf"
+            compareValue={[
+              { value: 'in', label: 'In' },
+              { value: 'notIn', label: 'Not In' },
+            ]}
+          >
+            <CippFormComponent
+              type="textField"
+              name={`conditions.${event.id}.Input.value`}
+              formControl={formControl}
+              label="Input"
+            />
+          </CippFormCondition>
+        </CippFormCondition>
+
+        {/* Show autocomplete with creatable for in/notIn operators (any property type) */}
+        <CippFormCondition
+          field={`conditions.${event.id}.Operator`}
+          formControl={formControl}
+          compareType="isOneOf"
+          compareValue={[
+            { value: 'in', label: 'In' },
+            { value: 'notIn', label: 'Not In' },
+          ]}
+          clearOnHide={false}
+        >
+          <CippFormComponent
+            type="autoComplete"
+            multiple={true}
+            name={`conditions.${event.id}.Input`}
+            formControl={formControl}
+            label="Input"
+            creatable={true}
+            options={
+              propertyWatcher?.[event.id]?.Property?.value?.startsWith('List:')
+                ? auditLogSchema[propertyWatcher?.[event.id]?.Property?.value]
+                : []
+            }
+            onCreateOption={(inputValue) => {
+              if (typeof inputValue === 'string') {
+                return {
+                  label: inputValue,
+                  value: inputValue,
+                }
+              }
+              return inputValue
+            }}
+          />
+        </CippFormCondition>
+
+        {/* Show autocomplete for List properties when NOT using in/notIn operators */}
+        <CippFormCondition
+          field={`conditions.${event.id}.Property`}
+          formControl={formControl}
+          compareType="contains"
+          compareValue="List:"
+          clearOnHide={false}
+        >
+          <CippFormCondition
+            field={`conditions.${event.id}.Operator`}
+            formControl={formControl}
+            compareType="isNotOneOf"
+            compareValue={[
+              { value: 'in', label: 'In' },
+              { value: 'notIn', label: 'Not In' },
+            ]}
+          >
+            <CippFormComponent
+              type="autoComplete"
+              multiple={propertyWatcher?.[event.id]?.Property?.multi ?? false}
+              name={`conditions.${event.id}.Input`}
+              formControl={formControl}
+              label="Input"
+              options={
+                auditLogSchema[propertyWatcher?.[event.id]?.Property?.value]
+              }
+            />
+          </CippFormCondition>
+        </CippFormCondition>
+      </Grid>
+      <Grid size={{ xs: 12, md: 1 }}>
+        <Tooltip title="Remove condition">
+          <IconButton
+            color="error"
+            onClick={() => handleRemoveCondition(event.id)}
+          >
+            <CippIcons.Delete />
+          </IconButton>
+        </Tooltip>
+      </Grid>
+    </Grid>
+  )
 
   const { isValid } = useFormState({ control: formControl.control })
   return (
@@ -949,185 +1156,111 @@ const AlertWizard = () => {
                               />
                             </Grid>
                           </Grid>
-                          <Grid size={12} sx={{ mb: 2 }}>
+                          {groupNumbers.map((group, index) => (
+                            <Fragment key={`group-${group}`}>
+                              {index > 0 && (
+                                <Divider sx={{ my: 2 }}>
+                                  <Chip size="small" label="OR" />
+                                </Divider>
+                              )}
+                              <Box
+                                sx={{
+                                  border: 1,
+                                  borderColor: 'divider',
+                                  borderRadius: 1,
+                                  p: 2,
+                                }}
+                              >
+                                <Stack
+                                  direction="row"
+                                  sx={{
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    mb: 2,
+                                  }}
+                                >
+                                  <Typography variant="subtitle2">
+                                    {groupNumbers.length > 1
+                                      ? `Group ${index + 1}: all of these must match`
+                                      : 'All of these must match'}
+                                  </Typography>
+                                  {groupNumbers.length > 1 && (
+                                    <Button
+                                      size="small"
+                                      color="error"
+                                      onClick={() => handleRemoveGroup(group)}
+                                    >
+                                      Remove group
+                                    </Button>
+                                  )}
+                                </Stack>
+                                {addedEvent
+                                  .filter(
+                                    (event) => rowGroup(event.id) === group
+                                  )
+                                  .map(conditionRow)}
+                                <Button
+                                  color="primary"
+                                  onClick={() => handleAddCondition(group)}
+                                  startIcon={
+                                    <SvgIcon>
+                                      <CippIcons.PlusIcon />
+                                    </SvgIcon>
+                                  }
+                                >
+                                  Add a condition
+                                </Button>
+                              </Box>
+                            </Fragment>
+                          ))}
+                          {sharedRows.length > 0 && (
+                            <Box
+                              sx={{
+                                border: 1,
+                                borderColor: 'divider',
+                                borderStyle: 'dashed',
+                                borderRadius: 1,
+                                p: 2,
+                                mt: 2,
+                              }}
+                            >
+                              <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                                Every group must also match these, for example
+                                to leave a user out of the whole alert
+                              </Typography>
+                              {sharedRows.map(conditionRow)}
+                            </Box>
+                          )}
+                          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
                             <Button
                               color="primary"
-                              onClick={() => handleAddCondition()}
+                              onClick={() =>
+                                handleAddCondition(
+                                  Math.max(...groupNumbers) + 1
+                                )
+                              }
                               startIcon={
                                 <SvgIcon>
                                   <CippIcons.PlusIcon />
                                 </SvgIcon>
                               }
                             >
-                              Add a condition
+                              Add an OR group
                             </Button>
-                          </Grid>
-                          {addedEvent.map((event) => (
-                            <Grid
-                              container
-                              spacing={2}
-                              key={event.id}
-                              sx={{
-                                justifyContent: 'space-around',
-                                mb: 2,
-                              }}
-                            >
-                              <Grid size={{ xs: 12, md: 4 }}>
-                                <CippFormComponent
-                                  type="autoComplete"
-                                  multiple={false}
-                                  name={`conditions.${event.id}.Property`}
-                                  formControl={formControl}
-                                  label="Select property"
-                                  options={getAuditLogSchema(
-                                    logbookWatcher?.value
-                                  )}
-                                  creatable={true}
-                                  onCreateOption={(option) => {
-                                    const propertyName = option.label || option
-
-                                    // Return the option with String type for immediate use
-                                    const newOption = {
-                                      label: propertyName,
-                                      value: 'String', // Always set to String for custom properties
-                                    }
-
-                                    return newOption
-                                  }}
-                                />
-                              </Grid>
-                              <Grid size={{ xs: 12, md: 4 }}>
-                                <CippFormComponent
-                                  type="autoComplete"
-                                  multiple={false}
-                                  name={`conditions.${event.id}.Operator`}
-                                  formControl={formControl}
-                                  label="is"
-                                  options={
-                                    propertyWatcher?.[event.id]?.Property
-                                      ?.label === 'Operation'
-                                      ? operationOperators
-                                      : conditionOperators
-                                  }
-                                />
-                              </Grid>
-                              <Grid size={{ xs: 12, md: 3 }}>
-                                {/* Show textField for String properties when NOT using in/notIn operators */}
-                                <CippFormCondition
-                                  field={`conditions.${event.id}.Property`}
-                                  formControl={formControl}
-                                  compareType="contains"
-                                  compareValue={'String'}
-                                  clearOnHide={false}
-                                >
-                                  <CippFormCondition
-                                    field={`conditions.${event.id}.Operator`}
-                                    formControl={formControl}
-                                    compareType="isNotOneOf"
-                                    compareValue={[
-                                      { value: 'in', label: 'In' },
-                                      { value: 'notIn', label: 'Not In' },
-                                    ]}
-                                  >
-                                    <CippFormComponent
-                                      type="textField"
-                                      name={`conditions.${event.id}.Input.value`}
-                                      formControl={formControl}
-                                      label="Input"
-                                    />
-                                  </CippFormCondition>
-                                </CippFormCondition>
-
-                                {/* Show autocomplete with creatable for in/notIn operators (any property type) */}
-                                <CippFormCondition
-                                  field={`conditions.${event.id}.Operator`}
-                                  formControl={formControl}
-                                  compareType="isOneOf"
-                                  compareValue={[
-                                    { value: 'in', label: 'In' },
-                                    { value: 'notIn', label: 'Not In' },
-                                  ]}
-                                  clearOnHide={false}
-                                >
-                                  <CippFormComponent
-                                    type="autoComplete"
-                                    multiple={true}
-                                    name={`conditions.${event.id}.Input`}
-                                    formControl={formControl}
-                                    label="Input"
-                                    creatable={true}
-                                    options={
-                                      propertyWatcher?.[
-                                        event.id
-                                      ]?.Property?.value?.startsWith('List:')
-                                        ? auditLogSchema[
-                                            propertyWatcher?.[event.id]
-                                              ?.Property?.value
-                                          ]
-                                        : []
-                                    }
-                                    onCreateOption={(inputValue) => {
-                                      if (typeof inputValue === 'string') {
-                                        return {
-                                          label: inputValue,
-                                          value: inputValue,
-                                        }
-                                      }
-                                      return inputValue
-                                    }}
-                                  />
-                                </CippFormCondition>
-
-                                {/* Show autocomplete for List properties when NOT using in/notIn operators */}
-                                <CippFormCondition
-                                  field={`conditions.${event.id}.Property`}
-                                  formControl={formControl}
-                                  compareType="contains"
-                                  compareValue="List:"
-                                  clearOnHide={false}
-                                >
-                                  <CippFormCondition
-                                    field={`conditions.${event.id}.Operator`}
-                                    formControl={formControl}
-                                    compareType="isNotOneOf"
-                                    compareValue={[
-                                      { value: 'in', label: 'In' },
-                                      { value: 'notIn', label: 'Not In' },
-                                    ]}
-                                  >
-                                    <CippFormComponent
-                                      type="autoComplete"
-                                      multiple={
-                                        propertyWatcher?.[event.id]?.Property
-                                          ?.multi ?? false
-                                      }
-                                      name={`conditions.${event.id}.Input`}
-                                      formControl={formControl}
-                                      label="Input"
-                                      options={
-                                        auditLogSchema[
-                                          propertyWatcher?.[event.id]?.Property
-                                            ?.value
-                                        ]
-                                      }
-                                    />
-                                  </CippFormCondition>
-                                </CippFormCondition>
-                              </Grid>
-                              <Grid size={{ xs: 12, md: 1 }}>
-                                <Tooltip title="Remove condition">
-                                  <IconButton
-                                    color="error"
-                                    onClick={() =>
-                                      handleRemoveCondition(event.id)
-                                    }
-                                  >
-                                    <CippIcons.Delete />
-                                  </IconButton>
-                                </Tooltip>
-                              </Grid>
-                            </Grid>
-                          ))}
+                            {groupNumbers.length > 1 && (
+                              <Button
+                                color="primary"
+                                onClick={() => handleAddCondition(-1)}
+                                startIcon={
+                                  <SvgIcon>
+                                    <CippIcons.PlusIcon />
+                                  </SvgIcon>
+                                }
+                              >
+                                Add a condition for every group
+                              </Button>
+                            )}
+                          </Stack>
                           <Grid container spacing={2} sx={{ mt: 1 }}>
                             <Grid size={12}>
                               <CippFormComponent
@@ -1135,7 +1268,12 @@ const AlertWizard = () => {
                                 name="thresholdEnabled"
                                 label="Only alert when one identity does this repeatedly"
                                 formControl={formControl}
-                                helperText="Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. The Operation condition must use Equals or In."
+                                disabled={groupNumbers.length > 1}
+                                helperText={
+                                  groupNumbers.length > 1
+                                    ? 'Not available with more than one group: a repeated activity alert counts one set of operations.'
+                                    : 'Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. The Operation condition must use Equals or In.'
+                                }
                               />
                             </Grid>
                             <CippFormCondition
@@ -1344,7 +1482,9 @@ const AlertWizard = () => {
                             <Grid size={{ xs: 12, md: 6 }}>
                               <CippFormComponent
                                 type="autoComplete"
-                                validators={{ required: 'This field is required' }}
+                                validators={{
+                                  required: 'This field is required',
+                                }}
                                 multiple={false}
                                 creatable={false}
                                 name="command"

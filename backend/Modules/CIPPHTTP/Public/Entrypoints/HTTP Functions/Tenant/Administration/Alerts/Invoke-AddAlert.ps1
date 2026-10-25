@@ -30,12 +30,23 @@ function Invoke-AddAlert {
                     })
             }
         }
-        $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $Conditions
-        if ($null -eq $Anchor) {
-            return ([HttpResponseContext]@{
-                    StatusCode = [HttpStatusCode]::BadRequest
-                    Body       = @{ error = 'An audit log alert needs an Operation condition using Equals, In, or Like with at least three characters of text.' }
-                })
+        # The alert matches when every condition of any one group matches; conditions without a Group are group 0.
+        $Groups = @(Split-CIPPAuditLogConditions -Conditions $Conditions)
+        foreach ($Group in $Groups) {
+            # A record has one Operation, so a second Operation condition in a group could only narrow or contradict the first.
+            if (@($Group.Conditions).Where({ [string]$_.Property.label -eq 'Operation' }).Count -gt 1) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = 'Each group of conditions can have only one Operation condition. Use In to list several operations.' }
+                    })
+            }
+            $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $Group.Conditions
+            if ($null -eq $Anchor) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = $(if ($Groups.Count -gt 1) { 'Each group of conditions needs an Operation condition using Equals, In, or Like with at least three characters of text.' } else { 'An audit log alert needs an Operation condition using Equals, In, or Like with at least three characters of text.' }) }
+                    })
+            }
         }
         # The log the alert reads: one of the Management Activity API content types.
         $LogType = [string]$Request.Body.logbook.value
@@ -54,6 +65,12 @@ function Invoke-AddAlert {
                 return ([HttpResponseContext]@{
                         StatusCode = [HttpStatusCode]::BadRequest
                         Body       = @{ error = 'A threshold needs a count from 2 to 100000 and a window from 10 to 1440 minutes.' }
+                    })
+            }
+            if ($Groups.Count -gt 1) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = 'A repeated activity alert counts one set of operations, so it cannot have more than one group of conditions.' }
                     })
             }
             if ($Anchor.Patterns.Count -gt 0) {

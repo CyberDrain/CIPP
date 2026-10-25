@@ -21,7 +21,11 @@ function Invoke-ListAlertsQueue {
 
     foreach ($Task in $WebhookRules) {
         $Conditions = $Task.Conditions | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue
-        $TranslatedConditions = ($Conditions | ForEach-Object { "When $($_.Property.label) is $($_.Operator.label) $($_.input.value)" }) -join ' and '
+        $Groups = @(Split-CIPPAuditLogConditions -Conditions $Conditions)
+        $TranslatedConditions = @(foreach ($Group in $Groups) {
+                $Text = ($Group.Conditions | ForEach-Object { "When $($_.Property.label) is $($_.Operator.label) $($_.input.value)" }) -join ' and '
+                if ($Groups.Count -gt 1) { "($Text)" } else { $Text }
+            }) -join ' or '
         $TranslatedActions = ($Task.Actions | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue).label -join ','
         $Tenants = ($Task.Tenants | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue)
         $Threshold = if ($Task.Threshold) { $Task.Threshold | ConvertFrom-Json -ErrorAction SilentlyContinue }

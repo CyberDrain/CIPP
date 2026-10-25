@@ -6657,6 +6657,22 @@
         "spo-file-uploaded",
         "spo-file-modified"
       ]
+    },
+    {
+      "preset": "MailForwardedOut",
+      "trigger": [
+        "exo-new-inboxrule-forward",
+        "exo-new-inboxrule-redirect",
+        "exo-set-inboxrule-forward",
+        "exo-set-inboxrule-redirect",
+        "exo-set-mailbox-forwarding-external"
+      ],
+      "noTrigger": [
+        "exo-new-inboxrule-plain",
+        "exo-set-inboxrule-plain",
+        "exo-set-mailbox-forwarding-cleared",
+        "exo-set-mailbox-customattribute"
+      ]
     }
   ]
 }

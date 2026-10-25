@@ -37,7 +37,7 @@ BeforeAll {
     }
 
     . $FunctionPath
-    foreach ($Helper in 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
+    foreach ($Helper in 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Webhooks/Split-CIPPAuditLogConditions.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
 }

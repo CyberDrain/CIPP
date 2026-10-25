@@ -32,7 +32,7 @@ BeforeAll {
     function Invoke-CippWebhookProcessing { param($Data, $CIPPURL, $TenantFilter, $AlertComment, $PendingAuditLogWrites) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     function Get-CippException { param($Exception) }
-    foreach ($Helper in 'Webhooks/Test-CIPPAuditLogRules.ps1', 'Webhooks/Get-CIPPAuditLogRuleSet.ps1', 'Webhooks/New-CippAuditLogClaimRow.ps1', 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
+    foreach ($Helper in 'Webhooks/Test-CIPPAuditLogRules.ps1', 'Webhooks/Get-CIPPAuditLogRuleSet.ps1', 'Webhooks/New-CippAuditLogClaimRow.ps1', 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Webhooks/Split-CIPPAuditLogConditions.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
 

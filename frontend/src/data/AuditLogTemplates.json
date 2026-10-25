@@ -1545,5 +1545,120 @@
         }
       ]
     }
+  },
+  {
+    "value": "MailForwardedOut",
+    "name": "Mail is forwarded or redirected to another address",
+    "template": {
+      "preset": {
+        "value": "MailForwardedOut",
+        "label": "Mail is forwarded or redirected to another address"
+      },
+      "logbook": {
+        "value": "Audit.Exchange",
+        "label": "Exchange"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "in",
+            "label": "In"
+          },
+          "Input": [
+            {
+              "value": "New-InboxRule",
+              "label": "New-InboxRule"
+            },
+            {
+              "value": "Set-InboxRule",
+              "label": "Set-InboxRule"
+            }
+          ],
+          "Group": 0
+        },
+        {
+          "Property": {
+            "value": "String",
+            "label": "ForwardTo"
+          },
+          "Operator": {
+            "value": "like",
+            "label": "Like"
+          },
+          "Input": {
+            "value": "*@*"
+          },
+          "Group": 0
+        },
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "in",
+            "label": "In"
+          },
+          "Input": [
+            {
+              "value": "New-InboxRule",
+              "label": "New-InboxRule"
+            },
+            {
+              "value": "Set-InboxRule",
+              "label": "Set-InboxRule"
+            }
+          ],
+          "Group": 1
+        },
+        {
+          "Property": {
+            "value": "String",
+            "label": "RedirectTo"
+          },
+          "Operator": {
+            "value": "like",
+            "label": "Like"
+          },
+          "Input": {
+            "value": "*@*"
+          },
+          "Group": 1
+        },
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "Set-Mailbox",
+            "label": "Set-Mailbox"
+          },
+          "Group": 2
+        },
+        {
+          "Property": {
+            "value": "String",
+            "label": "ForwardingSmtpAddress"
+          },
+          "Operator": {
+            "value": "like",
+            "label": "Like"
+          },
+          "Input": {
+            "value": "*@*"
+          },
+          "Group": 2
+        }
+      ]
+    }
   }
 ]

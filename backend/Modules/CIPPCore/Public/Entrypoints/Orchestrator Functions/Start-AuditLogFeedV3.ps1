@@ -48,9 +48,10 @@ function Start-AuditLogFeedV3 {
             foreach ($Rule in (Get-CIPPAzDataTableEntity @RuleTable)) {
                 if ($Rule.Disabled -eq $true -or [string]::IsNullOrEmpty($Rule.Tenants)) { continue }
                 $Conditions = $Rule.Conditions | ConvertFrom-Json -ErrorAction SilentlyContinue
-                if ($null -ne (Get-CIPPAuditLogRuleAnchor -Conditions $Conditions)) { continue }
+                $Groups = @(Split-CIPPAuditLogConditions -Conditions $Conditions)
+                if ($Groups.Count -gt 0 -and $Groups.Where({ $null -eq (Get-CIPPAuditLogRuleAnchor -Conditions $_.Conditions) }, 'First').Count -eq 0) { continue }
                 $Name = if ($Rule.AlertComment) { "'$($Rule.AlertComment)'" } else { $Rule.RowKey }
-                Write-LogMessage -API 'AuditLogFeedV3' -message "Audit log alert $Name is skipped: it needs an Operation condition using Equals, In, or Like with at least three characters of text. Edit the alert to add one." -sev Alert
+                Write-LogMessage -API 'AuditLogFeedV3' -message "Audit log alert $Name is skipped: each group of its conditions needs an Operation condition using Equals, In, or Like with at least three characters of text. Edit the alert to add one." -sev Alert
             }
             Add-CIPPAzDataTableEntity @ConfigTable -Entity @{ PartitionKey = 'AuditLogRuleAnchorCheck'; RowKey = 'AuditLogRuleAnchorCheck'; Date = $Today } -Force
         }

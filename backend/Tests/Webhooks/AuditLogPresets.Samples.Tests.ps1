@@ -57,6 +57,7 @@ BeforeAll {
             'Webhooks/Get-CIPPAuditLogPrefilter.ps1'
             'Webhooks/Select-CIPPAuditLogCandidate.ps1'
             'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1'
+            'Webhooks/Split-CIPPAuditLogConditions.ps1'
         )) {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
@@ -65,7 +66,8 @@ BeforeAll {
     # Management Activity feed path instead: the raw record (no auditData wrapper) through the prefilter and the feed's
     # -EvaluateOnly pass, then the stored AuditRecord through the post-exec evaluation that dispatches.
     function Invoke-PresetSample {
-        param([string]$Preset, [string]$Sample, [switch]$Feed)
+        # -Extra adds conditions to the preset's; -Report returns the engine's per-rule report for the raw record instead.
+        param([string]$Preset, [string]$Sample, [switch]$Feed, [object[]]$Extra, [switch]$Report)
         $Template = $script:Templates.Where({ $_.value -eq $Preset }, 'First')[0]
         $Case = @($script:Fixture.cases).Where({ $_.preset -eq $Preset }, 'First')[0]
         $Record = $script:Fixture.samples.$Sample
@@ -78,6 +80,7 @@ BeforeAll {
             }
             $Copy
         }
+        $Conditions = @($Conditions) + @($Extra | Where-Object { $_ })
         # Same serialisation Invoke-AddAlert stores.
         $script:RuleRow = [pscustomobject]@{
             PartitionKey      = 'Webhookv2'
@@ -107,6 +110,10 @@ BeforeAll {
         $script:PartnerUserMemo = $null
         $script:Dispatched = [System.Collections.Generic.List[object]]::new()
 
+        if ($Report) {
+            $Raw = [CIPP.CippJson]::ConvertFromJson(($Record.auditData | ConvertTo-Json -Depth 20 -Compress))
+            return , @((Test-CIPPAuditLogRules -TenantFilter $script:Tenant -Rows @($Raw) -EvaluateOnly -AllMatches 3>$null 6>$null).RuleReports)
+        }
         if ($Feed) {
             $Raw = [CIPP.CippJson]::ConvertFromJson(($Record.auditData | ConvertTo-Json -Depth 20 -Compress))
             $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter $script:Tenant
@@ -189,5 +196,30 @@ Describe 'Audit log presets on real audit records' {
 
     It 'fixture case <Preset> names a preset that exists' -ForEach $FixtureCases {
         $Known | Should -BeTrue
+    }
+
+    It 'a condition for every group applies inside each group of an OR alert (<Sample>)' -ForEach @(
+        @{ Sample = 'exo-new-inboxrule-forward' }, @{ Sample = 'exo-set-mailbox-forwarding-external' }
+    ) {
+        # The record's Id is never rewritten by the engine, so leaving it out proves the shared condition reaches the group.
+        $LeaveOut = { param($Value) [pscustomobject]@{ Property = @{ value = 'String'; label = 'Id' }; Operator = @{ value = 'notlike'; label = 'Not like' }; Input = @{ value = $Value }; Group = -1 } }
+        foreach ($Feed in $false, $true) {
+            $Dispatched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample $Sample -Feed:$Feed -Extra @(& $LeaveOut ([string]$script:Fixture.samples.$Sample.auditData.Id))
+            @($Dispatched).Count | Should -Be 0
+            $Dispatched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample $Sample -Feed:$Feed -Extra @(& $LeaveOut 'some-other-record')
+            @($Dispatched).Count | Should -Be 1
+        }
+    }
+
+    It 'reports, for every group of every alert, whether each condition holds on a record' {
+        $Reports = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample 'exo-set-inboxrule-plain' -Report
+        $Reports | Should -HaveCount 1
+        $Clauses = @($Reports[0].Clauses)
+        $Clauses.Group | Should -Be @(0, 1, 2)
+        $Clauses.Matched | Should -Be @($false, $false, $false)
+        $Clauses.Anchored | Should -Be @($true, $true, $false)
+        @($Clauses[0].Conditions).Where({ -not $_.Passed }).Condition | Should -Be @('ForwardTo is Like *@*')
+        $Matched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample 'exo-set-inboxrule-redirect' -Report
+        @($Matched[0].Clauses).Where({ $_.Matched }).Group | Should -Be @(1)
     }
 }

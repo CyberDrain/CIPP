@@ -3,6 +3,7 @@
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Get-CIPPAuditLogRuleAnchor.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Split-CIPPAuditLogConditions.ps1')
 
     class HttpResponseContext {
         [int]$StatusCode
@@ -67,6 +68,26 @@ Describe 'Get-CIPPAuditLogRuleAnchor' {
     }
 }
 
+Describe 'Split-CIPPAuditLogConditions' {
+    It 'keeps an alert without groups as one group' {
+        $Groups = @(Split-CIPPAuditLogConditions -Conditions @((New-Condition 'Operation' 'eq' 'A'), (New-Condition 'UserId' 'eq' 'x')))
+        $Groups | Should -HaveCount 1
+        $Groups[0].Conditions | Should -HaveCount 2
+    }
+
+    It 'splits by Group in order and adds the conditions for every group to each' {
+        $Conditions = @(
+            (New-Condition 'Operation' 'eq' 'B') | Add-Member -NotePropertyName Group -NotePropertyValue 2 -PassThru
+            (New-Condition 'UserId' 'notlike' 'bob@*') | Add-Member -NotePropertyName Group -NotePropertyValue -1 -PassThru
+            (New-Condition 'Operation' 'eq' 'A')
+        )
+        $Groups = @(Split-CIPPAuditLogConditions -Conditions $Conditions)
+        $Groups.Group | Should -Be @(0, 2)
+        $Groups[0].Conditions.Input.value | Should -Be @('A', 'bob@*')
+        $Groups[1].Conditions.Input.value | Should -Be @('B', 'bob@*')
+    }
+}
+
 Describe 'Invoke-AddAlert' {
     BeforeEach { Mock Add-CIPPAzDataTableEntity {} }
 
@@ -103,6 +124,39 @@ Describe 'Invoke-AddAlert' {
         $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' $Op $Value); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $true; threshold = $Threshold } })
         $Response.StatusCode | Should -Be 400
         Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'saves OR groups that each name their operations' {
+        $Conditions = @(
+            (New-Condition 'Operation' 'eq' 'New-InboxRule'), (New-Condition 'ForwardTo' 'like' '*@*')
+            (New-Condition 'Operation' 'eq' 'Set-Mailbox') | Add-Member -NotePropertyName Group -NotePropertyValue 1 -PassThru
+        )
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = $Conditions; tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.Exchange' } } })
+        $Response.StatusCode | Should -Be 200
+    }
+
+    It 'refuses <Case>' -ForEach @(
+        @{ Case = 'two Operation conditions in one group'; Second = 'Operation'; Group = 0; Error = '*only one Operation condition*' }
+        @{ Case = 'a group without an Operation condition'; Second = 'UserId'; Group = 1; Error = '*Each group of conditions needs an Operation condition*' }
+    ) {
+        $Conditions = @(
+            (New-Condition 'Operation' 'eq' 'New-InboxRule')
+            (New-Condition $Second 'eq' 'Set-Mailbox') | Add-Member -NotePropertyName Group -NotePropertyValue $Group -PassThru
+        )
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = $Conditions; logbook = @{ value = 'Audit.Exchange' } } })
+        $Response.StatusCode | Should -Be 400
+        $Response.Body.error | Should -BeLike $Error
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'refuses a repeated activity alert with more than one group' {
+        $Conditions = @(
+            (New-Condition 'Operation' 'eq' 'FileDeleted')
+            (New-Condition 'Operation' 'eq' 'FileRecycled') | Add-Member -NotePropertyName Group -NotePropertyValue 1 -PassThru
+        )
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = $Conditions; logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $true; threshold = @{ Count = 50; Minutes = 20 } } })
+        $Response.StatusCode | Should -Be 400
+        $Response.Body.error | Should -BeLike '*more than one group*'
     }
 
     It 'stores no threshold when it is switched off' {

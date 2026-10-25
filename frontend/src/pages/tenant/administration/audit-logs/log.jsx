@@ -12,6 +12,7 @@ import {
   CardContent,
   Button,
   Divider,
+  Stack,
   SvgIcon,
 } from "@mui/material";
 import CippFormSkeleton from "../../../../components/CippFormPages/CippFormSkeleton";
@@ -22,6 +23,29 @@ import CippGeoLocation from "../../../../components/CippComponents/CippGeoLocati
 import { Grid } from "@mui/system";
 import auditLogTranslation from "../../../../data/audit-log-translations.json";
 import { ArrowLeftIcon } from "@mui/x-date-pickers";
+import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
+
+// Each condition of the closest group of an alert, and whether this log meets it.
+const ruleMatchOffCanvas = {
+  extendedInfoFields: ["Alert", "Log", "WouldAlert", "Reason"],
+  children: (row) => (
+    <Stack spacing={1} sx={{ mt: 2 }}>
+      <Typography variant="subtitle2">Conditions</Typography>
+      {(row.Conditions ?? []).map((condition, index) => (
+        <Stack key={index} direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          {condition.Passed ? (
+            <CippIcons.CheckCircle color="success" fontSize="small" />
+          ) : (
+            <CippIcons.Cancel color="error" fontSize="small" />
+          )}
+          <Typography variant="body2">
+            {condition.Condition} ({condition.Passed ? "met" : "not met"})
+          </Typography>
+        </Stack>
+      ))}
+    </Stack>
+  ),
+};
 
 const Page = () => {
   const router = useRouter();
@@ -192,6 +216,26 @@ const Page = () => {
                 </Card>
               </Grid>
             )}
+            <Grid size={{ xs: 12 }}>
+              <CippDataTable
+                title="Would these alerts fire on this log now?"
+                api={{
+                  url: "/api/ListAuditLogRuleMatches",
+                  data: { tenantFilter: logData.Tenant, LogId: id },
+                  dataKey: "Results",
+                }}
+                queryKey={`AuditLogRuleMatches-${id}`}
+                simpleColumns={["Alert", "Log", "WouldAlert", "Reason"]}
+                offCanvas={ruleMatchOffCanvas}
+                filters={["Sent", "Matches, another alert is sent first", "Counts toward it", "No"].map(
+                  (outcome) => ({
+                    filterName: outcome,
+                    value: [{ id: "WouldAlert", value: outcome }],
+                    type: "column",
+                  })
+                )}
+              />
+            </Grid>
             <Grid size={{ xs: 12 }}>
               <CippPropertyListCard
                 title="Audit Data"

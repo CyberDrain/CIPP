@@ -10,30 +10,32 @@ This page is the reference for anyone writing audit log alerts or supporting the
 
 ## At a glance
 
+Microsoft 365 keeps an audit log for each tenant: an entry for each thing that happens, such as a sign-in, a file deletion or a mailbox change. This page calls each entry a **record**.
+
 | | |
 | --- | --- |
-| Source | The Office 365 Management Activity API, read for each tenant every 15 minutes. |
-| Logs | Entra ID (`Audit.AzureActiveDirectory`), Exchange (`Audit.Exchange`), SharePoint and OneDrive (`Audit.SharePoint`), and General (`Audit.General`: Teams, Microsoft Forms, Defender quarantine, Purview and other workloads). |
-| Delay | Microsoft publishes most records within minutes, and some much later. CIPP checks each tenant's logs every 15 minutes, so a typical alert arrives 5 to 30 minutes after the event. |
-| Matching | Every record is checked once, against every enabled alert that covers the tenant and reads the record's log. A record raises at most one alert. |
-| Kinds of alert | A **single-record alert** fires on each record that matches. A **repeated activity alert** fires when one user or app does something a set number of times within a window. |
-| Saved copy | Every record that raises an alert is saved and shown under **Saved Logs**, where you can also check it against your alerts. |
+| Where the records come from | The tenant's Microsoft 365 audit log. CIPP collects new records for each tenant every 15 minutes, through Microsoft's Office 365 Management Activity API. |
+| Which logs | Each alert watches one of four logs: **Entra ID** (sign-ins and directory changes), **Exchange** (mailboxes and Exchange settings), **SharePoint and OneDrive** (files and sharing), or **General** (Teams, Forms, quarantine, Purview and more). |
+| How quickly alerts arrive | Usually 5 to 30 minutes after the event. Microsoft makes most records available within a few minutes, though some take longer, and CIPP collects every 15 minutes. |
+| Two kinds of alert | A **single-record alert** fires each time one record matches its conditions. A **repeated activity alert** fires when one user or app does the same kind of thing many times in a short time, such as deleting hundreds of files. |
+| One alert per record | A record can match several of your alerts, but it sends only one single-record alert: the first one it matches. A repeated activity alert can still count the same record. |
+| Saved logs | Every record that sends an alert is saved under **Saved Logs**. There you can open it, download it, and see which of your alerts it matches. |
 
-## How a record reaches an alert
+## How CIPP checks the audit log
 
-Each 15-minute cycle runs these steps for every tenant that has audit log alerts:
+Every 15 minutes, CIPP takes these steps for each tenant that has audit log alerts. Diagnostics calls each round a **cycle**.
 
-1. **List.** CIPP asks Microsoft which new batches of records each log has published since it last looked. One listing covers at most 3 hours, so a tenant that fell behind catches up over a few cycles. CIPP never reads further back than 6 hours: after a longer outage, the older records are skipped and a warning is logged.
-2. **Download.** Batches are downloaded 16 at a time, in tasks of up to 64 batches, with at most 80 tasks per run. A batch that fails to download is retried on later cycles. A batch is queued at most 5 times; after that it is dropped and an error is written to the CIPP logbook. **Diagnostics** shows how many batches failed in each cycle.
-3. **Skip what no alert can match.** Before reading a batch, CIPP checks its text for the operation names your alerts use. A batch that contains none of them is skipped unread. Within a batch that is read, only records whose operation (and other plain-text values) some alert could match are fully built. Most records never get past this step, which is why the rules on the Operation condition below matter.
-4. **Enrich.** Each remaining record gets the fields CIPP adds (see [Fields CIPP adds](#fields-cipp-adds)): names for the IDs it contains, the location of its IP address, the time of day, and so on.
-5. **Match.** The record is checked against each alert that reads its log, in turn. The first alert it matches is the one that fires. Other alerts that would also have matched do not fire for the same record; the alert check on the saved log shows them as **Also matches**. Alerts with a [priority](#priority) are checked first, lowest number first. The rest follow in the order CIPP stores them, by an internal ID, not by name or creation date. Give overlapping alerts a priority to choose which one fires.
-6. **Act and save.** The alert's actions run (email, webhook, PSA ticket, disabling the user or BEC remediation), and the record is saved as a log you can open later. Emails and PSA tickets link to the saved log and to the settings of the alert that fired; a webhook carries the same links as `SavedLogUrl` and `AlertConfigurationUrl`.
+1. **Find what is new.** CIPP asks Microsoft for the records each log has added since its last check. Microsoft hands them over in **batches**: files of records. Each check covers up to 2 hours of activity. If a tenant has fallen behind, for example after an outage, CIPP catches up 2 hours at a time over the next checks. It never goes back more than 6 hours: anything older is skipped, and CIPP logs a warning saying so.
+2. **Download the batches.** CIPP downloads the new batches, many at a time. If a batch fails to download, CIPP tries again in the next checks. After 5 tries it gives up on that batch and writes an error to the CIPP logbook. **Diagnostics** shows how many batches failed in each cycle.
+3. **Leave out what no alert is looking for.** Most records are routine, and none of your alerts care about them. Before opening a batch, CIPP looks for the names of the actions your alerts watch (the **operations**, such as `UserLoggedIn` or `FileDeleted`). A batch that contains none of them is skipped. Inside a batch, CIPP only fully reads the records that one of your alerts could match. This is why every alert must name its operation, as the [rules](#rules-every-alert-must-follow) below explain.
+4. **Add useful details.** For each remaining record, CIPP adds extra fields: the names behind IDs, the country of the IP address, the time of day, and so on. See [Fields CIPP adds](#fields-cipp-adds).
+5. **Compare it with your alerts.** CIPP checks the record against each of your alerts for that tenant and log. The first alert whose conditions all match is the one that fires, and the record sends no other single-record alert, even one it also matches. The alert check on the saved log lists those under **Also matches**. Alerts with a [priority](#priority) are checked first, lowest number first. Without priorities, you cannot choose the order, so give overlapping alerts a priority.
+6. **Send the alert and save the record.** The alert's actions run: an email, a webhook, a PSA ticket, disabling the user, or BEC remediation. The record is saved under Saved Logs. Emails and PSA tickets link to the saved log and to the alert's settings; a webhook carries the same links as `SavedLogUrl` and `AlertConfigurationUrl`.
 
-Repeated activity alerts take a different path after step 3: CIPP counts each user's records of the alert's operations without building them, and fires once a count reaches the threshold. See [Repeated activity alerts](#repeated-activity-alerts).
+Repeated activity alerts work differently from step 3 onwards. Instead of comparing each record, CIPP counts how many records of the alert's operations each user or app has, and sends an alert when a count reaches the number you set. See [Repeated activity alerts](#repeated-activity-alerts).
 
 {% hint style="info" %}
-Alert rule changes take effect from the next collection task, within 15 minutes. Changes to tenant groups and custom variables are picked up the same way.
+A change to an alert takes effect from the next check, within 15 minutes. Changes to tenant groups and custom variables are picked up the same way.
 {% endhint %}
 
 ## Building conditions

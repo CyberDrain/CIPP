@@ -5,7 +5,7 @@ function Push-AuditLogFeedListV3 {
     .DESCRIPTION
         The tenants' due content types are listed 20 at a time (Get-CIPPAuditLogContent -ListOnly), each over the round's
         window from its cursor's ListedThroughUtc, or LastEndUtc before the first listing (Get-CIPPAuditLogFeedWindow:
-        at most 3 hours, never more than 6 hours back). Each listing page's blobs are upserted as they arrive
+        at most 2 hours, never more than 6 hours back). Each listing page's blobs are upserted as they arrive
         (PartitionKey tenant, RowKey '<created ticks>$<contentId>'), so listing a range again only rewrites its rows. A
         feed listed to the end moves ListedThroughUtc to the window's end; AuditLogFeedFanOutV3 then batches the rows.
 

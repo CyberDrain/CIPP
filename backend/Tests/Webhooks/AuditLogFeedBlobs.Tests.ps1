@@ -30,7 +30,7 @@ Describe 'Get-CIPPAuditLogFeedWindow' {
     It 'reads the same window whatever the kind of the time it is given' {
         $Local = Get-CIPPAuditLogFeedWindow -LastEndUtc $script:Now.AddHours(-5) -Now $script:Now.ToLocalTime()
         $Local.Start | Should -Be $script:Now.AddHours(-5)
-        $Local.End | Should -Be $script:Now.AddHours(-2)
+        $Local.End | Should -Be $script:Now.AddHours(-3)
     }
 
     It 'reads the last hour for a new cursor' {
@@ -39,17 +39,17 @@ Describe 'Get-CIPPAuditLogFeedWindow' {
         $Window.End | Should -Be $script:Now.AddMinutes(-5)
     }
 
-    It 'reads at most 3 hours from the cursor' {
+    It 'reads at most 2 hours from the cursor' {
         $Window = Get-CIPPAuditLogFeedWindow -LastEndUtc $script:Now.AddHours(-5) -Now $script:Now
         $Window.Start | Should -Be $script:Now.AddHours(-5)
-        $Window.End | Should -Be $script:Now.AddHours(-2)
+        $Window.End | Should -Be $script:Now.AddHours(-3)
         $Window.Skipped | Should -BeNullOrEmpty
     }
 
     It 'goes no further back than 6 hours, and says from where it skipped' {
         $Window = Get-CIPPAuditLogFeedWindow -LastEndUtc $script:Now.AddDays(-3) -Now $script:Now
         $Window.Start | Should -Be $script:Now.AddHours(-6)
-        $Window.End | Should -Be $script:Now.AddHours(-3)
+        $Window.End | Should -Be $script:Now.AddHours(-4)
         $Window.Skipped | Should -Be $script:Now.AddDays(-3)
     }
 
@@ -141,19 +141,19 @@ Describe 'Push-AuditLogFeedFanOutV3' {
         $script:Params = @{ CycleId = 'c1'; CycleStartUtc = $script:Start.ToString('o'); Run = 0 }
     }
 
-    It 'queues at most 80 tasks of 64 rows, tenants together and oldest first, counting an attempt on each row it queues' {
+    It 'queues every due row in one run, in tasks of 64 rows, tenants together and oldest first, counting an attempt on each' {
         $Base = [datetime]'2026-10-24T08:00:00Z'
         $script:Rows = @(foreach ($n in 1..6000) { New-Row -Tenant ('t{0:D2}.com' -f ($n % 7)) -Created $Base.AddSeconds($n) -Id "b$n" })
         Push-AuditLogFeedFanOutV3 -Item @{ Parameters = $script:Params }
         $Run = $script:Started[0]
         $Run.OrchestratorName | Should -Be 'AuditLogFeedBlobsV3'
-        $Run.Batch | Should -HaveCount 80
+        $Run.Batch | Should -HaveCount ([Math]::Ceiling(6000 / 64))
         @($Run.Batch[0].Tenants.Blobs).Count | Should -Be 64
         $Run.Batch[0].Tenants[0].TenantFilter | Should -Be 't00.com'
         $Run.PostExecution.FunctionName | Should -Be 'AuditLogFeedCursorV3'
         $Run.PostExecution.Parameters.Run | Should -Be 1
         $Marked = @($script:Writes | ForEach-Object { $_ })
-        $Marked | Should -HaveCount (80 * 64)
+        $Marked | Should -HaveCount 6000
         $Marked[0].Attempts | Should -Be 1
         $Marked[0].LastQueuedUtc | Should -Not -BeNullOrEmpty
         # A task's payload stays well inside the orchestrator's 64 KB.

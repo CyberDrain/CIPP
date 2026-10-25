@@ -1,12 +1,12 @@
 function Push-AuditLogFeedFanOutV3 {
     <#
     .SYNOPSIS
-        Queues pending AuditLogFeedBlobs rows as one bounded run of blob batch tasks.
+        Queues pending AuditLogFeedBlobs rows as one run of blob batch tasks.
     .DESCRIPTION
         Post-execution of the AuditLogFeedListV3 run, and of each AuditLogFeedBlobsV3 run while rows are left. Rows go out
-        oldest first in tasks of 64 (tenants together, so a task builds few prefilters), and a run takes at most 80
-        tasks: about 5,000 blobs, a few minutes of work, so no run gets near 10 minutes. AuditLogFeedCursorV3 follows
-        each run and queues the next until every row has been queued once this cycle.
+        oldest first in tasks of 64 (tenants together, so a task builds few prefilters), every due row in one run: a
+        listing reads at most 2 hours of a feed, which bounds how many blobs a tenant adds per cycle. AuditLogFeedCursorV3
+        follows each run and queues the next until every row has been queued once this cycle.
 
         Queuing a row counts an attempt (Attempts, LastQueuedUtc) before its task runs, so a blob whose task dies without
         a word is still counted, and a run only takes rows not queued since the cycle began (CycleStartUtc), so a cycle
@@ -32,7 +32,7 @@ function Push-AuditLogFeedFanOutV3 {
             Remove-CIPPAzDataTableEntity @BlobTable -Entity @(foreach ($Row in $Poisoned) { @{ PartitionKey = $Row.PartitionKey; RowKey = $Row.RowKey } }) -Force
         }
         $Due = @($Rows.Where({ [int]$_.Attempts -lt 5 -and -not ($_.LastQueuedUtc -and ([datetimeoffset]$_.LastQueuedUtc).UtcDateTime -ge $CycleStart) }) | Sort-Object PartitionKey, RowKey)
-        $Take = [Math]::Min($Due.Count, 80 * 64)
+        $Take = $Due.Count
         if ($Take -eq 0) {
             Push-AuditLogFeedCursorV3 -Item @{ Parameters = @{ CycleId = $CycleId } }
             return

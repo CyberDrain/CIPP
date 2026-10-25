@@ -133,6 +133,7 @@ Describe 'Invoke-AddAlert' {
     }
 
     It 'refuses <Case>' -ForEach @(
+        @{ Case = 'a value the engine would refuse to run'; Extra = { New-Condition 'UserId' 'eq' 'a$b@contoso.com' }; Says = '*cannot contain*' }
         @{ Case = 'a list of more than 500 values'; Extra = { New-Condition 'UserId' 'notin' @(1..501 | ForEach-Object { "u$_@a.com" }) }; Says = '*at most 500 values*' }
         @{ Case = 'a value longer than 1,024 characters'; Extra = { New-Condition 'UserId' 'eq' ('a' * 1025) }; Says = '*1,024 characters*' }
         @{ Case = 'a Like value with more than 8 wildcards'; Extra = { New-Condition 'UserAgent' 'like' ('*a' * 9) }; Says = '*8 wildcards*' }

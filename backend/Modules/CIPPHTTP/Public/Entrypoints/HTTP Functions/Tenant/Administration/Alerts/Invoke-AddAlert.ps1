@@ -33,6 +33,8 @@ function Invoke-AddAlert {
             $Values = @($condition.Input.value)
             $Problem = if ([string]$condition.Property.label -eq 'Operation' -and $Values.Where({ [string]$_ -match '%[A-Za-z][A-Za-z0-9_]*%' }, 'First').Count -gt 0) {
                 'The Operation condition cannot use a variable; name the operations themselves.'
+            } elseif ($Values.Where({ [string]$_ -match '[;|`$\{\}]' }, 'First').Count -gt 0) {
+                'A condition value cannot contain ; | ` $ { or }.'
             } elseif ($Values.Count -gt 500) {
                 "A condition can list at most 500 values; this one has $($Values.Count)."
             } elseif ($Values.Where({ ([string]$_).Length -gt 1024 }, 'First').Count -gt 0) {

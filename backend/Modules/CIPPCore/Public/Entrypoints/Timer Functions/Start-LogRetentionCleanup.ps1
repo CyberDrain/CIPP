@@ -120,24 +120,28 @@ function Start-LogRetentionCleanup {
             }
         }
 
-        # The records kept beside repeated activity audit log alerts follow the log retention setting.
-        $RelatedDeletedCount = 0
-        if ($PSCmdlet.ShouldProcess('AuditLogRelatedRecords', 'Cleaning up old related audit records')) {
-            $RelatedTable = Get-CippTable -tablename 'AuditLogRelatedRecords'
-            $RelatedFilter = "Timestamp lt datetime'$((Get-Date).ToUniversalTime().AddDays(-$RetentionDays).ToString('yyyy-MM-ddTHH:mm:ssZ'))'"
+        # Saved audit logs and the records kept beside repeated activity alerts have their own setting: 30 to 365 days, 180 by default.
+        $AuditRetention = Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'AuditLogRetention' and RowKey eq 'Settings'"
+        $AuditRetentionDays = [Math]::Min(365, [Math]::Max(30, [int]($AuditRetention.RetentionDays ?? 180)))
+        $AuditCutoff = "Timestamp lt datetime'$((Get-Date).ToUniversalTime().AddDays(-$AuditRetentionDays).ToString('yyyy-MM-ddTHH:mm:ssZ'))'"
+        $AuditDeleted = @{}
+        foreach ($AuditTableName in 'AuditLogs', 'AuditLogRelatedRecords') {
+            if (-not $PSCmdlet.ShouldProcess($AuditTableName, 'Cleaning up old saved audit logs')) { continue }
+            $AuditTable = Get-CippTable -tablename $AuditTableName
+            $AuditDeleted[$AuditTableName] = 0
             $HasMoreRecords = $true
             while ($HasMoreRecords) {
-                $OldRows = Get-AzDataTableEntity @RelatedTable -Filter $RelatedFilter -Property @('PartitionKey', 'RowKey') -First $BatchSize
+                $OldRows = Get-AzDataTableEntity @AuditTable -Filter $AuditCutoff -Property @('PartitionKey', 'RowKey') -First $BatchSize
                 $BatchCount = ($OldRows | Measure-Object).Count
                 if ($BatchCount -gt 0) {
-                    Remove-CIPPAzDataTableEntity @RelatedTable -Entity $OldRows -Force
-                    $RelatedDeletedCount += $BatchCount
+                    Remove-CIPPAzDataTableEntity @AuditTable -Entity $OldRows -Force
+                    $AuditDeleted[$AuditTableName] += $BatchCount
                 }
                 $HasMoreRecords = $BatchCount -eq $BatchSize
             }
         }
 
-        Write-LogMessage -API 'LogRetentionCleanup' -message "Log cleanup completed. Total logs deleted: $TotalDeletedCount, coverage ledger rows deleted: $CoverageDeletedCount, related audit records deleted: $RelatedDeletedCount (retention: $RetentionDays days)" -Sev 'Info'
+        Write-LogMessage -API 'LogRetentionCleanup' -message "Log cleanup completed. Total logs deleted: $TotalDeletedCount, coverage ledger rows deleted: $CoverageDeletedCount (retention: $RetentionDays days); saved audit logs deleted: $([int]$AuditDeleted['AuditLogs']), related audit records deleted: $([int]$AuditDeleted['AuditLogRelatedRecords']) (retention: $AuditRetentionDays days)" -Sev 'Info'
 
     } catch {
         $ErrorMessage = Get-CippException -Exception $_

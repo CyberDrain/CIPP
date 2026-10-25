@@ -61,6 +61,23 @@ Describe 'Start-LogRetentionCleanup' {
         Should -Invoke Write-LogMessage -ParameterFilter { $message -like 'Deleted 5010 old log entries in 2 batch*' }
     }
 
+    It 'removes saved audit logs and their related records after <Expect> days when the setting is <Set>' -ForEach @(
+        @{ Set = 'not set'; Days = $null; Expect = 180 }
+        @{ Set = '60'; Days = '60'; Expect = 60 }
+        @{ Set = 'below 30'; Days = '10'; Expect = 30 }
+        @{ Set = 'above 365'; Days = '400'; Expect = 365 }
+    ) {
+        $script:AuditDays = $Days
+        Mock Get-CIPPAzDataTableEntity -ParameterFilter { $Filter -like "*'AuditLogRetention'*" } { if ($script:AuditDays) { [pscustomobject]@{ RetentionDays = $script:AuditDays } } }
+        Start-LogRetentionCleanup
+        $Cut = (Get-Date).ToUniversalTime().AddDays(-$Expect).ToString('yyyy-MM-dd')
+        foreach ($Name in 'AuditLogs', 'AuditLogRelatedRecords') {
+            Should -Invoke Get-AzDataTableEntity -Times 1 -Exactly -ParameterFilter { $TableName -eq $Name -and $Filter -like "Timestamp lt datetime'$Cut*'" }
+        }
+        # The CIPP log setting is its own: CippLogs keeps its 90-day default.
+        Should -Invoke Get-AzDataTableEntity -ParameterFilter { $TableName -eq 'CippLogs' -and $Filter -eq "PartitionKey lt '$((Get-Date).ToUniversalTime().AddDays(-90).ToString('yyyyMMdd'))'" }
+    }
+
     It 'trims the audit-log coverage ledger to 30 days by Timestamp, in batches' {
         $script:CoverageCalls = 0
         Mock Get-AzDataTableEntity -ParameterFilter { $TableName -eq 'CippLogs' } { @() }

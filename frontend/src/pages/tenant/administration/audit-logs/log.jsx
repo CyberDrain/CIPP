@@ -25,6 +25,7 @@ import { CippAuditRecordView } from "../../../../components/CippComponents/CippA
 import { Grid } from "@mui/system";
 import { ArrowLeftIcon } from "@mui/x-date-pickers";
 import { CippAuditLogRuleCheck } from "../../../../components/CippComponents/CippAuditLogRuleCheck";
+import { downloadJson } from "../../../../utils/download-json";
 
 // Audit times are UTC without a zone marker.
 const parseAuditTime = (value) =>
@@ -144,16 +145,25 @@ const Page = () => {
                 )}
               </Stack>
             </Box>
-            {logData?.Data?.ActionUrl && logData?.Data?.ActionText && (
+            <Stack direction="row" spacing={1}>
               <Button
-                variant="contained"
-                color="primary"
-                startIcon={<CippIcons.Launch />}
-                onClick={() => window.open(logData.Data.ActionUrl, "_blank")}
+                variant="outlined"
+                startIcon={<CippIcons.Download />}
+                onClick={() => downloadJson(logData, `audit-log-${logData.LogId}.json`)}
               >
-                {logData.Data.ActionText}
+                Download
               </Button>
-            )}
+              {logData?.Data?.ActionUrl && logData?.Data?.ActionText && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<CippIcons.Launch />}
+                  onClick={() => window.open(logData.Data.ActionUrl, "_blank")}
+                >
+                  {logData.Data.ActionText}
+                </Button>
+              )}
+            </Stack>
           </Stack>
 
           <Grid container spacing={2}>

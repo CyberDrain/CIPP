@@ -6,6 +6,7 @@ import { CippTablePage } from "../../../../components/CippComponents/CippTablePa
 import { CippDateRangeFilter } from "../../../../components/CippComponents/CippDateRangeFilter";
 import tabOptions from "./tabOptions.json";
 import { useSettings } from "../../../../hooks/use-settings";
+import { downloadJson } from "../../../../utils/download-json";
 
 // Saved Logs Configuration
 const savedLogsColumns = [
@@ -27,6 +28,20 @@ const savedLogsActions = [
     pinned: true,
     color: "primary",
     icon: <CippIcons.EyeIcon />,
+  },
+  {
+    // The full saved logs; the table's CSV and PDF exports hold only the visible columns.
+    label: "Download (JSON)",
+    noConfirm: true,
+    multiPost: true,
+    icon: <CippIcons.Download />,
+    customFunction: (rows) => {
+      const logs = [rows].flat();
+      downloadJson(
+        logs,
+        logs.length === 1 ? `audit-log-${logs[0].LogId}.json` : `audit-logs-${logs.length}.json`
+      );
+    },
   },
 ];
 

@@ -8,6 +8,7 @@ const CippLogRetentionSettings = ({
   title = "Log Retention",
   endpoint = "ExecLogRetentionConfig",
   defaultDays = 90,
+  minDays = 7,
   description = "Configure how long to keep CIPP log entries. Logs will be automatically deleted after this period.",
 }) => {
   const retentionSetting = ApiGetCall({
@@ -32,8 +33,8 @@ const CippLogRetentionSettings = ({
   const handleRetentionChange = () => {
     const days = parseInt(retentionDays);
 
-    if (isNaN(days) || days < 7) {
-      setError("Retention must be at least 7 days");
+    if (isNaN(days) || days < minDays) {
+      setError(`Retention must be at least ${minDays} days`);
       return;
     }
 
@@ -55,8 +56,8 @@ const CippLogRetentionSettings = ({
     setRetentionDays(value);
 
     const days = parseInt(value);
-    if (!isNaN(days) && days < 7) {
-      setError("Retention must be at least 7 days");
+    if (!isNaN(days) && days < minDays) {
+      setError(`Retention must be at least ${minDays} days`);
     } else if (!isNaN(days) && days > 365) {
       setError("Retention must be at most 365 days");
     } else if (isNaN(days) && value !== "") {
@@ -83,7 +84,7 @@ const CippLogRetentionSettings = ({
             sx={{ width: "120px" }}
             label="Days"
             slotProps={{
-              htmlInput: { min: 7, max: 365 }
+              htmlInput: { min: minDays, max: 365 }
             }}
           />
           <Button
@@ -100,7 +101,7 @@ const CippLogRetentionSettings = ({
       }
     >
       <Typography variant="body2">
-        {description} Minimum retention is 7 days, maximum is 365 days, default is {defaultDays} days.
+        {description} Minimum retention is {minDays} days, maximum is 365 days, default is {defaultDays} days.
       </Typography>
       <CippApiResults apiObject={retentionChange} />
     </CippButtonCard>

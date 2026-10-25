@@ -177,7 +177,6 @@ Turn on **Only alert when one identity does this repeatedly** to alert when one 
   * There can be one group of conditions only, holding just the Operation condition.
   * The Operation condition must use Equals or In (counting needs the exact operations).
   * Only the operations below can be counted.
-* **Every identity counts.** A batch with thousands of users doing the operation is counted in full: CIPP stores one small count per 10-minute bucket, not one per user.
 
 | Log | Operations that can be counted |
 | --- | --- |

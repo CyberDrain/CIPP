@@ -500,7 +500,8 @@ Describe 'Test-CIPPAuditLogRules -EvaluateOnly directory load' {
         @{ CippField = 'CIPPActor'; Reads = 0 }
         @{ CippField = 'CIPPActorType'; Reads = 0 }
         @{ CippField = 'CIPPAddedKeys'; Reads = 0 }
-        @{ CippField = 'CIPPGeoLocation'; Reads = 0 }
+        # Users excluded from location alerts are matched on their mapped CIPPUserKey.
+        @{ CippField = 'CIPPGeoLocation'; Reads = 1 }
     ) {
         $Conditions = @(New-Condition 'Operation' 'eq' 'Set-Mailbox')
         if ($CippField) { $Conditions = @($Conditions[0], (New-Condition $CippField 'like' '*')) }

@@ -147,8 +147,9 @@ function Test-CIPPAuditLogRules {
         if ($SearchLookups.Tenant -ne $TenantFilter) { $SearchLookups = $null }
         $LookupsReused = $null -ne $SearchLookups.UserLookup
         # GUID mapping only adds CIPP-prefixed names, so an evaluation whose rules name none never needs the directory. The
-        # actor, key and geo fields are CIPP-prefixed too but come from the record and the geo lookup.
-        if ($EvaluateOnly -and -not @($Configuration.Conditions).Where({ $_ -match '"label"\s*:\s*"CIPP(?!(Actor|ActorIsTarget|ActorType|TargetType|AddedKeyTypes|AddedKeys|GeoLocation|BadRepIP|HostedIP|IPDetected)")' }, 'First').Count) {
+        # actor, key and geo fields are CIPP-prefixed too but come from the record and the geo lookup. CIPPGeoLocation still
+        # needs it: users excluded from location alerts are matched on their mapped CIPPUserKey.
+        if ($EvaluateOnly -and -not @($Configuration.Conditions).Where({ $_ -match '"label"\s*:\s*"CIPP(?!(Actor|ActorIsTarget|ActorType|TargetType|AddedKeyTypes|AddedKeys|BadRepIP|HostedIP|IPDetected)")' }, 'First').Count) {
             $UserLookup = @{}
             $GroupLookup = @{}
             $DeviceLookup = @{}

@@ -14994,7 +14994,7 @@
         "tags": [
           "CIPP > Settings"
         ],
-        "description": "Reads (List) or sets how many days saved audit logs, and the related records kept with repeated activity alerts,\nare kept: 30 to 365, 180 when not set.",
+        "description": "Reads (List) or sets how many days saved audit logs are kept: 30 to 365, 180 when not set.",
         "requestBody": {
           "required": false,
           "content": {
@@ -45201,7 +45201,7 @@
         "tags": [
           "Tenant > Administration > Alerts"
         ],
-        "description": "Lists audit log entries from the CIPP audit log store, filterable by tenant, date range, and log ID. Kind=Threshold\nlists only repeated activity alerts (one user or app doing something a set number of times within a window);\nAlertType says which kind each entry is, and TimesRepeated how many times for a repeated activity alert. A single\nrepeated activity alert (LogId) also returns RelatedRecords: the records kept with it (time, operation, item,\nIP address, device), up to 500.",
+        "description": "Lists audit log entries from the CIPP audit log store, filterable by tenant, date range, and log ID. Kind=Threshold\nlists only repeated activity alerts (one user or app doing something a set number of times within a window);\nAlertType says which kind each entry is, and TimesRepeated how many times for a repeated activity alert.",
         "parameters": [
           {
             "name": "EndDate",
@@ -45257,13 +45257,17 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
+                    "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                     "properties": {
                       "AlertType": {
                         "x-cipp-field-source": "backend"
                       },
                       "Data": {
                         "x-cipp-field-source": "backend"
+                      },
+                      "ETag": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
                       },
                       "LogId": {
                         "x-cipp-field-source": "backend"
@@ -45278,7 +45282,8 @@
                         "x-cipp-field-source": "backend"
                       },
                       "Timestamp": {
-                        "x-cipp-field-source": "backend"
+                        "type": "string",
+                        "x-cipp-field-source": "storage,backend"
                       },
                       "Title": {
                         "x-cipp-field-source": "backend"

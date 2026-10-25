@@ -1316,7 +1316,7 @@ const AlertWizard = () => {
                                 helperText={
                                   groupNumbers.length > 1
                                     ? 'Not available with more than one group: a repeated activity alert counts one set of operations.'
-                                    : 'Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. Only operations where many in a short time means something can be counted, such as deletions, downloads, sharing and failed sign-ins. The Operation condition must use Equals or In.'
+                                    : 'Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. Only operations where many in a short time means something can be counted, such as deletions, downloads, sharing and permission changes. The Operation condition must use Equals or In.'
                                 }
                               />
                             </Grid>

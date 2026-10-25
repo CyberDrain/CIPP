@@ -202,6 +202,12 @@ Describe 'Invoke-AddAlert' {
         Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
     }
 
+    It 'refuses a repeated activity alert on failed sign-ins' {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'eq' 'UserLoginFailed'); logbook = @{ value = 'Audit.AzureActiveDirectory' }; thresholdEnabled = $true; threshold = @{ Count = 20; Minutes = 20 } } })
+        $Response.StatusCode | Should -Be 400
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
     It 'refuses a repeated activity alert on an operation it should not count' {
         $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'in' @('FileDeleted', 'FileAccessed')); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $true; threshold = @{ Count = 50; Minutes = 20 } } })
         $Response.StatusCode | Should -Be 400

@@ -1,5 +1,5 @@
 {
-  "description": "Operations a repeated activity (threshold) audit log alert may count, per log. Only operations where many in a short time means something: deletion, downloads, sharing, exports, permission and account changes, failed sign-ins. High-volume reads (FileAccessed, MailItemsAccessed, MessageSent) are left out. Keep identical to frontend/src/data/AuditLogRepeatedActivityOperations.json.",
+  "description": "Operations a repeated activity (threshold) audit log alert may count, per log. Only operations where many in a short time means something: deletion, downloads, sharing, exports, permission and account changes. High-volume reads (FileAccessed, MailItemsAccessed, MessageSent) and failed sign-ins, whose sprays use a new username each time, are left out. Keep identical to frontend/src/data/AuditLogRepeatedActivityOperations.json.",
   "Audit.SharePoint": [
     "FileDeleted",
     "FileRecycled",
@@ -30,7 +30,6 @@
     "Set-Mailbox"
   ],
   "Audit.AzureActiveDirectory": [
-    "UserLoginFailed",
     "Delete user.",
     "Disable account.",
     "Reset user password.",

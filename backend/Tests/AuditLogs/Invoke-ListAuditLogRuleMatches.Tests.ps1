@@ -25,8 +25,8 @@ BeforeAll {
     function Invoke-Check([string]$LogId = 'log-1') {
         Invoke-ListAuditLogRuleMatches -Request ([pscustomobject]@{ Query = [pscustomobject]@{ tenantFilter = 'contoso.com'; LogId = $LogId } }) -TriggerMetadata $null
     }
-    function New-Rule([string]$Key, [string]$Comment, [object[]]$Conditions, [string]$Threshold, $Excluded) {
-        [pscustomobject]@{ RowKey = $Key; AlertComment = $Comment; LogType = 'Audit.Exchange'; Threshold = $Threshold; Excluded = $Excluded
+    function New-Rule([string]$Key, [string]$Comment, [object[]]$Conditions, [string]$Threshold, $Excluded, [string]$LogType = 'Audit.Exchange') {
+        [pscustomobject]@{ RowKey = $Key; AlertComment = $Comment; LogType = $LogType; Threshold = $Threshold; Excluded = $Excluded
             Conditions = ConvertTo-Json -Compress -Depth 5 -InputObject @($Conditions) }
     }
     $script:OpCondition = @{ Property = @{ label = 'Operation'; value = 'List:Operation' }; Operator = @{ value = 'in'; label = 'In' }; Input = @(@{ value = 'New-InboxRule' }, @{ value = 'Set-InboxRule' }) }
@@ -34,7 +34,7 @@ BeforeAll {
 
 Describe 'Invoke-ListAuditLogRuleMatches' {
     BeforeEach {
-        $Record = [ordered]@{ Id = 'r1'; Operation = 'New-InboxRule'; UserId = 'bob@contoso.com'; CreationTime = '2026-10-24T10:00:00'; ForwardTo = 'evil@x.com' }
+        $Record = [ordered]@{ Id = 'r1'; Workload = 'Exchange'; Operation = 'New-InboxRule'; UserId = 'bob@contoso.com'; CreationTime = '2026-10-24T10:00:00'; ForwardTo = 'evil@x.com' }
         Mock Get-CIPPAzDataTableEntity {
             [pscustomobject]@{ Data = ConvertTo-Json -Depth 6 -Compress -InputObject @{ RawData = @{ AuditRecord = (ConvertTo-Json -Compress -InputObject $Record) } } }
         }
@@ -46,6 +46,7 @@ Describe 'Invoke-ListAuditLogRuleMatches' {
             New-Rule 'count' 'Mass inbox rules' @($script:OpCondition) '{"Count":10,"Minutes":20}'
             New-Rule 'excluded' 'Excluded here' @($script:OpCondition) $null @(@{ value = 'contoso.com' })
             New-Rule 'excluded-elsewhere' 'Excluded, other activity' @(@{ Property = @{ label = 'Operation' }; Operator = @{ value = 'eq' }; Input = @{ value = 'Set-Mailbox' } }) $null @(@{ value = 'contoso.com' })
+            New-Rule 'sharepoint' 'Reads SharePoint' @($script:OpCondition) $null $null 'Audit.SharePoint'
             New-Rule 'broken' 'No anchor' @(@{ Property = @{ label = 'UserId' }; Operator = @{ value = 'like' }; Input = @{ value = '*' } })
         }
         # The engine's report: rules in order, each condition on its own.
@@ -59,6 +60,8 @@ Describe 'Invoke-ListAuditLogRuleMatches' {
                             [pscustomobject]@{ RuleKey = 'second'; Group = 0; Anchored = $true; Matched = $true; Conditions = @([pscustomobject]@{ Condition = 'Operation is In'; Passed = $true }) }
                             [pscustomobject]@{ RuleKey = 'forward'; Group = 0; Anchored = $true; Matched = $false; Conditions = @([pscustomobject]@{ Condition = 'Operation is In'; Passed = $true }, [pscustomobject]@{ Condition = 'RedirectTo is Like *@*'; Passed = $false }) }
                             [pscustomobject]@{ RuleKey = 'other'; Group = 0; Anchored = $false; Matched = $false; Conditions = @([pscustomobject]@{ Condition = 'Operation is Equals to Set-Mailbox'; Passed = $false }) }
+                            [pscustomobject]@{ RuleKey = 'excluded'; Group = 0; Anchored = $true; Matched = $true; Excluded = $true; Conditions = @([pscustomobject]@{ Condition = 'Operation is In'; Passed = $true }) }
+                            [pscustomobject]@{ RuleKey = 'excluded-elsewhere'; Group = 0; Anchored = $false; Matched = $false; Excluded = $true; Conditions = @([pscustomobject]@{ Condition = 'Operation is Equals to Set-Mailbox'; Passed = $false }) }
                         )
                     })
             }
@@ -91,7 +94,10 @@ Describe 'Invoke-ListAuditLogRuleMatches' {
         @($Group.Conditions).Where({ -not $_.Passed }).Condition | Should -Be 'RedirectTo is Like *@*'
         $Rows['Mass inbox rules'].WouldAlert | Should -Be 'Counts toward it'
         $Rows['Mass inbox rules'].Reason | Should -BeLike '*10 times within 20 minutes*'
-        $Rows['Excluded here'].Reason | Should -Be 'This tenant is excluded from the alert.'
+        $Rows['Excluded here'].WouldAlert | Should -Be 'Would match, but this tenant is excluded'
+        @($Rows['Excluded here'].Groups) | Should -HaveCount 1
+        $Rows['Reads SharePoint'].Outcome | Should -Be 'OtherLog'
+        $Rows['Reads SharePoint'].Reason | Should -BeLike '*reads the SharePoint and OneDrive log, and this record is in the Exchange log*'
         $Rows['No anchor'].Reason | Should -BeLike '*needs an Operation condition*'
         $Response.Body.Results[0].Alert | Should -Be 'First match'
         $Response.Body.Metadata.Operation | Should -Be 'New-InboxRule'

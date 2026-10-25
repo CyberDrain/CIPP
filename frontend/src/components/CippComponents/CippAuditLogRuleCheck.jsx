@@ -54,6 +54,11 @@ const outcomeStyle = {
     color: 'warning',
     icon: <CippIcons.NotificationsOff fontSize="small" />,
   },
+  Excluded: {
+    title: 'This tenant is excluded from this alert',
+    color: 'secondary',
+    icon: <CippIcons.NotificationsOff fontSize="small" />,
+  },
 }
 
 const ConditionLine = ({ condition }) => (
@@ -126,9 +131,16 @@ const AlertCard = ({ row }) => {
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           {row.Alert}
         </Typography>
-        <Chip size="small" variant="outlined" label={row.Log} />
         <EditButton row={row} />
       </Stack>
+      {row.Outcome === 'Excluded' && (
+        <Alert severity="warning" sx={{ mb: 1.5 }}>
+          This tenant is excluded from this alert, so it never sends here.{' '}
+          {row.Matches
+            ? 'Without the exclusion, every condition would match and it would fire.'
+            : 'Not every condition would match either.'}
+        </Alert>
+      )}
       <Stack spacing={1.5}>
         {shown.map((group, index) => (
           <Fragment key={group.Group}>
@@ -203,6 +215,56 @@ const NoteList = ({ title, description, rows, icon }) =>
     </Stack>
   )
 
+// Alerts that cannot fire on this log, as name chips grouped by the log they read.
+const ChipAccordion = ({ summary, description, rows }) => {
+  const byLog = rows.reduce((groups, row) => {
+    ;(groups[row.Log] = groups[row.Log] ?? []).push(row)
+    return groups
+  }, {})
+  return (
+    rows.length > 0 && (
+      <Accordion variant="outlined" disableGutters>
+        <AccordionSummary expandIcon={<CippIcons.ExpandMore />}>
+          <Typography variant="body2">{summary}</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack spacing={2}>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {description}
+            </Typography>
+            {Object.entries(byLog).map(([log, logRows]) => (
+              <Box key={log}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  {log} ({logRows.length})
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  useFlexGap
+                  sx={{ flexWrap: 'wrap' }}
+                >
+                  {logRows.map((row) => (
+                    <Chip
+                      key={row.RuleKey}
+                      size="small"
+                      variant="outlined"
+                      label={row.Alert}
+                      component={Link}
+                      href={editLink(row)}
+                      clickable
+                      title="Edit alert"
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    )
+  )
+}
+
 // Which of the audit log alerts set up now would fire on a saved log, shown condition by condition.
 export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
   const [open, setOpen] = useState(true)
@@ -223,11 +285,7 @@ export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
   const excluded = pick('Excluded')
   const notChecked = pick('NotChecked')
   const others = pick('OtherActivity')
-  // The alerts for other activity, by the log they read.
-  const othersByLog = others.reduce((byLog, row) => {
-    ;(byLog[row.Log] = byLog[row.Log] ?? []).push(row)
-    return byLog
-  }, {})
+  const otherLogs = pick('OtherLog')
 
   return (
     <Card variant="outlined">
@@ -301,7 +359,7 @@ export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
                 <Chip
                   size="small"
                   variant="outlined"
-                  label={`${others.length} look for other activity`}
+                  label={`${others.length + otherLogs.length} can't fire on this log`}
                 />
               </Stack>
 
@@ -342,13 +400,10 @@ export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
                   <CippIcons.CheckCircle color="success" fontSize="small" />
                 }
               />
-              <NoteList
+              <Section
                 title="Excluded for this tenant"
-                description="These alerts would otherwise check this log, but this tenant is excluded from them."
+                description="These alerts look at this activity, but this tenant is excluded from them. Their conditions are still checked so you can see what would happen without the exclusion."
                 rows={excluded}
-                icon={
-                  <CippIcons.InfoOutlined color="action" fontSize="small" />
-                }
               />
               <NoteList
                 title="Not checked"
@@ -357,55 +412,16 @@ export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
                 icon={<CippIcons.Warning color="warning" fontSize="small" />}
               />
 
-              {others.length > 0 && (
-                <Accordion variant="outlined" disableGutters>
-                  <AccordionSummary expandIcon={<CippIcons.ExpandMore />}>
-                    <Typography variant="body2">
-                      {others.length} other{' '}
-                      {others.length === 1 ? 'alert looks' : 'alerts look'} for
-                      different activity
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Stack spacing={2}>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: 'text.secondary' }}
-                      >
-                        These alerts look for activity other than{' '}
-                        <strong>{meta.Operation}</strong>, so they never check
-                        this log.
-                      </Typography>
-                      {Object.entries(othersByLog).map(([log, logRows]) => (
-                        <Box key={log}>
-                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                            {log} ({logRows.length})
-                          </Typography>
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            useFlexGap
-                            sx={{ flexWrap: 'wrap' }}
-                          >
-                            {logRows.map((row) => (
-                              <Chip
-                                key={row.RuleKey}
-                                size="small"
-                                variant="outlined"
-                                label={row.Alert}
-                                component={Link}
-                                href={editLink(row)}
-                                clickable
-                                title="Edit alert"
-                              />
-                            ))}
-                          </Stack>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </AccordionDetails>
-                </Accordion>
-              )}
+              <ChipAccordion
+                summary={`${others.length} ${others.length === 1 ? 'alert' : 'alerts'} on the ${meta.Log ?? 'same'} log ${others.length === 1 ? 'looks' : 'look'} for other activity`}
+                description={`They read this log, but look for activity other than ${meta.Operation}, so they never check this record.`}
+                rows={others}
+              />
+              <ChipAccordion
+                summary={`${otherLogs.length} ${otherLogs.length === 1 ? 'alert reads' : 'alerts read'} a different log and can never fire on this one`}
+                description={`This record is in the ${meta.Log ?? 'audit'} log. These alerts read other logs, so they never see it.`}
+                rows={otherLogs}
+              />
             </Stack>
           )}
         </CardContent>

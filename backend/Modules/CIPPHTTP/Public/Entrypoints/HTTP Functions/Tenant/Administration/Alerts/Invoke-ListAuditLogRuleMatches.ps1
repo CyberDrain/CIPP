@@ -10,7 +10,8 @@ function Invoke-ListAuditLogRuleMatches {
         Takes the audit record a saved alert (Saved Logs) was sent for, runs it through the alert engine as it is now
         without sending anything, and returns one row per audit log alert that applies to the tenant: WouldAlert (Sent,
         Matches but another alert is sent first, Counts toward it for a repeated activity alert, or No), Reason in plain
-        language, Outcome (Fires, AlsoMatches, CountsToward, Close, OtherActivity, Excluded or NotChecked) and Groups: each
+        language, Outcome (Fires, AlsoMatches, CountsToward, Close, OtherActivity, OtherLog, Excluded or NotChecked), Matches
+        (every condition of a group holds, whether or not the alert can send) and Groups: each
         OR group of the alert, whether it looks at this record's operation and matches, and each condition's property,
         operator, expected value, the record's actual value and whether it is met. A repeated activity alert is shown as
         counting the record when the record's operation is one it counts. Metadata names the record's operation, user
@@ -47,6 +48,13 @@ function Invoke-ListAuditLogRuleMatches {
         if ($Records.Count -eq 0) { throw [System.Management.Automation.ItemNotFoundException]::new('The saved alert has no audit record to check') }
         $Operations = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         foreach ($Record in $Records) { [void]$Operations.Add([string]$Record.Operation) }
+        # The log the record came from, by its workload: an alert reading another log never sees it.
+        $RecordLog = switch ([string]$Records[0].Workload) {
+            'AzureActiveDirectory' { 'Audit.AzureActiveDirectory' }
+            'Exchange' { 'Audit.Exchange' }
+            { $_ -in 'SharePoint', 'OneDrive' } { 'Audit.SharePoint' }
+            default { 'Audit.General' }
+        }
 
         $Evaluation = Test-CIPPAuditLogRules -TenantFilter $TenantFilter -Rows $Records -EvaluateOnly -AllMatches
         if ($Evaluation.Error) { throw $Evaluation.Error }
@@ -60,7 +68,7 @@ function Invoke-ListAuditLogRuleMatches {
             $Shown[[string]$Clause.RuleKey].Add($Clause)
         }
         foreach ($Report in @($Evaluation.RuleReports)) {
-            $First = $Report.Clauses.Where({ $_.Anchored -and $_.Matched }, 'First')
+            $First = $Report.Clauses.Where({ $_.Anchored -and $_.Matched -and -not $_.Excluded }, 'First')
             if ($First.Count -gt 0) { [void]$SentBy.Add([string]$First[0].RuleKey) }
             foreach ($Clause in $Report.Clauses) {
                 if (-not $ByRule.ContainsKey([string]$Clause.RuleKey)) { $ByRule[[string]$Clause.RuleKey] = [System.Collections.Generic.List[object]]::new() }
@@ -75,50 +83,43 @@ function Invoke-ListAuditLogRuleMatches {
                 if ($Summary.Length -gt 120) { $Summary.Substring(0, 117) + '...' } else { $Summary }
             }
             $Clauses = if ($ByRule.ContainsKey([string]$Rule.RowKey)) { @($ByRule[[string]$Rule.RowKey]) } else { @() }
-            $Outcome = if ($TenantFilter -in $Rule.Excluded.value) {
-                # Excluded only matters for an alert that looks at this activity at all.
-                $Groups = @(Split-CIPPAuditLogConditions -Conditions ($Rule.Conditions | ConvertFrom-Json -ErrorAction SilentlyContinue))
-                $LooksHere = $false
-                foreach ($Group in $Groups) {
-                    $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $Group.Conditions
-                    if (-not $Anchor) { continue }
-                    foreach ($Op in $Operations) {
-                        if ($Anchor.Literals.Contains($Op) -or $Anchor.Patterns.Where({ $_.IsMatch($Op) }, 'First').Count -gt 0) { $LooksHere = $true }
-                    }
-                }
-                if ($LooksHere) {
-                    @{ Code = 'Excluded'; WouldAlert = 'No'; Reason = 'This tenant is excluded from the alert.' }
-                } else {
-                    @{ Code = 'OtherActivity'; WouldAlert = 'No'; Reason = "The alert looks for other operations, not '$(@($Operations) -join "', '")'." }
-                }
+            $Hit = $Clauses.Where({ $_.Anchored -and $_.Matched }, 'First').Count -gt 0
+            $Anchored = $Clauses.Where({ $_.Anchored }, 'First').Count -gt 0
+            $Outcome = if ($Rule.LogType -and $Rule.LogType -ne $RecordLog) {
+                @{ Code = 'OtherLog'; WouldAlert = 'No'; Reason = "This alert reads the $($LogNames[[string]$Rule.LogType] ?? $Rule.LogType) log, and this record is in the $($LogNames[$RecordLog]) log, so it can never fire on it." }
             } elseif ($Rule.Threshold) {
                 $Setting = try { [string]$Rule.Threshold | ConvertFrom-Json -ErrorAction Stop } catch { $null }
                 $Group = @(Split-CIPPAuditLogConditions -Conditions ($Rule.Conditions | ConvertFrom-Json -ErrorAction SilentlyContinue))
                 $Anchor = if ($Group.Count -eq 1) { Get-CIPPAuditLogRuleAnchor -Conditions $Group[0].Conditions }
                 $Counted = $Anchor -and @($Operations).Where({ $Anchor.Literals.Contains($_) }, 'First').Count -gt 0
-                if ($Counted) {
+                if ($Counted -and $TenantFilter -in $Rule.Excluded.value) {
+                    @{ Code = 'Excluded'; WouldAlert = 'Would count toward it, but this tenant is excluded'; Reason = "A repeated activity alert this record would count toward, but this tenant is excluded from it." }
+                } elseif ($Counted) {
                     @{ Code = 'CountsToward'; WouldAlert = 'Counts toward it'; Reason = "A repeated activity alert: this record counts toward it, and it alerts when one user or app does this $($Setting.Count) times within $($Setting.Minutes) minutes." }
                 } else {
                     @{ Code = 'OtherActivity'; WouldAlert = 'No'; Reason = "A repeated activity alert that counts other operations, not '$(@($Operations) -join "', '")'." }
                 }
             } elseif ($Clauses.Count -eq 0) {
                 @{ Code = 'NotChecked'; WouldAlert = 'No'; Reason = 'The alert is not checked: each group of its conditions needs an Operation condition using Equals, In or Like.' }
-            } elseif ($Clauses.Where({ $_.Anchored -and $_.Matched }, 'First').Count -gt 0) {
+            } elseif ($TenantFilter -in $Rule.Excluded.value -and $Anchored) {
+                if ($Hit) {
+                    @{ Code = 'Excluded'; WouldAlert = 'Would match, but this tenant is excluded'; Reason = 'Every condition matches, but this tenant is excluded from the alert, so nothing is sent.' }
+                } else {
+                    @{ Code = 'Excluded'; WouldAlert = 'Would not match, and this tenant is excluded'; Reason = 'This tenant is excluded from the alert, and not every condition matches either.' }
+                }
+            } elseif ($Hit) {
                 if ($SentBy.Contains([string]$Rule.RowKey)) {
                     @{ Code = 'Fires'; WouldAlert = 'Sent'; Reason = 'Every condition matches, so this alert is sent.' }
                 } else {
                     @{ Code = 'AlsoMatches'; WouldAlert = 'Matches, another alert is sent first'; Reason = 'Every condition matches, but an earlier alert also matches this record and only one alert is sent per record.' }
                 }
-            } else {
+            } elseif ($Anchored) {
                 # The group that came closest: the one that looks at this operation, then the most conditions met.
-                $Closest = @($Clauses | Sort-Object -Property @{ Expression = { [int]$_.Anchored }; Descending = $true }, @{ Expression = { @($_.Conditions).Where({ $_.Passed }).Count }; Descending = $true })[0]
+                $Closest = @($Clauses.Where({ $_.Anchored }) | Sort-Object -Property @{ Expression = { @($_.Conditions).Where({ $_.Passed }).Count }; Descending = $true })[0]
                 $Failed = @(@($Closest.Conditions).Where({ -not $_.Passed }).Condition)
-                $Reason = if (-not $Closest.Anchored) {
-                    "The alert looks for other operations, not '$(@($Operations) -join "', '")'."
-                } else {
-                    "Not every condition matches. Not met: $($Failed -join '; ')."
-                }
-                @{ Code = $(if ($Closest.Anchored) { 'Close' } else { 'OtherActivity' }); WouldAlert = 'No'; Reason = $Reason }
+                @{ Code = 'Close'; WouldAlert = 'No'; Reason = "Not every condition matches. Not met: $($Failed -join '; ')." }
+            } else {
+                @{ Code = 'OtherActivity'; WouldAlert = 'No'; Reason = "The alert looks for other operations, not '$(@($Operations) -join "', '")'." }
             }
             [pscustomobject]@{
                 Alert      = $Name
@@ -126,6 +127,7 @@ function Invoke-ListAuditLogRuleMatches {
                 WouldAlert = $Outcome.WouldAlert
                 Reason     = $Outcome.Reason
                 Outcome    = $Outcome.Code
+                Matches    = $Hit
                 Groups     = @(foreach ($Clause in @($Shown[[string]$Rule.RowKey] | Where-Object { $_ })) {
                         [pscustomobject]@{
                             Group               = $Clause.Group
@@ -140,8 +142,8 @@ function Invoke-ListAuditLogRuleMatches {
         $First = $Records[0]
         $StatusCode = [HttpStatusCode]::OK
         $Body = @{
-            Results  = @($Results | Sort-Object -Property @{ Expression = { @('Sent', 'Matches, another alert is sent first', 'Counts toward it', 'No').IndexOf($_.WouldAlert) } }, Alert)
-            Metadata = @{ Operation = @($Operations) -join ', '; User = $First.UserId; CreationTime = $First.CreationTime; Records = $Records.Count }
+            Results  = @($Results | Sort-Object -Property @{ Expression = { @('Fires', 'AlsoMatches', 'Close', 'CountsToward', 'Excluded', 'NotChecked', 'OtherActivity', 'OtherLog').IndexOf($_.Outcome) } }, Alert)
+            Metadata = @{ Operation = @($Operations) -join ', '; Log = $LogNames[$RecordLog]; User = $First.UserId; CreationTime = $First.CreationTime; Records = $Records.Count }
         }
     } catch {
         $StatusCode = Get-CippErrorStatusCode -ErrorRecord $_

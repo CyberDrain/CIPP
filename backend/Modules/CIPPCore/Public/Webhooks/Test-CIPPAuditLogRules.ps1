@@ -707,9 +707,11 @@ function Test-CIPPAuditLogRules {
                 $LocationExcludedUserKeys = @(@($ExcludedUsers | Where-Object { $_.Type -eq 'Location' }).RowKey)
                 $Clauses = foreach ($Config in $Configuration) {
                     # Threshold rules alert on a count of records (Push-AuditLogFeedBlobsV3), never on one.
-                    if ($TenantFilter -in $Config.Excluded.value -or $Config.Threshold) {
+                    if ($Config.Threshold) {
                         continue
                     }
+                    # A rule that excludes the tenant never alerts here; its clauses are kept only for -AllMatches reports.
+                    $RuleExcluded = $TenantFilter -in $Config.Excluded.value
                     $RuleConditions = try { $Config.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' } } catch {
                         Write-Warning "Error reading the conditions of audit log rule $($Config.RowKey): $($_.Exception.Message)"
                         continue
@@ -771,6 +773,7 @@ function Test-CIPPAuditLogRules {
                                 Anchor             = $Anchor
                                 RuleKey            = $Config.RowKey
                                 Group              = $Branch.Group
+                                Excluded           = $RuleExcluded
                                 ConditionChecks    = $ConditionChecks.ToArray()
                                 expectedAction     = $Config.Actions
                                 expectedBecActions = $Config.BecActions
@@ -817,6 +820,7 @@ function Test-CIPPAuditLogRules {
                                     [pscustomobject]@{
                                         RuleKey    = $clause.RuleKey
                                         Group      = $clause.Group
+                                        Excluded   = [bool]$clause.Excluded
                                         Anchored   = $clause.Anchor.Literals.Contains($Operation) -or $clause.Anchor.Patterns.Where({ $_.IsMatch($Operation) }, 'First').Count -gt 0
                                         Matched    = $Checks.Where({ -not $_.Passed }, 'First').Count -eq 0
                                         Conditions = $Checks
@@ -827,6 +831,7 @@ function Test-CIPPAuditLogRules {
                 $Candidates = $null
                 if (-not $Compiled.ByOperation.TryGetValue($Operation, [ref]$Candidates)) {
                     $Candidates = @(foreach ($clause in $Compiled.Clauses) {
+                            if ($clause.Excluded) { continue }
                             if ($clause.Anchor.Literals.Contains($Operation) -or $clause.Anchor.Patterns.Where({ $_.IsMatch($Operation) }, 'First').Count -gt 0) { $clause }
                         })
                     $Compiled.ByOperation[$Operation] = $Candidates

@@ -178,7 +178,7 @@ function Push-AuditLogFeedBlobsV3 {
                         }
                         # The records kept with the counts, read only for an identity that alerts.
                         $WhoKey = ($Who -replace '[\\/#?|\x00-\x1f]', '_') -replace "'", "''"
-                        $Related = @(foreach ($Row in @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "PartitionKey eq '$TenantId' and RowKey ge '$RuleKey|$WhoKey|' and RowKey lt '$RuleKey|$WhoKey}' and Bucket ge '$From'" -Property @('RowKey', 'Records'))) { if ($Row.Records) { [string]$Row.Records } })
+                        $Related = @(foreach ($Row in @(Get-CIPPAzDataTableEntity @ThresholdTable -Filter "PartitionKey eq '$TenantId' and RowKey ge '$RuleKey|$WhoKey|' and RowKey lt '$RuleKey|$WhoKey}' and Bucket ge '$From'")) { if ($Row.Records) { [string]$Row.Records } })
                         foreach ($Burst in $Fired) { $Alerts.Add([pscustomobject]@{ TenantId = $TenantId; Threshold = $Threshold; Who = $Who; Sample = $SampleIndex["$Group`n$Who"]; End = $Burst.End; Count = $Burst.Count; Related = $Related }) }
                         break
                     }

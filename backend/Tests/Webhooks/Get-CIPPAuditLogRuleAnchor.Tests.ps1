@@ -2,6 +2,7 @@
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
+    $env:CIPPRootPath = $RepoRoot
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Get-CIPPAuditLogRuleAnchor.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Split-CIPPAuditLogConditions.ps1')
 
@@ -147,6 +148,19 @@ Describe 'Invoke-AddAlert' {
         $Response.StatusCode | Should -Be 400
         $Response.Body.error | Should -BeLike $Error
         Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'refuses a repeated activity alert on an operation it should not count' {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'in' @('FileDeleted', 'FileAccessed')); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $true; threshold = @{ Count = 50; Minutes = 20 } } })
+        $Response.StatusCode | Should -Be 400
+        $Response.Body.error | Should -BeLike "*can't count FileAccessed*"
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'keeps the repeated activity operations the same for the backend and the alert form' {
+        $Backend = Get-Content -Raw (Join-Path $RepoRoot 'Config/AuditLogRepeatedActivityOperations.json') | ConvertFrom-Json
+        $Frontend = Get-Content -Raw (Join-Path (Split-Path -Parent $RepoRoot) 'frontend/src/data/AuditLogRepeatedActivityOperations.json') | ConvertFrom-Json
+        ($Frontend | ConvertTo-Json -Depth 5) | Should -Be ($Backend | ConvertTo-Json -Depth 5)
     }
 
     It 'refuses a repeated activity alert with more than one group' {

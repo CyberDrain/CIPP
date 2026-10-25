@@ -26,6 +26,7 @@ import alertList from '../../../../data/alerts.json'
 import auditLogTemplates from '../../../../data/AuditLogTemplates'
 import alertActions from '../../../../data/alertActions.json'
 import auditLogSchema from '../../../../data/AuditLogSchema.json'
+import repeatedActivityOperations from '../../../../data/AuditLogRepeatedActivityOperations.json'
 import { Layout as DashboardLayout } from '../../../../layouts/index' // Dashboard layout
 import { CippApiResults } from '../../../../components/CippComponents/CippApiResults'
 import { ApiGetCall, ApiPostCall } from '../../../../api/ApiCall'
@@ -226,6 +227,10 @@ const AlertWizard = () => {
   const logbookWatcher = useWatch({
     control: formControl.control,
     name: 'logbook',
+  })
+  const thresholdWatcher = useWatch({
+    control: formControl.control,
+    name: 'thresholdEnabled',
   })
   const propertyWatcher = useWatch({
     control: formControl.control,
@@ -957,11 +962,7 @@ const AlertWizard = () => {
             formControl={formControl}
             label="Input"
             creatable={true}
-            options={
-              propertyWatcher?.[event.id]?.Property?.value?.startsWith('List:')
-                ? auditLogSchema[propertyWatcher?.[event.id]?.Property?.value]
-                : []
-            }
+            options={inputOptions(event.id)}
             onCreateOption={(inputValue) => {
               if (typeof inputValue === 'string') {
                 return {
@@ -997,9 +998,7 @@ const AlertWizard = () => {
               name={`conditions.${event.id}.Input`}
               formControl={formControl}
               label="Input"
-              options={
-                auditLogSchema[propertyWatcher?.[event.id]?.Property?.value]
-              }
+              options={inputOptions(event.id)}
             />
           </CippFormCondition>
         </CippFormCondition>
@@ -1016,6 +1015,18 @@ const AlertWizard = () => {
       </Grid>
     </Grid>
   )
+
+  // A repeated activity alert only counts the operations listed for its log.
+  const inputOptions = (id) => {
+    const list = propertyWatcher?.[id]?.Property?.value
+    if (!list?.startsWith('List:')) return []
+    if (list === 'List:Operation' && thresholdWatcher) {
+      return (repeatedActivityOperations[logbookWatcher?.value] ?? []).map(
+        (operation) => ({ value: operation, label: operation })
+      )
+    }
+    return auditLogSchema[list]
+  }
 
   const { isValid } = useFormState({ control: formControl.control })
   return (
@@ -1272,7 +1283,7 @@ const AlertWizard = () => {
                                 helperText={
                                   groupNumbers.length > 1
                                     ? 'Not available with more than one group: a repeated activity alert counts one set of operations.'
-                                    : 'Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. The Operation condition must use Equals or In.'
+                                    : 'Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. Only operations where many in a short time means something can be counted, such as deletions, downloads, sharing and failed sign-ins. The Operation condition must use Equals or In.'
                                 }
                               />
                             </Grid>

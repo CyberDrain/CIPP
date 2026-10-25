@@ -79,6 +79,15 @@ function Invoke-AddAlert {
                         Body       = @{ error = 'A threshold alert counts exact operations, so its Operation condition must use Equals or In, not Like.' }
                     })
             }
+            # Only operations where many in a short time means something (Config/AuditLogRepeatedActivityOperations.json).
+            $Allowed = (Get-Content -Raw -Path (Join-Path $env:CIPPRootPath 'Config/AuditLogRepeatedActivityOperations.json') | ConvertFrom-Json).$LogType
+            $NotAllowed = @(foreach ($Literal in $Anchor.Literals) { if (@($Allowed).Where({ $_ -eq $Literal }, 'First').Count -eq 0) { $Literal } })
+            if ($NotAllowed.Count -gt 0) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = "A repeated activity alert can't count $($NotAllowed -join ', '). It counts operations such as deletions, downloads, sharing and failed sign-ins, where many in a short time means something." }
+                    })
+            }
             $Threshold = [string](ConvertTo-Json -Compress -InputObject ([ordered]@{ Count = $Count; Minutes = $Minutes }))
         }
 

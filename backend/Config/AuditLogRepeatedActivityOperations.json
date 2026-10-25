@@ -1,0 +1,51 @@
+{
+  "description": "Operations a repeated activity (threshold) audit log alert may count, per log. Only operations where many in a short time means something: deletion, downloads, sharing, exports, permission and account changes, failed sign-ins. High-volume reads (FileAccessed, MailItemsAccessed, MessageSent) are left out. Keep identical to frontend/src/data/AuditLogRepeatedActivityOperations.json.",
+  "Audit.SharePoint": [
+    "FileDeleted",
+    "FileRecycled",
+    "FileDeletedFirstStageRecycleBin",
+    "FileDeletedSecondStageRecycleBin",
+    "FolderDeleted",
+    "FolderRecycled",
+    "FolderDeletedFirstStageRecycleBin",
+    "FolderDeletedSecondStageRecycleBin",
+    "FileDownloaded",
+    "FileSyncDownloadedFull",
+    "AnonymousLinkCreated",
+    "CompanyLinkCreated",
+    "SecureLinkCreated",
+    "SharingInvitationCreated",
+    "SharingSet",
+    "FileMalwareDetected",
+    "SiteDeleted"
+  ],
+  "Audit.Exchange": [
+    "HardDelete",
+    "SoftDelete",
+    "MoveToDeletedItems",
+    "New-InboxRule",
+    "Set-InboxRule",
+    "Add-MailboxPermission",
+    "Add-RecipientPermission",
+    "Set-Mailbox"
+  ],
+  "Audit.AzureActiveDirectory": [
+    "UserLoginFailed",
+    "Delete user.",
+    "Disable account.",
+    "Reset user password.",
+    "Remove member from group.",
+    "Remove member from role.",
+    "Add member to role.",
+    "Add service principal credentials."
+  ],
+  "Audit.General": [
+    "TeamDeleted",
+    "ChannelDeleted",
+    "MemberRemoved",
+    "MessagesExported",
+    "DeleteForm",
+    "QuarantineRelease",
+    "QuarantineExportMessage"
+  ]
+}

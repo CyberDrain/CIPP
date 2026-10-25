@@ -5,6 +5,7 @@ import {
   AccordionSummary,
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   CardHeader,
@@ -16,8 +17,25 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import Link from 'next/link'
 import { CippIcons } from '../../utils/icon-registry'
 import { ApiGetCall } from '../../api/ApiCall'
+
+// The alert configuration page for one alert.
+const editLink = (row) =>
+  `/tenant/administration/alert-configuration/alert?id=${encodeURIComponent(row.RuleKey)}`
+
+const EditButton = ({ row }) => (
+  <Button
+    size="small"
+    component={Link}
+    href={editLink(row)}
+    startIcon={<CippIcons.Edit fontSize="small" />}
+    sx={{ ml: 'auto' }}
+  >
+    Edit alert
+  </Button>
+)
 
 // How each outcome reads and looks. Colour always comes with an icon and words.
 const outcomeStyle = {
@@ -109,6 +127,7 @@ const AlertCard = ({ row }) => {
           {row.Alert}
         </Typography>
         <Chip size="small" variant="outlined" label={row.Log} />
+        <EditButton row={row} />
       </Stack>
       <Stack spacing={1.5}>
         {shown.map((group, index) => (
@@ -178,6 +197,7 @@ const NoteList = ({ title, description, rows, icon }) =>
           <Typography variant="body2">
             <strong>{row.Alert}</strong> ({row.Log})
           </Typography>
+          <EditButton row={row} />
         </Stack>
       ))}
     </Stack>
@@ -285,7 +305,14 @@ export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
                 />
               </Stack>
 
-              {fires.length === 0 && (
+              {fires.length === 0 && counts.length > 0 && (
+                <Alert severity="info">
+                  These records count toward the repeated activity alerts below.
+                  Those alert when one user or app does this often enough, not
+                  on a single record.
+                </Alert>
+              )}
+              {fires.length === 0 && counts.length === 0 && (
                 <Alert severity="info">
                   None of your alerts would fire on this log now.
                   {close.length > 0 &&
@@ -366,6 +393,10 @@ export const CippAuditLogRuleCheck = ({ tenant, logId }) => {
                                 size="small"
                                 variant="outlined"
                                 label={row.Alert}
+                                component={Link}
+                                href={editLink(row)}
+                                clickable
+                                title="Edit alert"
                               />
                             ))}
                           </Stack>

@@ -76,7 +76,21 @@ function Invoke-ListAuditLogRuleMatches {
             }
             $Clauses = if ($ByRule.ContainsKey([string]$Rule.RowKey)) { @($ByRule[[string]$Rule.RowKey]) } else { @() }
             $Outcome = if ($TenantFilter -in $Rule.Excluded.value) {
-                @{ Code = 'Excluded'; WouldAlert = 'No'; Reason = 'This tenant is excluded from the alert.' }
+                # Excluded only matters for an alert that looks at this activity at all.
+                $Groups = @(Split-CIPPAuditLogConditions -Conditions ($Rule.Conditions | ConvertFrom-Json -ErrorAction SilentlyContinue))
+                $LooksHere = $false
+                foreach ($Group in $Groups) {
+                    $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $Group.Conditions
+                    if (-not $Anchor) { continue }
+                    foreach ($Op in $Operations) {
+                        if ($Anchor.Literals.Contains($Op) -or $Anchor.Patterns.Where({ $_.IsMatch($Op) }, 'First').Count -gt 0) { $LooksHere = $true }
+                    }
+                }
+                if ($LooksHere) {
+                    @{ Code = 'Excluded'; WouldAlert = 'No'; Reason = 'This tenant is excluded from the alert.' }
+                } else {
+                    @{ Code = 'OtherActivity'; WouldAlert = 'No'; Reason = "The alert looks for other operations, not '$(@($Operations) -join "', '")'." }
+                }
             } elseif ($Rule.Threshold) {
                 $Setting = try { [string]$Rule.Threshold | ConvertFrom-Json -ErrorAction Stop } catch { $null }
                 $Group = @(Split-CIPPAuditLogConditions -Conditions ($Rule.Conditions | ConvertFrom-Json -ErrorAction SilentlyContinue))

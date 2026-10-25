@@ -45,6 +45,7 @@ Describe 'Invoke-ListAuditLogRuleMatches' {
             New-Rule 'other' 'Other operations' @(@{ Property = @{ label = 'Operation' }; Operator = @{ value = 'eq' }; Input = @{ value = 'Set-Mailbox' } })
             New-Rule 'count' 'Mass inbox rules' @($script:OpCondition) '{"Count":10,"Minutes":20}'
             New-Rule 'excluded' 'Excluded here' @($script:OpCondition) $null @(@{ value = 'contoso.com' })
+            New-Rule 'excluded-elsewhere' 'Excluded, other activity' @(@{ Property = @{ label = 'Operation' }; Operator = @{ value = 'eq' }; Input = @{ value = 'Set-Mailbox' } }) $null @(@{ value = 'contoso.com' })
             New-Rule 'broken' 'No anchor' @(@{ Property = @{ label = 'UserId' }; Operator = @{ value = 'like' }; Input = @{ value = '*' } })
         }
         # The engine's report: rules in order, each condition on its own.
@@ -82,6 +83,7 @@ Describe 'Invoke-ListAuditLogRuleMatches' {
         $Rows['Other operations'].Outcome | Should -Be 'OtherActivity'
         $Rows['Mass inbox rules'].Outcome | Should -Be 'CountsToward'
         $Rows['Excluded here'].Outcome | Should -Be 'Excluded'
+        $Rows['Excluded, other activity'].Outcome | Should -Be 'OtherActivity'
         $Rows['No anchor'].Outcome | Should -Be 'NotChecked'
         $Group = @($Rows['Redirects only'].Groups)[0]
         $Group.LooksAtThisActivity | Should -BeTrue

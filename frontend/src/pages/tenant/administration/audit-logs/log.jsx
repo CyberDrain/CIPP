@@ -19,30 +19,12 @@ import {
 } from "@mui/material";
 import CippFormSkeleton from "../../../../components/CippFormPages/CippFormSkeleton";
 import { getCippFormatting } from "../../../../utils/get-cipp-formatting";
-import { getCippTranslation } from "../../../../utils/get-cipp-translation";
 import CippGeoLocation from "../../../../components/CippComponents/CippGeoLocation";
 import { CippTimeAgo } from "../../../../components/CippComponents/CippTimeAgo";
-import { CippPropertyListCard } from "../../../../components/CippCards/CippPropertyListCard";
+import { CippAuditRecordView } from "../../../../components/CippComponents/CippAuditRecordView";
 import { Grid } from "@mui/system";
-import auditLogTranslation from "../../../../data/audit-log-translations.json";
 import { ArrowLeftIcon } from "@mui/x-date-pickers";
 import { CippAuditLogRuleCheck } from "../../../../components/CippComponents/CippAuditLogRuleCheck";
-
-// Fields shown elsewhere on the page, or only useful to CIPP itself.
-const excludeProperties = [
-  "CreationTime",
-  "CIPPLocationInfo",
-  "CIPPParameters",
-  "CIPPModifiedProperties",
-  "CIPPAction",
-  "CIPPCondition",
-  "CIPPIPDetected",
-  "CIPPExtendedProperties",
-  "CIPPDeviceProperties",
-  "CIPPGeoLocation",
-  "CIPPClause",
-  "AuditRecord",
-];
 
 // Audit times are UTC without a zone marker.
 const parseAuditTime = (value) =>
@@ -75,26 +57,6 @@ const Page = () => {
     },
     queryKey: `GetAuditLog-${id}`,
   });
-
-  const translateAuditLogValue = (key, value) => {
-    if (typeof value === "object" || Array.isArray(value)) {
-      return value;
-    }
-    if (typeof value === "boolean") {
-      return value;
-    }
-    if (
-      typeof value === "string" &&
-      (value.toLowerCase() === "true" || value.toLowerCase() === "false")
-    ) {
-      return value.toLowerCase() === "true";
-    }
-    const stringValue = String(value);
-    if (auditLogTranslation[key]) {
-      return auditLogTranslation[key][stringValue] ?? stringValue;
-    }
-    return stringValue;
-  };
 
   useEffect(() => {
     if (logRequest.isSuccess) {
@@ -129,13 +91,6 @@ const Page = () => {
   const conditions = String(raw.CIPPClause ?? "")
     .split(" and ")
     .filter(Boolean);
-  // Every field of the audit record, formatted as the rest of CIPP formats it.
-  const auditFields = Object.entries(raw)
-    .filter(([key]) => !excludeProperties.includes(key))
-    .map(([key, value]) => ({
-      label: getCippTranslation(key),
-      value: getCippFormatting(translateAuditLogValue(key, value), key) ?? "N/A",
-    }));
 
   return (
     <Box sx={{ p: 3 }}>
@@ -249,7 +204,7 @@ const Page = () => {
                       </SummaryRow>
                     )}
                     <SummaryRow icon={<CippIcons.TaskAlt fontSize="small" />} label="Actions taken">
-                      {raw.CIPPAction
+                      {raw.CIPPAction && raw.CIPPAction !== "[]"
                         ? getCippFormatting(raw.CIPPAction, "CIPPAction")
                         : "None"}
                     </SummaryRow>
@@ -273,14 +228,7 @@ const Page = () => {
               <CippAuditLogRuleCheck tenant={logData.Tenant} logId={id} />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <CippPropertyListCard
-                title="Everything in the audit record"
-                propertyItems={auditFields}
-                isFetching={logRequest.isLoading}
-                layout="multiple"
-                showDivider={false}
-                variant="outlined"
-              />
+              <CippAuditRecordView raw={raw} />
             </Grid>
           </Grid>
         </Paper>

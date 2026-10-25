@@ -15,7 +15,7 @@ This page is the reference for anyone writing audit log alerts or supporting the
 | Source | The Office 365 Management Activity API, read for each tenant every 15 minutes. |
 | Logs | Entra ID (`Audit.AzureActiveDirectory`), Exchange (`Audit.Exchange`), SharePoint and OneDrive (`Audit.SharePoint`), and General (`Audit.General`: Teams, Microsoft Forms, Defender quarantine, Purview and other workloads). |
 | Delay | Microsoft publishes most records within minutes, and some much later. CIPP checks each tenant's logs every 15 minutes, so a typical alert arrives 5 to 30 minutes after the event. |
-| Matching | Every record is checked once, against every enabled alert that covers the tenant. A record raises at most one alert. |
+| Matching | Every record is checked once, against every enabled alert that covers the tenant and reads the record's log. A record raises at most one alert. |
 | Kinds of alert | A **single-record alert** fires on each record that matches. A **repeated activity alert** fires when one user or app does something a set number of times within a window. |
 | Saved copy | Every record that raises an alert is saved and shown under **Saved Logs**, where you can also check it against your alerts. |
 
@@ -24,13 +24,13 @@ This page is the reference for anyone writing audit log alerts or supporting the
 Each 15-minute cycle runs these steps for every tenant that has audit log alerts:
 
 1. **List.** CIPP asks Microsoft which new batches of records each log has published since it last looked. One listing covers at most 3 hours, so a tenant that fell behind catches up over a few cycles. CIPP never reads further back than 6 hours: after a longer outage, the older records are skipped and a warning is logged.
-2. **Download.** Batches are downloaded 16 at a time, in tasks of up to 64 batches, with at most 80 tasks per run. A batch that fails to download is retried on later cycles. After 5 failed attempts it is dropped, and **Diagnostics** reports it.
+2. **Download.** Batches are downloaded 16 at a time, in tasks of up to 64 batches, with at most 80 tasks per run. A batch that fails to download is retried on later cycles. A batch is queued at most 5 times; after that it is dropped and an error is written to the CIPP logbook. **Diagnostics** shows how many batches failed in each cycle.
 3. **Skip what no alert can match.** Before reading a batch, CIPP checks its text for the operation names your alerts use. A batch that contains none of them is skipped unread. Within a batch that is read, only records whose operation (and other plain-text values) some alert could match are fully built. Most records never get past this step, which is why the rules on the Operation condition below matter.
 4. **Enrich.** Each remaining record gets the fields CIPP adds (see [Fields CIPP adds](#fields-cipp-adds)): names for the IDs it contains, the location of its IP address, the time of day, and so on.
-5. **Match.** The record is checked against each alert in turn. The first alert it matches is the one that fires. Other alerts that would also have matched do not fire for the same record; the alert check on the saved log shows them as **Also matches**.
+5. **Match.** The record is checked against each alert that reads its log, in turn. The first alert it matches is the one that fires. Other alerts that would also have matched do not fire for the same record; the alert check on the saved log shows them as **Also matches**. Alerts are checked in the order CIPP stores them, by an internal ID, not by name or creation date, so you cannot choose which of two overlapping alerts fires. Keep alerts that should both fire from overlapping, or combine them with OR groups.
 6. **Act and save.** The alert's actions run (email, webhook, PSA ticket, disabling the user or BEC remediation), and the record is saved as a log you can open later.
 
-Repeated activity alerts take a different path after step 3: CIPP counts matching records per user without building them, and fires once a count reaches the threshold. See [Repeated activity alerts](#repeated-activity-alerts).
+Repeated activity alerts take a different path after step 3: CIPP counts each user's records of the alert's operations without building them, and fires once a count reaches the threshold. See [Repeated activity alerts](#repeated-activity-alerts).
 
 {% hint style="info" %}
 Alert rule changes take effect from the next collection task, within 15 minutes. Changes to tenant groups and custom variables are picked up the same way.
@@ -45,9 +45,19 @@ A condition is a **property**, an **operator** and a **value**. All conditions i
 You can test any property of the audit record by name, not only those offered in the list. Typing a name that is not in the list creates it as a text property.
 
 * **Top-level fields** such as `Operation`, `UserId`, `ClientIP`, `ObjectId`, `ResultStatus` and `Workload`.
-* **Nested fields**, written with dots, for example `Actor.ID` or `Target.Type`. A dotted path into a list tests every entry in the list.
+* **Nested fields**, written with dots, for example `AppAccessContext.UniqueTokenId` or `Actor.ID`.
 * **Name/value lists**, which are flattened so each entry is a property of its own. This covers `ExtendedProperties`, `DeviceProperties` and `Parameters` (for example the `UserAgent` of a sign-in, or the `ForwardTo` of `New-InboxRule`).
 * **Changed values** (`ModifiedProperties`). Each changed property's new value is available under its own name, and its old value under `Previous_Value_<Name>`.
+
+A flattened entry replaces a top-level field of the same name, and when two lists hold the same name the later one wins, in the order `ExtendedProperties`, `DeviceProperties`, `Parameters`, `ModifiedProperties`. A few `ExtendedProperties` entries that only describe sign-in processing (values `SAS:EndAuth`, `SAS:ProcessAuth`, `deviceAuth:ReprocessTls` and `Consent:Set`) are left out.
+
+**Lists.** When a dotted path leads into a list, such as `Actor.ID`, the property holds every entry:
+
+* Equals, Like, Greater than and Less than match when **any** entry matches.
+* Not Equals to matches when any entry differs, so it is almost always true on a list.
+* In and Not In compare the whole list, so In never matches and Not In always does. Use Equals, or Contains (available through the API), instead.
+
+**Timestamps.** Fields holding a date and time, such as `CreationTime`, are dates, not text. Greater than and Less than compare them as dates (`CreationTime` Greater than `2026-10-17T17:00:00`), but Equals and Like never match them. Use `CIPPTimeUtc`, `CIPPDayUtc` and `CIPPDateUtc` for times and dates.
 
 Property names may contain only letters, numbers, `_` and `.`.
 
@@ -57,10 +67,10 @@ Microsoft documents every log's properties in the [Management Activity API schem
 
 | Field | What it holds |
 | --- | --- |
-| `CIPP<Property>` | For any property whose value is the ID of a user, group, device or app in the tenant, that object's name or UPN. For example `CIPPUserKey` is the UPN behind `UserKey`. Partner (GDAP) accounts are named the same way. |
+| `CIPP<Property>` | For a top-level property whose value is exactly the ID of an object in the tenant. For a user it holds the UPN: `CIPPUserKey` is the UPN behind `UserKey`. For a group, device or app it holds the directory entry, so test one of its fields, such as `CIPPObjectId.displayName`. Partner (GDAP) accounts are named the same way. Values inside nested fields or name/value lists are not looked up. |
 | `CIPPGeoLocation` | The two-letter country code of the record's IP address, `Reserved` for a private address, or `Unknown` when it cannot be looked up. |
-| `CIPPBadRepIP` | Whether the IP address belongs to a known VPN, proxy or anonymiser. |
-| `CIPPHostedIP` | Whether the IP address belongs to a hosting provider. |
+| `CIPPBadRepIP` | `True` when the IP address belongs to a known VPN, proxy or anonymiser, otherwise `False`; `Reserved` or `Unknown` as for `CIPPGeoLocation`. |
+| `CIPPHostedIP` | `True` when the IP address belongs to a hosting provider, otherwise `False`; `Reserved` or `Unknown` as for `CIPPGeoLocation`. |
 | `CIPPIPDetected` | The IP address that was looked up, with any port removed. |
 | `CIPPActor` | Every identity in the record's `Actor` list, as one text value, so you can test who acted. |
 | `CIPPActorType`, `CIPPTargetType` | `User`, `ServicePrincipal` or `Application`: the kind of identity that acted, and the kind acted on. |
@@ -71,7 +81,9 @@ Microsoft documents every log's properties in the [Management Activity API schem
 | `CIPPDateUtc` | The date in UTC, as `YYYY-MM-DD`. |
 
 {% hint style="info" %}
-Location fields are filled in for every record CIPP checks in full; each distinct IP address is looked up once per batch. A record from an address listed as **Trusted** in the tenant's IP list gets no location, so location conditions never match it. A user excluded from location alerts (for example while on holiday) is skipped by every alert with a location condition.
+Location fields are filled in for every record CIPP checks in full; each distinct IP address is looked up once per batch. A record from an address listed as **Trusted** in the tenant's IP list gets no location, so `CIPPGeoLocation` conditions never match it, and neither do records from a private or unknown address. A user excluded from location alerts (for example while on holiday) is skipped by every alert with a `CIPPGeoLocation` condition; the exclusion is matched on `CIPPUserKey`. Neither applies to `CIPPBadRepIP` or `CIPPHostedIP`, so pair those with a `CIPPGeoLocation` condition when trusted addresses and exclusions should count.
+
+Names come from a copy of the tenant's directory that CIPP refreshes at most once a day, so an object created since then is not yet named.
 {% endhint %}
 
 ### Operators
@@ -81,14 +93,14 @@ All comparisons ignore case.
 | Operator | Matches when the property | Notes |
 | --- | --- | --- |
 | Equals to / Not Equals to | is (is not) exactly the value | |
-| Like / Not like | matches (does not match) a wildcard pattern | `*` matches any text, `?` one character. Up to 8 wildcards. |
+| Like / Not like | matches (does not match) a wildcard pattern | `*` matches any text, `?` one character, and `[abc]` or `[a-c]` one of a set. Up to 8 wildcards. |
 | In / Not In | is (is not) one of a list of values | Up to 500 values. |
-| Greater than / Less than | sorts after (before) the value | Text sorts as text: `2026-11-01` is after `2026-10-31`, and `09:00` is before `17:00`. A number in the record compares as a number. |
+| Greater than / Less than | sorts after (before) the value | Text sorts as text: `2026-11-01` is after `2026-10-31`, and `09:00` is before `17:00`. A number in the record compares as a number, and a timestamp as a date. |
 | Does not match | does not match a regular expression | See [Regular expressions](#regular-expressions). |
 | Between (UTC) / Not between (UTC) | `CIPPTimeUtc` falls (does not fall) inside a time window | Written `HH:mm-HH:mm`, for example `07:00-19:00`. A window that crosses midnight, such as `22:00-06:00`, works. The form shows the window in your own time. |
 
 {% hint style="info" %}
-**Not between** never matches a record that has no time, and **Not In** and **Not Equals to** do match a record that lacks the property altogether. Pair a negative condition with a positive one when that matters.
+**Not between** never matches a record that has no time. **Not Equals to**, **Not In**, **Not like** and **Does not match** do match a record that lacks the property altogether, which counts as empty text (so Not like `*` is never true). Pair a negative condition with a positive one when that matters.
 {% endhint %}
 
 #### Regular expressions
@@ -99,6 +111,7 @@ Regular expressions run without backtracking. Their running time grows only with
 
 * A value can be up to 1,024 characters.
 * A value cannot contain `;` `|` `` ` `` `$` `{` or `}`.
+* A Like value's `[` needs a closing `]`.
 * A value can use [variables](#variables).
 
 ### OR groups
@@ -115,7 +128,7 @@ A value can name a custom variable as `%name%`. Each tenant then uses its own va
 
 * With **In** or **Not In**, a variable that holds several values separated by commas becomes a list. A `breakglass` variable of `bg1@contoso.com, bg2@contoso.com` with the condition `UserId In %breakglass%` alerts on either account.
 * A tenant with no value for a variable the alert uses is **not checked** by that alert. CIPP never compares against the variable's name, which would make a condition like `UserId Not Equals to %breakglass%` alert on every sign-in.
-* A variable's value has the same limits as a typed value: up to 500 values, each up to 1,024 characters. If it is longer, the alert is not checked for that tenant.
+* A variable's value has the same limits as a typed value: up to 500 values, each up to 1,024 characters, and none of `;` `|` `` ` `` `$` `{` `}`. If it breaks them, the alert is not checked for that tenant.
 * The Operation condition cannot use a variable.
 
 Example: alert whenever a break glass account signs in.
@@ -138,28 +151,29 @@ CIPP checks these when you save an alert. Each one exists because breaking it wo
 | The Operation condition cannot use a **variable**. | The operation text is used before any tenant's variables are known. |
 | Lists of at most **500** values; values of at most **1,024** characters; Like values with at most **8** wildcards; regular expressions of at most **200** characters. | Each of these is evaluated for every candidate record. Measured on long values, a 50,000-value list cost 11 ms per record and a 30-wildcard pattern 2 ms. Within the limits, conditions cost microseconds. |
 | At most **30** conditions in at most **10** groups. | Keeps an alert readable, and each condition costs time on every candidate record. |
-| Values cannot contain `;` `|` `` ` `` `$` `{` `}`. | CIPP refuses to run such a value, so the alert would never fire. |
+| Values cannot contain `;` `|` `` ` `` `$` `{` `}`, and a Like value's `[` needs a closing `]`. | CIPP refuses to run such a value, so the alert would never fire. |
+| A repeated activity alert has **only** the Operation condition. | Counting reads only each record's operation, user and time, so any other condition would be ignored. |
 
 **Busy operations:** `UserLoggedIn`, `UserLoginFailed`, `MailItemsAccessed`, `MailboxLogin`, `Send`, `MessageSent`, `MessageRead`, `MessagesListed`, `ChatRetrieved`, `TeamsSessionStarted`, `CopilotInteraction`, `SearchQueryPerformed`, `FileAccessed`, `FileAccessedExtended`, `FileDownloaded`, `FileModified`, `FileModifiedExtended`, `FilePreviewed`, `FileUploaded`, `FileSyncDownloadedFull`, `FileSyncUploadedFull`, `PageViewed`, `PageViewedExtended`.
 
 {% hint style="info" %}
-These rules apply when an alert is saved. Alerts saved before them keep running as they are, and are checked against the rules the next time they are edited.
+These rules apply when an alert is saved. Alerts saved before them keep running as they are, and are checked against the rules the next time they are edited. The exception is a group with no valid Operation condition: that group never runs, and an alert without any runnable group is reported in the CIPP logbook once a day.
 {% endhint %}
 
 ## Repeated activity alerts
 
-Turn on **Repeated activity** to alert when one user or app does something many times in a short time, such as mass file deletion, instead of on every record.
+Turn on **Only alert when one identity does this repeatedly** to alert when one user or app does something many times in a short time, such as mass file deletion, instead of on every record.
 
-* **How it counts.** Matching records are counted per identity (the record's `UserId`) in 10-minute buckets, across every batch and every collection task, so a burst split across batches or workers is still counted once. The alert fires when the records in any window of the chosen length reach the count.
+* **How it counts.** Records of the alert's operations, in the log the alert reads, are counted per identity (the record's `UserId`) in 10-minute buckets that start on the hour and every 10 minutes after it. Counts are shared across every batch and every collection task, so a burst split across batches or workers is still counted once. The alert fires when the buckets in any window reach the count. A window is a run of whole buckets, its length rounded up to a multiple of 10 minutes, so a burst that straddles a bucket boundary can need up to one bucket more than the window's length.
 * **Once per burst.** After firing for an identity, the alert stays quiet for that identity for an hour or the window's length, whichever is longer. It reports the busiest window of the burst.
-* **What it shows.** The alert carries the count and up to 5 sample records. The saved log also lists every record of the burst (up to 500) under **Related records**, summed up by IP address and device: the time, operation, item, IP address and device of each.
+* **What it shows.** The alert carries the count and up to 5 sample records. The saved log also lists the burst's records under **Related records**, summed up by IP address and device: the time, operation, item, IP address and device of each. Up to 60 records are kept per identity for each 10-minute bucket of each batch, and up to 500 per alert, so a very large burst shows a sample of it.
 * **Limits.**
   * The count must be from 2 to 100,000.
   * The window must be from 10 to 1,440 minutes.
-  * There can be one group of conditions only.
+  * There can be one group of conditions only, holding just the Operation condition.
   * The Operation condition must use Equals or In (counting needs the exact operations).
   * Only the operations below can be counted.
-* **Busy batches.** In one batch, at most the 1,000 identities with the most records are counted for each alert. Past that, a batch holds many names that each appear a few times, and no single-identity threshold reaches them.
+* **Busy batches.** In one batch, each alert counts at most the 1,000 identity and 10-minute bucket pairs with the most records. Past that, a batch holds many names that each appear a few times, and no single-identity threshold reaches them.
 
 | Log | Operations that can be counted |
 | --- | --- |
@@ -181,14 +195,18 @@ Open any saved log to see **Would your alerts fire on this log?** It runs the lo
 | Close | Alerts on this operation that fail some conditions. The failing conditions are marked. |
 | Repeated activity alerts | Alerts that count this operation instead of matching it. |
 | Excluded for this tenant | Alerts that exclude the tenant, with what they would have done. |
-| Not checked | Alerts that never run because a group of their conditions lacks an Operation condition using Equals, In or Like (alerts saved before that rule). Edit them to fix this. |
+| Not checked | Alerts that cannot run for this tenant: none of their groups has a valid Operation condition, or the alert uses a variable the tenant has no usable value for. |
 | Other activity / other logs | Alerts on other operations of this log, and alerts on other logs, which cannot fire on this record. |
 
 Each alert has an **Edit alert** link, so you can adjust it and check again.
 
 ## Saved logs and retention
 
-Every record that raises an alert is saved and listed under **Saved Logs**, with its full record (in sections, as changes, and as raw JSON), its location, and the alert check. Saved logs are not removed automatically. The related records of a repeated activity alert are kept for the log retention period set under CIPP settings (7 to 365 days).
+Every record that raises an alert is saved and listed under **Saved Logs**, with its full record (in sections, as changes, and as raw JSON), its location, and the alert check.
+
+Saved logs, and the related records of repeated activity alerts, are kept for the **Saved Audit Log Retention** period under CIPP settings: 30 to 365 days, 180 by default. Older ones are deleted once a day.
+
+To keep a copy, download it as JSON: **Download (JSON)** on the Saved Logs table downloads one log or all the selected ones, and **Download** on a saved log's page includes its related records. The table's CSV and PDF exports hold only the visible columns, not the full record.
 
 ## Log Collection and Diagnostics
 
@@ -202,11 +220,11 @@ Every record that raises an alert is saved and listed under **Saved Logs**, with
 | Unavailable | The tenant has auditing turned off, or no licence that includes the audit log. Checked again once a day. |
 | Waiting to start | Collection for this log has not run yet. |
 
-**Diagnostics** shows each 15-minute cycle: how long it took, how many tenants and batches it covered, how many records were read and checked, and how many alerts were sent, including repeated activity alerts.
+**Diagnostics** shows each 15-minute cycle: how long it took, how many tenants and batches it covered, how many records were read and checked, and how many alerts were sent, including repeated activity alerts. It covers every tenant, so it needs access to all tenants.
 
 ## Writing efficient alerts
 
-What an alert costs is driven by how many records it makes CIPP fully check, not by how many alerts you have. In testing on a real day of records with 61 alerts:
+What an alert costs is driven by how many records it makes CIPP fully check, not by how many alerts you have. Measured on a sample of 243,000 real records with 61 alerts, on one CPU:
 
 | Change | Records checked | Time |
 | --- | --- | --- |
@@ -216,7 +234,7 @@ What an alert costs is driven by how many records it makes CIPP fully check, not
 | Plus eight OR groups of broad wildcards | 200,000 | 185 s |
 
 * **Name operations exactly.** Equals and In on Operation let CIPP skip whole batches. A Like matches many more operations than it seems to.
-* **Prefer positive conditions.** Equals, In and Like on other properties also help CIPP skip records early. Not Equals, Not In, Not like and Does not match cannot, so the record is built and checked in full.
+* **Prefer positive conditions.** Equals, In and Like on other properties also help CIPP skip records early, when their values contain letters (up to 64 such values per tenant across all alerts). Values without letters, such as IP addresses and error codes, CIPP's own fields, and Not Equals, Not In, Not like and Does not match cannot, so the record is built and checked in full.
 * **Use repeated activity for volume.** If the question is "how many", a repeated activity alert counts without building records.
 * **Location conditions narrow early.** When every alert a record could match has a location condition, CIPP looks up the record's IP address before building it and skips it if no alert's location condition can hold.
 

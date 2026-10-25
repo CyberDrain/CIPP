@@ -120,7 +120,24 @@ function Start-LogRetentionCleanup {
             }
         }
 
-        Write-LogMessage -API 'LogRetentionCleanup' -message "Log cleanup completed. Total logs deleted: $TotalDeletedCount, coverage ledger rows deleted: $CoverageDeletedCount (retention: $RetentionDays days)" -Sev 'Info'
+        # The records kept beside repeated activity audit log alerts follow the log retention setting.
+        $RelatedDeletedCount = 0
+        if ($PSCmdlet.ShouldProcess('AuditLogRelatedRecords', 'Cleaning up old related audit records')) {
+            $RelatedTable = Get-CippTable -tablename 'AuditLogRelatedRecords'
+            $RelatedFilter = "Timestamp lt datetime'$((Get-Date).ToUniversalTime().AddDays(-$RetentionDays).ToString('yyyy-MM-ddTHH:mm:ssZ'))'"
+            $HasMoreRecords = $true
+            while ($HasMoreRecords) {
+                $OldRows = Get-AzDataTableEntity @RelatedTable -Filter $RelatedFilter -Property @('PartitionKey', 'RowKey') -First $BatchSize
+                $BatchCount = ($OldRows | Measure-Object).Count
+                if ($BatchCount -gt 0) {
+                    Remove-CIPPAzDataTableEntity @RelatedTable -Entity $OldRows -Force
+                    $RelatedDeletedCount += $BatchCount
+                }
+                $HasMoreRecords = $BatchCount -eq $BatchSize
+            }
+        }
+
+        Write-LogMessage -API 'LogRetentionCleanup' -message "Log cleanup completed. Total logs deleted: $TotalDeletedCount, coverage ledger rows deleted: $CoverageDeletedCount, related audit records deleted: $RelatedDeletedCount (retention: $RetentionDays days)" -Sev 'Info'
 
     } catch {
         $ErrorMessage = Get-CippException -Exception $_

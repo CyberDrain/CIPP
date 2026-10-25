@@ -71,7 +71,9 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
                 if ($Row.PartitionKey -eq $Pk -and [string]::CompareOrdinal($Row.RowKey, $Ge) -ge 0 -and [string]::CompareOrdinal($Row.RowKey, $Lt) -lt 0 -and [string]::CompareOrdinal($Row.Bucket, $From) -ge 0) { [pscustomobject]$Row }
             }
         }
+        $script:RelatedRows = [System.Collections.Generic.List[object]]::new()
         Mock Add-CIPPAzDataTableEntity {}
+        Mock Add-CIPPAzDataTableEntity -ParameterFilter { $TableName -eq 'AuditLogRelatedRecords' } { $script:RelatedRows.Add($Entity) }
         Mock Add-CIPPAzDataTableEntity -ParameterFilter { $TableName -eq 'AuditLogFeedThresholds' } {
             foreach ($Row in @($Entity)) {
                 $Key = "$($Row.PartitionKey)`n$($Row.RowKey)"
@@ -89,7 +91,8 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
             $script:Store[$Key] = $Copy
         }
         Mock Remove-CIPPAzDataTableEntity {}
-        Mock Invoke-CippWebhookProcessing { $script:Sent.Add($Data) }
+        # As the real one does, a sent alert hands back its AuditLogs row to write.
+        Mock Invoke-CippWebhookProcessing { $script:Sent.Add($Data); $PendingAuditLogWrites.Add(@{ PartitionKey = $TenantFilter; RowKey = $Data.Id }) }
         # Each blob as Get-CIPPAuditLogContent hands it over, with the counts it takes from the blob's index.
         Mock Get-CIPPAuditLogContent {
             foreach ($Blob in $Blobs) {
@@ -117,6 +120,23 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
         $Alert.CIPPClause | Should -BeLike '5 of FileRecycled, FileDeletedSecondStageRecycleBin by bob@a.com within 20 minutes*'
         $Alert.CIPPAction | Should -Be $script:Rule.Actions
         @([CIPP.CippJson]::ConvertFromJson($Alert.AuditRecord)).Count | Should -BeGreaterThan 0
+        # Every record of the burst is kept beside the alert, in time order, not only the samples.
+        $script:RelatedRows | Should -HaveCount 1
+        $script:RelatedRows[0].RowKey | Should -Be $Alert.Id
+        $Kept = @([CIPP.CippJson]::ConvertFromJson($script:RelatedRows[0].Records))
+        $Kept | Should -HaveCount 5
+        @($Kept.Time | ForEach-Object { if ($_ -is [datetime]) { $_.ToString('yyyy-MM-ddTHH:mm:ss') } else { $_ } }) | Should -Be @('2026-10-24T17:01:00', '2026-10-24T17:02:00', '2026-10-24T17:12:00', '2026-10-24T17:13:00', '2026-10-24T17:14:00')
+        $Kept[0].Item | Should -BeLike '*f-17:01:00.docx'
+        $Kept.Operation | Should -Contain 'FileDeletedSecondStageRecycleBin'
+    }
+
+    It 'keeps the related records of an identity whose name has characters a row key cannot hold' {
+        $Who = 'contoso.onmicrosoft.com\tenant: 1, object: 2'
+        $script:BlobJson = @{ r1 = New-BlobJson @(foreach ($Minute in 1..5) { , @('FileRecycled', $Who, ('17:0{0}:00' -f $Minute)) }) }
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1')
+        $script:Sent | Should -HaveCount 1
+        $script:RelatedRows | Should -HaveCount 1
+        @([CIPP.CippJson]::ConvertFromJson($script:RelatedRows[0].Records)) | Should -HaveCount 5
     }
 
     It 'sums an identity''s counts across runs, alerts the run that reaches the count, and never again for that burst' {

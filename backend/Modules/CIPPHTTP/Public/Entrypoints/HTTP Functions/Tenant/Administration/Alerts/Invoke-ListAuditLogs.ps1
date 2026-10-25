@@ -7,7 +7,9 @@ function Invoke-ListAuditLogs {
     .DESCRIPTION
         Lists audit log entries from the CIPP audit log store, filterable by tenant, date range, and log ID. Kind=Threshold
         lists only repeated activity alerts (one user or app doing something a set number of times within a window);
-        AlertType says which kind each entry is, and TimesRepeated how many times for a repeated activity alert.
+        AlertType says which kind each entry is, and TimesRepeated how many times for a repeated activity alert. A single
+        repeated activity alert (LogId) also returns RelatedRecords: the records kept with it (time, operation, item,
+        IP address, device), up to 500.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -92,6 +94,16 @@ function Invoke-ListAuditLogs {
             User           = $Raw.UserId
             TimesRepeated  = $Raw.CIPPThresholdCount
             Data           = $_.Data
+        }
+    }
+
+    # One saved repeated activity alert also returns the records kept with it (AuditLogRelatedRecords).
+    if ($LogID -and @($AuditLogs).Count -eq 1 -and $AuditLogs[0].AlertType -eq 'Repeated activity') {
+        $RelatedTable = Get-CIPPTable -TableName 'AuditLogRelatedRecords'
+        $SafeTenant = ConvertTo-CIPPODataFilterValue -Value ([string]$AuditLogs[0].Tenant) -Type 'String'
+        $Related = Get-CIPPAzDataTableEntity @RelatedTable -Filter "PartitionKey eq '$SafeTenant' and RowKey eq '$LogID'"
+        if ($Related.Records) {
+            $AuditLogs[0] | Add-Member -NotePropertyName RelatedRecords -NotePropertyValue @([CIPP.CippJson]::ConvertFromJson([string]$Related.Records)) -Force
         }
     }
 

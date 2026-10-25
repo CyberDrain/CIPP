@@ -158,6 +158,20 @@ Describe 'Invoke-AddAlert' {
         $Response.Body.error | Should -BeLike '*not a valid Like pattern*'
     }
 
+    It 'stores priority <Priority> as <Stored>' -ForEach @(@{ Priority = '5'; Stored = 5 }, @{ Priority = ' 1000 '; Stored = 1000 }, @{ Priority = ''; Stored = $null }, @{ Priority = $null; Stored = $null }) {
+        $script:Saved = $null
+        Mock Add-CIPPAzDataTableEntity { $script:Saved = $Entity }
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @((New-Condition 'Operation' 'eq' 'New-InboxRule')); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.Exchange' }; Priority = $Priority } })
+        $Response.StatusCode | Should -Be 200
+        $script:Saved.Priority | Should -Be $Stored
+    }
+
+    It 'refuses priority <Priority>' -ForEach @(@{ Priority = '0' }, @{ Priority = '1001' }, @{ Priority = '1.5' }, @{ Priority = 'high' }) {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @((New-Condition 'Operation' 'eq' 'New-InboxRule')); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.Exchange' }; Priority = $Priority } })
+        $Response.StatusCode | Should -Be 400
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
     It 'refuses more than 30 conditions' {
         $Conditions = @(New-Condition 'Operation' 'eq' 'UserLoginFailed') + @(foreach ($n in 1..30) { New-Condition 'UserId' 'ne' "u$n@a.com" })
         $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = $Conditions; tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.AzureActiveDirectory' } } })

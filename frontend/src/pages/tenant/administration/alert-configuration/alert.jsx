@@ -504,6 +504,7 @@ const AlertWizard = () => {
           ),
           thresholdEnabled: Boolean(alert.RawAlert.Threshold),
           threshold: alert.RawAlert.Threshold ?? defaultThreshold,
+          Priority: alert.RawAlert.Priority ?? '',
           conditions: [], // Include empty array to register field structure
         }
         // Reset first without spawning rows to avoid rendering empty operator fields
@@ -1322,7 +1323,7 @@ const AlertWizard = () => {
                                 helperText={
                                   groupNumbers.length > 1
                                     ? 'Not available with more than one group: a repeated activity alert counts one set of operations.'
-                                    : 'Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. Only operations where many in a short time means something can be counted, such as deletions, downloads, sharing and permission changes. The Operation condition must use Equals or In.'
+                                    : 'Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. Only operations where many in a short time means something can be counted, such as deletions, downloads, sharing and permission changes. The alert can have only the Operation condition, using Equals or In.'
                                 }
                               />
                             </Grid>
@@ -1366,6 +1367,19 @@ const AlertWizard = () => {
                                 />
                               </Grid>
                             </CippFormCondition>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <CippFormComponent
+                                type="number"
+                                name="Priority"
+                                label="Priority (optional)"
+                                formControl={formControl}
+                                helperText="A record alerts only on the first alert it matches. Alerts with a priority are checked first, lowest number first; the rest follow in no set order."
+                                validators={{
+                                  min: { value: 1, message: 'At least 1' },
+                                  max: { value: 1000, message: 'At most 1000' },
+                                }}
+                              />
+                            </Grid>
                           </Grid>
                         </CippButtonCard>
                       </Grid>

@@ -5,7 +5,8 @@ function Get-CIPPAuditLogRuleSet {
     .DESCRIPTION
         Reads WebhookRules, expands tenant groups and returns one object per rule that applies to
         TenantFilter (Tenants, Excluded, Conditions, Actions, BecActions, LogType, AlertComment,
-        CustomSubject, PsaTicketPriority, RowKey, Threshold). Exclusions are expanded only for rules that cover the tenant,
+        CustomSubject, PsaTicketPriority, RowKey, Threshold, Priority), rules with a Priority first (lowest first) and the rest in
+        stored order. Exclusions are expanded only for rules that cover the tenant,
         since each expansion reads the tenant list.
 
         The expanded rule set is memoised for two minutes. Script scope lasts one worker invocation, so
@@ -21,6 +22,7 @@ function Get-CIPPAuditLogRuleSet {
     $Now = [datetime]::UtcNow
     if ($null -eq $script:AuditRuleSetCache -or $script:AuditRuleSetCache.Expires -le $Now) {
         $ConfigTable = Get-CIPPTable -TableName 'WebhookRules'
+        $Order = 0
         $Rules = foreach ($ConfigEntry in (Get-CIPPAzDataTableEntity @ConfigTable)) {
             if ($ConfigEntry.Disabled -eq $true) {
                 continue
@@ -33,6 +35,7 @@ function Get-CIPPAuditLogRuleSet {
                 continue
             }
             [pscustomobject]@{
+                Order            = $Order++
                 Expanded         = @((Expand-CIPPTenantGroups -TenantFilter $Tenants).value)
                 ExcludedTenants  = $ConfigEntry.excludedTenants
                 ExcludedExpanded = $false
@@ -50,9 +53,12 @@ function Get-CIPPAuditLogRuleSet {
                     # Backend-only threshold rules: '{"Count":100,"Minutes":20}' alerts once one identity's records of the
                     # rule's operations reach Count within Minutes, instead of on each record.
                     Threshold         = $ConfigEntry.Threshold
+                    Priority          = if ([string]$ConfigEntry.Priority -match '^\d+$') { [int]$ConfigEntry.Priority }
                 }
             }
         }
+        # Rules with a priority first, lowest number first, then the rest in stored order; a record alerts on the first it matches.
+        $Rules = @($Rules | Sort-Object -Property @{ Expression = { $null -eq $_.Rule.Priority } }, @{ Expression = { $_.Rule.Priority } }, Order)
         $script:AuditRuleSetCache = [pscustomobject]@{ Expires = $Now.AddMinutes(2); Rules = @($Rules) }
     }
 

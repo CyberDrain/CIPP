@@ -14,7 +14,7 @@ BeforeDiscovery {
         $Condition
     }
     $SignIn = C 'Operation' 'eq' 'UserLoggedIn'
-    $Rule = { param($Key, [object[]]$Conditions, $Log = 'Audit.AzureActiveDirectory', $Excluded, $Threshold) @{ Key = $Key; Conditions = $Conditions; Log = $Log; Excluded = $Excluded; Threshold = $Threshold } }
+    $Rule = { param($Key, [object[]]$Conditions, $Log = 'Audit.AzureActiveDirectory', $Excluded, $Threshold, $Priority) @{ Key = $Key; Conditions = $Conditions; Log = $Log; Excluded = $Excluded; Threshold = $Threshold; Priority = $Priority } }
 
     $Cases = @(
         # --- Operators, on a real sign-in -------------------------------------------------------------------------------
@@ -93,6 +93,11 @@ BeforeDiscovery {
         @{ Name = 'A timestamp compares as a date'; Sample = 'aad-user-logged-in'; Expect = 'r'; Rules = @(& $Rule 'r' @($SignIn, (C 'CreationTime' 'gt' '2026-10-17T17:00:00'), (C 'CreationTime' 'lt' '2026-10-17T18:00:00'))) }
         @{ Name = 'A timestamp is not text, so Like does not match it (use CIPPDateUtc)'; Sample = 'aad-user-logged-in'; Expect = $null; Rules = @(& $Rule 'r' @($SignIn, (C 'CreationTime' 'like' '2026-10-17*'))) }
 
+        @{ Name = 'An alert with a priority is checked before one without'; Sample = 'aad-user-logged-in'; Expect = 'b'; Rules = @((& $Rule 'a' @($SignIn)), (& $Rule 'b' @($SignIn) 'Audit.AzureActiveDirectory' $null $null 500)) }
+        @{ Name = 'The lowest priority number is checked first'; Sample = 'aad-user-logged-in'; Expect = 'c'; Rules = @((& $Rule 'a' @($SignIn) 'Audit.AzureActiveDirectory' $null $null 20), (& $Rule 'b' @($SignIn) 'Audit.AzureActiveDirectory' $null $null 10), (& $Rule 'c' @($SignIn) 'Audit.AzureActiveDirectory' $null $null 2)) }
+        @{ Name = 'Alerts with the same priority keep their stored order'; Sample = 'aad-user-logged-in'; Expect = 'a'; Rules = @((& $Rule 'a' @($SignIn) 'Audit.AzureActiveDirectory' $null $null 5), (& $Rule 'b' @($SignIn) 'Audit.AzureActiveDirectory' $null $null 5)) }
+        @{ Name = 'A prioritised alert that does not match leaves the record to the next'; Sample = 'aad-user-logged-in'; Expect = 'a'; Rules = @((& $Rule 'a' @($SignIn)), (& $Rule 'b' @($SignIn, (C 'OS' 'eq' 'MacOs')) 'Audit.AzureActiveDirectory' $null $null 1)) }
+
         # --- Variables -----------------------------------------------------------------------------------------------------
         @{ Name = 'A variable takes the tenant''s value'; Sample = 'aad-user-logged-in'; Expect = 'r'; Vars = @{ '%breakglass%' = 'cipp.audit.preset.20261017172249@contoso.onmicrosoft.com' }; Rules = @(& $Rule 'r' @($SignIn, (C 'UserId' 'eq' '%breakglass%'))) }
         @{ Name = 'A variable lists several values for In'; Sample = 'aad-user-logged-in'; Expect = 'r'; Vars = @{ '%breakglass%' = 'bg@contoso.onmicrosoft.com, cipp.audit.preset.20261017172249@contoso.onmicrosoft.com' }; Rules = @(& $Rule 'r' @($SignIn, (C 'UserId' 'in' @('%breakglass%')))) }
@@ -158,6 +163,7 @@ BeforeAll {
                     Type              = $Rule.Log
                     AlertComment      = $Rule.Key
                     Threshold         = $Rule.Threshold
+                    Priority          = $Rule.Priority
                     CustomSubject     = ''
                     PsaTicketPriority = ''
                 }

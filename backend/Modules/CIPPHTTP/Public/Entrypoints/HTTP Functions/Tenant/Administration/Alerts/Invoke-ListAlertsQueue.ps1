@@ -35,6 +35,7 @@ function Invoke-ListAlertsQueue {
             excludedTenants = @($Task.excludedTenants | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue)
             Actions         = $TranslatedActions
             LogType         = $Task.type
+            Priority        = $Task.Priority
             EventType       = 'Audit log Alert'
             RowKey          = $Task.RowKey
             PartitionKey    = $Task.PartitionKey
@@ -49,6 +50,7 @@ function Invoke-ListAlertsQueue {
                 Tenants           = @($Tenants)
                 type              = $Task.type
                 Threshold         = $Threshold
+                Priority          = $Task.Priority
                 RowKey            = $Task.RowKey
                 PartitionKey      = $Task.PartitionKey
                 AlertComment      = $Task.AlertComment

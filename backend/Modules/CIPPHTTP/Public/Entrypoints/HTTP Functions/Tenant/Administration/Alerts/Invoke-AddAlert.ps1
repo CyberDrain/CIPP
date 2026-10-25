@@ -162,6 +162,17 @@ function Invoke-AddAlert {
         $Actions = $Request.Body.actions | ConvertTo-Json -Compress -Depth 10 | Out-String
         # Which containment actions the 'becremediate' action runs (ListBECRemediationActions ids); empty = the default six.
         $BecActions = @($Request.Body.becActions | ForEach-Object { if ($_ -and $_.PSObject.Properties['value']) { $_.value } else { $_ } } | Where-Object { $_ })
+        # Optional: alerts with a priority are checked first, lowest number first; the rest follow in stored order.
+        $Priority = $null
+        if (-not [string]::IsNullOrWhiteSpace([string]$Request.Body.Priority)) {
+            $Priority = if ([string]$Request.Body.Priority -match '^\s*\d{1,4}\s*$') { [int][string]$Request.Body.Priority }
+            if ($null -eq $Priority -or $Priority -lt 1 -or $Priority -gt 1000) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = 'Priority must be a whole number from 1 to 1000, or left empty.' }
+                    })
+            }
+        }
         $RowKey = $Request.Body.RowKey ? $Request.Body.RowKey : (New-Guid).ToString()
         $CompleteObject = @{
             Tenants           = [string]$TenantsJson
@@ -171,6 +182,7 @@ function Invoke-AddAlert {
             BecActions        = [string](ConvertTo-Json -InputObject $BecActions -Compress -Depth 5)
             type              = $LogType
             Threshold         = $Threshold
+            Priority          = $Priority
             RowKey            = $RowKey
             PartitionKey      = 'Webhookv2'
             AlertComment      = [string]$Request.Body.AlertComment

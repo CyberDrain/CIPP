@@ -32,6 +32,7 @@ BeforeAll {
     function Invoke-CippWebhookProcessing { param($Data, $CIPPURL, $TenantFilter, $AlertComment, $PendingAuditLogWrites) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     function Get-CippException { param($Exception) }
+    $env:CIPPRootPath = $RepoRoot
     foreach ($Helper in 'Webhooks/Test-CIPPAuditLogRules.ps1', 'Webhooks/Get-CIPPAuditLogRuleSet.ps1', 'Webhooks/New-CippAuditLogClaimRow.ps1', 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Webhooks/Split-CIPPAuditLogConditions.ps1', 'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
@@ -439,6 +440,19 @@ Describe 'Test-CIPPAuditLogRules -EvaluateOnly' {
         [object]::ReferenceEquals($script:AuditRuleClauseCache['contoso.com'], $Recompiled) | Should -BeFalse
     }
 
+    It 'counts only the operations the curated list allows for the rule''s log' {
+        foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
+        Set-Rules @(
+            @(, (New-Condition 'Operation' 'in' @('UserLoginFailed', 'Delete user.'))),
+            @(, (New-Condition 'Operation' 'eq' 'UserLoginFailed'))
+        )
+        foreach ($Row in $script:RuleRows) { $Row | Add-Member -NotePropertyName Threshold -NotePropertyValue '{"Count":3,"Minutes":20}' }
+        $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
+        $Prefilter.Thresholds | Should -HaveCount 1
+        $Prefilter.Thresholds[0].Operations | Should -Be @('Delete user.')
+        $Prefilter.Needles | Should -Not -Contain '"Operation":"UserLoginFailed'
+    }
+
     It 'keeps a threshold rule out of record matching, and gives the blob check its operations' {
         foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
         Set-Rules @(
@@ -446,6 +460,7 @@ Describe 'Test-CIPPAuditLogRules -EvaluateOnly' {
             @(, (New-Condition 'Operation' 'eq' 'New-InboxRule'))
         )
         $script:RuleRows[0] | Add-Member -NotePropertyName Threshold -NotePropertyValue '{"Count":3,"Minutes":20}'
+        $script:RuleRows[0].Type = 'Audit.SharePoint'
         $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'
         $Prefilter.Thresholds | Should -HaveCount 1
         @($Prefilter.Thresholds[0].Operations | Sort-Object) | Should -Be @('FileDeletedSecondStageRecycleBin', 'FileRecycled')

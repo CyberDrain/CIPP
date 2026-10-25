@@ -8,6 +8,7 @@ BeforeAll {
     function Get-GraphToken { param($tenantid, $scope, $AsApp) if ($tenantid -eq 'tid-notoken') { throw 'AADSTS65001 consent missing' }; @{ Authorization = 'Bearer test' } }
     function Get-CippUserAgent { 'CIPP-Test' }
     function Get-CIPPAuditLogRuleSet { param($TenantFilter) $script:Rules }
+    $env:CIPPRootPath = $RepoRoot
     foreach ($Helper in 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Webhooks/Split-CIPPAuditLogConditions.ps1', 'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
@@ -79,7 +80,7 @@ AfterAll {
 Describe 'Get-CIPPAuditLogContent' {
     It 'counts a threshold rule''s operations per identity and 10-minute bucket, alongside the records other rules keep' {
         $script:Rules = @(
-            [pscustomobject]@{ Conditions = (ConvertTo-Json -Compress -Depth 5 -InputObject @(New-Condition 'Operation' 'in' @('FileRecycled', 'FileDeleted'))); Excluded = $null; Threshold = '{"Count":2,"Minutes":20}' }
+            [pscustomobject]@{ Conditions = (ConvertTo-Json -Compress -Depth 5 -InputObject @(New-Condition 'Operation' 'in' @('FileRecycled', 'FileDeleted'))); Excluded = $null; Threshold = '{"Count":2,"Minutes":20}'; LogType = 'Audit.SharePoint' }
             [pscustomobject]@{ Conditions = (ConvertTo-Json -Compress -Depth 5 -InputObject @(New-Condition 'Operation' 'eq' 'New-InboxRule')); Excluded = $null }
         )
         $Prefilter = Get-CIPPAuditLogPrefilter -TenantFilter 'contoso.com'

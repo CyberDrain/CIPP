@@ -107,7 +107,8 @@ const Page = () => {
       queryKey={`SavedLogs-${tenant}-${apiParams.RelativeTime ?? ""}-${apiParams.StartDate ?? ""}-${
         apiParams.EndDate ?? ""
       }`}
-      apiData={apiParams}
+      // Pages through ListAuditLogs via Metadata.nextLink, so a long All Tenants list loads as it arrives.
+      apiData={{ ...apiParams, manualPagination: true }}
       actions={savedLogsActions}
       offCanvas={offCanvas}
       filters={savedLogsFilters}

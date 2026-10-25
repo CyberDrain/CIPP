@@ -52,9 +52,14 @@ function Get-CIPPAuditLogPrefilter {
                 if ($null -eq $Anchor) { continue }
                 $Setting = try { [string]$Rule.Threshold | ConvertFrom-Json -ErrorAction Stop } catch { $null }
                 # Counting needs the exact operations, so a like anchor cannot be a threshold rule.
-                if ([int]$Setting.Count -gt 0 -and $Anchor.Patterns.Count -eq 0) {
-                    foreach ($Needle in $Anchor.Needles) { [void]$Needles.Add($Needle) }
-                    $Thresholds.Add([pscustomobject]@{ Rule = $Rule; Operations = [string[]]@($Anchor.Literals); Count = [int]$Setting.Count; Minutes = [Math]::Min(60, [Math]::Max(10, [int]($Setting.Minutes ?? 20))) })
+                # Only the operations Config/AuditLogRepeatedActivityOperations.json lists for the rule's log are counted, as
+                # Invoke-AddAlert allows, so a rule saved before an operation was taken off the list stops counting it.
+                $script:AuditLogCountable ??= Get-Content -Raw -Path (Join-Path $env:CIPPRootPath 'Config/AuditLogRepeatedActivityOperations.json') | ConvertFrom-Json
+                $Countable = @($script:AuditLogCountable.([string]$Rule.LogType))
+                $Operations = [string[]]@(foreach ($Literal in $Anchor.Literals) { if ($Countable -contains $Literal) { $Literal } })
+                if ([int]$Setting.Count -gt 0 -and $Anchor.Patterns.Count -eq 0 -and $Operations.Count -gt 0) {
+                    foreach ($Literal in $Operations) { [void]$Needles.Add('"Operation":"' + $Literal) }
+                    $Thresholds.Add([pscustomobject]@{ Rule = $Rule; Operations = $Operations; Count = [int]$Setting.Count; Minutes = [Math]::Min(60, [Math]::Max(10, [int]($Setting.Minutes ?? 20))) })
                 }
                 continue
             }

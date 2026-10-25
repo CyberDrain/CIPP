@@ -110,6 +110,25 @@ Describe 'Push-AuditLogFeedBlobsV3 threshold rules' {
         }
     }
 
+    It 'counts a record toward a repeated activity alert and checks it against the single-record alerts too' {
+        # The blob's records also reach the engine, as candidates of single-record alerts.
+        Mock Get-CIPPAuditLogContent {
+            foreach ($Blob in $Blobs) {
+                $Index = [CIPP.CippJson]::IndexRecords($script:BlobJson[$Blob.RowKey], $script:Fields)
+                $Counts = $Index.CountWhere(0, $script:Ops, [int[]]@(2, 3), [int[]]@(-1, 15))
+                [pscustomobject]@{ Kind = 'Blob'; TenantId = $Blob.TenantId; Blob = $Blob; RecordCount = $Index.Count; Records = @([CIPP.CippJson]::ConvertFromJson($script:BlobJson[$Blob.RowKey])); ParseMs = 0; Error = $null; TenantDone = $false; Skipped = $false
+                    Counts = @(if ($Counts.Count) { [pscustomobject]@{ Threshold = 0; Counts = $Counts; Index = $Index } })
+                }
+            }
+        }
+        $script:Engine = [System.Collections.Generic.List[object]]::new()
+        Mock Test-CIPPAuditLogRules { foreach ($Row in $Rows) { $script:Engine.Add($Row) }; [pscustomobject]@{ MatchedLogs = 1 } }
+        Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1', 'r2')
+        @($script:Engine.Operation) | Should -Contain 'FileRecycled'
+        $script:Sent | Should -HaveCount 1
+        $script:Sent[0].Id | Should -BeLike 'threshold-*'
+    }
+
     It 'counts only the blobs of the log the rule reads' {
         $script:Rule | Add-Member -NotePropertyName LogType -NotePropertyValue 'Audit.Exchange' -Force
         Push-AuditLogFeedBlobsV3 -Item (New-Task 'r1', 'r2')

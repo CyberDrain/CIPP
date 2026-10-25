@@ -25,6 +25,7 @@ BeforeDiscovery {
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     Add-Type -Path (Join-Path $RepoRoot 'Shared/CIPPSharp/bin/CIPPSharp.dll')
+    $env:CIPPRootPath = $RepoRoot
     $script:Templates = Get-Content (Join-Path (Split-Path -Parent $RepoRoot) 'frontend/src/data/AuditLogTemplates.json') -Raw | ConvertFrom-Json
     $script:Fixture = Get-Content (Join-Path $PSScriptRoot 'Fixtures/AuditLogPresetSamples.json') -Raw | ConvertFrom-Json
     $script:Tenant = 'contoso.onmicrosoft.com'

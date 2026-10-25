@@ -12,7 +12,7 @@ BeforeAll {
     function Get-CIPPAuditLogContent { param($Queries, $Blobs, [switch]$ListOnly, $Prefilters, $MaxConcurrency) }
     function Get-CIPPAuditLogPrefilter { param($TenantFilter) }
     function Get-CIPPAuditLogRuleSet { param($TenantFilter) }
-    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$CallerSweepsCachePartition, $AlertCounts) }
+    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$CallerSweepsCachePartition) }
     function Invoke-CippWebhookProcessing { param($TenantFilter, $Data, $CIPPURL, $AlertComment, $PendingAuditLogWrites) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Push-AuditLogFeedBlobsV3.ps1')

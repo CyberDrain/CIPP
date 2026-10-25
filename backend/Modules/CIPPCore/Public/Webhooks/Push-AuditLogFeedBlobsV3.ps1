@@ -48,7 +48,6 @@ function Push-AuditLogFeedBlobsV3 {
     $CountRows = @{}
     $Touched = @{}
     $SampleIndex = @{}
-    $AlertCounts = @{}
 
     try {
         $WaitSw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -117,7 +116,7 @@ function Push-AuditLogFeedBlobsV3 {
                 $Memo ??= [pscustomobject]@{ Tenant = $Blob.TenantFilter; UserLookup = $null; GroupLookup = $null; DeviceLookup = $null; ServicePrincipalLookup = $null }
                 if (-not $_.TenantDone) { $Memos[$TenantId] = $Memo }
                 $script:AuditRuleSearchLookups = $Memo
-                $Result = Test-CIPPAuditLogRules -TenantFilter $Blob.TenantFilter -Rows $Records -CallerSweepsCachePartition -AlertCounts $AlertCounts
+                $Result = Test-CIPPAuditLogRules -TenantFilter $Blob.TenantFilter -Rows $Records -CallerSweepsCachePartition
                 $script:AuditRuleSearchLookups = $null
                 if ($Result.Error) {
                     $Failed.Add(@{ PartitionKey = $Blob.TenantFilter; RowKey = $Blob.RowKey; LastError = [string]$Result.Error })

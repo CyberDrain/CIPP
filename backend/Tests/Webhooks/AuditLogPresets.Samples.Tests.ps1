@@ -244,16 +244,6 @@ Describe 'Audit log presets on real audit records' {
         $Sw.Elapsed.TotalSeconds | Should -BeLessThan 2
     }
 
-    It 'sends at most 50 alerts per rule in one collection run, and says so once' {
-        $Rows = @(foreach ($n in 1..60) { [CIPP.CippJson]::ConvertFromJson(($script:Fixture.samples.'exo-new-inboxrule-forward'.auditData | ConvertTo-Json -Depth 20 -Compress)) | ForEach-Object { $_.Id = "flood-$n"; $_ } })
-        $null = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample 'exo-new-inboxrule-forward' -Report
-        $Counts = @{}
-        $First = Test-CIPPAuditLogRules -TenantFilter $script:Tenant -Rows $Rows[0..39] -EvaluateOnly -AlertCounts $Counts 3>$null 6>$null
-        $Second = Test-CIPPAuditLogRules -TenantFilter $script:Tenant -Rows $Rows[40..59] -EvaluateOnly -AlertCounts $Counts 3>$null 6>$null
-        @($First.DataToProcess).Count + @($Second.DataToProcess).Count | Should -Be 50
-        Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $message -like '*matched more than 50 records*' }
-    }
-
     It 'alerts only on records inside a UTC time window, day or date (<Sample>)' -ForEach @(@{ Sample = 'exo-new-inboxrule-forward' }) {
         $When = $script:Fixture.samples.$Sample.auditData.CreationTime
         $When = if ($When -is [datetime]) { if ($When.Kind -eq 'Local') { $When.ToUniversalTime() } else { $When } } else { [datetime]::Parse([string]$When, [cultureinfo]::InvariantCulture, 'AssumeUniversal,AdjustToUniversal') }

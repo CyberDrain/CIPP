@@ -14,7 +14,7 @@ BeforeAll {
     function Start-CIPPOrchestrator { param($InputObject) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     function Get-CippException { param($Exception) }
-    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$CallerSweepsCachePartition, $AlertCounts) }
+    function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$CallerSweepsCachePartition) }
     foreach ($Name in 'Get-CIPPAuditLogFeedWindow', 'Push-AuditLogFeedListV3', 'Push-AuditLogFeedFanOutV3', 'Push-AuditLogFeedBlobsV3', 'Push-AuditLogFeedCursorV3') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/Webhooks/$Name.ps1")
     }

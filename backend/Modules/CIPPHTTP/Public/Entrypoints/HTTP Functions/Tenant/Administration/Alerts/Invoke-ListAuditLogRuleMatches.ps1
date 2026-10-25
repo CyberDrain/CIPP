@@ -10,8 +10,10 @@ function Invoke-ListAuditLogRuleMatches {
         Takes the audit record a saved alert (Saved Logs) was sent for, runs it through the alert engine as it is now
         without sending anything, and returns one row per audit log alert that applies to the tenant: WouldAlert (Sent,
         Matches but another alert is sent first, Counts toward it for a repeated activity alert, or No), Reason in plain
-        language, and Conditions, each condition with whether the record meets it. A repeated activity alert is shown
-        as counting the record when the record's operation is one it counts. Metadata names the record's operation, user
+        language, Outcome (Fires, AlsoMatches, CountsToward, Close, OtherActivity, Excluded or NotChecked) and Groups: each
+        OR group of the alert, whether it looks at this record's operation and matches, and each condition's property,
+        operator, expected value, the record's actual value and whether it is met. A repeated activity alert is shown as
+        counting the record when the record's operation is one it counts. Metadata names the record's operation, user
         and time.
     #>
     [CmdletBinding()]
@@ -51,6 +53,12 @@ function Invoke-ListAuditLogRuleMatches {
         # Per rule, its clauses (one per OR group) on every record; and the rule each record would actually alert on.
         $ByRule = @{}
         $SentBy = [System.Collections.Generic.HashSet[string]]::new()
+        # The groups shown for a rule are its clauses on the first record.
+        $Shown = @{}
+        foreach ($Clause in @(@($Evaluation.RuleReports)[0].Clauses)) {
+            if (-not $Shown.ContainsKey([string]$Clause.RuleKey)) { $Shown[[string]$Clause.RuleKey] = [System.Collections.Generic.List[object]]::new() }
+            $Shown[[string]$Clause.RuleKey].Add($Clause)
+        }
         foreach ($Report in @($Evaluation.RuleReports)) {
             $First = $Report.Clauses.Where({ $_.Anchored -and $_.Matched }, 'First')
             if ($First.Count -gt 0) { [void]$SentBy.Add([string]$First[0].RuleKey) }
@@ -68,25 +76,24 @@ function Invoke-ListAuditLogRuleMatches {
             }
             $Clauses = if ($ByRule.ContainsKey([string]$Rule.RowKey)) { @($ByRule[[string]$Rule.RowKey]) } else { @() }
             $Outcome = if ($TenantFilter -in $Rule.Excluded.value) {
-                @{ WouldAlert = 'No'; Reason = 'This tenant is excluded from the alert.' }
+                @{ Code = 'Excluded'; WouldAlert = 'No'; Reason = 'This tenant is excluded from the alert.' }
             } elseif ($Rule.Threshold) {
                 $Setting = try { [string]$Rule.Threshold | ConvertFrom-Json -ErrorAction Stop } catch { $null }
                 $Group = @(Split-CIPPAuditLogConditions -Conditions ($Rule.Conditions | ConvertFrom-Json -ErrorAction SilentlyContinue))
                 $Anchor = if ($Group.Count -eq 1) { Get-CIPPAuditLogRuleAnchor -Conditions $Group[0].Conditions }
                 $Counted = $Anchor -and @($Operations).Where({ $Anchor.Literals.Contains($_) }, 'First').Count -gt 0
                 if ($Counted) {
-                    @{ WouldAlert = 'Counts toward it'; Reason = "A repeated activity alert: this record counts toward it, and it alerts when one user or app does this $($Setting.Count) times within $($Setting.Minutes) minutes." }
+                    @{ Code = 'CountsToward'; WouldAlert = 'Counts toward it'; Reason = "A repeated activity alert: this record counts toward it, and it alerts when one user or app does this $($Setting.Count) times within $($Setting.Minutes) minutes." }
                 } else {
-                    @{ WouldAlert = 'No'; Reason = "A repeated activity alert that counts other operations, not '$(@($Operations) -join "', '")'." }
+                    @{ Code = 'OtherActivity'; WouldAlert = 'No'; Reason = "A repeated activity alert that counts other operations, not '$(@($Operations) -join "', '")'." }
                 }
             } elseif ($Clauses.Count -eq 0) {
-                @{ WouldAlert = 'No'; Reason = 'The alert is not checked: each group of its conditions needs an Operation condition using Equals, In or Like.' }
+                @{ Code = 'NotChecked'; WouldAlert = 'No'; Reason = 'The alert is not checked: each group of its conditions needs an Operation condition using Equals, In or Like.' }
             } elseif ($Clauses.Where({ $_.Anchored -and $_.Matched }, 'First').Count -gt 0) {
-                $Matched = $Clauses.Where({ $_.Anchored -and $_.Matched }, 'First')[0]
                 if ($SentBy.Contains([string]$Rule.RowKey)) {
-                    @{ WouldAlert = 'Sent'; Reason = 'Every condition matches, so this alert is sent.'; Conditions = $Matched.Conditions }
+                    @{ Code = 'Fires'; WouldAlert = 'Sent'; Reason = 'Every condition matches, so this alert is sent.' }
                 } else {
-                    @{ WouldAlert = 'Matches, another alert is sent first'; Reason = 'Every condition matches, but an earlier alert also matches this record and only one alert is sent per record.'; Conditions = $Matched.Conditions }
+                    @{ Code = 'AlsoMatches'; WouldAlert = 'Matches, another alert is sent first'; Reason = 'Every condition matches, but an earlier alert also matches this record and only one alert is sent per record.' }
                 }
             } else {
                 # The group that came closest: the one that looks at this operation, then the most conditions met.
@@ -97,14 +104,22 @@ function Invoke-ListAuditLogRuleMatches {
                 } else {
                     "Not every condition matches. Not met: $($Failed -join '; ')."
                 }
-                @{ WouldAlert = 'No'; Reason = $Reason; Conditions = $Closest.Conditions }
+                @{ Code = $(if ($Closest.Anchored) { 'Close' } else { 'OtherActivity' }); WouldAlert = 'No'; Reason = $Reason }
             }
             [pscustomobject]@{
                 Alert      = $Name
                 Log        = $LogNames[[string]$Rule.LogType] ?? $Rule.LogType
                 WouldAlert = $Outcome.WouldAlert
                 Reason     = $Outcome.Reason
-                Conditions = @($Outcome.Conditions | Where-Object { $_ })
+                Outcome    = $Outcome.Code
+                Groups     = @(foreach ($Clause in @($Shown[[string]$Rule.RowKey] | Where-Object { $_ })) {
+                        [pscustomobject]@{
+                            Group               = $Clause.Group
+                            LooksAtThisActivity = $Clause.Anchored
+                            Matched             = $Clause.Anchored -and $Clause.Matched
+                            Conditions          = @($Clause.Conditions)
+                        }
+                    })
                 RuleKey    = $Rule.RowKey
             }
         }

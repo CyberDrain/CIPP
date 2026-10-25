@@ -219,6 +219,11 @@ Describe 'Audit log presets on real audit records' {
         $Clauses.Matched | Should -Be @($false, $false, $false)
         $Clauses.Anchored | Should -Be @($true, $true, $false)
         @($Clauses[0].Conditions).Where({ -not $_.Passed }).Condition | Should -Be @('ForwardTo is Like *@*')
+        # Each condition carries what it expects and what the record holds, as the engine sees it.
+        $Operation = @($Clauses[0].Conditions).Where({ $_.Property -eq 'Operation' })[0]
+        $Operation.Actual | Should -Be 'Set-InboxRule'
+        $Operation.Expected | Should -Be 'New-InboxRule, Set-InboxRule'
+        $Operation.Operator | Should -Be 'In'
         $Matched = Invoke-PresetSample -Preset 'MailForwardedOut' -Sample 'exo-set-inboxrule-redirect' -Report
         @($Matched[0].Clauses).Where({ $_.Matched }).Group | Should -Be @(1)
     }

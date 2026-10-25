@@ -75,7 +75,18 @@ Describe 'Invoke-ListAuditLogRuleMatches' {
         $Rows['Redirects only'].WouldAlert | Should -Be 'No'
         $Rows['Redirects only'].Reason | Should -BeLike '*Not met: RedirectTo is Like `*@`*.'
         $Rows['Other operations'].Reason | Should -Be "The alert looks for other operations, not 'New-InboxRule'."
-        $Rows['Mass inbox rules'].Conditions | Should -HaveCount 0
+        $Rows['Mass inbox rules'].Groups | Should -HaveCount 0
+        $Rows['First match'].Outcome | Should -Be 'Fires'
+        $Rows['Also matches'].Outcome | Should -Be 'AlsoMatches'
+        $Rows['Redirects only'].Outcome | Should -Be 'Close'
+        $Rows['Other operations'].Outcome | Should -Be 'OtherActivity'
+        $Rows['Mass inbox rules'].Outcome | Should -Be 'CountsToward'
+        $Rows['Excluded here'].Outcome | Should -Be 'Excluded'
+        $Rows['No anchor'].Outcome | Should -Be 'NotChecked'
+        $Group = @($Rows['Redirects only'].Groups)[0]
+        $Group.LooksAtThisActivity | Should -BeTrue
+        $Group.Matched | Should -BeFalse
+        @($Group.Conditions).Where({ -not $_.Passed }).Condition | Should -Be 'RedirectTo is Like *@*'
         $Rows['Mass inbox rules'].WouldAlert | Should -Be 'Counts toward it'
         $Rows['Mass inbox rules'].Reason | Should -BeLike '*10 times within 20 minutes*'
         $Rows['Excluded here'].Reason | Should -Be 'This tenant is excluded from the alert.'

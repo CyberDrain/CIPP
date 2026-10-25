@@ -752,7 +752,13 @@ function Test-CIPPAuditLogRules {
                                     break
                                 }
                                 $conditionStrings.Add($sanitized)
-                                $ConditionChecks.Add([pscustomobject]@{ Condition = $ConditionText; Test = $conditionStrings.GetRange($Before, $conditionStrings.Count - $Before) -join ' -and ' })
+                                $ConditionChecks.Add([pscustomobject]@{
+                                        Condition = $ConditionText
+                                        Property  = [string]$condition.Property.label
+                                        Operator  = [string]$condition.Operator.label
+                                        Expected  = @($condition.Input.value) -join ', '
+                                        Test      = $conditionStrings.GetRange($Before, $conditionStrings.Count - $Before) -join ' -and '
+                                    })
                             }
                             if (-not $validClause -or $conditionStrings.Count -eq 0) {
                                 continue
@@ -801,7 +807,12 @@ function Test-CIPPAuditLogRules {
                             Clauses = @(foreach ($clause in $Compiled.Clauses) {
                                     $Checks = @(foreach ($Check in $clause.ConditionChecks) {
                                             $Passed = try { @($item).Where([ScriptBlock]::Create($Check.Test), 'First').Count -gt 0 } catch { $false }
-                                            [pscustomobject]@{ Condition = $Check.Condition; Passed = $Passed }
+                                            # What the record holds for the condition's property, as the engine sees it.
+                                            $Actual = $item
+                                            foreach ($Part in ($Check.Property -split '\.')) { $Actual = if ($null -ne $Actual) { $Actual.$Part } }
+                                            $Actual = @($Actual) -join ', '
+                                            if ($Actual.Length -gt 300) { $Actual = $Actual.Substring(0, 297) + '...' }
+                                            [pscustomobject]@{ Condition = $Check.Condition; Property = $Check.Property; Operator = $Check.Operator; Expected = $Check.Expected; Actual = $Actual; Passed = $Passed }
                                         })
                                     [pscustomobject]@{
                                         RuleKey    = $clause.RuleKey

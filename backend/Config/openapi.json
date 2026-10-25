@@ -44876,6 +44876,89 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/ListAuditLogRuleMatches": {
+      "get": {
+        "summary": "Checks a saved audit log alert against the audit log alerts set up now, and says which of them would fire.",
+        "operationId": "ListAuditLogRuleMatches",
+        "tags": [
+          "Tenant > Administration > Alerts"
+        ],
+        "description": "Takes the audit record a saved alert (Saved Logs) was sent for, runs it through the alert engine as it is now\nwithout sending anything, and returns one row per audit log alert that applies to the tenant: WouldAlert (Sent,\nMatches but another alert is sent first, Counts toward it for a repeated activity alert, or No), Reason in plain\nlanguage, and Conditions, each condition with whether the record meets it. A repeated activity alert is shown\nas counting the record when the record's operation is one it counts. Metadata names the record's operation, user\nand time.",
+        "parameters": [
+          {
+            "name": "LogId",
+            "in": "query",
+            "description": "The LogId of the saved alert to check, as Saved Logs lists it.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                    "properties": {
+                      "Alert": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "Conditions": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "ETag": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Log": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "Reason": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "RuleKey": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "Timestamp": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "WouldAlert": {
+                        "x-cipp-field-source": "backend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.Alert.Read"
+      }
+    },
     "/api/ListAuditLogs": {
       "get": {
         "summary": "ListAuditLogs",

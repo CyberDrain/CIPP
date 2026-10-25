@@ -27,8 +27,8 @@ Each 15-minute cycle runs these steps for every tenant that has audit log alerts
 2. **Download.** Batches are downloaded 16 at a time, in tasks of up to 64 batches, with at most 80 tasks per run. A batch that fails to download is retried on later cycles. A batch is queued at most 5 times; after that it is dropped and an error is written to the CIPP logbook. **Diagnostics** shows how many batches failed in each cycle.
 3. **Skip what no alert can match.** Before reading a batch, CIPP checks its text for the operation names your alerts use. A batch that contains none of them is skipped unread. Within a batch that is read, only records whose operation (and other plain-text values) some alert could match are fully built. Most records never get past this step, which is why the rules on the Operation condition below matter.
 4. **Enrich.** Each remaining record gets the fields CIPP adds (see [Fields CIPP adds](#fields-cipp-adds)): names for the IDs it contains, the location of its IP address, the time of day, and so on.
-5. **Match.** The record is checked against each alert that reads its log, in turn. The first alert it matches is the one that fires. Other alerts that would also have matched do not fire for the same record; the alert check on the saved log shows them as **Also matches**. Alerts are checked in the order CIPP stores them, by an internal ID, not by name or creation date, so you cannot choose which of two overlapping alerts fires. Keep alerts that should both fire from overlapping, or combine them with OR groups.
-6. **Act and save.** The alert's actions run (email, webhook, PSA ticket, disabling the user or BEC remediation), and the record is saved as a log you can open later.
+5. **Match.** The record is checked against each alert that reads its log, in turn. The first alert it matches is the one that fires. Other alerts that would also have matched do not fire for the same record; the alert check on the saved log shows them as **Also matches**. Alerts with a [priority](#priority) are checked first, lowest number first. The rest follow in the order CIPP stores them, by an internal ID, not by name or creation date. Give overlapping alerts a priority to choose which one fires.
+6. **Act and save.** The alert's actions run (email, webhook, PSA ticket, disabling the user or BEC remediation), and the record is saved as a log you can open later. Emails and PSA tickets link to the saved log and to the settings of the alert that fired; a webhook carries the same links as `SavedLogUrl` and `AlertConfigurationUrl`.
 
 Repeated activity alerts take a different path after step 3: CIPP counts each user's records of the alert's operations without building them, and fires once a count reaches the threshold. See [Repeated activity alerts](#repeated-activity-alerts).
 
@@ -138,6 +138,10 @@ Example: alert whenever a break glass account signs in.
 | `Operation` | Equals to | `UserLoggedIn` |
 | `UserId` | In | `%breakglass%` |
 
+### Priority
+
+**Priority (optional)** is a whole number from 1 to 1000. A record raises only the first alert it matches, so when alerts overlap, priority decides which one that is: alerts with a priority are checked first, lowest number first, and alerts with the same priority keep their stored order. Alerts without a priority are checked after every alert that has one. Leave it empty unless alerts overlap.
+
 ## Rules every alert must follow
 
 CIPP checks these when you save an alert. Each one exists because breaking it would make the alert check far more records than it needs to, or never work at all.
@@ -198,7 +202,7 @@ Open any saved log to see **Would your alerts fire on this log?** It runs the lo
 | Not checked | Alerts that cannot run for this tenant: none of their groups has a valid Operation condition, or the alert uses a variable the tenant has no usable value for. |
 | Other activity / other logs | Alerts on other operations of this log, and alerts on other logs, which cannot fire on this record. |
 
-Each alert has an **Edit alert** link, so you can adjust it and check again.
+Each alert has an **Edit alert** link, so you can adjust it and check again. A saved log also has an **Alert settings** button that opens the alert that raised it.
 
 ## Saved logs and retention
 

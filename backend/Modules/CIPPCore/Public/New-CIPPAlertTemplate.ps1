@@ -10,6 +10,8 @@ function New-CIPPAlertTemplate {
         $CIPPURL,
         $Tenant,
         $AuditLogLink,
+        # The settings page of the audit log alert that matched, when there is one.
+        $AlertConfigLink,
         $AlertComment,
         $CustomSubject
     )
@@ -411,6 +413,9 @@ function New-CIPPAlertTemplate {
         if (![string]::IsNullOrWhiteSpace($AuditLogLink)) {
             $AfterButtonText = "$AfterButtonText<p>For forensics, <a href=`"$AuditLogLink`">view the source audit event in CIPP</a>.</p>"
         }
+        if (![string]::IsNullOrWhiteSpace($AlertConfigLink)) {
+            $AfterButtonText = "$AfterButtonText<p>To change what this alert matches or does, <a href=`"$AlertConfigLink`">open the alert's settings in CIPP</a>.</p>"
+        }
     }
 
     if (![string]::IsNullOrWhiteSpace($CustomSubject)) {
@@ -457,9 +462,6 @@ function New-CIPPAlertTemplate {
         }
         if ($AfterButtonText) {
             $PsaContent = "$PsaContent$AfterButtonText"
-        }
-        if ($AuditLogLink) {
-            $PsaContent = "$PsaContent<p><a href=`"$AuditLogLink`">View the audit log entry in CIPP</a></p>"
         }
         return [pscustomobject]@{
             title       = $Title

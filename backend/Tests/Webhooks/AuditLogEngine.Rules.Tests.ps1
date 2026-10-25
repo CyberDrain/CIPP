@@ -200,7 +200,11 @@ BeforeAll {
         }
         $Result = Test-CIPPAuditLogRules -TenantFilter $script:Tenant -Rows $Rows -EvaluateOnly -LogType $Log 3>$null 6>$null
         if ($Result.Error) { throw $Result.Error }
-        if ($Result.MatchedLogs -gt 0) { [string]@($Result.DataToProcess)[0].CIPPAlertComment }
+        if ($Result.MatchedLogs -gt 0) {
+            # The matched record names its rule, which the alert links to.
+            @($Result.DataToProcess)[0].CIPPRuleKey | Should -Be @($Result.DataToProcess)[0].CIPPAlertComment
+            [string]@($Result.DataToProcess)[0].CIPPAlertComment
+        }
     }
 }
 

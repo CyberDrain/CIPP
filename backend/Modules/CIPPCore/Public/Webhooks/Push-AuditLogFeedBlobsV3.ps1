@@ -232,6 +232,7 @@ function Push-AuditLogFeedBlobsV3 {
                 CIPPBecActions        = $Rule.BecActions
                 CIPPClause            = '{0} of {1} by {2} within {3} minutes (threshold {4})' -f $Alert.Count, ($Threshold.Operations -join ', '), $Who, $Threshold.Minutes, $Threshold.Count
                 CIPPAlertComment      = $Rule.AlertComment
+                CIPPRuleKey           = $Rule.RowKey
                 CIPPCustomSubject     = $Rule.CustomSubject
                 CIPPPsaTicketPriority = $Rule.PsaTicketPriority
                 CIPPThresholdCount    = $Alert.Count

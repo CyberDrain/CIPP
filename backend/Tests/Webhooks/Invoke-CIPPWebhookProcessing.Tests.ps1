@@ -16,7 +16,7 @@ BeforeAll {
     function Get-CIPPAzDataTableEntity { param($TableName, $Context, $Filter, $Property, $First) }
     function Add-CIPPAzDataTableEntity { param($TableName, $Context, $Entity, [switch]$Force, $OperationType) }
     function Get-Tenants { param([switch]$IncludeErrors, [switch]$IncludeAll) }
-    function New-CIPPAlertTemplate { param($format, $data, $ActionResults, $CIPPURL, $AlertComment, $CustomSubject, $Tenant, $AuditLogLink) }
+    function New-CIPPAlertTemplate { param($format, $data, $ActionResults, $CIPPURL, $AlertComment, $CustomSubject, $Tenant, $AuditLogLink, $AlertConfigLink) }
     function Send-CIPPAlert { param($Type, $Title, $HTMLContent, $JSONContent, $TenantFilter, $APIName, $SchemaSource, $InvokingCommand, $AffectedUser) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     function ConvertTo-CIPPODataFilterValue { param([string]$Value, $Type) $Value -replace "'", "''" }
@@ -295,6 +295,32 @@ Describe 'Invoke-CippWebhookProcessing' {
             Invoke-CippWebhookProcessing -TenantFilter 'contoso.com' -Data $Data -CIPPURL 'https://cipp.invalid'
             Should -Invoke New-CIPPAlertTemplate -Times 1 -Exactly -ParameterFilter { $format -eq 'json' }
             Should -Invoke New-CIPPAlertTemplate -Times 0 -Exactly -ParameterFilter { $format -eq 'html' }
+        }
+
+        It 'links every alert, and the saved log, to the saved log and the matching alert''s settings' {
+            $script:Webhook = $null
+            Mock -CommandName Send-CIPPAlert -MockWith { if ($Type -eq 'webhook') { $script:Webhook = $JSONContent } }
+            $Data = New-WebhookData -Id 'threshold-rule 1-a@contoso.com-202610251200'
+            $Data | Add-Member -NotePropertyName CIPPRuleKey -NotePropertyValue 'rule 1'
+            $Data.CIPPAction = (ConvertTo-Json -Compress -InputObject @(@{ value = 'generateWebhook' }, @{ value = 'generatemail' }, @{ value = 'generatePSA' }))
+            Invoke-CippWebhookProcessing -TenantFilter 'contoso.com' -Data $Data -CIPPURL 'https://cipp.invalid'
+            $LogLink = 'https://cipp.invalid/tenant/administration/audit-logs/log?id=threshold-rule%201-a%40contoso.com-202610251200&tenantFilter=contoso.com'
+            $RuleLink = 'https://cipp.invalid/tenant/administration/alert-configuration/alert?id=rule%201'
+            $Sent = [CIPP.CippJson]::ConvertFromJson([string]$script:Webhook)
+            $Sent.SavedLogUrl | Should -Be $LogLink
+            $Sent.AlertConfigurationUrl | Should -Be $RuleLink
+            foreach ($Kind in 'html', 'psa') {
+                Should -Invoke New-CIPPAlertTemplate -Times 1 -Exactly -ParameterFilter { $format -eq $Kind -and $AuditLogLink -eq $LogLink -and $AlertConfigLink -eq $RuleLink }
+            }
+        }
+
+        It 'has no settings link for a record no alert rule matched' {
+            $script:Webhook = $null
+            Mock -CommandName Send-CIPPAlert -MockWith { if ($Type -eq 'webhook') { $script:Webhook = $JSONContent } }
+            $Data = New-WebhookData -Id 'rec-1'
+            $Data.CIPPAction = (ConvertTo-Json -Compress -InputObject @(@{ value = 'generateWebhook' }))
+            Invoke-CippWebhookProcessing -TenantFilter 'contoso.com' -Data $Data -CIPPURL 'https://cipp.invalid'
+            ([CIPP.CippJson]::ConvertFromJson([string]$script:Webhook)).AlertConfigurationUrl | Should -BeNullOrEmpty
         }
 
         It 'still renders the email body when generatemail is requested' {

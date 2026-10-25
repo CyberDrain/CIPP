@@ -144,6 +144,10 @@ function Invoke-CippWebhookProcessing {
     # Save audit log entry to table
     $LocationInfo = try { [CIPP.CippJson]::ConvertFromJson([string]$Data.CIPPLocationInfo) } catch { $null }
     $AuditRecord = try { [CIPP.CippJson]::ConvertFromJson([string]$Data.AuditRecord) } catch { $null }
+    # Links to the saved log and, for a rule's alert, the alert's settings, in every alert and in the saved log itself.
+    $LogId = $Data.Id
+    $AuditLogLink = '{0}/tenant/administration/audit-logs/log?id={1}&tenantFilter={2}' -f $CIPPURL, [uri]::EscapeDataString([string]$LogId), $Tenant.defaultDomainName
+    $AlertConfigLink = if ($Data.CIPPRuleKey) { '{0}/tenant/administration/alert-configuration/alert?id={1}' -f $CIPPURL, [uri]::EscapeDataString([string]$Data.CIPPRuleKey) }
     $GenerateJSON = New-CIPPAlertTemplate -format 'json' -data $Data -ActionResults $ActionResults -CIPPURL $CIPPURL -AlertComment $AlertComment -CustomSubject $Data.CIPPCustomSubject -Tenant $Tenant.defaultDomainName
     $JsonContent = @{
         Title                 = $GenerateJSON.Title
@@ -155,6 +159,8 @@ function Invoke-CippWebhookProcessing {
         ActionsTaken          = $ActionResults
         AuditRecord           = $AuditRecord
         AlertComment          = $AlertComment
+        SavedLogUrl           = $AuditLogLink
+        AlertConfigurationUrl = $AlertConfigLink
     }
     $JsonContent = [CIPP.CippJson]::ToJson($JsonContent, 15) ?? (ConvertTo-Json -InputObject $JsonContent -Depth 15 -Compress)
 
@@ -169,9 +175,6 @@ function Invoke-CippWebhookProcessing {
         Tenant            = $TenantFilter
         EventCreationTime = $EventStamp
     }
-    $LogId = $Data.Id
-
-    $AuditLogLink = '{0}/tenant/administration/audit-logs/log?logId={1}&tenantFilter={2}' -f $CIPPURL, $LogId, $Tenant.defaultDomainName
     # The html render is deferred to the generatemail branch below, which is its only consumer.
     # Rendering it here meant every matched record paid for an email body whether or not any rule
     # asked for one - two template renders per alert where one was needed, ~15% of the processing
@@ -212,7 +215,7 @@ function Invoke-CippWebhookProcessing {
     foreach ($action in $ActionList ) {
         switch ($action) {
             'generatemail' {
-                $GenerateEmail = New-CIPPAlertTemplate -format 'html' -data $Data -ActionResults $ActionResults -CIPPURL $CIPPURL -Tenant $Tenant.defaultDomainName -AuditLogLink $AuditLogLink -AlertComment $AlertComment -CustomSubject $Data.CIPPCustomSubject
+                $GenerateEmail = New-CIPPAlertTemplate -format 'html' -data $Data -ActionResults $ActionResults -CIPPURL $CIPPURL -Tenant $Tenant.defaultDomainName -AuditLogLink $AuditLogLink -AlertConfigLink $AlertConfigLink -AlertComment $AlertComment -CustomSubject $Data.CIPPCustomSubject
                 $CIPPAlert = @{
                     Type         = 'email'
                     Title        = $GenerateEmail.title
@@ -224,7 +227,7 @@ function Invoke-CippWebhookProcessing {
                 Write-Host 'email should be sent'
             }
             'generatePSA' {
-                $GeneratePSA = New-CIPPAlertTemplate -format 'psa' -data $Data -ActionResults $ActionResults -CIPPURL $CIPPURL -Tenant $Tenant.defaultDomainName -AuditLogLink $AuditLogLink -AlertComment $AlertComment -CustomSubject $Data.CIPPCustomSubject
+                $GeneratePSA = New-CIPPAlertTemplate -format 'psa' -data $Data -ActionResults $ActionResults -CIPPURL $CIPPURL -Tenant $Tenant.defaultDomainName -AuditLogLink $AuditLogLink -AlertConfigLink $AlertConfigLink -AlertComment $AlertComment -CustomSubject $Data.CIPPCustomSubject
                 $CIPPAlert = @{
                     Type         = 'psa'
                     Title        = $GeneratePSA.title

@@ -862,6 +862,7 @@ function Test-CIPPAuditLogRules {
                     $item.CIPPClause = $clause.CIPPClause
                     $item | Add-Member -NotePropertyMembers ([ordered]@{
                             CIPPAlertComment      = $clause.AlertComment
+                            CIPPRuleKey           = $clause.RuleKey
                             CIPPCustomSubject     = $clause.CustomSubject
                             CIPPPsaTicketPriority = $clause.PsaTicketPriority
                         }) -Force -ErrorAction SilentlyContinue

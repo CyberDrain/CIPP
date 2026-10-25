@@ -153,6 +153,21 @@ const Page = () => {
               >
                 Download
               </Button>
+              {logData?.Data?.RawData?.CIPPRuleKey && (
+                <Button
+                  variant="outlined"
+                  startIcon={<CippIcons.Settings />}
+                  onClick={() =>
+                    router.push(
+                      `/tenant/administration/alert-configuration/alert?id=${encodeURIComponent(
+                        logData.Data.RawData.CIPPRuleKey
+                      )}`
+                    )
+                  }
+                >
+                  Alert settings
+                </Button>
+              )}
               {logData?.Data?.ActionUrl && logData?.Data?.ActionText && (
                 <Button
                   variant="contained"

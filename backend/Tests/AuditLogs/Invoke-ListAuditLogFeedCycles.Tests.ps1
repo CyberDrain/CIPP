@@ -39,13 +39,13 @@ Describe 'Invoke-ListAuditLogFeedCycles' {
         $Body = @((Invoke-Cycles).Body)
         $Body.CycleId | Should -Be @('202610241215', '202610241200')
         $Cycle = $Body[1]
-        $Cycle.Tasks | Should -Be 2
-        $Cycle.Tenants | Should -Be 35
-        $Cycle.Records | Should -Be 1200
-        $Cycle.Evaluated | Should -Be 1050
-        $Cycle.Matched | Should -Be 8
-        $Cycle.Failed | Should -Be 1
-        $Cycle.Seconds | Should -Be 40
+        $Cycle.Workers | Should -Be 2
+        $Cycle.TenantsChecked | Should -Be 35
+        $Cycle.RecordsRead | Should -Be 1200
+        $Cycle.RecordsChecked | Should -Be 1050
+        $Cycle.AlertsSent | Should -Be 8
+        $Cycle.BatchesFailed | Should -Be 1
+        $Cycle.TookSeconds | Should -Be 40
     }
 
     It 'refuses a caller limited to some tenants' {

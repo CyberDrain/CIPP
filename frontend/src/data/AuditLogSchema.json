@@ -79,6 +79,60 @@
     "ErrorNumber": "List:AADSTSErrorNumber",
     "LogonError": "List:AADSTSLogonError"
   },
+  "Audit.SharePoint": {
+    "Site": "String",
+    "SiteUrl": "String",
+    "WebId": "String",
+    "ListId": "String",
+    "ListItemUniqueId": "String",
+    "ItemType": "String",
+    "EventSource": "String",
+    "SourceRelativeUrl": "String",
+    "SourceFileName": "String",
+    "SourceFileExtension": "String",
+    "DestinationRelativeUrl": "String",
+    "DestinationFileName": "String",
+    "DestinationFileExtension": "String",
+    "TargetUserOrGroupName": "String",
+    "TargetUserOrGroupType": "String",
+    "UserSharedWith": "String",
+    "SharingType": "String",
+    "SharingLinkScope": "String",
+    "EventData": "String",
+    "UserAgent": "String",
+    "Platform": "String",
+    "GeoLocation": "String",
+    "IsManagedDevice": "String",
+    "DeviceDisplayName": "String",
+    "ApplicationId": "String",
+    "ApplicationDisplayName": "String",
+    "SensitivityLabelId": "String"
+  },
+  "Audit.General": {
+    "TeamName": "String",
+    "TeamGuid": "String",
+    "ChannelName": "String",
+    "ChannelType": "String",
+    "CommunicationType": "String",
+    "AddOnName": "String",
+    "AddOnType": "String",
+    "Members": "String",
+    "FormName": "String",
+    "FormId": "String",
+    "AlertId": "String",
+    "AlertType": "String",
+    "Name": "String",
+    "Severity": "String",
+    "Category": "String",
+    "Source": "String",
+    "Status": "String",
+    "NetworkMessageId": "String",
+    "ReleaseTo": "String",
+    "RequestType": "String",
+    "SearchJobName": "String",
+    "AppName": "String",
+    "ApplicationId": "String"
+  },
   "List:Operation": [
     {
       "value": "UserLoggedIn",
@@ -343,6 +397,186 @@
     {
       "value": "Update StsRefreshTokenValidFrom Timestamp.",
       "label": "Update StsRefreshTokenValidFrom Timestamp."
+    },
+    {
+      "value": "FileDeleted",
+      "label": "deleted a file"
+    },
+    {
+      "value": "FileRecycled",
+      "label": "moved a file to the recycle bin"
+    },
+    {
+      "value": "FileDeletedFirstStageRecycleBin",
+      "label": "deleted a file from the recycle bin"
+    },
+    {
+      "value": "FileDeletedSecondStageRecycleBin",
+      "label": "deleted a file from the second-stage recycle bin"
+    },
+    {
+      "value": "FolderDeleted",
+      "label": "deleted a folder"
+    },
+    {
+      "value": "FolderRecycled",
+      "label": "moved a folder to the recycle bin"
+    },
+    {
+      "value": "FolderDeletedFirstStageRecycleBin",
+      "label": "deleted a folder from the recycle bin"
+    },
+    {
+      "value": "FolderDeletedSecondStageRecycleBin",
+      "label": "deleted a folder from the second-stage recycle bin"
+    },
+    {
+      "value": "FileDownloaded",
+      "label": "downloaded a file"
+    },
+    {
+      "value": "FileSyncDownloadedFull",
+      "label": "synced a full file to a computer"
+    },
+    {
+      "value": "FileMalwareDetected",
+      "label": "detected malware in a file"
+    },
+    {
+      "value": "AnonymousLinkCreated",
+      "label": "created an anyone link"
+    },
+    {
+      "value": "AnonymousLinkUsed",
+      "label": "used an anyone link"
+    },
+    {
+      "value": "CompanyLinkCreated",
+      "label": "created a people-in-your-organization link"
+    },
+    {
+      "value": "SecureLinkCreated",
+      "label": "created a specific-people link"
+    },
+    {
+      "value": "SharingInvitationCreated",
+      "label": "invited someone to share a file or site"
+    },
+    {
+      "value": "SharingSet",
+      "label": "shared a file, folder or site"
+    },
+    {
+      "value": "SharingInheritanceBroken",
+      "label": "broke sharing inheritance"
+    },
+    {
+      "value": "SiteCollectionAdminAdded",
+      "label": "added a site collection admin"
+    },
+    {
+      "value": "SiteCollectionAdminRemoved",
+      "label": "removed a site collection admin"
+    },
+    {
+      "value": "SharingPolicyChanged",
+      "label": "changed a sharing policy"
+    },
+    {
+      "value": "SiteDeleted",
+      "label": "deleted a site"
+    },
+    {
+      "value": "SitePermanentlyDeleted",
+      "label": "permanently deleted a site"
+    },
+    {
+      "value": "UnmanagedSyncClientBlocked",
+      "label": "blocked an unmanaged sync client"
+    },
+    {
+      "value": "TeamCreated",
+      "label": "created a team"
+    },
+    {
+      "value": "TeamDeleted",
+      "label": "deleted a team"
+    },
+    {
+      "value": "ChannelDeleted",
+      "label": "deleted a channel"
+    },
+    {
+      "value": "MemberAdded",
+      "label": "added a member to a team"
+    },
+    {
+      "value": "MemberRemoved",
+      "label": "removed a member from a team"
+    },
+    {
+      "value": "MemberRoleChanged",
+      "label": "changed a team member role"
+    },
+    {
+      "value": "TeamsTenantSettingChanged",
+      "label": "changed a Teams organization setting"
+    },
+    {
+      "value": "AppInstalled",
+      "label": "installed a Teams app"
+    },
+    {
+      "value": "BotAddedToTeam",
+      "label": "added a bot to a team"
+    },
+    {
+      "value": "ConnectorAdded",
+      "label": "added a Teams connector"
+    },
+    {
+      "value": "TeamsImpersonationDetected",
+      "label": "Teams detected an impersonation attempt"
+    },
+    {
+      "value": "MessagesExported",
+      "label": "exported Teams messages"
+    },
+    {
+      "value": "AllowAnonymousResponse",
+      "label": "allowed anonymous responses to a form"
+    },
+    {
+      "value": "UpdatePhishingStatus",
+      "label": "updated a form phishing status"
+    },
+    {
+      "value": "AlertTriggered",
+      "label": "a Defender alert was triggered"
+    },
+    {
+      "value": "QuarantineRelease",
+      "label": "released a message from quarantine"
+    },
+    {
+      "value": "QuarantineReleaseRequest",
+      "label": "requested release of a quarantined message"
+    },
+    {
+      "value": "RemoveRetentionCompliancePolicy",
+      "label": "removed a retention policy"
+    },
+    {
+      "value": "AuditSearchCreated",
+      "label": "created an audit log search"
+    },
+    {
+      "value": "AuditSearchExportResultsDownloaded",
+      "label": "downloaded audit log search results"
+    },
+    {
+      "value": "DataExport",
+      "label": "exported Viva Engage data"
     }
   ],
   "List:LogonType": [

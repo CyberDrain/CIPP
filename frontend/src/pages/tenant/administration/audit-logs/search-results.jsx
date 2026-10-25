@@ -44,7 +44,7 @@ const Page = () => {
   const pageTitle = searchName ? `${searchName}` : `Search Results - ${searchId}`;
 
   const handleBackClick = () => {
-    router.push("/tenant/administration/audit-logs/searches");
+    router.push("/tenant/administration/audit-logs/manual-searches");
   };
 
   // Process Logs API configuration

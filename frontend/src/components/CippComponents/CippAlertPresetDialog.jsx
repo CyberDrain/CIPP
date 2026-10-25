@@ -7,7 +7,8 @@ import alertActions from '../../data/alertActions.json'
 const logbookLabels = {
   'Audit.AzureActiveDirectory': 'Azure AD',
   'Audit.Exchange': 'Exchange',
-  'Audit.SharePoint': 'SharePoint',
+  'Audit.SharePoint': 'SharePoint and OneDrive',
+  'Audit.General': 'General (Teams, Forms, Defender, Purview and more)',
 }
 
 // The alert rule for a preset is the preset's own template from AuditLogTemplates.json, exactly
@@ -87,6 +88,8 @@ export const CippAlertPresetDialog = ({
           preset: template.preset,
           logbook: template.logbook,
           conditions: template.conditions,
+          thresholdEnabled: Boolean(template.threshold),
+          threshold: template.threshold,
           Actions: formData.Actions,
           AlertComment: formData.AlertComment ?? '',
           CustomSubject: '',

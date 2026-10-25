@@ -40,6 +40,8 @@ const recurrenceSeconds = (value) => {
     : 0
 }
 
+const defaultThreshold = { Count: 100, Minutes: 20 }
+
 const AlertWizard = () => {
   const apiRequest = ApiPostCall({
     relatedQueryKeys: ['ListAlertsQueue', 'ListCurrentAlerts'],
@@ -171,6 +173,11 @@ const AlertWizard = () => {
   const logbookOptions = [
     { value: 'Audit.AzureActiveDirectory', label: 'Azure AD' },
     { value: 'Audit.Exchange', label: 'Exchange' },
+    { value: 'Audit.SharePoint', label: 'SharePoint and OneDrive' },
+    {
+      value: 'Audit.General',
+      label: 'General (Teams, Forms, Defender, Purview and more)',
+    },
   ]
 
   // Existing alert load effect moved below state declarations for guard usage
@@ -438,6 +445,8 @@ const AlertWizard = () => {
           PsaTicketPriority: toPsaPriorityValue(
             alert.RawAlert.PsaTicketPriority
           ),
+          thresholdEnabled: Boolean(alert.RawAlert.Threshold),
+          threshold: alert.RawAlert.Threshold ?? defaultThreshold,
           conditions: [], // Include empty array to register field structure
         }
         // Reset first without spawning rows to avoid rendering empty operator fields
@@ -638,6 +647,14 @@ const AlertWizard = () => {
     if (selectedTemplate.template.logbook) {
       formControl.setValue('logbook', selectedTemplate.template.logbook)
     }
+    formControl.setValue(
+      'thresholdEnabled',
+      Boolean(selectedTemplate.template.threshold)
+    )
+    formControl.setValue(
+      'threshold',
+      selectedTemplate.template.threshold ?? defaultThreshold
+    )
     setAddedEvent(formattedConditions.map((_, i) => ({ id: i })))
     prevOperatorValuesRef.current = formattedConditions.map((c) =>
       (c.Operator?.value || '').toLowerCase()
@@ -1103,6 +1120,57 @@ const AlertWizard = () => {
                               </Grid>
                             </Grid>
                           ))}
+                          <Grid container spacing={2} sx={{ mt: 1 }}>
+                            <Grid size={12}>
+                              <CippFormComponent
+                                type="switch"
+                                name="thresholdEnabled"
+                                label="Only alert when one identity does this repeatedly"
+                                formControl={formControl}
+                                helperText="Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. The Operation condition must use Equals or In."
+                              />
+                            </Grid>
+                            <CippFormCondition
+                              field="thresholdEnabled"
+                              compareType="is"
+                              compareValue={true}
+                              formControl={formControl}
+                            >
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <CippFormComponent
+                                  type="number"
+                                  name="threshold.Count"
+                                  label="Number of matching records"
+                                  formControl={formControl}
+                                  validators={{
+                                    min: { value: 2, message: 'At least 2' },
+                                    max: {
+                                      value: 100000,
+                                      message: 'At most 100000',
+                                    },
+                                  }}
+                                />
+                              </Grid>
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <CippFormComponent
+                                  type="number"
+                                  name="threshold.Minutes"
+                                  label="Within minutes"
+                                  formControl={formControl}
+                                  validators={{
+                                    min: {
+                                      value: 10,
+                                      message: 'At least 10 minutes',
+                                    },
+                                    max: {
+                                      value: 1440,
+                                      message: 'At most 1440 minutes',
+                                    },
+                                  }}
+                                />
+                              </Grid>
+                            </CippFormCondition>
+                          </Grid>
                         </CippButtonCard>
                       </Grid>
 

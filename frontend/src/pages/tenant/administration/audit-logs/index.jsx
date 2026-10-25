@@ -7,7 +7,16 @@ import { CippDateRangeFilter } from "../../../../components/CippComponents/CippD
 import tabOptions from "./tabOptions.json";
 
 // Saved Logs Configuration
-const savedLogsColumns = ["Timestamp", "Tenant", "Title", "Actions"];
+const savedLogsColumns = [
+  "Timestamp",
+  "Tenant",
+  "Title",
+  "AlertType",
+  "Workload",
+  "Operation",
+  "User",
+  "TimesRepeated",
+];
 const savedLogsApiUrl = "/api/ListAuditLogs";
 const savedLogViewLink = "/tenant/administration/audit-logs/log?id=[LogId]";
 const savedLogsActions = [
@@ -21,9 +30,34 @@ const savedLogsActions = [
 ];
 
 const offCanvas = {
-  extendedInfoFields: ["Timestamp", "Tenant", "Title"],
+  extendedInfoFields: [
+    "Timestamp",
+    "Tenant",
+    "Title",
+    "AlertType",
+    "Workload",
+    "Operation",
+    "User",
+    "TimesRepeated",
+  ],
   actions: savedLogsActions,
 };
+
+// An alert is on a single event, or on one user or app repeating an action a set number of times.
+const savedLogsFilters = [
+  {
+    filterName: "Repeated activity alerts",
+    value: [{ id: "AlertType", value: "Repeated activity" }],
+    type: "column",
+  },
+  ...["AzureActiveDirectory", "Exchange", "SharePoint", "OneDrive", "MicrosoftTeams"].map(
+    (workload) => ({
+      filterName: workload,
+      value: [{ id: "Workload", value: workload }],
+      type: "column",
+    })
+  ),
+];
 
 const Page = () => {
   // Preserves the previous behaviour: RelativeTime defaults to "7d" and is always sent.
@@ -59,6 +93,7 @@ const Page = () => {
       apiData={apiParams}
       actions={savedLogsActions}
       offCanvas={offCanvas}
+      filters={savedLogsFilters}
       rowOpen={{
         link: savedLogViewLink,
         condition: (row) => Boolean(row?.LogId),

@@ -5,7 +5,9 @@ function Invoke-ListAuditLogs {
     .ROLE
         CIPP.Alert.Read
     .DESCRIPTION
-        Lists audit log entries from the CIPP audit log store, filterable by tenant, date range, and log ID.
+        Lists audit log entries from the CIPP audit log store, filterable by tenant, date range, and log ID. Kind=Threshold
+        lists only repeated activity alerts (one user or app doing something a set number of times within a window);
+        AlertType says which kind each entry is, and TimesRepeated how many times for a repeated activity alert.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -13,7 +15,8 @@ function Invoke-ListAuditLogs {
     $TenantFilter = ConvertTo-CIPPODataFilterValue -Value $Request.Query.tenantFilter -Type 'String'
 
     if ($Request.Query.LogId) {
-        $LogID = ConvertTo-CIPPODataFilterValue -Value $Request.Query.LogId -Type 'Guid'
+        # A record's Id, or a threshold alert's 'threshold-<rule>-<identity>-<time>'.
+        $LogID = ConvertTo-CIPPODataFilterValue -Value $Request.Query.LogId -Type 'String'
     }
     $StartDate = $Request.Query.StartDate
     $EndDate = $Request.Query.EndDate
@@ -25,6 +28,9 @@ function Invoke-ListAuditLogs {
     } else {
         if ($TenantFilter -and $TenantFilter -ne 'AllTenants') {
             $FilterConditions.Add("Tenant eq '$TenantFilter'")
+        }
+        if ($Request.Query.Kind -eq 'Threshold') {
+            $FilterConditions.Add("RowKey ge 'threshold-' and RowKey lt 'threshold.'")
         }
 
         if (!$StartDate -and !$EndDate -and !$RelativeTime) {
@@ -74,7 +80,19 @@ function Invoke-ListAuditLogs {
 
     $AuditLogs = Get-CIPPAzDataTableEntity @Table | Where-Object { $Tenants.defaultDomainName -contains $_.Tenant } | ForEach-Object {
         $_.Data = try { $_.Data | ConvertFrom-Json } catch { $_.AuditData }
-        $_ | Select-Object @{n = 'LogId'; exp = { $_.RowKey } }, @{ n = 'Timestamp'; exp = { $_.Data.RawData.CreationTime } }, Tenant, Title, Data
+        $Raw = $_.Data.RawData
+        [pscustomobject]@{
+            LogId          = $_.RowKey
+            Timestamp      = $Raw.CreationTime
+            Tenant         = $_.Tenant
+            Title          = $_.Title
+            AlertType      = if ($_.RowKey -like 'threshold-*') { 'Repeated activity' } else { 'Single event' }
+            Workload       = $Raw.Workload
+            Operation      = $Raw.Operation
+            User           = $Raw.UserId
+            TimesRepeated  = $Raw.CIPPThresholdCount
+            Data           = $_.Data
+        }
     }
 
     $Body = @{

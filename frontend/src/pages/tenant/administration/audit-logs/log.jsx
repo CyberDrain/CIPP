@@ -92,6 +92,7 @@ const Page = () => {
           data?.Data?.RawData?.CIPPUserKey ??
           data?.Data?.RawData?.AuditRecord?.CIPPuserId ??
           data?.Data?.RawData?.AuditRecord?.UserKey ??
+          data?.Data?.RawData?.UserId ??
           data?.Data?.RawData?.userId ??
           "N/A",
       },

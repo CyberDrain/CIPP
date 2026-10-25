@@ -82,4 +82,31 @@ Describe 'Invoke-AddAlert' {
         $Response.StatusCode | Should -Be 200
         Should -Invoke Add-CIPPAzDataTableEntity -Times 1 -Exactly
     }
+
+    It 'refuses a log source that is not a feed content type' {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'eq' 'FileDeleted'); logbook = @{ value = 'Audit.Teams' } } })
+        $Response.StatusCode | Should -Be 400
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'saves a SharePoint threshold rule with its count and window' {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'in' @('FileDeleted', 'FileRecycled')); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $true; threshold = @{ Count = '100'; Minutes = '20' } } })
+        $Response.StatusCode | Should -Be 200
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 1 -Exactly -ParameterFilter { $Entity.type -eq 'Audit.SharePoint' -and $Entity.Threshold -eq '{"Count":100,"Minutes":20}' }
+    }
+
+    It 'refuses a threshold of <Case>' -ForEach @(
+        @{ Case = 'a count below 2'; Op = 'eq'; Value = 'FileDeleted'; Threshold = @{ Count = 1; Minutes = 20 } }
+        @{ Case = 'a window under 10 minutes'; Op = 'eq'; Value = 'FileDeleted'; Threshold = @{ Count = 50; Minutes = 5 } }
+        @{ Case = 'a Like anchor'; Op = 'like'; Value = 'File*'; Threshold = @{ Count = 50; Minutes = 20 } }
+    ) {
+        $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' $Op $Value); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $true; threshold = $Threshold } })
+        $Response.StatusCode | Should -Be 400
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+    }
+
+    It 'stores no threshold when it is switched off' {
+        $null = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'eq' 'FileDeleted'); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $false; threshold = @{ Count = 100; Minutes = 20 } } })
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 1 -Exactly -ParameterFilter { $null -eq $Entity.Threshold }
+    }
 }

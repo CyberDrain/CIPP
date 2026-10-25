@@ -3,7 +3,10 @@
     "value": "New-InboxRule",
     "name": "A new Inbox rule is created",
     "template": {
-      "preset": { "value": "New-InboxRule", "label": "A new Inbox rule is created" },
+      "preset": {
+        "value": "New-InboxRule",
+        "label": "A new Inbox rule is created"
+      },
       "logbook": { "value": "Audit.Exchange", "label": "Exchange" },
       "conditions": [
         {
@@ -97,9 +100,12 @@
   },
   {
     "value": "Set-InboxRule",
-    "name": "A existing Inbox rule is edited",
+    "name": "An existing Inbox rule is edited",
     "template": {
-      "preset": { "value": "Set-InboxRule", "label": "A existing Inbox rule is edited" },
+      "preset": {
+        "value": "Set-InboxRule",
+        "label": "An existing Inbox rule is edited"
+      },
       "logbook": { "value": "Audit.Exchange", "label": "Exchange" },
       "conditions": [
         {
@@ -115,11 +121,11 @@
   },
   {
     "value": "Set-InboxRuleRSS",
-    "name": "A existing Inbox rule is edited that forwards e-mails to the RSS feeds folder",
+    "name": "An existing Inbox rule is edited that forwards e-mails to the RSS feeds folder",
     "template": {
       "preset": {
         "value": "Set-InboxRuleRSS",
-        "label": "A existing Inbox rule is edited that forwards e-mails to the RSS feeds folder"
+        "label": "An existing Inbox rule is edited that forwards e-mails to the RSS feeds folder"
       },
       "logbook": { "value": "Audit.Exchange", "label": "Exchange" },
       "conditions": [
@@ -141,11 +147,11 @@
   },
   {
     "value": "Set-InboxRuleForward",
-    "name": "A existing Inbox rule is edited that forwards e-mails to a different email address",
+    "name": "An existing Inbox rule is edited that forwards e-mails to a different email address",
     "template": {
       "preset": {
         "value": "Set-InboxRuleForward",
-        "label": "A existing Inbox rule is edited that forwards e-mails to a different email address"
+        "label": "An existing Inbox rule is edited that forwards e-mails to a different email address"
       },
       "logbook": { "value": "Audit.Exchange", "label": "Exchange" },
       "conditions": [
@@ -167,11 +173,11 @@
   },
   {
     "value": "Set-InboxRuleRedirect",
-    "name": "A existing Inbox rule is edited that redirects e-mails to a different email address",
+    "name": "An existing Inbox rule is edited that redirects e-mails to a different email address",
     "template": {
       "preset": {
         "value": "Set-InboxRuleRedirect",
-        "label": "A existing Inbox rule is edited that redirects e-mails to a different email address"
+        "label": "An existing Inbox rule is edited that redirects e-mails to a different email address"
       },
       "logbook": { "value": "Audit.Exchange", "label": "Exchange" },
       "conditions": [
@@ -214,11 +220,11 @@
   },
   {
     "value": "Update StsRefreshTokenValidFrom Timestamp.",
-    "name": "A user sessions have been revoked",
+    "name": "A user's sessions have been revoked",
     "template": {
       "preset": {
         "value": "Update StsRefreshTokenValidFrom Timestamp.",
-        "label": "A user sessions have been revoked"
+        "label": "A user's sessions have been revoked"
       },
       "logbook": { "value": "Audit.AzureActiveDirectory", "label": "Azure AD" },
       "conditions": [
@@ -235,11 +241,11 @@
   },
   {
     "value": "Disable Strong Authentication.",
-    "name": "A users MFA has been disabled",
+    "name": "A user's MFA has been disabled",
     "template": {
       "preset": {
         "value": "Disable Strong Authentication.",
-        "label": "A users MFA has been disabled"
+        "label": "A user's MFA has been disabled"
       },
       "logbook": { "value": "Audit.AzureActiveDirectory", "label": "Azure AD" },
       "conditions": [
@@ -256,11 +262,11 @@
   },
   {
     "value": "Remove Member from a role.",
-    "name": "A user has been removed from a role",
+    "name": "A user has been removed from an admin role",
     "template": {
       "preset": {
         "value": "Remove Member from a role.",
-        "label": "A user has been removed from a role"
+        "label": "A user has been removed from an admin role"
       },
       "logbook": { "value": "Audit.AzureActiveDirectory", "label": "Azure AD" },
       "conditions": [
@@ -315,7 +321,11 @@
           }
         },
         {
-          "Property": { "value": "List:countryList", "label": "CIPPGeoLocation", "multi": true },
+          "Property": {
+            "value": "List:countryList",
+            "label": "CIPPGeoLocation",
+            "multi": true
+          },
           "Operator": { "value": "NotIn", "label": "Not In" }
         }
       ]
@@ -438,7 +448,9 @@
         {
           "Property": { "value": "String", "label": "Operation" },
           "Operator": { "value": "like", "label": "Like" },
-          "Input": { "value": "*application*Certificates and secrets management*" }
+          "Input": {
+            "value": "*application*Certificates and secrets management*"
+          }
         },
         {
           "Property": { "value": "String", "label": "UserId" },
@@ -466,7 +478,9 @@
         {
           "Property": { "value": "String", "label": "Operation" },
           "Operator": { "value": "like", "label": "Like" },
-          "Input": { "value": "*application*Certificates and secrets management*" }
+          "Input": {
+            "value": "*application*Certificates and secrets management*"
+          }
         },
         {
           "Property": { "value": "String", "label": "UserId" },
@@ -547,8 +561,14 @@
           "Property": { "value": "List:Operation", "label": "Operation" },
           "Operator": { "value": "in", "label": "In" },
           "Input": [
-            { "value": "Add owner to application.", "label": "Add owner to application." },
-            { "value": "Add owner to service principal.", "label": "Add owner to service principal." }
+            {
+              "value": "Add owner to application.",
+              "label": "Add owner to application."
+            },
+            {
+              "value": "Add owner to service principal.",
+              "label": "Add owner to service principal."
+            }
           ]
         },
         {
@@ -665,7 +685,9 @@
         {
           "Property": { "value": "String", "label": "Operation" },
           "Operator": { "value": "like", "label": "Like" },
-          "Input": { "value": "*application*Certificates and secrets management*" }
+          "Input": {
+            "value": "*application*Certificates and secrets management*"
+          }
         },
         {
           "Property": { "value": "String", "label": "UserId" },
@@ -693,7 +715,9 @@
         {
           "Property": { "value": "String", "label": "Operation" },
           "Operator": { "value": "like", "label": "Like" },
-          "Input": { "value": "*application*Certificates and secrets management*" }
+          "Input": {
+            "value": "*application*Certificates and secrets management*"
+          }
         },
         {
           "Property": { "value": "String", "label": "UserId" },
@@ -774,8 +798,14 @@
           "Property": { "value": "List:Operation", "label": "Operation" },
           "Operator": { "value": "in", "label": "In" },
           "Input": [
-            { "value": "Add owner to application.", "label": "Add owner to application." },
-            { "value": "Add owner to service principal.", "label": "Add owner to service principal." }
+            {
+              "value": "Add owner to application.",
+              "label": "Add owner to application."
+            },
+            {
+              "value": "Add owner to service principal.",
+              "label": "Add owner to service principal."
+            }
           ]
         },
         {
@@ -814,11 +844,11 @@
   },
   {
     "value": "badRepIP",
-    "name": "A user has logged in a using a known VPN, Proxy, Or anonymizer",
+    "name": "A user has logged in using a known VPN, Proxy, Or anonymizer",
     "template": {
       "preset": {
         "value": "badRepIP",
-        "label": "A user has logged in a using a known VPN, Proxy, Or anonymizer"
+        "label": "A user has logged in using a known VPN, Proxy, Or anonymizer"
       },
       "logbook": { "value": "Audit.AzureActiveDirectory", "label": "Azure AD" },
       "conditions": [
@@ -843,11 +873,11 @@
   },
   {
     "value": "HostedIP",
-    "name": "A user has logged in a using a known hosting provider IP",
+    "name": "A user has logged in using a known hosting provider IP",
     "template": {
       "preset": {
         "value": "HostedIP",
-        "label": "A user has logged in a using a known hosting provider IP"
+        "label": "A user has logged in using a known hosting provider IP"
       },
       "logbook": { "value": "Audit.AzureActiveDirectory", "label": "Azure AD" },
       "conditions": [
@@ -1063,6 +1093,454 @@
           },
           "Input": {
             "value": "True"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "value": "SPO-MassDeletion",
+    "name": "One user deleted 100 or more files or folders within 20 minutes",
+    "template": {
+      "preset": {
+        "value": "SPO-MassDeletion",
+        "label": "One user deleted 100 or more files or folders within 20 minutes"
+      },
+      "logbook": {
+        "value": "Audit.SharePoint",
+        "label": "SharePoint and OneDrive"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "in",
+            "label": "In"
+          },
+          "Input": [
+            {
+              "value": "FileDeleted",
+              "label": "FileDeleted"
+            },
+            {
+              "value": "FileRecycled",
+              "label": "FileRecycled"
+            },
+            {
+              "value": "FileDeletedFirstStageRecycleBin",
+              "label": "FileDeletedFirstStageRecycleBin"
+            },
+            {
+              "value": "FolderDeleted",
+              "label": "FolderDeleted"
+            },
+            {
+              "value": "FolderRecycled",
+              "label": "FolderRecycled"
+            },
+            {
+              "value": "FolderDeletedFirstStageRecycleBin",
+              "label": "FolderDeletedFirstStageRecycleBin"
+            }
+          ]
+        }
+      ],
+      "threshold": {
+        "Count": 100,
+        "Minutes": 20
+      }
+    }
+  },
+  {
+    "value": "SPO-RecycleBinPurge",
+    "name": "One user purged 25 or more items from the second-stage recycle bin within 20 minutes",
+    "template": {
+      "preset": {
+        "value": "SPO-RecycleBinPurge",
+        "label": "One user purged 25 or more items from the second-stage recycle bin within 20 minutes"
+      },
+      "logbook": {
+        "value": "Audit.SharePoint",
+        "label": "SharePoint and OneDrive"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "in",
+            "label": "In"
+          },
+          "Input": [
+            {
+              "value": "FileDeletedSecondStageRecycleBin",
+              "label": "FileDeletedSecondStageRecycleBin"
+            },
+            {
+              "value": "FolderDeletedSecondStageRecycleBin",
+              "label": "FolderDeletedSecondStageRecycleBin"
+            }
+          ]
+        }
+      ],
+      "threshold": {
+        "Count": 25,
+        "Minutes": 20
+      }
+    }
+  },
+  {
+    "value": "SPO-MassDownload",
+    "name": "One user downloaded 200 or more files within 20 minutes",
+    "template": {
+      "preset": {
+        "value": "SPO-MassDownload",
+        "label": "One user downloaded 200 or more files within 20 minutes"
+      },
+      "logbook": {
+        "value": "Audit.SharePoint",
+        "label": "SharePoint and OneDrive"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "in",
+            "label": "In"
+          },
+          "Input": [
+            {
+              "value": "FileDownloaded",
+              "label": "FileDownloaded"
+            },
+            {
+              "value": "FileSyncDownloadedFull",
+              "label": "FileSyncDownloadedFull"
+            }
+          ]
+        }
+      ],
+      "threshold": {
+        "Count": 200,
+        "Minutes": 20
+      }
+    }
+  },
+  {
+    "value": "SPO-AnonymousLinkCreated",
+    "name": "An anyone (anonymous) sharing link was created",
+    "template": {
+      "preset": {
+        "value": "SPO-AnonymousLinkCreated",
+        "label": "An anyone (anonymous) sharing link was created"
+      },
+      "logbook": {
+        "value": "Audit.SharePoint",
+        "label": "SharePoint and OneDrive"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "AnonymousLinkCreated",
+            "label": "AnonymousLinkCreated"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "value": "SPO-SiteCollectionAdminAdded",
+    "name": "A site collection admin was added",
+    "template": {
+      "preset": {
+        "value": "SPO-SiteCollectionAdminAdded",
+        "label": "A site collection admin was added"
+      },
+      "logbook": {
+        "value": "Audit.SharePoint",
+        "label": "SharePoint and OneDrive"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "SiteCollectionAdminAdded",
+            "label": "SiteCollectionAdminAdded"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "value": "SPO-SharingPolicyChanged",
+    "name": "A SharePoint sharing policy was changed",
+    "template": {
+      "preset": {
+        "value": "SPO-SharingPolicyChanged",
+        "label": "A SharePoint sharing policy was changed"
+      },
+      "logbook": {
+        "value": "Audit.SharePoint",
+        "label": "SharePoint and OneDrive"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "SharingPolicyChanged",
+            "label": "SharingPolicyChanged"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "value": "SPO-SiteDeleted",
+    "name": "A SharePoint site was deleted",
+    "template": {
+      "preset": {
+        "value": "SPO-SiteDeleted",
+        "label": "A SharePoint site was deleted"
+      },
+      "logbook": {
+        "value": "Audit.SharePoint",
+        "label": "SharePoint and OneDrive"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "in",
+            "label": "In"
+          },
+          "Input": [
+            {
+              "value": "SiteDeleted",
+              "label": "SiteDeleted"
+            },
+            {
+              "value": "SitePermanentlyDeleted",
+              "label": "SitePermanentlyDeleted"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "value": "SPO-FileMalwareDetected",
+    "name": "Malware was detected in a SharePoint or OneDrive file",
+    "template": {
+      "preset": {
+        "value": "SPO-FileMalwareDetected",
+        "label": "Malware was detected in a SharePoint or OneDrive file"
+      },
+      "logbook": {
+        "value": "Audit.SharePoint",
+        "label": "SharePoint and OneDrive"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "FileMalwareDetected",
+            "label": "FileMalwareDetected"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "value": "Teams-TeamDeleted",
+    "name": "A team was deleted",
+    "template": {
+      "preset": {
+        "value": "Teams-TeamDeleted",
+        "label": "A team was deleted"
+      },
+      "logbook": {
+        "value": "Audit.General",
+        "label": "General (Teams, Forms, Defender, Purview and more)"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "TeamDeleted",
+            "label": "TeamDeleted"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "value": "Teams-BotOrConnectorAdded",
+    "name": "A bot or connector was added to a team",
+    "template": {
+      "preset": {
+        "value": "Teams-BotOrConnectorAdded",
+        "label": "A bot or connector was added to a team"
+      },
+      "logbook": {
+        "value": "Audit.General",
+        "label": "General (Teams, Forms, Defender, Purview and more)"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "in",
+            "label": "In"
+          },
+          "Input": [
+            {
+              "value": "BotAddedToTeam",
+              "label": "BotAddedToTeam"
+            },
+            {
+              "value": "ConnectorAdded",
+              "label": "ConnectorAdded"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "value": "Defender-AlertTriggered",
+    "name": "A Microsoft Defender for Office alert was triggered",
+    "template": {
+      "preset": {
+        "value": "Defender-AlertTriggered",
+        "label": "A Microsoft Defender for Office alert was triggered"
+      },
+      "logbook": {
+        "value": "Audit.General",
+        "label": "General (Teams, Forms, Defender, Purview and more)"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "AlertTriggered",
+            "label": "AlertTriggered"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "value": "Quarantine-Release",
+    "name": "A message was released from quarantine",
+    "template": {
+      "preset": {
+        "value": "Quarantine-Release",
+        "label": "A message was released from quarantine"
+      },
+      "logbook": {
+        "value": "Audit.General",
+        "label": "General (Teams, Forms, Defender, Purview and more)"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "QuarantineRelease",
+            "label": "QuarantineRelease"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "value": "Purview-RetentionPolicyRemoved",
+    "name": "A retention policy was removed",
+    "template": {
+      "preset": {
+        "value": "Purview-RetentionPolicyRemoved",
+        "label": "A retention policy was removed"
+      },
+      "logbook": {
+        "value": "Audit.General",
+        "label": "General (Teams, Forms, Defender, Purview and more)"
+      },
+      "conditions": [
+        {
+          "Property": {
+            "value": "List:Operation",
+            "label": "Operation"
+          },
+          "Operator": {
+            "value": "eq",
+            "label": "Equals to"
+          },
+          "Input": {
+            "value": "RemoveRetentionCompliancePolicy",
+            "label": "RemoveRetentionCompliancePolicy"
           }
         }
       ]

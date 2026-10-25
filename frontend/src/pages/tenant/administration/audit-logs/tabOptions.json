@@ -5,9 +5,9 @@
     "icon": "Storage"
   },
   {
-    "label": "Log Searches",
-    "path": "/tenant/administration/audit-logs/searches",
-    "icon": "List"
+    "label": "Log Collection",
+    "path": "/tenant/administration/audit-logs/collection",
+    "icon": "ReceiptLong"
   },
   {
     "label": "Manual Searches",
@@ -15,8 +15,8 @@
     "icon": "ManageSearch"
   },
   {
-    "label": "Feed Status",
-    "path": "/tenant/administration/audit-logs/coverage",
+    "label": "Diagnostics",
+    "path": "/tenant/administration/audit-logs/diagnostics",
     "icon": "Timeline",
     "advanced": true
   },

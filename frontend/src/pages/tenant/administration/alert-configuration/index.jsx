@@ -101,6 +101,7 @@ const Page = () => {
       simpleColumns={[
         'Tenants',
         'EventType',
+        'LogType',
         'Enabled',
         'Conditions',
         'RepeatsEvery',

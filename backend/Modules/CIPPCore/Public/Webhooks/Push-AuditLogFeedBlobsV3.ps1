@@ -38,7 +38,7 @@ function Push-AuditLogFeedBlobsV3 {
     if ($Blobs.Count -eq 0) { return }
     $Finished = [System.Collections.Generic.List[object]]::new()
     $Failed = [System.Collections.Generic.List[object]]::new()
-    $Totals = @{ Records = 0; Evaluated = 0; Matched = 0 }
+    $Totals = @{ Records = 0; Evaluated = 0; Matched = 0; Thresholds = 0 }
     # The engine's directory memo, one per tenant, dropped once the tenant's last blob is in.
     $Memos = @{}
     # Threshold count rows by key; '<tenant id>`n<threshold>' -> identities counted; and a blob index holding each, for samples.
@@ -202,6 +202,7 @@ function Push-AuditLogFeedBlobsV3 {
                 Add-CIPPAzDataTableEntity @AuditLogTable -Entity $Rows.ToArray() -Force
             }
             $Totals.Matched++
+            $Totals.Thresholds++
         } catch {
             Write-Information "AuditLogFeedBlobsV3: could not send the threshold alert for $Who in $($Tenants[$TenantId]): $($_.Exception.Message)"
         }
@@ -217,7 +218,7 @@ function Push-AuditLogFeedBlobsV3 {
                 PartitionKey = 'Feed'; RowKey = '{0}-blobs-{1}' -f $Item.CycleId, ([guid]::NewGuid().ToString('N').Substring(0, 12)); CycleId = [string]$Item.CycleId
                 StartedUtc   = $Now; FinishedUtc = $Done; DurationSeconds = [Math]::Round(($Done - $Now).TotalSeconds, 1)
                 Tenants      = $Tenants.Count; Feeds = 0; Failed = $Failed.Count; Parked = 0; Blobs = $Blobs.Count
-                Records      = [int]$Totals.Records; Evaluated = [int]$Totals.Evaluated; Matched = [int]$Totals.Matched
+                Records      = [int]$Totals.Records; Evaluated = [int]$Totals.Evaluated; Matched = [int]$Totals.Matched; Thresholds = [int]$Totals.Thresholds
             } -Force
         } catch {
             Write-Information "AuditLogFeedBlobsV3: could not record the cycle: $($_.Exception.Message)"

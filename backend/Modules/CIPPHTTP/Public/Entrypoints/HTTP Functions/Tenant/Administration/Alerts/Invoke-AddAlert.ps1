@@ -30,11 +30,39 @@ function Invoke-AddAlert {
                     })
             }
         }
-        if ($null -eq (Get-CIPPAuditLogRuleAnchor -Conditions $Conditions)) {
+        $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $Conditions
+        if ($null -eq $Anchor) {
             return ([HttpResponseContext]@{
                     StatusCode = [HttpStatusCode]::BadRequest
                     Body       = @{ error = 'An audit log alert needs an Operation condition using Equals, In, or Like with at least three characters of text. It lets CIPP skip the logs the alert cannot match.' }
                 })
+        }
+        # The log the alert reads: one of the Management Activity API content types.
+        $LogType = [string]$Request.Body.logbook.value
+        if ($LogType -notin @('Audit.AzureActiveDirectory', 'Audit.Exchange', 'Audit.SharePoint', 'Audit.General')) {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = @{ error = "Unknown log source: $LogType" }
+                })
+        }
+        $Threshold = $null
+        # Alert when one identity's matching records reach Count within Minutes, instead of on every record.
+        if ([bool]$Request.Body.thresholdEnabled) {
+            $Count = $Request.Body.threshold.Count -as [int]
+            $Minutes = $Request.Body.threshold.Minutes -as [int]
+            if ($Count -lt 2 -or $Count -gt 100000 -or $Minutes -lt 10 -or $Minutes -gt 1440) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = 'A threshold needs a count from 2 to 100000 and a window from 10 to 1440 minutes.' }
+                    })
+            }
+            if ($Anchor.Patterns.Count -gt 0) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = 'A threshold alert counts exact operations, so its Operation condition must use Equals or In, not Like.' }
+                    })
+            }
+            $Threshold = [string](ConvertTo-Json -Compress -InputObject ([ordered]@{ Count = $Count; Minutes = $Minutes }))
         }
 
         $Tenants = $Request.Body.tenantFilter
@@ -51,7 +79,8 @@ function Invoke-AddAlert {
             Conditions        = [string]$Conditions
             Actions           = [string]$Actions
             BecActions        = [string](ConvertTo-Json -InputObject $BecActions -Compress -Depth 5)
-            type              = $Request.Body.logbook.value
+            type              = $LogType
+            Threshold         = $Threshold
             RowKey            = $RowKey
             PartitionKey      = 'Webhookv2'
             AlertComment      = [string]$Request.Body.AlertComment

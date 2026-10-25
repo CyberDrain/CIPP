@@ -24,9 +24,10 @@ function Invoke-ListAlertsQueue {
         $TranslatedConditions = ($Conditions | ForEach-Object { "When $($_.Property.label) is $($_.Operator.label) $($_.input.value)" }) -join ' and '
         $TranslatedActions = ($Task.Actions | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue).label -join ','
         $Tenants = ($Task.Tenants | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue)
+        $Threshold = if ($Task.Threshold) { $Task.Threshold | ConvertFrom-Json -ErrorAction SilentlyContinue }
         $TaskEntry = [PSCustomObject]@{
             Tenants         = @($Tenants.label)
-            Conditions      = $TranslatedConditions
+            Conditions      = if ($Threshold) { '{0} (one identity, {1} times within {2} minutes)' -f $TranslatedConditions, $Threshold.Count, $Threshold.Minutes } else { $TranslatedConditions }
             excludedTenants = @($Task.excludedTenants | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue)
             Actions         = $TranslatedActions
             LogType         = $Task.type
@@ -43,6 +44,7 @@ function Invoke-ListAlertsQueue {
                 BecActions        = @($($Task.BecActions | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue) | Where-Object { $_ })
                 Tenants           = @($Tenants)
                 type              = $Task.type
+                Threshold         = $Threshold
                 RowKey            = $Task.RowKey
                 PartitionKey      = $Task.PartitionKey
                 AlertComment      = $Task.AlertComment

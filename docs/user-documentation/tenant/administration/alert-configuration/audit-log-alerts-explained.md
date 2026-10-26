@@ -14,16 +14,16 @@ Microsoft 365 keeps an audit log for each tenant: an entry for each thing that h
 
 | | |
 | --- | --- |
-| Where the records come from | The tenant's Microsoft 365 audit log. CIPP collects new records for each tenant every 15 minutes, through Microsoft's Office 365 Management Activity API. |
+| Where the records come from | The tenant's Microsoft 365 audit log. CIPP collects new records for each tenant every 30 minutes, through Microsoft's Office 365 Management Activity API. |
 | Which logs | Each alert watches one of four logs: **Entra ID** (sign-ins and directory changes), **Exchange** (mailboxes and Exchange settings), **SharePoint and OneDrive** (files and sharing), or **General** (Teams, Forms, quarantine, Purview and more). |
-| How quickly alerts arrive | Usually 5 to 30 minutes after the event. Microsoft makes most records available within a few minutes, though some take longer, and CIPP collects every 15 minutes. |
+| How quickly alerts arrive | Usually 5 to 45 minutes after the event. Microsoft makes most records available within a few minutes, though some take longer, and CIPP collects every 30 minutes. |
 | Two kinds of alert | A **single-record alert** fires each time one record matches its conditions. A **repeated activity alert** fires when one user or app does the same kind of thing many times in a short time, such as deleting hundreds of files. |
 | One alert per record | A record can match several of your alerts, but it sends only one single-record alert: the first one it matches. A repeated activity alert can still count the same record. |
 | Saved logs | Every record that sends an alert is saved under **Saved Logs**. There you can open it, download it, and see which of your alerts it matches. |
 
 ## How CIPP checks the audit log
 
-Every 15 minutes, CIPP takes these steps for each tenant that has audit log alerts. Diagnostics calls each round a **cycle**.
+Every 30 minutes, CIPP takes these steps for each tenant that has audit log alerts. Diagnostics calls each round a **cycle**.
 
 1. **Find what is new.** CIPP asks Microsoft for the records each log has added since its last check. Microsoft hands them over in **batches**: files of records. Each check covers up to 2 hours of activity. If a tenant has fallen behind, for example after an outage, CIPP catches up 2 hours at a time over the next checks. It never goes back more than 6 hours: anything older is skipped, and CIPP logs a warning saying so.
 2. **Download the batches.** CIPP downloads the new batches, many at a time. If a batch fails to download, CIPP tries again in the next checks. After 5 tries it gives up on that batch and writes an error to the CIPP logbook. **Diagnostics** shows how many batches failed in each cycle.
@@ -35,7 +35,7 @@ Every 15 minutes, CIPP takes these steps for each tenant that has audit log aler
 Repeated activity alerts work differently from step 3 onwards. Instead of comparing each record, CIPP counts how many records of the alert's operations each user or app has, and sends an alert when a count reaches the number you set. See [Repeated activity alerts](#repeated-activity-alerts).
 
 {% hint style="info" %}
-A change to an alert takes effect from the next check, within 15 minutes. Changes to tenant groups and custom variables are picked up the same way.
+A change to an alert takes effect from the next check, within 30 minutes. Changes to tenant groups and custom variables are picked up the same way.
 {% endhint %}
 
 ## Building conditions
@@ -225,7 +225,7 @@ To keep a copy, download it as JSON: **Download (JSON)** on the Saved Logs table
 | Unavailable | The tenant has auditing turned off, or no licence that includes the audit log. Checked again once a day. |
 | Waiting to start | Collection for this log has not run yet. |
 
-**Diagnostics** shows each 15-minute cycle: how long it took, how many tenants and batches it covered, how many records were read and checked, and how many alerts were sent, including repeated activity alerts. It covers every tenant, so it needs access to all tenants.
+**Diagnostics** shows each 30-minute cycle: how long it took, how many tenants and batches it covered, how many records were read and checked, and how many alerts were sent, including repeated activity alerts. It covers every tenant, so it needs access to all tenants.
 
 ## Writing alerts that stay fast
 

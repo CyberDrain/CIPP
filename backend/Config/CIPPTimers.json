@@ -21,7 +21,7 @@
     "Id": "97f720ea-9afc-4771-80fc-36b51bce705c",
     "Command": "Start-AuditLogFeedV3",
     "Description": "Audit log feed: poll the Management Activity API, process new records, and download and process created Graph audit searches",
-    "Cron": "0 */15 * * * *",
+    "Cron": "0 */30 * * * *",
     "Priority": 2,
     "RunOnProcessor": true,
     "PreferredProcessor": "auditlog",

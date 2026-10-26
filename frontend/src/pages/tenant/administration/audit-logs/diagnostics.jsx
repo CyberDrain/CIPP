@@ -297,7 +297,7 @@ const Page = () => {
         name: 'Last check',
         color: 'secondary',
         toolTip: last
-          ? `Took ${Math.round(last.TookSeconds)} seconds and read ${last.RecordsRead} records from ${last.TenantsChecked} tenants. CIPP checks every 15 minutes.`
+          ? `Took ${Math.round(last.TookSeconds)} seconds and read ${last.RecordsRead} records from ${last.TenantsChecked} tenants. CIPP checks every 30 minutes.`
           : `No check in the last ${hours} hours`,
       },
       {
@@ -373,7 +373,7 @@ const Page = () => {
         <Container maxWidth={false}>
           <Stack spacing={3}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              Every 15 minutes CIPP collects each tenant&apos;s audit logs from
+              Every 30 minutes CIPP collects each tenant&apos;s audit logs from
               Microsoft and checks them against your audit log alerts. This page
               shows whether that is keeping up, and what to fix when it is not.
             </Typography>

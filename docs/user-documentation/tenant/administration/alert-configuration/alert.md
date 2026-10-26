@@ -19,7 +19,7 @@ Within CIPP, there are two types of alerts. Choose one of the two cards at the t
 
 ## Alert Timing
 
-* **Audit Log Alerts** - Processed in near real-time, but a small delay of up to 15 minutes is normal.
+* **Audit Log Alerts** - Processed in near real-time, but a delay of up to 45 minutes is normal.
 * **Scripted CIPP Alerts** - Each alert comes with a default recurrence suggested by the CIPP team, which you can adjust as needed. The available recurrences are every 30 minutes, hour, 4 hours, day, 7 days, 14 days, 21 days, 30 days or 365 days.
 
 ## Tenant Selector

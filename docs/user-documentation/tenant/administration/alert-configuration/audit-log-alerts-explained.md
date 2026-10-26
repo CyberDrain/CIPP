@@ -27,7 +27,7 @@ CIPP can collect the audit log in two ways. **CIPP > Settings > Features > Audit
 
 | | Graph searches (feature off, the default) | Audit Log Feed (feature on) |
 | --- | --- | --- |
-| How CIPP collects records | Creates a Microsoft Graph audit log search for each tenant every 15 minutes, and checks the results when Microsoft finishes the search. | Reads Microsoft's Office 365 Management Activity API every 30 minutes, as this page describes. |
+| How CIPP collects records | Creates a Microsoft Graph audit log search for each tenant every 30 minutes, and checks the results when Microsoft finishes the search. | Reads Microsoft's Office 365 Management Activity API every 30 minutes, as this page describes. |
 | How quickly alerts arrive | Often an hour or more: Microsoft takes a while to finish each search. | Usually 5 to 45 minutes. |
 | Which logs | Entra ID, and Exchange admin activity. | Entra ID, Exchange, SharePoint and OneDrive, and General. |
 | Repeated activity alerts | Not available. | Available. |

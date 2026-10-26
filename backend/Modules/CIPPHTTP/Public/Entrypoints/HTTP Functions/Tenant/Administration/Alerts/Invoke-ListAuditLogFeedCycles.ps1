@@ -5,7 +5,7 @@ function Invoke-ListAuditLogFeedCycles {
     .ROLE
         Tenant.Alert.Read
     .SYNOPSIS
-        Lists each audit log check (one every 15 minutes) with how long it took and what it read and alerted on.
+        Lists each audit log check (one every 30 minutes) with how long it took and what it read and alerted on.
     .DESCRIPTION
         One row per check, newest first, over the last Hours (default 48, at most 168): when it started and finished,
         TookSeconds, the workers it used and the longest one (each must finish well inside the 10-minute run limit),

@@ -34,6 +34,17 @@ function Get-CIPPAuditLogPrefilter {
     param([Parameter(Mandatory = $true)][string]$TenantFilter)
 
     try {
+        $RuleSet = @(Get-CIPPAuditLogRuleSet -TenantFilter $TenantFilter)
+        # Tenants whose rules compile alike share one prefilter, and its memos, within the task (one load of the rule set).
+        $Built = $null
+        if ($null -ne $script:AuditRuleSetCache) {
+            if (-not [object]::ReferenceEquals($script:AuditPrefilterCache.RuleSet, $script:AuditRuleSetCache)) {
+                $script:AuditPrefilterCache = @{ RuleSet = $script:AuditRuleSetCache; Built = @{} }
+            }
+            $Built = $script:AuditPrefilterCache.Built
+            $Signature = Get-CIPPAuditLogRuleSignature -TenantFilter $TenantFilter -Rules $RuleSet
+            if ($null -ne $Built[$Signature]) { return $Built[$Signature] }
+        }
         $Untested = '^(CIPP|Previous_Value_)|^(clientip|HasLocationData|AuditRecord|ExtendedProperties|DeviceProperties|parameters)$'
         $Needles = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         $Rules = [System.Collections.Generic.List[scriptblock]]::new()
@@ -42,7 +53,7 @@ function Get-CIPPAuditLogPrefilter {
         $Thresholds = [System.Collections.Generic.List[object]]::new()
         # Text JSON writes as is and every serialiser leaves alone.
         $PlainRun = [regex]'[A-Za-z0-9 ._@:-]{3,}'
-        foreach ($Rule in (Get-CIPPAuditLogRuleSet -TenantFilter $TenantFilter)) {
+        foreach ($Rule in $RuleSet) {
             if ($TenantFilter -in $Rule.Excluded.value) { continue }
             # The engine's own selection of a rule's conditions, split into its OR groups.
             $Branches = @(Split-CIPPAuditLogConditions -Conditions (Resolve-CIPPAuditLogConditionVariable -TenantFilter $TenantFilter -Conditions ($Rule.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' })))
@@ -118,7 +129,7 @@ function Get-CIPPAuditLogPrefilter {
                 $Index.Add([pscustomobject]@{ Rule = $Block; Literals = $Anchor.Literals; Patterns = $Anchor.Patterns; Location = $Location; Groups = $Groups.ToArray() })
             }
         }
-        [pscustomobject]@{
+        $Prefilter = [pscustomobject]@{
             Rules       = $Rules.ToArray()
             Needles     = @($Needles)
             RecordNeedles = $RecordNeedles.ToArray()
@@ -133,6 +144,8 @@ function Get-CIPPAuditLogPrefilter {
             # "<operation>`n<needle mask>" -> the entries a record with that Operation and text can match.
             Masked      = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
         }
+        if ($null -ne $Built) { $Built[$Signature] = $Prefilter }
+        $Prefilter
     } catch {
         Write-Information "Audit log prefilter for $TenantFilter could not be built, keeping every record: $($_.Exception.Message)"
         $null

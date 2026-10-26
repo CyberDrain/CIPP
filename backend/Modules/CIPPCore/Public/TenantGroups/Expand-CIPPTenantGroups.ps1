@@ -12,11 +12,13 @@ function Expand-CIPPTenantGroups {
         [Parameter(Mandatory = $true)]
         $TenantFilter
     )
-    $TenantList = Get-Tenants -IncludeErrors
+    $TenantList = $null
     $ExpandedGroups = $TenantFilter | ForEach-Object {
         $FilterValue = $_
         # Group lookup
         if ($_.type -eq 'Group') {
+            # Read only when a group needs it: callers expand one list per alert rule, and most name no group.
+            $TenantList ??= Get-Tenants -IncludeErrors
             $GroupResult = Get-TenantGroups -GroupId $_.value
             $members = if ($GroupResult) { $GroupResult.members } else { @() }
             $TenantList | Where-Object -Property customerId -In $members.customerId | ForEach-Object {

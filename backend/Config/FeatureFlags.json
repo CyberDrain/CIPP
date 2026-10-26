@@ -99,6 +99,18 @@
     "Hidden": false
   },
   {
+    "Id": "AuditLogFeed",
+    "Name": "Audit Log Feed",
+    "Description": "This is currently an opt-in feature. Collects audit logs for audit log alerts from Microsoft's Office 365 Management Activity API every 30 minutes, instead of creating Graph audit log searches every 15 minutes. It adds the SharePoint and OneDrive and General logs and repeated activity alerts, and shows Log Collection and Diagnostics instead of Log Searches and Search Coverage. Turning it off goes back to Graph audit log searches.",
+    "Enabled": false,
+    "AllowUserToggle": true,
+    "Timers": ["97f720ea-9afc-4771-80fc-36b51bce705c"],
+    "Endpoints": ["ListAuditLogFeedStatus", "ListAuditLogFeedCycles"],
+    "Pages": ["/tenant/administration/audit-logs/collection", "/tenant/administration/audit-logs/diagnostics"],
+    "HidesPages": ["/tenant/administration/audit-logs/searches", "/tenant/administration/audit-logs/coverage"],
+    "Hidden": false
+  },
+  {
     "Id": "CertificateAuthentication",
     "Name": "Certificate Authentication",
     "Description": "Authenticate CIPP's SAM application with the SAM certificate instead of the client secret for every Graph and Exchange Online call (app-only and delegated). Managed from the Setup Wizard - enable it for an existing install (the client secret is kept as a rollback) or provision a secret-less install from scratch.",

@@ -18,6 +18,8 @@ BeforeAll {
     function Get-CippErrorStatusCode { param($ErrorRecord) if ($ErrorRecord.Exception -is [System.Management.Automation.ItemNotFoundException]) { 404 } else { 500 } }
     function Test-CIPPAuditLogRules { param($TenantFilter, $Rows, [switch]$EvaluateOnly, [switch]$AllMatches) }
     function Get-CIPPAuditLogRuleSet { param($TenantFilter) }
+    function Get-CIPPFeatureFlag { param($Id) [pscustomobject]@{ Id = $Id; Enabled = $script:FeedEnabled } }
+    $script:FeedEnabled = $true
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Split-CIPPAuditLogConditions.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks/Get-CIPPAuditLogRuleAnchor.ps1')
@@ -102,6 +104,19 @@ Describe 'Invoke-ListAuditLogRuleMatches' {
         $Rows['No anchor'].Reason | Should -BeLike '*needs an Operation condition*'
         $Response.Body.Results[0].Alert | Should -Be 'First match'
         $Response.Body.Metadata.Operation | Should -Be 'New-InboxRule'
+    }
+
+    It 'ignores the log and counts nothing while the Audit Log Feed feature is off, as Graph searches do' {
+        $script:FeedEnabled = $false
+        try {
+            $Rows = @{}
+            foreach ($Row in (Invoke-Check).Body.Results) { $Rows[$Row.Alert] = $Row }
+            $Rows['Reads SharePoint'].Outcome | Should -Not -Be 'OtherLog'
+            $Rows['Mass inbox rules'].Outcome | Should -Be 'NotChecked'
+            $Rows['Mass inbox rules'].Reason | Should -BeLike '*Audit Log Feed*'
+        } finally {
+            $script:FeedEnabled = $true
+        }
     }
 
     It 'returns 404 for a saved alert that does not exist' {

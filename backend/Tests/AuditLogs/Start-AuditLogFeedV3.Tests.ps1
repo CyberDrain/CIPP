@@ -1,4 +1,5 @@
-# Pester tests for the audit log feed timer: tenant scope, cursor backoff, feed rounds and Graph search ingestion.
+# Pester tests for the audit log feed timer: tenant scope, cursor backoff, feed rounds and Graph search ingestion, and
+# the Audit Log Feed feature flag that chooses between the feed and the Graph search planner.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
@@ -14,6 +15,8 @@ BeforeAll {
     function Get-CippException { param($Exception) }
     function Start-AuditLogSearchCreationV2 {}
     function Start-AuditLogIngestionV2 {}
+    function Get-CIPPFeatureFlag { param($Id) [pscustomobject]@{ Id = $Id; Enabled = $script:FeedEnabled } }
+    $script:FeedEnabled = $true
 
     function New-Rule([object[]]$Tenants, [object[]]$Excluded, [string]$Type) {
         [pscustomobject]@{
@@ -49,6 +52,7 @@ namespace Craft.Services {
     . (Join-Path $Public 'Webhooks/Split-CIPPAuditLogConditions.ps1')
     . (Join-Path $Public 'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1')
     . (Join-Path $Public 'Entrypoints/Orchestrator Functions/Start-AuditLogFeedV3.ps1')
+    . (Join-Path $Public 'Entrypoints/Orchestrator Functions/Start-AuditLogPlannerV2.ps1')
 }
 
 Describe 'Get-CIPPAuditLogTenantScope' {
@@ -101,6 +105,7 @@ Describe 'Start-AuditLogFeedV3' {
         Mock Start-AuditLogSearchCreationV2 {}
         Mock Write-LogMessage {}
         [Craft.Services.OrchestratorBridge]::ActiveNames.Clear()
+        $script:FeedEnabled = $true
     }
 
     It 'leaves a cycle that is still <Active> be, but still ingests Graph searches' -ForEach @(@{ Active = 'AuditLogFeedListV3' }, @{ Active = 'AuditLogFeedBlobsV3' }) {
@@ -177,5 +182,38 @@ Describe 'Start-AuditLogFeedV3 unanchored rule check' {
         Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $sev -eq 'Alert' -and $message -like "*'App actors' is skipped*" }
         Start-AuditLogFeedV3
         Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $sev -eq 'Alert' }
+    }
+}
+
+Describe 'Audit Log Feed feature flag' {
+    BeforeEach {
+        [Craft.Services.OrchestratorBridge]::ActiveNames.Clear()
+        $script:CheckRow = $null
+        $script:RuleRows = @([pscustomobject]@{ RowKey = 'unanchored'; Tenants = '[{"value":"AllTenants"}]'; Conditions = '[{"Property":{"label":"UserId"},"Operator":{"value":"eq"},"Input":{"value":"a@contoso.com"}}]'; AlertComment = 'No anchor' })
+        Mock Get-CIPPAzDataTableEntity { if ($TableName -eq 'WebhookRules') { $script:RuleRows } elseif ($TableName -eq 'Config') { $script:CheckRow } }
+        Mock Add-CIPPAzDataTableEntity { if ($TableName -eq 'Config') { $script:CheckRow = [pscustomobject]$Entity } }
+        Mock Get-CIPPAuditLogTenantScope {}
+        Mock Start-AuditLogSearchCreationV2 {}
+        Mock Start-AuditLogIngestionV2 {}
+        Mock Write-LogMessage {}
+    }
+
+    It 'leaves the feed and created searches to the Graph search planner while the feature is off, but still checks the rules' {
+        $script:FeedEnabled = $false
+        Start-AuditLogFeedV3
+        Should -Invoke Get-CIPPAuditLogTenantScope -Times 0 -Exactly
+        Should -Invoke Start-AuditLogIngestionV2 -Times 0 -Exactly
+        Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $sev -eq 'Alert' -and $message -like "*'No anchor' is skipped*" }
+    }
+
+    It 'runs the Graph search planner only while the feature is off' {
+        $script:FeedEnabled = $false
+        Start-AuditLogPlannerV2
+        Should -Invoke Start-AuditLogSearchCreationV2 -Times 1 -Exactly
+        Should -Invoke Start-AuditLogIngestionV2 -Times 1 -Exactly
+        $script:FeedEnabled = $true
+        Start-AuditLogPlannerV2
+        Should -Invoke Start-AuditLogSearchCreationV2 -Times 1 -Exactly
+        Should -Invoke Start-AuditLogIngestionV2 -Times 1 -Exactly
     }
 }

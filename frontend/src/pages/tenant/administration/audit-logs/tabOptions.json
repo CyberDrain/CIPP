@@ -10,6 +10,11 @@
     "icon": "ReceiptLong"
   },
   {
+    "label": "Log Searches",
+    "path": "/tenant/administration/audit-logs/searches",
+    "icon": "List"
+  },
+  {
     "label": "Manual Searches",
     "path": "/tenant/administration/audit-logs/manual-searches",
     "icon": "ManageSearch"
@@ -17,6 +22,12 @@
   {
     "label": "Diagnostics",
     "path": "/tenant/administration/audit-logs/diagnostics",
+    "icon": "Timeline",
+    "advanced": true
+  },
+  {
+    "label": "Search Coverage",
+    "path": "/tenant/administration/audit-logs/coverage",
     "icon": "Timeline",
     "advanced": true
   },

@@ -40,6 +40,8 @@ BeforeAll {
     function Invoke-CippWebhookProcessing { param($Data, $CIPPURL, $TenantFilter, $AlertComment, $PendingAuditLogWrites) }
     function Get-CIPPGeoIPLocationBatch { param($IPs) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
+    function Get-CIPPFeatureFlag { param($Id) [pscustomobject]@{ Id = $Id; Enabled = $script:FeedEnabled } }
+    $script:FeedEnabled = $true
     function Get-CippException { param($Exception) [pscustomobject]@{ NormalizedError = "$Exception" } }
     function Get-CIPPTestData { param($TenantFilter, $Type, $Fields, [switch]$NoProjection) }
     function New-GraphBulkRequest { param($Requests, $AsApp, $TenantId) }

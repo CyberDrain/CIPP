@@ -14,12 +14,28 @@ Microsoft 365 keeps an audit log for each tenant: an entry for each thing that h
 
 | | |
 | --- | --- |
-| Where the records come from | The tenant's Microsoft 365 audit log. CIPP collects new records for each tenant every 30 minutes, through Microsoft's Office 365 Management Activity API. |
+| Where the records come from | The tenant's Microsoft 365 audit log. With the Audit Log Feed feature on, CIPP collects new records for each tenant every 30 minutes through Microsoft's Office 365 Management Activity API, which is what this page describes. Without it, CIPP uses Graph audit log searches: see [Graph searches or the Audit Log Feed](#graph-searches-or-the-audit-log-feed). |
 | Which logs | Each alert watches one of four logs: **Entra ID** (sign-ins and directory changes), **Exchange** (mailboxes and Exchange settings), **SharePoint and OneDrive** (files and sharing), or **General** (Teams, Forms, quarantine, Purview and more). |
 | How quickly alerts arrive | Usually 5 to 45 minutes after the event. Microsoft makes most records available within a few minutes, though some take longer, and CIPP collects every 30 minutes. |
 | Two kinds of alert | A **single-record alert** fires each time one record matches its conditions. A **repeated activity alert** fires when one user or app does the same kind of thing many times in a short time, such as deleting hundreds of files. |
 | One alert per record | A record can match several of your alerts, but it sends only one single-record alert: the first one it matches. A repeated activity alert can still count the same record. |
 | Saved logs | Every record that sends an alert is saved under **Saved Logs**. There you can open it, download it, and see which of your alerts it matches. |
+
+## Graph searches or the Audit Log Feed
+
+CIPP can collect the audit log in two ways. **CIPP > Settings > Features > Audit Log Feed** chooses which one.
+
+| | Graph searches (feature off, the default) | Audit Log Feed (feature on) |
+| --- | --- | --- |
+| How CIPP collects records | Creates a Microsoft Graph audit log search for each tenant every 15 minutes, and checks the results when Microsoft finishes the search. | Reads Microsoft's Office 365 Management Activity API every 30 minutes, as this page describes. |
+| How quickly alerts arrive | Often an hour or more: Microsoft takes a while to finish each search. | Usually 5 to 45 minutes. |
+| Which logs | Entra ID, and Exchange admin activity. | Entra ID, Exchange, SharePoint and OneDrive, and General. |
+| Repeated activity alerts | Not available. | Available. |
+| Audit Logs tabs | Log Searches and Search Coverage. | Log Collection and Diagnostics. |
+
+Both use the same alerts and the same checks: conditions, OR groups, variables, priority and Saved Logs work the same way. While the feature is off, CIPP will not save an alert on the SharePoint and OneDrive or General log, or a repeated activity alert, because Graph searches cannot fire them. Alerts like that saved while the feature was on stay, but do nothing until it is turned back on. Manual searches work either way.
+
+You can switch at any time. A record already alerted on is not alerted on again, so switching does not send duplicates. When the feature is turned on, a log CIPP has never read starts with its last hour, and a log it read before catches up from where it stopped, at most 6 hours back.
 
 ## How CIPP checks the audit log
 

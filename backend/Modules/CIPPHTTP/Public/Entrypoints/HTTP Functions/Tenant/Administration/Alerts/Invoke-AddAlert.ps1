@@ -113,6 +113,14 @@ function Invoke-AddAlert {
                     Body       = @{ error = "Unknown log source: $LogType" }
                 })
         }
+        # Graph audit searches, used while the Audit Log Feed feature is off, read only the Entra ID and Exchange logs and count nothing.
+        $FeedFlag = $(try { Get-CIPPFeatureFlag -Id 'AuditLogFeed' } catch { $null })
+        if ($FeedFlag.Enabled -ne $true -and ($LogType -in @('Audit.SharePoint', 'Audit.General') -or [bool]$Request.Body.thresholdEnabled)) {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = @{ error = 'Alerts on the SharePoint and OneDrive or General log, and repeated activity alerts, need the Audit Log Feed feature. Turn it on under CIPP > Settings > Features, then save the alert again.' }
+                })
+        }
         $Threshold = $null
         # Alert when one identity's matching records reach Count within Minutes, instead of on every record.
         if ([bool]$Request.Body.thresholdEnabled) {

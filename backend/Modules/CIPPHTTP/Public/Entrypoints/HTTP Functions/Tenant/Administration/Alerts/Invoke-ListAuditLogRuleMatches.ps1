@@ -76,6 +76,8 @@ function Invoke-ListAuditLogRuleMatches {
             }
         }
 
+        # Graph audit searches, used while the Audit Log Feed feature is off, match any log and count nothing.
+        $FeedEnabled = $(try { Get-CIPPFeatureFlag -Id 'AuditLogFeed' } catch { $null }).Enabled -eq $true
         $Results = foreach ($Rule in @(Get-CIPPAuditLogRuleSet -TenantFilter $TenantFilter)) {
             # An alert without a comment is named by its conditions.
             $Name = if ($Rule.AlertComment) { [string]$Rule.AlertComment } else {
@@ -85,8 +87,10 @@ function Invoke-ListAuditLogRuleMatches {
             $Clauses = if ($ByRule.ContainsKey([string]$Rule.RowKey)) { @($ByRule[[string]$Rule.RowKey]) } else { @() }
             $Hit = $Clauses.Where({ $_.Anchored -and $_.Matched }, 'First').Count -gt 0
             $Anchored = $Clauses.Where({ $_.Anchored }, 'First').Count -gt 0
-            $Outcome = if ($Rule.LogType -and $Rule.LogType -ne $RecordLog) {
+            $Outcome = if ($FeedEnabled -and $Rule.LogType -and $Rule.LogType -ne $RecordLog) {
                 @{ Code = 'OtherLog'; WouldAlert = 'No'; Reason = "This alert reads the $($LogNames[[string]$Rule.LogType] ?? $Rule.LogType) log, and this record is in the $($LogNames[$RecordLog]) log, so it can never fire on it." }
+            } elseif ($Rule.Threshold -and -not $FeedEnabled) {
+                @{ Code = 'NotChecked'; WouldAlert = 'No'; Reason = 'A repeated activity alert. These count records only while the Audit Log Feed feature is enabled.' }
             } elseif ($Rule.Threshold) {
                 $Setting = try { [string]$Rule.Threshold | ConvertFrom-Json -ErrorAction Stop } catch { $null }
                 $Group = @(Split-CIPPAuditLogConditions -Conditions ($Rule.Conditions | ConvertFrom-Json -ErrorAction SilentlyContinue))

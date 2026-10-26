@@ -11,31 +11,39 @@ function Start-AuditLogFeedV3 {
              the blobs out to bounded runs of batch tasks that download them and send their alerts.
           2. Graph searches: Start-AuditLogIngestionV2 downloads and processes searches that already exist, which are
              manual searches and scheduled windows created before the feed. No scheduled searches are created.
-        Once a day it also raises an alert for each enabled rule without an anchor, which the engine skips.
+        Both stages run only while the Audit Log Feed feature is enabled; otherwise Start-AuditLogPlannerV2 creates and
+        processes Graph searches. Either way, once a day it raises an alert for each enabled rule without an anchor, which
+        the engine skips.
     .FUNCTIONALITY
         Entrypoint
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param()
 
-    $Bridge = 'Craft.Services.OrchestratorBridge' -as [type]
-    if ($Bridge -and ([Craft.Services.OrchestratorBridge]::IsRunActive('AuditLogFeedListV3') -or [Craft.Services.OrchestratorBridge]::IsRunActive('AuditLogFeedBlobsV3'))) {
-        Write-Information 'AuditLogFeedV3: a feed cycle is still going'
+    # The host scheduler fires every CIPPTimers.json entry regardless of feature flags, so the feed gates itself.
+    $FeedFlag = $(try { Get-CIPPFeatureFlag -Id 'AuditLogFeed' } catch { $null })
+    if ($FeedFlag.Enabled -ne $true) {
+        Write-Information 'AuditLogFeedV3: skipped, the Audit Log Feed feature is disabled and Graph searches collect audit logs'
     } else {
-        try {
-            if ($PSCmdlet.ShouldProcess('Start-AuditLogFeedV3', 'Poll the audit log feed')) {
-                $Queued = Start-CIPPAuditLogFeedListRun -Tenants @(Get-CIPPAuditLogTenantScope)
-                Write-Information "AuditLogFeedV3: $Queued listing task(s) queued"
+        $Bridge = 'Craft.Services.OrchestratorBridge' -as [type]
+        if ($Bridge -and ([Craft.Services.OrchestratorBridge]::IsRunActive('AuditLogFeedListV3') -or [Craft.Services.OrchestratorBridge]::IsRunActive('AuditLogFeedBlobsV3'))) {
+            Write-Information 'AuditLogFeedV3: a feed cycle is still going'
+        } else {
+            try {
+                if ($PSCmdlet.ShouldProcess('Start-AuditLogFeedV3', 'Poll the audit log feed')) {
+                    $Queued = Start-CIPPAuditLogFeedListRun -Tenants @(Get-CIPPAuditLogTenantScope)
+                    Write-Information "AuditLogFeedV3: $Queued listing task(s) queued"
+                }
+            } catch {
+                Write-LogMessage -API 'AuditLogFeedV3' -message 'Audit log feed stage failed' -sev Error -LogData (Get-CippException -Exception $_)
             }
-        } catch {
-            Write-LogMessage -API 'AuditLogFeedV3' -message 'Audit log feed stage failed' -sev Error -LogData (Get-CippException -Exception $_)
         }
-    }
 
-    try {
-        Start-AuditLogIngestionV2
-    } catch {
-        Write-LogMessage -API 'AuditLogFeedV3' -message 'Audit log search ingestion failed' -sev Error -LogData (Get-CippException -Exception $_)
+        try {
+            Start-AuditLogIngestionV2
+        } catch {
+            Write-LogMessage -API 'AuditLogFeedV3' -message 'Audit log search ingestion failed' -sev Error -LogData (Get-CippException -Exception $_)
+        }
     }
 
     # Once a day, an alert for each enabled rule the engine skips for want of an anchor (Get-CIPPAuditLogRuleAnchor).

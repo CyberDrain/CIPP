@@ -18,11 +18,20 @@ function Start-AuditLogPlannerV2 {
         The two stages operate on different windows (stage 1 queues new searches; stage 2 consumes
         searches from earlier ticks once Graph has finished them), so running them in one tick simply
         pipelines the work.
+
+        Does nothing while the Audit Log Feed feature is enabled: Start-AuditLogFeedV3 then collects the logs and
+        processes the searches already created.
     .FUNCTIONALITY
         Entrypoint
     #>
     [CmdletBinding()]
     param()
+    # The host scheduler fires every CIPPTimers.json entry regardless of feature flags, so the planner gates itself.
+    $FeedFlag = $(try { Get-CIPPFeatureFlag -Id 'AuditLogFeed' } catch { $null })
+    if ($FeedFlag.Enabled -eq $true) {
+        Write-Information 'AuditLogV2: skipped, the Audit Log Feed feature collects audit logs instead of Graph searches'
+        return
+    }
     try {
         Start-AuditLogSearchCreationV2
     } catch {

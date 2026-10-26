@@ -16,6 +16,8 @@ BeforeAll {
     function Get-CIPPAzDataTableEntity { param($TableName, $Context, $Filter, $Property) }
     function Add-CIPPAzDataTableEntity { param($TableName, $Context, $Entity, [switch]$Force) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData, $headers) }
+    function Get-CIPPFeatureFlag { param($Id) [pscustomobject]@{ Id = $Id; Enabled = $script:FeedEnabled } }
+    $script:FeedEnabled = $true
     . (Get-ChildItem -Path (Join-Path $RepoRoot 'Modules/CIPPHTTP') -Recurse -Filter 'Invoke-AddAlert.ps1' -File)[0].FullName
 
     # The shapes the alert form posts: Input is one {value} object, or an array of them for In.
@@ -197,6 +199,27 @@ Describe 'Invoke-AddAlert' {
         $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = @(New-Condition 'Operation' 'eq' '%myoperation%'); tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.Exchange' } } })
         $Response.StatusCode | Should -Be 400
         $Response.Body.error | Should -BeLike '*cannot use a variable*'
+    }
+
+    It 'refuses SharePoint, General and repeated activity alerts while the Audit Log Feed feature is off' {
+        $script:FeedEnabled = $false
+        try {
+            $Inbox = @(New-Condition 'Operation' 'eq' 'New-InboxRule')
+            $Deletes = @(New-Condition 'Operation' 'in' @('FileDeleted', 'FileRecycled'))
+            foreach ($Body in @(
+                    @{ conditions = $Deletes; tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.SharePoint' } }
+                    @{ conditions = $Inbox; tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.General' } }
+                    @{ conditions = $Deletes; tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.SharePoint' }; thresholdEnabled = $true; threshold = @{ Count = '100'; Minutes = '20' } }
+                )) {
+                $Response = Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]$Body })
+                $Response.StatusCode | Should -Be 400
+                $Response.Body.error | Should -BeLike '*Audit Log Feed*'
+            }
+            Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+            (Invoke-AddAlert -Request ([pscustomobject]@{ Body = [pscustomobject]@{ conditions = $Inbox; tenantFilter = @(@{ value = 'AllTenants' }); logbook = @{ value = 'Audit.Exchange' } } })).StatusCode | Should -Be 200
+        } finally {
+            $script:FeedEnabled = $true
+        }
     }
 
     It 'refuses a log source that is not a feed content type' {

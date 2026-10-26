@@ -116,6 +116,19 @@ const AlertWizard = () => {
     refetchOnMount: false,
     refetchOnReconnect: false,
   })
+  // Same key and TTL as the layout's call so react-query serves one shared copy.
+  const featureFlags = ApiGetCall({
+    url: '/api/ListFeatureFlags',
+    queryKey: 'featureFlags',
+    staleTime: 600000,
+  })
+  // Without the Audit Log Feed feature, Graph audit searches read only the Entra ID and Exchange logs and count nothing.
+  const feedEnabled =
+    Array.isArray(featureFlags.data) &&
+    featureFlags.data.some(
+      (flag) => flag.Id === 'AuditLogFeed' && flag.Enabled === true
+    )
+  const graphSearchLogs = ['Audit.AzureActiveDirectory', 'Audit.Exchange']
   const haloDefaultStrategy = integrationsConfig?.data?.HaloPSA
     ?.LinkTicketsToUsers
     ? 'split'
@@ -255,6 +268,14 @@ const AlertWizard = () => {
     control: formControl.control,
     name: 'thresholdEnabled',
   })
+  // An existing alert keeps its log on offer, so it can still be opened and changed.
+  const availableLogbookOptions = feedEnabled
+    ? logbookOptions
+    : logbookOptions.filter(
+        (option) =>
+          graphSearchLogs.includes(option.value) ||
+          option.value === logbookWatcher?.value
+      )
   const propertyWatcher = useWatch({
     control: formControl.control,
     name: 'conditions',
@@ -1182,10 +1203,19 @@ const AlertWizard = () => {
                                 name="preset"
                                 formControl={formControl}
                                 label="Select an alert preset, or customize your own"
-                                options={auditLogTemplates.map((template) => ({
-                                  value: template.value,
-                                  label: template.name,
-                                }))}
+                                options={auditLogTemplates
+                                  .filter(
+                                    (template) =>
+                                      feedEnabled ||
+                                      (graphSearchLogs.includes(
+                                        template.template?.logbook?.value
+                                      ) &&
+                                        !template.template?.threshold)
+                                  )
+                                  .map((template) => ({
+                                    value: template.value,
+                                    label: template.name,
+                                  }))}
                               />
                             </Grid>
 
@@ -1203,7 +1233,7 @@ const AlertWizard = () => {
                                   },
                                 }}
                                 label="Select the log source"
-                                options={logbookOptions}
+                                options={availableLogbookOptions}
                               />
                             </Grid>
                           </Grid>
@@ -1313,60 +1343,67 @@ const AlertWizard = () => {
                             )}
                           </Stack>
                           <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid size={12}>
-                              <CippFormComponent
-                                type="switch"
-                                name="thresholdEnabled"
-                                label="Only alert when one identity does this repeatedly"
-                                formControl={formControl}
-                                disabled={groupNumbers.length > 1}
-                                helperText={
-                                  groupNumbers.length > 1
-                                    ? 'Not available with more than one group: a repeated activity alert counts one set of operations.'
-                                    : 'Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. Only operations where many in a short time means something can be counted, such as deletions, downloads, sharing and permission changes. The alert can have only the Operation condition, using Equals or In.'
-                                }
-                              />
-                            </Grid>
-                            <CippFormCondition
-                              field="thresholdEnabled"
-                              compareType="is"
-                              compareValue={true}
-                              formControl={formControl}
-                            >
-                              <Grid size={{ xs: 12, md: 6 }}>
-                                <CippFormComponent
-                                  type="number"
-                                  name="threshold.Count"
-                                  label="Number of matching records"
+                            {(feedEnabled || thresholdWatcher) && (
+                              <>
+                                <Grid size={12}>
+                                  <CippFormComponent
+                                    type="switch"
+                                    name="thresholdEnabled"
+                                    label="Only alert when one identity does this repeatedly"
+                                    formControl={formControl}
+                                    disabled={groupNumbers.length > 1}
+                                    helperText={
+                                      groupNumbers.length > 1
+                                        ? 'Not available with more than one group: a repeated activity alert counts one set of operations.'
+                                        : 'Counts the matching records per user or app and alerts once when the count is reached within the window, for example mass file deletion. Only operations where many in a short time means something can be counted, such as deletions, downloads, sharing and permission changes. The alert can have only the Operation condition, using Equals or In.'
+                                    }
+                                  />
+                                </Grid>
+                                <CippFormCondition
+                                  field="thresholdEnabled"
+                                  compareType="is"
+                                  compareValue={true}
                                   formControl={formControl}
-                                  validators={{
-                                    min: { value: 2, message: 'At least 2' },
-                                    max: {
-                                      value: 10000,
-                                      message: 'At most 10000',
-                                    },
-                                  }}
-                                />
-                              </Grid>
-                              <Grid size={{ xs: 12, md: 6 }}>
-                                <CippFormComponent
-                                  type="number"
-                                  name="threshold.Minutes"
-                                  label="Within minutes"
-                                  formControl={formControl}
-                                  validators={{
-                                    min: {
-                                      value: 10,
-                                      message: 'At least 10 minutes',
-                                    },
-                                    max: {
-                                      value: 60,
-                                      message: 'At most 60 minutes',
-                                    },
-                                  }}
-                                />
-                              </Grid>
-                            </CippFormCondition>
+                                >
+                                  <Grid size={{ xs: 12, md: 6 }}>
+                                    <CippFormComponent
+                                      type="number"
+                                      name="threshold.Count"
+                                      label="Number of matching records"
+                                      formControl={formControl}
+                                      validators={{
+                                        min: {
+                                          value: 2,
+                                          message: 'At least 2',
+                                        },
+                                        max: {
+                                          value: 10000,
+                                          message: 'At most 10000',
+                                        },
+                                      }}
+                                    />
+                                  </Grid>
+                                  <Grid size={{ xs: 12, md: 6 }}>
+                                    <CippFormComponent
+                                      type="number"
+                                      name="threshold.Minutes"
+                                      label="Within minutes"
+                                      formControl={formControl}
+                                      validators={{
+                                        min: {
+                                          value: 10,
+                                          message: 'At least 10 minutes',
+                                        },
+                                        max: {
+                                          value: 60,
+                                          message: 'At most 60 minutes',
+                                        },
+                                      }}
+                                    />
+                                  </Grid>
+                                </CippFormCondition>
+                              </>
+                            )}
                             <Grid size={{ xs: 12, md: 6 }}>
                               <CippFormComponent
                                 type="number"

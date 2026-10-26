@@ -31,6 +31,7 @@ The **Actions** menu acts on this mailbox. Some entries are greyed out rather th
 | Set Litigation Hold                         | Places the mailbox on litigation hold for a chosen number of days, or lifts an existing hold with the **Disable Litigation Hold** switch. Greyed out when the mailbox is not licensed for litigation hold.                                                                                                                |
 | Set Retention Hold                          | Places the mailbox on retention hold, or lifts one with the **Disable Retention Hold** switch.                                                                                                                                                                                                                            |
 | Set Mailbox Locale                          | Sets the mailbox language and regional format, for example `en-GB` or `da-DK`.                                                                                                                                                                                                                                            |
+| Set Custom Attributes                       | Sets one or more of the mailbox's Custom Attributes 1–15. Choose each attribute from a dropdown, enter a value, and use **Add attribute** if you need more than one. Leave a value blank to clear that attribute; anything you do not add is left as it is. Greyed out when the mailbox is synced from on-premises and Exchange is still managing those attributes on-premises. Also available as a bulk action on the mailbox list. |
 | Set Max Send/Receive Size                   | Sets the largest message the mailbox may send and receive, in MB.                                                                                                                                                                                                                                                         |
 | Set Send Quota                              | Sets the size at which the mailbox is stopped from sending.                                                                                                                                                                                                                                                               |
 | Set Send and Receive Quota                  | Sets the size at which the mailbox is stopped from sending and receiving.                                                                                                                                                                                                                                                 |
@@ -130,5 +131,15 @@ Sets the mailbox's automatic replies.
 ## Recipient Limits
 
 Sets the largest number of recipients the mailbox may address in a single message, which is a practical brake on a compromised account being used to send in bulk.
+
+## Custom Attributes
+
+Edits the mailbox's Custom Attributes 1–15. These are Exchange mailbox fields, not the directory attributes on Edit User, and not CIPP Custom Data.
+
+Attributes that already have a value show as rows. Use **Add attribute** to set others. Leave a value blank and submit to clear that attribute; attributes you do not list are left alone.
+
+If the mailbox is synced from on-premises and Exchange attributes are still managed there, CIPP shows the current values but does not allow editing. Cloud-only mailboxes can always be edited. For synced mailboxes, editing becomes available once Exchange cloud management is turned on for that mailbox (for example with the Enable Exchange Cloud Management standard).
+
+The same editor is available from **Actions → Set Custom Attributes**, and as a bulk action under Email → Administration → Mailboxes.
 
 {% include "../../../../../../.gitbook/includes/feature-request.md" %}

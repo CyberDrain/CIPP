@@ -23,10 +23,10 @@ CIPP was built with a security-first approach. Each CIPP instance is hosted in i
 
 ### Logging and Controls
 
-Data is hosted in the CyberDrain B.V. (Chamber of Commerce number 86594893) Azure Tenant. Sponsors hosted by CyberDrain can receive the following technical compliance information:
+Data is hosted in the CyberDrain B.V. (Chamber of Commerce number 86594893) Azure Tenant. Subscribers hosted by CyberDrain can receive the following technical compliance information:
 
 * Documentation regarding the current Secure Score state of the CyberDrain Azure Tenant
-* Sponsors can connect their SIEM/SOC directly to their own security group or Azure Storage account to be aware of any changes made to the environment.
+* Subscribers can connect their SIEM/SOC directly to their own security group or Azure Storage account to be aware of any changes made to the environment.
 
 ### **CyberDrain's Commitment to** Global Security Standards
 

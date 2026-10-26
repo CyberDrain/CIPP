@@ -7,7 +7,7 @@ function Invoke-ListPIMRoles {
     .SYNOPSIS
         List Entra directory roles grouped with their PIM assignment breakdown.
     .DESCRIPTION
-        Returns one row per role (per tenant when AllTenants is selected) with the role's definition details, how many principals hold it permanently, eligibly or with a time-bound active assignment, the role's PIM policy summary, a slim Members list and the full assignment rows for drill-in. Roles nobody holds are included for a single tenant so the result is also the role catalogue. Powers the Roles & PIM page; ListRoles keeps its original per-definition shape and ListRoleAssignments stays one flat row per assignment.
+        Returns one row per role (per tenant when AllTenants is selected) with the role's definition details, how many principals hold it permanently, eligibly or with a time-bound active assignment, the role's PIM policy summary, a slim Members list and the full assignment rows for drill-in. Roles nobody holds are included for a single tenant so the result is also the role catalogue. Supports UseReportDB=true to read a single tenant from the reporting database cache (sync with ExecCIPPDBCache Name=RolesAndAssignments); AllTenants always reads the cache. Powers the Roles & PIM page; ListRoles keeps its original per-definition shape and ListRoleAssignments stays one flat row per assignment.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -18,29 +18,52 @@ function Invoke-ListPIMRoles {
     $RoleTemplateId = $Request.Query.roleTemplateId
     # Restrict to the roles one principal (object id) holds.
     $PrincipalId = $Request.Query.principalId
+    # Serve from the reporting database cache instead of live Graph. AllTenants always reads the cache.
+    $UseReportDB = $Request.Query.UseReportDB -eq $true
+    $Failed = 0
+    $Total = 1
 
     try {
-        if ($TenantFilter -eq 'AllTenants') {
+        # Tenant|roleTemplateId -> directoryRole object id; the role's SID derives from that, not the template id.
+        $RoleObjectIds = @{}
+        if ($TenantFilter -eq 'AllTenants' -or $UseReportDB) {
+            $CountTenant = if ($TenantFilter -eq 'AllTenants') { 'allTenants' } else { $TenantFilter }
             $Counts = @(
-                Get-CIPPDbItem -TenantFilter 'allTenants' -Type 'RoleAssignmentScheduleInstances' -CountsOnly
-                Get-CIPPDbItem -TenantFilter 'allTenants' -Type 'Roles' -CountsOnly
+                foreach ($Type in @('RoleAssignmentScheduleInstances', 'RoleAssignments', 'RoleDefinitions', 'Roles')) {
+                    Get-CIPPDbItem -TenantFilter $CountTenant -Type $Type -CountsOnly
+                }
             ) | Where-Object { $_ }
             $RefreshedAt = @{}
             foreach ($Count in $Counts) {
                 $Existing = $RefreshedAt[$Count.PartitionKey]
                 if (-not $Existing -or $Count.Timestamp -gt $Existing) { $RefreshedAt[$Count.PartitionKey] = $Count.Timestamp }
             }
-            $TenantList = Get-Tenants -IncludeErrors
-            $Tenants = @($RefreshedAt.Keys | Where-Object { $TenantList.defaultDomainName -contains $_ })
+            if ($TenantFilter -eq 'AllTenants') {
+                $TenantList = Get-Tenants -IncludeErrors
+                $Tenants = @($RefreshedAt.Keys | Where-Object { $TenantList.defaultDomainName -contains $_ })
+            } else {
+                $Tenants = @($RefreshedAt.Keys)
+                if ($Tenants.Count -eq 0) {
+                    throw "No roles data found in reporting database for $TenantFilter. Sync the report data first."
+                }
+            }
 
+            # A single cached tenant lists roles nobody holds too, like the live read. AllTenants
+            # stays assigned-only: the catalogue is the same ~100 built-in roles in every tenant.
+            $IncludeUnassigned = ($TenantFilter -ne 'AllTenants') -and [string]::IsNullOrWhiteSpace($PrincipalId)
             $Rows = [System.Collections.Generic.List[object]]::new()
+            $Total = $Tenants.Count
             foreach ($Tenant in $Tenants) {
                 try {
-                    foreach ($Row in Get-CIPPPIMRoleAssignments -TenantFilter $Tenant -FromCache -IncludePolicy) {
+                    foreach ($Role in @(New-CIPPDbRequest -TenantFilter $Tenant -Type 'Roles')) {
+                        if ($Role.roleTemplateId) { $RoleObjectIds["$Tenant|$($Role.roleTemplateId)"] = $Role.id }
+                    }
+                    foreach ($Row in Get-CIPPPIMRoleAssignments -TenantFilter $Tenant -FromCache -IncludePolicy -IncludeUnassignedRoles:$IncludeUnassigned) {
                         $Row | Add-Member -NotePropertyName 'LastRefreshed' -NotePropertyValue $RefreshedAt[$Tenant] -Force
                         $Rows.Add($Row)
                     }
                 } catch {
+                    $Failed++
                     Write-LogMessage -API $APIName -tenant $Tenant -message "Failed to read cached role assignments: $($_.Exception.Message)" -sev Warning
                 }
             }
@@ -52,6 +75,13 @@ function Invoke-ListPIMRoles {
             if (-not [string]::IsNullOrWhiteSpace($PrincipalId)) { $Params.PrincipalId = $PrincipalId }
             if (-not [string]::IsNullOrWhiteSpace($RoleTemplateId)) { $Params.RoleDefinitionId = $RoleTemplateId }
             $Rows = @(Get-CIPPPIMRoleAssignments @Params)
+            try {
+                foreach ($Role in @(New-GraphGetRequest -uri 'https://graph.microsoft.com/v1.0/directoryRoles?$select=id,roleTemplateId' -tenantid $TenantFilter)) {
+                    if ($Role.roleTemplateId) { $RoleObjectIds["$TenantFilter|$($Role.roleTemplateId)"] = $Role.id }
+                }
+            } catch {
+                Write-Information "Could not list directory roles for $TenantFilter`: $($_.Exception.Message)"
+            }
         }
 
         if (-not [string]::IsNullOrWhiteSpace($PrincipalId)) { $Rows = @($Rows | Where-Object { $_.PrincipalId -eq $PrincipalId }) }
@@ -65,6 +95,7 @@ function Invoke-ListPIMRoles {
                 $Assignments = @($GroupRows | Where-Object { $_.PrincipalId })
                 $PermanentCount = @($Assignments | Where-Object { $_.AssignmentType -eq 'Permanent' }).Count
                 $EligibleCount = @($Assignments | Where-Object { $_.AssignmentType -eq 'Eligible' }).Count
+                $RoleObjectId = $RoleObjectIds["$($Meta.Tenant)|$($Meta.RoleDefinitionId)"]
                 $ActiveCount = @($Assignments | Where-Object { $_.AssignmentType -in @('Active', 'ActivatedFromEligible') }).Count
                 [PSCustomObject]@{
                     Tenant              = $Meta.Tenant
@@ -72,6 +103,7 @@ function Invoke-ListPIMRoles {
                     RoleDisplayName     = $Meta.RoleDisplayName
                     RoleDescription     = $Meta.RoleDescription
                     RoleIsBuiltIn       = $Meta.RoleIsBuiltIn
+                    SID                 = if ($RoleObjectId) { Convert-AzureAdObjectIdToSid -ObjectID $RoleObjectId } else { $null }
                     IsPrivilegedRole    = $Meta.IsPrivilegedRole
                     PIMCapable          = $Meta.PIMCapable
                     PolicySummary       = $Meta.PolicySummary
@@ -97,17 +129,18 @@ function Invoke-ListPIMRoles {
                         })
                     Assignments         = @($Assignments)
                     LastRefreshed       = $Meta.LastRefreshed
+                    CacheTimestamp      = $Meta.LastRefreshed
                 }
             }
         )
         $Results = @($Grouped | Sort-Object -Property Tenant, RoleDisplayName)
 
-        $StatusCode = [HttpStatusCode]::OK
+        $StatusCode = Get-CippBulkStatusCode -Total $Total -Failed $Failed
     } catch {
         $ErrorMessage = Get-CippException -Exception $_
         Write-LogMessage -API $APIName -tenant $TenantFilter -message "Failed to list roles with PIM data: $($ErrorMessage.NormalizedError)" -sev Error -LogData $ErrorMessage
         $Results = "Failed to list roles with PIM data for $TenantFilter. $($ErrorMessage.NormalizedError)"
-        $StatusCode = [HttpStatusCode]::BadRequest
+        $StatusCode = [HttpStatusCode]::InternalServerError
     }
 
     return [HttpResponseContext]@{

@@ -13,6 +13,11 @@ function Invoke-CippTestSMB1001_2_1 {
     $Name = 'Strong password hygiene is maintained'
 
     try {
+        if (-not (Test-CIPPStandardLicense -StandardName $TestId -TenantFilter $Tenant -Preset Entra -SkipLog)) {
+            Add-CippTestResult -TenantFilter $Tenant -TestId $TestId -TestType 'Identity' -Status 'Unlicensed' -ResultMarkdown 'This tenant is not licensed for Microsoft Entra Password Protection. Required capabilities: AAD_PREMIUM, AAD_PREMIUM_P2.' -Risk 'High' -Name $Name -UserImpact 'Low' -ImplementationEffort 'Low' -Category 'Password Hygiene'
+            return
+        }
+
         $Settings = Get-CIPPTestData -TenantFilter $Tenant -Type 'Settings'
 
         if (-not $Settings) {
@@ -20,16 +25,16 @@ function Invoke-CippTestSMB1001_2_1 {
             return
         }
 
-        $PwdSetting = $Settings | Where-Object {
+        $PwdSetting = $Settings.Where({
             $_.templateId -eq '5cf42378-d67d-4f36-ba46-e8b86229381d' -or $_.displayName -eq 'Password Rule Settings'
-        } | Select-Object -First 1
+        }, 'First')[0]
 
         if (-not $PwdSetting) {
             $Status = 'Failed'
             $Result = 'Entra ID Password Rule Settings not found. Configure a custom banned-password list to satisfy SMB1001 (2.1.vi) — passwords must not appear in previous data breaches.'
         } else {
-            $Enforce = ($PwdSetting.values | Where-Object { $_.name -eq 'EnableBannedPasswordCheck' }).value
-            $Custom = ($PwdSetting.values | Where-Object { $_.name -eq 'BannedPasswordList' }).value
+            $Enforce = $PwdSetting.values.Where({ $_.name -eq 'EnableBannedPasswordCheck' }).value
+            $Custom = $PwdSetting.values.Where({ $_.name -eq 'BannedPasswordList' }).value
 
             if ($Enforce -eq 'True' -and -not [string]::IsNullOrWhiteSpace($Custom)) {
                 $WordCount = ($Custom -split '\t').Count

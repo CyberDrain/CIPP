@@ -232,6 +232,7 @@ const Page = () => {
     if (values.intuneprotection) enabledComponents.push("Intune Protection");
     if (values.antispam) enabledComponents.push("Anti-Spam");
     if (values.antiphishing) enabledComponents.push("Anti-Phishing");
+    if (values.teamsvoice) enabledComponents.push("Teams Phone Numbers");
     if (values.CippWebhookAlerts) enabledComponents.push("CIPP Webhook Alerts");
     if (values.CippScriptedAlerts) enabledComponents.push("CIPP Scripted Alerts");
     if (values.CippCustomVariables) enabledComponents.push("Custom Variables");
@@ -604,18 +605,18 @@ const Page = () => {
           data: { ID: currentConfig?.RowKey },
           confirmText:
             "Are you sure you want to remove this backup schedule? This will stop automatic backups but won't delete existing backup files.",
+          onSuccess: () => {
+            // Refresh both queries when a backup schedule is removed
+            setTimeout(() => {
+              backupList.refetch();
+              existingBackupConfig.refetch();
+            }, 2000);
+          },
         }}
         relatedQueryKeys={[
           `BackupTasks-${settings.currentTenant}`,
           `BackupList-${settings.currentTenant}`,
         ]}
-        onSuccess={() => {
-          // Refresh both queries when a backup schedule is removed
-          setTimeout(() => {
-            backupList.refetch();
-            existingBackupConfig.refetch();
-          }, 2000);
-        }}
       />
     </HeaderedTabbedLayout>
   );

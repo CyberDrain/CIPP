@@ -12,11 +12,21 @@
 #
 # -p cipp keeps the project name stable regardless of the directory the command is run from.
 #
+# --pull always leaves the previous image dangling on each update; run `docker image prune -f` now and then.
+#
 # Ports: 5196 CRAFT (browse the app here), 3000 Next.js dev, 6006 Storybook, 10000-10002 azurite.
+# Cap container logs so CRAFT_VERBOSE output can't grow the Docker VM disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 20m
+    max-file: "3"
+
 services:
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     container_name: cipp-azurite
+    logging: *logging
     restart: unless-stopped
     # The prestart guard empties regenerable cache tables when the LokiJS file has
     # grown past the point where azurite can load it without OOM crash-looping.
@@ -37,9 +47,11 @@ services:
       - "127.0.0.1:10002:10002"
     environment:
       - AZURITE_ACCOUNTS=devstoreaccount1:Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-      - NODE_OPTIONS=--max-old-space-size=8192
+      - NODE_OPTIONS=--max-old-space-size=8192 --require /azurite-table-partition.js --require /azurite-perf.js
     volumes:
       - cipp-ng_azurite-data:/workspace
+      - ./tools/azurite-table-partition.js:/azurite-table-partition.js:ro
+      - ./tools/azurite-perf.js:/azurite-perf.js:ro
       - ./tools/azurite-prestart.js:/azurite-prestart.js:ro
     networks:
       - cipp-network
@@ -61,7 +73,7 @@ services:
     container_name: cipp-manifests
     command: >
       sh -c 'set -e; mkdir -p /out;
-      for m in CIPPStandards CIPPAlerts CIPPTests CIPPDB CippExtensions CIPPActivityTriggers; do
+      for m in CIPPStandards CIPPAlerts CIPPBaselines CIPPTests CIPPDB CippExtensions CIPPPwPush CIPPActivityTriggers; do
       cp -f "/src/$$m/$$m.psd1" "/out/$$m.psd1"; done'
     volumes:
       - ../backend/Modules:/src:ro
@@ -81,6 +93,7 @@ services:
     image: ghcr.io/cyberdrain/craft:dev
     platform: linux/amd64
     container_name: cipp-api
+    logging: *logging
     restart: unless-stopped
     ports:
       - "127.0.0.1:5196:8080"
@@ -115,6 +128,8 @@ services:
       - App__Worker__DevExpandModules__3=CIPPDB
       - App__Worker__DevExpandModules__4=CippExtensions
       - App__Worker__DevExpandModules__5=CIPPActivityTriggers
+      - App__Worker__DevExpandModules__6=CIPPBaselines
+      - App__Worker__DevExpandModules__7=CIPPPwPush
       # The Next.js dev server runs in a container, if using windows bind mounts are too slow for node_modules
       # you should use the other docker compose file without the frontend container and run the frontend dev server on the host using the start script
       - CRAFT_DEV_FRONTEND_URL=http://cipp-frontend:3000
@@ -150,9 +165,11 @@ services:
       # the .psm1 stub) still comes from the bind mount above, so PS edits stay live.
       - ./.devmanifests/CIPPStandards.psd1:/app/API/Modules/CIPPStandards/CIPPStandards.psd1
       - ./.devmanifests/CIPPAlerts.psd1:/app/API/Modules/CIPPAlerts/CIPPAlerts.psd1
+      - ./.devmanifests/CIPPBaselines.psd1:/app/API/Modules/CIPPBaselines/CIPPBaselines.psd1
       - ./.devmanifests/CIPPTests.psd1:/app/API/Modules/CIPPTests/CIPPTests.psd1
       - ./.devmanifests/CIPPDB.psd1:/app/API/Modules/CIPPDB/CIPPDB.psd1
       - ./.devmanifests/CippExtensions.psd1:/app/API/Modules/CippExtensions/CippExtensions.psd1
+      - ./.devmanifests/CIPPPwPush.psd1:/app/API/Modules/CIPPPwPush/CIPPPwPush.psd1
       - ./.devmanifests/CIPPActivityTriggers.psd1:/app/API/Modules/CIPPActivityTriggers/CIPPActivityTriggers.psd1
     develop:
       watch:
@@ -182,6 +199,7 @@ services:
     image: node:22-slim
     platform: linux/amd64
     container_name: cipp-frontend
+    logging: *logging
     restart: unless-stopped
     working_dir: /app
     # npx next dev instead of `yarn run dev`: the repo's dev script binds 127.0.0.1,
@@ -230,6 +248,7 @@ services:
     image: node:22-slim
     platform: linux/amd64
     container_name: cipp-storybook
+    logging: *logging
     restart: unless-stopped
     working_dir: /app
     # No yarn install here — cipp-frontend owns that for the shared node_modules volume, and

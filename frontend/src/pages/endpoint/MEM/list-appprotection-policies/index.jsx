@@ -19,13 +19,13 @@ const Page = () => {
     syncTitle: 'Sync App Protection Policies Report',
     allowToggle: true,
     defaultCached: false,
+    serverPagination: true,
   })
 
+  // Route create-template / clone by each row's own URLName (the concrete @odata.type for app
+  // protection / MAM rows, 'mobileAppConfigurations' for device app config) instead of forcing the
+  // generic managedAppPolicies collection, which cannot fetch an app configuration policy by id.
   const actions = useCippIntunePolicyActions(tenant, 'URLName', {
-    templateData: {
-      ID: 'id',
-      URLName: 'managedAppPolicies',
-    },
     platformType: 'deviceAppManagement',
     deleteUrlName: 'URLName',
   })
@@ -56,6 +56,8 @@ const Page = () => {
       <CippTablePage
         title={pageTitle}
         apiUrl={reportDB.resolvedApiUrl}
+        apiData={reportDB.resolvedApiData}
+        apiDataKey={reportDB.apiDataKey}
         queryKey={reportDB.resolvedQueryKey}
         actions={actions}
         offCanvas={offCanvas}

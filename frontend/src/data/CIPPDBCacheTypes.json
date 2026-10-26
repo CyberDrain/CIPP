@@ -55,14 +55,24 @@
     "description": "Authentication methods policy configuration"
   },
   {
-    "type": "DeviceSettings",
-    "friendlyName": "Device Settings",
-    "description": "Device management settings"
-  },
-  {
     "type": "DirectoryRecommendations",
     "friendlyName": "Directory Recommendations",
     "description": "Azure AD directory recommendations"
+  },
+  {
+    "type": "ServiceHealthOverviews",
+    "friendlyName": "Service Health Overviews",
+    "description": "Microsoft 365 service health status per workload"
+  },
+  {
+    "type": "ServiceHealthIssues",
+    "friendlyName": "Service Health Issues",
+    "description": "Microsoft 365 service health incidents and advisories, including their post history"
+  },
+  {
+    "type": "MessageCenterMessages",
+    "friendlyName": "Message Center Posts",
+    "description": "Microsoft 365 message center announcements, including body and rollout details"
   },
   {
     "type": "CrossTenantAccessPolicy",
@@ -73,6 +83,11 @@
     "type": "DefaultAppManagementPolicy",
     "friendlyName": "Default App Management Policy",
     "description": "Default application management policy"
+  },
+  {
+    "type": "ActivityBasedTimeoutPolicy",
+    "friendlyName": "Activity Based Timeout Policy",
+    "description": "Idle session timeout policies for Microsoft 365 web apps"
   },
   {
     "type": "Settings",
@@ -125,14 +140,14 @@
     "description": "Device registration policy settings"
   },
   {
-    "type": "CredentialUserRegistrationDetails",
-    "friendlyName": "Credential User Registration Details",
-    "description": "User credential registration details"
-  },
-  {
     "type": "UserRegistrationDetails",
     "friendlyName": "User Registration Details",
     "description": "MFA registration details for users"
+  },
+  {
+    "type": "ServicePrincipalSignInActivities",
+    "friendlyName": "Service Principal Sign-In Activity",
+    "description": "Last sign-in of every app, delegated or app-only (Entra ID P1)"
   },
   {
     "type": "OAuth2PermissionGrants",
@@ -148,6 +163,16 @@
     "type": "LicenseOverview",
     "friendlyName": "License Overview",
     "description": "License usage overview"
+  },
+  {
+    "type": "ActiveUserDetail",
+    "friendlyName": "Active User Detail",
+    "description": "Per-user last-activity dates for Exchange, OneDrive, SharePoint, Teams and Viva Engage over 90 days"
+  },
+  {
+    "type": "M365AppUserDetail",
+    "friendlyName": "Microsoft 365 App Usage Detail",
+    "description": "Per-user Office app usage by platform (Windows, Mac, mobile, web) over 90 days"
   },
   {
     "type": "MFAState",
@@ -255,9 +280,19 @@
     "description": "Client Access Server mailbox settings"
   },
   {
+    "type": "ExoCASMailboxSmtpAuth",
+    "friendlyName": "CAS Mailbox SMTP AUTH Overrides",
+    "description": "Mailboxes with SMTP AUTH explicitly enabled despite the tenant default"
+  },
+  {
     "type": "MailboxUsage",
     "friendlyName": "Mailbox Usage",
     "description": "Exchange Online mailbox usage statistics"
+  },
+  {
+    "type": "MailTrafficSummary",
+    "friendlyName": "Mail Traffic Summary",
+    "description": "Top mail senders and recipients by message volume over the last 30 days"
   },
   {
     "type": "OneDriveSiteListing",
@@ -287,9 +322,14 @@
     "description": "SharePoint site usage statistics"
   },
   {
+    "type": "SharePointUsageReport",
+    "friendlyName": "SharePoint Usage Report (Tenant-level)",
+    "description": "Aggregated SharePoint storage usage across all sites in the tenant"
+  },
+  {
     "type": "SPOSites",
     "friendlyName": "SharePoint Site Settings",
-    "description": "Per-site SharePoint admin settings (site owner, sharing controls, lifecycle, version policy, People Picker, unmanaged-device access) for every site collection, keyed by site id"
+    "description": "Per-site SharePoint settings (URL, title, template, guest People Picker suggestions) for every site collection, keyed by site id"
   },
   {
     "type": "SiteActivity",

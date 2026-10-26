@@ -1,9 +1,13 @@
 # Standards & Drift Alignment
 
+{% hint style="info" %}
+This page is hidden while the **Baselines** feature flag is on in [features.md](../../../cipp/settings/features.md "mention"), because [README.md](../../baselines/README.md "mention") replace Standards and Drift.
+{% endhint %}
+
 {% hint style="warning" %}
 ## **Understanding Standards**
 
-This page is a reference to the features of the Standard & Drift Alignment page in CIPP. To better understand Standards and Drift, please see the main page for [..](../ "mention").
+This page is a reference to the features of the Standard & Drift Alignment page in CIPP. To better understand Standards and Drift, please see the main page for [README.md](../README.md "mention").
 {% endhint %}
 
 This page gives you a snapshot of how your tenants measure up against your Standards and Drift templates. The same underlying data is presented three ways, and you switch between them with the toggle at the top of the table. Each view carries its own columns, filters, and actions.

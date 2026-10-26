@@ -60,6 +60,16 @@ export const CippOffboardingDefaultSettings = (props) => {
             ),
           },
           {
+            label: 'Remove group ownership',
+            value: (
+              <CippFormComponent
+                type="switch"
+                name="offboardingDefaults.RemoveGroupOwnership"
+                formControl={formControl}
+              />
+            ),
+          },
+          {
             label: 'Hide from Global Address List',
             value: (
               <CippFormComponent
@@ -277,6 +287,14 @@ export const CippOffboardingDefaultSettings = (props) => {
                   type="switch"
                   label="PSA"
                   name="offboardingDefaults.postExecution.psa"
+                  formControl={formControl}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <CippFormComponent
+                  type="switch"
+                  label="Push notification"
+                  name="offboardingDefaults.postExecution.push"
                   formControl={formControl}
                 />
               </Grid>

@@ -44,7 +44,7 @@ function Set-CIPPDBCacheIntuneAppProtectionPolicies {
         # treats a fresh empty cache as authoritative (baseline drift detection).
         $GetChecked = {
             param($Results, $Id)
-            $Result = $Results | Where-Object { $_.id -eq $Id } | Select-Object -First 1
+            $Result = $Results.Where({ $_.id -eq $Id }, 'First')[0]
             if (-not $Result -or $null -eq $Result.status -or [int]$Result.status -lt 200 -or [int]$Result.status -ge 300) {
                 $GraphError = $Result.body.error.message ?? $Result.body.message ?? 'no batch response'
                 throw "Graph request '$Id' failed (HTTP $($Result.status)): $GraphError - preserving the previous cache"
@@ -91,9 +91,9 @@ function Set-CIPPDBCacheIntuneAppProtectionPolicies {
             }
         }
 
-        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneAppProtectionPolicyGroups' -Data @($Groups) -AddCount
-        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneAppProtectionManagedAppPolicies' -Data @($ManagedAppPoliciesWithAssignments) -AddCount
-        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneAppProtectionMobileAppConfigurations' -Data @($MobileAppConfigs) -AddCount
+        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneAppProtectionPolicyGroups' -Data @($Groups) -AddCount -ClearOnEmpty
+        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneAppProtectionManagedAppPolicies' -Data @($ManagedAppPoliciesWithAssignments) -AddCount -ClearOnEmpty
+        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneAppProtectionMobileAppConfigurations' -Data @($MobileAppConfigs) -AddCount -ClearOnEmpty
 
         $TotalCount = (($ManagedAppPoliciesWithAssignments | Measure-Object).Count + ($MobileAppConfigs | Measure-Object).Count)
         Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message "Cached $TotalCount app protection/configuration policies" -sev Debug

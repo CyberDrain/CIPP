@@ -12,9 +12,12 @@ jobs:
       issues: write
     steps:
       - name: Label Issues
-        uses: andymckay/labeler@e6c4322d0397f3240f0e7e30a33b5c5df2d39e90
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
-          add-labels: "bug"
+          script: |
+            const issue = { ...context.repo, issue_number: context.issue.number }
+            await github.rest.issues.addLabels({ ...issue, labels: ['bug'] })
+            await github.rest.issues.update({ ...issue, type: 'Bug' })
   label_issues_frs:
     if: github.repository_owner == 'CyberDrain' && contains(github.event.issue.title, 'Feature')
     runs-on: ubuntu-slim
@@ -22,6 +25,9 @@ jobs:
       issues: write
     steps:
       - name: Label Issues
-        uses: andymckay/labeler@e6c4322d0397f3240f0e7e30a33b5c5df2d39e90
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
-          add-labels: "Feature, no-priority"
+          script: |
+            const issue = { ...context.repo, issue_number: context.issue.number }
+            await github.rest.issues.addLabels({ ...issue, labels: ['Feature', 'no-priority'] })
+            await github.rest.issues.update({ ...issue, type: 'Feature' })

@@ -34,6 +34,22 @@ Describe 'Get-CIPPSharePointDomain' {
 
 Describe 'Get-SharePointAdminLink' {
     Context 'resolving through Graph' {
+        BeforeEach {
+            $script:CIPPSharePointAdminLinks = @{}
+            $script:CIPPSharePointRootSiteFailures = @{}
+        }
+
+        It 'looks the root site up once per tenant and reuses it' {
+            Mock -CommandName New-GraphGetRequest -MockWith {
+                [PSCustomObject]@{ siteCollection = [PSCustomObject]@{ hostname = 'contoso.sharepoint.com' } }
+            }
+
+            $null = Get-SharePointAdminLink -Public $false -TenantFilter 'contoso.onmicrosoft.com'
+            (Get-SharePointAdminLink -Public $false -TenantFilter 'contoso.onmicrosoft.com').AdminUrl |
+                Should -Be 'https://contoso-admin.sharepoint.com'
+            Should -Invoke New-GraphGetRequest -Times 1 -Exactly
+        }
+
         It 'takes the domain from the root site host rather than assuming .com' {
             Mock -CommandName New-GraphGetRequest -MockWith {
                 [PSCustomObject]@{
@@ -152,5 +168,23 @@ Describe 'Get-SharePointAdminLink' {
             { Get-SharePointAdminLink -Public $true -TenantFilter 'contoso.com' } |
                 Should -Throw '*Could not find onmicrosoft domain*'
         }
+    }
+}
+
+Describe 'Get-SharePointAdminLink failed root site lookup' {
+    It 'rethrows a failed Graph lookup without requesting it again while fresh' {
+        Mock -CommandName New-GraphGetRequest -MockWith { throw "Target 'nosp.sharepoint.com' is not found." }
+
+        { Get-SharePointAdminLink -Public $false -TenantFilter 'nosp.onmicrosoft.com' } | Should -Throw '*is not found*'
+        { Get-SharePointAdminLink -Public $false -TenantFilter 'nosp.onmicrosoft.com' } | Should -Throw '*is not found*'
+        Should -Invoke New-GraphGetRequest -Times 1 -Exactly
+    }
+
+    It 'does not hold one tenant failure against another tenant' {
+        Mock -CommandName New-GraphGetRequest -MockWith {
+            [PSCustomObject]@{ siteCollection = [PSCustomObject]@{ hostname = 'other.sharepoint.com' } }
+        }
+
+        (Get-SharePointAdminLink -Public $false -TenantFilter 'other.onmicrosoft.com').TenantName | Should -Be 'other'
     }
 }

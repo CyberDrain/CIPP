@@ -100,6 +100,7 @@ const CippIntegrationSettings = ({ children }) => {
       IntegrationName: selectedCompany.label,
       IntegrationId: selectedCompany.value,
       TenantDomain: selectedTenant.addedFields.defaultDomainName,
+      ...(isHudu && { SyncPasswords: true }),
     };
 
     setTableData([...tableData, newRowData]);
@@ -147,6 +148,7 @@ const CippIntegrationSettings = ({ children }) => {
           TenantDomain: tenant.defaultDomainName,
           IntegrationName: matchingCompany.name,
           IntegrationId: matchingCompany.value,
+          ...(isHudu && { SyncPasswords: true }),
         });
       }
     });
@@ -185,17 +187,54 @@ const CippIntegrationSettings = ({ children }) => {
     });
   };
 
+  const extension = extensions.find((extension) => extension.id === router.query.id);
+  const isHudu = extension?.id === "Hudu";
+
+  const handleToggleSyncPasswords = (row) => {
+    const target = Array.isArray(row) ? row[0] : row;
+    setTableData(
+      tableData.map((item) =>
+        item === target ? { ...item, SyncPasswords: item.SyncPasswords === false } : item
+      )
+    );
+  };
+
+  // Only these extensions support syncing a single tenant through ExecExtensionSync.
+  const tenantSyncExtensions = ["NinjaOne", "Hudu"];
+
   const actions = [
-    {
-      label: "Sync Now",
-      icon: (
-        <SvgIcon>
-          <CippIcons.Sync />
-        </SvgIcon>
-      ),
-      confirmText: "Queue a NinjaOne sync for [Tenant]?",
-      customFunction: handleSyncTenant,
-    },
+    ...(tenantSyncExtensions.includes(extension?.id)
+      ? [
+          {
+            label: "Sync Now",
+            icon: (
+              <SvgIcon>
+                <CippIcons.Sync />
+              </SvgIcon>
+            ),
+            confirmText: `Queue a ${extension.name} sync for [Tenant]?`,
+            customFunction: handleSyncTenant,
+          },
+        ]
+      : []),
+    ...(isHudu
+      ? [
+          {
+            label: "Exclude password data (LAPS/BitLocker)",
+            icon: <CippIcons.Delete />,
+            noConfirm: true,
+            condition: (row) => row.SyncPasswords !== false,
+            customFunction: handleToggleSyncPasswords,
+          },
+          {
+            label: "Include password data",
+            icon: <CippIcons.Sync />,
+            noConfirm: true,
+            condition: (row) => row.SyncPasswords === false,
+            customFunction: handleToggleSyncPasswords,
+          },
+        ]
+      : []),
     {
       label: "Delete Mapping",
       icon: <CippIcons.Delete />,
@@ -204,8 +243,6 @@ const CippIntegrationSettings = ({ children }) => {
     },
   ];
 
-  const extension = extensions.find((extension) => extension.id === router.query.id);
-
   // Memoize the removeOptions array to ensure it updates when tableData changes
   const removedTenantIds = useMemo(() => {
     return Array.isArray(tableData) ? tableData.map((item) => item.TenantId) : [];
@@ -213,9 +250,16 @@ const CippIntegrationSettings = ({ children }) => {
 
   // isSuccess only goes false -> true once, so depending on it alone meant a refetch never
   // reached the table and server-side automap results stayed hidden until a page reload.
+  // Rows the server doesn't have yet are unsaved local automap matches; keep them.
   useEffect(() => {
     if (mappings.isSuccess) {
-      setTableData(mappings.data.Mappings ?? []);
+      const serverRows = mappings.data.Mappings ?? [];
+      setTableData((prev) => [
+        ...serverRows,
+        ...(Array.isArray(prev) ? prev : []).filter(
+          (row) => !serverRows.some((server) => server.TenantId === row.TenantId)
+        ),
+      ]);
     }
   }, [mappings.isSuccess, mappings.data]);
 
@@ -338,7 +382,13 @@ const CippIntegrationSettings = ({ children }) => {
                 reportTitle={`${extension.id}-tenant-map`}
                 data={tableData}
                 simple={false}
-                simpleColumns={["IntegrationName", "Tenant", "TenantDomain", "TenantId"]}
+                simpleColumns={[
+                  "IntegrationName",
+                  "Tenant",
+                  ...(isHudu ? ["SyncPasswords"] : []),
+                  "TenantDomain",
+                  "TenantId",
+                ]}
                 isFetching={mappings.isFetching}
                 refreshFunction={() => mappings.refetch()}
               />

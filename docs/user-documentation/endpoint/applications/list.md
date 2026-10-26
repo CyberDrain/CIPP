@@ -43,6 +43,10 @@ Site-level fields repeat once for every tenant you selected, labelled with that 
 
 Huntress guidance on choosing organisation keys is in their article on [account keys, organization keys and agent tags](https://support.huntress.io/hc/en-us/articles/4404012734227-Using-Account-Keys-Organization-Keys-and-Agent-Tags).
 
+{% hint style="warning" %}
+As of version 11.0.0, CIPP deploys Huntress with Huntress's current install script. Earlier deployments can fail on newer Huntress agents, which Autopilot's Enrollment Status Page reports as `Apps (0x80070001)`. A tenant that already has the Huntress app keeps the install it was deployed with, so remove that app from the tenant and deploy Huntress again from CIPP to pick up the fix.
+{% endhint %}
+
 **CW Automate**
 
 | Field                             | Description                                                          |
@@ -61,8 +65,16 @@ ConnectWise RMM, previously known as Command and before that Continuum.
 | ---------- | ---------------------------------------------------------------------------------- |
 | Client URL | Per tenant. The full download URL of the agent installer for that customer's site. |
 
+**NinjaOne**
+
+| Field           | Description                                                                                                                                                                            |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Installer Token | Per tenant. The token for the customer organisation and location, from a generic installer in NinjaOne. Accepts a CIPP custom variable such as `%NinjaOneToken%` (type `%` to browse). |
+
+CIPP packages NinjaOne's generic installer and passes the token at install time, so one package serves every organisation. The install is skipped on devices that already run the NinjaOne agent. The tokens are generated as described in NinjaOne's [quick deployment guide](https://www.ninjaone.com/docs/new-to-ninjaone/getting-started/best-practice-guides/quick-deployment-guide/).
+
 {% hint style="info" %}
-Datto RMM, CW Automate and CW Command are community contributions and are not covered by a vendor sponsorship. CIPP shows a notice to this effect when one of them is selected, and support for these is through the Discord community rather than the vendor.
+Datto RMM, CW Automate, CW Command and NinjaOne are community contributions and are not covered by a vendor sponsorship. CIPP shows a notice to this effect when one of them is selected, and support for these is through the Discord community rather than the vendor.
 {% endhint %}
 
 {% hint style="warning" %}
@@ -124,9 +136,9 @@ Deploys Microsoft 365 Apps using Intune's built-in Office suite deployment.
 
 Deploys Microsoft Edge using Intune's built-in Edge deployment. Nothing is packaged or uploaded; Intune installs it from Microsoft's own source. Edge is a singleton per tenant, so a tenant that already has it is skipped rather than given a second copy.
 
-| Field            | Description                                                                                                              |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Edge Channel     | The servicing channel the installation follows: Stable, Beta or Dev. Required.                                            |
+| Field            | Description                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Edge Channel     | The servicing channel the installation follows: Stable, Beta or Dev. Required.                                      |
 | Display Language | The language the browser interface is shown in. Optional, and left to the device's own language when it is not set. |
 
 **Custom Application**
@@ -152,19 +164,19 @@ Packages a pair of PowerShell scripts as a Win32 application, for anything that 
 
 **Assignment Options**
 
-Every application type except the MSP apps offers the same assignment choices at the bottom of the form.
+Every application type offers the same assignment choices at the bottom of the form.
 
-| Option                          | Description                                                                                                                    |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Do Not Assign                   | Creates the application in Intune without targeting anyone.                                                                    |
-| Assign to All Users             | Targets all licensed users in each selected tenant.                                                                            |
-| Assign to All Devices           | Targets all devices in each selected tenant.                                                                                   |
-| Assign to All Users and Devices | Targets both of the above.                                                                                                     |
-| Assign to Custom Group          | Targets named groups. Enter the group display names separated by commas, where `*` may be used as a wildcard.                  |
-| Exclude Group Names             | Shown for every option except Do Not Assign. Excludes the named groups, again comma separated and accepting `*` as a wildcard. |
+| Option                          | Description                                                                                                                                                                                                                         |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Do Not Assign                   | Creates the application in Intune without targeting anyone.                                                                                                                                                                         |
+| Assign to All Users             | Targets all licensed users in each selected tenant.                                                                                                                                                                                 |
+| Assign to All Devices           | Targets all devices in each selected tenant.                                                                                                                                                                                        |
+| Assign to All Users and Devices | Targets both of the above.                                                                                                                                                                                                          |
+| Assign to Custom Group          | Targets groups. With a single tenant selected this is a picker of that tenant's groups. With several tenants or All Tenants it is a text field taking group display names separated by commas, where `*` may be used as a wildcard. |
+| Exclude group(s)                | Shown for every option except Do Not Assign. The same picker or name field as above, for the groups to exclude.                                                                                                                     |
 
 {% hint style="info" %}
-Group names here are matched by display name across every selected tenant, so a wildcard such as `SEC-Workstations*` lets one deployment target similarly named groups in each customer without listing them individually.
+With several tenants selected, group names are matched by display name in each tenant, so a wildcard such as `SEC-Workstations*` lets one deployment target similarly named groups in each customer without listing them individually. A picker is only offered for a single tenant because a group belongs to one tenant; picking also avoids a mistyped or renamed exclude group silently matching nothing. Changing the tenant selection clears any picked groups.
 {% endhint %}
 
 </details>
@@ -179,7 +191,7 @@ Triggers a sync of all Apple Volume Purchase Program (VPP) tokens for the select
 
 ## Table Details
 
-The properties returned are for the Graph resource type `mobileApp`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/intune-apps-mobileapp?view=graph-rest-1.0#properties).
+The properties returned are for the Graph resource type `mobileApp`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/intune-apps-mobileapp?view=graph-rest-beta#properties).
 
 CIPP adds the following columns by resolving each application's assignments against the groups in the tenant:
 
@@ -193,7 +205,7 @@ CIPP adds the following columns by resolving each application's assignments agai
 <table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Assign to All Users</td><td>Assigns the application to all licensed users in the tenant using the chosen assignment intent, with optional exclusion groups and an optional assignment filter.</td><td>true</td></tr><tr><td>Assign to All Devices</td><td>Assigns the application to all devices in the tenant using the chosen assignment intent, with optional exclusion groups and an optional assignment filter.</td><td>true</td></tr><tr><td>Assign Globally (All Users / All Devices)</td><td>Assigns the application to both all licensed users and all devices in the tenant using the chosen assignment intent, with optional exclusion groups and an optional assignment filter.</td><td>true</td></tr><tr><td>Assign to Custom Group</td><td>Assigns the application to specific groups, or excludes specific groups from it, using the chosen assignment intent and an optional assignment filter. Selecting Exclude together with Replace and no groups clears all existing exclusions while leaving the included assignments in place.</td><td>true</td></tr><tr><td>Save as Template</td><td>Saves the selected application(s) as a named application template that can be redeployed to other tenants from Application Templates. Greyed out for anything other than a Microsoft Office or Microsoft Edge deployment, because every other template type is rebuilt from a package or a script at deployment and a Win32 application's uploaded installer content stays inside Intune. Rebuild one of those as a Custom Application whose install script fetches the installer.</td><td>true</td></tr><tr><td>Delete Application</td><td>Removes the application from Intune for the tenant. This also removes its assignments, and the application will be uninstalled or stop being offered depending on how it was assigned.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% hint style="info" %}
-Every assignment action offers an assignment mode. **Append** keeps the existing assignments and adds or overwrites only the targets you selected. **Replace** overwrites existing assignments, and for Assign to Custom Group it replaces only the direction you chose (include or exclude), leaving the other direction and any All Users or All Devices targets intact.
+Every assignment action offers an assignment mode. **Append** keeps the existing assignments and adds or overwrites only the targets you selected. **Replace** overwrites existing assignments, and for Assign to Custom Group it replaces only the direction you chose (include or exclude) and leaves the other direction intact. Include + Replace also removes any All Users or All Devices targets, so the picked groups become the only include targets; Exclude + Replace keeps them.
 {% endhint %}
 
 {% hint style="warning" %}

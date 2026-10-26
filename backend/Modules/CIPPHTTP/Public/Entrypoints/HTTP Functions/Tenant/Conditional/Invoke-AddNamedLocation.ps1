@@ -22,6 +22,7 @@ function Invoke-AddNamedLocation {
         $Tenants = $Tenants | Where-Object { $_ -in $AllowedTenantList.defaultDomainName }
     }
 
+    $Failed = 0
     $results = foreach ($Tenant in $tenants) {
         try {
             $ObjBody = if ($Request.body.Type -eq 'IPLocation') {
@@ -44,11 +45,12 @@ function Invoke-AddNamedLocation {
             $Body = ConvertTo-Json -InputObject $ObjBody
             $GraphRequest = New-GraphPOSTRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/namedLocations' -body $body -Type POST -tenantid $tenant
             "Successfully added Named Location for $($Tenant)"
-            Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $tenant -message "Added Named Location $($Displayname)" -Sev 'Info'
+            Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $tenant -message "Added Named Location $($Request.Body.policyName)" -Sev 'Info'
 
         } catch {
+            $Failed++
             "Failed to add Named Location $($Tenant): $($_.Exception.Message)"
-            Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $tenant -message "Failed adding Named Location$($Displayname). Error: $($_.Exception.Message)" -Sev 'Error'
+            Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $tenant -message "Failed adding Named Location $($Request.Body.policyName). Error: $($_.Exception.Message)" -Sev 'Error'
             continue
         }
 
@@ -57,7 +59,7 @@ function Invoke-AddNamedLocation {
     $body = [pscustomobject]@{'Results' = @($results) }
 
     return ([HttpResponseContext]@{
-            StatusCode = [HttpStatusCode]::OK
+            StatusCode = Get-CippBulkStatusCode -Total @($Tenants).Count -Failed $Failed
             Body       = $body
         })
 

@@ -18,24 +18,29 @@ function Get-CIPPAlertTERRL {
         # Get TERRL status
         $TerrlStatus = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-LimitsEnforcementStatus'
 
-        if ($TerrlStatus) {
+        # Threshold is 0 for tenants EXO hasn't computed a TERRL limit for yet; nothing to be near
+        if ($TerrlStatus -and [double]$TerrlStatus.Threshold -gt 0) {
             $UsagePercentage = [math]::Round(($TerrlStatus.ObservedValue / $TerrlStatus.Threshold) * 100, 2)
 
             if ($UsagePercentage -gt $Threshold) {
                 $AlertData = [PSCustomObject]@{
+                    Id                 = 'TERRL' # stable identity; Message carries live numbers
                     UsagePercentage    = $UsagePercentage
                     CurrentVolume      = $TerrlStatus.ObservedValue
                     ThresholdLimit     = $TerrlStatus.Threshold
                     EnforcementEnabled = $TerrlStatus.EnforcementEnabled
                     Verdict            = $TerrlStatus.Verdict
-                    Message            = 'Tenant is at {0}% of their TERRL limit (using {1} of {2} messages). Tenant Enforcement Status: {3}' -f $UsagePercentage, $TerrlStatus.ObservedValue, $TerrlStatus.Threshold, $TerrlStatus.Verdict
+                    AlertThreshold     = $Threshold
+                    # Keep the Message free of the hourly-moving figures: the alert lifecycle and snoozes
+                    # match items by content hash, and a Message that changes every run notifies every run.
+                    Message            = "Tenant is above the $Threshold% TERRL limit threshold"
                     Tenant             = $TenantFilter
                 }
-                Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data $AlertData
             }
+            Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data $AlertData
         }
     } catch {
         $ErrorMessage = Get-CippException -Exception $_
-        Write-LogMessage -tenant $TenantFilter -message "Could not get TERRL status for $($TenantFilter): $($ErrorMessage.NormalizedError)" -severity 'Error' -API 'CIPPAlertTERRL' -LogData $ErrorMessage
+        Write-LogMessage -tenant $TenantFilter -message "Could not get TERRL status for $($TenantFilter): $($ErrorMessage.NormalizedError)" -sev 'Error' -API 'CIPPAlertTERRL' -LogData $ErrorMessage
     }
 }

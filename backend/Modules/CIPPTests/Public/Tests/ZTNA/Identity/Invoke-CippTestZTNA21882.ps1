@@ -6,9 +6,15 @@ function Invoke-CippTestZTNA21882 {
     param($Tenant)
 
     try {
-        $Groups = Get-CIPPTestData -TenantFilter $Tenant -Type 'Groups'
+        # Members are streamed: kept for every group they are too large to cache
+        $GroupsSeen = $false
+        $RoleAssignableGroups = [System.Collections.Generic.List[object]]::new()
+        Get-CIPPTestData -TenantFilter $Tenant -Type 'Groups' -Fields 'id', 'displayName', 'isAssignableToRole', 'members' -Stream | ForEach-Object {
+            $GroupsSeen = $true
+            if ($_.isAssignableToRole -eq $true) { $RoleAssignableGroups.Add($_) }
+        }
 
-        if (-not $Groups) {
+        if (-not $GroupsSeen) {
             Add-CippTestResult -TenantFilter $Tenant -TestId 'ZTNA21882' -TestType 'Identity' -Status 'Skipped' -ResultMarkdown 'No data found in database. This may be due to missing required licenses or data collection not yet completed.' -Risk 'Medium' -Name 'No nested groups in PIM for groups' -UserImpact 'Low' -ImplementationEffort 'Medium' -Category 'Access Control'
             return
         }
@@ -16,8 +22,6 @@ function Invoke-CippTestZTNA21882 {
         # Role-assignable groups are the ones eligible for PIM-for-Groups.
         # A nested group member is one without a userPrincipalName (the Groups cache only
         # selects id/displayName/userPrincipalName, so missing UPN strongly implies a group).
-        $RoleAssignableGroups = $Groups.Where({ $_.isAssignableToRole -eq $true })
-
         if ($RoleAssignableGroups.Count -eq 0) {
             Add-CippTestResult -TenantFilter $Tenant -TestId 'ZTNA21882' -TestType 'Identity' -Status 'Passed' -ResultMarkdown 'No role-assignable groups found in the tenant.' -Risk 'Medium' -Name 'No nested groups in PIM for groups' -UserImpact 'Low' -ImplementationEffort 'Medium' -Category 'Access Control'
             return
@@ -32,7 +36,7 @@ function Invoke-CippTestZTNA21882 {
                 $NestedGroups.Add([PSCustomObject]@{
                         Group        = $G
                         NestedCount  = $GroupMembers.Count
-                        NestedSample = ($GroupMembers | Select-Object -First 3).displayName -join ', '
+                        NestedSample = @($GroupMembers.Where({ $true }, 'First', 3)).displayName -join ', '
                     })
             }
         }
@@ -47,7 +51,7 @@ function Invoke-CippTestZTNA21882 {
             $Lines.Add('')
             $Lines.Add('| Group | Nested Members | Sample |')
             $Lines.Add('| :---- | :------------- | :----- |')
-            foreach ($Entry in ($NestedGroups | Select-Object -First 25)) {
+            foreach ($Entry in $NestedGroups.Where({ $true }, 'First', 25)) {
                 $Lines.Add("| $($Entry.Group.displayName) | $($Entry.NestedCount) | $($Entry.NestedSample) |")
             }
             if ($NestedGroups.Count -gt 25) {

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Benchmark and profiling harness for server-side PDF generation, driven by CIPP's own reports.
+    It compiles the report kit (backend/Shared/CIPPSharp/Reporting) straight from source against OfficeIMO:
+      default                                  the vendored DLLs in backend/Shared/CIPPSharp/lib (what ships)
+      -p:OfficeImoSource=C:\GitHub\OfficeIMO   an OfficeIMO checkout, to measure OfficeIMO changes directly
+    Usage is in Program.cs.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Optimize>true</Optimize>
+    <!-- The kit's own warnings are CIPPSharp's business, not the harness's. -->
+    <NoWarn>$(NoWarn);CS8600;CS8602;CS8603;CS8604;CS8618;CS8625</NoWarn>
+    <!-- Workstation, non-concurrent GC keeps allocation and GC counts stable run to run. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <CippSharp>$(MSBuildThisFileDirectory)..\..\..\backend\Shared\CIPPSharp\</CippSharp>
+    <!-- -p:KitDir=<a copy of Reporting\> benches a report-kit change without touching the tree. -->
+    <KitDir Condition="'$(KitDir)' == ''">$(CippSharp)Reporting\</KitDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(KitDir)**\*.cs" Link="Reporting\%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- The kit loads its fonts and images from beside its assembly. -->
+    <None Include="$(CippSharp)bin\emoji-fallback.ttf" Link="emoji-fallback.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(CippSharp)bin\twemoji\**" Link="twemoji\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(CippSharp)bin\reportImages\**" Link="reportImages\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(OfficeImoSource)' == ''">
+    <Reference Include="OfficeIMO.Pdf" HintPath="$(CippSharp)lib\OfficeIMO.Pdf.dll" />
+    <Reference Include="OfficeIMO.Core" HintPath="$(CippSharp)lib\OfficeIMO.Core.dll" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(OfficeImoSource)' != ''">
+    <ProjectReference Include="$(OfficeImoSource)\OfficeIMO.Pdf\OfficeIMO.Pdf.csproj" />
+  </ItemGroup>
+</Project>

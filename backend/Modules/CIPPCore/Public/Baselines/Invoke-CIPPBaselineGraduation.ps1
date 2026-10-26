@@ -13,24 +13,33 @@ function Invoke-CIPPBaselineGraduation {
                     on every run - an 'All Tenants' baseline can gate a stage (say Intune
                     policies) on an 'Intune licensed' group
         - success:  every standard rolled out by the stages reached so far is aligned
-                    (Compliant or Accepted) on the tenant's resolved rows
+                    (Compliant or Accepted) on the tenant's resolved rows; a standard the
+                    tenant cannot license counts as aligned rather than blocking the stage
         - manual:   never auto-advances (operator uses ExecBaselineStage)
         A stage with no conditions does not auto-advance.
+        -TenantFilter/-TemplateId scope an on-demand re-evaluation; one result is emitted per
+        evaluated tenant state.
     .FUNCTIONALITY
         Internal
     #>
     [CmdletBinding()]
-    param()
+    param(
+        [string]$TenantFilter,
+        [string]$TemplateId,
+        [string]$TriggeredBy = 'schedule'
+    )
 
     $Now = [int64]([datetimeoffset]::UtcNow.ToUnixTimeSeconds())
     $StateTable = Get-CippTable -tablename 'BaselineRolloutState'
     $ResolvedTable = Get-CippTable -tablename 'BaselineAlignment'
     $Definitions = @(Get-CIPPBaselineDefinition)
     $Groups = @()
-    try { $Groups = @(Get-TenantGroups) } catch { Write-Information "Invoke-CIPPBaselineGraduation: tenant group lookup failed: $($_.Exception.Message)" }
+    try { $Groups = @(Get-TenantGroups -SkipCache) } catch { Write-Information "Invoke-CIPPBaselineGraduation: tenant group lookup failed: $($_.Exception.Message)" }
 
-    foreach ($Baseline in @(Get-CIPPBaseline)) {
+    $Baselines = if ($TemplateId) { @(Get-CIPPBaseline -ID $TemplateId) } else { @(Get-CIPPBaseline) }
+    foreach ($Baseline in $Baselines) {
         foreach ($State in $Baseline.tenantStates) {
+            if ($TenantFilter -and $State.tenantFilter -ne $TenantFilter) { continue }
             if ($State.currentStage -ge $State.totalStages) { continue }
             $NextStage = $Baseline.stages[$State.currentStage]
             $Conditions = @($NextStage.conditions)
@@ -45,7 +54,7 @@ function Invoke-CIPPBaselineGraduation {
                     }
                     'variable' {
                         # Reuse the replacement machinery: an unresolved token comes back verbatim.
-                        $Token = '%{0}%' -f $Condition.variable
+                        $Token = '%{0}%' -f "$($Condition.variable)".Trim().Trim('%')
                         $Value = Get-CIPPTextReplacement -TenantFilter $State.tenantFilter -Text $Token
                         if ($Value -eq $Token) { $false } else {
                             switch ($Condition.operator) {
@@ -87,7 +96,9 @@ function Invoke-CIPPBaselineGraduation {
                         $Aligned = 0
                         foreach ($Standard in $RolledOut) {
                             $Row = $Rows | Where-Object { $_.StandardName -eq $Standard } | Select-Object -First 1
-                            if ($Row -and $Row.Status -in @('Compliant', 'Accepted')) { $Aligned++ }
+                            # A standard the tenant cannot license is not drift it can fix, and the engine
+                            # rewrites that status every run so it cannot be accepted away either.
+                            if ($Row -and $Row.Status -in @('Compliant', 'Accepted', 'Skipped - No License')) { $Aligned++ }
                         }
                         $RolledOut.Count -gt 0 -and $Aligned -eq $RolledOut.Count
                     }
@@ -95,18 +106,26 @@ function Invoke-CIPPBaselineGraduation {
                 }
             }
 
+            $Results = @($Results)
             $Advance = if ($NextStage.logic -eq 'or') { $Results -contains $true } else { $Results -notcontains $false }
+            [pscustomobject]@{
+                TenantFilter = $State.tenantFilter
+                Advanced     = [bool]$Advance
+                Stage        = if ($Advance) { $State.currentStage + 1 } else { $State.currentStage }
+                StageName    = if ($Advance) { $NextStage.name } else { $State.stageName }
+                Unmet        = @(for ($i = 0; $i -lt $Conditions.Count; $i++) { if (-not $Results[$i]) { $Conditions[$i].type } })
+            }
             if (-not $Advance) { continue }
 
             $StateTable.Force = $true
             Add-CIPPAzDataTableEntity @StateTable -Entity @{
                 PartitionKey    = "$($Baseline.GUID)"
-                RowKey          = "$($State.tenantFilter)"
+                RowKey          = "$($State.customerId ?? $State.tenantFilter)"
                 currentStage    = ($State.currentStage + 1)
                 enteredStageAt  = $Now
                 firstDeployedAt = $State.firstDeployedAt ?? $State.enteredStageAt ?? $Now
             }
-            $null = Add-CIPPBaselineHistoryEvent -TenantFilter $State.tenantFilter -Standard $Baseline.templateName -Mode 'stage' -TriggeredBy 'schedule' -Outcome 'Stage Advanced' -Detail "Graduated to stage $($State.currentStage + 1) ($($NextStage.name)) - the stage's conditions were met"
+            $null = Add-CIPPBaselineHistoryEvent -TenantFilter $State.tenantFilter -Standard $Baseline.templateName -Mode 'stage' -TriggeredBy $TriggeredBy -Outcome 'Stage Advanced' -Detail "Graduated to stage $($State.currentStage + 1) ($($NextStage.name)) - the stage's conditions were met"
             Write-LogMessage -API 'Baselines' -tenant $State.tenantFilter -message "Graduated $($State.tenantFilter) to stage $($State.currentStage + 1) ($($NextStage.name)) of baseline $($Baseline.templateName)." -Sev 'Info'
         }
     }

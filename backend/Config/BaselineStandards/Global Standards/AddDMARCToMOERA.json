@@ -16,8 +16,7 @@
   "addedDate": "2025-06-16",
   "powershellEquivalent": "Portal only",
   "appliesToTest": [
-    "CIS_2_1_10",
-    "SMB1001_2_12"
+    "CIS_2_1_10"
   ],
   "recommendedBy": [
     "CIS",
@@ -34,11 +33,8 @@
       "recommended": "v=DMARC1; p=reject;"
     }
   },
-  "expected": {
-    "hasDmarc": true,
-    "record": "%RecordValue%"
-  },
   "read": {
     "cacheType": "MoeraDmarc"
-  }
+  },
+  "prepare": "Get-CIPPBaselineAddDMARCToMOERAState"
 }

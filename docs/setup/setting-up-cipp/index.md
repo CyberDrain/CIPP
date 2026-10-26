@@ -10,9 +10,9 @@ To get started you must follow or have the following ready. Click on the links f
 
 {% stepper %}
 {% step %}
-### Active Sponsorship
+### Active Subscription
 
-Start by signing up for the €99/month subscription through our [secure checkout](https://pay.cyberdrain.com/b/4gM7sLa003Sldjn6nu6wE01).
+Start by signing up for the €99/month subscription through our [secure checkout](https://cipp.ms/getcipp).
 {% endstep %}
 {% endstepper %}
 

@@ -1,49 +1,49 @@
 # Showcases
 
-### Report Builder
+## Report Builder
 
-{% @storylane/embed subdomain="app" linkValue="vcrohqu0snfg" url="https://app.storylane.io/share/vcrohqu0snfg" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/vcrohqu0snfg" linkValue="vcrohqu0snfg" %}
 
-### Drift Management
+## Baselines
 
-{% @storylane/embed subdomain="app" linkValue="cqb21ohc9fgp" url="https://app.storylane.io/share/cqb21ohc9fgp" %}
+{% @storylane/embed subdomain="app" linkValue="oyzpk0zn7v1m" url="https://app.storylane.io/share/oyzpk0zn7v1m" %}
 
-### Drift Standard Creation
+## Custom Tests
 
-{% @storylane/embed subdomain="app" linkValue="gykd6vk1y7kr" url="https://app.storylane.io/share/gykd6vk1y7kr" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/qevotii3ats1" linkValue="qevotii3ats1" %}
 
-### Custom Tests
+## AI Powered Help
 
-{% @storylane/embed subdomain="app" linkValue="qevotii3ats1" url="https://app.storylane.io/share/qevotii3ats1" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/ircpfbol1tpi" linkValue="ircpfbol1tpi" %}
 
-### AI Powered Help
+## Using variables in templates and more
 
-{% @storylane/embed subdomain="app" linkValue="ircpfbol1tpi" url="https://app.storylane.io/share/ircpfbol1tpi" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/x4vvtxxdhep7" linkValue="x4vvtxxdhep7" %}
 
-### Using variables in templates and more
+## Alerting
 
-{% @storylane/embed subdomain="app" linkValue="x4vvtxxdhep7" url="https://app.storylane.io/share/x4vvtxxdhep7" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/qjg1soaldygv" linkValue="qjg1soaldygv" %}
 
-### Alerting
+## Audit log searches
 
-{% @storylane/embed subdomain="app" linkValue="qjg1soaldygv" url="https://app.storylane.io/share/qjg1soaldygv" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/x3xrv5qfgqpg" linkValue="x3xrv5qfgqpg" %}
 
-### Audit log searches
+## License Management
 
-{% @storylane/embed subdomain="app" linkValue="x3xrv5qfgqpg" url="https://app.storylane.io/share/x3xrv5qfgqpg" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/ossqaogex1sw" linkValue="ossqaogex1sw" %}
 
-### License Management
+## Dashboard v2
 
-{% @storylane/embed subdomain="app" linkValue="ossqaogex1sw" url="https://app.storylane.io/share/ossqaogex1sw" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/zt4porabti6d" linkValue="zt4porabti6d" %}
 
-### Dashboard v2
+## Graph Explorer
 
-{% @storylane/embed subdomain="app" linkValue="zt4porabti6d" url="https://app.storylane.io/share/zt4porabti6d" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/p0ljufhpgkmb" linkValue="p0ljufhpgkmb" %}
 
-### Graph Explorer
+## Vacation Mode
 
-{% @storylane/embed subdomain="app" linkValue="p0ljufhpgkmb" url="https://app.storylane.io/share/p0ljufhpgkmb" %}
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/d7llhd4j78qv" linkValue="d7llhd4j78qv" %}
 
-### Vacation Mode
+## Security Simulations
 
-{% @storylane/embed subdomain="app" linkValue="d7llhd4j78qv" url="https://app.storylane.io/share/d7llhd4j78qv" %}
+{% @storylane/embed subdomain="app" linkValue="hcjwbcxbcp71" url="https://app.storylane.io/share/hcjwbcxbcp71" %}

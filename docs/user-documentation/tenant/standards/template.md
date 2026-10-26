@@ -156,6 +156,19 @@ Once every standard shows as configured, click **Save Template** at the top of t
 {% endstep %}
 {% endstepper %}
 
+## GitHub Sync
+
+A template imported from a GitHub repository, or saved to one, shows a chip under the page title naming that repository. It reads **Synced from** the repository while the template matches the copy there, and **Modified since last push to** the repository once it holds changes the repository does not. Selecting the chip opens the template's file on GitHub. A copy opened with **Clone & Edit Template** carries no chip.
+
+Saving a synced template adds these fields to the confirmation.
+
+| Field          | Description                                                                                                                |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Save to GitHub | Pushes the template to the repository it came from as part of the save. Offered only when you can push to that repository. |
+| Commit Message | The commit message for the push. Appears once **Save to GitHub** is on, and is then required.                              |
+
+Saving without pushing keeps your changes in CIPP only, and the repository copy stays out of date until you push it. Where you cannot push to the repository, the next sync replaces your changes if the file changes upstream. To keep a copy that upstream never touches, use **Clone & Edit Template** on the [README.md](alignment/templates/README.md "mention") page.
+
 ## Finding Standards
 
 The Add Standard to Template dialog can list a lot of standards, so it offers a search box and a set of filters. **Search Standards** matches on a standard's name, description, or tags. Expanding **View, Sort & Filter Options** gives you the rest.

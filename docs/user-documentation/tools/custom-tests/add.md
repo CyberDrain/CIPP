@@ -26,7 +26,7 @@ Reference material for writing the script, worth reading before your first test.
 Scripts run in PowerShell **ConstrainedLanguage** mode, so only approved cmdlets are available. `New-Object`, `[pscustomobject]@{}` casts, and .NET and reflection calls are all blocked. Build rows with `Select-Object @{Name;Expression}` and return a plain `@{}` hashtable instead. If you build your own intermediate list of `@{}` hashtables, pipe it through `Select-Object -ExpandProperty` at your own risk: that specific parameter throws a hashtable-to-object conversion error under ConstrainedLanguage, even though `$_.property` on the same hashtable works. Data read back from `Get-CIPPTestData` does not hit this, since Graph-sourced records are objects rather than hashtables.
 {% endhint %}
 
-Data is read through `Get-CIPPTestData` with a `-Type` parameter. The tenant is locked automatically, so do not pass `-TenantFilter`. **View Cached Types** opens a dialog listing every available type with its description, and the eye icon beside each one shows sample data from the currently selected tenant, which is the quickest way to see the shape of what you will be working with.
+Data is read through `Get-CIPPTestData` with a `-Type` parameter. The tenant is locked automatically, so do not pass `-TenantFilter`. **View Cached Types**, which shows how many types are available, opens the **Cached Types** dialog. It lists each data type held for the selected tenant, with its row count, a description where one exists, and its fields as chips (hover over a field to see its data type). The eye icon beside a type loads a live sample record from that tenant, which is the quickest way to see the shape of what you will be working with. If no tenant is selected, or nothing has been collected for the tenant yet, the dialog lists every available type without counts or fields.
 
 Type `%` anywhere in the script to insert a replacement variable, such as `%tenantid%` or `%defaultdomain%`, alongside any custom variables you have defined.
 
@@ -37,7 +37,7 @@ Paste the block below into an AI assistant along with a description of your use 
 ```
 Create a custom test for CIPP(https://docs.cipp.app/user-documentation/tools/custom-tests/add).
 
-Custom tests are read-only via Get-CIPPTestData with -Type. Tenant is auto-locked — do not pass -TenantFilter. Use %variable% syntax for replacement variables.
+Custom tests are read-only via Get-CIPPTestData with -Type. Tenant is auto-locked, so do not pass -TenantFilter. Use %variable% syntax for replacement variables.
 
 This script is CyberDrains example for Conditional access: 
 # Summarize Conditional Access policies by state
@@ -47,8 +47,8 @@ $grouped = $Policies | Group-Object -Property state
 $counts = $grouped | Select-Object @{Name='State'; Expression={ $_.Name }},
     @{Name='Count'; Expression={ $_.Count }}
 
-# Build markdown summary — %tenantname% is replaced at runtime
-$header = "### %tenantname% — CA Policies: $(@($Policies).Count) total
+# Build markdown summary (%tenantname% is replaced at runtime)
+$header = "### %tenantname% CA Policies ($(@($Policies).Count) total)
 
 | State | Count |
 |---|---|"
@@ -79,8 +79,8 @@ $md = $summaryTable + "
     CIPPResultMarkdown = $md
 }
 
-This is their script for Users with licenses:
-# List all users and their licenses with friendly SKU names
+This is their script for Users with licences:
+# List all users and their licences with friendly SKU names
 $Users = Get-CIPPTestData -Type 'Users'
 $Licenses = Get-CIPPTestData -Type 'LicenseOverview'
 
@@ -90,7 +90,7 @@ $Licenses | ForEach-Object {
     $SkuLookup[$_.skuId] = $_.License
 }
 
-# Build results - users with their resolved license names
+# Build results - users with their resolved licence names
 $results = $Users | Where-Object {
     $_.assignedLicenses.Count -gt 0
 } | Select-Object @{Name='UserPrincipalName'; Expression={ $_.userPrincipalName }},
@@ -114,7 +114,7 @@ $md = @($header) + @($rows) -join "\n"
 }
 
 
-I want you to build a script that cross references all CA policies, included groups, and show me which user is missing a license for P1 functionality(conditional acccess) or P2 functionality(Risk settings in CA).
+I want you to build a script that cross references all CA policies, included groups, and show me which user is missing a licence for P1 functionality(conditional acccess) or P2 functionality(Risk settings in CA).
 ```
 
 {% hint style="info" %}
@@ -132,7 +132,7 @@ Six starting points, from a straightforward filter to a multi-section markdown r
 Lists every licensed user and resolves their assigned SKU IDs to friendly names using the licence cache, returning a markdown table with an explicit `Passed` status. Demonstrates `CIPPStatus`, `CIPPResults` and `CIPPResultMarkdown` together.
 
 ```powershell
-# List all users and their licenses with friendly SKU names
+# List all users and their licences with friendly SKU names
 $Users = Get-CIPPTestData -Type 'Users'
 $Licenses = Get-CIPPTestData -Type 'LicenseOverview'
 
@@ -142,7 +142,7 @@ $Licenses | ForEach-Object {
     $SkuLookup[$_.skuId] = $_.License
 }
 
-# Build results - users with their resolved license names
+# Build results - users with their resolved licence names
 $results = $Users | Where-Object {
     $_.assignedLicenses.Count -gt 0
 } | Select-Object @{Name='UserPrincipalName'; Expression={ $_.userPrincipalName }},
@@ -179,17 +179,17 @@ $md = @($header) + @($rows) -join "
 Finds disabled accounts that still have a licence assigned, a common cost-waste indicator. Returns the matching rows as JSON, the default Result Display Type behaviour: no status wrapper needed, since a non-empty result already means a fail.
 
 ```powershell
-# Find disabled users that still have licenses (wasted cost)
+# Find disabled users that still have licences (wasted cost)
 $Users = Get-CIPPTestData -Type 'Users'
 
-# Return only disabled users with licenses: non-empty = fail
+# Return only disabled users with licences: non-empty = fail
 $Users | Where-Object {
     $_.accountEnabled -eq $false -and
     $_.assignedLicenses.Count -gt 0
 } | Select-Object @{Name='UserPrincipalName'; Expression={ $_.userPrincipalName }},
     @{Name='DisplayName'; Expression={ $_.displayName }},
     @{Name='LicenseCount'; Expression={ @($_.assignedLicenses).Count }},
-    @{Name='Message'; Expression={ 'Disabled account with active license(s)' }}
+    @{Name='Message'; Expression={ 'Disabled account with active licence(s)' }}
 ```
 
 </details>
@@ -431,7 +431,7 @@ Alerts are deduplicated per tenant per day, so a test failing on every scheduled
 
 **Markdown Result Template** appears only when **Result Display Type** is set to `Markdown`, and defines how the result is rendered. Where a previous test run has produced output, CIPP detects the result schema from it and offers the available fields for typed markdown, so run the test once before writing the template.
 
-**PowerShell Script** is the script itself, written in a full editor with syntax highlighting. Type `%` to insert replacement variables.
+**PowerShell Script** is the script itself, written in a full editor with syntax highlighting. Type `%` to insert replacement variables. The editor also suggests data types as you type the value for `-Type`, with each type's row count, and once the script reads a type with `Get-CIPPTestData`, typing a property access such as `$_.` suggests that type's fields.
 
 ## Test Script Output
 

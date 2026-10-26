@@ -1,12 +1,14 @@
 # Add Vacation Schedule
 
-This wizard schedules a set of temporary changes for one or more users and the reversal of each, so a period of absence is set up once and undone automatically. Five kinds of change are available and any combination can be used, but at least one has to be enabled before the wizard will continue.
+This wizard schedules a set of temporary changes for one or more users and the reversal of each, so a period of absence is set up once and undone automatically. Six kinds of change are available and any combination can be used, but at least one has to be enabled before the wizard will continue.
 
 {% stepper %}
 {% step %}
 ### Tenant Selection
 
 The tenant the changes apply to. This defaults to the tenant selected in the top menu and can be changed here.
+
+If the tenant has [Tenant Vacation Defaults](../../../tenant/manage/edit.md#tenant-vacation-defaults) saved, the Vacation Actions step starts with them filled in. See that step for how they are applied.
 {% endstep %}
 
 {% step %}
@@ -18,7 +20,7 @@ The users the vacation applies to. Several can be selected, and the changes belo
 {% step %}
 ### Vacation Actions
 
-Five switches, each revealing its own settings. Enable whichever apply.
+Six switches, each revealing its own settings. Enable whichever apply.
 
 #### Enable CA Policy Exclusion
 
@@ -28,7 +30,12 @@ Excludes the selected users from Conditional Access policies for the duration.
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Conditional Access Policies    | The policies to exclude the users from. At least one is required. The list is read from the tenant chosen in step one, so a tenant has to be selected before it populates. |
 | Create temporary travel policy | Creates a named location for the travel destination and a policy that blocks sign-ins from everywhere else, then deletes both at the end date.                             |
+| Add users' home country (usage location) to the travel destinations | Shown with the travel policy. Adds each selected user's usage location to the travel destination countries, so they can still sign in from home. A country you remove by hand is not added back. |
 | Travel destination countries   | The countries the users are travelling to. Required when a travel policy is being created.                                                                                 |
+
+{% hint style="info" %}
+When the tenant has Tenant Vacation Defaults, this card shows a **Using Tenant Defaults** label and the policies, travel policy, home country and location alert switches start as saved. The defaults are applied once when the tenant is chosen, so anything you change afterwards is kept, and every setting can still be changed for this vacation. A default policy that no longer exists in the tenant is dropped, with a warning naming it.
+{% endhint %}
 
 {% hint style="warning" %}
 Excluding someone from a Conditional Access policy allows sign-ins from anywhere, which is a wider gap than the trip usually warrants. The temporary travel policy is there to close it, restricting sign-ins to the destination for the same period.
@@ -37,6 +44,16 @@ Excluding someone from a Conditional Access policy allows sign-ins from anywhere
 #### Exclude from location-based audit log alerts
 
 Suppresses the alerts that would otherwise fire on sign-ins from an unusual location, by putting the users on the audit log alert exclusion list at the start date and taking them off again at the end date. This stands on its own: it needs no Conditional Access policy, so tenants without any still get to quiet the alerts for the trip.
+
+#### Add users to group(s) for the duration of the vacation
+
+Puts the users into the chosen groups at the start date and takes them out again at the end date.
+
+| Field    | Description                                                                                          |
+| -------- | ---------------------------------------------------------------------------------------------------- |
+| Group(s) | The groups to add the users to. At least one is required, and the list is read from the selected tenant. |
+
+Users who are already members of a group are left untouched, and only users who were added for the vacation are removed at the end date. Dynamic membership groups cannot take direct members, and the wizard warns when one is selected.
 
 #### Enable Mailbox Permissions
 
@@ -89,7 +106,7 @@ Turning automatic replies off at the end date preserves whatever the message say
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Scheduled Start Date   | When the changes are applied.                                                                                           |
 | Scheduled End Date     | When they are reversed.                                                                                                 |
-| Post Execution Actions | Which channels are notified as the tasks run: Webhook, Email, or PSA.                                                   |
+| Post Execution Actions | Which channels are notified as the tasks run: Webhook, Email, PSA, or Push (a notification to your own registered devices). |
 | Reference              | Free text carried onto every task the vacation creates, which is what ties them together on the [.](./ "mention") page. |
 {% endstep %}
 

@@ -5,7 +5,7 @@ function Invoke-ListTenants {
     .ROLE
         CIPP.Core.Read
     .DESCRIPTION
-        Lists all managed tenants accessible to the current user, with support for cache clearing and tenant filtering. This is the primary endpoint for tenant enumeration.
+        Lists all managed tenants accessible to the current user, with support for cache clearing and tenant filtering. This is the primary endpoint for tenant enumeration. Pass Search for a fuzzy, case-insensitive substring lookup across displayName, defaultDomainName, initialDomainName and customerId when the exact domain is unknown.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -20,7 +20,13 @@ function Invoke-ListTenants {
 
     $AllTenantSelector = $Request.Query.AllTenantSelector
 
-    $IncludeOffboardingDefaults = $Request.Query.IncludeOffboardingDefaults
+    # IncludeOffboardingDefaults is the pre-rename query parameter and still accepted.
+    $IncludeTenantDefaults = $Request.Query.IncludeTenantDefaults ?? $Request.Query.IncludeOffboardingDefaults
+
+    # Fuzzy tenant lookup: case-insensitive substring match over displayName, defaultDomainName,
+    # initialDomainName and customerId. Arbitrary verified domains are not indexed by Get-Tenants and
+    # cannot be matched here. Supports '*' wildcards. Use this when you don't know the exact domain.
+    $Search = $Request.Query.Search
 
     # Clear Cache
     if ($Request.Body.ClearCache -eq $true) {
@@ -50,9 +56,16 @@ function Invoke-ListTenants {
         #Get-Tenants -IncludeAll -TriggerRefresh
         return
     }
+    # Re-reads the tenant given in tenantFilter, or queues a refresh of all tenants when omitted. Returns a Results message instead of the tenant list.
     if ($Request.Query.TriggerRefresh) {
-        if ($Request.Query.TenantFilter -and $Request.Query.TenantFilter -ne 'AllTenants') {
-            Get-Tenants -TriggerRefresh -TenantFilter $Request.Query.TenantFilter
+        $TenantFilter = $Request.Query.TenantFilter
+        if ($TenantFilter -and $TenantFilter -ne 'AllTenants') {
+            $Refreshed = @(Get-Tenants -TriggerRefresh -TenantFilter $TenantFilter)
+            $Results = if ($Refreshed) {
+                "Refreshed tenant $($Refreshed[0].displayName) ($($Refreshed[0].defaultDomainName))."
+            } else {
+                "Tenant '$TenantFilter' not found."
+            }
         } else {
             $InputObject = [PSCustomObject]@{
                 Batch            = @(
@@ -64,7 +77,12 @@ function Invoke-ListTenants {
                 SkipLog          = $true
             }
             Start-CIPPOrchestrator -InputObject $InputObject
+            $Results = 'Refresh of all tenants queued. The list updates once it completes.'
         }
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::OK
+                Body       = @{ Results = $Results }
+            })
     }
     try {
         $TenantFilter = $Request.Query.tenantFilter
@@ -82,12 +100,23 @@ function Invoke-ListTenants {
             $Tenants = $Tenants | Where-Object -Property customerId -In $TenantAccess
         }
 
+        if ($Search) {
+            $Tenants = @($Tenants | Where-Object {
+                    $_.displayName -like "*$Search*" -or
+                    $_.defaultDomainName -like "*$Search*" -or
+                    $_.initialDomainName -like "*$Search*" -or
+                    $_.customerId -like "*$Search*"
+                })
+        }
+
         # If offboarding defaults are requested, fetch them
-        if ($IncludeOffboardingDefaults -eq 'true' -and $Tenants) {
+        if ($IncludeTenantDefaults -eq 'true' -and $Tenants) {
             $PropertiesTable = Get-CippTable -TableName 'TenantProperties'
 
             # Get all offboarding defaults for all tenants in one query for performance
-            $AllOffboardingDefaults = Get-CIPPAzDataTableEntity @PropertiesTable -Filter "RowKey eq 'OffboardingDefaults'"
+            $AllDefaultRows = Get-CIPPAzDataTableEntity @PropertiesTable -Filter "RowKey eq 'OffboardingDefaults' or RowKey eq 'VacationDefaults'"
+            $AllOffboardingDefaults = $AllDefaultRows | Where-Object { $_.RowKey -eq 'OffboardingDefaults' }
+            $AllVacationDefaults = $AllDefaultRows | Where-Object { $_.RowKey -eq 'VacationDefaults' }
 
             # Add offboarding defaults to each tenant
             foreach ($Tenant in $Tenants) {
@@ -105,6 +134,20 @@ function Invoke-ListTenants {
                 } else {
                     $Tenant | Add-Member -MemberType NoteProperty -Name 'offboardingDefaults' -Value $null -Force
                 }
+
+                $TenantVacation = $AllVacationDefaults | Where-Object { $_.PartitionKey -eq $Tenant.customerId } | Select-Object -First 1
+                if (-not $TenantVacation) {
+                    $TenantVacation = $AllVacationDefaults | Where-Object { $_.PartitionKey -eq $Tenant.initialDomainName } | Select-Object -First 1
+                }
+                $ParsedVacation = $null
+                if ($TenantVacation) {
+                    try {
+                        $ParsedVacation = $TenantVacation.Value | ConvertFrom-Json
+                    } catch {
+                        Write-LogMessage -headers $Headers -API $APIName -message "Failed to parse vacation defaults for tenant $($Tenant.defaultDomainName): $($_.Exception.Message)" -sev 'Warning'
+                    }
+                }
+                $Tenant | Add-Member -MemberType NoteProperty -Name 'vacationDefaults' -Value $ParsedVacation -Force
             }
         }
 
@@ -116,12 +159,12 @@ function Invoke-ListTenants {
                     defaultDomainName = 'AllTenants'
                     displayName       = '*All Tenants'
                     domains           = 'AllTenants'
-                    GraphErrorCount   = 0
                 }
 
                 # Add offboarding defaults to AllTenants object if requested
-                if ($IncludeOffboardingDefaults -eq 'true') {
+                if ($IncludeTenantDefaults -eq 'true') {
                     $AllTenantsObject.offboardingDefaults = $null
+                    $AllTenantsObject.vacationDefaults = $null
                 }
 
                 $TenantList.Add($AllTenantsObject) | Out-Null
@@ -192,6 +235,7 @@ function Invoke-ListTenants {
         }
 
         Write-LogMessage -headers $Headers -tenant $TenantFilter -API $APIName -message 'Listed Tenant Details' -Sev 'Debug'
+        $StatusCode = [HttpStatusCode]::OK
     } catch {
         Write-LogMessage -headers $Headers -tenant $TenantFilter -API $APIName -message "List Tenant failed. The error is: $($_.Exception.Message)" -Sev 'Error'
         $body = [pscustomobject]@{
@@ -201,10 +245,11 @@ function Invoke-ListTenants {
             customerId        = ''
 
         }
+        $StatusCode = [HttpStatusCode]::InternalServerError
     }
 
     return ([HttpResponseContext]@{
-            StatusCode = [HttpStatusCode]::OK
+            StatusCode = $StatusCode
             Body       = @($Body)
         })
 

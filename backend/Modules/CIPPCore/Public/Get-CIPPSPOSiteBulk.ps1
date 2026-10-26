@@ -33,6 +33,10 @@ function Get-CIPPSPOSiteBulk {
     Site reads packed into a single ProcessQuery (default 5). Kept small - SharePoint rejects large
     batched CSOM requests ("too many resources"); ~8 is the practical ceiling with SelectAllProperties.
 
+    .PARAMETER Properties
+    SiteProperties fields to return. Omit for every property. Url is always included so results can be
+    matched back to their input URLs.
+
     .PARAMETER UseCertificate
     Authenticate app-only with the SAM certificate (SharePoint app-only requires it).
 
@@ -48,6 +52,7 @@ function Get-CIPPSPOSiteBulk {
         [int]$MaxConcurrency = 4,
         [int]$MaxRetries = 3,
         [int]$BatchSize = 5,
+        [string[]]$Properties,
         [switch]$UseCertificate
     )
 
@@ -58,10 +63,18 @@ function Get-CIPPSPOSiteBulk {
     $TokenSplat = @{ tenantid = $TenantFilter; scope = "$AdminUrl/.default" }
     if ($UseCertificate) { $TokenSplat['AsApp'] = $true; $TokenSplat['UseCertificate'] = $true }
     $Authorization = (Get-GraphToken @TokenSplat).Authorization
+    $UserAgent = Get-CippUserAgent -SharePoint
 
     if ($BatchSize -lt 1) { $BatchSize = 1 }
     $CleanUrls = @($SiteUrls | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     if ($CleanUrls.Count -eq 0) { return @() }
+
+    $SiteQuery = if ($Properties) {
+        $Selected = @('Url') + @($Properties | Where-Object { $_ -and $_ -ne 'Url' }) | ForEach-Object { "<Property Name=`"$([System.Security.SecurityElement]::Escape($_))`" ScalarProperty=`"true`" />" }
+        "<Query SelectAllProperties=`"false`"><Properties>$($Selected -join '')</Properties></Query>"
+    } else {
+        '<Query SelectAllProperties="true"><Properties /></Query>'
+    }
 
     $Requests = [System.Collections.Generic.List[CIPP.CIPPConcurrentRequest]]::new()
     $BatchUrls = [System.Collections.Generic.List[object]]::new()
@@ -75,7 +88,7 @@ function Get-CIPPSPOSiteBulk {
         $Index = 0
         foreach ($Url in $Chunk) {
             $MethodId = 1000 + $Index; $PathId = 4000 + $Index; $QueryId = 7000 + $Index
-            [void]$Actions.Append("<ObjectPath Id=`"$PathId`" ObjectPathId=`"$MethodId`" /><Query Id=`"$QueryId`" ObjectPathId=`"$MethodId`"><Query SelectAllProperties=`"true`"><Properties /></Query></Query>")
+            [void]$Actions.Append("<ObjectPath Id=`"$PathId`" ObjectPathId=`"$MethodId`" /><Query Id=`"$QueryId`" ObjectPathId=`"$MethodId`">$SiteQuery</Query>")
             [void]$Paths.Append("<Method Id=`"$MethodId`" ParentId=`"1`" Name=`"GetSitePropertiesByUrl`"><Parameters><Parameter Type=`"String`">$([System.Security.SecurityElement]::Escape($Url))</Parameter><Parameter Type=`"Boolean`">true</Parameter></Parameters></Method>")
             $Index++
         }
@@ -89,6 +102,7 @@ function Get-CIPPSPOSiteBulk {
         $Headers = [System.Collections.Generic.Dictionary[string, string]]::new()
         $Headers['Authorization'] = $Authorization
         $Headers['Accept'] = 'application/json;odata=verbose'
+        $Headers['User-Agent'] = $UserAgent
         $Request.Headers = $Headers
 
         $Requests.Add($Request)
@@ -110,7 +124,7 @@ function Get-CIPPSPOSiteBulk {
                     $Parsed = $Result.Result.Content | ConvertFrom-Json
                     # One action's error aborts the whole ProcessQuery, so a batch-level ErrorInfo fails
                     # every URL in the chunk - the caller falls back per site.
-                    $CsomError = ($Parsed | Where-Object { $_.ErrorInfo } | Select-Object -First 1).ErrorInfo.ErrorMessage
+                    $CsomError = foreach ($Entry in $Parsed) { if ($Entry.ErrorInfo) { $Entry.ErrorInfo.ErrorMessage; break } }
                     if ($CsomError) { $BatchError = $CsomError }
                 } catch {
                     $BatchError = "Could not parse CSOM response: $($_.Exception.Message)"
@@ -126,7 +140,7 @@ function Get-CIPPSPOSiteBulk {
                 # deleted/erroring site in the middle would leave a gap) rather than trusting position.
                 $SitesInBatch = @($Parsed | Where-Object { $_._ObjectType_ -match 'SiteProperties' -and $_.Url })
                 foreach ($Url in $Chunk) {
-                    $Site = $SitesInBatch | Where-Object { "$($_.Url)".TrimEnd('/') -ieq "$Url".TrimEnd('/') } | Select-Object -First 1
+                    $Site = $SitesInBatch.Where({ "$($_.Url)".TrimEnd('/') -ieq "$Url".TrimEnd('/') }, 'First')[0]
                     if ($Site) {
                         [PSCustomObject]@{ SiteUrl = $Url; Site = $Site; Success = $true; Error = $null }
                     } else {

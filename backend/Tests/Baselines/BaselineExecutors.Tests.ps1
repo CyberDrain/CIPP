@@ -13,7 +13,7 @@
 
 BeforeAll {
     $script:RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
-    $Baselines = Join-Path $script:RepoRoot 'Modules/CIPPCore/Public/Baselines'
+    $Baselines = Join-Path $script:RepoRoot 'Modules/CIPPBaselines/Public'
 
     # Parameter binding is case-insensitive, so one casing per name covers every call site.
     function New-GraphPostRequest { param($tenantid, $uri, $Type, $Body, $AsApp, $ContentType, $AddedHeaders) }
@@ -23,10 +23,11 @@ BeforeAll {
     function Write-LogMessage { param($API, $tenant, $message, $Sev, $LogData) }
     function Set-CIPPDBCacheUsers { param($TenantFilter) }
 
-    . (Join-Path $Baselines 'Invoke-CIPPBaselineGraphRequest.ps1')
-    . (Join-Path $Baselines 'Invoke-CIPPBaselineExoRequest.ps1')
-    . (Join-Path $Baselines 'Invoke-CIPPBaselineDeviceRegistrationPolicy.ps1')
-    . (Join-Path $Baselines 'Invoke-CIPPBaselineGraphBulkSweep.ps1')
+    . (Join-Path $Baselines 'Helpers/Get-CIPPBaselineCommand.ps1')
+    . (Join-Path $Baselines 'Executors/Invoke-CIPPBaselineGraphRequest.ps1')
+    . (Join-Path $Baselines 'Executors/Invoke-CIPPBaselineExoRequest.ps1')
+    . (Join-Path $Baselines 'Executors/Invoke-CIPPBaselineDeviceRegistrationPolicy.ps1')
+    . (Join-Path $Baselines 'Executors/Invoke-CIPPBaselineGraphBulkSweep.ps1')
 
     # $batch answers one response per request, keyed by the id the caller supplied.
     function New-BulkSuccess { param($Requests) @($Requests | ForEach-Object { [PSCustomObject]@{ id = $_.id; status = 204 } }) }
@@ -105,6 +106,80 @@ Describe 'Invoke-CIPPBaselineExoRequest' {
         Invoke-CIPPBaselineExoRequest -Remediate $Spec -TenantFilter $script:Tenant -Current $null
         Should -Invoke New-ExoRequest -Times 1 -ParameterFilter {
             $cmdParams['Identity'] -eq 'Default' -and $cmdParams['NotifyOutboundSpam'] -eq $true
+        }
+    }
+
+    It 'skips a step whose only param is an empty GenericHashTable edit' {
+        # An empty %allowListAdd% variable renders Add as null/empty - Exchange rejects
+        # that with "MultiValuedProperty collections cannot contain null values".
+        $Spec = @{ cmdlets = @(@{
+                    cmdlet = 'Set-ExternalInOutlook'
+                    params = @{ AllowList = @{ '@odata.type' = '#Exchange.GenericHashTable'; Add = $null } }
+                }) } | ConvertTo-Spec
+        Invoke-CIPPBaselineExoRequest -Remediate $Spec -TenantFilter $script:Tenant -Current $null
+        Should -Invoke New-ExoRequest -Times 0 -Exactly
+    }
+
+    It 'drops only the empty edit from a mixed step, keeping the other params' {
+        $Spec = @{ cmdlets = @(@{
+                    cmdlet = 'Set-ExternalInOutlook'
+                    params = @{
+                        Enabled   = $true
+                        AllowList = @{ '@odata.type' = '#Exchange.GenericHashTable'; Add = @(); Remove = $null }
+                    }
+                }) } | ConvertTo-Spec
+        Invoke-CIPPBaselineExoRequest -Remediate $Spec -TenantFilter $script:Tenant -Current $null
+        Should -Invoke New-ExoRequest -Times 1 -Exactly -ParameterFilter {
+            $cmdParams.ContainsKey('Enabled') -and -not $cmdParams.ContainsKey('AllowList')
+        }
+    }
+
+    It 'strips null/empty entries out of a non-empty Add array before sending' {
+        $Spec = @{ cmdlets = @(@{
+                    cmdlet = 'Set-ExternalInOutlook'
+                    params = @{ AllowList = @{ '@odata.type' = '#Exchange.GenericHashTable'; Add = @('contoso.com', $null, '') } }
+                }) } | ConvertTo-Spec
+        Invoke-CIPPBaselineExoRequest -Remediate $Spec -TenantFilter $script:Tenant -Current $null
+        Should -Invoke New-ExoRequest -Times 1 -Exactly -ParameterFilter {
+            (@($cmdParams['AllowList'].Add) -join ',') -eq 'contoso.com'
+        }
+    }
+
+    It 'sends a non-empty GenericHashTable edit unchanged' {
+        $Spec = @{ cmdlets = @(@{
+                    cmdlet = 'Set-ExternalInOutlook'
+                    params = @{ AllowList = @{ '@odata.type' = '#Exchange.GenericHashTable'; Add = @('contoso.com') } }
+                }) } | ConvertTo-Spec
+        Invoke-CIPPBaselineExoRequest -Remediate $Spec -TenantFilter $script:Tenant -Current $null
+        Should -Invoke New-ExoRequest -Times 1 -Exactly -ParameterFilter {
+            $cmdParams.ContainsKey('AllowList') -and @($cmdParams['AllowList'].Add) -contains 'contoso.com'
+        }
+    }
+
+    It 'keeps a legitimate falsy entry (0) in a non-empty Add array' {
+        # Where-Object { $_ } would also drop 0/$false - only null and blank strings are empty.
+        $Spec = @{ cmdlets = @(@{
+                    cmdlet = 'Set-ExternalInOutlook'
+                    params = @{ AllowList = @{ '@odata.type' = '#Exchange.GenericHashTable'; Add = @(0, $null, '') } }
+                }) } | ConvertTo-Spec
+        Invoke-CIPPBaselineExoRequest -Remediate $Spec -TenantFilter $script:Tenant -Current $null
+        Should -Invoke New-ExoRequest -Times 1 -Exactly -ParameterFilter {
+            @($cmdParams['AllowList'].Add).Count -eq 1 -and @($cmdParams['AllowList'].Add)[0] -eq 0
+        }
+    }
+
+    It 'passes null, numeric and other non-object params through unchanged' {
+        # A null/scalar param indexed the same way as a GenericHashTable edit threw
+        # "Cannot index into a null array." and failed the whole remediation.
+        $Spec = @{ cmdlets = @(@{
+                    cmdlet = 'Set-Thing'
+                    params = @{ Identity = 'x'; Nullable = $null; Count = 0 }
+                }) } | ConvertTo-Spec
+        Invoke-CIPPBaselineExoRequest -Remediate $Spec -TenantFilter $script:Tenant -Current $null
+        Should -Invoke New-ExoRequest -Times 1 -Exactly -ParameterFilter {
+            $cmdParams.ContainsKey('Identity') -and $cmdParams['Identity'] -eq 'x' -and
+            $cmdParams.ContainsKey('Nullable') -and $null -eq $cmdParams['Nullable'] -and
+            $cmdParams.ContainsKey('Count') -and $cmdParams['Count'] -eq 0
         }
     }
 }
@@ -344,8 +419,8 @@ Describe 'Number variable rendering' {
 
 Describe 'Invoke-CIPPBaselineExoBulkSweep' {
     BeforeAll {
-        . (Join-Path $Baselines 'Invoke-CIPPBaselineExoBulkSweep.ps1')
-        function New-ExoBulkRequest { param($tenantid, $cmdletArray, $useSystemMailbox, $Anchor, $NoAuthCheck, $Select, $ReturnWithCommand, [switch]$Compliance, [switch]$AsApp) }
+        . (Join-Path $Baselines 'Executors/Invoke-CIPPBaselineExoBulkSweep.ps1')
+        function New-ExoBulkRequest { param($tenantid, $cmdletArray, $useSystemMailbox, $Anchor, $NoAuthCheck, $Select, $ReturnWithCommand, [int]$MaxConcurrency = 1, [switch]$Compliance, [switch]$AsApp) }
         function Set-CIPPDBCacheMailboxes { param($TenantFilter, $Types) }
     }
     BeforeEach {
@@ -372,6 +447,20 @@ Describe 'Invoke-CIPPBaselineExoBulkSweep' {
         $Spec = @{ writes = @(@{ cmdlet = 'Set-Mailbox'; params = @{ Identity = '%id%' } }) } | ConvertTo-Spec
         Invoke-CIPPBaselineExoBulkSweep -Remediate $Spec -TenantFilter $script:Tenant -Current $Current
         Should -Invoke New-ExoBulkRequest -Times 1 -ParameterFilter { @($cmdletArray)[0].OperationGuid -eq 'a@contoso.com' }
+    }
+
+    It 'fans out 16 batches at once unless the write group sets its own concurrency' {
+        $Current = @{ targets = @(@{ id = 'a@contoso.com' }) } | ConvertTo-Spec
+        $Spec = @{ writes = @(@{ cmdlet = 'Set-Mailbox'; params = @{ Identity = '%id%' } }) } | ConvertTo-Spec
+        Invoke-CIPPBaselineExoBulkSweep -Remediate $Spec -TenantFilter $script:Tenant -Current $Current
+        Should -Invoke New-ExoBulkRequest -Times 1 -Exactly -ParameterFilter { $MaxConcurrency -eq 16 }
+    }
+
+    It 'passes the write group concurrency through to the bulk request' {
+        $Current = @{ targets = @(@{ id = 'a@contoso.com' }) } | ConvertTo-Spec
+        $Spec = @{ writes = @(@{ cmdlet = 'Set-Mailbox'; concurrency = 8; params = @{ Identity = '%id%' } }) } | ConvertTo-Spec
+        Invoke-CIPPBaselineExoBulkSweep -Remediate $Spec -TenantFilter $script:Tenant -Current $Current
+        Should -Invoke New-ExoBulkRequest -Times 1 -Exactly -ParameterFilter { $MaxConcurrency -eq 8 }
     }
 
     It 'does nothing when there is nothing to sweep' {
@@ -423,7 +512,7 @@ Describe 'Invoke-CIPPBaselineQuarantineRequestAlert' {
     # The 'Allow extra addresses' switch decides whether the write preserves recipients it did
     # not add. Getting this wrong silently deletes somebody's notification address.
     BeforeAll {
-        . (Join-Path $Baselines 'Invoke-CIPPBaselineQuarantineRequestAlert.ps1')
+        . (Join-Path $Baselines 'Executors/Invoke-CIPPBaselineQuarantineRequestAlert.ps1')
         $script:AlertName = 'CIPP User requested to release a quarantined message'
     }
     BeforeEach {

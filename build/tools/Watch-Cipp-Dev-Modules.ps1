@@ -21,7 +21,7 @@ param(
     # compile built it, so leaving it out here meant test edits never went live.
     # build-dev-modules.ps1 handles its special case (source tree shipped alongside
     # the compiled module) so nothing extra is needed on this side.
-    [string[]] $Modules         = @('CIPPCore','CIPPHTTP','CIPPStandards','CIPPDB','CIPPAlerts','CIPPActivityTriggers','CippExtensions','CIPPTests'),
+    [string[]] $Modules         = @('CIPPCore','CIPPHTTP','CIPPStandards','CIPPDB','CIPPAlerts','CIPPBaselines','CIPPActivityTriggers','CippExtensions','CIPPPwPush','CIPPTests'),
     [string]   $Container       = 'cipp-api',
     [int]      $DebounceMs      = 750,
     [switch]   $SkipInitialBuild

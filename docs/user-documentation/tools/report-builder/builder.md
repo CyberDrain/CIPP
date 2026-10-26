@@ -3,7 +3,7 @@
 The builder is where a report template is assembled. A report is built from blocks, each of which contributes a section: a test result, data pulled from the cache database, a chart, or prose you write yourself. Blocks are added, reordered and edited here, then saved as a template or scheduled to generate on a recurring basis.
 
 {% hint style="info" %}
-Live test results and database content are loaded for the tenant selected in [tenant-select.md](../../shared-features/menu-bar/tenant-select.md "mention"), so what you see while building is that tenant's real data. Custom, chart and divider blocks work without a tenant selected. When the template is later generated for a different tenant, the data is collected fresh for that tenant.
+Live test results and database content are loaded for the tenant selected in [tenant-select.md](../../shared-features/menu-bar/tenant-select.md "mention"), so what you see while building is that tenant's real data. Blocks you fill in by hand, such as text, layout and **Manual** charts, work without a tenant selected. When the template is later generated for a different tenant, the data is collected fresh for that tenant.
 {% endhint %}
 
 ## Action Buttons
@@ -33,9 +33,10 @@ Opens the **Schedule Report Generation** dialog, which creates a scheduled task 
 
 The delivery options behave differently:
 
-* **Email** sends the report body as the message, to the address configured in [notifications.md](../../cipp/settings/notifications.md "mention"). Database blocks marked for attachment are sent as files.
+* **Email** sends the report body as the message, to the address configured in [notifications.md](../../cipp/settings/notifications.md "mention"). The report is attached as a PDF, followed by any database blocks marked for attachment. An attachment that would take the email over Microsoft's 4 MB limit is uploaded to storage instead and listed in the email as a download link, kept for the period set under [Report Attachment Retention](../../cipp/settings/README.md#report-attachment-retention). If the upload fails, the attachment is left off.
 * **PSA** raises a ticket with the report body as its content. Raw data is not attached.
 * **Webhook** posts a JSON payload of the task metadata and results.
+* **Push (notify me)** sends a notification to the devices you registered under [user-settings.md](../../shared-features/menu-bar/user-settings.md "mention"). It tells you when each run has finished. Only you receive it, and the schedule is only saved with it once you have registered at least one device.
 
 What the schedule generates depends on **Always use the latest saved version of this template**. With it on, the schedule points at the saved template, so every run picks the template up as it stands at that moment and later edits are applied automatically. Anything you have changed in the builder but not yet saved to the template is not included, so save before you schedule.
 
@@ -55,18 +56,69 @@ Opens the rendered report in a dialog so you can check pagination, branding and 
 
 ## Adding Blocks
 
-Choose a **Block Type**, complete whatever fields appear for it, then select **Add Block**. Repeat for each section the report needs. Blocks are appended to the bottom and can be reordered afterwards.
+Blocks are added from the **Report Settings** card. Choose a **Category**, then a **Block** from that category, complete whatever fields appear for it, and select **Add Block**. Repeat for each section the report needs. Blocks are appended to the bottom and can be reordered afterwards.
 
-| Block Type      | Description                                                                                                                                                                  |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Custom Block    | A free-form section you write yourself using a rich text editor, for structure, narrative or commentary.                                                                     |
-| Test Result     | A section tied to CIPP's test suite results. Choose a **Test Suite**, then one or more tests under **Select Tests**. Selecting several tests adds a separate block for each, and **Add All Tests** adds every test in the chosen suite in one go. |
-| Database Data   | A section populated from the cache database. Choose a **Data Source** and a **Format** of Table (Text), CSV or JSON.                                                         |
-| Chart           | A donut, bar or trend line chart built from data points you enter by hand.                                                                                                   |
-| Score Cards     | A row of headline figures, each a label and a value.                                                                                                                         |
-| Progress Bars   | Labelled bars showing a value against a maximum, useful for coverage figures.                                                                                                |
-| Section Divider | A full-width heading with optional subtext, footer text and a background image, for separating a report into parts.                                                          |
-| Page Break      | Forces the following content onto a new page.                                                                                                                                |
+**Text**
+
+| Block         | Description                                                                                              |
+| ------------- | -------------------------------------------------------------------------------------------------------- |
+| Custom Block  | A free-form section you write yourself using a rich text editor, for structure, narrative or commentary. |
+| Note          | A small italic aside, the size of a caption.                                                             |
+| Bullet List   | A list of points, each with a bold lead and the text that follows it.                                    |
+| Numbered List | A numbered list of steps.                                                                                |
+| Indented Text | Body text stepped in under a heading.                                                                    |
+| Code Block    | A command or snippet in a monospaced block.                                                              |
+| Callout       | A boxed callout with a title and text, styled as Info, Good news or Warning.                             |
+| Callout Grid  | Several callouts laid out 1, 2 or 3 across.                                                              |
+
+**Data**
+
+| Block         | Description                                                                                                                                                                                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Test Result   | A section tied to CIPP's test suite results. Choose a **Test Suite**, then one or more tests under **Select Tests**. Selecting several tests adds a separate block for each, and **Add All Tests** adds every test in the chosen suite in one go. |
+| Database Data | A section populated from the cache database. Choose a **Data Source** and a **Format** of Table (Text), CSV or JSON.                                                                                                                                 |
+| Table         | A formatted table with columns you name, filled by hand or from a data source.                                                                                                                                                                       |
+
+**Visuals**
+
+| Block         | Description                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------- |
+| Chart         | A donut, bar or trend line chart, at full width or half width so two sit side by side.      |
+| Flow (Sankey) | A flow diagram whose ribbon widths show how a total splits between stages or measures.      |
+| Score Cards   | A row of headline figures, each a figure and a label.                                       |
+| Progress Bars | Labelled bars showing a value against a maximum, useful for coverage figures.               |
+
+**Layout**
+
+| Block       | Description                                                                                                                                   |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cover       | The cover page. Leave the title blank to use the report's name.                                                                               |
+| Titled Page | Starts a new page with a title and subtitle in its header. The blocks that follow land on it.                                                 |
+| Infographic | A full page with a big figure, headline and supporting text over a background image that bleeds to the paper edge.                             |
+| Divider     | A horizontal rule to separate sections.                                                                                                       |
+| Page Break  | Forces the following content onto a new page.                                                                                                 |
+
+The **Background** of an Infographic block offers the stock cover images and every cover uploaded in [branding.md](../../cipp/settings/branding.md "mention"), listed by the name given to it there.
+
+**Pre-built**
+
+Pre-built blocks arrive already set up to draw from the tenant's data, so common dashboard visuals do not have to be assembled by hand. The **Block** list offers a topic, and where the topic has more than one visual, a **Chart type** field appears to choose between them.
+
+| Topic              | Visuals                                                                                          |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
+| Secure Score       | Trend, Controls to improve (table)                                                               |
+| Licences           | Usage (bar), Summary (table), Flow (Sankey)                                                      |
+| MFA                | Registration (donut), Coverage flow (Sankey), Auth methods (Sankey)                              |
+| Conditional Access | By state (donut)                                                                                 |
+| Devices            | Compliance (donut), Compliance flow (Sankey), By OS, By manufacturer, By ownership, By encryption (all donut) |
+| Users              | By type (donut)                                                                                  |
+| Mailboxes          | By type (donut), Busiest by items, Largest by storage, Top senders, Top recipients (all bar)     |
+| Groups             | By type (donut)                                                                                  |
+| Domains            | Mail security (table)                                                                            |
+| Risky users        | By risk level (donut)                                                                            |
+| Tenant             | Summary (cards)                                                                                  |
+
+A pre-built block is an ordinary block once added, so it can be edited like any other. Where CIPP holds no data for the tenant on that topic, the block shows that no data is available rather than failing the report.
 
 Two switches sit below the block controls:
 
@@ -98,6 +150,9 @@ Each block is shown as a card. The header carries the block title and chips desc
 | Custom         | Marks a free-form block.                                                                                        | Custom Block  |
 | Database       | The data source, the format in use, and the number of rows returned.                                            | Database Data |
 | Chart type     | Which chart is being rendered.                                                                                  | Chart         |
+| Rows           | The number of rows in the table.                                                                                | Table         |
+| Flow           | The number of nodes, or **from data** when the flow is read from a data source.                                 | Flow (Sankey) |
+| Callout style  | The callout's style, or the number of callouts in a grid.                                                       | Callout, Callout Grid |
 
 The actions on each card are:
 
@@ -123,6 +178,47 @@ The preview lists every licence assigned, falling back to the licence's SKU name
 
 ### Structured Block Editing
 
-Chart, Score Cards and Progress Bars blocks are edited as small tables of values. Add a row for each data point, giving it a label and a value, with an optional colour on chart data points. Charts also take a caption, and a donut chart takes a centre label and an optional maximum.
+Chart, Flow (Sankey), Table, Score Cards and Progress Bars blocks each start with a choice of where their data comes from.
+
+| Source             | Description                                                                                                                                                                                                                                                      |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Manual             | The values are typed in as a small table. Add a row for each data point, giving it a label and a value, with an optional colour on chart data points and score cards.                                                                                           |
+| Reporting database | The values are read from data CIPP has collected for the tenant each time the report is generated. Pick a **Collection**, then choose what to **Show** (a count of rows or a field's value) and what to show it **Per**. **Only rows where** narrows the rows counted. |
+
+The collections on offer include the tenant's test results alongside its collected data, so a chart or table can summarise test outcomes too.
+
+Score card colours and captions, and each progress bar's own target, are only set in **Manual**. Using a data source, each bar is filled by its share of the total.
+
+Manual score card and progress bar figures also accept data tokens, which are read when the report is generated. `&Users&` counts a collection, `&Devices.complianceState=compliant&` counts the rows that match, and `&Mailboxes.TotalItemSize:sum&` adds a field up.
+
+Charts also take a caption. A donut chart takes a centre label, and a trend line takes an **Axis maximum**, which uses the highest value when left blank.
+
+### Flow (Sankey) Editing
+
+A Flow block also takes a title and a **Caption**. In **Manual**, the diagram is described in two tables:
+
+| Table | Description                                                                                                                                  |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nodes | The boxes in the diagram. Each has a **Node ID**, a **Colour** in hex or `hsl()`, and an optional **Label** shown in place of the ID.         |
+| Links | The ribbons between boxes. Each joins a **From (node ID)** to a **To (node ID)**, and its **Value** sets how thick the ribbon is drawn.        |
+
+Columns and box heights are worked out from the links, so there is no layout to arrange by hand.
+
+With **Reporting database**, pick a **Collection** and then the shape of the flow:
+
+| Shape               | Description                                                                                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Flow between fields | Rows flow from one field's values to the next. Choose a **From field** and a **To field**, and optionally a third stage under **Then (optional)**. Ribbon widths reflect the number of rows taking each path. |
+| Split by measures   | One **Category field** on the left fans out into numeric fields on the right, for example a licence splitting into assigned and available. Add a row per measure, giving the **Value field** and how it is **Shown as**. |
+
+**Only rows where** narrows the rows used, with a **Condition** of is or is not and a **Value** to match.
+
+A Flow block added from **Pre-built** matches the equivalent dashboard diagram and has no fields to edit. **Switch to a custom flow** replaces it with an empty data-driven flow you set up yourself.
+
+### Callout Editing
+
+A Callout takes a **Callout title**, a **Style** of Info, Good news or Warning, and its **Text**, which accepts Markdown for bold, italic and links. An Info callout also takes a **Tone** of Default, Positive or Attention to tint it. **Label : value lines** switches the text to one `Label: value` pair per line, set as tight lines.
+
+A Callout Grid sets its **Layout** to 1, 2 or 3 across and shows the callouts arranged that way while you edit. Each callout has its own **Title** and **Text**. **Add callout** adds another, and **Remove callout** deletes one, down to a minimum of one.
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

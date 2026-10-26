@@ -32,8 +32,26 @@ import CippPageCard from "../CippCards/CippPageCard";
 import { useSettings } from "../../hooks/use-settings";
 import CippForefrontHeaderDialog from "./CippForefrontHeaderDialog";
 import { CippMessageDeliveryInfo } from "./CippMessageDeliveryInfo";
+import { CippApiDialog } from "./CippApiDialog";
+import { useDialog } from "../../hooks/use-dialog";
+import { CippTestMessageResults } from "./CippTestMessageResults";
+import { decodeMimeEncodedWords } from "../../utils/decode-mime-encoded-words";
+import { decodeTnef } from "../../utils/decode-tnef";
 
-export const CippMessageViewer = ({ emailSource }) => {
+const bytesToBase64 = (bytes) => {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return window.btoa(binary);
+};
+const headerAddress = (headers, name) =>
+  headers?.match(new RegExp(`^${name}:\\s*(.+)$`, "im"))?.[1]?.match(/[\w.+-]+@[\w.-]+/)?.[0] ?? "";
+
+export const CippMessageViewer = ({ emailSource, emlBase64 }) => {
+  const tenant = useSettings().currentTenant;
+  const testMessageDialog = useDialog();
+  const [testJobId, setTestJobId] = useState(null);
   const [emlContent, setEmlContent] = useState(null);
   const [emlError, setEmlError] = useState(false);
   const [messageHtml, setMessageHtml] = useState("");
@@ -114,13 +132,14 @@ export const CippMessageViewer = ({ emailSource }) => {
       );
     }
 
-    var fileName = attachment?.name ?? "attachment";
+    var fileName = decodeMimeEncodedWords(attachment?.name) ?? "attachment";
     const blob = new Blob([fileBytes], { type: contentType ?? "application/octet-stream" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     if (newTab) {
       if (contentType.includes("rfc822")) {
-        var content = fileBytes;
+        var content =
+          typeof fileBytes === "string" ? fileBytes : new TextDecoder().decode(fileBytes);
         const nestedMessage = <CippMessageViewer emailSource={content} />;
         setDialogContent(nestedMessage);
         setDialogTitle(fileName);
@@ -138,7 +157,8 @@ export const CippMessageViewer = ({ emailSource }) => {
         setDialogTitle(fileName);
         setDialogOpen(true);
       } else if (contentType.includes("text")) {
-        const textContent = fileBytes;
+        const textContent =
+          typeof fileBytes === "string" ? fileBytes : new TextDecoder().decode(fileBytes);
         setDialogContent(
           <CippCodeBlock
             code={textContent}
@@ -229,6 +249,18 @@ export const CippMessageViewer = ({ emailSource }) => {
         >
           View Source
         </Button>
+        <Button
+          size="small"
+          variant="contained"
+          onClick={testMessageDialog.handleOpen}
+          startIcon={
+            <SvgIcon fontSize="small">
+              <CippIcons.FactCheck />
+            </SvgIcon>
+          }
+        >
+          Test Mail Flow Rules
+        </Button>
       </Stack>
     );
   };
@@ -241,6 +273,24 @@ export const CippMessageViewer = ({ emailSource }) => {
         setMessageHtml(null);
         setEmlHeaders(null);
       } else {
+        // A top-level TNEF part is binary, so its bytes only survive in the base64 export.
+        const tnefIsBody = /ms-tnef/i.test(ReadEmlJson.headers?.["Content-Type"] ?? "");
+        ReadEmlJson.attachments = ReadEmlJson.attachments?.flatMap((attachment) => {
+          if (!/ms-tnef/i.test(attachment.contentType ?? "")) return [attachment];
+          let tnef = null;
+          try {
+            const fromExport = tnefIsBody && emlBase64;
+            const raw = atob(fromExport ? emlBase64 : (attachment.data64 ?? ""));
+            const source = fromExport ? raw.slice(raw.indexOf("\r\n\r\n") + 4) : raw;
+            tnef = decodeTnef(Uint8Array.from(source, (c) => c.charCodeAt(0)));
+          } catch {
+            // undecodable winmail.dat stays a plain attachment
+          }
+          if (!tnef) return [attachment];
+          ReadEmlJson.html ??= tnef.html;
+          ReadEmlJson.text ??= tnef.text;
+          return tnef.attachments.map((inner) => ({ ...inner, data64: bytesToBase64(inner.data) }));
+        });
         setEmlContent(ReadEmlJson);
         setEmlError(false);
         if (ReadEmlJson.html) {
@@ -281,13 +331,46 @@ export const CippMessageViewer = ({ emailSource }) => {
         setEmlHeaders(headers ? headers[0] : null);
       }
     });
-  }, [emailSource, setMessageHtml, setEmlError, setEmlContent, setEmlHeaders]);
+  }, [emailSource, emlBase64, setMessageHtml, setEmlError, setEmlContent, setEmlHeaders]);
 
   var buttons = EmailButtons(emlHeaders, emailSource);
 
   return (
     <>
       <CippMessageDeliveryInfo emailSource={emailSource} />
+      <CippApiDialog
+        title="Test Mail Flow Rules"
+        createDialog={testMessageDialog}
+        defaultvalues={(current) => ({
+          Sender: current?.Sender ?? "",
+          Recipients: current?.Recipients ?? "",
+          TransportRules: true,
+          UnifiedDlpRules: false,
+        })}
+        row={{
+          MessageFileBase64: emlBase64 ?? bytesToBase64(new TextEncoder().encode(emailSource)),
+          Sender: headerAddress(emlHeaders, "From"),
+          Recipients: headerAddress(emlHeaders, "To"),
+          TransportRules: true,
+          UnifiedDlpRules: false,
+        }}
+        fields={[
+          { type: "textField", name: "Sender", label: "Sender" },
+          { type: "textField", name: "Recipients", label: "Recipients (comma separated)" },
+          { type: "textField", name: "SendReportTo", label: "Send report to (a mailbox in this tenant)" },
+          { type: "switch", name: "TransportRules", label: "Evaluate mail flow rules" },
+          { type: "switch", name: "UnifiedDlpRules", label: "Evaluate unified DLP rules" },
+        ]}
+        api={{
+          url: "/api/ExecTestMessage",
+          type: "POST",
+          confirmText:
+            "This message is pushed through the tenant's rule pipeline without being delivered, and Exchange emails the report of every rule that matched. Rule actions such as block, moderate or notify can fire for it. Continue?",
+          data: { MessageFileBase64: "MessageFileBase64", tenantFilter: tenant },
+          onSuccess: (result) => setTestJobId(result?.DeploymentId ?? null),
+        }}
+      />
+      <CippTestMessageResults jobId={testJobId} />
 
       {emlError && (
         <Card className="mt-2 mb-4">
@@ -435,46 +518,62 @@ export const CippMessageViewer = ({ emailSource }) => {
               {emlContent.attachments && emlContent.attachments.length > 0 && (
                 <Grid container spacing={2} sx={{ mb: 2 }}>
                   <Grid size={12}>
-                    <Stack spacing={1} direction="row">
-                      {emlContent?.attachments?.map((attachment, index) => (
-                        <React.Fragment key={index}>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={(event) =>
-                              setAnchorEl({ ...anchorEl, [index]: event.currentTarget })
-                            }
-                            startIcon={
-                              <SvgIcon fontSize="small">
-                                {getAttachmentIcon(attachment?.contentType ?? "text/plain")}
-                              </SvgIcon>
-                            }
-                          >
-                            {attachment.name ?? "No name"}
-                          </Button>
+                    <Stack spacing={1} direction="row" useFlexGap sx={{ flexWrap: "wrap" }}>
+                      {emlContent?.attachments?.map((attachment, index) => {
+                        const attachmentName =
+                          decodeMimeEncodedWords(attachment.name) ?? "No name";
+                        return (
+                          <React.Fragment key={index}>
+                            <Tooltip title={attachmentName} placement="top">
+                              <Button
+                                variant="contained"
+                                size="small"
+                                onClick={(event) =>
+                                  setAnchorEl({ ...anchorEl, [index]: event.currentTarget })
+                                }
+                                startIcon={
+                                  <SvgIcon fontSize="small">
+                                    {getAttachmentIcon(attachment?.contentType ?? "text/plain")}
+                                  </SvgIcon>
+                                }
+                                sx={{ maxWidth: 280 }}
+                              >
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >
+                                  {attachmentName}
+                                </Box>
+                              </Button>
+                            </Tooltip>
 
-                          <Menu
-                            anchorEl={anchorEl[index]}
-                            open={Boolean(anchorEl[index])}
-                            onClose={() => setAnchorEl({ ...anchorEl, [index]: null })}
-                          >
-                            <MenuItem onClick={() => downloadAttachment(attachment)}>
-                              <CippIcons.Download sx={{ mr: 1 }} />
-                              Download
-                            </MenuItem>
-                            {(attachment?.contentType === undefined ||
-                              attachment?.contentType?.includes("text") ||
-                              attachment?.contentType?.includes("pdf") ||
-                              attachment?.contentType?.includes("image") ||
-                              attachment?.contentType?.includes("rfc822")) && (
-                              <MenuItem onClick={() => downloadAttachment(attachment, true)}>
-                                <CippIcons.Visibility sx={{ mr: 1 }} />
-                                View
+                            <Menu
+                              anchorEl={anchorEl[index]}
+                              open={Boolean(anchorEl[index])}
+                              onClose={() => setAnchorEl({ ...anchorEl, [index]: null })}
+                            >
+                              <MenuItem onClick={() => downloadAttachment(attachment)}>
+                                <CippIcons.Download sx={{ mr: 1 }} />
+                                Download
                               </MenuItem>
-                            )}
-                          </Menu>
-                        </React.Fragment>
-                      ))}
+                              {(attachment?.contentType === undefined ||
+                                attachment?.contentType?.includes("text") ||
+                                attachment?.contentType?.includes("pdf") ||
+                                attachment?.contentType?.includes("image") ||
+                                attachment?.contentType?.includes("rfc822")) && (
+                                <MenuItem onClick={() => downloadAttachment(attachment, true)}>
+                                  <CippIcons.Visibility sx={{ mr: 1 }} />
+                                  View
+                                </MenuItem>
+                              )}
+                            </Menu>
+                          </React.Fragment>
+                        );
+                      })}
                     </Stack>
                   </Grid>
                 </Grid>
@@ -567,9 +666,10 @@ const CippMessageViewerPage = () => {
       reader.onabort = () => console.log("file reading was aborted");
       reader.onerror = () => console.log("file reading has failed");
       reader.onload = () => {
-        setEmlFile(reader.result);
+        const bytes = new Uint8Array(reader.result);
+        setEmlFile({ text: new TextDecoder().decode(bytes), base64: bytesToBase64(bytes) });
       };
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
     });
   }, []);
 
@@ -582,7 +682,7 @@ const CippMessageViewerPage = () => {
   };
 
   const handleAnalyze = () => {
-    setEmlFile(pasteValue);
+    setEmlFile({ text: pasteValue });
     setPasteCollapsed(true);
   };
 
@@ -655,7 +755,7 @@ const CippMessageViewerPage = () => {
         </Collapse>
       )}
 
-      {emlFile && <CippMessageViewer emailSource={emlFile} />}
+      {emlFile && <CippMessageViewer emailSource={emlFile.text} emlBase64={emlFile.base64} />}
     </CippPageCard>
   );
 };

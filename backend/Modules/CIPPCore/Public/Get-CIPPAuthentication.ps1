@@ -94,6 +94,29 @@ function Get-CIPPAuthentication {
             }
 
             if (-not $env:SAMCertificate -and $env:SAMCertProvisionAttempted -ne 'true') {
+                # Another worker may have just written the cert — re-read before minting.
+                if ($IsDevMode) {
+                    $Table = Get-CIPPTable -tablename 'DevSecrets'
+                    $Secret = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'Secret' and RowKey eq 'Secret'"
+                    if ($Secret.SAMCertificate) {
+                        $env:SAMCertificate = $Secret.SAMCertificate
+                    }
+                } else {
+                    try {
+                        $SAMCertificateRetry = Get-CippKeyVaultSecret -VaultName $keyvaultname -Name 'SAMCertificate' -AsPlainText -ErrorAction Stop
+                        if ($SAMCertificateRetry) {
+                            $env:SAMCertificate = $SAMCertificateRetry
+                        }
+                    } catch {
+                        Write-Information "SAM certificate still not found on re-read: $($_.Exception.Message)"
+                    }
+                }
+            }
+
+            $HasRealAppId = $env:ApplicationID -and $env:ApplicationID -notmatch $PlaceholderPattern
+            if (-not $env:SAMCertificate -and -not $HasRealAppId) {
+                Write-Information 'SAM certificate provisioning waits for real application credentials'
+            } elseif (-not $env:SAMCertificate -and $env:SAMCertProvisionAttempted -ne 'true') {
                 # First run on this instance: provision the certificate now, at most once per
                 # process. The guard also breaks a recursion loop: Update-CIPPSAMCertificate
                 # calls Get-GraphToken, which re-enters this function when the AppCache

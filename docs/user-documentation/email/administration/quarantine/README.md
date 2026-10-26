@@ -48,7 +48,7 @@ Messages are listed newest first. Choosing AllTenants starts a background job to
 
 Fields with no value are left out rather than shown empty, so the sections vary in length from message to message. The actions offered in the table are repeated at the foot of the flyout.
 
-Where Microsoft Defender for Office 365 has analysed the message, the delivery, authentication, URL, and attachment detail comes from Microsoft's own analysis. Where it has not, CIPP falls back to reading the message headers and the message itself, and the flyout says so. The fallback still lists the links and attachments it finds, but Microsoft's per-link verdicts are not available for them.
+Where Microsoft Defender for Office 365 has analysed the message, the delivery, authentication, URL, and attachment detail comes from Microsoft's own analysis. Where it has not, CIPP falls back to reading the message headers and the message itself, and the flyout says so. The fallback still lists the links and attachments it finds, but Microsoft's per-link verdicts are not available for them, so their threat type shows as **Not analysed**. Those verdicts need Microsoft Defender for Office 365 Plan 2.
 
 {% hint style="info" %}
 The enriched detail needs the `SecurityAnalyzedMessage.Read.All` permission on your Secure Application Model application. Where that permission is missing, the flyout says so directly and links to the [Permissions](../../../cipp/settings/permissions.md) page, where **Repair Permissions** adds it. Where the message could not be analysed for another reason, the flyout falls back to the header-based view instead.

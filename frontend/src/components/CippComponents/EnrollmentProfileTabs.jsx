@@ -421,7 +421,7 @@ export const WindowsAutopilotEnrollmentProfiles = () => {
   const groupsQuery = ApiGetCall({
     url: '/api/ListGroups',
     data: { tenantFilter: currentTenant },
-    queryKey: `ListGroups-${currentTenant}`,
+    queryKey: `ListGroupsMap-${currentTenant}`,
     waiting: Boolean(currentTenant),
   })
   const groupMap = useMemo(() => {
@@ -570,18 +570,14 @@ export const WindowsAutopilotEnrollmentProfiles = () => {
           title={`Windows Autopilot Profiles - ${currentTenant}`}
           queryKey={`AutopilotProfiles-${currentTenant}`}
           api={{
-            url: '/api/ListGraphRequest',
-            data: {
-              tenantFilter: currentTenant,
-              Endpoint: 'deviceManagement/windowsAutopilotDeploymentProfiles',
-              $expand: 'assignments',
-            },
-            dataKey: 'Results',
+            url: '/api/ListAutopilotConfig',
+            data: { tenantFilter: currentTenant, type: 'ApProfile' },
           }}
           actions={autopilotActions}
           simpleColumns={[
             'displayName',
             'description',
+            'PolicyAssignment',
             'language',
             'extractHardwareHash',
             'deviceNameTemplate',

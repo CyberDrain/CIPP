@@ -24,10 +24,17 @@ namespace CIPP
     // =====================================================================
     public sealed class HttpResult
     {
+        private string? _content;
+
         public int                          StatusCode      { get; init; }
         public bool                         IsSuccess       { get; init; }
-        public string                       Content         { get; init; } = string.Empty;
+        /// <summary>The body as received; null when it was read as text (a non-UTF-8 charset).</summary>
+        public byte[]?                      ContentBytes    { get; init; }
+        // Decoded on first use: JSON callers parse ContentBytes and never need the string.
+        public string                       Content         { get => _content ??= HttpBody.Decode(ContentBytes); init => _content = value; }
         public bool                         IsJson          { get; init; }
+        /// <summary>Same as !string.IsNullOrWhiteSpace(Content), without decoding the body.</summary>
+        public bool                         HasContent      => ContentBytes is null ? !string.IsNullOrWhiteSpace(_content) : !HttpBody.IsBlank(ContentBytes, () => Content);
 
         /// <summary>
         /// Flat header dictionary keyed by header name (case-insensitive).
@@ -35,6 +42,45 @@ namespace CIPP
         /// shape that Invoke-RestMethod surfaces via -ResponseHeadersVariable.
         /// </summary>
         public Dictionary<string, string[]> ResponseHeaders { get; init; } = new();
+    }
+
+    internal static class HttpBody
+    {
+        // ReadAsStringAsync (no charset) and StreamReader both strip a UTF-8 BOM and switch to UTF-16/32 on theirs.
+        public static string Decode(byte[]? body)
+        {
+            if (body is null || body.Length == 0) return string.Empty;
+            if (HasWideBom(body))
+            {
+                using var reader = new StreamReader(new MemoryStream(body), Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+                return reader.ReadToEnd();
+            }
+            var start = HasUtf8Bom(body) ? 3 : 0;
+            return Encoding.UTF8.GetString(body, start, body.Length - start);
+        }
+
+        /// <summary>The UTF-8 JSON text without its BOM, or null when the body is UTF-16/32.</summary>
+        public static ReadOnlyMemory<byte>? Utf8(byte[] body)
+            => HasWideBom(body) ? null : body.AsMemory(HasUtf8Bom(body) ? 3 : 0);
+
+        public static bool IsBlank(byte[] body, Func<string> text) => FirstNonBlank(body, text) == '\0';
+
+        // First character that is not whitespace, '\0' when there is none. Non-ASCII falls back to the decoded text.
+        public static char FirstNonBlank(byte[] body, Func<string> text)
+        {
+            if (HasWideBom(body)) return text().TrimStart().FirstOrDefault();
+            for (var i = HasUtf8Bom(body) ? 3 : 0; i < body.Length; i++)
+            {
+                var b = body[i];
+                if (b == 0x20 || (b >= 0x09 && b <= 0x0D) || (b >= 0x1C && b <= 0x1F)) continue;
+                return b < 0x80 ? (char)b : text().TrimStart().FirstOrDefault();
+            }
+            return '\0';
+        }
+
+        private static bool HasUtf8Bom(byte[] b) => b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF;
+        private static bool HasWideBom(byte[] b) => b.Length >= 2 && ((b[0] == 0xFF && b[1] == 0xFE) || (b[0] == 0xFE && b[1] == 0xFF))
+                                                   || (b.Length >= 4 && b[0] == 0 && b[1] == 0 && b[2] == 0xFE && b[3] == 0xFF);
     }
 
     // =====================================================================
@@ -74,6 +120,8 @@ namespace CIPP
         public HttpResult? Result     { get; init; }
         public string?     Error      { get; init; }
         public int         Attempts   { get; init; }
+        /// <summary>True when the request hit its own TimeoutSec (not a server-side cancel).</summary>
+        public bool        TimedOut   { get; init; }
     }
 
     // =====================================================================
@@ -182,9 +230,10 @@ namespace CIPP
     //   PartnerCenter   5   api.partnercenter.microsoft.com
     //   SPO             5   *.sharepoint.com CSOM/_api (concurrent per-site fan-out)
     //   DNS             2   dns.google.com, cloudflare-dns.com (per host)
+    //   NinjaOne       12   *.ninjarmm.com, *.ninjaone.com (tenant sync fan-out)
     //   Default         5   catch-all + absorbs legacy Invoke-RestMethod calls
     //   ─────────────
-    //   Total          84   leaves a 41-port buffer for the Functions host,
+    //   Total          96   leaves a 29-port buffer for the Functions host,
     //                       Durable extension, AppInsights, Azure SDK clients,
     //                       and any stragglers that bypass the pool.
     //
@@ -238,6 +287,7 @@ namespace CIPP
         private static HttpClient? _adminPlaneClient;
         private static HttpClient? _spoClient;
         private static HttpClient? _dnsClient;
+        private static HttpClient? _ninjaOneClient;
         private static HttpClient? _defaultClient;
 
         /// <summary>
@@ -273,9 +323,9 @@ namespace CIPP
         //     graceful-recycle churn and cuts the TIME_WAIT tail under steady
         //     load — a small but measurable port saving.
         //
-        //   PooledConnectionIdleTimeout  2 min — idle connections that have
-        //     not been used for 2 minutes are closed and removed from the
-        //     pool. Keeps the pool lean during quiet periods.
+        //   PooledConnectionIdleTimeout  3 min — idle connections are closed
+        //     before the Azure SNAT silently drops an idle flow at 4 minutes,
+        //     so a pooled connection is never reused after its mapping is gone.
         //
         //   MaxConnectionsPerServer — hard cap on simultaneous TCP connections
         //     to a single host:port pair. Requests beyond this limit queue
@@ -293,33 +343,38 @@ namespace CIPP
         /// Covers graph.microsoft.com and any *.microsoft.com graph surface.
         /// Cap: 30 connections.
         /// </summary>
+        // Per-lane connection cap. Override any lane with env "<Lane>MaxConnectionsPerServer"
+        // (e.g. ExoMaxConnectionsPerServer) for load testing; otherwise the tuned default applies.
+        private static int MaxConn(string envVar, int fallback)
+            => int.TryParse(Environment.GetEnvironmentVariable(envVar), out var v) && v > 0 ? v : fallback;
+
         private static HttpClient BuildGraphClient() => new HttpClient(new SocketsHttpHandler
         {
             AutomaticDecompression         = DecompressionMethods.All,
             PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
             EnableMultipleHttp2Connections = true,   // Graph supports HTTP/2; streams share connections
             AllowAutoRedirect              = true,
             MaxAutomaticRedirections       = 10,
-            MaxConnectionsPerServer        = 30,
+            MaxConnectionsPerServer        = MaxConn("GraphMaxConnectionsPerServer", 30),
         }) { Timeout = Timeout.InfiniteTimeSpan };
 
         /// <summary>
         /// EXO client — Exchange Online and Outlook endpoints.
         /// Covers outlook.office365.com, outlook.office.com, outlook.com,
         /// and *.protection.outlook.com (mail protection / transport).
-        /// Cap: 20 connections.
+        /// Cap: 30 connections (override with env <c>ExoMaxConnectionsPerServer</c>).
         /// HTTP/2 enabled — EXO REST APIs support it.
         /// </summary>
         private static HttpClient BuildExoClient() => new HttpClient(new SocketsHttpHandler
         {
             AutomaticDecompression         = DecompressionMethods.All,
             PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
             EnableMultipleHttp2Connections = true,
             AllowAutoRedirect              = true,
             MaxAutomaticRedirections       = 10,
-            MaxConnectionsPerServer        = 20,
+            MaxConnectionsPerServer        = MaxConn("ExoMaxConnectionsPerServer", 30),
         }) { Timeout = Timeout.InfiniteTimeSpan };
 
         /// <summary>
@@ -333,11 +388,11 @@ namespace CIPP
         {
             AutomaticDecompression         = DecompressionMethods.All,
             PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
             EnableMultipleHttp2Connections = false,
             AllowAutoRedirect              = true,
             MaxAutomaticRedirections       = 5,
-            MaxConnectionsPerServer        = 5,
+            MaxConnectionsPerServer        = MaxConn("LoginMaxConnectionsPerServer", 5),
         }) { Timeout = Timeout.InfiniteTimeSpan };
 
         /// <summary>
@@ -353,10 +408,10 @@ namespace CIPP
         {
             AutomaticDecompression         = DecompressionMethods.All,
             PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
             EnableMultipleHttp2Connections = false,
             AllowAutoRedirect              = false,  // 3xx IS the expected response here
-            MaxConnectionsPerServer        = 5,
+            MaxConnectionsPerServer        = MaxConn("ComplianceMaxConnectionsPerServer", 5),
         }) { Timeout = Timeout.InfiniteTimeSpan };
 
         /// <summary>
@@ -369,11 +424,11 @@ namespace CIPP
         {
             AutomaticDecompression         = DecompressionMethods.All,
             PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
             EnableMultipleHttp2Connections = true,
             AllowAutoRedirect              = true,
             MaxAutomaticRedirections       = 10,
-            MaxConnectionsPerServer        = 5,
+            MaxConnectionsPerServer        = MaxConn("PartnerCenterMaxConnectionsPerServer", 5),
         }) { Timeout = Timeout.InfiniteTimeSpan };
 
         /// <summary>
@@ -385,32 +440,30 @@ namespace CIPP
         {
             AutomaticDecompression         = DecompressionMethods.All,
             PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
             EnableMultipleHttp2Connections = true,
             AllowAutoRedirect              = true,
             MaxAutomaticRedirections       = 10,
-            MaxConnectionsPerServer        = 5,
+            MaxConnectionsPerServer        = MaxConn("AdminPlaneMaxConnectionsPerServer", 5),
         }) { Timeout = Timeout.InfiniteTimeSpan };
 
         /// <summary>
         /// SharePoint / OneDrive client — dedicated lane for SPO admin CSOM (ProcessQuery) and
         /// SPO REST (_api) against *.sharepoint.com, which have no server-side $batch. Concurrent
-        /// per-site writes (Set-CIPPSPOSiteBulk via SendConcurrent) fan out here. HTTP/2 is disabled
-        /// so MaxConnectionsPerServer is a true concurrency ceiling (5) rather than a connection count
-        /// that H2 stream-multiplexing could exceed. Measured on a 526-site tenant, 5 in flight throttled
-        /// far less than 8-10 (43 vs 56 x HTTP 429) and finished sooner — SPO's CSOM-admin throttle is a
-        /// sustained-rate limit, so a lower ceiling plus the once-per-24h sweep guard is the throttle-safe
-        /// combination. Cap: 5 connections.
+        /// per-site writes (Set-CIPPSPOSiteBulk via SendConcurrent) fan out here. HTTP/2 multiplexes them
+        /// on one connection per host, so the cap counts sockets; in-flight requests are bounded by each
+        /// caller's MaxConcurrency and paced per tenant by CIPPRateLimiter's sharepoint bucket.
+        /// Cap: 5 connections.
         /// </summary>
         private static HttpClient BuildSpoClient() => new HttpClient(new SocketsHttpHandler
         {
             AutomaticDecompression         = DecompressionMethods.All,
             PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
-            EnableMultipleHttp2Connections = false,
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
+            EnableMultipleHttp2Connections = true,
             AllowAutoRedirect              = true,
             MaxAutomaticRedirections       = 10,
-            MaxConnectionsPerServer        = 5,
+            MaxConnectionsPerServer        = MaxConn("SpoMaxConnectionsPerServer", 5),
         }) { Timeout = Timeout.InfiniteTimeSpan };
 
         /// <summary>
@@ -424,11 +477,31 @@ namespace CIPP
         {
             AutomaticDecompression         = DecompressionMethods.All,
             PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
             EnableMultipleHttp2Connections = false,
             AllowAutoRedirect              = true,
             MaxAutomaticRedirections       = 5,
-            MaxConnectionsPerServer        = 2,
+            MaxConnectionsPerServer        = MaxConn("DnsMaxConnectionsPerServer", 2),
+        }) { Timeout = Timeout.InfiniteTimeSpan };
+
+        /// <summary>
+        /// NinjaOne client — *.ninjarmm.com / *.ninjaone.com. The tenant sync fans out
+        /// per-device and per-document writes, and NinjaOne scales close to linearly with
+        /// concurrency (300 device PATCHes: 98s at 1 in flight, 12s at 8, 6s at 16), so it gets its own
+        /// lane instead of queueing behind the 5-connection catch-all. HTTP/2 multiplexes every tenant
+        /// sync's requests on one connection per host (34 concurrent document PATCHes shared one), so
+        /// the cap counts sockets and in-flight requests are bounded by each caller's concurrency.
+        /// Cap: 12 connections.
+        /// </summary>
+        private static HttpClient BuildNinjaOneClient() => new HttpClient(new SocketsHttpHandler
+        {
+            AutomaticDecompression         = DecompressionMethods.All,
+            PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
+            EnableMultipleHttp2Connections = true,
+            AllowAutoRedirect              = true,
+            MaxAutomaticRedirections       = 10,
+            MaxConnectionsPerServer        = MaxConn("NinjaOneMaxConnectionsPerServer", 12),
         }) { Timeout = Timeout.InfiniteTimeSpan };
 
         /// <summary>
@@ -443,11 +516,11 @@ namespace CIPP
         {
             AutomaticDecompression         = DecompressionMethods.All,
             PooledConnectionLifetime       = TimeSpan.FromMinutes(30),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(3),
             EnableMultipleHttp2Connections = true,
             AllowAutoRedirect              = true,
             MaxAutomaticRedirections       = 10,
-            MaxConnectionsPerServer        = 5,
+            MaxConnectionsPerServer        = MaxConn("DefaultMaxConnectionsPerServer", 5),
         }) { Timeout = Timeout.InfiniteTimeSpan };
 
         // -----------------------------------------------------------------
@@ -469,6 +542,7 @@ namespace CIPP
                 _adminPlaneClient is not null &&
                 _spoClient        is not null &&
                 _dnsClient        is not null &&
+                _ninjaOneClient   is not null &&
                 _defaultClient    is not null)
                 return;
 
@@ -486,6 +560,7 @@ namespace CIPP
                     _adminPlaneClient = BuildAdminPlaneClient();
                     _spoClient        = BuildSpoClient();
                     _dnsClient        = BuildDnsClient();
+                    _ninjaOneClient   = BuildNinjaOneClient();
                     _defaultClient    = BuildDefaultClient();
                 }
             }
@@ -582,6 +657,9 @@ namespace CIPP
                 var h when h.Equals("cloudflare-dns.com",
                     StringComparison.OrdinalIgnoreCase)                    => (_dnsClient!, "DNS", host),
 
+                var h when h.EndsWith(".ninjarmm.com", StringComparison.OrdinalIgnoreCase)
+                        || h.EndsWith(".ninjaone.com", StringComparison.OrdinalIgnoreCase) => (_ninjaOneClient!, "NinjaOne", host),
+
                 // Rule 8 — catch-all
                 _                                                           => (_defaultClient!, "Default", host),
             };
@@ -663,7 +741,24 @@ namespace CIPP
             var client = selection.Client;
             TrackPoolSelection(selection.Pool, selection.Host);
 
+            var rateClaim = CIPPRateLimiter.Acquire(uri, method, body, headers);
+            var rateWait = rateClaim?.Wait ?? TimeSpan.Zero;
+            var rateWaited = TimeSpan.Zero;
+            while (rateWait > TimeSpan.Zero && rateWaited < CIPPRateLimiter.MaxWait)
+            {
+                await Task.Delay(rateWait).ConfigureAwait(false);
+                rateWaited += rateWait;
+                rateWait = CIPPRateLimiter.Recheck(rateClaim);
+            }
+
             using var request = new HttpRequestMessage(new HttpMethod(method), new Uri(uri));
+            // A request defaults to HTTP/1.1, so EnableMultipleHttp2Connections alone never multiplexes.
+            // These are the lanes that enable it; a host without h2 falls back to 1.1 in the TLS handshake.
+            if (selection.Pool is "Graph" or "Exo" or "PartnerCenter" or "AdminPlane" or "SPO" or "NinjaOne" or "Default")
+            {
+                request.Version       = HttpVersion.Version20;
+                request.VersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
+            }
 
             // ----------------------------------------------------------
             // Headers
@@ -797,12 +892,14 @@ namespace CIPP
                 // (the actionable signal - e.g. a 403 from EXO), and for a success response we surface a clear,
                 // attributable error instead of an opaque decompression exception. Callers that skip the error
                 // check (e.g. redirect / compliance-URL discovery) keep their headers and fall back to an empty body.
-                string content;
+                string? content = null;
+                byte[]? contentBytes = null;
                 try
                 {
-                    content = response.Content is not null
-                        ? await ReadDecodedContentAsync(response.Content, token).ConfigureAwait(false)
-                        : string.Empty;
+                    if (response.Content is not null)
+                        (contentBytes, content) = await ReadDecodedContentAsync(response.Content, token).ConfigureAwait(false);
+                    else
+                        content = string.Empty;
                 }
                 catch (Exception ex) when (ex is InvalidDataException || ex is IOException)
                 {
@@ -838,6 +935,9 @@ namespace CIPP
             // because the compliance client expects a 3xx response — the
             // redirect Location header IS the result we want.
             // ----------------------------------------------------------
+                if (contentBytes is not null) CIPPRateLimiter.Observe(rateClaim, statusCode, allHeaders, contentBytes);
+                else CIPPRateLimiter.Observe(rateClaim, statusCode, allHeaders, content);
+
                 bool effectiveSkipCheck = skipErrorCheck || noRedirect;
                 TrackPoolResult(selection.Pool, response.IsSuccessStatusCode, statusCode);
                 if (!effectiveSkipCheck && !response.IsSuccessStatusCode)
@@ -854,19 +954,14 @@ namespace CIPP
             // a non-standard or missing Content-Type header.
             // ----------------------------------------------------------
                 var mediaType = response.Content?.Headers.ContentType?.MediaType ?? string.Empty;
-                var trimmed   = content.TrimStart();
+                var first     = contentBytes is not null ? HttpBody.FirstNonBlank(contentBytes, () => HttpBody.Decode(contentBytes)) : (content ?? string.Empty).TrimStart().FirstOrDefault();
                 var isJson    = mediaType.Contains("application/json", StringComparison.OrdinalIgnoreCase)
-                             || trimmed.StartsWith('{')
-                             || trimmed.StartsWith('[');
+                             || first == '{'
+                             || first == '[';
 
-                return new HttpResult
-                {
-                    StatusCode      = statusCode,
-                    IsSuccess       = response.IsSuccessStatusCode,
-                    Content         = content,
-                    IsJson          = isJson,
-                    ResponseHeaders = allHeaders,
-                };
+                return contentBytes is not null
+                    ? new HttpResult { StatusCode = statusCode, IsSuccess = response.IsSuccessStatusCode, ContentBytes = contentBytes, IsJson = isJson, ResponseHeaders = allHeaders }
+                    : new HttpResult { StatusCode = statusCode, IsSuccess = response.IsSuccessStatusCode, Content = content ?? string.Empty, IsJson = isJson, ResponseHeaders = allHeaders };
             }
         }
 
@@ -958,6 +1053,7 @@ namespace CIPP
                     {
                         Index = index, IsSuccess = false, StatusCode = 0,
                         Error = ex.Message, Attempts = attempt,
+                        TimedOut = ex is OperationCanceledException,
                     };
                 }
             }
@@ -990,11 +1086,18 @@ namespace CIPP
         // so callers never receive raw compressed bytes. Idempotent: if the
         // handler already decoded, there's nothing left to do.
         // -----------------------------------------------------------------
-        private static async Task<string> ReadDecodedContentAsync(HttpContent httpContent, CancellationToken token)
+        // Returns the raw bytes when they decode as UTF-8 (HttpBody.Decode reproduces ReadAsStringAsync for those),
+        // otherwise the text read with the declared charset.
+        private static async Task<(byte[]? Bytes, string? Text)> ReadDecodedContentAsync(HttpContent httpContent, CancellationToken token)
         {
             var encodings = httpContent.Headers.ContentEncoding;
             if (encodings is null || encodings.Count == 0)
-                return await httpContent.ReadAsStringAsync(token).ConfigureAwait(false);
+            {
+                var charset = httpContent.Headers.ContentType?.CharSet?.Trim('"', '\'', ' ');
+                if (!string.IsNullOrEmpty(charset) && !charset.Equals("utf-8", StringComparison.OrdinalIgnoreCase) && !charset.Equals("utf8", StringComparison.OrdinalIgnoreCase))
+                    return (null, await httpContent.ReadAsStringAsync(token).ConfigureAwait(false));
+                return (await httpContent.ReadAsByteArrayAsync(token).ConfigureAwait(false), null);
+            }
 
             var raw = await httpContent.ReadAsStreamAsync(token).ConfigureAwait(false);
             Stream decoded = raw;
@@ -1010,10 +1113,10 @@ namespace CIPP
                     _                  => decoded,
                 };
             }
-            using var reader = new StreamReader(decoded, Encoding.UTF8);
-            var result = await reader.ReadToEndAsync(token).ConfigureAwait(false);
+            using var buffer = new MemoryStream();
+            await decoded.CopyToAsync(buffer, token).ConfigureAwait(false);
             decoded.Dispose();
-            return result;
+            return (buffer.ToArray(), null);
         }
 
         // =================================================================
@@ -1091,6 +1194,7 @@ namespace CIPP
                         .OrderBy(kvp => kvp.Key)
                         .ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
                 },
+                RateLimits = CIPPRateLimiter.GetDiagnostics(),
             }, new JsonSerializerOptions { WriteIndented = true });
         }
 

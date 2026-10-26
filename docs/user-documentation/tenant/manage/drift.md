@@ -1,5 +1,9 @@
 # Manage Drift
 
+{% hint style="info" %}
+This page is hidden while the **Baselines** feature flag is on in [features.md](../../cipp/settings/features.md "mention"), because [README.md](../baselines/README.md "mention") replace Standards and Drift.
+{% endhint %}
+
 This page and the other tabs are a way for you to manage your tenants and their drift away from the desired settings in your Drift Management template.
 
 ## Manage Drift Overview

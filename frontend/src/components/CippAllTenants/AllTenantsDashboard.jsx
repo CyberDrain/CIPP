@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@mui/material'
 import { getCippError } from '../../utils/get-cipp-error'
 import { CippInfoBar } from '../CippCards/CippInfoBar'
+import { ServiceHealthCard } from '../CippComponents/ServiceHealthCard'
 import { useAllTenantsDashboard } from './useAllTenantsDashboard'
 import {
   AllTenantsBandHeading,
@@ -50,6 +51,7 @@ export const AllTenantsDashboard = () => {
   const {
     tenantCount,
     tenants,
+    canReadLogs,
     alignmentApi,
     failedTestsApi,
     domainsApi,
@@ -154,7 +156,7 @@ export const AllTenantsDashboard = () => {
                 }}>
                 <Box>
                   <Typography variant="h4" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                    {secureScore.average}%
+                    {secureScore.average.toFixed(2)}%
                   </Typography>
                   <Typography variant="caption" sx={{
                     color: "text.disabled"
@@ -222,7 +224,7 @@ export const AllTenantsDashboard = () => {
                           fontVariantNumeric: 'tabular-nums',
                         }}
                       >
-                        {secureScore.best?.percent}%
+                        {secureScore.best?.percent?.toFixed(2)}%
                       </Typography>
                     </Box>
                     <Box sx={{ minWidth: 0, textAlign: 'right' }}>
@@ -241,7 +243,7 @@ export const AllTenantsDashboard = () => {
                           fontVariantNumeric: 'tabular-nums',
                         }}
                       >
-                        {secureScore.worst?.percent}%
+                        {secureScore.worst?.percent?.toFixed(2)}%
                       </Typography>
                     </Box>
                   </Stack>
@@ -442,17 +444,25 @@ export const AllTenantsDashboard = () => {
           description="What is broken, expiring, or stuck right now"
         />
 
+        {/* Outages first: a Microsoft incident explains the errors and failed checks below it.
+            AllTenants reads the nightly cache, each issue once with the tenants it reached. */}
+        <Box sx={{ mb: 2 }}>
+          <ServiceHealthCard tenantFilter="AllTenants" />
+        </Box>
+
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-            <AllTenantsStatTile
-              isFetching={logsApi.isLoading}
-              severity={logs.tenantCount ? 'critical' : 'ok'}
-              value={logs.tenantCount}
-              label="Tenants logging errors today"
-              meta={`${logs.total} entries · Error or Critical`}
-              link="/cipp/logs"
-            />
-          </Grid>
+          {canReadLogs && (
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <AllTenantsStatTile
+                isFetching={logsApi.isLoading}
+                severity={logs.tenantCount ? 'critical' : 'ok'}
+                value={logs.tenantCount}
+                label="Tenants logging errors today"
+                meta={`${logs.total} entries · Error or Critical`}
+                link="/cipp/logs"
+              />
+            </Grid>
+          )}
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <AllTenantsStatTile
               isFetching={tenants.isLoading}
@@ -490,7 +500,7 @@ export const AllTenantsDashboard = () => {
             <DashboardCard
               title="Tenants needing attention"
               subheader="Delegation state and error activity, worst first"
-              api={[tenants, logsApi]}
+              api={canReadLogs ? [tenants, logsApi] : tenants}
             >
               <AllTenantsRowList
                 rows={attention.rows}
@@ -635,7 +645,7 @@ export const AllTenantsDashboard = () => {
                   <AllTenantsCacheList
                     rows={cache.staleTenants}
                     isFetching={countsApi.isLoading || tenants.isLoading}
-                    emptyText="Every tenant was cached within the last 30 hours."
+                    emptyText="Every tenant was cached within the last 48 hours."
                   />
                 </Grid>
               </Grid>

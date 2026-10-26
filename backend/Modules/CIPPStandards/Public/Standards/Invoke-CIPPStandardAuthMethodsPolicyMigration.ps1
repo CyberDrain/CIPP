@@ -14,6 +14,7 @@ function Invoke-CIPPStandardAuthMethodsPolicyMigration {
             Entra (AAD) Standards
         TAG
             "EIDSCAAG01"
+            "ZTNA21803"
         EXECUTIVETEXT
             Completes the transition from legacy authentication policies to Microsoft's modern unified authentication methods policy, ensuring the organization benefits from the latest security features and management capabilities. This migration enables enhanced security controls and simplified policy management.
         ADDEDCOMPONENT
@@ -74,9 +75,7 @@ function Invoke-CIPPStandardAuthMethodsPolicyMigration {
     }
 
     if ($Settings.report -eq $true) {
-        $migrationComplete = $CurrentInfo.policyMigrationState -eq 'migrationComplete' -or $null -eq $CurrentInfo.policyMigrationState
         Set-CIPPStandardsCompareField -FieldName 'standards.AuthMethodsPolicyMigration' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $tenant
-        Add-CIPPBPAField -FieldName 'AuthMethodsPolicyMigration' -FieldValue $migrationComplete -StoreAs bool -Tenant $tenant
     }
 
 }

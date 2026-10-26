@@ -1,5 +1,9 @@
 # Standards v Drift: How Do I Know Which to Use?
 
+{% hint style="info" %}
+Turning on the **Baselines** feature flag replaces both Standards and Drift with [README.md](../../user-documentation/tenant/baselines/README.md "mention"), and switches off their scheduled runs. This page applies only while the flag is off.
+{% endhint %}
+
 This question has become a regular one since the introduction of Drift Management. While there is some overlap in how the two can work, they are very different approaches to how you manage the security baseline for your clients' tenants. This is fundamentally a question of how much you want to manage and how much visibility you want to the entire tenant.
 
 ### Standards
@@ -30,17 +34,17 @@ Standards apply specific settings. Drift monitors the full tenant state.
 
 ### Do I Need Both a Classic Template and a Drift Template With the Same Settings?
 
-No. A Drift Management template with **auto-remediate enabled** on a setting behaves the same as a Classic standard set to **Remediate** for that setting — it will bring the tenant back into alignment with the template value every twelve hours. With auto-remediate **disabled**, the setting reports as a deviation in [Manage Drift](../../user-documentation/tenant/manage/drift.md) for review.
+No. A Drift Management template with **auto-remediate enabled** on a setting behaves the same as a Classic standard set to **Remediate** for that setting: it will bring the tenant back into alignment with the template value every twelve hours. With auto-remediate **disabled**, the setting reports as a deviation in [Manage Drift](../../user-documentation/tenant/manage/drift.md) for review.
 
 The auto-remediate toggle is per-setting inside the drift template, so you can mix-and-match: auto-remediate the non-negotiables (audit log, anonymous reporting), and just report on settings you want eyes on first (Conditional Access changes).
 
-You only need a separate Classic template alongside Drift when you want to override a single setting for a specific tenant (see "Mixing All-Tenants, Groups, and Tenant Overrides" below) — and remember each tenant can only be assigned to **one** Drift template.
+You only need a separate Classic template alongside Drift when you want to override a single setting for a specific tenant (see "Mixing All-Tenants, Groups, and Tenant Overrides" below). Remember that each tenant can only be assigned to **one** Drift template.
 
 ### Mixing All-Tenants, Groups, and Tenant Overrides
 
 A common pattern that works well for MSPs with a mixed-licence customer base:
 
-1. **One Classic standard, assigned to All Tenants**, containing the settings you want enforced everywhere regardless of licence — enable audit log, anonymous reporting, helpdesk email as a security contact, etc.
+1. **One Classic standard, assigned to All Tenants**, containing the settings you want enforced everywhere regardless of licence, such as enabling the audit log and anonymous reporting, and setting the helpdesk email as a security contact.
 2.  **One Drift template per licence tier or customer segment**, assigned via tenant groups. For example:
 
     * An _Education_ tenant group → Drift template with Entra P1-dependent settings (Conditional Access, App Protection policies).
@@ -52,7 +56,7 @@ A common pattern that works well for MSPs with a mixed-licence customer base:
 This pattern keeps your group-level templates clean and your exceptions visible and named, without duplicating the rest of the configuration.
 
 {% hint style="info" %}
-Because licence-incompatible settings are automatically skipped, you _can_ lump everything into one big template — but the group-based pattern above gives you cleaner alignment reporting and makes "why is this tenant non-compliant?" easier to answer.
+Because licence-incompatible settings are automatically skipped, you _can_ lump everything into one big template, but the group-based pattern above gives you cleaner alignment reporting and makes "why is this tenant non-compliant?" easier to answer.
 {% endhint %}
 
 {% include "../../../.gitbook/includes/feature-request.md" %}

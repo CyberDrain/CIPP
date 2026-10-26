@@ -43,6 +43,10 @@ FROM ps-base AS build-cippalerts
 COPY backend/Modules/CIPPAlerts /src/CIPPAlerts
 RUN pwsh -File /build/build-single-module.ps1 -Module CIPPAlerts
 
+FROM ps-base AS build-cippbaselines
+COPY backend/Modules/CIPPBaselines /src/CIPPBaselines
+RUN pwsh -File /build/build-single-module.ps1 -Module CIPPBaselines
+
 FROM ps-base AS build-cippactivitytriggers
 COPY backend/Modules/CIPPActivityTriggers /src/CIPPActivityTriggers
 RUN pwsh -File /build/build-single-module.ps1 -Module CIPPActivityTriggers
@@ -50,6 +54,10 @@ RUN pwsh -File /build/build-single-module.ps1 -Module CIPPActivityTriggers
 FROM ps-base AS build-cippextensions
 COPY backend/Modules/CippExtensions /src/CippExtensions
 RUN pwsh -File /build/build-single-module.ps1 -Module CippExtensions
+
+FROM ps-base AS build-cipppwpush
+COPY backend/Modules/CIPPPwPush /src/CIPPPwPush
+RUN pwsh -File /build/build-single-module.ps1 -Module CIPPPwPush
 
 FROM ps-base AS build-cipptests
 COPY backend/Modules/CIPPTests /src/CIPPTests
@@ -189,7 +197,6 @@ ENV BUILD_DATE=$BUILD_DATE
 COPY backend/Modules/AzBobbyTables  /app/API/Modules/AzBobbyTables/
 COPY backend/Modules/DNSHealth      /app/API/Modules/DNSHealth/
 COPY backend/Modules/HuduAPI        /app/API/Modules/HuduAPI/
-COPY backend/Modules/PassPushPosh   /app/API/Modules/PassPushPosh/
 
 # Backend support directories
 # --chown: the app user owns Config/ so CRAFT can write Config/function-permissions.json
@@ -208,10 +215,12 @@ COPY backend/ExecMaintenanceScripts /app/API/ExecMaintenanceScripts/
 COPY docs                           /app/API/Docs/
 
 # Compiled modules — ordered by change frequency (least → most)
+COPY --from=build-cipppwpush           /src/CIPPPwPush/           /app/API/Modules/CIPPPwPush/
 COPY --from=build-cippextensions       /src/CippExtensions/       /app/API/Modules/CippExtensions/
 COPY --from=build-cippactivitytriggers /src/CIPPActivityTriggers/ /app/API/Modules/CIPPActivityTriggers/
 COPY --from=build-cippdb               /src/CIPPDB/               /app/API/Modules/CIPPDB/
 COPY --from=build-cippalerts           /src/CIPPAlerts/           /app/API/Modules/CIPPAlerts/
+COPY --from=build-cippbaselines        /src/CIPPBaselines/        /app/API/Modules/CIPPBaselines/
 COPY --from=build-cipptests            /src/CIPPTests/            /app/API/Modules/CIPPTests/
 COPY --from=build-cippstandards        /src/CIPPStandards/        /app/API/Modules/CIPPStandards/
 COPY --from=build-cipphttp             /src/CIPPHTTP/             /app/API/Modules/CIPPHTTP/

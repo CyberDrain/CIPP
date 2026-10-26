@@ -42,6 +42,8 @@ function Start-CIPPDBCacheOrchestrator {
         $InputObject = [PSCustomObject]@{
             Batch            = @($Batch)
             OrchestratorName = 'CIPPDBCacheOrchestrator'
+            AllowCollision   = $false
+            Priority         = 10
             SkipLog          = $false
             PostExecution    = @{
                 FunctionName = 'CIPPDBCacheApplyBatch'

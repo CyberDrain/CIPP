@@ -43,15 +43,15 @@ body:
     validations:
       required: true
 
-  # 4) Environment type (Sponsored vs. Non-sponsored)
+  # 4) Environment type (Subscribed vs. Non-subscribed)
   - type: dropdown
     id: environment_type
     attributes:
       label: "Environment Type"
       description: "Select whether you are using currently a paying user of the product, or if you are utilizing the free version"
       options:
-        - "Sponsored (paying) user"
-        - "Non-sponsored user"
+        - "Subscribed (paying) user"
+        - "Non-subscribed user"
     validations:
       required: true
 

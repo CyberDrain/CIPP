@@ -13,6 +13,7 @@ function Invoke-ListSiteActivity {
 
     $APIName = 'ListSiteActivity'
     $TenantFilter = $Request.Query.tenantFilter ?? $Request.Body.tenantFilter
+    # Optional site-type filter: 'SharePoint' or 'TeamsSite'. Omit to return both.
     $Type = $Request.Query.Type ?? $Request.Body.Type
     $SiteId = $Request.Query.siteId ?? $Request.Body.siteId
 
@@ -23,11 +24,17 @@ function Invoke-ListSiteActivity {
             })
     }
 
-    if ($Type -and $Type -notin @('SharePoint', 'TeamsSite')) {
-        return ([HttpResponseContext]@{
-                StatusCode = [HttpStatusCode]::BadRequest
-                Body       = 'Type must be SharePoint or TeamsSite'
-            })
+    switch ($Type) {
+        'SharePoint' { }
+        'TeamsSite' { }
+        default {
+            if ($Type) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = 'Type must be SharePoint or TeamsSite'
+                    })
+            }
+        }
     }
 
     try {
@@ -45,17 +52,18 @@ function Invoke-ListSiteActivity {
         $SelectedSiteType = if ($Type) { $TypeMap[$Type] } else { $null }
 
         $AllResults = [System.Collections.Generic.List[object]]::new()
+        $TotalTenants = 0
+        $FailedTenants = 0
 
         if ($TenantFilter -eq 'AllTenants') {
-            $AnyItems = Get-CIPPDbItem -TenantFilter 'allTenants' -Type 'SiteActivity'
-            $Tenants = @($AnyItems | Where-Object { $_.RowKey -notlike '*-Count' } | Select-Object -ExpandProperty PartitionKey -Unique)
+            $ItemsByTenant = Get-CIPPDbItem -TenantFilter 'allTenants' -Type 'SiteActivity' -ByTenant
+            $TotalTenants = @($ItemsByTenant.Keys).Count
 
-            $TenantList = Get-Tenants -IncludeErrors
-            $Tenants = $Tenants | Where-Object { $TenantList.defaultDomainName -contains $_ }
-
-            foreach ($Tenant in $Tenants) {
+            foreach ($Tenant in @($ItemsByTenant.Keys)) {
+                # Hand each tenant its rows and drop them here so they can be freed once processed
+                $TenantItems = $ItemsByTenant[$Tenant]; $ItemsByTenant[$Tenant] = $null
                 try {
-                    $TenantRows = @(New-CIPPDbRequest -TenantFilter $Tenant -Type 'SiteActivity')
+                    $TenantRows = @(New-CIPPDbRequest -TenantFilter $Tenant -Type 'SiteActivity' -Rows $TenantItems)
                     if (-not $TenantRows) { continue }
 
                     $CountRow = Get-CIPPDbItem -TenantFilter $Tenant -Type 'SiteActivity' -CountsOnly | Select-Object -First 1
@@ -76,6 +84,7 @@ function Invoke-ListSiteActivity {
                         [void]$AllResults.Add($Row)
                     }
                 } catch {
+                    $FailedTenants++
                     Write-LogMessage -API $APIName -tenant $Tenant -message "Failed to retrieve cached site activity: $($_.Exception.Message)" -sev Warning
                 }
             }
@@ -98,7 +107,7 @@ function Invoke-ListSiteActivity {
         }
 
         $GraphRequest = @($AllResults | Sort-Object -Property displayName)
-        $StatusCode = [HttpStatusCode]::OK
+        $StatusCode = Get-CippBulkStatusCode -Total $TotalTenants -Failed $FailedTenants
     } catch {
         $ErrorMessage = Get-CippException -Exception $_
         Write-LogMessage -API $APIName -tenant $TenantFilter -message "Failed to list site activity: $($ErrorMessage.NormalizedError)" -sev Error -LogData $ErrorMessage

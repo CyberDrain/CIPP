@@ -122,7 +122,7 @@ const Page = () => {
         </Stack>
       ),
       confirmText:
-        'Run [templateName] now? Pick a single covered tenant, or All Tenants in Template for the whole assignment. Standards in report-only stages are compared without changes.',
+        'Run [templateName] now? Pick a single covered tenant, or All Tenants in Template for the whole assignment. Standards in report-only stages are compared without changes. The configuration in this baseline is applied as-is: settings from other assigned baselines (even more specific ones) and tenant overrides are ignored for this run.',
       multiPost: false,
       relatedQueryKeys: ['ListBaseline*'],
     },
@@ -357,6 +357,24 @@ const Page = () => {
       );
     },
   }
+
+  const filterList = [
+    {
+      filterName: 'Synced from repository',
+      value: [{ id: 'isSynced', value: 'Yes' }],
+      type: 'column',
+    },
+    {
+      filterName: 'Local changes not pushed',
+      value: [{ id: 'hasLocalChanges', value: 'Yes' }],
+      type: 'column',
+    },
+    {
+      filterName: 'Not synced',
+      value: [{ id: 'isSynced', value: 'No' }],
+      type: 'column',
+    },
+  ]
 
   return (
     <CippTablePage
@@ -637,6 +655,7 @@ const Page = () => {
       }
       simpleColumns={[
         'baselineName',
+        'source',
         'description',
         'standardsCount',
         'stageNames',
@@ -646,6 +665,8 @@ const Page = () => {
         'updatedBy',
       ]}
       queryKey="ListBaselines-table"
+      defaultSorting={[{ id: 'baselineName', desc: false }]}
+      filters={filterList}
     />
   );
 }

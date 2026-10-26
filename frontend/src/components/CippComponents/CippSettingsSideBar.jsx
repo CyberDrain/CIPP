@@ -86,12 +86,14 @@ export const CippSettingsSideBar = (props) => {
         Compliance_Portal: formValues.portalLinks?.Compliance_Portal,
         Power_Platform_Portal: formValues.portalLinks?.Power_Platform_Portal,
         Power_BI_Portal: formValues.portalLinks?.Power_BI_Portal,
+        Login_Hint: formValues.portalLinks?.Login_Hint,
       },
 
       // Offboarding Defaults
       offboardingDefaults: {
         ConvertToShared: formValues.offboardingDefaults?.ConvertToShared,
         RemoveGroups: formValues.offboardingDefaults?.RemoveGroups,
+        RemoveGroupOwnership: formValues.offboardingDefaults?.RemoveGroupOwnership,
         HideFromGAL: formValues.offboardingDefaults?.HideFromGAL,
         RemoveLicenses: formValues.offboardingDefaults?.RemoveLicenses,
         removeCalendarInvites: formValues.offboardingDefaults?.removeCalendarInvites,
@@ -114,6 +116,7 @@ export const CippSettingsSideBar = (props) => {
           psa: formValues.offboardingDefaults?.postExecution?.psa,
           email: formValues.offboardingDefaults?.postExecution?.email,
           webhook: formValues.offboardingDefaults?.postExecution?.webhook,
+          push: formValues.offboardingDefaults?.postExecution?.push,
         },
       },
     };

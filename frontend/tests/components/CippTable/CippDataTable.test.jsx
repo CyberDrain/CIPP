@@ -8,6 +8,7 @@ import { resetOverlayHistory } from '../../../src/utils/overlay-history'
 
 vi.mock('../../../src/api/ApiCall', async () => (await import('../../mocks/api-call')).apiCallMock())
 import { api, paginatedResult } from '../../mocks/api-call'
+import { ApiGetCallWithPagination } from '../../../src/api/ApiCall'
 
 // idle keeps static-data tables on their data prop; the nested result is re-wrapped per call like react-query's tracked copy, the memo'd toolbar needs it to see selection
 const nestedRows = [{ id: 'child-1', displayName: 'Jane Doe' }]
@@ -1093,5 +1094,123 @@ describe('CippDataTable preset filterFn overrides', () => {
     await waitFor(() => {
       expect(screen.getByText('1-3 of 3')).toBeInTheDocument()
     })
+  }, 30000)
+})
+
+describe('CippDataTable AllTenants Graph paging', () => {
+  const sentData = (data) => {
+    ApiGetCallWithPagination.mockClear()
+    renderWithProviders(<CippDataTable api={{ url: '/api/ListGraphRequest', data }} noCard />)
+    return ApiGetCallWithPagination.mock.calls.find(([opts]) => opts.url === '/api/ListGraphRequest')[0]
+      .data
+  }
+
+  it('pages AllTenants Graph cache reads', () => {
+    expect(sentData({ tenantFilter: 'AllTenants', Endpoint: 'servicePrincipals' }).manualPagination).toBe(
+      true
+    )
+  })
+
+  it('leaves single-tenant reads and explicit opt-outs alone', () => {
+    expect(
+      sentData({ tenantFilter: 'contoso.com', Endpoint: 'servicePrincipals' }).manualPagination
+    ).toBeUndefined()
+    expect(
+      sentData({ tenantFilter: 'AllTenants', Endpoint: 'servicePrincipals', manualPagination: false })
+        .manualPagination
+    ).toBe(false)
+  })
+})
+
+describe('CippDataTable streamed pages', () => {
+  const page = (from, count, nextLink) => ({
+    Results: Array.from({ length: count }, (_, i) => ({ displayName: `User ${from + i}` })),
+    Metadata: nextLink ? { nextLink } : {},
+  })
+  const first = page(0, 4, 'p2')
+  const second = page(4, 1, 'p3')
+  const third = page(5, 3)
+  let stages
+  let stage
+
+  function Streaming() {
+    const [, rerender] = React.useReducer((n) => n + 1, 0)
+    return (
+      <>
+        <button
+          onClick={() => {
+            stage++
+            rerender()
+          }}
+        >
+          load page
+        </button>
+        <CippDataTable
+          api={{ url: '/api/StreamTest', dataKey: 'Results' }}
+          queryKey="StreamTest"
+          simpleColumns={['displayName']}
+          maxHeightOffset="100px"
+        />
+      </>
+    )
+  }
+
+  const renderStreaming = async (stageResults) => {
+    stages = stageResults
+    stage = 0
+    const routed = api.paginated
+    api.paginated = (opts) => (opts?.url === '/api/StreamTest' ? stages[stage] : routed(opts))
+    renderWithProviders(<Streaming />)
+    await screen.findByText('1-4 of 4')
+    return () => (api.paginated = routed)
+  }
+
+  it('holds a page back until the rows grow by half, and always shows the last page', async () => {
+    const user = userEvent.setup()
+    const restore = await renderStreaming([
+      paginatedResult([], { data: { pages: [first] }, hasNextPage: true }),
+      paginatedResult([], { data: { pages: [first, second] }, hasNextPage: true }),
+      paginatedResult([], { data: { pages: [first, second, third] }, hasNextPage: false }),
+    ])
+    try {
+      await user.click(screen.getByRole('button', { name: 'load page' }))
+      expect(screen.getByText('1-4 of 4')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'load page' }))
+      await screen.findByText('1-8 of 8')
+    } finally {
+      restore()
+    }
+  }, 30000)
+
+  it('shows the first page of a new load at once, even within half of the old row count', async () => {
+    const user = userEvent.setup()
+    const restore = await renderStreaming([
+      paginatedResult([], { data: { pages: [first] }, hasNextPage: false }),
+      paginatedResult([], { data: { pages: [page(100, 5, 'p2')] }, hasNextPage: true }),
+    ])
+    try {
+      await user.click(screen.getByRole('button', { name: 'load page' }))
+      await screen.findByText('1-5 of 5')
+    } finally {
+      restore()
+    }
+  }, 30000)
+
+  it('shows the held-back rows when the next page fails', async () => {
+    const user = userEvent.setup()
+    const restore = await renderStreaming([
+      paginatedResult([], { data: { pages: [first] }, hasNextPage: true }),
+      paginatedResult([], {
+        data: { pages: [first, second] },
+        hasNextPage: true,
+        isFetchNextPageError: true,
+      }),
+    ])
+    try {
+      await user.click(screen.getByRole('button', { name: 'load page' }))
+      await screen.findByText('1-5 of 5')
+    } finally {
+      restore()
+    }
   }, 30000)
 })

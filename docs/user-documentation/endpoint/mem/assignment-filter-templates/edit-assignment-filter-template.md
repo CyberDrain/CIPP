@@ -2,7 +2,7 @@
 
 Opens a saved assignment filter template so its values can be changed. Edits are stored against the template in CIPP, so they take effect the next time the template is deployed rather than changing any filter already created in a tenant.
 
-The form is the same as [edit-assignment-filter-template.md](edit-assignment-filter-template.md "mention"), populated with the template's stored values.
+The form is the same as [add.md](add.md "mention"), populated with the template's stored values.
 
 | Field        | Description                                                                           |
 | ------------ | ------------------------------------------------------------------------------------- |
@@ -16,4 +16,4 @@ The form is the same as [edit-assignment-filter-template.md](edit-assignment-fil
 Unlike an assignment filter itself, a template's Filter Type and Platform can be changed after it has been created, since nothing exists in a tenant until the template is deployed.
 {% endhint %}
 
-***
+{% include "../../../../../.gitbook/includes/feature-request.md" %}

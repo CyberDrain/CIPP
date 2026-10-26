@@ -6,17 +6,6 @@ Custom tests are ones you have written yourself rather than checks CIPP ships. T
 
 The suite is chosen from the controls at the top of the tab, which behave exactly as they do on the Overview tab. Changing the suite here changes it across the whole dashboard. A description of the selected suite is shown above the table.
 
-## Table Details
-
-| Column   | Description                                                                                        |
-| -------- | -------------------------------------------------------------------------------------------------- |
-| Name     | The name of the check that was run.                                                                |
-| Category | The category assigned to the check when it was written.                                            |
-| Risk     | How much risk this setting presents to the client if misconfigured, shown as High, Medium, or Low. |
-| Status   | The outcome of the check: Passed, Failed, Investigate, or Skipped.                                 |
-
-Additional columns can be shown from the **Columns** menu. See [table-features.md](../shared-features/table-features.md "mention").
-
 ## Filters
 
 Preset filters are available from the **Filters** button for each status and each risk level.
@@ -32,6 +21,17 @@ Preset filters are available from the **Filters** button for each status and eac
 | Low Risk    | Checks carrying a low risk rating.                                             |
 
 A status filter and a risk filter cannot both be active at once, since both act on the table's columns. To combine them, apply one preset and then filter the other column manually.
+
+## Table Details
+
+| Column   | Description                                                                                        |
+| -------- | -------------------------------------------------------------------------------------------------- |
+| Name     | The name of the check that was run.                                                                |
+| Category | The category assigned to the check when it was written.                                            |
+| Risk     | How much risk this setting presents to the client if misconfigured, shown as High, Medium, or Low. |
+| Status   | The outcome of the check: Passed, Failed, Investigate, or Skipped.                                 |
+
+Additional columns can be shown from the **Columns** menu. See [table-features.md](../shared-features/table-features.md "mention").
 
 ## Test Detail
 

@@ -17,7 +17,7 @@ Generates a branded, client-ready PDF of the currently selected date range: an e
 The daily disposition counts come from the Exchange Online `Get-MailFlowStatusReport` cmdlet, and the top sender and top spam recipient tables from `Get-MailTrafficSummaryReport`. Both support at most 90 days of history, which is why the period selector stops there.
 
 {% hint style="info" %}
-This page reports on a single tenant at a time — it is not available in All Tenants mode.
+This page reports on a single tenant at a time, and is not available in All Tenants mode.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

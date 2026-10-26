@@ -19,6 +19,14 @@ Function Invoke-AddQuarantinePolicy {
         $tenants = (Get-Tenants).defaultDomainName
     }
 
+    # Tenant scope: a scoped role must not reach tenants outside its allowed set through selectedTenants/AllTenants.
+    $AllowedTenants = Test-CippAccess -Request $Request -TenantList
+    if ($AllowedTenants -ne 'AllTenants') {
+        $AllowedTenantList = (Get-Tenants -IncludeErrors) | Where-Object { $_.customerId -in $AllowedTenants }
+        $tenants = $tenants | Where-Object { $_ -in $AllowedTenantList.defaultDomainName }
+    }
+
+    $Failed = 0
     $Result = foreach ($TenantFilter in $tenants) {
         try {
             $ReleaseActionPreference = $Request.Body.ReleaseActionPreference.value ?? $Request.Body.ReleaseActionPreference
@@ -49,6 +57,7 @@ Function Invoke-AddQuarantinePolicy {
 
         }
         catch {
+            $Failed++
             $ErrorMessage = Get-CippException -Exception $_
             $Message = "Failed to create Quarantine policy '$($Request.Body.Name)' for tenant '$($TenantFilter)' - $($ErrorMessage.NormalizedError)"
             Write-LogMessage -Headers $Headers -API $APIName -tenant $TenantFilter -message $Message -Sev Error -LogData $ErrorMessage
@@ -57,7 +66,7 @@ Function Invoke-AddQuarantinePolicy {
     }
 
     return ([HttpResponseContext]@{
-            StatusCode = [HttpStatusCode]::OK
+            StatusCode = Get-CippBulkStatusCode -Total @($tenants).Count -Failed $Failed
             Body       = @{Results = @($Result) }
         })
 

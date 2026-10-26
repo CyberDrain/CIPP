@@ -26,6 +26,8 @@ import { CippScheduledTaskActions } from "./CippScheduledTaskActions";
 import { CippApiLogsDrawer } from "./CippApiLogsDrawer";
 import { CippJobProgress, formatJobProgressText, OFFBOARDING_PROGRESS_ACTIONS } from "./CippJobProgress";
 import { CippCopyToClipBoard } from "./CippCopyToClipboard";
+import { mergeRow, useCraftJobEvents } from "../../hooks/use-craft-events";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) => {
   const [taskDetails, setTaskDetails] = useState(null);
@@ -36,7 +38,7 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
     setExpanded(newExpanded ? panel : false);
   };
 
-  // Keep the page live while the task is still in flight (Planned, Running or Processing).
+  // Refreshed by the card's button: a recurring task stays Planned between runs.
   const inFlight = ["Planned", "Running", "Processing"].includes(taskDetails?.Task?.TaskState);
   const taskDetailResults = ApiGetCall({
     url: `/api/ListScheduledItemDetails`,
@@ -44,19 +46,25 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
       RowKey: data.RowKey,
     },
     queryKey: `ListScheduledItemDetails-${data.RowKey}`,
-    refetchInterval: inFlight ? 5000 : false,
   });
 
   // Live step progress for jobs that report it (e.g. user offboarding). A wizard run shares one
   // job across its users, so only this task's user is shown.
   const deploymentId = taskDetails?.Task?.Parameters?.DeploymentId;
   const username = taskDetails?.Task?.Parameters?.Username;
+  const queryClient = useQueryClient();
+  useCraftJobEvents(inFlight ? deploymentId : null, (frame) => {
+    if (!frame.data) {
+      progressResults.refetch();
+      return;
+    }
+    queryClient.setQueryData([`ListAsyncDeployment-${deploymentId}`], (old) => mergeRow(old, frame.data));
+  });
   const progressResults = ApiGetCall({
     url: "/api/ListAsyncDeployment",
     data: { DeploymentId: deploymentId },
     queryKey: `ListAsyncDeployment-${deploymentId}`,
     waiting: !!deploymentId,
-    refetchInterval: inFlight ? 5000 : false,
     staleTime: 0,
   });
   const progressRows = (Array.isArray(progressResults.data) ? progressResults.data : []).filter(
@@ -88,7 +96,7 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
     if (!searchQuery) return true;
 
     const searchLower = searchQuery.toLowerCase();
-    const tenantMatches = (result.TenantName || result.Tenant || "")
+    const tenantMatches = String(result.TenantName || result.Tenant?.label || result.Tenant || "")
       .toLowerCase()
       .includes(searchLower);
 
@@ -135,7 +143,13 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
         <CippPropertyListCard
           actionButton={
             <Tooltip title="Refresh">
-              <IconButton size="small" onClick={() => taskDetailResults.refetch()}>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  taskDetailResults.refetch();
+                  if (deploymentId) progressResults.refetch();
+                }}
+              >
                 <CippIcons.Sync />
               </IconButton>
             </Tooltip>
@@ -156,7 +170,11 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
         />
 
         {deploymentId && (inFlight || progressRows.length > 0) && (
-          <Accordion variant="outlined" defaultExpanded>
+          <Accordion
+            variant="outlined"
+            defaultExpanded
+            slotProps={{ transition: { unmountOnExit: true } }}
+          >
             <AccordionSummary expandIcon={<CippIcons.ExpandMore />}>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography variant="h6">Progress</Typography>
@@ -207,6 +225,7 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
             variant="outlined"
             expanded={expanded === "task-trigger"}
             onChange={handleChange("task-trigger")}
+            slotProps={{ transition: { unmountOnExit: true } }}
           >
             <AccordionSummary expandIcon={<CippIcons.ExpandMore />}>
               <Typography variant="h6">Trigger Configuration</Typography>
@@ -236,6 +255,7 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
                 variant="outlined"
                 expanded={expanded === "task-parameters"}
                 onChange={handleChange("task-parameters")}
+                slotProps={{ transition: { unmountOnExit: true } }}
               >
                 <AccordionSummary expandIcon={<CippIcons.ExpandMore />}>
                   <Typography variant="h6">Task Parameters</Typography>
@@ -317,65 +337,85 @@ const ScheduledTaskDetails = ({ data, showActions = true, showTitle = true }) =>
                 </Stack>
                 <Stack>
                   {filteredDetails &&
-                    filteredDetails.map((result, index) => (
-                      <Accordion
-                        key={`result-${index}`}
-                        variant="outlined"
-                        expanded={expanded === `execution-results-${index}`}
-                        onChange={handleChange(`execution-results-${index}`)}
-                        sx={{ mb: 2 }}
-                      >
-                        <AccordionSummary
-                          expandIcon={<CippIcons.ExpandMore />}
-                          sx={{
-                            "& .MuiAccordionSummary-content": {
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              width: "100%",
-                            },
-                          }}
+                    filteredDetails.map((result, index) => {
+                      const panelId = `execution-results-${index}`;
+                      const isExpanded = expanded === panelId;
+                      return (
+                        <Accordion
+                          key={`result-${index}`}
+                          variant="outlined"
+                          expanded={isExpanded}
+                          onChange={handleChange(panelId)}
+                          slotProps={{ transition: { unmountOnExit: true } }}
+                          sx={{ mb: 2 }}
                         >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            {getCippFormatting(result.TenantName || result.Tenant, "Tenant")}
-                          </Box>
-                          <Chip
-                            size="small"
-                            color="info"
-                            variant="outlined"
-                            label={<CippTimeAgo data={result.Timestamp} />}
-                            sx={{ mx: 1 }}
-                          />
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          {result.Results === "null" || !result.Results ? (
-                            <Typography sx={{
-                              color: "text.secondary"
-                            }}>No data available</Typography>
-                          ) : Array.isArray(result.Results) ? (
-                            <CippDataTable
-                              noCard
-                              data={result.Results}
-                              disablePagination={result.Results.length <= 10}
-                              refreshFunction={() => taskDetailResults.refetch()}
-                            />
-                          ) : typeof result.Results === "object" ? (
-                            <CippPropertyListCard
-                              propertyItems={Object.entries(result.Results).map(([key, value]) => ({
-                                label: key,
-                                value: typeof value === "object" ? JSON.stringify(value) : value,
-                              }))}
-                            />
-                          ) : (
-                            <Box sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
-                              <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                                {result.Results}
-                              </pre>
+                          <AccordionSummary
+                            expandIcon={<CippIcons.ExpandMore />}
+                            sx={{
+                              "& .MuiAccordionSummary-content": {
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                width: "100%",
+                              },
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              {getCippFormatting(result.TenantName || result.Tenant, "Tenant")}
                             </Box>
-                          )}
-                        </AccordionDetails>
-                      </Accordion>
-                    ))}
+                            <Chip
+                              size="small"
+                              color="info"
+                              variant="outlined"
+                              label={<CippTimeAgo data={result.Timestamp} />}
+                              sx={{ mx: 1 }}
+                            />
+                          </AccordionSummary>
+                          {/* unmountOnExit keeps collapsed tenants' tables out of the tree. MUI mounts
+                              Accordion content even when collapsed, so an AllTenants task otherwise
+                              mounts one CippDataTable per tenant and locks the browser. */}
+                          <AccordionDetails>
+                            {result.Results === "null" || !result.Results ? (
+                              <Typography sx={{ color: "text.secondary" }}>
+                                No data available
+                              </Typography>
+                            ) : Array.isArray(result.Results) ? (
+                              <CippDataTable
+                                noCard
+                                data={result.Results}
+                                disablePagination={result.Results.length <= 10}
+                                refreshFunction={() => taskDetailResults.refetch()}
+                              />
+                            ) : typeof result.Results === "object" ? (
+                              <CippPropertyListCard
+                                propertyItems={Object.entries(result.Results).map(
+                                  ([key, value]) => ({
+                                    label: key,
+                                    value:
+                                      typeof value === "object"
+                                        ? JSON.stringify(value)
+                                        : value,
+                                  })
+                                )}
+                              />
+                            ) : (
+                              <Box
+                                sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}
+                              >
+                                <pre
+                                  style={{
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
+                                  }}
+                                >
+                                  {result.Results}
+                                </pre>
+                              </Box>
+                            )}
+                          </AccordionDetails>
+                        </Accordion>
+                      );
+                    })}
                   {filteredDetails && filteredDetails.length === 0 && (
                     <Box
                       sx={{

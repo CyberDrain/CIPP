@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
   Card,
@@ -13,7 +13,7 @@ import { useTheme } from "@mui/material/styles";
 import { ActionsMenu } from "../actions-menu";
 import { Chart } from "../chart";
 
-const useChartOptions = (labels, chartType, colors) => {
+const useChartOptions = (labels, chartType, colors, onSegmentClick, xaxisType) => {
   const theme = useTheme();
   const longBarLabels =
     chartType === "bar" &&
@@ -22,6 +22,14 @@ const useChartOptions = (labels, chartType, colors) => {
   return {
     chart: {
       background: "transparent",
+      ...(onSegmentClick && {
+        events: {
+          dataPointSelection: (event, context, config) => {
+            event?.stopPropagation?.();
+            onSegmentClick(labels[config.dataPointIndex], config.dataPointIndex);
+          },
+        },
+      }),
       toolbar: {
         show: false,
         tools: {
@@ -51,10 +59,13 @@ const useChartOptions = (labels, chartType, colors) => {
     },
 
     xaxis: {
+      // A datetime axis picks how many date ticks fit; a category axis truncates every one.
+      type: xaxisType,
       // Categories drive the bar/line axis labels and the tooltip title. Without this, a bar
       // chart's tooltip falls back to the auto series name ("series-1") instead of the label.
-      categories: labels,
+      categories: xaxisType === "datetime" ? [] : labels,
       labels: {
+        datetimeUTC: false,
         // Long SharePoint/site names overlap when forced upright under every bar. The card already
         // lists full names below; keep categories for tooltips and hide the crowded axis text.
         show: !longBarLabels,
@@ -120,13 +131,27 @@ export const CippChartCard = ({
   actions,
   headerAction,
   onClick,
+  onSegmentClick,
   totalLabel = "Total",
   customTotal,
   colors,
+  xaxisType,
 }) => {
   const [range, setRange] = useState("Last 7 days");
   const [barSeries, setBarSeries] = useState([]);
-  const chartOptions = useChartOptions(labels, chartType, colors);
+  // A stable handler so a parent re-render does not hand the chart new options to redraw.
+  const segmentRef = useRef(onSegmentClick);
+  useEffect(() => {
+    segmentRef.current = onSegmentClick;
+  });
+  const handleSegment = useCallback((label, index) => segmentRef.current?.(label, index), []);
+  const chartOptions = useChartOptions(
+    labels,
+    chartType,
+    colors,
+    onSegmentClick ? handleSegment : undefined,
+    xaxisType
+  );
   chartSeries = chartSeries.filter((item) => item !== null);
   // Round to 2 decimals - summing fractional series values accumulates floating-point
   // artifacts (e.g. 175.73000000000002). Integer series are unaffected.
@@ -148,6 +173,9 @@ export const CippChartCard = ({
       sx={{
         cursor: onClick ? "pointer" : "default",
         transition: "all 0.2s ease-in-out",
+        ...(onSegmentClick && {
+          "& .apexcharts-pie-area, & .apexcharts-bar-area": { cursor: "pointer" },
+        }),
         "&:hover": onClick ? {
           boxShadow: (theme) => theme.shadows[8],
           transform: "translateY(-2px)",
@@ -229,10 +257,23 @@ export const CippChartCard = ({
                       direction="row"
                       key={labels[index]}
                       spacing={1}
+                      onClick={
+                        onSegmentClick
+                          ? (event) => {
+                              event.stopPropagation();
+                              onSegmentClick(labels[index], index);
+                            }
+                          : undefined
+                      }
                       sx={{
                         alignItems: "center",
                         justifyContent: "space-between",
-                        py: 1
+                        py: 1,
+                        ...(onSegmentClick && {
+                          cursor: "pointer",
+                          borderRadius: 1,
+                          "&:hover": { bgcolor: "action.hover" },
+                        }),
                       }}>
                       {/* minWidth: 0 both here and on the label: labels are API free text
                           (recipient addresses, SharePoint URLs), and flexbox's min-width:

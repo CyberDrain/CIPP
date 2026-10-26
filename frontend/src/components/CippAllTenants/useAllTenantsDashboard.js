@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { ApiGetCall } from '../../api/ApiCall.jsx'
+import { usePermissions } from '../../hooks/use-permissions'
 
 // Some CIPP endpoints return a bare array, others wrap in { Results: [...] }. Normalise both.
 export const asArray = (payload) => {
@@ -74,16 +75,18 @@ export const deriveSecureScoreSummary = (rows, displayNameByDomain = new Map()) 
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, value]) => ({
       date,
-      percent: value.count ? Math.round((value.total / value.count) * 10) / 10 : 0,
+      percent: value.count ? Math.round((value.total / value.count) * 100) / 100 : 0,
     }))
 
   const delta =
     trend.length > 1
-      ? Math.round((trend[trend.length - 1].percent - trend[0].percent) * 10) / 10
+      ? Math.round((trend[trend.length - 1].percent - trend[0].percent) * 100) / 100
       : null
 
   return {
-    average: Math.round(withNames.reduce((sum, row) => sum + row.percent, 0) / withNames.length),
+    average:
+      Math.round((withNames.reduce((sum, row) => sum + row.percent, 0) / withNames.length) * 100) /
+      100,
     worst: sorted[0],
     best: sorted[sorted.length - 1],
     scored: withNames.length,
@@ -117,9 +120,12 @@ const ADHOC_CACHE_TYPES = new Set([
   'OneDriveRootPermissions',
 ])
 
+// Collections that are no longer cached. Their old rows stay in the table and never refresh.
+const RETIRED_CACHE_TYPES = new Set(['CredentialUserRegistrationDetails', 'DeviceSettings'])
+
 // The nightly orchestrator runs at 03:00, so a tenant that collected yesterday is still healthy;
-// past 30 hours it has missed a run, and past 72 it has missed three.
-const STALE_HOURS = 30
+// past 48 hours it has missed two runs, and past 72 it has missed three.
+const STALE_HOURS = 48
 const CRITICAL_HOURS = 72
 
 /**
@@ -140,6 +146,7 @@ export const deriveCacheSummary = (rows, tenants) => {
 
   rows.forEach((row) => {
     const type = row?.Type
+    if (RETIRED_CACHE_TYPES.has(type)) return
     const count = Number(row?.Count ?? 0)
     // Scale totals still count every collection — only the age judgement is scoped.
     if (type) totals.set(type, (totals.get(type) ?? 0) + count)
@@ -281,12 +288,17 @@ export const useAllTenantsDashboard = () => {
     waiting: true,
   })
 
+  // ListLogs sits behind CIPP.Logs rather than the sign-in permission; a role without it skips the
+  // call so the dashboard does not surface a 403 for a page the role is allowed to open.
+  const { checkPermissions } = usePermissions()
+  const canReadLogs = checkPermissions(['CIPP.Logs.*'])
+
   // ListLogs defaults to today's partition when no date is supplied, which keeps this cheap.
   const logsApi = ApiGetCall({
     url: '/api/ListLogs',
     data: { Filter: 'True', Severity: 'Error,Critical' },
     queryKey: 'AllTenantsDashboard-Logs',
-    waiting: true,
+    waiting: canReadLogs,
   })
 
   // Score fields only — the endpoint projects away controlScores, which is ~15 KB per cached record.
@@ -535,6 +547,7 @@ export const useAllTenantsDashboard = () => {
   return {
     tenantCount,
     tenants: tenantsApi,
+    canReadLogs,
     alignmentApi,
     failedTestsApi,
     domainsApi,

@@ -28,6 +28,8 @@ This page lists every timer CIPP defines, including those tied to features that 
 
 {% hint style="warning" %}
 **Run Now** starts the work straight away and does not check whether that timer is already running. Triggering a long-running timer repeatedly, or in bulk across several timers, can leave overlapping runs competing for the same resources. Give a run time to finish before starting another.
+
+Standards, drift and cache collection runs guard themselves: if one is started while a run of the same name is still in progress, the new run is skipped and a warning is written to the logbook.
 {% endhint %}
 
 ## Reset to Default

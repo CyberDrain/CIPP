@@ -13,7 +13,6 @@
   "addedDate": "2022-10-20",
   "powershellEquivalent": "Graph API",
   "appliesToTest": [
-    "SMB1001_2_8",
     "ZTNA21858"
   ],
   "recommendedBy": [
@@ -67,6 +66,7 @@
       {
         "from": "guestsToDisable",
         "method": "PATCH",
+        "asApp": false,
         "uri": "users/%id%",
         "body": {
           "accountEnabled": false
@@ -75,6 +75,7 @@
       {
         "from": "guestsToDelete",
         "method": "DELETE",
+        "asApp": false,
         "uri": "users/%id%"
       }
     ]

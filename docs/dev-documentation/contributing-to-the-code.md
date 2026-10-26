@@ -47,6 +47,26 @@ pwsh -File backend/Tests/Invoke-CippTests.ps1                                # a
 pwsh -File backend/Tests/Invoke-CippTests.ps1 -Path backend/Tests/Standards  # one area
 ```
 
+### Status Codes
+
+Return a status code that matches what happened. The frontend decides whether to retry or how to render a response from its status code, the MCP integration treats `400` and above as an error, and successful `GET` responses are cached. A failure returned as `200` is shown and cached as if it were data.
+
+| Situation                                                                       | Status code |
+| ------------------------------------------------------------------------------- | ----------- |
+| Success                                                                         | `200`       |
+| Missing or invalid input, or a request the business rules refuse                | `400`       |
+| A resource the caller named does not exist                                      | `404`       |
+| A CIPP access check refuses the caller                                          | `403`       |
+| A Microsoft Graph, Exchange, SharePoint, Azure or storage call failed           | `500`       |
+| Several items processed: all succeeded / some failed / all failed               | `200` / `207` / `500` |
+
+- Validate input before the `try` block and return `400` straight away.
+- In a `catch` block, set the status with `Get-CippErrorStatusCode -ErrorRecord $_`. A `catch` block must never return `200`; the `backend/Tests/Static` tests enforce this.
+- For endpoints that act on several items, set the status with `Get-CippBulkStatusCode -Total $Total -Failed $Failed`.
+- Helper functions throw `[System.ArgumentException]` for invalid input and `[System.Management.Automation.ItemNotFoundException]` for missing resources, so the endpoint can tell those apart from upstream failures.
+
+The full guide, including response body shapes, is in [`.github/agents/CIPP-Endpoint-Agent.md`](https://github.com/CyberDrain/CIPP/blob/dev/.github/agents/CIPP-Endpoint-Agent.md).
+
 ## Frontend Guidelines
 
 - See [frontend-testing.md](cipp-dev-guide/frontend-testing.md "mention") for test conventions and how to run the test suites.

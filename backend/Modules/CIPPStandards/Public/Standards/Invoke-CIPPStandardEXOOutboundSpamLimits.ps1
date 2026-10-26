@@ -14,6 +14,7 @@ function Invoke-CIPPStandardEXOOutboundSpamLimits {
             Exchange Standards
         TAG
             "CIS M365 5.0 (2.1.6)"
+            "ORCA103"
         EXECUTIVETEXT
             Sets limits on how many emails employees can send per hour and per day to prevent spam and protect the organization's email reputation. When limits are exceeded, the system can alert administrators or temporarily block the user, helping detect compromised accounts or prevent abuse.
         ADDEDCOMPONENT
@@ -138,6 +139,5 @@ function Invoke-CIPPStandardEXOOutboundSpamLimits {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.EXOOutboundSpamLimits' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'OutboundSpamLimitsConfigured' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }

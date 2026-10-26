@@ -3,18 +3,31 @@ function Invoke-DeleteTestReport {
     .FUNCTIONALITY
         Entrypoint
     .ROLE
-        CIPP.Dashboard.Read
+        Tenant.Tests.ReadWrite
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
 
     $APIName = $TriggerMetadata.FunctionName
-    Write-LogMessage -user $Request.Headers.'x-ms-client-principal' -API $APIName -message 'Accessed this API' -Sev 'Debug'
 
     try {
-        $ReportId = $Request.Body.ReportId
         $Table = Get-CippTable -tablename 'CippReportTemplates'
-        $ExistingReport = Get-CIPPAzDataTableEntity @Table -Filter "RowKey eq '$ReportId'"
+        # Validate ReportId as a GUID so it cannot inject into the filter and mass-delete reports.
+        try {
+            $ReportId = ConvertTo-CIPPODataFilterValue -Value ([string]$Request.Body.ReportId).ToLowerInvariant() -Type Guid
+        } catch {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = ConvertTo-Json -InputObject @{ Results = 'Failed to delete report: Invalid ReportId' }
+                })
+        }
+        $ExistingReport = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'Report' and RowKey eq '$ReportId'"
+        if (-not $ExistingReport) {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::NotFound
+                    Body       = ConvertTo-Json -InputObject @{ Results = 'Custom report not found' }
+                })
+        }
         Remove-CIPPAzDataTableEntity @Table -Entity $ExistingReport
 
         $Result = 'Successfully deleted custom report'
@@ -29,7 +42,7 @@ function Invoke-DeleteTestReport {
         $Body = [PSCustomObject]@{
             Results = "Failed to delete report: $($ErrorMessage.NormalizedError)"
         }
-        $StatusCode = [HttpStatusCode]::BadRequest
+        $StatusCode = [HttpStatusCode]::InternalServerError
     }
 
     return ([HttpResponseContext]@{

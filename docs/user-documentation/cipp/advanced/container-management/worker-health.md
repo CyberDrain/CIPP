@@ -1,6 +1,6 @@
 # Worker Health
 
-The Worker Health page is a real-time monitoring dashboard for the CIPP API container. It surfaces the state of the container's worker pools, the background job queue, resource usage, historical performance trends, the internal test-data cache, and the timing of the container's most recent startup. It is intended for diagnosing performance and capacity issues on a self-hosted CIPP instance. While the page is open it refreshes automatically: the live snapshot every few seconds, with historical trends and cache diagnostics on their own longer intervals.
+The Worker Health page is a real-time monitoring dashboard for the CIPP API container. It surfaces the state of the container's worker pools, the background job queue, resource usage, historical performance trends, the internal test-data cache, and the timing of the container's most recent startup. It is intended for diagnosing performance and capacity issues on your CIPP instance, whether self-hosted or CyberDrain-hosted. While the page is open it refreshes automatically: the live snapshot every few seconds, with historical trends and cache diagnostics on their own longer intervals.
 
 ## Page Controls
 

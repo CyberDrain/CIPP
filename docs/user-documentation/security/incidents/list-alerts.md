@@ -8,15 +8,15 @@ Security alerts raised across the selected tenant's Microsoft 365 security produ
 
 ## Table Details
 
-| Column | Description |
-| ---------------- | ---------------------------------------------------------------------------- |
-| Event Date Time  | When the alert fired. The table is sorted on this, newest first.               |
-| Status           | Where the alert sits in triage.                                               |
-| Title            | The alert's title, describing what was detected.                              |
-| Severity         | The severity assigned to the alert by the product that raised it.             |
-| Category         | The category the alert was raised under.                                      |
+| Column           | Description                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| Event Date Time  | When the earliest activity behind the alert took place. The table is sorted on this, newest first. |
+| Status           | Where the alert sits in triage: `new`, `inProgress` or `resolved`.                                 |
+| Title            | The alert's title, describing what was detected.                                                   |
+| Severity         | The severity assigned to the alert by the product that raised it.                                  |
+| Category         | The category the alert was raised under.                                                           |
 
-The Extended Info flyout adds the users involved in the alert, so you can see who it concerns without opening the security portal.
+The Extended Info flyout adds **Involved Users**, the user accounts recorded as evidence on the alert, so you can see who it concerns without opening the security portal.
 
 {% hint style="info" %}
 Selecting All Tenants queues a background job that collects alerts from every tenant, and the page tells you it is still loading. Come back in a few minutes for a complete list.

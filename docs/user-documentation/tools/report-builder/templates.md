@@ -16,7 +16,7 @@ This page lists your saved report templates. A template defines the sections a r
 
 Opens the **Browse Report Template Catalog** flyout, listing report templates published in the community-repos registered with your instance. Search for a template, preview it, then select **Import** to add it to your own templates.
 
-Unlike the equivalent catalog for Intune and Conditional Access, there is no option to import from one of your tenants, since report templates are not tenant objects.
+Unlike the equivalent catalogue for Intune and Conditional Access, there is no option to import from one of your tenants, since report templates are not tenant objects.
 
 </details>
 

@@ -76,6 +76,15 @@ Describe 'Start-CIPPDBTestsRun tenant selection' {
         }
     }
 
+    It 'reads each tenant''s Users count row by key instead of every count row' {
+        Mock Get-CIPPDbItem { @(New-CountRow -Tenant 'active.onmicrosoft.com') }
+        Mock Get-Tenants { @(New-TenantRow -DefaultDomainName 'active.onmicrosoft.com') }
+
+        Start-CIPPDBTestsRun -TenantFilter 'allTenants' | Out-Null
+
+        Should -Invoke Get-CIPPDbItem -Times 1 -Exactly -ParameterFilter { $TenantFilter -eq 'allTenants' -and $CountsOnly -and $Type -eq 'Users' }
+    }
+
     It 'drops tenants that are no longer managed but still have cached data' {
         # Same failure mode as exclusion: the GDAP relationship is gone, so Get-Tenants no longer
         # returns the tenant, but its cache rows survive until the 30-day table cleanup.
@@ -143,5 +152,26 @@ Describe 'Start-CIPPDBTestsRun tenant selection' {
         Start-CIPPDBTestsRun -TenantFilter 'allTenants' | Out-Null
 
         $script:QueuedTenants | Should -Be @('active.onmicrosoft.com')
+    }
+}
+
+Describe 'Start-CIPPDBTestsRun queue band' {
+    BeforeEach {
+        $script:Input = $null
+        Mock Test-CIPPRerun { return $false }
+        Mock Write-LogMessage { }
+        Mock Get-CIPPDbItem { @(New-CountRow -Tenant 'active.onmicrosoft.com') }
+        Mock Get-Tenants { @(New-TenantRow -DefaultDomainName 'active.onmicrosoft.com') }
+        Mock Start-CIPPOrchestrator { $script:Input = $InputObject; 'instance-1' }
+    }
+
+    It 'queues at the band it is given (the nightly timer passes 11, after the P10 cache)' {
+        Start-CIPPDBTestsRun -TenantFilter 'allTenants' -Priority 11 | Out-Null
+        $script:Input.Priority | Should -Be 11
+    }
+
+    It 'leaves the band to the caller when none is given (an API request stays at P1)' {
+        Start-CIPPDBTestsRun -TenantFilter 'allTenants' | Out-Null
+        $script:Input.PSObject.Properties.Name | Should -Not -Contain 'Priority'
     }
 }

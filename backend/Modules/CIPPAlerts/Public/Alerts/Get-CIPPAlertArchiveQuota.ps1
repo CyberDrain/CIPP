@@ -27,11 +27,13 @@ function Get-CIPPAlertArchiveQuota {
     } catch {
         $Cached = @()
     }
-    $CacheHasQuota = $Cached.Count -gt 0 -and ($Cached[0].PSObject.Properties.Name -contains 'ArchiveQuota')
+    $CacheHasQuota = $Cached.Count -gt 0 -and ($Cached[0].PSObject.Properties.Name -contains 'ArchiveQuota') -and ($Cached[0].PSObject.Properties.Name -contains 'AutoExpandingArchive')
 
     if ($CacheHasQuota) {
         $ArchiveUsage = foreach ($Mailbox in $Cached) {
             if ($Mailbox.ArchiveEnabled -ne $true -or -not $Mailbox.UPN) { continue }
+            # Auto-expanding archives grow past the quota, so a % of quota is meaningless (cache holds the effective org/mailbox state).
+            if ($Mailbox.AutoExpandingArchive -eq $true) { continue }
             [PSCustomObject]@{
                 UPN           = $Mailbox.UPN
                 RecipientType = $Mailbox.recipientTypeDetails
@@ -43,13 +45,20 @@ function Get-CIPPAlertArchiveQuota {
         try {
             # -Archive limits the result to mailboxes that actually have an online archive, and the
             # quota fields ride along so only the per-mailbox usage needs a second lookup.
-            $ArchiveMailboxes = @(New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-Mailbox' -cmdParams @{ Archive = $true } -Select 'UserPrincipalName,RecipientTypeDetails,ArchiveQuota,ArchiveGuid' -useSystemMailbox $true | Where-Object { $_.UserPrincipalName })
+            $ArchiveMailboxes = @(New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-Mailbox' -cmdParams @{ Archive = $true } -Select 'UserPrincipalName,RecipientTypeDetails,ArchiveQuota,ArchiveGuid,AutoExpandingArchiveEnabled' -useSystemMailbox $true | Where-Object { $_.UserPrincipalName })
         } catch {
             $ErrorMessage = Get-CippException -Exception $_
             Write-LogMessage -API 'Alerts' -tenant $TenantFilter -message "Archive quota Alert: Unable to get archive mailboxes: $($ErrorMessage.NormalizedError)" -sev Error -LogData $ErrorMessage
             return
         }
-        if ($ArchiveMailboxes.Count -eq 0) { return }
+        # Same effective state the cache computes: org-level overrides mailbox-level. Unknown org state falls back to mailbox-only.
+        $OrgAea = $null
+        try { $OrgAea = (New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-OrganizationConfig' -Select 'AutoExpandingArchiveEnabled' -useSystemMailbox $true).AutoExpandingArchiveEnabled } catch {}
+        $ArchiveMailboxes = @($ArchiveMailboxes | Where-Object { -not (Get-CIPPAutoExpandingArchiveState -MailboxAutoExpandingArchiveEnabled $_.AutoExpandingArchiveEnabled -OrgAutoExpandingArchiveEnabled $OrgAea).AutoExpandingArchive })
+        if ($ArchiveMailboxes.Count -eq 0) {
+            Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data @()
+            return
+        }
 
         # Archive size only comes from Get-MailboxStatistics. Batch it with an operation guid per
         # mailbox so each result maps back to its mailbox, the same pattern the reporting-DB cache uses.
@@ -95,6 +104,7 @@ function Get-CIPPAlertArchiveQuota {
         if ($UsagePercent -ge $Threshold) {
             [PSCustomObject]@{
                 Message           = "$($Item.UPN): Online archive is more than $($Threshold)% full. Archive is $UsagePercent% full"
+                Id                = $Item.UPN # stable identity; Message carries live usage %
                 Owner             = $Item.UPN
                 RecipientType     = $Item.RecipientType
                 UsagePercent      = $UsagePercent
@@ -105,7 +115,5 @@ function Get-CIPPAlertArchiveQuota {
         }
     }
 
-    if ($OverQuota) {
-        Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data $OverQuota
-    }
+    Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data $OverQuota
 }

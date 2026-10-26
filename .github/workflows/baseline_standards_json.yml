@@ -1,0 +1,33 @@
+---
+name: Baseline Standards JSON
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'backend/Config/BaselineStandards/**/*.json'
+      - 'backend/Config/baselineStandards.json'
+      - 'build/tools/Update-BaselineStandardsJson.ps1'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  reconcile:
+    if: github.repository_owner == 'CyberDrain'
+    name: Check the combined baseline JSON is reconciled
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check backend/Config/baselineStandards.json matches the definitions
+        shell: pwsh
+        run: |
+          try {
+            ./build/tools/Update-BaselineStandardsJson.ps1 -Check
+          } catch {
+            Write-Host "::error file=backend/Config/baselineStandards.json::$($_.Exception.Message)"
+            exit 1
+          }

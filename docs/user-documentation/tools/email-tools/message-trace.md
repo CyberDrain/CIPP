@@ -7,7 +7,7 @@ Exchange Online holds <mark style="color:blue;">90 days</mark> of message trace 
 {% endhint %}
 
 {% hint style="warning" %}
-Message Trace uses the Microsoft Graph message trace API, which requires the **`ExchangeMessageTrace.Read.All`** permission. It has been added to the CIPP-SAM application, so refresh CPV permissions on your tenants after updating. The first search in a tenant also provisions Microsoft's **Transport Data Platform** service principal automatically; Microsoft can take a few hours to activate it, during which CIPP falls back to the `Get-MessageTraceV2` cmdlet so results are still returned. A short notice appears above the results while the fallback is in use.
+Message Trace uses the Microsoft Graph message trace API, which requires the **`ExchangeMessageTrace.Read.All`** permission. It has been added to the CIPP-SAM application, so refresh CPV permissions on your tenants after updating. The first search in a tenant also provisions Microsoft's **Transport Data Platform** service principal automatically; Microsoft can take a few hours to activate it, during which CIPP falls back to the `Get-MessageTraceV2` cmdlet so results are still returned. A short notice appears above the results while the fallback is in use. Microsoft does not offer the Graph message trace API to GCC tenants, so searches in a GCC tenant use the same fallback.
 {% endhint %}
 
 ## Find a message

@@ -18,7 +18,7 @@ A template deploys under the policy name it was saved with. Where a tenant alrea
 {% endhint %}
 
 {% hint style="info" %}
-Changes to Safe Links policies and rules may take up to 6 hours to propagate throughout your organization.
+Changes to Safe Links policies and rules may take up to 6 hours to propagate throughout your organisation.
 {% endhint %}
 
 {% include "../../../../../.gitbook/includes/feature-request.md" %}

@@ -13,6 +13,7 @@ function Invoke-CIPPStandardGlobalQuarantineNotifications {
         CAT
             Exchange Standards
         TAG
+            "ORCA107"
         ADDEDCOMPONENT
             {"type":"autoComplete","multiple":false,"label":"Select value","name":"standards.GlobalQuarantineNotifications.NotificationInterval","options":[{"label":"4 hours","value":"04:00:00"},{"label":"1 day/Daily","value":"1.00:00:00"},{"label":"7 days/Weekly","value":"7.00:00:00"}]}
         IMPACT
@@ -111,6 +112,5 @@ function Invoke-CIPPStandardGlobalQuarantineNotifications {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.GlobalQuarantineNotifications' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'GlobalQuarantineNotificationsSet' -FieldValue [string]$CurrentState.EndUserSpamNotificationFrequency -StoreAs string -Tenant $Tenant
     }
 }

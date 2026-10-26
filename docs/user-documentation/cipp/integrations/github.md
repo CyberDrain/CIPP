@@ -1,6 +1,6 @@
 # GitHub
 
-The GitHub integration lets CIPP work with GitHub repositories, most visibly through the Community Repositories catalog where templates and scripts are browsed, imported, and published. Authentication uses a GitHub Personal Access Token, and the scopes you grant determine how much of the functionality is available.
+The GitHub integration lets CIPP work with GitHub repositories, most visibly through the Community Repositories catalogue where templates and scripts are browsed, imported, and published. Authentication uses a GitHub Personal Access Token, and the scopes you grant determine how much of the functionality is available.
 
 {% hint style="info" %}
 The integration is optional. Without it, CIPP falls back to a built-in shared token that provides read-only access to public community repositories. Configure your own token when you need private or internal repositories, or when you want to publish templates and scripts back to GitHub.
@@ -74,7 +74,7 @@ Every rejection is written to the [logs](../logs/ "mention") as a **GitHub** ent
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Browsing and searching community repositories            | None. Works through the built-in shared token.                                                                               |
 | Importing templates and scripts from a public repository | None, though your own token gives you a higher rate limit.                                                                   |
-| Adding a private or internal repository to the catalog   | Full `repo` scope.                                                                                                           |
+| Adding a private or internal repository to the catalogue | Full `repo` scope.                                                                                                           |
 | Publishing templates and scripts to a repository         | Full `repo` scope.                                                                                                           |
 | Creating a new repository from CIPP                      | Full `repo` scope, on a token belonging to an account with rights to create repositories in the target user or organisation. |
 

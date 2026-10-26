@@ -16,7 +16,7 @@
 param(
     [string]   $SourceModules = "$PSScriptRoot\..\..\backend\Modules",
     [string]   $OutputModules = "$PSScriptRoot\..\.devmodules",
-    [string[]] $Modules       = @('CIPPCore','CIPPHTTP','CIPPStandards','CIPPDB','CIPPAlerts','CIPPActivityTriggers','CippExtensions', 'CIPPTests'),
+    [string[]] $Modules       = @('CIPPCore','CIPPHTTP','CIPPStandards','CIPPDB','CIPPAlerts','CIPPBaselines','CIPPActivityTriggers','CippExtensions','CIPPPwPush', 'CIPPTests'),
     # Skip the openapi.json regeneration (the slowest step). The watcher passes this so a
     # CIPPHTTP edit's container restart is not blocked on the spec, then regenerates it in
     # the background itself. The initial build leaves it off so the spec is present at startup.
@@ -83,6 +83,10 @@ foreach ($mod in $Modules) {
             # mount root out from under Docker breaks the mount
             $stale = Join-Path $dstTree $mod
             if (Test-Path $stale) { Remove-Item $stale -Recurse -Force }
+            # Mirror the source: a test file deleted or moved in the source must disappear here too,
+            # or cipp-api keeps listing a test whose function no longer exists.
+            $publicDst = Join-Path $dstTree 'Public'
+            if (Test-Path $publicDst) { Remove-Item $publicDst -Recurse -Force }
             Copy-Item (Join-Path $srcTree '*') $dstTree -Recurse -Force
         }
     } catch {

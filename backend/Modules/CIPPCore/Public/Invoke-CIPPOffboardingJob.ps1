@@ -118,6 +118,19 @@ function Invoke-CIPPOffboardingJob {
                 }
             }
             @{
+                Title      = 'Remove group ownership'
+                Condition  = { $Options.RemoveGroupOwnership -eq $true }
+                Cmdlet     = 'Remove-CIPPGroupOwnerships'
+                Parameters = @{
+                    userid       = $UserID
+                    tenantFilter = $TenantFilter
+                    APIName      = $APIName
+                    Username     = $Username
+                    NewOwner     = [string]($Options.NewGroupOwner.value ?? $Options.NewGroupOwner)
+                    Headers      = $Headers
+                }
+            }
+            @{
                 Title      = 'Remove all rules'
                 Condition  = { $Options.RemoveRules -eq $true }
                 Cmdlet     = 'Remove-CIPPMailboxRule'
@@ -427,7 +440,7 @@ function Invoke-CIPPOffboardingJob {
                     $null = New-CIPPAsyncDeployment -JobId $DeploymentId -Names @($Username) -StepTitles (@($Batch | ForEach-Object { $_.Title }) + $NotifySteps) -Source 'Offboarding' -TaskId $TaskInfo.RowKey -TenantFilter $TenantFilter
                 } catch {
                     # Progress is a nice-to-have: a storage hiccup here must not fail the offboarding itself.
-                    Write-LogMessage -API $APIName -tenant $TenantFilter -message "Could not write the progress row for $Username : $($_.Exception.Message)" -sev Warn
+                    Write-LogMessage -API $APIName -tenant $TenantFilter -message "Could not write the progress row for $Username : $($_.Exception.Message)" -sev Warning
                 }
             }
             for ($i = 0; $i -lt $Batch.Count; $i++) {

@@ -28,6 +28,7 @@ import CippAliasDialog from '../../../../../components/CippComponents/CippAliasD
 import CippMailboxPermissionsDialog from '../../../../../components/CippComponents/CippMailboxPermissionsDialog'
 import CippCalendarPermissionsDialog from '../../../../../components/CippComponents/CippCalendarPermissionsDialog'
 import CippContactPermissionsDialog from '../../../../../components/CippComponents/CippContactPermissionsDialog'
+import { buildCustomAttributeRows } from '../../../../../components/CippComponents/CippMailboxCustomAttributeRows'
 
 const permissionOptionGroupOrder = {
   'System Users': 0,
@@ -392,6 +393,9 @@ const Page = () => {
         formControl.setValue('forwarding.ForwardInternal', '')
         formControl.setValue('forwarding.ForwardExternal', '')
       }
+
+      const mailbox = [].concat(currentSettings.Mailbox || [])[0]
+      formControl.setValue('attributeRows', buildCustomAttributeRows(mailbox))
     }
   }, [userRequest.isSuccess, userRequest.dataUpdatedAt, formControl])
 
@@ -1020,6 +1024,7 @@ const Page = () => {
         return Array.isArray(row) ? result : result[0]
       },
       condition: (row) => row && !row.Enabled,
+      hideCondition: (row) => row?.Enabled,
       confirmText: 'Are you sure you want to enable this mailbox rule?',
       multiPost: false,
     },
@@ -1040,6 +1045,7 @@ const Page = () => {
         return Array.isArray(row) ? result : result[0]
       },
       condition: (row) => row && row.Enabled,
+      hideCondition: (row) => !row?.Enabled,
       confirmText: 'Are you sure you want to disable this mailbox rule?',
       multiPost: false,
     },
@@ -1121,6 +1127,7 @@ const Page = () => {
                       Enable: true,
                       tenantFilter: userSettingsDefaults.currentTenant,
                     },
+                    hideCondition: () => data?.Enabled,
                     confirmText: 'Are you sure you want to enable this mailbox rule?',
                     multiPost: false,
                   },
@@ -1136,6 +1143,7 @@ const Page = () => {
                       Disable: true,
                       tenantFilter: userSettingsDefaults.currentTenant,
                     },
+                    hideCondition: () => !data?.Enabled,
                     confirmText: 'Are you sure you want to disable this mailbox rule?',
                     multiPost: false,
                   },
@@ -1169,18 +1177,16 @@ const Page = () => {
       type: 'POST',
       icon: <CippIcons.Delete />,
       url: '/api/RemoveTrustedBlockedSender',
-      customDataformatter: (row, action, formData) => {
-        return {
-          userPrincipalName: row?.UserPrincipalName,
-          typeProperty: row?.TypeProperty,
-          value: row?.Value,
+      customDataformatter: (row) =>
+        (Array.isArray(row) ? row : [row]).map((entry) => ({
+          userPrincipalName: entry?.UserPrincipalName,
+          typeProperty: entry?.TypeProperty,
+          value: entry?.Value,
           tenantFilter: userSettingsDefaults.currentTenant,
-        }
-      },
-      confirmText:
-        'Are you sure you want to remove [Value] from the [Type] list for [UserPrincipalName]?',
+        })),
+      confirmText: 'Are you sure you want to remove [Value] from the trusted/blocked list?',
       multiPost: false,
-      relatedQueryKeys: `JunkEmailConfig-${userId}`,
+      relatedQueryKeys: `TrustedBlockedSenders-${userId}`,
     },
   ]
 
@@ -1404,6 +1410,7 @@ const Page = () => {
       subtitle={subtitle}
       actions={CippExchangeActions()}
       actionsData={userRequest.data?.[0]?.MailboxActionsData}
+      queryKeys={[`Mailbox-${userId}`]}
       isFetching={graphUserRequest.isLoading}
     >
       {userRequest.isError && (
@@ -1595,6 +1602,8 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
+Page.getLayout = (page) => (
+  <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>
+)
 
 export default Page

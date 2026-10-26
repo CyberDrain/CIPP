@@ -32,6 +32,7 @@ import {
   formatCaCoverageReason,
   formatCaCoverageReasons,
 } from './format-ca-coverage-reason'
+import { getImpactResultColor, getImpactResultLabel } from './ca-policy-impact'
 import { getSignInErrorCodeTranslation } from './get-cipp-signin-errorcode-translation'
 import { CollapsibleChipList } from '../components/CippComponents/CollapsibleChipList'
 import countryList from '../data/countryList.json'
@@ -78,6 +79,78 @@ const readablePolicyTypeName = (value) => {
       .replace(/^./, (c) => c.toUpperCase())
   )
 }
+
+const absoluteDateArray = [
+  'WindowStart',
+  'WindowEnd',
+  'CreatedUtc',
+  'DownloadedUtc',
+  'ProcessedUtc',
+  'NextAttemptUtc',
+  'LastErrorUtc',
+  'LastPolledUtc',
+  'QueuedUtc', // Worker health job queue
+  'StartedUtc', // Worker health job queue
+  'CompletedUtc', // Worker health job queue
+  'FirstSeen', // Alert lifecycle
+  'LastSeen', // Alert lifecycle
+  'LastChecked', // Alert lifecycle
+  'ResolvedAt', // Alert lifecycle
+  'ExtractedAt', // BEC run: when the investigation snapshot was taken
+  'RequestedAt', // BEC run: when the run was requested
+]
+
+const timeAgoArray = [
+  'ExecutedTime',
+  'ScheduledTime',
+  'Timestamp',
+  'timestamp',
+  'DateTime',
+  'LastRun',
+  'lastRun', // Baselines
+  'lastRemediated', // Baselines
+  'deviationAt', // Baselines
+  'deviationExpires', // Baselines
+  'enteredStageAt', // Baselines
+  'LastRefresh',
+  'createdDateTime',
+  'activatedDateTime',
+  'lastModifiedDateTime',
+  'endDateTime',
+  'ReceivedTime',
+  'Expires',
+  'updatedAt',
+  'createdAt',
+  'Received',
+  'Date',
+  'WhenCreated',
+  'WhenChanged',
+  'CreationTime',
+  'renewalDate',
+  'commitmentTerm.renewalConfiguration.renewalDate',
+  'purchaseDate',
+  'NextOccurrence',
+  'LastOccurrence',
+  'NotBefore',
+  'NotAfter',
+  'latestDataCollection',
+  'requestDate', // App Consent Requests
+  'reviewedDate', // App Consent Requests
+  'GeneratedAt', // Report Builder
+  'RecordedAt', // Container update history
+  'directTenantAuthDate', // Direct tenant service account
+  'ServiceAccountLastAuth', // Direct tenant service account
+]
+
+const matchDateTime =
+  /([dD]ate[tT]ime|[Ee]xpiration|[Tt]imestamp|[sS]tart[Dd]ate|[eE]nd[Dd]ate)/
+
+// Columns rendered as dates. The table sizes these columns from this check too, so a date's
+// raw text form never decides the column width.
+export const isCippDateColumn = (cellName) =>
+  absoluteDateArray.includes(cellName) ||
+  timeAgoArray.includes(cellName) ||
+  matchDateTime.test(cellName)
 
 export const getCippFormatting = (
   data,
@@ -296,7 +369,10 @@ export const getCippFormatting = (
     //convert bytes to GB
     const bytes = data
     if (bytes === null || bytes === undefined) {
-      if (cellName === 'cleanupReclaimBytes' || cellName === 'versionEstimateBytes') {
+      if (
+        cellName === 'cleanupReclaimBytes' ||
+        cellName === 'versionEstimateBytes'
+      ) {
         return isText ? '—' : formatCellText('—', isText)
       }
       return isText ? (
@@ -306,7 +382,8 @@ export const getCippFormatting = (
       )
     }
     if (
-      (cellName === 'cleanupReclaimBytes' || cellName === 'versionEstimateBytes') &&
+      (cellName === 'cleanupReclaimBytes' ||
+        cellName === 'versionEstimateBytes') &&
       Number(bytes) === 0
     ) {
       return isText ? '—' : formatCellText('—', isText)
@@ -333,25 +410,14 @@ export const getCippFormatting = (
     // Only render an <img> for an http(s) URL; anything else (javascript:, data:, garbage)
     // falls back to plain text so tenant-supplied data can never become an active source.
     if (!isHttpUrl(data)) return formatCellText(data, isText)
-    return <img src={data} alt="logo" style={{ width: '16px', height: '16px' }} />
+    return (
+      <img src={data} alt="logo" style={{ width: '16px', height: '16px' }} />
+    )
   }
 
   // Audit-log coverage timestamps: render as an ABSOLUTE date in the browser's local timezone
   // (long format) rather than relative "x ago". The UTC ISO values carry a Z so they're
   // unambiguous; parseCippDate also handles epoch. Checked before the relative timeAgoArray below.
-  const absoluteDateArray = [
-    'WindowStart',
-    'WindowEnd',
-    'CreatedUtc',
-    'DownloadedUtc',
-    'ProcessedUtc',
-    'NextAttemptUtc',
-    'LastErrorUtc',
-    'LastPolledUtc',
-    'QueuedUtc', // Worker health job queue
-    'StartedUtc', // Worker health job queue
-    'CompletedUtc', // Worker health job queue
-  ]
   if (absoluteDateArray.includes(cellName)) {
     if (data === null || data === undefined || data === '') {
       return isText ? '' : ''
@@ -370,50 +436,6 @@ export const getCippFormatting = (
     return dt.toLocaleString()
   }
 
-  const timeAgoArray = [
-    'ExecutedTime',
-    'ScheduledTime',
-    'Timestamp',
-    'timestamp',
-    'DateTime',
-    'LastRun',
-    'lastRun', // Baselines
-    'lastRemediated', // Baselines
-    'deviationAt', // Baselines
-    'deviationExpires', // Baselines
-    'enteredStageAt', // Baselines
-    'LastRefresh',
-    'createdDateTime',
-    'activatedDateTime',
-    'lastModifiedDateTime',
-    'endDateTime',
-    'ReceivedTime',
-    'Expires',
-    'updatedAt',
-    'createdAt',
-    'Received',
-    'Date',
-    'WhenCreated',
-    'WhenChanged',
-    'CreationTime',
-    'renewalDate',
-    'commitmentTerm.renewalConfiguration.renewalDate',
-    'purchaseDate',
-    'NextOccurrence',
-    'LastOccurrence',
-    'NotBefore',
-    'NotAfter',
-    'latestDataCollection',
-    'requestDate', // App Consent Requests
-    'reviewedDate', // App Consent Requests
-    'GeneratedAt', // Report Builder
-    'RecordedAt', // Container update history
-    'directTenantAuthDate', // Direct tenant service account
-    'ServiceAccountLastAuth', // Direct tenant service account
-  ]
-
-  const matchDateTime =
-    /([dD]ate[tT]ime|[Ee]xpiration|[Tt]imestamp|[sS]tart[Dd]ate)/
   if (timeAgoArray.includes(cellName) || matchDateTime.test(cellName)) {
     return isText && canReceive === false ? (
       parseCippDate(data).toLocaleString() // This runs if canReceive is false and isText is true
@@ -705,6 +727,7 @@ export const getCippFormatting = (
       compliant: 'success',
       drift: 'error',
       conflict: 'error',
+      error: 'error',
       accepted: 'info',
       'partially accepted': 'warning',
       'denied - remediate pending': 'warning',
@@ -732,6 +755,8 @@ export const getCippFormatting = (
           'Fixed automatically on the next run (within 12 hours), or use Remediate Now.',
         'denied - delete pending':
           'Removed automatically on the next run (within 12 hours).',
+        error:
+          'The last remediation failed. Open the standard and use View Logs on the run for the error.',
       }
       const statusTooltip = baselineStatusTooltips[String(data).toLowerCase()]
       const chip = (
@@ -1532,6 +1557,23 @@ export const getCippFormatting = (
 
   if (cellName === 'AutoMapUrl') {
     return isText ? data : <CippCopyToClipBoard text={data} />
+  }
+
+  // CA policy usage report: how the policy itself evaluated for a sampled sign-in.
+  if (cellName === 'policyResult') {
+    const label = getImpactResultLabel(data)
+    if (isText) {
+      return label
+    }
+    const tone = getImpactResultColor(data)
+    return (
+      <Chip
+        variant="outlined"
+        label={label}
+        size="small"
+        color={tone === 'neutral' ? 'default' : tone}
+      />
+    )
   }
 
   // CA policy identity coverage: grid shows a count/top-reason summary; full lists belong in off-canvas.

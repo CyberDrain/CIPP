@@ -6,7 +6,7 @@ function Get-CippMcpToolCatalog {
         Returns every operation whose x-cipp-role ends in '.Read' (never '.ReadWrite') as a catalog
         entry: name (the API endpoint), description, inputSchema (JSON Schema built from the
         operation's query parameters / request body with $ref inlined), read-only annotations, and
-        internal routing fields (_category, _method, _summary). The projection is cached per worker;
+        internal routing fields (_category, _role, _method, _summary). The projection is cached per worker;
         pass -Force to rebuild.
 
         The catalog is NOT advertised to MCP clients wholesale — Get-CippMcpToolList exposes a fixed
@@ -47,6 +47,8 @@ function Get-CippMcpToolCatalog {
             foreach ($MethodEntry in $PathEntry.Value.GetEnumerator()) {
                 $Method = [string]$MethodEntry.Key
                 if ($Method -notin @('get', 'post')) { continue }
+                # a GET/POST pair is one tool; the POST also lists the query parameters
+                if ($Method -eq 'get' -and $PathEntry.Value.Contains('post')) { continue }
 
                 $Op = $MethodEntry.Value
                 $Role = $Op['x-cipp-role']
@@ -156,6 +158,7 @@ function Get-CippMcpToolCatalog {
                         inputSchema = $InputSchema
                         annotations = [ordered]@{ title = $Endpoint; readOnlyHint = $true }
                         _category   = $Category
+                        _role       = $Role
                         _method     = $Method.ToUpper()
                         _summary    = $Summary
                         _paramAlias = $ParamAlias
@@ -167,6 +170,15 @@ function Get-CippMcpToolCatalog {
     }
 
     $Filtered = @($script:CippMcpToolCatalogCache)
+
+    # Only list what the caller's own roles allow; Test-CIPPAccess still checks every call.
+    if ($Request) {
+        $Allowed = Get-CippRequestAllowedPermissions
+        if ($null -ne $Allowed) {
+            $AllowedSet = [System.Collections.Generic.HashSet[string]]::new([string[]]@($Allowed), [System.StringComparer]::OrdinalIgnoreCase)
+            $Filtered = @($Filtered.Where({ $AllowedSet.Contains([string]$_._role) }))
+        }
+    }
 
     # Per-connection filtering from the connector URL's query string.
     $Query = $Request.Query

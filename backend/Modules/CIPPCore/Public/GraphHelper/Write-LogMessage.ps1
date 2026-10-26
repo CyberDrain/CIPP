@@ -41,7 +41,7 @@ function Write-LogMessage {
 
     if (!$tenant) { $tenant = 'None' }
     if (!$username) { $username = 'CIPP' }
-    if ($sev -eq 'Debug' -and $env:DebugMode -ne $true) {
+    if ($sev -eq 'Debug' -and [System.Environment]::GetEnvironmentVariable('DebugMode') -ne $true) {
         return
     }
     $TzId = if ($env:CIPP_TIMEZONE) { $env:CIPP_TIMEZONE } else { 'UTC' }
@@ -90,6 +90,11 @@ function Write-LogMessage {
     }
     if ($script:CippBaselineRunIdStorage.Value) {
         $TableRow.BaselineRunId = [string]$script:CippBaselineRunIdStorage.Value
+    }
+    # Set by Set-CippBecCaseContext while a BEC check, containment, content search or evidence
+    # export runs, so the evidence package can bundle every log line of a case.
+    if ($script:CippBecCaseIdStorage.Value) {
+        $TableRow.BecCaseId = [string]$script:CippBecCaseIdStorage.Value
     }
 
     $Table.Entity = $TableRow

@@ -13,45 +13,67 @@ import { CippApiResults } from "../../../../components/CippComponents/CippApiRes
 import CippGeoLocation from "../../../../components/CippComponents/CippGeoLocation";
 import { useState } from "react";
 
+// Stored states stay Trusted/Blocked; they read as the BEC verdicts they mean.
+const STATE_LABEL = { Trusted: "Safe", Blocked: "Compromised" };
+const withVerdict = (row) => ({ ...row, Verdict: STATE_LABEL[row.state] || row.state });
+
 const Page = () => {
   const currentTenant = useSettings().currentTenant;
   const formControl = useForm({ mode: "onBlur" });
   const ip = useWatch({ control: formControl.control, name: "ipAddress" });
   const [ipAddress, setIpAddress] = useState(null);
 
+  // Entries are single addresses or CIDR ranges; a tenant entry overrides an AllTenants one for the
+  // same range and the most specific range decides an address. Blocked entries mark known attacker
+  // addresses (the BEC investigation treats them as confirmed compromised).
   const actions = [
     {
       label: "View Location",
-      customFunction: (row) => setIpAddress(row.RowKey),
+      customFunction: (row) => setIpAddress(String(row.Range || row.RowKey).split("/")[0]),
       noConfirm: true,
       icon: <CippIcons.MapPinIcon />,
       hideBulk: true,
     },
     {
-      label: "Add to Whitelist",
-      url: `/api/ExecAddTrustedIP${`?tenantFilter=${currentTenant}`}`,
+      label: "Mark Safe",
+      url: "/api/ExecAddTrustedIP",
       type: "POST",
       data: {
-        IP: "RowKey",
+        tenantFilter: "PartitionKey",
+        IP: "Range",
         State: "!Trusted",
       },
       icon: <CippIcons.Add />,
-      confirmText: "Are you sure you want to add this IP to the whitelist?",
+      confirmText: "Mark [Range] as safe?",
       multiPost: false,
       condition: (row) => row.state !== "Trusted",
     },
     {
-      label: "Remove from Whitelist",
-      url: `/api/ExecAddTrustedIP${`?tenantFilter=${currentTenant}`}`,
+      label: "Mark Compromised",
+      url: "/api/ExecAddTrustedIP",
       type: "POST",
       data: {
-        IP: "RowKey",
+        tenantFilter: "PartitionKey",
+        IP: "Range",
+        State: "!Blocked",
+      },
+      icon: <CippIcons.Block />,
+      confirmText: "Mark [Range] as compromised (a known attacker address)?",
+      multiPost: false,
+      condition: (row) => row.state !== "Blocked",
+    },
+    {
+      label: "Remove from list",
+      url: "/api/ExecAddTrustedIP",
+      type: "POST",
+      data: {
+        tenantFilter: "PartitionKey",
+        IP: "Range",
         State: "!NotTrusted",
       },
       icon: <CippIcons.Delete />,
-      confirmText: "Are you sure you want to remove this IP from the whitelist?",
+      confirmText: "Make [Range] neutral again (neither safe nor compromised)?",
       multiPost: false,
-      condition: (row) => row.state !== "NotTrusted",
     },
   ];
 
@@ -59,25 +81,18 @@ const Page = () => {
     relatedQueryKeys: [`geoiplookup-${ip}`, "ListIPWhitelist"],
   });
 
-  const handleAddToWhitelist = () => {
+  const setListState = (value, State) => {
     addGeoIP.mutate({
       url: `/api/ExecAddTrustedIP${`?tenantFilter=${currentTenant}`}`,
       data: {
-        IP: ip,
-        State: "Trusted",
+        IP: value,
+        State,
       },
     });
   };
-
-  const handleRemoveFromWhitelist = () => {
-    addGeoIP.mutate({
-      url: `/api/ExecAddTrustedIP${`?tenantFilter=${currentTenant}`}`,
-      data: {
-        IP: ip,
-        State: "NotTrusted",
-      },
-    });
-  };
+  const handleAddToWhitelist = () => setListState(ip, "Trusted");
+  const handleBlock = () => setListState(ip, "Blocked");
+  const handleRemoveFromWhitelist = () => setListState(ip, "NotTrusted");
 
   return (
     <Box
@@ -99,16 +114,20 @@ const Page = () => {
                     name="ipAddress"
                     type="textField"
                     validators={{
-                      validate: (value) => getCippValidator(value, "ipAny"),
+                      validate: (value) =>
+                        String(value || "").includes("/")
+                          ? getCippValidator(value, "ipv4cidr") === true ||
+                            getCippValidator(value, "ipv6cidr")
+                          : getCippValidator(value, "ipAny"),
                     }}
-                    placeholder="Enter IP Address (IPv4 or IPv6)"
+                    placeholder="IP address or CIDR range (IPv4 or IPv6)"
                     required
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Button
                     type="submit"
-                    onClick={() => setIpAddress(ip)}
+                    onClick={() => setIpAddress(String(ip || "").split("/")[0])}
                     variant="contained"
                     startIcon={<CippIcons.MagnifyingGlassIcon />}
                   >
@@ -135,11 +154,13 @@ const Page = () => {
                   <Grid size={12}>
                     <Stack direction="row" spacing={1}>
                       <Button variant="contained" color="primary" onClick={handleAddToWhitelist}>
-                        Add to Whitelist
+                        Mark Safe
                       </Button>
-
-                      <Button variant="outlined" color="error" onClick={handleRemoveFromWhitelist}>
-                        Remove from Whitelist
+                      <Button variant="contained" color="error" onClick={handleBlock}>
+                        Mark Compromised
+                      </Button>
+                      <Button variant="outlined" onClick={handleRemoveFromWhitelist}>
+                        Remove from list
                       </Button>
                     </Stack>
                   </Grid>
@@ -149,10 +170,11 @@ const Page = () => {
           )}
           <Grid size={{ xs: 12, sm: 6 }}>
             <CippDataTable
-              title={"IP Whitelist"}
+              title={"IP Allow/Block List"}
               api={{ url: "/api/ListIPWhitelist" }}
               queryKey={"ListIPWhitelist"}
-              simpleColumns={["PartitionKey", "state", "RowKey"]}
+              simpleColumns={["PartitionKey", "Verdict", "Range", "Note"]}
+              dataMap={withVerdict}
               actions={actions}
             />
             <CippApiResults apiObject={addGeoIP} />

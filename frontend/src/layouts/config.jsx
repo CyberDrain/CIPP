@@ -73,18 +73,6 @@ export const nativeMenuItems = [
             permissions: ['Identity.Role.*'],
           },
           {
-            title: 'JIT Admin Templates',
-            path: '/identity/administration/jit-admin-templates',
-            permissions: ['Identity.Role.*'],
-            scope: 'global',
-          },
-          {
-            title: 'JIT Role Templates',
-            path: '/identity/administration/jit-role-templates',
-            permissions: ['Identity.Role.*'],
-            scope: 'global',
-          },
-          {
             title: 'Vacation Mode',
             path: '/identity/administration/vacation-mode',
             permissions: ['Identity.User.*'],
@@ -92,6 +80,11 @@ export const nativeMenuItems = [
           {
             title: 'Offboarding Wizard',
             path: '/identity/administration/offboarding-wizard',
+            permissions: ['Identity.User.*'],
+          },
+          {
+            title: 'Business Email Compromise',
+            path: '/identity/administration/bec',
             permissions: ['Identity.User.*'],
           },
         ],
@@ -206,6 +199,13 @@ export const nativeMenuItems = [
             path: '/tenant/administration/domains',
             permissions: ['Tenant.Administration.*'],
           },
+          {
+            title: "Service Health",
+            path: "/tenant/administration/service-health",
+            permissions: ["Tenant.Administration.*"],
+            // No docs page yet; the help link lands on the section until one is written.
+            docsPath: "tenant/administration",
+          },
         ],
       },
       {
@@ -224,6 +224,11 @@ export const nativeMenuItems = [
         scope: 'global',
       },
       {
+        title: 'Security Simulations',
+        path: '/tenant/security-simulator',
+        permissions: ['Tenant.SecuritySimulations.*'],
+      },
+      {
         title: 'Domains Analyser',
         path: '/tenant/standards/domains-analyser',
         permissions: ['Tenant.DomainAnalyser.*'],
@@ -233,12 +238,6 @@ export const nativeMenuItems = [
         title: 'Standards & Drift',
         path: '/tenant/standards/alignment',
         permissions: ['Tenant.Standards.*'],
-        scope: 'global',
-      },
-      {
-        title: 'Best Practice Analyser',
-        path: '/tenant/standards/bpa-report',
-        permissions: ['Tenant.BestPracticeAnalyser.*'],
         scope: 'global',
       },
       {
@@ -479,47 +478,47 @@ export const nativeMenuItems = [
         <CippIcons.SparklesIcon />
       </SvgIcon>
     ),
-    permissions: ['Tenant.Standards.*'],
+    permissions: ['Tenant.AI.*'],
     items: [
       {
         title: 'Shadow AI Discovery',
         path: '/copilot/shadow-ai',
-        permissions: ['Tenant.Standards.*'],
+        permissions: ['Tenant.AI.*'],
       },
       {
         title: 'Copilot Settings',
         path: '/copilot/settings',
-        permissions: ['Tenant.Standards.*'],
+        permissions: ['Tenant.AI.*'],
       },
       {
         title: 'Agent365',
-        permissions: ['Tenant.Standards.*'],
+        permissions: ['Tenant.AI.*'],
         items: [
           {
             title: 'Packages',
             path: '/copilot/agent365/packages',
-            permissions: ['Tenant.Standards.*'],
+            permissions: ['Tenant.AI.*'],
           },
         ],
       },
       {
         title: 'Reports',
-        permissions: ['Tenant.Standards.*'],
+        permissions: ['Tenant.AI.*'],
         items: [
           {
             title: 'Copilot Adoption',
             path: '/copilot/reports/copilot-adoption',
-            permissions: ['Tenant.Standards.*'],
+            permissions: ['Tenant.AI.*'],
           },
           {
             title: 'Copilot Usage Trend',
             path: '/copilot/reports/copilot-trend',
-            permissions: ['Tenant.Standards.*'],
+            permissions: ['Tenant.AI.*'],
           },
           {
             title: 'Copilot User Activity',
             path: '/copilot/reports/copilot-usage',
-            permissions: ['Tenant.Standards.*'],
+            permissions: ['Tenant.AI.*'],
           },
         ],
       },
@@ -740,16 +739,6 @@ export const nativeMenuItems = [
         permissions: ['Sharepoint.Admin.*'],
       },
       {
-        title: 'Sharing Report',
-        path: '/teams-share/sharing-report',
-        permissions: ['Sharepoint.Site.*'],
-      },
-      {
-        title: 'Permissions Report',
-        path: '/teams-share/permissions-report',
-        permissions: ['Sharepoint.Site.*'],
-      },
-      {
         title: 'External Users',
         path: '/teams-share/external-users',
         permissions: ['Sharepoint.Site.*'],
@@ -764,14 +753,35 @@ export const nativeMenuItems = [
             permissions: ['Teams.Group.*'],
           },
           {
-            title: 'Teams Activity',
-            path: '/teams-share/teams/teams-activity',
-            permissions: ['Teams.Activity.*'],
-          },
-          {
             title: 'Business Voice',
             path: '/teams-share/teams/business-voice',
             permissions: ['Teams.Voice.*'],
+          },
+        ],
+      },
+      {
+        title: 'Reports',
+        permissions: ['Sharepoint.Site.*', 'Teams.Activity.*'],
+        items: [
+          {
+            title: 'Sharing Report',
+            path: '/teams-share/reports/sharing-report',
+            permissions: ['Sharepoint.Site.*'],
+          },
+          {
+            title: 'Storage Report',
+            path: '/teams-share/reports/storage-report',
+            permissions: ['Sharepoint.Site.*'],
+          },
+          {
+            title: 'Permissions Report',
+            path: '/teams-share/reports/permissions-report',
+            permissions: ['Sharepoint.Site.*'],
+          },
+          {
+            title: 'Teams Activity',
+            path: '/teams-share/reports/teams-activity',
+            permissions: ['Teams.Activity.*'],
           },
         ],
       },
@@ -1075,7 +1085,7 @@ export const nativeMenuItems = [
             title: 'IP Database',
             path: '/tenant/tools/geoiplookup',
             docsPath: 'tools/tenant-tools/geoiplookup',
-            permissions: ['CIPP.Core.*'],
+            permissions: ['CIPP.IPDatabase.*'],
             scope: 'global',
           },
         ],
@@ -1095,6 +1105,12 @@ export const nativeMenuItems = [
             path: '/email/tools/message-viewer',
             docsPath: 'tools/email-tools/message-viewer',
             permissions: ['Exchange.Mailbox.*'],
+          },
+          {
+            title: 'Test Mail Flow Rules',
+            path: '/email/tools/test-message',
+            docsPath: 'tools/email-tools/test-message',
+            permissions: ['Exchange.TransportRule.*'],
           },
           {
             title: 'Mailbox Restores',
@@ -1125,20 +1141,20 @@ export const nativeMenuItems = [
       },
       {
         title: 'Dark Web Tools',
-        permissions: ['CIPP.Core.*'],
+        permissions: ['CIPP.BreachLookup.*'],
         items: [
           {
             title: 'Tenant Breach Lookup',
             path: '/tools/tenantbreachlookup',
             docsPath: 'tools/dark-web-tools/tenant-breach-lookup',
-            permissions: ['CIPP.Core.*'],
+            permissions: ['CIPP.BreachLookup.*'],
             scope: 'global',
           },
           {
             title: 'Breach Lookup',
             path: '/tools/breachlookup',
             docsPath: 'tools/dark-web-tools/breach-lookup',
-            permissions: ['CIPP.Core.*'],
+            permissions: ['CIPP.BreachLookup.*'],
             scope: 'global',
           },
         ],
@@ -1146,35 +1162,30 @@ export const nativeMenuItems = [
       {
         title: 'Report Builder',
         path: '/tools/report-builder/generated',
-        roles: ['admin', 'superadmin'],
-        permissions: ['CIPP.Core.*'],
+        permissions: ['CIPP.ReportBuilder.*'],
         scope: 'global',
       },
       {
         title: 'Custom Tests',
         path: '/tools/custom-tests',
-        roles: ['admin', 'superadmin'],
         permissions: ['CIPP.Tests.*'],
         scope: 'global',
       },
       {
         title: 'Template Library',
         path: '/tools/templatelib',
-        roles: ['editor', 'admin', 'superadmin'],
-        permissions: ['CIPP.Core.*'],
+        permissions: ['CIPP.TemplateLibrary.*'],
         scope: 'global',
       },
       {
         title: 'Catalog',
         path: '/tools/community-repos',
-        roles: ['editor', 'admin', 'superadmin'],
-        permissions: ['CIPP.Core.*'],
+        permissions: ['CIPP.TemplateLibrary.*'],
         scope: 'global',
       },
       {
         title: 'Template Package Manager',
         path: '/tools/template-packages',
-        roles: ['editor', 'admin', 'superadmin'],
         permissions: ['Tenant.ConditionalAccess.*', 'Endpoint.MEM.*'],
         scope: 'global',
       },
@@ -1182,7 +1193,6 @@ export const nativeMenuItems = [
         title: 'Scheduler',
         path: '/cipp/scheduler',
         docsPath: 'tools/scheduler',
-        roles: ['editor', 'admin', 'superadmin'],
         permissions: ['CIPP.Scheduler.*'],
       },
     ],
@@ -1202,101 +1212,87 @@ export const nativeMenuItems = [
       {
         title: 'Application Settings',
         path: '/cipp/settings',
-        roles: ['admin', 'superadmin'],
         permissions: ['CIPP.AppSettings.*'],
         scope: 'global',
       },
       {
         title: 'Logbook',
         path: '/cipp/logs',
-        roles: ['editor', 'admin', 'superadmin'],
-        permissions: ['CIPP.Core.*'],
+        permissions: ['CIPP.Logs.*'],
         scope: 'global',
       },
       {
         title: 'Setup Wizard',
         path: '/onboardingv2',
-        roles: ['admin', 'superadmin'],
         permissions: ['CIPP.AppSettings.*'],
         scope: 'global',
       },
       {
         title: 'Integrations',
         path: '/cipp/integrations',
-        roles: ['admin', 'superadmin'],
         permissions: ['CIPP.Extension.*'],
         scope: 'global',
       },
       {
         title: 'Custom Data',
         path: '/cipp/custom-data/directory-extensions',
-        roles: ['admin', 'superadmin'],
         permissions: ['CIPP.AppSettings.*'],
         scope: 'global',
       },
       {
         title: 'Advanced',
-        roles: ['superadmin'],
         permissions: ['CIPP.SuperAdmin.*'],
         items: [
           {
             title: 'Super Admin',
             path: '/cipp/advanced/super-admin/tenant-mode',
-            roles: ['superadmin'],
             permissions: ['CIPP.SuperAdmin.*'],
             scope: 'global',
           },
           {
             title: 'Container Management',
             path: '/cipp/advanced/container-management/status',
-            roles: ['superadmin'],
             permissions: ['CIPP.SuperAdmin.*'],
             scope: 'global',
           },
           {
             // Lands on cipp-roles, not cipp-users: cipp-users is gated by the
             // SuperAdminNG feature flag, and the nav filter drops any item whose
-            // path is in a disabled flag's Pages list — pointing here at cipp-users
+            // path is in a disabled flag's Pages list - pointing here at cipp-users
             // would hide the whole Authentication group (including the ungated
             // SSO and SAM App pages) on non-NG instances.
             title: 'Authentication',
             path: '/cipp/advanced/authentication/cipp-roles',
-            roles: ['superadmin'],
             permissions: ['CIPP.SuperAdmin.*'],
             scope: 'global',
           },
           {
             title: 'Exchange Cmdlets',
             path: '/cipp/advanced/exchange-cmdlets',
-            roles: ['superadmin'],
             permissions: ['CIPP.SuperAdmin.*'],
             scope: 'global',
           },
           {
             title: 'Timers',
             path: '/cipp/advanced/timers',
-            roles: ['superadmin'],
             permissions: ['CIPP.SuperAdmin.*'],
             scope: 'global',
           },
           {
             title: 'Table Maintenance',
             path: '/cipp/advanced/table-maintenance',
-            roles: ['superadmin'],
             permissions: ['CIPP.SuperAdmin.*'],
             scope: 'global',
           },
           {
             title: 'CIPPDB Cache',
             path: '/cipp/advanced/cippdb-cache',
-            roles: ['superadmin'],
             permissions: ['CIPP.SuperAdmin.*'],
             scope: 'global',
           },
           {
             title: 'Diagnostics',
             path: '/cipp/advanced/diagnostics',
-            roles: ['superadmin'],
             permissions: ['CIPP.SuperAdmin.*'],
             scope: 'global',
           },

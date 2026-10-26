@@ -24,6 +24,19 @@ export function useSecureScore({ waiting = true } = {}) {
     waiting: waiting && !isAllTenants,
   })
 
+  // Same key and TTL as the layout's call so react-query serves one shared copy.
+  const featureFlags = ApiGetCall({
+    url: '/api/ListFeatureFlags',
+    queryKey: 'featureFlags',
+    staleTime: 600000,
+  })
+  const baselinesEnabled =
+    Array.isArray(featureFlags.data) &&
+    featureFlags.data.some((flag) => flag.Id === 'Baselines' && flag.Enabled === true)
+  // The Baselines flag hides the classic standards pages, so the in-app remediation link
+  // has to follow it or it lands on a page that no longer exists.
+  const standardsPath = baselinesEnabled ? '/tenant/baselines' : '/tenant/standards/templates'
+
   const secureScore = ApiGetCall({
     url: '/api/ListGraphRequest',
     data: {
@@ -64,14 +77,23 @@ export function useSecureScore({ waiting = true } = {}) {
         const remediation = getStandards().find((standard) =>
           standard.tag?.includes(control.controlName)
         )
+        // maxScore lives on the control profile, not on the per-tenant control score.
+        const pointsToGain =
+          translation?.maxScore != null
+            ? Math.max(translation.maxScore - (control.score ?? 0), 0)
+            : null
         return {
           ...control,
+          pointsToGain,
+          percentToGain:
+            pointsToGain != null && secureScoreData.maxScore
+              ? (pointsToGain / secureScoreData.maxScore) * 100
+              : null,
           title: translation?.title,
           threats: translation?.threats,
           complianceInformation: translation?.complianceInformation,
           actionUrl: remediation
-            ? //this needs to be updated to be a direct url to apply this standard.
-              '/tenant/standards'
+            ? `${standardsPath}?standard=${encodeURIComponent(remediation.name)}`
             : translation?.actionUrl,
           remediation: remediation
             ? `1. Enable the CIPP Standard: ${remediation.label}`
@@ -90,15 +112,14 @@ export function useSecureScore({ waiting = true } = {}) {
       setTranslatedData({
         ...secureScoreData,
         //secureScoreData.currentscore is the current score, secureScoreData.maxscore is the max score. calculate % reached.
-        percentageCurrent: Math.round(
-          (secureScoreData.currentScore / secureScoreData.maxScore) * 100
-        ),
-        percentageVsAllTenants: Math.round(
-          secureScoreData.averageComparativeScores?.[0]?.averageScore
-        ),
-        percentageVsSimilar: Math.round(
-          secureScoreData.averageComparativeScores?.[1]?.averageScore
-        ),
+        percentageCurrent: (
+          (secureScoreData.currentScore / secureScoreData.maxScore) *
+          100
+        ).toFixed(2),
+        percentageVsAllTenants:
+          secureScoreData.averageComparativeScores?.[0]?.averageScore?.toFixed(2),
+        percentageVsSimilar:
+          secureScoreData.averageComparativeScores?.[1]?.averageScore?.toFixed(2),
         controlScores: updatedControlScores,
       })
       setIsSuccess(true)
@@ -109,6 +130,7 @@ export function useSecureScore({ waiting = true } = {}) {
     controlScore.data,
     secureScore.data,
     isAllTenants,
+    standardsPath,
   ])
 
   return {

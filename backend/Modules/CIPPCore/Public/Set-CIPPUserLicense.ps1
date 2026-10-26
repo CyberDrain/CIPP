@@ -23,7 +23,7 @@ function Set-CIPPUserLicense {
             })
     }
 
-    $Results = [System.Collections.Generic.List[string]]::new()
+    $Results = [System.Collections.Generic.List[object]]::new()
 
     # Get default usage location once for all users
     $Table = Get-CippTable -tablename 'UserSettings'
@@ -46,6 +46,12 @@ function Set-CIPPUserLicense {
         if ([string]::IsNullOrWhiteSpace($Request.UserPrincipalName)) {
             $Request.UserPrincipalName = $Request.UserId
         }
+    }
+
+    # Graph rejects an assignLicense call with nothing to add or remove
+    foreach ($Request in @($LicenseRequests.Where({ $_.AddLicenses.Count -eq 0 -and $_.RemoveLicenses.Count -eq 0 }))) {
+        $Results.Add([PSCustomObject]@{ resultText = "No license changes needed for user $($Request.UserPrincipalName)"; state = 'success'; UserId = $Request.UserId })
+        $null = $LicenseRequests.Remove($Request)
     }
 
     # Process Replace operations first (remove all licenses)
@@ -71,7 +77,7 @@ function Set-CIPPUserLicense {
             if ($Result.status -ge 200 -and $Result.status -le 299) {
                 Write-LogMessage -Headers $Headers -API $APIName -tenant $TenantFilter -message "Removed existing licenses for user $($Request.UserPrincipalName)" -Sev 'Info'
             } else {
-                $Results.Add("Failed to remove licenses for user $($Request.UserPrincipalName): $($Result.body.error.message)")
+                $Results.Add([PSCustomObject]@{ resultText = "Failed to remove licenses for user $($Request.UserPrincipalName): $($Result.body.error.message)"; state = 'error'; UserId = $Request.UserId })
                 Write-LogMessage -Headers $Headers -API $APIName -tenant $TenantFilter -message "Failed to remove licenses for user $($Request.UserPrincipalName): $($Result.body.error.message)" -Sev 'Error'
             }
         }
@@ -96,7 +102,7 @@ function Set-CIPPUserLicense {
     }
 
     # Execute bulk request
-    $BulkResults = New-GraphBulkRequest -tenantid $TenantFilter -Requests @($BulkRequests)
+    $BulkResults = if ($LicenseRequests.Count -gt 0) { New-GraphBulkRequest -tenantid $TenantFilter -Requests @($BulkRequests) }
 
     # Collect users with usage location errors
     $UsageLocationErrors = [System.Collections.Generic.List[object]]::new()
@@ -105,12 +111,12 @@ function Set-CIPPUserLicense {
         $Request = $LicenseRequests | Where-Object { $_.UserId -eq $Result.id }
 
         if ($Result.status -ge 200 -and $Result.status -le 299) {
-            $Results.Add("Successfully set licenses for $($Request.UserPrincipalName). It may take 2–5 minutes before the changes become visible.")
+            $Results.Add([PSCustomObject]@{ resultText = "Successfully set licenses for $($Request.UserPrincipalName). It may take 2–5 minutes before the changes become visible."; state = 'success'; UserId = $Request.UserId })
             Write-LogMessage -Headers $Headers -API $APIName -tenant $TenantFilter -message "Assigned licenses to user $($Request.UserPrincipalName). Added: $($Request.AddLicenses -join ', '); Removed: $($Request.RemoveLicenses -join ', ')" -Sev 'Info'
         } elseif ($Result.body.error.message -like '*invalid usage location*' -or $Result.body.error.message -like '*UsageLocation*') {
             $UsageLocationErrors.Add($Request)
         } else {
-            $Results.Add("Failed to assign licenses for user $($Request.UserPrincipalName): $($Result.body.error.message)")
+            $Results.Add([PSCustomObject]@{ resultText = "Failed to assign licenses for user $($Request.UserPrincipalName): $($Result.body.error.message)"; state = 'error'; UserId = $Request.UserId })
             Write-LogMessage -Headers $Headers -API $APIName -tenant $TenantFilter -message "Failed to assign licenses for user $($Request.UserPrincipalName): $($Result.body.error.message)" -Sev 'Error'
         }
     }
@@ -162,10 +168,10 @@ function Set-CIPPUserLicense {
             $Request = $UsageLocationErrors | Where-Object { $_.UserId -eq $Result.id }
 
             if ($Result.status -ge 200 -and $Result.status -le 299) {
-                $Results.Add("Successfully set licenses for $($Request.UserPrincipalName) after setting usage location. It may take 2–5 minutes before the changes become visible.")
+                $Results.Add([PSCustomObject]@{ resultText = "Successfully set licenses for $($Request.UserPrincipalName) after setting usage location. It may take 2–5 minutes before the changes become visible."; state = 'success'; UserId = $Request.UserId })
                 Write-LogMessage -Headers $Headers -API $APIName -tenant $TenantFilter -message "Assigned licenses to user $($Request.UserPrincipalName) after usage location fix. Added: $($Request.AddLicenses -join ', '); Removed: $($Request.RemoveLicenses -join ', ')" -Sev 'Info'
             } else {
-                $Results.Add("Failed to assign licenses for user $($Request.UserPrincipalName) after setting usage location: $($Result.body.error.message)")
+                $Results.Add([PSCustomObject]@{ resultText = "Failed to assign licenses for user $($Request.UserPrincipalName) after setting usage location: $($Result.body.error.message)"; state = 'error'; UserId = $Request.UserId })
                 Write-LogMessage -Headers $Headers -API $APIName -tenant $TenantFilter -message "Failed to assign licenses for user $($Request.UserPrincipalName) after usage location fix: $($Result.body.error.message)" -Sev 'Error'
             }
         }
@@ -173,7 +179,7 @@ function Set-CIPPUserLicense {
 
     # Return single result for legacy support, or all results for bulk
     if ($PSCmdlet.ParameterSetName -eq 'Single') {
-        return $Results[0]
+        return $Results[0].resultText
     } else {
         return $Results
     }

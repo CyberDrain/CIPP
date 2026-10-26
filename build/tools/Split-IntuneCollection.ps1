@@ -21,11 +21,13 @@
     src\hooks\use-intune-collection.js. Both sides hash the UTF-8 bytes of the id and take the
     first 16 hex characters, so any change to the scheme has to be made in both places.
 
-    The bundled backend\Config\intuneCollection.json is left alone: Compare-CIPPIntuneObject.ps1
-    reads it directly and needs the whole catalog in one file.
+    It also writes _index\<platform>.json: a small per-platform search index the template
+    authoring picker loads, since a hash-addressed bundle cannot answer "which settings exist".
+    Settings that only ever appear beneath a parent carry parentId, because Intune
+    rejects them on their own: the picker adds them through their top-level setting.
 
 .PARAMETER CollectionPath
-    Source catalog. Defaults to backend\Config\intuneCollection.json.
+    Source catalog, with the construction fields Update-IntuneCollection.ps1 collects.
 
 .PARAMETER OutputPath
     Destination folder. Defaults to frontend\public\intune-definitions.
@@ -39,7 +41,8 @@
 
 [CmdletBinding()]
 param(
-    [string]$CollectionPath = (Join-Path $PSScriptRoot '..\..\backend\Config\intuneCollection.json'),
+    [Parameter(Mandatory)]
+    [string]$CollectionPath,
     [string]$OutputPath = (Join-Path $PSScriptRoot '..\..\frontend\public\intune-definitions')
 )
 
@@ -70,6 +73,17 @@ $Bundles = [System.Collections.Generic.SortedDictionary[string, System.Text.Stri
 $Hashes = @{}
 $Written = 0
 $Skipped = 0
+$IndexByPlatform = @{}
+$ParentOf = [System.Collections.Generic.Dictionary[string, string]]::new()
+
+function Get-JsonString($Element, [string]$Name) {
+    $Value = [System.Text.Json.JsonElement]::new()
+    if ($Element.ValueKind -eq 'Object' -and $Element.TryGetProperty($Name, [ref]$Value) -and $Value.ValueKind -eq 'String') { $Value.GetString() }
+}
+function Get-JsonArray($Element, [string]$Name) {
+    $Value = [System.Text.Json.JsonElement]::new()
+    if ($Element.ValueKind -eq 'Object' -and $Element.TryGetProperty($Name, [ref]$Value) -and $Value.ValueKind -eq 'Array') { $Value.EnumerateArray() }
+}
 
 try {
     foreach ($Element in $Document.RootElement.EnumerateArray()) {
@@ -107,6 +121,41 @@ try {
         }
         $null = $Bundle.Append('"').Append($Hash).Append('":').Append($Element.GetRawText())
         $Written++
+
+        # Search index. Child relationships are only recorded on the parent (childIds, and each
+        # option's dependedOnBy), so each child's parent is collected here for the index below.
+        foreach ($Child in (Get-JsonArray $Element 'childIds')) { $null = $ParentOf.TryAdd($Child.GetString(), $Id) }
+        foreach ($Option in (Get-JsonArray $Element 'options')) {
+            foreach ($Dependent in (Get-JsonArray $Option 'dependedOnBy')) {
+                $Referenced = Get-JsonString $Dependent 'dependedOnBy'
+                if ($Referenced) { $null = $ParentOf.TryAdd($Referenced, $Id) }
+            }
+        }
+
+        # visibility, not accessTypes: accessTypes reads 'none' for most configurable settings.
+        $Visibility = Get-JsonString $Element 'visibility'
+        if ($Visibility -and $Visibility -notmatch 'settingsCatalog') { continue }
+        # Only the definition types frontend/src/utils/intune-setting-builder.js can build.
+        if ((Get-JsonString $Element '@odata.type') -notmatch 'deviceManagementConfiguration(Choice|Simple)Setting(Collection)?Definition$|deviceManagementConfigurationSettingGroup(Collection)?Definition$') { continue }
+
+        $Applicability = [System.Text.Json.JsonElement]::new()
+        $null = $Element.TryGetProperty('applicability', [ref]$Applicability)
+        $Description = Get-JsonString $Element 'description'
+        if ($Description -and $Description.Length -gt 200) { $Description = $Description.Substring(0, 200).TrimEnd() + '...' }
+
+        $Entry = [pscustomobject]@{
+            id           = $Id
+            displayName  = Get-JsonString $Element 'displayName'
+            description  = $Description
+            categoryName = Get-JsonString $Element 'categoryName'
+            categoryId   = Get-JsonString $Element 'categoryId'
+            technologies = Get-JsonString $Applicability 'technologies'
+        }
+        $Platform = Get-JsonString $Applicability 'platform'
+        foreach ($P in ($Platform ? ($Platform -split ',').Trim() : @('unknown'))) {
+            if (-not $IndexByPlatform.ContainsKey($P)) { $IndexByPlatform[$P] = [System.Collections.Generic.List[object]]::new() }
+            $IndexByPlatform[$P].Add($Entry)
+        }
     }
 
     foreach ($Entry in $Bundles.GetEnumerator()) {
@@ -119,6 +168,32 @@ try {
 } finally {
     $Sha.Dispose()
     $Document.Dispose()
+}
+
+$IndexPath = Join-Path $OutputPath '_index'
+$null = New-Item -ItemType Directory -Path $IndexPath -Force
+foreach ($Platform in $IndexByPlatform.Keys) {
+    $Indexed = [System.Collections.Generic.HashSet[string]]::new([string[]]$IndexByPlatform[$Platform].id)
+    # A child is listed with its parent so the picker can add it through the top-level setting it
+    # sits under; one whose chain leaves this platform's index cannot be added and is left out.
+    $Rows = foreach ($Entry in $IndexByPlatform[$Platform]) {
+        $Current = $Entry.id
+        $Depth = 0
+        while ($ParentOf.ContainsKey($Current) -and $Indexed.Contains($ParentOf[$Current]) -and $Depth -lt 8) {
+            $Current = $ParentOf[$Current]
+            $Depth++
+        }
+        if ($ParentOf.ContainsKey($Current)) { continue }
+        if ($Depth -gt 0) { $Entry | Add-Member -Force -NotePropertyName parentId -NotePropertyValue $ParentOf[$Entry.id] }
+        $Entry
+    }
+    $Rows = $Rows | Sort-Object displayName
+    [System.IO.File]::WriteAllText(
+        (Join-Path $IndexPath ('{0}.json' -f $Platform.ToLowerInvariant())),
+        (ConvertTo-Json -InputObject @($Rows) -Depth 3 -Compress),
+        [System.Text.UTF8Encoding]::new($false)
+    )
+    Write-Host ('  index {0,-22} {1,6} settings' -f $Platform, @($Rows).Count)
 }
 
 Write-Host ''

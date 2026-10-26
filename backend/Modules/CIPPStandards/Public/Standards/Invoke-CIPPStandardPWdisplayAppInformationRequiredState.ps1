@@ -22,12 +22,8 @@ function Invoke-CIPPStandardPWdisplayAppInformationRequiredState {
             "EIDSCA.AM10"
             "NIST CSF 2.0 (PR.AA-03)"
             "EIDSCAAM01"
-            "EIDSCAAM03"
-            "EIDSCAAM04"
             "EIDSCAAM06"
             "EIDSCAAM07"
-            "EIDSCAAM09"
-            "EIDSCAAM10"
         EXECUTIVETEXT
             Enhances authentication security by requiring users to match numbers and showing detailed information about login requests, including application names and location data. This helps employees verify legitimate login attempts and prevents unauthorized access through more secure authentication methods.
         ADDEDCOMPONENT
@@ -82,7 +78,6 @@ function Invoke-CIPPStandardPWdisplayAppInformationRequiredState {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'PWdisplayAppInformationRequiredState' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
         $CurrentValue = @{
             state                              = $CurrentState.state
             displayAppInformationRequiredState = $CurrentState.featureSettings.displayAppInformationRequiredState.state

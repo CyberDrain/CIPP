@@ -61,7 +61,7 @@ function Set-CIPPDBCacheOneDriveRootPermissions {
 
         Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message 'Starting OneDrive root permissions collection' -sev Debug
 
-        $RawSites = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/sites/getAllSites?`$filter=isPersonalSite eq true&`$select=id,webUrl,displayName" -tenantid $TenantFilter -asapp $true)
+        $RawSites = @(New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/sites/getAllSites?`$filter=isPersonalSite eq true&`$select=id,webUrl,displayName,isPersonalSite" -tenantid $TenantFilter -asapp $true)
 
         $SiteById = @{}
         foreach ($Site in $RawSites) {
@@ -113,6 +113,7 @@ function Set-CIPPDBCacheOneDriveRootPermissions {
         $InputObject = [PSCustomObject]@{
             Batch            = @($Batches)
             OrchestratorName = "OneDriveRootPermissions_$TenantFilter"
+            AllowCollision   = $false
             PostExecution    = @{
                 FunctionName = 'StoreOneDriveRootPermissions'
                 Parameters   = @{

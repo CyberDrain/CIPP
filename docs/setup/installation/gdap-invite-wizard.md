@@ -40,7 +40,7 @@ This will generate a unique GDAP invite URL with the associated roles selected f
 {% step %}
 ### Tenant Onboarding
 
-On this step, you can review the relationship info. Before clicking "Start Onboarding", decide if you want to have the tenant excluded from All Tenants standards to allow you time to review the tenant before those are applied. Once done, click "Start Onboarding". CIPP will now automatically complete the tenant onboarding. This includes verifying the relationship was accepted, the roles are present in the relationship, the security groups are mapped to the tenant, and the tenant is accessible via Graph API.
+On this step, you can review the relationship info. Before clicking "Start Onboarding", decide if you want to have the tenant excluded from All Tenants standards to allow you time to review the tenant before those are applied. You can also choose static tenant groups under "Add onboarded tenant to Tenant Groups", and the tenant is added to them once its CPV permissions have been refreshed. Once done, click "Start Onboarding". CIPP will now automatically complete the tenant onboarding. This includes verifying the relationship was accepted, the roles are present in the relationship, the security groups are mapped to the tenant, and the tenant is accessible via Graph API.
 {% endstep %}
 
 {% step %}

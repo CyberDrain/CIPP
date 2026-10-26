@@ -81,6 +81,12 @@ Targets applications by attribute rather than by name, which keeps the policy cu
 | Device Filter Mode | Whether devices matching the rule are included or excluded.                |
 | Device Filter Rule | The filter expression, for example `device.extensionAttribute1 -eq "SAW"`. |
 
+### Authentication Flows
+
+| Field                                | Description                                                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Authentication Flow Transfer Methods | The authentication flows the policy applies to: **Device code flow**, **Authentication transfer**, or both. |
+
 ### Risk Levels
 
 Marked in the interface as requiring **Entra ID P2**.
@@ -91,12 +97,6 @@ Marked in the interface as requiring **Entra ID P2**.
 | User Risk Levels              | Risk levels for the account itself that trigger the policy.  |
 | Service Principal Risk Levels | Risk levels for workload identities that trigger the policy. |
 | Insider Risk Levels           | Insider risk levels that trigger the policy.                 |
-
-### Authentication Flows
-
-| Field                                | Description                                                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------ |
-| Authentication Flow Transfer Methods | The authentication transfer methods the policy applies to, such as device code flow. |
 
 ### Workload Identities
 

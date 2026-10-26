@@ -11,7 +11,8 @@ function New-HaloPSATicket {
     # priority id or the {label, value} shape the alert form stores, matching how the
     # integration-wide DefaultPriority is read below.
     $TicketPriority,
-    [int]$TicketId
+    [int]$TicketId,
+    [string]$ConsolidationKey
   )
   #Get HaloPSA Token based on the config we have.
   $Table = Get-CIPPTable -TableName Extensionsconfig
@@ -36,10 +37,21 @@ function New-HaloPSATicket {
       $description = "$description<p><em>Affected user: $UnmatchedLabel - no matching HaloPSA contact found, ticket assigned to General User.</em></p>"
     }
   }
+  # A caller may provide a stable consolidation key when the visible title contains
+  # dynamic data such as a timestamp. Without one, retain the existing title behavior.
+  $HashBase = if ([string]::IsNullOrWhiteSpace($ConsolidationKey)) {
+    $title
+  } else {
+    $ConsolidationKey
+  }
 
-  # When linking is active, include UPN in the consolidation key so per-user tickets don't
-  # collapse onto each other when the same alert title fires for multiple users.
-  $HashInput = if ($UserLinkActive -and $UserUPN) { "$title|$UserUPN" } else { $title }
+  # Preserve the existing per-user separation when LinkTicketsToUsers is enabled.
+  $HashInput = if ($UserLinkActive -and $UserUPN) {
+    "$HashBase|$UserUPN"
+  } else {
+    $HashBase
+  }
+
   $TitleHash = Get-StringHash -String $HashInput
 
   # Halo requires a site_id whenever a specific user is set on the ticket; pull it from the
@@ -51,11 +63,19 @@ function New-HaloPSATicket {
   # reference back to the request it came from - so it bypasses the consolidation table entirely.
   # Otherwise fall back to the ticket CIPP opened for this title, when consolidation is enabled.
   $TargetTicketId = $null
+  $LegacyTicket = $null
   if ($TicketId -gt 0) {
     $TargetTicketId = $TicketId
     Write-Information "Targeting caller-supplied HaloPSA ticket: $TargetTicketId"
   } elseif ($Configuration.ConsolidateTickets) {
     $ExistingTicket = Get-CIPPAzDataTableEntity @TicketTable -Filter "PartitionKey eq 'HaloPSA' and RowKey eq '$($client)-$($TitleHash)'"
+    # Tickets opened before a stable key was supplied are stored under the title hash; adopt them
+    # once so a wording change in the title does not fork the open ticket.
+    if (-not $ExistingTicket -and -not [string]::IsNullOrWhiteSpace($ConsolidationKey)) {
+      $LegacyHashInput = if ($UserLinkActive -and $UserUPN) { "$title|$UserUPN" } else { $title }
+      $LegacyTicket = Get-CIPPAzDataTableEntity @TicketTable -Filter "PartitionKey eq 'HaloPSA' and RowKey eq '$($client)-$(Get-StringHash -String $LegacyHashInput)'"
+      $ExistingTicket = $LegacyTicket
+    }
     if ($ExistingTicket) {
       Write-Information "Ticket already exists in HaloPSA: $($ExistingTicket.TicketID)"
       $TargetTicketId = $ExistingTicket.TicketID
@@ -67,6 +87,23 @@ function New-HaloPSATicket {
     if ($Ticket.id) {
       if (!$Ticket.hasbeenclosed) {
         Write-Information 'Ticket is still open, adding new note'
+        if ($LegacyTicket -and $PSCmdlet.ShouldProcess('HaloPSA consolidation row', 'Re-key')) {
+          try {
+            $RekeyedTicket = [PSCustomObject]@{
+              PartitionKey = 'HaloPSA'
+              RowKey       = "$($client)-$($TitleHash)"
+              Title        = $LegacyTicket.Title
+              ClientId     = $LegacyTicket.ClientId
+              TicketID     = $LegacyTicket.TicketID
+            }
+            Add-CIPPAzDataTableEntity @TicketTable -Entity $RekeyedTicket -Force
+            Remove-CIPPAzDataTableEntity @TicketTable -Entity $LegacyTicket -Force
+            Write-Information "Moved consolidation row for ticket $TargetTicketId to its stable key"
+          }
+          catch {
+            Write-Information "Failed to re-key consolidation row for ticket $($TargetTicketId): $($_.Exception.Message)"
+          }
+        }
         # Halo won't take a note without an outcome - it answers "An Outcome must be entered
         # for this Action" - so fall back to 7, the built-in Internal Note outcome, when the
         # integration hasn't been given one. The failure this used to hit was the API user not

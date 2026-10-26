@@ -6,6 +6,7 @@ import { usePermissions } from '../../hooks/use-permissions'
 import { Tooltip, Box, Divider, Typography, Alert, Skeleton, Link, IconButton } from '@mui/material'
 import CippFormComponent from './CippFormComponent'
 import { MfaVerifyForm } from './CippMfaVerifyForm'
+import { CippSharedMailboxLicenseAlert } from './CippSharedMailboxLicenseAlert'
 import { CippFormCondition } from './CippFormCondition'
 import { useWatch } from 'react-hook-form'
 import { ApiGetCall } from '../../api/ApiCall'
@@ -166,7 +167,7 @@ const ManageLicensesForm = ({ formControl, tenant }) => {
 
 // Separate component for the Temporary Access Pass form so it can query the tenant's
 // TAP policy to validate the allowed lifetime range and enforce one-time use when forced
-const TemporaryAccessPassForm = ({ formControl, row }) => {
+export const TemporaryAccessPassForm = ({ formControl, row }) => {
   const tenantFilter = useSettings().currentTenant
   const rowData = Array.isArray(row) ? row[0] : row
   const tenant = tenantFilter === 'AllTenants' && rowData?.Tenant ? rowData.Tenant : tenantFilter
@@ -281,6 +282,13 @@ const TemporaryAccessPassForm = ({ formControl, row }) => {
         name="startDateTime"
         label="Start Date/Time (leave blank for immediate)"
         dateTimeType="datetime"
+        formControl={formControl}
+      />
+      <CippFormComponent
+        type="switch"
+        name="generatePwPushLink"
+        label="Generate PwPush link"
+        helperText="Returns a PwPush link instead of the plain TAP so it can be shared securely. Requires the PwPush integration to be enabled; falls back to the plain TAP if the link cannot be created."
         formControl={formControl}
       />
     </>
@@ -495,6 +503,39 @@ export const OutOfOfficeForm = ({ formControl, row }) => {
   )
 }
 
+// On-premises attributes Microsoft documents as clearable on cloud-only users once directory sync is gone:
+// https://learn.microsoft.com/entra/identity/hybrid/connect/tshoot-clear-on-premises-attributes
+const onPremAttributeOptions = [
+  {
+    label: 'Immutable ID (onPremisesImmutableId)',
+    value: 'onPremisesImmutableId',
+  },
+  {
+    label: 'Distinguished Name (onPremisesDistinguishedName)',
+    value: 'onPremisesDistinguishedName',
+  },
+  {
+    label: 'Domain Name (onPremisesDomainName)',
+    value: 'onPremisesDomainName',
+  },
+  {
+    label: 'SAM Account Name (onPremisesSamAccountName)',
+    value: 'onPremisesSamAccountName',
+  },
+  {
+    label: 'Security Identifier (onPremisesSecurityIdentifier)',
+    value: 'onPremisesSecurityIdentifier',
+  },
+  {
+    label: 'User Principal Name (onPremisesUserPrincipalName)',
+    value: 'onPremisesUserPrincipalName',
+  },
+  {
+    label: 'Object Identifier (onPremisesObjectIdentifier)',
+    value: 'onPremisesObjectIdentifier',
+  },
+]
+
 export const useCippUserActions = () => {
   const tenant = useSettings().currentTenant
 
@@ -585,14 +626,18 @@ export const useCippUserActions = () => {
       condition: () => canWriteUser,
     },
     {
-      //tested
-      label: 'Research Compromised Account',
-      type: 'GET',
+      // Queues one BEC run per selected user (bulk-capable); results land on
+      // the BEC Reports page
+      label: 'BEC Remediation',
+      type: 'POST',
+      url: '/api/ExecBECBulkCheck',
       icon: <CippIcons.MagnifyingGlassIcon />,
-      link: '/identity/administration/users/user/bec?userId=[id]',
+      data: { UserIds: 'id' },
+      multiPost: true,
+      bulkFilterEligible: true,
       confirmText:
-        'Are you sure you want to research if [userPrincipalName] is a compromised account?',
-      multiPost: false,
+        'Queue a Business Email Compromise investigation for the selected users? Each run is kept; see the Business Email Compromise page under Identity.',
+      condition: (row) => row.userType !== 'Guest',
     },
     {
       //tested
@@ -676,6 +721,7 @@ export const useCippUserActions = () => {
           ],
           validators: { required: 'Please select a mailbox type' },
         },
+        { name: 'sharedMailboxLicenseWarning', component: CippSharedMailboxLicenseAlert },
       ],
       confirmText: 'Pick the type of mailbox you want to convert [userPrincipalName] to:',
       multiPost: false,
@@ -868,7 +914,7 @@ export const useCippUserActions = () => {
         userid: 'id',
       },
       defaultvalues: {
-        destination: { label: 'OneDrive root', value: 'root' },
+        destination: { label: 'Shortcuts folder (Microsoft UI)', value: 'shortcuts' },
       },
       fields: [
         {
@@ -898,9 +944,27 @@ export const useCippUserActions = () => {
           ],
           validators: { required: 'Please select a shortcut location' },
         },
+        {
+          type: 'textField',
+          name: 'shortcutName',
+          label: 'Shortcut name (optional)',
+          helperText: 'Leave blank to keep the library or site name.',
+          validators: {
+            validate: (value) => {
+              if (!value) return true
+              if (/["*:<>?/\\|]/.test(value)) return 'Cannot contain any of: " * : < > ? / \\ |'
+              if (value !== value.trim()) return 'Cannot start or end with a space'
+              if (value.endsWith('.')) return 'Cannot end with a period'
+              if (value.length > 255) return 'Cannot be longer than 255 characters'
+              return true
+            },
+          },
+        },
       ],
       confirmText: 'Select a SharePoint site and where to create the OneDrive shortcut:',
-      multiPost: false,
+      // One request for all selected users: the backend attempts every user and reports each
+      // failure in place, so a bulk rollout does not stop at the first user that already has it.
+      multiPost: true,
       allowResubmit: true,
       condition: () => canWriteUser,
     },
@@ -1023,16 +1087,42 @@ export const useCippUserActions = () => {
       condition: () => canWriteUser,
     },
     {
-      label: 'Clear Immutable ID',
+      label: 'Clear On-Premises Attributes',
       type: 'POST',
       icon: <CippIcons.Clear />,
-      url: '/api/ExecClrImmId',
+      url: '/api/ExecClrOnPremAttributes',
       data: {
         ID: 'id',
       },
-      confirmText: 'Are you sure you want to clear the Immutable ID for [userPrincipalName]?',
+      // Everything pre-selected: after a move to cloud-only the documented advice is to clear the whole set
+      defaultvalues: { Attributes: onPremAttributeOptions },
+      fields: [
+        {
+          type: 'autoComplete',
+          name: 'Attributes',
+          label: 'Attributes to clear',
+          multiple: true,
+          creatable: false,
+          options: onPremAttributeOptions,
+          validators: { required: 'Select at least one attribute' },
+        },
+      ],
+      confirmText:
+        'Clear the selected on-premises attributes for [userPrincipalName]? Only cloud-only accounts can be updated. The previous values are written to the log.',
       multiPost: false,
-      condition: (row) => !row?.onPremisesSyncEnabled && row?.onPremisesImmutableId && canWriteUser,
+      // Cloud-only accounts that still carry something left over from directory sync
+      condition: (row) =>
+        !row?.onPremisesSyncEnabled &&
+        !!(
+          row?.onPremisesImmutableId ||
+          row?.OnPremisesImmutableId ||
+          row?.onPremisesDistinguishedName ||
+          row?.onPremisesDomainName ||
+          row?.onPremisesSamAccountName ||
+          row?.onPremisesSecurityIdentifier ||
+          row?.onPremisesUserPrincipalName
+        ) &&
+        canWriteUser,
     },
     {
       label: 'Set Source of Authority',

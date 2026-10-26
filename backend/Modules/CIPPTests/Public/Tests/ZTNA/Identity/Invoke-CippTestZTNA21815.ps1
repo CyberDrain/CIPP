@@ -12,21 +12,27 @@ function Invoke-CippTestZTNA21815 {
     $TestId = 'ZTNA21815'
 
     try {
+        if (-not (Test-CIPPStandardLicense -StandardName $TestId -TenantFilter $Tenant -Preset PIM -SkipLog)) {
+            Add-CippTestResult -TenantFilter $Tenant -TestId $TestId -TestType 'Identity' -Status 'Unlicensed' -ResultMarkdown 'This tenant is not licensed for Privileged Identity Management. Required capabilities: AAD_PREMIUM_P2, Entra_Identity_Governance.' -Risk 'High' -Name 'All privileged role assignments are activated just in time and not permanently active' -UserImpact 'Low' -ImplementationEffort 'High' -Category 'Privileged access'
+            return
+        }
+
         $PrivilegedRoles = Get-CippDbRole -TenantFilter $Tenant -IncludePrivilegedRoles
         $RoleAssignmentScheduleInstances = Get-CIPPTestData -TenantFilter $Tenant -Type 'RoleAssignmentScheduleInstances'
         $Users = Get-CIPPTestData -TenantFilter $Tenant -Type 'Users'
+        $UserById = [CIPP.CippIndex]::Build($Users, @(foreach ($U in $Users) { , ($($U.id) ?? $null) }))
+        $AssignmentsByRole = [CIPP.CippIndex]::Build($RoleAssignmentScheduleInstances, @(foreach ($A in $RoleAssignmentScheduleInstances) { , ($($A.roleDefinitionId) ?? $null) }))
 
         $PermanentAssignments = [System.Collections.Generic.List[object]]::new()
 
         foreach ($Role in $PrivilegedRoles) {
-            $ActiveAssignments = $RoleAssignmentScheduleInstances | Where-Object {
-                $_.roleDefinitionId -eq $Role.RoletemplateId -and
+            $ActiveAssignments = ($AssignmentsByRole.Find($Role.RoletemplateId)).Where({
                 $_.assignmentType -eq 'Assigned' -and
                 $null -eq $_.endDateTime
-            }
+            })
 
             foreach ($Assignment in $ActiveAssignments) {
-                $User = $Users | Where-Object { $_.id -eq $Assignment.principalId } | Select-Object -First 1
+                $User = $UserById.First($Assignment.principalId)
                 if (-not $User) { continue }
 
                 $PermanentAssignments.Add([PSCustomObject]@{

@@ -74,6 +74,16 @@ function Get-CIPPBrandingPreset {
             $CoverData = $CoverMap[$CoverId].data
         }
 
+        $RoleColours = [pscustomobject]@{}
+        if ($Entity.roleColours) {
+            try {
+                $Parsed = ConvertFrom-Json -InputObject "$($Entity.roleColours)" -ErrorAction Stop
+                if ($Parsed -is [pscustomobject]) { $RoleColours = $Parsed }
+            } catch {
+                Write-Warning "Ignoring unparseable roleColours on branding preset $($Entity.RowKey): $($_.Exception.Message)"
+            }
+        }
+
         [pscustomobject]@{
             id               = "$($Entity.RowKey)"
             name             = if ($Entity.name) { "$($Entity.name)" } else { 'Untitled preset' }
@@ -90,6 +100,9 @@ function Get-CIPPBrandingPreset {
             showPageNumbers  = if ($null -eq $Entity.showPageNumbers) { $true } else { [bool]$Entity.showPageNumbers }
             watermarkText    = if ($Entity.watermarkText) { "$($Entity.watermarkText)" } else { '' }
             watermarkEnabled = if ($null -eq $Entity.watermarkEnabled) { $true } else { [bool]$Entity.watermarkEnabled }
+            coverFade        = $null -eq $Entity.coverFade -or [bool]$Entity.coverFade
+            tenantLabel      = if (@('alias', 'name', 'domain') -contains "$($Entity.tenantLabel)") { "$($Entity.tenantLabel)" } else { 'alias' }
+            roleColours      = $RoleColours
         }
     }
 

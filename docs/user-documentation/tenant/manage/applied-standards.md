@@ -1,5 +1,9 @@
 # Applied Standards Report
 
+{% hint style="info" %}
+This page is hidden while the **Baselines** feature flag is on in [features.md](../../cipp/settings/features.md "mention"), because [README.md](../baselines/README.md "mention") replace Standards and Drift.
+{% endhint %}
+
 The Applied Standards Report shows, for a single tenant, every standard in a chosen template alongside the tenant's current configuration, so you can see at a glance which standards the tenant meets and where it falls short. Each standard is presented with the configuration the template expects and the value found in the tenant. The page is titled after the template being reported on.
 
 ## Page Actions

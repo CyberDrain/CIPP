@@ -13,9 +13,18 @@ function Invoke-listStandardTemplates {
     $ID = $Request.Query.id
     $Table = Get-CippTable -tablename 'templates'
     $Filter = "PartitionKey eq 'StandardsTemplateV2'"
+    $RepoTable = Get-CippTable -tablename 'CommunityRepos'
+    $Repos = @(Get-CIPPAzDataTableEntity @RepoTable -Filter "PartitionKey eq 'CommunityRepos'")
+    $Total = 0
+    $Failed = 0
     $Templates = (Get-CIPPAzDataTableEntity @Table -Filter $Filter) | ForEach-Object {
+        $Total++
         $RowKey = $_.RowKey
+        $RowSHA = $_.SHA
+        $RowSource = $_.Source
+        $RowContentHash = $_.ContentHash
         $JSON = $_.JSON -replace '"Action":', '"action":'
+        $EffectiveJSON = $JSON
         try {
             $Data = $JSON | ConvertFrom-Json -Depth 100 -ErrorAction Stop
         } catch {
@@ -23,27 +32,45 @@ function Invoke-listStandardTemplates {
                 $RepairedJSON = Repair-CippStandardsTemplate -Json $JSON -Reference $RowKey
             } catch {
                 Write-LogMessage -headers $Request.Headers -API 'Standards' -message "Standards template '$($RowKey)' was omitted from the response: $($_.Exception.Message)" -Sev 'Error'
+                $Failed++
                 return
             }
             $Data = $RepairedJSON | ConvertFrom-Json -Depth 100
+            $EffectiveJSON = $RepairedJSON
             try {
-                $null = Add-CIPPAzDataTableEntity @Table -Entity @{
+                # A template imported from a repo carries SHA and Source; this write replaces the
+                # row, so both must carry across or the next repo sync treats it as new.
+                $RepairedEntity = @{
                     JSON         = "$RepairedJSON"
                     RowKey       = "$RowKey"
                     PartitionKey = 'StandardsTemplateV2'
                     GUID         = "$RowKey"
-                } -Force
+                }
+                if ($RowSHA) { $RepairedEntity.SHA = $RowSHA }
+                if ($RowSource) { $RepairedEntity.Source = $RowSource }
+                if ($RowContentHash) { $RepairedEntity.ContentHash = $RowContentHash }
+                $null = Add-CIPPAzDataTableEntity @Table -Entity $RepairedEntity -Force
                 Write-LogMessage -headers $Request.Headers -API 'Standards' -message "Standards template '$($RowKey)' contained corrupt data (case-duplicate keys) and was automatically repaired and re-saved." -Sev 'Warning'
             } catch {
                 Write-LogMessage -headers $Request.Headers -API 'Standards' -message "Standards template '$($RowKey)' was repaired but could not be re-saved, so it was omitted from the response: $($_.Exception.Message)" -Sev 'Error'
+                $Failed++
                 return
             }
         }
         if ($Data) {
+            # $null means legacy synced row (no Source/ContentHash to compare); true/false compares
+            # the live content hash against the one stamped at the last push/import.
+            $IsRepoSource = Test-CIPPRepoSource -Source $_.Source
+            $HasLocalChanges = $null
+            if ($RowSource -and $RowContentHash) {
+                $HasLocalChanges = (Get-CIPPTemplateContentHash -JSON $EffectiveJSON) -ne $RowContentHash
+            }
             $DataProps = [ordered]@{
-                GUID     = $_.GUID
-                source   = $_.Source
-                isSynced = (![string]::IsNullOrEmpty($_.SHA))
+                GUID            = $_.GUID
+                source          = $(if ($IsRepoSource) { $_.Source } else { $null })
+                isSynced        = ($IsRepoSource -and ![string]::IsNullOrEmpty($_.SHA))
+                sourceUrl       = $(if ($IsRepoSource) { Get-CIPPTemplateSourceUrl -Source $_.Source -SourcePath $_.SourcePath -Repos $Repos } else { $null })
+                hasLocalChanges = $(if ($IsRepoSource) { $HasLocalChanges } else { $null })
             }
 
             if (!$Data.excludedTenants) {
@@ -113,7 +140,7 @@ function Invoke-listStandardTemplates {
 
     if ($ID) { $Templates = $Templates | Where-Object GUID -EQ $ID }
     return ([HttpResponseContext]@{
-            StatusCode = [HttpStatusCode]::OK
+            StatusCode = $ID ? [HttpStatusCode]::OK : (Get-CippBulkStatusCode -Total $Total -Failed $Failed)
             Body       = @($Templates)
         })
 

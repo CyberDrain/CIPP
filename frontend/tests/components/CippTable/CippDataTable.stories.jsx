@@ -1,5 +1,5 @@
 import React from 'react'
-import { http, HttpResponse } from 'msw'
+import { http, HttpResponse, delay } from 'msw'
 import { fn, within, expect, userEvent, waitFor } from 'storybook/test'
 import { CippDataTable } from '../../../src/components/CippTable/CippDataTable'
 import { SettingsProvider } from '../../../src/contexts/settings-context'
@@ -477,6 +477,165 @@ export const GraphBackedEditFilters = {
         await expect(body.getByRole('button', { name: 'Apply Filter' })).toBeVisible()
       })
     })
+  },
+}
+
+// page 2 brings a new column, which re-keys MRT and remounts the toolbar - search must keep focus
+export const SearchKeepsFocusWhileLoading = {
+  beforeEach({ msw }) {
+    msw.use(
+      http.get('/api/TestPagedColumns', async ({ request }) => {
+        if (new URL(request.url).searchParams.get('nextLink')) {
+          await delay(1500)
+          return HttpResponse.json({
+            Results: [{ displayName: 'Bob Johnson', mail: 'bob@contoso.com', department: 'Sales' }],
+            Metadata: {},
+          })
+        }
+        return HttpResponse.json({
+          Results: [{ displayName: 'Alice Smith', mail: 'alice@contoso.com' }],
+          Metadata: { nextLink: 'page2' },
+        })
+      })
+    )
+  },
+  args: {
+    title: 'Paged Columns',
+    api: { url: '/api/TestPagedColumns', dataKey: 'Results' },
+    queryKey: 'storybook-TestPagedColumns',
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement)
+    const search = await canvas.findByPlaceholderText('Search...')
+
+    await step('type while page 2 is still loading', async () => {
+      await userEvent.click(search)
+      await userEvent.keyboard('o')
+    })
+
+    await step('search keeps focus and text once the new column arrives', async () => {
+      await waitFor(
+        () => {
+          expect(canvasElement.textContent).toContain('Sales')
+        },
+        { timeout: 5000 }
+      )
+      const current = canvas.getByPlaceholderText('Search...')
+      expect(current).toHaveFocus()
+      await userEvent.keyboard('n')
+      expect(canvas.getByPlaceholderText('Search...')).toHaveValue('on')
+    })
+  },
+}
+
+// Page 2 is too small to pass the row-growth throttle on its own, so it only shows once paging stops.
+let stopPagingPage3Requests = 0
+export const StopPagingKeepsLoadedRows = {
+  beforeEach({ msw }) {
+    stopPagingPage3Requests = 0
+    msw.use(
+      http.get('/api/TestStopPaging', async ({ request }) => {
+        const nextLink = new URL(request.url).searchParams.get('nextLink')
+        if (nextLink === 'page3') {
+          stopPagingPage3Requests++
+          await delay(30000)
+          return HttpResponse.json({ Results: [{ displayName: 'Never Shown' }], Metadata: {} })
+        }
+        if (nextLink === 'page2') {
+          return HttpResponse.json({
+            Results: [{ displayName: 'Erin Page2' }],
+            Metadata: { nextLink: 'page3' },
+          })
+        }
+        return HttpResponse.json({
+          Results: ['Alice', 'Bob', 'Carol', 'Dave'].map((name) => ({ displayName: `${name} Page1` })),
+          Metadata: { nextLink: 'page2' },
+        })
+      })
+    )
+  },
+  args: {
+    title: 'Stop Paging',
+    api: { url: '/api/TestStopPaging', dataKey: 'Results' },
+    queryKey: 'storybook-TestStopPaging',
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement)
+
+    await step('stop while the last page is loading', async () => {
+      await waitFor(() => expect(stopPagingPage3Requests).toBe(1), { timeout: 5000 })
+      const stop = await canvas.findByRole('button', { name: 'Stop loading' }, { timeout: 5000 })
+      await userEvent.click(stop)
+    })
+
+    await step('the rows already retrieved show and no further page is asked for', async () => {
+      await waitFor(() => expect(canvasElement.textContent).toContain('Erin Page2'), {
+        timeout: 5000,
+      })
+      expect(canvasElement.textContent).toContain('Alice Page1')
+      await canvas.findByRole('button', { name: 'Refresh data' })
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      expect(stopPagingPage3Requests).toBe(1)
+      expect(canvasElement.textContent).not.toContain('Never Shown')
+    })
+  },
+}
+
+// The coverage chip's action rides on exactly one reload; later reloads must not start another run.
+let fillMissingRequests = []
+export const LoadMissingTenants = {
+  beforeEach({ msw }) {
+    fillMissingRequests = []
+    msw.use(
+      http.get('/api/TestPartialCache', ({ request }) => {
+        const fill = new URL(request.url).searchParams.get('FillMissing')
+        fillMissingRequests.push(fill)
+        return HttpResponse.json({
+          Results: [{ displayName: 'Cached Row' }],
+          Metadata: fill
+            ? { CachedTenants: 2, ExpectedTenants: 3, QueueId: 'q-fill' }
+            : { CachedTenants: 2, ExpectedTenants: 3 },
+        })
+      }),
+      http.get('*/api/ListCippQueue', () =>
+        HttpResponse.json([{ QueueId: 'q-fill', Name: 'Users (1 missing tenants)', Status: 'Running' }])
+      )
+    )
+  },
+  args: {
+    title: 'Partial Cache',
+    api: { url: '/api/TestPartialCache', dataKey: 'Results' },
+    queryKey: 'storybook-TestPartialCache',
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement)
+    const body = within(document.body)
+
+    await step('load the missing tenants from the Data source controls', async () => {
+      await canvas.findByText('2 of 3 tenants', {}, { timeout: 5000 })
+      expect(canvas.getAllByText('2 of 3 tenants')).toHaveLength(1)
+      await userEvent.click(canvas.getByRole('button', { name: 'Sync' }))
+      await userEvent.click(await body.findByRole('menuitem', { name: 'Load missing tenants' }))
+    })
+
+    await step('one reload carries the flag and the run it started is tracked', async () => {
+      await waitFor(() => expect(fillMissingRequests).toContain('true'), { timeout: 5000 })
+      await userEvent.click(await canvas.findByRole('button', { name: 'Refresh data' }, { timeout: 5000 }))
+      await waitFor(() => expect(fillMissingRequests.at(-1)).toBeNull(), { timeout: 5000 })
+      expect(fillMissingRequests.filter((fill) => fill === 'true')).toHaveLength(1)
+    })
+  },
+}
+
+// Without a card header the coverage stays in the toolbar rather than disappearing.
+export const TenantCoverageWithoutHeader = {
+  beforeEach: LoadMissingTenants.beforeEach,
+  args: { ...LoadMissingTenants.args, noCard: true, queryKey: 'storybook-TestPartialCacheNoCard' },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await canvas.findByText('2 of 3 tenants', {}, { timeout: 5000 })
+    expect(canvas.getAllByText('2 of 3 tenants')).toHaveLength(1)
+    expect(canvas.getByRole('button', { name: 'Sync' })).toBeInTheDocument()
   },
 }
 

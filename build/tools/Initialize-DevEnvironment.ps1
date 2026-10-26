@@ -83,12 +83,14 @@ $LoadedModules = Get-Module | Select-Object -ExpandProperty Name
 switch ($LoadedModules) {
     'CIPPCore' { Remove-Module CIPPCore -Force }
     'CippExtensions' { Remove-Module CippExtensions -Force }
+    'CIPPPwPush' { Remove-Module CIPPPwPush -Force }
 }
 
 Import-Module ( Join-Path $CippRoot 'Modules\AzBobbyTables' )
 Import-Module ( Join-Path $CippRoot 'Modules\DNSHealth' )
 Import-Module ( Join-Path $CippRoot 'Modules\CIPPCore' )
 Import-Module ( Join-Path $CippRoot 'Modules\CippExtensions' )
+Import-Module ( Join-Path $CippRoot 'Modules\CIPPPwPush' )
 
 $Auth = Get-CIPPAuthentication
 if ($Auth) {

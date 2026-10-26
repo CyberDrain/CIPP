@@ -63,7 +63,7 @@ Anything other than `Complete` means the configuration is not doing what its nam
 {% endhint %}
 
 {% hint style="info" %}
-Changes to Safe Links policies and rules may take up to 6 hours to propagate throughout your organization.
+Changes to Safe Links policies and rules may take up to 6 hours to propagate throughout your organisation.
 {% endhint %}
 
 ## Table Actions

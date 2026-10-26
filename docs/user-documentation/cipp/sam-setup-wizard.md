@@ -32,7 +32,7 @@ Adding a tenant requires a role with unrestricted tenant access, meaning **Allow
 
 For Microsoft CSP partners. This walks you through creating a GDAP relationship, selecting the admin roles to request, and generating an invite link to send to the customer.
 
-Once the customer accepts the invite, a further **GDAP Tenant Onboarding** step becomes available in the same wizard. That step maps the requested GDAP roles to security groups and validates that CIPP can reach the tenant, and it offers the option to exclude the newly onboarded tenant from All Tenant standards. Onboarding progress can also be reviewed later on onboarding.md.
+Once the customer accepts the invite, a further **GDAP Tenant Onboarding** step becomes available in the same wizard. That step maps the requested GDAP roles to security groups and validates that CIPP can reach the tenant, and it offers the option to exclude the newly onboarded tenant from All Tenant standards. It can also add the tenant to static tenant groups, which happens once its CPV permissions have been refreshed. Onboarding progress can also be reviewed later on onboarding.md.
 
 ### Add Direct Tenant
 
@@ -81,7 +81,7 @@ This is most useful when migrating CIPP to a new Azure resource group and carryi
 
 Switches an existing installation between authenticating with the SAM certificate and the client secret, without recreating the application registration. The toggle starts set to the option's current state, and works in either direction.
 
-Turning it on makes sure a SAM certificate exists and is registered on the application - generating and registering one first if needed - before authentication switches over. If that step fails, the error is reported and the client secret stays in use, so nothing breaks. Turning it off is refused when the install has no usable client secret to fall back to.
+Turning it on makes sure a SAM certificate exists and is registered on the application - generating and registering one first if needed - before authentication switches over. If that step fails, the error is reported and the client secret stays in use, so nothing breaks. Turning it off needs a working client secret to fall back to: an install that has none gets one created for it, using the certificate, and the switch waits until Microsoft has activated it. If that takes longer than the request allows, certificate authentication stays on and you are asked to try again in a few minutes. Turning it on also sets the CIPP Exemption Policy, the Entra app management policy CIPP keeps on the CIPP-SAM application (explained on the [credentials.md](advanced/authentication/credentials.md "mention") page), to block adding client secrets, and turning it off lifts that block. Both switches are logged at Alert severity and the credentials involved appear on the [credentials.md](advanced/authentication/credentials.md "mention") page.
 
 {% hint style="info" %}
 The certificate is renewed automatically on the same schedule either way, so leaving certificate authentication off does not stop it being kept current for whenever it is turned on.

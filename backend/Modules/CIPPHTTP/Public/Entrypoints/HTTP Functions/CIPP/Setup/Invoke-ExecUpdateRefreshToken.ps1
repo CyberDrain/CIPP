@@ -48,6 +48,15 @@ function Invoke-ExecUpdateRefreshToken {
             }
         }
 
+        # Cached access tokens were minted from the old refresh token; drop them so the new one takes effect now.
+        # The partner token backs every GDAP tenant, a direct tenant's token only itself (cached under GUID or domain).
+        if ($IsPartnerTenant) {
+            $null = Clear-CippTokenCache
+        } else {
+            $null = Clear-CippTokenCache -TenantFilter $Request.body.tenantId
+        }
+        $null = Set-CIPPCredentialVersion
+
         if ($IsPartnerTenant) {
             try {
                 $Queue = New-CippQueueEntry -Name 'Update Permissions - Partner Tenant' -TotalTasks 1
@@ -97,7 +106,7 @@ function Invoke-ExecUpdateRefreshToken {
         }
 
         return ([HttpResponseContext]@{
-                StatusCode = [HttpStatusCode]::OK
+                StatusCode = [HttpStatusCode]::InternalServerError
                 Body       = $Results
             })
 

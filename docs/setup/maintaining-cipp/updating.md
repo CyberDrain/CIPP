@@ -6,13 +6,13 @@ description: >-
 
 # Updating Versions
 
-{% hint style="warning" %}
+{% hint style="info" %}
 ## **CyberDrain Hosted Clients**
 
-If you’re using a CyberDrain-hosted instance of CIPP, updates happen automatically; generally, within **48 hours** of a new release. You can safely skip the rest of this page; however, it is important to perform a permissions check via CIPP > Application Settings > [permissions.md](../../user-documentation/cipp/settings/permissions.md "mention") to ensure any newly added permissions are accounted for.
+CyberDrain-hosted instances update according to the **Update Checks** settings on CIPP > Advanced > Container Management > [status.md](../../user-documentation/cipp/advanced/container-management/status.md "mention"), the same as a self-hosted instance. The steps below apply to you too. After an update, run a permissions check via CIPP > Application Settings > [permissions.md](../../user-documentation/cipp/settings/permissions.md "mention") so any newly added permissions are accounted for.
 {% endhint %}
 
-Update your self-hosted CIPP instance to the latest release using the following instructions:
+Update your CIPP instance to the latest release using the following instructions:
 
 {% stepper %}
 {% step %}

@@ -70,14 +70,15 @@ Describe 'Send-CIPPScheduledTaskAlert - PSA snooze links' {
         }
 
         Mock -CommandName Send-CIPPAlert -MockWith {
-            param($Type, $Title, $HTMLContent, $JSONContent, $TenantFilter, $AffectedUser, $PSAReference, $PSATicketId)
+            param($Type, $Title, $HTMLContent, $JSONContent, $TenantFilter, $AffectedUser, $PSAReference, $PSATicketId, $PSAConsolidationKey)
             $script:SentAlerts.Add([pscustomobject]@{
-                    Type         = $Type
-                    Title        = $Title
-                    HTMLContent  = $HTMLContent
-                    AffectedUser = $AffectedUser
-                    PSAReference = $PSAReference
-                    PSATicketId  = $PSATicketId
+                    Type                = $Type
+                    Title               = $Title
+                    HTMLContent         = $HTMLContent
+                    AffectedUser        = $AffectedUser
+                    PSAReference        = $PSAReference
+                    PSATicketId         = $PSATicketId
+                    PSAConsolidationKey = $PSAConsolidationKey
                 })
         }
     }
@@ -144,6 +145,16 @@ Describe 'Send-CIPPScheduledTaskAlert - PSA snooze links' {
             $script:SentAlerts[0].HTMLContent | Should -Match 'Please review these accounts\.'
         }
 
+        It 'puts only the snooze key field in each link, not the whole item' {
+            $script:LinkTicketsToUsers = $false
+
+            Send-CIPPScheduledTaskAlert -Results $script:Results -TaskInfo $script:TaskInfo -TenantFilter 'contoso.com' -TaskType 'Alert'
+
+            $KeyOnly = [System.Web.HttpUtility]::UrlEncode('{"UserPrincipalName":"user1@contoso.com"}')
+            $script:SentAlerts[0].HTMLContent | Should -Match ([regex]::Escape("data=$KeyOnly&"))
+            $script:SentAlerts[0].HTMLContent | Should -Not -Match 'User\+One'
+        }
+
         It 'honours a per-task consolidated strategy over the global toggle' {
             $script:TaskInfo.PsaTicketStrategy = 'consolidated'
 
@@ -151,6 +162,36 @@ Describe 'Send-CIPPScheduledTaskAlert - PSA snooze links' {
 
             $script:SentAlerts.Count | Should -Be 1
             $script:SentAlerts[0].HTMLContent | Should -Match 'Snooze Individual Alerts'
+        }
+    }
+
+    # Consolidation keys on the task's identity so rewording the visible title cannot fork an
+    # open ticket; the per-user split keeps one ticket per user.
+    Context 'consolidation key' {
+        It 'keys the consolidated ticket on tenant and task' {
+            $script:LinkTicketsToUsers = $false
+
+            Send-CIPPScheduledTaskAlert -Results $script:Results -TaskInfo $script:TaskInfo -TenantFilter 'contoso.com' -TaskType 'Alert'
+
+            $script:SentAlerts.Count | Should -Be 1
+            $script:SentAlerts[0].PSAConsolidationKey | Should -Be 'contoso.com|task-1'
+            $script:SentAlerts[0].Title | Should -Be 'Alert - contoso.com - Users without MFA'
+        }
+
+        It 'keys each split ticket on tenant, task and user' {
+            Send-CIPPScheduledTaskAlert -Results $script:Results -TaskInfo $script:TaskInfo -TenantFilter 'contoso.com' -TaskType 'Alert'
+
+            @($script:SentAlerts.PSAConsolidationKey) | Should -Be @('contoso.com|task-1|user1@contoso.com', 'contoso.com|task-1|user2@contoso.com')
+            @($script:SentAlerts.Title) | Should -Be @('Alert - contoso.com - Users without MFA - User One (user1@contoso.com)', 'Alert - contoso.com - Users without MFA - User Two (user2@contoso.com)')
+        }
+
+        It 'leaves the reference out of the key' {
+            $script:TaskInfo | Add-Member -NotePropertyName Reference -NotePropertyValue 'Starter Creation' -Force
+            $script:LinkTicketsToUsers = $false
+
+            Send-CIPPScheduledTaskAlert -Results $script:Results -TaskInfo $script:TaskInfo -TenantFilter 'contoso.com' -TaskType 'Alert'
+
+            $script:SentAlerts[0].PSAConsolidationKey | Should -Be 'contoso.com|task-1'
         }
     }
 
@@ -212,5 +253,88 @@ Describe 'Send-CIPPScheduledTaskAlert - PSA snooze links' {
 
             $script:SentAlerts[0].PSAReference | Should -BeNullOrEmpty
         }
+    }
+}
+
+Describe 'Send-CIPPScheduledTaskAlert - display title' {
+    # Scripted multi-tenant alerts store Name as "{every selected tenant}: {subject}". That list
+    # must not appear in per-tenant PSA bodies - only the subject and the current Tenant line.
+    BeforeEach {
+        $script:SentAlerts = [System.Collections.Generic.List[object]]::new()
+
+        $script:Results = @(
+            [pscustomobject]@{ UsedStoragePercentage = 95; Tenant = 'contoso.com' }
+        )
+
+        $script:LongTenantName = 'Acme Corp (acme.com), Beta Ltd (beta.com), Contoso (contoso.com): Sharepoint Allowance is over 90%'
+
+        $script:TaskInfo = [pscustomobject]@{
+            RowKey            = 'task-quota'
+            Name              = $script:LongTenantName
+            Command           = 'Get-CIPPAlertSharepointQuota'
+            PostExecution     = 'psa'
+            AlertComment      = ''
+            CustomSubject     = ''
+            PsaTicketStrategy = 'consolidated'
+            Parameters        = '{}'
+        }
+
+        Mock -CommandName Get-CippTable -MockWith { param([string]$TableName) @{ TableName = $TableName } }
+        Mock -CommandName Get-Tenants -MockWith { [pscustomobject]@{ customerId = '00000000-0000-0000-0000-000000000001' } }
+        Mock -CommandName Get-CIPPTextReplacement -MockWith { param($Text, $TenantFilter) $Text }
+        Mock -CommandName Write-LogMessage -MockWith { }
+        Mock -CommandName Get-CIPPAzDataTableEntity -MockWith {
+            param($TableName, $Filter)
+            switch ($TableName) {
+                'Config' { [pscustomobject]@{ Value = 'cipp.contoso.com' } }
+                'Extensionsconfig' { New-HaloExtConfig -LinkTicketsToUsers $false }
+                default { $null }
+            }
+        }
+        Mock -CommandName Send-CIPPAlert -MockWith {
+            param($Type, $Title, $HTMLContent, $JSONContent, $TenantFilter, $AffectedUser, $PSAReference, $PSATicketId)
+            $script:SentAlerts.Add([pscustomobject]@{
+                    Type        = $Type
+                    Title       = $Title
+                    HTMLContent = $HTMLContent
+                })
+        }
+    }
+
+    It 'strips the multi-tenant Name prefix from Alert body and title' {
+        Send-CIPPScheduledTaskAlert -Results $script:Results -TaskInfo $script:TaskInfo -TenantFilter 'contoso.com' -TaskType 'Alert'
+
+        $script:SentAlerts.Count | Should -Be 1
+        $Body = $script:SentAlerts[0].HTMLContent
+        $Body | Should -Match 'Sharepoint Allowance is over 90%'
+        $Body | Should -Match 'Tenant:.*contoso\.com'
+        $Body | Should -Not -Match 'Acme Corp'
+        $Body | Should -Not -Match 'Beta Ltd'
+        $script:SentAlerts[0].Title | Should -Be 'Alert - contoso.com - Sharepoint Allowance is over 90%'
+        $script:SentAlerts[0].Title | Should -Not -Match 'Acme Corp'
+    }
+
+    It 'prefers CustomSubject over a legacy multi-tenant Name' {
+        $script:TaskInfo.CustomSubject = 'SharePoint quota high'
+        $script:TaskInfo.Name = $script:LongTenantName
+
+        Send-CIPPScheduledTaskAlert -Results $script:Results -TaskInfo $script:TaskInfo -TenantFilter 'contoso.com' -TaskType 'Alert'
+
+        $Body = $script:SentAlerts[0].HTMLContent
+        $Body | Should -Match 'SharePoint quota high'
+        $Body | Should -Not -Match 'Acme Corp'
+        $Body | Should -Not -Match 'Sharepoint Allowance is over 90%'
+        $script:SentAlerts[0].Title | Should -Be 'SharePoint quota high - contoso.com'
+    }
+
+    It 'keeps the full task Name for non-Alert scheduled tasks' {
+        $script:TaskInfo.Name = 'Weekly report for Contoso (contoso.com)'
+        $script:TaskInfo.CustomSubject = ''
+
+        Send-CIPPScheduledTaskAlert -Results $script:Results -TaskInfo $script:TaskInfo -TenantFilter 'contoso.com' -TaskType 'Scheduled Task'
+
+        $Body = $script:SentAlerts[0].HTMLContent
+        $Body | Should -Match 'Weekly report for Contoso \(contoso\.com\)'
+        $script:SentAlerts[0].Title | Should -Be 'Scheduled Task - contoso.com - Weekly report for Contoso (contoso.com)'
     }
 }

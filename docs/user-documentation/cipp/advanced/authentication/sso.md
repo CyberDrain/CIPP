@@ -1,6 +1,6 @@
 # SSO
 
-The SSO App Registration page manages the Entra ID app registration that backs CIPP single sign-on. From here you provision the sign-on app, repair or recreate it, rotate its client secret, choose between single- and multi-tenant login, and for advanced cases store an existing app's credentials by hand.
+The SSO App Registration card manages the Entra ID app registration that backs CIPP single sign-on. It lives on the [credentials.md](credentials.md "mention") page, next to the card for the CIPP-SAM application. From here you provision the sign-on app, repair or recreate it, rotate its client secret, choose between single- and multi-tenant login, and for advanced cases store an existing app's credentials by hand.
 
 ## What CIPP-SSO Is and Why It Exists
 
@@ -70,9 +70,9 @@ An Entra administrator is only needed when a tenant-level policy in your own ten
 
 {% stepper %}
 {% step %}
-### Open the SSO page
+### Open the Credentials page
 
-Sign in to CIPP as a user with the superadmin or admin role and go to **CIPP** > **Advanced** > **Authentication** > **SSO**. If your instance is prompting you to complete authentication setup, the dialog it shows runs the same process and you can complete it from there instead.
+Sign in to CIPP as a user with the superadmin or admin role and go to **CIPP** > **Advanced** > **Authentication** > **Credentials**. If your instance is prompting you to complete authentication setup, the dialog it shows runs the same process and you can complete it from there instead.
 {% endstep %}
 
 {% step %}
@@ -117,6 +117,7 @@ Once an app exists, the card also shows:
 
 * **Admin Consent**: whether the tenant-wide consent grant is in place. **Not Granted** is not fatal: sign-in still works, users are simply prompted to consent the first time. **Not Checked** means the grant has not been attempted yet; it is retried on every startup.
 * **App ID**: the Application (client) ID of the CIPP-SSO app, and the date it was created.
+* **Client secret**: when the app's current client secret expires. The weekly token update creates a new secret 30 days before expiry, so under normal operation this date moves forward on its own. A date within 30 days is highlighted.
 * **Sign-in URLs**: every hostname bound to this instance. A hostname shown in orange is bound to the instance but has no matching redirect URI on the app registration, so sign-in on that hostname fails with `AADSTS50011`. **Refresh Sign-in URLs** adds the missing ones.
 
 If a setup attempt failed, an alert explains what went wrong and points to the right next step: Repair or Recreate when the app was created but the secret failed, or Create when no App ID was ever saved and an orphaned CIPP-SSO app may need deleting from Entra by hand.
@@ -131,8 +132,12 @@ The buttons on the card change depending on the current status. The available ac
 | Repair                | Retries generating the client secret on the existing app registration. Used when the app was created but its secret could not be generated.           |
 | Recreate              | Clears the current SSO record and provisions a brand-new app registration. The previous app is left in your Entra tenant for you to delete manually.  |
 | Refresh Sign-in URLs  | Adds a redirect URI for every hostname currently bound to this instance. Use it after adding a custom domain. Additive, so it never removes a URI.       |
-| Rotate Secret         | Generates a new client secret for the existing SSO app.                                                                                               |
+| Rotate Secret         | Generates a new client secret for the existing SSO app and stores it. The instance keeps signing users in with the previous secret until it restarts, so restart it when convenient; the previous secret stays valid until it expires. |
 | Save Changes          | Applies changes to the SSO settings, such as toggling multi-tenant mode. This restarts CIPP, and the change can take up to 60 seconds to take effect. |
+
+{% hint style="info" %}
+The SSO client secret is rotated automatically by the weekly token update when it is within 30 days of expiry. The new secret is picked up at the next restart, and the logbook records a **Restart required** warning until then. A rotation, automatic or manual, is also logged at Alert severity with the user who performed it.
+{% endhint %}
 
 ## Single-Tenant vs Multi-Tenant Login
 
@@ -191,7 +196,7 @@ Select **Register**.
 {% step %}
 ### Add a redirect URI for every hostname
 
-Under **Authentication**, add a Web redirect URI of `https://<hostname>/.auth/login/aad/callback` for **every** hostname the instance answers on: the default `*.azurewebsites.net` address as well as any custom domain. The SSO page lists them under **Sign-in URLs**. A hostname without its own redirect URI fails sign-in with `AADSTS50011`.
+Under **Authentication**, add a Web redirect URI of `https://<hostname>/.auth/login/aad/callback` for **every** hostname the instance answers on: the default `*.azurewebsites.net` address as well as any custom domain. The SSO App Registration card lists them under **Sign-in URLs**. A hostname without its own redirect URI fails sign-in with `AADSTS50011`.
 
 Still under **Authentication**, tick **ID tokens (used for implicit and hybrid flows)**.
 {% endstep %}
@@ -213,7 +218,7 @@ Under **Certificates & secrets** > **Client secrets** > **New client secret**, c
 {% step %}
 ### Store the credentials in CIPP
 
-Copy the **Application (client) ID** from the app's Overview page. In CIPP, open **Advanced** > **Authentication** > **SSO**, expand **Manual configuration (advanced)**, paste the App ID and secret, set multi-tenant mode if needed, and select **Save Manual Configuration**.
+Copy the **Application (client) ID** from the app's Overview page. In CIPP, open **Advanced** > **Authentication** > **Credentials**, expand **Manual configuration (advanced)**, paste the App ID and secret, set multi-tenant mode if needed, and select **Save Manual Configuration**.
 {% endstep %}
 
 {% step %}

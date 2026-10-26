@@ -1,7 +1,15 @@
+# Cap container logs so CRAFT_VERBOSE output can't grow the Docker VM disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 20m
+    max-file: "3"
+
 services:
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     container_name: cipp-azurite
+    logging: *logging
     restart: unless-stopped
     command: >
       azurite
@@ -18,9 +26,11 @@ services:
       - "127.0.0.1:10002:10002"
     environment:
       - AZURITE_ACCOUNTS=devstoreaccount1:Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-      - NODE_OPTIONS=--max-old-space-size=8192
+      - NODE_OPTIONS=--max-old-space-size=8192 --require /azurite-table-partition.js --require /azurite-perf.js
     volumes:
       - cipp-ng_azurite-data:/workspace
+      - ./tools/azurite-table-partition.js:/azurite-table-partition.js:ro
+      - ./tools/azurite-perf.js:/azurite-perf.js:ro
     networks:
       - cipp-network
 
@@ -35,6 +45,7 @@ services:
     # then browse everything via http://localhost:5196 (same-origin API).
     image: ghcr.io/cyberdrain/craft:dev
     container_name: cipp-api
+    logging: *logging
     restart: unless-stopped
     ports:
       - "127.0.0.1:5196:8080"
@@ -98,8 +109,10 @@ services:
       - ./.devmodules/CIPPStandards:/app/API/Modules/CIPPStandards:ro
       - ./.devmodules/CIPPDB:/app/API/Modules/CIPPDB:ro
       - ./.devmodules/CIPPAlerts:/app/API/Modules/CIPPAlerts:ro
+      - ./.devmodules/CIPPBaselines:/app/API/Modules/CIPPBaselines:ro
       - ./.devmodules/CIPPActivityTriggers:/app/API/Modules/CIPPActivityTriggers:ro
       - ./.devmodules/CippExtensions:/app/API/Modules/CippExtensions:ro
+      - ./.devmodules/CIPPPwPush:/app/API/Modules/CIPPPwPush:ro
       - ./.devmodules/CIPPTests:/app/API/Modules/CIPPTests:rw
     develop:
       watch:
@@ -116,9 +129,11 @@ services:
             - CIPPStandards/
             - CIPPDB/
             - CIPPAlerts/
+            - CIPPBaselines/
             - CIPPTests/
             - CIPPActivityTriggers/
             - CippExtensions/
+            - CIPPPwPush/
         - action: restart
           path: ../backend/Shared
           target: /app/API/Shared

@@ -8,16 +8,6 @@ The suite is chosen from the controls at the top of the tab, which behave exactl
 Device checks are assessed against the tenant's Intune configuration, so a suite's device results depend on the tenant having devices enrolled and managed. Suites that cover only identity controls will show no results here.
 {% endhint %}
 
-## Table Details
-
-| Column | Description                                                                                        |
-| ------ | -------------------------------------------------------------------------------------------------- |
-| Name   | The name of the check that was run.                                                                |
-| Risk   | How much risk this setting presents to the client if misconfigured, shown as High, Medium, or Low. |
-| Status | The outcome of the check: Passed, Failed, Investigate, or Skipped.                                 |
-
-Additional columns can be shown from the **Columns** menu. See [table-features.md](../shared-features/table-features.md "mention").
-
 ## Filters
 
 Preset filters are available from the **Filters** button for each status and each risk level.
@@ -33,6 +23,16 @@ Preset filters are available from the **Filters** button for each status and eac
 | Low Risk    | Checks carrying a low risk rating.                                                                     |
 
 A status filter and a risk filter cannot both be active at once, since both act on the table's columns. To combine them, apply one preset and then filter the other column manually.
+
+## Table Details
+
+| Column | Description                                                                                        |
+| ------ | -------------------------------------------------------------------------------------------------- |
+| Name   | The name of the check that was run.                                                                |
+| Risk   | How much risk this setting presents to the client if misconfigured, shown as High, Medium, or Low. |
+| Status | The outcome of the check: Passed, Failed, Investigate, or Skipped.                                 |
+
+Additional columns can be shown from the **Columns** menu. See [table-features.md](../shared-features/table-features.md "mention").
 
 ## Test Detail
 

@@ -14,14 +14,20 @@ function Invoke-ListTests {
 
     $APIName = $TriggerMetadata.FunctionName
 
+    $TenantFilter = $Request.Query.tenantFilter ?? $Request.Body.tenantFilter
+    $ReportId = $Request.Query.reportId ?? $Request.Body.reportId
+    # When true, return only the aggregated TestCounts (per-type pass/fail/etc totals) and skip
+    # the per-result markdown/metadata enrichment and the SecureScore/MFAState/License DB reads.
+    $SummaryOnly = ($Request.Query.summaryOnly -eq $true) -or ($Request.Body.summaryOnly -eq $true)
+
+    if (-not $TenantFilter) {
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = @{ Error = 'TenantFilter parameter is required' }
+            })
+    }
+
     try {
-        $TenantFilter = $Request.Query.tenantFilter ?? $Request.Body.tenantFilter
-        $ReportId = $Request.Query.reportId ?? $Request.Body.reportId
-
-        if (-not $TenantFilter) {
-            throw 'TenantFilter parameter is required'
-        }
-
         $TestResultsData = Get-CIPPTestResults -TenantFilter $TenantFilter
 
         $IdentityTotal = 0
@@ -138,67 +144,69 @@ function Invoke-ListTests {
         $DeviceResults = $TestResultsData.TestResults | Where-Object { $_.TestType -eq 'Devices' }
         $CustomResultsForCounts = $TestResultsData.TestResults | Where-Object { $_.TestType -eq 'Custom' }
 
-        # Build lookup of custom script metadata (latest version per ScriptGuid)
-        $CustomScriptMetadataLookup = @{}
-        $CustomResults = @($TestResultsData.TestResults | Where-Object { $_.TestType -eq 'Custom' })
-        if ($CustomResults.Count -gt 0) {
-            $CustomScriptsTable = Get-CippTable -tablename 'CustomPowershellScripts'
-            $CustomScripts = @(Get-CIPPAzDataTableEntity @CustomScriptsTable -Filter "PartitionKey eq 'CustomScript'")
+        if (-not $SummaryOnly) {
+            # Build lookup of custom script metadata (latest version per ScriptGuid)
+            $CustomScriptMetadataLookup = @{}
+            $CustomResults = @($TestResultsData.TestResults | Where-Object { $_.TestType -eq 'Custom' })
+            if ($CustomResults.Count -gt 0) {
+                $CustomScriptsTable = Get-CippTable -tablename 'CustomPowershellScripts'
+                $CustomScripts = @(Get-CIPPAzDataTableEntity @CustomScriptsTable -Filter "PartitionKey eq 'CustomScript'")
 
-            if ($CustomScripts.Count -gt 0) {
-                $LatestCustomScripts = $CustomScripts |
-                    Group-Object -Property ScriptGuid |
-                    ForEach-Object {
-                        $_.Group | Sort-Object -Property Version -Descending | Select-Object -First 1
-                    }
+                if ($CustomScripts.Count -gt 0) {
+                    $LatestCustomScripts = $CustomScripts |
+                        Group-Object -Property ScriptGuid |
+                        ForEach-Object {
+                            $_.Group | Sort-Object -Property Version -Descending | Select-Object -First 1
+                        }
 
-                foreach ($Script in @($LatestCustomScripts)) {
-                    if (-not [string]::IsNullOrWhiteSpace($Script.ScriptGuid)) {
-                        $CustomScriptMetadataLookup[$Script.ScriptGuid] = [PSCustomObject]@{
-                            Description      = $Script.Description ?? ''
-                            ReturnType       = $Script.ReturnType ?? 'JSON'
-                            MarkdownTemplate = $Script.MarkdownTemplate ?? ''
+                    foreach ($Script in @($LatestCustomScripts)) {
+                        if (-not [string]::IsNullOrWhiteSpace($Script.ScriptGuid)) {
+                            $CustomScriptMetadataLookup[$Script.ScriptGuid] = [PSCustomObject]@{
+                                Description      = $Script.Description ?? ''
+                                ReturnType       = $Script.ReturnType ?? 'JSON'
+                                MarkdownTemplate = $Script.MarkdownTemplate ?? ''
+                            }
                         }
                     }
                 }
             }
-        }
 
-        # Add descriptions from markdown files to each test result
-        $MdFileLookup = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-        foreach ($MdPath in [System.IO.Directory]::EnumerateFiles($TestsRootPath, '*.md', [System.IO.SearchOption]::AllDirectories)) {
-            $MdKey = [System.IO.Path]::GetFileNameWithoutExtension($MdPath)
-            if (-not $MdFileLookup.ContainsKey($MdKey)) {
-                $MdFileLookup[$MdKey] = $MdPath
-            }
-        }
-
-        foreach ($TestResult in $TestResultsData.TestResults) {
-            $MdFile = $null
-            [void]$MdFileLookup.TryGetValue(('Invoke-CippTest{0}' -f $TestResult.RowKey), [ref]$MdFile)
-
-            if ($MdFile) {
-                try {
-                    $MdContent = [System.IO.File]::ReadAllText($MdFile)
-                    if ($MdContent) {
-                        $Description = ($MdContent -split '<!--- Results --->')[0].Trim()
-                        $Description = ($Description -split '%TestResult%')[0].Trim()
-                        $TestResult | Add-Member -NotePropertyName 'Description' -NotePropertyValue $Description -Force
-                    }
-                } catch {
-                    #Test
+            # Add descriptions from markdown files to each test result
+            $MdFileLookup = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($MdPath in [System.IO.Directory]::EnumerateFiles($TestsRootPath, '*.md', [System.IO.SearchOption]::AllDirectories)) {
+                $MdKey = [System.IO.Path]::GetFileNameWithoutExtension($MdPath)
+                if (-not $MdFileLookup.ContainsKey($MdKey)) {
+                    $MdFileLookup[$MdKey] = $MdPath
                 }
             }
 
-            if ($TestResult.TestType -eq 'Custom') {
-                $ScriptGuid = ($TestResult.RowKey -replace '^CustomScript-', '')
-                if (-not [string]::IsNullOrWhiteSpace($ScriptGuid) -and $CustomScriptMetadataLookup.ContainsKey($ScriptGuid)) {
-                    $CustomMetadata = $CustomScriptMetadataLookup[$ScriptGuid]
-                    $TestResult | Add-Member -NotePropertyMembers ([ordered]@{
-                            Description      = ($CustomMetadata.Description)
-                            ReturnType       = ($CustomMetadata.ReturnType)
-                            MarkdownTemplate = ($CustomMetadata.MarkdownTemplate)
-                        }) -Force
+            foreach ($TestResult in $TestResultsData.TestResults) {
+                $MdFile = $null
+                [void]$MdFileLookup.TryGetValue(('Invoke-CippTest{0}' -f $TestResult.RowKey), [ref]$MdFile)
+
+                if ($MdFile) {
+                    try {
+                        $MdContent = [System.IO.File]::ReadAllText($MdFile)
+                        if ($MdContent) {
+                            $Description = ($MdContent -split '<!--- Results --->')[0].Trim()
+                            $Description = ($Description -split '%TestResult%')[0].Trim()
+                            $TestResult | Add-Member -NotePropertyName 'Description' -NotePropertyValue $Description -Force
+                        }
+                    } catch {
+                        #Test
+                    }
+                }
+
+                if ($TestResult.TestType -eq 'Custom') {
+                    $ScriptGuid = ($TestResult.RowKey -replace '^CustomScript-', '')
+                    if (-not [string]::IsNullOrWhiteSpace($ScriptGuid) -and $CustomScriptMetadataLookup.ContainsKey($ScriptGuid)) {
+                        $CustomMetadata = $CustomScriptMetadataLookup[$ScriptGuid]
+                        $TestResult | Add-Member -NotePropertyMembers ([ordered]@{
+                                Description      = ($CustomMetadata.Description)
+                                ReturnType       = ($CustomMetadata.ReturnType)
+                                MarkdownTemplate = ($CustomMetadata.MarkdownTemplate)
+                            }) -Force
+                    }
                 }
             }
         }
@@ -209,7 +217,7 @@ function Invoke-ListTests {
                 Failed         = @($IdentityResults | Where-Object { $_.Status -in @('Failed', 'Active', 'Postponed') }).Count
                 NeedsAttention = @($IdentityResults | Where-Object { $_.Status -eq 'Investigate' }).Count
                 Skipped        = @($IdentityResults | Where-Object { $_.Status -eq 'Skipped' }).Count
-                Informational  = @($IdentityResults | Where-Object { $_.Status -eq 'Informational' }).Count
+                Informational  = @($IdentityResults | Where-Object { $_.Status -in @('Informational', 'Unlicensed') }).Count
                 Total          = $IdentityTotal
             }
             Devices  = @{
@@ -217,7 +225,7 @@ function Invoke-ListTests {
                 Failed         = @($DeviceResults | Where-Object { $_.Status -in @('Failed', 'Active', 'Postponed') }).Count
                 NeedsAttention = @($DeviceResults | Where-Object { $_.Status -eq 'Investigate' }).Count
                 Skipped        = @($DeviceResults | Where-Object { $_.Status -eq 'Skipped' }).Count
-                Informational  = @($DeviceResults | Where-Object { $_.Status -eq 'Informational' }).Count
+                Informational  = @($DeviceResults | Where-Object { $_.Status -in @('Informational', 'Unlicensed') }).Count
                 Total          = $DevicesTotal
             }
             Custom   = @{
@@ -225,34 +233,44 @@ function Invoke-ListTests {
                 Failed         = @($CustomResultsForCounts | Where-Object { $_.Status -eq 'Failed' }).Count
                 NeedsAttention = @($CustomResultsForCounts | Where-Object { $_.Status -eq 'Investigate' }).Count
                 Skipped        = @($CustomResultsForCounts | Where-Object { $_.Status -eq 'Skipped' }).Count
-                Informational  = @($CustomResultsForCounts | Where-Object { $_.Status -eq 'Informational' }).Count
+                Informational  = @($CustomResultsForCounts | Where-Object { $_.Status -in @('Informational', 'Unlicensed') }).Count
                 Total          = $CustomTotal
             }
         }
 
-        $TestResultsData | Add-Member -NotePropertyName 'TestCounts' -NotePropertyValue $TestCounts -Force
+        if ($SummaryOnly) {
+            # Return only the aggregated counts; skip the SecureScore/MFAState/License DB reads
+            # and the full per-result payload.
+            $StatusCode = [HttpStatusCode]::OK
+            $Body = [PSCustomObject]@{
+                TenantFilter = $TenantFilter
+                TestCounts   = $TestCounts
+            }
+        } else {
+            $TestResultsData | Add-Member -NotePropertyName 'TestCounts' -NotePropertyValue $TestCounts -Force
 
-        $SecureScoreData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'SecureScore'
-        if ($SecureScoreData) {
-            $TestResultsData | Add-Member -NotePropertyName 'SecureScore' -NotePropertyValue @($SecureScoreData) -Force
-        }
-        $MFAStateData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'MFAState'
-        if ($MFAStateData) {
-            $TestResultsData | Add-Member -NotePropertyName 'MFAState' -NotePropertyValue @($MFAStateData) -Force
-        }
+            $SecureScoreData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'SecureScore'
+            if ($SecureScoreData) {
+                $TestResultsData | Add-Member -NotePropertyName 'SecureScore' -NotePropertyValue @($SecureScoreData) -Force
+            }
+            $MFAStateData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'MFAState'
+            if ($MFAStateData) {
+                $TestResultsData | Add-Member -NotePropertyName 'MFAState' -NotePropertyValue @($MFAStateData) -Force
+            }
 
-        $LicenseData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'LicenseOverview'
-        if ($LicenseData) {
-            $TestResultsData | Add-Member -NotePropertyName 'LicenseData' -NotePropertyValue @($LicenseData) -Force
-        }
+            $LicenseData = New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'LicenseOverview'
+            if ($LicenseData) {
+                $TestResultsData | Add-Member -NotePropertyName 'LicenseData' -NotePropertyValue @($LicenseData) -Force
+            }
 
-        $StatusCode = [HttpStatusCode]::OK
-        $Body = $TestResultsData
+            $StatusCode = [HttpStatusCode]::OK
+            $Body = $TestResultsData
+        }
 
     } catch {
         $ErrorMessage = Get-CippException -Exception $_
         Write-LogMessage -API $APIName -tenant $TenantFilter -message "Error retrieving tests: $($ErrorMessage.NormalizedError)" -sev Error -LogData $ErrorMessage
-        $StatusCode = [HttpStatusCode]::BadRequest
+        $StatusCode = [HttpStatusCode]::InternalServerError
         $Body = @{ Error = $ErrorMessage.NormalizedError }
     }
 

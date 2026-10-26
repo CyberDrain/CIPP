@@ -27,7 +27,6 @@ function Get-CIPPTenantAlignment {
     $TemplateTable = Get-CippTable -tablename 'templates'
     $TemplateFilter = "PartitionKey eq 'StandardsTemplateV2'"
     $TenantGroups = Get-TenantGroups
-    $DriftTable = Get-CippTable -tablename 'tenantDrift'
 
     try {
         # Get all standard templates
@@ -304,8 +303,11 @@ function Get-CIPPTenantAlignment {
                         }
                     }
                 }
-                # Handle Reusable Settings templates — TemplateList is multi-select, one key per template id
-                elseif ($StandardKey -eq 'ReusableSettingsTemplate' -and $StandardConfig) {
+                # Handle Reusable Settings templates — TemplateList is multi-select, one key per template id.
+                # Match on the key alone (not truthiness): an empty template value (@()) must stay in this
+                # branch and emit nothing, not fall through to the catch-all below and produce a bare
+                # 'standards.ReusableSettingsTemplate' id that can never match a report row (shows as NOT FOUND).
+                elseif ($StandardKey -eq 'ReusableSettingsTemplate') {
                     foreach ($RSTemplate in @($StandardConfig)) {
                         $RSActions = if ($RSTemplate.action) { $RSTemplate.action } else { @() }
                         $RSReportingEnabled = ($RSActions | Where-Object { $_.value -and ($_.value.ToLower() -eq 'report' -or $_.value.ToLower() -eq 'remediate') }).Count -gt 0
@@ -385,12 +387,10 @@ function Get-CIPPTenantAlignment {
                 if ($IsDriftTemplate) {
                     if (-not $TenantDriftStatusesCache.ContainsKey($TenantName)) {
                         try {
-                            $DriftFilter = "PartitionKey eq '$TenantName'"
-                            $DriftEntities = Get-CIPPAzDataTableEntity @DriftTable -Filter $DriftFilter
-                            foreach ($DriftEntity in $DriftEntities) {
-                                if ($DriftEntity.StandardName) {
-                                    $TenantDriftStatuses[$DriftEntity.StandardName] = $DriftEntity.Status
-                                }
+                            $DriftLookup ??= Get-CIPPTenantLookup
+                            $DriftStates = (Get-CIPPTenantDriftState -TenantFilter $TenantName -Lookup $DriftLookup).States
+                            foreach ($DriftName in $DriftStates.Keys) {
+                                $TenantDriftStatuses[$DriftName] = $DriftStates[$DriftName].Status
                             }
                         } catch {
                             Write-Warning "Failed to get drift states for $TenantName $($_.Exception.Message)"

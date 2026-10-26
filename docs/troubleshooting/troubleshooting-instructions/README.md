@@ -15,7 +15,7 @@ To ensure we can assist you with any CIPP issue, complete details are essential.
 * **What to Share**: A screenshot of the page including both boxes, and an Export of the report by pressing the Export button. You can redact any sensitive info as long as it's still clearly usable to verify the checks (e.g. redact domain but leave username visible on UPN)
 
 {% hint style="info" %}
-The output of these checks includes information that may be possible for you to solve the issue on your own at this point. Review any warnings or errors to determine what needs to be corrected. If you're still stuck, please ask away in Discord or reach out to the helpdesk if you are a sponsor.
+The output of these checks includes information that may be possible for you to solve the issue on your own at this point. Review any warnings or errors to determine what needs to be corrected. If you're still stuck, please ask away in Discord or reach out to the helpdesk if you have an active subscription.
 {% endhint %}
 {% endstep %}
 
@@ -25,7 +25,7 @@ The output of these checks includes information that may be possible for you to 
 If the issue relates to a specific tenant, locate the tenant in the table on the Permissions tab. Screenshot the tenant's entry being sure to include the Last Run, Graph Status, Exchange Status, and Missing Roles columns.
 
 {% hint style="info" %}
-The output of these checks includes information that may be possible for you to solve the issue on your own at this point. Review any warnings or errors to determine what needs to be corrected. If you're still stuck, please ask away in Discord or reach out to the helpdesk if you are a sponsor.
+The output of these checks includes information that may be possible for you to solve the issue on your own at this point. Review any warnings or errors to determine what needs to be corrected. If you're still stuck, please ask away in Discord or reach out to the helpdesk if you have an active subscription.
 {% endhint %}
 {% endstep %}
 {% endstepper %}

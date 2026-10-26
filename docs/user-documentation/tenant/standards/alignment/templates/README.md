@@ -3,7 +3,7 @@
 {% hint style="warning" %}
 ## **Understanding Standards**
 
-This page is a reference to the features of the Standards Templates page in CIPP. To better understand Standards and Drift, please see the main page for ...
+This page is a reference to the features of the Standards Templates page in CIPP. To better understand Standards and Drift, please see the main page for [README.md](../../README.md "mention").
 {% endhint %}
 
 This page lists every Standards and Drift template you have built. A template is a named set of standards together with the tenants it applies to, and it is the unit CIPP schedules, runs, and reports against.
@@ -26,11 +26,20 @@ Opens the policy catalogue, where you can import a prebuilt standards template r
 If you are upgrading from a version of CIPP that predates templates, a **Convert Legacy Standards** prompt appears above the table whenever legacy standards are detected. Converting creates a new template for each standard you had, with the schedule disabled. Check each new template is correct before re-enabling its schedule.
 {% endhint %}
 
+## Filters
+
+| Filter                   | Shows                                                                                      |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| Synced from repository   | Templates kept in step with a GitHub repository.                                           |
+| Local changes not pushed | Synced templates holding changes made in CIPP that have not been pushed to the repository. |
+| Not synced               | Templates that are not linked to a GitHub repository.                                      |
+
 ## Table Details
 
 | Column           | Description                                                                                      |
 | ---------------- | ------------------------------------------------------------------------------------------------ |
 | Template Name    | The name you set when creating the template.                                                     |
+| Synced From      | The GitHub repository the template was imported from or saved to, when it has one.               |
 | Type             | Whether this is a Standards template or a Drift template.                                        |
 | Tenant           | The tenant, tenants, or tenant groups the template applies to.                                   |
 | Excluded Tenants | Tenants excluded from an All Tenants template.                                                   |

@@ -27,8 +27,8 @@ function Set-CIPPDBCacheManagedDeviceEncryptionStates {
         # devices cache is missing the set stays empty and rows pass through untouched.
         $CloudPCIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         try {
-            foreach ($Device in @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'ManagedDevices' -Fields 'id', 'isCloudPC', 'deviceType', 'chassisType', 'model', 'manufacturer')) {
-                if ($Device.id -and (Test-CIPPCloudPCDevice -Device $Device)) { $null = $CloudPCIds.Add([string]$Device.id) }
+            New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'ManagedDevices' -Fields 'id', 'isCloudPC', 'deviceType', 'chassisType', 'model', 'manufacturer' | ForEach-Object {
+                if ($_.id -and (Test-CIPPCloudPCDevice -Device $_)) { $null = $CloudPCIds.Add([string]$_.id) }
             }
         } catch {
             Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message "Could not load the managed devices cache; Cloud PCs will not be marked platform-encrypted: $($_.Exception.Message)" -sev Warning
@@ -45,11 +45,12 @@ function Set-CIPPDBCacheManagedDeviceEncryptionStates {
         try {
             New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/deviceManagement/managedDeviceEncryptionStates?$top=999' -tenantid $TenantFilter -Stream | ForEach-Object {
                 $IsCloudPC = $CloudPCIds.Contains([string]$_.id)
-                $_ | Add-Member -NotePropertyName 'isCloudPC' -NotePropertyValue $IsCloudPC -Force
+                $Props = $_.PSObject.Properties
+                $Props.Remove('isCloudPC'); $Props.Add([psnoteproperty]::new('isCloudPC', $IsCloudPC))
                 # A distinct state rather than a rewrite to 'encrypted': the disk IS encrypted at
                 # rest, but by the Azure platform, not by a BitLocker policy this report tracks.
                 if ($IsCloudPC -and $_.encryptionState -eq 'notEncrypted') {
-                    $_ | Add-Member -NotePropertyName 'encryptionState' -NotePropertyValue 'encryptedByPlatform' -Force
+                    $Props.Remove('encryptionState'); $Props.Add([psnoteproperty]::new('encryptionState', 'encryptedByPlatform'))
                 }
                 $CachedCount++
                 $Writer.Process($_)

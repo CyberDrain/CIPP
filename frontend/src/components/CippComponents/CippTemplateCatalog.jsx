@@ -46,7 +46,6 @@ export const templateTypeLabels = {
   ReportBuilderTemplate: 'Report Builder',
   GroupTemplate: 'Group',
   AppApprovalTemplate: 'App Approval',
-  BPATemplate: 'Best Practices Report',
   TransportTemplate: 'Transport Rule',
   ExConnectorTemplate: 'Exchange Connector',
   AppTemplate: 'Application',
@@ -624,8 +623,10 @@ export const CippTemplateCatalog = ({
     ]
   )
 
-  const warnings = Array.isArray(catalog.data?.Metadata?.Warnings)
-    ? catalog.data.Metadata.Warnings
+  // When every repository fails the catalog is an error response that still carries the warnings
+  const catalogBody = catalog.data ?? catalog.error?.response?.data
+  const warnings = Array.isArray(catalogBody?.Metadata?.Warnings)
+    ? catalogBody.Metadata.Warnings
     : []
 
   const toOptions = (values, labelFn) =>

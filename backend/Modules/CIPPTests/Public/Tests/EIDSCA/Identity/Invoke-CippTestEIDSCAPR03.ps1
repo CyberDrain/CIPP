@@ -6,6 +6,11 @@ function Invoke-CippTestEIDSCAPR03 {
     param($Tenant)
 
     try {
+        if (-not (Test-CIPPStandardLicense -StandardName 'EIDSCAPR03' -TenantFilter $Tenant -Preset Entra -SkipLog)) {
+            Add-CippTestResult -TenantFilter $Tenant -TestId 'EIDSCAPR03' -TestType 'Identity' -Status 'Unlicensed' -ResultMarkdown 'This tenant is not licensed for Microsoft Entra Password Protection. Required capabilities: AAD_PREMIUM, AAD_PREMIUM_P2.' -Risk 'Medium' -Name 'Password Rule Settings - Enforce custom list' -UserImpact 'Low' -ImplementationEffort 'Low' -Category 'Password Policy'
+            return
+        }
+
         $Settings = Get-CIPPTestData -TenantFilter $Tenant -Type 'Settings'
 
         if (-not $Settings) {
@@ -13,7 +18,7 @@ function Invoke-CippTestEIDSCAPR03 {
             return
         }
 
-        $SettingValue = ($Settings.values | Where-Object { $_.name -eq 'EnableBannedPasswordCheck' }).value
+        $SettingValue = $Settings.values.Where({ $_.name -eq 'EnableBannedPasswordCheck' }).value
 
         if ($SettingValue -eq 'True') {
             $Status = 'Passed'

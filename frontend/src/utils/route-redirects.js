@@ -14,7 +14,8 @@ export const routeRedirects = {
   '/identity/administration/users/add': '/identity/administration/users',
   '/identity/administration/users/bulk-add': '/identity/administration/users',
   // Vacation mode now lives under Identity Management. Its standalone add page is retired.
-  '/tenant/conditional/deploy-vacation': '/identity/administration/vacation-mode',
+  '/tenant/conditional/deploy-vacation':
+    '/identity/administration/vacation-mode',
   // Tenant onboarding runs through the setup wizard. The Add Tenant page redirects there
   // in-page; this entry is the fallback for the same route.
   '/tenant/administration/tenants/add': '/onboardingv2',
@@ -33,6 +34,32 @@ export const routeRedirects = {
   // User Templates moved from Manage Tenant tabs to the Users tabbed layout.
   '/tenant/manage/user-defaults':
     '/identity/administration/users/user-defaults',
+  // BEC lives under Identity > Administration: a case hub, plus a purpose-built case workspace. The
+  // retired reports page, the old per-user BEC tab (in alert emails and PSA/documentation links written
+  // before the move) and the earlier top-level /identity/bec location all forward here, query (userId,
+  // caseId, tenantFilter) carried across.
+  '/identity/reports/bec-reports': '/identity/administration/bec',
+  '/identity/administration/users/user/bec':
+    '/identity/administration/bec/case',
+  '/identity/bec': '/identity/administration/bec',
+  '/identity/bec/case': '/identity/administration/bec/case',
+  // Teams & SharePoint reports moved into a Reports folder.
+  '/teams-share/sharing-report': '/teams-share/reports/sharing-report',
+  '/teams-share/permissions-report': '/teams-share/reports/permissions-report',
+  '/teams-share/teams/teams-activity': '/teams-share/reports/teams-activity',
+  // JIT Admin and Role Templates moved into the JIT Admin tabbed layout.
+  '/identity/administration/jit-admin-templates':
+    '/identity/administration/jit-admin/templates',
+  '/identity/administration/jit-admin-templates/add':
+    '/identity/administration/jit-admin/templates/add',
+  '/identity/administration/jit-admin-templates/edit':
+    '/identity/administration/jit-admin/templates/edit',
+  '/identity/administration/jit-role-templates':
+    '/identity/administration/jit-admin/role-templates',
+  '/identity/administration/jit-role-templates/add':
+    '/identity/administration/jit-admin/role-templates/add',
+  '/identity/administration/jit-role-templates/edit':
+    '/identity/administration/jit-admin/role-templates/edit',
 }
 
 export const getRedirectTarget = (pathname) => {

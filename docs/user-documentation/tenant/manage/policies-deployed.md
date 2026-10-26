@@ -1,5 +1,9 @@
 # Policies and Settings Deployed
 
+{% hint style="info" %}
+This page is hidden while the **Baselines** feature flag is on in [features.md](../../cipp/settings/features.md "mention"), because [README.md](../baselines/README.md "mention") replace Standards and Drift.
+{% endhint %}
+
 This page shows what a single standards template contains and how each item currently stands against the selected tenant. It is a read-only view built by comparing the template's contents with the tenant's live configuration, broken into Security Standards, Intune Policies and Conditional Access Policies.
 
 Two things determine what is shown: the template chosen in the **Template** picker at the top of the page, and the tenant currently selected in CIPP. Each section header carries a count of the items in it, and sections can be collapsed.

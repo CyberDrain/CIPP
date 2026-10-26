@@ -134,7 +134,7 @@ A scheduled decrease checks the tenant's actual assignment state before it runs,
 
 ## Automated Migrations
 
-Automated migrations identify licences at a non-Sherweb CSP that are approaching their transfer window, and — depending on the strategy chosen — notify you, purchase the equivalent licence at Sherweb, or additionally cancel the legacy subscription.
+Automated migrations identify licences at a non-Sherweb CSP that are approaching their transfer window. Depending on the strategy chosen, they notify you, purchase the equivalent licence at Sherweb, or additionally cancel the legacy subscription.
 
 Once automated migrations are enabled, CIPP registers a daily background check for each mapped tenant. Each run looks for subscriptions renewing within the next seven days, compares them against the subscriptions already held at Sherweb, and treats anything without an equivalent as a candidate for migration. Turning the setting back off removes the background check as well, so no further alerts or purchases follow.
 

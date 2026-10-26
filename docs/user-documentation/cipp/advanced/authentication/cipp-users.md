@@ -28,6 +28,8 @@ A few rules govern roles on this page:
 
 * The **superadmin** role grants full access to CIPP. When a user has it, all of their other role assignments are ignored.
 * There must always be at least one superadmin. You cannot remove the superadmin role from a user if they are the only superadmin. To hand the role over, assign superadmin to another user first, then remove it from the original.
+* Only superadmin assigned by hand on this page counts towards that minimum. Superadmin inherited from an Entra group does not, because group membership can change.
+* If no superadmin can sign in, a self-hosted instance can restore one from its storage account. See [#recovering-superadmin-access](../../../../setup/setting-up-cipp/roles.md#recovering-superadmin-access "mention").
 * To grant access to users outside your partner tenant, either add them as guest users in your partner tenant and assign their roles here or enable multi-tenant mode on the CIPP SSO tab and add them to the list directly, without inviting them as guests.
 
 {% include "../../../../../.gitbook/includes/feature-request.md" %}

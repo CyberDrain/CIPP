@@ -50,6 +50,7 @@ function Invoke-ListSiteBrowser {
             '^(?i)STS' { return 'Team site (classic)' }
             '(?i)Redirect' { return 'Redirect site' }
             '^(?i)APPCATALOG$' { return 'App catalog' }
+            '^(?i)TEAMCHANNEL$' { return 'Team Channel' }
             default { return $Normalized }
         }
     }
@@ -138,6 +139,25 @@ function Invoke-ListSiteBrowser {
                 }
             }
 
+            $RequestId = 0
+            $MissingSiteRequests = foreach ($Row in $AdminRows) {
+                $RowUrl = ([string]$Row.SiteUrl).TrimEnd('/')
+                $RowSiteId = ([string]$Row.SiteId).Trim('{}')
+                if ([string]::IsNullOrWhiteSpace($RowUrl) -or $GraphByWebUrl.ContainsKey($RowUrl) -or ($RowSiteId -and $GraphBySiteId.ContainsKey($RowSiteId))) { continue }
+                $SiteUri = [System.Uri]$RowUrl
+                @{
+                    id     = [string]$RequestId++
+                    method = 'GET'
+                    url    = "sites/$($SiteUri.Host):$($SiteUri.AbsolutePath)?`$select=id,createdDateTime,description,name,displayName,webUrl,siteCollection,sharepointIds"
+                }
+            }
+            if (@($MissingSiteRequests).Count -gt 0) {
+                foreach ($Response in @(New-GraphBulkRequest -tenantid $TenantFilter -Requests @($MissingSiteRequests) -asapp $true | Where-Object { $_.status -eq 200 })) {
+                    $GraphBySiteId[([string]$Response.body.sharepointIds.siteId).Trim('{}').ToLowerInvariant()] = $Response.body
+                    $GraphByWebUrl[$Response.body.webUrl.TrimEnd('/').ToLowerInvariant()] = $Response.body
+                }
+            }
+
             foreach ($Row in $AdminRows) {
                 $RowUrl = [string]$Row.SiteUrl
                 $RowTitle = [string]$Row.Title
@@ -195,7 +215,7 @@ function Invoke-ListSiteBrowser {
 
             $SiteMeta = New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/sites/$SiteSegment`?`$select=id,webUrl,displayName,isPersonalSite" -tenantid $TenantFilter -asapp $true
             if ($SiteMeta.isPersonalSite -eq $true) {
-                throw 'OneDrive sites are not supported in the SharePoint site browser.'
+                return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ 'Results' = 'OneDrive sites are not supported in the SharePoint site browser.' } })
             }
             if ([string]::IsNullOrWhiteSpace($SiteUrl)) {
                 $SiteUrl = $SiteMeta.webUrl
@@ -263,7 +283,7 @@ function Invoke-ListSiteBrowser {
         $ErrorMessage = Get-CippException -Exception $_
         $Results = "Failed to list SharePoint browser items: $($ErrorMessage.NormalizedError)"
         Write-LogMessage -Headers $Request.Headers -API $APIName -tenant $TenantFilter -message $Results -sev Error -LogData $ErrorMessage
-        $StatusCode = [HttpStatusCode]::BadRequest
+        $StatusCode = [HttpStatusCode]::InternalServerError
         $StorageStatus = $null
     }
 

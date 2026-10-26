@@ -15,16 +15,16 @@ The panel at the top of the page reports the state of the current subscription.
 {% hint style="warning" %}
 **If you have migrated to a new CIPP instance, check the Webhook URL.**
 
-The subscription held in Partner Center records the exact address CIPP was reachable at when it was created. Migrating CIPP — including migrating to the container-based next-generation release — changes that address, but the subscription in Partner Center does not follow it. Partner Center carries on delivering events to the old address, so tenants silently stop being onboarded and partner alerts stop arriving, with nothing on this page failing outright.
+The subscription held in Partner Center records the exact address CIPP was reachable at when it was created. Migrating CIPP, including migrating to the container-based next-generation release, changes that address, but the subscription in Partner Center does not follow it. Partner Center carries on delivering events to the old address, so tenants silently stop being onboarded and partner alerts stop arriving, with nothing on this page failing outright.
 
 CIPP compares the registered address against the one your instance is published on and shows a warning beneath the Webhook URL when they differ, naming the address it expects. To correct it, save the settings on this page: this re-registers the subscription against that address. This is worth checking as a matter of course after any migration or change of hostname, and if automated onboarding was working before a migration and has since gone quiet.
 {% endhint %}
 
-The address CIPP expects is the custom domain bound to your instance, not the address you happen to be browsing on — so opening this page over the default `*.azurewebsites.net` hostname does not change what it asks you to register. If several custom domains are bound, CIPP uses the first one for webhooks and for the links in its notification emails, and says which one that is beneath the Webhook URL.
+The address CIPP expects is the custom domain bound to your instance, not the address you happen to be browsing on, so opening this page over the default `*.azurewebsites.net` hostname does not change what it asks you to register. If several custom domains are bound, CIPP uses the first one for webhooks and for the links in its notification emails, and says which one that is beneath the Webhook URL.
 
-That address is re-checked every time CIPP starts. If the instance's stored URL has drifted it is corrected, and **if automated onboarding is enabled the Partner Center subscription is re-registered against the correct address as well** — so binding a new custom domain normally repairs itself without anything being done on this page. The re-registration keeps your selected event types.
+That address is re-checked every time CIPP starts. If the instance's stored URL has drifted it is corrected, and **if automated onboarding is enabled the Partner Center subscription is re-registered against the correct address as well**, so binding a new custom domain normally repairs itself without anything being done on this page. The re-registration keeps your selected event types.
 
-Startup will not re-register in two cases, both deliberate. If CIPP cannot confirm the bound hostname with Azure — which includes any deployment not running on App Service — it leaves the subscription alone rather than guessing, because guessing wrong would point Partner Center at an address CIPP is not served on. And if Partner Center cannot be reached, it makes no change at all. In either case the warning on this page and a manual save remain the fix.
+Startup will not re-register in two cases, both deliberate. If CIPP cannot confirm the bound hostname with Azure, which includes any deployment not running on App Service, it leaves the subscription alone rather than guessing, because guessing wrong would point Partner Center at an address CIPP is not served on. And if Partner Center cannot be reached, it makes no change at all. In either case the warning on this page and a manual save remain the fix.
 
 ## Settings
 

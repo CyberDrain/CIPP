@@ -27,6 +27,9 @@ function Add-CIPPScheduledTask {
     )
 
     try {
+        # The [pscustomobject] parameter type doesn't convert hashtables, and PSObject.Properties can't see hashtable keys
+        if ($Task -is [System.Collections.IDictionary]) { $Task = [pscustomobject]$Task }
+        if ($Task.Parameters -is [System.Collections.IDictionary]) { $Task.Parameters = [pscustomobject]$Task.Parameters }
 
         $Table = Get-CIPPTable -TableName 'ScheduledTasks'
 
@@ -34,7 +37,9 @@ function Add-CIPPScheduledTask {
             try {
                 $Filter = "PartitionKey eq 'ScheduledTask' and RowKey eq '$($RowKey)'"
                 $ExistingTask = (Get-CIPPAzDataTableEntity @Table -Filter $Filter)
-                $ExistingTask.ScheduledTime = [int64](([datetime]::UtcNow) - (Get-Date '1/1/1970')).TotalSeconds
+                $Now = [int64](([datetime]::UtcNow) - (Get-Date '1/1/1970')).TotalSeconds
+                $DueSlot = Get-CIPPScheduledTaskNextRun -Recurrence $ExistingTask.Recurrence -ScheduledTime $ExistingTask.ScheduledTime -Due
+                $ExistingTask.ScheduledTime = [string]($DueSlot -gt 0 ? $DueSlot : $Now)
                 $ExistingTask.TaskState = 'Planned'
                 Add-CIPPAzDataTableEntity @Table -Entity $ExistingTask -Force
                 Write-LogMessage -headers $Headers -API 'RunNow' -message "Task $($ExistingTask.Name) scheduled to run now" -Sev 'Info' -Tenant $ExistingTask.Tenant
@@ -56,7 +61,7 @@ function Add-CIPPScheduledTask {
             }
 
             if ($DisallowDuplicateName) {
-                $Filter = "PartitionKey eq 'ScheduledTask' and Name eq '$($Task.Name)' and TaskState ne 'Completed' and TaskState ne 'Failed'"
+                $Filter = "PartitionKey eq 'ScheduledTask' and Name eq '$($Task.Name -replace "'", "''")' and TaskState ne 'Completed' and TaskState ne 'Failed'"
                 $ExistingTask = (Get-CIPPAzDataTableEntity @Table -Filter $Filter)
                 if ($ExistingTask) {
                     return "Error - A scheduled task named '$($Task.Name)' already exists and was not created again."
@@ -65,34 +70,14 @@ function Add-CIPPScheduledTask {
 
             $RequestedCommand = $task.Command.value ?? $task.Command
 
-            # Validate the command exists — on HttpOnly workers sibling modules aren't loaded,
-            # so import them temporarily for validation (actual execution runs on activity workers)
-            $Command = Get-Command $RequestedCommand -ErrorAction SilentlyContinue
-            $ImportedModules = [System.Collections.Generic.List[string]]::new()
-            if (-not $Command) {
-                try {
-                    foreach ($SiblingModule in @('CIPPStandards', 'CIPPAlerts', 'CIPPTests', 'CIPPDB', 'CippExtensions', 'CIPPActivityTriggers')) {
-                        if (-not (Get-Module -Name $SiblingModule)) {
-                            Import-Module $SiblingModule -ErrorAction SilentlyContinue
-                            if (Get-Module -Name $SiblingModule) {
-                                $ImportedModules.Add($SiblingModule)
-                            }
-                        }
-                    }
-                    $Command = Get-Command $RequestedCommand -ErrorAction SilentlyContinue
-                } finally {
-                    foreach ($Imported in $ImportedModules) {
-                        Remove-Module $Imported -ErrorAction SilentlyContinue
-                    }
-                }
-            }
+            $Command = Resolve-CIPPCommand -Name $RequestedCommand
 
             if (!$Command) {
                 Write-LogMessage -headers $Headers -API 'ScheduledTask' -message "Blocked attempt to schedule non-existent command: $RequestedCommand" -Sev 'Warning'
                 return "Error - The command '$RequestedCommand' does not exist and cannot be scheduled."
             }
 
-            if ($Command.Module -notin @('CIPPCore', 'CIPPAlerts', 'CIPPStandards', 'CIPPTests', 'CIPPDB', 'CippExtensions', 'CIPPActivityTriggers')) {
+            if ($Command.ModuleName -notin @('CIPPCore', 'CIPPAlerts', 'CIPPStandards', 'CIPPBaselines', 'CIPPTests', 'CIPPDB', 'CippExtensions', 'CIPPActivityTriggers')) {
                 Write-LogMessage -headers $Headers -API 'ScheduledTask' -message "Blocked attempt to schedule command from unauthorized module: $($Command.ModuleName)\$RequestedCommand" -Sev 'Warning'
                 return "Error - The command '$RequestedCommand' is not permitted to run as a scheduled task."
             }
@@ -102,9 +87,19 @@ function Add-CIPPScheduledTask {
                 return "Error - The command '$RequestedCommand' is not permitted to run as a scheduled task."
             }
 
-            $propertiesToCheck = @('Webhook', 'Email', 'PSA')
+            $propertiesToCheck = @('Webhook', 'Email', 'PSA', 'Push')
             $PostExecutionObject = ($propertiesToCheck | Where-Object { $task.PostExecution.$_ -eq $true })
             $PostExecution = $PostExecutionObject ? @($PostExecutionObject -join ',') : ($Task.PostExecution.value -join ',')
+            # Push goes to the creating user's own devices, so a task asking for it from a user with
+            # none registered would silently notify nobody. Refuse up front; the Preferences page is
+            # where they enrol. Headers are absent for system-created tasks, which never ask for Push.
+            if ($PostExecution -match '(^|,)Push(,|$)' -and $Headers.'x-ms-client-principal') {
+                $PushUser = ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Headers.'x-ms-client-principal')) | ConvertFrom-Json).userDetails
+                $PushTable = Get-CIPPTable -TableName 'PushSubscriptions'
+                if (-not (Get-CIPPAzDataTableEntity @PushTable -Filter "PartitionKey eq '$PushUser'" -First 1)) {
+                    return 'Error - Push (notify me) was selected but you have no push notification devices registered. Enable notifications under Preferences > Push Notifications first, or remove Push from the post execution actions.'
+                }
+            }
             $Parameters = [System.Collections.Hashtable]@{}
             foreach ($Key in $task.Parameters.PSObject.Properties.Name) {
                 $Param = $task.Parameters.$Key
@@ -260,6 +255,7 @@ function Add-CIPPScheduledTask {
                 PsaTicketStrategy    = [string]($task.PsaTicketStrategy.value ?? $task.PsaTicketStrategy)
                 PsaTicketPriority    = [string]($task.PsaTicketPriority.value ?? $task.PsaTicketPriority)
                 PsaTicketId          = [string]($task.PsaTicketId.value ?? $task.PsaTicketId)
+                AlertReNotify        = [string]$task.AlertReNotify -eq 'True'
             }
 
 

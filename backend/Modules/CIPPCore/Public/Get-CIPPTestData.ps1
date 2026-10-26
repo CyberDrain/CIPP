@@ -77,7 +77,11 @@ function Get-CIPPTestData {
         [string[]]$Fields,
 
         [Parameter(Mandatory = $false)]
-        [switch]$NoProjection
+        [switch]$NoProjection,
+
+        # Emit records page by page without caching them; for one-pass reads of fields too large to keep
+        [Parameter(Mandatory = $false)]
+        [switch]$Stream
     )
 
     # Enforce tenant lock when running inside custom script execution
@@ -113,12 +117,19 @@ function Get-CIPPTestData {
     if ([CIPP.TestDataCache]::TryGet($CacheKey, [ref]$CachedValue)) {
         return $CachedValue
     }
-
-    $Data = if ($NormalizedFields) {
-        New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type -Fields $NormalizedFields
-    } else {
-        New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type
+    # Whole records already loaded (sandbox) carry every projected field; don't parse the type a second time.
+    if ($NormalizedFields -and [CIPP.TestDataCache]::TryGet(('{0}|{1}' -f $TenantFilter, $Type), [ref]$CachedValue, $false)) {
+        return $CachedValue
     }
+
+    $Request = @{ TenantFilter = $TenantFilter; Type = $Type; PageSize = 1000 }
+    if ($NormalizedFields) { $Request.Fields = $NormalizedFields }
+    if ($Stream) {
+        New-CIPPDbRequest @Request
+        return
+    }
+
+    $Data = New-CIPPDbRequest @Request
 
     [CIPP.TestDataCache]::Set($CacheKey, $Data)
 

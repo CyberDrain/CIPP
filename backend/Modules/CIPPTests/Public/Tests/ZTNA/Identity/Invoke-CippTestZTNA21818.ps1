@@ -12,6 +12,11 @@ function Invoke-CippTestZTNA21818 {
     $TestId = 'ZTNA21818'
 
     try {
+        if (-not (Test-CIPPStandardLicense -StandardName $TestId -TenantFilter $Tenant -Preset PIM -SkipLog)) {
+            Add-CippTestResult -TenantFilter $Tenant -TestId $TestId -TestType 'Identity' -Status 'Unlicensed' -ResultMarkdown 'This tenant is not licensed for Privileged Identity Management. Required capabilities: AAD_PREMIUM_P2, Entra_Identity_Governance.' -Risk 'High' -Name 'Privileged role activations have monitoring and alerting configured' -UserImpact 'Low' -ImplementationEffort 'Medium' -Category 'Monitoring'
+            return
+        }
+
         $PrivilegedRoles = Get-CippDbRole -TenantFilter $Tenant -IncludePrivilegedRoles
         $RoleManagementPolicies = Get-CIPPTestData -TenantFilter $Tenant -Type 'RoleManagementPolicies'
 
@@ -67,17 +72,22 @@ function Invoke-CippTestZTNA21818 {
         $Passed = $true
         $ExitLoop = $false
 
+        # roleDefinitionId carries the role's TEMPLATE id — matching it against $Role.id (the
+        # directoryRole instance id) never succeeded.
+        $PolicyByRoleId = @{}
+        foreach ($RolePolicy in $RoleManagementPolicies) {
+            if ($RolePolicy.scopeId -eq '/' -and $RolePolicy.scopeType -eq 'DirectoryRole' -and $RolePolicy.roleDefinitionId -and -not $PolicyByRoleId.ContainsKey("$($RolePolicy.roleDefinitionId)")) {
+                $PolicyByRoleId["$($RolePolicy.roleDefinitionId)"] = $RolePolicy
+            }
+        }
+
         foreach ($Role in $PrivilegedRoles) {
-            # roleDefinitionId carries the role's TEMPLATE id — matching it against $Role.id (the
-            # directoryRole instance id) never succeeded.
-            $Policy = $RoleManagementPolicies | Where-Object {
-                $_.scopeId -eq '/' -and $_.scopeType -eq 'DirectoryRole' -and $_.roleDefinitionId -eq $Role.roleTemplateId
-            } | Select-Object -First 1
+            $Policy = $PolicyByRoleId["$($Role.roleTemplateId)"]
 
             if (-not $Policy) { continue }
 
             foreach ($NotificationRuleId in $Notifications.RuleId) {
-                $Rule = $Policy.rules | Where-Object { $_.id -eq $NotificationRuleId } | Select-Object -First 1
+                $Rule = $Policy.rules.Where({ $_.id -eq $NotificationRuleId }, 'First')[0]
 
                 if ($Rule) {
                     $RuleWithRole = $Rule | Select-Object *, @{Name = 'RoleDisplayName'; Expression = { $Role.displayName } }
@@ -105,7 +115,7 @@ function Invoke-CippTestZTNA21818 {
         $null = $ResultMarkdown.Append("| :-------- | :-------------------- | :---------------- | :------------------------- | :-------------------- |`n")
 
         foreach ($NotificationRule in $NotificationRules) {
-            $MatchingNotification = $Notifications | Where-Object { $_.RuleId -eq $NotificationRule.id }
+            $MatchingNotification = $Notifications.Where({ $_.RuleId -eq $NotificationRule.id })
             $Recipients = if ($NotificationRule.notificationRecipients) { ($NotificationRule.notificationRecipients -join ', ') } else { '' }
             $null = $ResultMarkdown.Append("| $($NotificationRule.roleDisplayName) | $($MatchingNotification.notificationScenario) | $($MatchingNotification.notificationType) | $($NotificationRule.isDefaultRecipientsEnabled) | $Recipients |`n")
         }

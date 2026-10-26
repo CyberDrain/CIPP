@@ -11,10 +11,14 @@ function Get-CippUserAgent {
         Internal
     #>
     [CmdletBinding()]
-    param()
+    param(
+        # SharePoint Online prioritises traffic decorated as ISV.
+        [switch]$SharePoint
+    )
 
-    $Version = $env:CippVersion ?? $env:APP_VERSION ?? '1.0'
+    $Version = [System.Environment]::GetEnvironmentVariable('CippVersion') ?? [System.Environment]::GetEnvironmentVariable('APP_VERSION') ?? '1.0'
     $Context = $script:CippUserAgentContextStorage.Value
+    $Product = if ($SharePoint) { 'ISV|CIPP/{0}' -f $Version } else { 'CIPP/{0}' -f $Version }
 
     if ($Context.Source) {
         $Segments = [System.Collections.Generic.List[string]]::new()
@@ -22,13 +26,13 @@ function Get-CippUserAgent {
             # Identity belongs to the source itself, e.g. user:john@msp.com or api:<appid>
             $Segments.Add($Context.Identity ? ('{0}:{1}' -f $Context.Source, $Context.Identity) : $Context.Source)
         } else {
-            $Id = @($Context.TaskId, $Context.TemplateId) | Where-Object { $_ } | Select-Object -First 1
+            $Id = if ($Context.TaskId) { $Context.TaskId } else { $Context.TemplateId }
             $Segments.Add($Id ? ('{0}:{1}' -f $Context.Source, $Id) : $Context.Source)
             if ($Context.Identity) {
                 $Segments.Add('user:{0}' -f $Context.Identity)
             }
         }
-        return ('CIPP/{0} ({1})' -f $Version, ($Segments -join '; '))
+        return ('{0} ({1})' -f $Product, ($Segments -join '; '))
     }
-    return ('CIPP/{0}' -f $Version)
+    return $Product
 }

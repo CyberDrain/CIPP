@@ -15,6 +15,12 @@ Only templates that are not synced to a community repository can be edited. A sy
 
 The template's type is shown alongside the card heading.
 
+**Validate template** checks your current changes for anything that would stop the template deploying and lists every problem found. Nothing is saved. A template that would not deploy is not saved when you submit it either, and the result lists what is wrong.
+
+## Configured settings
+
+Shown for Intune Settings Catalog templates, with a count of the settings the template holds. **Add setting** searches the Settings Catalog for the template's platform and adds the one you choose, exactly as on [add.md](add.md "mention"). Each setting has a remove control, and a setting made of grouped entries has **Add row** and **Remove row** controls. Removing the last setting leaves an empty policy, which the card warns would deploy as an empty policy.
+
 ## Policy settings
 
 Lists the template's settings as editable fields, grouped into the sections Intune itself organises them under. Each setting is rendered according to what it accepts: a true or false switch, a list of the options the setting allows, a list of values, or a free text or numeric field.

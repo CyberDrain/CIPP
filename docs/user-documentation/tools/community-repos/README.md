@@ -6,6 +6,8 @@ description: Connect to GitHub community repositories for easy template creation
 
 Template sources are GitHub repositories CIPP reads templates from, letting you import configurations shared by the MSP community rather than building each one yourself. This page shows every source registered with your instance, and is where you add, configure and remove them.
 
+Browsing template sources needs the `CIPP.TemplateLibrary` permission. Read covers browsing and importing from the catalogue, and Read/Write covers publishing templates to a source. The same permission gates the Save to GitHub actions on the template pages.
+
 {% hint style="info" %}
 This page is powered by the GitHub integration. CIPP can populate much of this information even without your own Personal Access Token, but creating repositories and reading private ones requires one. See the [github.md](../../cipp/integrations/github.md "mention") integration page for more.
 {% endhint %}
@@ -30,7 +32,7 @@ Opens the **Create New Repository** dialog, which creates a new repository on Gi
 | Description     | The repository description.                                                  |
 | Private         | Creates the repository as private rather than public.                        |
 
-This button is unavailable unless the GitHub integration is enabled, since creating a repository requires your own Personal Access Token.
+This button is greyed out unless the GitHub integration is enabled, since creating a repository requires your own Personal Access Token.
 
 </details>
 
@@ -40,10 +42,12 @@ This button is unavailable unless the GitHub integration is enabled, since creat
 
 Opens the **Add Template Source** dialog, which registers an existing GitHub repository.
 
-| Field                               | Description                                                                                                                                                                                                          |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub repository URL or owner/repo | The repository to add. Either format is accepted, so a pasted GitHub URL works as well as `owner/repo`.                                                                                                              |
-| Template Types                      | The kinds of template the repository contains, used to decide which catalogs its templates appear in. Repositories that follow CIPP's folder naming are detected automatically, so this can be left empty for those. |
+| Field                               | Description                                                                                                                                                                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub repository URL or owner/repo | The repository to add. Either format is accepted, so a pasted GitHub URL works as well as `owner/repo`.                                                                                                                |
+| Template Types                      | The kinds of template the repository contains, used to decide which catalogues its templates appear in. Repositories that follow CIPP's folder naming are detected automatically, so this can be left empty for those. |
+
+If GitHub cannot find the repository, the add is refused with a message naming it, and no card is created. Check the owner and repository spelling. A private repository needs the GitHub integration configured with access to it.
 
 </details>
 
@@ -64,12 +68,12 @@ At the foot of each card, a coloured dot and a count show how many templates the
 
 The menu on each card carries the actions for that source.
 
-| Action            | Description                                                                                                                               |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Open on GitHub    | Opens the repository on GitHub in a new tab.                                                                                              |
-| Set Upload Branch | Chooses which branch templates are pushed to when uploading. Only shown on sources CIPP has write access to.                              |
-| Set Template Type | Changes which template types the source is tagged with, and so which catalogs its templates appear in. Not available on built-in sources. |
-| Remove Source     | Unregisters the source. Not available on built-in sources.                                                                                |
+| Action            | Description                                                                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open on GitHub    | Opens the repository on GitHub in a new tab.                                                                                                |
+| Set Upload Branch | Chooses which branch templates are pushed to when uploading. Only shown on sources CIPP has write access to.                                |
+| Set Template Type | Changes which template types the source is tagged with, and so which catalogues its templates appear in. Not available on built-in sources. |
+| Remove Source     | Unregisters the source. Not available on built-in sources.                                                                                  |
 
 {% hint style="info" %}
 Removing a source only stops CIPP reading from it. Templates you have already imported are unaffected, and nothing is deleted on GitHub, including private repositories you own.

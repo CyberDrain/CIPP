@@ -105,7 +105,7 @@ Move to the **Tenant Mapping** tab and map each CIPP tenant to its Halo client, 
 | HaloPSA Ticket Type                | The ticket type used for CIPP alert tickets. Sets the workflow, and determines which priorities and outcomes are offered below. Leave blank to use Halo's default.                                                                                                                                           |
 | HaloPSA Request Source             | Optional. Sets the request source recorded on every CIPP-generated ticket, so they can be told apart from manually logged tickets when reporting on ticket origin. Halo records tickets raised over the API as Manual unless one is set. Create the source in Halo first. Leave blank to use Halo's default.   |
 | HaloPSA Default Priority           | Optional. Sets the priority on every CIPP-generated ticket. Only priorities on the ticket type's SLA are listed. Leave blank to use the SLA default. Appears once a ticket type is selected.                                                                                                                 |
-| Consolidate Tickets                | Adds repeat alerts with the same title to the existing open ticket as a private note rather than raising a new ticket. Appears once a ticket type is selected.                                                                                                                                               |
+| Consolidate Tickets                | Adds repeat alerts for the same task or title to the existing open ticket as a private note rather than raising a new ticket. Appears once a ticket type is selected.                                                                                                                                               |
 | HaloPSA Outcome                    | The action applied when a duplicate alert is added to an existing ticket. Only outcomes from the selected ticket type's workflow are listed, and the action must be one the Halo API user can run. Leave blank to use Halo's built-in Internal Note action. Appears once **Consolidate Tickets** is enabled. |
 | Link Tickets to affected Users     | Raises one ticket per affected user and links it to the matching Halo contact. Appears once a ticket type is selected.                                                                                                                                                                                       |
 
@@ -133,17 +133,23 @@ To add a mapping manually, choose a tenant and a Halo client, then select the ad
 Individual mappings can be removed with the **Delete Mapping** row action.
 
 {% hint style="info" %}
-Automapping for Halo PSA matches on the Microsoft tenant IDs that Halo stores against each client through its own Azure AD / Microsoft 365 integration, rather than guessing from company names. Existing mappings are never overwritten, and the mappings it creates are saved immediately, so there is no need to select **Submit** afterwards.
+Automapping for Halo PSA first matches on the Microsoft tenant IDs that Halo stores against each client through its own Azure AD / Microsoft 365 integration. A tenant with no tenant ID match falls back to a Halo client whose name exactly matches the tenant's display name. Existing mappings are never overwritten, and these mappings are saved immediately, so there is no need to select **Submit** afterwards.
 
-When it finishes, CIPP reports how many tenants were newly mapped and how many are now mapped in total. The same summary is written to the Logbook, along with a line for each mapping created, which is the place to look if a tenant you expected did not appear.
+**Automap Companies** also suggests looser name matches that ignore case, punctuation and legal suffixes such as Ltd or LLC. Those appear in the table but are only saved when you select **Submit**.
+
+When it finishes, CIPP reports how many tenants were newly mapped and how many are now mapped in total. The Logbook records a line for each mapping created, which is the place to look if a tenant you expected did not appear.
+{% endhint %}
+
+{% hint style="info" %}
+While the integration is enabled, CIPP also runs the tenant ID and exact name matching automatically every two hours, so newly added tenants are mapped without visiting this page. The looser name suggestions are only made by **Automap Companies**.
 {% endhint %}
 
 {% hint style="warning" %}
 Two situations leave a tenant unmapped.
 
-Where the same Microsoft tenant ID is recorded against more than one Halo client, CIPP cannot tell which is correct and skips that tenant. The competing clients are named in the Logbook, and the tenant can be mapped manually.
+Where the same Microsoft tenant ID is recorded against more than one Halo client, or more than one Halo client has the tenant's exact name, CIPP cannot tell which is correct and skips that tenant. The competing clients are named in the result shown after selecting **Automap Companies**, and the tenant can be mapped manually.
 
-Where Halo's Microsoft 365 integration has not been set up, no tenant IDs are available at all and automapping reports that there is nothing to match against. Map the tenants manually in that case.
+Where Halo's Microsoft 365 integration has not been set up, no tenant IDs are available and only exact name matches are made. Map any remaining tenants manually.
 {% endhint %}
 
 ## Testing the Integration
@@ -165,7 +171,7 @@ The test ticket is created directly rather than through the alert pipeline, so i
 
 Ticket titles are prefixed with `[CIPP]` so that CIPP-generated tickets are easy to identify and filter in Halo.
 
-When **Consolidate Tickets** is enabled, CIPP records the ticket it raised for each combination of client and alert title. A later alert with the same title is added to that ticket as a private note, using the configured outcome. If the ticket has since been closed, or the note cannot be added, a new ticket is created instead, so the alert is never lost. The usual reason a note cannot be added is that the Halo API user is not permitted to run the chosen outcome.
+When **Consolidate Tickets** is enabled, CIPP records the ticket it raised for each combination of client and alert. A later occurrence of the same alert is added to that ticket as a private note, using the configured outcome. Alerts from a scheduled task are recognised by the task itself, together with the user where tickets are raised per user, so rewording the task's alert title does not open a second ticket. A ticket that is still open from before alerts were matched this way is picked up by the next alert and carried on from there. Alerts that carry no such identity are matched on their title. If the ticket has since been closed, or the note cannot be added, a new ticket is created instead, so the alert is never lost. The usual reason a note cannot be added is that the Halo API user is not permitted to run the chosen outcome.
 
 When **Link Tickets to affected Users** is enabled, CIPP raises a separate ticket per affected user and matches them to a Halo contact within the mapped client, first on Microsoft Entra Object ID and then on email address or network login. Where no contact matches, the ticket is assigned to the client's General User and the affected user's UPN is included in the ticket body.
 

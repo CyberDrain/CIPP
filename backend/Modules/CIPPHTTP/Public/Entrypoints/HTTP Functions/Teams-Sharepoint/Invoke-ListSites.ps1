@@ -13,6 +13,7 @@ function Invoke-ListSites {
 
 
     $TenantFilter = $Request.Query.TenantFilter
+    # Required. Which usage set to list: SharePointSiteUsage or OneDriveUsageAccount.
     $Type = $Request.Query.Type
     # Serve from the reporting database cache instead of live Graph. Much faster, especially for AllTenants.
     $UseReportDB = $Request.Query.UseReportDB -eq $true
@@ -30,8 +31,35 @@ function Invoke-ListSites {
             })
     }
 
+    # Reject an unrecognised Type instead of silently treating it as OneDrive below.
+    switch ($Type) {
+        'SharePointSiteUsage' { }
+        'OneDriveUsageAccount' { }
+        default {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = "Type '$Type' is invalid. Valid values: SharePointSiteUsage, OneDriveUsageAccount."
+                })
+        }
+    }
+
     if ($TenantFilter -eq 'AllTenants' -or $UseReportDB) {
         try {
+            # Return one page per request as { Results, Metadata } with a continuation token in Metadata.nextLink.
+            if ($Request.Query.manualPagination -eq $true) {
+                # Cached rows per page, clamped between 250 and 10000. Defaults to 5000. Pages hold whole tenants.
+                $PageSize = $Request.Query.PageSize -as [int]
+                $PageParams = if ($Type -eq 'SharePointSiteUsage') {
+                    @{ Type = 'SharePointSiteListing'; Report = { param($Tenant) Get-CIPPSharePointSiteUsageReport -TenantFilter $Tenant -ErrorAction Stop } }
+                } else {
+                    @{ Type = 'OneDriveSiteListing'; Report = { param($Tenant) Get-CIPPOneDriveUsageReport -TenantFilter $Tenant -ErrorAction Stop } }
+                }
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::OK
+                        # Continuation token from the previous page's Metadata.nextLink; opaque to callers.
+                        Body       = Get-CIPPReportPage -TenantFilter $TenantFilter @PageParams -PageSize $PageSize -ContinuationToken $Request.Query.nextLink
+                    })
+            }
             if ($Type -eq 'SharePointSiteUsage') {
                 $GraphRequest = Get-CIPPSharePointSiteUsageReport -TenantFilter $TenantFilter -ErrorAction Stop
             } elseif ($Type -eq 'OneDriveUsageAccount') {
@@ -124,7 +152,7 @@ function Invoke-ListSites {
 
     } catch {
         $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-        $StatusCode = [HttpStatusCode]::Forbidden
+        $StatusCode = [HttpStatusCode]::InternalServerError
         $GraphRequest = $ErrorMessage
     }
     if ($Request.query.URLOnly -eq $true) {

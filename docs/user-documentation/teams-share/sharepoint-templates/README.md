@@ -1,6 +1,6 @@
 # SharePoint Templates
 
-The SharePoint Templates page lists the saved SharePoint provisioning templates in CIPP. Each template defines one or more site templates and their document libraries, which can be deployed to tenants to provision SharePoint sites in a consistent way. From here you can create, edit, copy, and delete templates, as well as deploy a template to a tenant.
+The SharePoint Templates page lists the saved SharePoint provisioning templates in CIPP. Each template defines one or more site templates, each provisioning a SharePoint site or a Microsoft Team, with its document libraries and, for a Team, any extra channels and folders. Templates can be deployed to tenants to provision sites and Teams in a consistent way. From here you can create, edit, copy, and delete templates, as well as deploy a template to a tenant.
 
 ## Action Buttons
 
@@ -12,7 +12,7 @@ The SharePoint Templates page lists the saved SharePoint provisioning templates 
 
 <summary>Deploy Template</summary>
 
-Deploying pushes a saved template out to a tenant, provisioning the sites, document libraries, and permissions it defines. Selecting **Deploy Template** opens a side panel.
+Deploying pushes a saved template out to a tenant, provisioning the sites and Teams, document libraries, permissions, and Teams [channels](add.md#channels) and [folders](add.md#folders) it defines. Selecting **Deploy Template** opens a side panel.
 
 | Field             | Description                                                                                                                                                                                       |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,7 +20,7 @@ Deploying pushes a saved template out to a tenant, provisioning the sites, docum
 | Select Tenant     | The tenant to deploy the template to. One tenant per deployment. Required.                                                                                                                        |
 | Site / Team Owner | The user who will be set as the owner of every site or Team the template creates. The list shows the enabled, licensed users in the selected tenant, and clears if you change the tenant. Required. |
 
-The **Deploy Template** button in the panel queues the deployment, and only becomes available once a template, a tenant, and an owner have been chosen. A **Deployment Progress** view then updates live as each site, library, and permission is provisioned. When it finishes, select **Deploy Again** to run another deployment, or **Close** to dismiss the panel.
+The **Deploy Template** button in the panel queues the deployment, and only becomes available once a template, a tenant, and an owner have been chosen. A **Deployment Progress** view then updates live for each site or Team, showing which step it has reached, such as applying permissions or creating a channel, library, or folder. If any of those steps fail, the site or Team is marked as failed with the reason, and its remaining steps still run. When it finishes, select **Deploy Again** to run another deployment, or **Close** to dismiss the panel.
 
 </details>
 

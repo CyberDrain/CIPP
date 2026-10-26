@@ -15,6 +15,7 @@ function Invoke-ExecCloneTemplate {
 
     $GUID = $Request.Query.GUID ?? $Request.Body.GUID
     $Type = $Request.Query.Type ?? $Request.Body.Type
+    $StatusCode = [HttpStatusCode]::OK
 
     if ($GUID -and $Type) {
         $Table = Get-CIPPTable -tablename templates
@@ -26,6 +27,15 @@ function Invoke-ExecCloneTemplate {
             $NewGuid = [guid]::NewGuid().ToString()
             $Template.RowKey = $NewGuid
             $Template.JSON = $Template.JSON -replace $GUID, $NewGuid
+            # Some template types (e.g. CA) also key lookups off the GUID column, not just RowKey
+            if ($Template.GUID) {
+                $Template.GUID = $NewGuid
+            }
+            # Clearing Source detaches the clone from its library: community sync matches existing
+            # templates on displayName + Source, so a clone keeping the Source could be overwritten
+            if ($Template.Source) {
+                $Template.Source = $null
+            }
             if ($Template.Package) {
                 $Template.Package = $null
             }
@@ -43,6 +53,7 @@ function Invoke-ExecCloneTemplate {
                     }
                 }
             } catch {
+                $StatusCode = [HttpStatusCode]::InternalServerError
                 $ErrorMessage = Get-CIPPException -Exception $_
                 $Result = "Failed to clone template (Type=$Type, GUID=$GUID): $($ErrorMessage.NormalizedError)"
                 Write-LogMessage -headers $Headers -API $APIName -tenant 'Global' -message $Result -Sev 'Error' -LogData $ErrorMessage
@@ -55,6 +66,7 @@ function Invoke-ExecCloneTemplate {
                 }
             }
         } else {
+            $StatusCode = [HttpStatusCode]::NotFound
             $body = @{
                 Results = @{
                     state      = 'error'
@@ -63,6 +75,7 @@ function Invoke-ExecCloneTemplate {
             }
         }
     } else {
+        $StatusCode = [HttpStatusCode]::BadRequest
         $body = @{
             Results = @{
                 state      = 'error'
@@ -71,7 +84,7 @@ function Invoke-ExecCloneTemplate {
         }
     }
     return ([HttpResponseContext]@{
-            StatusCode = [HttpStatusCode]::OK
+            StatusCode = $StatusCode
             Body       = $body
         })
 }

@@ -2,17 +2,17 @@
 description: Welcome to your hosted instance of CIPP!
 ---
 
-# Sponsor Quick Start
+# Subscription Quick Start
 
 {% hint style="success" %}
 If you need assistance with or aren't comfortable navigating these requirements alone, take a look at our [Professional Onboarding Services](professional-onboarding-services.md) page, which offers a paid option for those who need a bit more hands on guidance with GDAP & CIPP deployment.
 {% endhint %}
 
-If you've started the sponsorship process and are ready to enhance your management of Microsoft 365 tenants with efficiency, this guide is designed to get you started. You can click through the flipbook experience starting with [index.md](../setting-up-cipp/index.md "mention") or follow below.
+If you've started the subscription process and are ready to enhance your management of Microsoft 365 tenants with efficiency, this guide is designed to get you started. You can click through the flipbook experience starting with [index.md](../setting-up-cipp/index.md "mention") or follow below.
 
-## **Initial Sponsorship Actions**
+## **Initial Subscription Actions**
 
-1. **Subscription Activation**: Start by signing up for the €99/month subscription through our [secure checkout](https://pay.cyberdrain.com/b/4gM7sLa003Sldjn6nu6wE01).
+1. **Subscription Activation**: Start by signing up for the €99/month subscription through our [secure checkout](https://cipp.ms/getcipp).
 2. **Welcome Email**: Upon subscription, you will receive an email with detailed instructions to kickstart your deployment. This email will guide you to the [CIPP management portal ](https://management.cipp.app)for deployment steps.
 
 ## Deployment & Service Account Creation
@@ -34,7 +34,7 @@ If you've started the sponsorship process and are ready to enhance your manageme
 If you are unsure about whether your clients' environments are GDAP ready, or need more information about the process, continue to the [gdap-invite-wizard.md](../installation/gdap-invite-wizard.md "mention") page for more granular details & next steps.
 {% endhint %}
 
-## Sponsorship Billing
+## Subscription Billing
 
 Hosted CIPP subscriptions are €99/month. New subscriptions use the secure checkout above, while existing GitHub Sponsors subscribers can continue using their current billing path until October 1, 2026.
 

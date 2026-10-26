@@ -27,6 +27,8 @@ import { Scrollbar } from '../scrollbar'
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { ApiGetCallWithPagination } from '../../api/ApiCall'
+import { CippTenantCoverage } from './CippTenantCoverage'
+import { useQueryClient } from '@tanstack/react-query'
 import { utilTableMode } from './util-tablemode'
 import {
   utilColumnsFromAPI,
@@ -34,6 +36,7 @@ import {
 } from './util-columnsFromAPI'
 import { CIPPTableToptoolbar } from './CIPPTableToptoolbar'
 import { CippOffCanvas } from '../CippComponents/CippOffCanvas'
+import { CippStructuredTooltip } from '../CippComponents/CippStructuredTooltip'
 import { useDialog } from '../../hooks/use-dialog'
 import { CippApiDialog } from '../CippComponents/CippApiDialog'
 import { getCippError } from '../../utils/get-cipp-error'
@@ -188,7 +191,7 @@ const buildSubTableColumn = (sub) => ({
   ),
 })
 
-const SORTING_FNS = {
+export const SORTING_FNS = {
   dateTimeNullsLast: (a, b, id) => {
     const aRaw = getRowValueByColumnId(a, id)
     const bRaw = getRowValueByColumnId(b, id)
@@ -210,6 +213,15 @@ const SORTING_FNS = {
     const bVal = Number.isNaN(bNum) ? null : bNum
 
     return compareNullable(aVal, bVal)
+  },
+  // Object-array columns render as an "N items" button; sort on the item count instead
+  // of the accessor's text form (a JSON string), which orders them at random.
+  arrayLength: (a, b, id) => {
+    const len = (row) => {
+      const value = getRowValueByColumnId(row, id)
+      return Array.isArray(value) ? value.length : null
+    }
+    return compareNullable(len(a), len(b))
   },
   boolean: (a, b, id) => {
     const aRaw = getRowValueByColumnId(a, id)
@@ -560,6 +572,22 @@ const computeSchemaKey = (data) => {
   return [...keys].sort().join(',') + '|' + data.length
 }
 
+const mergeCaseInsensitive = (obj1, obj2) => {
+  const merged = { ...obj1 }
+  for (const key in obj2) {
+    const lowerCaseKey = key.toLowerCase()
+    const existingKey = Object.keys(merged).find(
+      (k) => k.toLowerCase() === lowerCaseKey
+    )
+    if (existingKey) {
+      merged[existingKey] = obj2[key]
+    } else {
+      merged[key] = obj2[key]
+    }
+  }
+  return merged
+}
+
 // ── Module-level render helpers for filter mode menus ──────────────────────
 function renderGlobalFilterModeMenuItemsFn({
   internalFilterOptions,
@@ -660,6 +688,8 @@ export const CippDataTable = (props) => {
     simpleColumns = [],
     dataFilter,
     dataMap,
+    // Whole-array transform applied after dataFilter/dataMap (e.g. grouping All Tenants rows).
+    dataTransform,
     actions,
     title = 'Report',
     simple = false,
@@ -681,6 +711,11 @@ export const CippDataTable = (props) => {
     mobileCard,
     dataSourceControls,
     subTables = EMPTY_ARRAY,
+    // { [columnId]: (row) => ({ title, description, items }) | null }: hover details for a column's cells.
+    // Keep the object stable (module scope or useMemo); a new one rebuilds the columns.
+    cellTooltips,
+    // { [columnId]: (row, defaultCell) => node }: replace or wrap a column's rendered cell; same stability rule.
+    cellRenderers,
     persistenceKey,
     parentRow,
   } = props
@@ -743,17 +778,22 @@ export const CippDataTable = (props) => {
   const [columnFilterFns, setColumnFilterFns] = useState({})
   const waitingBool = api?.url ? true : false
 
-  // The cards branch and the renderTopToolbar branch are two alternating CIPPTableToptoolbar
-  // instances (only one is ever mounted), so state that must survive the cards<->table flip
-  // lives here and is passed down as props to both.
   const [activeFilters, setActiveFilters] = useState({ graph: null, table: null })
   const [searchValue, setSearchValue] = useState('')
   const restoredFiltersRef = useRef(new Set())
+  const searchFocusRef = useRef(null)
 
   const settings = useSettings()
   const router = useRouter()
   const routerPageName = router.pathname.split('/').slice(1).join('/')
   const pageName = persistenceKey ?? (isInDialog ? '' : routerPageName)
+  // The user's saved column selection for this page. Always layered over a full default
+  // map, never used as the whole visibility state: TanStack treats a column with no entry
+  // as visible, so a preference saved on a tenant whose data lacked a field would reveal
+  // that field the moment another tenant's data contains it.
+  const preferredColumnVisibility = pageName
+    ? settings?.columnDefaults?.[pageName]
+    : undefined
 
   // 'cards' below the md breakpoint (or when forced via settings/prop), 'table' otherwise.
   // simple tables always resolve to 'table'.
@@ -787,13 +827,63 @@ export const CippDataTable = (props) => {
   // Ref to track previous data reference for the static-data sync effect.
   const prevDataRef = useRef(data)
 
+  // A graph preset is layered over the current request, so a tenant switch keeps it applied
+  // under the new tenant's key.
+  const baseQueryKey = queryKey ? queryKey : title
+  // Set by the toolbar's stop button: the pages loaded so far stay and no further page is fetched.
+  const [pagingStopped, setPagingStopped] = useState(false)
+  // FillMissing or RefreshCache from the tenant coverage chip: sent with one reload, dropped once it lands.
+  const [cacheAction, setCacheAction] = useState(null)
+  const requestQueryKey = graphFilterData.name
+    ? `${baseQueryKey}-${graphFilterData.name}`
+    : baseQueryKey
+  const queryClient = useQueryClient()
   const getRequestData = ApiGetCallWithPagination({
     url: api.url,
-    data: { ...api.data },
-    queryKey: queryKey ? queryKey : title,
+    data: {
+      // AllTenants Graph cache reads are served in bounded pages; a page can still opt out with manualPagination: false.
+      ...(api.url === '/api/ListGraphRequest' &&
+        api.data?.tenantFilter === 'AllTenants' && { manualPagination: true }),
+      ...(graphFilterData.filter
+        ? mergeCaseInsensitive(api.data, graphFilterData.filter)
+        : api.data),
+      ...(cacheAction && { [cacheAction]: true }),
+    },
+    queryKey: requestQueryKey,
     waiting: waitingBool,
-    ...graphFilterData,
   })
+
+  useEffect(() => {
+    if (cacheAction) {
+      queryClient.resetQueries({ queryKey: [requestQueryKey], exact: true })
+    }
+  }, [cacheAction, queryClient, requestQueryKey])
+
+  // An AllTenants Graph cache's coverage and sync sit with any report DB controls, in the Data source slot.
+  const responseMetadata = getRequestData.data?.pages?.[0]?.Metadata
+  const tenantCoverage = useMemo(
+    () =>
+      responseMetadata?.ExpectedTenants ? (
+        <CippTenantCoverage
+          metadata={responseMetadata}
+          onCacheAction={setCacheAction}
+          queryKey={requestQueryKey}
+          title={title}
+        />
+      ) : null,
+    [responseMetadata, requestQueryKey, title]
+  )
+  const sourceControls = useMemo(
+    () =>
+      dataSourceControls || tenantCoverage ? (
+        <>
+          {dataSourceControls}
+          {tenantCoverage}
+        </>
+      ) : null,
+    [dataSourceControls, tenantCoverage]
+  )
+  const headerShowsSource = !noCard && Boolean(cardButton || !hideTitle)
 
   useEffect(() => {
     // Only set initial filters if they haven't been set yet OR if the filters prop has actually changed
@@ -844,19 +934,37 @@ export const CippDataTable = (props) => {
   }, [data, api?.url])
 
   useEffect(() => {
-    if (getRequestData.isSuccess && !getRequestData.isFetching) {
+    if (api?.url && getRequestData.isSuccess && !getRequestData.isFetching) {
       const lastPage =
         getRequestData.data?.pages[getRequestData.data.pages.length - 1]
       const nextLinkExists = lastPage?.Metadata?.nextLink
-      if (nextLinkExists) {
+      if (nextLinkExists && !pagingStopped) {
         getRequestData.fetchNextPage()
       }
     }
-  }, [getRequestData.data?.pages?.length, getRequestData.isFetching, queryKey])
+  }, [
+    api?.url,
+    getRequestData.data?.pages?.length,
+    getRequestData.isFetching,
+    queryKey,
+    pagingStopped,
+  ])
 
+  // While pages stream in, the rows are handed to the table again only once they have grown by
+  // half, so a long AllTenants load re-renders a handful of times instead of once per page.
+  const shownRowCountRef = useRef(0)
+  const firstPageRef = useRef()
+  const [generation, setGeneration] = useState(0)
   useEffect(() => {
-    if (getRequestData.isSuccess) {
+    if (api?.url && getRequestData.isSuccess) {
       const allPages = getRequestData.data.pages
+      if (allPages[0] !== firstPageRef.current) {
+        firstPageRef.current = allPages[0]
+        shownRowCountRef.current = 0
+        setPagingStopped(false)
+        setCacheAction(null)
+        setGeneration((count) => count + 1)
+      }
 
       const combinedResults = allPages.flatMap((page) => {
         const nestedData = getNestedValue(page, api.dataKey)
@@ -866,23 +974,38 @@ export const CippDataTable = (props) => {
         // dataKey miss on a bare-array page: the endpoint served the legacy shape.
         return Array.isArray(page) ? page : []
       })
+      const shown = shownRowCountRef.current
+      if (
+        getRequestData.hasNextPage &&
+        !getRequestData.isFetchNextPageError &&
+        !pagingStopped &&
+        combinedResults.length > shown &&
+        combinedResults.length < shown * 1.5
+      ) {
+        return
+      }
+      shownRowCountRef.current = combinedResults.length
       const filtered = dataFilter
         ? combinedResults.filter(dataFilter)
         : combinedResults
-      setUsedData(
+      const mapped =
         typeof dataMap === 'function'
           ? filtered.map((row) => dataMap(row, { parentRow }))
           : filtered
-      )
+      setUsedData(typeof dataTransform === 'function' ? dataTransform(mapped) : mapped)
     }
   }, [
+    api?.url,
     getRequestData.isSuccess,
     getRequestData.data,
+    getRequestData.hasNextPage,
+    getRequestData.isFetchNextPageError,
+    pagingStopped,
     api.dataKey,
-    getRequestData.isFetching,
     queryKey,
     dataFilter,
     dataMap,
+    dataTransform,
     parentRow,
   ])
 
@@ -905,7 +1028,8 @@ export const CippDataTable = (props) => {
     }
     prevSchemaKeyRef.current = schemaKey
 
-    const apiColumns = utilColumnsFromAPI(usedData)
+    // Inlined, the column closures would keep this render's scope and, through usedColumns, every earlier one.
+    const apiColumns = /*#__NOINLINE__*/ utilColumnsFromAPI(usedData)
 
     // Apply custom filterFn to columns that have filterType === 'equal'
     const enhancedApiColumns = apiColumns.map((col) => {
@@ -999,6 +1123,14 @@ export const CippDataTable = (props) => {
         }
       }
     }
+    // Saved preferred columns win over the defaults above. Fields the preference never
+    // saw (a different tenant's schema) keep the default computed for this table.
+    if (
+      preferredColumnVisibility &&
+      Object.keys(preferredColumnVisibility).length > 0
+    ) {
+      Object.assign(newVisibility, preferredColumnVisibility)
+    }
     if (defaultSorting?.length > 0) {
       setSorting(defaultSorting)
     }
@@ -1011,40 +1143,14 @@ export const CippDataTable = (props) => {
     settings?.currentTenant,
     filterTypeMap,
     subTables,
+    preferredColumnVisibility,
   ])
 
   // Previous-value refs for the guards below: CippDataTable is the single owner of this
   // state across both toolbar instances, so an effect can compare against the last value
   // it actually saw rather than firing unconditionally on every render.
-  const prevTenantRef = useRef(settings?.currentTenant)
-  const prevQueryKeyRef = useRef(queryKey || title)
   const prevPageNameRef = useRef(pageName)
   const appliedColumnDefaultsRef = useRef({})
-
-  // if the currentTenant switches, remove graph filters and the active-filter highlight
-  useEffect(() => {
-    const currentTenant = settings?.currentTenant
-    if (prevTenantRef.current === currentTenant) {
-      return
-    }
-    prevTenantRef.current = currentTenant
-    if (currentTenant) {
-      setGraphFilterData({})
-      setActiveFilters({ graph: null, table: null })
-      restoredFiltersRef.current.delete(`${pageName}-graph`)
-    }
-  }, [settings?.currentTenant, pageName])
-
-  // clear the active-filter highlight when the effective query key changes (tenant swap,
-  // different queryKey/title)
-  useEffect(() => {
-    const effectiveKey = queryKey || title
-    if (prevQueryKeyRef.current === effectiveKey) {
-      return
-    }
-    prevQueryKeyRef.current = effectiveKey
-    setActiveFilters({ graph: null, table: null })
-  }, [queryKey, title])
 
   // clear persisted-filter restoration tracking only when the page actually changes
   useEffect(() => {
@@ -1057,20 +1163,23 @@ export const CippDataTable = (props) => {
 
   // apply preferred columns once per page, and again whenever the saved preference's
   // identity changes. Nested dialog tables must not read or write the parent page key.
+  // Layered over the current state rather than replacing it: on a static-data table
+  // this runs in the same commit as the column build above, and replacing would drop
+  // the defaults just computed for every field the preference does not mention.
   useEffect(() => {
     if (!pageName) {
       return
     }
-    const preferred = settings?.columnDefaults?.[pageName]
+    const preferred = preferredColumnVisibility
     if (
       preferred &&
       Object.keys(preferred).length > 0 &&
       appliedColumnDefaultsRef.current[pageName] !== preferred
     ) {
       appliedColumnDefaultsRef.current[pageName] = preferred
-      setColumnVisibility(preferred)
+      setColumnVisibility((previous) => ({ ...previous, ...preferred }))
     }
-  }, [settings?.columnDefaults?.[pageName], pageName])
+  }, [preferredColumnVisibility, pageName])
 
   const createDialog = useDialog()
   const hasActions = !!actions
@@ -1125,8 +1234,36 @@ export const CippDataTable = (props) => {
   }, [columnVisibility])
 
   const displayColumns = useMemo(() => {
+    const withTooltips = (cols) => {
+      if (!cellTooltips && !cellRenderers) return cols
+      return cols.map((col) => {
+        const getTooltip = cellTooltips?.[col.id]
+        const render = cellRenderers?.[col.id]
+        const BaseCell = col.Cell
+        if (
+          typeof BaseCell !== 'function' ||
+          (typeof getTooltip !== 'function' && typeof render !== 'function')
+        )
+          return col
+        return {
+          ...col,
+          Cell: (cellProps) => {
+            const base = <BaseCell {...cellProps} />
+            const rendered =
+              typeof render === 'function' ? render(cellProps.row.original, base) : base
+            const tooltip =
+              typeof getTooltip === 'function' ? getTooltip(cellProps.row.original) : null
+            return tooltip ? (
+              <CippStructuredTooltip {...tooltip}>{rendered}</CippStructuredTooltip>
+            ) : (
+              rendered
+            )
+          },
+        }
+      })
+    }
     if (!Array.isArray(subTables) || subTables.length === 0) {
-      return usedColumns
+      return withTooltips(usedColumns)
     }
     const cachedHeaders = new Map()
     const injected = []
@@ -1153,10 +1290,12 @@ export const CippDataTable = (props) => {
     const injectedById = new Map(injected.map((col) => [col.id, col]))
     const replaced = columns.map((col) => injectedById.get(col.id) ?? col)
     const existing = new Set(columns.map((col) => col.id))
-    return [...replaced, ...injected.filter((col) => !existing.has(col.id))].filter(
-      (col) => !excludedIds.has(col.id)
+    return withTooltips(
+      [...replaced, ...injected.filter((col) => !existing.has(col.id))].filter(
+        (col) => !excludedIds.has(col.id)
+      )
     )
-  }, [usedColumns, usedData, subTables, configuredSimpleColumns])
+  }, [usedColumns, usedData, subTables, configuredSimpleColumns, cellTooltips, cellRenderers])
 
   const displayColumnIds = useMemo(
     () => displayColumns.map((col) => col.id).filter(Boolean),
@@ -1197,7 +1336,12 @@ export const CippDataTable = (props) => {
   // column virtualizer memoizes pinned indexes without depending on column count;
   // without a remount, TableHeadRow maps a sparse virtual item and reads `.index`
   // on undefined.
-  const mrtColumnSetKey = useMemo(() => displayColumnIds.join('|'), [displayColumnIds])
+  // Also remount on each new load (refresh, tenant switch): MUI buttons and MRT's row virtualizer
+  // keep their first render's closures for life, and through them that render's rows and pages.
+  const mrtColumnSetKey = useMemo(
+    () => `${displayColumnIds.join('|')}#${generation}`,
+    [displayColumnIds, generation]
+  )
 
   const preferredColumnOrderIds = useMemo(
     () =>
@@ -1772,6 +1916,9 @@ export const CippDataTable = (props) => {
               actions={actions}
               exportEnabled={exportEnabled}
               refreshFunction={refreshFunction}
+              pagingStopped={pagingStopped}
+              tenantCoverage={headerShowsSource ? null : tenantCoverage}
+              setPagingStopped={setPagingStopped}
               setColumnVisibility={setColumnVisibility}
               filters={filters}
               queryKeys={queryKey ? queryKey : title}
@@ -1787,12 +1934,13 @@ export const CippDataTable = (props) => {
               tableViewActive={toggleAllowed ? tableViewActive : undefined}
               showReturnToCards={showReturnToCards}
               bulkActionsSlot={isNarrowViewport && !isInDialog ? headerBulkSlot : null}
-              dataSourceControls={dataSourceControls}
+              dataSourceControls={sourceControls}
               activeFilters={activeFilters}
               setActiveFilters={setActiveFilters}
               searchValue={searchValue}
               setSearchValue={setSearchValue}
               restoredFiltersRef={restoredFiltersRef}
+              searchFocusRef={searchFocusRef}
             />
           )}
         </>
@@ -1823,9 +1971,12 @@ export const CippDataTable = (props) => {
       showReturnToCards,
       isNarrowViewport,
       headerBulkSlot,
-      dataSourceControls,
+      sourceControls,
+      tenantCoverage,
+      headerShowsSource,
       activeFilters,
       searchValue,
+      pagingStopped,
     ]
   )
 
@@ -1870,6 +2021,16 @@ export const CippDataTable = (props) => {
           },
         },
       }),
+    // inside a dialog only the rows scroll: the container is sized to the dialog paper
+    // (viewport minus dialog margins, title, toolbar, pagination and actions) so the
+    // DialogContent never grows its own scrollbar on top of the table's
+    ...(isInDialog && {
+      enableStickyHeader: true,
+      muiTableContainerProps: {
+        ...modeInfo.muiTableContainerProps,
+        sx: { ...modeInfo.muiTableContainerProps?.sx, maxHeight: 'calc(100vh - 420px)' },
+      },
+    }),
     renderRowActionMenuItems,
     renderTopToolbar,
     sortingFns: SORTING_FNS,
@@ -1985,6 +2146,8 @@ export const CippDataTable = (props) => {
   // the table on every render: this used to be mirrored into state by an effect keyed on
   // filters and sorting, so the copy was taken once at mount — before the rows had arrived
   // — and every table that loads its data asynchronously reported nothing to navigate.
+  // No closure may capture it: every row's memos keep the table options of their render, and
+  // through them this render's scope, so a captured row array chains every generation of rows.
   const navigationRows = table.getSortedRowModel().rows
   // Prefer the position of the row actually on show, so sorting or filtering while the
   // drawer is open carries the counter with it. The stored index covers the case where the
@@ -2105,6 +2268,9 @@ export const CippDataTable = (props) => {
                 actions={actions}
                 exportEnabled={exportEnabled}
                 refreshFunction={refreshFunction}
+                pagingStopped={pagingStopped}
+                tenantCoverage={headerShowsSource ? null : tenantCoverage}
+                setPagingStopped={setPagingStopped}
                 setColumnVisibility={setColumnVisibility}
                 filters={filters}
                 queryKeys={queryKey ? queryKey : title}
@@ -2125,7 +2291,7 @@ export const CippDataTable = (props) => {
                 selectModeLocked={hasOnChange}
                 onViewToggle={toggleAllowed ? handleViewToggle : undefined}
                 tableViewActive={toggleAllowed ? tableViewActive : undefined}
-                dataSourceControls={dataSourceControls}
+                dataSourceControls={sourceControls}
                 activeFilters={activeFilters}
                 setActiveFilters={setActiveFilters}
                 searchValue={searchValue}
@@ -2190,11 +2356,11 @@ export const CippDataTable = (props) => {
                         sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                       />
                       {/* narrow viewports carry these in the Table options sheet */}
-                      {dataSourceControls && !isNarrowViewport ? (
+                      {sourceControls && !isNarrowViewport ? (
                         <Stack direction='row' spacing={1} sx={{
                           alignItems: 'center'
                         }}>
-                          {dataSourceControls}
+                          {sourceControls}
                           {headerAction}
                         </Stack>
                       ) : (
@@ -2267,20 +2433,20 @@ export const CippDataTable = (props) => {
         customComponent={offCanvas?.customComponent}
         onNavigateUp={() => {
           const newIndex = currentRowIndex - 1
-          if (newIndex >= 0 && navigationRows[newIndex]) {
-            const nextRow = navigationRows[newIndex].original
+          const target = table.getSortedRowModel().rows[newIndex]
+          if (newIndex >= 0 && target) {
             setOffCanvasRowIndex(newIndex)
-            setOffCanvasData(nextRow)
-            setContextRow(nextRow)
+            setOffCanvasData(target.original)
+            setContextRow(target.original)
           }
         }}
         onNavigateDown={() => {
           const newIndex = currentRowIndex + 1
-          if (navigationRows[newIndex]) {
-            const nextRow = navigationRows[newIndex].original
+          const target = table.getSortedRowModel().rows[newIndex]
+          if (target) {
             setOffCanvasRowIndex(newIndex)
-            setOffCanvasData(nextRow)
-            setContextRow(nextRow)
+            setOffCanvasData(target.original)
+            setContextRow(target.original)
           }
         }}
         canNavigateUp={currentRowIndex > 0}

@@ -4,6 +4,8 @@ A template library keeps CIPP's stored templates in step with an external source
 
 Tenant-based libraries sync every 4 hours. Community repository libraries sync every 7 days.
 
+This page needs the `CIPP.TemplateLibrary` permission together with the Scheduler permission that runs the sync.
+
 {% hint style="warning" %}
 Enabling this feature will overwrite templates with the same name.
 {% endhint %}
@@ -22,11 +24,9 @@ CIPP recommends using a Customer Development Experience tenant for developing yo
 
 ### Community Repository
 
-Choose a repository registered with your instance. Once selected, a **Repository Branch** field appears, prefilled with the repository's default branch and changeable if the templates you want live elsewhere.
+Choose a repository registered with your instance. Once selected, a **Repository Branch** section appears with a **Select Branch** field, prefilled with the repository's default branch and changeable if the templates you want live elsewhere.
 
-Repositories are managed separately, and you can register your own alongside the built-in ones:
-
-CIPP ships with five repositories registered:
+Repositories are managed on the [README.md](community-repos/README.md "mention") page, where you can register your own alongside the built-in ones. CIPP ships with five repositories registered:
 
 | Repository                                                                         | Contents                                                                                        |
 | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
@@ -92,8 +92,8 @@ Templates are compared before being written. Where a template already exists, ca
 
 A table at the foot of the page lists every template library already set up, across all tenants and repositories rather than only the tenant currently selected. It refreshes itself when you create a new one.
 
-| Column        | Description                                                                        |
-| ------------- | ---------------------------------------------------------------------------------- |
+| Column        | Description                                                                          |
+| ------------- | ------------------------------------------------------------------------------------ |
 | Name          | The name of the library, taken from the tenant or the repository it was created for. |
 | Tenant        | The tenant the library writes into, or **No tenant** for a repository library.       |
 | Recurrence    | How often the library syncs.                                                         |
@@ -101,6 +101,10 @@ A table at the foot of the page lists every template library already set up, acr
 | Executed Time | When the library last ran.                                                           |
 | Results       | What the last run reported.                                                          |
 
-Libraries are edited and removed from [README.md](scheduler/README.md "mention"), not from this page.
+## Table Actions
+
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Delete Library</td><td>Stops the library syncing after you confirm. Templates the library has already imported stay in CIPP and are not imported again; delete those separately from the Conditional Access or Intune template pages if you no longer need them. Greyed out unless you have write access to the scheduler.</td><td>true</td></tr></tbody></table>
+
+To change how a library runs rather than remove it, use [README.md](scheduler/README.md "mention"). Community repository libraries appear there with the tenant filter set to All Tenants.
 
 {% include "../../../.gitbook/includes/feature-request.md" %}

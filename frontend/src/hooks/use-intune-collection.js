@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  childDefinitionIds,
+  optionFor,
+  requiredChildIds,
+} from '../utils/intune-setting-builder'
 
 // Intune setting definitions are fetched in bucket bundles from public/intune-definitions, which
 // build/tools/Split-IntuneCollection.ps1 generates from the catalog.
@@ -173,6 +178,111 @@ export const useIntuneCategories = ({ enabled = true } = {}) => {
   }, [enabled])
 
   return categories
+}
+
+// Fetches definitions outside render, e.g. when a setting is picked. Shares the cache above.
+export const fetchIntuneDefinitions = async (ids) => {
+  await resolveDefinitions(ids.filter((id) => !cache.has(id)))
+  return ids.map((id) => cache.get(id) ?? null)
+}
+
+export const fetchIntuneDefinition = async (id) =>
+  id ? (await fetchIntuneDefinitions([id]))[0] : null
+
+const MAX_DEPTH = 4
+
+// Every definition buildSettingInstance needs beneath one (group members, and the settings the chosen
+// option requires or `wanted` asks for), keyed by id. Bounded because the catalog links children back to parents.
+export const fetchIntuneDescendants = async (definition, wanted) => {
+  const byId = {}
+  const seen = new Set([definition?.id])
+  const walk = async (current, depth) => {
+    if (!current || depth > MAX_DEPTH) return
+    const option = optionFor(current, wanted)
+    const ids = [
+      ...childDefinitionIds(current),
+      ...(option ? requiredChildIds(current, option.id, wanted) : []),
+    ].filter((id) => id && !seen.has(id))
+    if (ids.length === 0) return
+    ids.forEach((id) => seen.add(id))
+    const resolved = (await fetchIntuneDefinitions(ids)).filter(Boolean)
+    resolved.forEach((child) => {
+      byId[child.id] = child
+    })
+    await Promise.all(resolved.map((child) => walk(child, depth + 1)))
+  }
+  await walk(definition, 0)
+  return byId
+}
+
+// Per-platform search index written by Split-IntuneCollection.ps1. The bundles are hash-addressed
+// and cannot be listed, so picking a new setting needs this. Static, so it is searched in the browser.
+const INDEX_ROOT = '/intune-definitions/_index'
+const indexRequests = new Map()
+
+const loadPlatformIndex = (platform) => {
+  const key = platform.toLowerCase()
+  let request = indexRequests.get(key)
+  if (!request) {
+    request = fetch(`${INDEX_ROOT}/${key}.json`)
+      .then((response) => {
+        if (response.status === 404) return []
+        if (!response.ok)
+          throw new Error(`${INDEX_ROOT} HTTP ${response.status}`)
+        return response.json()
+      })
+      .catch((error) => {
+        indexRequests.delete(key)
+        throw error
+      })
+    indexRequests.set(key, request)
+  }
+  return request
+}
+
+const EMPTY_ROWS = []
+
+// Search rows for a policy's platforms value ('windows10', or several comma-separated), deduplicated
+// because a setting that applies to several platforms is indexed under each.
+export const useIntuneSettingIndex = (platforms, { enabled = true } = {}) => {
+  const [loaded, setLoaded] = useState({
+    key: null,
+    rows: EMPTY_ROWS,
+    isError: false,
+  })
+  const key = String(platforms ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .join(',')
+  const active = enabled && key.length > 0
+  const isCurrent = loaded.key === key
+
+  useEffect(() => {
+    if (!active || isCurrent) return undefined
+    let alive = true
+    Promise.all(key.split(',').map(loadPlatformIndex))
+      .then((lists) => {
+        if (!alive) return
+        const byId = new Map()
+        lists
+          .flat()
+          .forEach(
+            (row) => row?.id && !byId.has(row.id) && byId.set(row.id, row)
+          )
+        setLoaded({ key, rows: Array.from(byId.values()), isError: false })
+      })
+      .catch(() => alive && setLoaded({ key, rows: EMPTY_ROWS, isError: true }))
+    return () => {
+      alive = false
+    }
+  }, [active, isCurrent, key])
+
+  return {
+    rows: isCurrent ? loaded.rows : EMPTY_ROWS,
+    isLoading: active && !isCurrent,
+    isError: isCurrent && loaded.isError,
+  }
 }
 
 const EMPTY_IDS = []

@@ -73,7 +73,10 @@ function Invoke-ExecDnsConfig {
                 # AnyTenant: restricted callers may only edit domains for tenants in scope
                 $AllowedTenants = Test-CIPPAccess -Request $Request -TenantList
                 if ($AllowedTenants -notcontains 'AllTenants' -and -not ($DomainInfo | Select-CippAllowedTenantData -TenantProperty 'TenantGUID', 'TenantId')) {
-                    throw 'Access to this domain is not allowed'
+                    return ([HttpResponseContext]@{
+                            StatusCode = [HttpStatusCode]::Forbidden
+                            Body       = [pscustomobject]@{'Results' = 'Failed. Access to this domain is not allowed' }
+                        })
                 }
 
                 $DkimSelectors = [string]($Selector | ConvertTo-Json -Compress)
@@ -105,7 +108,10 @@ function Invoke-ExecDnsConfig {
                 # AnyTenant: restricted callers may only remove domains for tenants in scope
                 $AllowedTenants = Test-CIPPAccess -Request $Request -TenantList
                 if ($AllowedTenants -notcontains 'AllTenants' -and -not ($DomainRow | Select-CippAllowedTenantData -TenantProperty 'TenantGUID', 'TenantId')) {
-                    throw 'Access to this domain is not allowed'
+                    return ([HttpResponseContext]@{
+                            StatusCode = [HttpStatusCode]::Forbidden
+                            Body       = [pscustomobject]@{'Results' = 'Failed. Access to this domain is not allowed' }
+                        })
                 }
 
                 Remove-CIPPAzDataTableEntity -Force @DomainTable -Entity $DomainRow
@@ -115,9 +121,9 @@ function Invoke-ExecDnsConfig {
         }
     } catch {
         $ErrorMessage = Get-CippException -Exception $_
-        Write-LogMessage -API $APIName -tenant $($name) -headers $Headers -message "DNS Config API failed. $($ErrorMessage.NormalizedError)" -Sev 'Error' -LogData $ErrorMessage
+        Write-LogMessage -API $APIName -tenant 'Global' -headers $Headers -message "DNS Config API failed. $($ErrorMessage.NormalizedError)" -Sev 'Error' -LogData $ErrorMessage
         $body = [pscustomobject]@{'Results' = "Failed. $($ErrorMessage.NormalizedError)" }
-        $StatusCode = [HttpStatusCode]::BadRequest
+        $StatusCode = [HttpStatusCode]::InternalServerError
     }
 
     return ([HttpResponseContext]@{

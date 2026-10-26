@@ -13,6 +13,7 @@ import CippBackupRetentionSettings from "../../../components/CippSettings/CippBa
 import CippLogRetentionSettings from "../../../components/CippSettings/CippLogRetentionSettings";
 import CippJitAdminSettings from "../../../components/CippSettings/CippJitAdminSettings";
 import CippBulkActionConfirmSettings from "../../../components/CippSettings/CippBulkActionConfirmSettings";
+import CippBecRemediationSettings from "../../../components/CippSettings/CippBecRemediationSettings";
 const Page = () => {
   return (
     <Container sx={{ pt: { xs: 0, md: 3 }, px: { xs: 1.5, md: 3 } }} maxWidth="xl">
@@ -39,7 +40,18 @@ const Page = () => {
           <CippLogRetentionSettings />
         </Grid>
         <Grid size={{ lg: 4, md: 6, sm: 12, xs: 12 }}>
+          <CippLogRetentionSettings
+            title="Report Attachment Retention"
+            endpoint="ExecReportAttachmentRetentionConfig"
+            defaultDays={360}
+            description="Configure how long generated Report Builder reports and their PDFs are kept, along with scheduled report attachments too large to email (over 4MB), which are uploaded to storage and linked from the email instead. Download links stop working once their files are deleted."
+          />
+        </Grid>
+        <Grid size={{ lg: 4, md: 6, sm: 12, xs: 12 }}>
           <CippJitAdminSettings />
+        </Grid>
+        <Grid size={{ lg: 4, md: 6, sm: 12, xs: 12 }}>
+          <CippBecRemediationSettings />
         </Grid>
         <Grid size={{ lg: 4, md: 6, sm: 12, xs: 12 }}>
           <CippBulkActionConfirmSettings />

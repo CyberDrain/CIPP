@@ -161,6 +161,7 @@ const Page = () => {
     allowToggle: true,
     defaultCached: true,
     allowAllTenantSync: true,
+    serverPagination: true,
   })
 
   // Anonymization: M365 "conceal names in reports" hashes owner fields in Graph usage reports.
@@ -169,6 +170,7 @@ const Page = () => {
   const anonymizedReport = useReportAnonymized({
     url: reportDB.resolvedApiUrl,
     data: reportDB.resolvedApiData,
+    dataKey: reportDB.apiDataKey,
     queryKey: reportDB.resolvedQueryKey,
     check: (rows) => isReportAnonymized(rows, ['ownerPrincipalName', 'ownerDisplayName']),
   })
@@ -179,6 +181,7 @@ const Page = () => {
   const noUsageMetrics = useReportAnonymized({
     url: reportDB.resolvedApiUrl,
     data: reportDB.resolvedApiData,
+    dataKey: reportDB.apiDataKey,
     queryKey: reportDB.resolvedQueryKey,
     check: (rows) =>
       rows.length > 0 &&
@@ -202,14 +205,14 @@ const Page = () => {
         URL: 'webUrl',
         SharePointType: 'rootWebTemplate',
       },
-      confirmText: 'Select the User to add and the site role to add them to.',
+      confirmText: 'Select the user(s) to add and the site role to add them to.',
       condition: () => canWriteSite,
       fields: [
         {
           type: 'autoComplete',
           name: 'user',
-          label: 'Select User',
-          multiple: false,
+          label: 'Select User(s)',
+          multiple: true,
           creatable: false,
           api: {
             url: '/api/ListGraphRequest',
@@ -434,6 +437,7 @@ const Page = () => {
           if (!isNaN(storageMax) && storageMax > 0) payload.StorageMaximumLevel = storageMax
           if (!isNaN(storageWarn) && storageWarn > 0) payload.StorageWarningLevel = storageWarn
           if (!isGroupSite && !formData.InheritVersionPolicyFromTenant) {
+            payload.ApplyToNewDocumentLibraries = true
             payload.EnableAutoExpirationVersionTrim = !!formData.EnableAutoExpirationVersionTrim
             if (!formData.EnableAutoExpirationVersionTrim) {
               payload.MajorVersionLimit = parseInt(formData.MajorVersionLimit ?? 0, 10)
@@ -771,6 +775,7 @@ const Page = () => {
         title={pageTitle}
         apiUrl={reportDB.resolvedApiUrl}
         apiData={reportDB.resolvedApiData}
+        apiDataKey={reportDB.apiDataKey}
         queryKey={reportDB.resolvedQueryKey}
         actions={actions}
         offCanvas={offCanvas}

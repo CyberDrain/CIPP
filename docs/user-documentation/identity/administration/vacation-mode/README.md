@@ -1,6 +1,6 @@
 # Vacation Mode
 
-Vacation Mode schedules temporary changes to a user's access and mailbox for a fixed period, then reverses them automatically when the period ends. It covers Conditional Access exclusions, location-based audit log alert exclusions, mailbox delegation, mail forwarding, and out of office replies, so a single schedule can cover everything that needs to change while someone is away.
+Vacation Mode schedules temporary changes to a user's access and mailbox for a fixed period, then reverses them automatically when the period ends. It covers Conditional Access exclusions, location-based audit log alert exclusions, temporary group membership, mailbox delegation, mail forwarding, and out of office replies, so a single schedule can cover everything that needs to change while someone is away.
 
 Each vacation produces a pair of scheduled tasks for every change: one that applies it at the start date and one that reverses it at the end date. This page lists those tasks.
 
@@ -31,6 +31,7 @@ Opens the add-vacation-schedule.md wizard, where the users, the changes to apply
 | Mailbox Permissions | Tasks that grant or revoke mailbox delegation.                                           |
 | Mail Forwarding     | Tasks that set or clear mail forwarding.                                                 |
 | Out of Office       | Tasks that enable or disable automatic replies.                                          |
+| Group Membership    | Tasks that add or remove users from groups for the vacation.                             |
 
 ## Table Details
 

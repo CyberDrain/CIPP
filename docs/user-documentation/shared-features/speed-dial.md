@@ -10,7 +10,7 @@ On a phone the lower right corner holds the actions for the page you are on, so 
 
 | Option                  | Description                                                                                                                                                      |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tutorials               | Opens the tutorials list, described under [tutorials.md](../../demos/tutorials.md "mention") below.                                                              |
+| Tutorials               | Opens the tutorials list. See [#tutorials](speed-dial.md#tutorials "mention") below.                                                                              |
 | Check the Documentation | Opens [docs.cipp.app](https://docs.cipp.app/) in a new tab, at the page matching the CIPP page you are currently on.                                             |
 | Join the Discord!       | Opens a new tab to join the [CyberDrain Discord server](https://discord.gg/cyberdrain).                                                                          |
 | Request Feature         | Opens a new tab to the GitHub feature request form.                                                                                                              |
@@ -20,7 +20,7 @@ On a phone the lower right corner holds the actions for the page you are on, so 
 | Clear Cache and Reload  | Clears CIPP's cached data from your browser and reloads the page. This is especially helpful if you recently updated CIPP and are still seeing an older version. |
 
 {% hint style="info" %}
-Feature requests can only be raised by sponsors at the required sponsorship level. Requests from non-sponsors are closed automatically. The form itself sets out the current requirement.
+Feature requests can only be raised by users with an active subscription. Requests from non-subscribers are closed automatically. The form itself sets out the current requirement.
 {% endhint %}
 
 ## Tutorials

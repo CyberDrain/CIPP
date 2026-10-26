@@ -1,6 +1,6 @@
 # Authentication
 
-Authentication covers who can sign in to CIPP and what they are allowed to do: the CIPP user list, custom CIPP roles and their API permissions, single sign-on for the CIPP instance itself, and the roles and Graph permissions granted to the SAM application.
+Authentication covers who can sign in to CIPP and what they are allowed to do: the CIPP user list, custom CIPP roles and their API permissions, the credentials of the CIPP-SAM and CIPP-SSO app registrations, and the roles and Graph permissions granted to the SAM application.
 
 These pages are limited to users with the `superadmin` role.
 

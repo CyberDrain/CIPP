@@ -58,7 +58,7 @@ By the end of the session, you’ll:
 ## **👉 Sign up now at:** [**https://go.cyberdrain.com/onboarding**](https://go.cyberdrain.com/onboarding)
 
 {% hint style="info" %}
-**Note**: Sponsorship is required for onboarding services, whether using a hosted or self-hosted instance of CIPP. Complete the sponsorship process to access full support.
+**Note**: An active subscription is required for onboarding services, whether using a hosted or self-hosted instance of CIPP. Complete the subscription process to access full support.
 {% endhint %}
 
 ***

@@ -12,40 +12,78 @@ function Invoke-ExecTokenExchange {
     $KV = Get-CippKeyVaultName
     $APIName = $Request.Params.CIPPEndpoint
 
+    if (!$Request.Body) {
+        Write-LogMessage -API $APIName -message 'Request body is missing' -Sev 'Error'
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = @{ error = 'invalid_request'; error_description = 'Request body is missing' }
+                Headers    = @{'Content-Type' = 'application/json' }
+            })
+    }
+
+    $TokenRequest = $Request.Body.tokenRequest
+    $TokenUrl = $Request.Body.tokenUrl
+    $TenantId = $Request.Body.tenantId
+
+    if (!$TokenRequest -or !$TokenUrl) {
+        Write-LogMessage -API $APIName -message 'Missing required parameters: tokenRequest or tokenUrl' -Sev 'Error'
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = @{ error = 'invalid_request'; error_description = 'Missing required parameters: tokenRequest or tokenUrl' }
+                Headers    = @{'Content-Type' = 'application/json' }
+            })
+    }
+
+    # This endpoint exists only for the SAM setup wizard's authorization-code exchange, which always
+    # posts to the /organizations token endpoint. Pin the full URL so a caller cannot redirect the
+    # SAM credential to an arbitrary tenant realm.
+    $ParsedTokenUri = $null
+    $IsValidTokenUri = [System.Uri]::TryCreate($TokenUrl, [System.UriKind]::Absolute, [ref]$ParsedTokenUri)
+    if (-not $IsValidTokenUri -or
+        -not $ParsedTokenUri.Scheme.Equals('https', [System.StringComparison]::OrdinalIgnoreCase) -or
+        -not $ParsedTokenUri.Host.Equals('login.microsoftonline.com', [System.StringComparison]::OrdinalIgnoreCase) -or
+        -not $ParsedTokenUri.AbsolutePath.Equals('/organizations/oauth2/v2.0/token', [System.StringComparison]::OrdinalIgnoreCase)) {
+        Write-LogMessage -API $APIName -message "Blocked token request to disallowed token endpoint: $TokenUrl" -Sev 'Warning'
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = @{ error = 'invalid_request'; error_description = 'Invalid tokenUrl. Only https://login.microsoftonline.com/organizations/oauth2/v2.0/token is allowed.' }
+                Headers    = @{'Content-Type' = 'application/json' }
+            })
+    }
+
+    # Only the authorization-code grant is permitted. Any other grant (notably client_credentials)
+    # would attach the SAM credential to a caller-chosen request and mint SAM tokens for any tenant.
+    $GrantType = $TokenRequest.grant_type
+    if ($GrantType -ne 'authorization_code') {
+        Write-LogMessage -API $APIName -message "Blocked token exchange with disallowed grant_type: $GrantType" -Sev 'Warning'
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = @{ error = 'unsupported_grant_type'; error_description = 'Only the authorization_code grant is supported.' }
+                Headers    = @{'Content-Type' = 'application/json' }
+            })
+    }
+
+    $StatusCode = [HttpStatusCode]::OK
     try {
-        if (!$Request.Body) {
-            Write-LogMessage -API $APIName -message 'Request body is missing' -Sev 'Error'
-            throw 'Request body is missing'
-        }
-
-        $TokenRequest = $Request.Body.tokenRequest
-        $TokenUrl = $Request.Body.tokenUrl
-        $TenantId = $Request.Body.tenantId
-
-        if (!$TokenRequest -or !$TokenUrl) {
-            Write-LogMessage -API $APIName -message 'Missing required parameters: tokenRequest or tokenUrl' -Sev 'Error'
-            throw 'Missing required parameters: tokenRequest or tokenUrl'
-        }
-
-        $ParsedTokenUri = $null
-        $IsValidTokenUri = [System.Uri]::TryCreate($TokenUrl, [System.UriKind]::Absolute, [ref]$ParsedTokenUri)
-        if (-not $IsValidTokenUri -or
-            -not $ParsedTokenUri.Scheme.Equals('https', [System.StringComparison]::OrdinalIgnoreCase) -or
-            -not $ParsedTokenUri.Host.Equals('login.microsoftonline.com', [System.StringComparison]::OrdinalIgnoreCase)) {
-            Write-LogMessage -API $APIName -message "Blocked token request to non-Microsoft login host: $TokenUrl" -Sev 'Warning'
-            throw 'Invalid tokenUrl. Only https://login.microsoftonline.com is allowed.'
-        }
-
         Write-LogMessage -API $APIName -message "Making token request to $TokenUrl" -Sev 'Info'
 
         # Make sure we get the latest authentication (also refreshes $env:CertificateAuthMode)
         $auth = Get-CIPPAuthentication
 
-        # Convert the token request to form data first, so the chosen credential - client secret
-        # or certificate assertion - can be layered on top.
+        # Forward only the fields the authorization-code exchange needs; never arbitrary caller fields.
+        # The chosen credential (client secret or certificate assertion) is layered on top below.
+        $AllowedFields = @('grant_type', 'client_id', 'code', 'redirect_uri', 'code_verifier', 'scope')
         $FormData = @{}
         foreach ($key in $TokenRequest.PSObject.Properties.Name) {
-            $FormData[$key] = $TokenRequest.$key
+            if ($key -in $AllowedFields) {
+                $FormData[$key] = $TokenRequest.$key
+            }
+        }
+
+        # Bind client_id to this instance's SAM app when it is configured, so the exchange can only ever
+        # run as CIPP's own app regardless of what the caller sends.
+        if ($env:ApplicationID -and $env:ApplicationID -notmatch '^LongApplicationId$') {
+            $FormData['client_id'] = $env:ApplicationID
         }
 
         # Resolve the client secret, tolerating its absence. A secret-less certificate-only setup
@@ -72,7 +110,13 @@ function Invoke-ExecTokenExchange {
 
         if ($UseCertAssertion) {
             $AppId = $FormData['client_id']
-            if (!$AppId) { throw 'Token request is missing client_id; cannot build a certificate assertion.' }
+            if (!$AppId) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ error = 'invalid_request'; error_description = 'Token request is missing client_id; cannot build a certificate assertion.' }
+                        Headers    = @{'Content-Type' = 'application/json' }
+                    })
+            }
             $SAMCert = Get-CIPPSAMCertificate -SkipCache
             if (-not $SAMCert) {
                 throw 'Certificate authentication is required but no SAM certificate is available. Complete the application step first, then retry.'
@@ -103,23 +147,20 @@ function Invoke-ExecTokenExchange {
             break
         }
     } catch {
+        $StatusCode = [HttpStatusCode]::InternalServerError
         $ErrorMessage = $_.Exception
         $Results = @{
             error             = 'server_error'
             error_description = "Token exchange failed: $ErrorMessage"
         }
     }
-    if ($Results.error) {
-        return ([HttpResponseContext]@{
-                StatusCode = [HttpStatusCode]::BadRequest
-                Body       = $Results
-                Headers    = @{'Content-Type' = 'application/json' }
-            })
-    } else {
-        return ([HttpResponseContext]@{
-                StatusCode = [HttpStatusCode]::OK
-                Body       = $Results
-                Headers    = @{'Content-Type' = 'application/json' }
-            })
+    if ($Results.error -and $StatusCode -eq [HttpStatusCode]::OK) {
+        # The token endpoint's own OAuth error (invalid_grant and the like) is passed through as a client error
+        $StatusCode = [HttpStatusCode]::BadRequest
     }
+    return ([HttpResponseContext]@{
+            StatusCode = $StatusCode
+            Body       = $Results
+            Headers    = @{'Content-Type' = 'application/json' }
+        })
 }

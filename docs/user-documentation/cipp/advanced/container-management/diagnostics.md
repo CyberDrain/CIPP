@@ -30,16 +30,16 @@ Health checks for the selected window, worst first, so anything failing is at th
 
 ## Health Timeline
 
-Charts sharing the selected window and the same five-minute intervals, so a spike in one can be lined up against the others.
+Charts sharing the selected window and the same time axis, so a spike in one can be lined up against the others. API egress is drawn in 15-minute intervals and everything else in five-minute intervals.
 
 | Chart                | Shows                                                                                                                                                                                          |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | API Requests / 5 min | Authenticated API requests, stacked by client. The four busiest clients over the window each get their own colour, and everything else is grouped as Other.                                     |
-| API Egress / 5 min   | Data served to API clients. The caption gives today's total, and the share of the daily budget it represents where one is set. Only appears when egress is being accounted for.                 |
+| API Egress / 15 min  | Data served to API clients, stacked by client. The caption gives today's total, the share of the daily budget it represents where one is set, and how many requests were refused once the budget was reached. Only appears when egress is being accounted for. |
 | Heap (MB)            | Memory in use over time, with a dashed line marking the limit, and dashed markers where a restart or an out-of-memory event occurred.                                                           |
 | Pool Pressure        | How often the worker pool ran out, alongside the longest a request waited for a worker. Only appears where there was pool exhaustion, or a wait of ten seconds or more.                         |
 
-Below the timeline, an API Egress card shows a used-of-cap gauge for the instance total and a stacked per-client trend, switchable between 24h, 3d and 7d. It only appears on hosted instances with egress accounting enabled, and is separate from the API Egress / 5 min chart above, which follows the page's own window selector rather than its own range toggle.
+For the used-of-cap gauge and a breakdown of egress by endpoint, see the API Usage tab of the CIPP-API integration: [cipp-api.md](../../integrations/cipp-api.md "mention").
 
 ## Restart & Out-of-Memory Events
 

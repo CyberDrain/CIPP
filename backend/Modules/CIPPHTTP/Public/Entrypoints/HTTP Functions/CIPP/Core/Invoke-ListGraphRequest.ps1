@@ -6,17 +6,18 @@ function Invoke-ListGraphRequest {
     .ROLE
         CIPP.Core.Read
     .DESCRIPTION
-        Proxies an arbitrary Microsoft Graph API GET request for a tenant. Supports custom endpoints, filters, pagination, and field selection via query parameters.
+        Proxies an arbitrary Microsoft Graph API GET request for a tenant. Supports custom endpoints, filters, pagination, and field selection via query parameters. If a request returns a permission error, retry with AsApp set to true: admin and application-scoped endpoints (for example admin/sharepoint/settings) require the application's own permissions rather than the default delegated access.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
 
     $APIName = $Request.Params.CIPPEndpoint
     $Headers = $Request.Headers
-    $Message = 'Accessed this API | Endpoint: {0}' -f $Request.Query.Endpoint
-    Write-LogMessage -headers $Headers -API $APIName -message $Message -Sev 'Debug'
+    Write-LogMessage -headers $Headers -API $APIName -message 'Accessed this API' -Sev 'Debug'
 
     $CippLink = ([System.Uri]$TriggerMetadata.Headers.Referer).PathAndQuery
+    # Craft breaks egress accounting out per Graph resource on this header.
+    $EgressHeaders = @{ 'X-Craft-Endpoint' = (Get-CippGraphEndpointLabel -Endpoint $Request.Query.Endpoint) }
 
     $Parameters = @{}
     if ($Request.Query.'$filter') {
@@ -81,8 +82,18 @@ function Invoke-ListGraphRequest {
         $GraphRequestParams.QueueId = $Request.Query.QueueId
     }
 
-    if ($Request.Query.Version) {
-        $GraphRequestParams.Version = $Request.Query.Version
+    # Graph API version to call: v1.0 or beta. Defaults to beta when omitted.
+    switch ($Request.Query.Version) {
+        'v1.0' { $GraphRequestParams.Version = 'v1.0' }
+        'beta' { $GraphRequestParams.Version = 'beta' }
+        default {
+            if ($Request.Query.Version) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = 'Version must be v1.0 or beta.'
+                    })
+            }
+        }
     }
 
     # Return only the first page and stop. The default follows every @odata.nextLink until
@@ -153,6 +164,21 @@ function Invoke-ListGraphRequest {
         $GraphRequestParams.AsApp = [System.Convert]::ToBoolean($Request.Query.AsApp)
     }
 
+    # AllTenants only: queue just the tenants missing from a partial cache, serving the cached rows meanwhile.
+    if ($Request.Query.FillMissing) {
+        $GraphRequestParams.FillMissing = [System.Convert]::ToBoolean($Request.Query.FillMissing)
+    }
+
+    # AllTenants only: query every tenant again although a cache exists, serving the cached rows until each is replaced.
+    if ($Request.Query.RefreshCache) {
+        $GraphRequestParams.RefreshCache = [System.Convert]::ToBoolean($Request.Query.RefreshCache)
+    }
+
+    $CacheStatus = @{}
+    if ($Request.Query.TenantFilter -eq 'AllTenants') {
+        $GraphRequestParams.CacheStatus = $CacheStatus
+    }
+
     $Metadata = $GraphRequestParams
 
     # Use raw JSON passthrough for AllTenants cached results when no post-processing is needed.
@@ -166,6 +192,13 @@ function Invoke-ListGraphRequest {
             $GraphRequestParams.RawJsonArray = $true
         }
         $Results = Get-GraphRequestList @GraphRequestParams
+        # How many tenants the cached rows cover, and the run filling in the rest
+        $Metadata.Remove('CacheStatus')
+        if ($CacheStatus.ExpectedTenants) {
+            $Metadata.CachedTenants = $CacheStatus.CachedTenants
+            $Metadata.ExpectedTenants = $CacheStatus.ExpectedTenants
+            if ($CacheStatus.QueueId) { $Metadata.QueueId = $CacheStatus.QueueId }
+        }
 
         if ($script:LastGraphResponseHeaders) {
             $Metadata.GraphHeaders = $script:LastGraphResponseHeaders
@@ -188,6 +221,7 @@ function Invoke-ListGraphRequest {
             return ([HttpResponseContext]@{
                     StatusCode  = [HttpStatusCode]::OK
                     ContentType = 'application/json'
+                    Headers     = $EgressHeaders
                     Body        = $GraphRequestData
                 })
         }
@@ -204,6 +238,7 @@ function Invoke-ListGraphRequest {
             return ([HttpResponseContext]@{
                     StatusCode  = $StatusCode
                     ContentType = 'application/json'
+                    Headers     = $EgressHeaders
                     Body        = $GraphRequestData
                 })
         }
@@ -254,6 +289,7 @@ function Invoke-ListGraphRequest {
 
     return ([HttpResponseContext]@{
             StatusCode = $StatusCode
+            Headers    = $EgressHeaders
             Body       = $GraphRequestData
         })
 }

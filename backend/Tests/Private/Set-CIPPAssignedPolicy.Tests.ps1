@@ -90,6 +90,28 @@ Describe 'Set-CIPPAssignedPolicy' {
         }
     }
 
+    Context 'a picked group whose display name is a broad-target token' {
+        # The deploy drawers send the picked group's display name as GroupName next to its id.
+        It 'assigns the group by id instead of expanding the name to All Devices' {
+            $null = Set-CIPPAssignedPolicy -GroupName 'AllDevices' -GroupIds @($script:SalesId) -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant -AssignmentMode 'replace'
+
+            Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter {
+                $Targets = ($body | ConvertFrom-Json).assignments.target
+                @($Targets).Count -eq 1 -and
+                $Targets[0].'@odata.type' -eq '#microsoft.graph.groupAssignmentTarget' -and
+                $Targets[0].groupId -eq $script:SalesId
+            }
+        }
+
+        It 'does not read a group named On as do-not-assign' {
+            $null = Set-CIPPAssignedPolicy -GroupName 'On' -GroupIds @($script:SalesId) -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant -AssignmentMode 'replace'
+
+            Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter {
+                ($body | ConvertFrom-Json).assignments.target.groupId -eq $script:SalesId
+            }
+        }
+    }
+
     Context 'broad targets on a device management policy' {
         It 'sends the allLicensedUsers target' {
             $null = Set-CIPPAssignedPolicy -GroupName 'allLicensedUsers' -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant
@@ -151,6 +173,78 @@ Describe 'Set-CIPPAssignedPolicy' {
                 $Types -contains '#microsoft.graph.groupAssignmentTarget' -and
                 $Types -contains '#microsoft.graph.exclusionGroupAssignmentTarget'
             }
+        }
+    }
+
+    Context 'direction-scoped replace (Custom Group action)' {
+        BeforeEach {
+            $script:ExcludedId = '22222222-2222-2222-2222-222222222222'
+            Mock -CommandName New-GraphGetRequest -ParameterFilter { $uri -like '*/assignments' } -MockWith {
+                @(
+                    [PSCustomObject]@{ target = [PSCustomObject]@{ '@odata.type' = '#microsoft.graph.allDevicesAssignmentTarget' } }
+                    [PSCustomObject]@{ target = [PSCustomObject]@{ '@odata.type' = '#microsoft.graph.allLicensedUsersAssignmentTarget' } }
+                    [PSCustomObject]@{ target = [PSCustomObject]@{ '@odata.type' = '#microsoft.graph.exclusionGroupAssignmentTarget'; groupId = $script:ExcludedId } }
+                )
+            }
+        }
+
+        # Keeping the broad targets made Include + Replace a no-op: All Devices plus a group is still All Devices.
+        It 'include replaces All Users / All Devices with the picked groups and keeps exclusions' {
+            $null = Set-CIPPAssignedPolicy -GroupIds @($script:SalesId) -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant -AssignmentMode 'replace' -AssignmentDirection 'include'
+
+            Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter {
+                $Targets = @(($body | ConvertFrom-Json).assignments.target)
+                $Targets.Count -eq 2 -and
+                ($Targets | Where-Object { $_.'@odata.type' -eq '#microsoft.graph.groupAssignmentTarget' }).groupId -eq $script:SalesId -and
+                ($Targets | Where-Object { $_.'@odata.type' -eq '#microsoft.graph.exclusionGroupAssignmentTarget' }).groupId -eq $script:ExcludedId
+            }
+        }
+
+        It 'exclude keeps All Users / All Devices, the exclusions narrow them' {
+            $null = Set-CIPPAssignedPolicy -ExcludeGroupIds @($script:SalesId) -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant -AssignmentMode 'replace' -AssignmentDirection 'exclude'
+
+            Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter {
+                $Types = @(($body | ConvertFrom-Json).assignments.target.'@odata.type')
+                $Types.Count -eq 3 -and
+                $Types -contains '#microsoft.graph.allDevicesAssignmentTarget' -and
+                $Types -contains '#microsoft.graph.allLicensedUsersAssignmentTarget' -and
+                @(($body | ConvertFrom-Json).assignments.target.groupId) -notcontains $script:ExcludedId
+            }
+        }
+    }
+
+    Context 'when an exclude group name does not resolve' {
+        BeforeEach {
+            $script:ExclId = '22222222-2222-2222-2222-222222222222'
+            Mock -CommandName New-GraphGetRequest -ParameterFilter { $uri -like '*/groups?*' } -MockWith {
+                @(
+                    [PSCustomObject]@{ id = $script:SalesId; displayName = 'Sales Users' },
+                    [PSCustomObject]@{ id = $script:ExclId; displayName = 'Real - Excluded' }
+                )
+            }
+        }
+
+        It 'throws, warns naming the group, and does not post' {
+            { Set-CIPPAssignedPolicy -GroupName 'AllDevices' -ExcludeGroup 'Missing - Excluded' -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant } |
+                Should -Throw
+
+            Should -Invoke New-GraphPOSTRequest -Times 0 -Exactly
+            Should -Invoke Write-LogMessage -ParameterFilter { $Sev -eq 'Warning' -and $message -like '*Missing - Excluded*' }
+        }
+
+        It 'names only the unresolved name when another resolves' {
+            { Set-CIPPAssignedPolicy -GroupName 'AllDevices' -ExcludeGroup 'Real - Excluded,Missing - Excluded' -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant } |
+                Should -Throw
+
+            Should -Invoke Write-LogMessage -ParameterFilter { $Sev -eq 'Warning' -and $message -like '*Missing - Excluded*' -and $message -notlike '*Real - Excluded*' }
+            Should -Invoke New-GraphPOSTRequest -Times 0 -Exactly
+        }
+
+        It 'still assigns when the exclude name resolves' {
+            $Result = Set-CIPPAssignedPolicy -GroupName 'AllDevices' -ExcludeGroup 'Real - Excluded' -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant
+
+            $Result | Should -BeLike "*excluded group 'Real - Excluded'*"
+            Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter { ($body | ConvertFrom-Json).assignments.target.groupId -contains $script:ExclId }
         }
     }
 

@@ -14,11 +14,11 @@ The project publicly posts security reports after resolution, including all comm
 
 ## Notifications and Security Advisories
 
-Security notification reporting is via the GitHub notification and advisory system. Sponsors with hosted instances receive a notification directly.
+Security notification reporting is via the GitHub notification and advisory system. Subscribers with hosted instances receive a notification directly.
 
 ## Bounties and Rewards
 
-This project is an open-source sponsor-ware effort, which makes it hard to create a monetary reward without breaking the bank.
+This project is a subscription-funded open-source effort, which makes it hard to create a monetary reward without breaking the bank.
 
 For _critical_ security bugs, involving things like remote code execution or API data leaks, the project aims to offer a 50-dollar reward. For other bugs, the project may reward with some swag such as an official CyberDrain t-shirt or hoodie.
 

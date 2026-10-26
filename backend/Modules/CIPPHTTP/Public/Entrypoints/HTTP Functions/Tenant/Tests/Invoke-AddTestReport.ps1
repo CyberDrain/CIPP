@@ -3,30 +3,48 @@ function Invoke-AddTestReport {
     .FUNCTIONALITY
         Entrypoint
     .ROLE
-        CIPP.Dashboard.Read
+        Tenant.Tests.ReadWrite
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
 
     $APIName = $TriggerMetadata.FunctionName
-    Write-LogMessage -user $Request.Headers.'x-ms-client-principal' -API $APIName -message 'Accessed this API' -Sev 'Debug'
+
+    $Body = $Request.Body
+
+    # Validate required fields
+    if ([string]::IsNullOrEmpty($Body.name)) {
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = ConvertTo-Json -InputObject @{ Results = 'Failed to save report: Report name is required' }
+            })
+    }
+    if ($Body.name.Length -gt 256) {
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = ConvertTo-Json -InputObject @{ Results = 'Failed to save report: Report name must be 256 characters or fewer' }
+            })
+    }
 
     try {
-        $Body = $Request.Body
-
-        # Validate required fields
-        if ([string]::IsNullOrEmpty($Body.name)) {
-            throw 'Report name is required'
-        }
-        if ($Body.name.Length -gt 256) {
-            throw 'Report name must be 256 characters or fewer'
-        }
 
         $IsUpdate = -not [string]::IsNullOrWhiteSpace([string]$Body.ReportId)
         $ReportTable = Get-CippTable -tablename 'CippReportTemplates'
 
-        # Use existing ReportId for updates, otherwise generate a new ID
-        $ReportId = if ($IsUpdate) { [string]$Body.ReportId } else { [string](New-Guid) }
+        # Use existing ReportId for updates, otherwise generate a new ID. Validate a caller-supplied
+        # ReportId as a GUID so it cannot inject into the table filter or target an arbitrary RowKey.
+        if ($IsUpdate) {
+            try {
+                $ReportId = ConvertTo-CIPPODataFilterValue -Value ([string]$Body.ReportId).ToLowerInvariant() -Type Guid
+            } catch {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = ConvertTo-Json -InputObject @{ Results = 'Failed to save report: Invalid ReportId' }
+                    })
+            }
+        } else {
+            $ReportId = [string](New-Guid)
+        }
         $IdentityTests = $Body.IdentityTests ? ($Body.IdentityTests | ConvertTo-Json -Compress) : '[]'
         $DevicesTests = $Body.DevicesTests ? ($Body.DevicesTests | ConvertTo-Json -Compress) : '[]'
         $CustomTests = $Body.CustomTests ? ($Body.CustomTests | ConvertTo-Json -Compress) : '[]'
@@ -35,7 +53,10 @@ function Invoke-AddTestReport {
         if ($IsUpdate) {
             $ExistingReport = Get-CIPPAzDataTableEntity @ReportTable -Filter "PartitionKey eq 'Report' and RowKey eq '$ReportId'"
             if (-not $ExistingReport) {
-                throw 'Custom report not found'
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::NotFound
+                        Body       = ConvertTo-Json -InputObject @{ Results = 'Failed to save report: Custom report not found' }
+                    })
             }
             $CreatedAt = [string]($ExistingReport.CreatedAt ?? (Get-Date).ToString('o'))
         }
@@ -69,7 +90,7 @@ function Invoke-AddTestReport {
         $Body = [PSCustomObject]@{
             Results = "Failed to save report: $($ErrorMessage.NormalizedError)"
         }
-        $StatusCode = [HttpStatusCode]::BadRequest
+        $StatusCode = [HttpStatusCode]::InternalServerError
     }
 
     return ([HttpResponseContext]@{

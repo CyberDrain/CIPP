@@ -92,7 +92,6 @@ function Get-CippTestDataFieldManifest {
             'CsTenantFederationConfiguration'    = @('AllowFederatedUsers', 'AllowedDomains', 'AllowTeamsConsumer', 'AllowTeamsConsumerInbound')
             'DefaultAppManagementPolicy'         = @('isEnabled', 'applicationRestrictions', 'servicePrincipalRestrictions')
             'DeviceRegistrationPolicy'           = @('azureADJoin', 'userDeviceQuota', 'localAdminPassword', 'multiFactorAuthConfiguration')
-            'DeviceSettings'                     = @('secureByDefault')
             'DirectoryRecommendations'           = @('status', 'priority', 'displayName', 'impactType', 'lastModifiedDateTime', 'insights', 'recommendationType', 'applicationDisplayName', 'applicationId')
             'DlpCompliancePolicies'              = @('Name', 'DisplayName', 'Mode', 'Enabled', 'TeamsLocation', 'TeamsLocationException', 'Workload', 'EnforcementPlanes')
             'Domains'                            = @('id', 'passwordValidityPeriodInDays', 'authenticationType')
@@ -106,7 +105,8 @@ function Get-CippTestDataFieldManifest {
             'ExoHostedOutboundSpamFilterPolicy'  = @('Identity', 'IsDefault', 'RecipientLimitExternalPerHour', 'RecipientLimitInternalPerHour', 'RecipientLimitPerDay', 'ActionWhenThresholdReached', 'NotifyOutboundSpam', 'NotifyOutboundSpamRecipients', 'BccSuspiciousOutboundMail', 'BccSuspiciousOutboundAdditionalRecipients', 'AutoForwardingMode')
             'ExoInboundConnector'                = @('Identity', 'Enabled', 'SenderDomains', 'EFSkipLastIP', 'EFSkipIPs', 'EFTestMode', 'EFUsers')
             'ExoMalwareFilterPolicies'           = @('Name', 'Identity', 'IsDefault', 'EnableFileFilter', 'FileTypes', 'EnableInternalSenderAdminNotifications', 'InternalSenderAdminAddress', 'ZapEnabled', 'Action', 'RecipientDomainIs')
-            'ExoOrganizationConfig'              = @('CustomerLockBoxEnabled', 'BookingsEnabled', 'AuditDisabled', 'ExternalInOutlookEnabled', 'ExternalInOutlook', 'OAuth2ClientProfileEnabled', 'MailTipsAllTipsEnabled', 'MailTipsExternalRecipientsTipsEnabled', 'MailTipsGroupMetricsEnabled', 'MailTipsLargeAudienceThreshold', 'RejectDirectSend')
+            'ExoExternalInOutlook'               = @('Identity', 'Enabled', 'AllowList')
+            'ExoOrganizationConfig'              = @('CustomerLockBoxEnabled', 'BookingsEnabled', 'AuditDisabled', 'OAuth2ClientProfileEnabled', 'MailTipsAllTipsEnabled', 'MailTipsExternalRecipientsTipsEnabled', 'MailTipsGroupMetricsEnabled', 'MailTipsLargeAudienceThreshold', 'RejectDirectSend')
             'ExoPresetSecurityPolicy'            = @('Identity', 'State', 'ImpersonationProtectionState', 'EnableMailboxIntelligence', 'EnableMailboxIntelligenceProtection', 'EnableSimilarUsersSafetyTips', 'EnableSimilarDomainsSafetyTips', 'EnableUnusualCharactersSafetyTips')
             'ExoProtectionAlert'                 = @('Name', 'Disabled')
             'ExoRemoteDomain'                    = @('Name', 'DomainName', 'AutoForwardEnabled')
@@ -117,7 +117,7 @@ function Get-CippTestDataFieldManifest {
             'ExoTransportConfig'                 = @('SmtpClientAuthenticationDisabled')
             'ExoTransportRules'                  = @('Name', 'State', 'Priority', 'SetSCL', 'SetSpamConfidenceLevel', 'SetHeaderName', 'SetHeaderValue', 'SenderDomainIs')
             'FormsSettings'                      = @('isInOrgFormsPhishingScanEnabled')
-            'Groups'                             = @('id', 'displayName', 'mail', 'visibility', 'groupTypes', 'members', 'isAssignableToRole')
+            'Groups'                             = @('id', 'displayName', 'mail', 'visibility', 'groupTypes', 'isAssignableToRole')
             'Guests'                             = @('id', 'displayName', 'userPrincipalName', 'accountEnabled', 'signInActivity', 'createdDateTime', 'sponsors')
             # URLName is added by the collector (Add-Member), not returned by Graph. It carries the
             # Graph resource each policy came from (iosManagedAppProtection /
@@ -148,16 +148,16 @@ function Get-CippTestDataFieldManifest {
             'RoleEligibilitySchedules'           = @('id', 'roleDefinitionId', 'principalId', 'principal', 'scheduleInfo', 'directoryScopeId', 'memberType', 'status')
             # policyId, not id: this type is sourced from roleManagementPolicyAssignments (only the
             # assignment carries roleDefinitionId) and the policy is flattened up one level.
-            'RoleManagementPolicies'             = @('policyId', 'scopeId', 'scopeType', 'roleDefinitionId', 'rules', 'effectiveRules')
+            'RoleManagementPolicies'             = @('policyId', 'scopeId', 'scopeType', 'roleDefinitionId', 'rules')
             'Roles'                              = @('id', 'displayName', 'roleTemplateId', 'members')
             'SecureScore'                        = @('currentScore', 'maxScore', 'createdDateTime', 'controlScores')
-            'SensitivityLabels'                  = @('name', 'PolicyName', 'IsValid', 'isActive', 'sensitivity', 'parent', 'hasProtection')
+            'SensitivityLabels'                  = @('name', 'isActive', 'sensitivity', 'parent', 'hasProtection')
             'ServicePrincipalRiskDetections'     = @('servicePrincipalId', 'servicePrincipalDisplayName', 'appId', 'activity', 'riskState', 'riskLevel', 'riskEventType', 'detectedDateTime', 'lastUpdatedDateTime')
             'ServicePrincipals'                  = @('id', 'appId', 'displayName', 'accountEnabled', 'keyCredentials', 'passwordCredentials', 'appOwnerOrganizationId', 'servicePrincipalType', 'replyUrls', 'owners', 'appRoleAssignmentRequired', 'preferredSingleSignOnMode')
             'Settings'                           = @('id', 'templateId', 'displayName', 'values', 'isOfficeStoreEnabled', 'isAppAndServicesTrialEnabled', 'isInOrgFormsPhishingScanEnabled')
-            'SPOTenant'                          = @('LegacyAuthProtocolsEnabled', 'EnableAzureADB2BIntegration', 'SharingCapability', 'OneDriveSharingCapability', 'PreventExternalUsersFromResharing', 'SharingDomainRestrictionMode', 'SharingAllowedDomainList', 'SharingBlockedDomainList', 'DefaultSharingLinkType', 'DefaultLinkPermission', 'ExternalUserExpirationRequired', 'ExternalUserExpireInDays', 'EmailAttestationRequired', 'EmailAttestationReAuthDays', 'DisallowInfectedFileDownload')
+            'SPOTenant'                          = @('LegacyAuthProtocolsEnabled', 'EnableAzureADB2BIntegration', 'SharingCapability', 'ODBSharingCapability', 'PreventExternalUsersFromResharing', 'SharingDomainRestrictionMode', 'SharingAllowedDomainList', 'SharingBlockedDomainList', 'DefaultSharingLinkType', 'DefaultLinkPermission', 'ExternalUserExpirationRequired', 'ExternalUserExpireInDays', 'EmailAttestationRequired', 'EmailAttestationReAuthDays', 'DisallowInfectedFileDownload')
             'UserRegistrationDetails'            = @('id', 'userPrincipalName', 'userDisplayName', 'isMfaCapable', 'isMfaRegistered', 'methodsRegistered')
-            'Users'                              = @('id', 'userPrincipalName', 'displayName', 'accountEnabled', 'userType', 'onPremisesSyncEnabled', 'assignedLicenses', 'assignedPlans', 'signInActivity', 'passwordPolicies')
+            'Users'                              = @('id', 'userPrincipalName', 'displayName', 'accountEnabled', 'userType', 'onPremisesSyncEnabled', 'assignedLicenses', 'signInActivity', 'passwordPolicies')
         }
     }
 

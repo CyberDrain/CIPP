@@ -17,6 +17,10 @@ function Invoke-AddPolicy {
     $description = $Request.Body.Description
     $AssignTo = if ($Request.Body.AssignTo -ne 'on') { $Request.Body.AssignTo }
     $ExcludeGroup = $Request.Body.excludeGroup
+    # Sent by the deploy drawer when a single tenant is selected and groups were picked by id.
+    # customGroup/excludeGroup still carry the display names for logging and as a fallback.
+    $GroupIds = @($Request.Body.GroupIds | Where-Object { $_ })
+    $ExcludeGroupIds = @($Request.Body.ExcludeGroupIds | Where-Object { $_ })
     $AssignmentFilterSelection = $Request.Body.AssignmentFilterName ?? $Request.Body.assignmentFilter
     $AssignmentFilterType = $Request.Body.AssignmentFilterType ?? $Request.Body.assignmentFilterType
     $AssignmentFilterName = switch ($AssignmentFilterSelection) {
@@ -29,6 +33,7 @@ function Invoke-AddPolicy {
     $Request.Body.customGroup ? ($AssignTo = $Request.Body.customGroup) : $null
     $RawJSON = $Request.Body.RAWJson
 
+    $Failed = 0
     $Results = foreach ($Tenant in $Tenants) {
         if ($Request.Body.replacemap.$Tenant) {
             ([pscustomobject]$Request.Body.replacemap.$Tenant).PSObject.Properties | ForEach-Object { $RawJSON = $RawJSON -replace $_.name, $_.value }
@@ -74,9 +79,16 @@ function Invoke-AddPolicy {
         }
 
         try {
+            # Per tenant, because the replacemap above rewrites the payload.
+            $Validation = Test-CIPPIntuneTemplate -RawJSON $RawJSON -TemplateType $Request.Body.TemplateType -DisplayName $DisplayName
+            if (-not $Validation.IsValid) {
+                throw "Not deployed to $Tenant : $($Validation.Errors -join ' ')"
+            }
+
             Write-Host 'Calling Adding policy'
             $params = @{
-                TemplateType     = $Request.Body.TemplateType
+                # Resolved type: a template stored before Type was recorded arrives with none.
+                TemplateType     = $Validation.Type
                 Description      = $description
                 DisplayName      = $DisplayName
                 RawJSON          = $RawJSON
@@ -87,6 +99,8 @@ function Invoke-AddPolicy {
                 Headers          = $Headers
                 APIName          = $APIName
             }
+            if ($GroupIds.Count -gt 0) { $params.GroupIds = $GroupIds }
+            if ($ExcludeGroupIds.Count -gt 0) { $params.ExcludeGroupIds = $ExcludeGroupIds }
 
             if (-not [string]::IsNullOrWhiteSpace($AssignmentFilterName)) {
                 $params.AssignmentFilterName = $AssignmentFilterName
@@ -95,13 +109,14 @@ function Invoke-AddPolicy {
 
             Set-CIPPIntunePolicy @params
         } catch {
+            $Failed++
             "$($_.Exception.Message)"
             continue
         }
     }
 
     return ([HttpResponseContext]@{
-            StatusCode = [HttpStatusCode]::OK
+            StatusCode = Get-CippBulkStatusCode -Total @($Tenants).Count -Failed $Failed
             Body       = @{'Results' = @($Results) }
         })
 }

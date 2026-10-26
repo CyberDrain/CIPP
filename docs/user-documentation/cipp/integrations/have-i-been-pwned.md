@@ -6,7 +6,7 @@ The Have I Been Pwned integration lets CIPP check tenant domains and individual 
 
 | Setting                                                                                      | Description                                                                                                                                                                                                |
 | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Enter your own HIBP API Key. When you are a CyberDrain hosted partner, leave this key blank. | Your Have I Been Pwned API key. Stored securely and masked once saved. CyberDrain-hosted partners can leave this blank to fall back to the shared key provided through CyberDrain's partnership with HIBP. |
+| Enter your own HIBP API Key. When you are a CyberDrain hosted partner, leave this key blank. | Your Have I Been Pwned API key. Stored securely and masked once saved. CyberDrain-hosted subscribers can leave this blank to fall back to the shared key provided through CyberDrain's partnership with HIBP. |
 | Enable Integration - Allow darkweb scanning through tools and alerts                         | Turns the integration on. The API key field and the **Test** button remain unavailable until this is enabled and saved.                                                                                    |
 
 {% hint style="info" %}
@@ -21,7 +21,7 @@ The API key field appears above the toggle on screen, but the toggle governs it.
 
 Purchase or retrieve an [API key from HIBP](https://haveibeenpwned.com/API/Key).
 
-CyberDrain-hosted sponsors have access to a complimentary key through a partnership with HIBP and can skip this step, leaving the key blank.
+CyberDrain-hosted subscribers have access to a complimentary key through a partnership with HIBP and can skip this step, leaving the key blank.
 {% endstep %}
 
 {% step %}
@@ -53,7 +53,7 @@ The button clears the key immediately, without a confirmation prompt. It also re
 
 ## Where Breach Data Is Used
 
-Breach data reaches CIPP through two different routes, which is worth knowing when troubleshooting.
+Breach data reaches CIPP in two ways, on demand from the lookup pages and on a schedule from the breach alert, which is worth knowing when troubleshooting.
 
 | Feature              | Description                                                                                                                                                                 |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

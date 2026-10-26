@@ -43,16 +43,40 @@ function Get-CIPPAlertVulnerabilities {
     }
 
     try {
-        $VulnerabilityGroups = New-GraphGetRequest -tenantid $TenantFilter -uri 'https://api.securitycenter.microsoft.com/api/machines/SoftwareVulnerabilitiesByMachine' -scope 'https://api.securitycenter.microsoft.com/.default' |
-            Where-Object { $_.cveId } |
-            Select-Object cveId, vulnerabilitySeverityLevel, firstSeenTimestamp, lastSeenTimestamp, cvssScore, exploitabilityLevel, softwareName, softwareVendor, softwareVersion, recommendedSecurityUpdate, recommendedSecurityUpdateId, recommendedSecurityUpdateUrl, deviceName, deviceId, osPlatform, osVersion, osArchitecture |
-            Group-Object cveId
+        # Fold the streamed export into one small bucket per CVE (earliest record, record count,
+        # unique device names) instead of grouping every device x CVE record in memory. Each device
+        # name is stored once tenant-wide and buckets hold its index, as the DefenderCVEs cache does.
+        $Buckets = @{}
+        $DeviceIndex = [System.Collections.Generic.Dictionary[string, int]]::new([System.StringComparer]::Ordinal)
+        $DeviceNames = [System.Collections.Generic.List[string]]::new()
+        $Fields = @('cveId', 'deviceName', 'firstSeenTimestamp', 'lastSeenTimestamp', 'cvssScore', 'vulnerabilitySeverityLevel', 'exploitabilityLevel',
+            'softwareName', 'softwareVendor', 'softwareVersion', 'recommendedSecurityUpdate', 'recommendedSecurityUpdateId', 'recommendedSecurityUpdateUrl')
+        Get-DefenderTvmRaw -TenantId $TenantFilter -Stream -Property $Fields | & { process {
+            if (-not $_.cveId) { return }
+            $Bucket = $Buckets[$_.cveId]
+            if (-not $Bucket) {
+                $Bucket = @{ First = $_; Count = 0; Devices = [System.Collections.Generic.List[int]]::new(); Seen = [System.Collections.Generic.HashSet[int]]::new() }
+                $Buckets[$_.cveId] = $Bucket
+            } elseif ($_.firstSeenTimestamp -lt $Bucket.First.firstSeenTimestamp) {
+                $Bucket.First = $_
+            }
+            $Bucket.Count++
+            $DeviceName = [string]$_.deviceName
+            $Index = $DeviceIndex[$DeviceName]
+            if ($null -eq $Index) {
+                $Index = $DeviceNames.Count
+                $DeviceIndex[$DeviceName] = $Index
+                $DeviceNames.Add($DeviceName)
+            }
+            if ($Bucket.Seen.Add($Index)) { $Bucket.Devices.Add($Index) }
+        } }
 
-        if ($VulnerabilityGroups) {
+        if ($Buckets.Count -gt 0) {
             $AlertData = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-            foreach ($Group in $VulnerabilityGroups) {
-                $FirstVuln = $Group.Group | Sort-Object firstSeenTimestamp | Select-Object -First 1
+            foreach ($CveId in ($Buckets.Keys | Sort-Object)) {
+                $Bucket = $Buckets[$CveId]
+                $FirstVuln = $Bucket.First
                 $HoursOld = [math]::Round(((Get-Date) - [datetime]$FirstVuln.firstSeenTimestamp).TotalHours)
 
                 # Skip based on age threshold mode
@@ -82,16 +106,19 @@ function Get-CIPPAlertVulnerabilities {
                 }
 
                 $DaysOld = [math]::Round(((Get-Date) - [datetime]$FirstVuln.firstSeenTimestamp).TotalDays)
-                $AffectedDevices = ($Group.Group | Select-Object -ExpandProperty deviceName -Unique) -join ', '
+                $Names = [string[]]::new($Bucket.Devices.Count)
+                for ($i = 0; $i -lt $Names.Length; $i++) { $Names[$i] = $DeviceNames[$Bucket.Devices[$i]] }
+                $AffectedDevices = [string]::Join(', ', $Names)
 
                 $VulnerabilityAlert = [PSCustomObject]@{
-                    CVE                  = $Group.Name
+                    Id                   = $CveId
+                    CVE                  = $CveId
                     Severity             = $FirstVuln.vulnerabilitySeverityLevel
                     FirstSeenTimestamp   = $FirstVuln.firstSeenTimestamp
                     LastSeenTimestamp    = $FirstVuln.lastSeenTimestamp
                     DaysOld              = $DaysOld
                     HoursOld             = $HoursOld
-                    AffectedDeviceCount  = $Group.Count
+                    AffectedDeviceCount  = $Bucket.Count
                     SoftwareName         = $FirstVuln.softwareName
                     SoftwareVendor       = $FirstVuln.softwareVendor
                     SoftwareVersion      = $FirstVuln.softwareVersion
@@ -106,11 +133,9 @@ function Get-CIPPAlertVulnerabilities {
                 $AlertData.Add($VulnerabilityAlert)
             }
 
-            # Only send alert if we have vulnerabilities that meet the criteria
-            if ($AlertData.Count -gt 0) {
-                Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data $AlertData
-            }
         }
+
+        Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data $AlertData
     } catch {
         Write-LogMessage -message "Failed to check vulnerabilities: $($_.exception.message)" -API 'Vulnerability Alerts' -tenant $TenantFilter -sev Error
     }

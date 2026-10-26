@@ -19,8 +19,8 @@ function Invoke-ListSiteUserAccess {
           resolved through transitiveMemberOf so nested groups count
         - A tenant-wide claim (Everyone, Everyone except external users, All Users), which every
           internal user matches
-        - Sharing links and direct item shares the user received, read from the
-          SharePointSharingLinks cache rather than live
+        - Sharing links and direct item shares the user received, read from the cached
+          sharing links rather than live
 
         When a library is given and it still inherits, its permissions are the site's, so the
         site is evaluated and the result says so.
@@ -38,13 +38,19 @@ function Invoke-ListSiteUserAccess {
     $ListId = $Request.Query.ListId ?? $Request.Body.ListId
     $UserPrincipalName = $Request.Query.UserPrincipalName ?? $Request.Body.UserPrincipalName
 
-    try {
-        if ([string]::IsNullOrWhiteSpace($SiteUrl)) { throw 'SiteUrl is required.' }
-        if ([string]::IsNullOrWhiteSpace($UserPrincipalName)) { throw 'UserPrincipalName is required.' }
+    if ([string]::IsNullOrWhiteSpace($SiteUrl)) {
+        return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ 'Results' = 'SiteUrl is required.' } })
+    }
+    if ([string]::IsNullOrWhiteSpace($UserPrincipalName)) {
+        return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ 'Results' = 'UserPrincipalName is required.' } })
+    }
 
+    try {
         # --- Resolve the user and every group they are in, nested groups included ---
         $User = New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/users/$UserPrincipalName`?`$select=id,displayName,userPrincipalName,mail,userType" -tenantid $TenantFilter -AsApp $true
-        if (-not $User.id) { throw "User $UserPrincipalName was not found in this tenant." }
+        if (-not $User.id) {
+            return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::NotFound; Body = @{ 'Results' = "User $UserPrincipalName was not found in this tenant." } })
+        }
         $IsGuest = $User.userType -eq 'Guest' -or $User.userPrincipalName -match '(?i)#ext#'
 
         $GroupIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
@@ -167,7 +173,7 @@ function Invoke-ListSiteUserAccess {
         # --- Sharing links this user received, from the cache ---
         $SharingLinksChecked = $false
         try {
-            $CachedLinks = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'SharePointSharingLinks')
+            $CachedLinks = @(Get-CIPPSharingLinks -TenantFilter $TenantFilter)
             $SharingLinksChecked = $CachedLinks.Count -gt 0
             $SiteHost = ([System.Uri]$SiteUrl).AbsoluteUri.TrimEnd('/')
             foreach ($Link in $CachedLinks) {
@@ -208,7 +214,7 @@ function Invoke-ListSiteUserAccess {
         $ErrorMessage = Get-CippException -Exception $_
         $Results = "Failed to check access: $($ErrorMessage.NormalizedError)"
         Write-LogMessage -Headers $Request.Headers -API $APIName -tenant $TenantFilter -message $Results -sev Error -LogData $ErrorMessage
-        $StatusCode = [HttpStatusCode]::BadRequest
+        $StatusCode = [HttpStatusCode]::InternalServerError
     }
 
     return ([HttpResponseContext]@{

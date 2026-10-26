@@ -45,6 +45,7 @@ function Get-CIPPBrandingSettings {
             showPageNumbers  = $true
             watermarkText    = ''
             watermarkEnabled = $true
+            coverFade        = $true
             reportDefaults   = [pscustomobject]@{}
             roleColours      = [pscustomobject]@{}
         }
@@ -265,6 +266,13 @@ function Get-CIPPBrandingSettings {
     $ShowPageNumbers = if ($null -eq $BrandingConfig.showPageNumbers) { $true } else { [bool]$BrandingConfig.showPageNumbers }
     $WatermarkEnabled = if ($null -eq $BrandingConfig.watermarkEnabled) { $true } else { [bool]$BrandingConfig.watermarkEnabled }
 
+    # The gallery covers by id and name, without their data: what a picker elsewhere (an Infographic
+    # page's background in the report builder) needs to offer them.
+    $CoverNames = Get-CIPPImageNameMap -PartitionKey 'brandingCover'
+    $CoverImages = @(foreach ($Cid in $CoverImageIds) {
+            [pscustomobject]@{ id = [string]$Cid; name = if ($CoverNames.ContainsKey([string]$Cid)) { $CoverNames[[string]$Cid] } else { '' } }
+        })
+
     return [pscustomobject]@{
         colour           = if ($BrandingConfig.colour) { $BrandingConfig.colour } else { '#F77F00' }
         secondaryColour  = $SecondaryColour
@@ -277,13 +285,17 @@ function Get-CIPPBrandingSettings {
         logoUploads      = [string[]]@($LogoUploads)
         coverImage       = $CoverImageData
         coverUploads     = [string[]]@($CoverUploads)
+        coverImages      = $CoverImages
         footerText       = $FooterText
         coverFooterText  = $CoverFooterText
         showFooter       = $ShowFooter
         showPageNumbers  = $ShowPageNumbers
         watermarkText    = $WatermarkText
         watermarkEnabled = $WatermarkEnabled
+        coverFade        = $null -eq $BrandingConfig.coverFade -or [bool]$BrandingConfig.coverFade
         reportDefaults   = $ReportDefaults
         roleColours      = $RoleColours
+        # Which of the tenant's names a report prints; 'alias' is the name CIPP shows, the old behaviour.
+        tenantLabel      = if (@('alias', 'name', 'domain') -contains "$($BrandingConfig.tenantLabel)") { "$($BrandingConfig.tenantLabel)" } else { 'alias' }
     }
 }

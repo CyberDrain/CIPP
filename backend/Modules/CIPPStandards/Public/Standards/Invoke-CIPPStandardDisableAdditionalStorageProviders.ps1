@@ -15,7 +15,6 @@ function Invoke-CIPPStandardDisableAdditionalStorageProviders {
         TAG
             "CIS M365 5.0 (6.5.3)"
             "exo_storageproviderrestricted"
-            "ZTNA21817"
         EXECUTIVETEXT
             Prevents employees from accessing personal cloud storage services like Dropbox or Google Drive through Outlook on the web, reducing data security risks and ensuring company information stays within approved corporate systems. This helps maintain data governance and prevents accidental data leaks.
         ADDEDCOMPONENT
@@ -52,7 +51,7 @@ function Invoke-CIPPStandardDisableAdditionalStorageProviders {
     }
     catch {
         $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-        Write-LogMessage -API 'Standards' -Tenant $Tenant -Message "Could not get the DisableAddShortcutsToOneDrive state for $Tenant. Error: $ErrorMessage" -Sev Error
+        Write-LogMessage -API 'Standards' -Tenant $Tenant -Message "Could not get the DisableAdditionalStorageProviders state for $Tenant. Error: $ErrorMessage" -Sev Error
         return
     }
 
@@ -91,8 +90,6 @@ function Invoke-CIPPStandardDisableAdditionalStorageProviders {
     }
 
     if ($Settings.report -eq $true) {
-        $State = $AdditionalStorageProvidersState.AdditionalStorageProvidersAvailable ? $false : $true
         Set-CIPPStandardsCompareField -FieldName 'standards.DisableAdditionalStorageProviders' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'AdditionalStorageProvidersAvailable' -FieldValue $State -StoreAs bool -Tenant $Tenant
     }
 }

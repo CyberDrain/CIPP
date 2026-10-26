@@ -73,7 +73,7 @@ Back in CIPP, select **Force Sync** once more to import usage against the newly 
 
 Each run publishes any tenant that does not already exist in Gradient as an account, using the tenant's display name and default domain name. The default domain name is the account identifier, so it is also what ties alerts to the right Gradient account.
 
-For every licence held by a tenant, CIPP looks for a matching service in Gradient by the licence's friendly product name. Where none exists, a service is created automatically under the _infrastructure_ category and _hosted email_ subcategory, which you can adjust in Synthesize afterwards. The count reported against each service is the number of licences purchased rather than the number assigned.
+For every licence held by a tenant, CIPP looks for a matching service in Gradient by the licence's friendly product name. Where none exists, a service is created automatically under the _infrastructure_ category and _hosted email_ subcategory, which you can adjust in Synthesize afterwards. The count reported against each service is the number of licences purchased rather than the number assigned. Counts are taken from CIPP's last collection of each tenant's data, so a tenant CIPP has not collected licence data for yet is skipped, with a warning in the CIPP logs, until the next collection.
 
 Synchronisation runs automatically once a day, and can be triggered at any time with **Force Sync**. Both routes require **Enable sending all license information to Gradient** to be on.
 

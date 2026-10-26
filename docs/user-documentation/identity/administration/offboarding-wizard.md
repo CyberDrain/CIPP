@@ -51,6 +51,7 @@ The options are pre-filled from your saved offboarding defaults each time the te
 | Wipe Mobile Devices (account data only) | Wipes only the Exchange account data (mail, contacts, calendar) from each mobile device registered on the mailbox, without removing the device itself or its personal data. Delivered the next time the device connects to Exchange, and needs a modern ActiveSync client; an older device fails the wipe rather than falling back to a full device wipe. |
 | Remove all Mobile Devices          | Removes the mobile devices registered against the mailbox.                                                      |
 | Remove from all groups             | Removes the user from every group they belong to.                                                               |
+| Remove group ownership             | Removes the user as owner of every group they own. When this is on, a **New group owner** field appears: that person is added as owner of each of those groups first, and only then is the user removed. Without a new owner, a group the user is the only owner of cannot be released and is reported as failed. Groups synced from on-premises Active Directory cannot be changed in the cloud, so they are left alone and reported as failed. |
 | Remove Licenses                    | Strips every licence from the account.                                                                          |
 | Revoke all sessions                | Invalidates the account's tokens so every device has to sign in again.                                          |
 | Disable Sign in                    | Blocks the account from signing in.                                                                             |
@@ -66,7 +67,7 @@ Deleting the user removes the mailbox with it, so it cannot be combined with con
 {% endhint %}
 
 {% hint style="warning" %}
-Converting a mailbox that is at or near 50 GB may fail, and a converted mailbox over that size stops receiving mail once its licence is removed unless an Exchange Online Plan 2 licence is assigned. The wizard checks the size of the selected mailboxes and warns before you submit.
+Converting a mailbox that is at or near 50 GB may fail, and a converted mailbox over that size stops receiving mail once its licence is removed unless an Exchange Online Plan 2 licence is assigned. An archive over 50 GB, or a litigation hold, also needs the mailbox to keep a licence. The wizard checks the selected mailboxes against the overnight mailbox data and warns before you submit.
 {% endhint %}
 
 {% hint style="info" %}
@@ -102,6 +103,7 @@ Selecting **Delete user** greys out the mailbox access, forwarding and out of of
 | Schedule this offboarding  | Defers the job to a chosen date instead of running it immediately, and reveals the settings below.                        |
 | Scheduled Offboarding Date | When the job should run.                                                                                                  |
 | Webhook, E-mail, PSA       | Which channels are notified when the job completes. Each has to be configured in CIPP's notification settings to deliver. |
+| Push notification to my devices | Sends a push notification to the browsers and installed apps you registered under [user-settings.md](../../shared-features/menu-bar/user-settings.md "mention"). Only you receive it. You need at least one device registered there first; without one, the offboarding is not queued and the results explain where to enrol. |
 | HaloPSA Ticket             | An existing HaloPSA ticket to add the results to as a note, instead of raising a new ticket. Only shown once PSA is selected and the HaloPSA integration is enabled. |
 | Reference                  | Free text added to the notification so the job can be recognised later.                                                   |
 
@@ -115,7 +117,7 @@ Every job reports its progress as it runs. Opening a job from the table, or choo
 
 An action that reports an error line, such as a group the user could not be removed from, is shown as failed even when its other items succeeded, and the user's overall result follows the same rule. Each user's block has a copy button that places the block on the clipboard as text.
 
-Notification channels chosen for the job (webhook, e-mail, PSA) are the last steps of the user's block from the start. They run once every action has finished and show whether each delivery succeeded, and the outcomes are recorded on the task as well.
+Notification channels chosen for the job (webhook, e-mail, PSA, push) are the last steps of the user's block from the start. They run once every action has finished and show whether each delivery succeeded, and the outcomes are recorded on the task as well.
 
 **Re-run** queues that user's full set of actions again, the same as **Run Now** on the task. The arrow next to a single action runs only that action again: it is queued as its own job, named after the action, so it has results and logs of its own, and it reports into the same progress block. Both use the wizard's own permission, and actions that are not repeatable without effect, such as a password reset, happen again.
 

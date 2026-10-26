@@ -15,6 +15,11 @@ function Invoke-CIPPStandardSmartLockout {
         TAG
             "EIDSCAPR05"
             "EIDSCAPR06"
+            "ZTNA21849"
+            "ZTNA21850"
+            "EIDSCAPR01"
+            "EIDSCAPR02"
+            "CIS_5_2_3_3"
         ADDEDCOMPONENT
             {"type":"number","name":"standards.SmartLockout.LockoutDurationInSeconds","label":"Lockout Duration (seconds)","default":60,"required":true}
             {"type":"number","name":"standards.SmartLockout.LockoutThreshold","label":"Lockout Threshold (failed attempts)","default":10,"required":true}
@@ -171,6 +176,5 @@ function Invoke-CIPPStandardSmartLockout {
         Set-CIPPStandardsCompareField -FieldName 'standards.SmartLockout' `
             -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
 
-        Add-CIPPBPAField -FieldName 'SmartLockout' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }

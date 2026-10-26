@@ -8,6 +8,18 @@ The header carries the application's display name, chips for the Application (cl
 
 The actions menu offers the same actions as the [#table-actions](./#table-actions "mention") table, with the exception of the one that opens this page. All of them act on the application currently in view.
 
+For an application that uses SAML single sign-on, three further actions manage its token signing certificates. They are greyed out for any other application.
+
+| Action                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add Token Signing Certificate     | Has Entra generate a new token signing certificate for the application, alongside the current one. **Certificate subject** is optional and defaults to `Microsoft Azure Federated SSO Certificate`, with `CN=` added if you leave it off. **Expiry** is optional and defaults to three years, shortened where the tenant's app management policy caps certificate lifetimes. The current certificate keeps signing until you set the new one as preferred. |
+| Set Preferred Signing Certificate | Switches the application to sign tokens with the certificate you choose. Greyed out until the application holds more than one signing certificate.                                                                                                                                                                                                                                                                                                         |
+| Remove Signing Certificate        | Deletes the signing certificate you choose, together with its private key. The preferred certificate is not offered, so set another as preferred first. Greyed out until the application holds a certificate other than the preferred one.                                                                                                                                                                                                                 |
+
+{% hint style="warning" %}
+Switching the preferred certificate takes effect immediately. Any relying party that trusts only the old certificate rejects sign-ins until it is given the new one, so add the new certificate to the relying party before you switch, and remove the old certificate only once nothing trusts it.
+{% endhint %}
+
 ## View Enterprise App Tab
 
 ### Enterprise application
@@ -30,9 +42,27 @@ This card identifies the application. The top of the card shows the display name
 An app registration only exists in the tenant that owns the application. For Microsoft services and third-party multi-tenant applications, the registration lives in the publisher's tenant, so the app registration page will not find it.
 {% endhint %}
 
+### Single sign-on
+
+Shown only for an application that uses SAML single sign-on. The entry is marked **Configured** when the application has both an identifier and a reply URL, and **Incomplete** otherwise, with the identifier shown beneath the name. Expanding it lists the application's SAML settings alongside the values the relying party needs from Entra.
+
+| Field                            | Description                                                                                          |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Identifier (Entity ID)           | The identifiers the application is known by in SAML requests.                                        |
+| Reply URL (ACS)                  | Where Entra sends the SAML response after sign-in.                                                   |
+| Sign-on URL                      | The URL that starts a sign-in from the application's side, where one is set.                         |
+| Relay State                      | Where the application sends the user after sign-in completes, where one is set.                      |
+| Logout URL                       | Where Entra sends the sign-out response, where one is set.                                           |
+| Certificate expiry notifications | The addresses Entra emails before the signing certificate expires.                                   |
+| Login / Logout URL (Entra)       | The Entra sign-in and sign-out endpoint to configure in the relying party.                           |
+| Entra identifier                 | The issuer the relying party should expect in tokens from Entra.                                     |
+| App federation metadata          | A link to the application's federation metadata XML, which many relying parties can import directly. |
+
 ### Credentials
 
 Two collapsible entries summarise the credentials held by the service principal, one for client secrets and one for certificates. Each shows how many credentials are configured and the next expiry date, taken from the earliest expiry across all credentials of that type.
+
+For an application that uses SAML single sign-on, a **Token Signing Certificates** entry comes first. It names the certificate currently signing tokens, or is marked in amber when no preferred certificate is set, and shows how many signing certificates the application holds. Expanding it gives the SSO mode, the preferred thumbprint and the next expiry, followed by a table of every signing certificate with its name, thumbprint, whether it is the preferred one, and its start and end dates. Signing certificates are managed with the actions under [#page-actions](#page-actions "mention"), not from this entry.
 
 Expanding an entry lists each credential individually by name and expiry date, along with its key ID. Where the credential list is empty, the entry is marked in amber to draw the eye; that is a prompt to check rather than a fault, since most applications legitimately hold no credentials in the tenants they are consented to.
 
@@ -48,7 +78,7 @@ Rotation deletes the original secret as soon as the replacement is created, so a
 {% endhint %}
 
 {% hint style="info" %}
-Credentials cannot be added from this page, only rotated or removed. A certificate removed here has to be uploaded again in Entra.
+Client secrets and certificate credentials cannot be added from this page, only rotated or removed. A certificate removed here has to be uploaded again in Entra. Token signing certificates are the exception, and can be added with **Add Token Signing Certificate**.
 {% endhint %}
 
 ### Owners

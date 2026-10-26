@@ -14,7 +14,6 @@ function Invoke-CIPPStandardSpoofWarn {
             Exchange Standards
         TAG
             "CIS M365 5.0 (6.2.3)"
-            "ORCA111"
             "ORCA240"
             "CISAMSEXO71"
         EXECUTIVETEXT
@@ -136,7 +135,6 @@ function Invoke-CIPPStandardSpoofWarn {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'SpoofingWarnings' -FieldValue $CurrentInfo.Enabled -StoreAs bool -Tenant $Tenant
 
         $CurrentValue = @{
             Enabled     = $CurrentInfo.Enabled

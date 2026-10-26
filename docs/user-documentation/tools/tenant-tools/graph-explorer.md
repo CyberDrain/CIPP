@@ -1,9 +1,9 @@
 # Graph Explorer
 
-The Graph Explorer builds ad hoc reports directly from the Microsoft Graph API. Rather than returning a raw JSON representation of the Graph object, it renders the response as a table with the usual sorting, filtering and export options. Run one of the built-in queries, load a preset you or a colleague has saved, or craft your own request to customise the data to your liking. Results are always scoped to the tenant chosen in the tenant-select.md.
+The Graph Explorer builds ad hoc reports directly from the Microsoft Graph API. Rather than returning a raw JSON representation of the Graph object, it renders the response as a table with the usual sorting, filtering and export options. Run one of the built-in queries, load a preset you or a colleague has saved, or craft your own request to customise the data to your liking. Results are always scoped to the tenant chosen in [tenant-select.md](../../shared-features/menu-bar/tenant-select.md "mention").
 
 {% hint style="warning" %}
-Graph Explorer is a moderately advanced tool. Understanding the Microsoft Graph API and the various ways to influence its output can be difficult. If you get stuck crafting a query, please don't hesitate to ask questions in the CyberDrain Discord server, or contact support if you are a sponsoring user or organisation.
+Graph Explorer is a moderately advanced tool. Understanding the Microsoft Graph API and the various ways to influence its output can be difficult. If you get stuck crafting a query, please don't hesitate to ask questions in the CyberDrain Discord server, or contact support if you or your organisation has an active subscription.
 {% endhint %}
 
 ## Microsoft Graph
@@ -13,6 +13,10 @@ Microsoft Graph is the source of the data for much of CIPP and is the vehicle fo
 {% embed url="https://learn.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0" %}
 
 {% embed url="https://learn.microsoft.com/en-us/graph/api/overview?view=graph-rest-beta" %}
+
+{% hint style="warning" %}
+Endpoints that return customer content are blocked, and a query against one fails with a **Graph endpoint blocked** error instead of returning results. This includes mail messages and attachments, Teams chats and meetings, calendar events, personal contacts, files in OneDrive and SharePoint (including sharing links and raw file content), SharePoint pages and list items, OneNote, To Do and Planner tasks, group conversations, call records, Copilot interactions, Bookings customers, and eDiscovery. The same block applies when such data is pulled in through **Expand**, and to scheduled reports.
+{% endhint %}
 
 ## Action Buttons
 

@@ -31,8 +31,8 @@ The alert's **Ignore Disabled Apps?** option skips service principals that are a
 | ------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | CloudSponge                     | `a43e5392-f48b-46a4-a0f1-098b5eeb4757` | Contact-import service abused to harvest address books.                                                              |
 | CubeBackup                      | `412445a2-0794-487e-9dd6-d57d9593b249` | Microsoft 365 backup tool abused for mass mailbox, SharePoint and OneDrive exfiltration.                             |
-| Edison Mail                     | `62db40a4-2c7e-4373-a609-eda138798962` | Email client with full mailbox synchronization, abused for mailbox exfiltration.                                     |
-| eM Client                       | `e9a7fea1-1cc0-4cd9-a31b-9137ca5deedd` | Desktop email client abused to bulk-synchronize compromised mailboxes and maintain access.                           |
+| Edison Mail                     | `62db40a4-2c7e-4373-a609-eda138798962` | Email client with full mailbox synchronisation, abused for mailbox exfiltration.                                     |
+| eM Client                       | `e9a7fea1-1cc0-4cd9-a31b-9137ca5deedd` | Desktop email client abused to bulk-synchronise compromised mailboxes and maintain access.                           |
 | Fastmail                        | `77468577-4f6e-40e7-b745-11d3d0c28095` | Email service whose import feature can exfiltrate all mail to an attacker-controlled account.                        |
 | Foxmail                         | `231575bc-9f6c-4539-9241-5cfae696b630` | Desktop email client observed in business email compromise with full legacy-protocol mailbox access.                 |
 | Horizon Tech                    | `b1c4926a-5fb6-4aad-b920-709c957be148` | Pulls email and contacts and sends phishing from the compromised mailbox.                                            |

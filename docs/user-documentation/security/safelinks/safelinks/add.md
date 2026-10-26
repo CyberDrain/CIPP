@@ -55,7 +55,7 @@ This page needs a single tenant selected and does not support All Tenants.
 | Recipients | Individual recipients excluded from the policy. |
 
 {% hint style="info" %}
-Changes to Safe Links policies and rules may take up to 6 hours to propagate throughout your organization.
+Changes to Safe Links policies and rules may take up to 6 hours to propagate throughout your organisation.
 {% endhint %}
 
 {% include "../../../../../.gitbook/includes/feature-request.md" %}

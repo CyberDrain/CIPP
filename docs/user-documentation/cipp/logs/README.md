@@ -2,31 +2,41 @@
 
 The Logbook records every action CIPP performs, whether triggered by a technician, a scheduled task, an alert, or a background process. It is the primary tool for monitoring and troubleshooting, letting you confirm that an operation ran, see why one failed, and trace what CIPP was doing at a given moment.
 
-By default the table shows entries for the current day only, newest first. Results are also scoped to the tenant currently selected in CIPP, and to the tenants your role gives you access to. Entries CIPP records against itself rather than a customer are always included.
+Opening the Logbook needs the `CIPP.Logs` permission. The built-in roles all carry it, but the sign-in permission on its own does not, so a custom role must be granted it explicitly.
+
+By default the table shows entries for the current day only, newest first, across every tenant your role gives you access to. To narrow it to the tenant selected in CIPP, turn on **Only show logs for** in the filters. Entries CIPP records against itself rather than a customer are always included.
 
 ## Using the Logbook for Troubleshooting
 
 You can verify whether a specific action occurred by checking the log entries. For example, to confirm that the scheduled task "Hudu Extension Sync" ran successfully, select the appropriate date, filter or search for `Hudu Extension Sync`, and review the entries returned.
 
 {% hint style="warning" %}
-If an expected action is not logged, it might indicate a failure that occurred before the data was collected. If an alert is expected but not present in the logbook, it could indicate a failure in the data collection process. Such issues typically require developer intervention for identification and resolution. If you are a sponsor, please reach out to the helpdesk in these cases.
+If an expected action is not logged, it might indicate a failure that occurred before the data was collected. If an alert is expected but not present in the logbook, it could indicate a failure in the data collection process. Such issues typically require developer intervention for identification and resolution. If you have an active subscription, please reach out to the helpdesk in these cases.
 {% endhint %}
 
 ## Logbook Filters
 
 Expanding the **Logbook Filters** section at the top of the page reveals the options for narrowing what is retrieved. The section header shows the date currently in effect, or a summary of the active filters once any are applied.
 
-| Field              | Description                                                                                |
-| ------------------ | ------------------------------------------------------------------------------------------ |
-| Select Start Date  | The first day to retrieve entries for. Leave both dates empty to show the current day.     |
-| Select End Date    | The last day to retrieve entries for. Requires a start date, and must fall on or after it. |
-| Filter by Username | Restricts results to entries recorded against a particular user.                           |
-| Filter by Severity | Restricts results to one or more severity levels. Several can be selected at once.         |
+| Field              | Description                                                                                                                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Search messages    | Finds entries whose message contains the text, across every page of results rather than only the rows already loaded. |
+| Today · 2d · 7d · 30d | Quick ranges ending today. **2d** is yesterday and today. Choosing one clears any dates you picked. |
+| Select Start Date  | The first day to retrieve entries for. Leave both dates empty to show the current day.                                                                                                                            |
+| Select End Date    | The last day to retrieve entries for. Requires a start date, and must fall on or after it.                                                                                                                        |
+| Filter by Username | Restricts results to entries recorded against a particular user.                                                                                                                                                  |
+| Filter by Severity | Restricts results to one or more severity levels. Several can be selected at once.                                                                                                                                |
+| Filter by API      | Restricts results to entries from particular APIs, matching the **API** column. Type the API names to filter on. Several can be added, and entries from any of them are shown. Part of a name is enough to match. |
+| Filter by IP address | Restricts results to entries from an IP address. Part of an address is enough to match. |
+| Filter by App ID   | Restricts results to actions made by a particular API client or integration, matching the **AppId** column. |
+| Only show logs for | Restricts results to the tenant currently selected in CIPP. Unavailable while All Tenants is selected.                                                                                                            |
 
 | Button        | Description                                                              |
 | ------------- | ------------------------------------------------------------------------ |
 | Apply Filters | Runs the query with the chosen filters and collapses the filter section. |
 | Clear Filters | Resets every field and returns the table to the current day.             |
+
+Applied filters are kept in the page address, so a filtered view can be bookmarked or shared, and opening that link shows the same results.
 
 {% hint style="info" %}
 Log entries are partitioned by date, and the day boundary follows your CIPP instance rather than your own location. The filter panel shows how far your local time is offset, which is worth checking when an entry you expect near midnight appears on the neighbouring day.
@@ -56,13 +66,13 @@ Debug entries are excluded unless you explicitly select Debug in **Filter by Sev
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>View Log Entry</td><td>Opens the full logentry.md page for the selected entry, including any associated standard, template or scheduled task details.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>View Log Entry</td><td>Opens the full <a data-mention href="logentry.md">logentry.md</a> page for the selected entry, including any associated standard, template or scheduled task details. Selecting a row opens the same page.</td><td>false</td></tr></tbody></table>
 
 ## Logbook Severity
 
 | Severity | Description                                                                                                                                                                                                                                      |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Alert    | A notable event that warrants proactive notification. Entries with this severity come from any alerts set up via alert-configuration.                                                                                                            |
+| Alert    | A notable event that warrants proactive notification. Entries with this severity come from any alerts set up in [alert-configuration](../../tenant/administration/alert-configuration/ "mention").                                                                                                            |
 | Error    | The operation failed. The requested action could not be completed, typically due to an API failure, missing permissions, or an invalid request.                                                                                                  |
 | Info     | The operation completed successfully. Informational messages confirming an action was performed as expected.                                                                                                                                     |
 | Warning  | The operation completed, but with a caveat. Something may need attention even though the action wasn't blocked. Example: resetting a password on a directory-synced user warns that password writeback must be enabled.                          |

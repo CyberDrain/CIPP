@@ -1,13 +1,27 @@
 function Add-HuduAssetLayoutField {
-    Param(
-        $AssetLayoutId,
-        $Label = 'Microsoft 365',
-        $FieldType = 'RichText',
-        $Position = 0,
-        $ShowInList = $false
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$AssetLayoutId,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Label = 'Microsoft 365',
+
+        [Parameter(Mandatory = $false)]
+        [string]$FieldType = 'RichText',
+
+        [Parameter(Mandatory = $false)]
+        [int]$Position = 0,
+
+        [Parameter(Mandatory = $false)]
+        [bool]$ShowInList = $false,
+
+        # The layout as already fetched; it is returned unchanged when the field needs no update
+        [Parameter(Mandatory = $false)]
+        [object]$AssetLayout
     )
 
-    $M365Field = @{
+    $DesiredField = @{
         position     = $Position
         label        = $Label
         field_type   = $FieldType
@@ -16,17 +30,48 @@ function Add-HuduAssetLayoutField {
         expiration   = $false
     }
 
-    $AssetLayout = Get-HuduAssetLayouts -LayoutId $AssetLayoutId
-
-    if ($AssetLayout.fields.label -contains $Label) {
-        return $AssetLayout
-    }
+    if (-not $AssetLayout) { $AssetLayout = Get-HuduAssetLayouts -LayoutId $AssetLayoutId -ErrorAction Stop }
 
     $AssetLayoutFields = [System.Collections.Generic.List[object]]::new()
-    $AssetLayoutFields.Add($M365Field)
-    foreach ($Field in $AssetLayout.fields) {
-        $Field.position++
-        $AssetLayoutFields.Add($Field)
+    $ExistingField = $AssetLayout.fields | Where-Object { $_.label -eq $Label } | Select-Object -First 1
+    if ($ExistingField) {
+        # An existing field keeps the position the partner gave it; only its type and list visibility are enforced
+        if ([string]$ExistingField.field_type -eq $FieldType -and [bool]$ExistingField.show_in_list -eq [bool]$ShowInList) {
+            return $AssetLayout
+        }
+        if ($ExistingField -is [System.Collections.IDictionary]) {
+            foreach ($Key in $ExistingField.Keys) { $DesiredField[$Key] = $ExistingField[$Key] }
+        } else {
+            foreach ($Property in $ExistingField.PSObject.Properties) { $DesiredField[$Property.Name] = $Property.Value }
+        }
+        $DesiredField.field_type = $FieldType
+        $DesiredField.show_in_list = $ShowInList
     }
-    Set-HuduAssetLayout -Id $AssetLayoutId -Fields $AssetLayoutFields
+
+    $RemainingFields = @($AssetLayout.fields | Where-Object { $_.label -ne $Label } | Sort-Object position)
+    $InsertAt = if ($ExistingField) {
+        @($RemainingFields | Where-Object { [int]$_.position -lt [int]$ExistingField.position }).Count
+    } else {
+        [Math]::Min([Math]::Max(0, [int]$Position), $RemainingFields.Count)
+    }
+    for ($Index = 0; $Index -le $RemainingFields.Count; $Index++) {
+        if ($Index -eq $InsertAt) { [void]$AssetLayoutFields.Add($DesiredField) }
+        if ($Index -lt $RemainingFields.Count) {
+            $Field = $RemainingFields[$Index]
+            $LayoutField = @{}
+            if ($Field -is [System.Collections.IDictionary]) {
+                foreach ($Key in $Field.Keys) { $LayoutField[$Key] = $Field[$Key] }
+            } else {
+                foreach ($Property in $Field.PSObject.Properties) { $LayoutField[$Property.Name] = $Property.Value }
+            }
+            [void]$AssetLayoutFields.Add($LayoutField)
+        }
+    }
+
+    for ($Index = 0; $Index -lt $AssetLayoutFields.Count; $Index++) {
+        $AssetLayoutFields[$Index].position = $Index
+    }
+
+    $Result = Set-HuduAssetLayout -Id $AssetLayoutId -Fields $AssetLayoutFields -ErrorAction Stop
+    return $Result
 }

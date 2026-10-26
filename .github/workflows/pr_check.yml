@@ -49,7 +49,7 @@ jobs:
               // Can't read fork PRs — skip
             }
 
-            message += '🔄 If you are attempting to update your CIPP repo please follow the instructions at: https://docs.cipp.app/setup/self-hosting-guide/updating. Are you a sponsor? Contact the helpdesk for direct assistance with updating to the latest version.';
+            message += '🔄 If you are attempting to update your CIPP repo please follow the instructions at: https://docs.cipp.app/setup/self-hosting-guide/updating. Are you a subscriber? Contact the helpdesk for direct assistance with updating to the latest version.';
 
             if (openPRs.length > 0) {
               message += ` It looks like you may already have a pending update PR on your fork — check your [open pull requests](${forkPullsUrl}) to accept it.`;

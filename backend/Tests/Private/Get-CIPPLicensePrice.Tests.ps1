@@ -1,4 +1,4 @@
-# Pester tests for Get-CIPPLicensePrice — estimates from CSV, overrides win, unknown SKUs.
+# Pester tests for Get-CIPPLicensePrice — estimates from the catalog, overrides win, unknown SKUs.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
@@ -8,11 +8,12 @@ BeforeAll {
 
     function Get-CIPPTable { param($TableName) }
     function Get-CIPPAzDataTableEntity { param($Filter, $Property) }
+    function Get-CIPPLicenseCatalog { param([switch]$Force) }
 
     . $FunctionPath
 
-    # The function joins $env:CIPPRootPath to locate the defaults CSV; the CSV read itself is
-    # mocked, so any non-empty base path is enough to get past Join-Path.
+    # The function joins $env:CIPPRootPath to locate the SKU list; the read itself is mocked, so
+    # any non-empty base path is enough to get past Join-Path.
     $script:SavedRoot = $env:CIPPRootPath
     $env:CIPPRootPath = "$TestDrive"
 
@@ -27,12 +28,15 @@ AfterAll {
 
 Describe 'Get-CIPPLicensePrice' {
     BeforeEach {
-        Mock -CommandName Test-Path -MockWith { $true }
-        Mock -CommandName Import-Csv -MockWith {
-            @(
-                [pscustomobject]@{ skuId = $script:E5; skuPartNumber = 'ENTERPRISEPREMIUM'; Product_Display_Name = 'Office 365 E5'; MonthlyPrice = '38.00'; Currency = 'USD' }
-                [pscustomobject]@{ skuId = $script:E3; skuPartNumber = 'ENTERPRISEPACK'; Product_Display_Name = 'Office 365 E3'; MonthlyPrice = '23.00'; Currency = 'USD' }
-            )
+        # No SKU list on disk unless a case provides one
+        Mock -CommandName Test-Path -MockWith { $false }
+        Mock -CommandName Get-CIPPLicenseCatalog -MockWith {
+            [pscustomobject]@{
+                products = @(
+                    [pscustomobject]@{ skuId = $script:E5; skuPartNumber = 'ENTERPRISEPREMIUM'; name = 'Office 365 E5'; prices = [pscustomobject]@{ USD = 38.00 } }
+                    [pscustomobject]@{ skuId = $script:E3; skuPartNumber = 'ENTERPRISEPACK'; name = 'Office 365 E3'; prices = [pscustomobject]@{ USD = 23.00 } }
+                )
+            }
         }
         Mock -CommandName Get-CIPPTable -MockWith { @{ Context = 'fake' } }
         # Default: no overrides
@@ -79,6 +83,25 @@ Describe 'Get-CIPPLicensePrice' {
         ($Result.skuId | Sort-Object) | Should -Be (@($script:E3, $script:E5) | Sort-Object)
     }
 
+    It 'lists every SKU from the shipped SKU list when IncludeUnknown is set, named from that list' {
+        Mock -CommandName Test-Path -MockWith { $true }
+        Mock -CommandName Get-Content -MockWith {
+            "Product_Display_Name,String_Id,GUID,Service_Plan_Name,Service_Plan_Id`nOffice 365 E5 (from list),ENTERPRISEPREMIUM,$($script:E5),EXCHANGE_S_ENTERPRISE,efb87545`nExchange Online Kiosk,EXCHANGEDESKLESS,80b2d799-d2ba-4d2a-8842-fb0d0f3a4b82,EXCHANGE_S_DESKLESS,4a82b400`nExchange Online Kiosk,EXCHANGEDESKLESS,80b2d799-d2ba-4d2a-8842-fb0d0f3a4b82,INTUNE_O365,882e1d05"
+        }
+
+        $Result = @(Get-CIPPLicensePrice -IncludeUnknown)
+
+        $Result.Count | Should -Be 3
+        $Kiosk = $Result | Where-Object { $_.skuId -eq '80b2d799-d2ba-4d2a-8842-fb0d0f3a4b82' }
+        $Kiosk.Source | Should -Be 'Unknown'
+        $Kiosk.MonthlyPrice | Should -BeNullOrEmpty
+        $Kiosk.skuPartNumber | Should -Be 'EXCHANGEDESKLESS'
+        # The SKU list wins for the display name; the catalog carries prices only
+        ($Result | Where-Object { $_.skuId -eq $script:E5 }).Product_Display_Name | Should -Be 'Office 365 E5 (from list)'
+        # Without IncludeUnknown the unpriced Kiosk row is omitted
+        @(Get-CIPPLicensePrice).Count | Should -Be 2
+    }
+
     It 'merges an override-only SKU into the full list' {
         Mock -CommandName Get-CIPPAzDataTableEntity -MockWith {
             @([pscustomobject]@{ PartitionKey = 'Price'; RowKey = 'aaaa1111-2222-3333-4444-555566667777'; skuId = 'aaaa1111-2222-3333-4444-555566667777'; skuPartNumber = 'CUSTOM'; Product_Display_Name = 'Custom SKU'; MonthlyPrice = 5.0; Currency = 'USD' })
@@ -93,14 +116,15 @@ Describe 'Get-CIPPLicensePrice' {
 
 Describe 'Get-CIPPLicensePrice - multi-currency' {
     BeforeEach {
-        Mock -CommandName Test-Path -MockWith { $true }
+        Mock -CommandName Test-Path -MockWith { $false }
         # E5 priced in USD and AUD; E3 in USD only
-        Mock -CommandName Import-Csv -MockWith {
-            @(
-                [pscustomobject]@{ skuId = $script:E5; skuPartNumber = 'ENTERPRISEPREMIUM'; Product_Display_Name = 'Office 365 E5'; MonthlyPrice = '38.00'; Currency = 'USD' }
-                [pscustomobject]@{ skuId = $script:E5; skuPartNumber = 'ENTERPRISEPREMIUM'; Product_Display_Name = 'Office 365 E5'; MonthlyPrice = '60.00'; Currency = 'AUD' }
-                [pscustomobject]@{ skuId = $script:E3; skuPartNumber = 'ENTERPRISEPACK'; Product_Display_Name = 'Office 365 E3'; MonthlyPrice = '23.00'; Currency = 'USD' }
-            )
+        Mock -CommandName Get-CIPPLicenseCatalog -MockWith {
+            [pscustomobject]@{
+                products = @(
+                    [pscustomobject]@{ skuId = $script:E5; skuPartNumber = 'ENTERPRISEPREMIUM'; name = 'Office 365 E5'; prices = [pscustomobject]@{ USD = 38.00; AUD = 60.00 } }
+                    [pscustomobject]@{ skuId = $script:E3; skuPartNumber = 'ENTERPRISEPACK'; name = 'Office 365 E3'; prices = [pscustomobject]@{ USD = 23.00 } }
+                )
+            }
         }
         Mock -CommandName Get-CIPPTable -MockWith { @{ Context = 'fake' } }
         Mock -CommandName Get-CIPPAzDataTableEntity -MockWith { @() }
@@ -147,5 +171,83 @@ Describe 'Get-CIPPLicensePrice - multi-currency' {
         # USD is untouched by the AUD override
         (Get-CIPPLicensePrice -SkuId $script:E5 -Currency 'USD').MonthlyPrice | Should -Be 38.00
         (Get-CIPPLicensePrice -SkuId $script:E5 -Currency 'USD').Source | Should -Be 'Estimate'
+    }
+}
+
+Describe 'Get-CIPPLicensePrice - SKU ID normalization' {
+    BeforeEach {
+        $script:DirtyE5 = "$($script:E5)$([char]0xA0)"
+        Mock -CommandName Test-Path -MockWith { $true }
+        Mock -CommandName Get-Content -MockWith {
+            "Product_Display_Name,String_Id,GUID`nOffice 365 E5,ENTERPRISEPREMIUM,$($script:DirtyE5)"
+        }
+        Mock -CommandName Get-CIPPLicenseCatalog -MockWith {
+            [pscustomobject]@{
+                products = @(
+                    [pscustomobject]@{ skuId = $script:DirtyE5; skuPartNumber = 'ENTERPRISEPREMIUM'; name = 'Office 365 E5'; prices = [pscustomobject]@{ GBP = 30.0 } }
+                )
+            }
+        }
+        Mock -CommandName Get-CIPPTable -MockWith { @{ Context = 'fake' } }
+        Mock -CommandName Get-CIPPAzDataTableEntity -MockWith { @() }
+    }
+
+    It 'trims nonbreaking whitespace from the shipped SKU list, catalog, and lookup input' {
+        Mock -CommandName Get-CIPPAzDataTableEntity -MockWith {
+            @([pscustomobject]@{ PartitionKey = 'Price'; RowKey = "$($script:DirtyE5)-gbp"; skuPartNumber = 'ENTERPRISEPREMIUM'; Product_Display_Name = 'Office 365 E5'; MonthlyPrice = 21.0; Currency = 'GBP' })
+        }
+
+        $Result = Get-CIPPLicensePrice -SkuId $script:DirtyE5 -Currency 'GBP'
+        $List = @(Get-CIPPLicensePrice -Currency 'GBP' -IncludeUnknown)
+
+        $Result.skuId | Should -Be $script:E5
+        $Result.MonthlyPrice | Should -Be 21.0
+        $Result.Source | Should -Be 'Override'
+        $List.Count | Should -Be 1
+        $List[0].skuId | Should -Be $script:E5
+    }
+
+    It 'trims nonbreaking whitespace from the stored skuId field' {
+        Mock -CommandName Get-CIPPAzDataTableEntity -MockWith {
+            @([pscustomobject]@{ PartitionKey = 'Price'; RowKey = "$($script:E5)-gbp"; skuId = $script:DirtyE5; skuPartNumber = 'ENTERPRISEPREMIUM'; Product_Display_Name = 'Office 365 E5'; MonthlyPrice = 21.0; Currency = 'GBP' })
+        }
+
+        $Result = Get-CIPPLicensePrice -SkuId $script:E5 -Currency 'GBP'
+
+        $Result.skuId | Should -Be $script:E5
+        $Result.MonthlyPrice | Should -Be 21.0
+        $Result.Source | Should -Be 'Override'
+    }
+}
+
+Describe 'Get-CIPPLicensePrice - FailOnError' {
+    BeforeEach {
+        Mock -CommandName Test-Path -MockWith { $true }
+        Mock -CommandName Get-Content -MockWith {
+            "Product_Display_Name,String_Id,GUID`nOffice 365 E5,ENTERPRISEPREMIUM,$($script:E5)"
+        }
+        Mock -CommandName Get-CIPPLicenseCatalog -MockWith {
+            [pscustomobject]@{ products = @([pscustomobject]@{ skuId = $script:E5; skuPartNumber = 'ENTERPRISEPREMIUM'; name = 'Office 365 E5'; prices = [pscustomobject]@{ GBP = 30.0 } }) }
+        }
+        Mock -CommandName Get-CIPPTable -MockWith { @{ Context = 'fake' } }
+        Mock -CommandName Get-CIPPAzDataTableEntity -MockWith { @() }
+    }
+
+    It 'throws when the license catalog cannot be read' {
+        Mock -CommandName Get-CIPPLicenseCatalog -MockWith { Write-Error 'catalog unavailable' }
+
+        { Get-CIPPLicensePrice -Currency 'GBP' -IncludeUnknown -FailOnError } | Should -Throw '*failed to read the license catalog*'
+    }
+
+    It 'throws when license price overrides cannot be read' {
+        Mock -CommandName Get-CIPPAzDataTableEntity -MockWith { Write-Error 'table unavailable' }
+
+        { Get-CIPPLicensePrice -Currency 'GBP' -IncludeUnknown -FailOnError } | Should -Throw '*failed to read override table*'
+    }
+
+    It 'throws when the SKU list is unavailable' {
+        Mock -CommandName Test-Path -MockWith { $false }
+
+        { Get-CIPPLicensePrice -Currency 'GBP' -IncludeUnknown -FailOnError } | Should -Throw '*failed to read the SKU list*'
     }
 }

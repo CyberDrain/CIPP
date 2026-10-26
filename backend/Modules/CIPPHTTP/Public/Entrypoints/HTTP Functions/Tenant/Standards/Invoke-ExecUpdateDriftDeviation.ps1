@@ -9,7 +9,6 @@ function Invoke-ExecUpdateDriftDeviation {
     param($Request, $TriggerMetadata)
 
     $APIName = $TriggerMetadata.FunctionName
-    Write-LogMessage -Headers $Request.Headers -API $APINAME -message 'Accessed this API' -Sev 'Debug'
 
     function Find-CIPPTagBundleEntry {
         param($Entries, $TemplateId, $TemplatePartition)
@@ -56,11 +55,12 @@ function Invoke-ExecUpdateDriftDeviation {
 
     try {
         $TenantFilter = $Request.Body.TenantFilter
+        $Total = 0
+        $Failed = 0
 
         if ($Request.Body.RemoveDriftCustomization) {
             $Table = Get-CippTable -tablename 'tenantDrift'
-            $Filter = "PartitionKey eq '$TenantFilter'"
-            $ExistingDeviations = Get-CIPPAzDataTableEntity @Table -Filter $Filter
+            $ExistingDeviations = (Get-CIPPTenantDriftState -TenantFilter $TenantFilter).Rows
             foreach ($Deviation in $ExistingDeviations) {
                 Remove-CIPPAzDataTableEntity @Table -Entity $Deviation
             }
@@ -72,6 +72,7 @@ function Invoke-ExecUpdateDriftDeviation {
         } else {
             $Deviations = $Request.Body.deviations
             $Reason = $Request.Body.reason
+            $DriftPartition = $(try { (Get-CIPPTenantLookup)[$TenantFilter].customerId } catch { $null }) ?? $TenantFilter
             $PersistentDeny = [bool]($Request.Body.persistentDeny)
             # Intune multi-admin approval rejects any write that carries no justification header
             # ("Header 'x-msft-approval-justification' is required to request approval"). The header is
@@ -81,6 +82,7 @@ function Invoke-ExecUpdateDriftDeviation {
             if ([string]::IsNullOrWhiteSpace($Justification)) { $Justification = 'Denied and deleted from CIPP drift review' }
             if ($Justification.Length -gt 1024) { $Justification = $Justification.Substring(0, 1024) }
             $Justification = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Justification))
+            $Total = @($Deviations).Count
             $Results = foreach ($Deviation in $Deviations) {
                 try {
                     $user = $request.headers.'x-ms-client-principal'
@@ -304,13 +306,14 @@ function Invoke-ExecUpdateDriftDeviation {
                     }
 
                     # Task queued / policy gone; a throw above leaves the row untouched.
-                    $Result = Set-CIPPDriftDeviation -TenantFilter $TenantFilter -StandardName $Deviation.standardName -Status $Deviation.status -Reason $Reason -user $username
+                    $Result = Set-CIPPDriftDeviation -TenantFilter $DriftPartition -StandardName $Deviation.standardName -Status $Deviation.status -Reason $Reason -user $username
                     [PSCustomObject]@{
                         success = $true
                         result  = $Result
                     }
                     Write-LogMessage -tenant $TenantFilter -Headers $Request.Headers -API $APINAME -message "Updated drift deviation status for $($Deviation.standardName) to $($Deviation.status) with reason: $Reason" -Sev 'Info'
                 } catch {
+                    $Failed++
                     [PSCustomObject]@{
                         standardName = $Deviation.standardName
                         success      = $false
@@ -324,14 +327,14 @@ function Invoke-ExecUpdateDriftDeviation {
         $Body = @{ Results = @($Results) }
 
         return ([HttpResponseContext]@{
-                StatusCode = [HttpStatusCode]::OK
+                StatusCode = Get-CippBulkStatusCode -Total $Total -Failed $Failed
                 Body       = $Body
             })
 
     } catch {
         Write-LogMessage -Headers $Request.Headers -API $APINAME -message "Failed to update drift deviation: $($_.Exception.Message)" -Sev 'Error'
         return ([HttpResponseContext]@{
-                StatusCode = [HttpStatusCode]::BadRequest
+                StatusCode = [HttpStatusCode]::InternalServerError
                 Body       = @{error = $_.Exception.Message }
             })
     }

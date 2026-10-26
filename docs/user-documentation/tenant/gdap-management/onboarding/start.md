@@ -25,6 +25,7 @@ Once a relationship is selected, CIPP compares the roles it grants against the r
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Ignore Missing Default Roles                      | Allows onboarding to continue when the relationship does not contain all of CIPP's default roles. Only shown when roles are missing. |
 | Exclude onboarded tenant from top-level standards | Prevents the tenant from picking up standards that are applied to all tenants.                                                       |
+| Add onboarded tenant to Tenant Groups             | The [tenant groups](../../administration/tenants/groups/README.md) to add the tenant to. You can choose several. Only static groups are offered, since dynamic groups work out their own membership. The tenant is added once its CPV permissions have been refreshed, and each group it joins is recorded in the onboarding logs. Optional. |
 
 {% hint style="warning" %}
 Onboarding will fail if the relationship is missing any of the default roles, unless **Ignore Missing Default Roles** is enabled. Be aware that CIPP may not function correctly against the tenant if this is the only relationship you hold with it.

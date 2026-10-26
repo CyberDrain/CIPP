@@ -52,7 +52,11 @@ function Invoke-CIPPStandardRetentionCompliancePolicyTemplate {
 
     if ($Settings.remediate -eq $true) {
         foreach ($Template in @($Templates)) {
-            $null = Set-CIPPRetentionCompliancePolicy -TenantFilter $Tenant -Template $Template -APIName 'Standards'
+            try {
+                $null = Set-CIPPRetentionCompliancePolicy -TenantFilter $Tenant -Template $Template -APIName 'Standards'
+            } catch {
+                Write-Information $_.Exception.Message
+            }
         }
     }
 
@@ -80,6 +84,5 @@ function Invoke-CIPPStandardRetentionCompliancePolicyTemplate {
         $ExpectedValue = @{ MissingPolicies = @() }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.RetentionCompliancePolicyTemplate' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'RetentionCompliancePolicyTemplate' -FieldValue ($MissingPolicies.Count -eq 0) -StoreAs bool -Tenant $Tenant
     }
 }

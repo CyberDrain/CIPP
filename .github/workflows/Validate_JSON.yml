@@ -10,16 +10,16 @@ on:
       - main
       - dev
     paths:
-      - "public/**/*.json"
-      - "src/data/**/*.json"
+      - "frontend/public/**/*.json"
+      - "frontend/src/data/**/*.json"
       - ".github/workflows/Validate_JSON.yml"
       - ".github/scripts/validate-json.mjs"
   push:
     branches:
       - dev
     paths:
-      - "public/**/*.json"
-      - "src/data/**/*.json"
+      - "frontend/public/**/*.json"
+      - "frontend/src/data/**/*.json"
       - ".github/workflows/Validate_JSON.yml"
       - ".github/scripts/validate-json.mjs"
 concurrency:
@@ -30,7 +30,7 @@ permissions:
   pull-requests: write
 jobs:
   validate:
-    name: Parse JSON in public and src/data
+    name: Parse JSON in frontend/public and frontend/src/data
     runs-on: ubuntu-latest
     steps:
       - name: Checkout base (trusted validator script)
@@ -50,7 +50,7 @@ jobs:
         continue-on-error: true
         env:
           ROOT: ${{ github.event_name == 'pull_request_target' && 'pr/' || '' }}
-        run: node .github/scripts/validate-json.mjs --strip "$ROOT" "${ROOT}public" "${ROOT}src/data"
+        run: node .github/scripts/validate-json.mjs --strip "$ROOT" "${ROOT}frontend/public" "${ROOT}frontend/src/data"
 
       - name: Comment on PR
         if: github.event_name == 'pull_request_target'
@@ -90,7 +90,7 @@ jobs:
                 `${list}\n\n` +
                 `Please fix the syntax and push again — this comment will update automatically.`;
             } else if (existing) {
-              body = `${marker}\n### ✅ JSON is valid\n\nAll JSON files in \`public\` and \`src/data\` parse correctly. Thanks for fixing it!`;
+              body = `${marker}\n### ✅ JSON is valid\n\nAll JSON files in \`frontend/public\` and \`frontend/src/data\` parse correctly. Thanks for fixing it!`;
             } else {
               // Nothing was ever broken — stay quiet.
               return;

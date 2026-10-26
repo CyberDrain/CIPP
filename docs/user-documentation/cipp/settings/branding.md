@@ -25,15 +25,18 @@ Presets share the same logo and cover galleries as the default branding rather t
 
 Sets which preset each type of report reaches for when nothing else specifies one. Each report has its own selector, offering **Use default branding** plus every preset you have created.
 
-| Report             |
-| ------------------ |
-| Executive Report   |
-| Shadow AI Report   |
-| BEC Remediation    |
-| Sharing Report     |
-| Permissions Report |
-| Mail Flow Report   |
-| Report Builder     |
+| Report                   |
+| ------------------------ |
+| Executive Report         |
+| Shadow AI Report         |
+| BEC Full Report          |
+| BEC C-Suite Summary      |
+| Sharing Report           |
+| Permissions Report       |
+| Mail Flow Report         |
+| Licensing Report         |
+| Security Baseline Report |
+| Report Builder           |
 
 Precedence runs in three steps. A report template with its own preset assigned wins over the default set here, and the default set here wins over the default branding.
 
@@ -74,9 +77,13 @@ SOC is the default for a new instance. Selecting **No cover image** produces a c
 | Format           | JPG or PNG.                                                                                                                                                                |
 | Maximum size     | 5MB.                                                                                                                                                                       |
 | Ideal dimensions | Around 1240x1754px, which is A4 portrait at roughly 150dpi, or a similar portrait aspect ratio.                                                                            |
-| Subject matter   | Soft or dark imagery works best, because the image is displayed full bleed at around 50% opacity behind the cover text. Busy or bright images make the title hard to read. |
+| Subject matter   | Soft or dark imagery works best, because the image is displayed full bleed, faded to around 50% opacity by default, behind the cover text. Busy or bright images make the title hard to read. |
+
+Each uploaded cover has a **Name this cover** field beneath its tile, limited to 64 characters. The name is saved when you leave the field, and is how the cover is listed when you choose a background for an Infographic block in the [builder.md](../../tools/report-builder/builder.md "mention"). An unnamed cover is listed by its position instead.
 
 Uploaded covers can be removed with the delete icon on their tile. Deleting the cover that is currently selected falls back to **No cover image** rather than to a stock cover.
+
+**Fade cover image** (on by default) draws the cover at around 50% opacity so the cover text stays readable. Switch it off to print a designed cover page at full strength, for example one that already carries your own artwork and colours.
 
 ## Cover Preview
 
@@ -119,8 +126,18 @@ Colours individual parts of a report. Each one follows the brand colour until yo
 | Watermark              | The diagonal mark across each page. Drawn at low opacity.                    |
 
 {% hint style="warning" %}
-Report Colors are stored with the default branding only. A preset holds the brand and accent colours, logo, cover, footer and watermark, but not the per-role colours, so setting them while a preset is selected has no effect.
+Report Colors are stored with the default branding only. A preset holds the brand and accent colours, logo, cover, tenant name, footer and watermark, but not the per-role colours, so setting them while a preset is selected has no effect.
 {% endhint %}
+
+## Tenant Name
+
+Chooses how reports refer to the tenant: on the cover, in the text, and wherever `%tenantname%` is used.
+
+| Option                                 | Description                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------ |
+| Name as shown in CIPP (alias when set) | The name the tenant has in CIPP, which is its alias when one is set. The default.    |
+| Microsoft 365 organisation name        | The organisation name held in Microsoft 365, regardless of any alias set in CIPP.    |
+| Default domain                         | The tenant's default domain.                                                         |
 
 ## Page Footer
 

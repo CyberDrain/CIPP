@@ -9,6 +9,7 @@
 # Prerequisites:
 #   - Docker Desktop running
 #   - Ports 3000, 5196, 10000-10002 free
+#   - Node.js on PATH (or nvm-windows with the engines.node version from frontend/package.json)
 #
 # Access everything via http://localhost:5196
 
@@ -65,13 +66,55 @@ Write-Host ("  Ports free: {0}" -f ($requiredPorts -join ', ')) -ForegroundColor
 
 $frontendPath = Join-Path -Path $RepoRoot -ChildPath 'frontend'
 $dockerpath = Join-Path -Path $RepoRoot -ChildPath 'build'
-$frontendCommand = 'try { yarn install --network-timeout 500000; yarn run dev } catch { Write-Error $_.Exception.Message } finally { Read-Host "Press Enter to exit" }'
+# Prefer nvm-windows engines.node when that version is installed; otherwise use PATH Node.
+$frontendCommand = @'
+try {
+  if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+    throw 'Node.js not found on PATH. Install Node or nvm-windows with the version from frontend/package.json engines.node.'
+  }
+
+  $engines = (Get-Content package.json -Raw | ConvertFrom-Json).engines.node
+  $required = $null
+  $usedNvm = $false
+  if ($engines -and $engines -match '(\d+\.\d+\.\d+)') {
+    $required = $Matches[1]
+    $nvmHome = $env:NVM_HOME
+    if (-not $nvmHome) { $nvmHome = Join-Path $env:LOCALAPPDATA 'nvm' }
+    $nodeDir = Join-Path $nvmHome "v$required"
+    if (Test-Path (Join-Path $nodeDir 'node.exe')) {
+      # Session-local PATH pin (avoids nvm use symlink/admin side effects).
+      $env:Path = "$nodeDir;$env:Path"
+      $usedNvm = $true
+      Write-Host "Using Node $required via nvm ($nodeDir)" -ForegroundColor Green
+    } else {
+      Write-Host "nvm Node $required not found; using Node from PATH." -ForegroundColor DarkYellow
+    }
+  }
+
+  $active = (node -v).TrimStart('v')
+  if (-not $usedNvm) {
+    Write-Host "Using Node $active" -ForegroundColor Green
+  }
+  if ($required -and $active -ne $required) {
+    Write-Warning "Active Node is $active; package.json engines.node wants $required."
+  }
+
+  yarn install --network-timeout 500000
+  if ($LASTEXITCODE -ne 0) { throw "yarn install failed with exit code $LASTEXITCODE" }
+  yarn run dev
+} catch {
+  Write-Error $_.Exception.Message
+} finally {
+  Read-Host 'Press Enter to exit'
+}
+'@
 $frontendEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($frontendCommand))
 # Proxyman trust (when set up via Export-ProxymanCert.ps1) is applied automatically through
 # the optional CA mount in docker-compose-no-frontend.yml + build/.env, which Compose loads
 # on its own — no -f overlay needed here. The frontend runs on the host in this loop, so it
 # trusts Proxyman via the Windows certificate store, not a container mount.
-$dockerCommand = "try { ./tools/build-dev-modules.ps1; docker compose -f docker-compose-no-frontend.yml up --pull always --watch } catch { Write-Error `$_.Exception.Message } finally { Read-Host 'Press Enter to exit' }"
+# --pull always leaves the previous craft:dev/azurite image dangling on every update; drop them first.
+$dockerCommand = "try { ./tools/build-dev-modules.ps1; docker image prune -f; docker compose -f docker-compose-no-frontend.yml up --pull always --watch } catch { Write-Error `$_.Exception.Message } finally { Read-Host 'Press Enter to exit' }"
 $dockerEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($dockerCommand))
 $watcherCommand = 'try { ./tools/Watch-Cipp-Dev-Modules.ps1 -SkipInitialBuild } catch { Write-Error $_.Exception.Message } finally { Read-Host "Press Enter to exit" }'
 $watcherEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($watcherCommand))

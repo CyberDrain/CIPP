@@ -14,8 +14,6 @@ function Invoke-CIPPStandardintuneDeviceReg {
             Intune Standards
         TAG
             "CISA (MS.AAD.17.1v1)"
-            "ZTNA21801"
-            "ZTNA21802"
         EXECUTIVETEXT
             Limits how many devices each employee can register for corporate access, preventing excessive device proliferation while accommodating legitimate business needs. This helps maintain security oversight and prevents potential abuse of device registration privileges.
         ADDEDCOMPONENT
@@ -90,6 +88,5 @@ function Invoke-CIPPStandardintuneDeviceReg {
             userDeviceQuota = $Settings.max
         }
         Set-CIPPStandardsCompareField -FieldName 'standards.intuneDeviceReg' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'intuneDeviceReg' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
     }
 }

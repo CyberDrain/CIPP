@@ -33,7 +33,9 @@ function New-ExoRequest {
 
         $ModuleVersion = '3.9.2',
         [switch]$AsApp,
-        [switch]$UseCertificate
+        [switch]$UseCertificate,
+        # Emit each page as @{ Value } as it arrives instead of returning every page at the end
+        [switch]$StreamPages
     )
     if ((Get-AuthorisedRequest -TenantID $tenantid) -or $NoAuthCheck -eq $True) {
         if ($Compliance.IsPresent) {
@@ -59,7 +61,7 @@ function New-ExoRequest {
         }
         $ExoBody = Get-CIPPTextReplacement -TenantFilter $tenantid -Text $ExoBody -EscapeForJson
 
-        $Tenant = Get-Tenants -IncludeErrors | Where-Object { $_.defaultDomainName -eq $tenantid -or $_.customerId -eq $tenantid -or $_.initialDomainName -eq $tenantid } | Select-Object -First 1
+        $Tenant = @(Get-Tenants -IncludeErrors -TenantFilter $tenantid)[0]
         if (-not $Tenant -and $NoAuthCheck -eq $true) {
             $Tenant = [PSCustomObject]@{
                 customerId = $tenantid
@@ -134,6 +136,14 @@ function New-ExoRequest {
 
                 Write-Information "POST [ $URL ] | tenant: $tenantid | cmdlet: $cmdlet"
                 Write-Verbose "Request Body: $ExoBody"
+                if ($StreamPages) {
+                    do {
+                        $Return = Invoke-CIPPRestMethod -Uri $URL -Method POST -Body $ExoBody -Headers $Headers -ContentType 'application/json; charset=utf-8'
+                        $URL = $Return.'@odata.nextLink'
+                        [PSCustomObject]@{ Value = $Return.value }
+                    } until ($null -eq $URL)
+                    return
+                }
                 $ReturnedData = do {
                     $ExoRequestParams = @{
                         Uri         = $URL
@@ -148,7 +158,7 @@ function New-ExoRequest {
                     $Return
                 } until ($null -eq $URL)
 
-                Write-Verbose "Response Headers: $($ResponseHeaders | ConvertTo-Json -Depth 5 -Compress)"
+                if ($VerbosePreference -ne 'SilentlyContinue') { Write-Verbose "Response Headers: $($ResponseHeaders | ConvertTo-Json -Depth 5 -Compress)" }
                 if ($ReturnedData.'@adminapi.warnings' -and $null -eq $ReturnedData.value) {
                     $ReturnedData.value = $ReturnedData.'@adminapi.warnings'
                 }
@@ -159,7 +169,9 @@ function New-ExoRequest {
                     $Message = if ($ReportedError.error.details.message) {
                         $ReportedError.error.details.message
                     } elseif ($ReportedError.error.innererror) {
-                        $ReportedError.error.innererror.internalException.message
+                        # Not every innererror carries an internalException; fall through to its own
+                        # message and then the top-level one rather than losing the body entirely.
+                        $ReportedError.error.innererror.internalException.message ?? $ReportedError.error.innererror.message ?? $ReportedError.error.message
                     } elseif ($ReportedError.error.message) { $ReportedError.error.message }
                 } catch { $Message = $_.ErrorDetails }
                 if ($null -eq $Message) { $Message = $ErrorMess }

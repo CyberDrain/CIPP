@@ -24,7 +24,7 @@ The list is grouped, so the tenants you work with most sit at the top rather tha
 
 | Group           | Description                                                                                                                        |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **Favorites**   | Tenants you have starred, in the order you starred them.                                                                           |
+| **Favorites**   | Tenants you have starred, sorted alphabetically.                                                                                   |
 | **Recent**      | The tenants you have selected most recently, newest first, up to eight. A tenant that is already a favourite is not repeated here. |
 | **All tenants** | Every tenant you manage, sorted alphabetically.                                                                                    |
 

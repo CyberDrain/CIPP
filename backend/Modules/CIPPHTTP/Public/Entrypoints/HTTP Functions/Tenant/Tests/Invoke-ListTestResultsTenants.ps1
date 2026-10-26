@@ -26,7 +26,7 @@ function Invoke-ListTestResultsTenants {
         $TenantFilterRaw = $Request.Query.tenantFilter ?? $Request.Body.tenantFilter
         # One or more test IDs (the result row's RowKey), e.g. 'CustomScript-<guid>'.
         $TestIdRaw = $Request.Query.testId ?? $Request.Body.testId
-        # Narrow the scan to these statuses: Passed, Failed, Investigate, Skipped, Informational.
+        # Narrow the scan to these statuses: Passed, Failed, Investigate, Skipped, Informational and Unlicensed.
         $StatusRaw = $Request.Query.status ?? $Request.Body.status
         # Restrict to a single test type: Identity, Devices or Custom.
         $TestType = $Request.Query.testType ?? $Request.Body.testType
@@ -76,7 +76,14 @@ function Invoke-ListTestResultsTenants {
         # permitted customerIds, or 'AllTenants' for unrestricted users. Passed into the query so
         # disallowed tenants are dropped before any counting or row building — a post-hoc filter
         # would leak estate size through the counts and burn time filtering rows at scale.
-        $AllowedTenants = Test-CIPPAccess -Request $Request -TenantList
+        try {
+            $AllowedTenants = Test-CIPPAccess -Request $Request -TenantList
+        } catch {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::Forbidden
+                    Body       = @{ Error = $_.Exception.Message }
+                })
+        }
         if ($AllowedTenants -notcontains 'AllTenants') {
             $Params.AllowedTenantIds = @($AllowedTenants | Where-Object { $_ })
         }
@@ -92,7 +99,7 @@ function Invoke-ListTestResultsTenants {
     } catch {
         $ErrorMessage = Get-CippException -Exception $_
         Write-LogMessage -API $APIName -message "Error retrieving cross-tenant test results: $($ErrorMessage.NormalizedError)" -sev Error -LogData $ErrorMessage
-        $StatusCode = [HttpStatusCode]::BadRequest
+        $StatusCode = [HttpStatusCode]::InternalServerError
         $Body = @{ Error = $ErrorMessage.NormalizedError }
     }
 

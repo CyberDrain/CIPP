@@ -6,7 +6,7 @@ Each role in a template is backed by a security group in your partner tenant. CI
 
 If you have no templates yet, the page offers to create the **CIPP Defaults** template, which contains the 15 roles listed on the [recommended-roles.md](../../../../setup/maintaining-cipp/recommended-roles.md "mention") page, or to build a custom one. If you have templates but none named `CIPP Defaults`, a warning offers to create it - so the prompt returns if you delete or rename that template.
 
-Use **Add Template** to create a template via [add.md](add.md "mention"), or **Group Mappings** to review the underlying role-to-group mappings on [mappings.md](mappings.md "mention").
+Use **Add Template** to create a template via [add.md](add.md "mention"), or **Group Mappings** to review the underlying role-to-group mappings on [README.md](mappings/README.md "mention").
 
 ## Table Details
 

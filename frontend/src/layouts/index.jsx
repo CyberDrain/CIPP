@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Box, Container, Divider, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useIsMobileLayout } from '../hooks/use-breakpoint'
@@ -19,9 +19,10 @@ import { SsoMigrationDialog } from '../components/CippComponents/SsoMigrationDia
 import { ForcedSsoMigrationDialog } from '../components/CippComponents/ForcedSsoMigrationDialog'
 import { SubscriptionEndedDialog } from '../components/CippComponents/SubscriptionEndedDialog'
 import { FailedPaymentDialog } from '../components/CippComponents/FailedPaymentDialog'
+import { LegacyInfrastructureDialog } from '../components/CippComponents/LegacyInfrastructureDialog'
 import { CippMaintenanceBanner } from '../components/CippComponents/CippMaintenanceBanner'
 import { CippImpersonationBanner } from '../components/CippComponents/CippImpersonationBanner'
-import { matchPattern } from '../utils/permission-rules'
+import { filterMenuItems, getHiddenPages } from '../utils/filter-menu-items'
 
 import {
   CHROME_TOP_OFFSET,
@@ -99,6 +100,7 @@ export const Layout = (props) => {
   const [menuItems, setMenuItems] = useState(nativeMenuItems)
   const lastUserSettingsUpdate = useRef(null)
   const currentTenant = settings?.currentTenant
+  const urlTenant = useSearchParams()?.get('tenantFilter')
   const [hideSidebar, setHideSidebar] = useState(false)
 
   const swaStatus = ApiGetCall({
@@ -131,66 +133,12 @@ export const Layout = (props) => {
       }
 
       // Get hidden pages from feature flags - only filter if we have valid data.
-      // A DISABLED flag hides its Pages (features gated behind the flag); an ENABLED
-      // flag hides its HidesPages (features it replaces - e.g. Baselines supersedes
-      // the classic Standards and Drift pages).
-      let hiddenPages = []
-      if (featureFlags.isSuccess && Array.isArray(featureFlags.data)) {
-        const disabledPages = featureFlags.data
-          .filter((flag) => flag.Enabled === false || flag.enabled === false)
-          .flatMap((flag) => flag.Pages || flag.pages || [])
-          .filter((page) => typeof page === 'string')
-        const replacedPages = featureFlags.data
-          .filter((flag) => flag.Enabled === true || flag.enabled === true)
-          .flatMap((flag) => flag.HidesPages || flag.hidesPages || [])
-          .filter((page) => typeof page === 'string')
-        hiddenPages = [...disabledPages, ...replacedPages]
-      }
+      const hiddenPages = featureFlags.isSuccess ? getHiddenPages(featureFlags.data) : []
 
-      const filterItemsByRole = (items) => {
-        return items
-          .map((item) => {
-            // Check if page is hidden by feature flag
-            if (item.path && hiddenPages.length > 0 && hiddenPages.includes(item.path)) {
-              return null
-            }
-
-            // Check permission with pattern matching support
-            if (item.permissions && item.permissions.length > 0) {
-              const hasPermission = userPermissions?.some((userPerm) => {
-                return item.permissions.some((requiredPerm) => {
-                  // Exact match
-                  if (userPerm === requiredPerm) {
-                    return true
-                  }
-
-                  // Pattern matching - matchPattern escapes every regex metacharacter and
-                  // treats * as the only wildcard, mirroring PowerShell -like on the backend.
-                  if (requiredPerm.includes('*')) {
-                    return matchPattern(requiredPerm, userPerm)
-                  }
-
-                  return false
-                });
-              })
-              if (!hasPermission) {
-                return null
-              }
-            } else {
-              return null
-            }
-            // check sub-items
-            if (item.items && item.items.length > 0) {
-              const filteredSubItems = filterItemsByRole(item.items).filter(Boolean)
-              if (filteredSubItems.length === 0) return null
-              return { ...item, items: filteredSubItems }
-            }
-
-            return item
-          })
-          .filter(Boolean);
-      }
-      const filteredMenu = filterItemsByRole(nativeMenuItems)
+      const filteredMenu = filterMenuItems(nativeMenuItems, {
+        permissions: userPermissions,
+        hiddenPages,
+      })
       setMenuItems(filteredMenu)
     } else if (
       swaStatus.isLoading ||
@@ -231,7 +179,8 @@ export const Layout = (props) => {
       // Only update if the data has actually changed (using dataUpdatedAt as a proxy)
       const dataUpdatedAt = userSettingsAPI.dataUpdatedAt
       if (dataUpdatedAt && dataUpdatedAt !== lastUserSettingsUpdate.current) {
-        const { bookmarks: _bookmarks, ...serverSettings } = userSettingsAPI.data || {}
+        const { bookmarks: _bookmarks, ...serverSettings } =
+          userSettingsAPI.data || {}
         //if userSettingsAPI.data contains offboardingDefaults.user, delete that specific key.
         if (serverSettings.offboardingDefaults?.user) {
           delete serverSettings.offboardingDefaults.user
@@ -279,6 +228,12 @@ export const Layout = (props) => {
   // fetched above rather than a second request.
   const maintenanceAlert = useMemo(
     () => alertsAPI.data?.find((alert) => alert.maintenance === true) ?? null,
+    [alertsAPI.data]
+  )
+  // Legacy infrastructure warning, flagged "blocking" by the backend so it also raises a dialog
+  // that has to be sat through before the instance can be used.
+  const blockingAlert = useMemo(
+    () => alertsAPI.data?.find((alert) => alert.blocking === true) ?? null,
     [alertsAPI.data]
   )
 
@@ -331,7 +286,13 @@ export const Layout = (props) => {
               open={mobileNav.open}
             />
           )}
-          {!navCollapsed && <SideNav items={menuItems} onPin={handleNavPin} pinned={!!settings.pinNav} />}
+          {!navCollapsed && (
+            <SideNav
+              items={menuItems}
+              onPin={handleNavPin}
+              pinned={!!settings.pinNav}
+            />
+          )}
         </>
       )}
       <LayoutRoot
@@ -346,10 +307,16 @@ export const Layout = (props) => {
           <SubscriptionEndedDialog
             hostedSubscriptionEnded={currentRole.data?.hostedSubscriptionEnded}
           />
-          <FailedPaymentDialog hostedFailedPayments={currentRole.data?.hostedFailedPayments} />
+          <FailedPaymentDialog
+            hostedFailedPayments={currentRole.data?.hostedFailedPayments}
+          />
+          <LegacyInfrastructureDialog alert={blockingAlert} />
           <SsoMigrationDialog meData={currentRole.data} />
           <ForcedSsoMigrationDialog />
-          {(currentTenant === 'AllTenants' || !currentTenant) && !allTenantsSupport ? (
+          {(currentTenant === 'AllTenants' ||
+            urlTenant === 'AllTenants' ||
+            !currentTenant) &&
+          !allTenantsSupport ? (
             <Box sx={{ flexGrow: 1, py: 3 }}>
               <Container maxWidth={false}>
                 <CippBreadcrumbNav mode="hierarchical" />

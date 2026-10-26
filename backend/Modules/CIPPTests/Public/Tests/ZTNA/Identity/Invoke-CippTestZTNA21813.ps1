@@ -12,12 +12,20 @@ function Invoke-CippTestZTNA21813 {
     $TestId = 'ZTNA21813'
 
     try {
+        if (-not (Test-CIPPStandardLicense -StandardName $TestId -TenantFilter $Tenant -Preset PIM -SkipLog)) {
+            Add-CippTestResult -TenantFilter $Tenant -TestId $TestId -TestType 'Identity' -Status 'Unlicensed' -ResultMarkdown 'This tenant is not licensed for Privileged Identity Management. Required capabilities: AAD_PREMIUM_P2, Entra_Identity_Governance.' -Risk 'High' -Name 'High Global Administrator to privileged user ratio' -UserImpact 'Low' -ImplementationEffort 'Medium' -Category 'Privileged access'
+            return
+        }
+
         $GlobalAdminRoleId = '62e90394-69f5-4237-9190-012177145e10'
 
         $PrivilegedRoles = Get-CippDbRole -TenantFilter $Tenant -IncludePrivilegedRoles
         $RoleAssignmentScheduleInstances = Get-CIPPTestData -TenantFilter $Tenant -Type 'RoleAssignmentScheduleInstances'
         $RoleEligibilitySchedules = Get-CIPPTestData -TenantFilter $Tenant -Type 'RoleEligibilitySchedules'
         $Users = Get-CIPPTestData -TenantFilter $Tenant -Type 'Users'
+        $UserById = [CIPP.CippIndex]::Build($Users, @(foreach ($U in $Users) { , ($($U.id) ?? $null) }))
+        $AssignmentsByRole = [CIPP.CippIndex]::Build($RoleAssignmentScheduleInstances, @(foreach ($A in $RoleAssignmentScheduleInstances) { , ($($A.roleDefinitionId) ?? $null) }))
+        $EligibilitiesByRole = [CIPP.CippIndex]::Build($RoleEligibilitySchedules, @(foreach ($E in $RoleEligibilitySchedules) { , ($($E.roleDefinitionId) ?? $null) }))
 
         $AllGAUsers = @{}
         $AllPrivilegedUsers = @{}
@@ -27,17 +35,13 @@ function Invoke-CippTestZTNA21813 {
             # 'roleTemplateId', not 'templateId' — the Roles cache has no templateId field at all
             # (description, displayName, id, memberCount, members, roleTemplateId), so both filters
             # below compared against $null and matched nothing.
-            $ActiveAssignments = $RoleAssignmentScheduleInstances | Where-Object {
-                $_.roleDefinitionId -eq $Role.roleTemplateId -and $_.assignmentType -eq 'Assigned'
-            }
-            $EligibleAssignments = $RoleEligibilitySchedules | Where-Object {
-                $_.roleDefinitionId -eq $Role.roleTemplateId
-            }
+            $ActiveAssignments = ($AssignmentsByRole.Find($Role.roleTemplateId)).Where({ $_.assignmentType -eq 'Assigned' })
+            $EligibleAssignments = $EligibilitiesByRole.Find($Role.roleTemplateId)
 
             $AllAssignments = @($ActiveAssignments) + @($EligibleAssignments)
 
             foreach ($Assignment in $AllAssignments) {
-                $User = $Users | Where-Object { $_.id -eq $Assignment.principalId } | Select-Object -First 1
+                $User = $UserById.First($Assignment.principalId)
                 if (-not $User) { continue }
 
                 $UserId = $User.id
@@ -113,7 +117,7 @@ function Invoke-CippTestZTNA21813 {
             $User = $UserEntry.User
             $IsGA = if ($UserEntry.IsGA) { 'Yes' } else { 'No' }
 
-            $OtherRoles = $UserEntry.Roles | Where-Object { $_ -ne 'Global Administrator' } | Sort-Object
+            $OtherRoles = $UserEntry.Roles.Where({ $_ -ne 'Global Administrator' }) | Sort-Object
             $RolesList = if ($OtherRoles.Count -gt 0) { ($OtherRoles -join ', ') } else { '-' }
 
             $UserLink = "https://entra.microsoft.com/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/AdministrativeRole/userId/$($User.id)/hidePreviewBanner~/true"

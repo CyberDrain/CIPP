@@ -13,8 +13,6 @@ function Invoke-CIPPStandardintuneRequireMFA {
         CAT
             Intune Standards
         TAG
-            "ZTNA21782"
-            "ZTNA21796"
             "ZTNA21872"
         EXECUTIVETEXT
             Requires employees to use multi-factor authentication when registering devices for corporate access, adding an extra security layer to prevent unauthorized device enrollment. This helps ensure only legitimate users can connect their devices to company systems.
@@ -70,8 +68,6 @@ function Invoke-CIPPStandardintuneRequireMFA {
     }
 
     if ($Settings.report -eq $true) {
-        $RequireMFA = if ($PreviousSetting.multiFactorAuthConfiguration -eq 'required') { $true } else { $false }
-
         $CurrentValue = @{
             multiFactorAuthConfiguration = $PreviousSetting.multiFactorAuthConfiguration
         }
@@ -79,6 +75,5 @@ function Invoke-CIPPStandardintuneRequireMFA {
             multiFactorAuthConfiguration = 'required'
         }
         Set-CIPPStandardsCompareField -FieldName 'standards.intuneRequireMFA' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -Tenant $Tenant
-        Add-CIPPBPAField -FieldName 'intuneRequireMFA' -FieldValue $RequireMFA -StoreAs bool -Tenant $Tenant
     }
 }

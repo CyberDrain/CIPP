@@ -11,6 +11,7 @@
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
+    Add-Type -Path (Join-Path $RepoRoot 'Shared/CIPPSharp/bin/CIPPSharp.dll')
     $WebhookDir = Join-Path $RepoRoot 'Modules/CIPPCore/Public/Webhooks'
 
     function Get-CippTable { param($TableName) }
@@ -29,10 +30,8 @@ BeforeAll {
         if ($ids) { @($ids) } else { $null }
     }
 
-    # Real helpers, not mocks: the point-write settle and the quarantined legacy read are part of
-    # what these tests are pinning.
+    # Real helper, not a mock: the point-write settle is part of what these tests are pinning.
     . (Join-Path $WebhookDir 'Set-CippAuditLogWindowProcessed.ps1')
-    . (Join-Path $WebhookDir 'Get-CippAuditLogLegacyCacheRow.ps1')
     . (Join-Path $WebhookDir 'Push-AuditLogTenantProcessV2.ps1')
 }
 
@@ -164,6 +163,16 @@ Describe 'Push-AuditLogTenantProcessV2' {
             Push-AuditLogTenantProcessV2 -Item $script:Item | Should -BeTrue
         }
 
+        It 'scopes the directory cache to the search and clears it when the search ends' {
+            Mock -CommandName Test-CIPPAuditLogRules -MockWith {
+                $script:SeenSearchCache = $script:AuditRuleSearchLookups
+                [PSCustomObject]@{ MatchedLogs = 0 }
+            }
+            $null = Push-AuditLogTenantProcessV2 -Item $script:Item
+            $script:SeenSearchCache.Tenant | Should -Be 'contoso.com'
+            $script:AuditRuleSearchLookups | Should -BeNullOrEmpty
+        }
+
         It 'reads the search partition, never an OR-list of RowKeys' {
             # The whole point of the layout. An OR-list cannot use the index and scans the
             # partition, which is what made cost scale with the tenant's backlog.
@@ -210,6 +219,7 @@ Describe 'Push-AuditLogTenantProcessV2' {
         It 'returns the window to Downloaded when processing throws' {
             Mock -CommandName Test-CIPPAuditLogRules -MockWith { throw 'boom' }
             Push-AuditLogTenantProcessV2 -Item $script:Item | Should -BeFalse
+            $script:AuditRuleSearchLookups | Should -BeNullOrEmpty
             ($script:LedgerWrites | Where-Object { $_.RowKey -eq 'window-1' -and $_.State -eq 'Downloaded' }) |
                 Should -Not -BeNullOrEmpty
         }
@@ -346,14 +356,6 @@ Describe 'Push-AuditLogTenantProcessV2' {
             ($script:SweptRows.PartitionKey | Sort-Object -Unique) | Should -Be @('contoso.com|search-1')
         }
 
-        It 'does not sweep for legacy batches' {
-            # Legacy rows share the tenant partition with every other search, so a sweep there
-            # would delete records belonging to searches this batch never processed.
-            $null = Push-AuditLogTenantProcessV2 -Item @{
-                TenantFilter = 'contoso.com'; LegacyRowIds = @('rec-1', 'rec-2')
-            }
-            $script:SweptRows.Count | Should -Be 0
-        }
 
         It 'does not sweep when paging stopped because the cursor stalled' {
             # A stalled cursor means the range predicate was not honoured and rows may never have
@@ -375,31 +377,6 @@ Describe 'Push-AuditLogTenantProcessV2' {
             }
             $null = Push-AuditLogTenantProcessV2 -Item $script:Item
             $script:SweptRows.Count | Should -Be 0
-        }
-    }
-
-    Context 'legacy rows written before per-search partitioning' {
-        It 'still processes rows addressed by id from the old tenant partition' {
-            $null = Push-AuditLogTenantProcessV2 -Item @{
-                TenantFilter = 'contoso.com'; LegacyRowIds = @('rec-1', 'rec-2')
-            }
-            @($script:RulesRows).Count | Should -Be 2
-        }
-
-        It 'keeps the legacy filter short enough to stay inside the request size limit' {
-            # Azure rejects ~27kb of filter with HTTP 414 and Azurite ~13kb with HTTP 431, and the
-            # outer catch swallows both. Only the legacy path builds filters this way.
-            $script:CacheRows = @(
-                1..250 | ForEach-Object {
-                    [PSCustomObject]@{
-                        RowKey = ('rec-{0:D3}' -f $_); OriginalEntityId = $null
-                        SearchId = 'search-1'; JSON = ('{{"id":"rec-{0:D3}"}}' -f $_)
-                    }
-                }
-            )
-            $ids = @(1..250 | ForEach-Object { 'rec-{0:D3}' -f $_ })
-            $null = Push-AuditLogTenantProcessV2 -Item @{ TenantFilter = 'contoso.com'; LegacyRowIds = $ids }
-            ($script:SeenFilters | Measure-Object -Property Length -Maximum).Maximum | Should -BeLessThan 11000
         }
     }
 }

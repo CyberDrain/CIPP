@@ -59,8 +59,8 @@ jobs:
           print(f"openapi.json is valid ({len(spec['paths'])} endpoints)")
           PY
 
-      # Get-CippMcpToolList keys tools by endpoint name, so a path carrying two
-      # operations would advertise two tools with the same name.
+      # Get-CippMcpToolList keys tools by endpoint name and projects only the POST of
+      # a get+post pair, so a path may carry one method or exactly that pair.
       - name: Check MCP projection invariants
         shell: pwsh
         run: |
@@ -68,7 +68,7 @@ jobs:
           $Problems = @()
           foreach ($Entry in $Spec.paths.GetEnumerator()) {
             $Methods = @($Entry.Value.Keys)
-            if ($Methods.Count -ne 1) {
+            if ($Methods.Count -gt 2 -or ($Methods.Count -eq 2 -and (Compare-Object $Methods @('get', 'post')))) {
               $Problems += "$($Entry.Key) has $($Methods.Count) operations: $($Methods -join ', ')"
             }
             foreach ($Method in $Methods) {

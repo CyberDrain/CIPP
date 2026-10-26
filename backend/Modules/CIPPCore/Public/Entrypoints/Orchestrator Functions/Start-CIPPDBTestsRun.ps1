@@ -20,7 +20,10 @@ function Start-CIPPDBTestsRun {
         # Optional subset of suites to run (e.g. 'Custom'). Omit to run every suite.
         # Suite names must match the ValidateSet in Invoke-CIPPTestCollection.
         [Parameter(Mandatory = $false)]
-        [string[]]$Suites
+        [string[]]$Suites,
+
+        [Parameter(Mandatory = $false)]
+        [int]$Priority
     )
 
     Write-Information "Starting tests run for tenant: $TenantFilter"
@@ -46,7 +49,8 @@ function Start-CIPPDBTestsRun {
         try { [CIPP.TestDataCache]::Clear() } catch { Write-Information "TestDataCache clear skipped: $($_.Exception.Message)" }
 
         $AllTenantsList = if ($TenantFilter -eq 'allTenants') {
-            $DbCounts = Get-CIPPDbItem -CountsOnly -TenantFilter 'allTenants'
+            # Users is collected for every tenant, so its count row marks a tenant with data: one key read per tenant, not a table scan
+            $DbCounts = Get-CIPPDbItem -CountsOnly -TenantFilter 'allTenants' -Type 'Users'
             $TenantsWithData = $DbCounts | Where-Object { (($_.DataCount ?? $_.Count) ?? 0) -gt 0 } | Select-Object -ExpandProperty PartitionKey -Unique
             $ActiveTenants = [System.Collections.Generic.HashSet[string]]::new(
                 [string[]]@((Get-Tenants).defaultDomainName | Where-Object { $_ }),
@@ -59,7 +63,7 @@ function Start-CIPPDBTestsRun {
             Write-Information "Found $($TenantsWithData.Count) tenants with data in database"
             $TenantsWithData
         } else {
-            $DbCounts = Get-CIPPDbItem -TenantFilter $TenantFilter -CountsOnly
+            $DbCounts = Get-CIPPDbItem -TenantFilter $TenantFilter -CountsOnly -Type 'Users'
             if ((($DbCounts | Measure-Object -Property DataCount -Sum).Sum ?? 0) -gt 0) {
                 @($TenantFilter)
             } else {
@@ -95,6 +99,7 @@ function Start-CIPPDBTestsRun {
         $NameSuffix = if ($TenantFilter -ne 'allTenants') { "-$TenantFilter" } else { '' }
         $InputObject = [PSCustomObject]@{
             OrchestratorName = "TestsList$NameSuffix"
+            AllowCollision   = $TenantFilter -ne 'allTenants'
             Batch            = @($Batch)
             SkipLog          = $true
             PostExecution    = @{
@@ -105,12 +110,20 @@ function Start-CIPPDBTestsRun {
             }
         }
 
+        if ($PSBoundParameters.ContainsKey('Priority')) {
+            $InputObject | Add-Member -NotePropertyName Priority -NotePropertyValue $Priority
+        }
+
         $InstanceId = Start-CIPPOrchestrator -InputObject $InputObject
         Write-Information "Started tests list orchestration with ID = '$InstanceId'"
 
         return @{
             InstanceId = $InstanceId
-            Message    = "Tests orchestration started: $($AllTenantsList.Count) tenant orchestrators will be created"
+            Message    = if ("$InstanceId" -like '*-Skipped') {
+                'Tests orchestration skipped: a tests run for all tenants is still running'
+            } else {
+                "Tests orchestration started: $($AllTenantsList.Count) tenant orchestrators will be created"
+            }
         }
     } catch {
         $ErrorMessage = Get-CippException -Exception $_

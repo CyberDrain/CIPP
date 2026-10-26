@@ -12,7 +12,6 @@ import {
   Menu,
   MenuItem,
   Stack,
-  SvgIcon,
   Tab,
   Tabs,
   TextField,
@@ -24,12 +23,16 @@ import { Grid } from '@mui/system'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { get } from 'lodash'
 import { Layout as DashboardLayout } from '../../../layouts/index'
 import { CippHead } from '../../../components/CippComponents/CippHead'
 import CippButtonCard from '../../../components/CippCards/CippButtonCard'
 import { CippPropertyListCard } from '../../../components/CippCards/CippPropertyListCard'
 import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
+import { CippApiDialog } from '../../../components/CippComponents/CippApiDialog'
+import { buildSyncedTemplateFields } from '../../../components/CippStandards/CippStandardsSideBar'
+import { useDialog } from '../../../hooks/use-dialog'
 import { CippFormTenantSelector } from '../../../components/CippComponents/CippFormTenantSelector'
 import CippBaselineStandardItem from '../../../components/CippBaselines/CippBaselineStandardItem'
 import CippBaselineStandardDialog from '../../../components/CippBaselines/CippBaselineStandardDialog'
@@ -57,6 +60,8 @@ const unitOptions = [
   { label: 'Days', value: 'days' },
   { label: 'Weeks', value: 'weeks' },
 ]
+
+const MAX_STAGES = 20
 
 const logicOptions = [
   { label: 'All conditions must match (AND)', value: 'and' },
@@ -94,12 +99,19 @@ const toOptionArray = (value) => {
   return entries.length > 0 ? entries : null
 }
 
+// Stable identity for a stage while it is being edited. Panels (and their forms) are
+// keyed on it rather than on position, so moving a stage up or down carries its
+// configuration along instead of handing it to whichever stage lands in that slot.
+const newStageKey = () =>
+  globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)
+
 const buildEditorStages = (templateDefinition) =>
   (
     templateDefinition?.stages ?? [
       { name: 'Default', standards: [], conditions: [], logic: 'and' },
     ]
   ).map((stage) => ({
+    key: newStageKey(),
     name: stage.name,
     standards: [...stage.standards],
     // Saved per-instance configuration (variables + action posture) keyed by
@@ -130,9 +142,13 @@ const StagePanel = ({
   hidden,
   onStageNameChange,
   onRemoveStage,
+  onMoveStage,
   onOpenDialog,
   onRemoveStandard,
+  onAddStandardInstance,
   canRemoveStage,
+  canMoveUp,
+  canMoveDown,
   tenantsInStage,
   catalogByName,
   registerSerializer,
@@ -172,6 +188,13 @@ const StagePanel = ({
   const handleRemoveStandard = (standardName) => {
     formControl.unregister(standardName)
     onRemoveStandard(stageIndex, standardName)
+  }
+
+  // Quick add for multi-instance standards: the new instance opens immediately so the
+  // operator lands in its settings instead of hunting for it in the list.
+  const handleAddStandardInstance = (standardName) => {
+    const instanceKey = onAddStandardInstance(stageIndex, standardName)
+    if (instanceKey) setExpandedStandard(instanceKey)
   }
 
   // Bulk posture: apply one action setting to every standard in this stage.
@@ -227,7 +250,7 @@ const StagePanel = ({
               : item
           )
         : unwrapValue(value)
-    registerSerializer(stageIndex, () => {
+    registerSerializer(stage.key, () => {
       const values = formControl.getValues()
       return {
         name: stage.name,
@@ -271,7 +294,7 @@ const StagePanel = ({
         }),
       }
     })
-    return () => registerSerializer(stageIndex, null)
+    return () => registerSerializer(stage.key, null)
   })
 
   return (
@@ -306,6 +329,30 @@ const StagePanel = ({
             </Tooltip>
           )}
           <Box sx={{ flexGrow: 1 }} />
+          {stageIndex > 0 && (
+            <>
+              <Tooltip title="Move this stage up">
+                <span>
+                  <IconButton
+                    onClick={() => onMoveStage(stageIndex, -1)}
+                    disabled={!canMoveUp}
+                  >
+                    <CippIcons.ArrowUpward />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Move this stage down">
+                <span>
+                  <IconButton
+                    onClick={() => onMoveStage(stageIndex, 1)}
+                    disabled={!canMoveDown}
+                  >
+                    <CippIcons.ArrowDownward />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </>
+          )}
           {canRemoveStage && (
             <Tooltip title="Remove this stage">
               <IconButton
@@ -564,6 +611,7 @@ const StagePanel = ({
                 )
               }
               onRemove={handleRemoveStandard}
+              onAddInstance={handleAddStandardInstance}
             />
           ))}
         </Stack>
@@ -580,6 +628,10 @@ const Page = () => {
   // editor, or a clone before its first save); the save response's id is adopted
   // so saving twice never creates twice.
   const [saveTargetId, setSaveTargetId] = useState(null)
+  // Bumped only when a different template is loaded into the editor. Keying the stage
+  // panels on it (not on the template id) keeps their forms mounted across a save:
+  // per-standard actions live in those forms, so a remount would reset them.
+  const [editorGeneration, setEditorGeneration] = useState(0)
   const [stages, setStages] = useState(() => buildEditorStages(undefined))
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogStageIndex, setDialogStageIndex] = useState(0)
@@ -597,26 +649,31 @@ const Page = () => {
   })
   // Saving a baseline invalidates every baseline-related query: the baselines list (direct
   // and table), all alignment views for every tenant, and the standards catalog.
-  const saveBaseline = ApiPostCall({
-    relatedQueryKeys: ['ListBaseline*'],
-    onResult: (result) => {
-      const savedId = result?.Metadata?.id
-      if (!savedId) return
-      // Adopt the saved baseline: the next save updates it instead of creating a
-      // duplicate, and the URL reflects it so a refresh keeps editing the same one.
-      // Matching loadedTemplateId also stops the render-phase loader from
-      // re-resetting the form when the refetched list arrives.
-      setSaveTargetId(savedId)
-      setLoadedTemplateId(savedId)
-      if (router.query.id !== savedId || router.query.clone) {
-        router.replace(
-          { pathname: router.pathname, query: { id: savedId } },
-          undefined,
-          { shallow: true }
-        )
-      }
-    },
-  })
+  // The save runs inside a confirm dialog so its result (including the GitHub push
+  // outcome) shows there; lastSavedId drives the post-save prompt once it is closed.
+  const saveDialog = useDialog()
+  const [lastSavedId, setLastSavedId] = useState(null)
+  const onBaselineSaved = (result) => {
+    const savedId = result?.Metadata?.id
+    if (!savedId) return
+    // Adopt the saved baseline: the next save updates it instead of creating a
+    // duplicate, and the URL reflects it so a refresh keeps editing the same one.
+    // Matching loadedTemplateId also stops the render-phase loader from
+    // re-resetting the form when the refetched list arrives.
+    setSaveTargetId(savedId)
+    setLoadedTemplateId(savedId)
+    setLastSavedId(savedId)
+    setHasUnsavedChanges(false)
+    // Re-baseline the form so isDirty clears after the save.
+    formControl.reset(formControl.getValues())
+    if (router.query.id !== savedId || router.query.clone) {
+      router.replace(
+        { pathname: router.pathname, query: { id: savedId } },
+        undefined,
+        { shallow: true }
+      )
+    }
+  }
   // After a save, the natural next step is seeing where the tenants stand - offer a
   // no-changes check right away instead of ending the setup flow in silence.
   const runAfterSave = ApiPostCall({
@@ -648,6 +705,20 @@ const Page = () => {
   const template = (baselinesApi.data ?? []).find(
     (entry) => entry.GUID === router.query.id
   )
+  // A clone isn't pushed to the source repo yet, so it drops the synced badge/option.
+  const templateSource = !router.query.clone && template?.source ? template.source : null
+  const templateSourceUrl = !router.query.clone ? template?.sourceUrl : null
+  const templateHasLocalChanges = !router.query.clone ? template?.hasLocalChanges ?? null : null
+  // Repos the user can push to; shares its queryKey with the templates list's own
+  // "Save to GitHub" action so both read the same cached result.
+  const writableReposApi = ApiGetCall({
+    url: '/api/ListCommunityRepos',
+    data: { WriteAccess: true },
+    queryKey: 'CommunityRepos-Write',
+  })
+  const canSaveToGitHub =
+    !!templateSource &&
+    (writableReposApi.data?.Results ?? []).some((repo) => repo.FullName === templateSource)
   const formControl = useForm({
     mode: 'onBlur',
     defaultValues: {
@@ -655,6 +726,7 @@ const Page = () => {
       description: '',
       alertEmails: '',
       alertWebhookUrl: '',
+      disableAlerts: false,
       disableScheduledRuns: false,
     },
   })
@@ -665,6 +737,7 @@ const Page = () => {
   if (template && template.GUID !== loadedTemplateId) {
     setLoadedTemplateId(template.GUID)
     setSaveTargetId(router.query.clone ? null : template.GUID)
+    setEditorGeneration((generation) => generation + 1)
     setStages(buildEditorStages(template))
     setActiveStage(0)
     setHasUnsavedChanges(false)
@@ -675,6 +748,7 @@ const Page = () => {
       description: template.description,
       alertEmails: template.alertEmails ?? '',
       alertWebhookUrl: template.alertWebhookUrl ?? '',
+      disableAlerts: template.disableAlerts === true,
       disableScheduledRuns: template.disableScheduledRuns === true,
       // The tenant selector's own option objects round-trip verbatim through the API
       // (assignments/exclusions); older saves fall back to name-based options.
@@ -697,17 +771,22 @@ const Page = () => {
   const unsavedChanges = hasUnsavedChanges || formControl.formState.isDirty
 
   // Warn before navigating away with unsaved changes (browser close + in-app navigation).
-  const handleRouteChange = useCallback(() => {
-    if (unsavedChanges) {
-      const confirmLeave = window.confirm(
-        'You have unsaved changes. Are you sure you want to leave this page?'
-      )
-      if (!confirmLeave) {
-        router.events.emit('routeChangeError')
-        throw 'Route change was aborted'
+  const handleRouteChange = useCallback(
+    (url, { shallow } = {}) => {
+      // A shallow replace (adopting a saved baseline's id) keeps the page and its state.
+      if (shallow) return
+      if (unsavedChanges) {
+        const confirmLeave = window.confirm(
+          'You have unsaved changes. Are you sure you want to leave this page?'
+        )
+        if (!confirmLeave) {
+          router.events.emit('routeChangeError')
+          throw 'Route change was aborted'
+        }
       }
-    }
-  }, [unsavedChanges, router])
+    },
+    [unsavedChanges, router]
+  )
 
   useEffect(() => {
     const handleBeforeUnload = (event) => {
@@ -743,9 +822,11 @@ const Page = () => {
     )
 
   const handleAddStage = () => {
+    if (stages.length >= MAX_STAGES) return
     mutateStages((prev) => [
       ...prev,
       {
+        key: newStageKey(),
         name: `Stage ${prev.length + 1}`,
         standards: [],
         standardConfigs: {},
@@ -764,13 +845,28 @@ const Page = () => {
     setActiveStage((prev) => Math.max(0, prev - 1))
   }
 
+  // Swap a stage with its neighbour. Stage 1 is the default stage and never moves:
+  // nothing moves into its slot and it is never moved out of it.
+  const handleMoveStage = (stageIndex, direction) => {
+    const target = stageIndex + direction
+    if (stageIndex < 1 || target < 1 || target >= stages.length) return
+    mutateStages((prev) => {
+      const next = [...prev]
+      ;[next[stageIndex], next[target]] = [next[target], next[stageIndex]]
+      return next
+    })
+    setActiveStage(target)
+  }
+
   // Duplicate a stage (standards + graduation condition structure) as a new stage at the end.
   const handleCopyStage = (stageIndex) => {
+    if (stages.length >= MAX_STAGES) return
     mutateStages((prev) => {
       const source = prev[stageIndex]
       return [
         ...prev,
         {
+          key: newStageKey(),
           name: `${source.name} (Copy)`,
           standards: [...source.standards],
           standardConfigs: { ...source.standardConfigs },
@@ -796,6 +892,24 @@ const Page = () => {
           : stage
       )
     )
+
+  // Quick add from a staged row: appends one more instance of a multi-instance standard
+  // to the given stage and returns its key so the panel can expand it straight away.
+  const handleAddStandardInstance = (stageIndex, standardName) => {
+    if (catalogByName[standardName]?.multiple !== true) return null
+    const instanceId =
+      globalThis.crypto?.randomUUID?.().slice(0, 8) ??
+      Math.random().toString(36).slice(2, 10)
+    const instanceKey = `${standardName}#${instanceId}`
+    mutateStages((prev) =>
+      prev.map((stage, index) =>
+        index === stageIndex
+          ? { ...stage, standards: [...stage.standards, instanceKey] }
+          : stage
+      )
+    )
+    return instanceKey
+  }
 
   const handleToggleStandard = (standardName) =>
     mutateStages((prev) =>
@@ -832,11 +946,11 @@ const Page = () => {
 
   const stageOccupancy = template?.occupancy ?? []
 
-  const registerSerializer = useCallback((index, serialize) => {
+  const registerSerializer = useCallback((stageKey, serialize) => {
     if (serialize) {
-      stageSerializers.current[index] = serialize
+      stageSerializers.current[stageKey] = serialize
     } else {
-      delete stageSerializers.current[index]
+      delete stageSerializers.current[stageKey]
     }
   }, [])
 
@@ -873,11 +987,9 @@ const Page = () => {
   ]
   const isSaveDisabled = steps.some((step) => !step.done)
 
-  const handleSave = () => {
+  const buildBaselinePayload = (dialogValues = {}) => {
     const values = formControl.getValues()
-    saveBaseline.mutate({
-      url: '/api/AddBaseline',
-      data: {
+    return {
         GUID: saveTargetId ?? undefined,
         templateName: values.templateName,
         description: values.description,
@@ -895,22 +1007,23 @@ const Page = () => {
         ),
         alertEmails: values.alertEmails,
         alertWebhookUrl: values.alertWebhookUrl,
+        disableAlerts: values.disableAlerts === true,
         disableScheduledRuns: values.disableScheduledRuns === true,
         stages: stages.map(
-          (stage, index) =>
-            stageSerializers.current[index]?.() ?? {
+          (stage) =>
+            stageSerializers.current[stage.key]?.() ?? {
               name: stage.name,
               logic: 'and',
               conditions: [],
               standards: [],
             }
         ),
-      },
-    })
-    setHasUnsavedChanges(false)
-    // Re-baseline the form so isDirty clears after the save.
-    formControl.reset(formControl.getValues())
+        ...(dialogValues.saveToGitHub && templateSource
+          ? { GitHub: { FullName: templateSource, Message: dialogValues.GitHubMessage } }
+          : {}),
+    }
   }
+  const handleSave = () => saveDialog.handleOpen()
 
   const pageTitle = template ? 'Edit Baseline' : 'Add Baseline'
 
@@ -918,19 +1031,6 @@ const Page = () => {
     <Box sx={{ flexGrow: 1, px: 3, maxWidth: '1900px' }}>
       <CippHead title={pageTitle} />
       <Stack spacing={2}>
-        <Box>
-          <Button
-            color="inherit"
-            onClick={() => router.back()}
-            startIcon={
-              <SvgIcon fontSize="small">
-                <CippIcons.ArrowLeft />
-              </SvgIcon>
-            }
-          >
-            Back
-          </Button>
-        </Box>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={{ xs: 2, sm: 4 }}
@@ -939,12 +1039,25 @@ const Page = () => {
             alignItems: { xs: 'stretch', sm: 'center' },
             mb: 1
           }}>
-          <Typography variant="h4">{pageTitle}</Typography>
+          <Stack spacing={1} sx={{ alignItems: 'flex-start' }}>
+            {/* A fixed link, not router.back(): the editor is often opened from Alignment,
+                and "back" should land on the Baselines list either way. */}
+            <Button
+              component={Link}
+              href="/tenant/baselines/templates"
+              color="inherit"
+              size="small"
+              startIcon={<CippIcons.ArrowBack fontSize="small" />}
+            >
+              Back to Baselines
+            </Button>
+            <Typography variant="h4">{pageTitle}</Typography>
+          </Stack>
           <Stack
             direction="row"
             spacing={2}
             useFlexGap
-            sx={{ flexWrap: 'wrap' }}
+            sx={{ flexWrap: 'wrap', alignItems: 'center' }}
           >
             <PermissionButton
               requiredPermissions={['Tenant.Standards.ReadWrite']}
@@ -961,9 +1074,12 @@ const Page = () => {
               color="primary"
               startIcon={<CippIcons.Add />}
               endIcon={<CippIcons.ExpandMore />}
+              disabled={stages.length >= MAX_STAGES}
               onClick={(event) => setAddStageAnchor(event.currentTarget)}
             >
-              Add Stage
+              {stages.length >= MAX_STAGES
+                ? `Maximum of ${MAX_STAGES} stages reached`
+                : 'Add Stage'}
             </Button>
             <Menu
               anchorEl={addStageAnchor}
@@ -997,9 +1113,32 @@ const Page = () => {
             </Menu>
           </Stack>
         </Stack>
+        {templateSource && (
+          <Box sx={{ mb: 2 }}>
+            <Chip
+              size="small"
+              variant="outlined"
+              icon={CippIcons.GitHub ? <CippIcons.GitHub /> : undefined}
+              color={templateHasLocalChanges ? 'warning' : 'default'}
+              label={
+                templateHasLocalChanges
+                  ? `Modified since last push to ${templateSource}`
+                  : `Synced from ${templateSource}`
+              }
+              {...(templateSourceUrl
+                ? {
+                    component: 'a',
+                    href: templateSourceUrl,
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                    clickable: true,
+                  }
+                : {})}
+            />
+          </Box>
+        )}
 
-        <CippApiResults apiObject={saveBaseline} />
-        {saveBaseline.isSuccess && !runAfterSave.isSuccess && (
+        {lastSavedId && !saveDialog.open && !runAfterSave.isSuccess && (
           <Alert
             severity="success"
             action={
@@ -1013,9 +1152,7 @@ const Page = () => {
                     url: '/api/ExecBaselineRun',
                     data: {
                       mode: 'compare',
-                      templateId:
-                        saveBaseline.data?.data?.Metadata?.id ??
-                        loadedTemplateId,
+                      templateId: lastSavedId,
                     },
                   })
                 }
@@ -1061,6 +1198,7 @@ const Page = () => {
                     formControl={formControl}
                     name="excludedTenants"
                     label="Excluded Tenants"
+                    includeGroups={true}
                     required={false}
                     disableClearable={false}
                   />
@@ -1099,6 +1237,19 @@ const Page = () => {
                     Alerts follow each standard's alert settings. Leave these
                     empty to deliver through the global CIPP notification
                     settings (email, webhook, and PSA).
+                  </Typography>
+                  <CippFormComponent
+                    type="switch"
+                    name="disableAlerts"
+                    label="Disable Alerts for this baseline"
+                    formControl={formControl}
+                  />
+                  <Typography variant="caption" sx={{
+                    color: "text.secondary"
+                  }}>
+                    With alerts disabled, no email, webhook, or PSA
+                    notifications are sent for this baseline - deviations are
+                    still detected and shown on the alignment page.
                   </Typography>
                 </Stack>
               </CippButtonCard>
@@ -1165,7 +1316,7 @@ const Page = () => {
               >
                 {stages.map((stage, index) => (
                   <Tab
-                    key={index}
+                    key={stage.key}
                     label={`Stage ${index + 1}: ${stage.name}`}
                     value={index}
                   />
@@ -1175,15 +1326,19 @@ const Page = () => {
               <CardContent>
                 {stages.map((stage, index) => (
                   <StagePanel
-                    key={`${loadedTemplateId ?? 'new'}-${index}`}
+                    key={`${editorGeneration}-${stage.key}`}
                     stageIndex={index}
                     stage={stage}
                     hidden={activeStage !== index}
                     onStageNameChange={handleStageNameChange}
                     onRemoveStage={handleRemoveStage}
+                    onMoveStage={handleMoveStage}
                     onOpenDialog={handleOpenDialog}
                     onRemoveStandard={handleRemoveStandard}
+                    onAddStandardInstance={handleAddStandardInstance}
                     canRemoveStage={index > 0}
+                    canMoveUp={index > 1}
+                    canMoveDown={index > 0 && index < stages.length - 1}
                     tenantsInStage={stageOccupancy[index]?.tenants ?? null}
                     catalogByName={catalogByName}
                     registerSerializer={registerSerializer}
@@ -1203,6 +1358,25 @@ const Page = () => {
         catalog={catalog}
         selectedStandards={stages[dialogStageIndex]?.standards ?? []}
         onToggle={handleToggleStandard}
+      />
+      <CippApiDialog
+        createDialog={saveDialog}
+        title="Save Baseline"
+        api={{
+          url: '/api/AddBaseline',
+          type: 'POST',
+          confirmText: 'Save this baseline? Assigned tenants are checked on the schedule unless scheduled runs are disabled.',
+          customDataformatter: (row, action, formData) => buildBaselinePayload(formData),
+          onSuccess: onBaselineSaved,
+        }}
+        fields={buildSyncedTemplateFields({
+          source: templateSource,
+          canSaveToGitHub,
+          kind: 'baseline',
+          hasLocalChanges: templateHasLocalChanges,
+        })}
+        row={{}}
+        relatedQueryKeys={['ListBaseline*']}
       />
     </Box>
   );

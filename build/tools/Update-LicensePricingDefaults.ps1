@@ -1,16 +1,21 @@
 <#
 .SYNOPSIS
-Regenerates backend/Config/LicensePricingDefaults.csv from Microsoft's public retail prices.
+Refreshes the prices in backend/Config/LicenseCatalog.json from Microsoft's public retail prices.
 
 .DESCRIPTION
 Microsoft's plans-and-pricing pages hydrate their prices from an unauthenticated JSON endpoint
 (https://www.microsoft.com/msonecloudapi/m365/product/price). This tool resolves the retail
 (MSRP/list) price for a curated set of Microsoft catalog product IDs, joins each to its licensing
 skuPartNumber + GUID (Microsoft's "Product names and service plan identifiers" CSV), and writes the
-shipped MSRP-estimate table the license optimization report falls back to.
+result into the `prices` map of each product in the license catalog the optimization report reads.
 
-Prices are the per-user/month retail rate. Annual-upfront = MonthlyPrice x 10 (2 months free);
-month-to-month = x12. Only MonthlyPrice is stored; the report derives the rest.
+The catalog's other sections (capabilities, families, per-product family/tier/eligibleTarget) are
+hand-maintained and left untouched. A scraped SKU that is not yet in the catalog is appended with
+family 'other' and eligibleTarget false so it prices but is never recommended until someone
+classifies it.
+
+Prices are the per-user/month retail rate on an annual commitment. Month-to-month costs
+meta.monthlyCommitmentUplift (20%) more; the report derives that.
 
 The endpoint is undocumented and could change - this is a best-effort estimate source, not an
 authoritative feed. Real per-partner cost/RRP still comes from the MSP price override table and,
@@ -18,15 +23,15 @@ later, distributor/Partner Center integrations.
 
 .PARAMETER Market
 One or more Microsoft market codes (US, AU, GB, CA, NZ, IE, ...). Each maps to its local currency
-(US->USD, AU->AUD, GB->GBP, CA->CAD, NZ->NZD, IE->EUR). The CSV is written multi-currency: one row
-per (skuId, currency). The loader (Get-CIPPLicensePrice -Currency) filters to the currency in view.
+(US->USD, AU->AUD, GB->GBP, CA->CAD, NZ->NZD, IE->EUR). Each product's `prices` map gains one
+entry per currency. The loader (Get-CIPPLicensePrice -Currency) filters to the currency in view.
 
 .PARAMETER OutFile
-Target CSV. Defaults to backend/Config/LicensePricingDefaults.csv.
+Target catalog JSON. Defaults to backend/Config/LicenseCatalog.json.
 
 .PARAMETER NoMerge
-Do not merge the existing OutFile. By default existing (skuId, currency) rows are kept so SKUs/
-currencies this tool does not yet scrape never regress.
+Drop every existing price before writing. By default existing (skuId, currency) prices are kept so
+SKUs/currencies this tool does not yet scrape never regress.
 
 .EXAMPLE
 pwsh build/tools/Update-LicensePricingDefaults.ps1
@@ -39,6 +44,7 @@ Regenerate for a specific market set (use -Command, not -File, so the array bind
 .NOTES
 Date: 2026-08-26
 Version: 1.0 - Initial script
+Version: 1.1 - Writes into LicenseCatalog.json instead of the retired LicensePricingDefaults.csv
 #>
 [CmdletBinding()]
 param(
@@ -51,7 +57,7 @@ $ErrorActionPreference = 'Stop'
 
 # This script lives in build/tools/, so the repo root is two levels up.
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-if (-not $OutFile) { $OutFile = Join-Path $RepoRoot 'backend/Config/LicensePricingDefaults.csv' }
+if (-not $OutFile) { $OutFile = Join-Path $RepoRoot 'backend/Config/LicenseCatalog.json' }
 
 $PriceEndpoint = 'https://www.microsoft.com/msonecloudapi/m365/product/price'
 $LicenseCsvUrl = 'https://download.microsoft.com/download/e/3/e/e3e9faf2-f28b-490a-9ada-c6089a1fc5b0/Product%20names%20and%20service%20plan%20identifiers%20for%20licensing.csv'
@@ -104,6 +110,25 @@ a0c4p0_pidcfq7ttc0lfk5_skuid0001_r2p3
 a0c4p0_pidcfq7ttc0lfj1_skuid0001_r2p3
 a0c4p0_pidcfq7ttc0rp76_skuid0002_r2p3
 a0c4p0_pidcfq7ttc0mft1_skuid0001_r2p3
+a0c4p0_pidcfq7ttc0lh04_skuid_r2p3
+a0c4p0_pidcfq7ttc0lhxh_skuid_r2p3
+a0c4p0_pidcfq7ttc0hd33_skuid_r2p3
+a0c4p0_pidcfq7ttc0hd32_skuid_r2p3
+a0c4p0_pidcfq7ttc0lsgz_skuid_r2p3
+a0c4p0_pidcfq7ttc0r9qb_skuid_r2p3
+a0c4p0_pidcfq7ttc0nggx_skuid0004_r2p3
+a0c4p0_pidcfq7ttc0hdb0_skuid0002_r2p3
+a0c4p0_pidcfq7ttc0hdb1_skuid0002_r2p3
+a0c4p0_pidcfq7ttc0lhq5_skuid0001_r2p3
+a0c4p0_pidcfq7ttc0lh2h_skuid0002_r2p3
+a0c4p0_pidcfq7ttc0rm8k_skuid0022_r2p3
+a0c4p0_pidcfq7ttc0qw7c_skuid0006_r2p3
+a0c4p0_pidcfq7ttc0hl73_skuid0001_r2p3
+a0c4p0_pidcfq7ttc0lh18_skuid000p_r2p3
+a0c4p0_pidcfq7ttc0ldpb_skuid001w_r2p3
+a0c4p0_pidcfq7ttc0lchc_skuid001p_r2p3
+a0c4p0_pidcfq7ttc0lh05_skuid0013_r2p3
+a0c4p0_pidcfq7ttc0mbmd_skuid002t_r2p3
 '@
 
 # Curated productId -> correct skuPartNumber, for cases the name join gets wrong:
@@ -114,6 +139,26 @@ a0c4p0_pidcfq7ttc0mft1_skuid0001_r2p3
 $OverridePart = @{
     'CFQ7TTC0LH18' = 'O365_BUSINESS_ESSENTIALS'
     'CFQ7TTC0MM8R' = 'Microsoft_365_Copilot'
+    'CFQ7TTC0LH04' = 'ATP_ENTERPRISE'                # Defender for Office 365 (Plan 1)
+    'CFQ7TTC0LHXH' = 'THREAT_INTELLIGENCE'           # Defender for Office 365 (Plan 2)
+    'CFQ7TTC0HD33' = 'VISIOONLINE_PLAN1'             # Visio Plan 1 (name also matches the _DEPT SKU)
+    'CFQ7TTC0HD32' = 'VISIOCLIENT'                   # Visio Plan 2
+    'CFQ7TTC0LSGZ' = 'POWERAUTOMATE_ATTENDED_RPA'    # Power Automate Premium
+    'CFQ7TTC0R9QB' = 'Workload_Identities_P2'        # Entra Workload ID
+    'CFQ7TTC0NGGX' = 'Microsoft_Intune_Advanced_Analytics' # sku 0004 = enterprise; default sku is the FLW variant
+    'CFQ7TTC0HDB0' = 'PROJECTPROFESSIONAL'            # Planner and Project Plan 3
+    'CFQ7TTC0HDB1' = 'PROJECT_P1'                     # Planner Plan 1
+    'CFQ7TTC0LHQ5' = 'EXCHANGEARCHIVE'                # Exchange Online Archiving for Exchange Server
+    'CFQ7TTC0LH2H' = 'POWERAPPS_PER_USER'             # Power Apps Premium (name also matches the GCC / embedded SKUs)
+    'CFQ7TTC0RM8K' = 'M365_TEAMS_PREMIUM'             # Teams Premium
+    'CFQ7TTC0HL73' = 'MCOTEAMS_ESSENTIALS'            # Teams Phone with Calling Plan
+}
+# productId + skuId -> skuPartNumber, where one product carries several SKUs with their own GUID
+$OverridePartBySku = @{
+    'CFQ7TTC0QW7C|0006' = 'Microsoft_Teams_Rooms_Pro_without_Audio_Conferencing'
+    'CFQ7TTC0LH18|000P' = 'Microsoft_365_Business_Basic_(no Teams)'
+    # Business Standard/Premium (no Teams) SKUs on the pricing pages are Copilot bundles now, so
+    # the Copilot skip below drops them rather than attaching a bundle price to the plain SKU.
 }
 
 # productIds with no single clean per-seat subscribedSku (config-matrix or too new for the CSV).
@@ -130,7 +175,8 @@ function Get-NormalizedName {
 # --- 1. Parse every unique (productId, skuId, recurrence, cadence) tuple ------------------------
 $Tuples = [System.Collections.Generic.List[object]]::new()
 $Seen = [System.Collections.Generic.HashSet[string]]::new()
-foreach ($M in [regex]::Matches($RawTokens, 'pid([a-z0-9]+)_skuid([a-z0-9]+)_r(\d+)p(\d+)')) {
+# An empty skuid ("_skuid_") asks the endpoint for the product's default SKU.
+foreach ($M in [regex]::Matches($RawTokens, 'pid([a-z0-9]+)_skuid([a-z0-9]*)_r(\d+)p(\d+)')) {
     $ProductId = $M.Groups[1].Value
     $SkuIdPart = $M.Groups[2].Value
     if ($Seen.Add("$ProductId|$SkuIdPart")) {
@@ -171,6 +217,8 @@ function Get-RetailPrice {
         $Url = '{0}?q={1}&llcc={2}&v=4&r=json' -f $PriceEndpoint, $Query, $Llcc
         try {
             $Response = Invoke-RestMethod -Uri $Url -Headers @{ 'User-Agent' = $UserAgent }
+            # The endpoint blocks bursts; pace the batches.
+            Start-Sleep -Seconds 3
         } catch {
             Write-Warning ("price batch @{0} ({1}) failed: {2}" -f $i, $Llcc, $_.Exception.Message)
             continue
@@ -181,6 +229,7 @@ function Get-RetailPrice {
                     ProductId = $Item.productId
                     Product   = $Item.title
                     SkuTitle  = $Item.sku.title
+                    SkuId     = [string]$Item.sku.id
                     Currency  = $Item.sku.currencyCode
                     Monthly   = [decimal]$Item.sku.msrpPrice
                 })
@@ -204,7 +253,8 @@ foreach ($Mkt in $Market) {
         if ($Price.SkuTitle -match '(?i)copilot' -and $Price.ProductId.ToUpperInvariant() -ne 'CFQ7TTC0MM8R') { continue }
 
         $Hit = $null
-        $PartOverride = $OverridePart[$Price.ProductId.ToUpperInvariant()]
+        $PartOverride = $OverridePartBySku[('{0}|{1}' -f $Price.ProductId.ToUpperInvariant(), $Price.SkuId.ToUpperInvariant())]
+        if (-not $PartOverride) { $PartOverride = $OverridePart[$Price.ProductId.ToUpperInvariant()] }
         if ($PartOverride) {
             $Hit = $ByPart[$PartOverride.ToLowerInvariant()]
         }
@@ -229,25 +279,56 @@ foreach ($Mkt in $Market) {
 $DedupSeen = [System.Collections.Generic.HashSet[string]]::new()
 $Catalog = @($Catalog | Where-Object { $DedupSeen.Add(('{0}|{1}' -f $_.skuId, $_.Currency.ToLowerInvariant())) })
 
-# --- 5. Multi-currency defaults, merged over existing, keyed by (skuId, currency) ---------------
-$Rows = @{}
-if (-not $NoMerge -and (Test-Path $OutFile)) {
-    foreach ($Row in (Import-Csv -Path $OutFile)) {
-        if (-not $Row.skuId) { continue }
-        $Cur = if ($Row.Currency) { [string]$Row.Currency } else { 'USD' }
-        $Rows[('{0}|{1}' -f $Row.skuId.ToLowerInvariant(), $Cur.ToLowerInvariant())] = [pscustomobject]@{
-            skuId = $Row.skuId.ToLowerInvariant(); skuPartNumber = $Row.skuPartNumber
-            Product_Display_Name = $Row.Product_Display_Name; MonthlyPrice = $Row.MonthlyPrice; Currency = $Cur
+# --- 5. Write the prices into the catalog JSON, keyed by (skuId, currency) ---------------------
+if (-not (Test-Path $OutFile)) { throw "Catalog not found at $OutFile - the capabilities/families sections are hand-maintained and cannot be regenerated here." }
+$CatalogJson = Get-Content -Path $OutFile -Raw | ConvertFrom-Json
+$ProductBySku = @{}
+foreach ($Product in @($CatalogJson.products)) {
+    $ProductBySku[([string]$Product.skuId).ToLowerInvariant()] = $Product
+    if ($NoMerge) { $Product.prices = [pscustomobject]@{} }
+}
+
+$Added = [System.Collections.Generic.List[string]]::new()
+foreach ($Row in $Catalog) {
+    $Product = $ProductBySku[$Row.skuId]
+    if (-not $Product) {
+        # No name or part number: the SKU list (ConversionTable.csv) is the one place those live.
+        $Product = [pscustomobject]@{
+            skuId          = $Row.skuId
+            family         = 'other'
+            tier           = 0
+            eligibleTarget = $false
+            prices         = [pscustomobject]@{}
         }
+        $CatalogJson.products = @($CatalogJson.products) + $Product
+        $ProductBySku[$Row.skuId] = $Product
+        $Added.Add(('{0} ({1})' -f $Row.Product_Display_Name, $Row.skuPartNumber))
+    }
+    if ($null -eq $Product.prices) { $Product.prices = [pscustomobject]@{} }
+    # scraped wins over the existing value for this currency
+    if ($Product.prices.PSObject.Properties[$Row.Currency]) {
+        $Product.prices.($Row.Currency) = $Row.MonthlyPrice
+    } else {
+        $Product.prices | Add-Member -NotePropertyName $Row.Currency -NotePropertyValue $Row.MonthlyPrice
     }
 }
-foreach ($Row in $Catalog) { $Rows[('{0}|{1}' -f $Row.skuId, $Row.Currency.ToLowerInvariant())] = $Row }   # scraped wins
 
-$Output = @($Rows.Values |
-        Select-Object skuId, skuPartNumber, Product_Display_Name, MonthlyPrice, Currency |
-        Sort-Object Product_Display_Name, Currency)
-$Output | Export-Csv -Path $OutFile -NoTypeInformation -Encoding utf8 -UseQuotes AsNeeded
-Write-Host ("`nWrote {0} ({1} rows across {2})" -f $OutFile, $Output.Count, (($Output.Currency | Sort-Object -Unique) -join ',')) -ForegroundColor Green
+# Stable output: products by name, currencies alphabetical
+foreach ($Product in @($CatalogJson.products)) {
+    $Sorted = [ordered]@{}
+    foreach ($P in ($Product.prices.PSObject.Properties | Sort-Object Name)) { $Sorted[$P.Name] = [double]$P.Value }
+    $Product.prices = [pscustomobject]$Sorted
+}
+$CatalogJson.products = @($CatalogJson.products | Sort-Object name)
+
+$Json = $CatalogJson | ConvertTo-Json -Depth 10
+[System.IO.File]::WriteAllText($OutFile, $Json + "`n", [System.Text.UTF8Encoding]::new($false))
+$Currencies = @($CatalogJson.products | ForEach-Object { $_.prices.PSObject.Properties.Name } | Sort-Object -Unique)
+Write-Host ("`nWrote {0} ({1} products across {2})" -f $OutFile, @($CatalogJson.products).Count, ($Currencies -join ',')) -ForegroundColor Green
+if ($Added.Count) {
+    Write-Host "`nADDED to the catalog as family 'other' (classify them: family / tier / eligibleTarget):" -ForegroundColor Yellow
+    $Added | ForEach-Object { Write-Host "  $_" }
+}
 
 if ($Unmatched.Count) {
     Write-Host "`nUNMATCHED (excluded - no clean subscribedSku; add an override or leave out):" -ForegroundColor Yellow

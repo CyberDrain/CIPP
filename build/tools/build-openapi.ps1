@@ -1078,6 +1078,11 @@ function Get-EndpointContract {
         $Code = $Match.Groups[1].Value
         if (-not $StatusCodes.Contains($Code)) { $StatusCodes.Add($Code) }
     }
+    if ($Definition.Extent.Text -match '\bGet-CippBulkStatusCode\b') {
+        foreach ($Code in 'OK', 'MultiStatus', 'InternalServerError') {
+            if (-not $StatusCodes.Contains($Code)) { $StatusCodes.Add($Code) }
+        }
+    }
 
     $Relative = [IO.Path]::GetRelativePath($RootPath, (Split-Path -Parent $Path))
     $Tag = if ($Relative -eq '.') { 'General' } else { ($Relative -split '[\\/]' -join ' > ') }
@@ -1213,6 +1218,7 @@ function Test-ArrayResponse {
 
 $StatusDescriptions = @{
     'OK'                  = 'Success'
+    'MultiStatus'         = 'Partial success - some items failed; per-item results are in the body'
     'Accepted'            = 'Accepted - work was queued and runs asynchronously'
     'BadRequest'          = 'Bad request - missing required field or invalid input'
     'Unauthorized'        = 'Unauthorized - invalid or missing bearer token'
@@ -2153,8 +2159,8 @@ $Report = [System.Collections.Generic.List[object]]::new()
 foreach ($Contract in ($Contracts | Sort-Object Name -CaseSensitive)) {
     # Craft dispatches by name and does not filter on verb, but an endpoint that
     # reads the body is a POST and one that only reads the query string is a GET.
-    # Exactly one operation per path: Get-CippMcpToolList keys tools by endpoint
-    # name, so a second method would advertise a duplicate tool.
+    # A path gets both only for the read/action split below; the MCP catalog keeps one
+    # tool per name by preferring the POST, which carries the query parameters too.
     $HasBodyShape = $Contract.BodyTree.Children.Count -gt 0 -or $Contract.BodyTree.IsArray -or $Contract.BodyTree.IsDynamic
     $ReadsQuery = $Contract.UsesQuery -or $Contract.QueryTree.Children.Count -gt 0
 
@@ -2186,26 +2192,40 @@ foreach ($Contract in ($Contracts | Sort-Object Name -CaseSensitive)) {
     $IsMutation = $Contract.Name -match '^(Add|Set|Remove|Delete|Edit|New|Update|Disable|Enable|Reset|Revoke|Push|Clear|Start|Stop|Rename|Move|Copy)' -or
         $Contract.Role -match '\.ReadWrite$'
 
-    $Method = if ($IsMutation) { 'post' }
-    elseif ($Contract.UsesBody -and $HasBodyShape -and $ReadsQuery -and $IsReadVerb -and $QueryCoversBody) { 'get' }
-    elseif ($Contract.UsesBody -and $HasBodyShape) { 'post' }
-    elseif ($ReadsQuery) { 'get' }
-    elseif ($Contract.UsesBody) { 'post' }
-    else { 'get' }
+    # A List/Get endpoint that reads the query but takes some fields only from the body
+    # answers a plain GET and also accepts a POST for those fields, as ListTenants does for
+    # ClearCache. Documenting only the POST hid the GET every caller actually makes.
+    $IsDualMethod = -not $IsMutation -and $IsReadVerb -and $ReadsQuery -and $Contract.UsesBody -and $HasBodyShape -and -not $QueryCoversBody
 
-    $Operation = ConvertTo-OasOperation -Contract $Contract -Method $Method
+    $Methods = if ($IsMutation) { @('post') }
+    elseif ($IsDualMethod) { @('get', 'post') }
+    elseif ($Contract.UsesBody -and $HasBodyShape -and $ReadsQuery -and $IsReadVerb -and $QueryCoversBody) { @('get') }
+    elseif ($Contract.UsesBody -and $HasBodyShape) { @('post') }
+    elseif ($ReadsQuery) { @('get') }
+    elseif ($Contract.UsesBody) { @('post') }
+    else { @('get') }
+
+    $Override = $null
     if ($Overrides.ContainsKey($Contract.Name)) {
         $Override = $Overrides[$Contract.Name]
-        if ($Override.ContainsKey('method')) { $Method = [string]$Override['method']; $Override.Remove('method') }
-        $Operation = Merge-OpenApiOverride -Base $Operation -Override $Override
+        if ($Override.ContainsKey('method')) { $Methods = @([string]$Override['method']); $Override.Remove('method') }
     }
 
-    $Paths["/api/$($Contract.Name)"] = [ordered]@{ $Method = $Operation }
+    $PathItem = [ordered]@{}
+    foreach ($Method in $Methods) {
+        $Operation = ConvertTo-OasOperation -Contract $Contract -Method $Method
+        # operationIds must be unique across the spec, so the POST half of a dual-method
+        # endpoint gets a suffix and the GET keeps the plain name.
+        if ($Methods.Count -gt 1 -and $Method -ne $Methods[0]) { $Operation['operationId'] = "$($Contract.Name)$($Method.Substring(0,1).ToUpper())$($Method.Substring(1))" }
+        if ($Override) { $Operation = Merge-OpenApiOverride -Base $Operation -Override $Override }
+        $PathItem[$Method] = $Operation
+    }
+    $Paths["/api/$($Contract.Name)"] = $PathItem
     $null = $TagSet.Add($Contract.Tag)
 
     $Report.Add([ordered]@{
             endpoint       = $Contract.Name
-            method         = $Method
+            method         = $Methods -join ','
             role           = $Contract.Role
             tag            = $Contract.Tag
             bodyFields     = $Contract.BodyTree.Children.Count
@@ -2345,8 +2365,8 @@ if ($ReportPath) {
         endpoints          = $Report.Count
         skippedNonEntrypoint = $Skipped.Count
         byMethod           = [ordered]@{
-            get  = @($Report | Where-Object { $_.method -eq 'get' }).Count
-            post = @($Report | Where-Object { $_.method -eq 'post' }).Count
+            get  = @($Report | Where-Object { $_.method -split ',' -contains 'get' }).Count
+            post = @($Report | Where-Object { $_.method -split ',' -contains 'post' }).Count
         }
         withoutRole        = @($Report | Where-Object { -not $_.role }).Count
         withoutDescription = @($Report | Where-Object { -not $_.hasDescription }).Count

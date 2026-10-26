@@ -33,7 +33,7 @@ BeforeAll {
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     function Get-CippException { param($Exception) }
     $env:CIPPRootPath = $RepoRoot
-    foreach ($Helper in 'Webhooks/Test-CIPPAuditLogRules.ps1', 'Webhooks/Get-CIPPAuditLogRuleSet.ps1', 'Webhooks/New-CippAuditLogClaimRow.ps1', 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Webhooks/Split-CIPPAuditLogConditions.ps1', 'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1', 'Webhooks/Get-CIPPAuditLogRuleSignature.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
+    foreach ($Helper in 'Webhooks/Test-CIPPAuditLogRules.ps1', 'Webhooks/Get-CIPPAuditLogRuleSet.ps1', 'Webhooks/New-CippAuditLogClaimRow.ps1', 'Webhooks/Get-CIPPAuditLogPrefilter.ps1', 'Webhooks/Select-CIPPAuditLogCandidate.ps1', 'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1', 'Webhooks/Split-CIPPAuditLogConditions.ps1', 'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1', 'Webhooks/Get-CIPPAuditLogRuleKey.ps1', 'Tools/Test-CIPPConditionFilter.ps1') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }
 
@@ -438,6 +438,25 @@ Describe 'Test-CIPPAuditLogRules -EvaluateOnly' {
         @(@($Edited.DataToProcess).Id) | Should -Be @('r2')
         [object]::ReferenceEquals($Recompiled, $Compiled) | Should -BeFalse
         [object]::ReferenceEquals($script:AuditRuleClauseCache['contoso.com'], $Recompiled) | Should -BeFalse
+    }
+
+    It 'compiles each rule once a task for every tenant, keeping each tenant''s exclusions and variable values' {
+        foreach ($Name in 'AuditRuleSetCache', 'AuditRuleSearchLookups', 'AuditRuleListCache', 'AuditRuleClauseCache') { Set-Variable -Scope Script -Name $Name -Value $null }
+        function Get-CIPPTextReplacement { param($TenantFilter, $Text) $Text -replace '%breakglass%', "bg@$TenantFilter" }
+        Set-Rules @(@(, (New-Condition 'Operation' 'eq' 'New-InboxRule')), @((New-Condition 'Operation' 'eq' 'Set-Mailbox'), (New-Condition 'UserId' 'eq' '%breakglass%'))) -Excluded 'rule-1'
+        $Records = @(
+            [ordered]@{ Id = 'r1'; Operation = 'New-InboxRule'; UserId = 'a@example.com' }
+            [ordered]@{ Id = 'r2'; Operation = 'Set-Mailbox'; UserId = 'bg@contoso.com' }
+            [ordered]@{ Id = 'r3'; Operation = 'Set-Mailbox'; UserId = 'bg@fabrikam.com' }
+        )
+        $Seen = foreach ($Tenant in 'contoso.com', 'fabrikam.com') {
+            $Kept = @(Select-CIPPAuditLogCandidate -Prefilter (Get-CIPPAuditLogPrefilter -TenantFilter $Tenant) -Records @(ConvertTo-Records $Records)).Id -join ','
+            $Result = Test-CIPPAuditLogRules -TenantFilter $Tenant -Rows @(ConvertTo-Records $Records) -EvaluateOnly 3>$null 6>$null
+            "$Tenant kept $Kept matched $(@($Result.DataToProcess).Id -join ',')"
+        }
+        $Seen | Should -Be @('contoso.com kept r2 matched r2', 'fabrikam.com kept r1,r3 matched r1,r3')
+        # rule-1 once for fabrikam (contoso is excluded from it), rule-2 once per tenant for its variable.
+        $script:AuditPrefilterRuleCache.Rules.Count | Should -Be 3
     }
 
     It 'counts only the operations the curated list allows for the rule''s log' {

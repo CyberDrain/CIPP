@@ -145,7 +145,7 @@ BeforeAll {
             'Webhooks/Select-CIPPAuditLogCandidate.ps1'
             'Webhooks/Get-CIPPAuditLogRuleAnchor.ps1'
             'Webhooks/Split-CIPPAuditLogConditions.ps1'
-            'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1', 'Webhooks/Get-CIPPAuditLogRuleSignature.ps1'
+            'Webhooks/Resolve-CIPPAuditLogConditionVariable.ps1', 'Webhooks/Get-CIPPAuditLogRuleKey.ps1'
         )) {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Helper")
     }

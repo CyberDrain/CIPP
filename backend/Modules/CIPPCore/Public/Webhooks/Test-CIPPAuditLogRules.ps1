@@ -720,111 +720,111 @@ function Test-CIPPAuditLogRules {
             if ($null -eq $script:AuditRuleSetCache -or -not $Compiled -or -not [object]::ReferenceEquals($Compiled.RuleSet, $script:AuditRuleSetCache) -or -not [object]::ReferenceEquals($Compiled.Lists, $ListEntry)) {
                 $UnsafeValueRegex = [regex]'[;|`\$\{\}]'
                 $LocationExcludedUserKeys = @(@($ExcludedUsers | Where-Object { $_.Type -eq 'Location' }).RowKey)
-                # Tenants whose rules, variables and location exclusions come out the same share one compile within the task.
-                $Shared = $null
+                # Each rule compiles once per task; a tenant only assembles the rules that apply to it. The key adds what is the
+                # tenant's own: whether the rule excludes it, and its location exclusions when the rule has a location condition.
+                $Memo = $null
                 if ($null -ne $script:AuditRuleSetCache) {
-                    if (-not [object]::ReferenceEquals($script:AuditRuleClauseShared.RuleSet, $script:AuditRuleSetCache)) {
-                        $script:AuditRuleClauseShared = @{ RuleSet = $script:AuditRuleSetCache; Built = @{} }
+                    if (-not [object]::ReferenceEquals($script:AuditRuleClauseRuleCache.RuleSet, $script:AuditRuleSetCache)) {
+                        $script:AuditRuleClauseRuleCache = @{ RuleSet = $script:AuditRuleSetCache; Rules = @{} }
                     }
-                    $Signature = "$(Get-CIPPAuditLogRuleSignature -TenantFilter $TenantFilter -Rules $Configuration)`n$($LocationExcludedUserKeys -join ',')"
-                    $Shared = $script:AuditRuleClauseShared.Built[$Signature]
+                    $Memo = $script:AuditRuleClauseRuleCache.Rules
                 }
-                if ($null -eq $Shared) {
-                    $Clauses = foreach ($Config in $Configuration) {
-                        # Threshold rules alert on a count of records (Push-AuditLogFeedBlobsV3), never on one.
-                        if ($Config.Threshold) {
-                            continue
-                        }
-                        # A rule that excludes the tenant never alerts here; its clauses are kept only for -AllMatches reports.
-                        $RuleExcluded = $TenantFilter -in $Config.Excluded.value
-                        $RuleConditions = try { Resolve-CIPPAuditLogConditionVariable -TenantFilter $TenantFilter -Conditions ($Config.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' }) } catch {
-                            Write-Warning "Error reading the conditions of audit log rule $($Config.RowKey): $($_.Exception.Message)"
-                            continue
-                        }
-                        # Each OR group of the rule is a clause of its own; the first clause a record matches alerts.
-                        foreach ($Branch in @(Split-CIPPAuditLogConditions -Conditions $RuleConditions)) {
-                            $CIPPClause = [System.Collections.Generic.List[string]]::new()
-                            try {
-                                $conditions = $Branch.Conditions
-                                # Build sanitized condition strings instead of direct evaluation
-                                $conditionStrings = [System.Collections.Generic.List[string]]::new()
-                                # Each condition's own test, for an evaluation that reports which conditions a record fails.
-                                $ConditionChecks = [System.Collections.Generic.List[object]]::new()
-                                $validClause = $true
-                                foreach ($condition in $conditions) {
-                                    $ConditionText = "$($condition.Property.label) is $($condition.Operator.label) $($condition.Input.value)"
-                                    $CIPPClause.Add($ConditionText)
-                                    $Before = $conditionStrings.Count
-                                    # Add geo-location prerequisites before the condition itself
-                                    if ($condition.Property.label -eq 'CIPPGeoLocation') {
-                                        $conditionStrings.Add('$_.HasLocationData -eq $true')
-                                        if ($LocationExcludedUserKeys.Count -gt 0) {
-                                            $sanitizedKeys = foreach ($key in $LocationExcludedUserKeys) {
-                                                $keyStr = [string]$key
-                                                if ($UnsafeValueRegex.IsMatch($keyStr)) {
-                                                    Write-Warning "Blocked unsafe excluded user key: '$keyStr'"
-                                                    $validClause = $false
-                                                    break
-                                                }
-                                                "'{0}'" -f ($keyStr -replace "'", "''")
+                $Clauses = foreach ($Config in $Configuration) {
+                    # Threshold rules alert on a count of records (Push-AuditLogFeedBlobsV3), never on one.
+                    if ($Config.Threshold) {
+                        continue
+                    }
+                    # A rule that excludes the tenant never alerts here; its clauses are kept only for -AllMatches reports.
+                    $RuleExcluded = $TenantFilter -in $Config.Excluded.value
+                    if ($null -ne $Memo) {
+                        $MemoKey = '{0}|{1}' -f (Get-CIPPAuditLogRuleKey -TenantFilter $TenantFilter -Rule $Config), [int]$RuleExcluded
+                        if ([string]$Config.Conditions -match 'CIPPGeoLocation') { $MemoKey += '|' + ($LocationExcludedUserKeys -join ',') }
+                        if ($Memo.ContainsKey($MemoKey)) { $Memo[$MemoKey]; continue }
+                    }
+                    $RuleConditions = try { Resolve-CIPPAuditLogConditionVariable -TenantFilter $TenantFilter -Conditions ($Config.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' }) } catch {
+                        Write-Warning "Error reading the conditions of audit log rule $($Config.RowKey): $($_.Exception.Message)"
+                        continue
+                    }
+                    # Each OR group of the rule is a clause of its own; the first clause a record matches alerts.
+                    $RuleClauses = @(foreach ($Branch in @(Split-CIPPAuditLogConditions -Conditions $RuleConditions)) {
+                        $CIPPClause = [System.Collections.Generic.List[string]]::new()
+                        try {
+                            $conditions = $Branch.Conditions
+                            # Build sanitized condition strings instead of direct evaluation
+                            $conditionStrings = [System.Collections.Generic.List[string]]::new()
+                            # Each condition's own test, for an evaluation that reports which conditions a record fails.
+                            $ConditionChecks = [System.Collections.Generic.List[object]]::new()
+                            $validClause = $true
+                            foreach ($condition in $conditions) {
+                                $ConditionText = "$($condition.Property.label) is $($condition.Operator.label) $($condition.Input.value)"
+                                $CIPPClause.Add($ConditionText)
+                                $Before = $conditionStrings.Count
+                                # Add geo-location prerequisites before the condition itself
+                                if ($condition.Property.label -eq 'CIPPGeoLocation') {
+                                    $conditionStrings.Add('$_.HasLocationData -eq $true')
+                                    if ($LocationExcludedUserKeys.Count -gt 0) {
+                                        $sanitizedKeys = foreach ($key in $LocationExcludedUserKeys) {
+                                            $keyStr = [string]$key
+                                            if ($UnsafeValueRegex.IsMatch($keyStr)) {
+                                                Write-Warning "Blocked unsafe excluded user key: '$keyStr'"
+                                                $validClause = $false
+                                                break
                                             }
-                                            if (-not $validClause) { break }
-                                            $conditionStrings.Add("`$_.CIPPUserKey -notin @($($sanitizedKeys -join ', '))")
+                                            "'{0}'" -f ($keyStr -replace "'", "''")
                                         }
+                                        if (-not $validClause) { break }
+                                        $conditionStrings.Add("`$_.CIPPUserKey -notin @($($sanitizedKeys -join ', '))")
                                     }
-                                    $sanitized = Test-CIPPConditionFilter -Condition $condition
-                                    if ($null -eq $sanitized) {
-                                        Write-Warning "Skipping rule due to invalid condition for property '$($condition.Property.label)'"
-                                        $validClause = $false
-                                        break
-                                    }
-                                    $conditionStrings.Add($sanitized)
-                                    $ConditionChecks.Add([pscustomobject]@{
-                                            Condition = $ConditionText
-                                            Property  = [string]$condition.Property.label
-                                            Operator  = [string]$condition.Operator.label
-                                            Expected  = @($condition.Input.value) -join ', '
-                                            Test      = $conditionStrings.GetRange($Before, $conditionStrings.Count - $Before) -join ' -and '
-                                        })
                                 }
-                                if (-not $validClause -or $conditionStrings.Count -eq 0) {
-                                    continue
+                                $sanitized = Test-CIPPConditionFilter -Condition $condition
+                                if ($null -eq $sanitized) {
+                                    Write-Warning "Skipping rule due to invalid condition for property '$($condition.Property.label)'"
+                                    $validClause = $false
+                                    break
                                 }
-                                # A rule without an anchor would be tested on every record; Start-AuditLogFeedV3 warns about it.
-                                $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $conditions
-                                if ($null -eq $Anchor) { continue }
-                                [PSCustomObject]@{
-                                    WhereBlock         = [ScriptBlock]::Create($conditionStrings -join ' -and ')
-                                    Anchor             = $Anchor
-                                    RuleKey            = $Config.RowKey
-                                    Group              = $Branch.Group
-                                    Excluded           = $RuleExcluded
-                                    ConditionChecks    = $ConditionChecks.ToArray()
-                                    expectedAction     = $Config.Actions
-                                    expectedBecActions = $Config.BecActions
-                                    CIPPClause         = $CIPPClause -join ' and '
-                                    AlertComment       = $Config.AlertComment
-                                    LogType            = [string]$Config.LogType
-                                    CustomSubject      = $Config.CustomSubject
-                                    PsaTicketPriority  = $Config.PsaTicketPriority
-                                }
-                            } catch {
-                                Write-Warning "Error processing conditions: $($CIPPClause -join ' and '): $($_.Exception.Message)"
+                                $conditionStrings.Add($sanitized)
+                                $ConditionChecks.Add([pscustomobject]@{
+                                        Condition = $ConditionText
+                                        Property  = [string]$condition.Property.label
+                                        Operator  = [string]$condition.Operator.label
+                                        Expected  = @($condition.Input.value) -join ', '
+                                        Test      = $conditionStrings.GetRange($Before, $conditionStrings.Count - $Before) -join ' -and '
+                                    })
                             }
+                            if (-not $validClause -or $conditionStrings.Count -eq 0) {
+                                continue
+                            }
+                            # A rule without an anchor would be tested on every record; Start-AuditLogFeedV3 warns about it.
+                            $Anchor = Get-CIPPAuditLogRuleAnchor -Conditions $conditions
+                            if ($null -eq $Anchor) { continue }
+                            [PSCustomObject]@{
+                                WhereBlock         = [ScriptBlock]::Create($conditionStrings -join ' -and ')
+                                Anchor             = $Anchor
+                                RuleKey            = $Config.RowKey
+                                Group              = $Branch.Group
+                                Excluded           = $RuleExcluded
+                                ConditionChecks    = $ConditionChecks.ToArray()
+                                expectedAction     = $Config.Actions
+                                expectedBecActions = $Config.BecActions
+                                CIPPClause         = $CIPPClause -join ' and '
+                                AlertComment       = $Config.AlertComment
+                                LogType            = [string]$Config.LogType
+                                CustomSubject      = $Config.CustomSubject
+                                PsaTicketPriority  = $Config.PsaTicketPriority
+                            }
+                        } catch {
+                            Write-Warning "Error processing conditions: $($CIPPClause -join ' and '): $($_.Exception.Message)"
                         }
-                    }
-                    # ByOperation: Operation -> the clauses whose anchor allows it, in rule order, filled as records arrive.
-                    $Shared = [PSCustomObject]@{
-                        Clauses     = @($Clauses)
-                        ByOperation = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
-                    }
-                    if ($null -ne $script:AuditRuleSetCache) { $script:AuditRuleClauseShared.Built[$Signature] = $Shared }
+                    })
+                    if ($null -ne $Memo) { $Memo[$MemoKey] = $RuleClauses }
+                    $RuleClauses
                 }
+                # ByOperation: Operation -> the clauses whose anchor allows it, in rule order, filled as records arrive.
                 $Compiled = [PSCustomObject]@{
                     RuleSet     = $script:AuditRuleSetCache
                     Lists       = $ListEntry
-                    Clauses     = $Shared.Clauses
-                    ByOperation = $Shared.ByOperation
+                    Clauses     = @($Clauses)
+                    ByOperation = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::InvariantCultureIgnoreCase)
                 }
                 $script:AuditRuleClauseCache[$TenantFilter] = $Compiled
             }

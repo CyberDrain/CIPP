@@ -44867,7 +44867,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                    "description": "Derived from the fields written into the storage table it reads, and the columns the CIPP UI renders. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                     "properties": {
                       "Attempts": {
                         "x-cipp-field-source": "storage"
@@ -44887,13 +44887,13 @@
                         "x-cipp-field-source": "storage"
                       },
                       "LastError": {
-                        "x-cipp-field-source": "storage"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "LastPolledUtc": {
                         "x-cipp-field-source": "storage"
                       },
                       "MatchedCount": {
-                        "x-cipp-field-source": "storage"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "PartitionKey": {
                         "type": "string",
@@ -44904,7 +44904,7 @@
                       },
                       "RecordCount": {
                         "type": "integer",
-                        "x-cipp-field-source": "storage"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "RetryCount": {
                         "x-cipp-field-source": "storage"
@@ -44918,10 +44918,13 @@
                       },
                       "SearchStatus": {
                         "type": "string",
-                        "x-cipp-field-source": "storage"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "State": {
-                        "x-cipp-field-source": "storage"
+                        "x-cipp-field-source": "storage,frontend"
+                      },
+                      "Tenant": {
+                        "x-cipp-field-source": "frontend"
                       },
                       "TenantId": {
                         "type": "string",
@@ -44935,13 +44938,13 @@
                         "x-cipp-field-source": "storage"
                       },
                       "Type": {
-                        "x-cipp-field-source": "storage"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "WindowEnd": {
-                        "x-cipp-field-source": "storage"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "WindowStart": {
-                        "x-cipp-field-source": "storage"
+                        "x-cipp-field-source": "storage,frontend"
                       }
                     }
                   }

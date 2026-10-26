@@ -44970,7 +44970,7 @@
     },
     "/api/ListAuditLogFeedCycles": {
       "get": {
-        "summary": "Lists each audit log check (one every 15 minutes) with how long it took and what it read and alerted on.",
+        "summary": "Lists each audit log check (one every 30 minutes) with how long it took and what it read and alerted on.",
         "operationId": "ListAuditLogFeedCycles",
         "tags": [
           "Tenant > Administration > Alerts"

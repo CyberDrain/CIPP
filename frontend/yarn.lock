@@ -1800,10 +1800,10 @@
     outvariant "^1.4.3"
     strict-event-emitter "^0.5.1"
 
-"@mui/core-downloads-tracker@^9.4.0":
-  version "9.4.0"
-  resolved "https://registry.npmjs.org/@mui/core-downloads-tracker/-/core-downloads-tracker-9.4.0.tgz#9322a7ffbc2bba9303b7f1be6e794a73b99679f6"
-  integrity sha512-d+gIYM1raJP87yrVQcVg+Q3vycVMArMkgu/TjJLi2vTvO9FHKWNRR1xs9nnN4eLpM9nGxxm02UMvc9BrmcUKvQ==
+"@mui/core-downloads-tracker@^9.5.0":
+  version "9.5.0"
+  resolved "https://registry.npmjs.org/@mui/core-downloads-tracker/-/core-downloads-tracker-9.5.0.tgz#42d07b201a43020a579f448549462d60fe03db82"
+  integrity sha512-PErEpl3Lp+1ZqWYKI7GQU8XSiciAFmLbUAZ7IoaUL598HLy1UAFuEUMEJu8yAS1v8vkXYzWprMVZzky4UwXoOA==
 
 "@mui/icons-material@9.4.0":
   version "9.4.0"
@@ -1824,22 +1824,22 @@
     clsx "^2.1.1"
     prop-types "^15.8.1"
 
-"@mui/material@9.4.0":
-  version "9.4.0"
-  resolved "https://registry.npmjs.org/@mui/material/-/material-9.4.0.tgz#f8f70c029fedeac8b2c68861396d741c5aa78153"
-  integrity sha512-6KKUIvkQ2r/s48s9VZV9JEZ1W2dRa7RndVsF+Ipx4CYxDOQeozeRsS5r9NiheFf8A5hpbqJJIGoX7hjg5X4XUw==
+"@mui/material@9.5.0":
+  version "9.5.0"
+  resolved "https://registry.npmjs.org/@mui/material/-/material-9.5.0.tgz#914e2ed4013bd33801430d0781bf203263cc3ea7"
+  integrity sha512-QgqvdVjZoKxP8E8SBxYY6LrdV+kw00moXweZQWBbMMdifPKZAGfUaaXhGKIca6fjKnCL6HJIe/AWWCpqNvyHVw==
   dependencies:
-    "@babel/runtime" "^7.29.7"
-    "@mui/core-downloads-tracker" "^9.4.0"
-    "@mui/system" "^9.4.0"
-    "@mui/types" "^9.4.0"
-    "@mui/utils" "^9.4.0"
+    "@babel/runtime" "^7.29.7 || ^8.0.5"
+    "@mui/core-downloads-tracker" "^9.5.0"
+    "@mui/system" "^9.5.0"
+    "@mui/types" "^9.5.0"
+    "@mui/utils" "^9.5.0"
     "@popperjs/core" "^2.11.8"
     "@types/react-transition-group" "^4.4.12"
     clsx "^2.1.1"
     csstype "^3.2.3"
     prop-types "^15.8.1"
-    react-is "^19.2.8"
+    react-is "^19.3.0"
     react-transition-group "^4.4.5"
 
 "@mui/private-theming@^9.5.0":
@@ -1863,7 +1863,7 @@
     csstype "^3.2.3"
     prop-types "^15.8.1"
 
-"@mui/system@9.5.0", "@mui/system@^9.4.0":
+"@mui/system@9.5.0", "@mui/system@^9.4.0", "@mui/system@^9.5.0":
   version "9.5.0"
   resolved "https://registry.npmjs.org/@mui/system/-/system-9.5.0.tgz#43db6b26b0cedefe4c0e452713a5150d0c9470ec"
   integrity sha512-OZuAwvoiaaHpvn0a540VH1DUwwmojJubGfNmO2g+nb2ybNDP4/gF7t7aA6AMduELSuJ5yxwlzyFvUO3CfLv1Yg==
@@ -8309,7 +8309,7 @@ react-html-parser@^2.0.2:
   dependencies:
     htmlparser2 "^3.9.0"
 
-react-is@19.3.0, react-is@^19.2.8, react-is@^19.3.0:
+react-is@19.3.0, react-is@^19.3.0:
   version "19.3.0"
   resolved "https://registry.npmjs.org/react-is/-/react-is-19.3.0.tgz#716028d67e9993d23a2d353c6d08a3c1ef2bbeb4"
   integrity sha512-UpMYezM4v5/18F28aC66AEsjXIgE02kyEMH6yLdgLXu/UTfa1Ntwck/nNLrbqJsEXW7gPb0coNO9FQse9WTovA==

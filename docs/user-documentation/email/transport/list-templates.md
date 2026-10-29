@@ -16,7 +16,7 @@ Opens a drawer that deploys a transport rule to one or more tenants. Select the 
 
 <summary>New Template</summary>
 
-Opens the same editor as **New Transport Rule** on the Transport Rules page, without a tenant behind it. Fill in the name, comments, conditions, actions and exceptions as you would for a rule. There is no priority, because a template is not placed in any tenant's rule order. Users, groups, domains and connectors are typed in rather than picked from a tenant's directory.
+Opens the same editor as **New Transport Rule** on the Transport Rules page, without a tenant behind it. Fill in the name, comments, conditions, actions and exceptions as you would for a rule. **Deploy Position** sets where the rule goes in each tenant's rule order. **Deploy first** puts it at priority 0, ahead of every other rule. **Deploy last** (the default) adds a new rule at the end and leaves an existing rule where it is. Users, groups, domains and connectors are typed in rather than picked from a tenant's directory.
 
 Text values can contain CIPP variables such as `%tenantname%` or your own custom variables; type `%` in a text field to pick one. Variables are resolved for each tenant when the template is deployed, from this page, from the Transport Rule Template standard or from a baseline, so a rule named `%tenantname% - External tag` is created and checked under each tenant's own name.
 

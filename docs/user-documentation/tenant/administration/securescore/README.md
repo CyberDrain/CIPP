@@ -1,6 +1,6 @@
 # Secure Score
 
-The Tenant Overview presents Microsoft Secure Score. With a single tenant selected it shows that tenant's current standing and every recommendation Microsoft makes for it, one card per recommendation, ordered by the points still to gain with the biggest win first. With All Tenants selected it shows an estate-wide summary instead. The same data is available as a table on table.md.
+The Tenant Overview presents Microsoft Secure Score. With a single tenant selected it shows that tenant's current standing and every recommendation Microsoft makes for it, one card per recommendation, ordered by the points still to gain with the biggest win first. With All Tenants selected it shows an estate-wide summary and a table of every tenant's score instead. The same data is available as a table on table.md, and with All Tenants selected a third tab, controls.md, compares each recommendation across the estate.
 
 ## All Tenants View
 
@@ -17,8 +17,23 @@ Selecting All Tenants replaces the cards with a portfolio view, built from CIPP'
 
 **Top 5** and **Bottom 5** rank the estate by score, with a coloured bar per tenant: green at 75% or above, amber from 50%, red below that. Selecting a tenant opens its own Secure Score page and switches the tenant selector to it. Ranks are estate-wide, so #1 is the best scoring tenant in the estate rather than the best of five. The two boards never overlap: Bottom 5 takes the lowest five and Top 5 takes whatever remains, so an estate with fewer than ten scored tenants shows a shorter Top 5.
 
+**Secure score by tenant**, below the summary, lists one row per tenant, sorted lowest score first so the tenants that need attention are at the top.
+
+| Column           | Description                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| Tenant Name      | The tenant's display name, falling back to its domain where no name is recorded.                    |
+| Tenant           | The tenant's default domain.                                                                        |
+| Percentage Score | The tenant's latest score as a percentage of the maximum available to it.                           |
+| Change           | How far the tenant's score has moved across the retained history, in percentage points.             |
+| Current Score    | The latest score in points.                                                                         |
+| Max Score        | The maximum score available to that tenant.                                                         |
+| Captured At      | When the score CIPP is showing was recorded.                                                        |
+| Tenant Groups    | The CIPP tenant groups the tenant belongs to. Hidden by default; enable it from the column picker. |
+
+The **Tenant groups** picker above the table limits it to tenants in any of the CIPP tenant groups you tick; with none ticked it shows every tenant. **View tenant secure score** opens the selected tenant's own Secure Score page and switches the tenant selector to it.
+
 {% hint style="info" %}
-Scores appear only after the nightly cache job has run, so a newly added tenant shows nothing until the next refresh. Tenants with no maximum score recorded are left out of the average and the leaderboards entirely.
+Scores appear only after the nightly cache job has run, so a newly added tenant shows nothing until the next refresh. Tenants with no maximum score recorded are left out of the average and the leaderboards entirely. Excluded tenants never appear, even when older cached scores for them remain.
 {% endhint %}
 
 The filters, cards and actions described below apply to the single-tenant view.

@@ -146,6 +146,7 @@
         * [Edit App Approval Template](user-documentation/tenant/administration/applications/templates/edit.md)
     * [Secure Score](user-documentation/tenant/administration/securescore/README.md)
       * [Table View](user-documentation/tenant/administration/securescore/table.md)
+      * [Controls](user-documentation/tenant/administration/securescore/controls.md)
     * [App Consent Requests](user-documentation/tenant/administration/app-consent-requests.md)
     * [Authentication Methods](user-documentation/tenant/administration/authentication-methods/README.md)
       * [Registration Campaign](user-documentation/tenant/administration/authentication-methods/registration-campaign.md)

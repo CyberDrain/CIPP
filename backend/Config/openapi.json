@@ -62972,6 +62972,9 @@
                         "type": "string",
                         "x-cipp-field-source": "graph,backend"
                       },
+                      "lastSuccessfulSignInDateTime": {
+                        "x-cipp-field-source": "backend,frontend"
+                      },
                       "onPremisesSyncEnabled": {
                         "type": "boolean",
                         "x-cipp-field-source": "graph,backend,frontend"

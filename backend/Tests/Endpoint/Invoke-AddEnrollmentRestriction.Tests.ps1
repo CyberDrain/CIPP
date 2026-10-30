@@ -4,7 +4,7 @@
 # restriction's object ids and a forced priority), group ids only used for a single tenant,
 # deploying a saved template by id from the deploy drawer, and the request checks.
 # Invoke-AddEnrollmentRestrictionTemplate: a row from ListEnrollmentRestrictions saves as a
-# normalized template, and incomplete templates are refused.
+# normalised template, and incomplete templates are refused.
 # Invoke-ExecRemoveEnrollmentRestriction: the default restriction is never deleted.
 # Invoke-ListEnrollmentRestrictions: the default restriction is listed last on each platform,
 # and the platform filter limits the rows to one tab's platforms.
@@ -146,7 +146,7 @@ Describe 'Invoke-AddEnrollmentRestrictionTemplate' {
         Mock Add-CIPPAzDataTableEntity { $script:Saved = $Entity }
     }
 
-    It 'saves a ListEnrollmentRestrictions row as a normalized template' {
+    It 'saves a ListEnrollmentRestrictions row as a normalised template' {
         $Row = With @{ customGroup = @('BYOD Users'); ids = @('x_SinglePlatformRestriction'); priority = 1; platformLabel = 'Android' }
         $Response = Invoke-AddEnrollmentRestrictionTemplate -Request (New-Request $Row 'AddEnrollmentRestrictionTemplate') -TriggerMetadata $null
 

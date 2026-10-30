@@ -1,7 +1,7 @@
 function ConvertTo-CIPPEnrollmentRestrictionSettings {
     <#
     .SYNOPSIS
-        Normalizes any enrollment restriction input into CIPP's flat settings shape.
+        Normalises any enrollment restriction input into CIPP's flat settings shape.
     .DESCRIPTION
         The create drawer, the template forms, saved templates, rows from
         ListEnrollmentRestrictions and baseline variables all describe a restriction with the same
@@ -12,7 +12,7 @@ function ConvertTo-CIPPEnrollmentRestrictionSettings {
         The flat shape is: displayName, description, platform (android, ios, macOS or windows),
         priority (null when unset), the unprefixed platform settings, the deviceAdmin* settings
         for the Android device administrator half, and the assignment in the same AssignTo and
-        customGroup fields Intune templates use. AssignTo is normalized by
+        customGroup fields Intune templates use. AssignTo is normalised by
         Get-CIPPIntuneAssignTarget; enrollment restrictions apply to users, so only
         allLicensedUsers and customGroup assign, and anything else is 'On' (do not assign).
     .FUNCTIONALITY

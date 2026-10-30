@@ -15,7 +15,7 @@ const platformLabels = {
 }
 const assignmentLabel = (template) =>
   template.AssignTo === 'allLicensedUsers'
-    ? 'All Licenced Users'
+    ? 'All Licensed Users'
     : template.AssignTo === 'customGroup'
       ? template.customGroup
       : 'Not assigned'

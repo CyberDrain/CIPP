@@ -3,7 +3,7 @@
 # The fixtures are the restrictions Neptune North holds: an Android restriction stored as two
 # singlePlatformRestriction objects (androidForWork allowed from 13.0, android device
 # administrator blocked) with the same name and group, plus a Windows restriction for all
-# licensed users. Covered: settings normalization (AssignTo through Get-CIPPIntuneAssignTarget),
+# licensed users. Covered: settings normalisation (AssignTo through Get-CIPPIntuneAssignTarget),
 # the per-platform-type Graph bodies, grouping a tenant's objects back into restrictions
 # (round-trip equal to the template that wrote them), and Set-CIPPEnrollmentRestriction's
 # create/patch and priority behaviour, with assignment handed to Set-CIPPAssignedPolicy.

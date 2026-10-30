@@ -5,10 +5,34 @@ import { Button } from "@mui/material";
 import Link from "next/link";
 import { useSettings } from "../../../../hooks/use-settings.js";
 import ScheduledTaskDetails from "../../../../components/CippComponents/ScheduledTaskDetails";
+import { ApiGetCall } from "../../../../api/ApiCall";
 
 const Page = () => {
   const initialState = useSettings();
   const currentTenant = initialState.currentTenant;
+  // Separate fetch: action conditions only see their own row, and the table's paginated cache is internal
+  const vacationTasks = ApiGetCall({
+    url: "/api/ListScheduledItems?SearchTitle=*Vacation*",
+    data: { tenantFilter: currentTenant },
+    queryKey: `VacationModeTasks-${currentTenant}`,
+  });
+
+  // A Remove task's start counterpart is "Add ..." ("Create ..." for travel policies) with the same
+  // suffix; forwarding appends " -> target" to the Add name only
+  const startPending = (removeRow) => {
+    const suffix = removeRow.Name.slice("Remove ".length);
+    const tasks = Array.isArray(vacationTasks.data) ? vacationTasks.data : [];
+    return tasks.some((task) => {
+      const startSuffix = task.Name?.replace(/^(Add|Create) /, "");
+      return (
+        startSuffix !== task.Name &&
+        (startSuffix === suffix || startSuffix.startsWith(`${suffix} -> `)) &&
+        task.Tenant === removeRow.Tenant &&
+        !["Completed", "Failed"].includes(task.TaskState) &&
+        new Date(task.ScheduledTime) <= new Date(removeRow.ScheduledTime)
+      );
+    });
+  };
 
   const actions = [
     {
@@ -18,12 +42,28 @@ const Page = () => {
       icon: <CippIcons.EyeIcon />,
     },
     {
+      label: "End Vacation Now",
+      type: "POST",
+      url: "/api/AddScheduledItem",
+      data: { RowKey: "RowKey", RunNow: true },
+      confirmText:
+        "Run [Name] now? This reverts the vacation change immediately instead of waiting for the end date. Use this when the user is back early.",
+      icon: <CippIcons.PlayArrow />,
+      multiPost: false,
+      // Running the revert before the start task leaves the start change in place with no cleanup
+      condition: (row) =>
+        vacationTasks.isSuccess &&
+        row?.TaskState === "Planned" &&
+        row?.Name?.startsWith("Remove ") &&
+        !startPending(row),
+    },
+    {
       label: "Cancel Vacation Mode",
       type: "POST",
       url: "/api/RemoveScheduledItem",
       data: { ID: "RowKey" },
       confirmText:
-        "Are you sure you want to cancel this vacation mode entry? This might mean the user will remain in vacation mode permanently.",
+        "Cancel deletes this scheduled task without reverting anything, so the user might remain in vacation mode permanently. If the user is back early, use 'End Vacation Now' on the Remove task instead.",
       icon: <CippIcons.Delete />,
       multiPost: false,
     },

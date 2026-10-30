@@ -5,6 +5,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Typography,
   useMediaQuery,
 } from '@mui/material'
 import { Stack } from '@mui/system'
@@ -51,6 +52,34 @@ export const CippApiDialog = (props) => {
   const [partialResults, setPartialResults] = useState([])
   const [isFormSubmitted, setIsFormSubmitted] = useState(false)
   const mdDown = useMediaQuery((theme) => theme.breakpoints.down('md'))
+
+  const bulkConfirmQuery = ApiGetCall({
+    url: '/api/ExecBulkActionConfirmConfig?list=true',
+    queryKey: 'BulkActionConfirmConfig',
+  })
+  const bulkConfirmSettings = bulkConfirmQuery.data?.Results ?? {
+    Enabled: false,
+    Threshold: 10,
+    CountdownSeconds: 5,
+  }
+  const isBulkConfirmCountdown =
+    bulkConfirmSettings.Enabled &&
+    Array.isArray(row) &&
+    row.length > bulkConfirmSettings.Threshold
+  const [secondsLeft, setSecondsLeft] = useState(0)
+
+  useEffect(() => {
+    if (!createDialog.open || !isBulkConfirmCountdown) {
+      setSecondsLeft(0)
+      return
+    }
+    setSecondsLeft(bulkConfirmSettings.CountdownSeconds)
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => (prev <= 1 ? 0 : prev - 1))
+    }, 1000)
+    return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createDialog.open, isBulkConfirmCountdown, bulkConfirmSettings.CountdownSeconds])
 
   if (mdDown) {
     other.fullScreen = true
@@ -413,7 +442,14 @@ export const CippApiDialog = (props) => {
           <form onSubmit={formHook.handleSubmit(onSubmit)}>
             <DialogTitle>{title}</DialogTitle>
             <DialogContent>
-              <Stack spacing={2}>{confirmText}</Stack>
+              <Stack spacing={2}>
+                {confirmText}
+                {isBulkConfirmCountdown && secondsLeft > 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    Please wait {secondsLeft}s before confirming this bulk action.
+                  </Typography>
+                )}
+              </Stack>
             </DialogContent>
             <DialogContent>
               <Stack spacing={2}>
@@ -552,9 +588,17 @@ export const CippApiDialog = (props) => {
               <Button
                 variant="contained"
                 type="submit"
-                disabled={!isValid || (isFormSubmitted && !allowResubmit)}
+                disabled={
+                  !isValid ||
+                  (isFormSubmitted && !allowResubmit) ||
+                  (isBulkConfirmCountdown && secondsLeft > 0)
+                }
               >
-                {isFormSubmitted && allowResubmit ? 'Reconfirm' : 'Confirm'}
+                {isBulkConfirmCountdown && secondsLeft > 0
+                  ? `Confirm (${secondsLeft})`
+                  : isFormSubmitted && allowResubmit
+                    ? 'Reconfirm'
+                    : 'Confirm'}
               </Button>
             </DialogActions>
           </form>

@@ -3,6 +3,7 @@ import { CippIcons } from '../../../../utils/icon-registry'
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
 import Link from 'next/link'
+import { CippDeployGroupTemplateDrawer } from '../../../../components/CippComponents/CippDeployGroupTemplateDrawer'
 import { Stack } from '@mui/system'
 import { useSettings } from '../../../../hooks/use-settings'
 import { useCippReportDB } from '../../../../components/CippComponents/CippReportDBControls'
@@ -509,13 +510,7 @@ const Page = () => {
             <Button component={Link} href="groups/add" startIcon={<CippIcons.GroupAdd />}>
               Add Group
             </Button>
-            <Button
-              component={Link}
-              href="/identity/administration/group-templates/deploy"
-              startIcon={<CippIcons.RocketLaunch />}
-            >
-              Deploy Group Template
-            </Button>
+            <CippDeployGroupTemplateDrawer requiredPermissions={['Identity.Group.ReadWrite']} />
           </Stack>
         }
         dataSourceControls={reportDB.controls}

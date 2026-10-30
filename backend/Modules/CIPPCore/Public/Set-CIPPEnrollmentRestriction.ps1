@@ -12,7 +12,8 @@ function Set-CIPPEnrollmentRestriction {
         Priority (from the settings) is applied to newly created objects only, unless
         -PriorityMode Always, which also moves existing objects - used when an operator edits a
         restriction's priority by hand. Priority is relative to the tenant's other restrictions
-        on the same platform, so templates only set it at creation.
+        on the same platform type, so templates only set it at creation, and a priority past the
+        end of that platform's list places the restriction last.
 
         Assignment goes through Set-CIPPAssignedPolicy, the same path Intune policies use, so
         AssignTo and customGroup (names, wildcards allowed) or -GroupIds behave identically. A
@@ -56,9 +57,12 @@ function Set-CIPPEnrollmentRestriction {
 
             $IsNew = $null -eq $Match
             $Id = $Match.id
+            $CurrentPriority = $Match.priority
             if ($IsNew) {
                 if ($PSCmdlet.ShouldProcess("$DisplayName ($PlatformType)", 'Create enrollment restriction')) {
-                    $Id = (New-GraphPOSTRequest -uri $BaseUri -tenantid $TenantFilter -type POST -body (ConvertTo-Json -InputObject $Body -Depth 10 -Compress)).id
+                    $New = New-GraphPOSTRequest -uri $BaseUri -tenantid $TenantFilter -type POST -body (ConvertTo-Json -InputObject $Body -Depth 10 -Compress)
+                    $Id = $New.id
+                    $CurrentPriority = $New.priority
                     $Created++
                 }
             } else {
@@ -72,9 +76,15 @@ function Set-CIPPEnrollmentRestriction {
             }
             if (-not $Id) { continue }
 
-            if ($null -ne $Settings.priority -and ($IsNew -or ($PriorityMode -eq 'Always' -and "$($Match.priority)" -ne "$($Settings.priority)"))) {
-                if ($PSCmdlet.ShouldProcess("$DisplayName ($PlatformType)", "Set priority $($Settings.priority)")) {
-                    $null = New-GraphPOSTRequest -uri "$BaseUri/$Id/setPriority" -tenantid $TenantFilter -type POST -body (@{ priority = [int]$Settings.priority } | ConvertTo-Json -Compress)
+            # Intune numbers restrictions from 1 within each platform type and puts a new one last.
+            # setPriority fails for the position an object already holds or one past the end of its
+            # platform's list, so the target is capped at the list length and skipped when already met.
+            if ($null -ne $Settings.priority -and ($IsNew -or $PriorityMode -eq 'Always')) {
+                $PlatformCount = @($Existing | Where-Object { "$($_.platformType)" -eq $PlatformType }).Count + $(if ($IsNew) { 1 } else { 0 })
+                $TargetPriority = [Math]::Min([int]$Settings.priority, $PlatformCount)
+                if ($null -eq $CurrentPriority) { $CurrentPriority = $PlatformCount }
+                if ("$CurrentPriority" -ne "$TargetPriority" -and $PSCmdlet.ShouldProcess("$DisplayName ($PlatformType)", "Set priority $TargetPriority")) {
+                    $null = New-GraphPOSTRequest -uri "$BaseUri/$Id/setPriority" -tenantid $TenantFilter -type POST -body (@{ priority = $TargetPriority } | ConvertTo-Json -Compress)
                 }
             }
             if ($AssignTarget.Managed) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CippIcons } from '../../utils/icon-registry'
 import { Alert, Button, Divider } from '@mui/material'
 import { Grid } from '@mui/system'
@@ -11,14 +11,17 @@ import { useSettings } from '../../hooks/use-settings'
 import { applyPickedGroups } from './CippIntunePolicyActions'
 import CippEnrollmentRestrictionForm, {
   enrollmentRestrictionDefaults,
+  enrollmentRestrictionPlatformOptions,
   enrollmentRestrictionToForm,
 } from '../CippFormPages/CippEnrollmentRestrictionForm'
 
 // Creates an enrollment restriction across tenants, or edits one restriction when given a row
-// from ListEnrollmentRestrictions. In edit mode the table owns visibility.
+// from ListEnrollmentRestrictions. In edit mode the table owns visibility. platforms limits the
+// platforms offered on create, and the first one is preselected.
 export const CippEnrollmentRestrictionDrawer = ({
   buttonText = 'Add Restriction',
   row,
+  platforms,
   drawerVisible: controlledVisible,
   setDrawerVisible: setControlledVisible,
 }) => {
@@ -28,7 +31,19 @@ export const CippEnrollmentRestrictionDrawer = ({
   const drawerVisible = editing ? controlledVisible : localVisible
   const setDrawerVisible = editing ? setControlledVisible : setLocalVisible
 
-  const formControl = useForm({ mode: 'onChange', defaultValues: enrollmentRestrictionDefaults })
+  const platformOptions = useMemo(
+    () =>
+      platforms
+        ? enrollmentRestrictionPlatformOptions.filter((option) => platforms.includes(option.value))
+        : enrollmentRestrictionPlatformOptions,
+    [platforms]
+  )
+  const defaultValues = useMemo(
+    () => ({ ...enrollmentRestrictionDefaults, platform: platformOptions[0]?.value }),
+    [platformOptions]
+  )
+
+  const formControl = useForm({ mode: 'onChange', defaultValues })
   const { isValid } = useFormState({ control: formControl.control })
   const selectedTenants = useWatch({ control: formControl.control, name: 'selectedTenants' })
 
@@ -74,7 +89,7 @@ export const CippEnrollmentRestrictionDrawer = ({
 
   const handleCloseDrawer = () => {
     setDrawerVisible(false)
-    formControl.reset(enrollmentRestrictionDefaults)
+    formControl.reset(defaultValues)
   }
 
   return (
@@ -144,6 +159,7 @@ export const CippEnrollmentRestrictionDrawer = ({
               formControl={formControl}
               editing={editing}
               groupTenant={groupTenant}
+              platformOptions={editing ? enrollmentRestrictionPlatformOptions : platformOptions}
             />
           </Grid>
         </Grid>

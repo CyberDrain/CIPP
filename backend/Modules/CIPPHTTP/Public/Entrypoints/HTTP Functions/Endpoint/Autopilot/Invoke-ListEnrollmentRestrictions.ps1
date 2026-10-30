@@ -5,7 +5,7 @@ function Invoke-ListEnrollmentRestrictions {
     .ROLE
         Endpoint.Autopilot.Read
     .DESCRIPTION
-        Lists a tenant's enrollment (device type) restrictions for specific groups, one row per restriction as the Intune portal shows them: the two objects behind an Android restriction are combined. Each row carries the flat settings the add, edit and template forms use, its priority, and its assignment (AssignTo, customGroup and the readable PolicyAssignment). The tenant's default restriction is managed by the DefaultPlatformRestrictions standard and is not listed.
+        Lists a tenant's enrollment (device type) restrictions for specific groups, one row per restriction as the Intune portal shows them: the two objects behind an Android restriction are combined. Each row carries the flat settings the add, edit and template forms use, its priority, and its assignment (AssignTo, customGroup and the readable PolicyAssignment). The tenant's default restriction is listed last on each platform with isDefault true and priority 'Default', including tvOS and visionOS; it is read-only here and managed by the DefaultPlatformRestrictions standard. platform (comma-separated: android, ios, macOS, tvOS, visionOS, windows) limits the rows to those platforms.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -13,6 +13,7 @@ function Invoke-ListEnrollmentRestrictions {
     $APIName = $Request.Params.CIPPEndpoint
     $Headers = $Request.Headers
     $TenantFilter = $Request.Query.tenantFilter ?? $Request.Body.tenantFilter
+    $Platforms = @("$($Request.Query.platform ?? $Request.Body.platform)".Split(',').Trim() | Where-Object { $_ })
 
     try {
         # Graph's groupAssignmentTarget carries only groupId, so fetch group names in the same batch
@@ -40,16 +41,21 @@ function Invoke-ListEnrollmentRestrictions {
             $AssignmentText["$($Configuration.id)"] = $ListItem.PolicyAssignment
         }
 
-        $PlatformLabels = @{ android = 'Android'; ios = 'iOS/iPadOS'; macOS = 'macOS'; windows = 'Windows' }
-        $Results = foreach ($Restriction in @(ConvertFrom-CIPPEnrollmentRestrictionConfiguration -Configurations $Configurations -GroupNameById $GroupLookup)) {
+        $PlatformLabels = @{ android = 'Android'; ios = 'iOS/iPadOS'; macOS = 'macOS'; tvOS = 'tvOS'; visionOS = 'visionOS'; windows = 'Windows' }
+        $Restrictions = @(ConvertFrom-CIPPEnrollmentRestrictionConfiguration -Configurations $Configurations -GroupNameById $GroupLookup -IncludeDefault)
+        if ($Platforms.Count -gt 0) { $Restrictions = @($Restrictions | Where-Object { $_.platform -in $Platforms }) }
+        $Results = foreach ($Restriction in $Restrictions) {
+            # The default is one object across platforms, so each of its rows gets a unique row id.
             $Restriction | Add-Member -NotePropertyMembers ([ordered]@{
-                    id               = $Restriction.ids[0]
+                    id               = $(if ($Restriction.isDefault) { "$($Restriction.ids[0])|$($Restriction.platform)" } else { $Restriction.ids[0] })
                     platformLabel    = $PlatformLabels[$Restriction.platform]
-                    PolicyAssignment = $AssignmentText[$Restriction.ids[0]]
+                    PolicyAssignment = $(if ($Restriction.isDefault) { 'All users and all devices' } else { $AssignmentText[$Restriction.ids[0]] })
                 }) -Force
             $Restriction
         }
-        $Results = @($Results | Sort-Object -Property platform, priority, displayName)
+        # The portal lists the default last on each platform tab and shows 'Default' as its priority.
+        $Results = @($Results | Sort-Object -Property platform, isDefault, priority, displayName)
+        foreach ($Restriction in $Results | Where-Object isDefault) { $Restriction.priority = 'Default' }
         $StatusCode = [HttpStatusCode]::OK
     } catch {
         $ErrorMessage = Get-CippException -Exception $_

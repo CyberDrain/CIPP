@@ -6,11 +6,14 @@
 # Invoke-AddEnrollmentRestrictionTemplate: a row from ListEnrollmentRestrictions saves as a
 # normalized template, and incomplete templates are refused.
 # Invoke-ExecRemoveEnrollmentRestriction: the default restriction is never deleted.
+# Invoke-ListEnrollmentRestrictions: the default restriction is listed last on each platform,
+# and the platform filter limits the rows to one tab's platforms.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
-    foreach ($Name in @('Invoke-AddEnrollmentRestriction', 'Invoke-AddEnrollmentRestrictionTemplate', 'Invoke-ExecRemoveEnrollmentRestriction',
-            'Get-CIPPEnrollmentRestrictionPlatformTypes', 'ConvertTo-CIPPEnrollmentRestrictionSettings', 'New-CIPPEnrollmentRestrictionBody', 'Get-CIPPIntuneAssignTarget')) {
+    foreach ($Name in @('Invoke-AddEnrollmentRestriction', 'Invoke-AddEnrollmentRestrictionTemplate', 'Invoke-ExecRemoveEnrollmentRestriction', 'Invoke-ListEnrollmentRestrictions',
+            'Get-CIPPEnrollmentRestrictionPlatformTypes', 'ConvertTo-CIPPEnrollmentRestrictionSettings', 'New-CIPPEnrollmentRestrictionBody', 'Get-CIPPIntuneAssignTarget',
+            'ConvertFrom-CIPPEnrollmentRestrictionConfiguration')) {
         $Path = Get-ChildItem -Path (Join-Path $RepoRoot 'Modules') -Recurse -Filter "$Name.ps1" -File | Select-Object -First 1 -ExpandProperty FullName
         if (-not $Path) { throw "Could not locate $Name.ps1 under Modules/" }
         . $Path
@@ -33,6 +36,8 @@ BeforeAll {
     function New-GraphPOSTRequest { param($uri, $tenantid, $type, $body) }
     function Write-LogMessage { param($Headers, $API, $tenant, $message, $Sev, $LogData) }
     function Get-CippException { param($Exception) [PSCustomObject]@{ NormalizedError = "$Exception" } }
+    function New-GraphBulkRequest { param($Requests, $tenantid) }
+    function ConvertTo-CIPPIntunePolicyListItem { param($Policy, $URLName, $DefaultPolicyTypeName, $GroupLookup) [PSCustomObject]@{ PolicyAssignment = 'Assigned' } }
 
     function New-Request {
         param($Body, $Endpoint = 'AddEnrollmentRestriction')
@@ -99,6 +104,15 @@ Describe 'Invoke-AddEnrollmentRestriction' {
         Should -Invoke Set-CIPPEnrollmentRestriction -Times 0
     }
 
+    It 'refuses to edit the default restriction' {
+        $Body = With @{ tenantFilter = 'tenant-a'; ConfigurationIds = @('acc_DefaultPlatformRestrictions') }
+        $Response = Invoke-AddEnrollmentRestriction -Request (New-Request $Body) -TriggerMetadata $null
+
+        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::BadRequest)
+        $Response.Body.Results | Should -BeLike '*DefaultPlatformRestrictions standard*'
+        Should -Invoke Set-CIPPEnrollmentRestriction -Times 0
+    }
+
     It 'reports a failure in one tenant as partial success' {
         Mock Set-CIPPEnrollmentRestriction -ParameterFilter { $TenantFilter -eq 'tenant-a' } -MockWith { throw 'boom' }
         $Response = Invoke-AddEnrollmentRestriction -Request (New-Request (With @{ selectedTenants = @('tenant-a', 'tenant-b') })) -TriggerMetadata $null
@@ -146,5 +160,45 @@ Describe 'Invoke-ExecRemoveEnrollmentRestriction' {
         $Response = Invoke-ExecRemoveEnrollmentRestriction -Request (New-Request @{ tenantFilter = 't'; ids = @('acc_DefaultPlatformRestrictions') } 'ExecRemoveEnrollmentRestriction') -TriggerMetadata $null
         $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::InternalServerError)
         Should -Invoke New-GraphPOSTRequest -Times 2 -Exactly
+    }
+}
+
+Describe 'Invoke-ListEnrollmentRestrictions' {
+    BeforeEach {
+        $Allowed = [PSCustomObject]@{ platformBlocked = $false; personalDeviceEnrollmentBlocked = $false; osMinimumVersion = $null; osMaximumVersion = $null; blockedManufacturers = @() }
+        $script:Configurations = @(
+            [PSCustomObject]@{
+                '@odata.type' = '#microsoft.graph.deviceEnrollmentPlatformRestrictionsConfiguration'; id = 'acc_DefaultPlatformRestrictions'; displayName = 'All users and all devices'; priority = 0
+                androidForWorkRestriction = $Allowed; androidRestriction = $Allowed; iosRestriction = $Allowed; macOSRestriction = $Allowed; windowsRestriction = $Allowed; tvosRestriction = $Allowed; visionOSRestriction = $Allowed
+            }
+            [PSCustomObject]@{ '@odata.type' = '#microsoft.graph.deviceEnrollmentPlatformRestrictionConfiguration'; id = 'i1_SinglePlatformRestriction'; displayName = 'iOS BYOD'; priority = 1; platformType = 'ios'; platformRestriction = $Allowed }
+            [PSCustomObject]@{ '@odata.type' = '#microsoft.graph.deviceEnrollmentPlatformRestrictionConfiguration'; id = 'w1_SinglePlatformRestriction'; displayName = 'Windows Corporate'; priority = 1; platformType = 'windows'; platformRestriction = $Allowed }
+        )
+        Mock New-GraphBulkRequest {
+            @(
+                [PSCustomObject]@{ id = 'Configurations'; status = 200; body = [PSCustomObject]@{ value = $script:Configurations } }
+                [PSCustomObject]@{ id = 'Groups'; status = 200; body = [PSCustomObject]@{ value = @() } }
+            )
+        }
+    }
+
+    It 'lists the Apple tab with the default last on every Apple platform, read-only' {
+        $Request = [PSCustomObject]@{ Params = @{ CIPPEndpoint = 'ListEnrollmentRestrictions' }; Headers = @{}; Query = @{ tenantFilter = 't'; platform = 'ios,macOS,tvOS,visionOS' } }
+        $Rows = @((Invoke-ListEnrollmentRestrictions -Request $Request -TriggerMetadata $null).Body.Results)
+
+        @($Rows | ForEach-Object { "$($_.platform)|$($_.priority)" }) | Should -Be @('ios|1', 'ios|Default', 'macOS|Default', 'tvOS|Default', 'visionOS|Default')
+        $Default = $Rows | Where-Object { $_.platform -eq 'tvOS' }
+        $Default.isDefault | Should -BeTrue
+        $Default.platformLabel | Should -Be 'tvOS'
+        $Default.PolicyAssignment | Should -Be 'All users and all devices'
+        @($Rows.id | Select-Object -Unique).Count | Should -Be $Rows.Count
+    }
+
+    It 'lists every platform when no platform is given' {
+        $Request = [PSCustomObject]@{ Params = @{ CIPPEndpoint = 'ListEnrollmentRestrictions' }; Headers = @{}; Query = @{ tenantFilter = 't' } }
+        $Rows = @((Invoke-ListEnrollmentRestrictions -Request $Request -TriggerMetadata $null).Body.Results)
+
+        @($Rows | Where-Object isDefault).Count | Should -Be 6
+        @($Rows | Where-Object { -not $_.isDefault }).Count | Should -Be 2
     }
 }

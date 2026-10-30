@@ -124,7 +124,13 @@ const PlatformSettings = ({ formControl, prefix = '', title, hasVersions, platfo
 // The fields of one enrollment (device type) restriction, shared by the add/edit drawer and the
 // template pages. With groupTenant set, groups are picked from that tenant (submit through
 // applyPickedGroups); otherwise they are entered as names, which resolve in every tenant.
-const CippEnrollmentRestrictionForm = ({ formControl, editing = false, groupTenant }) => (
+// platformOptions narrows the platforms offered, as each platform tab does.
+const CippEnrollmentRestrictionForm = ({
+  formControl,
+  editing = false,
+  groupTenant,
+  platformOptions = enrollmentRestrictionPlatformOptions,
+}) => (
   <Grid container spacing={2}>
     <CippFormComponent type="hidden" name="GUID" formControl={formControl} />
 
@@ -134,7 +140,7 @@ const CippEnrollmentRestrictionForm = ({ formControl, editing = false, groupTena
         row
         name="platform"
         label="Platform"
-        options={enrollmentRestrictionPlatformOptions}
+        options={platformOptions}
         formControl={formControl}
         disabled={editing}
         validators={{ required: 'Select a platform' }}

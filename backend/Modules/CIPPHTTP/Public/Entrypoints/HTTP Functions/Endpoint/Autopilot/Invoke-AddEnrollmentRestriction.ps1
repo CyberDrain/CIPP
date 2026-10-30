@@ -27,10 +27,14 @@ function Invoke-AddEnrollmentRestriction {
         $Tenants = @($Tenants | Where-Object { $_ -in $AllowedTenantList.defaultDomainName })
     }
 
-    $BadRequest = $null
+    # Editing reaches restrictions for specific groups only; the default restriction is managed by
+    # the DefaultPlatformRestrictions standard, and an edit sent for it would create a new restriction.
+    $BadRequest = $(if (@($ConfigurationIds | Where-Object { "$_" -notmatch '_SinglePlatformRestriction$' }).Count -gt 0) {
+            'Only restrictions for specific groups can be edited here. The default restriction is managed by the DefaultPlatformRestrictions standard.'
+        })
     $Source = $Body
     $TemplateId = "$($Body.TemplateId.value ?? $Body.TemplateId ?? $Body.TemplateList.value ?? $Body.TemplateList)"
-    if (-not $Editing -and -not [string]::IsNullOrWhiteSpace($TemplateId)) {
+    if (-not $BadRequest -and -not $Editing -and -not [string]::IsNullOrWhiteSpace($TemplateId)) {
         $Table = Get-CippTable -tablename 'templates'
         $SafeId = ConvertTo-CIPPODataFilterValue -Value $TemplateId
         $Entity = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'EnrollmentRestrictionTemplate' and RowKey eq '$SafeId'" | Select-Object -First 1

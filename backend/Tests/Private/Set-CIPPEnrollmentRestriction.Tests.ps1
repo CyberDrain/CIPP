@@ -100,6 +100,12 @@ Describe 'New-CIPPEnrollmentRestrictionBody' {
         $Bodies.android.displayName | Should -Be $Bodies.androidForWork.displayName
     }
 
+    It 'refuses tvOS and visionOS, which Graph cannot create for specific groups' {
+        foreach ($Platform in @('tvOS', 'visionOS')) {
+            { New-CIPPEnrollmentRestrictionBody -Settings (ConvertTo-CIPPEnrollmentRestrictionSettings -InputObject @{ displayName = 'TV'; platform = $Platform }) } | Should -Throw '*platform*'
+        }
+    }
+
     It 'leaves OS versions off macOS and manufacturers off every non device administrator type' {
         $Bodies = New-CIPPEnrollmentRestrictionBody -Settings (ConvertTo-CIPPEnrollmentRestrictionSettings -InputObject @{ displayName = 'Mac'; platform = 'macOS'; osMinimumVersion = '14.0'; deviceAdminBlockedManufacturers = 'Acme' })
         @($Bodies.Keys) | Should -Be @('mac')
@@ -131,6 +137,40 @@ Describe 'ConvertFrom-CIPPEnrollmentRestrictionConfiguration' {
             Should -Be (ConvertTo-Json (Get-CIPPEnrollmentRestrictionProjection -Settings $Template -Platform 'android') -Compress)
     }
 
+    It 'lists the default restriction once per platform only when asked' {
+        $Allowed = @{ platformBlocked = $false; personalDeviceEnrollmentBlocked = $false; osMinimumVersion = ''; osMaximumVersion = ''; blockedManufacturers = @() }
+        $Default = [PSCustomObject]@{
+            '@odata.type'             = '#microsoft.graph.deviceEnrollmentPlatformRestrictionsConfiguration'
+            id                        = 'acc_DefaultPlatformRestrictions'
+            displayName               = 'All users and all devices'
+            priority                  = 0
+            androidForWorkRestriction = [PSCustomObject]$Allowed
+            androidRestriction        = [PSCustomObject]@{ platformBlocked = $true; personalDeviceEnrollmentBlocked = $false; osMinimumVersion = ''; osMaximumVersion = ''; blockedManufacturers = @('Acme') }
+            iosRestriction            = [PSCustomObject]@{ platformBlocked = $false; personalDeviceEnrollmentBlocked = $true; osMinimumVersion = '17.0'; osMaximumVersion = ''; blockedManufacturers = @() }
+            macOSRestriction          = [PSCustomObject]$Allowed
+            windowsRestriction        = [PSCustomObject]$Allowed
+            tvosRestriction           = [PSCustomObject]@{ platformBlocked = $true; personalDeviceEnrollmentBlocked = $false; osMinimumVersion = $null; osMaximumVersion = $null; blockedManufacturers = @() }
+            visionOSRestriction       = [PSCustomObject]$Allowed
+        }
+        $Configurations = @(Get-NeptuneConfigurations | Where-Object { $_.id -ne 'acc_DefaultPlatformRestrictions' }) + $Default
+
+        @(ConvertFrom-CIPPEnrollmentRestrictionConfiguration -Configurations $Configurations | Where-Object isDefault).Count | Should -Be 0
+
+        $Restrictions = @(ConvertFrom-CIPPEnrollmentRestrictionConfiguration -Configurations $Configurations -IncludeDefault)
+        $Defaults = @($Restrictions | Where-Object isDefault)
+        @($Defaults.platform) | Should -Be @('android', 'ios', 'macOS', 'windows', 'tvOS', 'visionOS')
+        ($Defaults | Where-Object platform -EQ 'tvOS').platformBlocked | Should -BeTrue
+        @($Restrictions | Where-Object { -not $_.isDefault }).Count | Should -Be 2
+        $Defaults | ForEach-Object { $_.ids | Should -Be @('acc_DefaultPlatformRestrictions'); $_.priority | Should -BeNullOrEmpty; $_.AssignTo | Should -Be 'On' }
+        $Android = $Defaults | Where-Object platform -EQ 'android'
+        $Android.platformBlocked | Should -BeFalse
+        $Android.deviceAdminPlatformBlocked | Should -BeTrue
+        $Android.deviceAdminBlockedManufacturers | Should -Be @('Acme')
+        $Ios = $Defaults | Where-Object platform -EQ 'ios'
+        $Ios.personalDeviceEnrollmentBlocked | Should -BeTrue
+        $Ios.osMinimumVersion | Should -Be '17.0'
+    }
+
     It 'reports an Android restriction missing its device administrator half' {
         $Configurations = @(Get-NeptuneConfigurations | Where-Object { $_.platformType -ne 'android' })
         $Android = @(ConvertFrom-CIPPEnrollmentRestrictionConfiguration -Configurations $Configurations) | Where-Object platform -EQ 'android'
@@ -145,25 +185,52 @@ Describe 'Set-CIPPEnrollmentRestriction' {
         Mock New-GraphGetRequest -MockWith { $script:Existing }
         Mock New-GraphPOSTRequest -MockWith {
             $script:Writes.Add([PSCustomObject]@{ uri = $uri; type = $type; body = $body })
-            [PSCustomObject]@{ id = "new-$($script:Writes.Count)" }
+            # Intune puts a new restriction last within its platform type.
+            $PlatformType = $(if ($type -eq 'POST' -and $uri -like '*/deviceEnrollmentConfigurations') { ($body | ConvertFrom-Json).platformType })
+            [PSCustomObject]@{ id = "new-$($script:Writes.Count)"; priority = @($script:Existing | Where-Object { $_.platformType -eq $PlatformType }).Count + 1 }
         }
         Mock Set-CIPPAssignedPolicy { }
         Mock Write-LogMessage { }
         $script:Settings = ConvertTo-CIPPEnrollmentRestrictionSettings -InputObject $script:AndroidTemplate
     }
 
-    It 'creates both Android objects, sets their priority and assigns each through Set-CIPPAssignedPolicy' {
+    It 'creates both Android objects and assigns each through Set-CIPPAssignedPolicy' {
         $Result = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings
 
         $Result | Should -BeLike 'Created android enrollment restriction*'
         @($script:Writes | Where-Object { $_.type -eq 'POST' -and $_.uri -like '*/deviceEnrollmentConfigurations' }).Count | Should -Be 2
-        $Priority = @($script:Writes | Where-Object { $_.uri -like '*/setPriority' })
-        $Priority.Count | Should -Be 2
-        ($Priority[0].body | ConvertFrom-Json).priority | Should -Be 1
         Should -Invoke Set-CIPPAssignedPolicy -Times 2 -Exactly -ParameterFilter {
             $Type -eq 'deviceEnrollmentConfigurations' -and $AssignmentMode -eq 'replace' -and
             $GroupName -eq 'Android - Baseline - BYOD - App Protection - Include' -and $PolicyId -like 'new-*'
         }
+    }
+
+    It 'does not ask Intune for the priority a new restriction already has' {
+        # The only restriction on its platform is created at priority 1; Intune rejects setPriority 1.
+        $null = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings
+
+        @($script:Writes | Where-Object { $_.uri -like '*/setPriority' }).Count | Should -Be 0
+    }
+
+    It 'moves a new restriction above the existing ones on its platform' {
+        $script:Existing = Get-NeptuneConfigurations
+        $script:Settings.displayName = 'Android - Corporate'
+
+        $null = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings
+
+        $Priority = @($script:Writes | Where-Object { $_.uri -like '*/setPriority' })
+        $Priority.Count | Should -Be 2
+        $Priority | ForEach-Object { ($_.body | ConvertFrom-Json).priority | Should -Be 1 }
+    }
+
+    It 'places a new restriction last when the priority is past the end of its platform list' {
+        $script:Existing = Get-NeptuneConfigurations
+        $script:Settings.displayName = 'Android - Corporate'
+        $script:Settings.priority = 5
+
+        $null = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings
+
+        @($script:Writes | Where-Object { $_.uri -like '*/setPriority' }).Count | Should -Be 0
     }
 
     It 'patches existing objects without the platform type and leaves their priority alone' {
@@ -178,13 +245,28 @@ Describe 'Set-CIPPEnrollmentRestriction' {
         @($script:Writes | Where-Object { $_.uri -like '*/setPriority' }).Count | Should -Be 0
     }
 
-    It 'moves an existing restriction to a new priority when editing' {
+    It 'moves an existing restriction when editing, capped at the end of its platform list' {
+        $Blocked = @{ platformBlocked = $true; personalDeviceEnrollmentBlocked = $false; osMinimumVersion = $null; osMaximumVersion = $null; blockedManufacturers = @() }
+        $script:Existing = @(Get-NeptuneConfigurations) + @(
+            New-Restriction -Id 'aa11' -Name 'Android - Corporate' -PlatformType 'android' -Priority 2 -Restriction $Blocked
+            New-Restriction -Id 'aa12' -Name 'Android - Corporate' -PlatformType 'androidForWork' -Priority 2 -Restriction $Blocked
+        )
+        $script:Settings.priority = 3
+
+        $null = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings -ConfigurationIds @('c39a_SinglePlatformRestriction', 'f471_SinglePlatformRestriction') -PriorityMode Always
+
+        $Priority = @($script:Writes | Where-Object { $_.uri -like '*/c39a_SinglePlatformRestriction/setPriority' -or $_.uri -like '*/f471_SinglePlatformRestriction/setPriority' })
+        $Priority.Count | Should -Be 2
+        $Priority | ForEach-Object { ($_.body | ConvertFrom-Json).priority | Should -Be 2 }
+    }
+
+    It 'leaves an edited restriction that is alone on its platform at priority 1' {
         $script:Existing = Get-NeptuneConfigurations
         $script:Settings.priority = 3
 
         $null = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings -ConfigurationIds @('c39a_SinglePlatformRestriction', 'f471_SinglePlatformRestriction') -PriorityMode Always
 
-        @($script:Writes | Where-Object { $_.uri -like '*/c39a_SinglePlatformRestriction/setPriority' -or $_.uri -like '*/f471_SinglePlatformRestriction/setPriority' }).Count | Should -Be 2
+        @($script:Writes | Where-Object { $_.uri -like '*/setPriority' }).Count | Should -Be 0
     }
 
     It 'passes picked group ids through, and assigns all users by the broad target name' {

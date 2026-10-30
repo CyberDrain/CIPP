@@ -119,6 +119,7 @@ const CACHE_TYPE_COLLECTIONS = {
     "IntuneReusableSettings",
     "DetectedApps",
     "IntuneAppInstallStatus",
+    "IntuneNonCompliantSettings",
     "MDEOnboarding",
     "AutopilotDeploymentProfiles",
     "DeviceEnrollmentConfigurations",

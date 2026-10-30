@@ -5,7 +5,7 @@ function Invoke-AddEnrollmentRestriction {
     .ROLE
         Endpoint.Autopilot.ReadWrite
     .DESCRIPTION
-        Creates or updates an enrollment (device type) restriction with its priority and group assignment (AssignTo with customGroup names, as Intune templates use). Creating fans out over selectedTenants (or a wizard's tenantFilter list) and can take its settings from a saved template (TemplateId). Editing sends one tenantFilter with the restriction's ConfigurationIds, and may pass GroupIds picked in that tenant instead of group names.
+        Creates or updates an enrollment (device type) restriction with its priority and group assignment (AssignTo with customGroup names, as Intune templates use). Creating fans out over selectedTenants (or a tenantFilter list) and can take its settings from a saved template (TemplateId, or TemplateList from the deploy drawer). replacename sets how groups are handled, as for conditional access templates: displayName (default) assigns the template's groups by name, leave keeps each restriction's current assignment, AllUsers assigns all users. CreateGroups creates the named groups a tenant does not have. Editing sends one tenantFilter with the restriction's ConfigurationIds, and may pass GroupIds picked in that tenant instead of group names.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -48,6 +48,15 @@ function Invoke-AddEnrollmentRestriction {
             $BadRequest = "$($_.Exception.Message)"
         }
     }
+    # How a deploy handles groups, with AddCAPolicy's replacename values: displayName (or none) keeps
+    # the template's assignment, its groups looked up by name; leave keeps each restriction's current
+    # assignment, so a new one is unassigned; AllUsers assigns all users.
+    if (-not $BadRequest -and -not $Editing) {
+        switch ("$($Body.replacename.value ?? $Body.replacename)") {
+            'leave' { $Settings.AssignTo = 'On'; $Settings.customGroup = '' }
+            'AllUsers' { $Settings.AssignTo = 'allLicensedUsers'; $Settings.customGroup = '' }
+        }
+    }
     if (-not $BadRequest) {
         $BadRequest = $(if ($Tenants.Count -eq 0) {
                 'Select at least one tenant.'
@@ -80,6 +89,7 @@ function Invoke-AddEnrollmentRestriction {
             $SetParams.ConfigurationIds = $ConfigurationIds
             $SetParams.PriorityMode = 'Always'
         }
+        if ("$($Body.CreateGroups)" -eq 'true') { $SetParams.CreateGroups = $true }
         try {
             Set-CIPPEnrollmentRestriction @SetParams
         } catch {

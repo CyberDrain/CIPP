@@ -22,6 +22,9 @@ BeforeAll {
     function New-GraphPOSTRequest { [CmdletBinding()] param($uri, $tenantid, $body, $type, $AsApp) }
     function Write-LogMessage { [CmdletBinding()] param($Headers, $API, $tenant, $message, $Sev, $LogData) }
     function Set-CIPPAssignedPolicy { [CmdletBinding()] param($GroupName, $GroupIds, $PolicyId, $Type, $TenantFilter, $AssignmentMode, $Headers, $APIName) }
+    function New-CIPPGroup { [CmdletBinding()] param($GroupObject, $TenantFilter, $APIName) }
+    function Get-CippTable { [CmdletBinding()] param($tablename) @{ Context = $tablename } }
+    function Get-CIPPAzDataTableEntity { [CmdletBinding()] param($Context, $Filter) }
 
     $script:Tenant = 'neptunenorth.co.uk'
     $script:ByodGroup = '3baf8b01-f9c5-4914-81b8-6afddfcb43e7'
@@ -276,6 +279,52 @@ Describe 'Set-CIPPEnrollmentRestriction' {
         $script:Settings.AssignTo = 'allLicensedUsers'
         $null = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings -GroupIds @('picked-1')
         Should -Invoke Set-CIPPAssignedPolicy -Times 2 -Exactly -ParameterFilter { $GroupName -eq 'allLicensedUsers' -and -not $GroupIds }
+    }
+
+    Context 'creating missing groups' {
+        BeforeEach {
+            Mock New-GraphGetRequest -ParameterFilter { $uri -like '*/groups*' } -MockWith {
+                @([PSCustomObject]@{ id = 'existing-id'; displayName = 'Existing Group' })
+            }
+            Mock New-CIPPGroup { [PSCustomObject]@{ Success = $true; GroupId = 'created-id' } }
+            Mock Get-CIPPAzDataTableEntity { }
+            $script:Settings.customGroup = 'Existing Group, New Group, Pilot*'
+        }
+
+        It 'creates a missing named group as a security group, skips wildcards and assigns by id' {
+            $null = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings -CreateGroups
+
+            Should -Invoke New-CIPPGroup -Times 1 -Exactly -ParameterFilter {
+                $GroupObject.displayName -eq 'New Group' -and $GroupObject.groupType -eq 'generic' -and $GroupObject.securityEnabled -and $GroupObject.username -eq 'NewGroup'
+            }
+            Should -Invoke Set-CIPPAssignedPolicy -Times 2 -Exactly -ParameterFilter {
+                @($GroupIds).Count -eq 2 -and $GroupIds -contains 'existing-id' -and $GroupIds -contains 'created-id'
+            }
+        }
+
+        It 'creates the group from the group template of the same name' {
+            Mock Get-CIPPAzDataTableEntity { [PSCustomObject]@{ JSON = (@{ displayName = 'New Group'; groupType = 'dynamic'; membershipRules = 'user.department -eq "BYOD"' } | ConvertTo-Json -Compress) } }
+
+            $null = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings -CreateGroups
+
+            Should -Invoke New-CIPPGroup -Times 1 -Exactly -ParameterFilter { $GroupObject.groupType -eq 'dynamic' }
+        }
+
+        It 'creates nothing and assigns by name when every group exists' {
+            $script:Settings.customGroup = 'Existing Group'
+
+            $null = Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings -CreateGroups
+
+            Should -Invoke New-CIPPGroup -Times 0
+            Should -Invoke Set-CIPPAssignedPolicy -Times 2 -Exactly -ParameterFilter { $GroupName -eq 'Existing Group' -and -not $GroupIds }
+        }
+
+        It 'writes no restriction when a group cannot be created' {
+            Mock New-CIPPGroup { [PSCustomObject]@{ Success = $false; Error = 'Insufficient privileges' } }
+
+            { Set-CIPPEnrollmentRestriction -TenantFilter $script:Tenant -Settings $script:Settings -CreateGroups } | Should -Throw "*Failed to create group 'New Group': Insufficient privileges*"
+            $script:Writes.Count | Should -Be 0
+        }
     }
 
     It 'leaves the assignment alone for do not assign' {

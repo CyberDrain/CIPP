@@ -12,7 +12,7 @@ const Page = () => {
   return (
     <CippFormPage
       resetForm={false}
-      queryKey="ListEnrollmentRestrictionTemplates"
+      queryKey={['ListEnrollmentRestrictionTemplates', 'EnrollmentRestrictionTemplates']}
       formControl={formControl}
       title="Enrollment Restriction Template"
       backButtonTitle="Enrollment Restriction Templates"

@@ -19,6 +19,11 @@ function Set-CIPPEnrollmentRestriction {
         AssignTo and customGroup (names, wildcards allowed) or -GroupIds behave identically. A
         restriction with a named target owns its assignment and is replaced to exactly that set;
         'On' (do not assign) leaves the assignment as it is.
+
+        -CreateGroups creates the customGroup names no tenant group matches with New-CIPPGroup,
+        from the group template of that name when there is one and otherwise as a security group,
+        before any restriction object is written. When it creates one, the restriction is assigned by id, since a new group may not
+        be listed by name yet. A wildcard name cannot be created and is left to match what exists.
     .FUNCTIONALITY
         Internal
     #>
@@ -32,6 +37,7 @@ function Set-CIPPEnrollmentRestriction {
         [string[]]$GroupIds,
         [ValidateSet('OnCreate', 'Always')]
         [string]$PriorityMode = 'OnCreate',
+        [switch]$CreateGroups,
         $Headers,
         $APIName = 'Set Enrollment Restriction'
     )
@@ -43,6 +49,49 @@ function Set-CIPPEnrollmentRestriction {
     $BaseUri = 'https://graph.microsoft.com/beta/deviceManagement/deviceEnrollmentConfigurations'
 
     try {
+        $HasGroupIds = $GroupIds -and @($GroupIds).Count -gt 0
+        if ($CreateGroups -and $AssignTarget.AssignTo -eq 'customGroup' -and -not $HasGroupIds) {
+            # Names match as Set-CIPPAssignedPolicy matches them: -like, with brackets taken literally.
+            $TenantGroups = @(New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/groups?$select=id,displayName&$top=999' -tenantid $TenantFilter)
+            $ResolvedIds = [System.Collections.Generic.List[string]]::new()
+            $CreatedAny = $false
+            $GroupTemplates = $null
+            foreach ($Name in @("$($Settings.customGroup)".Split(',').Trim() | Where-Object { $_ })) {
+                $Pattern = $Name -replace '\[', '`[' -replace '\]', '`]'
+                $Matched = @($TenantGroups | Where-Object { "$($_.displayName)" -like $Pattern })
+                if ($Matched.Count -gt 0) {
+                    $Matched | ForEach-Object { $ResolvedIds.Add("$($_.id)") }
+                } elseif ($Name -notmatch '[*?]' -and $PSCmdlet.ShouldProcess($Name, 'Create group')) {
+                    # A group template with the name is used when there is one, else a security group.
+                    if ($null -eq $GroupTemplates) {
+                        $TemplatesTable = Get-CippTable -tablename 'templates'
+                        $GroupTemplates = @(Get-CIPPAzDataTableEntity @TemplatesTable -Filter "PartitionKey eq 'GroupTemplate'" | ForEach-Object {
+                                if ($_.JSON -and (Test-Json -Json $_.JSON -ErrorAction SilentlyContinue)) { $_.JSON | ConvertFrom-Json }
+                            })
+                    }
+                    # One template only: duplicates would make the create body's displayName an array.
+                    $GroupObject = @($GroupTemplates | Where-Object -Property displayName -EQ $Name) | Select-Object -First 1
+                    if (-not $GroupObject) {
+                        $MailNickname = $Name -replace '[^a-zA-Z0-9]', ''
+                        $GroupObject = @{
+                            groupType       = 'generic'
+                            displayName     = $Name
+                            username        = $MailNickname.Substring(0, [Math]::Min(64, $MailNickname.Length))
+                            securityEnabled = $true
+                        }
+                    }
+                    $NewGroup = New-CIPPGroup -GroupObject $GroupObject -TenantFilter $TenantFilter -APIName $APIName
+                    # Never assign an empty id in place of the group.
+                    if (-not $NewGroup.Success -or [string]::IsNullOrWhiteSpace($NewGroup.GroupId)) {
+                        throw "Failed to create group '$Name'$(if ($NewGroup.Error) { ": $($NewGroup.Error)" })"
+                    }
+                    $ResolvedIds.Add("$($NewGroup.GroupId)")
+                    $CreatedAny = $true
+                }
+            }
+            if ($CreatedAny) { $GroupIds = @($ResolvedIds | Select-Object -Unique) }
+        }
+
         $Existing = @(New-GraphGetRequest -uri "$BaseUri`?`$top=999" -tenantid $TenantFilter | Where-Object { "$($_.'@odata.type')" -match 'deviceEnrollmentPlatformRestrictionConfiguration$' })
 
         $Created = 0

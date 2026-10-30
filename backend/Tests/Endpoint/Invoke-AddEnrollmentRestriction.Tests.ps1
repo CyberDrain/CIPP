@@ -2,7 +2,7 @@
 #
 # Invoke-AddEnrollmentRestriction: the create/edit split (tenant fan-out vs one tenant with the
 # restriction's object ids and a forced priority), group ids only used for a single tenant,
-# deploying a saved template by id from the wizard, and the request checks.
+# deploying a saved template by id from the deploy drawer, and the request checks.
 # Invoke-AddEnrollmentRestrictionTemplate: a row from ListEnrollmentRestrictions saves as a
 # normalized template, and incomplete templates are refused.
 # Invoke-ExecRemoveEnrollmentRestriction: the default restriction is never deleted.
@@ -26,7 +26,7 @@ BeforeAll {
     $Accelerators = [PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')
     if (-not ('HttpStatusCode' -as [type])) { $Accelerators::Add('HttpStatusCode', [System.Net.HttpStatusCode]) }
 
-    function Set-CIPPEnrollmentRestriction { param($TenantFilter, $Settings, $ConfigurationIds, $GroupIds, $PriorityMode, $Headers, $APIName) }
+    function Set-CIPPEnrollmentRestriction { param($TenantFilter, $Settings, $ConfigurationIds, $GroupIds, $PriorityMode, [switch]$CreateGroups, $Headers, $APIName) }
     function Test-CippAccess { param($Request, [switch]$TenantList) 'AllTenants' }
     function Get-Tenants { param([switch]$IncludeErrors) }
     function Get-CippTable { param($tablename) @{ Context = $tablename } }
@@ -84,14 +84,34 @@ Describe 'Invoke-AddEnrollmentRestriction' {
         }
     }
 
-    It 'deploys a saved template from the wizard by its id' {
+    It 'deploys a saved template from the deploy drawer by its id' {
         Mock Get-CIPPAzDataTableEntity { [PSCustomObject]@{ JSON = (@{ displayName = 'iOS BYOD'; platform = 'ios'; personalDeviceEnrollmentBlocked = $true; AssignTo = 'allLicensedUsers' } | ConvertTo-Json) } }
-        $Body = @{ tenantFilter = @(@{ value = 'tenant-a' }); TemplateList = @{ value = 'guid-1'; label = 'iOS BYOD (iOS/iPadOS)' } }
+        $Body = @{ selectedTenants = @(@{ value = 'tenant-a'; label = 'Tenant A' }); TemplateList = @{ value = 'guid-1'; label = 'iOS BYOD (iOS/iPadOS)' } }
         $null = Invoke-AddEnrollmentRestriction -Request (New-Request $Body) -TriggerMetadata $null
 
         Should -Invoke Set-CIPPEnrollmentRestriction -Times 1 -Exactly -ParameterFilter {
             $TenantFilter -eq 'tenant-a' -and $Settings.displayName -eq 'iOS BYOD' -and $Settings.personalDeviceEnrollmentBlocked -and $Settings.AssignTo -eq 'allLicensedUsers'
         }
+    }
+
+    It 'handles groups on deploy as conditional access templates do' {
+        Mock Get-CIPPAzDataTableEntity { [PSCustomObject]@{ JSON = (@{ displayName = 'Android BYOD'; platform = 'android'; AssignTo = 'customGroup'; customGroup = 'BYOD*' } | ConvertTo-Json) } }
+        $Deploy = { param($Mode) @{ selectedTenants = @(@{ value = 'tenant-a' }); TemplateList = @{ value = 'guid-1' }; replacename = $Mode } }
+
+        $null = Invoke-AddEnrollmentRestriction -Request (New-Request (& $Deploy 'displayName')) -TriggerMetadata $null
+        Should -Invoke Set-CIPPEnrollmentRestriction -Times 1 -Exactly -ParameterFilter { $Settings.AssignTo -eq 'customGroup' -and $Settings.customGroup -eq 'BYOD*' }
+
+        $null = Invoke-AddEnrollmentRestriction -Request (New-Request (& $Deploy 'leave')) -TriggerMetadata $null
+        Should -Invoke Set-CIPPEnrollmentRestriction -Times 1 -Exactly -ParameterFilter { $Settings.AssignTo -eq 'On' -and -not $Settings.customGroup }
+
+        $null = Invoke-AddEnrollmentRestriction -Request (New-Request (& $Deploy 'AllUsers')) -TriggerMetadata $null
+        Should -Invoke Set-CIPPEnrollmentRestriction -Times 1 -Exactly -ParameterFilter { $Settings.AssignTo -eq 'allLicensedUsers' -and -not $Settings.customGroup }
+        Should -Invoke Set-CIPPEnrollmentRestriction -Times 0 -ParameterFilter { $CreateGroups }
+
+        $Body = & $Deploy 'displayName'
+        $Body.CreateGroups = $true
+        $null = Invoke-AddEnrollmentRestriction -Request (New-Request $Body) -TriggerMetadata $null
+        Should -Invoke Set-CIPPEnrollmentRestriction -Times 1 -Exactly -ParameterFilter { $CreateGroups }
     }
 
     It 'rejects a missing platform, a missing name and custom groups with no groups' {

@@ -3431,7 +3431,7 @@
         "tags": [
           "Endpoint > Autopilot"
         ],
-        "description": "Creates or updates an enrollment (device type) restriction with its priority and group assignment (AssignTo with customGroup names, as Intune templates use). Creating fans out over selectedTenants (or a wizard's tenantFilter list) and can take its settings from a saved template (TemplateId). Editing sends one tenantFilter with the restriction's ConfigurationIds, and may pass GroupIds picked in that tenant instead of group names.",
+        "description": "Creates or updates an enrollment (device type) restriction with its priority and group assignment (AssignTo with customGroup names, as Intune templates use). Creating fans out over selectedTenants (or a tenantFilter list) and can take its settings from a saved template (TemplateId, or TemplateList from the deploy drawer). replacename sets how groups are handled, as for conditional access templates: displayName (default) assigns the template's groups by name, leave keeps each restriction's current assignment, AllUsers assigns all users. CreateGroups creates the named groups a tenant does not have. Editing sends one tenantFilter with the restriction's ConfigurationIds, and may pass GroupIds picked in that tenant instead of group names.",
         "requestBody": {
           "required": true,
           "content": {
@@ -3442,9 +3442,15 @@
                   "ConfigurationIds": {
                     "type": "string"
                   },
+                  "CreateGroups": {
+                    "type": "string"
+                  },
                   "GroupIds": {
                     "type": "string",
                     "description": "Group ids picked in the drawer (applyPickedGroups) only exist in that one tenant."
+                  },
+                  "replacename": {
+                    "$ref": "#/components/schemas/LabelValue"
                   },
                   "selectedTenants": {
                     "type": "string"

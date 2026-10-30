@@ -220,11 +220,20 @@ const CippEnrollmentRestrictionForm = ({
     <CippFormCondition
       formControl={formControl}
       field="platform"
-      compareType="isOneOf"
-      compareValue={['ios', 'windows']}
+      compareType="is"
+      compareValue="ios"
       clearOnHide={false}
     >
       <PlatformSettings formControl={formControl} hasVersions platform="ios" />
+    </CippFormCondition>
+    <CippFormCondition
+      formControl={formControl}
+      field="platform"
+      compareType="is"
+      compareValue="windows"
+      clearOnHide={false}
+    >
+      <PlatformSettings formControl={formControl} hasVersions platform="windows" />
     </CippFormCondition>
     <CippFormCondition
       formControl={formControl}

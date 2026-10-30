@@ -4,7 +4,7 @@ function Invoke-CIPPBaselineEnrollmentRestrictionTemplate {
         EnrollmentRestrictionTemplate executor: creates or updates the template's restriction.
     .DESCRIPTION
         Writes the template the prepare hook resolved through Set-CIPPEnrollmentRestriction - the
-        same path the add/edit endpoint and the classic standard use. Existing objects are
+        same path the add, edit and deploy endpoint uses. Existing objects are
         targeted by the ids the hook matched, so a restriction is patched in place and a missing
         Android half is created alongside it. Priority is only set on objects this run creates.
     .FUNCTIONALITY

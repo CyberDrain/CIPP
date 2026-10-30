@@ -7,6 +7,7 @@ import { Stack } from '@mui/system'
 import { useSettings } from '../../../../hooks/use-settings'
 import { useCippReportDB } from '../../../../components/CippComponents/CippReportDBControls'
 import { getRowTenant } from '../../../../utils/resolve-row-templates'
+import { CippAddGroupDrawer } from '../../../../components/CippComponents/CippAddGroupDrawer'
 
 const Page = () => {
   const pageTitle = 'Groups'
@@ -506,9 +507,7 @@ const Page = () => {
           <Stack direction="row" spacing={1} sx={{
             alignItems: "center"
           }}>
-            <Button component={Link} href="groups/add" startIcon={<CippIcons.GroupAdd />}>
-              Add Group
-            </Button>
+            <CippAddGroupDrawer />
             <Button
               component={Link}
               href="/identity/administration/group-templates/deploy"

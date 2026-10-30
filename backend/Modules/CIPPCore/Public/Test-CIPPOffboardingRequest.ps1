@@ -69,7 +69,7 @@ function Test-CIPPOffboardingRequest {
         'ConvertToShared', 'HideFromGAL', 'removeCalendarInvites', 'removePermissions', 'removeCalendarPermissions',
         'RemoveRules', 'RemoveMobile', 'WipeMobile', 'RemoveGroups', 'RemoveGroupOwnership', 'RemoveLicenses', 'RevokeSessions', 'DisableSignIn',
         'ClearImmutableId', 'ResetPass', 'RemoveMFADevices', 'RemoveTeamsPhoneDID', 'DeleteUser',
-        'DisableOneDriveSharing', 'disableForwarding'
+        'DisableOneDriveSharing', 'disableForwarding', 'AddDisplayNameSuffix'
     )
     $CollectionActions = @('AccessNoAutomap', 'AccessAutomap', 'AccessSendAs', 'AccessSendOnBehalf', 'OnedriveAccess')
 

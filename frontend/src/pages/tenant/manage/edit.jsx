@@ -157,6 +157,8 @@ const Page = () => {
         DisableOneDriveSharing: false,
         removeCalendarPermissions: false,
         OOO: '',
+        AddDisplayNameSuffix: false,
+        DisplayNameSuffix: '',
       }
 
       let offboardingDefaults = {}
@@ -217,6 +219,8 @@ const Page = () => {
       DisableOneDriveSharing: false,
       removeCalendarPermissions: false,
       OOO: '',
+      AddDisplayNameSuffix: false,
+      DisplayNameSuffix: '',
     }
 
     offboardingFormControl.reset({ offboardingDefaults: defaultOffboardingValues })

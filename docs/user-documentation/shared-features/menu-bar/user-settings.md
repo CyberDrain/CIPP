@@ -57,6 +57,7 @@ A label on the card indicates which defaults are currently in effect: **Using Te
 | Clear Immutable ID                            | Clears the user's immutable ID.                                        |
 | Disable OneDrive Sharing Links                | Disables the sharing links the user created in OneDrive.               |
 | Out of Office Message                         | Default automatic reply for offboardings. Leave blank to not set. Supports CIPP `%variable%` tokens (for example `%tenantname%` and tenant custom variables), which are resolved when the offboarding job runs. `%username%` is not the offboarded user. |
+| Add suffix to display name                    | Adds text to the end of the leaver's display name. A **Display name suffix** box appears when this is on; left blank, `- Leaver` is used. |
 
 An Out of Office message alone is enough for these defaults to count as configured for the user vs all-users precedence.
 

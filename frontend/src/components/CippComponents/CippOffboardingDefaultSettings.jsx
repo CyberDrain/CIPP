@@ -1,5 +1,6 @@
 import { CippPropertyListCard } from '../../components/CippCards/CippPropertyListCard'
 import CippFormComponent from '../../components/CippComponents/CippFormComponent'
+import { CippFormCondition } from '../../components/CippComponents/CippFormCondition'
 import { Box, Chip, Typography } from '@mui/material'
 import { Grid } from '@mui/system'
 
@@ -239,9 +240,38 @@ export const CippOffboardingDefaultSettings = (props) => {
               />
             ),
           },
+          {
+            label: 'Add suffix to display name',
+            value: (
+              <CippFormComponent
+                type="switch"
+                name="offboardingDefaults.AddDisplayNameSuffix"
+                formControl={formControl}
+              />
+            ),
+          },
         ]}
         cardButton={
           <Box sx={{ width: '100%', px: 2, py: 1 }}>
+            <CippFormCondition
+              formControl={formControl}
+              field="offboardingDefaults.AddDisplayNameSuffix"
+              compareType="is"
+              compareValue={true}
+            >
+              <Box sx={{ mb: 2 }}>
+                <CippFormComponent
+                  type="textField"
+                  name="offboardingDefaults.DisplayNameSuffix"
+                  label="Display name suffix"
+                  placeholder="- Leaver"
+                  helperText="Added after the current name, for example Pat Lee - Leaver. Leave blank to use - Leaver."
+                  disableVariables
+                  fullWidth
+                  formControl={formControl}
+                />
+              </Box>
+            </CippFormCondition>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               Out of Office Message
             </Typography>

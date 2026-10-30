@@ -94,6 +94,19 @@ function Invoke-CIPPOffboardingJob {
                 }
             }
             @{
+                Title      = 'Add suffix to display name'
+                Condition  = { $Options.AddDisplayNameSuffix -eq $true }
+                Cmdlet     = 'Set-CIPPDisplayNameSuffix'
+                Parameters = @{
+                    TenantFilter = $TenantFilter
+                    UserID       = $Username
+                    DisplayName  = $DisplayName
+                    Suffix       = [string]::IsNullOrWhiteSpace([string]$Options.DisplayNameSuffix) ? '- Leaver' : [string]$Options.DisplayNameSuffix
+                    APIName      = $APIName
+                    Headers      = $Headers
+                }
+            }
+            @{
                 Title      = 'Hide from Global Address List'
                 Condition  = { $Options.HideFromGAL -eq $true }
                 Cmdlet     = 'Set-CIPPHideFromGAL'

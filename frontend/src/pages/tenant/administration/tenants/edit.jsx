@@ -76,6 +76,8 @@ const Page = () => {
         DisableOneDriveSharing: false,
         removeCalendarPermissions: false,
         OOO: "",
+        AddDisplayNameSuffix: false,
+        DisplayNameSuffix: "",
         postExecution: {
           psa: false,
           email: false,
@@ -130,6 +132,8 @@ const Page = () => {
       DisableOneDriveSharing: false,
       removeCalendarPermissions: false,
       OOO: "",
+      AddDisplayNameSuffix: false,
+      DisplayNameSuffix: "",
       postExecution: {
         psa: false,
         email: false,

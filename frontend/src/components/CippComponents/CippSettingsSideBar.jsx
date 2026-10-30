@@ -112,6 +112,8 @@ export const CippSettingsSideBar = (props) => {
         removeCalendarPermissions: formValues.offboardingDefaults?.removeCalendarPermissions,
         DisableOneDriveSharing: formValues.offboardingDefaults?.DisableOneDriveSharing,
         OOO: formValues.offboardingDefaults?.OOO,
+        AddDisplayNameSuffix: formValues.offboardingDefaults?.AddDisplayNameSuffix,
+        DisplayNameSuffix: formValues.offboardingDefaults?.DisplayNameSuffix,
         postExecution: {
           psa: formValues.offboardingDefaults?.postExecution?.psa,
           email: formValues.offboardingDefaults?.postExecution?.email,

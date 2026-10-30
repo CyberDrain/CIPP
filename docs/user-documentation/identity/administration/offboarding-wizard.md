@@ -60,6 +60,7 @@ The options are pre-filled from your saved offboarding defaults each time the te
 | Remove all MFA Devices             | Removes every registered authentication method.                                                                 |
 | Remove Teams Phone DID             | Releases the phone number assigned to the user in Teams.                                                        |
 | Disable OneDrive Sharing Links     | Revokes the sharing links the user created in OneDrive.                                                         |
+| Add suffix to display name         | Adds text to the end of the user's display name, so leavers stand out in address lists and pickers. A **Suffix** box appears when this is on; left blank, `- Leaver` is used, so "Pat Lee" becomes "Pat Lee - Leaver". Running the job again does not add it twice. For users synced from on-premises Active Directory, change the name in the local AD instead. |
 | Delete user                        | Deletes the account.                                                                                            |
 
 {% hint style="warning" %}

@@ -130,6 +130,7 @@ export const CippWizardOffboarding = (props) => {
     if (deleteUser) {
       formControl.setValue('ConvertToShared', false)
       formControl.setValue('HideFromGAL', false)
+      formControl.setValue('AddDisplayNameSuffix', false)
       formControl.setValue('removeCalendarInvites', false)
       formControl.setValue('removePermissions', false)
       formControl.setValue('removeCalendarPermissions', false)
@@ -366,6 +367,42 @@ export const CippWizardOffboarding = (props) => {
                 formControl={formControl}
                 disabled={!!deleteUser}
               />
+              <CippFormComponent
+                name="AddDisplayNameSuffix"
+                label="Add suffix to display name"
+                type="switch"
+                formControl={formControl}
+                disabled={!!deleteUser}
+              />
+              <CippFormCondition
+                formControl={formControl}
+                field={'AddDisplayNameSuffix'}
+                compareType="is"
+                compareValue={true}
+              >
+                <CippFormComponent
+                  sx={{ m: 1 }}
+                  name="DisplayNameSuffix"
+                  label="Suffix"
+                  type="textField"
+                  placeholder="- Leaver"
+                  disableVariables
+                  formControl={formControl}
+                  disabled={!!deleteUser}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'text.secondary',
+                    display: 'block',
+                    mx: 1,
+                    mb: 1,
+                  }}
+                >
+                  Added after the current name, for example Pat Lee - Leaver. Leave blank to use -
+                  Leaver.
+                </Typography>
+              </CippFormCondition>
               <CippFormComponent
                 name="DeleteUser"
                 label="Delete user"

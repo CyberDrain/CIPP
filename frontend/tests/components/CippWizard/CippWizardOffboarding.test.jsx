@@ -88,6 +88,7 @@ describe('CippWizardOffboarding', () => {
           user: [{ value: 'user-guid-2' }],
           ConvertToShared: true,
           HideFromGAL: true,
+          AddDisplayNameSuffix: true,
           removeCalendarInvites: true,
           removePermissions: true,
           removeCalendarPermissions: true,
@@ -122,6 +123,7 @@ describe('CippWizardOffboarding', () => {
     await waitFor(() => expect(formApi.getValues('ConvertToShared')).toBe(false))
 
     expect(formApi.getValues('HideFromGAL')).toBe(false)
+    expect(formApi.getValues('AddDisplayNameSuffix')).toBe(false)
     expect(formApi.getValues('removeCalendarInvites')).toBe(false)
     expect(formApi.getValues('removePermissions')).toBe(false)
     expect(formApi.getValues('removeCalendarPermissions')).toBe(false)

@@ -106,7 +106,7 @@ Execute a BEC Remediate and Disable the user in the log entry act on the tenant 
 
 ### PSA Ticket Strategy
 
-Shown for scripted alerts when PSA is one of the selected actions. It overrides the HaloPSA Link Tickets to affected Users toggle for this alert only, which is handy for wide alerts such as users without MFA where you want to control how many tickets are raised.
+Shown for scripted alerts when PSA is one of the selected actions. It overrides the Link Tickets to affected Users toggle of the HaloPSA or NinjaOne integration for this alert only, which is handy for wide alerts such as users without MFA where you want to control how many tickets are raised.
 
 | Option                             | Description                                                   |
 | ---------------------------------- | ------------------------------------------------------------- |
@@ -117,7 +117,7 @@ Whichever option matches your current HaloPSA integration setting is labelled as
 
 ### PSA Ticket Priority
 
-Shown for both alert types when Generate a PSA ticket (or PSA) is one of the selected actions, and only while the HaloPSA integration is enabled. Overrides the HaloPSA Default Priority for tickets raised by this alert, restricted to the priorities available on the integration's Ticket Type. Leave it blank to use the integration default.
+Shown for both alert types when Generate a PSA ticket (or PSA) is one of the selected actions, and only while the HaloPSA or Syncro integration is enabled. Overrides that integration's default priority for tickets raised by this alert; for HaloPSA the list is restricted to the priorities available on the integration's Ticket Type. Leave it blank to use the integration default. NinjaOne tickets always use the priority set on the NinjaOne integration.
 
 {% hint style="info" %}
 The dropdown is shown disabled with an explanation instead of a priority list when there is nothing valid to offer: no Ticket Type is set on the integration yet, the configured Ticket Type has no SLA attached (so HaloPSA is left to apply its own priority regardless of any selection here), or the priority list could not be loaded.

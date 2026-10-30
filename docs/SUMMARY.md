@@ -421,6 +421,7 @@
     * [Sherweb](user-documentation/cipp/integrations/sherweb.md)
     * [Gradient](user-documentation/cipp/integrations/gradient.md)
     * [Halo PSA](user-documentation/cipp/integrations/halopsa.md)
+    * [Syncro](user-documentation/cipp/integrations/syncro.md)
     * [NinjaOne](user-documentation/cipp/integrations/ninjaone.md)
     * [Hudu](user-documentation/cipp/integrations/hudu.md)
     * [Password Pusher](user-documentation/cipp/integrations/passwordpusher.md)

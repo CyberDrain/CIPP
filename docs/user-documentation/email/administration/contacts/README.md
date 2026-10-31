@@ -38,6 +38,18 @@ Opens a drawer that creates a mail contact in the currently selected tenant. Onl
 
 <details>
 
+<summary>Bulk Add Contacts</summary>
+
+Creates several mail contacts at once in the currently selected tenant, from a CSV file or from rows entered by hand.
+
+**Download Example CSV** gives a file with the header row and two sample contacts showing what each column expects, one with `hidefromGAL` set to `false` and one set to `true`. The columns are the same fields as Add Contact, with `displayName` and `email` required. Replace the sample rows with your own before uploading, or delete them from the preview. **Add Contact Manually** opens a dialog with the same fields for adding one row at a time.
+
+Every row appears in the **Contact Preview** table, where it can be checked and removed before submitting. Rows missing a display name or a valid email address are flagged above the table and block **Create Contacts** until they are fixed or removed. **Create Contacts** sends the rows one at a time and the results panel reports each contact separately. A row whose email address already exists in the tenant is rejected by Exchange and shown as an error, and the other rows still go through.
+
+</details>
+
+<details>
+
 <summary>Deploy Contact Template</summary>
 
 Opens a drawer that creates mail contacts from one or more saved templates across one or more tenants. The same drawer is available from [README.md](../contacts-template/README.md "mention").

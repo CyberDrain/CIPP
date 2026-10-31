@@ -21,6 +21,18 @@ Creates a new room mailbox in the selected tenant.
 
 </details>
 
+<details>
+
+<summary>Bulk Add Rooms</summary>
+
+Creates several room mailboxes at once in the selected tenant, from a CSV file or from rows entered by hand.
+
+**Download Example CSV** gives a file with the header row and two sample rooms showing what each column expects, one with a capacity and one without. The columns are the same fields as Add Room Mailbox: `displayName`, `username` and `domain` are required, and `resourceCapacity` is an optional whole number that is left unset when the cell is empty. Replace the sample rows with your own before uploading, or delete them from the preview. **Add Room Manually** opens a dialog with the same fields, with the domain chosen from the tenant's verified domains, for adding one row at a time.
+
+Every row appears in the **Room Preview** table, where it can be checked and removed before submitting. Rows missing a display name, username or domain, or with a capacity that is not a whole number, are flagged above the table and block **Create Rooms** until they are fixed or removed. **Create Rooms** sends the rows one at a time, blocking sign-in for each new mailbox as Add Room Mailbox does, and the results panel reports each room separately. A row whose address already exists, or whose domain is not verified in the tenant, is rejected by Exchange and shown as an error, and the other rows still go through.
+
+</details>
+
 ## Table Details
 
 Each row combines the room's mailbox with its location and facility details, so the columns below are not a straight return from a single Exchange command.

@@ -20,6 +20,18 @@ Creates a new equipment mailbox in the selected tenant.
 
 </details>
 
+<details>
+
+<summary>Bulk Add Equipment</summary>
+
+Creates several equipment mailboxes at once in the selected tenant, from a CSV file or from rows entered by hand.
+
+**Download Example CSV** gives a file with the header row and two sample mailboxes showing what each column expects. The columns are the same fields as Add Equipment Mailbox, `displayName`, `username` and `domain`, and all three are required. Replace the sample rows with your own before uploading, or delete them from the preview. **Add Equipment Mailbox Manually** opens a dialog with the same fields, with the domain chosen from the tenant's verified domains, for adding one row at a time.
+
+Every row appears in the **Equipment Mailbox Preview** table, where it can be checked and removed before submitting. Rows missing a display name, username or domain are flagged above the table and block **Create Equipment Mailboxes** until they are fixed or removed. **Create Equipment Mailboxes** sends the rows one at a time, blocking sign-in for each new mailbox as Add Equipment Mailbox does, and the results panel reports each mailbox separately. A row whose address already exists, or whose domain is not verified in the tenant, is rejected by Exchange and shown as an error, and the other rows still go through.
+
+</details>
+
 ## Table Details
 
 The properties returned are for the Exchange Online PowerShell command `Get-Mailbox` with a filter for `EquipmentMailbox`. For more information on the command please see the [Microsoft documentation](https://learn.microsoft.com/en-us/powershell/module/exchange/get-mailbox?view=exchange-ps).&#x20;

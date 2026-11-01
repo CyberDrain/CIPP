@@ -304,13 +304,17 @@ const Page = () => {
         },
       ],
       confirmText: 'Are you sure you want to assign "[displayName]" to all users?',
-      customDataformatter: (row, action, formData) => ({
-        tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
-        ID: row?.id,
-        Type: getScriptEndpoint(row?.scriptType),
-        AssignTo: 'allLicensedUsers',
-        assignmentMode: formData?.assignmentMode || 'append',
-      }),
+      customDataformatter: (row, action, formData) => {
+        const formatRow = (singleRow) => ({
+          tenantFilter:
+            tenantFilter === 'AllTenants' && singleRow?.Tenant ? singleRow.Tenant : tenantFilter,
+          ID: singleRow?.id,
+          Type: getScriptEndpoint(singleRow?.scriptType),
+          AssignTo: 'allLicensedUsers',
+          assignmentMode: formData?.assignmentMode || 'append',
+        })
+        return Array.isArray(row) ? row.map(formatRow) : formatRow(row)
+      },
     },
     {
       label: 'Assign to All Devices',
@@ -331,13 +335,17 @@ const Page = () => {
         },
       ],
       confirmText: 'Are you sure you want to assign "[displayName]" to all devices?',
-      customDataformatter: (row, action, formData) => ({
-        tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
-        ID: row?.id,
-        Type: getScriptEndpoint(row?.scriptType),
-        AssignTo: 'AllDevices',
-        assignmentMode: formData?.assignmentMode || 'append',
-      }),
+      customDataformatter: (row, action, formData) => {
+        const formatRow = (singleRow) => ({
+          tenantFilter:
+            tenantFilter === 'AllTenants' && singleRow?.Tenant ? singleRow.Tenant : tenantFilter,
+          ID: singleRow?.id,
+          Type: getScriptEndpoint(singleRow?.scriptType),
+          AssignTo: 'AllDevices',
+          assignmentMode: formData?.assignmentMode || 'append',
+        })
+        return Array.isArray(row) ? row.map(formatRow) : formatRow(row)
+      },
     },
     {
       label: 'Assign Globally (All Users / All Devices)',
@@ -358,13 +366,17 @@ const Page = () => {
         },
       ],
       confirmText: 'Are you sure you want to assign "[displayName]" to all users and devices?',
-      customDataformatter: (row, action, formData) => ({
-        tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
-        ID: row?.id,
-        Type: getScriptEndpoint(row?.scriptType),
-        AssignTo: 'AllDevicesAndUsers',
-        assignmentMode: formData?.assignmentMode || 'append',
-      }),
+      customDataformatter: (row, action, formData) => {
+        const formatRow = (singleRow) => ({
+          tenantFilter:
+            tenantFilter === 'AllTenants' && singleRow?.Tenant ? singleRow.Tenant : tenantFilter,
+          ID: singleRow?.id,
+          Type: getScriptEndpoint(singleRow?.scriptType),
+          AssignTo: 'AllDevicesAndUsers',
+          assignmentMode: formData?.assignmentMode || 'append',
+        })
+        return Array.isArray(row) ? row.map(formatRow) : formatRow(row)
+      },
     },
     {
       label: 'Assign to Custom Group',
@@ -424,17 +436,19 @@ const Page = () => {
         const isExclude = formData?.assignmentDirection === 'exclude'
         const ids = selectedGroups.map((group) => group.value).filter(Boolean)
         const names = selectedGroups.map((group) => group.label).filter(Boolean)
-        return {
-          tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
-          ID: row?.id,
-          Type: getScriptEndpoint(row?.scriptType),
+        const formatRow = (singleRow) => ({
+          tenantFilter:
+            tenantFilter === 'AllTenants' && singleRow?.Tenant ? singleRow.Tenant : tenantFilter,
+          ID: singleRow?.id,
+          Type: getScriptEndpoint(singleRow?.scriptType),
           GroupIds: isExclude ? [] : ids,
           GroupNames: isExclude ? [] : names,
           ExcludeGroupIds: isExclude ? ids : [],
           ExcludeGroupNames: isExclude ? names : [],
           assignmentDirection: formData?.assignmentDirection || 'include',
           assignmentMode: formData?.assignmentMode || 'append',
-        }
+        })
+        return Array.isArray(row) ? row.map(formatRow) : formatRow(row)
       },
     },
     {

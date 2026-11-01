@@ -19,6 +19,8 @@ BeforeAll {
 
     . (Join-Path $Baselines 'Helpers/Get-CIPPBaselineCommand.ps1')
     . (Join-Path $Baselines 'Helpers/Get-CIPPBaselineCacheRows.ps1')
+    . (Join-Path $Baselines 'Helpers/Get-CIPPBaselineForwardingProfileState.ps1')
+    . (Join-Path $Baselines 'Helpers/Invoke-CIPPBaselineForwardingProfile.ps1')
     . (Join-Path $Baselines 'PrepareHooks/Get-CIPPBaselineGlobalSecureAccessM365ProfileState.ps1')
     . (Join-Path $Baselines 'Executors/Invoke-CIPPBaselineGlobalSecureAccessM365Profile.ps1')
     . (Join-Path $script:RepoRoot 'Modules/CIPPCore/Public/Get-CIPPIntuneCompareExclusions.ps1')

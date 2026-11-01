@@ -4,7 +4,7 @@
   "cat": "Global Secure Access",
   "tag": [],
   "impact": "Medium Impact",
-  "helpText": "Chooses who gets their Microsoft 365 traffic (Exchange, SharePoint, Teams) sent through Global Secure Access on devices with the client installed: everyone, nobody, or selected groups for a pilot. Groups assigned by hand are left alone. Don't set this to Disabled while 'Require a compliant network (Global Secure Access)' is enabled - they will keep flipping each other. Requires 'Onboard Global Secure Access' first.",
+  "helpText": "Chooses who gets their Microsoft 365 traffic (Exchange, SharePoint, Teams) sent through Global Secure Access on devices with the client installed: everyone, nobody, or selected groups for a pilot. Groups assigned by hand are left alone. Requires 'Onboard Global Secure Access' first.",
   "executiveText": "Controls which staff have Microsoft 365 traffic routed through the company's network security service on managed devices: everyone, nobody, or a pilot group first.",
   "docsDescription": "Checks the Microsoft 365 traffic profile: on or off, its policy links, and who it is assigned to. Sets the profile state, enables any disabled policy links, and assigns all users and devices, nobody, or the selected groups (wildcards allowed). Users, groups and devices assigned by hand are kept.",
   "impactColour": "warning",

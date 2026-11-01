@@ -1,0 +1,34 @@
+{
+  "name": "GlobalSecureAccessOnboard",
+  "label": "Onboard Global Secure Access",
+  "cat": "Global Secure Access",
+  "tag": [],
+  "impact": "Low Impact",
+  "helpText": "Onboards the tenant to Microsoft's Global Secure Access service - the prerequisite for every other Global Secure Access standard. Onboarding alone routes no traffic: nothing flows through the service until a traffic profile is enabled and the client is deployed, but it is a one-way door - there is no offboard API and reversing it requires Microsoft support - so enable it deliberately. Requires a Microsoft Entra ID P1 or P2 license.",
+  "executiveText": "Registers the tenant with Microsoft's cloud network security service, the required first step before secure routing and compliant-network sign-in controls can be configured. No staff traffic is redirected by this step alone.",
+  "docsDescription": "Grades the onboarding flag from the NetworkAccess cache (onboarded). Remediation reads the live tenant status, starts onboarding with POST /networkAccess/microsoft.graph.networkaccess.onboard when the tenant is not onboarded, waits out the asynchronous onboarding window, and reports the API's own error when an earlier onboarding failed. A tenant still settling when the window ends is re-verified by the next run.",
+  "impactColour": "info",
+  "addedDate": "2026-11-01",
+  "powershellEquivalent": "Invoke-MgBetaOnboardNetworkAccess",
+  "recommendedBy": [
+    "CIPP"
+  ],
+  "requiredCapabilities": [
+    [
+      "AAD_PREMIUM",
+      "AAD_PREMIUM_P2"
+    ]
+  ],
+  "secureScoreImpact": 0,
+  "compare": "subset",
+  "variables": {},
+  "expected": {
+    "onboarded": true
+  },
+  "read": {
+    "cacheType": "NetworkAccess"
+  },
+  "remediate": {
+    "executor": "GlobalSecureAccessOnboard"
+  }
+}

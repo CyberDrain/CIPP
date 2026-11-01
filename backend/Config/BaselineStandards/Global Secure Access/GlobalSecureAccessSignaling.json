@@ -1,0 +1,62 @@
+{
+  "name": "GlobalSecureAccessSignaling",
+  "label": "Enable Global Secure Access signaling for Conditional Access",
+  "cat": "Global Secure Access",
+  "tag": [],
+  "impact": "Low Impact",
+  "helpText": "Controls whether Global Secure Access signals network context to Conditional Access: source IP restoration (Conditional Access and the sign-in logs see the user's original IP instead of the service's egress IPs) and compliant network validation (sign-ins can be required to come from a verified network). Enabling it changes what existing location-based Conditional Access policies evaluate - a policy keyed on the service's egress IPs stops matching - so review those policies first. Prerequisite: the tenant must be onboarded to Global Secure Access (enable 'Onboard Global Secure Access' first); the standard reports an error naming that prerequisite until onboarding has run. Requires a Microsoft Entra ID P1 or P2 license.",
+  "executiveText": "Makes Microsoft's cloud network security service report each user's true network location to the sign-in controls, so policies can require that sign-ins come from company devices or networks, and sign-in logs show real user IP addresses instead of a shared service address.",
+  "docsDescription": "Grades signalingStatus (enabled/disabled) from the NetworkAccess cache, which is collected only for onboarded tenants. Remediation PATCHes /networkAccess/settings/conditionalAccess with the selected status. A tenant that is not onboarded is reported as an error naming the onboarding standard instead of Graph's ambiguous 403 (missing app permission or missing onboarding?).",
+  "impactColour": "info",
+  "addedDate": "2026-11-01",
+  "powershellEquivalent": "Update-MgBetaNetworkAccessSettingConditionalAccess",
+  "recommendedBy": [
+    "CIPP"
+  ],
+  "requiredCapabilities": [
+    [
+      "AAD_PREMIUM",
+      "AAD_PREMIUM_P2"
+    ]
+  ],
+  "secureScoreImpact": 0,
+  "compare": "subset",
+  "variables": {
+    "signalingStatus": {
+      "type": "autoComplete",
+      "creatable": false,
+      "label": "Signaling status",
+      "options": [
+        {
+          "value": "enabled",
+          "label": "Enabled"
+        },
+        {
+          "value": "disabled",
+          "label": "Disabled"
+        }
+      ],
+      "default": "enabled",
+      "recommended": "enabled"
+    }
+  },
+  "expected": {
+    "signalingStatus": "%signalingStatus%"
+  },
+  "read": {
+    "cacheType": "NetworkAccess"
+  },
+  "prepare": "Get-CIPPBaselineGlobalSecureAccessSignalingState",
+  "remediate": {
+    "executor": "GraphRequest",
+    "requests": [
+      {
+        "method": "PATCH",
+        "uri": "networkAccess/settings/conditionalAccess",
+        "body": {
+          "signalingStatus": "%signalingStatus%"
+        }
+      }
+    ]
+  }
+}

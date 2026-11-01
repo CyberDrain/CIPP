@@ -13,8 +13,10 @@ function Register-CIPPExtensionScheduledTasks {
     # Get existing scheduled usertasks
     $ScheduledTasksTable = Get-CIPPTable -TableName ScheduledTasks
     $ScheduledTasks = Get-CIPPAzDataTableEntity @ScheduledTasksTable -Filter 'Hidden eq true' | Where-Object { $_.Command -match 'Sync-CippExtensionData' }
-    $PushTasks = Get-CIPPAzDataTableEntity @ScheduledTasksTable -Filter 'Hidden eq true' | Where-Object { $_.Command -match 'Push-CippExtensionData' }
-    $SherwebMigTasks = Get-CIPPAzDataTableEntity @ScheduledTasksTable -Filter 'Hidden eq true' | Where-Object { $_.Command -match 'Invoke-SherwebMigration' }
+    # Only reconcile tasks for the extensions being registered: a call for one extension (the Hudu reschedule, say)
+    # must not treat another extension's tenants as unmapped and delete its tasks.
+    $PushTasks = Get-CIPPAzDataTableEntity @ScheduledTasksTable -Filter 'Hidden eq true' | Where-Object { $_.Command -match 'Push-CippExtensionData' -and $_.SyncType -in $Extensions }
+    $SherwebMigTasks = Get-CIPPAzDataTableEntity @ScheduledTasksTable -Filter 'Hidden eq true' | Where-Object { $_.Command -match 'Invoke-SherwebMigration' -and 'Sherweb' -in $Extensions }
     $Tenants = Get-Tenants -IncludeErrors
 
     # Remove all legacy Sync-CippExtensionData tasks (now deprecated - extensions use CippReportingDB)
@@ -24,10 +26,11 @@ function Register-CIPPExtensionScheduledTasks {
         $Entity = $Task | Select-Object -Property PartitionKey, RowKey
         Remove-CIPPAzDataTableEntity -Force @ScheduledTasksTable -Entity $Entity
     }
-    $ScheduledTasks = @() # Clear the list since we removed them all
 
-    $MappedTenants = [System.Collections.Generic.List[string]]::new()
+    # Mapped tenants per extension, so each extension's tasks are checked against its own mappings
+    $MappedTenants = @{}
     foreach ($Extension in $Extensions) {
+        $MappedTenants[$Extension] = [System.Collections.Generic.List[string]]::new()
         $ExtensionConfig = $Config.$Extension
         if ($ExtensionConfig.Enabled -eq $true -or $Extension -eq 'CustomData') {
             if ($Extension -eq 'Sherweb') {
@@ -48,7 +51,7 @@ function Register-CIPPExtensionScheduledTasks {
                 foreach ($Mapping in $SherwebMappings) {
                     $Tenant = $Tenants | Where-Object { $_.customerId -eq $Mapping.RowKey }
                     if (-not $Tenant) { continue }
-                    $MappedTenants.Add($Tenant.defaultDomainName)
+                    $MappedTenants[$Extension].Add($Tenant.defaultDomainName)
                     $ExistingMigTask = $SherwebMigTasks | Where-Object { $_.Tenant -eq $Tenant.defaultDomainName }
                     if (-not $ExistingMigTask -or $Reschedule.IsPresent) {
                         $Task = [pscustomobject]@{
@@ -120,7 +123,7 @@ function Register-CIPPExtensionScheduledTasks {
                     Write-Warning "Tenant $($Mapping.RowKey) not found"
                     continue
                 }
-                $MappedTenants.Add($Tenant.defaultDomainName)
+                $MappedTenants[$Extension].Add($Tenant.defaultDomainName)
 
                 # Legacy Sync-CippExtensionData tasks are no longer needed - extensions now use CippReportingDB
                 # All cache data is now collected by Push-CIPPDBCacheData scheduled tasks
@@ -157,6 +160,7 @@ function Register-CIPPExtensionScheduledTasks {
                 $Entity = $_ | Select-Object -Property PartitionKey, RowKey
                 Remove-CIPPAzDataTableEntity -Force @ScheduledTasksTable -Entity $Entity
             }
+            $PushTasks = @($PushTasks | Where-Object { $_.SyncType -ne $Extension }) # Already removed
             if ($Extension -eq 'Sherweb') {
                 $SherwebMigTasks | ForEach-Object {
                     Write-Information "Extension Disabled: Cleaning up scheduled task $($_.Name) for tenant $($_.Tenant)"
@@ -167,24 +171,15 @@ function Register-CIPPExtensionScheduledTasks {
             }
         }
     }
-    $MappedTenants = $MappedTenants | Sort-Object -Unique
-
-    foreach ($Task in $ScheduledTasks) {
-        if ($Task.Tenant -notin $MappedTenants) {
-            Write-Information "Tenant Removed: Cleaning up scheduled task $($Task.Name) for tenant $($Task.TenantFilter)"
-            $Entity = $Task | Select-Object -Property PartitionKey, RowKey
-            Remove-CIPPAzDataTableEntity -Force @ScheduledTasksTable -Entity $Entity
-        }
-    }
     foreach ($Task in $PushTasks) {
-        if ($Task.Tenant -notin $MappedTenants) {
+        if ($Task.Tenant -notin $MappedTenants[$Task.SyncType]) {
             Write-Information "Tenant Removed: Cleaning up scheduled task $($Task.Name) for tenant $($Task.TenantFilter)"
             $Entity = $Task | Select-Object -Property PartitionKey, RowKey
             Remove-CIPPAzDataTableEntity -Force @ScheduledTasksTable -Entity $Entity
         }
     }
     foreach ($Task in $SherwebMigTasks) {
-        if ($Task.Tenant -notin $MappedTenants) {
+        if ($Task.Tenant -notin $MappedTenants['Sherweb']) {
             Write-Information "Tenant Removed: Cleaning up scheduled task $($Task.Name) for tenant $($Task.TenantFilter)"
             $Entity = $Task | Select-Object -Property PartitionKey, RowKey
             Remove-CIPPAzDataTableEntity -Force @ScheduledTasksTable -Entity $Entity

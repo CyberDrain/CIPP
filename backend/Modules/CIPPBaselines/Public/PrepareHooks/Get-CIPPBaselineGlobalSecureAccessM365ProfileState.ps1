@@ -5,19 +5,16 @@ function Get-CIPPBaselineGlobalSecureAccessM365ProfileState {
         forwarding profile from the NetworkAccess cache.
     .DESCRIPTION
         The assignment model is the profile's own assignmentRules - AllMembership (all
-        users) or EnumeratedMembership (users/groups/devices) - captured by the cache
-        collector. The legacy enterprise-app surface (the profile app's assignment flag)
-        is not graded: the Global Secure Access portal's User and device assignments
-        blade does not read it. The expected state is conditional, like the packaged
-        compliant-network standard's enforce variable: 'disabled' expresses an opinion on
-        the profile state alone - links and assignment are left to the administrator -
-        while 'enabled' also grades every policy link and the assignment. AllUsers grades
-        the membership type; CustomGroups additionally grades that every configured group
-        (resolved by display name through the Groups cache) holds an assignment,
-        ADDITIVELY: assignments an administrator made by hand are never drift. A tenant
-        that is not onboarded gets the onboarding prerequisite named instead of Graph's
-        403, and a missing default profile (onboarding settles asynchronously and the
-        profile cannot be created via the API) reports No Data.
+        users and devices) or EnumeratedMembership (users/groups/devices) - captured by
+        the cache collector; the legacy enterprise-app surface is not graded. The
+        assignTo picker follows the Intune template convention: DoNotAssign (an enabled
+        profile nobody holds), AllDevicesAndUsers (AllMembership) or customGroup (the
+        configured group names, wildcards allowed, resolved through the Groups cache).
+        The expected state is conditional: 'disabled' expresses an opinion on the profile
+        state alone. Assignments an administrator made by hand are never drift - except
+        under DoNotAssign, where any assignment means somebody holds the profile. A
+        tenant that is not onboarded gets the onboarding prerequisite named, and a
+        missing default profile reports No Data.
     .FUNCTIONALITY
         Internal
     #>
@@ -29,17 +26,17 @@ function Get-CIPPBaselineGlobalSecureAccessM365ProfileState {
     $ProfileState = "$($V.profileState)"
     if (-not $ProfileState) { $ProfileState = 'enabled' }
     $AssignTo = "$($V.assignTo)"
-    if (-not $AssignTo) { $AssignTo = 'AllUsers' }
-    $GroupRefs = @($V.assignedGroups | ForEach-Object { "$($_.value ?? $_)" } | Where-Object { $_ })
+    if (-not $AssignTo) { $AssignTo = 'AllDevicesAndUsers' }
+    $GroupRefs = @("$($V.customGroup)" -split ',' | ForEach-Object { "$_".Trim() } | Where-Object { $_ })
 
     if ($ProfileState -notin @('enabled', 'disabled')) {
         return @{ Current = $null; ConfigError = $true; NoDataReason = "profileState must be 'enabled' or 'disabled', not '$ProfileState'." }
     }
-    if ($AssignTo -notin @('AllUsers', 'CustomGroups')) {
-        return @{ Current = $null; ConfigError = $true; NoDataReason = "assignTo must be 'AllUsers' or 'CustomGroups', not '$AssignTo'." }
+    if ($AssignTo -notin @('DoNotAssign', 'AllDevicesAndUsers', 'customGroup')) {
+        return @{ Current = $null; ConfigError = $true; NoDataReason = "assignTo must be 'DoNotAssign', 'AllDevicesAndUsers' or 'customGroup', not '$AssignTo'." }
     }
-    if ($ProfileState -eq 'enabled' -and $AssignTo -eq 'CustomGroups' -and $GroupRefs.Count -eq 0) {
-        return @{ Current = $null; ConfigError = $true; NoDataReason = 'CustomGroups is selected but no groups are configured - a scoped profile with no assigned groups gives no user the profile.' }
+    if ($ProfileState -eq 'enabled' -and $AssignTo -eq 'customGroup' -and $GroupRefs.Count -eq 0) {
+        return @{ Current = $null; ConfigError = $true; NoDataReason = 'customGroup is selected but no group name is configured - a scoped profile with no assigned groups gives no user the profile.' }
     }
 
     $State = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'NetworkAccess' | Where-Object { $_ }) | Select-Object -First 1
@@ -53,7 +50,9 @@ function Get-CIPPBaselineGlobalSecureAccessM365ProfileState {
     }
 
     $Links = @($TrafficProfile.policies | Where-Object { $_ })
-    $AssignmentType = "$($TrafficProfile.assignmentRules.assignments.'@odata.type')"
+    $Assigned = $TrafficProfile.assignmentRules.assignments
+    $AssignmentType = "$($Assigned.'@odata.type')"
+    $IsEnumerated = $AssignmentType -like '*forwardingProfileAssignmentsEnumeratedMembership'
     $Current = [ordered]@{
         profileState       = "$($TrafficProfile.state)"
         policyLinksEnabled = $Links.Count -gt 0 -and @($Links | Where-Object { $_.state -ne 'enabled' }).Count -eq 0
@@ -64,20 +63,31 @@ function Get-CIPPBaselineGlobalSecureAccessM365ProfileState {
     }
     if ($ProfileState -eq 'enabled') {
         $Expected.policyLinksEnabled = $true
-        if ($AssignTo -eq 'AllUsers') {
+        if ($AssignTo -eq 'AllDevicesAndUsers') {
             $Expected.assignedToAllUsers = $true
+        } elseif ($AssignTo -eq 'DoNotAssign') {
+            $Expected.assignedToAllUsers = $false
+            $Expected.nobodyAssigned = $true
+            $Current.nobodyAssigned = $IsEnumerated -and
+                @($Assigned.users | Where-Object { $_ }).Count -eq 0 -and
+                @($Assigned.groups | Where-Object { $_ }).Count -eq 0 -and
+                @($Assigned.devices | Where-Object { $_ }).Count -eq 0
         } else {
             $Expected.assignedToAllUsers = $false
             $Expected.configuredGroupsAssigned = $true
-            # Additive: only the configured groups are graded; assignments an
-            # administrator made by hand are never drift.
-            $AssignedIds = @($TrafficProfile.assignmentRules.assignments.groups | Where-Object { $_ } | ForEach-Object { "$($_.id)" })
+            # Additive: only the configured groups (wildcards allowed) are graded;
+            # assignments an administrator made by hand are never drift.
+            $AssignedIds = @($Assigned.groups | Where-Object { $_ } | ForEach-Object { "$($_.id)" })
             $Groups = @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'Groups')
-            $Current.configuredGroupsAssigned = @($GroupRefs | ForEach-Object {
-                    $Ref = $_
-                    $Match = $Groups | Where-Object { $_.displayName -eq $Ref } | Select-Object -First 1
-                    ($null -ne $Match) -and ($AssignedIds -contains $Match.id)
-                }) -notcontains $false
+            $MatchedIds = [System.Collections.Generic.List[string]]::new()
+            $EveryPatternMatched = $true
+            foreach ($Ref in $GroupRefs) {
+                $Escaped = $Ref -replace '\[', '`[' -replace '\]', '`]'
+                $Matches = @($Groups | Where-Object { $_.displayName -like $Escaped })
+                if ($Matches.Count -eq 0) { $EveryPatternMatched = $false; continue }
+                foreach ($Match in $Matches) { $MatchedIds.Add($Match.id) }
+            }
+            $Current.configuredGroupsAssigned = $EveryPatternMatched -and @($MatchedIds | Where-Object { $AssignedIds -notcontains $_ }).Count -eq 0
         }
     }
     @{ Expected = [PSCustomObject]$Expected; Current = [PSCustomObject]$Current }

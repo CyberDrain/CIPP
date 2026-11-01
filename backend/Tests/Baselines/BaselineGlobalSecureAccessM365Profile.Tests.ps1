@@ -55,11 +55,11 @@ BeforeAll {
         @{ assignments = @{ '@odata.type' = '#microsoft.graph.networkaccess.forwardingProfileAssignmentsEnumeratedMembership'; users = @($Users); groups = @($Groups); devices = @($Devices) } }
     }
     function New-ItemVars {
-        param([string]$ProfileState, [string]$AssignTo, $Groups)
+        param([string]$ProfileState, [string]$AssignTo, [string]$CustomGroup)
         [PSCustomObject]@{
-            profileState   = $ProfileState
-            assignTo       = $AssignTo
-            assignedGroups = $Groups
+            profileState = $ProfileState
+            assignTo     = $AssignTo
+            customGroup  = $CustomGroup
         }
     }
 }
@@ -118,13 +118,26 @@ Describe 'Get-CIPPBaselineGlobalSecureAccessM365ProfileState' {
         $Profile = $script:M365.Clone()
         $Profile.assignmentRules = New-Enumerated -Groups @(@{ id = 'g-pilot' }, @{ id = 'g-hand' })
         $script:Row = New-Row -Profile $Profile
-        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'CustomGroups' -Groups @('GSA Pilot')) }) -TenantFilter $script:Tenant
+        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'customGroup' -CustomGroup 'GSA Pilot') }) -TenantFilter $script:Tenant
         $P.Expected.PSObject.Properties.Name | Should -Be @('profileState', 'policyLinksEnabled', 'assignedToAllUsers', 'configuredGroupsAssigned')
         (Get-Verdict -Expected $P.Expected -Current $P.Current).Count | Should -Be 0
     }
 
+    It 'resolves wildcard group names: every matching group must be assigned' {
+        $Profile = $script:M365.Clone()
+        $Profile.assignmentRules = New-Enumerated -Groups @(@{ id = 'g-pilot' })
+        $script:Row = New-Row -Profile $Profile
+        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'customGroup' -CustomGroup 'GSA*') }) -TenantFilter $script:Tenant
+        (Get-Verdict -Expected $P.Expected -Current $P.Current).Count | Should -Be 0
+
+        $Profile.assignmentRules = New-Enumerated -Groups @()
+        $script:Row = New-Row -Profile $Profile
+        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'customGroup' -CustomGroup 'GSA*') }) -TenantFilter $script:Tenant
+        (Get-Verdict -Expected $P.Expected -Current $P.Current).Property | Should -Contain 'configuredGroupsAssigned'
+    }
+
     It 'grades drift when a configured group has no assignment, and when the profile is still all-users' {
-        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'CustomGroups' -Groups @('GSA Pilot', 'IT')) }) -TenantFilter $script:Tenant
+        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'customGroup' -CustomGroup 'GSA Pilot, IT') }) -TenantFilter $script:Tenant
         $Differences = Get-Verdict -Expected $P.Expected -Current $P.Current
         @($Differences.Property | Sort-Object) | Should -Be @('assignedToAllUsers', 'configuredGroupsAssigned')
     }
@@ -133,15 +146,37 @@ Describe 'Get-CIPPBaselineGlobalSecureAccessM365ProfileState' {
         $Profile = $script:M365.Clone()
         $Profile.assignmentRules = New-Enumerated -Groups @(@{ id = 'g-pilot' })
         $script:Row = New-Row -Profile $Profile
-        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'CustomGroups' -Groups @('GSA Pilot', 'Does Not Exist')) }) -TenantFilter $script:Tenant
+        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'customGroup' -CustomGroup 'GSA Pilot, Does Not Exist') }) -TenantFilter $script:Tenant
         (Get-Verdict -Expected $P.Expected -Current $P.Current).Property | Should -Contain 'configuredGroupsAssigned'
     }
 
-    It 'refuses CustomGroups with no groups configured - a scoped profile nobody holds gives no user the profile' {
-        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'CustomGroups') }) -TenantFilter $script:Tenant
+    It 'grades DoNotAssign compliant on an enabled profile assigned to nobody, and drift on all-users or any assignment' {
+        $Profile = $script:M365.Clone()
+        $Profile.assignmentRules = New-Enumerated
+        $script:Row = New-Row -Profile $Profile
+        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'DoNotAssign') }) -TenantFilter $script:Tenant
+        $P.Expected.PSObject.Properties.Name | Should -Be @('profileState', 'policyLinksEnabled', 'assignedToAllUsers', 'nobodyAssigned')
+        (Get-Verdict -Expected $P.Expected -Current $P.Current).Count | Should -Be 0
+
+        # all-users mode is not nobody
+        $script:Row = New-Row
+        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'DoNotAssign') }) -TenantFilter $script:Tenant
+        $Differences = Get-Verdict -Expected $P.Expected -Current $P.Current
+        @($Differences.Property | Sort-Object) | Should -Be @('assignedToAllUsers', 'nobodyAssigned')
+
+        # any hand-assigned group is not nobody
+        $Profile = $script:M365.Clone()
+        $Profile.assignmentRules = New-Enumerated -Groups @(@{ id = 'g-hand' })
+        $script:Row = New-Row -Profile $Profile
+        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'DoNotAssign') }) -TenantFilter $script:Tenant
+        (Get-Verdict -Expected $P.Expected -Current $P.Current).Property | Should -Contain 'nobodyAssigned'
+    }
+
+    It 'refuses customGroup with no group name configured - a scoped profile nobody holds gives no user the profile' {
+        $P = Get-CIPPBaselineGlobalSecureAccessM365ProfileState -Item ([PSCustomObject]@{ Variables = (New-ItemVars -AssignTo 'customGroup') }) -TenantFilter $script:Tenant
         $P.Current | Should -BeNullOrEmpty
         $P.ConfigError | Should -BeTrue
-        $P.NoDataReason | Should -BeLike '*no groups are configured*'
+        $P.NoDataReason | Should -BeLike '*no group name*'
     }
 
     It 'refuses an invalid profile state or assign mode as a configuration error' {
@@ -224,7 +259,7 @@ Describe 'Invoke-CIPPBaselineGlobalSecureAccessM365Profile' {
         Should -Invoke New-GraphPostRequest -Times 0 -Exactly
     }
 
-    It 'moves a scoped profile to all users with one profile PATCH carrying the AllMembership type - and never touches the legacy service principal' {
+    It 'moves a scoped profile to all users and devices with one profile PATCH carrying the AllMembership type - and never touches the legacy service principal' {
         $script:LiveAssignmentType = 'EnumeratedMembership'
         $script:LiveAssignedGroups = @('g-hand')
         $Result = Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate ([PSCustomObject]@{}) -TenantFilter $script:Tenant -Current $null
@@ -247,10 +282,17 @@ Describe 'Invoke-CIPPBaselineGlobalSecureAccessM365Profile' {
     }
 
     It 'scopes a profile to the configured groups in the portal-exact body shape: filters first, comma-joined platforms, id entries' {
-        $Remediate = [PSCustomObject]@{ assignTo = 'CustomGroups'; assignedGroups = @('GSA Pilot') }
+        $Remediate = [PSCustomObject]@{ assignTo = 'customGroup'; customGroup = 'GSA Pilot' }
         $Result = Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate $Remediate -TenantFilter $script:Tenant -Current $null
         $Result | Should -BeNullOrEmpty
         Should -Invoke New-GraphPostRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*networkAccess/forwardingProfiles/prof-m365' -and $body -like '*assignmentRules*devicePropertyFilters*platforms*"windows,macOS,android,iOS"*assignments*EnumeratedMembership*users*devices*g-pilot*' }
+    }
+
+    It 'resolves wildcard group names and assigns every match' {
+        $Remediate = [PSCustomObject]@{ assignTo = 'customGroup'; customGroup = 'GSA*, IT' }
+        $Result = Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate $Remediate -TenantFilter $script:Tenant -Current $null
+        $Result | Should -BeNullOrEmpty
+        Should -Invoke New-GraphPostRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*networkAccess/forwardingProfiles/prof-m365' -and $body -like '*g-pilot*' -and $body -like '*g-it*' }
     }
 
     It 'adds only the missing configured groups, preserving hand-added groups, users and devices - additive' {
@@ -258,7 +300,7 @@ Describe 'Invoke-CIPPBaselineGlobalSecureAccessM365Profile' {
         $script:LiveAssignedGroups = @('g-hand')
         $script:LiveAssignedUsers = @('u-1')
         $script:LiveAssignedDevices = @('d-1')
-        $Remediate = [PSCustomObject]@{ assignTo = 'CustomGroups'; assignedGroups = @('GSA Pilot', 'IT') }
+        $Remediate = [PSCustomObject]@{ assignTo = 'customGroup'; customGroup = 'GSA Pilot, IT' }
         $Result = Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate $Remediate -TenantFilter $script:Tenant -Current $null
         $Result | Should -BeNullOrEmpty
         Should -Invoke New-GraphPostRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*networkAccess/forwardingProfiles/prof-m365' -and $body -like '*g-hand*' -and $body -like '*g-pilot*' -and $body -like '*g-it*' -and $body -like '*u-1*' -and $body -like '*d-1*' }
@@ -268,17 +310,34 @@ Describe 'Invoke-CIPPBaselineGlobalSecureAccessM365Profile' {
     It 'writes nothing when every configured group already holds an assignment' {
         $script:LiveAssignmentType = 'EnumeratedMembership'
         $script:LiveAssignedGroups = @('g-pilot', 'g-it')
-        $Remediate = [PSCustomObject]@{ assignTo = 'CustomGroups'; assignedGroups = @('GSA Pilot', 'IT') }
+        $Remediate = [PSCustomObject]@{ assignTo = 'customGroup'; customGroup = 'GSA Pilot, IT' }
         $Result = Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate $Remediate -TenantFilter $script:Tenant -Current $null
         $Result.Changed | Should -BeFalse
         Should -Invoke New-GraphPostRequest -Times 0 -Exactly
     }
 
-    It 'throws naming an unresolvable group, and refuses CustomGroups with no groups' {
-        $Remediate = [PSCustomObject]@{ assignTo = 'CustomGroups'; assignedGroups = @('Does Not Exist') }
+    It 'throws naming an unresolvable group, and refuses customGroup with no group name' {
+        $Remediate = [PSCustomObject]@{ assignTo = 'customGroup'; customGroup = 'Does Not Exist' }
         { Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate $Remediate -TenantFilter $script:Tenant -Current $null } | Should -Throw '*Does Not Exist*'
 
-        { Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate ([PSCustomObject]@{ assignTo = 'CustomGroups' }) -TenantFilter $script:Tenant -Current $null } | Should -Throw '*no groups are configured*'
+        { Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate ([PSCustomObject]@{ assignTo = 'customGroup' }) -TenantFilter $script:Tenant -Current $null } | Should -Throw '*no group name*'
+    }
+
+    It 'clears the assignment for DoNotAssign from all-users mode with an empty enumerated membership, and refuses to delete hand-made assignments' {
+        $Remediate = [PSCustomObject]@{ assignTo = 'DoNotAssign' }
+        $Result = Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate $Remediate -TenantFilter $script:Tenant -Current $null
+        $Result | Should -BeNullOrEmpty
+        Should -Invoke New-GraphPostRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*networkAccess/forwardingProfiles/prof-m365' -and $body -like '*EnumeratedMembership*' -and $body.Contains('"users":[]') -and $body.Contains('"devices":[]') -and $body.Contains('"groups":[]') }
+
+        # assignments made by hand are never removed - the operator clears them in the portal
+        $script:LiveAssignmentType = 'EnumeratedMembership'
+        $script:LiveAssignedGroups = @('g-hand')
+        { Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate $Remediate -TenantFilter $script:Tenant -Current $null } | Should -Throw '*remove them in the portal*'
+
+        # already assigned to nobody: a no-op that grades compliant
+        $script:LiveAssignedGroups = @()
+        $Result = Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate $Remediate -TenantFilter $script:Tenant -Current $null
+        $Result.Changed | Should -BeFalse
     }
 
     It 'disables the profile and nothing else when the desired state is disabled' {

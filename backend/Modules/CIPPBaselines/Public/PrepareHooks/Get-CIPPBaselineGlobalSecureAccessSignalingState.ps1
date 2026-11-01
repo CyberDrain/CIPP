@@ -1,28 +1,41 @@
 function Get-CIPPBaselineGlobalSecureAccessSignalingState {
     <#
     .SYNOPSIS
-        Prepare hook for GlobalSecureAccessSignaling: grades the Conditional Access
-        signaling setting from the NetworkAccess cache.
+        Prepare hook for GlobalSecureAccessSignaling: grades the LIVE Conditional Access
+        signaling setting.
     .DESCRIPTION
-        Every networkAccess path except tenantStatus answers 403 until the tenant is
-        onboarded, so the cache collector records no signaling status for a tenant that
-        is not onboarded, and the declarative PATCH would fail against Graph's ambiguous
-        403 (missing app permission or missing onboarding?). Such a tenant is not graded
-        here: the hook names the onboarding prerequisite and the engine reports it as an
-        error until "Onboard Global Secure Access" has run.
+        Signaling is a single toggle administrators flip deliberately (to test drift, or
+        to park source IP restoration), so the verdict must be the tenant's actual state:
+        reading the NetworkAccess cache would grade whatever the last scheduled collection
+        saw, and a toggle flipped in between reports compliant for a tenant that is not.
+        The hook reads the live tenant status first - every networkAccess path except
+        tenantStatus answers 403 until the tenant is onboarded, so a tenant that is not
+        onboarded gets the prerequisite named clearly instead of Graph's ambiguous 403
+        (missing app permission or missing onboarding?) - then the live signaling setting.
+        A failed live read reports No Data with the reason rather than grading a stale
+        value.
     .FUNCTIONALITY
         Internal
     #>
     [CmdletBinding()]
     param($Item, $TenantFilter)
 
-    $State = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'NetworkAccess' | Where-Object { $_ }) | Select-Object -First 1
-    if (-not $State) { return @{ Current = $null } }
-    if ($State.onboarded -ne $true) {
+    $Graph = 'https://graph.microsoft.com/beta'
+    try {
+        $Status = New-GraphGetRequest -uri "$Graph/networkAccess/tenantStatus" -tenantid $TenantFilter -AsApp $true
+    } catch {
+        return @{ Current = $null; NoDataReason = "could not read the Global Secure Access tenant status: $($_.Exception.Message)" }
+    }
+    if ($Status.onboardingStatus -ne 'onboarded') {
         return @{
             Current      = $null
             NoDataReason = 'the tenant is not onboarded to Global Secure Access - enable the "Onboard Global Secure Access" standard first'
         }
     }
-    @{ Current = $State }
+    try {
+        $Settings = New-GraphGetRequest -uri "$Graph/networkAccess/settings/conditionalAccess" -tenantid $TenantFilter -AsApp $true
+    } catch {
+        return @{ Current = $null; NoDataReason = "could not read the Global Secure Access signaling setting: $($_.Exception.Message)" }
+    }
+    @{ Current = [PSCustomObject]@{ signalingStatus = $Settings.signalingStatus } }
 }

@@ -62,11 +62,20 @@ function Invoke-CIPPBaselineGlobalSecureAccessM365Profile {
         $Changed = $true
     }
 
+    # The write body must mirror the portal's own PATCH byte for byte, including property
+    # order (devicePropertyFilters first) and the comma-joined platforms string the GET
+    # returns - the array form is rejected and the omission is rejected. Captured live
+    # from the portal's request on a test tenant.
+    $Platforms = "$($TrafficProfile.assignmentRules.devicePropertyFilters.platforms)"
+    if (-not $Platforms) { $Platforms = 'windows,macOS,android,iOS' }
+
     $AssignmentType = "$($TrafficProfile.assignmentRules.assignments.'@odata.type')"
     if ($AssignTo -eq 'AllUsers') {
         if ($AssignmentType -notlike '*forwardingProfileAssignmentsAllMembership') {
-            $Rules = @{ assignments = @{ '@odata.type' = '#microsoft.graph.networkaccess.forwardingProfileAssignmentsAllMembership' } }
-            if ($TrafficProfile.assignmentRules.devicePropertyFilters) { $Rules.devicePropertyFilters = $TrafficProfile.assignmentRules.devicePropertyFilters }
+            $Rules = [ordered]@{
+                devicePropertyFilters = [ordered]@{ platforms = $Platforms }
+                assignments           = [ordered]@{ '@odata.type' = '#microsoft.graph.networkaccess.forwardingProfileAssignmentsAllMembership' }
+            }
             & $PatchProfile $Rules
             Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message 'Assigned the Microsoft 365 traffic forwarding profile to all users.' -Sev 'Info'
             $Changed = $true
@@ -93,15 +102,17 @@ function Invoke-CIPPBaselineGlobalSecureAccessM365Profile {
         $Missing = @($ResolvedIds | Where-Object { $ExistingGroups -notcontains $_ })
         if ($AssignmentType -notlike '*forwardingProfileAssignmentsEnumeratedMembership' -or $Missing.Count -gt 0) {
             $AllGroups = @($ExistingGroups + $ResolvedIds | Sort-Object -Unique)
-            $Rules = @{
-                assignments = @{
+            # Portal-exact shape and order: devicePropertyFilters first, then the
+            # enumerated assignments with users, devices and groups.
+            $Rules = [ordered]@{
+                devicePropertyFilters = [ordered]@{ platforms = $Platforms }
+                assignments           = [ordered]@{
                     '@odata.type' = '#microsoft.graph.networkaccess.forwardingProfileAssignmentsEnumeratedMembership'
                     users         = @($ExistingUsers | ForEach-Object { @{ id = $_ } })
-                    groups        = @($AllGroups | ForEach-Object { @{ id = $_ } })
                     devices       = @($ExistingDevices | ForEach-Object { @{ id = $_ } })
+                    groups        = @($AllGroups | ForEach-Object { @{ id = $_ } })
                 }
             }
-            if ($TrafficProfile.assignmentRules.devicePropertyFilters) { $Rules.devicePropertyFilters = $TrafficProfile.assignmentRules.devicePropertyFilters }
             & $PatchProfile $Rules
             Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message "Assigned the Microsoft 365 traffic forwarding profile to $($ResolvedIds.Count) group(s); assignments made by hand are preserved." -Sev 'Info'
             $Changed = $true

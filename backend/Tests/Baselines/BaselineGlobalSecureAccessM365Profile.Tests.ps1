@@ -246,11 +246,11 @@ Describe 'Invoke-CIPPBaselineGlobalSecureAccessM365Profile' {
         Should -Invoke New-GraphPostRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*networkAccess/forwardingProfiles/prof-m365' -and $body -like '*forwardingProfileAssignmentsAllMembership*' }
     }
 
-    It 'scopes a profile to the configured groups from all-users mode, preserving the device platform filters' {
+    It 'scopes a profile to the configured groups in the portal-exact body shape: filters first, comma-joined platforms, id entries' {
         $Remediate = [PSCustomObject]@{ assignTo = 'CustomGroups'; assignedGroups = @('GSA Pilot') }
         $Result = Invoke-CIPPBaselineGlobalSecureAccessM365Profile -Remediate $Remediate -TenantFilter $script:Tenant -Current $null
         $Result | Should -BeNullOrEmpty
-        Should -Invoke New-GraphPostRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*networkAccess/forwardingProfiles/prof-m365' -and $body -like '*forwardingProfileAssignmentsEnumeratedMembership*' -and $body -like '*g-pilot*' -and $body -like '*devicePropertyFilters*' -and $body -like '*windows,macOS,android,iOS*' }
+        Should -Invoke New-GraphPostRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*networkAccess/forwardingProfiles/prof-m365' -and $body -like '*assignmentRules*devicePropertyFilters*platforms*"windows,macOS,android,iOS"*assignments*EnumeratedMembership*users*devices*g-pilot*' }
     }
 
     It 'adds only the missing configured groups, preserving hand-added groups, users and devices - additive' {

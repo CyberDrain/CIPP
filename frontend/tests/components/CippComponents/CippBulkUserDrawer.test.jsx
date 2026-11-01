@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders, settingsWith } from '../../test-utils'
+import { SettingsContext } from '../../../src/contexts/settings-context'
 import { CippBulkUserDrawer } from '../../../src/components/CippComponents/CippBulkUserDrawer'
 import {
   ApiGetCall,
@@ -124,5 +125,43 @@ describe('CippBulkUserDrawer - bulk creation is refused under All Tenants (ticke
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Create Users' })).toBeEnabled()
     })
+  }, 30000)
+})
+
+// The Users page stays mounted when the tenant selector changes, so the drawer must pick up the
+// tenant that is current when it is opened, not the one captured when the form was created.
+function TenantSwitchHarness() {
+  const [tenant, setTenant] = useState('tenant-a.example.com')
+  return (
+    <SettingsContext.Provider value={settingsWith({ currentTenant: tenant })}>
+      <button onClick={() => setTenant('tenant-b.example.com')}>
+        Switch tenant
+      </button>
+      <CippBulkUserDrawer />
+    </SettingsContext.Provider>
+  )
+}
+
+describe('CippBulkUserDrawer - tenant switch', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    postState = { isLoading: false, isSuccess: false, isError: false }
+    mutateSpy = vi.fn()
+    mockApis()
+  })
+
+  it('submits to the tenant selected when the drawer is opened', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<TenantSwitchHarness />)
+
+    await user.click(screen.getByRole('button', { name: 'Switch tenant' }))
+    await user.click(screen.getByRole('button', { name: 'Bulk Add Users' }))
+    await queueOneUser(user)
+    await user.click(screen.getByRole('button', { name: 'Create Users' }))
+
+    expect(mutateSpy).toHaveBeenCalledTimes(1)
+    expect(mutateSpy.mock.calls[0][0].data.tenantFilter).toBe(
+      'tenant-b.example.com'
+    )
   }, 30000)
 })

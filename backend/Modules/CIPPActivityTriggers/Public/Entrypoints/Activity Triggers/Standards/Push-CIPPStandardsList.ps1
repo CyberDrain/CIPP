@@ -166,6 +166,7 @@ function Push-CIPPStandardsList {
                     }
                     Write-Host "COMPLIANCE LOOKUP: Found $($IntuneComplianceLookup.Count) IntuneTemplate entries in alignment data"
 
+                    $StandardTemplateChanges = @{}
                     foreach ($Key in $IntuneKeys) {
                         $Template = $ComputedStandards[$Key]
                         $TemplateEntity = Get-CIPPAzDataTableEntity @TemplateTable -Filter "PartitionKey eq 'IntuneTemplate' and RowKey eq '$($Template.Settings.TemplateList.value)'"
@@ -189,30 +190,36 @@ function Push-CIPPStandardsList {
                         }
                         Write-Host "TEMPLATE CHECK: $Key | PolicyType=$PolicyType | PolicyChanged=$PolicyChanged"
 
-                        # Check StandardTemplate changes
-                        $StandardTemplate = Get-CIPPAzDataTableEntity @TemplateTable -Filter "PartitionKey eq 'StandardsTemplateV2' and RowKey eq '$($Template.TemplateId)'"
-                        $StandardTemplateChanged = $false
+                        # Preserve the pre-write decision for every policy sharing this standards template.
+                        $StandardTemplateKey = "StandardTemplate_$($Template.TemplateId)"
+                        if (-not $StandardTemplateChanges.ContainsKey($StandardTemplateKey)) {
+                            $StandardTemplate = Get-CIPPAzDataTableEntity @TemplateTable -Filter "PartitionKey eq 'StandardsTemplateV2' and RowKey eq '$($Template.TemplateId)'"
+                            $StandardTemplateChanged = $false
 
-                        if ($StandardTemplate) {
-                            $StandardTimeUtc = ([DateTimeOffset]$StandardTemplate.Timestamp).UtcDateTime
-                            $CachedStandardTemplate = Get-CIPPAzDataTableEntity @TrackingTable -Filter "PartitionKey eq '$TenantFilter' and RowKey eq 'StandardTemplate_$($Template.TemplateId)'"
+                            if ($StandardTemplate) {
+                                $StandardTimeUtc = ([DateTimeOffset]$StandardTemplate.Timestamp).UtcDateTime
+                                $CachedStandardTemplate = Get-CIPPAzDataTableEntity @TrackingTable -Filter "PartitionKey eq '$TenantFilter' and RowKey eq '$StandardTemplateKey'"
 
-                            if ($CachedStandardTemplate -and $CachedStandardTemplate.CachedTimestamp) {
-                                $CachedStandardTimeUtc = ([DateTimeOffset]$CachedStandardTemplate.CachedTimestamp).UtcDateTime
-                                $TimeDiff = [Math]::Abs(($StandardTimeUtc - $CachedStandardTimeUtc).TotalSeconds)
-                                $StandardTemplateChanged = ($TimeDiff -gt 60)
-                                Write-Host "STDTEMPLATE CHECK: TemplateId=$($Template.TemplateId) | TimeDiff=${TimeDiff}s | Changed=$StandardTemplateChanged"
-                            } else {
-                                $StandardTemplateChanged = $true
-                                Write-Host "STDTEMPLATE CHECK: TemplateId=$($Template.TemplateId) | No cached timestamp - treating as changed"
+                                if ($CachedStandardTemplate -and $CachedStandardTemplate.CachedTimestamp) {
+                                    $CachedStandardTimeUtc = ([DateTimeOffset]$CachedStandardTemplate.CachedTimestamp).UtcDateTime
+                                    $TimeDiff = [Math]::Abs(($StandardTimeUtc - $CachedStandardTimeUtc).TotalSeconds)
+                                    $StandardTemplateChanged = ($TimeDiff -gt 60)
+                                    Write-Host "STDTEMPLATE CHECK: TemplateId=$($Template.TemplateId) | TimeDiff=${TimeDiff}s | Changed=$StandardTemplateChanged"
+                                } else {
+                                    $StandardTemplateChanged = $true
+                                    Write-Host "STDTEMPLATE CHECK: TemplateId=$($Template.TemplateId) | No cached timestamp - treating as changed"
+                                }
+
+                                Add-CIPPAzDataTableEntity @TrackingTable -Entity @{
+                                    PartitionKey    = $TenantFilter
+                                    RowKey          = $StandardTemplateKey
+                                    CachedTimestamp = $StandardTemplate.Timestamp
+                                } -Force | Out-Null
                             }
 
-                            Add-CIPPAzDataTableEntity @TrackingTable -Entity @{
-                                PartitionKey    = $TenantFilter
-                                RowKey          = "StandardTemplate_$($Template.TemplateId)"
-                                CachedTimestamp = $StandardTemplate.Timestamp
-                            } -Force | Out-Null
+                            $StandardTemplateChanges[$StandardTemplateKey] = $StandardTemplateChanged
                         }
+                        $StandardTemplateChanged = $StandardTemplateChanges[$StandardTemplateKey]
 
                         if (-not $PolicyChanged -and -not $StandardTemplateChanged) {
                             $AlignmentKey = "standards.IntuneTemplate.$($Template.Settings.TemplateList.value)"

@@ -1,0 +1,76 @@
+{
+  "name": "GlobalSecureAccessM365Profile",
+  "label": "Manage the Microsoft 365 traffic forwarding profile",
+  "cat": "Global Secure Access",
+  "tag": [],
+  "impact": "Medium Impact",
+  "helpText": "Controls the Microsoft 365 traffic forwarding profile - the part of Global Secure Access that acquires Exchange Online, SharePoint and Teams traffic on devices running the Global Secure Access client. Enable it for all users, or restrict it to selected groups (a pilot); groups an administrator assigned by hand are always left alone. Nothing routes without the client, but on client-equipped devices enabling or disabling this profile changes whether their Microsoft 365 traffic is acquired. Prerequisite: the tenant must be onboarded to Global Secure Access (enable 'Onboard Global Secure Access' first). Graded from the daily Global Secure Access cache collection - run a Global Secure Access cache sync for an immediate re-grade. Do not combine a Disabled profile state with 'Require a compliant network (Global Secure Access)': that standard enables this profile and the two will keep flipping it.",
+  "executiveText": "Controls which staff have their Microsoft 365 traffic (email, file and collaboration services) routed through the company's cloud network security service on managed devices: everyone, or a selected pilot group while it is proven out.",
+  "docsDescription": "Grades the Microsoft 365 traffic forwarding profile from the NetworkAccess cache: its state, every policy link, and its assignment. The expected state is conditional - Disabled grades the profile state alone; CustomGroups additionally grades that every configured group holds an appRoleAssignment on the profile app, additively (assignments made by hand are never drift and never removed). Remediation reads live state and writes only what differs: the profile state, each disabled policy link, and the assignment - all-users lifts the assignment requirement, CustomGroups resolves the configured group names live (stopping on an unresolvable one) and assigns only the missing groups.",
+  "impactColour": "warning",
+  "addedDate": "2026-11-01",
+  "powershellEquivalent": "Update-MgBetaNetworkAccessForwardingProfile",
+  "recommendedBy": [
+    "CIPP"
+  ],
+  "requiredCapabilities": [
+    [
+      "AAD_PREMIUM",
+      "AAD_PREMIUM_P2"
+    ]
+  ],
+  "secureScoreImpact": 0,
+  "compare": "subset",
+  "variables": {
+    "profileState": {
+      "type": "autoComplete",
+      "creatable": false,
+      "label": "Profile state",
+      "options": [
+        {
+          "value": "enabled",
+          "label": "Enabled"
+        },
+        {
+          "value": "disabled",
+          "label": "Disabled"
+        }
+      ],
+      "default": "enabled",
+      "recommended": "enabled"
+    },
+    "assignTo": {
+      "type": "autoComplete",
+      "creatable": false,
+      "label": "Assign the profile to",
+      "options": [
+        {
+          "value": "AllUsers",
+          "label": "All users"
+        },
+        {
+          "value": "CustomGroups",
+          "label": "Selected groups (pilot)"
+        }
+      ],
+      "default": "AllUsers"
+    },
+    "assignedGroups": {
+      "type": "autoComplete",
+      "multiple": true,
+      "creatable": true,
+      "label": "Group names to assign the profile to (when 'Selected groups' is chosen)",
+      "omitWhenBlank": true
+    }
+  },
+  "read": {
+    "cacheType": "NetworkAccess"
+  },
+  "prepare": "Get-CIPPBaselineGlobalSecureAccessM365ProfileState",
+  "remediate": {
+    "executor": "GlobalSecureAccessM365Profile",
+    "profileState": "%profileState%",
+    "assignTo": "%assignTo%",
+    "assignedGroups": "%assignedGroups%"
+  }
+}

@@ -4,14 +4,16 @@ function Invoke-CIPPBaselineGlobalSecureAccessM365Profile {
         GlobalSecureAccessM365Profile executor: brings the Microsoft 365 traffic
         forwarding profile to the configured state.
     .DESCRIPTION
-        Extracted from the packaged compliant-network standard's proven tenant block.
-        Reads the LIVE profile (remediation always works from live state), then writes
-        only what differs: the profile state, every disabled policy link, and - in
-        enabled mode - the assignment. AllUsers lifts the profile app's assignment
-        requirement; CustomGroups resolves the configured group names live, refuses an
-        unresolvable one, and assigns only the groups that do not already hold an
-        assignment. Assignments are ADDITIVE: anything an administrator made by hand
-        is never removed, in either mode. Disabled mode writes the profile state and
+        Extracted from the packaged compliant-network standard's proven tenant block,
+        with the assignment rewritten to the model the Global Secure Access portal
+        actually uses: the profile's own assignmentRules, written through a PATCH of the
+        forwarding profile. AllUsers sets the AllMembership type; CustomGroups resolves
+        the configured group names live (stopping on an unresolvable one) and merges them
+        into the live EnumeratedMembership - ADDITIVELY: hand-assigned groups, users and
+        devices are preserved, as are the profile's device platform filters, and nothing
+        is ever deleted. The legacy enterprise-app surface (the profile app's
+        appRoleAssignmentRequired flag and its appRoleAssignments) is deliberately not
+        touched: the portal does not read it. Disabled mode writes the profile state and
         nothing else.
     .FUNCTIONALITY
         Internal
@@ -27,11 +29,17 @@ function Invoke-CIPPBaselineGlobalSecureAccessM365Profile {
     $GroupRefs = @($Remediate.assignedGroups | ForEach-Object { "$($_.value ?? $_)" } | Where-Object { $_ })
 
     if ($ProfileState -notin @('enabled', 'disabled')) { throw "profileState must be 'enabled' or 'disabled', not '$ProfileState'." }
-    if ($AssignTo -eq 'CustomGroups' -and $GroupRefs.Count -eq 0) { throw 'CustomGroups is selected but no groups are configured - a profile that requires assignment with no assigned groups gives no user the profile.' }
+    if ($AssignTo -eq 'CustomGroups' -and $GroupRefs.Count -eq 0) { throw 'CustomGroups is selected but no groups are configured - a scoped profile with no assigned groups gives no user the profile.' }
 
     $Profiles = @(New-GraphGetRequest -uri "$Graph/networkAccess/forwardingProfiles?`$expand=policies(`$expand=policy)" -tenantid $TenantFilter -AsApp $true)
     $TrafficProfile = $Profiles | Where-Object { $_.trafficForwardingType -eq 'm365' -and $_.isCustomProfile -ne $true } | Select-Object -First 1
     if (-not $TrafficProfile) { throw 'The Microsoft 365 traffic forwarding profile was not found; run the standard again in a few minutes.' }
+
+    $PatchProfile = {
+        param($Rules)
+        $Body = @{ assignmentRules = $Rules } | ConvertTo-Json -Depth 10 -Compress
+        $null = New-GraphPostRequest -uri "$Graph/networkAccess/forwardingProfiles/$($TrafficProfile.id)" -tenantid $TenantFilter -type PATCH -body $Body -AsApp $true
+    }
 
     $Changed = $false
     if ($ProfileState -eq 'disabled') {
@@ -54,44 +62,49 @@ function Invoke-CIPPBaselineGlobalSecureAccessM365Profile {
         $Changed = $true
     }
 
-    $SpId = $TrafficProfile.servicePrincipal.id
-    if ($SpId) {
-        if ($AssignTo -eq 'AllUsers') {
-            $Sp = New-GraphGetRequest -uri "$Graph/servicePrincipals/$SpId`?`$select=id,appRoleAssignmentRequired" -tenantid $TenantFilter -AsApp $true
-            if ($Sp.appRoleAssignmentRequired -ne $false) {
-                $null = New-GraphPostRequest -uri "$Graph/servicePrincipals/$SpId" -tenantid $TenantFilter -type PATCH -body '{"appRoleAssignmentRequired":false}' -AsApp $true
-                Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message 'Assigned the Microsoft 365 traffic forwarding profile to all users.' -Sev 'Info'
-                $Changed = $true
+    $AssignmentType = "$($TrafficProfile.assignmentRules.assignments.'@odata.type')"
+    if ($AssignTo -eq 'AllUsers') {
+        if ($AssignmentType -notlike '*forwardingProfileAssignmentsAllMembership') {
+            $Rules = @{ assignments = @{ '@odata.type' = '#microsoft.graph.networkaccess.forwardingProfileAssignmentsAllMembership' } }
+            if ($TrafficProfile.assignmentRules.devicePropertyFilters) { $Rules.devicePropertyFilters = $TrafficProfile.assignmentRules.devicePropertyFilters }
+            & $PatchProfile $Rules
+            Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message 'Assigned the Microsoft 365 traffic forwarding profile to all users.' -Sev 'Info'
+            $Changed = $true
+        }
+    } else {
+        # Resolve the configured group names live: the cache can lag a group created
+        # moments ago, and an unresolved name must stop the run, not silently skip.
+        $Groups = @(New-GraphGetRequest -uri "$Graph/groups?`$select=id,displayName&`$top=999" -tenantid $TenantFilter -AsApp $true)
+        $ResolvedIds = [System.Collections.Generic.List[string]]::new()
+        foreach ($Ref in $GroupRefs) {
+            $Match = $Groups | Where-Object { $_.displayName -eq $Ref } | Select-Object -First 1
+            if (-not $Match) { throw "Group '$Ref' was not found and could not be assigned the traffic profile." }
+            $ResolvedIds.Add($Match.id)
+        }
+
+        # Merge into the live enumerated membership - additive: hand-assigned groups,
+        # users and devices are preserved, as are the device platform filters.
+        $ExistingUsers = @(); $ExistingGroups = @(); $ExistingDevices = @()
+        if ($AssignmentType -like '*forwardingProfileAssignmentsEnumeratedMembership') {
+            $ExistingUsers = @($TrafficProfile.assignmentRules.assignments.users | Where-Object { $_ } | ForEach-Object { "$($_.id)" })
+            $ExistingGroups = @($TrafficProfile.assignmentRules.assignments.groups | Where-Object { $_ } | ForEach-Object { "$($_.id)" })
+            $ExistingDevices = @($TrafficProfile.assignmentRules.assignments.devices | Where-Object { $_ } | ForEach-Object { "$($_.id)" })
+        }
+        $Missing = @($ResolvedIds | Where-Object { $ExistingGroups -notcontains $_ })
+        if ($AssignmentType -notlike '*forwardingProfileAssignmentsEnumeratedMembership' -or $Missing.Count -gt 0) {
+            $AllGroups = @($ExistingGroups + $ResolvedIds | Sort-Object -Unique)
+            $Rules = @{
+                assignments = @{
+                    '@odata.type' = '#microsoft.graph.networkaccess.forwardingProfileAssignmentsEnumeratedMembership'
+                    users         = @($ExistingUsers | ForEach-Object { @{ id = $_ } })
+                    groups        = @($AllGroups | ForEach-Object { @{ id = $_ } })
+                    devices       = @($ExistingDevices | ForEach-Object { @{ id = $_ } })
+                }
             }
-        } else {
-            # Resolve the configured group names live: the cache can lag a group created
-            # moments ago, and an unresolved name must stop the run, not silently skip.
-            $Groups = @(New-GraphGetRequest -uri "$Graph/groups?`$select=id,displayName&`$top=999" -tenantid $TenantFilter -AsApp $true)
-            $Resolved = @{}
-            foreach ($Ref in $GroupRefs) {
-                $Match = $Groups | Where-Object { $_.displayName -eq $Ref } | Select-Object -First 1
-                if (-not $Match) { throw "Group '$Ref' was not found and could not be assigned the traffic profile." }
-                $Resolved[$Ref] = $Match.id
-            }
-            $Sp = New-GraphGetRequest -uri "$Graph/servicePrincipals/$SpId`?`$select=id,appRoleAssignmentRequired,appRoles&`$expand=appRoleAssignments(`$select=principalId)" -tenantid $TenantFilter -AsApp $true
-            $AppRole = @($Sp.appRoles | Where-Object { $_ }) | Select-Object -First 1
-            if (-not $AppRole) { throw 'The Microsoft 365 traffic forwarding profile exposes no app role to assign groups to.' }
-            if ($Sp.appRoleAssignmentRequired -ne $true) {
-                $null = New-GraphPostRequest -uri "$Graph/servicePrincipals/$SpId" -tenantid $TenantFilter -type PATCH -body '{"appRoleAssignmentRequired":true}' -AsApp $true
-                Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message 'Restricted the Microsoft 365 traffic forwarding profile to assigned groups.' -Sev 'Info'
-                $Changed = $true
-            }
-            $AssignedIds = @($Sp.appRoleAssignments | Where-Object { $_ } | ForEach-Object { "$($_.principalId)" })
-            # Additive: only the missing configured groups are assigned; assignments an
-            # administrator made by hand are never removed.
-            foreach ($Ref in $GroupRefs) {
-                $PrincipalId = $Resolved[$Ref]
-                if ($AssignedIds -contains $PrincipalId) { continue }
-                $Body = @{ principalId = $PrincipalId; resourceId = $SpId; appRoleId = $AppRole.id } | ConvertTo-Json -Compress
-                $null = New-GraphPostRequest -uri "$Graph/servicePrincipals/$SpId/appRoleAssignments" -tenantid $TenantFilter -type POST -body $Body -AsApp $true
-                Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message "Assigned the Microsoft 365 traffic forwarding profile to group '$Ref'." -Sev 'Info'
-                $Changed = $true
-            }
+            if ($TrafficProfile.assignmentRules.devicePropertyFilters) { $Rules.devicePropertyFilters = $TrafficProfile.assignmentRules.devicePropertyFilters }
+            & $PatchProfile $Rules
+            Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message "Assigned the Microsoft 365 traffic forwarding profile to $($ResolvedIds.Count) group(s); assignments made by hand are preserved." -Sev 'Info'
+            $Changed = $true
         }
     }
 

@@ -35,25 +35,13 @@ function Set-CIPPDBCacheNetworkAccess {
         if ($Onboarded) {
             foreach ($RawProfile in @(New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/networkAccess/forwardingProfiles?$expand=policies($expand=policy)' -tenantid $TenantFilter -AsApp $true)) {
                 $AssignmentRequired = $null
-                $Assignments = $null
-                # Only the Microsoft 365 profile's assignments are graded by a baseline
-                # (GlobalSecureAccessM365Profile CustomGroups mode), so only its SP read
-                # expands them - every other profile stays a cheap flag read.
-                $IsM365Profile = $RawProfile.trafficForwardingType -eq 'm365' -and $RawProfile.isCustomProfile -ne $true
+                # The assignment profile apps read is legacy enterprise-app state; the profile's
+                # own assignmentRules (AllMembership / EnumeratedMembership) is what the Global
+                # Secure Access portal's User and device assignments blade reads and writes.
                 if ($RawProfile.servicePrincipal.id) {
                     try {
-                        $SpUri = "https://graph.microsoft.com/beta/servicePrincipals/$($RawProfile.servicePrincipal.id)?`$select=appRoleAssignmentRequired"
-                        if ($IsM365Profile) { $SpUri += "&`$expand=appRoleAssignments(`$select=principalId,principalDisplayName)" }
-                        $Sp = New-GraphGetRequest -uri $SpUri -tenantid $TenantFilter -AsApp $true
+                        $Sp = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/servicePrincipals/$($RawProfile.servicePrincipal.id)?`$select=appRoleAssignmentRequired" -tenantid $TenantFilter -AsApp $true
                         $AssignmentRequired = [bool]$Sp.appRoleAssignmentRequired
-                        if ($IsM365Profile) {
-                            $Assignments = [System.Collections.Generic.List[object]]::new()
-                            foreach ($RawAssignment in @($Sp.appRoleAssignments)) {
-                                if (-not $RawAssignment) { continue }
-                                $Assignments.Add([PSCustomObject]@{ principalId = $RawAssignment.principalId; principalDisplayName = $RawAssignment.principalDisplayName })
-                            }
-                            $Assignments = @($Assignments)
-                        }
                     } catch {
                         Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message "Could not read the app behind forwarding profile '$($RawProfile.name)': $($_.Exception.Message)" -sev Warning
                     }
@@ -66,7 +54,8 @@ function Set-CIPPDBCacheNetworkAccess {
                         isCustomProfile           = [bool]$RawProfile.isCustomProfile
                         servicePrincipalId        = $RawProfile.servicePrincipal.id
                         appRoleAssignmentRequired = $AssignmentRequired
-                        assignments               = $Assignments
+                        assignmentRules           = $RawProfile.assignmentRules
+                        associations              = @($RawProfile.associations | Where-Object { $_ })
                         policies                  = @($RawProfile.policies | ForEach-Object { [PSCustomObject]@{ id = $_.id; state = $_.state; policyName = $_.policy.name } })
                     })
             }

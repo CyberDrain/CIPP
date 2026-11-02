@@ -1,6 +1,10 @@
 # Add Group
 
-This page creates a new group in the selected tenant. Complete the shared details, choose a group type, then fill in any additional settings that appear for that type. Selecting **Submit** creates the group immediately, with no confirmation step.
+The **Add Group** button on the [Groups](README.md) list opens a drawer that creates a new group in the selected tenant. Complete the shared details, choose a group type, then fill in any additional settings that appear for that type. Selecting **Create Group** creates the group immediately, with no confirmation step. The drawer stays open afterwards, so **Create Another Group** starts a fresh form for the next group.
+
+{% hint style="info" %}
+Groups are created in one tenant at a time. With **All Tenants** selected in the tenant selector, the drawer shows a warning and **Create Group** stays disabled until a specific tenant is chosen.
+{% endhint %}
 
 ## Group Details
 
@@ -53,7 +57,7 @@ An example membership rule for a dynamic group, excluding guests and external us
 {% endhint %}
 
 {% hint style="warning" %}
-Members entered on this page are ignored for a **Dynamic Group**, because membership is calculated from the rule rather than assigned directly. Owners are still applied.
+Members entered in this drawer are ignored for a **Dynamic Group**, because membership is calculated from the rule rather than assigned directly. Owners are still applied.
 {% endhint %}
 
 {% hint style="warning" %}

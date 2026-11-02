@@ -9,6 +9,11 @@ updates:
     directory: "/frontend" # Location of package manifests
     schedule:
       interval: "weekly"
+    groups:
+      storybook:
+        patterns:
+          - "storybook"
+          - "@storybook/*"
     target-branch: "dev"
     commit-message:
       prefix: "chore"

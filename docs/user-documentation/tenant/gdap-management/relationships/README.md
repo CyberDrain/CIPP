@@ -1,15 +1,16 @@
 # Relationships
 
-This page lists every delegated admin relationship attached to your Microsoft partner tenant. It shows the status of each relationship, the customer it belongs to, when it was created and activated, when it expires, and the roles it grants. Preset filters are available for the **Active**, **Approval Pending**, **Terminating**, and **Terminated** statuses.
+This page lists every delegated admin relationship attached to your Microsoft partner tenant. It shows the status of each relationship, the customer it belongs to, when it was created and activated, when it expires, and the roles it grants. Preset filters are available for the **Active**, **Approval Pending**, **Terminating**, and **Terminated** statuses, plus **Active without Auto Extend** for active relationships that will expire unless renewed.
 
 ## Filters
 
-| Filter           | Shows                                                                     |
-| ---------------- | ------------------------------------------------------------------------- |
-| Active           | Relationships that are currently active.                                  |
-| Approval Pending | Relationships awaiting the customer's approval before they become active. |
-| Terminating      | Relationships that are in the process of being terminated.                |
-| Terminated       | Relationships that have already been terminated.                          |
+| Filter                     | Shows                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| Active                     | Relationships that are currently active.                                             |
+| Approval Pending           | Relationships awaiting the customer's approval before they become active.            |
+| Terminating                | Relationships that are in the process of being terminated.                           |
+| Terminated                 | Relationships that have already been terminated.                                     |
+| Active without Auto Extend | Active relationships that will not renew automatically and expire at their end date. |
 
 ## Table Details
 

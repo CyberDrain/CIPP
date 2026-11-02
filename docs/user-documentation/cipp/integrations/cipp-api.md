@@ -15,7 +15,7 @@ If you're using a **hosted CIPP instance**, you can follow the instructions belo
       2. Fill out the form with the App Name.
    2. If you've already created an App Registration and would like to import it:
       1. Click on Actions > Add Existing Client.
-      2. Select the API Client from the list.
+      2. Select the API Client from the list. The CIPP-SAM and CIPP-SSO applications are never offered here and cannot be added, reset or deleted as API clients; manage them from [credentials.md](../advanced/authentication/credentials.md "mention") instead.
    3. Ensure that you Enable the client in order to save it to the Function App authentication settings.
    4. Optionally set the [#custom-roles](../../../setup/setting-up-cipp/roles.md#custom-roles "mention") and Allowed IP Ranges for additional security.
    5. Select if you want MCP Access Allowed for this client. Enabling MCP Access sets this client up as an MCP connector app (the app your AI signs in as); CIPP automatically creates and manages a separate shared **CIPP-MCP** resource app that the tokens are issued for. You can enable MCP Access on more than one client. Connectors that sign a user in run with that user's own CIPP role; the client's role and IP range only apply when the client calls with its own secret and no user. MCP Access is only supported on the latest CIPP infrastructure. See [#enable-the-mcp-feature](cipp-api.md#enable-the-mcp-feature "mention") for more information.

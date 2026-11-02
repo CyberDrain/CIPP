@@ -70,9 +70,9 @@ An Entra administrator is only needed when a tenant-level policy in your own ten
 
 {% stepper %}
 {% step %}
-### Open the SSO page
+### Open the Credentials page
 
-Sign in to CIPP as a user with the superadmin or admin role and go to **CIPP** > **Advanced** > **Authentication** > **SSO**. If your instance is prompting you to complete authentication setup, the dialog it shows runs the same process and you can complete it from there instead.
+Sign in to CIPP as a user with the superadmin or admin role and go to **CIPP** > **Advanced** > **Authentication** > **Credentials**. If your instance is prompting you to complete authentication setup, the dialog it shows runs the same process and you can complete it from there instead.
 {% endstep %}
 
 {% step %}
@@ -196,7 +196,7 @@ Select **Register**.
 {% step %}
 ### Add a redirect URI for every hostname
 
-Under **Authentication**, add a Web redirect URI of `https://<hostname>/.auth/login/aad/callback` for **every** hostname the instance answers on: the default `*.azurewebsites.net` address as well as any custom domain. The SSO page lists them under **Sign-in URLs**. A hostname without its own redirect URI fails sign-in with `AADSTS50011`.
+Under **Authentication**, add a Web redirect URI of `https://<hostname>/.auth/login/aad/callback` for **every** hostname the instance answers on: the default `*.azurewebsites.net` address as well as any custom domain. The SSO App Registration card lists them under **Sign-in URLs**. A hostname without its own redirect URI fails sign-in with `AADSTS50011`.
 
 Still under **Authentication**, tick **ID tokens (used for implicit and hybrid flows)**.
 {% endstep %}
@@ -218,7 +218,7 @@ Under **Certificates & secrets** > **Client secrets** > **New client secret**, c
 {% step %}
 ### Store the credentials in CIPP
 
-Copy the **Application (client) ID** from the app's Overview page. In CIPP, open **Advanced** > **Authentication** > **SSO**, expand **Manual configuration (advanced)**, paste the App ID and secret, set multi-tenant mode if needed, and select **Save Manual Configuration**.
+Copy the **Application (client) ID** from the app's Overview page. In CIPP, open **Advanced** > **Authentication** > **Credentials**, expand **Manual configuration (advanced)**, paste the App ID and secret, set multi-tenant mode if needed, and select **Save Manual Configuration**.
 {% endstep %}
 
 {% step %}

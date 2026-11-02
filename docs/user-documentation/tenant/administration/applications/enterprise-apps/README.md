@@ -18,6 +18,14 @@ Microsoft first-party service principals make up the bulk of a typical tenant's 
 | ----------------------------- | --------------------------------------------------------- |
 | Hidden from MyApps portal    | Applications currently hidden from users in the MyApps portal. |
 
+The **Graph filters** group in the Filters menu changes the request sent to Microsoft Graph rather than filtering the rows already loaded. See [table-features.md](../../../../shared-features/table-features.md "mention") for how the two kinds of filter combine.
+
+| Graph filter                  | Shows                                                     |
+| ----------------------------- | --------------------------------------------------------- |
+| All Enterprise Applications   | Applications tagged as integrated Microsoft Entra applications. |
+| SAML Applications             | Gallery applications, which is where SAML single sign-on applications are found. |
+| Connectwise Breached Apps     | Any of the four ConnectWise Cloud Management applications named in the ConnectWise breach disclosure that exist in the tenant. Set the tenant selector to **All Tenants** to check every tenant at once. To be told when one appears, use the **Alert on presence of specific app ids** alert on [alert.md](../../alert-configuration/alert.md "mention"). |
+
 ## Table Details
 
 The properties returned are for the Graph resource type `servicePrincipal`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/serviceprincipal?view=graph-rest-1.0#properties).

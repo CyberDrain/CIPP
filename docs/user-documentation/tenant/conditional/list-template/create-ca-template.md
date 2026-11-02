@@ -216,6 +216,17 @@ and `officeips` takes CIDR ranges, IPv4 or IPv6:
 
 On deployment each tenant's locations are created, or updated in place, with that tenant's countries and ranges, so one template covers every client. Changing a tenant's variable takes effect on the next deployment or standard run.
 
+### Optional per-tenant exclusions
+
+An empty List removes its entry, so a List can also hold exclusions that only some tenants have. For example, a policy that blocks sign-ins from known bad networks for every client, where a few clients need their own allowed ranges on top of the shared ones:
+
+1. On [global-variables.md](../../administration/tenants/global-variables.md "mention"), add a variable named `clientallowlocations` with the type **List** and the value `[]`. Every tenant now has an empty list by default.
+2. In the template, define the shared locations under **Named Locations**, for example `Block Infra Block` and `Block Infra Allow`. Under Conditions, include `Block Infra Block` and exclude both `Block Infra Allow` and `%clientallowlocations%`. Do not define the per-client location in the template.
+3. For each client that needs an exception, create its named location in that tenant, for example `Block Infra CLIENT Allow`, with the client's ranges.
+4. In the Custom Variables box on that tenant's [edit.md](../../manage/edit.md "mention") page, use **Override for this tenant** on `clientallowlocations` and enter the location's name. Enter one name per line if there is more than one.
+
+A tenant without an override deploys the policy excluding only `Block Infra Allow`. A tenant with one also excludes its own location, which is matched by name because the template does not define it. CIPP never overwrites that location, so each client's ranges are managed in its own tenant.
+
 Type `%` in the Users, Groups and Locations fields to pick from the [variable-auto-complete.md](../../../shared-features/variable-auto-complete.md "mention") list.
 
 {% hint style="warning" %}

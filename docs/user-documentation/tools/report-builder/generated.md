@@ -2,6 +2,8 @@
 
 This page lists the reports that have been generated from your report templates, whether produced on demand or by a scheduled task. Each row is a completed report you can open, read on screen, or download as a PDF.
 
+Generated reports are deleted automatically, together with their PDFs, once they are older than the period set under [Report Attachment Retention](../../cipp/settings/README.md#report-attachment-retention).
+
 {% hint style="info" %}
 A generated report is a snapshot, not a live view. Test results and database content are collected at the moment the report is generated and stored with it, so opening a report later shows the tenant as it was at that point. To see current data, generate the report again.
 {% endhint %}

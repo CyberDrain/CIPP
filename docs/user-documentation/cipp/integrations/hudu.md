@@ -24,7 +24,8 @@ User and device information is written to a rich text field named **Microsoft 36
 | Exclude device serials (comma separated)                                        | Additional serial numbers to skip when matching and creating devices. A set of common placeholder serials is always excluded regardless of this setting.                                          |
 | Import domains from M365                                                        | Creates a Hudu website record for each domain in the tenant that does not already exist.                                                                                                          |
 | Monitor domains in Hudu                                                         | Enables DNS, SSL and WHOIS monitoring on the website records created by the previous setting. Without it, records are created paused with monitoring disabled.                                    |
-| Hide Empty Roles in Magic Dash                                                  | Omits directory roles with no active or eligible members from the assigned roles table, which keeps the Magic Dash considerably shorter.                                                                             |
+| Hide Empty Roles in Magic Dash                                                  | Omits directory roles with no active or eligible members from the Magic Dash roles list, which keeps it considerably shorter.                                                                                       |
+| Date and number format                                                          | The locale used for dates and numbers in the Magic Dash and the **Microsoft 365** field. Defaults to English (United Kingdom). Dates and times are shown in the CIPP time zone.                                   |
 | Include link to Partner Center Service management page (partner.microsoft.com)  | Adds a Partner Center link to the tenant's portal links.                                                                                                                                          |
 | Include link to Defender Portal (security.microsoft.com)                        | Adds a Defender portal link to the tenant's portal links.                                                                                                                                         |
 | Include link to Compliance Portal (compliance.microsoft.com)                    | Adds a Purview compliance portal link to the tenant's portal links.                                                                                                                               |
@@ -47,7 +48,18 @@ Sign in to Hudu as an Administrator, go to **Admin** > **Account Administration*
 {% step %}
 ### Configure the key
 
-Give it a name such as _CIPP Integration_, set **Limit scope to** to _Full Access_, and leave **Company** blank. Enable **Password Access** under **Key can perform the following actions** when synchronising LAPS passwords or BitLocker recovery keys. The other actions are not required.
+Give it a name such as _CIPP Integration_, set **Limit scope to** to _Full Access_, and leave **Company** blank. Enable **Password Access** under **Key can perform the following actions** when synchronising LAPS passwords or BitLocker recovery keys. The other actions are not required, apart from the delete action described below.
+
+{% hint style="info" %}
+Enable the **Delete** action if you want CIPP to remove old Magic Dashes. When a tenant is renamed, its Magic Dash title changes and the dash under the old name is left behind. With the delete action, the next synchronisation removes it. Without it, CIPP logs a warning naming the old dashes. Magic Dashes can only be removed through the Hudu API, and a key's actions cannot be changed after it is created. To clean up later, either create a new key with the delete action and enter it in CIPP, or remove the dashes yourself with the [HuduAPI](https://www.powershellgallery.com/packages/HuduAPI) PowerShell module and a key that has the delete action:
+
+```powershell
+Install-Module HuduAPI
+New-HuduBaseURL 'https://yourcompany.huducloud.com'
+New-HuduAPIKey '<key with the delete action>'
+Get-HuduMagicDashes -Title 'Microsoft 365 - Old Tenant Name' | Remove-HuduMagicDash
+```
+{% endhint %}
 
 Optionally restrict **Allowed IP Addresses** to your function app's outbound addresses. CyberDrain-hosted clients can find these at [management.cipp.app](https://management.cipp.app/).
 
@@ -157,7 +169,28 @@ CIPP adds the fields it needs to whichever layouts you map, so no preparation is
 
 ## What Gets Synchronised
 
-Once a tenant is mapped, CIPP schedules a daily synchronisation for it. Each run publishes a Magic Dash card on the Hudu company titled **Microsoft 365 -&#x20;**_**tenant name**_, showing the licensed user count and containing tenant detail, portal links and the assigned roles table. The roles table lists each role's active members and, for tenants using Privileged Identity Management, its eligible members in a separate column with their eligibility end date; expired eligibilities are left out. User and device assets are then created or updated in the mapped layouts, and domains are imported as website records where enabled.
+Once a tenant is mapped, CIPP schedules a daily synchronisation for it. User and device assets are created or updated in the mapped layouts, domains are imported as website records where enabled, and a Magic Dash card is published on the Hudu company.
+
+### Magic Dash
+
+The card is titled **Microsoft 365 -&#x20;**_**tenant name**_. Its tile shows the licensed user count and, when something needs attention, how many items need it, and turns red. Opening it shows:
+
+* the tenant name, default domain, tenant ID and portal links, followed by a **Needs attention** strip for licenses that are fully or at least 90% assigned and for five or more Global Administrators
+* tiles for licensed users, license SKUs, Global Administrators and verified domains
+* basic tenant information and the role holders, listed by number of directory roles with Global Administrators first and service principals marked with a robot icon
+* license usage, with purchased but unassigned licenses grouped below
+* a collapsible list of every directory role and its members. For tenants using Privileged Identity Management, eligible members are shown with their eligibility end date and expired eligibilities are left out. **Hide Empty Roles in Magic Dash** still applies.
+* the licensed users with their licenses, devices and Entra and Microsoft 365 admin links, with resource accounts such as rooms and queues grouped separately
+
+When a tenant is renamed, the next synchronisation removes the dash left under the old title, provided the API key has the delete action. Only dashes that carry the tenant's ID are removed, so dashes for other tenants mapped to the same company are left alone.
+
+### User assets
+
+The **Microsoft 365** field on each user asset opens with a header showing the user's name, account status, job title and links to Entra, Teams, Intune and CIPP. A **Needs attention** strip follows when the mailbox or OneDrive is at least 90% full, a device is non-compliant or has not synced in over 30 days, a Conditional Access policy is report-only, mail is being forwarded, or the account is disabled. Below it are cards for contact details, mailbox and OneDrive usage, mailbox access and settings, licenses and aliases, Conditional Access, Intune devices, groups and service plans. Cards with nothing to show are left out. The asset is only rewritten when this content changes.
+
+### Device assets
+
+The **Microsoft 365** field on each device asset opens with a header showing the device name, compliance state, operating system and version, primary user and links to Intune and, where the Hudu asset has Datto RMM or ConnectWise cards, to Datto RMM, Datto RMM Remote, CW Automate and CW Control. A **Needs attention** strip follows when the device is non-compliant, has not synced in over 30 days, or its storage is at least 90% full. Below it are cards for device details, hardware with a storage usage bar, enrollment and security (including Device Guard, virtualization-based security and Credential Guard), compliance policies and groups. As with users, the asset is only rewritten when this content changes.
 
 Each tenant's synchronisation first checks that CIPP can reach Hudu with the saved API key. If it cannot, that tenant's run stops straight away and the Hudu error is recorded in the logbook. Select **Test** to confirm the connection.
 
@@ -171,144 +204,11 @@ The Integration Sync page shows per-tenant synchronisation status and is the fir
 
 ## Custom CSS
 
-The Microsoft 365 rich text field can render with cut-off tables or cramped formatting depending on your Hudu theme. Adding the following custom CSS in your Hudu settings improves the layout of the tables, licence tiles and link buttons CIPP generates.
+No custom CSS is needed. Everything CIPP writes to Hudu carries its own styling and works in Hudu's light and dark themes.
 
-```css
-.card__item table {
-  border-collapse: collapse;
-  margin: 5px 0;
-  font-size: 0.8em;
-  font-family: sans-serif;
-  min-width: 400px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-}
-.card__item h2,
-.card__item p {
-  font-size: 0.8em;
-  font-family: sans-serif;
-}
-.card__item th,
-.card__item td {
-  padding: 5px 5px;
-  width: auto;
-}
-.card__item thead tr {
-  text-align: left;
-}
-.card__item tr {
-  border-bottom: 1px solid #dddddd;
-}
-
-.custom-fast-fact.custom-fast-fact--warning { background: #f5c086; }
-.custom-fast-fact.custom-fast-fact--datto-low { background: #2c81c8; }
-.custom-fast-fact.custom-fast-fact--datto-moderate { background: #f7c210; }
-.custom-fast-fact.custom-fast-fact--datto-high { background: #f68218; }
-.custom-fast-fact.custom-fast-fact--datto-critical { background: #ec422e; }
-
-.nasa__block {
-  height: auto;
-}
-.nasa__block td {
-  white-space: normal;
-  word-wrap: break-word;
-  word-break: break-word;
-}
-
-.mce-content-body {
-  max-height: none !important;
-  overflow: visible !important;
-}
-.writer-wrap {
-  max-height: none;
-  overflow-y: auto;
-}
-
-/* === License & Management Link Card Grids === */
-
-/* Suppress generated <br> tags between sections */
-.rich_text_content .o365 + br {
-  display: none;
-}
-
-/* Flex for management button rows */
-.o365 {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 0;
-  align-items: stretch;
-}
-
-/* Grid for license tile rows — equal-width columns */
-.o365:has(.o365__app) {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-}
-
-.o365__app {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 14px;
-  min-width: 130px;
-  border-radius: 6px;
-  border: 1px solid rgba(200, 200, 200, 0.15);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  font-family: sans-serif;
-  font-size: 0.8em;
-  text-align: center;
-}
-.o365__app strong {
-  font-size: 1em;
-  line-height: 1.2;
-  display: block;
-}
-.o365__app font {
-  font-size: 0.72rem !important;
-  opacity: 0.65;
-  display: block;
-  line-height: 1.2;
-}
-
-.o365 .button {
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 0.85em;
-  font-family: sans-serif;
-  font-weight: 500;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: box-shadow 0.15s ease, transform 0.1s ease;
-  white-space: nowrap;
-  margin: 0;
-  cursor: pointer;
-}
-.o365 .button:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  transform: translateY(-1px);
-}
-.o365 .button a {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-}
-
-.section-label {
-  font-family: sans-serif;
-  font-size: 0.7em;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--primaryl1);
-  margin-top: 16px;
-  margin-bottom: 6px;
-  padding-bottom: 5px;
-  padding-left: 2px;
-  border-bottom: 1px solid rgba(21, 112, 239, 0.3);
-}
-```
+{% hint style="warning" %}
+If you added custom CSS from an earlier version of this page, remove it. Those rules targeted every table in an asset field, so they also restyle the current layouts.
+{% endhint %}
 
 ## Special Thanks
 

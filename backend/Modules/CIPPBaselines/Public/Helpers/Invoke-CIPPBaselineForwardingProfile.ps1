@@ -111,9 +111,9 @@ function Invoke-CIPPBaselineForwardingProfile {
         $ResolvedIds = [System.Collections.Generic.List[string]]::new()
         foreach ($Ref in $GroupRefs) {
             $Escaped = $Ref -replace '\[', '`[' -replace '\]', '`]'
-            $Matches = @($Groups | Where-Object { $_.displayName -like $Escaped })
-            if ($Matches.Count -eq 0) { throw "No group matches '$Ref' - it could not be assigned the traffic profile." }
-            foreach ($Match in $Matches) { $ResolvedIds.Add($Match.id) }
+            $Matched = @($Groups | Where-Object { $_.displayName -like $Escaped })
+            if ($Matched.Count -eq 0) { throw "No group matches '$Ref' - it could not be assigned the traffic profile." }
+            foreach ($Group in $Matched) { $ResolvedIds.Add($Group.id) }
         }
 
         # Merge into the live enumerated membership - additive: hand-assigned groups,

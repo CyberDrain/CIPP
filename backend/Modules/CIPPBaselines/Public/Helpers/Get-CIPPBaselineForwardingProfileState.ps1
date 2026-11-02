@@ -84,9 +84,9 @@ function Get-CIPPBaselineForwardingProfileState {
             $EveryPatternMatched = $true
             foreach ($Ref in $GroupRefs) {
                 $Escaped = $Ref -replace '\[', '`[' -replace '\]', '`]'
-                $Matches = @($Groups | Where-Object { $_.displayName -like $Escaped })
-                if ($Matches.Count -eq 0) { $EveryPatternMatched = $false; continue }
-                foreach ($Match in $Matches) { $MatchedIds.Add($Match.id) }
+                $Matched = @($Groups | Where-Object { $_.displayName -like $Escaped })
+                if ($Matched.Count -eq 0) { $EveryPatternMatched = $false; continue }
+                foreach ($Group in $Matched) { $MatchedIds.Add($Group.id) }
             }
             $Current.configuredGroupsAssigned = $EveryPatternMatched -and @($MatchedIds | Where-Object { $AssignedIds -notcontains $_ }).Count -eq 0
         }

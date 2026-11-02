@@ -13,7 +13,7 @@ Selecting a tenant shows a summary of what you currently hold against it, so you
 | GDAP Relationships  | The number of delegated admin relationships between your partner tenant and this tenant. |
 | CSP Contract        | Whether a reseller contract relationship exists with this tenant.                        |
 | MSP Applications    | The number of applications in the tenant that originate from your partner tenant.        |
-| Vendor Applications | The number of applications in the tenant that originate from a known third-party vendor. |
+| Vendor Applications | The number of applications in the tenant from known third-party vendors whose applications are offered for removal at offboarding, such as MSP tools. |
 
 ## Offboarding actions to perform
 
@@ -21,7 +21,7 @@ The tenant will not be fully offboarded unless all the relationships and contrac
 
 | Setting                                                                                                          | Description                                                                       |
 | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Vendor Applications to Remove                                                                                    | The third-party vendor applications to remove from the tenant.                    |
+| Vendor Applications to Remove                                                                                    | The vendor applications to remove from the tenant. Only applications from vendors marked for removal at offboarding are offered. |
 | Remove all guest users originating from the CSP tenant.                                                          | Removes guest accounts in the customer tenant that came from your partner tenant. |
 | Remove all notification contacts originating from the CSP tenant (technical, security, marketing notifications). | Clears your partner tenant's addresses from the customer's notification contacts. |
 | Remove all Domain Analyser results for this tenant.                                                              | Deletes the tenant's stored Domain Analyser data from CIPP.                       |

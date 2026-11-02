@@ -50,6 +50,21 @@ Anything selected here is removed from the group when you save. The lists show o
 | Remove Owners                    | Removes the selected users as owners.                                                                                                   |
 | Remove Contacts                  | Removes the selected mail contacts.                                                                                                     |
 
+## Send Permissions
+
+Controls who can send mail as the group, or on its behalf. This section is shown for Distribution List, Mail-Enabled Security and Microsoft 365 groups.
+
+| Setting               | Description                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add Send As           | Lets the selected users send mail that appears to come from the group itself. Users who already have Send As are left out of the list.       |
+| Remove Send As        | Takes Send As away from the selected users. The list shows only the users who currently have it.                                             |
+| Add Send on Behalf    | Lets the selected users send mail on behalf of the group, so recipients see both the sender and the group. Users who already have it are left out of the list. |
+| Remove Send on Behalf | Takes Send on Behalf away from the selected users. The list shows only the users who currently have it.                                      |
+
+{% hint style="info" %}
+Send on Behalf can only be given to users who have a mailbox. Additions and removals of Send on Behalf are saved together, so if any selected user has no mailbox, none of the Send on Behalf changes are made and the result names that user. Your other changes still apply.
+{% endhint %}
+
 ## Group Settings
 
 These settings apply to mail-enabled groups, and which of them appear depends on the group's type.

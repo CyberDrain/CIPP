@@ -1,5 +1,7 @@
 ---
 description: Configuring the Syncro ticketing integration
+hidden: true
+noIndex: true
 ---
 
 # Syncro

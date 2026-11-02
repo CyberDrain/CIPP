@@ -2,9 +2,10 @@ function Set-CIPPDBCacheNetworkAccess {
     <#
     .SYNOPSIS
         Caches Global Secure Access state for a tenant: onboarding status, forwarding
-        profiles (with policy groups, the profile app's assignment flag and - for the
-        Microsoft 365 profile only - the group assignments behind that flag) and the
-        Conditional Access signaling setting. One row per tenant.
+        profiles (with policy groups, the legacy profile-app assignment flag, the
+        assignmentRules the portal's User and device assignments blade actually reads
+        and writes, and the branch associations) and the Conditional Access signaling
+        setting. One row per tenant.
 
     .PARAMETER TenantFilter
         The tenant to cache Global Secure Access state for
@@ -20,7 +21,7 @@ function Set-CIPPDBCacheNetworkAccess {
     )
 
     try {
-        $TestResult = Test-CIPPStandardLicense -StandardName 'NetworkAccessCache' -TenantFilter $TenantFilter -Preset Entra -SkipLog
+        $TestResult = Test-CIPPStandardLicense -StandardName 'NetworkAccessCache' -TenantFilter $TenantFilter -Preset Entra -RequiredCapabilities @('Entra_Premium_Internet_Access') -SkipLog
         if ($TestResult -eq $false) {
             Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'NetworkAccess' -Data @() -AddCount -ClearOnEmpty
             return

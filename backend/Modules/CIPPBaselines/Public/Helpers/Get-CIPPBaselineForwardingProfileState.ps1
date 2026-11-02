@@ -11,7 +11,11 @@ function Get-CIPPBaselineForwardingProfileState {
         profile nobody holds), AllDevicesAndUsers (AllMembership) or customGroup (the
         configured group names, wildcards allowed, resolved through the Groups cache).
         The expected state is conditional: 'disabled' expresses an opinion on the profile
-        state alone. Assignments an administrator made by hand are never drift - except
+        state alone. Grading reads the cache rather than live state by design: profile
+        data is high-volume and portal flips are caught on the collection cadence, while
+        remediation always re-reads live state and corrects drift on the next run. The
+        signaling and block page standards read live instead - singleton settings
+        administrators deliberately flip mid-test. Assignments an administrator made by hand are never drift - except
         under DoNotAssign, where any assignment means somebody holds the profile. A
         tenant that is not onboarded gets the onboarding prerequisite named, and a
         missing profile reports No Data. A profile with no policy links grades its links

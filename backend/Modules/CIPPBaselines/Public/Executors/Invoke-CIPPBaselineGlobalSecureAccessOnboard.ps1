@@ -45,6 +45,7 @@ function Invoke-CIPPBaselineGlobalSecureAccessOnboard {
         $Status = New-GraphGetRequest -uri "$Graph/networkAccess/tenantStatus" -tenantid $TenantFilter -AsApp $true
     } while ($Status.onboardingStatus -eq 'onboardingInProgress' -and $Attempts -lt 12)
 
+    if ($Status.onboardingStatus -eq 'onboardingErrorOccurred') { throw "Global Secure Access onboarding failed earlier: $($Status.onboardingErrorMessage)" }
     if ($Status.onboardingStatus -eq 'onboarded') {
         Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message 'Onboarded the tenant to Global Secure Access.' -Sev 'Info'
     } else {

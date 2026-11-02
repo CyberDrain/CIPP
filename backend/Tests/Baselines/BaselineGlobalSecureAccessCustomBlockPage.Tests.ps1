@@ -85,3 +85,16 @@ Describe 'Get-CIPPBaselineGlobalSecureAccessCustomBlockPageState' {
         $P.NoDataReason | Should -BeLike '*block page*403 Forbidden*'
     }
 }
+
+Describe 'GlobalSecureAccessCustomBlockPage definition' {
+    It 'remediates declaratively with the documented PATCH body: state and the markdown configuration' {
+        $DefinitionPath = Join-Path $script:RepoRoot 'Config/BaselineStandards/Global Secure Access/GlobalSecureAccessCustomBlockPage.json'
+        $Definition = Get-Content $DefinitionPath -Raw | ConvertFrom-Json
+        $Request = $Definition.remediate.requests[0]
+        $Request.method | Should -Be 'PATCH'
+        $Request.uri | Should -Be 'networkAccess/settings/customBlockPage'
+        $Request.body.state | Should -Be '%state%'
+        $Request.body.configuration.'@odata.type' | Should -Be '#microsoft.graph.networkaccess.markdownBlockMessageConfiguration'
+        $Request.body.configuration.body | Should -Be '%blockMessage%'
+    }
+}

@@ -51,7 +51,7 @@ Describe 'Invoke-CIPPBaselineGlobalSecureAccessOnboard' {
     }
 
     It 'self-heals a stale cache: no POST, but the NetworkAccess cache is refreshed so the next run grades compliant' {
-        $Result = Invoke-CIPPBaselineGlobalSecureAccessOnboard -Remediate ([PSCustomObject]@{}) -TenantFilter $script:Tenant -Current $null
+        $Result = Invoke-CIPPBaselineGlobalSecureAccessOnboard -Remediate ([PSCustomObject]@{}) -TenantFilter $script:Tenant -Current (@{ onboarded = $false } | ConvertTo-Cached)
         $Result.Changed | Should -BeFalse
         Should -Invoke New-GraphPostRequest -Times 0 -Exactly
         Should -Invoke Set-CIPPDBCacheNetworkAccess -Times 1 -Exactly
@@ -83,6 +83,14 @@ Describe 'Invoke-CIPPBaselineGlobalSecureAccessOnboard' {
         Should -Invoke New-GraphGetRequest -Times 13 -Exactly
         Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $message -like '*still*' -and $Sev -eq 'Info' }
         Should -Invoke Write-LogMessage -Times 0 -Exactly -ParameterFilter { $Sev -eq 'Error' }
+    }
+
+    It 'surfaces an onboarding error that occurs during the wait window in the same run, with the API message' {
+        $script:LiveStatus = 'onboardingErrorOccurred'
+        $script:LiveError = 'the tenant is not licensed for Global Secure Access'
+        $script:PendingPolls = 3
+        { Invoke-CIPPBaselineGlobalSecureAccessOnboard -Remediate ([PSCustomObject]@{}) -TenantFilter $script:Tenant -Current (@{ onboarded = $false } | ConvertTo-Cached) } | Should -Throw '*failed earlier*not licensed for Global Secure Access*'
+        Should -Invoke New-GraphPostRequest -Times 0 -Exactly
     }
 
     It 'surfaces the API onboarding error instead of re-POSTing over it' {

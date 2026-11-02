@@ -7045,6 +7045,52 @@
     ]
   },
   {
+    "name": "standards.GlobalSecureAccessCustomBlockPage",
+    "cat": "Global Secure Access",
+    "tag": [],
+    "helpText": "Sets the message users see when Global Secure Access blocks a website. Supports limited markdown, including links like [Contact the help desk](https://example.com). Set the state to Disabled to use Microsoft's default block page. Requires 'Onboard Global Secure Access' first and an Entra Internet Access license.",
+    "docsDescription": "Checks the custom block page state and message live, and writes both through the documented settings PATCH. Disabled grades the state alone; an enabled page needs a message.",
+    "executiveText": "Controls what staff see when the company's network security service blocks a website: a company message with who to contact, or Microsoft's default page.",
+    "label": "Manage the custom block page",
+    "impact": "Low Impact",
+    "impactColour": "info",
+    "addedDate": "2026-11-01",
+    "powershellEquivalent": "Update-MgBetaNetworkAccessSettingCustomBlockPage",
+    "recommendedBy": [
+      "CIPP"
+    ],
+    "requiredCapabilities": [
+      [
+        "Entra_Premium_Internet_Access"
+      ]
+    ],
+    "addedComponent": [
+      {
+        "name": "standards.GlobalSecureAccessCustomBlockPage.state",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Block page state",
+        "options": [
+          {
+            "value": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "value": "disabled",
+            "label": "Disabled"
+          }
+        ],
+        "default": "enabled"
+      },
+      {
+        "name": "standards.GlobalSecureAccessCustomBlockPage.blockMessage",
+        "type": "textField",
+        "label": "Block page message (markdown, links like [Help](https://example.com) allowed)",
+        "default": ""
+      }
+    ]
+  },
+  {
     "name": "standards.GlobalSecureAccessInternetProfile",
     "cat": "Global Secure Access",
     "tag": [],

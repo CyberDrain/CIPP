@@ -2,6 +2,8 @@
 
 This page lists the external and guest users that SharePoint knows about in the selected tenant, and classifies each one against Microsoft Entra so you can tell a healthy guest from a leftover. It draws on both the tenant's external users store, which is populated when a guest first redeems a share, and a sweep of every site's user list, which also catches guests who were given membership but never signed in.
 
+For every site a guest belongs to, the page also shows when their access to that site expires under SharePoint's guest expiration policy, and lets you extend or remove their access one site at a time without touching their Entra account or their other sites.
+
 {% hint style="info" %}
 The **Guest Type** column tells you what each entry really is. **Entra B2B** is a normal guest with a live Entra account. **Orphaned B2B (not in Entra)** means the Entra guest account has been deleted but SharePoint still holds a reference to them. **SharePoint-only (email authenticated)** is a legacy email-authenticated guest that never had an Entra account at all.
 {% endhint %}
@@ -16,19 +18,32 @@ The **Guest Type** column tells you what each entry really is. **Entra B2B** is 
 
 ## Table Details
 
-| Column       | Description                                                                                                                    |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| Display Name | The name SharePoint holds for the guest.                                                                                       |
-| Accepted As  | The email address the guest actually accepted the invitation with, which is not always the address they were invited on.        |
-| Guest Type   | How the guest is classified against Entra: Entra B2B, Orphaned B2B (not in Entra), or SharePoint-only (email authenticated).    |
-| In Entra     | Whether a live Entra guest account was found for this person.                                                                   |
-| Source       | Where the entry was found: the tenant's external users store, or membership of a site.                                          |
-| Sites        | The sites the guest holds membership of. Blank when they have redeemed a share but hold no site membership.                     |
-| When Created | When the entry was created in the external users store. Blank for guests found only through site membership.                    |
-| Invited By   | The user who invited the guest. Blank for guests found only through site membership.                                            |
+| Column          | Description                                                                                                                                                       |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Display Name    | The name SharePoint holds for the guest.                                                                                                                          |
+| Accepted As     | The email address the guest actually accepted the invitation with, which is not always the address they were invited on.                                           |
+| Guest Type      | How the guest is classified against Entra: Entra B2B, Orphaned B2B (not in Entra), or SharePoint-only (email authenticated).                                       |
+| In Entra        | Whether a live Entra guest account was found for this person.                                                                                                      |
+| Source          | Where the entry was found: the tenant's external users store, or membership of a site.                                                                             |
+| Sites           | The sites the guest holds membership of. Blank when they have redeemed a share but hold no site membership.                                                        |
+| Next Expiration | The soonest date on which the guest's access to any of their sites expires. Sort by this column to find guests about to lose access. Blank when none of their sites has an expiry set. |
+| When Created    | When the entry was created in the external users store. Blank for guests found only through site membership.                                                       |
+| Invited By      | The user who invited the guest. Blank for guests found only through site membership.                                                                               |
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Remove Guest Access</td><td>Fully removes external access for the selected guest. Deletes their Entra guest account, if one exists, and removes them from every site listed in the <strong>Sites</strong> column, so nothing is left orphaned. You are asked to confirm first. Any sharing links they hold are revoked separately from <a data-mention href="reports/sharing-report.md">sharing-report.md</a>, and the leftover SharePoint store entry ages out on its own. Greyed out unless you have SharePoint site write access and the guest either has an Entra account or holds membership of at least one site.</td><td>true</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Remove Guest Access (All Sites + Entra)</td><td>Fully removes external access for the selected guest. Deletes their Entra guest account, if one exists, and removes them from every site listed in the <strong>Sites</strong> column, so nothing is left orphaned. You are asked to confirm first. To remove a guest from a single site only, use <strong>Remove from this site</strong> under <a href="#site-access">Site Access</a> instead. Any sharing links they hold are revoked separately from <a data-mention href="reports/sharing-report.md">sharing-report.md</a>, and the leftover SharePoint store entry ages out on its own. Greyed out unless you have SharePoint site write access and the guest either has an Entra account or holds membership of at least one site.</td><td>true</td></tr></tbody></table>
+
+## Site Access
+
+Open a guest with **More Info** (from the row menu or by right-clicking the row) to see the **Site access** list below their details. It shows every site the guest belongs to, with the date their access to that site expires, or **No expiry set**. Hover over a site name to see its full address, or click it to open the site.
+
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Extend access on this site</td><td>Sets the guest's access to this site to expire a chosen number of days from today, up to a maximum of 90 (90 if left blank). Only this site's expiry changes. Access cannot be extended by more than 90 days from todays date. The list refreshes once the change is made.</td><td>false</td></tr><tr><td>Remove from this site</td><td>Expires the guest's access to this site straight away, the same as <strong>Remove</strong> on the site's own Guest Expiration page. Their Entra guest account and their access to other sites are not affected. You are asked to confirm first.</td><td>false</td></tr></tbody></table>
+
+Both actions require SharePoint site write access. Without it, the list is shown read-only.
+
+{% hint style="info" %}
+Expiry dates only exist where SharePoint's guest expiration policy applies, set either for the whole tenant in the SharePoint admin center or on an individual site. Guests who had access before the policy was turned on, and sites without the policy, show **No expiry set**. Extending a guest on such a site gives them an expiry date where they had none before.
+{% endhint %}
 
 {% include "../../../.gitbook/includes/feature-request.md" %}

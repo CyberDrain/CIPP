@@ -192,7 +192,7 @@ function Start-ContainerUpdateCheck {
                 RunningVersion    = [string]($RunningVersion ?? '')
                 RemoteVersion     = [string]($RemoteVersion ?? '')
                 RemoteDigest      = [string]($RemoteDigest ?? '')
-                RemoteBuildDate   = [string]($RemoteBuildDate ?? '')
+                RemoteBuildDate   = if ($RemoteBuildDate -is [DateTime]) { $RemoteBuildDate.ToUniversalTime().ToString('o') } else { [string]($RemoteBuildDate ?? '') }
                 CheckedTag        = [string]($CheckTag ?? '')
                 AttestationState  = [string]$Attestation.State
                 AttestationReason = [string]$Attestation.Reason

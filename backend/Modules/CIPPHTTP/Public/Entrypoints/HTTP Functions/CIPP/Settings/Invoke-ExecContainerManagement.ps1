@@ -95,7 +95,8 @@ function Invoke-ExecContainerManagement {
         return [pscustomobject]@{
             Digest  = [string]$digest
             Version = [string]$version
-            Created = [string]$created
+            # ConvertFrom-Json yields a local DateTime; a bare string of it loses the zone.
+            Created = if ($created -is [DateTime]) { $created.ToUniversalTime().ToString('o') } else { [string]$created }
         }
     }
 

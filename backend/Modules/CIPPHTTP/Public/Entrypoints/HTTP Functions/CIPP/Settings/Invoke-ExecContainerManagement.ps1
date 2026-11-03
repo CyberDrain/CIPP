@@ -168,15 +168,17 @@ function Invoke-ExecContainerManagement {
                 # hourly checks, preferred time 23:00).
                 $Settings = Sync-CippContainerUpdateState
                 $UpdateInfo = @{
-                    AutoUpdate      = $true
-                    CheckInterval   = '1h'
-                    CheckTime       = '23'
-                    LastCheck       = $null
-                    UpdateAvailable = $false
-                    RunningVersion  = $null
-                    RemoteVersion   = $null
-                    RemoteDigest    = $null
-                    RemoteBuildDate = $null
+                    AutoUpdate        = $true
+                    CheckInterval     = '1h'
+                    CheckTime         = '23'
+                    LastCheck         = $null
+                    UpdateAvailable   = $false
+                    RunningVersion    = $null
+                    RemoteVersion     = $null
+                    RemoteDigest      = $null
+                    RemoteBuildDate   = $null
+                    AttestationState  = $null
+                    AttestationReason = $null
                 }
                 if ($Settings) {
                     $UpdateInfo.AutoUpdate = $Settings.AutoUpdate -eq 'true'
@@ -188,6 +190,8 @@ function Invoke-ExecContainerManagement {
                     $UpdateInfo.RemoteVersion = $Settings.RemoteVersion ?? $null
                     $UpdateInfo.RemoteDigest = $Settings.RemoteDigest ?? $null
                     $UpdateInfo.RemoteBuildDate = $Settings.RemoteBuildDate ?? $null
+                    $UpdateInfo.AttestationState = $Settings.AttestationState ?? $null
+                    $UpdateInfo.AttestationReason = $Settings.AttestationReason ?? $null
                 }
 
                 # Note: the branch-build tag list is NOT fetched here. Status is polled, and each

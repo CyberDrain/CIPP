@@ -122,6 +122,9 @@ export const CippContainerManagement = () => {
 
   const data = containerStatus.data?.Results
   const updateSettings = data?.UpdateSettings
+  const updateUnverified =
+    updateSettings?.UpdateAvailable &&
+    ['Failed', 'Unverifiable'].includes(updateSettings?.AttestationState)
 
   // Presentation for a channel value. Standard channels get their friendly name; a branch build
   // shows its tag, which is the thing that matches the branch it came from. Kept here rather
@@ -265,13 +268,28 @@ export const CippContainerManagement = () => {
         value: formatUtcDate(updateSettings?.RemoteBuildDate),
       },
       { label: 'Digest', value: truncateDigest(updateSettings?.RemoteDigest) },
+      {
+        label: 'Provenance',
+        value: isUnset(updateSettings?.AttestationState) ? null : (
+          <>
+            {updateSettings.AttestationState}
+            {updateSettings.AttestationReason && (
+              <Typography variant="caption" component="div">
+                {updateSettings.AttestationReason}
+              </Typography>
+            )}
+          </>
+        ),
+      },
     ])
 
     const updateState = !updateSettings?.LastCheck
       ? { label: 'Never checked', color: 'primary', icon: <CippIcons.HelpOutlined /> }
-      : updateSettings.UpdateAvailable
-        ? { label: 'Update available', color: 'info', icon: <CippIcons.NewReleases /> }
-        : { label: 'Up to date', color: 'success', icon: <CippIcons.CheckCircle /> }
+      : updateUnverified
+        ? { label: 'Update unverified', color: 'warning', icon: <CippIcons.GppBad /> }
+        : updateSettings.UpdateAvailable
+          ? { label: 'Update available', color: 'info', icon: <CippIcons.NewReleases /> }
+          : { label: 'Up to date', color: 'success', icon: <CippIcons.CheckCircle /> }
 
     return [
       {
@@ -295,6 +313,7 @@ export const CippContainerManagement = () => {
         name: 'Update Status',
         data: updateState.label,
         color: updateState.color,
+        toolTip: updateUnverified ? updateSettings.AttestationReason : undefined,
         offcanvas: remoteDetails.length
           ? { title: 'Latest on this channel', propertyItems: remoteDetails }
           : undefined,
@@ -309,7 +328,7 @@ export const CippContainerManagement = () => {
           : 'No update check has run on this instance yet',
       },
     ]
-  }, [data, updateSettings, channelInfo.label, channelInfo.color])
+  }, [data, updateSettings, updateUnverified, channelInfo.label, channelInfo.color])
 
   const channelChangePending =
     data?.ConfiguredChannel && data.ConfiguredChannel !== data.CurrentChannel
@@ -341,11 +360,19 @@ export const CippContainerManagement = () => {
                 to apply.
               </Alert>
             )}
-            {updateSettings?.UpdateAvailable && (
-              <Alert severity="info">
-                A container update is available. Restart the container to pull
-                the latest image.
+            {updateUnverified ? (
+              <Alert severity="warning">
+                A container update is available but did not pass provenance
+                verification, so it will not be applied automatically.
+                Restarting the container pulls it anyway.
               </Alert>
+            ) : (
+              updateSettings?.UpdateAvailable && (
+                <Alert severity="info">
+                  A container update is available. Restart the container to pull
+                  the latest image.
+                </Alert>
+              )
             )}
           </Stack>
         )}
@@ -619,6 +646,12 @@ export const CippContainerManagement = () => {
             pulled as it comes back up — a restart always updates to the latest
             image on the channel, whatever the reason for it.
           </DialogContentText>
+          {updateSettings?.AttestationState === 'Failed' && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              The pending image did not pass provenance verification, and
+              restarting will pull it anyway.
+            </Alert>
+          )}
           <CippApiResults apiObject={restartAction} />
         </DialogContent>
         <DialogActions>

@@ -487,6 +487,7 @@
 * [CIPP Security and Compliance](security/cipp-security-and-compliance/README.md)
   * [Security Policy](security/cipp-security-and-compliance/security-policy.md)
   * [Security Reports](security/cipp-security-and-compliance/security-reports.md)
+  * [Verifying Container Images](security/cipp-security-and-compliance/verifying-container-images.md)
 * [CIPP Community Vulnerability Disclosure Policy](security/cipp-community-vulnerability-disclosure-policy.md)
 
 ## 👩‍💻 Dev Documentation

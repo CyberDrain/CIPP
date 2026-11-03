@@ -101,6 +101,18 @@ This card configures how often CIPP asks the container registry whether a newer 
 
 Select **Save Settings** to store these options. Setting Check Interval to **Disabled** turns off scheduled checks and disables the other two settings, as neither has any effect without them; you can still check on demand with **Check for Updates**.
 
+### Provenance
+
+Every check also verifies the newest image on your channel: its signed build attestation is fetched from the registry and checked against the release workflow of the repository the image came from. The **Latest on this channel** panel shows the result whether or not an update is pending, and an update is only applied automatically when it passes:
+
+| Result       | Meaning                                                                                                                                              |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Verified     | The image was built and signed by the expected CI workflow. Auto-restart proceeds as configured.                                                      |
+| Failed       | No attestation was found, or it did not match. With an update pending, auto-restart is withheld, a warning is logged and the restart dialog warns you; when already up to date the result is simply shown.  |
+| Unverifiable | The attestation could not be checked, for example a registry error or a private fork signed by a certificate authority CIPP does not carry. The check retries next interval. |
+
+See [verifying-container-images.md](../../../../security/cipp-security-and-compliance/verifying-container-images.md "mention") for how to verify an image yourself and what to do when building from a fork.
+
 Note that if the container restarts for any reason, the latest image for the current release channel is pulled regardless of these settings.
 
 ## Update History

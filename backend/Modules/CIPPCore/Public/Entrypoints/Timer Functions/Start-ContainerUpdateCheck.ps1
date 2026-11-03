@@ -175,8 +175,9 @@ function Start-ContainerUpdateCheck {
                 $UpdateAvailable = $true
             }
 
+            # Verified on every check so an up-to-date instance still shows whether its channel image is attested.
             $Attestation = [pscustomobject]@{ State = ''; Reason = '' }
-            if ($UpdateAvailable) {
+            if ($RemoteDigest) {
                 $Attestation = Test-CIPPContainerAttestation -ImagePath $imagePath -Digest $RemoteDigest -Tag $CheckTag -AuthHeader $authHeader
             }
 
@@ -211,6 +212,9 @@ function Start-ContainerUpdateCheck {
                 }
             } elseif ($UpdateAvailable) {
                 Write-LogMessage -API 'ContainerUpdateCheck' -message "Container update available (running: $RunningVersion, remote: $RemoteVersion)" -sev Info
+            } elseif ($Attestation.State -in 'Failed', 'Unverifiable') {
+                # Information only: channels whose current image predates attestation would otherwise warn every check.
+                Write-Information "Container is up to date. Version: $RunningVersion. Channel image provenance $($Attestation.State): $($Attestation.Reason)"
             } else {
                 Write-Information "Container is up to date. Version: $RunningVersion"
             }

@@ -159,4 +159,12 @@ describe('CippContainerManagement provenance state', () => {
     expect(screen.getByText(/did not pass provenance verification/)).toBeInTheDocument()
     expect(screen.queryByText(/Restart the container to pull the latest image/)).not.toBeInTheDocument()
   })
+
+  it('flags an up-to-date instance whose channel image failed provenance', () => {
+    statusGet.data.Results.UpdateSettings.UpdateAvailable = false
+    renderWithProviders(<CippContainerManagement />)
+    expect(screen.getByText('Up to date, unverified')).toBeInTheDocument()
+    expect(screen.getByText(/did not pass provenance verification/)).toBeInTheDocument()
+    expect(screen.queryByText(/will not be applied automatically/)).not.toBeInTheDocument()
+  })
 })

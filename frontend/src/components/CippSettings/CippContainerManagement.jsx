@@ -122,9 +122,7 @@ export const CippContainerManagement = () => {
 
   const data = containerStatus.data?.Results
   const updateSettings = data?.UpdateSettings
-  const updateUnverified =
-    updateSettings?.UpdateAvailable &&
-    ['Failed', 'Unverifiable'].includes(updateSettings?.AttestationState)
+  const imageUnverified = ['Failed', 'Unverifiable'].includes(updateSettings?.AttestationState)
 
   // Presentation for a channel value. Standard channels get their friendly name; a branch build
   // shows its tag, which is the thing that matches the branch it came from. Kept here rather
@@ -285,8 +283,12 @@ export const CippContainerManagement = () => {
 
     const updateState = !updateSettings?.LastCheck
       ? { label: 'Never checked', color: 'primary', icon: <CippIcons.HelpOutlined /> }
-      : updateUnverified
-        ? { label: 'Update unverified', color: 'warning', icon: <CippIcons.GppBad /> }
+      : imageUnverified
+        ? {
+            label: updateSettings.UpdateAvailable ? 'Update unverified' : 'Up to date, unverified',
+            color: 'warning',
+            icon: <CippIcons.GppBad />,
+          }
         : updateSettings.UpdateAvailable
           ? { label: 'Update available', color: 'info', icon: <CippIcons.NewReleases /> }
           : { label: 'Up to date', color: 'success', icon: <CippIcons.CheckCircle /> }
@@ -313,7 +315,7 @@ export const CippContainerManagement = () => {
         name: 'Update Status',
         data: updateState.label,
         color: updateState.color,
-        toolTip: updateUnverified ? updateSettings.AttestationReason : undefined,
+        toolTip: imageUnverified ? updateSettings.AttestationReason : undefined,
         offcanvas: remoteDetails.length
           ? { title: 'Latest on this channel', propertyItems: remoteDetails }
           : undefined,
@@ -328,7 +330,7 @@ export const CippContainerManagement = () => {
           : 'No update check has run on this instance yet',
       },
     ]
-  }, [data, updateSettings, updateUnverified, channelInfo.label, channelInfo.color])
+  }, [data, updateSettings, imageUnverified, channelInfo.label, channelInfo.color])
 
   const channelChangePending =
     data?.ConfiguredChannel && data.ConfiguredChannel !== data.CurrentChannel
@@ -350,7 +352,7 @@ export const CippContainerManagement = () => {
 
         {/* Page-level state. Static explanation lives on the cards as helper text; an Alert
             only appears when there is something to act on. */}
-        {(channelChangePending || updateSettings?.UpdateAvailable) && (
+        {(channelChangePending || updateSettings?.UpdateAvailable || imageUnverified) && (
           <Stack spacing={2}>
             {channelChangePending && (
               <Alert severity="warning">
@@ -360,11 +362,12 @@ export const CippContainerManagement = () => {
                 to apply.
               </Alert>
             )}
-            {updateUnverified ? (
+            {imageUnverified ? (
               <Alert severity="warning">
-                A container update is available but did not pass provenance
-                verification, so it will not be applied automatically.
-                Restarting the container pulls it anyway.
+                The latest image on your channel did not pass provenance
+                verification.
+                {updateSettings?.UpdateAvailable &&
+                  ' It will not be applied automatically, and restarting the container pulls it anyway.'}
               </Alert>
             ) : (
               updateSettings?.UpdateAvailable && (
@@ -646,7 +649,7 @@ export const CippContainerManagement = () => {
             pulled as it comes back up — a restart always updates to the latest
             image on the channel, whatever the reason for it.
           </DialogContentText>
-          {updateSettings?.AttestationState === 'Failed' && (
+          {updateSettings?.AttestationState === 'Failed' && updateSettings?.UpdateAvailable && (
             <Alert severity="warning" sx={{ mb: 2 }}>
               The pending image did not pass provenance verification, and
               restarting will pull it anyway.

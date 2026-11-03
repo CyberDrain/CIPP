@@ -333,6 +333,12 @@ function Invoke-ExecContainerManagement {
                     $UpdateAvailable = $true
                 }
 
+                $ImagePath = $CurrentImage -replace '^ghcr\.io/', '' -replace ':.*$', ''
+                $Attestation = [pscustomobject]@{ State = ''; Reason = '' }
+                if ($RemoteDigest) {
+                    $Attestation = Test-CIPPContainerAttestation -ImagePath $ImagePath -Digest $RemoteDigest -Tag $CheckTag
+                }
+
                 $Entity = @{
                     PartitionKey    = 'Settings'
                     RowKey          = 'UpdateConfig'
@@ -343,6 +349,8 @@ function Invoke-ExecContainerManagement {
                     RemoteDigest    = [string]($RemoteDigest ?? '')
                     RemoteBuildDate = [string]($RemoteBuildDate ?? '')
                     CheckedTag      = [string]($CheckTag ?? '')
+                    AttestationState = [string]$Attestation.State
+                    AttestationReason = [string]$Attestation.Reason
                 }
                 $Existing = Get-CIPPAzDataTableEntity @SettingsTable -Filter "PartitionKey eq 'Settings' and RowKey eq 'UpdateConfig'" | Select-Object -First 1
                 if ($Existing) {
@@ -356,7 +364,10 @@ function Invoke-ExecContainerManagement {
                 Add-CIPPAzDataTableEntity @SettingsTable -Entity $Entity -Force | Out-Null
 
                 $Settings = Sync-CippContainerUpdateState
-                if ($UpdateAvailable -and $Settings.AutoUpdate -eq 'true') {
+                if ($UpdateAvailable -and $Attestation.State -eq 'Failed') {
+                    $Result = "Update available but withheld: $RemoteVersion failed provenance verification ($($Attestation.Reason))."
+                    Write-LogMessage -API $APIName -headers $Headers -message "Container update $RemoteVersion failed provenance verification: $($Attestation.Reason). Auto-restart withheld." -sev Warning
+                } elseif ($UpdateAvailable -and $Settings.AutoUpdate -eq 'true' -and $Attestation.State -eq 'Verified') {
                     Write-LogMessage -API $APIName -headers $Headers -message "Auto-update: new container version detected (running: $RunningVersion, remote: $RemoteVersion). Restarting." -sev Info
                     try { Request-CIPPRestart -Reason 'Auto-update: new container version available' } catch {}
                     $Result = "Update available — container restart initiated (auto-update enabled). Running: $RunningVersion, Remote: $RemoteVersion"

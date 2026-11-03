@@ -111,6 +111,8 @@ Every check also verifies the newest image on your channel: its signed build att
 | Failed       | No attestation was found, or it did not match. With an update pending, auto-restart is withheld, a warning is logged and the restart dialog warns you; when already up to date the result is simply shown.  |
 | Unverifiable | The attestation could not be checked, for example a registry error or a private fork signed by a certificate authority CIPP does not carry. The check retries next interval. |
 
+Verified says who built the image, not who reviewed it. On the **dev** and **nightly** channels it shows as **Verified · Dev**: those images are built from the dev branch, which accepts direct pushes before release review. Branch builds show **Verified · Preview**. Only **latest** is built from a release tag on main, where pull requests are required, and shows plain **Verified**. The Release Channel card shows a warning when a dev or nightly channel is selected.
+
 See [verifying-container-images.md](../../../../security/cipp-security-and-compliance/verifying-container-images.md "mention") for how to verify an image yourself and what to do when building from a fork.
 
 Note that if the container restarts for any reason, the latest image for the current release channel is pulled regardless of these settings.

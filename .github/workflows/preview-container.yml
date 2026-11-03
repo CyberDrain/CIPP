@@ -46,6 +46,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -202,6 +204,15 @@ jobs:
             org.opencontainers.image.revision=${{ steps.version.outputs.full_sha }}
             org.opencontainers.image.version=${{ steps.version.outputs.app_version }}
             org.opencontainers.image.created=${{ steps.version.outputs.build_date }}
+
+      # Signs a provenance attestation linking the pushed digest to this workflow run and commit,
+      # so consumers can verify an image came from CI rather than a direct registry push.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
 
       - name: Summary
         run: |

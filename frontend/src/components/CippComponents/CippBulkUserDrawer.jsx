@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CippIcons } from "../../utils/icon-registry"
-import { Alert, Button, Link, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { Alert, Button, Link, Dialog, DialogActions, DialogContent, DialogTitle, Stack } from "@mui/material";
 import { Grid } from "@mui/system";
 import { useForm, useWatch } from "react-hook-form";
 import { CippOffCanvas } from "./CippOffCanvas";
@@ -130,14 +130,25 @@ export const CippBulkUserDrawer = ({
     });
   };
 
-  const handleCloseDrawer = () => {
-    setDrawerVisible(false);
+  // Reset on open as well as close: the page stays mounted across tenant switches, so the
+  // mount-time defaults would otherwise send the request to the previously selected tenant.
+  const resetForm = () => {
     formControl.reset({
       tenantFilter: initialState.currentTenant,
       usageLocation: initialState.usageLocation || "US",
       bulkUser: [],
       licenses: [],
     });
+  };
+
+  const handleOpenDrawer = () => {
+    resetForm();
+    setDrawerVisible(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerVisible(false);
+    resetForm();
   };
 
   const actions = [
@@ -154,7 +165,7 @@ export const CippBulkUserDrawer = ({
     <>
       <PermissionButton
         {...(PermissionButton !== Button ? { requiredPermissions } : {})}
-        onClick={() => setDrawerVisible(true)}
+        onClick={handleOpenDrawer}
         startIcon={<CippIcons.GroupAdd />}
       >
         {buttonText}
@@ -165,28 +176,31 @@ export const CippBulkUserDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSubmit}
-              disabled={
-                isAllTenants ||
-                createBulkUsers.isLoading ||
-                !bulkUserData ||
-                bulkUserData.length === 0
-              }
-            >
-              {createBulkUsers.isLoading
-                ? "Creating Users..."
-                : createBulkUsers.isSuccess
-                  ? "Create More Users"
-                  : "Create Users"}
-            </Button>
-            <Button variant="outlined" onClick={handleCloseDrawer}>
-              Close
-            </Button>
-          </div>
+          <Stack spacing={2}>
+            <CippApiResults apiObject={createBulkUsers} />
+            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit}
+                disabled={
+                  isAllTenants ||
+                  createBulkUsers.isLoading ||
+                  !bulkUserData ||
+                  bulkUserData.length === 0
+                }
+              >
+                {createBulkUsers.isLoading
+                  ? "Creating Users..."
+                  : createBulkUsers.isSuccess
+                    ? "Create More Users"
+                    : "Create Users"}
+              </Button>
+              <Button variant="outlined" onClick={handleCloseDrawer}>
+                Close
+              </Button>
+            </div>
+          </Stack>
         }
       >
         <Grid container spacing={2}>
@@ -255,8 +269,6 @@ export const CippBulkUserDrawer = ({
               noCard={true}
             />
           </Grid>
-
-          <CippApiResults apiObject={createBulkUsers} />
         </Grid>
 
         <Dialog

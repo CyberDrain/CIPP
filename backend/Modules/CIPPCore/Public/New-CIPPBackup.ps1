@@ -36,6 +36,7 @@ function New-CIPPBackup {
                     $BackupTables = @(
                         'AppPermissions'
                         'AccessRoleGroups'
+                        'allowedAppRoles'
                         'ApiClients'
                         'CippReplacemap'
                         'CustomPowershellScripts'
@@ -58,6 +59,9 @@ function New-CIPPBackup {
                         'TenantProperties'
                         'TenantGroups'
                         'TenantGroupMembers'
+                        'BaselineRollouts'
+                        'Baselines'
+                        'BaselineRolloutState'
                     )
                     $CSVfile = foreach ($CSVTable in $BackupTables) {
                         $Table = Get-CippTable -tablename $CSVTable

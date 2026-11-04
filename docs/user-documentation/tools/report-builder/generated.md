@@ -16,9 +16,6 @@ A generated report is a snapshot, not a live view. Test results and database con
 | Tenant Filter | The tenant the report was generated for.                                                                                                                                                                                                     |
 | Generated At  | The relative time since the report was generated.                                                                                                                                                                                            |
 | Status        | The status of the generated report. The only value in use is `Completed`. A report that fails to generate is never recorded here at all, so failures show up as a missing report rather than a failed one, and the reason is in the logbook. |
-| Sections      | The number of sections in the report.                                                                                                                                                                                                        |
-
-Additional columns are available through the **Toggle Column Visibility** button at the top of the table, including separate counts of the test-backed and custom sections that make up the total.
 
 ## Table Actions
 

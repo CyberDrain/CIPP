@@ -571,7 +571,7 @@ const LazyControlDetail = ({ row }) => {
           {row.ControlName}
         </Typography>
       </Box>
-      <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+      <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
         <Button
           size="small"
           variant="contained"

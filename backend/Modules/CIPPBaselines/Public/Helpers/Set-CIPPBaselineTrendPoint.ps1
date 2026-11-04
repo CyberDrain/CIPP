@@ -20,7 +20,7 @@ function Set-CIPPBaselineTrendPoint {
     param()
 
     $ResolvedTable = Get-CippTable -tablename 'BaselineAlignment'
-    $Rows = @(Get-CIPPAzDataTableEntity @ResolvedTable -Filter "PartitionKey ne ''")
+    $Rows = @(Get-CIPPAzDataTableEntity @ResolvedTable -Filter "PartitionKey ne ''" -Property PartitionKey, RowKey, StandardName, Status, OriginalEntityId, PartIndex)
     if ($Rows.Count -eq 0) { return }
 
     $Day = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')

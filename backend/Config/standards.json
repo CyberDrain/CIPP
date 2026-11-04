@@ -7976,6 +7976,15 @@
       },
       {
         "type": "autoComplete",
+        "name": "standards.ColleagueImpersonationAlert.excludedMailboxes",
+        "label": "Exclude mailboxes by keywords for example any Displayname starting with (Leaver)",
+        "multiple": true,
+        "creatable": true,
+        "required": false
+      },
+
+      {
+        "type": "autoComplete",
         "name": "standards.ColleagueImpersonationAlert.additionalExemptSenders",
         "label": "Additional exempt sender addresses",
         "multiple": true,

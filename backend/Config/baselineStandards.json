@@ -5897,6 +5897,43 @@
     ]
   },
   {
+    "name": "standards.EnrollmentRestrictionTemplate",
+    "cat": "Templates",
+    "tag": [],
+    "helpText": "Deploy enrollment (device type) restrictions for specific groups from CIPP templates, with their platform settings and group assignment. An existing restriction with the same name and platform is updated.",
+    "docsDescription": "Deploy an enrollment (device type) restriction from a CIPP template. Grades whether every object the platform needs exists (two for Android), the platform settings, and the assignment as all users or the set of groups matching the template's group names. Priority is applied when the restriction is created and is not graded afterwards. Remediation creates or patches the restriction through Set-CIPPEnrollmentRestriction.",
+    "executiveText": "Applies the same rules about which devices staff can enrol, such as allowing personal Android phones only through a work profile or blocking personal iPhones, to the right groups in every tenant.",
+    "label": "Enrollment Restriction Template",
+    "impact": "High Impact",
+    "impactColour": "danger",
+    "addedDate": "2026-10-29",
+    "powershellEquivalent": "Graph: POST or PATCH deviceManagement/deviceEnrollmentConfigurations, then setPriority and assign",
+    "recommendedBy": [],
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ],
+    "multiple": true,
+    "addedComponent": [
+      {
+        "name": "standards.EnrollmentRestrictionTemplate.enrollmentRestrictionTemplate",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Select Enrollment Restriction Template",
+        "required": true,
+        "api": {
+          "url": "/api/ListEnrollmentRestrictionTemplates",
+          "labelField": "displayName",
+          "valueField": "GUID",
+          "queryKey": "ListEnrollmentRestrictionTemplates"
+        }
+      }
+    ]
+  },
+  {
     "name": "standards.EnrollmentWindowsHelloForBusinessConfiguration",
     "cat": "Intune Standards",
     "tag": [],
@@ -9537,8 +9574,8 @@
     "name": "standards.SPGuestPeoplePicker",
     "cat": "SharePoint Standards",
     "tag": [],
-    "helpText": "Controls whether guest (external) users already in the tenant appear as suggestions in the SharePoint and OneDrive People Picker. Enforces the wanted state on BOTH the tenant default and every existing site collection - the two are set independently, so changing the tenant default does not update existing sites. Which sites differ is read from the daily SharePoint cache, and the write sweep runs at most once per 24h per tenant so it never re-runs against a stale cache.",
-    "docsDescription": "Enforces ShowPeoplePickerSuggestionsForGuestUsers at both levels it is set independently: the tenant default and each site collection. Which sites differ is read from the SPOSites reporting cache (populated by the daily SharePoint cache run); the tenant default is read from the cached SharePoint tenant configuration. It reports the tenant default and every differing site as offenders and remediates the tenant default (Set-SPOTenant) and each offending site (Set-SPOSite), sweeping the sites concurrently. The sweep is guarded to once per 24h per tenant (shared with the classic standard) so it is not repeated before the next daily cache run reflects the change and the standard re-evaluates. Guests are not shown by default even when they exist in the tenant, and changing the tenant default does not retroactively change existing sites - which is why both are covered here.",
+    "helpText": "Controls whether existing guest users appear as suggestions in the SharePoint and OneDrive People Picker. Applies to the tenant default and all existing sites, since changing the tenant setting alone does not update existing sites.",
+    "docsDescription": "Sets ShowPeoplePickerSuggestionsForGuestUsers on the tenant default and on each existing site collection. These are separate settings, so changing the tenant default does not change sites that already exist. Showing guests makes it easier to share with known external collaborators. Hiding them lowers the risk of sharing with the wrong person by accident. Site-level changes show up in reports after the next daily SharePoint data refresh.",
     "executiveText": "Makes existing external collaborators discoverable (or hidden) when sharing SharePoint and OneDrive content, consistently across the whole tenant - the default for new sites and every existing site. This keeps the sharing experience predictable and prevents individual sites from drifting away from the agreed collaboration posture.",
     "label": "Show guest users in the SharePoint People Picker",
     "impact": "Low Impact",

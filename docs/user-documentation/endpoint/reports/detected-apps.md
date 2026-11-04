@@ -27,6 +27,6 @@ Unmanaged applications are only collected from devices marked as corporate owned
 Intune refreshes this inventory roughly every seven days per device, counted from that device's enrolment date rather than on a tenant-wide schedule, so a newly installed application can take a while to appear. Applications collected by the Intune Management Extension for Win32 apps refresh every 24 hours instead.
 {% endhint %}
 
-To see which applications a particular device reports, use the Detected Applications section on [device.md](../mem/devices/device.md "mention").
+To see which applications a particular device reports, use the Detected Applications section on [device.md](../mem/devices/device/README.md "mention").
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

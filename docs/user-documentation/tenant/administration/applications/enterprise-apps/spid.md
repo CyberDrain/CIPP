@@ -1,8 +1,8 @@
 # View Enterprise Application
 
-This page shows a single enterprise application in detail: its identifiers and publisher, the credentials it holds, who owns it, and the permissions that have actually been granted to it in the tenant.
+This page shows a single enterprise application in detail: its identifiers and publisher, how exposed the tenant is through it, the credentials it holds, who owns it, and the permissions and directory roles that have actually been granted to it in the tenant.
 
-The header carries the application's display name, chips for the Application (client) ID and Object ID that copy to the clipboard when selected, how long ago the service principal was created, and a **View in Entra** link that opens the same application in the Microsoft Entra admin center.
+The header carries the application's display name, an **Enabled** or **Disabled** chip showing whether the application can sign in and obtain tokens in this tenant, chips for the Application (client) ID and Object ID that copy to the clipboard when selected, how long ago the service principal was created, and a **View in Entra** link that opens the same application in the Microsoft Entra admin center.
 
 ## Page Actions
 
@@ -41,6 +41,14 @@ This card identifies the application. The top of the card shows the display name
 {% hint style="info" %}
 An app registration only exists in the tenant that owns the application. For Microsoft services and third-party multi-tenant applications, the registration lives in the publisher's tenant, so the app registration page will not find it.
 {% endhint %}
+
+### Permission exposure
+
+Summarises the application's row from [app-permission-exposure.md](../../../reports/app-permission-exposure.md "mention"): its overall risk, highest impact and suspicion ratings, who owns it, the reasons behind the rating, its sign-in activity and credentials, and each risky permission, directory role and Exchange application role it holds. **Open report** opens the full report for the selected tenant.
+
+Where the application holds nothing from CIPP's risky permissions set, the card says so instead. A note beneath the card says whether the figures come from the report's cached data, and when it was collected, or were read live because the tenant has no cached data yet. Run a sync from the report to refresh cached figures.
+
+The card is not shown with **All Tenants** selected, because the report covers one tenant at a time.
 
 ### Single sign-on
 
@@ -91,6 +99,16 @@ Where Graph returns no owners the section says so, and where the owners request 
 
 This tab shows what the application has actually been granted in the tenant, read from the service principal's own app role assignments and OAuth2 permission grants. It reflects consent as it stands now, not what the application asks for in its manifest, so a permission the application requests but has never been consented to will not appear here.
 
+With the `Tenant.Application.ReadWrite` permission, you can also grant and remove permissions here. Each change applies as soon as you confirm it.
+
+| Control                  | Description                                                                                                                                                                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add permission           | Shown beside each section heading. Choose a **Resource API**, then one or more permissions that API publishes. Application permissions are granted with admin consent and take effect without a signed-in user. Delegated permissions are consented on behalf of every user in the tenant. Only APIs CIPP knows the permissions of are offered. |
+| Remove (bin icon)        | Shown on each permission. Removes that one permission. Removing a delegated permission also removes any consent individual users gave for it.                                                                                                                                                       |
+| Remove all (sweep icon)  | Shown on each API group. Removes every permission the application holds on that API, in that section.                                                                                                                                                                                              |
+
+A permission the application already holds is reported as already granted rather than added twice.
+
 ### Application permissions
 
 App roles assigned to the application for app-only access, grouped by the API that publishes them. Each group is headed by the resource name, its object ID, and the number of permissions granted. Expanding a group lists each permission by name with the description published by that API.
@@ -105,6 +123,24 @@ Permissions that appear in CIPP's curated set of risky permissions are marked wi
 
 {% hint style="info" %}
 The risky-permissions set is a deliberately short list of the permissions most useful to an attacker, and it concentrates on application permissions, so delegated scopes are rarely flagged. A permission without a chip has not been assessed rather than judged safe.
+{% endhint %}
+
+## Roles Tab
+
+This tab lists the Microsoft Entra directory roles assigned to the application. A role lets the application act as that administrator through any application permission it uses, so a role here can grant far more than the Permissions tab suggests.
+
+Each role shows its name and description, a chip for where it applies (**Directory** for tenant-wide, otherwise the scope it is limited to), and a **Custom** chip for a custom role. Roles in CIPP's risky set carry an **Impact** chip, and hovering it gives the reason the role is considered risky. Where the application holds no roles, the tab says so.
+
+With the `Identity.Role.ReadWrite` permission, you can change the application's roles here. Each change applies as soon as you confirm it.
+
+| Control           | Description                                                                                                                                                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add role          | Choose one or more directory roles to assign. Roles are assigned tenant-wide. Roles in CIPP's risky set show their impact in the list, and roles the application already holds tenant-wide are not offered.                     |
+| Remove (bin icon) | Shown on each role. Removes that role from the application, including a role limited to an administrative unit.                                                                                                            |
+| Remove all        | Removes every directory role the application holds. Greyed out when it holds none.                                                                                                                                           |
+
+{% hint style="warning" %}
+Privileged roles such as Global Administrator give the application full control of the tenant. CIPP refuses to change the roles of its own CIPP-SAM application.
 {% endhint %}
 
 {% include "../../../../../../.gitbook/includes/feature-request.md" %}

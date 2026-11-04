@@ -15,7 +15,7 @@ Each row is one of the derived types of the Graph resource `authenticationMethod
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Enable Policy</td><td>Enables the selected authentication method for the tenant.</td><td>true</td></tr><tr><td>Disable Policy</td><td>Disables the selected authentication method for the tenant.</td><td>true</td></tr><tr><td>Deploy to Custom Group</td><td>Scopes the method to one or more groups chosen from the tenant's group list. The groups selected replace whatever the method was previously scoped to.</td><td>true</td></tr><tr><td>Assign to All Users</td><td>Scopes the method to every user in the tenant, replacing any existing targeting.</td><td>false</td></tr><tr><td>Configure</td><td>Opens a form of settings specific to the selected method. Only available where the method is enabled and has settings to configure, which means Temporary Access Pass, Microsoft Authenticator, Email, QR Code PIN, FIDO2, Voice or SMS.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Enable Policy</td><td>Enables the selected authentication method for the tenant.</td><td>true</td></tr><tr><td>Disable Policy</td><td>Disables the selected authentication method for the tenant.</td><td>true</td></tr><tr><td>Deploy to Custom Group</td><td>Scopes the method to one or more groups chosen from the tenant's group list. The groups selected replace whatever the method was previously scoped to.</td><td>true</td></tr><tr><td>Assign to All Users</td><td>Scopes the method to every user in the tenant, replacing any existing targeting.</td><td>false</td></tr><tr><td>Configure</td><td>Opens a form of settings for the selected method, including the groups excluded from it. Greyed out when the method is disabled.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% hint style="warning" %}
 Both targeting actions replace the method's include targets rather than adding to them. Deploying to a custom group on a method currently scoped to all users removes the all-users scope, so anyone outside the chosen groups loses the method.
@@ -23,10 +23,11 @@ Both targeting actions replace the method's include targets rather than adding t
 
 ## Method Settings
 
-**Configure** shows only the settings that apply to the selected method, pre-filled with the method's current values.
+**Configure** shows only the settings that apply to the selected method, pre-filled with the method's current values. Every method has **Exclude group(s)**; the other settings depend on the method.
 
 | Method                  | Setting                                                         | Description                                                                                                                |
 | ----------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| All methods             | Exclude group(s)                                                | Groups excluded from the method. The groups selected replace the current exclusions, and clearing the field removes them.  |
 | Temporary Access Pass   | One-time use only                                               | Whether a pass is consumed by its first use, rather than remaining valid until it expires.                                 |
 | Temporary Access Pass   | Minimum lifetime (minutes)                                      | The shortest lifetime an administrator may set when issuing a pass.                                                        |
 | Temporary Access Pass   | Maximum lifetime (minutes)                                      | The longest lifetime an administrator may set when issuing a pass.                                                         |
@@ -37,7 +38,6 @@ Both targeting actions replace the method's include targets rather than adding t
 | Microsoft Authenticator | Show geographic location in push and passwordless notifications | Whether approval prompts show where the sign-in came from. Default, Enabled or Disabled.                                   |
 | Microsoft Authenticator | Companion app allowed state                                     | Whether approvals may be completed from a companion app. Default, Enabled or Disabled.                                     |
 | Email                   | Allow external users to use Email OTP                           | Whether guests from outside the tenant may authenticate with an emailed one-time code. Default, Enabled or Disabled.       |
-| Email                   | Exclude group(s)                                                | Groups excluded from Email OTP.                                                                                            |
 | QR Code PIN             | Standard QR code lifetime (days, 1-395)                         | How long an issued QR code remains valid.                                                                                  |
 | QR Code PIN             | PIN length (8-20)                                               | How many digits the accompanying PIN contains.                                                                             |
 | FIDO2                   | Enforce attestation                                             | Whether security keys must prove their make and model before they can be registered.                                       |

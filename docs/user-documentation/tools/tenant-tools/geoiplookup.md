@@ -1,9 +1,9 @@
 # IP Database
 
-The IP Database holds CIPP's IP allow and block list. Each entry is a single address or a CIDR range, IPv4 or IPv6, recorded as trusted, as blocked (a known attacker address), or as neutral.
+The IP Database holds CIPP's IP allow and block list. Each entry is a single address or a CIDR range, IPv4 or IPv6, recorded as safe or as compromised (a known attacker address).
 
-* **Audit logs:** a trusted address is excluded from audit log processing. When CIPP evaluates audit logs against your alert rules, any client IP marked as trusted skips geolocation and reputation enrichment entirely, so rules that key on location or on a bad-reputation IP (including `CIPPBadRepIP`) will not fire for it. Reserved and private address ranges are skipped automatically and do not need an entry.
-* **Compromise investigations:** the [Business Email Compromise](../../identity/administration/bec/README.md) investigation treats trusted entries as confirmed safe and blocked entries as confirmed compromised. Where several entries cover the same address, the most specific range decides it, and at the same specificity an entry for the tenant overrides one for all tenants. A single blocked address inside a trusted office range therefore stays blocked.
+* **Audit logs:** a safe address is excluded from audit log processing. When CIPP evaluates audit logs against your alert rules, any client IP marked as safe skips geolocation and reputation enrichment entirely, so rules that key on location or on a bad-reputation IP (including `CIPPBadRepIP`) will not fire for it. Reserved and private address ranges are skipped automatically and do not need an entry.
+* **Compromise investigations:** the [Business Email Compromise](../../identity/administration/bec/README.md) investigation treats safe entries as confirmed safe and compromised entries as confirmed compromised. Where several entries cover the same address, the most specific range decides it, and at the same specificity an entry for the tenant overrides one for all tenants. A single compromised address inside a safe office range therefore stays compromised.
 
 The page pairs a lookup tool for investigating an IP address with the list of entries already recorded.
 
@@ -27,9 +27,9 @@ The results card appears once a check has run. Alongside the details below, a ma
 
 Three buttons below the results record what you entered in the **Geo IP Check** field, address or range, against the tenant currently chosen in the tenant selector:
 
-* **Trust** records it as trusted.
-* **Block** records it as blocked, marking it as a known attacker address.
-* **Remove from list** makes it neutral again, neither trusted nor blocked. This does not delete the entry, it changes its state, so it stays in the table as `NotTrusted`.
+* **Mark Safe** records it as safe.
+* **Mark Compromised** records it as compromised, a known attacker address.
+* **Remove from list** deletes the entry for that tenant, so the address is neither safe nor compromised.
 
 {% hint style="warning" %}
 Check the tenant selector before using any of the buttons. Entries are written against the tenant selected at that moment, and an entry for one tenant has no effect on any other. With **All Tenants** selected, the entry applies to every tenant, and an entry for a single tenant overrides it for the same range.
@@ -44,16 +44,16 @@ The table lists every entry recorded across all of your tenants, not just the te
 | Column        | Description                                                                                                                                                 |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Partition Key | The tenant the entry applies to, shown as that tenant's default domain name, or `AllTenants` for an entry that applies to every tenant.                     |
-| State         | Whether the entry is recorded as `Trusted`, `Blocked`, or `NotTrusted` (neutral). Neutral entries have no effect.                                           |
+| Verdict       | Whether the entry is recorded as `Safe` or `Compromised`. An entry made neutral before entries could be removed shows as `NotTrusted` and has no effect.     |
 | Range         | The IP address or CIDR range.                                                                                                                               |
 | Note          | Context recorded with the entry. Entries saved from a Business Email Compromise IP review carry the case they came from, for example `BEC case` and its ID. |
 
 ### Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>View Location</td><td>Runs a Geo IP check for the selected entry and shows the result in the Geo IP Results card. For a range, the check uses the address before the prefix length.</td><td>false</td></tr><tr><td>Trust</td><td>Records the selected entry as trusted for the tenant currently selected. Greyed out on entries that are already trusted.</td><td>true</td></tr><tr><td>Block</td><td>Records the selected entry as blocked, a known attacker address, for the tenant currently selected. Greyed out on entries that are already blocked.</td><td>true</td></tr><tr><td>Remove from list</td><td>Makes the selected entry neutral again, neither trusted nor blocked, for the tenant currently selected. Greyed out on entries that are already neutral.</td><td>true</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>View Location</td><td>Runs a Geo IP check for the selected entry and shows the result in the Geo IP Results card. For a range, the check uses the address before the prefix length.</td><td>false</td></tr><tr><td>Mark Safe</td><td>Records the selected entry as safe for the tenant shown in its <strong>Partition Key</strong>. Greyed out on entries that are already safe.</td><td>true</td></tr><tr><td>Mark Compromised</td><td>Records the selected entry as compromised, a known attacker address, for the tenant shown in its <strong>Partition Key</strong>. Greyed out on entries that are already compromised.</td><td>true</td></tr><tr><td>Remove from list</td><td>Deletes the selected entry from the list.</td><td>true</td></tr></tbody></table>
 
 {% hint style="info" %}
-The **Trust**, **Block**, and **Remove from list** actions write against the tenant in the tenant selector, not the tenant shown in the entry's **Partition Key**. Acting on another tenant's row while a different tenant is selected creates a second entry rather than changing the existing one.
+The table actions change the entry for the tenant in its own **Partition Key**, whatever the tenant selector is set to. Only the buttons below the Geo IP results write against the selected tenant.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

@@ -35,6 +35,8 @@ export const CippPermissionResults = (props) => {
       results?.Results?.ErrorMessages?.length > 0
     ) {
       setCardIcon(<CippIcons.Cancel />);
+    } else if (results?.Results?.WarningMessages?.length > 0) {
+      setCardIcon(<CippIcons.Warning />);
     } else {
       setCardIcon(<CippIcons.CheckCircle />);
     }
@@ -157,6 +159,16 @@ export const CippPermissionResults = (props) => {
                 </Typography>
               </ListItem>
             ))}
+            {results?.Results?.WarningMessages?.map((warning, index) => (
+              <ListItem key={`warning-${index}`} sx={{ py: 0 }}>
+                <Typography variant="body2">
+                  <SvgIcon fontSize="sm" color="warning" style={{ marginRight: 4 }}>
+                    <CippIcons.Warning />
+                  </SvgIcon>
+                  {warning}
+                </Typography>
+              </ListItem>
+            ))}
             {results?.Results?.ErrorMessages?.map((error, index) => (
               <ListItem key={index} sx={{ py: 0 }}>
                 <Typography variant="body2">
@@ -233,6 +245,15 @@ export const CippPermissionResults = (props) => {
                   simpleColumns={["Application", "Type", "Permission"]}
                 />
               </>
+            )}
+            {results?.Results?.UngrantedPermissions?.length > 0 && (
+              <CippDataTable
+                title="Permissions not granted in your tenant"
+                isFetching={!importReport && executeCheck?.isFetching}
+                refreshFunction={executeCheck}
+                data={results?.Results?.UngrantedPermissions}
+                simpleColumns={["Type", "Permission"]}
+              />
             )}
             <CippApiResults apiObject={startCPVRefresh} />
             {results?.Results?.CPVRefreshList?.length > 0 && (

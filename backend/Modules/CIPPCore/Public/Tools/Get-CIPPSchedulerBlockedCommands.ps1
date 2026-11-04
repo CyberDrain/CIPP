@@ -48,6 +48,7 @@ function Get-CIPPSchedulerBlockedCommands {
         # Extension authentication tokens
         'Get-GradientToken'
         'Get-HaloToken'
+        'Invoke-SyncroRequest'
         'Get-NinjaOneToken'
         'Get-SherwebAuthentication'
         'Get-HIBPAuth'

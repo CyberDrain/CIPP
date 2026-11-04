@@ -20,7 +20,7 @@ Within CIPP, there are two types of alerts. Choose one of the two cards at the t
 ## Alert Timing
 
 * **Audit Log Alerts** - Processed in near real-time, but a small delay of up to 15 minutes is normal.
-* **Scripted CIPP Alerts** - Each alert comes with a default recurrence suggested by the CIPP team, which you can adjust as needed. The available recurrences are every 30 minutes, hour, 4 hours, day, 7 days, 14 days, 21 days, 30 days or 365 days.
+* **Scripted CIPP Alerts** - Each alert comes with a default recurrence suggested by the CIPP team, which you can adjust as needed. The available recurrences are every 30 minutes, hour, 4 hours, 6 hours, day, 7 days, 14 days, 21 days, 30 days or 365 days. Alerts whose data only refreshes on a schedule, such as daily, set a minimum run interval, and only recurrences at or above that minimum are offered for them.
 
 ## Tenant Selector
 
@@ -72,8 +72,12 @@ For what each code means, see Microsoft's [AADSTS error code reference](https://
 | Field                            | Description                                                                                                            |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | What alerting script should run  | The CIPP alert check to run. See [#available-alerts](alert.md#available-alerts "mention") for the full list. Required. |
-| When should the alert run        | How often the check repeats. Required.                                                                                 |
+| When should the alert run        | How often the check repeats. Required. Recurrences shorter than the alert's minimum run interval are not offered.      |
 | When should the first alert run? | The date and time of the first run, with the recurrence counted from there.                                            |
+
+{% hint style="info" %}
+Opening an existing alert that was saved with a recurrence shorter than its minimum run interval raises the recurrence to the minimum, and saving the alert keeps the new value. Until it is saved, the alert keeps its old schedule, but runs that fall inside the minimum interval since the last completed run for that tenant are skipped. Skipped runs are listed on [run-history.md](run-history.md "mention").
+{% endhint %}
 
 Some alert scripts need extra information, such as a threshold value or a list of items to watch. Any additional fields appear beneath the recurrence options once you have selected the script and are labelled by the script itself.
 
@@ -106,7 +110,7 @@ Execute a BEC Remediate and Disable the user in the log entry act on the tenant 
 
 ### PSA Ticket Strategy
 
-Shown for scripted alerts when PSA is one of the selected actions. It overrides the HaloPSA Link Tickets to affected Users toggle for this alert only, which is handy for wide alerts such as users without MFA where you want to control how many tickets are raised.
+Shown for scripted alerts when PSA is one of the selected actions. It overrides the Link Tickets to affected Users toggle of the HaloPSA or NinjaOne integration for this alert only, which is handy for wide alerts such as users without MFA where you want to control how many tickets are raised.
 
 | Option                             | Description                                                   |
 | ---------------------------------- | ------------------------------------------------------------- |
@@ -117,7 +121,7 @@ Whichever option matches your current HaloPSA integration setting is labelled as
 
 ### PSA Ticket Priority
 
-Shown for both alert types when Generate a PSA ticket (or PSA) is one of the selected actions, and only while the HaloPSA integration is enabled. Overrides the HaloPSA Default Priority for tickets raised by this alert, restricted to the priorities available on the integration's Ticket Type. Leave it blank to use the integration default.
+Shown for both alert types when Generate a PSA ticket (or PSA) is one of the selected actions, and only while the HaloPSA or Syncro integration is enabled. Overrides that integration's default priority for tickets raised by this alert; for HaloPSA the list is restricted to the priorities available on the integration's Ticket Type. Leave it blank to use the integration default. NinjaOne tickets always use the priority set on the NinjaOne integration.
 
 {% hint style="info" %}
 The dropdown is shown disabled with an explanation instead of a priority list when there is nothing valid to offer: no Ticket Type is set on the integration yet, the configured Ticket Type has no SLA attached (so HaloPSA is left to apply its own priority regardless of any selection here), or the priority list could not be loaded.
@@ -133,7 +137,7 @@ Overrides the default notification subject with your own text. The value is pref
 
 ### Alert Comment
 
-Free-text information to carry with the alert, such as documentation links, FAQ references or instructions for whoever picks it up. Variable replacement is supported, including `%tenantfilter%`, `%tenantname%`, `%resultcount%` for the number of results that triggered the alert, and any custom variables you have defined.
+Free-text information to carry with the alert, such as documentation links, FAQ references or instructions for whoever picks it up. The comment is shown in the alert notification for both alert types, with web addresses turned into clickable links and line breaks kept. Variable replacement is supported, including `%tenantfilter%`, `%tenantname%`, `%resultcount%` for the number of results that triggered the alert, and any custom variables you have defined.
 
 Once the criteria and notification settings are complete, **Save Alert** on the Notification Settings card writes the alert. The button stays disabled until every required field is valid.
 

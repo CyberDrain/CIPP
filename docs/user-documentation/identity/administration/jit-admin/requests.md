@@ -27,12 +27,12 @@ The JIT Admin is created and scheduled in the same way as one created without ap
 
 | Event              | Who is told                                                                                                                                                                                                                                                 |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Request submitted  | Everyone set up in CIPP's [notifications.md](../../../cipp/settings/notifications.md "mention") settings: the email recipients, the webhook, and the PSA if **Send to integration** is on. On the new CIPP infrastructure, approvers also get a push notification on any device they have registered. The requester does not get a push notification for their own request. |
-| Approved           | The same notification settings, with the result of creating the JIT Admin. On the new CIPP infrastructure, the requester also gets a push notification.                                                                                                     |
-| Rejected           | The same notification settings, with the rejection note. On the new CIPP infrastructure, the requester also gets a push notification.                                                                                                                       |
+| Request submitted  | Everyone set up in CIPP's [notifications.md](../../../cipp/settings/notifications.md "mention") settings: the email recipients, the webhook, and the PSA if **Send to integration** is on. Each approver also gets an email of their own, and on the new CIPP infrastructure a push notification on any device they have registered. The requester does not get a push notification for their own request. |
+| Approved           | The same notification settings, with the result of creating the JIT Admin. The requester also gets an email, and on the new CIPP infrastructure a push notification.                                                                                                     |
+| Rejected           | The same notification settings, with the rejection note. The requester also gets an email, and on the new CIPP infrastructure a push notification.                                                                                                                       |
 
 {% hint style="info" %}
-Push notifications go to devices registered on the **Preferences** page. Approvers are found from the users listed under CIPP Users, so an approver who signs in to CIPP without being listed there does not receive a push, but still receives the email, webhook and PSA notifications.
+Push notifications go to devices registered on the **Preferences** page. Approvers are found from the users listed under CIPP Users, so an approver who signs in to CIPP without being listed there gets neither the personal email nor the push, though the notification settings above are still told.
 {% endhint %}
 
 ## Filters

@@ -48,7 +48,7 @@ A stacked chart shows each API client's egress over the selected window. Hover o
 
 **Top endpoints today**
 
-A table of today's endpoints, ordered by the data they served. Use **Endpoints for** to switch between **All API clients**, a single API client, and **Signed-in users (not capped)**. Graph requests are grouped by resource with IDs removed, so requests for different users' group memberships count as one endpoint, and MCP traffic is grouped by tool.
+A table of today's endpoints, ordered by the data they served. Use **Breakdown for** to switch between **All API clients**, a single API client, and **Signed-in users (not capped)**. The same choice applies to **Top caller IPs today** below. Graph requests are grouped by resource with IDs removed, so requests for different users' group memberships count as one endpoint, and MCP traffic is grouped by tool.
 
 | Column      | Description                                                  |
 | ----------- | ------------------------------------------------------------ |
@@ -58,8 +58,22 @@ A table of today's endpoints, ordered by the data they served. Use **Endpoints f
 | AvgSize     | Average response size.                                       |
 | MaxSize     | Largest single response.                                     |
 | Cache Hit % | Share of requests answered from cache.                       |
+| Encoding    | The share of requests whose responses were sent Brotli compressed (`br`), gzip compressed (`gzip`), or uncompressed (`none`). Shows `-` for traffic recorded before compression was tracked. |
 | Errors      | Requests that returned an error.                             |
 | Shed        | Requests turned away because the daily cap had been reached. |
+
+**Top caller IPs today**
+
+A table of the IP addresses that made today's requests, ordered by the data served to them, for the source chosen in **Breakdown for**. Use it to spot an automation or a single machine pulling far more data than expected.
+
+| Column   | Description                                                  |
+| -------- | ------------------------------------------------------------ |
+| IP       | The address the requests came from.                          |
+| Egress   | Data served to this address today.                           |
+| Requests | Number of requests today.                                    |
+| Encoding | The share of requests sent Brotli compressed, gzip compressed, or uncompressed, as in the endpoints table. |
+| Errors   | Requests that returned an error.                             |
+| Shed     | Requests turned away because the daily cap had been reached. |
 
 The API Client table on the **Settings** tab also has an **Egress Today** column with each client's own total for today. It shows `-` for a client with no recorded traffic, or where accounting isn't enabled.
 

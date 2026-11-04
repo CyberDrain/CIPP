@@ -45,7 +45,7 @@ import { useSettings } from '../../hooks/use-settings'
 import { parseCippDate } from '../../utils/parse-cipp-date'
 import { isEqual } from 'lodash' // Import lodash for deep comparison
 import { useLicenseBackfill } from '../../hooks/use-license-backfill'
-import { licenseIncludesFilterFn } from '../../utils/get-cipp-filter-variant'
+import { booleanEqualsFilterFn, licenseIncludesFilterFn } from '../../utils/get-cipp-filter-variant'
 import { useTableViewMode, useIsNarrowForTables } from '../../hooks/use-breakpoint'
 import { CippMobileCardList } from './CippMobileCardList'
 import { CippPageActionsFab } from '../CippComponents/CippPageActionsFab'
@@ -268,6 +268,7 @@ const FILTER_FNS = {
     return String(rowValue).toLowerCase().includes(String(value).toLowerCase())
   },
   licenseIncludes: licenseIncludesFilterFn,
+  booleanEquals: booleanEqualsFilterFn,
   notContains: (row, columnId, value) => {
     const rowValue = row.getValue(columnId)
     if (rowValue === null || rowValue === undefined) {
@@ -310,6 +311,7 @@ const MRT_LOCALIZATION_OVERRIDES = {
   filterNotContains: 'Does Not Contain',
   filterRegex: 'Regex',
   filterLicenseIncludes: 'Includes',
+  filterBooleanEquals: 'Equals',
   filterCustom: 'Custom',
 }
 
@@ -841,12 +843,12 @@ export const CippDataTable = (props) => {
   const getRequestData = ApiGetCallWithPagination({
     url: api.url,
     data: {
-      // AllTenants Graph cache reads are served in bounded pages; a page can still opt out with manualPagination: false.
-      ...(api.url === '/api/ListGraphRequest' &&
-        api.data?.tenantFilter === 'AllTenants' && { manualPagination: true }),
       ...(graphFilterData.filter
         ? mergeCaseInsensitive(api.data, graphFilterData.filter)
         : api.data),
+      // AllTenants Graph cache reads are always served in bounded pages, whatever the page or a saved preset sends.
+      ...(api.url === '/api/ListGraphRequest' &&
+        api.data?.tenantFilter === 'AllTenants' && { manualPagination: true }),
       ...(cacheAction && { [cacheAction]: true }),
     },
     queryKey: requestQueryKey,

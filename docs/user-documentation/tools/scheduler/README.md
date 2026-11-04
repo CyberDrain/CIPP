@@ -57,7 +57,7 @@ The field always holds one of the two options rather than an inherited setting. 
 {% endhint %}
 
 {% hint style="info" %}
-If the ticket entered in **HaloPSA Ticket** is closed or can no longer be found, CIPP raises a new ticket instead of adding a note to it.
+If the ticket entered in **HaloPSA Ticket** is closed or can no longer be found, CIPP raises a new ticket instead of adding a note to it. A ticket assigned to another agent counts as not found unless the agent the HaloPSA API application logs in as can view and edit other agents' tickets; see [HaloPSA](../../cipp/integrations/halopsa.md).
 {% endhint %}
 
 A pair of buttons then selects the task type:

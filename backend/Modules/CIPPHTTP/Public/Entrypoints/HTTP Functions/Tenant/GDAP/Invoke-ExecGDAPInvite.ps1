@@ -165,7 +165,7 @@ function Invoke-ExecGDAPInvite {
             }
         }
         'Update' {
-            $Invite = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'invite' and RowKey eq '$InviteId'"
+            $Invite = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'invite' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $InviteId)'"
             if ($Invite) {
 
                 $InviteEntity = [PSCustomObject]@{
@@ -186,7 +186,7 @@ function Invoke-ExecGDAPInvite {
             }
         }
         'Delete' {
-            $Invite = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'invite' and RowKey eq '$InviteId'"
+            $Invite = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'invite' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $InviteId)'"
             if ($Invite) {
                 Remove-CIPPAzDataTableEntity @Table -Entity $Invite
                 $Message = 'Invite deleted'

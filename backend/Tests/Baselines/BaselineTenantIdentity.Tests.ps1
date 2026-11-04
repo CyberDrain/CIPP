@@ -89,6 +89,29 @@ Describe 'Baseline tenant identity (#941)' {
         $Items[0].TemplateName | Should -Be 'Tenant Override'
     }
 
+    It 'names a renamed group by its current name, so the assignment still matches it' {
+        $Rollout = New-Rollout 'b-renamed'
+        $Rollout | Add-Member -NotePropertyName assignedTo -NotePropertyValue '[{"label":"Baselines (Onboarding)","value":"g1","type":"Group"}]'
+        $script:Rollouts = @($Rollout)
+        $Delta = New-Delta 'b-renamed' 'group' 'g1' $false
+        $Delta.scopeName = 'Baselines (Onboarding)'
+        $script:Deltas = @($Delta)
+
+        $Baseline = Get-CIPPBaseline -ID 'b-renamed'
+
+        $Baseline.assignedTenants | Should -Be @('Baselines')
+        @($Baseline.assignments)[0].label | Should -Be 'Baselines'
+    }
+
+    It 'keeps the saved name of a group that no longer exists' {
+        $script:Rollouts = @((New-Rollout 'b-gone'))
+        $Delta = New-Delta 'b-gone' 'group' 'deleted-group' $false
+        $Delta.scopeName = 'Old group'
+        $script:Deltas = @($Delta)
+
+        (Get-CIPPBaseline -ID 'b-gone').assignedTenants | Should -Be @('Old group')
+    }
+
     It 'reads one stage per tenant and prefers the customerId row over a legacy domain row' {
         $script:Rollouts = @((New-Rollout 'b-staged' -Stages '[{"name":"One"},{"name":"Two"},{"name":"Three"}]'))
         $script:Deltas = @((New-Delta 'b-staged' 'group' 'g1' $false))
@@ -103,6 +126,20 @@ Describe 'Baseline tenant identity (#941)' {
         $States[0].tenantFilter | Should -Be 'contoso.com'
         $States[0].currentStage | Should -Be 3
         $States[0].customerId | Should -Be $script:CustomerId
+    }
+
+    It 'counts a stage gated on group <Group> only for its members (member: <Member>)' -ForEach @(
+        @{ Group = 'g1'; Member = $true }
+        @{ Group = 'other'; Member = $false }
+    ) {
+        $Stages = '[{"name":"One"},{"name":"Two","conditions":[{"type":"manual"},{"type":"group","group":{"value":"' + $Group + '"}}]}]'
+        $script:Rollouts = @((New-Rollout 'b-gated' -Stages $Stages))
+        $script:Deltas = @((New-Delta 'b-gated' 'group' 'g1' $false))
+
+        $State = @((Get-CIPPBaseline -ID 'b-gated').tenantStates)[0]
+
+        $State.totalStages | Should -Be $(if ($Member) { 2 } else { 1 })
+        [bool]$State.nextStage | Should -Be $Member
     }
 
     It 'stores tenant assignments and exclusions by customerId' {

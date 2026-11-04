@@ -27,6 +27,23 @@ Shortly after a renewal, the check can report that the secret CIPP is currently 
 When this check flags missing permissions or required CPV refreshes, the Details flyout provides buttons to handle these tasks easily.
 {% endhint %}
 
+### Permissions not granted in your tenant
+
+The check also compares the Microsoft Graph permissions CIPP needs with the ones actually granted to the CIPP-SAM application in your own tenant, once for application permissions and once for delegated permissions. Anything missing is reported as a warning rather than a failure, because CIPP keeps working, but the features that use those permissions fail. For example, certificate authentication needs the Application.ReadWrite.All application permission. The Details flyout lists each permission that is not granted.
+
+CIPP grants these permissions itself during its nightly permission update, signed in as the CIPP service account. The usual cause is that the service account does not hold a role that is allowed to grant them. To fix it:
+
+1. In Entra, assign the **Privileged Role Administrator** role to the CIPP service account. **Global Administrator** also works. If you use Privileged Identity Management, make the assignment active rather than eligible.
+2. Wait for the next nightly permission update. A failed update is retried a day after the last attempt, so this can take up to two nights. To apply it straight away, run **Refresh CPV Permissions** on the \*Partner Tenant row under CIPP > Application Settings > Tenants. That row is listed only when the partner tenant is included in the tenant list, and the action needs a role with access to it.
+3. Select **Refresh** on the Permissions check and confirm the warnings have cleared.
+
+If you would rather not give the service account that role, a Global Administrator can grant the permissions manually:
+
+1. Select the CIPP-SAM link next to **App Registration** on the Permissions check. It opens the application in the Azure portal.
+2. Go to **API permissions**. Add any permission listed in the Details flyout that is not shown, choosing **Microsoft Graph** and then Application or Delegated permissions to match the Type column.
+3. Select **Grant admin consent** for your tenant and confirm each permission shows as granted.
+4. After a few minutes, select **Refresh** on the Permissions check. Newly granted permissions can take a short while to appear.
+
 ## GDAP Check
 
 Checks your Granular Delegated Admin Privileges relationships and the roles they grant. As with the Permissions check, **Refresh** re-runs it and **Details** opens the full breakdown.

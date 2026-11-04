@@ -34,6 +34,24 @@ Every row in the Tenant and Standard views carries a state.
 
 The view opens on the tenant currently selected, and is laid out as a score bar, the baselines assigned to that tenant, and the table of applicable standards.
 
+### All Tenants
+
+With **All Tenants** selected, the view lists every tenant covered by a baseline in a **Tenant Alignment** table instead, so you can see which tenants need attention before opening one.
+
+| Column                             | Description                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------- |
+| Display Name                       | The tenant's name.                                                                  |
+| Compliant with accepted deviations | The share of the tenant's standards counting as aligned, including acceptances.     |
+| Compliant with baseline            | The share of the tenant's standards genuinely in their expected state.              |
+| Open Drift                         | How many standards are deviating and awaiting a decision.                           |
+| Accepted                           | How many deviations have been accepted.                                             |
+| Denied                             | How many deviations were denied and are queued for correction.                      |
+| Conflicts                          | How many standards are in **Conflict** between two baselines.                       |
+| License Missing                    | How many standards are excluded from scoring because the tenant is not licensed.    |
+| Tenant                             | The tenant's default domain.                                                        |
+
+**View Tenant Alignment** in the row's actions selects that tenant and opens its own Tenant View.
+
 ### Score Bar
 
 | Tile                               | Description                                                                                                                                         |
@@ -48,6 +66,10 @@ The view opens on the tenant currently selected, and is laid out as a score bar,
 One card per baseline assigned to the tenant, showing how closely the tenant matches the standards rolled out to it so far, which stage it is in, and what has to happen before it reaches the next one. Where the next stage needs manual approval the card is marked **Awaiting approval** and carries a **Move to next stage** button, which applies that stage's standards on the following run.
 
 Where the next stage is reached automatically, the card instead carries **Re-evaluate stage conditions**, which checks the tenant against that stage's conditions straight away rather than waiting for the next scheduled check. If the conditions are met, the tenant moves into the stage and receives its standards on the following run; if not, the result lists the conditions still unmet.
+
+From Stage 2 onwards the card also carries **Move back a stage**, which returns the tenant to the previous stage. The standards of the stage it leaves stop applying on the next run, but settings already applied stay in place. If the tenant still meets the conditions of the stage it left, the next scheduled run moves it forward again.
+
+Tenants are never moved forward by an edit to the baseline. Where a stage is removed, reordered or inserted, a tenant keeps only the leading stages it had already reached, and is moved back if the stage it sat in has changed. Each such move is recorded in the [Historic View](#historic-view) as **Stage Moved Back**.
 
 ### What-If Report
 
@@ -128,7 +150,9 @@ The **Baseline** and **Stage** selectors above the table narrow the view to one 
 | License Missing                    | How many tenants are excluded from scoring for want of a licence.        |
 | Tenants                            | How many tenants the standard applies to in total.                       |
 
-Selecting a row opens the **Standard Tenant Summary** flyout, which adds the Secure Score points the standard is worth, a compliance trend once there is more than one day of data, and a card per tenant giving its state. Deviating tenants can be accepted or given a tenant override directly from those cards.
+Selecting a row opens the **Standard Tenant Summary** flyout, which adds the Secure Score points the standard is worth, a compliance trend covering the last 30 days once there is more than one day of data, and a list of every tenant the standard applies to with its state.
+
+The tenant list puts tenants still awaiting a decision first. The chips above it filter the list to one state, each showing how many tenants are in it. Every tenant carries its own actions menu, with **View Deviation** and the same actions as the [Tenant View](#table-actions), and selecting a tenant opens its **Standard Details**. Tick tenants, or use the checkbox above the list to select every one shown, then use **Bulk actions** to apply an action to all of them at once. A bulk action is greyed out unless it applies to every selected tenant, and tenant overrides can only be created or removed one tenant at a time.
 
 ### Table Actions
 
@@ -149,17 +173,25 @@ One row per baseline, with the tenants it covers and how far the rollout has pro
 | Remediation      | Whether the baseline reports on deviations only, or corrects them automatically. |
 | Updated At       | When the baseline was last saved.                                                |
 
-Selecting a row opens the **Baseline Rollout** flyout, which gives a card per tenant showing the stage it is in, when it entered that stage, what has to happen before it advances, and an estimate of when that will be. Tenants waiting on manual approval carry a **Move to Next Stage** button. Tenants whose next stage is reached automatically carry **Re-evaluate Stage** instead, which checks that stage's conditions for the tenant straight away, in the same way as **Re-evaluate stage conditions** on the tenant's own card.
+Selecting a row opens the **Baseline Rollout** flyout, which gives a card per tenant showing the stage it is in, when it entered that stage, what has to happen before it advances, and an estimate of when that will be. Tenants waiting on manual approval carry a **Move to Next Stage** button. Tenants whose next stage is reached automatically carry **Re-evaluate Stage** instead, which checks that stage's conditions for the tenant straight away, in the same way as **Re-evaluate stage conditions** on the tenant's own card. Tenants past Stage 1 also carry **Move Back**, which works like **Move back a stage** on the tenant's own card.
 
 ### Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Edit Baseline</td><td>Opens the baseline in the editor.</td><td>false</td></tr><tr><td>Run Baseline Now</td><td>Runs the baseline immediately against a single covered tenant, or against every tenant it is assigned to. Standards sitting in report-only stages are compared without anything being changed.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Edit Baseline</td><td>Opens the baseline in the editor.</td><td>false</td></tr><tr><td>Run Baseline Now</td><td>Runs the baseline immediately against a single covered tenant, or against every tenant it is assigned to. Standards sitting in report-only stages are compared without anything being changed. The baseline's own configuration is applied as it stands: settings from other assigned baselines, even more specific ones, and tenant overrides are ignored for this run.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 ## Historic View
 
-A timeline of everything recorded for the selected tenant: scheduled and manual runs, and the decisions operators have made. Runs are collapsed into a single entry carrying a count per outcome, which expands to the individual standards. Entries where an alert was sent are marked, and each run can be opened to show its logs.
+A timeline of everything recorded for the selected tenant: scheduled and manual runs, the decisions operators have made, stage changes, and deletions. Runs are collapsed into a single entry carrying a count per outcome, which expands to the individual standards. Entries where an alert was sent are marked, and each run can be opened to show its logs. **View Logs** above the timeline opens every baseline log entry for the tenant.
 
-The timeline can be narrowed by standard, outcome, and run type, or searched, and loads in blocks of fifty entries.
+The timeline loads 500 entries at a time. **Load more** at the bottom fetches the next block.
+
+| Filter        | Description                                                                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Search Events | Narrows the entries already loaded by standard, outcome, detail, or operator. Load more entries to search further back.                      |
+| Standard      | Shows only the standards you pick.                                                                                                           |
+| Outcome       | Shows only the outcomes you pick, from the list below.                                                                                       |
+| Event Type    | Shows only the event types you pick: **Full run**, **Compare**, **One-off remediation**, **Operator action**, **Stage change**, or **Deletion**. |
+| Time Range    | Limits the timeline to **Last 24 hours**, **Last 7 days**, or **Last 30 days**. **All history** removes the limit.                          |
 
 | Outcome                      | Meaning                                                          |
 | ---------------------------- | ---------------------------------------------------------------- |
@@ -180,6 +212,7 @@ The timeline can be narrowed by standard, outcome, and run type, or searched, an
 | Override Created             | A tenant-specific override of the standard was created.          |
 | Override Removed             | A tenant-specific override was deleted.                          |
 | Stage Advanced               | The tenant moved into the next stage of a baseline.              |
+| Stage Moved Back             | The tenant was moved back a stage, by an operator or because the baseline's stages changed. |
 | Deleted                      | A policy was removed after its deviation was denied.             |
 | Delete Failed                | The removal did not complete. The run logs explain why.          |
 

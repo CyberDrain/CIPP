@@ -259,7 +259,10 @@ function Get-Tenants {
                     continue
                 }
                 $DefaultDomainName = if ($KeepCached) { $Item.existingDefault } else { $Resolved.defaultDomainName }
-                New-CIPPTenantRow -Item $Item -DefaultDomainName $DefaultDomainName -InitialDomainName ($Item.existingInitial ?? $Resolved.defaultDomainName ?? $DefaultDomainName) -RequiresRefresh $true
+                # The lookup only knows the default domain, which is a custom one for most tenants. Portal
+                # links pass initialDomainName as delegatedOrg, so keep a cached .onmicrosoft.com one over it.
+                $InitialDomainName = if ($Item.existingInitial -like '*.onmicrosoft.com') { $Item.existingInitial } else { $Resolved.defaultDomainName ?? $DefaultDomainName }
+                New-CIPPTenantRow -Item $Item -DefaultDomainName $DefaultDomainName -InitialDomainName $InitialDomainName -RequiresRefresh $true
             }
 
             if (($NewRows | Measure-Object).Count -gt 0) {

@@ -12,8 +12,6 @@ When the account has no mailbox, the page reports that rather than showing empty
 
 ## Actions
 
-## Actions
-
 The **Actions** menu acts on this mailbox. Some entries are greyed out rather than hidden when they do not apply, so the menu always shows the same list and the state of the mailbox decides what can be run. The whole menu is unavailable until the mailbox details have loaded.
 
 | Action                                      | Description                                                                                                                                                                                                                                                                                                               |
@@ -31,6 +29,7 @@ The **Actions** menu acts on this mailbox. Some entries are greyed out rather th
 | Set Litigation Hold                         | Places the mailbox on litigation hold for a chosen number of days, or lifts an existing hold with the **Disable Litigation Hold** switch. Greyed out when the mailbox is not licensed for litigation hold.                                                                                                                |
 | Set Retention Hold                          | Places the mailbox on retention hold, or lifts one with the **Disable Retention Hold** switch.                                                                                                                                                                                                                            |
 | Set Mailbox Locale                          | Sets the mailbox language and regional format, for example `en-GB` or `da-DK`.                                                                                                                                                                                                                                            |
+| Migrate Calendar Time Zone                  | Moves the mailbox to a new time zone, for example from Pacific Standard Time to British Columbia Standard Time. Choose the **Current time zone** and the **New time zone**: the mailbox and its working hours are set to the new zone, and future meetings the mailbox organises move to it at the same local time. Attendees receive a meeting update. Recurring meetings are not moved by Microsoft yet and need updating in Outlook. Where Microsoft has not yet rolled calendar migration out to the tenant or mailbox, the action fails without changing the mailbox and is safe to run again later. |
 | Set Custom Attributes                       | Sets one or more of the mailbox's Custom Attributes 1–15. Choose each attribute from a dropdown, enter a value, and use **Add attribute** if you need more than one. Leave a value blank to clear that attribute; anything you do not add is left as it is. Greyed out when the mailbox is synced from on-premises and Exchange is still managing those attributes on-premises. Also available as a bulk action on the mailbox list. |
 | Set Max Send/Receive Size                   | Sets the largest message the mailbox may send and receive, in MB.                                                                                                                                                                                                                                                         |
 | Set Send Quota                              | Sets the size at which the mailbox is stopped from sending.                                                                                                                                                                                                                                                               |
@@ -101,7 +100,7 @@ This card is worth a look during a compromise investigation, since rules that mo
 
 ## Trusted and Blocked Senders/Domains
 
-The user's own safe and blocked sender lists, listed by type and value. The row action removes an entry.
+The user's own safe and blocked sender lists, listed by type and value. **Remove Entry** takes an entry off its list. Select several entries to remove them all at once, and the list refreshes when the removal finishes.
 
 ## Mailbox Forwarding
 

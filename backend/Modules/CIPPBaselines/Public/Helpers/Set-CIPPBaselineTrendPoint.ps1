@@ -27,7 +27,7 @@ function Set-CIPPBaselineTrendPoint {
     $TrendTable = Get-CippTable -tablename 'BaselineTrend'
     $TrendTable.Force = $true
 
-    $WritePoint = {
+    $NewPoint = {
         param($PartitionKey, $BucketRows)
         $BucketRows = @($BucketRows)
         $Total = $BucketRows.Count
@@ -40,7 +40,7 @@ function Set-CIPPBaselineTrendPoint {
         $Denied = @($BucketRows | Where-Object { $_.Status -like 'Denied - *' }).Count
         $Pct = { param($Count) if ($Applicable) { [math]::Round(($Count / $Applicable) * 100) } else { 0 } }
 
-        Add-CIPPAzDataTableEntity @TrendTable -Entity @{
+        @{
             PartitionKey   = "$PartitionKey"
             RowKey         = $Day
             Aligned        = [int](& $Pct ($Compliant + $Accepted))
@@ -56,12 +56,15 @@ function Set-CIPPBaselineTrendPoint {
         }
     }
 
-    & $WritePoint 'fleet' $Rows
-    foreach ($Group in ($Rows | Group-Object -Property PartitionKey)) {
-        & $WritePoint ('tenant_{0}' -f $Group.Name) $Group.Group
-    }
-    foreach ($Group in ($Rows | Group-Object -Property StandardName)) {
-        if (-not $Group.Name) { continue }
-        & $WritePoint ('standard_{0}' -f ($Group.Name -replace '#', '~')) $Group.Group
-    }
+    $Points = @(
+        & $NewPoint 'fleet' $Rows
+        foreach ($Group in ($Rows | Group-Object -Property PartitionKey)) {
+            & $NewPoint ('tenant_{0}' -f $Group.Name) $Group.Group
+        }
+        foreach ($Group in ($Rows | Group-Object -Property StandardName)) {
+            if (-not $Group.Name) { continue }
+            & $NewPoint ('standard_{0}' -f ($Group.Name -replace '#', '~')) $Group.Group
+        }
+    )
+    Add-CIPPAzDataTableEntity @TrendTable -Entity $Points
 }

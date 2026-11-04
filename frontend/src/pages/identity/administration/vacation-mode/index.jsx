@@ -5,29 +5,33 @@ import { Button } from "@mui/material";
 import Link from "next/link";
 import { useSettings } from "../../../../hooks/use-settings.js";
 import ScheduledTaskDetails from "../../../../components/CippComponents/ScheduledTaskDetails";
-import { ApiGetCall } from "../../../../api/ApiCall";
+import { ApiGetCallWithPagination } from "../../../../api/ApiCall";
 
 const Page = () => {
   const initialState = useSettings();
   const currentTenant = initialState.currentTenant;
-  // Separate fetch: action conditions only see their own row, and the table's paginated cache is internal
-  const vacationTasks = ApiGetCall({
+  // Action conditions only see their own row, so subscribe to the table's own paginated query
+  // (same hook, same key) to find a row's start counterpart; a separate copy of the list went
+  // stale against the table's refresh and the action's invalidation
+  const vacationTasks = ApiGetCallWithPagination({
     url: "/api/ListScheduledItems?SearchTitle=*Vacation*",
     data: { tenantFilter: currentTenant },
-    queryKey: `VacationModeTasks-${currentTenant}`,
+    queryKey: `VacationMode-${currentTenant}`,
   });
+  const allVacationTasks = (vacationTasks.data?.pages ?? []).flatMap((page) =>
+    Array.isArray(page) ? page : page?.Results ?? [],
+  );
 
   // A Remove task's start counterpart is "Add ..." ("Create ..." for travel policies) with the same
   // suffix; forwarding appends " -> target" to the Add name only
   const startPending = (removeRow) => {
     const suffix = removeRow.Name.slice("Remove ".length);
-    const tasks = Array.isArray(vacationTasks.data) ? vacationTasks.data : [];
-    return tasks.some((task) => {
+    return allVacationTasks.some((task) => {
       const startSuffix = task.Name?.replace(/^(Add|Create) /, "");
       return (
         startSuffix !== task.Name &&
         (startSuffix === suffix || startSuffix.startsWith(`${suffix} -> `)) &&
-        task.Tenant === removeRow.Tenant &&
+        (task.Tenant?.value ?? task.Tenant) === (removeRow.Tenant?.value ?? removeRow.Tenant) &&
         !["Completed", "Failed"].includes(task.TaskState) &&
         new Date(task.ScheduledTime) <= new Date(removeRow.ScheduledTime)
       );

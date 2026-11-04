@@ -245,6 +245,18 @@ Describe 'Invoke-ExecCustomRole app role tenants' {
         Should -Invoke Clear-CippAccessUserCache -Times 0 -Exactly
     }
 
+    It 'lists built-in roles with their app role tenants even when there are no custom roles' {
+        Mock -CommandName Get-CIPPAzDataTableEntity -MockWith {
+            [pscustomobject]@{ PartitionKey = $TenantA; RowKey = 'editor' }
+        } -ParameterFilter { $TableName -eq 'allowedAppRoles' }
+
+        $Response = Invoke-ExecCustomRole -Request (New-RoleRequest @{ }) -TriggerMetadata $null
+
+        $Editor = @($Response.Body).Where({ $_.RowKey -eq 'editor' })
+        $Editor.Count | Should -Be 1
+        $Editor[0].AppRoleTenants | Should -Be @($TenantA)
+    }
+
     It 'removes the role from every tenant when the role is deleted' {
         Mock -CommandName Get-CIPPAzDataTableEntity -MockWith {
             [pscustomobject]@{ PartitionKey = $TenantA; RowKey = 'testrole' }

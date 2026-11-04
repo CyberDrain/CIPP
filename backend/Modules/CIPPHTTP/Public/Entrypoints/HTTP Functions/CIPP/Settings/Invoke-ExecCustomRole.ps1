@@ -277,137 +277,130 @@ function Invoke-ExecCustomRole {
             }
         }
         default {
-            $Body = Get-CIPPAzDataTableEntity @Table | Sort-Object -Property RowKey
+            # Built-in roles are listed even with no custom roles, so the role form never loads one without its mappings
+            $Body = @(Get-CIPPAzDataTableEntity @Table | Sort-Object -Property RowKey)
             $EntraRoleGroups = Get-CIPPAzDataTableEntity @AccessRoleGroupTable
             $AccessIPRanges = Get-CIPPAzDataTableEntity @AccessIPRangeTable
             $AppRoleRows = @(Get-CIPPAzDataTableEntity @AppRoleTable)
-            if (!$Body) {
-                $Body = @(
-                    @{
-                        RowKey = 'No custom roles found'
-                    }
-                )
-            } else {
-                # One-time migration: rows saved before the rules format gain concrete-string
-                # rules (behavior-preserving, Include = explicit values). Runs here because
-                # this superadmin-only list action is hit whenever roles are managed.
-                foreach ($Role in $Body) {
-                    if ($Role.PSObject.Properties.Name -notcontains 'PermissionRules' -or [string]::IsNullOrWhiteSpace($Role.PermissionRules)) {
-                        try {
-                            $RulesJson = ConvertTo-CippPermissionRules -Permissions $Role.Permissions | ConvertTo-Json -Compress -Depth 5
-                            if ($Role.PSObject.Properties.Name -contains 'PermissionRules') {
-                                $Role.PermissionRules = $RulesJson
-                            } else {
-                                $Role | Add-Member -NotePropertyName PermissionRules -NotePropertyValue $RulesJson
-                            }
-                            Add-CIPPAzDataTableEntity @Table -Entity $Role -Force | Out-Null
-                            Write-LogMessage -headers $Request.Headers -API 'ExecCustomRole' -message "Migrated custom role $($Role.RowKey) to permission rules format" -Sev 'Info'
-                        } catch {
-                            Write-Warning "Failed to migrate custom role $($Role.RowKey) to permission rules: $($_.Exception.Message)"
-                        }
-                    }
-                }
-                $CustomRoles = foreach ($Role in $Body) {
+            # One-time migration: rows saved before the rules format gain concrete-string
+            # rules (behavior-preserving, Include = explicit values). Runs here because
+            # this superadmin-only list action is hit whenever roles are managed.
+            foreach ($Role in $Body) {
+                if ($Role.PSObject.Properties.Name -notcontains 'PermissionRules' -or [string]::IsNullOrWhiteSpace($Role.PermissionRules)) {
                     try {
-                        $Role.Permissions = $Role.Permissions | ConvertFrom-Json
+                        $RulesJson = ConvertTo-CippPermissionRules -Permissions $Role.Permissions | ConvertTo-Json -Compress -Depth 5
+                        if ($Role.PSObject.Properties.Name -contains 'PermissionRules') {
+                            $Role.PermissionRules = $RulesJson
+                        } else {
+                            $Role | Add-Member -NotePropertyName PermissionRules -NotePropertyValue $RulesJson
+                        }
+                        Add-CIPPAzDataTableEntity @Table -Entity $Role -Force | Out-Null
+                        Write-LogMessage -headers $Request.Headers -API 'ExecCustomRole' -message "Migrated custom role $($Role.RowKey) to permission rules format" -Sev 'Info'
                     } catch {
-                        $Role.Permissions = @()
+                        Write-Warning "Failed to migrate custom role $($Role.RowKey) to permission rules: $($_.Exception.Message)"
                     }
-                    if ($Role.PermissionRules) {
-                        try {
-                            $Role.PermissionRules = $Role.PermissionRules | ConvertFrom-Json
-                        } catch {
-                            $Role.PermissionRules = $null
-                        }
-                    } else {
-                        $Role | Add-Member -NotePropertyName PermissionRules -NotePropertyValue $null -Force
-                    }
-                    if ($Role.AllowedTenants) {
-                        try {
-                            $Role.AllowedTenants = @($Role.AllowedTenants | ConvertFrom-Json)
-                        } catch {
-                            $Role.AllowedTenants = @()
-                        }
-                    } else {
-                        $Role | Add-Member -NotePropertyName AllowedTenants -NotePropertyValue @() -Force
-                    }
-                    if ($Role.BlockedTenants) {
-                        try {
-                            $Role.BlockedTenants = @($Role.BlockedTenants | ConvertFrom-Json)
-                        } catch {
-                            $Role.BlockedTenants = @()
-                        }
-                    } else {
-                        $Role | Add-Member -NotePropertyName BlockedTenants -NotePropertyValue @() -Force
-                    }
-                    if ($Role.BlockedEndpoints) {
-                        try {
-                            $Role.BlockedEndpoints = @($Role.BlockedEndpoints | ConvertFrom-Json)
-                        } catch {
-                            $Role.BlockedEndpoints = @()
-                        }
-                    } else {
-                        $Role | Add-Member -NotePropertyName BlockedEndpoints -NotePropertyValue @() -Force
-                    }
-                    if ($Role.AllowedRolesTemplate) {
-                        try {
-                            $Role.AllowedRolesTemplate = $Role.AllowedRolesTemplate | ConvertFrom-Json
-                        } catch {
-                            $Role.AllowedRolesTemplate = $null
-                        }
-                    } else {
-                        $Role | Add-Member -NotePropertyName AllowedRolesTemplate -NotePropertyValue $null -Force
-                    }
-                    $EntraRoleGroup = $EntraRoleGroups | Where-Object -Property RowKey -EQ $Role.RowKey
-                    if ($EntraRoleGroup) {
-                        $EntraGroup = $EntraRoleGroups | Where-Object -Property RowKey -EQ $Role.RowKey | Select-Object @{Name = 'label'; Expression = { $_.GroupName } }, @{Name = 'value'; Expression = { $_.GroupId } }
-
-                        $Role | Add-Member -NotePropertyName EntraGroup -NotePropertyValue $EntraGroup -Force
-                    }
-                    # Load IP ranges from separate table
-                    $IPRangeEntity = $AccessIPRanges | Where-Object -Property RowKey -EQ $Role.RowKey
-                    if ($IPRangeEntity) {
-                        try {
-                            $IPRanges = @($IPRangeEntity.IPRanges | ConvertFrom-Json)
-                        } catch {
-                            $IPRanges = @()
-                        }
-                        $Role | Add-Member -NotePropertyName IPRange -NotePropertyValue $IPRanges -Force
-                    } else {
-                        $Role | Add-Member -NotePropertyName IPRange -NotePropertyValue @() -Force
-                    }
-                    $Role | Add-Member -NotePropertyName AppRoleTenants -NotePropertyValue @(foreach ($Row in $AppRoleRows) { if ($Row.RowKey -eq $Role.RowKey) { $Row.PartitionKey } }) -Force
-                    $Role
                 }
-                $DefaultRoles = foreach ($DefaultRole in $DefaultRoles.PSObject.Properties.Name) {
-                    $Role = @{
-                        RowKey           = $DefaultRole
-                        Permissions      = $DefaultRoles.$DefaultRole
-                        AllowedTenants   = @('AllTenants')
-                        BlockedTenants   = @()
-                        BlockedEndpoints = @()
-                    }
-                    $EntraRoleGroup = $EntraRoleGroups | Where-Object -Property RowKey -EQ $Role.RowKey
-                    if ($EntraRoleGroup) {
-                        $Role.EntraGroup = $EntraRoleGroups | Where-Object -Property RowKey -EQ $Role.RowKey | Select-Object @{Name = 'label'; Expression = { $_.GroupName } }, @{Name = 'value'; Expression = { $_.GroupId } }
-                    }
-                    # Load IP ranges from separate table
-                    $IPRangeEntity = $AccessIPRanges | Where-Object -Property RowKey -EQ $DefaultRole
-                    if ($IPRangeEntity) {
-                        try {
-                            $IPRanges = @($IPRangeEntity.IPRanges | ConvertFrom-Json)
-                        } catch {
-                            $IPRanges = @()
-                        }
-                        $Role.IPRange = $IPRanges
-                    } else {
-                        $Role.IPRange = @()
-                    }
-                    $Role.AppRoleTenants = @(foreach ($Row in $AppRoleRows) { if ($Row.RowKey -eq $DefaultRole) { $Row.PartitionKey } })
-                    $Role
-                }
-                $Body = @($DefaultRoles + $CustomRoles)
             }
+            $CustomRoles = foreach ($Role in $Body) {
+                try {
+                    $Role.Permissions = $Role.Permissions | ConvertFrom-Json
+                } catch {
+                    $Role.Permissions = @()
+                }
+                if ($Role.PermissionRules) {
+                    try {
+                        $Role.PermissionRules = $Role.PermissionRules | ConvertFrom-Json
+                    } catch {
+                        $Role.PermissionRules = $null
+                    }
+                } else {
+                    $Role | Add-Member -NotePropertyName PermissionRules -NotePropertyValue $null -Force
+                }
+                if ($Role.AllowedTenants) {
+                    try {
+                        $Role.AllowedTenants = @($Role.AllowedTenants | ConvertFrom-Json)
+                    } catch {
+                        $Role.AllowedTenants = @()
+                    }
+                } else {
+                    $Role | Add-Member -NotePropertyName AllowedTenants -NotePropertyValue @() -Force
+                }
+                if ($Role.BlockedTenants) {
+                    try {
+                        $Role.BlockedTenants = @($Role.BlockedTenants | ConvertFrom-Json)
+                    } catch {
+                        $Role.BlockedTenants = @()
+                    }
+                } else {
+                    $Role | Add-Member -NotePropertyName BlockedTenants -NotePropertyValue @() -Force
+                }
+                if ($Role.BlockedEndpoints) {
+                    try {
+                        $Role.BlockedEndpoints = @($Role.BlockedEndpoints | ConvertFrom-Json)
+                    } catch {
+                        $Role.BlockedEndpoints = @()
+                    }
+                } else {
+                    $Role | Add-Member -NotePropertyName BlockedEndpoints -NotePropertyValue @() -Force
+                }
+                if ($Role.AllowedRolesTemplate) {
+                    try {
+                        $Role.AllowedRolesTemplate = $Role.AllowedRolesTemplate | ConvertFrom-Json
+                    } catch {
+                        $Role.AllowedRolesTemplate = $null
+                    }
+                } else {
+                    $Role | Add-Member -NotePropertyName AllowedRolesTemplate -NotePropertyValue $null -Force
+                }
+                $EntraRoleGroup = $EntraRoleGroups | Where-Object -Property RowKey -EQ $Role.RowKey
+                if ($EntraRoleGroup) {
+                    $EntraGroup = $EntraRoleGroups | Where-Object -Property RowKey -EQ $Role.RowKey | Select-Object @{Name = 'label'; Expression = { $_.GroupName } }, @{Name = 'value'; Expression = { $_.GroupId } }
+
+                    $Role | Add-Member -NotePropertyName EntraGroup -NotePropertyValue $EntraGroup -Force
+                }
+                # Load IP ranges from separate table
+                $IPRangeEntity = $AccessIPRanges | Where-Object -Property RowKey -EQ $Role.RowKey
+                if ($IPRangeEntity) {
+                    try {
+                        $IPRanges = @($IPRangeEntity.IPRanges | ConvertFrom-Json)
+                    } catch {
+                        $IPRanges = @()
+                    }
+                    $Role | Add-Member -NotePropertyName IPRange -NotePropertyValue $IPRanges -Force
+                } else {
+                    $Role | Add-Member -NotePropertyName IPRange -NotePropertyValue @() -Force
+                }
+                $Role | Add-Member -NotePropertyName AppRoleTenants -NotePropertyValue @(foreach ($Row in $AppRoleRows) { if ($Row.RowKey -eq $Role.RowKey) { $Row.PartitionKey } }) -Force
+                $Role
+            }
+            $DefaultRoles = foreach ($DefaultRole in $DefaultRoles.PSObject.Properties.Name) {
+                $Role = @{
+                    RowKey           = $DefaultRole
+                    Permissions      = $DefaultRoles.$DefaultRole
+                    AllowedTenants   = @('AllTenants')
+                    BlockedTenants   = @()
+                    BlockedEndpoints = @()
+                }
+                $EntraRoleGroup = $EntraRoleGroups | Where-Object -Property RowKey -EQ $Role.RowKey
+                if ($EntraRoleGroup) {
+                    $Role.EntraGroup = $EntraRoleGroups | Where-Object -Property RowKey -EQ $Role.RowKey | Select-Object @{Name = 'label'; Expression = { $_.GroupName } }, @{Name = 'value'; Expression = { $_.GroupId } }
+                }
+                # Load IP ranges from separate table
+                $IPRangeEntity = $AccessIPRanges | Where-Object -Property RowKey -EQ $DefaultRole
+                if ($IPRangeEntity) {
+                    try {
+                        $IPRanges = @($IPRangeEntity.IPRanges | ConvertFrom-Json)
+                    } catch {
+                        $IPRanges = @()
+                    }
+                    $Role.IPRange = $IPRanges
+                } else {
+                    $Role.IPRange = @()
+                }
+                $Role.AppRoleTenants = @(foreach ($Row in $AppRoleRows) { if ($Row.RowKey -eq $DefaultRole) { $Row.PartitionKey } })
+                $Role
+            }
+            $Body = @($DefaultRoles + $CustomRoles)
         }
     }
 

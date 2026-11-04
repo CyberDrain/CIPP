@@ -8,6 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Stack,
 } from "@mui/material";
 import { Grid } from "@mui/system";
 import { useForm, useWatch } from "react-hook-form";
@@ -185,29 +186,32 @@ export const CippBulkDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSubmit}
-              disabled={
-                isAllTenants ||
-                addItems.isPending ||
-                !bulkRows ||
-                bulkRows.length === 0 ||
-                invalidRowCount > 0
-              }
-            >
-              {addItems.isPending
-                ? `Creating ${itemLabelPlural}...`
-                : addItems.isSuccess
-                  ? `Create More ${itemLabelPlural}`
-                  : `Create ${itemLabelPlural}`}
-            </Button>
-            <Button variant="outlined" onClick={handleCloseDrawer}>
-              Close
-            </Button>
-          </div>
+          <Stack spacing={2}>
+            <CippApiResults apiObject={addItems} />
+            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit}
+                disabled={
+                  isAllTenants ||
+                  addItems.isPending ||
+                  !bulkRows ||
+                  bulkRows.length === 0 ||
+                  invalidRowCount > 0
+                }
+              >
+                {addItems.isPending
+                  ? `Creating ${itemLabelPlural}...`
+                  : addItems.isSuccess
+                    ? `Create More ${itemLabelPlural}`
+                    : `Create ${itemLabelPlural}`}
+              </Button>
+              <Button variant="outlined" onClick={handleCloseDrawer}>
+                Close
+              </Button>
+            </div>
+          </Stack>
         }
       >
         <Grid container spacing={2}>
@@ -263,8 +267,6 @@ export const CippBulkDrawer = ({
               noCard={true}
             />
           </Grid>
-
-          <CippApiResults apiObject={addItems} />
         </Grid>
 
         <Dialog

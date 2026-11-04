@@ -141,6 +141,7 @@
         * [View Enterprise Application](user-documentation/tenant/administration/applications/enterprise-apps/spid.md)
       * [App Registrations](user-documentation/tenant/administration/applications/app-registrations/README.md)
         * [View App Registration](user-documentation/tenant/administration/applications/app-registrations/appid.md)
+      * [Deleted Apps](user-documentation/tenant/administration/applications/deleted-apps.md)
       * [Permission Sets](user-documentation/tenant/administration/applications/permission-sets.md)
       * [Application Templates](user-documentation/tenant/administration/applications/templates/README.md)
         * [Add App Approval Template](user-documentation/tenant/administration/applications/templates/add.md)

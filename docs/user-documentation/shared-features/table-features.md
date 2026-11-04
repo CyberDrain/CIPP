@@ -23,6 +23,19 @@ Cached mode also adds a **Cache Timestamp** column so you can see how old the da
 AllTenants always uses cached data, even on pages that otherwise allow the toggle. The **Sync** button is disabled under AllTenants unless the page explicitly supports syncing every tenant at once.
 {% endhint %}
 
+### Tenant Coverage
+
+On some pages, AllTenants data is gathered tenant by tenant, and a coverage chip beside the data source controls shows how many tenants the cached data covers, for example `42 of 45 tenants`. The chip turns amber while some tenants are missing, and hovering over it says whether more are still loading. Once every tenant is covered, it shows the total on its own.
+
+Next to the chip, a **Sync** button offers two options:
+
+| Option               | Description                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| Load missing tenants | Gathers data only for the tenants not yet covered. Greyed out once every tenant is covered.        |
+| Reload all tenants   | Gathers fresh data for every tenant, replacing what is cached.                                    |
+
+**Sync** is greyed out while a load is already running, and a queue tracker beside it shows the progress.
+
 ## Toolbar
 
 The toolbar sits above every table and holds the search box, filtering, column selection and export controls.

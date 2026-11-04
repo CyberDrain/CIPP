@@ -8,7 +8,7 @@ The Groups page lists every group in the tenant and is where group membership, m
 
 ## Action Buttons
 
-**Add Group** creates a group in the selected tenant, and **Deploy Group Template** applies a saved template to one or more tenants.
+**Add Group** opens a drawer that creates a group in the selected tenant, and **Deploy Group Template** applies a saved template to one or more tenants.
 
 {% content-ref url="add.md" %}
 [add.md](add.md)
@@ -21,6 +21,16 @@ The Groups page lists every group in the tenant and is where group membership, m
 {% content-ref url="edit.md" %}
 [edit.md](edit.md)
 {% endcontent-ref %}
+
+## Filters
+
+| Filter                     | Shows                                                                         |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| MemberOf rules (retiring)  | Dynamic groups whose membership rule uses `memberOf`, which Microsoft is retiring. |
+
+{% hint style="warning" %}
+Microsoft is retiring `memberOf` in dynamic membership rules. Review the rule of any group this filter shows and rewrite it before the retirement date Microsoft has announced for your tenant.
+{% endhint %}
 
 ## Table Details
 

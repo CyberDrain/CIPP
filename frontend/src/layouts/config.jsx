@@ -187,7 +187,7 @@ export const nativeMenuItems = [
           {
             title: 'Authentication Methods',
             path: '/tenant/administration/authentication-methods',
-            permissions: ['Tenant.Config.*'],
+            permissions: ['Tenant.Administration.*'],
           },
           {
             title: 'Partner Relationships',
@@ -583,6 +583,17 @@ export const nativeMenuItems = [
             permissions: ['Endpoint.Autopilot.*'],
           },
           {
+            title: 'Enrollment Restrictions',
+            path: '/endpoint/autopilot/enrollment-restrictions',
+            permissions: ['Endpoint.Autopilot.*'],
+          },
+          {
+            title: 'Enrollment Restriction Templates',
+            path: '/endpoint/autopilot/enrollment-restriction-templates',
+            permissions: ['Endpoint.Autopilot.*'],
+            scope: 'global',
+          },
+          {
             title: 'Status Pages',
             path: '/endpoint/autopilot/list-status-pages',
             permissions: ['Endpoint.Autopilot.*'],
@@ -870,6 +881,11 @@ export const nativeMenuItems = [
             path: '/email/administration/exchange-retention/policies',
             permissions: ['Exchange.RetentionPolicies.*'],
           },
+          {
+            title: 'App Mailbox Access',
+            path: '/email/administration/app-mailbox-access/roles',
+            permissions: ['Tenant.Application.*'],
+          },
         ],
       },
       {
@@ -1091,6 +1107,7 @@ export const nativeMenuItems = [
           {
             title: 'Compare CA Policies',
             path: '/tenant/tools/compare-ca-policies',
+            docsPath: 'tools/tenant-tools/compare-ca-policies',
             permissions: ['Tenant.ConditionalAccess.*'],
             scope: 'global',
           },

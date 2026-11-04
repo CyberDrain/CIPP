@@ -33,6 +33,8 @@ Set **Authentication Method** to _Client ID and Secret (Services)_, then store t
 Set the **Login Type** and **Agent to login as**. This determines who appears to be responsible for the tickets CIPP raises, so a dedicated agent is usually preferable.
 
 The agent needs Tickets Access Level of Read and Modify, Clients Access Level of Read and Modify, and **Can add new Tickets** set to Yes. Administrator has been tested; other roles may work but have not been verified.
+
+To add results to an existing ticket, as the **HaloPSA Ticket** box on the offboarding wizard, the user edit page and the scheduler does, the agent also needs **Can view Tickets that are assigned to other Agents** and **Can Edit Tickets Which Are Not Assigned To Them** set to Yes. Without them Halo hides tickets assigned to anyone else, CIPP reports the ticket as not found, and raises a new ticket instead.
 {% endstep %}
 
 {% step %}

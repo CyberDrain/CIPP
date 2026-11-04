@@ -8,7 +8,7 @@ function Get-CIPPBaselineCATemplateState {
         engine's verdict is the only verdict. Both sides normalize to one canonical
         vocabulary; every rule below closes a documented false-drift source from the old
         standards engine:
-        - id/GUID/*time*/templateId/@odata/LocationInfo/AuthContextInfo stripped everywhere
+        - id/GUID/*time*/templateId/tenantFilter/@odata/LocationInfo/AuthContextInfo stripped everywhere
           (GUID and AuthContextInfo were NOT excluded by the shared compare and drifted
           forever; AuthContextInfo carries source-tenant descriptions)
         - null-valued properties stripped on BOTH sides, sessionControls scrubbed on BOTH
@@ -23,6 +23,8 @@ function Get-CIPPBaselineCATemplateState {
         - users/groups translate GUID->displayName via the Users/Groups caches, then one live
           directoryObjects/getByIds for ids those caches do not hold yet; still-unresolved
           GUIDs stay GUIDs so raw-GUID templates still match
+        - template user names that match no user in the tenant are dropped from Expected
+          (New-CIPPCAPolicy drops them on deploy, so they could never converge)
         - 'Vacation Exclusion*' groups are removed from excludeGroups on both sides
           (New-CIPPCAPolicy re-adds them on every deploy - deliberate, not drift)
         - grantControls.authenticationStrength collapses to @{ displayName } on both sides
@@ -76,8 +78,10 @@ function Get-CIPPBaselineCATemplateState {
     foreach ($Strength in @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'AuthenticationStrengths' | Where-Object { $_ })) {
         if ($Strength.id -and $Strength.displayName) { $StrengthNameById["$($Strength.id)"] = "$($Strength.displayName)" }
     }
+    $UserNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($Directory in @('Users', 'Groups')) {
         foreach ($Entry in @($(try { New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Directory } catch { $null }) | Where-Object { $_ })) {
+            if ($Directory -eq 'Users' -and $Entry.displayName) { $null = $UserNames.Add("$($Entry.displayName)") }
             if ($Entry.id -and $Entry.displayName -and -not $NameById.ContainsKey("$($Entry.id)")) { $NameById["$($Entry.id)"] = "$($Entry.displayName)" }
         }
     }
@@ -95,7 +99,7 @@ function Get-CIPPBaselineCATemplateState {
         param($Node)
         if ($Node -isnot [System.Management.Automation.PSCustomObject]) { return }
         foreach ($Property in @($Node.PSObject.Properties)) {
-            if ($Property.Name -in @('id', 'GUID', 'templateId', 'LocationInfo', 'AuthContextInfo') -or
+            if ($Property.Name -in @('id', 'GUID', 'templateId', 'tenantFilter', 'LocationInfo', 'AuthContextInfo') -or
                 $Property.Name -like '*time*' -or $Property.Name -like '*@odata*' -or $null -eq $Property.Value) {
                 $Node.PSObject.Properties.Remove($Property.Name)
                 continue
@@ -178,6 +182,17 @@ function Get-CIPPBaselineCATemplateState {
             }
         } catch {
             Write-Information "Baselines: resolving CA user/group ids on $TenantFilter failed: $($_.Exception.Message)"
+        }
+    }
+
+    foreach ($Value in @($Live.conditions.users.includeUsers) + @($Live.conditions.users.excludeUsers)) {
+        if ($NameById.ContainsKey("$Value")) { $null = $UserNames.Add($NameById["$Value"]) }
+    }
+    if ($UserNames.Count -gt 0 -and $Template.conditions.users) {
+        $Guid = [guid]::Empty
+        foreach ($Side in @('includeUsers', 'excludeUsers')) {
+            if ($null -eq $Template.conditions.users.$Side) { continue }
+            $Template.conditions.users.$Side = @($Template.conditions.users.$Side | Where-Object { "$_" -in 'All', 'None', 'GuestsOrExternalUsers' -or [guid]::TryParse("$_", [ref]$Guid) -or $UserNames.Contains("$_") })
         }
     }
 

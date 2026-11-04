@@ -2,6 +2,8 @@
 
 The NinjaOne integration pushes Microsoft 365 tenant, user, licence and device information from CIPP into NinjaOne, and can monitor Intune device compliance as a NinjaOne custom field. Tenant and device data is written to NinjaOne custom fields, while detailed user and licence records use NinjaOne Documentation. You control which of these are populated, so it is entirely reasonable to sync only the parts you need.
 
+The same integration can also raise CIPP alert tickets in NinjaOne Ticketing, linked to the organisation, the affected end user and the affected device where NinjaOne knows them. See [#ticketing](#ticketing "mention").
+
 {% hint style="warning" %}
 The NinjaOne CIPP integration requires NinjaOne version 5.6 or above.
 {% endhint %}
@@ -23,6 +25,12 @@ Tenant and device information uses custom fields, which you create yourself in N
 | Only Sync Licensed Users (Requires NinjaOne Documentation) | Restricts user synchronisation to users holding a licence. This applies to both the user documents and the tenant-level user summary field.                                                                    |
 | Enable Automated CVE Sync                                  | Uploads Defender vulnerability data to NinjaOne scan groups as part of each tenant synchronisation.                                                                                                            |
 | CVE Sync Scan Group Prefix                                 | The prefix used to identify the scan groups CIPP maintains. Scan groups are named `[Prefix][tenant-domain]`, for example `CIPP-contoso.com`. Appears once automated CVE sync is enabled.                       |
+| Enable Ticketing                                           | Raises CIPP alert tickets in NinjaOne Ticketing for mapped tenants. Needs Ticketing enabled on your NinjaOne instance and a technician sign-in, described under [#ticketing](#ticketing "mention"). Keep only one ticketing integration enabled.           |
+| NinjaOne Ticket Form                                       | The ticket form CIPP tickets are created with. Required once ticketing is enabled; the list is read from NinjaOne.                                                                                                |
+| NinjaOne Ticket Status                                     | Optional. The status new tickets are created with. Leave blank for New.                                                                                                                                        |
+| NinjaOne Ticket Priority                                   | Optional. Sets the priority on every CIPP-generated ticket: None, Low, Medium or High. Leave blank to send no priority.                                                                                        |
+| Link Tickets to affected Users                             | Sets the ticket requester to the organisation's end user or contact whose email matches the affected user. Unmatched users are noted in the ticket and it is raised without a requester.                        |
+| Consolidate Tickets                                        | Adds repeat alerts with the same title as a comment on the existing open ticket instead of raising a new one. Resolved and closed tickets get a new ticket.                                                     |
 
 ## Preparing NinjaOne
 
@@ -35,6 +43,8 @@ Sign in to NinjaOne as a System Administrator and go to **Administration** > **A
 Choose an **Application Platform** of _API Services (machine-to-machine)_, give it a name such as _CIPP Integration_, and leave **Redirect URIs** blank. Select the **Monitoring** and **Management** scopes, and an allowed grant type of **Client Credentials**. Save.
 
 The client secret is shown once on save, so record it before closing the application. The **Client ID** can be copied from the table afterwards.
+
+If you intend to use ticketing, this machine-to-machine application is not enough: NinjaOne does not let you change an application's platform, scopes or grant types after it is created, so ticketing needs a new API application with the Authorization Code grant. The [#ticketing](#ticketing "mention") section describes it; you can create that one instead from the start and use it for everything.
 {% endstep %}
 
 {% step %}
@@ -154,6 +164,54 @@ Before the daily run, a catch-up pass, or **Force Sync** queues any tenants, CIP
 Intune device compliance is handled separately. CIPP subscribes to Graph change notifications for device compliance, so the Intune Device Compliance Status and Intune Non-Compliant Settings fields update within minutes of a change in Microsoft 365 rather than waiting for the daily run. This requires at least one of those two fields to be mapped.
 
 Where **Sync Users** or **Sync Licenses** is enabled, CIPP creates and maintains the document templates it needs in NinjaOne Documentation, `CIPP - Microsoft 365 Users` and `CIPP - Microsoft 365 Licenses`, and writes a document per user or licence beneath them. You do not need to create these templates yourself.
+
+## Ticketing
+
+With **Enable Ticketing** on, any alert configured to deliver to a PSA is raised as a ticket in NinjaOne Ticketing against the organisation the tenant is mapped to. Tenants without an organisation mapping are skipped with a warning in the logbook.
+
+NinjaOne only accepts ticket writes from a signed-in user, not from the API application on its own, so a technician signs in once from the integration page and CIPP raises tickets as that technician from then on. Documentation and compliance sync keep using the application credentials.
+
+{% stepper %}
+{% step %}
+### Create a new API application for the sign-in
+
+The platform, scopes and grant types of a NinjaOne API application are fixed when it is created, so an existing machine-to-machine application cannot be given the sign-in. In NinjaOne go to **Administration** > **Apps** > **API** and select **Add** to create a new one.
+
+Choose an **Application Platform** of _Web (PHP, Java, .Net Core, etc.)_ and a name such as _CIPP Ticketing_. Under **Redirect URIs** add the one shown on the CIPP integration page, which is your CIPP URL followed by `/authredirect`, for example `https://cipp.example.com/authredirect`; it must match exactly, including the scheme and any port. Select the **Monitoring** and **Management** scopes, and allow the **Authorization Code**, **Refresh Token** and **Client Credentials** grant types. Save, and record the client secret, which is shown once.
+
+Enter this application's **Client ID** and **Client Secret** on the CIPP integration page in place of the earlier ones. With Client Credentials allowed it serves the documentation and compliance sync too, so the first application can be removed once the new one is saved and tested.
+{% endstep %}
+
+{% step %}
+### Enable ticketing and save
+
+On the NinjaOne integration page in CIPP, turn on **Enable Ticketing**, choose the **NinjaOne Ticket Form** and optionally a status and priority, and select **Submit**. The **Connect NinjaOne** button and the redirect URI appear above the Test button once ticketing is saved.
+{% endstep %}
+
+{% step %}
+### Connect as a technician
+
+Select **Connect NinjaOne** and sign in to NinjaOne in the popup. The page then reports that ticketing is signed in and when. **Disconnect** removes the sign-in; **Reconnect** replaces it, for example when the technician leaves. Tickets are created by the technician who connected, so a dedicated NinjaOne technician account makes CIPP's tickets easy to tell apart.
+{% endstep %}
+{% endstepper %}
+
+{% hint style="warning" %}
+A ticket cannot be raised until someone has connected. An alert that reaches NinjaOne before then is reported as a failure asking for the sign-in.
+{% endhint %}
+
+{% hint style="warning" %}
+Alerts go to every ticketing integration that is enabled, so leaving HaloPSA or Syncro enabled alongside NinjaOne ticketing raises the same alert in each. Saving the integration settings warns when more than one is on.
+{% endhint %}
+
+### How Alert Tickets Are Raised
+
+Ticket subjects are prefixed with `[CIPP]` so that CIPP-generated tickets are easy to identify and filter in NinjaOne. The alert body is attached as a private description, so raising a ticket never emails the end user.
+
+The priority on each ticket is the integration's **NinjaOne Ticket Priority**. A per-alert **PSA Ticket Priority** is honoured only when it is one of NinjaOne's own priorities; when HaloPSA or Syncro is enabled as well, that list belongs to them and NinjaOne uses its own default.
+
+With **Link Tickets to affected Users** on, CIPP looks for an end user or contact in the mapped organisation whose email matches the affected user and sets them as the requester. NinjaOne users carry no Microsoft identifier, so the match is on email only; a user who does not exist in NinjaOne is named in the ticket description instead, and the ticket is raised without a requester. Linking also keeps one ticket per user when **Consolidate Tickets** is on.
+
+When an alert concerns a device, CIPP attaches it to the ticket as well. Devices are found through the device mapping the daily synchronisation maintains between Intune and NinjaOne, with a fall back to matching the serial number against the organisation's devices. A device NinjaOne does not know is noted in the logbook and the ticket is raised without one.
 
 ## CVE Synchronisation
 

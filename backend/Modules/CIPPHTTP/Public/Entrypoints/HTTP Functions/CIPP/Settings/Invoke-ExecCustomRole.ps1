@@ -11,6 +11,8 @@ function Invoke-ExecCustomRole {
     $Table = Get-CippTable -tablename 'CustomRoles'
     $AccessRoleGroupTable = Get-CippTable -tablename 'AccessRoleGroups'
     $AccessIPRangeTable = Get-CippTable -tablename 'AccessIPRanges'
+    # PartitionKey = tenant id, RowKey = role: CRAFT grants the role to a user whose token from that tenant carries it as an app role
+    $AppRoleTable = Get-CippTable -tablename 'allowedAppRoles'
     $Action = $Request.Query.Action ?? $Request.Body.Action
 
     $CippRolesJson = Join-Path -Path $env:CIPPRootPath -ChildPath 'Config\cipp-roles.json'
@@ -118,6 +120,47 @@ function Invoke-ExecCustomRole {
                         }
                     }
                 }
+                $RoleKey = $Request.Body.RoleName.ToLower()
+                $AppRoleTenants = @(foreach ($Tenant in @($Request.Body.AppRoleTenants)) {
+                        $TenantId = [string]($Tenant.value ?? $Tenant)
+                        if ($TenantId -as [guid]) {
+                            $TenantId.ToLower()
+                        } elseif ($TenantId) {
+                            $Results.Add("Ignored app role tenant '$TenantId': not a tenant ID")
+                        }
+                    })
+                $ExistingAppRoleRows = @(Get-CIPPAzDataTableEntity @AppRoleTable -Filter "RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $RoleKey)'").Where({ $_ })
+                foreach ($Row in $ExistingAppRoleRows) {
+                    if ($AppRoleTenants -notcontains $Row.PartitionKey) {
+                        Remove-CIPPAzDataTableEntity -Force @AppRoleTable -Entity $Row
+                        $AccessGroupChanged = $true
+                    }
+                }
+                foreach ($TenantId in $AppRoleTenants) {
+                    if (@($ExistingAppRoleRows.PartitionKey) -notcontains $TenantId) {
+                        Add-CIPPAzDataTableEntity @AppRoleTable -Entity @{ PartitionKey = $TenantId; RowKey = $RoleKey } -Force | Out-Null
+                        $AccessGroupChanged = $true
+                    }
+                }
+                if ($AppRoleTenants.Count -gt 0) {
+                    # The role must exist as an app role on the SSO app registration before any tenant can assign it
+                    $SSOAppId = [Environment]::GetEnvironmentVariable('WEBSITE_AUTH_CLIENT_ID')
+                    try {
+                        if (-not $SSOAppId) { throw 'no SSO app is configured on this instance' }
+                        $SSOApp = New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/applications(appId='$SSOAppId')?`$select=id,appRoles" -NoAuthCheck $true -AsApp $true
+                        if (@($SSOApp.appRoles.value) -notcontains $RoleKey) {
+                            $AppRoles = @(
+                                @($SSOApp.appRoles)
+                                @{ id = [guid]::NewGuid().ToString(); allowedMemberTypes = @('User'); displayName = "CIPP $RoleKey"; description = "Grants the CIPP role '$RoleKey'"; value = $RoleKey; isEnabled = $true }
+                            )
+                            $null = New-GraphPOSTRequest -uri "https://graph.microsoft.com/v1.0/applications/$($SSOApp.id)" -body (ConvertTo-Json -Depth 5 -Compress -InputObject @{ appRoles = $AppRoles }) -type PATCH -NoAuthCheck $true -AsApp $true
+                            $Results.Add("App role '$RoleKey' added to the SSO app registration.")
+                        }
+                    } catch {
+                        $Results.Add("Could not add app role '$RoleKey' to the SSO app registration ($($_.Exception.Message)). Add an app role with the value '$RoleKey' to it manually.")
+                    }
+                    $Results.Add("Users assigned the '$RoleKey' app role in tenant(s) $($AppRoleTenants -join ', ') receive this role.")
+                }
                 if ($Request.Body.EntraGroup) {
                     $ExistingRoleGroup = Get-CIPPAzDataTableEntity @AccessRoleGroupTable -Filter "PartitionKey eq 'AccessRoleGroups' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value ($Request.Body.RoleName.ToLower()))'"
                     $RoleGroup = @{
@@ -210,6 +253,10 @@ function Invoke-ExecCustomRole {
             if ($AccessIPRange) {
                 Remove-CIPPAzDataTableEntity -Force @AccessIPRangeTable -Entity $AccessIPRange
             }
+            foreach ($Row in @(Get-CIPPAzDataTableEntity @AppRoleTable -Filter "RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $Request.Body.RoleName.ToLower())'").Where({ $_ })) {
+                Remove-CIPPAzDataTableEntity -Force @AppRoleTable -Entity $Row
+                $AccessGroupChanged = $true
+            }
             $Body = @{Results = 'Custom role deleted' }
             Write-LogMessage -headers $Request.Headers -API 'ExecCustomRole' -message "Deleted custom role $($Request.Body.RoleName)" -Sev 'Info'
         }
@@ -226,6 +273,7 @@ function Invoke-ExecCustomRole {
             $Body = Get-CIPPAzDataTableEntity @Table | Sort-Object -Property RowKey
             $EntraRoleGroups = Get-CIPPAzDataTableEntity @AccessRoleGroupTable
             $AccessIPRanges = Get-CIPPAzDataTableEntity @AccessIPRangeTable
+            $AppRoleRows = @(Get-CIPPAzDataTableEntity @AppRoleTable)
             if (!$Body) {
                 $Body = @(
                     @{
@@ -321,6 +369,7 @@ function Invoke-ExecCustomRole {
                     } else {
                         $Role | Add-Member -NotePropertyName IPRange -NotePropertyValue @() -Force
                     }
+                    $Role | Add-Member -NotePropertyName AppRoleTenants -NotePropertyValue @(foreach ($Row in $AppRoleRows) { if ($Row.RowKey -eq $Role.RowKey) { $Row.PartitionKey } }) -Force
                     $Role
                 }
                 $DefaultRoles = foreach ($DefaultRole in $DefaultRoles.PSObject.Properties.Name) {
@@ -347,6 +396,7 @@ function Invoke-ExecCustomRole {
                     } else {
                         $Role.IPRange = @()
                     }
+                    $Role.AppRoleTenants = @(foreach ($Row in $AppRoleRows) { if ($Row.RowKey -eq $DefaultRole) { $Row.PartitionKey } })
                     $Role
                 }
                 $Body = @($DefaultRoles + $CustomRoles)

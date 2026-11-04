@@ -59,6 +59,8 @@ SPF, DKIM, DMARC, and DNSSEC coverage across the domains that have been analysed
 
 The portfolio average alignment score, with tenants grouped into bands of 90% and above, 75 to 89%, 50 to 74%, and below 50%. **View** opens the [alignment](../tenant/standards/alignment/ "mention") page.
 
+With the Baselines feature switched on, the score comes from each tenant's [Baseline Alignment](../tenant/baselines/alignment.md) instead, counting accepted deviations as aligned, and **View** opens that page.
+
 </details>
 
 ### Operations and Triage
@@ -72,7 +74,7 @@ Four tiles cover what needs attention right now.
 | Tenants logging errors today           | Tenants with Error or Critical log entries today, with the total entry count. Opens the [logs](../cipp/logs/ "mention").                                       |
 | Delegations expiring within 30 days    | GDAP delegations nearing expiry, noting how many of those have no auto-extend. Opens GDAP [relationships](../tenant/gdap-management/relationships/ "mention"). |
 | High-risk checks failing               | High-risk test failures and how many tenants they span. Opens the [identity.md](identity.md "mention") tab.                                                    |
-| Standards deviations awaiting approval | Deviations pending approval and the number of tenants involved. Opens [alignment](../tenant/standards/alignment/ "mention").                                   |
+| Standards deviations awaiting approval | Deviations pending approval and the number of tenants involved. Opens [alignment](../tenant/standards/alignment/ "mention"), or Baseline Alignment when Baselines is on. |
 
 Below the tiles, three cards surface the tenants behind those numbers.
 
@@ -96,7 +98,7 @@ GDAP and CSP relationships grouped by time remaining: expired, 0 to 7 days, 8 to
 
 <summary>Cache freshness</summary>
 
-Counts of tenants that are fresh, stale, or never cached, alongside the tenants that have not synced recently. This catches tenants that quietly stopped collecting data, which would otherwise show as misleadingly clean elsewhere on the dashboard.
+Counts of tenants that are fresh, stale, or never cached, alongside the tenants that have not synced recently. A tenant counts as stale once its oldest data collection is more than 48 hours old, so a single missed nightly run does not flag it. This catches tenants that quietly stopped collecting data, which would otherwise show as misleadingly clean elsewhere on the dashboard.
 
 </details>
 
@@ -249,7 +251,7 @@ Every item the tenant's scripted alerts are currently reporting, with counts for
 * The clock icon snoozes an item so it stops notifying, for 7 to 90 days or until it resolves. Tick "keep it visible" to leave it in the open list marked as snoozed, so it is not forgotten; otherwise it moves to the snoozed section. Either way the bin icon lifts the snooze early.
 * Recently resolved items appear in a muted section for two days, so you can confirm a fix landed.
 
-**History** opens the [alert-history](../tenant/administration/alert-configuration/alert-history.md "mention") page for every tenant; **Manage** opens the [alert-configuration](../tenant/administration/alert-configuration/ "mention") page, as does the card's **Alerts** heading.
+**History** opens the [alert-history](../tenant/administration/alert-configuration/history.md "mention") page for every tenant; **Manage** opens the [alert-configuration](../tenant/administration/alert-configuration/ "mention") page, as does the card's **Alerts** heading.
 
 </details>
 
@@ -267,7 +269,7 @@ Open Microsoft 365 incidents and advisories for the tenant, read live from Micro
 
 <summary>Secure Score</summary>
 
-The historical trend of the Microsoft Secure Score collected for the tenant.
+The historical trend of the Microsoft Secure Score collected for the tenant. The **%** / **Points** toggle switches the chart between the score as a percentage of the maximum (the default) and the score in points.
 
 </details>
 

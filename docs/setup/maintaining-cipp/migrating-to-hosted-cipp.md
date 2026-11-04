@@ -160,7 +160,7 @@ There are two ways to finish this. Creating a new app registration is simpler an
 
 {% stepper %}
 {% step %}
-In your **hosted** instance, go to **CIPP** → **Advanced** → **Authentication** → **SSO**, or work through the **Complete Authentication Setup** prompt if the instance is showing one.
+In your **hosted** instance, go to **CIPP** → **Advanced** → **Authentication** → **Credentials**, or work through the **Complete Authentication Setup** prompt if the instance is showing one.
 {% endstep %}
 
 {% step %}
@@ -186,12 +186,12 @@ In Entra, open the `CIPP-SSO` app registration → **Authentication**, and add a
 {% endstep %}
 
 {% step %}
-In your **hosted** instance, go to **CIPP** → **Advanced** → **Authentication** → **SSO**, expand **Manual configuration (advanced)**, paste the App ID and secret, and select **Save Manual Configuration**. The instance restarts, which can take up to 60 seconds.
+In your **hosted** instance, go to **CIPP** → **Advanced** → **Authentication** → **Credentials**, expand **Manual configuration (advanced)**, paste the App ID and secret, and select **Save Manual Configuration**. The instance restarts, which can take up to 60 seconds.
 {% endstep %}
 {% endstepper %}
 
 {% hint style="warning" %}
-If you add a custom domain in Step 5 **after** setting up single sign-on, the new hostname has no redirect URI yet and sign-in on it fails. Select **Refresh Sign-in URLs** on the SSO page to add one. The action is additive and never removes a URI.
+If you add a custom domain in Step 5 **after** setting up single sign-on, the new hostname has no redirect URI yet and sign-in on it fails. Select **Refresh Sign-in URLs** on the SSO App Registration card to add one. The action is additive and never removes a URI.
 {% endhint %}
 
 {% hint style="info" %}

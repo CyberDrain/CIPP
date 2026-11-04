@@ -21,7 +21,7 @@ There is deliberately no indefinite snooze. A snooze that never ends is how an a
 A snooze is matched on the content of the alert item, not just the user or object name. If the underlying detail changes, CIPP treats it as a new item and it will alert again even though a snooze exists for the earlier version.
 {% endhint %}
 
-A snoozed item is still tracked. It keeps its place on the [alert-history](alert-history.md "mention") page with the status `Snoozed`, and the alert keeps checking whether it is still true, so you can see whether the condition cleared while the snooze was in effect. Removing a snooze puts the item back to open straight away.
+A snoozed item is still tracked. It keeps its place on the [alert-history](history.md "mention") page with the status `Snoozed`, and the alert keeps checking whether it is still true, so you can see whether the condition cleared while the snooze was in effect. Removing a snooze puts the item back to open straight away.
 
 ## Table Details
 

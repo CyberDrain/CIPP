@@ -20,9 +20,11 @@ The type decides how a value is written into a template.
 | Integer | Written as a number, so a numeric setting receives `300` rather than `"300"`.                                                                                                                                                              |
 | Boolean | Written as `true` or `false`.                                                                                                                                                                                                              |
 | JSON    | Written as the JSON value it holds, where the variable fills a whole field.                                                                                                                                                                |
-| List    | Several values, entered one per line. Used as an entry in a list, such as a Conditional Access policy's excluded users, groups or locations, it expands into one entry per value. An empty list removes the entry. Inside other text the values are joined with commas. |
+| List    | Several values, entered one per line. Used as an entry in a list, such as a Conditional Access policy's excluded users, groups or locations, it expands into one entry per value. An empty list, entered as `[]`, removes the entry. Inside other text the values are joined with commas. |
 
 A List lets one variable carry a different number of values per tenant, for example `%breakglassaccounts%` holding two accounts for one client and three for another, without a variable per entry.
+
+A List can also be empty, which makes an entry optional. Set the global value to `[]` and override it only on the tenants that need something there: everywhere else the entry is removed rather than left unresolved. The Value box cannot be left blank, so type `[]` to save an empty list. See the optional exclusions example under Custom Variables on [create-ca-template.md](../../conditional/list-template/create-ca-template.md "mention").
 
 ## Automatically Replaced Variables
 

@@ -98,13 +98,16 @@ Enter the number of days and select **Save**.
 
 ## Report Attachment Retention
 
-Sets how long oversized scheduled report attachments stay available. An attachment that would take a scheduled report email over Microsoft's 4 MB limit is uploaded to storage instead, and the email links to it. This setting controls how long those files, and the download links pointing at them, are kept.
+Sets how long generated reports and oversized report attachments are kept.
+
+* **Generated reports**: every Report Builder report, whether generated on demand or by a schedule, is stored with its PDF so it can be opened again later. If the PDF cannot be stored, the report content is kept instead. Reports older than the retention period are deleted together with their PDFs.
+* **Oversized attachments**: an attachment that would take a scheduled report email over Microsoft's 4 MB limit is uploaded to storage instead, and the email links to it. Those files, and the download links pointing at them, are kept for the retention period.
 
 | Field | Description                                                                                                                         |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Days  | The retention period in days. The minimum is 7, the maximum is 365, and the default is 360. Values outside that range are rejected. |
+| Days  | The retention period in days. The minimum is 7, the maximum is 180, and the default is 90. Values outside that range are rejected. A period saved above 180 days before the limit was introduced is treated as 180. |
 
-Enter the number of days and select **Save**. Files past the retention period are deleted daily at 2:30 AM, after which their download links stop working.
+Enter the number of days and select **Save**. Cleanup runs daily at 1:00 AM and deletes reports and files past the retention period. Download links to deleted files stop working.
 
 {% hint style="info" %}
 A download link expires after the retention period that applied when its email was sent. Changing the setting later does not extend links already sent.
@@ -129,7 +132,7 @@ Select **Save Settings** to apply. The maximum duration applies to all tenants, 
 Custom values must be valid ISO 8601 durations, so use forms such as `PT1H`, `P1D` or `P28D`. An invalid value prevents the card from saving.
 {% endhint %}
 
-When approval is on, a request is never approved by the person who submitted it, and a single rejection ends it. Approvers are notified through the [notifications.md](notifications.md "mention") settings, and on the new CIPP infrastructure by push to any device they have registered. Requests are approved and rejected on the [Requests](../../identity/administration/jit-admin/requests.md) tab of JIT Admin, which describes the whole flow.
+When approval is on, a request is never approved by the person who submitted it, and a single rejection ends it. Each approver gets an email about a new request, and the requester gets one with the decision. Every event also goes to the [notifications.md](notifications.md "mention") settings, and on the new CIPP infrastructure approvers also get a push on any device they have registered. Requests are approved and rejected on the [Requests](../../identity/administration/jit-admin/requests.md) tab of JIT Admin, which describes the whole flow.
 
 {% hint style="warning" %}
 If the technicians who request JIT Admin access also hold an approver role, they can approve each other's requests, though never their own. Choose approver roles held by the people who should sign off on elevated access.

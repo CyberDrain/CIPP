@@ -27,6 +27,7 @@ import { Scrollbar } from '../scrollbar'
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { ApiGetCallWithPagination } from '../../api/ApiCall'
+import { CippTenantCoverage } from './CippTenantCoverage'
 import { useQueryClient } from '@tanstack/react-query'
 import { utilTableMode } from './util-tablemode'
 import {
@@ -35,6 +36,7 @@ import {
 } from './util-columnsFromAPI'
 import { CIPPTableToptoolbar } from './CIPPTableToptoolbar'
 import { CippOffCanvas } from '../CippComponents/CippOffCanvas'
+import { CippStructuredTooltip } from '../CippComponents/CippStructuredTooltip'
 import { useDialog } from '../../hooks/use-dialog'
 import { CippApiDialog } from '../CippComponents/CippApiDialog'
 import { getCippError } from '../../utils/get-cipp-error'
@@ -43,7 +45,7 @@ import { useSettings } from '../../hooks/use-settings'
 import { parseCippDate } from '../../utils/parse-cipp-date'
 import { isEqual } from 'lodash' // Import lodash for deep comparison
 import { useLicenseBackfill } from '../../hooks/use-license-backfill'
-import { licenseIncludesFilterFn } from '../../utils/get-cipp-filter-variant'
+import { booleanEqualsFilterFn, licenseIncludesFilterFn } from '../../utils/get-cipp-filter-variant'
 import { useTableViewMode, useIsNarrowForTables } from '../../hooks/use-breakpoint'
 import { CippMobileCardList } from './CippMobileCardList'
 import { CippPageActionsFab } from '../CippComponents/CippPageActionsFab'
@@ -266,6 +268,7 @@ const FILTER_FNS = {
     return String(rowValue).toLowerCase().includes(String(value).toLowerCase())
   },
   licenseIncludes: licenseIncludesFilterFn,
+  booleanEquals: booleanEqualsFilterFn,
   notContains: (row, columnId, value) => {
     const rowValue = row.getValue(columnId)
     if (rowValue === null || rowValue === undefined) {
@@ -308,6 +311,7 @@ const MRT_LOCALIZATION_OVERRIDES = {
   filterNotContains: 'Does Not Contain',
   filterRegex: 'Regex',
   filterLicenseIncludes: 'Includes',
+  filterBooleanEquals: 'Equals',
   filterCustom: 'Custom',
 }
 
@@ -709,6 +713,11 @@ export const CippDataTable = (props) => {
     mobileCard,
     dataSourceControls,
     subTables = EMPTY_ARRAY,
+    // { [columnId]: (row) => ({ title, description, items }) | null }: hover details for a column's cells.
+    // Keep the object stable (module scope or useMemo); a new one rebuilds the columns.
+    cellTooltips,
+    // { [columnId]: (row, defaultCell) => node }: replace or wrap a column's rendered cell; same stability rule.
+    cellRenderers,
     persistenceKey,
     parentRow,
   } = props
@@ -834,12 +843,12 @@ export const CippDataTable = (props) => {
   const getRequestData = ApiGetCallWithPagination({
     url: api.url,
     data: {
-      // AllTenants Graph cache reads are served in bounded pages; a page can still opt out with manualPagination: false.
-      ...(api.url === '/api/ListGraphRequest' &&
-        api.data?.tenantFilter === 'AllTenants' && { manualPagination: true }),
       ...(graphFilterData.filter
         ? mergeCaseInsensitive(api.data, graphFilterData.filter)
         : api.data),
+      // AllTenants Graph cache reads are always served in bounded pages, whatever the page or a saved preset sends.
+      ...(api.url === '/api/ListGraphRequest' &&
+        api.data?.tenantFilter === 'AllTenants' && { manualPagination: true }),
       ...(cacheAction && { [cacheAction]: true }),
     },
     queryKey: requestQueryKey,
@@ -851,6 +860,32 @@ export const CippDataTable = (props) => {
       queryClient.resetQueries({ queryKey: [requestQueryKey], exact: true })
     }
   }, [cacheAction, queryClient, requestQueryKey])
+
+  // An AllTenants Graph cache's coverage and sync sit with any report DB controls, in the Data source slot.
+  const responseMetadata = getRequestData.data?.pages?.[0]?.Metadata
+  const tenantCoverage = useMemo(
+    () =>
+      responseMetadata?.ExpectedTenants ? (
+        <CippTenantCoverage
+          metadata={responseMetadata}
+          onCacheAction={setCacheAction}
+          queryKey={requestQueryKey}
+          title={title}
+        />
+      ) : null,
+    [responseMetadata, requestQueryKey, title]
+  )
+  const sourceControls = useMemo(
+    () =>
+      dataSourceControls || tenantCoverage ? (
+        <>
+          {dataSourceControls}
+          {tenantCoverage}
+        </>
+      ) : null,
+    [dataSourceControls, tenantCoverage]
+  )
+  const headerShowsSource = !noCard && Boolean(cardButton || !hideTitle)
 
   useEffect(() => {
     // Only set initial filters if they haven't been set yet OR if the filters prop has actually changed
@@ -1201,8 +1236,36 @@ export const CippDataTable = (props) => {
   }, [columnVisibility])
 
   const displayColumns = useMemo(() => {
+    const withTooltips = (cols) => {
+      if (!cellTooltips && !cellRenderers) return cols
+      return cols.map((col) => {
+        const getTooltip = cellTooltips?.[col.id]
+        const render = cellRenderers?.[col.id]
+        const BaseCell = col.Cell
+        if (
+          typeof BaseCell !== 'function' ||
+          (typeof getTooltip !== 'function' && typeof render !== 'function')
+        )
+          return col
+        return {
+          ...col,
+          Cell: (cellProps) => {
+            const base = <BaseCell {...cellProps} />
+            const rendered =
+              typeof render === 'function' ? render(cellProps.row.original, base) : base
+            const tooltip =
+              typeof getTooltip === 'function' ? getTooltip(cellProps.row.original) : null
+            return tooltip ? (
+              <CippStructuredTooltip {...tooltip}>{rendered}</CippStructuredTooltip>
+            ) : (
+              rendered
+            )
+          },
+        }
+      })
+    }
     if (!Array.isArray(subTables) || subTables.length === 0) {
-      return usedColumns
+      return withTooltips(usedColumns)
     }
     const cachedHeaders = new Map()
     const injected = []
@@ -1229,10 +1292,12 @@ export const CippDataTable = (props) => {
     const injectedById = new Map(injected.map((col) => [col.id, col]))
     const replaced = columns.map((col) => injectedById.get(col.id) ?? col)
     const existing = new Set(columns.map((col) => col.id))
-    return [...replaced, ...injected.filter((col) => !existing.has(col.id))].filter(
-      (col) => !excludedIds.has(col.id)
+    return withTooltips(
+      [...replaced, ...injected.filter((col) => !existing.has(col.id))].filter(
+        (col) => !excludedIds.has(col.id)
+      )
     )
-  }, [usedColumns, usedData, subTables, configuredSimpleColumns])
+  }, [usedColumns, usedData, subTables, configuredSimpleColumns, cellTooltips, cellRenderers])
 
   const displayColumnIds = useMemo(
     () => displayColumns.map((col) => col.id).filter(Boolean),
@@ -1854,7 +1919,7 @@ export const CippDataTable = (props) => {
               exportEnabled={exportEnabled}
               refreshFunction={refreshFunction}
               pagingStopped={pagingStopped}
-              onCacheAction={setCacheAction}
+              tenantCoverage={headerShowsSource ? null : tenantCoverage}
               setPagingStopped={setPagingStopped}
               setColumnVisibility={setColumnVisibility}
               filters={filters}
@@ -1871,7 +1936,7 @@ export const CippDataTable = (props) => {
               tableViewActive={toggleAllowed ? tableViewActive : undefined}
               showReturnToCards={showReturnToCards}
               bulkActionsSlot={isNarrowViewport && !isInDialog ? headerBulkSlot : null}
-              dataSourceControls={dataSourceControls}
+              dataSourceControls={sourceControls}
               activeFilters={activeFilters}
               setActiveFilters={setActiveFilters}
               searchValue={searchValue}
@@ -1908,7 +1973,9 @@ export const CippDataTable = (props) => {
       showReturnToCards,
       isNarrowViewport,
       headerBulkSlot,
-      dataSourceControls,
+      sourceControls,
+      tenantCoverage,
+      headerShowsSource,
       activeFilters,
       searchValue,
       pagingStopped,
@@ -2204,7 +2271,7 @@ export const CippDataTable = (props) => {
                 exportEnabled={exportEnabled}
                 refreshFunction={refreshFunction}
                 pagingStopped={pagingStopped}
-                onCacheAction={setCacheAction}
+                tenantCoverage={headerShowsSource ? null : tenantCoverage}
                 setPagingStopped={setPagingStopped}
                 setColumnVisibility={setColumnVisibility}
                 filters={filters}
@@ -2226,7 +2293,7 @@ export const CippDataTable = (props) => {
                 selectModeLocked={hasOnChange}
                 onViewToggle={toggleAllowed ? handleViewToggle : undefined}
                 tableViewActive={toggleAllowed ? tableViewActive : undefined}
-                dataSourceControls={dataSourceControls}
+                dataSourceControls={sourceControls}
                 activeFilters={activeFilters}
                 setActiveFilters={setActiveFilters}
                 searchValue={searchValue}
@@ -2291,11 +2358,11 @@ export const CippDataTable = (props) => {
                         sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                       />
                       {/* narrow viewports carry these in the Table options sheet */}
-                      {dataSourceControls && !isNarrowViewport ? (
+                      {sourceControls && !isNarrowViewport ? (
                         <Stack direction='row' spacing={1} sx={{
                           alignItems: 'center'
                         }}>
-                          {dataSourceControls}
+                          {sourceControls}
                           {headerAction}
                         </Stack>
                       ) : (

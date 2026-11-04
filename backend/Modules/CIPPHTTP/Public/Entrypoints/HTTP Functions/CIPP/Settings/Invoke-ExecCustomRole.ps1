@@ -160,6 +160,13 @@ function Invoke-ExecCustomRole {
                         $Results.Add("Could not add app role '$RoleKey' to the SSO app registration ($($_.Exception.Message)). Add an app role with the value '$RoleKey' to it manually.")
                     }
                     $Results.Add("Users assigned the '$RoleKey' app role in tenant(s) $($AppRoleTenants -join ', ') receive this role.")
+                    $SignInTenants = [Environment]::GetEnvironmentVariable('WEBSITE_AUTH_AAD_ALLOWED_TENANTS')
+                    if ($SignInTenants) {
+                        $Blocked = @($AppRoleTenants.Where({ ($SignInTenants -split ',') -notcontains $_ }))
+                        if ($Blocked.Count -gt 0) {
+                            $Results.Add("Tenant(s) $($Blocked -join ', ') cannot sign in until they are added to the restricted multi-tenant list in the SSO settings.")
+                        }
+                    }
                 }
                 if ($Request.Body.EntraGroup) {
                     $ExistingRoleGroup = Get-CIPPAzDataTableEntity @AccessRoleGroupTable -Filter "PartitionKey eq 'AccessRoleGroups' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value ($Request.Body.RoleName.ToLower()))'"

@@ -7082,6 +7082,254 @@
     ]
   },
   {
+    "name": "standards.GlobalSecureAccessCustomBlockPage",
+    "cat": "Global Secure Access",
+    "tag": [],
+    "helpText": "Sets the message users see when Global Secure Access blocks a website. Supports limited markdown, including links like [Contact the help desk](https://example.com). Set the state to Disabled to use Microsoft's default block page. Requires 'Onboard Global Secure Access' first and an Entra Internet Access license.",
+    "docsDescription": "Checks the custom block page state and message live, and writes both through the documented settings PATCH. Disabled grades the state alone; an enabled page needs a message.",
+    "executiveText": "Controls what staff see when the company's network security service blocks a website: a company message with who to contact, or Microsoft's default page.",
+    "label": "Manage the custom block page",
+    "impact": "Low Impact",
+    "impactColour": "info",
+    "addedDate": "2026-11-01",
+    "powershellEquivalent": "Update-MgBetaNetworkAccessSettingCustomBlockPage",
+    "recommendedBy": [
+      "CIPP"
+    ],
+    "requiredCapabilities": [
+      [
+        "Entra_Premium_Internet_Access"
+      ]
+    ],
+    "addedComponent": [
+      {
+        "name": "standards.GlobalSecureAccessCustomBlockPage.state",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Block page state",
+        "options": [
+          {
+            "value": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "value": "disabled",
+            "label": "Disabled"
+          }
+        ],
+        "default": "enabled"
+      },
+      {
+        "name": "standards.GlobalSecureAccessCustomBlockPage.blockMessage",
+        "type": "textField",
+        "label": "Block page message (markdown, links like [Help](https://example.com) allowed)",
+        "default": ""
+      }
+    ]
+  },
+  {
+    "name": "standards.GlobalSecureAccessInternetProfile",
+    "cat": "Global Secure Access",
+    "tag": [],
+    "helpText": "Chooses who gets their internet traffic sent through Global Secure Access on devices with the client installed: everyone, nobody, or selected groups for a pilot. Groups assigned by hand are left alone. Requires 'Onboard Global Secure Access' first and an Entra Internet Access license.",
+    "docsDescription": "Checks the Internet traffic profile: on or off, its policy links, and who it is assigned to. Sets the profile state, enables any disabled policy links, and assigns all users and devices, nobody, or the selected groups (wildcards allowed). Users, groups and devices assigned by hand are kept.",
+    "executiveText": "Controls which staff have internet traffic routed through the company's network security service on managed devices: everyone, nobody, or a pilot group first.",
+    "label": "Manage the Internet traffic forwarding profile",
+    "impact": "Medium Impact",
+    "impactColour": "warning",
+    "addedDate": "2026-11-01",
+    "powershellEquivalent": "Update-MgBetaNetworkAccessForwardingProfile",
+    "recommendedBy": [
+      "CIPP"
+    ],
+    "requiredCapabilities": [
+      [
+        "Entra_Premium_Internet_Access"
+      ]
+    ],
+    "addedComponent": [
+      {
+        "name": "standards.GlobalSecureAccessInternetProfile.profileState",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Profile state",
+        "options": [
+          {
+            "value": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "value": "disabled",
+            "label": "Disabled"
+          }
+        ],
+        "default": "enabled",
+        "recommended": "enabled"
+      },
+      {
+        "name": "standards.GlobalSecureAccessInternetProfile.assignTo",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Who should this profile be assigned to?",
+        "options": [
+          {
+            "value": "DoNotAssign",
+            "label": "Do not assign"
+          },
+          {
+            "value": "AllDevicesAndUsers",
+            "label": "Assign to all users and devices"
+          },
+          {
+            "value": "customGroup",
+            "label": "Assign to Custom Group"
+          }
+        ],
+        "default": "AllDevicesAndUsers"
+      },
+      {
+        "name": "standards.GlobalSecureAccessInternetProfile.customGroup",
+        "type": "textField",
+        "label": "Custom group name (if assigning to a custom group; wildcards allowed)",
+        "default": ""
+      }
+    ]
+  },
+  {
+    "name": "standards.GlobalSecureAccessM365Profile",
+    "cat": "Global Secure Access",
+    "tag": [],
+    "helpText": "Chooses who gets their Microsoft 365 traffic (Exchange, SharePoint, Teams) sent through Global Secure Access on devices with the client installed: everyone, nobody, or selected groups for a pilot. Groups assigned by hand are left alone. Requires 'Onboard Global Secure Access' first.",
+    "docsDescription": "Checks the Microsoft 365 traffic profile: on or off, its policy links, and who it is assigned to. Sets the profile state, enables any disabled policy links, and assigns all users and devices, nobody, or the selected groups (wildcards allowed). Users, groups and devices assigned by hand are kept.",
+    "executiveText": "Controls which staff have Microsoft 365 traffic routed through the company's network security service on managed devices: everyone, nobody, or a pilot group first.",
+    "label": "Manage the Microsoft 365 traffic forwarding profile",
+    "impact": "Medium Impact",
+    "impactColour": "warning",
+    "addedDate": "2026-11-01",
+    "powershellEquivalent": "Update-MgBetaNetworkAccessForwardingProfile",
+    "recommendedBy": [
+      "CIPP"
+    ],
+    "requiredCapabilities": [
+      [
+        "AAD_PREMIUM",
+        "AAD_PREMIUM_P2"
+      ]
+    ],
+    "addedComponent": [
+      {
+        "name": "standards.GlobalSecureAccessM365Profile.profileState",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Profile state",
+        "options": [
+          {
+            "value": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "value": "disabled",
+            "label": "Disabled"
+          }
+        ],
+        "default": "enabled",
+        "recommended": "enabled"
+      },
+      {
+        "name": "standards.GlobalSecureAccessM365Profile.assignTo",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Who should this profile be assigned to?",
+        "options": [
+          {
+            "value": "DoNotAssign",
+            "label": "Do not assign"
+          },
+          {
+            "value": "AllDevicesAndUsers",
+            "label": "Assign to all users and devices"
+          },
+          {
+            "value": "customGroup",
+            "label": "Assign to Custom Group"
+          }
+        ],
+        "default": "AllDevicesAndUsers"
+      },
+      {
+        "name": "standards.GlobalSecureAccessM365Profile.customGroup",
+        "type": "textField",
+        "label": "Custom group name (if assigning to a custom group; wildcards allowed)",
+        "default": ""
+      }
+    ]
+  },
+  {
+    "name": "standards.GlobalSecureAccessOnboard",
+    "cat": "Global Secure Access",
+    "tag": [],
+    "helpText": "Connects the tenant to Microsoft's Global Secure Access service. Required before the other Global Secure Access standards work. Onboarding is permanent - undoing it needs Microsoft support - but no traffic changes until the client is deployed. Requires Entra ID P1 or P2.",
+    "docsDescription": "Checks whether the tenant is onboarded to Global Secure Access and starts onboarding if needed. Onboarding takes a few minutes; the next run confirms it finished.",
+    "executiveText": "Signs the tenant up for Microsoft's cloud network security service. Nothing changes for users yet.",
+    "label": "Onboard Global Secure Access",
+    "impact": "Low Impact",
+    "impactColour": "info",
+    "addedDate": "2026-11-01",
+    "powershellEquivalent": "Invoke-MgBetaOnboardNetworkAccess",
+    "recommendedBy": [
+      "CIPP"
+    ],
+    "requiredCapabilities": [
+      [
+        "AAD_PREMIUM",
+        "AAD_PREMIUM_P2"
+      ]
+    ],
+    "addedComponent": []
+  },
+  {
+    "name": "standards.GlobalSecureAccessSignaling",
+    "cat": "Global Secure Access",
+    "tag": [],
+    "helpText": "Lets Conditional Access recognize Global Secure Access traffic: sign-in logs show the user's real IP and policies can require a compliant network. Review location-based Conditional Access policies before enabling - they will see different IP addresses. Requires 'Onboard Global Secure Access' first.",
+    "docsDescription": "Checks whether Global Secure Access signaling is on or off, and sets it to the chosen value. Tenants that are not onboarded yet show an error until 'Onboard Global Secure Access' has run.",
+    "executiveText": "Lets the company's network security service report each user's real location to the sign-in controls, so sign-in policies can require company devices or networks.",
+    "label": "Enable Global Secure Access signaling for Conditional Access",
+    "impact": "Low Impact",
+    "impactColour": "info",
+    "addedDate": "2026-11-01",
+    "powershellEquivalent": "Update-MgBetaNetworkAccessSettingConditionalAccess",
+    "recommendedBy": [
+      "CIPP"
+    ],
+    "requiredCapabilities": [
+      [
+        "AAD_PREMIUM",
+        "AAD_PREMIUM_P2"
+      ]
+    ],
+    "addedComponent": [
+      {
+        "name": "standards.GlobalSecureAccessSignaling.signalingStatus",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Signaling status",
+        "options": [
+          {
+            "value": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "value": "disabled",
+            "label": "Disabled"
+          }
+        ],
+        "default": "enabled",
+        "recommended": "enabled"
+      }
+    ]
+  },
+  {
     "name": "standards.GroupTemplate",
     "cat": "Templates",
     "tag": [],

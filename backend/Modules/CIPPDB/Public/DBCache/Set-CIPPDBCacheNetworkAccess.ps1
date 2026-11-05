@@ -2,8 +2,10 @@ function Set-CIPPDBCacheNetworkAccess {
     <#
     .SYNOPSIS
         Caches Global Secure Access state for a tenant: onboarding status, forwarding
-        profiles (with policy groups and the profile app's assignment flag) and the
-        Conditional Access signaling setting. One row per tenant.
+        profiles (with policy groups, the legacy profile-app assignment flag, the
+        assignmentRules the portal's User and device assignments blade actually reads
+        and writes, and the branch associations) and the Conditional Access signaling
+        setting. One row per tenant.
 
     .PARAMETER TenantFilter
         The tenant to cache Global Secure Access state for
@@ -19,7 +21,7 @@ function Set-CIPPDBCacheNetworkAccess {
     )
 
     try {
-        $TestResult = Test-CIPPStandardLicense -StandardName 'NetworkAccessCache' -TenantFilter $TenantFilter -Preset Entra -SkipLog
+        $TestResult = Test-CIPPStandardLicense -StandardName 'NetworkAccessCache' -TenantFilter $TenantFilter -Preset Entra -RequiredCapabilities @('Entra_Premium_Internet_Access') -SkipLog
         if ($TestResult -eq $false) {
             Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'NetworkAccess' -Data @() -AddCount -ClearOnEmpty
             return
@@ -34,6 +36,9 @@ function Set-CIPPDBCacheNetworkAccess {
         if ($Onboarded) {
             foreach ($RawProfile in @(New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/networkAccess/forwardingProfiles?$expand=policies($expand=policy)' -tenantid $TenantFilter -AsApp $true)) {
                 $AssignmentRequired = $null
+                # The assignment profile apps read is legacy enterprise-app state; the profile's
+                # own assignmentRules (AllMembership / EnumeratedMembership) is what the Global
+                # Secure Access portal's User and device assignments blade reads and writes.
                 if ($RawProfile.servicePrincipal.id) {
                     try {
                         $Sp = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/servicePrincipals/$($RawProfile.servicePrincipal.id)?`$select=appRoleAssignmentRequired" -tenantid $TenantFilter -AsApp $true
@@ -50,6 +55,8 @@ function Set-CIPPDBCacheNetworkAccess {
                         isCustomProfile           = [bool]$RawProfile.isCustomProfile
                         servicePrincipalId        = $RawProfile.servicePrincipal.id
                         appRoleAssignmentRequired = $AssignmentRequired
+                        assignmentRules           = $RawProfile.assignmentRules
+                        associations              = @($RawProfile.associations | Where-Object { $_ })
                         policies                  = @($RawProfile.policies | ForEach-Object { [PSCustomObject]@{ id = $_.id; state = $_.state; policyName = $_.policy.name } })
                     })
             }

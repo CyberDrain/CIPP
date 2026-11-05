@@ -1,0 +1,62 @@
+{
+  "name": "GlobalSecureAccessSignaling",
+  "label": "Enable Global Secure Access signaling for Conditional Access",
+  "cat": "Global Secure Access",
+  "tag": [],
+  "impact": "Low Impact",
+  "helpText": "Lets Conditional Access recognize Global Secure Access traffic: sign-in logs show the user's real IP and policies can require a compliant network. Review location-based Conditional Access policies before enabling - they will see different IP addresses. Requires 'Onboard Global Secure Access' first.",
+  "executiveText": "Lets the company's network security service report each user's real location to the sign-in controls, so sign-in policies can require company devices or networks.",
+  "docsDescription": "Checks whether Global Secure Access signaling is on or off, and sets it to the chosen value. Tenants that are not onboarded yet show an error until 'Onboard Global Secure Access' has run.",
+  "impactColour": "info",
+  "addedDate": "2026-11-01",
+  "powershellEquivalent": "Update-MgBetaNetworkAccessSettingConditionalAccess",
+  "recommendedBy": [
+    "CIPP"
+  ],
+  "requiredCapabilities": [
+    [
+      "AAD_PREMIUM",
+      "AAD_PREMIUM_P2"
+    ]
+  ],
+  "secureScoreImpact": 0,
+  "compare": "subset",
+  "variables": {
+    "signalingStatus": {
+      "type": "autoComplete",
+      "creatable": false,
+      "label": "Signaling status",
+      "options": [
+        {
+          "value": "enabled",
+          "label": "Enabled"
+        },
+        {
+          "value": "disabled",
+          "label": "Disabled"
+        }
+      ],
+      "default": "enabled",
+      "recommended": "enabled"
+    }
+  },
+  "expected": {
+    "signalingStatus": "%signalingStatus%"
+  },
+  "read": {
+    "cacheType": "NetworkAccess"
+  },
+  "prepare": "Get-CIPPBaselineGlobalSecureAccessSignalingState",
+  "remediate": {
+    "executor": "GraphRequest",
+    "requests": [
+      {
+        "method": "PATCH",
+        "uri": "networkAccess/settings/conditionalAccess",
+        "body": {
+          "signalingStatus": "%signalingStatus%"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "GlobalSecureAccessOnboard",
+  "label": "Onboard Global Secure Access",
+  "cat": "Global Secure Access",
+  "tag": [],
+  "impact": "Low Impact",
+  "helpText": "Connects the tenant to Microsoft's Global Secure Access service. Required before the other Global Secure Access standards work. Onboarding is permanent - undoing it needs Microsoft support - but no traffic changes until the client is deployed. Requires Entra ID P1 or P2.",
+  "executiveText": "Signs the tenant up for Microsoft's cloud network security service. Nothing changes for users yet.",
+  "docsDescription": "Checks whether the tenant is onboarded to Global Secure Access and starts onboarding if needed. Onboarding takes a few minutes; the next run confirms it finished.",
+  "impactColour": "info",
+  "addedDate": "2026-11-01",
+  "powershellEquivalent": "Invoke-MgBetaOnboardNetworkAccess",
+  "recommendedBy": [
+    "CIPP"
+  ],
+  "requiredCapabilities": [
+    [
+      "AAD_PREMIUM",
+      "AAD_PREMIUM_P2"
+    ]
+  ],
+  "secureScoreImpact": 0,
+  "compare": "subset",
+  "variables": {},
+  "expected": {
+    "onboarded": true
+  },
+  "read": {
+    "cacheType": "NetworkAccess"
+  },
+  "remediate": {
+    "executor": "GlobalSecureAccessOnboard"
+  }
+}

@@ -115,7 +115,7 @@ Describe 'Set-CIPPDBCacheServicePrincipalRoleChanges' {
         Should -Invoke Add-CIPPDbItem -Times 1 -Exactly -ParameterFilter { $Type -eq 'ServicePrincipalRoleChanges' -and @($Data).Count -eq 1 -and -not $ClearOnEmpty }
     }
 
-    It 'reads group membership events only for role-assignable groups, one read per group' {
+    It 'reads group membership events only for role-assignable groups' {
         Mock New-GraphGetRequest {
             if ($uri -like '*/groups?*') { [pscustomobject]@{ id = 'grp-a' }; [pscustomobject]@{ id = 'grp-b' } }
         }
@@ -123,10 +123,24 @@ Describe 'Set-CIPPDBCacheServicePrincipalRoleChanges' {
         Set-CIPPDBCacheServicePrincipalRoleChanges -TenantFilter 'contoso.onmicrosoft.com'
 
         Should -Invoke New-GraphGetRequest -Times 1 -Exactly -ParameterFilter { $uri -like '*/groups?$filter=isAssignableToRole eq true*' }
-        foreach ($GroupId in 'grp-a', 'grp-b') {
-            Should -Invoke New-GraphGetRequest -Times 1 -Exactly -ParameterFilter { $uri -like "*category eq 'GroupManagement' and activityDisplayName eq 'Add member to group' and activityDateTime ge * and targetResources/any(t:t/id eq '$GroupId')&*" -and $AsApp -and $Stream }
-        }
+        Should -Invoke New-GraphGetRequest -Times 1 -Exactly -ParameterFilter { $uri -like "*category eq 'GroupManagement' and activityDisplayName eq 'Add member to group' and activityDateTime ge * and targetResources/any(t:t/id eq 'grp-a' or t/id eq 'grp-b')&*" -and $AsApp -and $Stream }
         Should -Invoke New-GraphGetRequest -Times 0 -ParameterFilter { $uri -like "*category eq 'GroupManagement'*" -and $uri -notlike '*targetResources/any*' }
+    }
+
+    It 'reads the groups 20 at a time, each group exactly once' {
+        Mock New-GraphGetRequest {
+            if ($uri -like '*/groups?*') { 1..45 | ForEach-Object { [pscustomobject]@{ id = "grp-$_" } } }
+        }
+
+        Set-CIPPDBCacheServicePrincipalRoleChanges -TenantFilter 'contoso.onmicrosoft.com'
+
+        Should -Invoke New-GraphGetRequest -Times 3 -Exactly -ParameterFilter { $uri -like "*category eq 'GroupManagement'*" }
+        foreach ($Size in 20, 20, 5) {
+            Should -Invoke New-GraphGetRequest -ParameterFilter { $uri -like "*category eq 'GroupManagement'*" -and ([regex]::Matches($uri, "t/id eq 'grp-\d+'")).Count -eq $Size }
+        }
+        foreach ($n in 1, 20, 21, 40, 41, 45) {
+            Should -Invoke New-GraphGetRequest -Times 1 -Exactly -ParameterFilter { $uri -like "*t/id eq 'grp-$n'[) ]*" }
+        }
     }
 
     It 'skips the group membership read when the tenant has no role-assignable group' {

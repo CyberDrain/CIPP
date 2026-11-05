@@ -30,8 +30,11 @@ function Set-CIPPDBCacheServicePrincipalRoleChanges {
         $Filters = [System.Collections.Generic.List[string]]::new()
         $Filters.Add("category eq 'RoleManagement' and activityDateTime ge $Start")
         # Only role-assignable groups can hold a directory role; the group log as a whole runs to hundreds of thousands of events
-        foreach ($Group in @(New-GraphGetRequest -uri 'https://graph.microsoft.com/v1.0/groups?$filter=isAssignableToRole eq true&$select=id&$top=999' -tenantid $TenantFilter)) {
-            $Filters.Add("category eq 'GroupManagement' and activityDisplayName eq 'Add member to group' and activityDateTime ge $Start and targetResources/any(t:t/id eq '$($Group.id)')")
+        $GroupIds = @(foreach ($Group in @(New-GraphGetRequest -uri 'https://graph.microsoft.com/v1.0/groups?$filter=isAssignableToRole eq true&$select=id&$top=999' -tenantid $TenantFilter)) { [string]$Group.id })
+        # 20 ids per read keeps the URL near 1 KB; the log rejects 'in', so the ids are or-ed
+        for ($i = 0; $i -lt $GroupIds.Count; $i += 20) {
+            $IdFilter = @(foreach ($Id in $GroupIds[$i..([Math]::Min($i + 19, $GroupIds.Count - 1))]) { "t/id eq '$Id'" }) -join ' or '
+            $Filters.Add("category eq 'GroupManagement' and activityDisplayName eq 'Add member to group' and activityDateTime ge $Start and targetResources/any(t:$IdFilter)")
         }
         $Events = [System.Collections.Generic.List[object]]::new()
         foreach ($Filter in $Filters) {

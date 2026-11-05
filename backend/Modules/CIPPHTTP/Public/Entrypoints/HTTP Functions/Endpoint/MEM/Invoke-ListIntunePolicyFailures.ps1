@@ -18,8 +18,8 @@ function Invoke-ListIntunePolicyFailures {
 
     # Report shapes (probed 2026-10-30): the summary and per-policy device reports take a PolicyId filter;
     # getConfigurationSettingNonComplianceReport needs PolicyId, DeviceId and UserId together and has no
-    # column naming the other policies, so conflict partners come from settingStates.sources (classic
-    # profiles) or from the policies applied to the device that share a setting definition (settings catalog).
+    # column naming the other policies, so conflict partners are the device's other policies in conflict on the
+    # same setting path (classic profiles) or sharing a setting definition (settings catalog).
     $ReportBase = 'https://graph.microsoft.com/beta/deviceManagement/reports'
     $ClassicType = 'Microsoft.Management.Services.Api.DeviceConfiguration'
     $CatalogType = 'DeviceManagementConfigurationPolicy'
@@ -113,7 +113,7 @@ function Invoke-ListIntunePolicyFailures {
     }
 
     $AddConflict = {
-        param($SettingName, $PolicyNames)
+        param($SettingName, $PolicyNames, [switch]$CountDevice)
         if (-not $Settings.Contains([string]$SettingName)) {
             $Settings[[string]$SettingName] = [PSCustomObject]@{
                 settingName         = $SettingName
@@ -123,6 +123,8 @@ function Invoke-ListIntunePolicyFailures {
                 conflictingPolicies = [System.Collections.Generic.List[string]]::new()
             }
         }
+        # The setting report has no rows for classic profiles, so their per-device states supply the count
+        if ($CountDevice -and -not $Settings[[string]$SettingName].settingId) { $Settings[[string]$SettingName].conflictDevices++ }
         foreach ($Name in @($PolicyNames)) {
             if ($Name -and $Settings[[string]$SettingName].conflictingPolicies -notcontains $Name) {
                 $Settings[[string]$SettingName].conflictingPolicies.Add([string]$Name)
@@ -132,21 +134,49 @@ function Invoke-ListIntunePolicyFailures {
 
     $ConflictDevices = @($Devices | Where-Object { $_.ReportStatus -eq 'Conflict' })
     if ($ConflictDevices.Count -gt 0) {
+        # Bulk lookups that Graph refused; reported in errors instead of silently leaving conflicts unpaired
+        $FailedLookups = [System.Collections.Generic.List[string]]::new()
         try {
             if ($PolicyBaseTypeName -eq $ClassicType) {
-                # Classic profiles: the per-device setting state names every policy that set the setting
-                $Requests = foreach ($Device in $ConflictDevices) {
-                    [PSCustomObject]@{
-                        id     = $Device.IntuneDeviceId
-                        method = 'GET'
-                        url    = "/deviceManagement/managedDevices/$($Device.IntuneDeviceId)/deviceConfigurationStates/$PolicyGuid/settingStates"
+                # Classic profiles: settingStates.sources only names the policy itself, so pair by the other
+                # profiles in conflict on the same device that report a conflict on the same setting path
+                # The report repeats a device per user context; its states are per device
+                $StateRequests = foreach ($DeviceId in @($ConflictDevices.IntuneDeviceId | Sort-Object -Unique)) {
+                    [PSCustomObject]@{ id = $DeviceId; method = 'GET'; url = "/deviceManagement/managedDevices/$DeviceId/deviceConfigurationStates" }
+                }
+                $OtherNames = @{}
+                $Requests = [System.Collections.Generic.List[object]]::new()
+                foreach ($Response in @(New-GraphBulkRequest -tenantid $TenantFilter -Requests @($StateRequests))) {
+                    if ([int]$Response.status -ge 300) { $FailedLookups.Add("$($Response.id): $($Response.body.error.message)"); continue }
+                    $PolicyIds = [System.Collections.Generic.List[string]]::new()
+                    $PolicyIds.Add($PolicyGuid)
+                    foreach ($State in @($Response.body.value | Where-Object { $_.state -eq 'conflict' -and $_.id -ne $PolicyGuid })) {
+                        $OtherNames[[string]$State.id] = $State.displayName
+                        $PolicyIds.Add([string]$State.id)
+                    }
+                    foreach ($Id in $PolicyIds) {
+                        $Requests.Add([PSCustomObject]@{
+                                id     = "$($Response.id)/$Id"
+                                method = 'GET'
+                                url    = "/deviceManagement/managedDevices/$($Response.id)/deviceConfigurationStates/$Id/settingStates"
+                            })
                     }
                 }
-                foreach ($Response in @(New-GraphBulkRequest -tenantid $TenantFilter -Requests @($Requests))) {
-                    if ([int]$Response.status -ge 300) { continue }
-                    foreach ($State in @($Response.body.value | Where-Object { $_.state -eq 'conflict' })) {
-                        $Others = @($State.sources | Where-Object { $_.id -ne $PolicyGuid } | ForEach-Object { $_.displayName })
-                        & $AddConflict ($State.settingName ?? $State.setting) $Others
+                $SettingResponses = foreach ($Response in @(New-GraphBulkRequest -tenantid $TenantFilter -Requests @($Requests))) {
+                    if ([int]$Response.status -ge 300) { $FailedLookups.Add("$($Response.id): $($Response.body.error.message)"); continue }
+                    $Response
+                }
+                foreach ($Device in @($SettingResponses | Group-Object -Property { ([string]$_.id -split '/')[0] })) {
+                    $Own = @($Device.Group | Where-Object { $_.id -eq "$($Device.Name)/$PolicyGuid" } | ForEach-Object { $_.body.value } | Where-Object { $_.state -eq 'conflict' } | Sort-Object -Property setting -Unique)
+                    foreach ($State in $Own) {
+                        $Partners = foreach ($Response in @($Device.Group | Where-Object { $_.id -ne "$($Device.Name)/$PolicyGuid" })) {
+                            if (@($Response.body.value | Where-Object { $_.state -eq 'conflict' -and $_.setting -eq $State.setting }).Count -gt 0) {
+                                $OtherNames[([string]$Response.id -split '/')[1]]
+                            }
+                        }
+                        # settingName reads Windows10GeneralConfiguration.DefenderScanMaxCpu; keep the setting part
+                        $SettingName = if ($State.settingName) { $State.settingName -replace '^.*\.', '' } else { $State.setting }
+                        & $AddConflict $SettingName @($Partners) -CountDevice
                     }
                 }
             } elseif ($PolicyBaseTypeName -eq $CatalogType) {
@@ -159,13 +189,19 @@ function Invoke-ListIntunePolicyFailures {
                     $Missing = @($Ids | Where-Object { -not $PolicySettings.ContainsKey([string]$_) })
                     if ($Missing.Count -gt 0) {
                         $Requests = foreach ($Id in $Missing) {
-                            [PSCustomObject]@{ id = $Id; method = 'GET'; url = "/deviceManagement/configurationPolicies('$Id')?`$expand=settings&`$select=id,name" }
+                            [PSCustomObject]@{ id = $Id; method = 'GET'; url = "/deviceManagement/configurationPolicies('$Id')?`$expand=settings(`$expand=settingDefinitions)&`$select=id,name" }
                         }
                         foreach ($Response in @(New-GraphBulkRequest -tenantid $TenantFilter -Requests @($Requests))) {
-                            if ([int]$Response.status -ge 300) { continue }
+                            if ([int]$Response.status -ge 300) { $FailedLookups.Add("$($Response.id): $($Response.body.error.message)"); continue }
+                            # The setting report names settings by their definition display name
+                            $DisplayNames = @{}
+                            foreach ($Definition in @($Response.body.settings.settingDefinitions)) {
+                                $DisplayNames[[string]$Definition.id] = $Definition.displayName
+                            }
                             $PolicySettings[[string]$Response.id] = [PSCustomObject]@{
                                 name          = $Response.body.name
                                 definitionIds = @($Response.body.settings | ForEach-Object { $_.settingInstance.settingDefinitionId })
+                                displayNames  = $DisplayNames
                             }
                         }
                     }
@@ -183,15 +219,19 @@ function Invoke-ListIntunePolicyFailures {
                         $Other = $PolicySettings[$OtherId]
                         if (-not $Other) { continue }
                         foreach ($Shared in @($OwnDefinitions | Where-Object { $_ -in $Other.definitionIds })) {
-                            # the report names the setting by its definition id; fall back to the id itself when it doesn't match
-                            $Name = @($FailingNames | Where-Object { $_ -eq $Shared -or $_ -like "*$Shared*" }) | Select-Object -First 1
-                            & $AddConflict ($Name ?? $Shared) @($Other.name)
+                            # the report names the setting by its definition display name; fall back to the id itself
+                            $DisplayName = $PolicySettings[$PolicyGuid].displayNames[[string]$Shared]
+                            $Name = @($FailingNames | Where-Object { $_ -eq $DisplayName -or $_ -eq $Shared }) | Select-Object -First 1
+                            & $AddConflict ($Name ?? $DisplayName ?? $Shared) @($Other.name)
                         }
                     }
                 }
             }
         } catch {
             $Errors['conflicts'] = "Failed to resolve conflicting policies: $((Get-CippException -Exception $_).NormalizedError)"
+        }
+        if ($FailedLookups.Count -gt 0 -and -not $Errors.Contains('conflicts')) {
+            $Errors['conflicts'] = "Failed $($FailedLookups.Count) conflict lookup(s): $(@($FailedLookups | Select-Object -First 3) -join '; ')"
         }
     }
 

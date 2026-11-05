@@ -124,35 +124,69 @@ Describe 'Invoke-ListIntunePolicyFailures' {
             $reportCalls[0].Filter | Should -Be "(PolicyId eq '$policy')"
         }
 
-        It 'names the other policies from settingStates sources for classic profiles' {
-            $script:bulkResponses['d1'] = [pscustomobject]@{
-                id = 'd1'; status = 200
-                body = [pscustomobject]@{ value = @(
-                        [pscustomobject]@{ settingName = 'Firewall'; state = 'conflict'; sources = @([pscustomobject]@{ id = $policy; displayName = 'Me' }, [pscustomobject]@{ id = $other; displayName = 'Other profile' }) }
-                        [pscustomobject]@{ settingName = 'Fine'; state = 'compliant'; sources = @([pscustomobject]@{ id = $other; displayName = 'Other profile' }) }
+        It 'pairs classic profile conflicts by the other profiles conflicting on the same setting path' {
+            # Intune's settingStates.sources only names the policy itself, so pairing comes from the device's other profiles
+            $third = '33333333-3333-3333-3333-333333333333'
+            $path = './Vendor/MSFT/Policy/Config/Defender/AVGCPULoadFactor'
+            $script:reports['getConfigurationPolicySettingsDeviceSummaryReport'] = @()
+            $script:reports['getConfigurationPolicyNonComplianceReport'] = @(
+                [pscustomobject]@{ IntuneDeviceId = 'd1'; UserId = 'u1'; DeviceName = 'PC1'; ReportStatus = 'Conflict' }
+                [pscustomobject]@{ IntuneDeviceId = 'd1'; UserId = '00000000-0000-0000-0000-000000000000'; DeviceName = 'PC1'; ReportStatus = 'Conflict' }
+            )
+            $script:bulkResponses['d1'] = [pscustomobject]@{ id = 'd1'; status = 200; body = [pscustomobject]@{ value = @(
+                        [pscustomobject]@{ id = $policy; displayName = 'Me'; state = 'conflict' }
+                        [pscustomobject]@{ id = $other; displayName = 'Other profile'; state = 'conflict' }
+                        [pscustomobject]@{ id = $third; displayName = 'Unrelated'; state = 'conflict' }
+                        [pscustomobject]@{ id = '44444444-4444-4444-4444-444444444444'; displayName = 'Healthy'; state = 'compliant' }
                     )
                 }
             }
+            $ownState = [pscustomobject]@{ setting = $path; settingName = 'Windows10GeneralConfiguration.DefenderScanMaxCpu'; state = 'conflict'; sources = @([pscustomobject]@{ id = $policy; displayName = $null }) }
+            $script:bulkResponses["d1/$policy"] = [pscustomobject]@{ id = "d1/$policy"; status = 200; body = [pscustomobject]@{ value = @($ownState, $ownState) } }
+            $script:bulkResponses["d1/$other"] = [pscustomobject]@{ id = "d1/$other"; status = 200; body = [pscustomobject]@{ value = @([pscustomobject]@{ setting = $path; state = 'conflict' }) } }
+            $script:bulkResponses["d1/$third"] = [pscustomobject]@{ id = "d1/$third"; status = 200; body = [pscustomobject]@{ value = @([pscustomobject]@{ setting = './Vendor/MSFT/Policy/Config/Other'; state = 'conflict' }) } }
 
             $response = Invoke-ListIntunePolicyFailures -Request (New-Request @{ policyId = $policy; policyBaseTypeName = 'Microsoft.Management.Services.Api.DeviceConfiguration' }) -TriggerMetadata $null
 
+            $response.Body.Results.errors.Count | Should -Be 0 -Because ($response.Body.Results.errors | ConvertTo-Json -Compress)
             $response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
-            @($bulkRequests[0]).Count | Should -Be 1
-            $bulkRequests[0][0].url | Should -Be "/deviceManagement/managedDevices/d1/deviceConfigurationStates/$policy/settingStates"
-            $firewall = $response.Body.Results.settings | Where-Object settingName -EQ 'Firewall'
-            @($firewall.conflictingPolicies) | Should -Be @('Other profile')
+            # one device despite two user rows, and only the profiles in conflict on it
+            @($bulkRequests[0]).url | Should -Be @('/deviceManagement/managedDevices/d1/deviceConfigurationStates')
+            @($bulkRequests[1]).url | Sort-Object | Should -Be @(
+                "/deviceManagement/managedDevices/d1/deviceConfigurationStates/$policy/settingStates"
+                "/deviceManagement/managedDevices/d1/deviceConfigurationStates/$other/settingStates"
+                "/deviceManagement/managedDevices/d1/deviceConfigurationStates/$third/settingStates"
+            )
+            @($response.Body.Results.settings).Count | Should -Be 1
+            $response.Body.Results.settings[0].settingName | Should -Be 'DefenderScanMaxCpu'
+            $response.Body.Results.settings[0].conflictDevices | Should -Be 1
+            @($response.Body.Results.settings[0].conflictingPolicies) | Should -Be @('Other profile')
+        }
+
+        It 'reports refused bulk lookups in errors instead of dropping them silently' {
+            $script:reports['getConfigurationPolicySettingsDeviceSummaryReport'] = @()
+            $script:reports['getConfigurationPolicyNonComplianceReport'] = @(
+                [pscustomobject]@{ IntuneDeviceId = 'd1'; UserId = 'u1'; DeviceName = 'PC1'; ReportStatus = 'Conflict' }
+            )
+            $script:bulkResponses['d1'] = [pscustomobject]@{ id = 'd1'; status = 403; body = [pscustomobject]@{ error = [pscustomobject]@{ message = 'Forbidden' } } }
+
+            $response = Invoke-ListIntunePolicyFailures -Request (New-Request @{ policyId = $policy; policyBaseTypeName = 'Microsoft.Management.Services.Api.DeviceConfiguration' }) -TriggerMetadata $null
+
+            $response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::MultiStatus)
+            $response.Body.Results.errors.conflicts | Should -Match 'Failed 1 conflict lookup\(s\): d1: Forbidden'
         }
 
         It 'pairs settings catalog conflicts with applied policies sharing a setting definition' {
             $script:reports['getConfigurationSettingNonComplianceReport'] = @(
-                [pscustomobject]@{ SettingName = 'device_vendor_msft_firewall_enable'; SettingStatus = 6 }
+                [pscustomobject]@{ SettingName = 'Firewall'; SettingStatus = 6 }
             )
             $script:reports['getConfigurationPoliciesReportForDevice'] = @(
                 [pscustomobject]@{ PolicyId = $policy }
                 [pscustomobject]@{ PolicyId = $other }
                 [pscustomobject]@{ PolicyId = '33333333-3333-3333-3333-333333333333' }
             )
-            $script:bulkResponses[$policy] = [pscustomobject]@{ id = $policy; status = 200; body = [pscustomobject]@{ name = 'Me'; settings = @([pscustomobject]@{ settingInstance = [pscustomobject]@{ settingDefinitionId = 'device_vendor_msft_firewall_enable' } }) } }
+            # The reports name a setting by its definition display name, not its id
+            $script:bulkResponses[$policy] = [pscustomobject]@{ id = $policy; status = 200; body = [pscustomobject]@{ name = 'Me'; settings = @([pscustomobject]@{ settingInstance = [pscustomobject]@{ settingDefinitionId = 'device_vendor_msft_firewall_enable' }; settingDefinitions = @([pscustomobject]@{ id = 'device_vendor_msft_firewall_enable'; displayName = 'Firewall' }) }) } }
             $script:bulkResponses[$other] = [pscustomobject]@{ id = $other; status = 200; body = [pscustomobject]@{ name = 'Other catalog'; settings = @([pscustomobject]@{ settingInstance = [pscustomobject]@{ settingDefinitionId = 'device_vendor_msft_firewall_enable' } }) } }
             $script:bulkResponses['33333333-3333-3333-3333-333333333333'] = [pscustomobject]@{ id = '33333333-3333-3333-3333-333333333333'; status = 200; body = [pscustomobject]@{ name = 'Unrelated'; settings = @([pscustomobject]@{ settingInstance = [pscustomobject]@{ settingDefinitionId = 'device_vendor_msft_bitlocker' } }) } }
 
@@ -161,9 +195,10 @@ Describe 'Invoke-ListIntunePolicyFailures' {
             $response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
             $settingCall = $reportCalls | Where-Object { $_.Name -eq 'getConfigurationSettingNonComplianceReport' }
             $settingCall.Filter | Should -Be "(PolicyId eq '$policy') and (DeviceId eq 'd1') and (UserId eq 'u1')"
-            $paired = $response.Body.Results.settings | Where-Object settingName -EQ 'device_vendor_msft_firewall_enable'
-            @($paired.conflictingPolicies) | Should -Be @('Other catalog')
-            ($response.Body.Results.settings | Where-Object settingName -EQ 'Firewall').conflictingPolicies | Should -BeNullOrEmpty
+            # the partner lands on the report's own row instead of a second row keyed by the definition id
+            @($response.Body.Results.settings).settingName | Should -Be @('Firewall')
+            @($response.Body.Results.settings[0].conflictingPolicies) | Should -Be @('Other catalog')
+            $response.Body.Results.settings[0].conflictDevices | Should -Be 1
         }
 
         It 'reports a failed sub-call in errors instead of failing the response' {

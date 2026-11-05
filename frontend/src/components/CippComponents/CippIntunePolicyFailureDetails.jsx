@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import { Alert, Box, Skeleton, Stack } from '@mui/material'
+import { Alert, Box, Skeleton, Stack, Typography } from '@mui/material'
 import { ApiGetCall } from '../../api/ApiCall'
 import { CippDataTable } from '../CippTable/CippDataTable'
 import { getCippError } from '../../utils/get-cipp-error'
@@ -65,20 +65,25 @@ export const CippIntunePolicyFailureDetails = ({ row, tenant }) => {
   ]
 
   return (
-    <Stack spacing={2} sx={{ p: 1 }}>
+    <Stack spacing={2}>
       {errors.map((message) => (
         <Alert key={message} severity="warning">
           {message}
         </Alert>
       ))}
+      {/* noCard drops the card header, so the section titles sit above each table */}
+      <Typography variant="subtitle1">Failing Settings</Typography>
       <CippDataTable
+        noCard
         title="Failing Settings"
         data={settings}
         simpleColumns={['settingName', 'errorDevices', 'conflictDevices', 'conflictingPolicies']}
         isFetching={request.isFetching}
         refreshFunction={() => request.refetch()}
       />
+      <Typography variant="subtitle1">Devices</Typography>
       <CippDataTable
+        noCard
         title="Devices"
         data={devices}
         simpleColumns={['DeviceName', 'UPN', 'ReportStatus', 'PspdpuLastModifiedTimeUtc']}

@@ -60,7 +60,9 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
       allowedTenants: [],
       blockedTenants: [],
       BlockedEndpoints: [],
+      BlockAllTenants: false,
       IPRange: [],
+      AppRoleTenants: [],
       Permissions: {},
       AllowedRolesTemplate: null,
       PermissionRulesInclude: [],
@@ -98,6 +100,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
     name: "AllowedRolesTemplate",
   });
   const ipRanges = useWatch({ control: formControl.control, name: "IPRange" });
+  const appRoleTenants = useWatch({ control: formControl.control, name: "AppRoleTenants" });
   const includeRules = useWatch({ control: formControl.control, name: "PermissionRulesInclude" });
   const excludeRules = useWatch({ control: formControl.control, name: "PermissionRulesExclude" });
   const baseRoleTemplate = useWatch({ control: formControl.control, name: "BaseRoleTemplate" });
@@ -366,7 +369,13 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
         allowedTenants: newAllowedTenants,
         blockedTenants: newBlockedTenants,
         BlockedEndpoints: processedBlockedEndpoints,
+        BlockAllTenants: Boolean(currentPermissions?.BlockAllTenants),
         IPRange: processedIPRanges,
+        AppRoleTenants:
+          currentPermissions?.AppRoleTenants?.map((tenantId) => ({
+            label: tenantId,
+            value: tenantId,
+          })) || [],
         EntraGroup: currentPermissions?.EntraGroup,
         AllowedRolesTemplate: currentPermissions?.AllowedRolesTemplate || null,
         PermissionRulesInclude: toRuleOptions(storedRules?.Include),
@@ -500,7 +509,9 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
         AllowedTenants: processedAllowedTenants,
         BlockedTenants: processedBlockedTenants,
         BlockedEndpoints: processedBlockedEndpoints,
+        BlockAllTenants: Boolean(values?.["BlockAllTenants"]),
         IPRange: processedIPRanges,
+        AppRoleTenants: values?.["AppRoleTenants"]?.map((tenant) => tenant?.value || tenant) || [],
         AllowedRolesTemplate: selectedRolesTemplate || null,
       },
     });
@@ -735,6 +746,15 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
                   />
                 </Box>
               )}
+              <Box sx={{ mb: 3 }}>
+                <CippFormComponent
+                  type="switch"
+                  name="BlockAllTenants"
+                  label="Block the All Tenants view"
+                  formControl={formControl}
+                  helperText="Members of this role cannot select All Tenants or run cross-tenant views. Another role without this setting still grants it."
+                />
+              </Box>
 
               <Box sx={{ mb: 3 }}>
                 <CippFormComponent
@@ -815,6 +835,21 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
               }
               fullWidth={true}
               disabled={selectedRole === "superadmin"}
+            />
+          </Box>
+          <Box sx={{ mb: 3 }}>
+            <CippFormComponent
+              type="autoComplete"
+              name="AppRoleTenants"
+              label="App Role Tenants (Entra tenant IDs)"
+              formControl={formControl}
+              multiple={true}
+              freeSolo={true}
+              creatable={true}
+              options={[]}
+              placeholder="Type a tenant ID and hit enter"
+              helperText="Users from these tenants who are assigned this role as an app role on the CIPP SSO enterprise app receive it at sign-in. Include your own tenant ID to use app roles there. Other tenants need the SSO app in multi-tenant mode and admin consent."
+              fullWidth={true}
             />
           </Box>
           {apiPermissionFetching && (
@@ -1327,6 +1362,16 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
               <ul>
                 {ipRanges.map((ip, idx) => (
                   <li key={`ip-range-${idx}`}>{ip?.value || ip?.label || ip}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          {appRoleTenants?.length > 0 && (
+            <>
+              <h5>App Role Tenants</h5>
+              <ul>
+                {appRoleTenants.map((tenant, idx) => (
+                  <li key={`app-role-tenant-${idx}`}>{tenant?.value || tenant?.label || tenant}</li>
                 ))}
               </ul>
             </>

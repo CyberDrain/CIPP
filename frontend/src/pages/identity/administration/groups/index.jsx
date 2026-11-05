@@ -1,15 +1,23 @@
-import { Button } from '@mui/material'
 import { CippIcons } from '../../../../utils/icon-registry'
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
-import Link from 'next/link'
+import { CippDeployGroupTemplateDrawer } from '../../../../components/CippComponents/CippDeployGroupTemplateDrawer'
 import { Stack } from '@mui/system'
 import { useSettings } from '../../../../hooks/use-settings'
 import { useCippReportDB } from '../../../../components/CippComponents/CippReportDBControls'
 import { getRowTenant } from '../../../../utils/resolve-row-templates'
+import { CippAddGroupDrawer } from '../../../../components/CippComponents/CippAddGroupDrawer'
 
 const Page = () => {
   const pageTitle = 'Groups'
+  // Microsoft retires memberOf in dynamic membership rules (Nov 3 2026, Mar 31 2027 with ID Governance)
+  const filterList = [
+    {
+      filterName: 'MemberOf rules (retiring)',
+      value: [{ id: 'membershipRule', value: 'memberOf', filterFn: 'contains' }],
+      type: 'column',
+    },
+  ]
   const { currentTenant } = useSettings()
   const tenantQuery =
     currentTenant === 'AllTenants' ? '[Tenant]' : currentTenant
@@ -506,16 +514,8 @@ const Page = () => {
           <Stack direction="row" spacing={1} sx={{
             alignItems: "center"
           }}>
-            <Button component={Link} href="groups/add" startIcon={<CippIcons.GroupAdd />}>
-              Add Group
-            </Button>
-            <Button
-              component={Link}
-              href="/identity/administration/group-templates/deploy"
-              startIcon={<CippIcons.RocketLaunch />}
-            >
-              Deploy Group Template
-            </Button>
+            <CippAddGroupDrawer />
+            <CippDeployGroupTemplateDrawer requiredPermissions={['Identity.Group.ReadWrite']} />
           </Stack>
         }
         dataSourceControls={reportDB.controls}
@@ -528,6 +528,7 @@ const Page = () => {
           reportDB.useReportDB ? reportDB.resolvedQueryKey : `groups-${currentTenant}`
         }
         actions={actions}
+        filters={filterList}
         offCanvas={offCanvas}
         rowOpen={{
           link: `/identity/administration/groups/group?groupId=[id]&tenantFilter=${tenantQuery}`,

@@ -101,6 +101,29 @@ export const Layout = (props) => {
   const lastUserSettingsUpdate = useRef(null)
   const currentTenant = settings?.currentTenant
   const urlTenant = useSearchParams()?.get('tenantFilter')
+  // Same query as the tenant selector, so this reads its cache rather than fetching again.
+  const tenantList = ApiGetCall({
+    url: '/api/listTenants',
+    data: { AllTenantSelector: true },
+    queryKey: 'TenantSelector',
+    refetchOnMount: false,
+  })
+  const urlTenantMatch = tenantList.isSuccess
+    ? (tenantList.data ?? []).find((t) =>
+        [t.defaultDomainName, t.customerId, t.initialDomainName].includes(
+          urlTenant
+        )
+      )
+    : undefined
+  // A tenant the user cannot access shows a notice instead of a page full of failing calls, and a
+  // page waits for the URL's tenant to be applied so its first call is not sent without one.
+  const urlTenantUnavailable =
+    !!urlTenant && tenantList.isSuccess && !urlTenantMatch
+  const urlTenantPending =
+    !!urlTenant &&
+    !urlTenantUnavailable &&
+    !tenantList.isError &&
+    (urlTenantMatch?.defaultDomainName ?? urlTenant) !== currentTenant
   const [hideSidebar, setHideSidebar] = useState(false)
 
   const swaStatus = ApiGetCall({
@@ -333,7 +356,22 @@ export const Layout = (props) => {
                 </Grid>
               </Container>
             </Box>
-          ) : (
+          ) : urlTenantUnavailable ? (
+            <Box sx={{ flexGrow: 1, py: 3 }}>
+              <Container maxWidth={false}>
+                <CippBreadcrumbNav mode="hierarchical" />
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <CippImageCard
+                      title="Tenant not available"
+                      imageUrl="/assets/illustrations/undraw_website_ij0l.svg"
+                      text={`You don't have access to ${urlTenant}, or CIPP doesn't manage it. Pick a tenant from the tenant selector.`}
+                    />
+                  </Grid>
+                </Grid>
+              </Container>
+            </Box>
+          ) : urlTenantPending ? null : (
             <Stack>
               {/* The nav carries its own rail chrome (gutter + divider) so that when it
                   renders nothing — a single crumb on a phone — no hairline is left behind. */}

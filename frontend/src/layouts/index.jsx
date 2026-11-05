@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Box, Container, Divider, Stack } from '@mui/material'
+import { Divider, Stack } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useIsMobileLayout } from '../hooks/use-breakpoint'
 import { useSettings } from '../hooks/use-settings'
@@ -11,8 +11,7 @@ import { TopNav } from './top-nav'
 import { ApiGetCall } from '../api/ApiCall'
 import { useDispatch } from 'react-redux'
 import { showToast } from '../store/toasts'
-import Grid from '@mui/system/Grid'
-import { CippImageCard } from '../components/CippCards/CippImageCard'
+import { CippErrorState } from '../components/CippComponents/CippErrorState'
 import { nativeMenuItems } from './config'
 import { CippBreadcrumbNav } from '../components/CippComponents/CippBreadcrumbNav'
 import { SsoMigrationDialog } from '../components/CippComponents/SsoMigrationDialog'
@@ -340,37 +339,25 @@ export const Layout = (props) => {
             urlTenant === 'AllTenants' ||
             !currentTenant) &&
           !allTenantsSupport ? (
-            <Box sx={{ flexGrow: 1, py: 3 }}>
-              <Container maxWidth={false}>
-                <CippBreadcrumbNav mode="hierarchical" />
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <CippImageCard
-                      title="Not supported"
-                      imageUrl="/assets/illustrations/undraw_website_ij0l.svg"
-                      text={
-                        'The page does not support all Tenants, please select a different tenant using the tenant selector.'
-                      }
-                    />
-                  </Grid>
-                </Grid>
-              </Container>
-            </Box>
+            <Stack>
+              {showBreadcrumb && <CippBreadcrumbNav withRail />}
+              <CippErrorState
+                title="Pick a tenant"
+                description="This page works on one tenant at a time. Choose a tenant from the tenant selector to continue."
+                imageUrl="/cippy-404.png"
+              />
+            </Stack>
           ) : urlTenantUnavailable ? (
-            <Box sx={{ flexGrow: 1, py: 3 }}>
-              <Container maxWidth={false}>
-                <CippBreadcrumbNav mode="hierarchical" />
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <CippImageCard
-                      title="Tenant not available"
-                      imageUrl="/assets/illustrations/undraw_website_ij0l.svg"
-                      text={`You don't have access to ${urlTenant}, or CIPP doesn't manage it. Pick a tenant from the tenant selector.`}
-                    />
-                  </Grid>
-                </Grid>
-              </Container>
-            </Box>
+            <Stack>
+              {showBreadcrumb && <CippBreadcrumbNav withRail />}
+              <CippErrorState
+                title="Tenant not available"
+                description={`You don't have access to ${urlTenant}, or CIPP doesn't manage it. Pick another tenant from the tenant selector.`}
+                imageUrl="/cippy-401.png"
+                actionText="Return to Home"
+                actionHref="/"
+              />
+            </Stack>
           ) : urlTenantPending ? null : (
             <Stack>
               {/* The nav carries its own rail chrome (gutter + divider) so that when it

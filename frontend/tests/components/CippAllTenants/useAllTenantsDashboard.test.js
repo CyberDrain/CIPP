@@ -50,20 +50,13 @@ describe('deriveCacheSummary', () => {
     expect(summary.staleTenants).toEqual([])
   })
 
-  it('says so when a tenant has only ad-hoc collections rather than none', () => {
+  it('judges rows without the Scheduled flag, so a cached older response is not all on-demand', () => {
     const summary = deriveCacheSummary(
-      [row('a.com', 'SharePointSharingLinks', 24 * 90, 1, false)],
+      [{ Tenant: 'a.com', Type: 'Users', Count: 1, LastRefresh: hoursAgo(2) }],
       [tenant('a.com', 'Alpha')]
     )
 
-    expect(summary.freshness).toEqual({ fresh: 0, stale: 0, missing: 1 })
-    expect(summary.staleTenants[0]).toMatchObject({
-      name: 'Alpha',
-      detail: 'Only on-demand collections cached',
-      severity: 'critical',
-      ageHours: null,
-      collections: [],
-    })
+    expect(summary.freshness).toEqual({ fresh: 1, stale: 0, missing: 0 })
   })
 
   it('treats a collection that missed one nightly run as fresh', () => {

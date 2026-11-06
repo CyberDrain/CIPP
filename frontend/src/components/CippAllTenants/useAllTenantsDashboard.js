@@ -123,20 +123,14 @@ export const deriveCacheSummary = (rows, tenants) => {
   const tenantCount = tenants.length
   const totals = new Map()
   const collectionsByTenant = new Map()
-  // Domains whose only rows are collections the nightly run never refreshes (on demand, baseline-only
-  // or retired). They have nothing scheduled to judge, so they read as never cached.
-  const adhocOnly = new Set()
 
   rows.forEach((row) => {
     const type = row?.Type
     const count = Number(row?.Count ?? 0)
     // Scale totals still count every collection — only the age judgement is scoped.
     if (type) totals.set(type, (totals.get(type) ?? 0) + count)
-    if (!row?.Tenant) return
-    if (!row.Scheduled) {
-      adhocOnly.add(row.Tenant)
-      return
-    }
+    // On-demand, baseline-only and retired types never refresh nightly, so their age means nothing.
+    if (!row?.Tenant || row.Scheduled === false) return
 
     const ageHours = hoursSince(row?.LastRefresh)
     if (ageHours === null) return
@@ -145,9 +139,8 @@ export const deriveCacheSummary = (rows, tenants) => {
     collectionsByTenant.set(row.Tenant, collections)
   })
 
-  collectionsByTenant.forEach((collections, domain) => {
+  collectionsByTenant.forEach((collections) => {
     collections.sort((a, b) => b.ageHours - a.ageHours)
-    adhocOnly.delete(domain)
   })
 
   const scale = SCALE_TYPES.map(({ type, label }) => ({
@@ -174,9 +167,7 @@ export const deriveCacheSummary = (rows, tenants) => {
       staleTenants.push({
         name,
         domain,
-        detail: adhocOnly.has(domain)
-          ? 'Only on-demand collections cached'
-          : 'No cached collections found',
+        detail: 'No cached collections found',
         severity: 'critical',
         ageHours: null,
         collections: [],

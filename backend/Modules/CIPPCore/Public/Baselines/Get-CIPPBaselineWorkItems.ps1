@@ -41,8 +41,8 @@ function Get-CIPPBaselineWorkItems {
     $Groups = @()
     try { $Groups = @(Get-TenantGroups) } catch { Write-Information "Get-CIPPBaselineWorkItems: tenant group lookup failed: $($_.Exception.Message)" }
 
+    # Every baseline resolves even when one is run by hand, so its run cannot overwrite what a more specific baseline, an override or a conflict decides.
     $Baselines = @(Get-CIPPBaseline)
-    if ($TemplateId) { $Baselines = @($Baselines | Where-Object { $_.GUID -eq $TemplateId }) }
     $Definitions = @(Get-CIPPBaselineDefinition)
     $DefinitionsByName = @{}
     foreach ($Definition in $Definitions) { if ($Definition.name) { $DefinitionsByName[$Definition.name] = $Definition } }
@@ -157,6 +157,7 @@ function Get-CIPPBaselineWorkItems {
                             Standard             = $InstanceKey
                             BaseName             = ($InstanceKey -split '#')[0]
                             TemplateId           = $Baseline.GUID
+                            SourceTemplateIds    = @($Baseline.GUID)
                             TemplateName         = $Baseline.templateName
                             Variables            = ($Config.variables ?? [PSCustomObject]@{})
                             RemediateEnabled     = [bool]$Config.remediateEnabled
@@ -199,6 +200,7 @@ function Get-CIPPBaselineWorkItems {
                             $Twin.Item.AlertEnabled = [bool]($Twin.Item.AlertEnabled -or $Candidate.Item.AlertEnabled)
                             $Twin.Item.AlertOnRemediate = [bool]($Twin.Item.AlertOnRemediate -or $Candidate.Item.AlertOnRemediate)
                             $Twin.Item.SourceTemplate = @(@($Twin.Item.SourceTemplate -split ', ') + $Candidate.Item.TemplateName | Where-Object { $_ } | Select-Object -Unique) -join ', '
+                            $Twin.Item.SourceTemplateIds = @(@($Twin.Item.SourceTemplateIds) + $Candidate.Item.TemplateId | Select-Object -Unique)
                             $Twin.Item.Tiers = @(@($Twin.Item.Tiers) + @($Candidate.Item.Tiers) | Where-Object { $_ })
                             if ($Candidate.UpdatedAt -gt $Twin.UpdatedAt) { $Twin.UpdatedAt = $Candidate.UpdatedAt }
                         } else {
@@ -221,7 +223,6 @@ function Get-CIPPBaselineWorkItems {
         $OverrideTenant = $TenantLookup["$($Delta.scopeId)"].defaultDomainName ?? "$($Delta.scopeId)"
         if ($TenantFilter -and $OverrideTenant -notin @($TenantFilter)) { continue }
         if ($StandardName -and $Delta.standardName -notin $StandardName) { continue }
-        if ($TemplateId) { continue } # a baseline-scoped run never picks up ad-hoc overrides of other config
         $Variables = $(try { $Delta.expectedValue | ConvertFrom-Json -ErrorAction Stop } catch { [PSCustomObject]@{} }) ?? [PSCustomObject]@{}
         # An override targets a specific resolved instance: find the effective entry whose
         # winning item carries that instance key (identity-keyed entries included), and
@@ -261,6 +262,7 @@ function Get-CIPPBaselineWorkItems {
                     Standard         = $Delta.standardName
                     BaseName         = ($Delta.standardName -split '#')[0]
                     TemplateId       = ''
+                    SourceTemplateIds = @()
                     TemplateName     = 'Tenant Override'
                     Variables        = $Variables
                     RemediateEnabled = [bool]$Delta.remediateEnabled
@@ -304,6 +306,7 @@ function Get-CIPPBaselineWorkItems {
             }
         }
         $ConflictNames = @($Candidates | ForEach-Object { $_.Item.TemplateName } | Select-Object -Unique)
+        $ConflictIds = @($Candidates | ForEach-Object { $_.Item.SourceTemplateIds } | Select-Object -Unique)
         $EmittedKeys = [System.Collections.Generic.HashSet[string]]::new()
         foreach ($ConflictCandidate in $Candidates) {
             if (-not $EmittedKeys.Add("$($ConflictCandidate.Item.Standard)")) { continue }
@@ -313,6 +316,7 @@ function Get-CIPPBaselineWorkItems {
             $ConflictItem.Tiers = @($ConflictTiers)
             # Attribute the row to every colliding baseline, not just its own source.
             $ConflictItem.SourceTemplate = ($ConflictNames -join ', ')
+            $ConflictItem.SourceTemplateIds = $ConflictIds
             $ConflictItem | Add-Member -NotePropertyMembers ([ordered]@{
                     Conflicted   = $true
                     ConflictWith = $ConflictNames
@@ -431,5 +435,8 @@ function Get-CIPPBaselineWorkItems {
         }
     }
 
-    foreach ($ResolvedItem in $ResolvedItems) { $ResolvedItem }
+    foreach ($ResolvedItem in $ResolvedItems) {
+        if ($TemplateId -and $TemplateId -notin $ResolvedItem.SourceTemplateIds) { continue }
+        $ResolvedItem
+    }
 }

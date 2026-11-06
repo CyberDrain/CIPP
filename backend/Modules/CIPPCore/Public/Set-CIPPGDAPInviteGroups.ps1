@@ -7,7 +7,8 @@ function Set-CIPPGDAPInviteGroups {
         $Invite = Get-CIPPAzDataTableEntity @Table -Filter "RowKey eq '$($Relationship.id)'"
         $APINAME = 'GDAPInvites'
         $RoleMappings = $Invite.RoleMappings | ConvertFrom-Json
-        $AccessAssignments = New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/tenantRelationships/delegatedAdminRelationships/$($Relationship.id)/accessAssignments"
+        # Graph keeps removed assignments listed as deleted; their groups still need mapping again.
+        $AccessAssignments = @(New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/tenantRelationships/delegatedAdminRelationships/$($Relationship.id)/accessAssignments").Where({ $_.status -notin @('deleted', 'deleting') })
         $Failed = $false
         foreach ($Role in $RoleMappings) {
             # Skip mapping if group is present in relationship

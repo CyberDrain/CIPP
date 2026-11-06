@@ -75,6 +75,15 @@ Describe 'GDAP role template group mapping' {
             Set-CIPPGDAPInviteGroups -Relationship $script:Relationship | Should -BeTrue
             $script:Posted | Should -Be @('g-exo', 'g-pim')
         }
+
+        It 'maps a group again when its earlier assignment was deleted' {
+            $script:Assignments = @(
+                [pscustomobject]@{ id = 'a1'; status = 'deleted'; accessContainer = @{ accessContainerId = 'g-reader' } }
+                [pscustomobject]@{ id = 'a2'; status = 'active'; accessContainer = @{ accessContainerId = 'g-exo' } }
+            )
+            Set-CIPPGDAPInviteGroups -Relationship $script:Relationship | Should -BeTrue
+            $script:Posted | Should -Be @('g-reader', 'g-pim')
+        }
     }
 
     Context 'Test-CIPPGDAPGroupMappings recreation' {

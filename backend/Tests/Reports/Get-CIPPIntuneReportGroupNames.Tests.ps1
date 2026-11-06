@@ -1,5 +1,5 @@
-# The cached Intune reports name assignment groups from the IntunePolicyGroups snapshot the IntunePolicies
-# umbrella writes, and fall back to the Groups cache only for a tenant that has no snapshot.
+# The cached Intune reports name assignment groups from the shared IntunePolicyGroups snapshot, and fall back
+# to the Groups cache only for a tenant that has no snapshot.
 
 BeforeDiscovery {
     $Assignments = @(
@@ -9,6 +9,12 @@ BeforeDiscovery {
     $Cases = @(
         @{ Report = 'Get-CIPPIntuneCompliancePolicyReport'; Type = 'IntuneDeviceCompliancePolicies'; Include = 'PolicyAssignment'; Exclude = 'PolicyExclude'
             Policy = [pscustomobject]@{ id = 'p1'; displayName = 'Policy'; '@odata.type' = '#microsoft.graph.windows10CompliancePolicy'; assignments = $Assignments } }
+        @{ Report = 'Get-CIPPIntuneAppProtectionPolicyReport'; Type = 'IntuneAppProtectionManagedAppPolicies'; Include = 'PolicyAssignment'; Exclude = 'PolicyExclude'
+            Policy = [pscustomobject]@{ id = 'p1'; displayName = 'Policy'; URLName = 'iosManagedAppProtection'; assignments = $Assignments } }
+        @{ Report = 'Get-CIPPIntuneScriptReport'; Type = 'IntuneWindowsScripts'; Include = 'ScriptAssignment'; Exclude = 'ScriptExclude'
+            Policy = [pscustomobject]@{ id = 'p1'; displayName = 'Script'; assignments = $Assignments } }
+        @{ Report = 'Get-CIPPIntuneApplicationReport'; Type = 'IntuneApplications'; Include = 'AppAssignment'; Exclude = 'AppExclude'
+            Policy = [pscustomobject]@{ id = 'p1'; displayName = 'App'; assignments = $Assignments } }
     )
 }
 
@@ -16,7 +22,7 @@ BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     function Get-CIPPDbItem { param($TenantFilter, $Type) $script:Rows[$Type] }
-    foreach ($Report in 'Get-CIPPIntuneCompliancePolicyReport') {
+    foreach ($Report in 'Get-CIPPIntuneCompliancePolicyReport', 'Get-CIPPIntuneAppProtectionPolicyReport', 'Get-CIPPIntuneScriptReport', 'Get-CIPPIntuneApplicationReport') {
         . (Join-Path $RepoRoot "Modules/CIPPCore/Public/$Report.ps1")
     }
 

@@ -27,15 +27,15 @@ BeforeAll {
         [PSCustomObject]@{ standard = $Standard; instance = $Standard; variables = [PSCustomObject]$Variables; remediateEnabled = $true; alertEnabled = $false; alertOnRemediate = $false }
     }
     $script:NewBaseline = {
-        param($Guid, $Assignment, $Configs)
+        param($Guid, $Assignment, $Configs, [bool]$ManualOnly = $false, [int64]$UpdatedAt = 100)
         [PSCustomObject]@{
             GUID                 = $Guid
             templateName         = "Baseline $Guid"
             assignments          = @([PSCustomObject]@{ value = $Assignment })
             assignedTenants      = @($Assignment)
             excludedTenants      = @()
-            disableScheduledRuns = $false
-            updatedAt            = 100
+            disableScheduledRuns = $ManualOnly
+            updatedAt            = $UpdatedAt
             stages               = @([PSCustomObject]@{ name = 'Stage 1'; standardsConfig = @($Configs) })
             tenantStates         = @([PSCustomObject]@{ tenantFilter = 'contoso.com'; tenantName = 'Contoso'; currentStage = 1 })
         }
@@ -94,5 +94,39 @@ Describe 'Get-CIPPBaselineWorkItems for one baseline run by hand' {
             $Items.Count | Should -Be 1
             $Items[0].Conflicted | Should -Not -BeTrue
         }
+    }
+}
+
+Describe 'Get-CIPPBaselineWorkItems for a scheduled run alongside a manual-only baseline' {
+    BeforeAll {
+        # The orchestrator's scheduled-run filter.
+        $script:ScheduledItems = { @(Get-CIPPBaselineWorkItems | Where-Object { -not $_.DisableScheduledRuns }) }
+    }
+    BeforeEach { $script:Overrides = @() }
+
+    It 'keeps a standard both set identically whichever baseline loads first' -ForEach @(
+        @{ Order = 'manual first'; ManualFirst = $true }
+        @{ Order = 'scheduled first'; ManualFirst = $false }
+    ) {
+        $Manual = & $script:NewBaseline 'manual' 'contoso.com' @((& $script:Config 'Compliance' @{ secureByDefault = $true })) $true
+        $Scheduled = & $script:NewBaseline 'sched' 'contoso.com' @((& $script:Config 'Compliance' @{ secureByDefault = $true }))
+        $script:Baselines = if ($ManualFirst) { @($Manual, $Scheduled) } else { @($Scheduled, $Manual) }
+
+        $Items = & $script:ScheduledItems
+        $Items.Count | Should -Be 1
+        $Items[0].TemplateId | Should -Be 'sched'
+        $Items[0].SourceTemplateIds | Should -Contain 'manual'
+    }
+
+    It 'still reports a conflict when the manual-only baseline was edited more recently' {
+        $script:Baselines = @(
+            (& $script:NewBaseline 'sched' 'contoso.com' @((& $script:Config 'Compliance' @{ secureByDefault = $false })))
+            (& $script:NewBaseline 'manual' 'contoso.com' @((& $script:Config 'Compliance' @{ secureByDefault = $true })) $true 200)
+        )
+
+        $Items = & $script:ScheduledItems
+        $Items.Count | Should -Be 1
+        $Items[0].Conflicted | Should -BeTrue
+        $Items[0].RemediateEnabled | Should -BeFalse
     }
 }

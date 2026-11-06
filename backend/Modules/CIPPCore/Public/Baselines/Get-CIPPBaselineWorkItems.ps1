@@ -195,14 +195,19 @@ function Get-CIPPBaselineWorkItems {
                     } elseif ($Candidate.Rank -eq $Existing.Rank) {
                         $Twin = $Existing.Candidates | Where-Object { $_.Fingerprint -eq $Candidate.Fingerprint } | Select-Object -First 1
                         if ($Twin) {
-
-                            $Twin.Item.RemediateEnabled = [bool]($Twin.Item.RemediateEnabled -or $Candidate.Item.RemediateEnabled)
-                            $Twin.Item.AlertEnabled = [bool]($Twin.Item.AlertEnabled -or $Candidate.Item.AlertEnabled)
-                            $Twin.Item.AlertOnRemediate = [bool]($Twin.Item.AlertOnRemediate -or $Candidate.Item.AlertOnRemediate)
-                            $Twin.Item.SourceTemplate = @(@($Twin.Item.SourceTemplate -split ', ') + $Candidate.Item.TemplateName | Where-Object { $_ } | Select-Object -Unique) -join ', '
-                            $Twin.Item.SourceTemplateIds = @(@($Twin.Item.SourceTemplateIds) + $Candidate.Item.TemplateId | Select-Object -Unique)
-                            $Twin.Item.Tiers = @(@($Twin.Item.Tiers) + @($Candidate.Item.Tiers) | Where-Object { $_ })
-                            if ($Candidate.UpdatedAt -gt $Twin.UpdatedAt) { $Twin.UpdatedAt = $Candidate.UpdatedAt }
+                            $Keep, $Fold = $Twin, $Candidate
+                            # A scheduled baseline represents the shared item, so a manual-only twin cannot drop it from scheduled runs.
+                            if ($Twin.Item.DisableScheduledRuns -and -not $Candidate.Item.DisableScheduledRuns) {
+                                $Keep, $Fold = $Candidate, $Twin
+                                $Existing.Candidates[$Existing.Candidates.IndexOf($Twin)] = $Candidate
+                            }
+                            $Keep.Item.RemediateEnabled = [bool]($Keep.Item.RemediateEnabled -or $Fold.Item.RemediateEnabled)
+                            $Keep.Item.AlertEnabled = [bool]($Keep.Item.AlertEnabled -or $Fold.Item.AlertEnabled)
+                            $Keep.Item.AlertOnRemediate = [bool]($Keep.Item.AlertOnRemediate -or $Fold.Item.AlertOnRemediate)
+                            $Keep.Item.SourceTemplate = @(@($Keep.Item.SourceTemplate -split ', ') + @($Fold.Item.SourceTemplate -split ', ') | Where-Object { $_ } | Select-Object -Unique) -join ', '
+                            $Keep.Item.SourceTemplateIds = @(@($Keep.Item.SourceTemplateIds) + @($Fold.Item.SourceTemplateIds) | Select-Object -Unique)
+                            $Keep.Item.Tiers = @(@($Keep.Item.Tiers) + @($Fold.Item.Tiers) | Where-Object { $_ })
+                            if ($Fold.UpdatedAt -gt $Keep.UpdatedAt) { $Keep.UpdatedAt = $Fold.UpdatedAt }
                         } else {
                             # Same level, same identity, different settings: conflict.
                             $Existing.Candidates.Add($Candidate)
@@ -284,7 +289,8 @@ function Get-CIPPBaselineWorkItems {
     # tenant's resolved set in hand before anything is emitted.
     $ResolvedItems = [System.Collections.Generic.List[object]]::new()
     foreach ($Entry in $Effective.Values) {
-        $Candidates = @($Entry.Candidates | Sort-Object -Property UpdatedAt -Descending)
+        # Scheduled baselines first, so the conflict row a scheduled run emits is never one it then drops as manual-only.
+        $Candidates = @($Entry.Candidates | Sort-Object -Property @{ Expression = { [bool]$_.Item.DisableScheduledRuns } }, @{ Expression = { $_.UpdatedAt }; Descending = $true })
         if ($Candidates.Count -le 1) {
             $ResolvedItems.Add($Candidates[0].Item)
             continue

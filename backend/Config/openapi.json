@@ -61985,10 +61985,19 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                    "description": "Derived from the fields written into the storage table it reads, and the columns the CIPP UI renders. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                     "properties": {
                       "ContentHash": {
                         "x-cipp-field-source": "storage"
+                      },
+                      "defaultForTenant": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "department": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "displayName": {
+                        "x-cipp-field-source": "frontend"
                       },
                       "ETag": {
                         "type": "string",
@@ -62024,7 +62033,7 @@
                         "x-cipp-field-source": "storage"
                       },
                       "templateName": {
-                        "x-cipp-field-source": "storage"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "Timestamp": {
                         "type": "string",
@@ -62032,6 +62041,15 @@
                       },
                       "UpdatedBy": {
                         "x-cipp-field-source": "storage"
+                      },
+                      "usageLocation": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "usernameFormat": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "usernameSpaceHandling": {
+                        "x-cipp-field-source": "frontend"
                       }
                     }
                   }

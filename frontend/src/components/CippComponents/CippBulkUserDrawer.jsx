@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CippIcons } from "../../utils/icon-registry"
-import { Alert, Button, Link, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { Alert, Button, Link, Dialog, DialogActions, DialogContent, DialogTitle, Stack } from "@mui/material";
 import { Grid } from "@mui/system";
 import { useForm, useWatch } from "react-hook-form";
 import { CippOffCanvas } from "./CippOffCanvas";
@@ -12,6 +12,7 @@ import { useSettings } from "../../hooks/use-settings";
 import { ApiPostCall } from "../../api/ApiCall";
 import { getCippTranslation } from "../../utils/get-cipp-translation";
 import countryList from "../../data/countryList.json";
+import { isMultiTenant } from "../../utils/tenant-selection";
 
 export const CippBulkUserDrawer = ({
   buttonText = "Bulk Add Users",
@@ -26,7 +27,7 @@ export const CippBulkUserDrawer = ({
   // and the Graph write helpers silently no-op while the endpoint still reports success, so guard
   // the submit rather than letting it appear to succeed while creating nothing.
   const isAllTenants =
-    !initialState?.currentTenant || initialState.currentTenant === "AllTenants";
+    !initialState?.currentTenant || isMultiTenant(initialState.currentTenant);
 
   const addedFields = initialState?.defaultAttributes
     ? initialState.userAttributes.map((item) => item.label)
@@ -176,28 +177,31 @@ export const CippBulkUserDrawer = ({
         onClose={handleCloseDrawer}
         size="lg"
         footer={
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSubmit}
-              disabled={
-                isAllTenants ||
-                createBulkUsers.isLoading ||
-                !bulkUserData ||
-                bulkUserData.length === 0
-              }
-            >
-              {createBulkUsers.isLoading
-                ? "Creating Users..."
-                : createBulkUsers.isSuccess
-                  ? "Create More Users"
-                  : "Create Users"}
-            </Button>
-            <Button variant="outlined" onClick={handleCloseDrawer}>
-              Close
-            </Button>
-          </div>
+          <Stack spacing={2}>
+            <CippApiResults apiObject={createBulkUsers} />
+            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-start" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit}
+                disabled={
+                  isAllTenants ||
+                  createBulkUsers.isLoading ||
+                  !bulkUserData ||
+                  bulkUserData.length === 0
+                }
+              >
+                {createBulkUsers.isLoading
+                  ? "Creating Users..."
+                  : createBulkUsers.isSuccess
+                    ? "Create More Users"
+                    : "Create Users"}
+              </Button>
+              <Button variant="outlined" onClick={handleCloseDrawer}>
+                Close
+              </Button>
+            </div>
+          </Stack>
         }
       >
         <Grid container spacing={2}>
@@ -266,8 +270,6 @@ export const CippBulkUserDrawer = ({
               noCard={true}
             />
           </Grid>
-
-          <CippApiResults apiObject={createBulkUsers} />
         </Grid>
 
         <Dialog

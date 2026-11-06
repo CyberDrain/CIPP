@@ -33,7 +33,7 @@ import {
   TimelineSeparator,
 } from '@mui/lab'
 import { Grid } from '@mui/system'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
 import { TabbedLayout } from '../../../../layouts/TabbedLayout'
@@ -62,6 +62,7 @@ import { parseCippDate } from '../../../../utils/parse-cipp-date'
 import { CippOffCanvas } from '../../../../components/CippComponents/CippOffCanvas'
 import { CippAutoComplete } from '../../../../components/CippComponents/CippAutocomplete'
 import CippJsonView from '../../../../components/CippFormPages/CippJSONView'
+import { isMultiTenant } from '../../../../utils/tenant-selection'
 
 // Manual-task instance keys are 'ManualTask#n', so match by prefix. standardName can be
 // absent on malformed or partially hydrated rows - the check must never throw.
@@ -777,7 +778,7 @@ const Page = () => {
     setHistoryFilters((prev) => ({ ...prev, [name]: value }))
   }
   const isTenantView = viewMode === 'tenant'
-  const isAllTenants = currentTenant === 'AllTenants'
+  const isAllTenants = isMultiTenant(currentTenant)
   const isTemplateView = viewMode === 'template'
 
   // Refetch everything baseline-related after any triage/run/override action:
@@ -891,7 +892,24 @@ const Page = () => {
       value: index + 1,
     })),
   ]
-  const standardAggregates = aggregateApi.data?.standards ?? []
+  // A standard row spans tenants that may resolve it from different baselines, so it only
+  // names one to edit when the filter picks it or every tenant agrees.
+  const standardAggregates = useMemo(
+    () =>
+      (aggregateApi.data?.standards ?? []).map((row) => {
+        const templateIds = [
+          ...new Set(
+            (row.rows ?? []).map((entry) => entry.templateId).filter(Boolean)
+          ),
+        ]
+        return {
+          ...row,
+          templateId:
+            baselineId || (templateIds.length === 1 ? templateIds[0] : null),
+        }
+      }),
+    [aggregateApi.data, baselineId]
+  )
   const tenant = {
     displayName: currentTenant,
     tenantFilter: currentTenant,
@@ -1215,6 +1233,7 @@ const Page = () => {
       icon: <CippIcons.Edit />,
       color: 'success',
       target: '_self',
+      hideCondition: (row) => !row.templateId,
     },
   ]
 

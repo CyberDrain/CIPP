@@ -6,6 +6,7 @@
  *   update (array splices and a linear scan), for a PartitionKey -> RowKey -> entity map kept current from the
  *   collection's insert/update/delete events. Point lookups read the map; queries walk a sorted copy of the
  *   partition (or table) that is rebuilt only after a write to it.
+ * - Batches run one at a time: stock azurite shares one rollback state between concurrent batches and can wedge it.
  */
 const Module = require('module')
 const path = require('path')
@@ -61,6 +62,38 @@ function sortedRows(coll, pk) {
 }
 
 function patchStore(Store, QueryGenerator, Collection) {
+  // A batch's rollback state is one pair of arrays shared by the whole store. Batches that interleave across an await mix
+  // their rows; a failed one rolls the other's rows back against its own table, the rollback throws before the arrays are
+  // reset, and every later batch fails "Transaction Overlap!" (a bodyless 500) until restart. Batches run one at a time, and
+  // the state is reset however a batch ends. A batch that never ends is stepped past after a minute.
+  let tail = Promise.resolve()
+  let holder = null
+  Store.prototype.beginBatchTransaction = async function (batchId) {
+    const previous = tail
+    let release
+    tail = new Promise((resolve) => (release = resolve))
+    let timer
+    await Promise.race([previous, new Promise((resolve) => (timer = setTimeout(resolve, 60000)))])
+    clearTimeout(timer)
+    holder = { batchId, release }
+    this.transactionRollbackTheseEntities = []
+    this.transactionDeleteTheseEntities = []
+  }
+  const endBatchTransaction = Store.prototype.endBatchTransaction
+  Store.prototype.endBatchTransaction = async function (account, table, batchId, context, succeeded) {
+    // the batch was refused before it began: there is nothing of its own to roll back or reset
+    if (holder?.batchId !== batchId) return
+    try {
+      await endBatchTransaction.call(this, account, table, batchId, context, succeeded)
+    } finally {
+      this.transactionRollbackTheseEntities = []
+      this.transactionDeleteTheseEntities = []
+      const { release } = holder
+      holder = null
+      release()
+    }
+  }
+
   const findOne = Collection.prototype.findOne
   Collection.prototype.findOne = function (query) {
     const keys = this.__keys
@@ -108,9 +141,19 @@ Module.prototype._compile = function (content, filename) {
   if (!filename.startsWith(ROOT)) return compile.call(this, content, filename)
   if (!logging) content = content.replace(/\bthis\.logger\.(error|warn|info|verbose|debug)\(/g, 'false && this.logger.$1(')
   const result = compile.call(this, content, filename)
+  // An internal error inside a batch (not a storage error) has no status code; azurite then fails serialising it and
+  // answers a bodyless 500 with nothing logged. Print it, as nothing else will.
+  if (filename === `${ROOT}table/batch/TableBatchSerialization.js`) {
+    const Serialization = this.exports.TableBatchSerialization
+    const serializeError = Serialization.prototype.serializeError
+    Serialization.prototype.serializeError = function (err, ...rest) {
+      if (err?.statusCode === undefined) console.error('azurite-perf: batch operation failed:', err?.stack || err)
+      return serializeError.call(this, err, ...rest)
+    }
+  }
   if (filename === STORE) {
     const Store = this.exports.default
-    const methods = ['getEntityCollection', 'queryTableEntities', 'decodeContinuationHeader', 'getMaxResultsOption', 'adjustQueryResultforTop']
+    const methods = ['getEntityCollection', 'queryTableEntities', 'decodeContinuationHeader', 'getMaxResultsOption', 'adjustQueryResultforTop', 'beginBatchTransaction', 'endBatchTransaction']
     if (methods.every((m) => typeof Store?.prototype?.[m] === 'function')) {
       const QueryGenerator = this.require(path.join(path.dirname(STORE), 'LokiTableStoreQueryGenerator')).default
       patchStore(Store, QueryGenerator, this.require('lokijs').Collection)

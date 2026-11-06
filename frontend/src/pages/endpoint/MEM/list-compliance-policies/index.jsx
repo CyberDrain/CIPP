@@ -15,7 +15,7 @@ const Page = () => {
   const reportDB = useCippReportDB({
     apiUrl: "/api/ListCompliancePolicies",
     queryKey: "ListCompliancePolicies",
-    cacheName: "IntuneCompliancePolicies",
+    cacheName: "IntunePolicies",
     syncTitle: "Sync Compliance Policies Report",
     allowToggle: true,
     defaultCached: false,
@@ -79,5 +79,5 @@ const Page = () => {
   );
 };
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout tenantGroupSupport={true}>{page}</DashboardLayout>;
 export default Page;

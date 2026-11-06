@@ -1093,6 +1093,8 @@ function Get-EndpointContract {
         Synopsis     = (($Help.Synopsis ?? '') + '').Trim()
         Description  = (($Help.Description ?? '') + '').Trim()
         AnyTenant    = $AnyTenant
+        # Only an endpoint marked TenantGroup takes a tenant group; the router refuses it everywhere else
+        TenantGroup  = $Functionality -match '(?i)\bTenantGroup\b'
         Tag          = $Tag
         BodyTree     = $Trees.Body
         QueryTree    = $Trees.Query
@@ -1854,6 +1856,20 @@ function Get-QueryParameterList {
         # tenantFilter is on nearly every endpoint; reuse the component so its
         # description lives in one place. AnyTenant endpoints run without a tenant,
         # so they get an inline optional copy instead of the required component.
+        # The shared tenantGroup component is added next to tenantFilter below; an endpoint reading it directly adds nothing
+        if ($Name.ToLowerInvariant() -eq 'tenantgroup' -and $Contract.TenantGroup) { continue }
+        if ($Name.ToLowerInvariant() -eq 'tenantfilter' -and $Contract.TenantGroup) {
+            # one or the other: the router refuses a request that sends both
+            $Parameters.Add([ordered]@{
+                    name        = $Name
+                    'in'        = 'query'
+                    description = "Target tenant: the tenant's default domain, its tenant ID, or 'AllTenants'. Required unless tenantGroup is sent instead; never send both."
+                    required    = $false
+                    schema      = [ordered]@{ type = 'string' }
+                })
+            $Parameters.Add([ordered]@{ '$ref' = '#/components/parameters/tenantGroup' })
+            continue
+        }
         if ($Name.ToLowerInvariant() -eq 'tenantfilter' -and -not $Contract.AnyTenant) {
             $Parameters.Add([ordered]@{ '$ref' = '#/components/parameters/tenantFilter' })
             continue
@@ -2042,6 +2058,7 @@ function ConvertTo-OasOperation {
     $Operation['security'] = @([ordered]@{ bearerAuth = @() })
     if ($Contract.Role) { $Operation['x-cipp-role'] = $Contract.Role }
     if ($Contract.AnyTenant) { $Operation['x-cipp-any-tenant'] = $true }
+    if ($Contract.TenantGroup -and $Contract.QueryTree.Children.Keys -contains 'tenantFilter') { $Operation['x-cipp-tenant-group'] = $true }
     if ($Contract.Downstream.Count -gt 0) {
         # some of the documented fields are read by these helpers rather than by the
         # entrypoint; recorded so a surprising field can be traced back to its source
@@ -2281,6 +2298,13 @@ backend and must be sent as an object, not a bare string.
                 'in'        = 'query'
                 description = "Target tenant: the tenant's default domain, its tenant ID, or 'AllTenants'."
                 required    = $true
+                schema      = [ordered]@{ type = 'string' }
+            }
+            tenantGroup     = [ordered]@{
+                name        = 'tenantGroup'
+                'in'        = 'query'
+                description = "Tenant group ID (from ListTenantGroups). Runs this read across the group's tenants that you can access, as an AllTenants read narrowed to the group. Send instead of tenantFilter, never with it. Writes take it only where this operation lists it."
+                required    = $false
                 schema      = [ordered]@{ type = 'string' }
             }
             selectedTenants = [ordered]@{

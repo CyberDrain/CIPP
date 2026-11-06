@@ -616,6 +616,11 @@ export const nativeMenuItems = [
             permissions: ['Endpoint.Device.*'],
           },
           {
+            title: 'Non-Compliant Devices',
+            path: '/endpoint/MEM/non-compliant-devices',
+            permissions: ['Endpoint.MEM.*'],
+          },
+          {
             title: 'BitLocker Key Search',
             path: '/endpoint/MEM/bitlocker-search',
             docsPath: 'endpoint/mem/bitlocker-search',
@@ -631,6 +636,12 @@ export const nativeMenuItems = [
             title: 'Compliance Policies',
             path: '/endpoint/MEM/list-compliance-policies',
             docsPath: 'endpoint/mem/list-compliance-policies',
+            permissions: ['Endpoint.MEM.*'],
+          },
+          {
+            title: 'Policy Failures',
+            path: '/endpoint/MEM/policy-failures',
+            docsPath: 'endpoint/mem/policy-failures',
             permissions: ['Endpoint.MEM.*'],
           },
           {

@@ -168,7 +168,10 @@ function Push-ExecOnboardTenantQueue {
             $Logs.Add([PSCustomObject]@{ Date = (Get-Date).ToUniversalTime(); Log = 'Checking group mapping' })
             $AccessAssignments = New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/tenantRelationships/delegatedAdminRelationships/$Id/accessAssignments"
             $AccessAssignments = $AccessAssignments | Where-Object { $_.status -notin @('deleted', 'deleting') }
-            if ($AccessAssignments.id -and $Item.AutoMapRoles -ne $true) {
+            $InviteTable = Get-CIPPTable -TableName 'GDAPInvites'
+            $Invite = Get-CIPPAzDataTableEntity @InviteTable -Filter "RowKey eq '$Id'"
+            # A pending invite means some of its groups are still unmapped, even when others already are.
+            if ($AccessAssignments.id -and $Item.AutoMapRoles -ne $true -and !$Invite) {
                 $Logs.Add([PSCustomObject]@{ Date = (Get-Date).ToUniversalTime(); Log = 'Groups mapped' })
                 $OnboardingSteps.Step3.Status = 'succeeded'
                 $OnboardingSteps.Step3.Message = 'Your GDAP relationship already has mapped security groups'
@@ -179,9 +182,6 @@ function Push-ExecOnboardTenantQueue {
                 $TenantOnboarding.OnboardingSteps = [string](ConvertTo-Json -InputObject $OnboardingSteps -Compress)
                 $TenantOnboarding.Logs = [string](ConvertTo-Json -InputObject @($Logs) -Compress)
                 Add-CIPPAzDataTableEntity @OnboardTable -Entity $TenantOnboarding -Force -ErrorAction Stop
-
-                $InviteTable = Get-CIPPTable -TableName 'GDAPInvites'
-                $Invite = Get-CIPPAzDataTableEntity @InviteTable -Filter "RowKey eq '$Id'"
 
                 if ($AccessAssignments.id -and !$Invite) {
                     $MissingRoles = [System.Collections.Generic.List[object]]::new()
@@ -578,6 +578,20 @@ function Push-ExecOnboardTenantQueue {
                         $TemplatesTable.Force = $true
                         Add-CIPPAzDataTableEntity @TemplatesTable -Entity $AllTenantsTemplate
                     }
+                }
+
+                # Baselines assigned to All Tenants exclude the same group
+                $RolloutTable = Get-CIPPTable -tablename 'BaselineRollouts'
+                foreach ($Rollout in @(Get-CIPPAzDataTableEntity @RolloutTable -Filter "PartitionKey eq 'rollout'")) {
+                    $Assigned = @(try { $Rollout.assignedTo | ConvertFrom-Json -ErrorAction Stop } catch { })
+                    if ($Assigned.Where({ ($_.value ?? $_) -eq 'AllTenants' }).Count -eq 0) { continue }
+                    $ExcludedValues = @(try { $Rollout.excludedTenants | ConvertFrom-Json -ErrorAction Stop } catch { })
+                    if ($ExcludedValues -contains $ExclusionGroupId) { continue }
+                    $ExcludedTo = @(try { $Rollout.excludedTo | ConvertFrom-Json -ErrorAction Stop } catch { })
+                    $Rollout | Add-Member -NotePropertyName 'excludedTo' -NotePropertyValue ([string](ConvertTo-Json -Compress -Depth 10 -InputObject @($ExcludedTo + $GroupExclusionObj))) -Force
+                    $Rollout | Add-Member -NotePropertyName 'excludedTenants' -NotePropertyValue ([string](ConvertTo-Json -Compress -Depth 10 -InputObject @($ExcludedValues + $ExclusionGroupId))) -Force
+                    Add-CIPPAzDataTableEntity @RolloutTable -Entity $Rollout -Force
+                    $Logs.Add([PSCustomObject]@{ Date = (Get-Date).ToUniversalTime(); Log = "Excluded the group from baseline '$($Rollout.templateName)'" })
                 }
 
                 # Bust the tenant groups cache so standards pick up the new member

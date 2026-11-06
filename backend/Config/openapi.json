@@ -1016,8 +1016,12 @@
                     "description": "State of the new policy: disabled, enabledForReportingButNotEnforced, enabled or sameAsSource. Defaults to disabled."
                   },
                   "tenantFilter": {
-                    "type": "string",
-                    "description": "Tenant the source policy lives in; the copy is created in the same tenant."
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/LabelValue"
+                      }
+                    ],
+                    "description": "Tenant the source policy lives in; the copy is created in the same tenant. Resolved in the same order as Test-CIPPAccess, so the tenant acted on is the tenant RBAC checked."
                   }
                 },
                 "required": [
@@ -1027,6 +1031,11 @@
             }
           }
         },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1444,7 +1453,7 @@
                   },
                   "hidefromGAL": {
                     "type": "boolean",
-                    "description": "Only add HiddenFromAddressListsEnabled if we're actually hiding from GAL"
+                    "description": "Hide the contact from the Global Address List"
                   },
                   "lastName": {
                     "type": "string"
@@ -5125,6 +5134,9 @@
           },
           "207": {
             "description": "Partial success - some items failed; per-item results are in the body"
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"
@@ -11657,9 +11669,6 @@
                     "type": "string",
                     "description": "Interact with query parameters or the body of the request."
                   },
-                  "defaultDomainName": {
-                    "type": "string"
-                  },
                   "offboardingDefaults": {
                     "type": "string"
                   }
@@ -11741,9 +11750,6 @@
                   "customerId": {
                     "type": "string",
                     "description": "Interact with query parameters or the body of the request."
-                  },
-                  "defaultDomainName": {
-                    "type": "string"
                   },
                   "vacationDefaults": {
                     "type": "string"
@@ -42071,6 +42077,179 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/ExecUnassignAPDevice": {
+      "post": {
+        "summary": "ExecUnassignAPDevice",
+        "operationId": "ExecUnassignAPDevice",
+        "tags": [
+          "Endpoint > Autopilot"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "device": {
+                    "type": "string",
+                    "description": "The Autopilot device identity id"
+                  },
+                  "serialNumber": {
+                    "type": "string",
+                    "description": "Serial number, used for logging only"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Derived from the Microsoft Graph entity it queries. This endpoint returns the Graph response as-is without selecting fields, so these are the properties the entity CAN carry (x-cipp-field-source: graph-entity) rather than a proven projection - Graph returns a default subset unless asked otherwise.",
+                  "properties": {
+                    "addressableUserName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "azureActiveDirectoryDeviceId": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "azureAdDeviceId": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "deploymentProfileAssignedDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "deploymentProfileAssignmentDetailedStatus": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "deploymentProfileAssignmentStatus": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "deviceAccountPassword": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "deviceAccountUpn": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "deviceFriendlyName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "displayName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "enrollmentState": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "groupTag": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "id": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "lastContactedDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "managedDeviceId": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "manufacturer": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "model": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "productKey": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "purchaseOrderIdentifier": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "remediationState": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "remediationStateLastModifiedDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "resourceName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "serialNumber": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "skuNumber": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "systemFamily": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "userlessEnrollmentStatus": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "userPrincipalName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Endpoint.Autopilot.ReadWrite"
+      }
+    },
     "/api/ExecUniversalSearch": {
       "get": {
         "summary": "ExecUniversalSearch",
@@ -42259,6 +42438,17 @@
                   "type": "object",
                   "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                   "properties": {
+                    "Compliant": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "CurrentValue": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Diff": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
                     "ETag": {
                       "type": "string",
                       "x-cipp-field-source": "storage"
@@ -42268,6 +42458,9 @@
                     },
                     "Results": {
                       "x-cipp-field-source": "backend"
+                    },
+                    "Status": {
+                      "x-cipp-field-source": "storage"
                     },
                     "Timestamp": {
                       "type": "string",
@@ -42570,9 +42763,6 @@
                         "type": "string"
                       }
                     }
-                  },
-                  "user": {
-                    "type": "string"
                   }
                 }
               }
@@ -42636,7 +42826,8 @@
                     "type": "string"
                   },
                   "user": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Saves either the shared allUsers row or the caller's own, never another user's"
                   }
                 }
               }
@@ -46038,66 +46229,6 @@
           }
         ],
         "x-cipp-role": "Tenant.Alert.Read"
-      }
-    },
-    "/api/ListAuditLogTest": {
-      "get": {
-        "summary": "ListAuditLogTest",
-        "operationId": "ListAuditLogTest",
-        "tags": [
-          "Tenant > Administration > Alerts"
-        ],
-        "description": "Tests audit log webhook rules against a specific search to validate rule matching and alert triggering.",
-        "parameters": [
-          {
-            "name": "SearchId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "TenantFilter",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - invalid or missing bearer token"
-          },
-          "403": {
-            "description": "Forbidden - caller lacks the required RBAC role"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "x-cipp-role": "Tenant.Alert.Read",
-        "x-cipp-any-tenant": true
       }
     },
     "/api/ListAutopilotconfig": {
@@ -49956,7 +50087,7 @@
           {
             "name": "allTenants",
             "in": "query",
-            "description": "A template is not bound to a tenant - the same template deploys to many, and each variable in it resolves against whichever tenant it lands on. So a caller editing one needs every variable *name* that exists anywhere, not the set belonging to whichever tenant happens to be selected. Values are deliberately not returned here: they differ per tenant, so there is no single correct one to show.",
+            "description": "A template is not bound to a tenant - the same template deploys to many, and each variable in it resolves against whichever tenant it lands on. So a caller editing one needs every variable *name* that exists anywhere, not the set belonging to whichever tenant happens to be selected. Values are deliberately not returned here: they differ per tenant, so there is no single correct one to show. Only names from tenants the caller's roles cover are listed.",
             "required": false,
             "schema": {
               "type": "boolean"
@@ -50145,6 +50276,33 @@
             "required": false,
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "manualPagination",
+            "in": "query",
+            "description": "Return one page per request as { Results, Metadata } with a continuation token in Metadata.nextLink. latestOnly, groupBy and top do not apply to paged reads.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "nextLink",
+            "in": "query",
+            "description": "Continuation token from the previous page's Metadata.nextLink; opaque to callers.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Cached rows per page, clamped between 250 and 10000. Defaults to 5000. Pages hold whole tenants.",
+            "required": false,
+            "schema": {
+              "type": "integer"
             }
           },
           {
@@ -51106,6 +51264,96 @@
           }
         ],
         "x-cipp-role": "Identity.Device.Read"
+      }
+    },
+    "/api/ListDeviceNonCompliance": {
+      "get": {
+        "summary": "ListDeviceNonCompliance",
+        "operationId": "ListDeviceNonCompliance",
+        "tags": [
+          "Endpoint > MEM"
+        ],
+        "description": "Lists cached failing compliance settings on non-compliant Intune managed devices, one row per device per setting, from the NoncompliantDevicesAndSettingsV3 export in the CIPP reporting database. Each row carries the device's current compliance state from the ManagedDevices cache. Supports AllTenants.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the columns the CIPP UI renders. The response may carry more; these are the ones known to exist.",
+                    "properties": {
+                      "builtInPolicy": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "complianceState": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "deviceCount": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "deviceName": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "errorCode": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "errorCount": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "os": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "osVersion": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "policyName": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "settingName": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "settingStatus": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "userPrincipalName": {
+                        "x-cipp-field-source": "frontend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Partial success - some items failed; per-item results are in the body"
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Endpoint.MEM.Read"
       }
     },
     "/api/ListDevicePolicyStatus": {
@@ -56472,6 +56720,69 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Endpoint.MEM.Read"
+      }
+    },
+    "/api/ListIntunePolicyFailures": {
+      "get": {
+        "summary": "ListIntunePolicyFailures",
+        "operationId": "ListIntunePolicyFailures",
+        "tags": [
+          "Endpoint > MEM"
+        ],
+        "description": "Lists the Intune configuration policies (settings catalog, device configuration profiles, administrative templates and endpoint security) that have at least one device in Error or Conflict, from the same report as Intune's Assignment failures view. With policyId it returns that policy's affected devices and its failing settings with error and conflict device counts, naming the other policies that set a conflicting setting where Intune exposes them.",
+        "parameters": [
+          {
+            "name": "policyBaseTypeName",
+            "in": "query",
+            "description": "The policy's PolicyBaseTypeName from the list; decides how conflicting policies are looked up",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "policyId",
+            "in": "query",
+            "description": "Policy id (GUID) to drill into; omit for the list of failing policies",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Partial success - some items failed; per-item results are in the body"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"
@@ -63218,8 +63529,24 @@
         "tags": [
           "Tenant > Reports"
         ],
-        "description": "Returns the latest Microsoft Secure Score per tenant from the CIPP reporting database, with no\nlive Graph calls. Reads the nightly cache and projects to the score fields only, so the large\ncontrolScores breakdown on each cached record is never materialized.\n\nQuery parameters:\n  - tenantFilter: A tenant domain, or 'AllTenants' for every tenant the caller can see.\n  - includeHistory: When 'true', each tenant also carries a History array of the retained\n                    daily scores (date / score / percentage) for trend display.",
+        "description": "Returns the latest Microsoft Secure Score per tenant from the CIPP reporting database, with no\nlive Graph calls. Reads the nightly cache and projects to the score fields only, so the large\ncontrolScores breakdown on each cached record is never materialized.\n\nQuery parameters:\n  - tenantFilter: A tenant domain, or 'AllTenants' for every tenant the caller can see.\n  - includeHistory: When 'true', each tenant also carries a History array of the retained\n                    daily scores (date / score / percentage) for trend display.\n  - includeControls: When 'true', each tenant also carries its per-control scores and states\n                     as Controls, and the response adds a Catalog of shared control metadata.\n  - ControlName: With a single tenantFilter, returns that tenant's cached control profile\n                 (description, remediation, state history) instead of the report.",
         "parameters": [
+          {
+            "name": "ControlName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeControls",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
           {
             "name": "includeHistory",
             "in": "query",
@@ -63246,11 +63573,36 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                    "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                    "properties": {
+                      "Data": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ETag": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PartitionKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "RowKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Timestamp": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Type": {
+                        "x-cipp-field-source": "storage"
+                      }
+                    }
                   }
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"
@@ -64108,6 +64460,9 @@
                       "id": {
                         "type": "string",
                         "x-cipp-field-source": "graph,backend"
+                      },
+                      "lastSuccessfulSignInDateTime": {
+                        "x-cipp-field-source": "backend,frontend"
                       },
                       "onPremisesSyncEnabled": {
                         "type": "boolean",
@@ -71665,149 +72020,6 @@
         "x-cipp-role": "Exchange.Mailbox.Read"
       }
     },
-    "/api/ListWebhookAlert": {
-      "get": {
-        "summary": "ListWebhookAlert",
-        "operationId": "ListWebhookAlert",
-        "tags": [
-          "Tenant > Administration > Alerts"
-        ],
-        "description": "Lists configured webhook alert rules that trigger on specific audit log events.",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
-                    "properties": {
-                      "AffectedDevice": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "AffectedUser": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "AlertText": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "AlertTitle": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "Data": {
-                        "type": "string",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "email": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "ETag": {
-                        "type": "string",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "includeTenantId": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "onePerTenant": {
-                        "type": "boolean",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "PartitionKey": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "PSAConsolidationKey": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "PsaTicketId": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "PsaTicketPriority": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "Reference": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "RowKey": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "schedule": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "sendtoIntegration": {
-                        "type": "boolean",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "Severity": {
-                        "type": "string",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "Tenant": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "TenantId": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "Timestamp": {
-                        "type": "string",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "Title": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "type": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "UseStandardizedSchema": {
-                        "type": "boolean",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "webhook": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "webhookAuthHeaderName": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "webhookAuthHeaders": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "webhookAuthHeaderValue": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "webhookAuthPassword": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "webhookAuthToken": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "webhookAuthType": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "webhookAuthUsername": {
-                        "x-cipp-field-source": "storage"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - invalid or missing bearer token"
-          },
-          "403": {
-            "description": "Forbidden - caller lacks the required RBAC role"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "x-cipp-role": "CIPP.Alert.Read"
-      }
-    },
     "/api/ListWorkerHealth": {
       "get": {
         "summary": "ListWorkerHealth",
@@ -76035,175 +76247,6 @@
           }
         ],
         "x-cipp-role": "Identity.User.ReadWrite"
-      }
-    },
-    "/api/RemoveWebhookAlert": {
-      "post": {
-        "summary": "RemoveWebhookAlert",
-        "operationId": "RemoveWebhookAlert",
-        "tags": [
-          "Tenant > Administration > Alerts"
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {}
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "ID",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/tenantFilter"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
-                  "properties": {
-                    "AffectedDevice": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "AffectedUser": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "AlertText": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "AlertTitle": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Data": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "email": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "ETag": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "includeTenantId": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "onePerTenant": {
-                      "type": "boolean",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "PartitionKey": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "PSAConsolidationKey": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "PsaTicketId": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "PsaTicketPriority": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Reference": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Results": {
-                      "x-cipp-field-source": "backend"
-                    },
-                    "RowKey": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "schedule": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "sendtoIntegration": {
-                      "type": "boolean",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Severity": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Tenant": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "TenantId": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Timestamp": {
-                      "type": "string",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "Title": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "type": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "UseStandardizedSchema": {
-                      "type": "boolean",
-                      "x-cipp-field-source": "storage"
-                    },
-                    "webhook": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "webhookAuthHeaderName": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "webhookAuthHeaders": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "webhookAuthHeaderValue": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "webhookAuthPassword": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "webhookAuthToken": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "webhookAuthType": {
-                      "x-cipp-field-source": "storage"
-                    },
-                    "webhookAuthUsername": {
-                      "x-cipp-field-source": "storage"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - invalid or missing bearer token"
-          },
-          "403": {
-            "description": "Forbidden - caller lacks the required RBAC role"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "x-cipp-role": "CIPP.Alert.ReadWrite"
       }
     },
     "/api/SetAuthMethod": {

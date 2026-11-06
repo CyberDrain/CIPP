@@ -4,9 +4,11 @@ import { CippTablePage } from "../../../../components/CippComponents/CippTablePa
 import { Button } from "@mui/material";
 import Link from "next/link";
 import countryList from "../../../../data/countryList.json";
+import { useSettings } from "../../../../hooks/use-settings";
 
 const Page = () => {
   const pageTitle = "Named Locations";
+  const multiTenant = useSettings().currentTenant === "AllTenants";
 
   const actions = [
     {
@@ -240,16 +242,18 @@ const Page = () => {
         </>
       }
       simpleColumns={[
+        ...(multiTenant ? ["Tenant"] : []),
         "displayName",
         "includeUnknownCountriesAndRegions",
         "isTrusted",
         "rangeOrLocation",
         "modifiedDateTime",
+        ...(multiTenant ? ["CacheTimestamp"] : []),
       ]}
     />
   );
 };
 
-Page.getLayout = (page) => <DashboardLayout allTenantsSupport={false}>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout allTenantsSupport={true}>{page}</DashboardLayout>;
 
 export default Page;

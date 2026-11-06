@@ -544,6 +544,19 @@ Describe 'Test-CIPPAccess tenant-filter permutations' {
                 Should -BeTrue
         }
 
+        It 'the flag does not lift an endpoint block on AllTenants' {
+            Mock -CommandName Get-CIPPRolePermissions -MockWith {
+                param($Role)
+                switch ($Role) {
+                    'blocker' { [pscustomobject]@{ Role = 'blocker'; Permissions = @('Identity.User.Read'); AllowedTenants = @('AllTenants'); BlockedTenants = @(); BlockedEndpoints = @('ListUsers'); BlockAllTenants = $true } }
+                    'open' { [pscustomobject]@{ Role = 'open'; Permissions = @('Identity.User.Read'); AllowedTenants = @('AllTenants'); BlockedTenants = @(); BlockedEndpoints = @() } }
+                    default { throw "unexpected $Role" }
+                }
+            }
+            { Test-CIPPAccess -Request (New-UserRequest -CIPPEndpoint 'ListUsers' -UserRoles @('blocker', 'open') -Query @{ tenantFilter = 'AllTenants' }) } |
+                Should -Throw -ExpectedMessage "*'blocker' has blocked this endpoint: ListUsers"
+        }
+
         It 'flag absent: unrestricted role keeps AllTenants Read access' {
             Mock -CommandName Get-CIPPRolePermissions -MockWith {
                 [pscustomobject]@{ Role = 'roleAll'; Permissions = @('Identity.User.Read'); AllowedTenants = @('AllTenants'); BlockedTenants = @(); BlockedEndpoints = @() }
@@ -657,7 +670,7 @@ Describe 'Test-CIPPAccess scope-rule permutations' {
         $script:CIPPBaseRoles = $script:SeedBaseRoles
     }
 
-    It 'mixed rules: Unrestricted + explicit AllowedTenants -> union contains AllTenants AND the explicit IDs' {
+    It 'mixed rules: Unrestricted + explicit AllowedTenants -> AllTenants only (the explicit IDs add nothing)' {
         Mock -CommandName Get-CippAccessScopeRule -MockWith {
             param($Role)
             switch ($Role) {
@@ -668,7 +681,22 @@ Describe 'Test-CIPPAccess scope-rule permutations' {
         }
         Mock -CommandName Get-Tenants -MockWith { throw 'Get-Tenants must not be called (no AllowAllTenants rule)' }
         $Result = Test-CIPPAccess -Request (New-UserRequest -UserRoles @('openrole', 'scopedrole')) -TenantList
-        $Result | Should -Be @('AllTenants', 'tenant-x', 'tenant-y')
+        $Result | Should -Be @('AllTenants')
+        Should -Invoke -CommandName Get-Tenants -Times 0
+    }
+
+    It 'mixed rules: Unrestricted + AllowAllTenants-with-blocks -> AllTenants only, no tenant table read' {
+        Mock -CommandName Get-CippAccessScopeRule -MockWith {
+            param($Role)
+            switch ($Role) {
+                'openrole' { [pscustomobject]@{ Unrestricted = $true } }
+                'exceptrole' { [pscustomobject]@{ Unrestricted = $false; AllowAllTenants = $true; AllowedTenants = @(); BlockedTenants = @('tenant-b') } }
+                default { throw "unexpected $Role" }
+            }
+        }
+        Mock -CommandName Get-Tenants -MockWith { throw 'Get-Tenants must not be called (an unrestricted role short-circuits)' }
+        $Result = Test-CIPPAccess -Request (New-UserRequest -UserRoles @('openrole', 'exceptrole')) -TenantList
+        $Result | Should -Be @('AllTenants')
         Should -Invoke -CommandName Get-Tenants -Times 0
     }
 

@@ -97,10 +97,11 @@ function New-CIPPTravelPolicy {
             )
         }
         $null = New-CIPPCAPolicy -RawJSON $RawJSON -TenantFilter $TenantFilter -Overwrite $true -ReplacePattern 'none' -APIName $APIName -Headers $Headers
-        $AlsoAllowed = @()
-        if (@($ExistingLocations | Where-Object { $_ }).Count -gt 0) { $AlsoAllowed += "$(@($ExistingLocations | Where-Object { $_ }).Count) existing named location(s)" }
-        if ($AllowTrusted) { $AlsoAllowed += 'all trusted locations' }
-        $Result = "Created temporary travel policy '$PolicyName' allowing sign-ins from $($Countries -join ', ')$(if ($AlsoAllowed) { ' and ' + ($AlsoAllowed -join ', ') }) only."
+        $AlsoAllowed = [System.Collections.Generic.List[string]]::new()
+        $ExistingLocationCount = @($ExcludeLocations | Where-Object { $_ -match $GuidRegex }).Count
+        if ($ExistingLocationCount -gt 0) { $AlsoAllowed.Add("$ExistingLocationCount existing named location(s)") }
+        if ($AllowTrusted) { $AlsoAllowed.Add('all trusted locations') }
+        $Result = "Created temporary travel policy '$PolicyName' allowing sign-ins from $($Countries -join ', ')$(if ($AlsoAllowed.Count -gt 0) { ' and ' + ($AlsoAllowed -join ', ') }) only."
         Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $Result -Sev 'Info'
         return $Result
     } catch {

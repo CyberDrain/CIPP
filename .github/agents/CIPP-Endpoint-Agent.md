@@ -198,6 +198,9 @@ selector's `ListTenantGroups?TenantSelector=true` lists no groups and the dispat
   `tenantScope(selection)` from `utils/tenant-selection`, which returns `{ tenantFilter }` or `{ tenantGroup }`.
   This includes `row.Tenant ?? selection` fallbacks. Use `isMultiTenant(selection)` for "show the multi-tenant view",
   never `=== 'AllTenants'`.
+  A page that never uses the selected tenant (settings, templates) sets `usesTenant={false}` on its layout: with a
+  group selected it is not blocked and runs as it does with All Tenants. Any other page without `tenantGroupSupport`
+  shows a "pick a tenant or All Tenants" notice.
 
 ---
 

@@ -1254,6 +1254,7 @@ const CippSchedulerForm = (props) => {
                     compareType="isNot"
                     compareValue={true}
                     formControl={formControl}
+                    clearOnHide={false}
                     key={idx}
                   >
                     <Grid

@@ -74618,13 +74618,25 @@
                   "type": "object",
                   "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
                   "properties": {
+                    "copyField": {
+                      "x-cipp-field-source": "backend"
+                    },
                     "Results": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "resultText": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "state": {
                       "x-cipp-field-source": "backend"
                     }
                   }
                 }
               }
             }
+          },
+          "202": {
+            "description": "Accepted - work was queued and runs asynchronously"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"

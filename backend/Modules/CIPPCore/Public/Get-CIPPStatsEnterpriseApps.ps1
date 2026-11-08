@@ -21,9 +21,11 @@ function Get-CIPPStatsEnterpriseApps {
         $ParseJson = [CIPP.CippJson].GetMethod('ConvertFromJson', [type[]]@([string], [string[]]))
 
         $Apps = @{}
-        # One tenant at a time: service principal rows are large, and holding every tenant's peaks the heap
-        foreach ($Tenant in (Get-Tenants -IncludeErrors).defaultDomainName) {
-            if ([string]::IsNullOrWhiteSpace($Tenant)) { continue }
+        # One tenant at a time: service principal rows are large, and holding every tenant's peaks the heap.
+        # Ordinal order, as a table read returns them: an app's display name is the first one seen.
+        $Tenants = [string[]]@((Get-Tenants -IncludeErrors).defaultDomainName | Where-Object { $_ })
+        [Array]::Sort($Tenants, [StringComparer]::Ordinal)
+        foreach ($Tenant in $Tenants) {
             foreach ($Row in (Get-CIPPDbItem -Partition $Tenant -Type 'ServicePrincipals')) {
                 if (-not $Row.Data) { continue }
                 $Parsed = try { $ParseJson.Invoke($null, [object[]]@([string]$Row.Data, $Fields)) } catch { $null }

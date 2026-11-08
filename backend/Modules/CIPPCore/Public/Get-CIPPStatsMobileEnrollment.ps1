@@ -4,19 +4,14 @@ function Get-CIPPStatsMobileEnrollment {
 
     try {
         $MobileEnrollment = 0
-        $ManagedDeviceRows = Get-CIPPDbItem -TenantFilter allTenants -Type 'ManagedDevices'
-        foreach ($ManagedDeviceRow in $ManagedDeviceRows) {
-            if (-not $ManagedDeviceRow.Data) { continue }
-
-            try {
-                $ManagedDevice = $ManagedDeviceRow.Data | ConvertFrom-Json -Depth 20 -ErrorAction Stop
-            } catch {
-                continue
-            }
-
-            $OperatingSystem = [string]$ManagedDevice.operatingSystem
-            if ($OperatingSystem -match 'iOS|iPadOS|Android') {
-                $MobileEnrollment++
+        $Rows = Get-CIPPDbItem -TenantFilter allTenants -Type 'ManagedDevices' -ByTenant
+        foreach ($Tenant in $Rows.Keys) {
+            foreach ($Row in $Rows[$Tenant]) {
+                if ([string]::IsNullOrWhiteSpace($Row.Data)) { continue }
+                $Parsed = try { [CIPP.CippJson]::ConvertFromJson([string]$Row.Data, [string[]]@('operatingSystem')) } catch { $null }
+                foreach ($Device in @($Parsed)) {
+                    if ([string]$Device.operatingSystem -match 'iOS|iPadOS|Android') { $MobileEnrollment++ }
+                }
             }
         }
 

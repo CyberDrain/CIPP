@@ -1,9 +1,13 @@
 function Get-CIPPStatsDriftStandardsCount {
     [CmdletBinding()]
-    param()
+    param(
+        # Get-CIPPStandards -TenantFilter allTenants, read once by the caller
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [object[]]$Standards
+    )
 
     try {
-        $Standards = @(Get-CIPPStandards -TenantFilter allTenants)
         $TemplateTable = Get-CippTable -tablename 'templates'
         $TemplateRows = @(Get-CIPPAzDataTableEntity @TemplateTable -Filter "PartitionKey eq 'StandardsTemplateV2'")
 

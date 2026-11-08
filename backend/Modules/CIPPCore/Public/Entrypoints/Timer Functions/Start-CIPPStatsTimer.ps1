@@ -53,7 +53,7 @@ function Start-CIPPStatsTimer {
         $caPolicyCount = ($caPolicyCounts | Measure-Object -Property DataCount -Sum).Sum
         $ReportsTable = Get-CippTable -tablename 'ReportBuilderTemplates'
         $CustomReportCount = (Get-CIPPAzDataTableEntity @ReportsTable -Filter "PartitionKey eq 'ReportBuilderTemplates'").count
-        $Standards = try { @(Get-CIPPStandards -TenantFilter allTenants) } catch { @() }
+        $Standards = @(try { Get-CIPPStandards -TenantFilter allTenants } catch { })
         $uniqueStandardsApplied = Get-CIPPStatsUniqueStandardsApplied -Standards $Standards
         $driftStandardsCount = Get-CIPPStatsDriftStandardsCount -Standards $Standards
         $mobileEnrollment = Get-CIPPStatsMobileEnrollment

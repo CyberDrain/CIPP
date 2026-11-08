@@ -13,13 +13,9 @@ function Get-CIPPStatsDriftStandardsCount {
 
         $TemplateTypeByGuid = @{}
         foreach ($TemplateRow in $TemplateRows) {
-            if ([string]::IsNullOrWhiteSpace($TemplateRow.JSON)) { continue }
+            if (-not $TemplateRow.JSON) { continue }
 
-            try {
-                $TemplateData = $TemplateRow.JSON | ConvertFrom-Json -Depth 30 -ErrorAction Stop
-            } catch {
-                continue
-            }
+            $TemplateData = try { [CIPP.CippJson]::ConvertFromJson([string]$TemplateRow.JSON, [string[]]@('GUID', 'type')) } catch { continue }
 
             $TemplateGuid = [string]($TemplateData.GUID ?? $TemplateRow.GUID)
             if ([string]::IsNullOrWhiteSpace($TemplateGuid)) { continue }

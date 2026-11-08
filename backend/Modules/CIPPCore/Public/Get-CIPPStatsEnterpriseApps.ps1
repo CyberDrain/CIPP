@@ -17,14 +17,16 @@ function Get-CIPPStatsEnterpriseApps {
         $VendorTenants = Get-CIPPVendorTenantMap
         $CippAppId = [string]$env:ApplicationID
         $Fields = [string[]]@('appId', 'displayName', 'appOwnerOrganizationId', 'servicePrincipalType')
+        # Through MethodInfo.Invoke: PowerShell copies a large string passed straight to a method several times per call
+        $ParseJson = [CIPP.CippJson].GetMethod('ConvertFromJson', [type[]]@([string], [string[]]))
 
         $Apps = @{}
         # One tenant at a time: service principal rows are large, and holding every tenant's peaks the heap
         foreach ($Tenant in (Get-Tenants -IncludeErrors).defaultDomainName) {
             if ([string]::IsNullOrWhiteSpace($Tenant)) { continue }
             foreach ($Row in (Get-CIPPDbItem -Partition $Tenant -Type 'ServicePrincipals')) {
-                if ([string]::IsNullOrWhiteSpace($Row.Data)) { continue }
-                $Parsed = try { [CIPP.CippJson]::ConvertFromJson([string]$Row.Data, $Fields) } catch { $null }
+                if (-not $Row.Data) { continue }
+                $Parsed = try { $ParseJson.Invoke($null, [object[]]@([string]$Row.Data, $Fields)) } catch { $null }
                 foreach ($Sp in @($Parsed)) {
                     $AppId = [string]$Sp.appId
                     if ([string]::IsNullOrWhiteSpace($AppId)) { continue }

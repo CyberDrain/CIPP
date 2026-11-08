@@ -4,9 +4,9 @@ function Get-CIPPStatsMobileEnrollment {
 
     try {
         $MobileEnrollment = 0
-        $Rows = Get-CIPPDbItem -TenantFilter allTenants -Type 'ManagedDevices' -ByTenant
-        foreach ($Tenant in $Rows.Keys) {
-            foreach ($Row in $Rows[$Tenant]) {
+        foreach ($Tenant in (Get-Tenants -IncludeErrors).defaultDomainName) {
+            if ([string]::IsNullOrWhiteSpace($Tenant)) { continue }
+            foreach ($Row in (Get-CIPPDbItem -Partition $Tenant -Type 'ManagedDevices')) {
                 if ([string]::IsNullOrWhiteSpace($Row.Data)) { continue }
                 $Parsed = try { [CIPP.CippJson]::ConvertFromJson([string]$Row.Data, [string[]]@('operatingSystem')) } catch { $null }
                 foreach ($Device in @($Parsed)) {

@@ -19,9 +19,10 @@ function Get-CIPPStatsEnterpriseApps {
         $Fields = [string[]]@('appId', 'displayName', 'appOwnerOrganizationId', 'servicePrincipalType')
 
         $Apps = @{}
-        $Rows = Get-CIPPDbItem -TenantFilter allTenants -Type 'ServicePrincipals' -ByTenant
-        foreach ($Tenant in $Rows.Keys) {
-            foreach ($Row in $Rows[$Tenant]) {
+        # One tenant at a time: service principal rows are large, and holding every tenant's peaks the heap
+        foreach ($Tenant in (Get-Tenants -IncludeErrors).defaultDomainName) {
+            if ([string]::IsNullOrWhiteSpace($Tenant)) { continue }
+            foreach ($Row in (Get-CIPPDbItem -Partition $Tenant -Type 'ServicePrincipals')) {
                 if ([string]::IsNullOrWhiteSpace($Row.Data)) { continue }
                 $Parsed = try { [CIPP.CippJson]::ConvertFromJson([string]$Row.Data, $Fields) } catch { $null }
                 foreach ($Sp in @($Parsed)) {

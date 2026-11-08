@@ -87,11 +87,11 @@ function Invoke-ListIntuneDeploymentStatus {
     try {
         switch ($Type) {
             'mobileApps' {
-                $Devices = foreach ($Row in (Get-CIPPIntuneReport -TenantFilter $TenantFilter -ReportName 'retrieveDeviceAppInstallationStatusReport' -Filter "(ApplicationId eq '$Id')")) {
+                $Devices = foreach ($Row in (Get-CIPPIntuneReportRows -TenantFilter $TenantFilter -Uri 'https://graph.microsoft.com/beta/deviceManagement/reports/retrieveDeviceAppInstallationStatusReport' -Filter "(ApplicationId eq '$Id')" -OrderBy @())) {
                     $Detail = @($Row.AppInstallStateDetails_loc, $Row.HexErrorCode) | Where-Object { $_ }
                     & $DeviceRow $Row.DeviceName $Row.UserPrincipalName ($Row.AppInstallState_loc ?? (& $Friendly $Row.AppInstallState)) ($Detail -join ' ') $Row.Platform $Row.LastModifiedDateTime
                 }
-                $Users = foreach ($Row in (Get-CIPPIntuneReport -TenantFilter $TenantFilter -ReportName 'getUserInstallStatusReport' -Filter "(ApplicationId eq '$Id')")) {
+                $Users = foreach ($Row in (Get-CIPPIntuneReportRows -TenantFilter $TenantFilter -Uri 'https://graph.microsoft.com/beta/deviceManagement/reports/getUserInstallStatusReport' -Filter "(ApplicationId eq '$Id')" -OrderBy @())) {
                     $Status = if ($Row.FailedCount) { 'Failed' } elseif ($Row.PendingInstallCount) { 'Install pending' } elseif ($Row.NotInstalledCount) { 'Not installed' } elseif ($Row.InstalledCount) { 'Installed' } else { 'Not applicable' }
                     $DeviceCount = $Row.InstalledCount + $Row.FailedCount + $Row.PendingInstallCount + $Row.NotInstalledCount + $Row.NotApplicableCount
                     & $UserRow $Row.UserPrincipalName $Row.UserName $Status "$($Row.InstalledCount) installed, $($Row.FailedCount) failed, $($Row.PendingInstallCount) pending, $($Row.NotInstalledCount) not installed, $($Row.NotApplicableCount) not applicable" $DeviceCount $null
@@ -117,7 +117,7 @@ function Invoke-ListIntuneDeploymentStatus {
                     'Microsoft.Management.Services.Api.DeviceManagementIntent'
                 )
                 $TypeFilter = ($PolicyTypes | ForEach-Object { "(PolicyBaseTypeName eq '$_')" }) -join ' or '
-                $Devices = foreach ($Row in (Get-CIPPIntuneReport -TenantFilter $TenantFilter -ReportName 'getConfigurationPolicyDevicesReport' -Filter "($TypeFilter) and (PolicyId eq '$Id')")) {
+                $Devices = foreach ($Row in (Get-CIPPIntuneReportRows -TenantFilter $TenantFilter -Uri 'https://graph.microsoft.com/beta/deviceManagement/reports/getConfigurationPolicyDevicesReport' -Filter "($TypeFilter) and (PolicyId eq '$Id')" -OrderBy @())) {
                     & $DeviceRow $Row.DeviceName $Row.UPN ($Row.ReportStatus_loc ?? $Row.ReportStatus) $null $Row.UnifiedPolicyPlatformType_loc $Row.PspdpuLastModifiedTimeUtc
                 }
                 $Users = @(& $UsersFromDevices $Devices)

@@ -24,6 +24,18 @@ Creates a shared mailbox in the selected tenant.
 
 </details>
 
+<details>
+
+<summary>Bulk Add Shared Mailboxes</summary>
+
+Creates several shared mailboxes at once in the currently selected tenant, from a CSV file or from rows entered by hand. Only available with a single tenant selected: under **All Tenants** the drawer shows a warning and the button stays disabled.
+
+**Download Example CSV** gives a file with the header row and two sample mailboxes showing what each column expects. The columns are the same fields as Add Shared Mailbox, `displayName`, `username` and `domain`, and all three are required. Replace the sample rows with your own before uploading, or delete them from the preview. **Add Shared Mailbox Manually** opens a dialog with the same fields, with the domain chosen from the tenant's verified domains, for adding one row at a time.
+
+Every row appears in the **Shared Mailbox Preview** table, where it can be checked and removed before submitting. Rows missing a display name, username or domain are flagged above the table and block **Create Shared Mailboxes** until they are fixed or removed. **Create Shared Mailboxes** sends the rows one at a time and the results panel reports each mailbox separately. A row whose address already exists, or whose domain is not verified in the tenant, is rejected by Exchange and shown as an error, and the other rows still go through. The table refreshes afterwards; when it is reading cached data the new mailboxes appear after the next sync.
+
+</details>
+
 ## Filters
 
 | Filter                              | Shows                                                                                                                    |

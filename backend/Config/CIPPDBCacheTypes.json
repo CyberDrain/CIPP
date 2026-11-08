@@ -100,6 +100,12 @@
     "description": "Microsoft Secure Score and control profiles"
   },
   {
+    "type": "SecureScoreSummary",
+    "collectedBy": "SecureScore",
+    "friendlyName": "Secure Score Summary",
+    "description": "Compact per-tenant secure score, history and per-control results used by the All Tenants secure score views"
+  },
+  {
     "type": "PIMSettings",
     "friendlyName": "PIM Settings",
     "description": "Privileged Identity Management settings and assignments"
@@ -163,6 +169,16 @@
     "type": "ServicePrincipalSignInActivities",
     "friendlyName": "Service Principal Sign-In Activity",
     "description": "Last sign-in of every app, delegated or app-only (Entra ID P1)"
+  },
+  {
+    "type": "AppCredentialSignInActivities",
+    "friendlyName": "App Credential Sign-In Activity",
+    "description": "Last sign-in of every app secret and certificate that signed in (Entra ID P1)"
+  },
+  {
+    "type": "AppFederatedCredentials",
+    "friendlyName": "App Federated Credentials",
+    "description": "Federated identity credentials on app registrations: the issuer and subject whose tokens sign in as the app"
   },
   {
     "type": "AppCredentialChanges",

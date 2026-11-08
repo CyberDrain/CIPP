@@ -13,6 +13,12 @@ function Invoke-ExecGDAPAccessAssignment {
     $Action = $Request.Body.Action ?? $Request.Query.Action
     $Id = $Request.Body.Id ?? $Request.Query.Id
 
+    # Multi-partner: act as the relationship's source partner (defaults to the primary)
+    $PartnerTenantId = $Request.Body.partnerTenantId.value ?? $Request.Body.partnerTenantId ?? $Request.Query.partnerTenantId
+    if (!$PartnerTenantId -or -not (Get-CIPPPartnerTenantList | Where-Object { $_.partnerTenantId -eq $PartnerTenantId })) {
+        $PartnerTenantId = $env:TenantID
+    }
+
     switch ($Action) {
         'ResetMappings' {
             $RoleTemplateId = $Request.Body.RoleTemplateId
@@ -41,15 +47,15 @@ function Invoke-ExecGDAPAccessAssignment {
                     }
                 )
 
-                $RelationshipResults = New-GraphBulkRequest -Requests $RelationshipRequests -NoAuthCheck $true
+                $RelationshipResults = New-GraphBulkRequest -Requests $RelationshipRequests -NoAuthCheck $true -tenantid $PartnerTenantId
                 $Relationship = ($RelationshipResults | Where-Object id -EQ 'getRelationship').body
                 $AccessAssignments = ($RelationshipResults | Where-Object id -EQ 'getAccessAssignments').body.value
 
-                $Groups = New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/groups?`$top=999&`$select=id,displayName&`$filter=securityEnabled eq true" -asApp $true -NoAuthCheck $true
+                $Groups = New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/groups?`$top=999&`$select=id,displayName&`$filter=securityEnabled eq true" -asApp $true -NoAuthCheck $true -tenantid $PartnerTenantId
 
                 # Validate/correct the template's group mappings against the partner tenant before creating any
                 # access assignments - a stale GroupId would otherwise fail with "access container does not exist".
-                $GroupCheck = Test-CIPPGDAPGroupMappings -RoleMappings $Mappings -PartnerGroups $Groups -WriteBack -TemplateId $RoleTemplateId -Headers $Request.Headers
+                $GroupCheck = Test-CIPPGDAPGroupMappings -RoleMappings $Mappings -PartnerGroups $Groups -WriteBack -TemplateId $RoleTemplateId -Headers $Request.Headers -PartnerTenantId $PartnerTenantId
                 $Mappings = $GroupCheck.RoleMappings
 
                 $Requests = [System.Collections.Generic.List[object]]::new()
@@ -124,8 +130,9 @@ function Invoke-ExecGDAPAccessAssignment {
                 }
 
                 foreach ($Mapping in $Mappings) {
-                    $DeletedAssignments = $AccessAssignments | Where-Object { $_.accessContainer.accessContainerId -eq $Mapping.GroupId -and $_.status -eq 'deleted' }
-                    if (($AccessAssignments.accessContainer.accessContainerId -notcontains $Mapping.GroupId -or $DeletedAssignments.accessContainer.accessContainerId -contains $Mapping.GroupId) -and $Relationship.accessDetails.unifiedRoles.roleDefinitionId -contains $Mapping.roleDefinitionId) {
+                    # A group re-mapped after a removal keeps its deleted assignment listed next to the live one
+                    $LiveAssignment = @($AccessAssignments).Where({ $_.accessContainer.accessContainerId -eq $Mapping.GroupId -and $_.status -ne 'deleted' }, 'First')
+                    if ($LiveAssignment.Count -eq 0 -and $Relationship.accessDetails.unifiedRoles.roleDefinitionId -contains $Mapping.roleDefinitionId) {
                         Write-Information "Creating access assignment for $($Mapping.GroupId)"
                         $Requests.Add(@{
                                 'id'      = "create-$($Mapping.GroupId)"
@@ -159,7 +166,7 @@ function Invoke-ExecGDAPAccessAssignment {
                     Write-Warning "Executing $($Requests.Count) access assignment changes"
                     Write-Information ($Requests | ConvertTo-Json -Depth 10)
 
-                    $BulkResults = New-GraphBulkRequest -Requests $Requests -NoAuthCheck $true
+                    $BulkResults = New-GraphBulkRequest -Requests $Requests -NoAuthCheck $true -tenantid $PartnerTenantId
 
                     Write-Warning "Received $($BulkResults.Count) access assignment results"
                     Write-Information ($BulkResults | ConvertTo-Json -Depth 10)

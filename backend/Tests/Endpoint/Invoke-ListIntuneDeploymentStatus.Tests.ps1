@@ -13,7 +13,7 @@ BeforeAll {
     function New-GraphGetRequest { param($uri, $tenantid) }
     function New-GraphBulkRequest { param($Requests, $tenantid) }
     function Get-CippException { param($Exception) @{ NormalizedError = "$Exception" } }
-    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPIntuneReport.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPIntuneReportRows.ps1')
 
     $EndpointPath = Join-Path $RepoRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Endpoint/MEM/Invoke-ListIntuneDeploymentStatus.ps1'
     $EndpointScript = [ScriptBlock]::Create("using namespace System.Net`n" + (Get-Content -LiteralPath $EndpointPath -Raw))

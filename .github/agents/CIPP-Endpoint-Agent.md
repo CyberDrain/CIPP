@@ -182,6 +182,28 @@ passes `reportDB.resolvedApiUrl`, `resolvedApiData`, `apiDataKey` and `resolvedQ
 
 ---
 
+## Tenant groups
+
+A request names a tenant (`tenantFilter`) or a tenant group (`tenantGroup`), in the query or the body, never both and
+never a group inside `tenantFilter` (`New-CippCoreRequest` returns 400 for either).
+The whole feature sits behind the `TenantGroupSelector` feature flag (off by default): while it is off, the
+selector's `ListTenantGroups?TenantSelector=true` lists no groups and the dispatcher refuses any `tenantGroup` with 400.
+
+- **Backend:** an endpoint accepts a group by declaring `.FUNCTIONALITY Entrypoint,TenantGroup`, and only when its
+  All Tenants path honours the request scope (`Get-Tenants`, `Get-CIPPDbItem -TenantFilter allTenants`,
+  `Select-CippAllowedTenantData`). The dispatcher runs it with `tenantFilter=AllTenants` and `tenantGroup` in the query,
+  narrowed to the group's tenants. `Test-CIPPAccess` refuses a group on an endpoint without the flag, and on any write.
+- **Frontend:** a page accepts a group with `tenantGroupSupport={true}` on its layout. The selection
+  (`settings.currentTenant`) is `'group:<id>'` for a group, so every request built from it uses
+  `tenantScope(selection)` from `utils/tenant-selection`, which returns `{ tenantFilter }` or `{ tenantGroup }`.
+  This includes `row.Tenant ?? selection` fallbacks. Use `isMultiTenant(selection)` for "show the multi-tenant view",
+  never `=== 'AllTenants'`.
+  A page that never uses the selected tenant (settings, templates) sets `usesTenant={false}` on its layout: with a
+  group selected it is not blocked and runs as it does with All Tenants. Any other page without `tenantGroupSupport`
+  shows a "pick a tenant or All Tenants" notice.
+
+---
+
 ## Frontend contract
 
 - `ApiGetCall` / `ApiPostCall` do not retry 4xx (except 408 and 429). They retry 5xx shed responses (503) and do not

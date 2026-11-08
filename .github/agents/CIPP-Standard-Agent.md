@@ -134,7 +134,8 @@ function Invoke-CIPPBaseline<Name> {
 - Match the source-of-truth's **auth mode exactly** (`-AsApp $true` where required — read
   any classic implementation's write block to the end before porting).
 - Standards sharing one settings object must **live-read before create-vs-patch
-  decisions** — concurrent one-off remediations race each other's cache refreshes.
+  decisions** — every remediation in a run reads the same pre-write cache, which is refreshed only
+  after the run finishes.
 - Directory-settings (`beta/settings`) PATCHes require the **full values array**; partial
   arrays are rejected.
 - A write the executor must gate itself (fingerprint checks, always-run semantics) pairs

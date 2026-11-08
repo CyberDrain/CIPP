@@ -18,6 +18,18 @@ Microsoft first-party service principals make up the bulk of a typical tenant's 
 | ----------------------------- | --------------------------------------------------------- |
 | Hidden from MyApps portal    | Applications currently hidden from users in the MyApps portal. |
 
+## Sign-in Activity
+
+With a single tenant selected, four columns show whether each application is still in use. They are read from CIPP's cache of the Entra sign-in activity reports, which needs Entra ID P1 and is collected with the nightly cache run, so they can be up to a day behind.
+
+| Column                  | Shows                                                                                                                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sign In Activity        | Active (signed in within 30 days), Idle 30+ days, Stale 90+ days, or No sign-in recorded. Measured from when the report was collected. Unknown (not collected) when the tenant's report has not been cached. |
+| Last Sign In Date Time  | The application's last sign-in in this tenant, delegated or app-only.                                                                                                                                        |
+| Credential Use          | Whether the application's unexpired secrets and certificates have signed in during the last 90 days: All used in 90 days, Unused credentials (with how many of them), or No active credentials.              |
+| Last Credential Sign In | The most recent sign-in by any of its secrets or certificates.                                                                                                                                               |
+
+The **Stale (no sign-in for 90+ days)**, **No sign-in recorded** and **Unused credentials (90+ days)** filters use these columns. An unused credential is a good candidate for removal, since nothing has signed in with it. Check with the application's owner first: a credential kept for a rarely run job looks the same.
 ## Table Details
 
 The properties returned are for the Graph resource type `servicePrincipal`. For more information on the properties please see the [Graph documentation](https://learn.microsoft.com/en-us/graph/api/resources/serviceprincipal?view=graph-rest-1.0#properties).

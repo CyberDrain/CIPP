@@ -12,7 +12,8 @@ BeforeAll {
     function New-GraphPOSTRequest { param($uri, $tenantid, $body) }
     function Get-CippException { param($Exception) @{ NormalizedError = "$Exception" } }
     . (Get-ChildItem -Path (Join-Path $RepoRoot 'Modules') -Recurse -Filter 'Get-CippBulkStatusCode.ps1' -File | Select-Object -First 1 -ExpandProperty FullName)
-    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPIntuneReport.ps1')
+    # The report paging and Schema/Values row build live in this helper now
+    . (Get-ChildItem -Path (Join-Path $RepoRoot 'Modules') -Recurse -Filter 'Get-CIPPIntuneReportRows.ps1' -File | Select-Object -First 1 -ExpandProperty FullName)
 
     $EndpointPath = Join-Path $RepoRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Endpoint/MEM/Invoke-ListDevicePolicyStatus.ps1'
     $EndpointScript = [ScriptBlock]::Create("using namespace System.Net`n" + (Get-Content -LiteralPath $EndpointPath -Raw))

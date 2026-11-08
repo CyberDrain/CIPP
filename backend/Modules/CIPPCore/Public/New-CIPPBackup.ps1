@@ -36,6 +36,7 @@ function New-CIPPBackup {
                     $BackupTables = @(
                         'AppPermissions'
                         'AccessRoleGroups'
+                        'allowedAppRoles'
                         'ApiClients'
                         'CippReplacemap'
                         'CustomPowershellScripts'
@@ -58,6 +59,7 @@ function New-CIPPBackup {
                         'TenantProperties'
                         'TenantGroups'
                         'TenantGroupMembers'
+                        'PartnerTenants'
                         'BaselineRollouts'
                         'Baselines'
                         'BaselineRolloutState'

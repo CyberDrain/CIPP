@@ -55,6 +55,21 @@ The value of a new or rotated secret is shown once, with a copy button, and cann
 Certificates can be removed here but not added. Upload a new certificate credential in Entra instead.
 {% endhint %}
 
+#### Federated credentials
+
+A third entry lists the registration's federated credentials. A federated credential lets a token from another identity provider sign in as the application with no secret or certificate. The provider might be GitHub Actions, a Kubernetes cluster, a managed identity or any OpenID Connect issuer. The table shows each credential's name, issuer, the subject it accepts, its audiences and description. **Remove** deletes a credential after a confirmation prompt.
+
+**Add Federated Credential** in the page's actions menu builds a credential from a scenario:
+
+| Scenario                        | What you enter                                                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| GitHub Actions                  | The organization and repository, and which workflows may sign in: a deployment environment, a branch or a tag (by name), or pull requests. |
+| Kubernetes service account      | The cluster's OIDC issuer URL, the namespace and the service account.                                                                      |
+| Managed identity in this tenant | The managed identity, picked from the tenant's managed identities. The issuer is set to this tenant.                                       |
+| Other OpenID Connect issuer     | The issuer URL (https), the exact subject and, if the issuer needs one, an audience other than the default `api://AzureADTokenExchange`.   |
+
+**Remove Federated Credentials** in the same menu removes several at once. Federated credentials have no expiry, so one stays valid until it is removed. Only add issuers and subjects you control: whoever controls them can sign in as the application. The [App Permission Exposure](../../../reports/app-permission-exposure.md) report flags credentials that trust an issuer it does not recognise, or another organisation's Entra tenant.
+
 ### Owners
 
 Lists the owners of the app registration, with their display name, user principal name, mail address and object type. **View User** opens the selected owner in CIPP, and is offered only for owners that are users rather than groups or other service principals. Where Graph returns no owners the section says so, and where the request fails the error returned by Graph is shown instead.

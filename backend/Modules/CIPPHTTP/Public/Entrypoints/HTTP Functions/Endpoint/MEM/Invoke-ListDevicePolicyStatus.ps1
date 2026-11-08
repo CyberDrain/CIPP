@@ -42,15 +42,15 @@ function Invoke-ListDevicePolicyStatus {
     $TypeFilter = ($PolicyTypes | ForEach-Object { "(PolicyBaseTypeName eq '$_')" }) -join ' or '
     $Reports = [ordered]@{
         configuration = @{
-            Report = 'getConfigurationPoliciesReportForDevice'
+            Uri    = 'https://graph.microsoft.com/beta/deviceManagement/reports/getConfigurationPoliciesReportForDevice'
             Filter = "($TypeFilter) and (IntuneDeviceId eq '$DeviceGuid')"
         }
         compliance    = @{
-            Report = 'getDevicePoliciesComplianceReport'
+            Uri    = 'https://graph.microsoft.com/beta/deviceManagement/reports/getDevicePoliciesComplianceReport'
             Filter = "(DeviceId eq '$DeviceGuid')"
         }
         enrollment    = @{
-            Report  = 'getEnrollmentConfigurationPoliciesByDevice'
+            Uri     = 'https://graph.microsoft.com/beta/deviceManagement/reports/getEnrollmentConfigurationPoliciesByDevice'
             Filter  = "(DeviceId eq '$DeviceGuid')"
             Select  = @('PolicyId', 'PolicyType', 'ProfileName')
             OrderBy = @()
@@ -70,7 +70,7 @@ function Invoke-ListDevicePolicyStatus {
     foreach ($Name in $Names) {
         try {
             $Definition = $Reports[$Name]
-            $Loaded[$Name] = Get-CIPPIntuneReport -TenantFilter $TenantFilter -ReportName $Definition.Report -Filter $Definition.Filter -Select ($Definition.Select ?? @()) -OrderBy ($Definition.OrderBy ?? @('PolicyName'))
+            $Loaded[$Name] = Get-CIPPIntuneReportRows -TenantFilter $TenantFilter @Definition
         } catch {
             $ErrorMessage = Get-CippException -Exception $_
             $Errors[$Name] = "Failed to load $Name policies for device $($DeviceId): $($ErrorMessage.NormalizedError)"

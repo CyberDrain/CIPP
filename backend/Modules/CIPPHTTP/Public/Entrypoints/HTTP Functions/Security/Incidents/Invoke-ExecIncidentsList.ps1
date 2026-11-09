@@ -63,7 +63,7 @@ function Invoke-ExecIncidentsList {
                 Classification = $incident.classification
                 Determination  = $incident.determination
                 Severity       = $incident.severity
-                Tags           = ($incident.tags -join ', ')
+                Tags           = ((@($incident.customTags) + @($incident.systemTags)).Where({ $_ }) -join ', ')
                 Comments       = @($incident.comments)
             }
         }

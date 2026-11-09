@@ -115,17 +115,17 @@ Describe 'ConvertTo-CippReportPdf' {
     Context 'Image formats' {
         BeforeAll {
             # 1x1 fixtures: the smallest valid GIF and WebP, a two-colour SVG, and a corrupt PNG.
-            $script:Gif = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+            $script:Gif = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
             $script:Webp = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA'
             $script:Svg = 'data:image/svg+xml;base64,' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20"><rect width="40" height="20" fill="#F77F00"/></svg>'))
             $script:Block = @(@{ type = 'blank'; title = 'Formats'; content = '<p>x</p>' })
         }
-        It 'identifies every raster OfficeIMO decodes, not just PNG and JPEG' {
-            [CIPP.Reporting.ReportComponents]::ImageContentType([CIPP.Reporting.ReportComponents]::DecodeImage($script:Gif)) | Should -Be 'image/gif'
-            [CIPP.Reporting.ReportComponents]::ImageContentType([CIPP.Reporting.ReportComponents]::DecodeImage($script:Webp)) | Should -Be 'image/webp'
+        It 'identifies every raster OfficeIMO decodes, keeping only the first frame of a GIF' {
+            [CIPP.Reporting.ReportComponents]::ImageContentType([CIPP.Reporting.ReportComponents]::DecodeImage($script:Gif, $false)) | Should -Be 'image/png'
+            [CIPP.Reporting.ReportComponents]::ImageContentType([CIPP.Reporting.ReportComponents]::DecodeImage($script:Webp, $false)) | Should -Be 'image/webp'
         }
         It 'rasterises an SVG once at decode time so every placement sees a PNG' {
-            $bytes = [CIPP.Reporting.ReportComponents]::DecodeImage($script:Svg)
+            $bytes = [CIPP.Reporting.ReportComponents]::DecodeImage($script:Svg, $false)
             [CIPP.Reporting.ReportComponents]::ImageContentType($bytes) | Should -Be 'image/png'
             # 40x20 source scaled to 1200px on the long side, aspect kept.
             $size = [CIPP.Reporting.ReportComponents]::ImageSize($bytes)
@@ -133,8 +133,36 @@ Describe 'ConvertTo-CippReportPdf' {
             $size.Item2 | Should -Be 600
         }
         It 'drops what OfficeIMO cannot identify rather than failing the render' {
-            [CIPP.Reporting.ReportComponents]::DecodeImage($script:TinyPng) | Should -BeNullOrEmpty
-            [CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('not an image'))) | Should -BeNullOrEmpty
+            [CIPP.Reporting.ReportComponents]::DecodeImage($script:TinyPng, $false) | Should -BeNullOrEmpty
+            [CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('not an image')), $false) | Should -BeNullOrEmpty
+        }
+        It 'shrinks an oversized logo to fit 780x300 and keeps a small one as uploaded' {
+            $Big = [OfficeIMO.Drawing.OfficeRasterImage]::new(3000, 1500, [OfficeIMO.OfficeColor]::FromRgb(20, 120, 200))
+            $bytes = [CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String([OfficeIMO.Drawing.OfficePngWriter]::Encode($Big)), $false)
+            $size = [CIPP.Reporting.ReportComponents]::ImageSize($bytes)
+            $size.Item1 | Should -Be 600
+            $size.Item2 | Should -Be 300
+            [CIPP.Reporting.ReportComponents]::ImageContentType($bytes) | Should -Be 'image/png'
+
+            $Small = [OfficeIMO.Drawing.OfficePngWriter]::Encode([OfficeIMO.Drawing.OfficeRasterImage]::new(240, 80, [OfficeIMO.OfficeColor]::FromRgb(20, 120, 200)))
+            [Convert]::ToBase64String([CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String($Small), $false)) | Should -Be ([Convert]::ToBase64String($Small))
+        }
+        It 'stores an opaque oversized cover as a 2000px JPEG and keeps a transparent one as PNG' {
+            # Noise, like a photo: a flat colour would compress smaller as PNG and rightly stay one.
+            $Pixels = [byte[]]::new(2100 * 1050 * 4)
+            [Random]::new(1).NextBytes($Pixels)
+            for ($i = 3; $i -lt $Pixels.Length; $i += 4) { $Pixels[$i] = 255 }
+            $Opaque = [OfficeIMO.Drawing.OfficePngWriter]::Encode([OfficeIMO.Drawing.OfficeRasterImage]::FromRgba32(2100, 1050, $Pixels))
+            $bytes = [CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String($Opaque), $true)
+            [CIPP.Reporting.ReportComponents]::ImageContentType($bytes) | Should -Be 'image/jpeg'
+            $size = [CIPP.Reporting.ReportComponents]::ImageSize($bytes)
+            $size.Item1 | Should -Be 2000
+            $size.Item2 | Should -Be 1000
+
+            $Clear = [OfficeIMO.Drawing.OfficePngWriter]::Encode([OfficeIMO.Drawing.OfficeRasterImage]::new(4000, 3000))
+            $bytes = [CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String($Clear), $true)
+            [CIPP.Reporting.ReportComponents]::ImageContentType($bytes) | Should -Be 'image/png'
+            [CIPP.Reporting.ReportComponents]::ImageSize($bytes).Item1 | Should -Be 2000
         }
         It 'renders a GIF logo, an SVG logo and a WebP cover' {
             Test-IsPdf (ConvertTo-CippReportPdf -Blocks $script:Block -Branding @{ logo = $script:Gif }) | Should -BeTrue

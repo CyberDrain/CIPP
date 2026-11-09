@@ -52,15 +52,15 @@ namespace CIPP.Reporting
                 blocks.RemoveAll(b => b.Type == "cover");
             }
 
-            var logo = ReportComponents.DecodeImage(branding.Logo);
+            var logo = ReportComponents.DecodeImage(branding.Logo, background: false);
             // The cover photo, resolved the way the client's resolveCoverImage did: an uploaded cover wins,
             // then the stock photo the branding picked ("none" means no cover at all), then the report's
             // own %coverfallbackimage% (e.g. "/reportImages/soc.jpg"), so a report without configured
             // branding still gets a cover.
-            var coverImage = ReportComponents.DecodeImage(branding.CoverImage)
+            var coverImage = ReportComponents.DecodeImage(branding.CoverImage, background: true)
                 ?? (branding.CoverStock == "none" ? null
-                    : ReportComponents.DecodeImage(branding.CoverStock)
-                        ?? (variables.TryGetValue("coverfallbackimage", out var coverFallback) ? ReportComponents.DecodeImage(coverFallback) : null));
+                    : ReportComponents.DecodeImage(branding.CoverStock, background: true)
+                        ?? (variables.TryGetValue("coverfallbackimage", out var coverFallback) ? ReportComponents.DecodeImage(coverFallback, background: true) : null));
             ReportContext Context(byte[]? logoBytes) => new()
             {
                 Theme = theme,
@@ -136,7 +136,7 @@ namespace CIPP.Reporting
                         // Full-bleed divider: a dark page with an optional cover photo behind the big figure,
                         // no header/footer chrome. The photo is a page background image (edge to edge); the
                         // text is drawn over it, vertically centred, with the footer note bottom-right.
-                        var heroImage = ReportComponents.DecodeImage(group.Block!.Str("heroImage") ?? group.Block!.Str("backgroundImage"));
+                        var heroImage = ReportComponents.DecodeImage(group.Block!.Str("heroImage") ?? group.Block!.Str("backgroundImage"), background: true);
                         compose.Section(p =>
                         {
                             ApplyPageDefaults(p);

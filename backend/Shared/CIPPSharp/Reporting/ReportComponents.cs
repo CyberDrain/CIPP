@@ -33,8 +33,9 @@ namespace CIPP.Reporting
         }
 
         // -- images --
-        /// <summary>Decode a data-URL/base64 image (or resolve a bundled /reportImages/ path) into bytes OfficeIMO can draw anywhere, or null.</summary>
-        public static byte[]? DecodeImage(string? dataUrl)
+        /// <summary>Decode a data-URL/base64 image (or resolve a bundled /reportImages/ path) into bytes OfficeIMO can draw anywhere, or null.
+        /// <paramref name="background"/> is a cover or hero photo filling a page; otherwise the image is a logo.</summary>
+        public static byte[]? DecodeImage(string? dataUrl, bool background)
         {
             if (string.IsNullOrWhiteSpace(dataUrl)) return null;
             var s = dataUrl.Trim();
@@ -47,19 +48,21 @@ namespace CIPP.Reporting
             if (stock.Success) return ReportImage(stock.Groups[1].Value);
 
             // A branding logo or uploaded cover is the same data URL on every render for a tenant, so it is
-            // decoded (and an SVG rasterised) once, and every render hands OfficeIMO the same array - which
-            // also lets OfficeIMO's per-array prepared-image cache hit across renders. Keyed by the data URL
-            // itself: a lookup is a fast string hash and compare, where a digest of a large upload is not.
-            var key = s;
+            // decoded and sized once, and every render hands OfficeIMO the same array - which also lets
+            // OfficeIMO's per-array prepared-image cache hit across renders. Keyed by the data URL itself, a
+            // fast string hash and compare; an upload too large to hold as a key goes by its digest instead.
+            var key = (background ? "b:" : "l:") + (s.Length > MaxImageKeyChars
+                ? Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Runtime.InteropServices.MemoryMarshal.AsBytes(s.AsSpan())))
+                : s);
             if (DecodedImageCache.TryGetValue(key, out var cached)) return cached;
             var comma = s.IndexOf("base64,", StringComparison.OrdinalIgnoreCase);
             if (comma >= 0) s = s.Substring(comma + "base64,".Length);
             byte[]? bytes;
-            try { bytes = NormaliseImage(Convert.FromBase64String(s.Trim())); } catch { bytes = null; }
+            try { bytes = NormaliseImage(Convert.FromBase64String(s.Trim()), background); } catch { bytes = null; }
             // ponytail: clear-on-overflow, not LRU; a byte budget keeps a burst of distinct brandings bounded.
-            // An entry bigger than a quarter of the budget (an upload of roughly 3 MB, counting its data URL)
-            // is not kept, so one huge image cannot clear everything else for itself. Each cached array also
-            // keeps OfficeIMO's prepared copy of it alive, so what this retains is a few times the budget.
+            // An entry bigger than a quarter of the budget is not kept, so one huge image cannot clear everything
+            // else for itself. Each cached array also keeps OfficeIMO's prepared copy of it alive, so what this
+            // retains is a few times the budget.
             var size = 2L * key.Length + (bytes?.Length ?? 0);
             if (size > DecodedImageCacheBudget / 4) return bytes;
             if (Interlocked.Add(ref decodedImageCacheBytes, size) > DecodedImageCacheBudget)
@@ -72,6 +75,7 @@ namespace CIPP.Reporting
         }
 
         private const long DecodedImageCacheBudget = 32L * 1024 * 1024;
+        private const int MaxImageKeyChars = 256 * 1024;
         private static long decodedImageCacheBytes;
         private static readonly ConcurrentDictionary<string, byte[]?> DecodedImageCache = new(StringComparer.Ordinal);
 
@@ -81,17 +85,55 @@ namespace CIPP.Reporting
         // crisp at logo and cover sizes and a few KB for a typical logo - and then behaves like a PNG.
         // Anything OfficeIMO cannot identify is dropped here rather than left to fail at serialisation.
         // Add-CIPPImage enforces the same list at upload time.
+        // Rasters are sized for their use (logos drawn at most 260x100pt get 3px per point, page photos 2000px)
+        // with metadata stripped, and an opaque page photo becomes JPEG.
         private const double SvgRasterSize = 1200;
-        private static byte[]? NormaliseImage(byte[] bytes)
+        private const int LogoMaxWidth = 780, LogoMaxHeight = 300, BackgroundMaxSide = 2000, BackgroundJpegQuality = 80;
+        private static byte[]? NormaliseImage(byte[] bytes, bool background)
         {
+            OfficeImageInfo info;
             try
             {
-                if (!OfficeImageReader.TryIdentifyByContent(bytes, null, out var info)) return null;
-                if (info.Format != OfficeImageFormat.Svg) return bytes;
-                if (!OfficeSvgDrawingReader.TryRead(bytes, out var drawing) || drawing.Width <= 0 || drawing.Height <= 0) return null;
-                return OfficeDrawingRasterRenderer.ToPng(drawing, SvgRasterSize / Math.Max(drawing.Width, drawing.Height), null);
+                if (!OfficeImageReader.TryIdentifyByContent(bytes, null, out info)) return null;
+                if (info.Format == OfficeImageFormat.Svg)
+                {
+                    if (!OfficeSvgDrawingReader.TryRead(bytes, out var drawing) || drawing.Width <= 0 || drawing.Height <= 0) return null;
+                    return OfficeDrawingRasterRenderer.ToPng(drawing, SvgRasterSize / Math.Max(drawing.Width, drawing.Height), null);
+                }
             }
             catch { return null; }
+            // Sizing is an optimisation: an image it cannot process is drawn as uploaded.
+            var sized = bytes;
+            try
+            {
+                var scale = background
+                    ? (double)BackgroundMaxSide / Math.Max(info.Width, info.Height)
+                    : Math.Min((double)LogoMaxWidth / info.Width, (double)LogoMaxHeight / info.Height);
+                // A PDF shows only a GIF's first frame, which the optimizer will not extract from an animation.
+                if (scale < 1 || info.Format == OfficeImageFormat.Gif)
+                {
+                    int w = Math.Max(1, (int)Math.Round(info.Width * Math.Min(scale, 1))), h = Math.Max(1, (int)Math.Round(info.Height * Math.Min(scale, 1)));
+                    var result = info.Format == OfficeImageFormat.Gif ? null : OfficeImageOptimizer.Optimize(bytes, new OfficeImageOptimizationRequest(w, h)
+                    {
+                        ResamplingMode = OfficeRasterResamplingMode.Area,
+                        JpegQuality = BackgroundJpegQuality,
+                        MetadataPolicy = OfficeImageMetadataPolicy.Strip,
+                    });
+                    if (result?.Changed == true) sized = result.Bytes;
+                    else if (result is null or { Status: OfficeImageOptimizationStatus.UnsupportedFormat or OfficeImageOptimizationStatus.DecodeFailed })
+                    {
+                        var frame = OfficeRasterImageDecoder.Decode(bytes);
+                        sized = OfficePngWriter.Encode(scale < 1 ? OfficeRasterResampler.Resize(frame, w, h, OfficeRasterResamplingMode.Area) : frame);
+                    }
+                }
+                if (!background || info.Format == OfficeImageFormat.Jpeg) return sized;
+                var raster = OfficeRasterImageDecoder.Decode(sized);
+                var pixels = raster.GetPixels();
+                for (var i = 3; i < pixels.Length; i += 4) if (pixels[i] != 255) return sized;
+                var jpeg = OfficeJpegCodec.Encode(raster, new OfficeJpegEncodeOptions { Quality = BackgroundJpegQuality });
+                return jpeg.Length < sized.Length ? jpeg : sized;
+            }
+            catch { return sized; }
         }
 
         private static readonly Regex ReportImagesPathPattern =
@@ -343,8 +385,9 @@ namespace CIPP.Reporting
             var dateLine = 9 * lineBox;
             var headerH = Math.Max(dateLine, logoBox.h);
             if (logoType is not null)
-                dw.AddImage(ctx.Logo!, logoType, new OfficeImageProjection(
-                    new OfficeImagePlacement(leftPad, headerTop, logoBox.w, logoBox.h), new OfficeImageSourceCrop(0, 0, 0, 0), 0, null, null, false, false));
+                // Uninterpolated like the page-header logo, so the two placements share one image object.
+                dw.AddImageWithInterpolation(ctx.Logo!, logoType, new OfficeImageProjection(
+                    new OfficeImagePlacement(leftPad, headerTop, logoBox.w, logoBox.h), new OfficeImageSourceCrop(0, 0, 0, 0), 0, null, null, false, false), interpolate: false);
             if (!string.IsNullOrEmpty(ctx.GeneratedOn))
                 Line(San(ctx.GeneratedOn).ToUpperInvariant(), 0, headerTop + (headerH - dateLine) / 2, ctx.ContentWidth - leftPad, 9, coverText, OfficeTextAlignment.Right);
 

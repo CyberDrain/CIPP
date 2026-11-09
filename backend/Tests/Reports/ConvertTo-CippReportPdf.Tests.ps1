@@ -100,7 +100,7 @@ Describe 'ConvertTo-CippReportPdf' {
             $Rows = @(1..20 | ForEach-Object { @{ name = "Filler $_"; value = 'x'; target = 'y' } }) +
                 @(@{ name = 'Tall'; value = $Tall; target = 'z' }, @{ name = 'After'; value = 'x'; target = 'y' })
             $b = @(@{ type = 'richtable'; title = 'Straddle'; columns = $Cols; rows = $Rows; limit = 50 })
-            $Pages = @([OfficeIMO.Pdf.PdfReadDocument]::Open((ConvertTo-CippReportPdf -Blocks $b)).Pages | ForEach-Object { $_.ExtractText() })
+            $Pages = @([OfficeIMO.Pdf.PdfDocument]::Load([IO.MemoryStream]::new((ConvertTo-CippReportPdf -Blocks $b))).Pages | ForEach-Object { $_.ExtractText() })
             $Start = @(0..($Pages.Count - 1) | Where-Object { $Pages[$_] -match 'ROWSTART' })
             $End = @(0..($Pages.Count - 1) | Where-Object { $Pages[$_] -match 'ROWEND' })
             $Start | Should -HaveCount 1
@@ -193,9 +193,9 @@ Describe 'Watermark layering' {
         $Marked = @($Streams | Where-Object { $_.Contains($Marker) })
         # a content page and the divider at least; the cover never carries one
         $Marked.Count | Should -BeGreaterOrEqual 2
-        $Streams[0] | Should -Not -Match 'Tj\s*ET\s*Q\s*$'
+        $Streams[0] | Should -Not -Match ([regex]::Escape($Marker))
         foreach ($Data in $Marked) {
-            $Data.TrimEnd() | Should -Match "$([regex]::Escape($Marker))\s*ET\s*Q$"
+            $Data.TrimEnd() | Should -Match "$([regex]::Escape($Marker))\s*(EMC\s*)?ET\s*Q$"
             ([regex]::Matches($Data, '> Tj|\) Tj') | Select-Object -Last 1).Value | Should -Be '> Tj'
             $Data.LastIndexOf(' re') | Should -BeLessThan $Data.IndexOf($Marker)
             # rising left to right like the client's rotate(-45deg), the divider's tag angle written back
@@ -212,7 +212,7 @@ Describe 'Watermark layering' {
         $Streams = [regex]::Matches($Pdf, '(?s)<< /Length (\d+) >>\s*stream\n(.*?)\nendstream') | ForEach-Object { $_.Groups[2].Value }
         $Marked = @($Streams | Where-Object { $_ -match '0\.707 0\.707 -0\.707 0\.707' })
         $Marked.Count | Should -BeGreaterOrEqual 1
-        foreach ($Data in $Marked) { $Data.TrimEnd() | Should -Match 'Tj\s*ET\s*Q$' }
+        foreach ($Data in $Marked) { $Data.TrimEnd() | Should -Match 'Tj\s*(EMC\s*)?ET\s*Q$' }
     }
 
     It 'stacks a mark wider than the page on full lines rather than overprinting them' {
@@ -274,7 +274,7 @@ Describe 'Cover footer note' {
         $Cover = {
             param($Branding)
             $Bytes = ConvertTo-CippReportPdf -Blocks @(@{ type = 'blank'; title = 'T'; content = '<p>x</p>' }) -Variables @{ coverfooternote = 'Report wording' } -Branding $Branding -TenantName 'Contoso' -ReportName 'T'
-            [OfficeIMO.Pdf.PdfReadDocument]::Open($Bytes).Pages[0].ExtractText()
+            [OfficeIMO.Pdf.PdfDocument]::Load([IO.MemoryStream]::new($Bytes)).Pages[0].ExtractText()
         }
         $Branded = & $Cover @{ colour = '#0E4C92'; coverFooterText = 'Branded wording' }
         $Branded | Should -Match 'BRANDED\s+WORDING'
@@ -287,7 +287,7 @@ Describe 'Cover footer note' {
         $Logo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAKCAYAAACjd+4vAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAfSURBVDhPY+DzmfR/IDADugC98KjFdMOjFtMNjzyLAVL6P4McNkyeAAAAAElFTkSuQmCC'
         $Variables = @{ coversubtitle = 'A deliberately long subtitle that wraps onto a second line on the landscape cover of the report'; covermeta = '24 sharing links' }
         $Bytes = ConvertTo-CippReportPdf -Blocks @(@{ type = 'blank'; title = 'T'; content = '<p>x</p>' }) -Variables $Variables -Branding @{ colour = '#0E4C92'; logo = $Logo } -TenantName 'Contoso Landscape Tenant' -ReportName 'Quarterly Security Review' -Landscape
-        $Cover = [OfficeIMO.Pdf.PdfReadDocument]::Open($Bytes).Pages[0].ExtractText()
+        $Cover = [OfficeIMO.Pdf.PdfDocument]::Load([IO.MemoryStream]::new($Bytes)).Pages[0].ExtractText()
         $Cover | Should -Match 'Contoso\s+Landscape\s+Tenant'
         $Cover | Should -Match '24\s+sharing\s+links'
         $Cover | Should -Match 'CONFIDENTIAL'
@@ -325,7 +325,7 @@ Describe 'Table empty state' {
     It 'draws a table''s emptyText inside the table when it has no rows' {
         $Table = @{ type = 'richtable'; columns = @(@{ header = 'Plan'; key = 'p'; width = 2 }, @{ header = 'Seats'; key = 's'; width = 1 }); rows = @(); limit = 10; emptyText = 'Nothing to list.' }
         $Bytes = ConvertTo-CippReportPdf -Blocks @($Table) -Variables @{} -Branding @{ colour = '#0E4C92' } -TenantName 'Contoso' -ReportName 'T'
-        $Text = ([OfficeIMO.Pdf.PdfReadDocument]::Open($Bytes).Pages | ForEach-Object { $_.ExtractText() }) -join "`n"
+        $Text = ([OfficeIMO.Pdf.PdfDocument]::Load([IO.MemoryStream]::new($Bytes)).Pages | ForEach-Object { $_.ExtractText() }) -join "`n"
         $Text | Should -Match 'PLAN\s+SEATS\s+Nothing to list\.'
     }
 
@@ -335,7 +335,7 @@ Describe 'Table empty state' {
             @{ type = 'database'; title = 'Header only'; format = 'text'; content = "| Name | UPN |`n|---|---|" }
         )
         $Bytes = ConvertTo-CippReportPdf -Blocks $Blocks -Variables @{} -Branding @{ colour = '#0E4C92' } -TenantName 'Contoso' -ReportName 'T'
-        $Text = ([OfficeIMO.Pdf.PdfReadDocument]::Open($Bytes).Pages | ForEach-Object { $_.ExtractText() }) -join "`n"
+        $Text = ([OfficeIMO.Pdf.PdfDocument]::Load([IO.MemoryStream]::new($Bytes)).Pages | ForEach-Object { $_.ExtractText() }) -join "`n"
         $Text | Should -Match 'PLAN\s+Nothing to report\.'
         ([regex]::Matches($Text, 'Nothing to report')).Count | Should -Be 1
     }

@@ -41,6 +41,7 @@ These settings pre-select the offboarding options used when a user in this tenan
 | Convert to Shared Mailbox                     | Converts the leaver's mailbox to a shared mailbox so colleagues can be granted access to it.                             |
 | Remove from all groups                        | Removes the user from every group they are a member of.                                                                  |
 | Remove group ownership                        | Removes the user as owner of every group they own. The replacement owner is chosen in the wizard itself.                 |
+| Remove all admin roles                        | Removes every Entra directory role the user holds, PIM assignments included. The last Global Administrator is never removed. |
 | Hide from Global Address List                 | Hides the mailbox so it no longer appears in address lists.                                                              |
 | Remove Licenses                               | Removes all licences assigned to the user.                                                                               |
 | Cancel all calendar invites                   | Cancels meetings the user organised so attendees are not left with orphaned invitations.                                 |

@@ -12,6 +12,7 @@ import CippBackupSettings from "../../../components/CippSettings/CippBackupSetti
 import CippBackupRetentionSettings from "../../../components/CippSettings/CippBackupRetentionSettings";
 import CippLogRetentionSettings from "../../../components/CippSettings/CippLogRetentionSettings";
 import CippJitAdminSettings from "../../../components/CippSettings/CippJitAdminSettings";
+import CippBulkActionConfirmSettings from "../../../components/CippSettings/CippBulkActionConfirmSettings";
 import CippBecRemediationSettings from "../../../components/CippSettings/CippBecRemediationSettings";
 const Page = () => {
   return (
@@ -52,6 +53,9 @@ const Page = () => {
         </Grid>
         <Grid size={{ lg: 4, md: 6, sm: 12, xs: 12 }}>
           <CippBecRemediationSettings />
+        </Grid>
+        <Grid size={{ lg: 4, md: 6, sm: 12, xs: 12 }}>
+          <CippBulkActionConfirmSettings />
         </Grid>
       </Grid>
     </Container>

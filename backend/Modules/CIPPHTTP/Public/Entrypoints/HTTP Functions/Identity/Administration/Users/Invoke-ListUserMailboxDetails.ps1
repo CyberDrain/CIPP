@@ -13,6 +13,10 @@ function Invoke-ListUserMailboxDetails {
     $TenantFilter = $Request.Query.tenantFilter
     $UserID = $Request.Query.UserID
     $UserMail = $Request.Query.userMail
+    if (-not $UserID) {
+        # Without a user every cmdlet below runs against every mailbox in the tenant
+        return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ Results = 'UserID is required' } })
+    }
     Write-Host "TenantFilter: $TenantFilter"
     Write-Host "UserID: $UserID"
     Write-Host "UserMail: $UserMail"

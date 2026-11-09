@@ -77,6 +77,15 @@ function Invoke-ExecBaselineStage {
             firstDeployedAt = $State.firstDeployedAt ?? $State.enteredStageAt ?? $Now
         }
 
+        if ($MovingBack) {
+            # Standards only the later stages rolled out would otherwise keep showing under those stages.
+            $Kept = @(Get-CIPPBaselineStageStandards -Baseline $Baseline -Definitions @(Get-CIPPBaselineDefinition) | Select-Object -First $NewStage | ForEach-Object { $_ })
+            $ResolvedTable = Get-CippTable -tablename 'BaselineAlignment'
+            $SafeTenant = ConvertTo-CIPPODataFilterValue -Value ($Tenant.defaultDomainName ?? $TenantFilter)
+            $Stale = @(Get-CIPPAzDataTableEntity @ResolvedTable -Filter "PartitionKey eq '$SafeTenant' and TemplateId eq '$SafeTemplate'").Where({ $Kept -notcontains $_.StandardName })
+            if ($Stale.Count -gt 0) { Remove-CIPPAzDataTableEntity -Force @ResolvedTable -Entity $Stale }
+        }
+
         $StageName = $Baseline.stages[$NewStage - 1].name
         $null = Add-CIPPBaselineHistoryEvent -TenantFilter $TenantFilter -Standard $Baseline.templateName -Mode 'stage' -TriggeredBy $User -Outcome $(if ($MovingBack) { 'Stage Moved Back' } else { 'Stage Advanced' }) -Detail "$Moved to stage $NewStage ($StageName) - the stage's standards apply on the next run"
         Write-LogMessage -headers $Request.Headers -API $APIName -message "$Moved $TenantFilter to stage $NewStage ($StageName) of baseline $($Baseline.templateName)." -Sev 'Info'

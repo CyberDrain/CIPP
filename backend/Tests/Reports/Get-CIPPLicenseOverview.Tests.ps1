@@ -10,8 +10,8 @@ BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     $FunctionPath = Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPLicenseOverview.ps1'
 
-    # ConversionTable.csv is read directly off disk (not via a mockable command), so point the
-    # function at the real backend config. Pretty-name resolution falls back to skuPartNumber for
+    # ConversionTable.csv is read directly off disk by Get-CIPPConversionTable, so point it at the
+    # real backend config. Pretty-name resolution falls back to skuPartNumber for
     # SKUs missing from the CSV, which is all this test relies on.
     $env:CIPPRootPath = $RepoRoot
 
@@ -26,6 +26,7 @@ BeforeAll {
     function Add-CIPPAzDataTableEntity { param($Context, $Entity) }
 
     . $FunctionPath
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPConversionTable.ps1')
 
     $script:FlowFreeGuid = 'f30db892-07e9-47e9-837c-80727f46fd3d'   # Microsoft Power Automate Free (default exclusion)
     $script:E5Guid = '06ebc4ee-1bb5-47dd-8120-11324bc54e06'         # SPE_E5 (not excluded)

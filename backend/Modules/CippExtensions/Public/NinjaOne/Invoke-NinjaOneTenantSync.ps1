@@ -1514,9 +1514,7 @@ function Invoke-NinjaOneTenantSync {
         ### License Document Details
         if ($Configuration.LicenseDocumentsEnabled -eq $True) {
 
-            # String_Id -> display name, last row wins like convert-skuname's Where-Object | Select-Object -Last 1
-            $SkuDisplayNames = @{}
-            foreach ($Row in [System.IO.File]::ReadAllText((Join-Path $env:CIPPRootPath 'Config\ConversionTable.csv')) | ConvertFrom-Csv) { $SkuDisplayNames[$Row.String_Id] = $Row.Product_Display_Name }
+            $SkuDisplayNames = (Get-CIPPConversionTable).NameByPartNumber
             $UsersBySku = [CIPP.CippIndex]::Build($Users, @(foreach ($User in $Users) { , ($($User.assignedLicenses.skuId) ?? $null) }))
             $LicenseMapTable = Get-CippTable -tablename 'NinjaOneLicenseMap'
             $LicenseMapBySku = @{}

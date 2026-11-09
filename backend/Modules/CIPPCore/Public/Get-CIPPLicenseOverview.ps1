@@ -54,8 +54,7 @@ function Get-CIPPLicenseOverview {
         Licenses = $LicRequest
     }
     # GUID -> display name, last row wins
-    $SkuNames = @{}
-    foreach ($Row in [System.IO.File]::ReadAllText((Join-Path $env:CIPPRootPath 'Config\ConversionTable.csv')) | ConvertFrom-Csv) { $SkuNames[$Row.GUID] = $Row.Product_Display_Name }
+    $SkuNames = (Get-CIPPConversionTable).NameBySkuId
     $LicenseTable = Get-CIPPTable -TableName ExcludedLicenses
     $ExcludedSkuList = Get-CIPPAzDataTableEntity @LicenseTable
 

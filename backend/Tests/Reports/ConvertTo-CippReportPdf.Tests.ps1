@@ -136,12 +136,12 @@ Describe 'ConvertTo-CippReportPdf' {
             [CIPP.Reporting.ReportComponents]::DecodeImage($script:TinyPng, $false) | Should -BeNullOrEmpty
             [CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('not an image')), $false) | Should -BeNullOrEmpty
         }
-        It 'shrinks an oversized logo to fit 780x300 and keeps a small one as uploaded' {
+        It 'shrinks an oversized logo to fit 1040x400 and keeps a small one as uploaded' {
             $Big = [OfficeIMO.Drawing.OfficeRasterImage]::new(3000, 1500, [OfficeIMO.OfficeColor]::FromRgb(20, 120, 200))
             $bytes = [CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String([OfficeIMO.Drawing.OfficePngWriter]::Encode($Big)), $false)
             $size = [CIPP.Reporting.ReportComponents]::ImageSize($bytes)
-            $size.Item1 | Should -Be 600
-            $size.Item2 | Should -Be 300
+            $size.Item1 | Should -Be 800
+            $size.Item2 | Should -Be 400
             [CIPP.Reporting.ReportComponents]::ImageContentType($bytes) | Should -Be 'image/png'
 
             $Small = [OfficeIMO.Drawing.OfficePngWriter]::Encode([OfficeIMO.Drawing.OfficeRasterImage]::new(240, 80, [OfficeIMO.OfficeColor]::FromRgb(20, 120, 200)))
@@ -158,6 +158,12 @@ Describe 'ConvertTo-CippReportPdf' {
             $size = [CIPP.Reporting.ReportComponents]::ImageSize($bytes)
             $size.Item1 | Should -Be 2000
             $size.Item2 | Should -Be 1000
+
+            $SmallPixels = [byte[]]::new(400 * 300 * 4)
+            [Random]::new(1).NextBytes($SmallPixels)
+            for ($i = 3; $i -lt $SmallPixels.Length; $i += 4) { $SmallPixels[$i] = 255 }
+            $SmallOpaque = [OfficeIMO.Drawing.OfficePngWriter]::Encode([OfficeIMO.Drawing.OfficeRasterImage]::FromRgba32(400, 300, $SmallPixels))
+            [CIPP.Reporting.ReportComponents]::ImageContentType([CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String($SmallOpaque), $true)) | Should -Be 'image/png'
 
             $Clear = [OfficeIMO.Drawing.OfficePngWriter]::Encode([OfficeIMO.Drawing.OfficeRasterImage]::new(4000, 3000))
             $bytes = [CIPP.Reporting.ReportComponents]::DecodeImage('data:image/png;base64,' + [Convert]::ToBase64String($Clear), $true)

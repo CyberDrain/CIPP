@@ -85,10 +85,11 @@ namespace CIPP.Reporting
         // crisp at logo and cover sizes and a few KB for a typical logo - and then behaves like a PNG.
         // Anything OfficeIMO cannot identify is dropped here rather than left to fail at serialisation.
         // Add-CIPPImage enforces the same list at upload time.
-        // Rasters are sized for their use (logos drawn at most 260x100pt get 3px per point, page photos 2000px)
-        // with metadata stripped, and an opaque page photo becomes JPEG.
+        // Rasters are sized for their use (logos drawn at most 260x100pt get 4px per point, page photos 2000px)
+        // with metadata stripped, and an opaque page photo of a megapixel or more becomes JPEG: a smaller one is
+        // magnified on the page, and its JPEG artefacts with it, for a saving of a few KB.
         private const double SvgRasterSize = 1200;
-        private const int LogoMaxWidth = 780, LogoMaxHeight = 300, BackgroundMaxSide = 2000, BackgroundJpegQuality = 80;
+        private const int LogoMaxWidth = 1040, LogoMaxHeight = 400, BackgroundMaxSide = 2000, BackgroundJpegQuality = 80;
         private static byte[]? NormaliseImage(byte[] bytes, bool background)
         {
             OfficeImageInfo info;
@@ -102,6 +103,24 @@ namespace CIPP.Reporting
                 }
             }
             catch { return null; }
+            return SizeImage(bytes, info, background);
+        }
+
+        /// <summary>A raster sized for the report as <see cref="DecodeImage"/> would draw it, which is what Add-CIPPImage stores.
+        /// An SVG, or anything OfficeIMO cannot identify or process, comes back as given.</summary>
+        public static byte[] SizeImage(byte[] bytes, bool background)
+        {
+            try
+            {
+                return OfficeImageReader.TryIdentifyByContent(bytes, null, out var info) && info.Format != OfficeImageFormat.Svg
+                    ? SizeImage(bytes, info, background)
+                    : bytes;
+            }
+            catch { return bytes; }
+        }
+
+        private static byte[] SizeImage(byte[] bytes, OfficeImageInfo info, bool background)
+        {
             // Sizing is an optimisation: an image it cannot process is drawn as uploaded.
             var sized = bytes;
             try
@@ -126,7 +145,7 @@ namespace CIPP.Reporting
                         sized = OfficePngWriter.Encode(scale < 1 ? OfficeRasterResampler.Resize(frame, w, h, OfficeRasterResamplingMode.Area) : frame);
                     }
                 }
-                if (!background || info.Format == OfficeImageFormat.Jpeg) return sized;
+                if (!background || info.Format == OfficeImageFormat.Jpeg || info.Width * Math.Min(scale, 1) * info.Height * Math.Min(scale, 1) < 1_000_000) return sized;
                 var raster = OfficeRasterImageDecoder.Decode(sized);
                 var pixels = raster.GetPixels();
                 for (var i = 3; i < pixels.Length; i += 4) if (pixels[i] != 255) return sized;

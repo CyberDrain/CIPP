@@ -55,7 +55,6 @@ function Remove-CIPPLicense {
         return "Scheduled license removal for $username.$LicenseSuffix"
     } else {
         try {
-            $SkuNames = (Get-CIPPConversionTable).NameBySkuId
             $User = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/users/$($userid)" -tenantid $tenantFilter
             $GroupMemberships = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/users/$($userid)/memberOf/microsoft.graph.group?`$select=id,displayName,assignedLicenses,mailEnabled,groupTypes" -tenantid $tenantFilter
             $LicenseGroups = $GroupMemberships | Where-Object { ($_.assignedLicenses | Measure-Object).Count -gt 0 }
@@ -131,12 +130,12 @@ function Remove-CIPPLicense {
             $GroupLicenseSkuIds = @(($User.licenseAssignmentStates | Where-Object { $null -ne $_.assignedByGroup -and $_.state -eq 'Active' }).skuId | Select-Object -Unique)
 
             if ($GroupLicenseSkuIds) {
-                $GroupLicenseNames = $(@(foreach ($SkuId in $GroupLicenseSkuIds) { $SkuNames[([string]$SkuId).ToLowerInvariant()] }) | Where-Object { $_ } | Sort-Object -Unique) -join ', '
+                $GroupLicenseNames = @((Get-CIPPLicenseSkuName -SkuIds @($GroupLicenseSkuIds) -TenantFilter $TenantFilter).displayName | Sort-Object -Unique) -join ', '
                 Write-LogMessage -headers $Headers -API $APIName -message "Licenses inherited from groups for $($username) will be removed when group membership changes are processed: $GroupLicenseNames" -Sev 'Info' -tenant $TenantFilter
             }
 
             $CurrentLicenses = $DirectLicenseSkuIds
-            $ConvertedLicense = $(@(foreach ($SkuId in $CurrentLicenses) { $SkuNames[([string]$SkuId).ToLowerInvariant()] }) | Where-Object { $_ } | Sort-Object -Unique) -join ', '
+            $ConvertedLicense = @((Get-CIPPLicenseSkuName -SkuIds @($CurrentLicenses) -TenantFilter $TenantFilter).displayName | Sort-Object -Unique) -join ', '
             if ($CurrentLicenses) {
                 $LicensePayload = [PSCustomObject]@{
                     addLicenses    = @()

@@ -26,7 +26,6 @@ Function Invoke-ListUsers {
                 Body       = @{ Results = 'A specific tenant is required when requesting a single user.' }
             })
     }
-    $SkuNames = (Get-CIPPConversionTable).NameBySkuId
 
     # When fetching a single user, use an explicit $select so directory/schema extension properties are
     # returned. Covers the properties the user view and edit form consume, any attributes added via
@@ -116,6 +115,11 @@ Function Invoke-ListUsers {
             $User
         }
     }
+
+    $UsedSkuIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($User in $UserData) { foreach ($Sku in $User.assignedLicenses.skuId) { if ($Sku) { [void]$UsedSkuIds.Add($Sku) } } }
+    $SkuNames = @{}
+    foreach ($Sku in Get-CIPPLicenseSkuName -SkuIds @($UsedSkuIds)) { $SkuNames[$Sku.skuId] = $Sku.displayName }
 
     $GraphRequest = foreach ($User in $UserData) {
         $SkuID = $User.AssignedLicenses.skuid

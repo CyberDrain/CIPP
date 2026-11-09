@@ -14,7 +14,6 @@ BeforeAll {
     function Write-LogMessage { param($headers, $API, $message, $Sev, $tenant) }
     function Add-CIPPBaselineHistoryEvent { param($TenantFilter, $Standard, $Mode, $TriggeredBy, $Outcome, $Detail) }
     function Get-CIPPBaselineDefinition { param($Name) @() }
-    function Get-CippErrorStatusCode { param($ErrorRecord) 500 }
     function Get-CIPPBaseline {
         param($ID)
         [pscustomobject]@{
@@ -29,6 +28,7 @@ BeforeAll {
     }
 
     . (Join-Path $BackendRoot 'Modules/CIPPCore/Public/ConvertTo-CIPPODataFilterValue.ps1')
+    . (Join-Path $BackendRoot 'Modules/CIPPCore/Public/Get-CippErrorStatusCode.ps1')
     . (Join-Path $BackendRoot 'Modules/CIPPCore/Public/Baselines/Get-CIPPBaselineStageStandards.ps1')
     . (Join-Path $BackendRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Tenant/Standards/Invoke-ExecBaselineStage.ps1')
 
@@ -50,5 +50,26 @@ Describe 'Moving a tenant back a baseline stage' {
         $Response.StatusCode | Should -Be 200
         Should -Invoke Get-CIPPAzDataTableEntity -ParameterFilter { $Filter -eq "PartitionKey eq 'contoso.com' and TemplateId eq 'b1'" } -Times 1 -Exactly
         Should -Invoke Remove-CIPPAzDataTableEntity -Times 1 -Exactly -ParameterFilter { @($Entity).StandardName -join ',' -eq 'C' }
+    }
+}
+
+Describe 'Moving a tenant forward into a group-gated stage' {
+    It 'refuses a tenant outside the group and leaves its stage alone' {
+        Mock Get-CIPPBaseline {
+            [pscustomobject]@{
+                templateName = 'Staged'
+                stages       = @([pscustomobject]@{ name = 'S1' }, [pscustomobject]@{ name = 'S2' })
+                tenantStates = @([pscustomobject]@{ tenantFilter = 'contoso.com'; groupBlocked = $true })
+            }
+        }
+        Mock Get-CIPPAzDataTableEntity { [pscustomobject]@{ RowKey = 'cid-1'; currentStage = 1 } }
+        Mock Add-CIPPAzDataTableEntity {}
+        $Request = [pscustomobject]@{ Params = @{ CIPPEndpoint = 'ExecBaselineStage' }; Headers = @{ 'x-ms-client-principal' = $Principal }; Body = [pscustomobject]@{ tenantFilter = 'contoso.com'; templateId = 'b1' } }
+
+        $Response = Invoke-ExecBaselineStage -Request $Request
+
+        $Response.StatusCode | Should -Be 400
+        $Response.Body.Results | Should -BeLike '*requires a tenant group*'
+        Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
     }
 }

@@ -41,7 +41,7 @@ function Invoke-ExecBaselineStage {
             throw [System.ArgumentException]::new("$TenantFilter is already in the final stage of $($Baseline.templateName).")
         }
         $TenantState = @($Baseline.tenantStates).Where({ $_.tenantFilter -eq $Tenant.defaultDomainName }, 'First')[0]
-        if (-not $MovingBack -and $TenantState -and -not $TenantState.nextStage) {
+        if (-not $MovingBack -and $Request.Body.action -ne 'evaluate' -and $TenantState.groupBlocked) {
             throw [System.ArgumentException]::new("Stage $($CurrentStage + 1) of $($Baseline.templateName) requires a tenant group $TenantFilter is not a member of.")
         }
 

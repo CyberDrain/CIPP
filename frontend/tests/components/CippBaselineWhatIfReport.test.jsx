@@ -122,6 +122,27 @@ describe('describeStageConditions', () => {
       "the tenant is in the 'Premium customers' group AND the tenant is in the 'grp-2' group"
     )
   })
+
+  it('offers each condition group as an alternative, skipping empty ones', () => {
+    expect(
+      describeStageConditions({
+        conditions: [],
+        logic: 'and',
+        conditionGroups: [
+          {
+            logic: 'and',
+            conditions: [
+              { type: 'group', group: 'grp-1', groupName: 'Intune' },
+              { type: 'success' },
+            ],
+          },
+          { logic: 'and', conditions: [{ type: 'manual' }] },
+        ],
+      })
+    ).toBe(
+      "(the tenant is in the 'Intune' group AND all previous stage items applied successfully) OR (manual approval by an operator)"
+    )
+  })
 })
 
 describe('CippBaselineWhatIfReport', () => {

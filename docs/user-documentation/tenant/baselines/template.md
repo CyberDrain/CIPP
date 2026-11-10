@@ -8,6 +8,10 @@ The editor is where a baseline is given its name, its tenants, and the standards
 
 Leaving the page with unsaved work prompts you to confirm first.
 
+## Overview
+
+{% @storylane/embed subdomain="app" linkValue="av1rymxqugob" url="https://app.storylane.io/share/av1rymxqugob" %}
+
 ## Page Actions
 
 | Button            | Description                                                                                                                                                                                                                                                                                                                     |

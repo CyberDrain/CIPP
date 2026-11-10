@@ -9,6 +9,7 @@
   "caps": {
     "signInRows": 100000,
     "auditLogPages": 10,
+    "directoryActions": 5000,
     "rawSignIns": 500,
     "signInSliceHours": 24
   },

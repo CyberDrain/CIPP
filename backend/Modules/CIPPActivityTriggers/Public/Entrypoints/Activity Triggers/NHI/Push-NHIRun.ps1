@@ -564,17 +564,24 @@ function Push-NHIRun {
                     # The audit log fills initiatedBy.app.appId only for some services (PIM), so the app's actions are also
                     # found by every name it went by, and kept only when made by its own service principal.
                     $Audits = 'https://graph.microsoft.com/v1.0/auditLogs/directoryAudits'
+                    # An app that manages the tenant (provisioning, backup, CIPP) acts thousands of times a month: the newest
+                    # caps.directoryActions of each query are kept, read as a stream so nothing past the cap is held.
+                    $Cap = [int]($Heuristics.caps.directoryActions ?? 5000)
                     $ById = [ordered]@{}
-                    foreach ($AuditEvent in @(New-GraphGetRequest -uri "$Audits`?`$filter=activityDateTime ge $Since and initiatedBy/app/appId eq '$($Subject.AppId)'&`$top=999" -tenantid $TenantFilter -AsApp $true)) {
-                        if ($AuditEvent.id) { $ById[[string]$AuditEvent.id] = $AuditEvent }
-                    }
+                    $Capped = $false
+                    $Kept = @(New-GraphGetRequest -uri "$Audits`?`$filter=activityDateTime ge $Since and initiatedBy/app/appId eq '$($Subject.AppId)'&`$top=999" -tenantid $TenantFilter -AsApp $true -Stream | Where-Object { $_.id } | Select-Object -First $Cap)
+                    if ($Kept.Count -ge $Cap) { $Capped = $true }
+                    foreach ($AuditEvent in $Kept) { $ById[[string]$AuditEvent.id] = $AuditEvent }
                     $AppNames = @(@($State.AppNames) + @($Name) | Where-Object { $_ } | Select-Object -Unique)
                     if ($AppNames.Count -gt 0) {
+                        # other apps go by the same name (every CIPP instance's app is CIPP-SAM): bound what is read past them too
+                        $Scanned = 0
                         $NameFilter = @($AppNames | ForEach-Object { "initiatedBy/app/displayName eq '$([uri]::EscapeDataString((([string]$_) -replace "'", "''")))'" }) -join ' or '
-                        foreach ($AuditEvent in @(New-GraphGetRequest -uri "$Audits`?`$filter=activityDateTime ge $Since and ($NameFilter)&`$top=999" -tenantid $TenantFilter -AsApp $true)) {
-                            if ($AuditEvent.id -and $AuditEvent.initiatedBy.app.servicePrincipalId -eq $ServicePrincipalId) { $ById[[string]$AuditEvent.id] = $AuditEvent }
-                        }
+                        $Kept = @(New-GraphGetRequest -uri "$Audits`?`$filter=activityDateTime ge $Since and ($NameFilter)&`$top=999" -tenantid $TenantFilter -AsApp $true -Stream | Select-Object -First ($Cap * 4) | ForEach-Object { $Scanned++; $_ } | Where-Object { $_.id -and $_.initiatedBy.app.servicePrincipalId -eq $ServicePrincipalId } | Select-Object -First $Cap)
+                        if ($Kept.Count -ge $Cap -or $Scanned -ge $Cap * 4) { $Capped = $true }
+                        foreach ($AuditEvent in $Kept) { $ById[[string]$AuditEvent.id] = $AuditEvent }
                     }
+                    $Kept = $null
                     $Events = @($ById.Values)
                     $Actions = foreach ($AuditEvent in $Events) {
                         $Activity = [string]$AuditEvent.activityDisplayName
@@ -696,7 +703,7 @@ function Push-NHIRun {
                                 TargetProtected          = [bool](($Owner -and $VendorTenants[$Owner].VendorType -eq 'Microsoft') -or ($CippAppId -and $TargetSp.appId -eq $CippAppId))
                             }) -Force
                     }
-                    New-CIPPBecCollectorResult -Data @($Actions | Sort-Object -Property ActivityDateTime -Descending)
+                    New-CIPPBecCollectorResult -Data @($Actions | Sort-Object -Property ActivityDateTime -Descending) -Complete (-not $Capped) -Cap $(if ($Capped) { "the newest $Cap actions of the app" })
                 }
                 & $Mark 'DirectoryActions' $Result
                 & $Save @{ DirectoryActions = @($Result.Data) }

@@ -1,7 +1,7 @@
 # Standards v Drift: How Do I Know Which to Use?
 
 {% hint style="info" %}
-Turning on the **Baselines** feature flag replaces both Standards and Drift with [README.md](../../user-documentation/tenant/baselines/README.md "mention"), and switches off their scheduled runs. This page applies only while the flag is off.
+Baselines combines Standards and Drift into one engine. Turning on the **Baselines** feature flag switches off both, along with their scheduled runs, so the choice on this page only arises while the flag is off. See [Where Baselines Fit](#where-baselines-fit) for how the same decisions carry over.
 {% endhint %}
 
 This question has become a regular one since the introduction of Drift Management. While there is some overlap in how the two can work, they are very different approaches to how you manage the security baseline for your clients' tenants. This is fundamentally a question of how much you want to manage and how much visibility you want to the entire tenant.
@@ -58,5 +58,35 @@ This pattern keeps your group-level templates clean and your exceptions visible 
 {% hint style="info" %}
 Because licence-incompatible settings are automatically skipped, you _can_ lump everything into one big template, but the group-based pattern above gives you cleaner alignment reporting and makes "why is this tenant non-compliant?" easier to answer.
 {% endhint %}
+
+### Where Baselines Fit
+
+[Baselines](../../user-documentation/tenant/baselines/README.md) replace both Standards and Drift Management while the **Baselines** flag is on. Instead of choosing between the two approaches, you make the same choice standard by standard inside one baseline.
+
+#### What Does Baselines Do?
+
+A baseline is checked against every assigned tenant twice a day. Each standard in it has its own **Automatically fix this when the setting drifts** setting. Turned on, the standard is corrected on every run, like a classic standard set to remediate. Left off, the deviation is only reported, like a Drift setting without auto-remediate. Standards arrive with automatic fixing switched off, so nothing changes in a tenant until you turn it on.
+
+Standards are grouped into stages, so a baseline can roll out gradually. Every tenant receives the first stage, and moves into later stages once it meets the graduation conditions you set, for example time spent in the previous stage or approval by an operator. See [Add or Edit Baseline](../../user-documentation/tenant/baselines/template.md) for the options.
+
+#### What Visibility Does Baselines Provide?
+
+Every standard in a baseline is reported on the [Baseline Alignment](../../user-documentation/tenant/baselines/alignment.md) page, where each deviation can be accepted, with a reason and an optional expiry date, or denied so it is corrected on the next run.
+
+For the whole-tenant view Drift Management gives, add the **Detect Intune Drift** and **Detect Conditional Access Drift** standards to the baseline. They raise a deviation for every Intune or Conditional Access policy in the tenant that no baseline template covers, and never change anything automatically. A policy is only removed once you deny it.
+
+#### How Does the Mixed Pattern Translate?
+
+The pattern in [Mixing All-Tenants, Groups, and Tenant Overrides](#mixing-all-tenants-groups-and-tenant-overrides) carries over with fewer moving parts:
+
+1. **One baseline assigned to All Tenants**, holding the settings you want enforced everywhere.
+2. **One baseline per licence tier or customer segment**, assigned to tenant groups. A tenant can be assigned to more than one baseline, so there is no one-template limit to plan around.
+3. **A tenant override for each one-off variance**, created with **Create Tenant Override** on the Baseline Alignment page, instead of a separate tenant-specific template.
+
+Where more than one baseline configures the same standard for a tenant, a baseline assigned to the tenant directly beats one assigned through a tenant group, which beats one assigned to All Tenants. A tenant override beats all three. Two baselines at the same level with identical settings for a standard are treated as one. With different settings, the standard shows as **Conflict** and is neither compared nor corrected until you edit one of the baselines.
+
+#### How Do I Move Across?
+
+**Migrate from Standards** on the [Manage Baselines](../../user-documentation/tenant/baselines/templates.md) page converts your classic and drift templates into baselines, leaving the originals untouched. Import everything as report-only, review the results on the Baseline Alignment page, create any tenant overrides you need, then turn on automatic fixing for the standards you want enforced.
 
 {% include "../../../.gitbook/includes/feature-request.md" %}

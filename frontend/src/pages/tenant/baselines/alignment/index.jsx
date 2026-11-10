@@ -1137,11 +1137,26 @@ const Page = () => {
                 row.expectedValue
               )}
             />
+            <CippFormComponent
+              type="textField"
+              name="reason"
+              label="Reason"
+              formControl={formHook}
+              validators={{ required: 'A reason is required' }}
+              required
+            />
+            <CippFormComponent
+              type="datePicker"
+              name="expires"
+              label="Expires (optional)"
+              dateTimeType="date"
+              formControl={formHook}
+            />
           </Stack>
         );
       },
       confirmText:
-        'Create a tenant-specific override of [standardLabel] for [tenantFilter]?',
+        'Create a tenant-specific override of [standardLabel] for [tenantFilter]? When it expires, the next baseline run removes it and the inherited configuration applies again.',
       multiPost: false,
       relatedQueryKeys,
       condition: (row) => {
@@ -1378,6 +1393,21 @@ const Page = () => {
           value: row.deviationExpires
             ? parseCippDate(row.deviationExpires).toLocaleDateString()
             : 'Never',
+        })
+      }
+      if (row.sourceTemplate === 'Tenant Override' && row.overrideReason) {
+        const overrideExpired =
+          row.overrideExpires && Number(row.overrideExpires) * 1000 <= Date.now()
+        properties.push({ label: 'Override Reason', value: row.overrideReason })
+        properties.push({ label: 'Override Set By', value: row.overrideBy })
+        properties.push({
+          label: 'Override Expires',
+          value: row.overrideExpires
+            ? `${parseCippDate(row.overrideExpires).toLocaleDateString()}${
+                overrideExpired ? ' (expired - removed on the next run)' : ''
+              }`
+            : 'Never',
+          ...(overrideExpired ? { color: 'warning' } : {}),
         })
       }
       if (row.pendingVerification) {
@@ -3548,6 +3578,8 @@ const Page = () => {
                 'deviationAt',
                 'deviationExpires',
                 'sourceTemplate',
+                'overrideReason',
+                'overrideExpires',
                 'lastRun',
               ]}
             />

@@ -47,3 +47,7 @@
 ## Security Simulations
 
 {% @storylane/embed subdomain="app" linkValue="hcjwbcxbcp71" url="https://app.storylane.io/share/hcjwbcxbcp71" %}
+
+## BEC Correlation Graph
+
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/gdmmkcigycbe" linkValue="gdmmkcigycbe" %}

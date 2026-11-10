@@ -14,6 +14,8 @@ BeforeAll {
     function Write-LogMessage { param($headers, $API, $message, $Sev) }
     function Get-CippErrorStatusCode { param($ErrorRecord) 500 }
     . (Join-Path $BackendRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Tenant/Standards/Invoke-ExecBaselineOverride.ps1')
+    . (Join-Path $BackendRoot 'Modules/CIPPCore/Public/Baselines/Resolve-CIPPBaselineExpiry.ps1')
+    function Get-CIPPBaselineExpiryPolicy { [pscustomobject]@{ defaultDays = 0; maxDays = 0 } }
 
     function New-Row($Tiers) {
         [pscustomobject]@{

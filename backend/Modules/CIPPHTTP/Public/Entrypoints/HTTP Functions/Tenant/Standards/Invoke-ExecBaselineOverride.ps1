@@ -28,8 +28,8 @@ function Invoke-ExecBaselineOverride {
         if ($Action -eq 'createOverride' -and -not $Reason) {
             throw [System.ArgumentException]::new('A reason is required to create a tenant override.')
         }
-        # Unix seconds after which the override stops applying. Empty keeps it until it is removed.
-        $Expires = if ("$($Request.Body.expires)" -match '^\d+$') { [int64]$Request.Body.expires } else { $null }
+        # Unix seconds after which the override stops applying. Empty keeps it until it is removed, unless the instance sets a maximum.
+        $Expires = if ($Action -eq 'createOverride') { Resolve-CIPPBaselineExpiry -Expires $Request.Body.expires }
 
         $User = ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Request.Headers.'x-ms-client-principal')) | ConvertFrom-Json).userDetails
         $DeltaTable = Get-CippTable -tablename 'Baselines'

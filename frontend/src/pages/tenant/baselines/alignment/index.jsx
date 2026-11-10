@@ -813,6 +813,25 @@ const Page = () => {
       !!currentTenant &&
       !isAllTenants,
   })
+  const expiryPolicy =
+    ApiGetCall({ url: '/api/ListBaselineExpiryPolicy', queryKey: 'BaselineExpiryPolicy' }).data ??
+    {}
+  const expiryDays = expiryPolicy.defaultDays || expiryPolicy.maxDays || 0
+  const expiryDefaults = () =>
+    expiryDays ? { expires: Math.floor(Date.now() / 1000) + expiryDays * 86400 } : {}
+  const expiryField = (formHook) => (
+    <CippFormComponent
+      type="datePicker"
+      name="expires"
+      label={
+        expiryPolicy.maxDays
+          ? `Expires (within ${expiryPolicy.maxDays} days)`
+          : 'Expires (optional)'
+      }
+      dateTimeType="date"
+      formControl={formHook}
+    />
+  )
   // Same filter/queryKey scheme as the Fleet Overview so both pages share cache entries.
   // router.query is empty on the first render, so URL values are the fallback until the user picks.
   const baselineId =
@@ -939,13 +958,7 @@ const Page = () => {
         formControl={formHook}
         required
       />
-      <CippFormComponent
-        type="datePicker"
-        name="expires"
-        label="Expires (optional)"
-        dateTimeType="date"
-        formControl={formHook}
-      />
+      {expiryField(formHook)}
       <CippFormComponent
         type="switch"
         name="remediateOnExpire"
@@ -1022,6 +1035,7 @@ const Page = () => {
         standard: 'standardName',
       },
       children: triageFormFields,
+      defaultvalues: expiryDefaults,
       confirmText:
         'Accept the current deviation on [standardLabel]? The tenant counts as aligned, and alerts are silenced until the acceptance expires.',
       multiPost: false,
@@ -1111,6 +1125,7 @@ const Page = () => {
       color: 'info',
       // Overrides configure ONE tenant's settings in a dialog - meaningless as a bulk action.
       hideBulk: true,
+      defaultvalues: expiryDefaults,
       data: {
         action: '!createOverride',
         tenantFilter: 'tenantFilter',
@@ -1145,13 +1160,7 @@ const Page = () => {
               validators={{ required: 'A reason is required' }}
               required
             />
-            <CippFormComponent
-              type="datePicker"
-              name="expires"
-              label="Expires (optional)"
-              dateTimeType="date"
-              formControl={formHook}
-            />
+            {expiryField(formHook)}
           </Stack>
         );
       },

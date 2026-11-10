@@ -42,6 +42,8 @@
       "AccessGranted": 2,
       "AccessGrantedByApp": 3,
       "NameImpersonation": 2,
+      "NewApp": 1,
+      "NewAppByApp": 4,
       "DormantAwakened": 3,
       "AttackerIPs": 4,
       "SuspiciousIPs": 2,

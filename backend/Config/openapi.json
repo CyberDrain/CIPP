@@ -15865,6 +15865,9 @@
                     "CredentialVersion": {
                       "x-cipp-field-source": "storage"
                     },
+                    "DomainExclusions": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "Enabled": {
                       "type": "boolean",
                       "x-cipp-field-source": "storage"
@@ -17255,6 +17258,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "CredentialVersion": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "DomainExclusions": {
                       "x-cipp-field-source": "storage"
                     },
                     "Enabled": {
@@ -21826,6 +21832,10 @@
                   "Domain": {
                     "type": "string"
                   },
+                  "ExclusionPatterns": {
+                    "type": "string",
+                    "description": "Wildcard patterns (*.voice.example.com) the Domain Analyser and DKIM baseline skip, comma or newline separated"
+                  },
                   "Resolver": {
                     "type": "string"
                   },
@@ -21886,6 +21896,12 @@
                   "type": "object",
                   "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
                   "properties": {
+                    "ExclusionPatterns": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "Resolver": {
+                      "x-cipp-field-source": "backend"
+                    },
                     "Results": {
                       "x-cipp-field-source": "backend"
                     }
@@ -27874,6 +27890,9 @@
                     "CredentialVersion": {
                       "x-cipp-field-source": "storage"
                     },
+                    "DomainExclusions": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "Enabled": {
                       "type": "boolean",
                       "x-cipp-field-source": "storage"
@@ -28632,6 +28651,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "CredentialVersion": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "DomainExclusions": {
                       "x-cipp-field-source": "storage"
                     },
                     "Enabled": {
@@ -33224,6 +33246,9 @@
                     "CredentialVersion": {
                       "x-cipp-field-source": "storage"
                     },
+                    "DomainExclusions": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "Enabled": {
                       "type": "boolean",
                       "x-cipp-field-source": "storage"
@@ -35708,6 +35733,9 @@
                     "CredentialVersion": {
                       "x-cipp-field-source": "storage"
                     },
+                    "DomainExclusions": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "Enabled": {
                       "type": "boolean",
                       "x-cipp-field-source": "storage"
@@ -37233,6 +37261,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "CredentialVersion": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "DomainExclusions": {
                       "x-cipp-field-source": "storage"
                     },
                     "Enabled": {

@@ -766,6 +766,9 @@
                     "items": {
                       "type": "object",
                       "properties": {
+                        "conditionGroups": {
+                          "type": "string"
+                        },
                         "conditions": {
                           "type": "array",
                           "items": {
@@ -15865,6 +15868,9 @@
                     "CredentialVersion": {
                       "x-cipp-field-source": "storage"
                     },
+                    "DomainExclusions": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "Enabled": {
                       "type": "boolean",
                       "x-cipp-field-source": "storage"
@@ -16061,6 +16067,67 @@
         "x-cipp-role": "Tenant.Baselines.ReadWrite"
       }
     },
+    "/api/ExecBaselineExpiryPolicy": {
+      "post": {
+        "summary": "Set the baseline expiry policy",
+        "operationId": "ExecBaselineExpiryPolicy",
+        "tags": [
+          "CIPP > Settings"
+        ],
+        "description": "Sets the instance-wide default and maximum expiry, in days, for accepted baseline\ndeviations and tenant overrides. 0 means no default or no maximum.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "defaultDays": {
+                    "type": "integer",
+                    "description": "Days from now that a new acceptance or override expires by default. 0 for no default."
+                  },
+                  "maxDays": {
+                    "type": "integer",
+                    "description": "Furthest away, in days, that an expiry may be. 0 for no maximum."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.AppSettings.ReadWrite",
+        "x-cipp-any-tenant": true
+      }
+    },
     "/api/ExecBaselineMigrate": {
       "post": {
         "summary": "ExecBaselineMigrate",
@@ -16138,7 +16205,7 @@
         "tags": [
           "Tenant > Standards"
         ],
-        "description": "Creates or removes a tenant-scoped delta (design doc §4.1) overriding one standard for\none tenant. Presence is the override: the delta's expectedValue (the configured variable\nvalues) fully replaces what the baselines apply. The resolved row's §4.2 columns are\nupdated immediately so the UI reflects the new effective configuration; the engine\nenforces it on the next run.",
+        "description": "Creates or removes a tenant-scoped delta (design doc §4.1) overriding one standard for\none tenant. Presence is the override: the delta's expectedValue (the configured variable\nvalues) fully replaces what the baselines apply. The resolved row's §4.2 columns are\nupdated immediately so the UI reflects the new effective configuration; the engine\nenforces it on the next run. createOverride requires a reason and takes an optional\nexpiry, after which the next baseline run removes the override.",
         "requestBody": {
           "required": true,
           "content": {
@@ -16152,6 +16219,14 @@
                       "createOverride",
                       "deleteOverride"
                     ]
+                  },
+                  "expires": {
+                    "type": "string",
+                    "description": "Unix seconds after which the override stops applying. Empty keeps it until it is removed, unless the instance sets a maximum."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why this tenant differs from its baselines. Required to create an override."
                   },
                   "standard": {
                     "type": "string"
@@ -16353,7 +16428,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "Queues one BEC investigation per user, each its own sequential orchestration, with a queue entry for progress. Accepts either an array of { UserIds, tenantFilter } items (the Users table bulk action) or one object with UserIds[]. Each run gets its own case id; results appear on the BEC Reports page and each user's Compromise Remediation tab.",
+        "description": "Queues one BEC investigation per user, each its own sequential orchestration, with a queue entry for progress. Accepts either an array of { UserIds, tenantFilter } items (the Users table bulk action) or one object with UserIds[]. An optional windowDays (1-30) sets how many days of history every run covers, ending now; omitted, a run covers 7 days, or 30 when the user holds Entra ID P1/P2. Each run gets its own case id; results appear on the BEC Reports page and each user's Compromise Remediation tab.",
         "responses": {
           "200": {
             "description": "Success",
@@ -16391,7 +16466,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "GET with GUID (or caseId) returns that run: while it is queued or running { Waiting = true, Progress } where Progress is the job status (queued until a worker picks it up, then running) and the per-step state the page renders; { Error, Progress } when it failed; otherwise the results payload with the server-side Score, per-collector Completeness and a Run block. GET without a GUID returns the user's latest run as { GUID, Status } and starts nothing (GUID is null when the user has no runs). POST with tenantFilter, userid and userName queues a new run and returns its { GUID }. Every run is the full investigation and is kept in the BecReports table; metadata only, never message content.",
+        "description": "GET with GUID (or caseId) returns that run: while it is queued or running { Waiting = true, Progress } where Progress is the job status (queued until a worker picks it up, then running) and the per-step state the page renders; { Error, Progress } when it failed; otherwise the results payload with the server-side Score, per-collector Completeness and a Run block. GET without a GUID returns the user's latest run as { GUID, Status } and starts nothing (GUID is null when the user has no runs). POST with tenantFilter, userid and userName queues a new run and returns its { GUID }; windowDays (1-30) sets how many days of history it covers, ending now, and defaults to 7 days (30 when the user holds Entra ID P1/P2). Every run is the full investigation and is kept in the BecReports table; metadata only, never message content.",
         "requestBody": {
           "required": true,
           "content": {
@@ -16409,6 +16484,10 @@
                   "userName": {
                     "type": "string",
                     "description": "The user's UPN (stored on the run and used by the collectors)"
+                  },
+                  "windowDays": {
+                    "type": "string",
+                    "description": "Days of history the run covers, ending now (1-30); omitted = 7 days, or 30 when the user holds Entra ID P1/P2"
                   }
                 },
                 "required": [
@@ -16453,6 +16532,15 @@
             "name": "userName",
             "in": "query",
             "description": "The user's UPN (stored on the run and used by the collectors)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "windowDays",
+            "in": "query",
+            "description": "Days of history the run covers, ending now (1-30); omitted = 7 days, or 30 when the user holds Entra ID P1/P2",
             "required": false,
             "schema": {
               "type": "string"
@@ -17244,6 +17332,9 @@
                     "CredentialVersion": {
                       "x-cipp-field-source": "storage"
                     },
+                    "DomainExclusions": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "Enabled": {
                       "type": "boolean",
                       "x-cipp-field-source": "storage"
@@ -17731,6 +17822,9 @@
                     "type": "string",
                     "description": "If UserId is a guid, get the user's UPN"
                   },
+                  "TravelAllowTrusted": {
+                    "type": "boolean"
+                  },
                   "TravelCountries": {
                     "allOf": [
                       {
@@ -17738,6 +17832,12 @@
                       }
                     ],
                     "description": "Optional: temporary travel policy that only allows sign-ins from the travel destination"
+                  },
+                  "TravelExistingLocations": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/LabelValue"
+                    }
                   },
                   "UserID": {
                     "type": "string"
@@ -21804,6 +21904,10 @@
                   "Domain": {
                     "type": "string"
                   },
+                  "ExclusionPatterns": {
+                    "type": "string",
+                    "description": "Wildcard patterns (*.voice.example.com) the Domain Analyser and DKIM baseline skip, comma or newline separated"
+                  },
                   "Resolver": {
                     "type": "string"
                   },
@@ -21864,6 +21968,12 @@
                   "type": "object",
                   "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
                   "properties": {
+                    "ExclusionPatterns": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "Resolver": {
+                      "x-cipp-field-source": "backend"
+                    },
                     "Results": {
                       "x-cipp-field-source": "backend"
                     }
@@ -27852,6 +27962,9 @@
                     "CredentialVersion": {
                       "x-cipp-field-source": "storage"
                     },
+                    "DomainExclusions": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "Enabled": {
                       "type": "boolean",
                       "x-cipp-field-source": "storage"
@@ -28610,6 +28723,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "CredentialVersion": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "DomainExclusions": {
                       "x-cipp-field-source": "storage"
                     },
                     "Enabled": {
@@ -31823,6 +31939,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "caseId": {
+                    "type": "string",
+                    "description": "The run to read"
+                  },
                   "servicePrincipalId": {
                     "type": "string",
                     "description": "Object id of the service principal to investigate"
@@ -31896,6 +32016,9 @@
                 }
               }
             }
+          },
+          "207": {
+            "description": "Partial success - some items failed; per-item results are in the body"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"
@@ -31978,14 +32101,17 @@
               }
             }
           },
-          "400": {
-            "description": "Bad request - missing required field or invalid input"
+          "207": {
+            "description": "Partial success - some items failed; per-item results are in the body"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"
           },
           "403": {
             "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         },
         "security": [
@@ -32056,9 +32182,6 @@
           },
           "403": {
             "description": "Forbidden - caller lacks the required RBAC role"
-          },
-          "500": {
-            "description": "Internal server error"
           }
         },
         "security": [
@@ -32274,14 +32397,17 @@
               }
             }
           },
-          "400": {
-            "description": "Bad request - missing required field or invalid input"
+          "207": {
+            "description": "Partial success - some items failed; per-item results are in the body"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"
           },
           "403": {
             "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         },
         "security": [
@@ -32342,9 +32468,6 @@
           },
           "403": {
             "description": "Forbidden - caller lacks the required RBAC role"
-          },
-          "500": {
-            "description": "Internal server error"
           }
         },
         "security": [
@@ -33200,6 +33323,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "CredentialVersion": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "DomainExclusions": {
                       "x-cipp-field-source": "storage"
                     },
                     "Enabled": {
@@ -35686,6 +35812,9 @@
                     "CredentialVersion": {
                       "x-cipp-field-source": "storage"
                     },
+                    "DomainExclusions": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "Enabled": {
                       "type": "boolean",
                       "x-cipp-field-source": "storage"
@@ -37211,6 +37340,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "CredentialVersion": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "DomainExclusions": {
                       "x-cipp-field-source": "storage"
                     },
                     "Enabled": {
@@ -43414,7 +43546,8 @@
                     "type": "string"
                   },
                   "expires": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Unix seconds when the acceptance lapses. Empty for none, unless the instance sets a maximum."
                   },
                   "method": {
                     "type": "string"
@@ -47917,6 +48050,48 @@
           }
         ],
         "x-cipp-role": "Tenant.Baselines.Read"
+      }
+    },
+    "/api/ListBaselineExpiryPolicy": {
+      "get": {
+        "summary": "Baseline expiry policy",
+        "operationId": "ListBaselineExpiryPolicy",
+        "tags": [
+          "Tenant > Standards"
+        ],
+        "description": "Returns the instance-wide default and maximum expiry, in days, for accepted baseline\ndeviations and tenant overrides. 0 means no default or no maximum.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Baselines.Read",
+        "x-cipp-any-tenant": true
       }
     },
     "/api/ListBaselines": {
@@ -68003,6 +68178,24 @@
         "description": "Lists the contents of a SharePoint site's recycle bin (first and second stage) via the\nSharePoint REST API with certificate authentication.",
         "parameters": [
           {
+            "name": "MaxItems",
+            "in": "query",
+            "description": "Items to return in this call; Metadata.nextLink is set when the bin holds more.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "nextLink",
+            "in": "query",
+            "description": "Offset to resume from, taken from a previous call's Metadata.nextLink.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
             "name": "SiteUrl",
             "in": "query",
             "required": true,
@@ -68061,6 +68254,15 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "nextLink",
+            "in": "query",
+            "description": "Offset to resume from, taken from a previous call's Metadata.nextLink; each call sums only its own items.",
+            "required": false,
+            "schema": {
+              "type": "integer"
             }
           },
           {

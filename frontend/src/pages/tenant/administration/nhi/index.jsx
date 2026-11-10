@@ -11,6 +11,7 @@ import { useBecEvidenceDownload } from '../../../../components/CippComponents/Ci
 import { CippIcons } from '../../../../utils/icon-registry'
 import { ApiPostCall } from '../../../../api/ApiCall'
 import { useSettings } from '../../../../hooks/use-settings'
+import { usePermissions } from '../../../../hooks/use-permissions.js'
 
 // Pick one or more apps or managed identities and queue an NHI investigation for each.
 const StartInvestigationDrawer = ({ tenant }) => {
@@ -74,7 +75,11 @@ const StartInvestigationDrawer = ({ tenant }) => {
         footer={
           <Stack spacing={2}>
             <CippApiResults apiObject={queue} />
-            <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ justifyContent: 'flex-end' }}
+            >
               <Button variant="outlined" onClick={handleClose}>
                 Close
               </Button>
@@ -131,6 +136,8 @@ const StartInvestigationDrawer = ({ tenant }) => {
 
 const Page = () => {
   const { currentTenant } = useSettings()
+  const { checkPermissions } = usePermissions()
+  const canWrite = checkPermissions(['Tenant.Application.ReadWrite'])
   const { download } = useBecEvidenceDownload({
     url: '/api/ExecNHIEvidenceExport',
     prefix: 'NHI',
@@ -163,6 +170,7 @@ const Page = () => {
         'Permanently delete [CaseId], including the investigation results?',
       relatedQueryKeys: [`ListNHIReports-${currentTenant}`],
       multiPost: false,
+      condition: () => canWrite,
     },
   ]
 

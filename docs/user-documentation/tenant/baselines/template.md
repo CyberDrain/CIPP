@@ -29,6 +29,8 @@ Saving a synced baseline adds these fields to the confirmation.
 
 Saving without pushing keeps your changes in CIPP only, and the repository copy stays out of date until you push it. Where you cannot push to the repository, the next sync replaces your changes if the file changes upstream. To keep a copy that upstream never touches, use **Clone & Edit Baseline** on the [Manage Baselines](templates.md) page.
 
+Importing the baseline again from its repository, for example to take an upstream change, updates it in place. Its stages and standards come from the repository copy, while its **Assigned Tenants**, **Excluded Tenants**, alerting settings, and **Disable Scheduled Runs** stay as they are. If the repository file names tenants of its own, those replace **Assigned Tenants**.
+
 ## Baseline Details
 
 | Field                  | Description                                                                                                                                           |
@@ -75,6 +77,8 @@ Saving never moves a tenant forward. Where stages have been removed, reordered o
 ### Graduation Conditions
 
 Add as many conditions as you need. With more than one, a **Condition Logic** field appears and sets whether all of them must match or any one of them is enough. A stage with no conditions can only be advanced into by hand, from the Alignment page.
+
+**Add OR Condition Group** adds another set of conditions, with its own Condition Logic. A tenant advances once it meets any one group. For example, one group can require that the tenant is in a tenant group and that all previous stage items applied successfully, while a second group holds only manual approval, so an operator can still move a tenant forward that does not meet the first group. A tenant outside a required tenant group is only held back when every group requires a group it is not in.
 
 | Condition                                     | Description                                                                                                                        |
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |

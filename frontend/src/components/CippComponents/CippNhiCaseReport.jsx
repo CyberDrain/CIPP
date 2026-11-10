@@ -21,6 +21,7 @@ import { CippNhiContainmentDrawer } from './CippNhiContainmentDrawer'
 import { useBecEvidenceDownload } from './CippBecEvidenceDownload'
 import { CippIcons } from '../../utils/icon-registry'
 import { ApiPostCall } from '../../api/ApiCall'
+import { PermissionButton } from '../../utils/permissions'
 
 export const NHI_LEVEL_COLOR = {
   Critical: 'error',
@@ -48,7 +49,7 @@ const Section = ({ title, count, flagged = 0, note, children }) => (
     component="accordion"
     accordionExpanded={flagged > 0}
     title={
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
         <span>{title}</span>
         {flagged > 0 && (
           <Chip size="small" color="error" label={`${flagged} flagged`} />
@@ -113,7 +114,7 @@ const ContainmentHistory = ({ caseData, tenantFilter, relatedQueryKeys }) => {
       <Stack
         direction={{ xs: 'column', md: 'row' }}
         spacing={1}
-        alignItems={{ md: 'center' }}
+        sx={{ alignItems: { md: 'center' } }}
       >
         <TextField
           size="small"
@@ -122,7 +123,8 @@ const ContainmentHistory = ({ caseData, tenantFilter, relatedQueryKeys }) => {
           onChange={(event) => setConfirmation(event.target.value)}
           sx={{ minWidth: 320 }}
         />
-        <Button
+        <PermissionButton
+          requiredPermissions={['Tenant.Application.ReadWrite']}
           variant="outlined"
           onClick={() =>
             releaseCall.mutate({
@@ -137,7 +139,7 @@ const ContainmentHistory = ({ caseData, tenantFilter, relatedQueryKeys }) => {
           disabled={!confirmation.trim() || releaseCall.isPending}
         >
           Release: re-enable the app
-        </Button>
+        </PermissionButton>
       </Stack>
       <CippApiResults apiObject={releaseCall} />
     </Section>
@@ -204,6 +206,7 @@ export const CippNhiCaseReport = ({
   const persistence = allActions.filter((a) => a.Kind === 'AppPersistence')
   // permissions and directory roles it gave itself, other apps or users
   const elevation = allActions.filter((a) => a.Kind === 'Elevation')
+  const otherTenants = list(caseData?.OtherTenants)
   const actions = allActions.filter(
     (a) => a.Kind !== 'AppPersistence' && a.Kind !== 'Elevation'
   )
@@ -239,7 +242,11 @@ export const CippNhiCaseReport = ({
                 <Typography variant="overline" color="text.secondary">
                   Case level
                 </Typography>
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: 'center' }}
+                >
                   <Chip
                     color={NHI_LEVEL_COLOR[score.Level] || 'default'}
                     label={score.Level || 'Unknown'}
@@ -321,8 +328,7 @@ export const CippNhiCaseReport = ({
               <Stack
                 direction="row"
                 spacing={1}
-                sx={{ mt: 2 }}
-                flexWrap="wrap"
+                sx={{ flexWrap: 'wrap', mt: 2 }}
                 useFlexGap
               >
                 <CippNhiContainmentDrawer
@@ -551,6 +557,36 @@ export const CippNhiCaseReport = ({
               link: `/tenant/administration/nhi/case?servicePrincipalId=[TargetServicePrincipalId]&tenantFilter=${tenantFilter}&start=true`,
               multiPost: false,
               condition: (row) => !!row.TargetServicePrincipalId,
+            },
+          ]}
+        />
+      </Section>
+
+      <Section
+        title="This app in your other tenants"
+        count={otherTenants.length}
+        note={
+          caseData?.Completeness?.OtherTenants?.Skipped
+            ? `Not looked up: ${caseData.Completeness.OtherTenants.Requirement}.`
+            : 'The same app in the other tenants you manage, from the reporting database. A compromised app usually reaches every tenant it is consented in: investigate it there too.'
+        }
+      >
+        <Table
+          title="Other tenants"
+          rows={otherTenants}
+          columns={[
+            'Tenant',
+            'DisplayName',
+            'AccountEnabled',
+            'CreatedDateTime',
+          ]}
+          actions={[
+            {
+              label: 'Investigate in this tenant',
+              icon: <CippIcons.TravelExplore />,
+              link: '/tenant/administration/nhi/case?servicePrincipalId=[ServicePrincipalId]&tenantFilter=[Tenant]&start=true',
+              multiPost: false,
+              condition: (row) => !!row.ServicePrincipalId,
             },
           ]}
         />

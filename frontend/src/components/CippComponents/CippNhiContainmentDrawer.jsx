@@ -14,6 +14,7 @@ import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
 import { CippOffCanvas } from './CippOffCanvas'
 import CippFormComponent from './CippFormComponent'
 import { CippApiResults } from './CippApiResults'
+import { PermissionButton } from '../../utils/permissions'
 
 const IMPACT_ORDER = ['Critical', 'High', 'Medium', 'Low']
 const impactColor = (impact) =>
@@ -177,14 +178,15 @@ export const CippNhiContainmentDrawer = ({
 
   return (
     <>
-      <Button
+      <PermissionButton
+        requiredPermissions={['Tenant.Application.ReadWrite']}
         size="small"
         variant="contained"
         onClick={() => setVisible(true)}
         startIcon={<CippIcons.ShieldCheckIcon width={20} />}
       >
         Contain app
-      </Button>
+      </PermissionButton>
       <CippOffCanvas
         title={`Contain ${appName}`}
         visible={visible}
@@ -193,7 +195,11 @@ export const CippNhiContainmentDrawer = ({
         footer={
           <Stack spacing={2}>
             <CippApiResults apiObject={runCall} />
-            <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ justifyContent: 'flex-end' }}
+            >
               <Button
                 variant="contained"
                 color="error"
@@ -237,8 +243,7 @@ export const CippNhiContainmentDrawer = ({
                 <Stack
                   direction="row"
                   spacing={1}
-                  alignItems="center"
-                  sx={{ mb: 1 }}
+                  sx={{ alignItems: 'center', mb: 1 }}
                 >
                   <Typography variant="subtitle1">{impact}</Typography>
                   <Chip

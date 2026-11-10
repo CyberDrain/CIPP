@@ -2408,7 +2408,7 @@ const Page = () => {
     },
     {
       filterName: 'Tenant Overrides',
-      value: [{ id: 'sourceTemplate', value: 'Tenant Override' }],
+      value: [{ id: 'sourceTemplate', value: 'Tenant Override', filterFn: 'equals' }],
       type: 'column',
     },
   ]

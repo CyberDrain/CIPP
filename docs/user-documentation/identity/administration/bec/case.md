@@ -272,6 +272,8 @@ Below the findings, two collapsible cards round off the case. Both start open.
 * **Remediation taken** lists every containment run on the case, newest first, with when it ran, who ran it and the result for each action and target. Releases are listed here too, marked **Release**. It appears once containment has run at least once, and carries the **Release user** button described under [#releasing-the-user](case.md#releasing-the-user "mention").
 * **Attack timeline** shows the case's correlated events over time, with the likely start of compromise marked. The toggle switches between **Timeline** and **Correlation graph**, which groups the events by attacker source and the accounts it reached. **Full screen** opens the same view across the whole screen, where the graph has room to spread out.
 
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/gdmmkcigycbe" linkValue="gdmmkcigycbe" %}
+
 ## Reviewing IP verdicts
 
 **Review IPs** opens a drawer with one card per address in the case, 25 to a page. Each card shows the address, its verdict, its score, whether it is a hosting or proxy network, its location, network and organisation, its successful and failed sign-in and activity counts, when it was first and last seen, and every reason behind the score with the points it carried. Red reasons push towards the attacker, green ones towards the user. An address decided by you or by the IP Allow/Block List says what decided it.

@@ -30,6 +30,27 @@ Describe 'Resolve-CIPPSharePointRestContext' {
         $Result.SharePointInfo | Should -Be $script:SharePointInfo
     }
 
+    It 'accepts the tenant <_> host' -ForEach @(
+        'https://contoso-my.sharepoint.com/personal/user_contoso_com'
+        'https://contoso-admin.sharepoint.com'
+        'https://CONTOSO.sharepoint.com/sites/HR'
+    ) {
+        (Resolve-CIPPSharePointRestContext -TenantFilter 'contoso.onmicrosoft.com' -SiteUrl $_).BaseUri | Should -Be "$_/_api"
+    }
+
+    It 'refuses <_>' -ForEach @(
+        'https://evil.example.com/sites/HR'
+        'https://fabrikam.sharepoint.com/sites/HR'
+        'https://contoso.sharepoint.com.evil.example.com/sites/HR'
+        'https://contoso.sharepoint.com@evil.example.com/sites/HR'
+        'https://evil.example.com/contoso.sharepoint.com'
+        'https://contosoevil.sharepoint.com/sites/HR'
+        'http://contoso.sharepoint.com/sites/HR'
+        'contoso.sharepoint.com/sites/HR'
+    ) {
+        { Resolve-CIPPSharePointRestContext -TenantFilter 'contoso.onmicrosoft.com' -SiteUrl $_ } | Should -Throw '*does not belong to this tenant*'
+    }
+
     It 'reuses SharePointInfo when supplied' {
         Resolve-CIPPSharePointRestContext -TenantFilter 'contoso.onmicrosoft.com' -SiteUrl 'https://contoso.sharepoint.com/sites/HR' -SharePointInfo $script:SharePointInfo | Out-Null
 

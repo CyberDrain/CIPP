@@ -1,6 +1,6 @@
 # Edit Filtering Policy
 
-Edits a filtering policy in the selected tenant. Open it with **Edit Policy** on the Filtering Policies page. Changes are written to the tenant when you save.
+Creates or edits a filtering policy in the selected tenant. Open it with **Add Policy** or **Edit Policy** on the Filtering Policies page. A new policy's name must not already be used in the tenant. Changes are written to the tenant when you save.
 
 ## Fields
 

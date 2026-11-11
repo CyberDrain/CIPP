@@ -1,6 +1,6 @@
 # Edit Security Profile
 
-Edits a security profile in the selected tenant. Open it with **Edit Profile** on the Security Profiles page. Changes are written to the tenant when you save.
+Creates or edits a security profile in the selected tenant. Open it with **Add Profile** or **Edit Profile** on the Security Profiles page. A new profile needs a priority no other profile uses. Changes are written to the tenant when you save.
 
 ## Fields
 

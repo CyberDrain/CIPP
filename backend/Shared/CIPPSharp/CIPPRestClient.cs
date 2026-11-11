@@ -312,6 +312,8 @@ namespace CIPP
         private static readonly ConcurrentDictionary<string, long> _hostSelections =
             new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<int, long> _statusCodes = new();
+        private const int MaxTrackedHosts = 500;
+        private static int _trackedHosts;
 
         // -----------------------------------------------------------------
         // Client factory helpers
@@ -700,7 +702,13 @@ namespace CIPP
         private static void TrackPoolSelection(string pool, string host)
         {
             _poolSelections.AddOrUpdate(pool, 1, static (_, current) => current + 1);
-            _hostSelections.AddOrUpdate(host, 1, static (_, current) => current + 1);
+            // SharePoint and extension hosts are per tenant, so new hosts past the cap share one row.
+            if (Volatile.Read(ref _trackedHosts) >= MaxTrackedHosts && !_hostSelections.ContainsKey(host))
+                host = "(other)";
+            if (_hostSelections.TryAdd(host, 1))
+                Interlocked.Increment(ref _trackedHosts);
+            else
+                _hostSelections.AddOrUpdate(host, 1, static (_, current) => current + 1);
         }
 
         private static void TrackPoolResult(string pool, bool success, int statusCode)
@@ -1231,6 +1239,7 @@ namespace CIPP
             _poolFailures.Clear();
             _poolTransportErrors.Clear();
             _hostSelections.Clear();
+            Interlocked.Exchange(ref _trackedHosts, 0);
             _statusCodes.Clear();
         }
     }

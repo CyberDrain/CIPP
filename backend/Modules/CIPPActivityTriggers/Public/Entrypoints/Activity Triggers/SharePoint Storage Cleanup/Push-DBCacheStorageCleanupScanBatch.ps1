@@ -174,7 +174,9 @@ function Push-DBCacheStorageCleanupScanBatch {
                     if ($null -ne $TotalSize) {
                         $Tip = if ($null -ne $FileStreamSize) { $FileStreamSize } else { [int64]0 }
                         $Meta = if ($null -ne $MetadataSize) { $MetadataSize } else { [int64]0 }
-                        $VersionEstimate = [Math]::Max([int64]0, $TotalSize - $Tip - $Meta)
+                        # TotalSize also counts ~40 KB per library and ~320 bytes of metadata per file (measured on 538 libraries), which is not version history.
+                        $Overhead = 40KB + 320 * [int64]($FileCount ?? 0)
+                        $VersionEstimate = [Math]::Max([int64]0, $TotalSize - $Tip - $Meta - $Overhead)
                     }
 
                     $LibraryRows.Add([PSCustomObject]@{

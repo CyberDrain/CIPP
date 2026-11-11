@@ -158,7 +158,7 @@ export const REPORT_COVER_PRESETS = [
     subtitle:
       "Where SharePoint and OneDrive storage is used, how much of it is old file versions, and what can be reclaimed.",
     metaPrimary: SAMPLE_TENANT_NAME,
-    metaSecondary: `${SAMPLE_STORAGE.sharePointGb}.00 GB SharePoint · ${SAMPLE_STORAGE.oneDriveGb}.00 GB OneDrive · ${SAMPLE_STORAGE.sites} sites`,
+    metaSecondary: `${SAMPLE_STORAGE.sharePointGb}.00 GB SharePoint · ${SAMPLE_STORAGE.teamsGb}.00 GB Teams · ${SAMPLE_STORAGE.oneDriveGb}.00 GB OneDrive`,
     footer: "Confidential — For Internal Use Only",
   },
   {

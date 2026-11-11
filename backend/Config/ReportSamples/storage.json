@@ -5,35 +5,40 @@
       "webUrl": "https://contoso.sharepoint.com/sites/finance",
       "storageUsedInBytes": 442381631488,
       "storageAllocatedInBytes": 1099511627776,
-      "lastActivityDate": "2026-10-30"
+      "lastActivityDate": "2026-10-30",
+      "rootWebTemplate": "Team site"
     },
     {
       "displayName": "Sample Projects",
       "webUrl": "https://contoso.sharepoint.com/sites/projects",
       "storageUsedInBytes": 287762808832,
       "storageAllocatedInBytes": 1099511627776,
-      "lastActivityDate": "2026-11-02"
+      "lastActivityDate": "2026-11-02",
+      "rootWebTemplate": "Group"
     },
     {
       "displayName": "Sample Marketing",
       "webUrl": "https://contoso.sharepoint.com/sites/marketing",
       "storageUsedInBytes": 103079215104,
       "storageAllocatedInBytes": 1099511627776,
-      "lastActivityDate": "2026-06-15"
+      "lastActivityDate": "2026-06-15",
+      "rootWebTemplate": "Team site"
     },
     {
       "displayName": "Sample Archive",
       "webUrl": "https://contoso.sharepoint.com/sites/archive",
       "storageUsedInBytes": 57982058496,
       "storageAllocatedInBytes": 1099511627776,
-      "lastActivityDate": "2025-12-01"
+      "lastActivityDate": "2025-12-01",
+      "rootWebTemplate": "Team site"
     },
     {
       "displayName": "Sample Intranet",
       "webUrl": "https://contoso.sharepoint.com/sites/intranet",
       "storageUsedInBytes": 12884901888,
       "storageAllocatedInBytes": 1099511627776,
-      "lastActivityDate": "2026-11-05"
+      "lastActivityDate": "2026-11-05",
+      "rootWebTemplate": "Team site"
     }
   ],
   "oneDrive": [
@@ -90,7 +95,8 @@
       "versionEstimateBytes": 246960619520,
       "versionPolicy": "500 versions, never expire",
       "versionTrimMode": 0,
-      "majorVersionLimit": 500
+      "majorVersionLimit": 500,
+      "fileCount": 42000
     },
     {
       "rowType": "Library",
@@ -101,7 +107,8 @@
       "versionEstimateBytes": 64424509440,
       "versionPolicy": "Automatic",
       "versionTrimMode": 2,
-      "majorVersionLimit": 500
+      "majorVersionLimit": 500,
+      "fileCount": 61000
     },
     {
       "rowType": "Library",
@@ -112,7 +119,8 @@
       "versionEstimateBytes": 21474836480,
       "versionPolicy": "100 versions, expire after 365 days",
       "versionTrimMode": 1,
-      "majorVersionLimit": 100
+      "majorVersionLimit": 100,
+      "fileCount": 8000
     }
   ]
 }

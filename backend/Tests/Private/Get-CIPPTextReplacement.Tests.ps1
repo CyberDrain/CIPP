@@ -304,6 +304,26 @@ Describe 'Get-CIPPTextReplacement' {
                 Should -Be 'Welcome to Contoso Ltd (11111111-1111-1111-1111-111111111111)'
         }
 
+        It 'resolves <Text> to the default domain' -ForEach @(
+            @{ Text = '%tenantdomain%'; Escape = $false; Expected = 'contoso.onmicrosoft.com' }
+            @{ Text = '%TenantDomain%'; Escape = $false; Expected = 'contoso.onmicrosoft.com' }
+            @{ Text = '{"v":"%TenantDomain%"}'; Escape = $true; Expected = '{"v":"contoso.onmicrosoft.com"}' }
+        ) {
+            Get-CIPPTextReplacement -TenantFilter 'contoso.onmicrosoft.com' -Text $Text -EscapeForJson:$Escape |
+                Should -Be $Expected
+        }
+
+        It 'lets a <Scope> variable named tenantdomain replace the default domain' -ForEach @(
+            @{ Scope = 'global' }
+            @{ Scope = 'tenant' }
+        ) {
+            $Row = New-VariableRow -Name 'TenantDomain' -Value 'custom.example.com'
+            if ($Scope -eq 'global') { $script:GlobalRows = @($Row) } else { $script:TenantRows = @($Row) }
+
+            Get-CIPPTextReplacement -TenantFilter 'contoso.onmicrosoft.com' -Text '%tenantdomain%' |
+                Should -Be 'custom.example.com'
+        }
+
         It 'returns non-string input untouched' {
             $Input = @{ a = 1 }
             Get-CIPPTextReplacement -TenantFilter 'contoso.onmicrosoft.com' -Text $Input | Should -Be $Input

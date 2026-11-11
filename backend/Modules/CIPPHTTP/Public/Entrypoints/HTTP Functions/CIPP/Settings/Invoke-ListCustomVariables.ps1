@@ -56,6 +56,13 @@ function Invoke-ListCustomVariables {
                 Category    = 'tenant'
             },
             @{
+                Name        = 'tenantdomain'
+                Variable    = '%tenantdomain%'
+                Description = 'The tenant default domain name, used unless a custom variable has the same name'
+                Type        = 'reserved'
+                Category    = 'tenant'
+            },
+            @{
                 Name        = 'initialdomain'
                 Variable    = '%initialdomain%'
                 Description = 'The tenant initial domain name'

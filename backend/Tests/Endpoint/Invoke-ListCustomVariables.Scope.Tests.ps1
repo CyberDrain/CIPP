@@ -51,3 +51,14 @@ Describe 'Invoke-ListCustomVariables allTenants names' {
         @($Response.Body.Results | Where-Object { $_.Type -eq 'custom' } | ForEach-Object { $_.Name } | Sort-Object) | Should -Be $Expect
     }
 }
+
+Describe 'Invoke-ListCustomVariables built-in names' {
+    It 'lists %tenantdomain%' {
+        Mock Get-CIPPAzDataTableEntity { }
+        $Request = [pscustomobject]@{ Params = @{ CIPPEndpoint = 'ListCustomVariables' }; Query = [pscustomobject]@{} }
+
+        $Response = Invoke-ListCustomVariables -Request $Request -TriggerMetadata $null
+
+        @($Response.Body.Results | Where-Object { $_.Name -eq 'tenantdomain' }).Variable | Should -Be '%tenantdomain%'
+    }
+}

@@ -33,9 +33,12 @@ The following variables will be automatically replaced by CIPP:
 * `%deviceadminsid%`
 * `%globaladminsid%`
 * `%initialdomain%`
+* `%tenantdomain%`
 * `%tenantfilter%`
 * `%tenantid%`
 * `%tenantname%`
+
+`%tenantdomain%` resolves to the tenant's default domain name, the same value as `%tenantfilter%`. A custom variable named `tenantdomain` takes precedence over it, and a tenant's own variable takes precedence over a global one.
 
 `%globaladminsid%` and `%deviceadminsid%` resolve to the tenant's own Global Administrator and Microsoft Entra Joined Device Local Administrator role SIDs, which differ from tenant to tenant. They are read from the tenant's synchronised directory roles, so a deployment that uses one fails for a tenant whose roles have not been synchronised yet.
 

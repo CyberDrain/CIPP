@@ -28,6 +28,7 @@ function Get-CIPPBaselineAlignment {
     param(
         $TenantFilter,
         [switch]$ByStandard,
+        [switch]$TenantScores,
         [switch]$History,
         [string[]]$Standard,
         [string[]]$Outcome,
@@ -40,6 +41,58 @@ function Get-CIPPBaselineAlignment {
     )
 
     $ResolvedTable = Get-CippTable -tablename 'BaselineAlignment'
+
+    $ScoreRows = {
+        param($Rows)
+        $Total = 0; $LicenseMissing = 0; $NoData = 0; $Compliant = 0; $Accepted = 0; $Drift = 0; $Denied = 0; $Conflicts = 0
+        foreach ($Row in $Rows) {
+            $Total++
+            switch -Wildcard ("$($Row.status)") {
+                'Skipped - No License' { $LicenseMissing++ }
+                # 'No Data' rows are standards a baseline has rolled out that the engine has not
+                # resolved yet - shown, but excluded from scoring like license-missing rows.
+                'No Data' { $NoData++ }
+                'Compliant' { $Compliant++ }
+                'Accepted' { $Accepted++ }
+                'Drift' { $Drift++ }
+                'Partially Accepted' { $Drift++ }
+                'Denied - *' { $Denied++ }
+                'Conflict' { $Conflicts++ }
+            }
+        }
+        $Applicable = $Total - $LicenseMissing - $NoData
+        $Pct = { param($Count) if ($Applicable) { [math]::Round(($Count / $Applicable) * 100) } else { 0 } }
+        @{
+            total              = $Total
+            applicable         = $Applicable
+            licenseMissing     = $LicenseMissing
+            noData             = $NoData
+            compliant          = $Compliant
+            accepted           = $Accepted
+            drift              = $Drift
+            denied             = $Denied
+            conflicts          = $Conflicts
+            verifiedPercentage = & $Pct $Compliant
+            alignedPercentage  = & $Pct ($Compliant + $Accepted)
+            acceptedPercentage = & $Pct $Accepted
+        }
+    }
+
+    if ($TenantScores) {
+        # Status is a flat column, so per-tenant scores need no definitions, JSON parsing or trends.
+        $ByTenant = @{}
+        foreach ($Entity in (Get-CIPPAzDataTableEntity @ResolvedTable -Filter "PartitionKey ne ''" -Property PartitionKey, RowKey, TenantName, Status)) {
+            $Key = "$($Entity.PartitionKey)"
+            if (-not $ByTenant.ContainsKey($Key)) { $ByTenant[$Key] = [System.Collections.Generic.List[object]]::new() }
+            $ByTenant[$Key].Add($Entity)
+        }
+        return @(foreach ($Key in $ByTenant.Keys) {
+                [PSCustomObject]([ordered]@{
+                        tenantFilter = $Key
+                        displayName  = $ByTenant[$Key][0].TenantName ?? $Key
+                    } + (& $ScoreRows $ByTenant[$Key]))
+            })
+    }
     $Definitions = Get-CIPPBaselineDefinition
 
     # Lazy template-name lookup for identity-carrying standards. The definition's
@@ -202,37 +255,6 @@ function Get-CIPPBaselineAlignment {
         return [PSCustomObject]@{ events = @($Events); Metadata = @{ nextLink = $NextLink } }
     }
 
-    $ScoreRows = {
-        param($Rows)
-        $Rows = @($Rows)
-        $Total = $Rows.Count
-        $LicenseMissing = @($Rows | Where-Object { $_.status -eq 'Skipped - No License' }).Count
-        # 'No Data' rows are standards a baseline has rolled out that the engine has not
-        # resolved yet - shown, but excluded from scoring like license-missing rows.
-        $NoData = @($Rows | Where-Object { $_.status -eq 'No Data' }).Count
-        $Applicable = $Total - $LicenseMissing - $NoData
-        $Compliant = @($Rows | Where-Object { $_.status -eq 'Compliant' }).Count
-        $Accepted = @($Rows | Where-Object { $_.status -eq 'Accepted' }).Count
-        $Drift = @($Rows | Where-Object { $_.status -in @('Drift', 'Partially Accepted') }).Count
-        $Denied = @($Rows | Where-Object { $_.status -like 'Denied - *' }).Count
-        $Conflicts = @($Rows | Where-Object { $_.status -eq 'Conflict' }).Count
-        $Pct = { param($Count) if ($Applicable) { [math]::Round(($Count / $Applicable) * 100) } else { 0 } }
-        @{
-            total              = $Total
-            applicable         = $Applicable
-            licenseMissing     = $LicenseMissing
-            noData             = $NoData
-            compliant          = $Compliant
-            accepted           = $Accepted
-            drift              = $Drift
-            denied             = $Denied
-            conflicts          = $Conflicts
-            verifiedPercentage = & $Pct $Compliant
-            alignedPercentage  = & $Pct ($Compliant + $Accepted)
-            acceptedPercentage = & $Pct $Accepted
-        }
-    }
-
     if ($TenantFilter) {
         $SafeTenant = ConvertTo-CIPPODataFilterValue -Value $TenantFilter
         $Entities = Get-CIPPAzDataTableEntity @ResolvedTable -Filter "PartitionKey eq '$SafeTenant'"
@@ -386,7 +408,14 @@ function Get-CIPPBaselineAlignment {
             $Definition = $Definitions | Where-Object { $_.name -eq $BaseName } | Select-Object -First 1
             $Expected = & $RenderExpected $Definition $Variables
             $Row = $Rows | Where-Object { $_.standardName -eq $Delta.standardName } | Select-Object -First 1
+            $OverrideFields = @{
+                overrideReason  = $Delta.reason
+                overrideBy      = $Delta.updatedBy
+                overrideAt      = $Delta.updatedAt
+                overrideExpires = $Delta.expires
+            }
             if ($Row) {
+                $Row | Add-Member -NotePropertyMembers $OverrideFields -Force
                 if ($Row.sourceTemplate -ne 'Tenant Override') {
                     $Inheritance = [System.Collections.Generic.List[object]]::new()
                     foreach ($Tier in @($Row.inheritance)) {
@@ -436,6 +465,10 @@ function Get-CIPPBaselineAlignment {
                         deviationAt         = $null
                         deviationExpires    = $null
                         remediateOnExpire   = $false
+                        overrideReason      = $OverrideFields.overrideReason
+                        overrideBy          = $OverrideFields.overrideBy
+                        overrideAt          = $OverrideFields.overrideAt
+                        overrideExpires     = $OverrideFields.overrideExpires
                         lastRun             = $null
                         lastRemediated      = $null
                         history             = @()
@@ -498,12 +531,12 @@ function Get-CIPPBaselineAlignment {
         $Rows = @($Entities | ForEach-Object { Convert-CIPPBaselineResolvedEntity -Entity $_ -Definitions $Definitions -ResolveTemplateName $ResolveTemplateName })
 
         $FilterInfo = $null
-        if ($Stage -and -not $BaselineId) { throw 'Stage requires BaselineId.' }
+        if ($Stage -and -not $BaselineId) { throw [System.ArgumentException]::new('Stage requires BaselineId.') }
         if ($BaselineId) {
             $FilterBaseline = Get-CIPPBaseline -ID $BaselineId | Select-Object -First 1
-            if (-not $FilterBaseline) { throw "Baseline '$BaselineId' was not found." }
+            if (-not $FilterBaseline) { throw [System.Management.Automation.ItemNotFoundException]::new("Baseline '$BaselineId' was not found.") }
             $StageKeys = @(Get-CIPPBaselineStageStandards -Baseline $FilterBaseline -Definitions $Definitions)
-            if ($Stage -and ($Stage -lt 1 -or $Stage -gt $StageKeys.Count)) { throw "Baseline '$($FilterBaseline.templateName)' has no stage $Stage." }
+            if ($Stage -and ($Stage -lt 1 -or $Stage -gt $StageKeys.Count)) { throw [System.ArgumentException]::new("Baseline '$($FilterBaseline.templateName)' has no stage $Stage.") }
             # Tenant -> instance keys this baseline has rolled out to it.
             $Allowed = @{}
             foreach ($State in @($FilterBaseline.tenantStates)) {
@@ -609,5 +642,5 @@ function Get-CIPPBaselineAlignment {
         return $Result
     }
 
-    throw 'Specify -TenantFilter or -ByStandard.'
+    throw 'Specify -TenantFilter, -ByStandard or -TenantScores.'
 }

@@ -138,6 +138,10 @@ Collapsed by default, since most policies do not use these.
 | Enable Persistent Browser        | Controls whether the browser session persists across restarts.                                                                 |
 | Persistence Mode                 | Whether sessions are always persistent or never persistent.                                                                    |
 | Disable Resilience Defaults      | Stops Entra extending existing sessions during an outage. Leaving resilience defaults on is the safer choice for most tenants. |
+| Enable Security Profile          | Applies a Global Secure Access web content filtering security profile. Needs a Microsoft Entra Internet Access licence in each tenant. |
+| Security profile template or profile name | Pick a [security profile template](../../gsa/security-profiles/templates.md) to deploy the profile, and its filtering policies, with the policy. Or type the name of a security profile each tenant already has, choosing **Add option**, and deployment uses the profile of that name. |
+
+In a baseline, a template that applies a security profile is graded by the profile name, and tenants without a Microsoft Entra Internet Access licence are reported as **Skipped - No License** instead of drifting.
 
 ## Named Locations
 
@@ -215,6 +219,17 @@ and `officeips` takes CIDR ranges, IPv4 or IPv6:
 ```
 
 On deployment each tenant's locations are created, or updated in place, with that tenant's countries and ranges, so one template covers every client. Changing a tenant's variable takes effect on the next deployment or standard run.
+
+### Optional per-tenant exclusions
+
+An empty List removes its entry, so a List can also hold exclusions that only some tenants have. For example, a policy that blocks sign-ins from known bad networks for every client, where a few clients need their own allowed ranges on top of the shared ones:
+
+1. On [global-variables.md](../../administration/tenants/global-variables.md "mention"), add a variable named `clientallowlocations` with the type **List** and the value `[]`. Every tenant now has an empty list by default.
+2. In the template, define the shared locations under **Named Locations**, for example `Block Infra Block` and `Block Infra Allow`. Under Conditions, include `Block Infra Block` and exclude both `Block Infra Allow` and `%clientallowlocations%`. Do not define the per-client location in the template.
+3. For each client that needs an exception, create its named location in that tenant, for example `Block Infra CLIENT Allow`, with the client's ranges.
+4. In the Custom Variables box on that tenant's [edit.md](../../manage/edit.md "mention") page, use **Override for this tenant** on `clientallowlocations` and enter the location's name. Enter one name per line if there is more than one.
+
+A tenant without an override deploys the policy excluding only `Block Infra Allow`. A tenant with one also excludes its own location, which is matched by name because the template does not define it. CIPP never overwrites that location, so each client's ranges are managed in its own tenant.
 
 Type `%` in the Users, Groups and Locations fields to pick from the [variable-auto-complete.md](../../../shared-features/variable-auto-complete.md "mention") list.
 

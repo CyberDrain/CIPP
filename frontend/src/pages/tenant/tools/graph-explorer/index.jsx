@@ -1,13 +1,14 @@
 import { Layout as DashboardLayout } from "../../../../layouts/index";
 import CippGraphExplorerSimpleFilter from "../../../../components/CippTable/CippGraphExplorerSimpleFilter";
 import { CippDataTable } from "../../../../components/CippTable/CippDataTable";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Grid, Stack, Box, Container } from "@mui/system";
 import { useSettings } from "../../../../hooks/use-settings";
 import { CippCodeBlock } from "../../../../components/CippComponents/CippCodeBlock";
 import { ApiGetCallWithPagination } from "../../../../api/ApiCall";
 import { Alert, CircularProgress, Divider, Typography, Card } from "@mui/material";
 import { CippHead } from "../../../../components/CippComponents/CippHead";
+import { isMultiTenant } from "../../../../utils/tenant-selection";
 
 const Page = () => {
   const [apiFilter, setApiFilter] = useState([]);
@@ -16,15 +17,32 @@ const Page = () => {
   const tenantFilter = useSettings().currentTenant;
   const queryKey = JSON.stringify({ apiFilter, tenantFilter });
   const apiUrl = apiFilter.endpoint ? "/api/ListGraphRequest" : "/api/ListEmptyResults";
+  // AllTenants reads come from the cache in bounded pages, never as one response
+  const requestData = {
+    tenantFilter,
+    ...apiFilter,
+    ...(isMultiTenant(tenantFilter) && { manualPagination: true }),
+  };
 
   const apiData = ApiGetCallWithPagination({
     url: apiUrl,
-    data: { tenantFilter, ...apiFilter },
+    data: requestData,
     queryKey: queryKey,
     waiting: !!apiFilter.endpoint && viewMode === "json",
   });
 
-  const jsonData = apiData?.data?.pages?.[0]?.Results || apiData?.data || {};
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = apiData;
+  useEffect(() => {
+    if (viewMode === "json" && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [viewMode, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const pages = apiData?.data?.pages;
+  const jsonData =
+    pages?.length > 1
+      ? pages.flatMap((page) => page?.Results ?? [])
+      : pages?.[0]?.Results || apiData?.data || {};
 
   // the filter bar (and its edit drawer) mounts once, view toggles only swap the content below
   return (
@@ -102,7 +120,7 @@ const Page = () => {
                     simple={false}
                     api={{
                       url: apiUrl,
-                      data: { tenantFilter, ...apiFilter },
+                      data: requestData,
                       dataKey: "Results",
                     }}
                     simpleColumns={apiFilter?.$select != "" ? apiFilter?.$select?.split(",") : []}
@@ -118,6 +136,6 @@ const Page = () => {
   );
 };
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+Page.getLayout = (page) => <DashboardLayout usesTenant={false}>{page}</DashboardLayout>;
 
 export default Page;

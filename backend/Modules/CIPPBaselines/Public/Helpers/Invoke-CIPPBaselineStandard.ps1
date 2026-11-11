@@ -17,10 +17,12 @@ function Invoke-CIPPBaselineStandard {
             delete.executor    'Foo' -> Invoke-CIPPBaselineDeleteFoo
             prepare                  -> the Get-CIPPBaseline*State function it names
 
-        -GradeOnly is the post-remediation cache verification: read and compare only,
-        returning { Compliant, CurrentValue, Diff } while persisting NOTHING - no history
-        events, no alignment writes, no alerts, no remediation. Only meaningful right after
-        a remediation on the same item, where conflict/unconfigured/manual cannot occur.
+        -GradeOnly reads and compares only, returning { Compliant, CurrentValue, Diff } while
+        persisting NOTHING - no history events, no alignment writes, no alerts, no remediation.
+
+        A remediation writes an optimistic Compliant + PendingVerification row. The run's
+        PostExecution refreshes the written caches and then compares again; until that cache
+        is newer than the write, a non-forced run leaves the pending row as it is.
     .FUNCTIONALITY
         Internal
     #>
@@ -163,11 +165,33 @@ function Invoke-CIPPBaselineStandard {
         }
         $Item.Variables = & $NormalizeVariables $Item.Variables
 
-        # A flat requiredCapabilities list is any-of; a nested array is a group that must
-        # also match (AND of any-of groups).
-        $Required = @($Definition.requiredCapabilities)
-        if ($Required.Count -gt 0 -and $Mode -ne 'oneoff') {
-            $Capabilities = $(try { Get-CIPPTenantCapabilities -TenantFilter $TenantFilter } catch { $null })
+        $SkipUnlicensed = {
+            $Skipped = [PSCustomObject]@{
+                Item                = $Item
+                Mode                = $Mode
+                TriggeredBy         = $TriggeredBy
+                ExpectedValue       = $null
+                CurrentValue        = $null
+                Compliant           = $false
+                PendingVerification = $false
+                LicenseAvailable    = $false
+                Status              = 'Skipped - No License'
+                Remediated          = $false
+                Outcome             = 'Skipped-License'
+                Diff                = $null
+                Inheritance         = @($Item.Tiers)
+                AlertEvent          = $null
+                CacheType           = $null
+            }
+            Set-CIPPBaselineResult -Result $Skipped -Prior $null -RunId $RunId
+            $Skipped
+        }
+
+        # A flat capability list is any-of; a nested array is a group that must also match
+        # (AND of any-of groups). Used for the definition and for what a prepare hook returns.
+        $Capabilities = $null
+        $IsLicensed = {
+            param($Required)
             # Built as a List: an if-expression's pipeline output unwraps one array level,
             # which silently turned every capability into its own AND-group.
             $Groups = [System.Collections.Generic.List[object]]::new()
@@ -176,34 +200,15 @@ function Invoke-CIPPBaselineStandard {
             } else {
                 $Groups.Add(@($Required))
             }
-            $Licensed = $true
             foreach ($Group in $Groups) {
-                if (@(@($Group) | Where-Object { $Capabilities.$_ -eq $true }).Count -eq 0) {
-                    $Licensed = $false
-                    break
-                }
+                if (@(@($Group) | Where-Object { $Capabilities.$_ -eq $true }).Count -eq 0) { return $false }
             }
-            if (-not $Licensed) {
-                $Skipped = [PSCustomObject]@{
-                    Item                = $Item
-                    Mode                = $Mode
-                    TriggeredBy         = $TriggeredBy
-                    ExpectedValue       = $null
-                    CurrentValue        = $null
-                    Compliant           = $false
-                    PendingVerification = $false
-                    LicenseAvailable    = $false
-                    Status              = 'Skipped - No License'
-                    Remediated          = $false
-                    Outcome             = 'Skipped-License'
-                    Diff                = $null
-                    Inheritance         = @($Item.Tiers)
-                    AlertEvent          = $null
-                    CacheType           = $null
-                }
-                Set-CIPPBaselineResult -Result $Skipped -Prior $null -RunId $RunId
-                return $Skipped
-            }
+            $true
+        }
+        $Required = @($Definition.requiredCapabilities)
+        if ($Required.Count -gt 0 -and $Mode -ne 'oneoff') {
+            $Capabilities = $(try { Get-CIPPTenantCapabilities -TenantFilter $TenantFilter } catch { $null })
+            if (-not (& $IsLicensed $Required)) { return (& $SkipUnlicensed) }
         }
 
         if (-not $GradeOnly) {
@@ -445,11 +450,31 @@ function Invoke-CIPPBaselineStandard {
             $JustRefreshed = Wait-CIPPBaselineCacheReady -TenantFilter $TenantFilter -Definition $Definition -RunId $RunId
         }
 
+        # A cache older than a pending remediation still holds the pre-write state and would report the
+        # fixed drift again. Bounded to a day so a cache that never refreshes cannot hide drift forever.
+        $FreshnessType = $Definition.read.freshnessType ?? $Definition.read.cacheType
+        if ($Prior.PendingVerification -eq $true -and -not $Force -and -not $GradeOnly -and -not $JustRefreshed -and $FreshnessType -and
+            "$($Prior.LastRemediated)" -match '^\d+$' -and [int64]$Prior.LastRemediated -gt ($Now - 86400)) {
+            $CacheMeta = @($(try { Get-CIPPDbItem -TenantFilter $TenantFilter -Type $FreshnessType -CountsOnly } catch { $null }))[0]
+            if ($CacheMeta.Timestamp -and ([datetimeoffset]$CacheMeta.Timestamp).ToUnixTimeSeconds() -lt [int64]$Prior.LastRemediated) {
+                Write-Information "Baselines: $($Item.Standard) on $TenantFilter is awaiting verification - the $FreshnessType cache predates the remediation."
+                $Result.PendingVerification = $true
+                $Result.Outcome = 'Skipped-NoCache'
+                $Result.Status = $PriorStatus
+                return $Result
+            }
+        }
+
         if ($Definition.prepare) {
             if ($Definition.prepare -notmatch '^Get-CIPPBaseline[A-Za-z0-9]+$' -or -not (Get-CIPPBaselineCommand -Name $Definition.prepare)) {
                 throw "Prepare function $($Definition.prepare) is not available."
             }
             $Prepared = & $Definition.prepare -Item $Item -TenantFilter $TenantFilter
+            # Capabilities only the selected item needs (any-of), e.g. a CA template with risk conditions needs P2.
+            if ($Prepared.RequiredCapabilities -and $Mode -ne 'oneoff') {
+                $Capabilities ??= $(try { Get-CIPPTenantCapabilities -TenantFilter $TenantFilter } catch { $null })
+                if (-not (& $IsLicensed @($Prepared.RequiredCapabilities))) { return (& $SkipUnlicensed) }
+            }
             # ConfigError: the hook cannot grade because of the baseline's own settings, so fresh data
             # would not help and re-collecting (a full per-object read for some caches) is skipped.
             if ($null -eq $Prepared.Current -and $CacheCollector -and -not $JustRefreshed -and -not $Prepared.ConfigError) {
@@ -759,7 +784,8 @@ function Invoke-CIPPBaselineStandard {
                 $Result.Status = 'Compliant'
                 # Edge-triggered like the Drift alert: checkBeforeRun:false standards write every
                 # run, so alerting on a steady-state rewrite would fire forever with nothing changed.
-                if ($Item.AlertOnRemediate -and $PriorStatus -ne 'Compliant') { $Result.AlertEvent = 'Remediated' }
+                # An operator-triggered fix is not news to the operator, and the alert says "automatically".
+                if ($Item.AlertOnRemediate -and $PriorStatus -ne 'Compliant' -and $TriggeredBy -eq 'schedule') { $Result.AlertEvent = 'Remediated' }
             }
         } elseif ($Compliant) {
             $Result.Compliant = $true
@@ -800,10 +826,11 @@ function Invoke-CIPPBaselineStandard {
         return $Result
     } catch {
         Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message "Baseline run failed for $($Item.Standard) on ${TenantFilter}: $($_.Exception.Message)" -Sev 'Error'
-        # A failed verification must never overwrite the optimistic post-remediation row.
         if ($GradeOnly) { return $null }
         if ($Result) {
             $Result.Outcome = 'Error'
+            # An error is not a verification: a pending row stays pending.
+            $Result.PendingVerification = [bool]$Prior.PendingVerification
             try { Set-CIPPBaselineResult -Result $Result -Prior $Prior -RunId $RunId } catch { Write-Information "Set-CIPPBaselineResult failed: $($_.Exception.Message)" }
             return $Result
         }

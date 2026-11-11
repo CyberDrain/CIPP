@@ -56,7 +56,7 @@ function Invoke-HuduExtensionSync {
         # globally and shared across every tenant's sync instead of pulling the full relations
         # table (30s+ on large instances) on every single sync run.
         $HuduRelationsCache = Get-CippTable -tablename 'CacheHuduRelations'
-        $HuduRelationsCacheTTLMinutes = 15
+        $HuduRelationsCacheTTLMinutes = 30
 
         $CompanyResult.Logs.Add('Starting Hudu Extension Sync')
         if (-not $SyncPasswords -and ($Configuration.IncludeLAPS -or $Configuration.IncludeBitLocker)) {
@@ -249,48 +249,41 @@ function Invoke-HuduExtensionSync {
         $RelationsCacheMeta = Get-CIPPAzDataTableEntity @HuduRelationsCache -Filter "PartitionKey eq 'CacheMetadata' and RowKey eq 'LastRefresh'"
         $RelationsCacheAgeMinutes = if ($RelationsCacheMeta.LastRefresh) { ((Get-Date).ToUniversalTime() - [datetime]$RelationsCacheMeta.LastRefresh).TotalMinutes } else { $null }
 
+        # Only asset to asset relations are checked below, so only those are cached
+        $RelationKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         if ($null -ne $RelationsCacheAgeMinutes -and $RelationsCacheAgeMinutes -lt $HuduRelationsCacheTTLMinutes) {
-            $CachedRelationRows = Get-CIPPAzDataTableEntity @HuduRelationsCache -Filter "PartitionKey eq 'HuduRelation'"
-            $HuduRelations = foreach ($CachedRelationRow in $CachedRelationRows) {
-                [PSCustomObject]@{
-                    id            = $CachedRelationRow.RowKey
-                    fromable_type = $CachedRelationRow.FromableType
-                    fromable_id   = $CachedRelationRow.FromableId
-                    toable_type   = $CachedRelationRow.ToableType
-                    toable_id     = $CachedRelationRow.ToableId
-                }
+            foreach ($CachedRelationRow in Get-CIPPAzDataTableEntity @HuduRelationsCache -Filter "PartitionKey eq 'HuduRelation'") {
+                $null = $RelationKeys.Add("$($CachedRelationRow.FromableType)|$($CachedRelationRow.FromableId)|$($CachedRelationRow.ToableType)|$($CachedRelationRow.ToableId)")
             }
         } else {
-            $HuduRelations = Get-HuduRelations
-
-            $ExistingRelationRows = Get-CIPPAzDataTableEntity @HuduRelationsCache -Filter "PartitionKey eq 'HuduRelation'"
-            if ($ExistingRelationRows) {
-                Remove-CIPPAzDataTableEntity @HuduRelationsCache -Entity $ExistingRelationRows -Force
-            }
-
-            $RelationEntities = foreach ($Relation in $HuduRelations) {
-                [PSCustomObject]@{
-                    PartitionKey = 'HuduRelation'
-                    RowKey       = [string]$Relation.id
-                    FromableType = [string]$Relation.fromable_type
-                    FromableId   = [string]$Relation.fromable_id
-                    ToableType   = [string]$Relation.toable_type
-                    ToableId     = [string]$Relation.toable_id
+            # Stamped first so syncs starting during the refresh read the existing rows instead of refreshing too
+            Add-CIPPAzDataTableEntity @HuduRelationsCache -Entity ([PSCustomObject]@{ PartitionKey = 'CacheMetadata'; RowKey = 'LastRefresh'; LastRefresh = (Get-Date).ToUniversalTime().ToString('o') }) -Force
+            $CachedRelationIds = [System.Collections.Generic.HashSet[string]]::new()
+            foreach ($CachedRelationRow in Get-CIPPAzDataTableEntity @HuduRelationsCache -Filter "PartitionKey eq 'HuduRelation'" -Property PartitionKey, RowKey) { $null = $CachedRelationIds.Add($CachedRelationRow.RowKey) }
+            $LiveRelationIds = [System.Collections.Generic.HashSet[string]]::new()
+            $NewRelationRows = [System.Collections.Generic.List[object]]::new()
+            # Relations never change, so only new ones are written
+            $RelationErrors = $null
+            Get-HuduRelations -ErrorVariable RelationErrors | ForEach-Object {
+                if ($_.fromable_type -ne 'Asset' -or $_.toable_type -ne 'Asset') { return }
+                $RelationId = [string]$_.id
+                $null = $LiveRelationIds.Add($RelationId)
+                $null = $RelationKeys.Add("Asset|$($_.fromable_id)|Asset|$($_.toable_id)")
+                if (-not $CachedRelationIds.Contains($RelationId)) {
+                    $NewRelationRows.Add([PSCustomObject]@{ PartitionKey = 'HuduRelation'; RowKey = $RelationId; FromableType = 'Asset'; FromableId = [string]$_.fromable_id; ToableType = 'Asset'; ToableId = [string]$_.toable_id })
                 }
             }
-            if ($RelationEntities) {
-                Add-CIPPAzDataTableEntity @HuduRelationsCache -Entity $RelationEntities -Force
+            if ($NewRelationRows.Count) { Add-CIPPAzDataTableEntity @HuduRelationsCache -Entity $NewRelationRows.ToArray() -Force }
+            # A failed page leaves relations out of the list, so nothing is deleted on that run
+            if (-not $RelationErrors) {
+                # These rows are never split, so plain deletes skip the per-row part lookup
+                $RemovedRelationRows = @(foreach ($CachedRelationId in $CachedRelationIds) { if (-not $LiveRelationIds.Contains($CachedRelationId)) { @{ PartitionKey = 'HuduRelation'; RowKey = $CachedRelationId } } })
+                if ($RemovedRelationRows.Count) {
+                    # A sync refreshing at the same moment may have deleted them already; the next refresh retries
+                    try { $null = Remove-AzDataTableEntity @HuduRelationsCache -Entity $RemovedRelationRows -Force -ErrorAction Stop } catch { Write-Warning "Hudu relations cache cleanup failed: $_" }
+                }
             }
-
-            $RelationsCacheMetaEntity = [PSCustomObject]@{
-                PartitionKey = 'CacheMetadata'
-                RowKey       = 'LastRefresh'
-                LastRefresh  = (Get-Date).ToUniversalTime().ToString('o')
-            }
-            Add-CIPPAzDataTableEntity @HuduRelationsCache -Entity $RelationsCacheMetaEntity -Force
         }
-        $RelationKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-        foreach ($Relation in $HuduRelations) { $null = $RelationKeys.Add("$($Relation.fromable_type)|$($Relation.fromable_id)|$($Relation.toable_type)|$($Relation.toable_id)") }
         [System.Collections.Generic.List[object]]$Links = @(
             @{
                 Title = 'M365 Admin Portal'
@@ -508,14 +501,30 @@ function Invoke-HuduExtensionSync {
 
         $AllConditionalAccessPolicies = $ExtensionCache.ConditionalAccess
 
+        # CA classes a user as guest/external by userType + #EXT# UPN. The legacy 'GuestsOrExternalUsers'
+        # token in includeUsers/excludeUsers means every category, the guest blocks list categories.
+        # ponytail: an enumerated externalTenants list is treated as all tenants (documentation sync, not
+        # worth a tenant lookup per run); Get-CIPPExternalDomainTenant resolves it if that ever matters
+        $GuestUsers = @(foreach ($User in $Users) {
+                $IsExt = [string]$User.userPrincipalName -like '*#EXT#*'
+                $Category = if ($User.userType -eq 'Guest') { if ($IsExt) { 'b2bCollaborationGuest' } else { 'internalGuest' } } elseif ($IsExt) { 'b2bCollaborationMember' }
+                if ($Category) { [pscustomobject]@{ id = $User.id; Category = $Category } }
+            })
+        $GuestIdsFor = {
+            param($UserRefs, $GuestBlock)
+            $Types = if ($UserRefs -contains 'GuestsOrExternalUsers') { 'internalGuest', 'b2bCollaborationGuest', 'b2bCollaborationMember' } else { @(([string]$GuestBlock.guestOrExternalUserTypes -split ',').Trim()) }
+            foreach ($Guest in $GuestUsers) { if ($Types -contains $Guest.Category) { $Guest.id } }
+        }
+
         $ConditionalAccessMembers = foreach ($CAPolicy in $AllConditionalAccessPolicies) {
             [System.Collections.Generic.List[PSCustomObject]]$CAMembers = @()
 
             if ($CAPolicy.conditions.users.includeUsers -contains 'All') {
                 $Users | ForEach-Object { $null = $CAMembers.add($_.id) }
             } else {
-                $CAPolicy.conditions.users.includeUsers | ForEach-Object { $null = $CAMembers.add($_) }
+                $CAPolicy.conditions.users.includeUsers | Where-Object { $_ -ne 'GuestsOrExternalUsers' } | ForEach-Object { $null = $CAMembers.add($_) }
             }
+            foreach ($GuestId in (& $GuestIdsFor $CAPolicy.conditions.users.includeUsers $CAPolicy.conditions.users.includeGuestsOrExternalUsers)) { $null = $CAMembers.add($GuestId) }
 
             foreach ($CAIGroup in $CAPolicy.conditions.users.includeGroups) {
                 foreach ($Member in $GroupById.Find($CAIGroup).Members) {
@@ -540,6 +549,7 @@ function Invoke-HuduExtensionSync {
 
             if ($CAMembers) {
                 $CAPolicy.conditions.users.excludeUsers | ForEach-Object { $null = $CAMembers.remove($_) }
+                foreach ($GuestId in (& $GuestIdsFor $CAPolicy.conditions.users.excludeUsers $CAPolicy.conditions.users.excludeGuestsOrExternalUsers)) { $null = $CAMembers.remove($GuestId) }
 
                 foreach ($CAEGroup in $CAPolicy.conditions.users.excludeGroups) {
                     foreach ($Member in $GroupById.Find($CAEGroup).Members) {
@@ -807,14 +817,14 @@ function Invoke-HuduExtensionSync {
                         Culture         = $Culture
                         TimeZone        = $TimeZone
                     }
-                    $UserModel = Get-HuduUserViewModel @UserModelParams
-                    $UserBody = Get-HuduUserBody -Model $UserModel -Culture $Culture -TimeZone $TimeZone
+                    $UserModel = Get-CippExtensionUserViewModel @UserModelParams
+                    $UserBody = Get-CippExtensionUserBody -Model $UserModel -Culture $Culture -TimeZone $TimeZone
 
                     if (![string]::IsNullOrEmpty($PeopleLayoutId)) {
                         # Hash is calculated before the timestamp is added, otherwise every asset would be rewritten on every sync
                         $NewHash = Get-StringHash -String $UserBody
                         $UserAssetFields = { @{
-                            microsoft_365 = Get-HuduUserBody -Model $UserModel -SyncedAt (Get-Date) -Culture $Culture -TimeZone $TimeZone
+                            microsoft_365 = Get-CippExtensionUserBody -Model $UserModel -SyncedAt (Get-Date) -Culture $Culture -TimeZone $TimeZone
                             email_address = $user.userPrincipalName
                             licenses      = $userLicenses
                         } }
@@ -1005,12 +1015,12 @@ function Invoke-HuduExtensionSync {
                         Culture  = $Culture
                         TimeZone = $TimeZone
                     }
-                    $DeviceModel = Get-HuduDeviceViewModel @DeviceModelParams
+                    $DeviceModel = Get-CippExtensionDeviceViewModel @DeviceModelParams
                     $DeviceAssetFields = @{
-                        microsoft_365 = Get-HuduDeviceBody -Model $DeviceModel -SyncedAt (Get-Date) -Culture $Culture -TimeZone $TimeZone
+                        microsoft_365 = Get-CippExtensionDeviceBody -Model $DeviceModel -SyncedAt (Get-Date) -Culture $Culture -TimeZone $TimeZone
                     }
                     # Exclude the timestamp from the hash so unchanged assets are not rewritten on every sync.
-                    $DeviceHashMaterial = [System.Collections.Generic.List[string]]@(Get-HuduDeviceBody -Model $DeviceModel -Culture $Culture -TimeZone $TimeZone)
+                    $DeviceHashMaterial = [System.Collections.Generic.List[string]]@(Get-CippExtensionDeviceBody -Model $DeviceModel -Culture $Culture -TimeZone $TimeZone)
                     $CredentialRetrievalFailed = $false
                     $CredentialFailureReasons = [System.Collections.Generic.List[string]]::new()
                     $CredentialFieldsChanged = $false
@@ -1269,7 +1279,7 @@ function Invoke-HuduExtensionSync {
         # Remove this tenant's dashes left under an earlier title
         if ($DashSet) {
             try {
-                $StaleDashes = @(Get-HuduStaleMagicDash -Dashes (Get-HuduMagicDashes -CompanyId $company_id -ErrorAction Stop) -CurrentTitle $DashTitle -TenantId $Tenant.customerId)
+                $StaleDashes = @(Get-HuduStaleMagicDash -Dashes (Get-HuduMagicDashes -CompanyId $company_id) -CurrentTitle $DashTitle -TenantId $Tenant.customerId)
                 foreach ($StaleDash in $StaleDashes) {
                     try {
                         Remove-HuduMagicDash -Id $StaleDash.id -Confirm:$false -ErrorAction Stop

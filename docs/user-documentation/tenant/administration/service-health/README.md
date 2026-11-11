@@ -14,7 +14,7 @@ The page is split into four tabs. This page covers the **Overview** tab, which i
 With All Tenants selected, every figure and list on the Overview covers the whole estate. An issue or message Microsoft posted to several tenants is listed once, with the tenants it reached shown against it.
 
 {% hint style="info" %}
-The Overview has no sync control of its own. Each of the other three tabs syncs its own data, so if a figure here is empty or out of date, sync it from the matching tab.
+For a single tenant, the Overview reads current data from Microsoft each time it loads. With All Tenants selected it shows the data last synced on the other three tabs, and it has no sync control of its own, so if a figure is empty or out of date, sync it from the matching tab.
 {% endhint %}
 
 ## Summary Bar

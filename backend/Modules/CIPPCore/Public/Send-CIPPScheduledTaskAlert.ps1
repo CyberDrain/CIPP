@@ -189,10 +189,11 @@ function Send-CIPPScheduledTaskAlert {
         } else {
             $Results | ForEach-Object { ConvertTo-AlertDisplayRow -Row $_ } | ConvertTo-Html -Fragment
         }
-        $HTML = $FinalResults -replace '\[\[BR\]\]', '<br />' -replace '<table>', "$AlertHeader $TableDesign<table class=adaptiveTable>" | Out-String
+        $TableHtml = $FinalResults -replace '\[\[BR\]\]', '<br />' -replace '<table>', "$AlertHeader $TableDesign<table class=adaptiveTable>" | Out-String
 
         # Everything the envelope carried besides the result lines, as field/value rows below the
         # table rather than as extra columns beside it.
+        $ExtraBlock = ''
         if ($EnvelopeRow) {
             $ExtraRows = foreach ($Prop in $EnvelopeRow.PSObject.Properties) {
                 if ($Prop.Name -eq 'Results') { continue }
@@ -201,26 +202,27 @@ function Send-CIPPScheduledTaskAlert {
             if ($ExtraRows) {
                 $ExtraHtml = @($ExtraRows) | ConvertTo-Html -Fragment
                 $ExtraHtml = $ExtraHtml -replace '\[\[BR\]\]', '<br />' -replace '<table>', '<table class=adaptiveTable>' | Out-String
-                $HTML += "<p style=`"margin:16px 0 4px;font-size:13px;font-weight:600;opacity:0.75;`">Additional detail</p>$ExtraHtml"
+                $ExtraBlock = "<p style=`"margin:16px 0 4px;font-size:13px;font-weight:600;opacity:0.75;`">Additional detail</p>$ExtraHtml"
             }
         }
 
         # For alert tasks, add per-row snooze links. The resolved URL is kept in scope so the
         # per-user PSA split below can build the same block from each user's own rows.
         $SnoozeCIPPURL = $null
+        $SnoozeHtml = ''
         if ($TaskType -eq 'Alert' -and $Results -is [array] -and $Results.Count -gt 0 -and $Results[0] -isnot [string]) {
             try {
                 $CippConfigTable = Get-CippTable -tablename Config
                 $CippConfig = Get-CIPPAzDataTableEntity @CippConfigTable -Filter "PartitionKey eq 'InstanceProperties' and RowKey eq 'CIPPURL'"
                 $SnoozeCIPPURL = if ($CippConfig.Value) { 'https://{0}' -f $CippConfig.Value } else { $null }
-                $HTML += Get-AlertSnoozeLinksHtml -Rows $Results -CIPPURL $SnoozeCIPPURL -CmdletName $TaskInfo.Command -Tenant $TenantFilter
+                $SnoozeHtml = Get-AlertSnoozeLinksHtml -Rows $Results -CIPPURL $SnoozeCIPPURL -CmdletName $TaskInfo.Command -Tenant $TenantFilter
             } catch {
                 Write-Information "Failed to resolve CIPP URL for snooze links: $($_.Exception.Message)"
             }
         }
 
-        # Add alert comment if available. Held separately as well as appended to $HTML so the
-        # per-user PSA split can re-attach it to each rebuilt ticket body.
+        # Add alert comment if available. Held separately so the per-user PSA split can re-attach
+        # it to each rebuilt ticket body.
         $AlertCommentHtml = ''
         if ($TaskInfo.AlertComment) {
             $AlertComment = $TaskInfo.AlertComment
@@ -233,9 +235,10 @@ function Send-CIPPScheduledTaskAlert {
 
             # Replace other variables
             $AlertComment = Get-CIPPTextReplacement -Text $AlertComment -TenantFilter $TenantFilter
+            $AlertComment = $AlertComment -replace '(?<![="''>])(https?://[^\s<"'']*[^\s<"''.,;:!?)])', '<a href="$1">$1</a>' -replace '\r?\n', '<br>'
             $AlertCommentHtml = "<div style='background-color: transparent; border-left: 4px solid #007bff; padding: 15px; margin: 15px 0;'><h4 style='margin-top: 0; color: #007bff;'>Alert Information</h4><p style='margin-bottom: 0;'>$AlertComment</p></div>"
-            $HTML += $AlertCommentHtml
         }
+        $HTML = -join ($TableHtml, $ExtraBlock, $SnoozeHtml, $AlertCommentHtml)
 
         # Build title — honor CustomSubject if set on the task row, otherwise use DisplayTitle
         # so multi-tenant alert Names do not leak other client labels into the ticket subject.
@@ -245,7 +248,7 @@ function Send-CIPPScheduledTaskAlert {
             "$TaskType - $TenantFilter - $DisplayTitle"
         }
         if ($TaskInfo.Reference) {
-            $title += " - Reference: $($TaskInfo.Reference)"
+            $title = "$title - Reference: $($TaskInfo.Reference)"
         }
 
         Write-Information 'Scheduler: Sending the results to configured targets.'
@@ -265,6 +268,7 @@ function Send-CIPPScheduledTaskAlert {
             '*psa*' {
                 $PsaSplitSent = $false
                 $TaskAffectedUser = $null
+                $TaskAffectedDevice = $null
                 # Per-task PSA ticket priority (configured on the alert) overrides the global
                 # HaloPSA.DefaultPriority. Empty on tasks saved before this field existed, in which
                 # case New-HaloPSATicket falls back to the integration default. Read here rather
@@ -286,8 +290,10 @@ function Send-CIPPScheduledTaskAlert {
                     $ExtConfigTable = Get-CIPPTable -TableName Extensionsconfig
                     $ExtConfig = (Get-CIPPAzDataTableEntity @ExtConfigTable).config | ConvertFrom-Json -ErrorAction SilentlyContinue
                     $HaloConfig = $ExtConfig.HaloPSA
+                    $NinjaConfig = $ExtConfig.NinjaOne
+                    $PsaLinkingAvailable = ($HaloConfig -and $HaloConfig.Enabled) -or ($NinjaConfig.Enabled -and $NinjaConfig.TicketingEnabled)
 
-                    if ($HaloConfig -and $HaloConfig.Enabled) {
+                    if ($PsaLinkingAvailable) {
                         # Resolve an affected user from the scheduled task's own parameters first.
                         # User-targeted tasks (Edit user, license changes, sign-in state) carry the
                         # user in Parameters while their results often have no UPN column. A UPN-like
@@ -333,6 +339,30 @@ function Send-CIPPScheduledTaskAlert {
                             }
                         }
 
+                        # Device-targeted tasks carry the Intune managed device id (GUID/DeviceId, or
+                        # DeviceFilter on New-CIPPDeviceAction) or the Entra device id (Device on the LAPS
+                        # and recovery key commands), sometimes with a serial or name.
+                        $DeviceIntuneId = $null
+                        $DeviceEntraId = $null
+                        foreach ($DeviceKey in @('GUID', 'DeviceId', 'ManagedDeviceId', 'DeviceID', 'DeviceFilter', 'Device')) {
+                            $DeviceValue = $TaskParameters.$DeviceKey
+                            if ($DeviceValue -isnot [string] -and $null -ne $DeviceValue.value -and $DeviceValue.value -is [string]) { $DeviceValue = $DeviceValue.value }
+                            if ($DeviceValue -is [string] -and $DeviceValue -match $GuidPattern) {
+                                if ($DeviceKey -eq 'Device') { $DeviceEntraId = $DeviceValue } else { $DeviceIntuneId = $DeviceValue }
+                                break
+                            }
+                        }
+                        $DeviceSerial = @('SerialNumber', 'serialNumber') | ForEach-Object { $TaskParameters.$_ } | Where-Object { $_ -is [string] -and -not [string]::IsNullOrWhiteSpace($_) -and $_ -notmatch '%' } | Select-Object -First 1
+                        $DeviceName = @('DeviceName', 'deviceName') | ForEach-Object { $TaskParameters.$_ } | Where-Object { $_ -is [string] -and -not [string]::IsNullOrWhiteSpace($_) -and $_ -notmatch '%' } | Select-Object -First 1
+                        if ($DeviceIntuneId -or $DeviceEntraId -or $DeviceSerial) {
+                            $TaskAffectedDevice = [pscustomobject]@{
+                                IntuneId      = $DeviceIntuneId
+                                EntraDeviceId = $DeviceEntraId
+                                SerialNumber  = $DeviceSerial
+                                DisplayName   = $DeviceName
+                            }
+                        }
+
                         # Per-task PsaTicketStrategy (configured on the task) overrides the global
                         # HaloPSA.LinkTicketsToUsers toggle. Lets MSPs decide on a per-task basis
                         # whether a wide result set (e.g. "users without MFA") should produce one
@@ -341,7 +371,7 @@ function Send-CIPPScheduledTaskAlert {
                         $ShouldSplit = switch ($TaskStrategy) {
                             'split' { $true }
                             'consolidated' { $false }
-                            default { [bool]$HaloConfig.LinkTicketsToUsers }
+                            default { [bool]($HaloConfig.LinkTicketsToUsers -or $NinjaConfig.LinkTicketsToUsers) }
                         }
 
                         if ($ShouldSplit -and $Results -is [array] -and $Results.Count -gt 0 -and $Results[0] -isnot [string]) {
@@ -361,16 +391,16 @@ function Send-CIPPScheduledTaskAlert {
                                     # This path rebuilds the body from the grouped rows instead of using
                                     # $HTML, so everything appended to $HTML after the table - the snooze
                                     # buttons and the alert comment
-                                    $GroupBody = $GroupHTMLFragment -replace '\[\[BR\]\]', '<br />' -replace '<table>', "$AlertHeader $TableDesign<table class=adaptiveTable>" | Out-String
-                                    $GroupBody += Get-AlertSnoozeLinksHtml -Rows $Group.Group -CIPPURL $SnoozeCIPPURL -CmdletName $TaskInfo.Command -Tenant $TenantFilter
-                                    $GroupBody += $AlertCommentHtml
-                                    $GroupHTML = ConvertTo-PSAHtml -Html $GroupBody
+                                    $GroupTable = $GroupHTMLFragment -replace '\[\[BR\]\]', '<br />' -replace '<table>', "$AlertHeader $TableDesign<table class=adaptiveTable>" | Out-String
+                                    $GroupSnooze = Get-AlertSnoozeLinksHtml -Rows $Group.Group -CIPPURL $SnoozeCIPPURL -CmdletName $TaskInfo.Command -Tenant $TenantFilter
+                                    $GroupHTML = ConvertTo-PSAHtml -Html (-join ($GroupTable, $GroupSnooze, $AlertCommentHtml))
 
                                     if ([string]::IsNullOrWhiteSpace($GroupKey)) {
                                         # Rows without a usable user identifier - fall back to the
                                         # task-level affected user if one was resolved.
                                         $GroupParams = @{ Type = 'psa'; Title = $title; HTMLContent = $GroupHTML; TenantFilter = $TenantFilter; PSAReference = $PsaReference; PSATicketId = $PsaTicketId; PSAConsolidationKey = $PsaConsolidationKey }
                                         if ($TaskAffectedUser) { $GroupParams.AffectedUser = $TaskAffectedUser }
+                                        if ($TaskAffectedDevice) { $GroupParams.AffectedDevice = $TaskAffectedDevice }
                                         if ($TaskPsaPriority) { $GroupParams.PsaTicketPriority = $TaskPsaPriority }
                                         $Outcomes.Add([pscustomobject]@{ Channel = 'PSA'; Result = [string]((Send-CIPPAlert @GroupParams) -join ' ') })
                                     } else {
@@ -383,6 +413,7 @@ function Send-CIPPScheduledTaskAlert {
                                         }
                                         $UserParams = @{ Type = 'psa'; Title = $UserTitle; HTMLContent = $GroupHTML; TenantFilter = $TenantFilter; AffectedUser = $AffectedUser; PSAReference = $PsaReference; PSATicketId = $PsaTicketId; PSAConsolidationKey = $(if ($PsaConsolidationKey) { "$PsaConsolidationKey|$GroupKey" }) }
                                         if ($TaskPsaPriority) { $UserParams.PsaTicketPriority = $TaskPsaPriority }
+                                        if ($TaskAffectedDevice) { $UserParams.AffectedDevice = $TaskAffectedDevice }
                                         $Outcomes.Add([pscustomobject]@{ Channel = 'PSA'; Result = [string]((Send-CIPPAlert @UserParams) -join ' ') })
                                     }
                                 }
@@ -397,6 +428,7 @@ function Send-CIPPScheduledTaskAlert {
                 if (-not $PsaSplitSent) {
                     $PsaParams = @{ Type = 'psa'; Title = $title; HTMLContent = (ConvertTo-PSAHtml -Html $HTML); TenantFilter = $TenantFilter; PSAReference = $PsaReference; PSATicketId = $PsaTicketId; PSAConsolidationKey = $PsaConsolidationKey }
                     if ($TaskAffectedUser) { $PsaParams.AffectedUser = $TaskAffectedUser }
+                    if ($TaskAffectedDevice) { $PsaParams.AffectedDevice = $TaskAffectedDevice }
                     if ($TaskPsaPriority) { $PsaParams.PsaTicketPriority = $TaskPsaPriority }
                     $Outcomes.Add([pscustomobject]@{ Channel = 'PSA'; Result = [string]((Send-CIPPAlert @PsaParams) -join ' ') })
                 }

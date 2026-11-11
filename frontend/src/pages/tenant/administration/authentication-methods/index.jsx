@@ -6,6 +6,7 @@ import { CippTablePage } from "../../../../components/CippComponents/CippTablePa
 import CippFormComponent from "../../../../components/CippComponents/CippFormComponent.jsx";
 import { Box } from "@mui/material";
 import { useSettings } from "../../../../hooks/use-settings.js";
+import { isMultiTenant } from "../../../../utils/tenant-selection";
 
 const Page = () => {
   const pageTitle = "Policies";
@@ -22,7 +23,7 @@ const Page = () => {
     { label: "Disabled", value: "disabled" },
   ];
 
-  // Group picker reused by "Deploy to Custom Group" and the Email exclude-groups field
+  // Group picker reused by "Deploy to Custom Group" and the exclude-groups field
   const groupFieldApi = {
     url: "/api/ListGraphRequest",
     dataKey: "Results",
@@ -48,16 +49,16 @@ const Page = () => {
   // Match a method row by id, case-insensitively (Graph casing varies)
   const isId = (row, id) => row?.id?.toLowerCase() === id.toLowerCase();
 
-  // Methods that expose configurable sub-settings (others only support enable/disable + targeting)
-  const configurableMethods = [
-    "TemporaryAccessPass",
-    "MicrosoftAuthenticator",
-    "Email",
-    "QRCodePin",
-    "Fido2",
-    "Voice",
-    "SMS",
-  ];
+  // Every method supports exclude targets, so this field is added to each method's field set
+  const excludeGroupsField = {
+    type: "autoComplete",
+    name: "ExcludeGroupIds",
+    label: "Exclude group(s)",
+    multiple: true,
+    creatable: false,
+    rowDefaultPath: "excludeTargets",
+    api: groupFieldApi,
+  };
 
   // Per-method field definitions for the "Configure" action. Keyed by method id so the
   // right set can be looked up directly from the row, instead of relying on dialog-level
@@ -137,15 +138,6 @@ const Page = () => {
         options: tristateOptions,
         rowDefaultPath: "allowExternalIdToUseEmailOtp",
       },
-      {
-        type: "autoComplete",
-        name: "EmailExcludeGroupIds",
-        label: "Exclude group(s)",
-        multiple: true,
-        creatable: false,
-        rowDefaultPath: "excludeTargets",
-        api: groupFieldApi,
-      },
     ],
     QRCodePin: [
       {
@@ -194,10 +186,10 @@ const Page = () => {
     ],
   };
 
-  // Look up the field set for whichever configurable method this row is
+  // Look up the field set for whichever method this row is
   const getMethodFields = (row) => {
     const methodId = Object.keys(methodFieldDefs).find((id) => isId(row, id));
-    return methodId ? methodFieldDefs[methodId] : [];
+    return [...(methodId ? methodFieldDefs[methodId] : []), excludeGroupsField];
   };
 
   const getNested = (obj, path) =>
@@ -209,7 +201,7 @@ const Page = () => {
   // Field names match the backend parameter names, so methodFieldDefs is the single source of truth.
   const buildConfigBody = (row, formData) => {
     const body = {
-      tenantFilter: tenant === "AllTenants" && row?.Tenant ? row.Tenant : tenant,
+      tenantFilter: isMultiTenant(tenant) && row?.Tenant ? row.Tenant : tenant,
       id: row?.id,
       state: row?.state,
     };
@@ -270,7 +262,7 @@ const Page = () => {
       customDataformatter: (row, action, formData) => {
         const selectedGroups = Array.isArray(formData?.groupTargets) ? formData.groupTargets : [];
         return {
-          tenantFilter: tenant === "AllTenants" && row?.Tenant ? row.Tenant : tenant,
+          tenantFilter: isMultiTenant(tenant) && row?.Tenant ? row.Tenant : tenant,
           state: row?.state,
           id: row?.id,
           GroupIds: selectedGroups.map((group) => group.value).filter(Boolean),
@@ -286,7 +278,7 @@ const Page = () => {
       hideBulk: true,
       confirmText: 'Are you sure you want to scope "[id]" to all users?',
       customDataformatter: (row) => ({
-        tenantFilter: tenant === "AllTenants" && row?.Tenant ? row.Tenant : tenant,
+        tenantFilter: isMultiTenant(tenant) && row?.Tenant ? row.Tenant : tenant,
         state: row?.state,
         id: row?.id,
         GroupIds: ["all_users"],
@@ -299,7 +291,7 @@ const Page = () => {
       icon: <CippIcons.Settings />,
       url: "/api/SetAuthMethod",
       hideBulk: true,
-      condition: (row) => row?.state === "enabled" && configurableMethods.some((m) => isId(row, m)),
+      condition: (row) => row?.state === "enabled",
       confirmText: "Configure authentication method settings.",
       // Computed straight from the row via CippApiDialog's existing `defaultvalues` function
       // prop — no dialog-level default-value handling needed for this action.

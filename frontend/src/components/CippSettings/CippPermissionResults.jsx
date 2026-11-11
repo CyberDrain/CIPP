@@ -7,6 +7,7 @@ import { CippDataTable } from "../CippTable/CippDataTable";
 import { ApiPostCall } from "../../api/ApiCall";
 import { CippApiResults } from "../CippComponents/CippApiResults";
 import { useEffect, useState } from "react";
+import { CippCheckFatalAlert } from "./CippCheckFatalAlert";
 
 export const CippPermissionResults = (props) => {
   const {
@@ -16,6 +17,7 @@ export const CippPermissionResults = (props) => {
     setOffcanvasVisible,
     importReport,
     setCardIcon,
+    isPrimaryPartner,
   } = props;
   const [results, setResults] = useState({});
 
@@ -33,6 +35,8 @@ export const CippPermissionResults = (props) => {
       results?.Results?.ErrorMessages?.length > 0
     ) {
       setCardIcon(<CippIcons.Cancel />);
+    } else if (results?.Results?.WarningMessages?.length > 0) {
+      setCardIcon(<CippIcons.Warning />);
     } else {
       setCardIcon(<CippIcons.CheckCircle />);
     }
@@ -67,6 +71,10 @@ export const CippPermissionResults = (props) => {
     });
   };
 
+  // The check never got a token - the detail fields would all be blank
+  const fatalError =
+    results?.Results?.ErrorMessages?.length > 0 && !results?.Results?.AccessTokenDetails?.Name;
+
   var propertyItems = [];
   accessTokenHeaders.forEach((header) => {
     propertyItems.push({
@@ -88,11 +96,32 @@ export const CippPermissionResults = (props) => {
 
   return (
     <>
-      {propertyItems.length > 0 && (
+      {propertyItems.length > 0 && !fatalError && (
         <CippPropertyList
           isFetching={!importReport && executeCheck?.isFetching}
           propertyItems={propertyItems}
           layout="double"
+          showDivider={false}
+        />
+      )}
+      {fatalError && results?.Results?.AccessTokenDetails?.AppId && (
+        <CippPropertyList
+          isFetching={!importReport && executeCheck?.isFetching}
+          propertyItems={[
+            {
+              label: "App Registration",
+              value: (
+                <Link
+                  href={`https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/${results?.Results?.AccessTokenDetails?.AppId}`}
+                  target="_blank"
+                >
+                  {results?.Results?.AccessTokenDetails?.AppName ||
+                    results?.Results?.AccessTokenDetails?.AppId}
+                </Link>
+              ),
+            },
+          ]}
+          layout="single"
           showDivider={false}
         />
       )}
@@ -111,6 +140,12 @@ export const CippPermissionResults = (props) => {
           Failed to load permission check results. Please try refreshing or contact support if the
           issue persists.
         </Alert>
+      ) : fatalError ? (
+        <>
+          {results?.Results?.ErrorMessages?.map((error, index) => (
+            <CippCheckFatalAlert key={index} message={error} isPrimaryPartner={isPrimaryPartner} />
+          ))}
+        </>
       ) : (
         <>
           <List>
@@ -121,6 +156,16 @@ export const CippPermissionResults = (props) => {
                     <CippIcons.CheckCircle />
                   </SvgIcon>
                   {message}
+                </Typography>
+              </ListItem>
+            ))}
+            {results?.Results?.WarningMessages?.map((warning, index) => (
+              <ListItem key={`warning-${index}`} sx={{ py: 0 }}>
+                <Typography variant="body2">
+                  <SvgIcon fontSize="sm" color="warning" style={{ marginRight: 4 }}>
+                    <CippIcons.Warning />
+                  </SvgIcon>
+                  {warning}
                 </Typography>
               </ListItem>
             ))}
@@ -146,7 +191,9 @@ export const CippPermissionResults = (props) => {
             )}
           </List>
 
-          <CippOffCanvas
+        </>
+      )}
+      <CippOffCanvas
             size="lg"
             title="Permission Details"
             visible={offcanvasVisible}
@@ -198,6 +245,15 @@ export const CippPermissionResults = (props) => {
                   simpleColumns={["Application", "Type", "Permission"]}
                 />
               </>
+            )}
+            {results?.Results?.UngrantedPermissions?.length > 0 && (
+              <CippDataTable
+                title="Permissions not granted in your tenant"
+                isFetching={!importReport && executeCheck?.isFetching}
+                refreshFunction={executeCheck}
+                data={results?.Results?.UngrantedPermissions}
+                simpleColumns={["Type", "Permission"]}
+              />
             )}
             <CippApiResults apiObject={startCPVRefresh} />
             {results?.Results?.CPVRefreshList?.length > 0 && (
@@ -255,9 +311,7 @@ export const CippPermissionResults = (props) => {
                 />
               </>
             )}
-          </CippOffCanvas>
-        </>
-      )}
+      </CippOffCanvas>
     </>
   );
 };

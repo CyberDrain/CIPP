@@ -33,8 +33,9 @@ import {
   TimelineSeparator,
 } from '@mui/lab'
 import { Grid } from '@mui/system'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
+import NextLink from 'next/link'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
 import { TabbedLayout } from '../../../../layouts/TabbedLayout'
 import tabOptions from '../tabOptions.json'
@@ -62,6 +63,7 @@ import { parseCippDate } from '../../../../utils/parse-cipp-date'
 import { CippOffCanvas } from '../../../../components/CippComponents/CippOffCanvas'
 import { CippAutoComplete } from '../../../../components/CippComponents/CippAutocomplete'
 import CippJsonView from '../../../../components/CippFormPages/CippJSONView'
+import { isMultiTenant } from '../../../../utils/tenant-selection'
 
 // Manual-task instance keys are 'ManualTask#n', so match by prefix. standardName can be
 // absent on malformed or partially hydrated rows - the check must never throw.
@@ -389,6 +391,11 @@ const outcomeTimeline = {
     color: 'primary',
     chipColor: 'primary',
     icon: <CippIcons.ArrowForward />,
+  },
+  'Stage Moved Back': {
+    color: 'warning',
+    chipColor: 'warning',
+    icon: <CippIcons.ArrowBack />,
   },
   Deleted: { color: 'error', chipColor: 'error', icon: <CippIcons.RemoveCircle /> },
   'Delete Failed': {
@@ -772,7 +779,7 @@ const Page = () => {
     setHistoryFilters((prev) => ({ ...prev, [name]: value }))
   }
   const isTenantView = viewMode === 'tenant'
-  const isAllTenants = currentTenant === 'AllTenants'
+  const isAllTenants = isMultiTenant(currentTenant)
   const isTemplateView = viewMode === 'template'
 
   // Refetch everything baseline-related after any triage/run/override action:
@@ -807,6 +814,25 @@ const Page = () => {
       !!currentTenant &&
       !isAllTenants,
   })
+  const expiryPolicy =
+    ApiGetCall({ url: '/api/ListBaselineExpiryPolicy', queryKey: 'BaselineExpiryPolicy' }).data ??
+    {}
+  const expiryDays = expiryPolicy.defaultDays || expiryPolicy.maxDays || 0
+  const expiryDefaults = () =>
+    expiryDays ? { expires: Math.floor(Date.now() / 1000) + expiryDays * 86400 } : {}
+  const expiryField = (formHook) => (
+    <CippFormComponent
+      type="datePicker"
+      name="expires"
+      label={
+        expiryPolicy.maxDays
+          ? `Expires (within ${expiryPolicy.maxDays} days)`
+          : 'Expires (optional)'
+      }
+      dateTimeType="date"
+      formControl={formHook}
+    />
+  )
   // Same filter/queryKey scheme as the Fleet Overview so both pages share cache entries.
   // router.query is empty on the first render, so URL values are the fallback until the user picks.
   const baselineId =
@@ -886,7 +912,24 @@ const Page = () => {
       value: index + 1,
     })),
   ]
-  const standardAggregates = aggregateApi.data?.standards ?? []
+  // A standard row spans tenants that may resolve it from different baselines, so it only
+  // names one to edit when the filter picks it or every tenant agrees.
+  const standardAggregates = useMemo(
+    () =>
+      (aggregateApi.data?.standards ?? []).map((row) => {
+        const templateIds = [
+          ...new Set(
+            (row.rows ?? []).map((entry) => entry.templateId).filter(Boolean)
+          ),
+        ]
+        return {
+          ...row,
+          templateId:
+            baselineId || (templateIds.length === 1 ? templateIds[0] : null),
+        }
+      }),
+    [aggregateApi.data, baselineId]
+  )
   const tenant = {
     displayName: currentTenant,
     tenantFilter: currentTenant,
@@ -904,6 +947,7 @@ const Page = () => {
     ...(resolvedApi.data?.summary ?? {}),
     rows: resolvedApi.data?.rows ?? [],
   }
+  const overrideCount = tenant.rows.filter((row) => row.sourceTemplate === 'Tenant Override').length
   const stageStates = resolvedApi.data?.stageStates ?? []
 
   const triageFormFields = ({ formHook }) => (
@@ -915,13 +959,7 @@ const Page = () => {
         formControl={formHook}
         required
       />
-      <CippFormComponent
-        type="datePicker"
-        name="expires"
-        label="Expires (optional)"
-        dateTimeType="date"
-        formControl={formHook}
-      />
+      {expiryField(formHook)}
       <CippFormComponent
         type="switch"
         name="remediateOnExpire"
@@ -958,11 +996,23 @@ const Page = () => {
       url: '/api/ExecBaselineRun',
       icon: <CippIcons.PlayArrow />,
       color: 'success',
-      data: {
-        mode: '!oneoff',
-        tenantFilter: 'tenantFilter',
-        standard: 'standardName',
-      },
+      // One request per tenant: the backend refuses a second CA deploy for a tenant while one runs.
+      customDataformatter: (rows) =>
+        Array.isArray(rows)
+          ? [...new Set(rows.map((row) => row.tenantFilter))].map(
+              (tenantFilter) => ({
+                mode: 'oneoff',
+                tenantFilter,
+                standard: rows
+                  .filter((row) => row.tenantFilter === tenantFilter)
+                  .map((row) => row.standardName),
+              })
+            )
+          : {
+              mode: 'oneoff',
+              tenantFilter: rows.tenantFilter,
+              standard: rows.standardName,
+            },
       confirmText:
         'Fix [standardLabel] on [tenantFilter] now? CIPP immediately applies the configured expected value.',
       multiPost: false,
@@ -986,6 +1036,7 @@ const Page = () => {
         standard: 'standardName',
       },
       children: triageFormFields,
+      defaultvalues: expiryDefaults,
       confirmText:
         'Accept the current deviation on [standardLabel]? The tenant counts as aligned, and alerts are silenced until the acceptance expires.',
       multiPost: false,
@@ -1075,6 +1126,7 @@ const Page = () => {
       color: 'info',
       // Overrides configure ONE tenant's settings in a dialog - meaningless as a bulk action.
       hideBulk: true,
+      defaultvalues: expiryDefaults,
       data: {
         action: '!createOverride',
         tenantFilter: 'tenantFilter',
@@ -1101,11 +1153,20 @@ const Page = () => {
                 row.expectedValue
               )}
             />
+            <CippFormComponent
+              type="textField"
+              name="reason"
+              label="Reason"
+              formControl={formHook}
+              validators={{ required: 'A reason is required' }}
+              required
+            />
+            {expiryField(formHook)}
           </Stack>
         );
       },
       confirmText:
-        'Create a tenant-specific override of [standardLabel] for [tenantFilter]?',
+        'Create a tenant-specific override of [standardLabel] for [tenantFilter]? When it expires, the next baseline run removes it and the inherited configuration applies again.',
       multiPost: false,
       relatedQueryKeys,
       condition: (row) => {
@@ -1198,6 +1259,7 @@ const Page = () => {
       icon: <CippIcons.Edit />,
       color: 'success',
       target: '_self',
+      hideCondition: (row) => !row.templateId,
     },
   ]
 
@@ -1341,6 +1403,21 @@ const Page = () => {
           value: row.deviationExpires
             ? parseCippDate(row.deviationExpires).toLocaleDateString()
             : 'Never',
+        })
+      }
+      if (row.sourceTemplate === 'Tenant Override' && row.overrideReason) {
+        const overrideExpired =
+          row.overrideExpires && Number(row.overrideExpires) * 1000 <= Date.now()
+        properties.push({ label: 'Override Reason', value: row.overrideReason })
+        properties.push({ label: 'Override Set By', value: row.overrideBy })
+        properties.push({
+          label: 'Override Expires',
+          value: row.overrideExpires
+            ? `${parseCippDate(row.overrideExpires).toLocaleDateString()}${
+                overrideExpired ? ' (expired - removed on the next run)' : ''
+              }`
+            : 'Never',
+          ...(overrideExpired ? { color: 'warning' } : {}),
         })
       }
       if (row.pendingVerification) {
@@ -2175,6 +2252,43 @@ const Page = () => {
       multiPost: false,
       relatedQueryKeys,
     },
+    {
+      label: 'Move Tenants to Next Stage',
+      type: 'POST',
+      url: '/api/ExecBaselineStage',
+      icon: <CippIcons.ArrowForward />,
+      hideBulk: true,
+      condition: (row) =>
+        (row.tenantStates ?? []).some((state) => state.manualAdvance),
+      children: ({ formHook, row }) => (
+        <Box sx={{ mt: 2 }}>
+          <CippFormComponent
+            type="autoComplete"
+            name="tenants"
+            label="Tenants awaiting approval"
+            formControl={formHook}
+            multiple={true}
+            creatable={false}
+            options={(row.tenantStates ?? [])
+              .filter((state) => state.manualAdvance)
+              .map((state) => ({
+                label: `${state.tenantName} (stage ${state.currentStage} to ${state.nextStageName})`,
+                value: state.tenantFilter,
+              }))}
+            validators={{ required: 'Select at least one tenant' }}
+          />
+        </Box>
+      ),
+      customDataformatter: (row, action, formData) =>
+        (formData.tenants ?? []).map((tenant) => ({
+          action: 'advanceStage',
+          tenantFilter: tenant.value,
+          templateId: row.GUID,
+        })),
+      confirmText:
+        'Move the selected tenants of [templateName] into their next stage? Each tenant receives the standards of that stage on the next run.',
+      relatedQueryKeys,
+    },
   ]
 
   const templateOffCanvas = {
@@ -2295,6 +2409,24 @@ const Page = () => {
                         Re-evaluate Stage
                       </Button>
                     )}
+                    {state.currentStage > 1 && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<CippIcons.ArrowBack />}
+                        onClick={() => {
+                          setAdvanceTarget({
+                            action: 'previous',
+                            tenantFilter: state.tenantFilter,
+                            templateId: row.GUID,
+                            templateName: row.templateName,
+                          })
+                          advanceDialog.handleOpen()
+                        }}
+                      >
+                        Move Back
+                      </Button>
+                    )}
                   </Stack>
                 </Stack>
                 {state.nextStage ? (
@@ -2349,6 +2481,11 @@ const Page = () => {
     {
       filterName: 'License Missing',
       value: [{ id: 'status', value: 'Skipped - No License' }],
+      type: 'column',
+    },
+    {
+      filterName: 'Tenant Overrides',
+      value: [{ id: 'sourceTemplate', value: 'Tenant Override', filterFn: 'equals' }],
       type: 'column',
     },
   ]
@@ -2466,13 +2603,17 @@ const Page = () => {
                 }}
               >
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography
+                  <Link
+                    component={NextLink}
+                    href={`/tenant/baselines/template?id=${state.templateId}`}
                     variant="subtitle2"
-                    sx={{ fontWeight: 600 }}
+                    color="inherit"
+                    underline="hover"
+                    sx={{ fontWeight: 600, display: 'block' }}
                     noWrap
                   >
                     {state.templateName}
-                  </Typography>
+                  </Link>
                   <Typography variant="caption" sx={{
                     color: "text.secondary"
                   }}>
@@ -2540,56 +2681,68 @@ const Page = () => {
                     - advances when {describeStageConditions(state.nextStage)}
                   </Typography>
                 )}
-                {state.manualAdvance && (
+                {(state.nextStage || state.currentStage > 1) && (
                   <>
                     <Box sx={{ flexGrow: 1 }} />
                     <Divider sx={{ my: 1 }} />
-                    <Stack direction="row" sx={{
+                    <Stack direction="row" spacing={1} sx={{
                       justifyContent: "flex-end"
                     }}>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        startIcon={<CippIcons.ArrowForward />}
-                        onClick={() => {
-                          setAdvanceTarget({
-                            tenantFilter: tenant.tenantId,
-                            templateId: state.templateId,
-                            templateName: state.templateName,
-                            nextStageName: state.nextStageName,
-                          })
-                          advanceDialog.handleOpen()
-                        }}
-                      >
-                        Move to next stage ({state.nextStageName})
-                      </Button>
-                    </Stack>
-                  </>
-                )}
-                {state.nextStage && !state.manualAdvance && (
-                  <>
-                    <Box sx={{ flexGrow: 1 }} />
-                    <Divider sx={{ my: 1 }} />
-                    <Stack direction="row" sx={{
-                      justifyContent: "flex-end"
-                    }}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<CippIcons.Refresh />}
-                        onClick={() => {
-                          setAdvanceTarget({
-                            action: 'evaluate',
-                            tenantFilter: tenant.tenantId,
-                            templateId: state.templateId,
-                            templateName: state.templateName,
-                            nextStageName: state.nextStageName,
-                          })
-                          advanceDialog.handleOpen()
-                        }}
-                      >
-                        Re-evaluate stage conditions
-                      </Button>
+                      {state.currentStage > 1 && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<CippIcons.ArrowBack />}
+                          onClick={() => {
+                            setAdvanceTarget({
+                              action: 'previous',
+                              tenantFilter: tenant.tenantId,
+                              templateId: state.templateId,
+                              templateName: state.templateName,
+                            })
+                            advanceDialog.handleOpen()
+                          }}
+                        >
+                          Move back a stage
+                        </Button>
+                      )}
+                      {state.manualAdvance && (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          startIcon={<CippIcons.ArrowForward />}
+                          onClick={() => {
+                            setAdvanceTarget({
+                              tenantFilter: tenant.tenantId,
+                              templateId: state.templateId,
+                              templateName: state.templateName,
+                              nextStageName: state.nextStageName,
+                            })
+                            advanceDialog.handleOpen()
+                          }}
+                        >
+                          Move to next stage ({state.nextStageName})
+                        </Button>
+                      )}
+                      {state.nextStage && !state.manualAdvance && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<CippIcons.Refresh />}
+                          onClick={() => {
+                            setAdvanceTarget({
+                              action: 'evaluate',
+                              tenantFilter: tenant.tenantId,
+                              templateId: state.templateId,
+                              templateName: state.templateName,
+                              nextStageName: state.nextStageName,
+                            })
+                            advanceDialog.handleOpen()
+                          }}
+                        >
+                          Re-evaluate stage conditions
+                        </Button>
+                      )}
                     </Stack>
                   </>
                 )}
@@ -2622,6 +2775,13 @@ const Page = () => {
           color: 'error',
         },
         {
+          icon: <CippIcons.Tune />,
+          name: 'Tenant Overrides',
+          data: overrideCount,
+          color: 'info',
+          toolTip: 'Standards configured by a tenant override instead of a baseline. Review them periodically.',
+        },
+        {
           icon: <CippIcons.Key />,
           name: 'License Missing',
           data: `${tenant.total ? Math.round((tenant.licenseMissing / tenant.total) * 100) : 0}%`,
@@ -2640,25 +2800,27 @@ const Page = () => {
         <CippApiDialog
           createDialog={advanceDialog}
           title={
-            advanceTarget.action === 'evaluate'
-              ? 'Re-evaluate Stage'
-              : 'Move to Next Stage'
+            {
+              evaluate: 'Re-evaluate Stage',
+              previous: 'Move Back a Stage',
+            }[advanceTarget.action] ?? 'Move to Next Stage'
           }
           api={{
             url: '/api/ExecBaselineStage',
             type: 'POST',
             data: {
-              action:
-                advanceTarget.action === 'evaluate'
-                  ? '!evaluate'
-                  : '!advanceStage',
+              action: `!${advanceTarget.action ?? 'advanceStage'}`,
               tenantFilter: 'tenantFilter',
               templateId: 'templateId',
             },
             confirmText:
-              advanceTarget.action === 'evaluate'
-                ? 'Check now whether [tenantFilter] meets the conditions for stage [nextStageName] of [templateName]? If they are met it moves there and receives the standards of that stage on the next run.'
-                : 'Move [tenantFilter] into stage [nextStageName] of [templateName]? The tenant receives all standards from that stage on the next run.',
+              {
+                evaluate:
+                  'Check now whether [tenantFilter] meets the conditions for stage [nextStageName] of [templateName]? If they are met it moves there and receives the standards of that stage on the next run.',
+                previous:
+                  'Move [tenantFilter] back one stage in [templateName]? Standards from its current stage stop applying on the next run, but settings already applied stay in place. If it still meets the conditions of the stage it left, the next scheduled run moves it forward again.',
+              }[advanceTarget.action] ??
+              'Move [tenantFilter] into stage [nextStageName] of [templateName]? The tenant receives all standards from that stage on the next run.',
             relatedQueryKeys,
           }}
           row={advanceTarget}
@@ -3467,6 +3629,8 @@ const Page = () => {
                 'deviationAt',
                 'deviationExpires',
                 'sourceTemplate',
+                'overrideReason',
+                'overrideExpires',
                 'lastRun',
               ]}
             />
@@ -3588,7 +3752,7 @@ const Page = () => {
 }
 
 Page.getLayout = (page) => (
-  <DashboardLayout>
+  <DashboardLayout usesTenant={false}>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
 )

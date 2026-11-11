@@ -34,6 +34,7 @@ function Get-CIPPSchedulerBlockedCommands {
         'New-DeviceLogin'
         'Clear-CippTokenCache'
         'Remove-CIPPDirectTenantToken'
+        'Remove-CIPPPartnerTenant'
 
         # Env
         'Set-CIPPEnvVarBackup'
@@ -47,6 +48,7 @@ function Get-CIPPSchedulerBlockedCommands {
         # Extension authentication tokens
         'Get-GradientToken'
         'Get-HaloToken'
+        'Invoke-SyncroRequest'
         'Get-NinjaOneToken'
         'Get-SherwebAuthentication'
         'Get-HIBPAuth'
@@ -99,6 +101,7 @@ function Get-CIPPSchedulerBlockedCommands {
 
         # Tenant enumeration - would reveal full tenant list
         'Get-Tenants'
+        'Get-CIPPPartnerTenantList'
 
         # SAM permission enumeration - exposes which permissions the SAM app holds
         'Get-CippSamPermissions'

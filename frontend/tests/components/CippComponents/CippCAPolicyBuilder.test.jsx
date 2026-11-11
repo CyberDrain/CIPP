@@ -27,7 +27,7 @@ const livePolicy = {
 }
 
 let form
-const Harness = ({ existingPolicy }) => {
+const Harness = ({ existingPolicy, live = false }) => {
   const formControl = useForm({ mode: 'onChange' })
   useEffect(() => {
     form = formControl
@@ -36,7 +36,8 @@ const Harness = ({ existingPolicy }) => {
     <CippCAPolicyBuilder
       formControl={formControl}
       existingPolicy={existingPolicy}
-      showNamedLocations
+      showNamedLocations={!live}
+      directorySearch={live}
     />
   )
 }
@@ -79,6 +80,69 @@ describe('CippCAPolicyBuilder template named locations', () => {
   })
 })
 
+// A template captured from a live policy keeps the strength as Graph expands it. Deploy matches
+// a custom strength by displayName, so the source tenant's id alone cannot deploy anywhere else.
+const authStrengthTemplate = {
+  displayName: 'CTS008 - Require TAP to Register Devices',
+  state: 'enabled',
+  conditions: {
+    clientAppTypes: ['all'],
+    applications: { includeUserActions: ['urn:user:registersecurityinfo'] },
+    users: { includeUsers: ['All'] },
+  },
+  grantControls: {
+    operator: 'OR',
+    authenticationStrength: {
+      id: '6c5ea24f-7a1b-4c2d-bbc3-f5a8441dff78',
+      displayName: 'TAP Only',
+      description: '',
+      policyType: 'custom',
+      requirementsSatisfied: 'mfa',
+      allowedCombinations: [
+        'temporaryAccessPassOneTime',
+        'temporaryAccessPassMultiUse',
+      ],
+    },
+  },
+}
+
+describe('CippCAPolicyBuilder authentication strength', () => {
+  it('saves a template with the captured strength intact', async () => {
+    renderWithProviders(<Harness existingPolicy={authStrengthTemplate} />)
+
+    await waitFor(() =>
+      expect(
+        form.getValues('grantControls.authenticationStrength.id')
+      ).toBeTruthy()
+    )
+    expect(
+      extractCAPolicyJSON(form.getValues(), authStrengthTemplate).grantControls
+        .authenticationStrength
+    ).toEqual(authStrengthTemplate.grantControls.authenticationStrength)
+  })
+
+  it('saves only the id once a different strength is picked', () => {
+    const policy = extractCAPolicyJSON(
+      {
+        grantControls: {
+          operator: 'OR',
+          authenticationStrength: {
+            id: {
+              label: 'Phishing-resistant MFA',
+              value: '00000000-0000-0000-0000-000000000004',
+            },
+          },
+        },
+      },
+      authStrengthTemplate
+    )
+
+    expect(policy.grantControls.authenticationStrength).toEqual({
+      id: '00000000-0000-0000-0000-000000000004',
+    })
+  })
+})
+
 describe('CippCAPolicyBuilder authentication flow transfer methods', () => {
   it('loads both methods of a live policy into the multi-select instead of dropping them', async () => {
     renderWithProviders(<Harness existingPolicy={livePolicy} />)
@@ -108,5 +172,113 @@ describe('CippCAPolicyBuilder authentication flow transfer methods', () => {
     expect(policy.conditions.authenticationFlows.transferMethods).toBe(
       livePolicy.conditions.authenticationFlows.transferMethods
     )
+  })
+})
+
+// A live policy that applies a Global Secure Access security profile. Graph mirrors the profile
+// into networkAccessSecurity.
+const profileId = '33333333-3333-3333-3333-333333333333'
+const withSessionControls = (sessionControls) => ({
+  displayName: 'Web filtering for staff',
+  state: 'disabled',
+  conditions: {
+    clientAppTypes: ['all'],
+    applications: { includeApplications: ['All'] },
+    users: { includeUsers: ['None'] },
+  },
+  sessionControls,
+})
+const loadAndExtract = async (policy, live = false) => {
+  renderWithProviders(<Harness existingPolicy={policy} live={live} />)
+  await waitFor(() =>
+    expect(form.getValues('displayName')).toBe('Web filtering for staff')
+  )
+  return extractCAPolicyJSON(form.getValues(), policy)
+}
+
+describe('CippCAPolicyBuilder session controls', () => {
+  it('drops a disabled sign-in frequency and keeps an enabled one', () => {
+    expect(
+      extractCAPolicyJSON({
+        sessionControls: {
+          signInFrequency: { isEnabled: false, value: 4 },
+          persistentBrowser: { isEnabled: true, mode: 'never' },
+        },
+      }).sessionControls
+    ).toEqual({ persistentBrowser: { isEnabled: true, mode: 'never' } })
+  })
+
+  it('saves a live security profile by id and drops the mirror Graph adds', async () => {
+    const policy = withSessionControls({
+      globalSecureAccessFilteringProfile: { profileId, isEnabled: true },
+      networkAccessSecurity: { policyId: profileId, isEnabled: true },
+    })
+    expect((await loadAndExtract(policy, true)).sessionControls).toEqual({
+      globalSecureAccessFilteringProfile: { profileId, isEnabled: true },
+    })
+  })
+
+  it('drops a disabled security profile session control', async () => {
+    const policy = withSessionControls({
+      globalSecureAccessFilteringProfile: { profileId, isEnabled: false },
+    })
+    expect((await loadAndExtract(policy)).sessionControls).toBeUndefined()
+  })
+
+  it('keeps a security profile template link as a link', async () => {
+    const policy = withSessionControls({
+      globalSecureAccessFilteringProfile: {
+        profileId: { label: 'Staff', value: 'tpl-staff' },
+        isEnabled: true,
+      },
+    })
+    expect((await loadAndExtract(policy)).sessionControls).toEqual(
+      policy.sessionControls
+    )
+  })
+
+  it('keeps a security profile referred to by name as that name', async () => {
+    const policy = withSessionControls({
+      globalSecureAccessFilteringProfile: {
+        profileId: 'Staff',
+        isEnabled: true,
+      },
+    })
+    expect((await loadAndExtract(policy)).sessionControls).toEqual(
+      policy.sessionControls
+    )
+  })
+
+  it('saves a typed profile name as a name and a picked template as a link', () => {
+    const save = (picked) =>
+      extractCAPolicyJSON({
+        sessionControls: {
+          globalSecureAccessFilteringProfile: {
+            isEnabled: true,
+            _profileTemplate: picked,
+          },
+        },
+      }).sessionControls.globalSecureAccessFilteringProfile
+    expect(save({ label: 'Contractors', value: 'Contractors' })).toEqual({
+      isEnabled: true,
+      profileId: 'Contractors',
+    })
+    expect(save({ label: 'Staff', value: 'tpl-staff' })).toEqual({
+      isEnabled: true,
+      profileId: { label: 'Staff', value: 'tpl-staff' },
+    })
+  })
+
+  it('loads the reference into the field each mode edits', async () => {
+    const policy = withSessionControls({
+      globalSecureAccessFilteringProfile: { profileId, isEnabled: true },
+    })
+    await loadAndExtract(policy, true)
+    expect(
+      form.getValues('sessionControls.globalSecureAccessFilteringProfile')
+    ).toEqual({
+      isEnabled: true,
+      profileId: { label: profileId, value: profileId },
+    })
   })
 })

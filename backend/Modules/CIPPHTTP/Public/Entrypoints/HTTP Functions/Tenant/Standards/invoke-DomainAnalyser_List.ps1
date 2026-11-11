@@ -4,7 +4,7 @@ using namespace System.Net
 Function Invoke-DomainAnalyser_List {
     <#
     .FUNCTIONALITY
-        Entrypoint,AnyTenant
+        Entrypoint,AnyTenant,TenantGroup
     .ROLE
         Tenant.DomainAnalyser.Read
     .DESCRIPTION
@@ -17,7 +17,7 @@ Function Invoke-DomainAnalyser_List {
     # Get all the things
 
     if ($Request.Query.tenantFilter -ne 'AllTenants') {
-        $DomainTable.Filter = "TenantId eq '{0}'" -f $Request.Query.tenantFilter
+        $DomainTable.Filter = "TenantId eq '{0}'" -f (ConvertTo-CIPPODataFilterValue -Value $Request.Query.tenantFilter)
     }
 
     try {

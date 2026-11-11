@@ -45,7 +45,7 @@ import { useSettings } from '../../hooks/use-settings'
 import { parseCippDate } from '../../utils/parse-cipp-date'
 import { isEqual } from 'lodash' // Import lodash for deep comparison
 import { useLicenseBackfill } from '../../hooks/use-license-backfill'
-import { licenseIncludesFilterFn } from '../../utils/get-cipp-filter-variant'
+import { booleanEqualsFilterFn, licenseIncludesFilterFn } from '../../utils/get-cipp-filter-variant'
 import { useTableViewMode, useIsNarrowForTables } from '../../hooks/use-breakpoint'
 import { CippMobileCardList } from './CippMobileCardList'
 import { CippPageActionsFab } from '../CippComponents/CippPageActionsFab'
@@ -60,6 +60,7 @@ import {
   sanitizeColumnOrder,
 } from './util-subTables'
 import { attachParentRow, getRowTenant } from '../../utils/resolve-row-templates'
+import { isMultiTenant, isMultiTenantScope } from '../../utils/tenant-selection'
 import {
   dispatchRowOpen,
   partitionRowMenuActions,
@@ -268,6 +269,7 @@ const FILTER_FNS = {
     return String(rowValue).toLowerCase().includes(String(value).toLowerCase())
   },
   licenseIncludes: licenseIncludesFilterFn,
+  booleanEquals: booleanEqualsFilterFn,
   notContains: (row, columnId, value) => {
     const rowValue = row.getValue(columnId)
     if (rowValue === null || rowValue === undefined) {
@@ -310,6 +312,7 @@ const MRT_LOCALIZATION_OVERRIDES = {
   filterNotContains: 'Does Not Contain',
   filterRegex: 'Regex',
   filterLicenseIncludes: 'Includes',
+  filterBooleanEquals: 'Equals',
   filterCustom: 'Custom',
 }
 
@@ -841,12 +844,12 @@ export const CippDataTable = (props) => {
   const getRequestData = ApiGetCallWithPagination({
     url: api.url,
     data: {
-      // AllTenants Graph cache reads are served in bounded pages; a page can still opt out with manualPagination: false.
-      ...(api.url === '/api/ListGraphRequest' &&
-        api.data?.tenantFilter === 'AllTenants' && { manualPagination: true }),
       ...(graphFilterData.filter
         ? mergeCaseInsensitive(api.data, graphFilterData.filter)
         : api.data),
+      // AllTenants Graph cache reads are always served in bounded pages, whatever the page or a saved preset sends.
+      ...(api.url === '/api/ListGraphRequest' &&
+        isMultiTenantScope(api.data) && { manualPagination: true }),
       ...(cacheAction && { [cacheAction]: true }),
     },
     queryKey: requestQueryKey,
@@ -1046,7 +1049,7 @@ export const CippDataTable = (props) => {
     let newVisibility = { ...columnVisibility }
 
     // Check if we're in AllTenants mode and data has Tenant property
-    const isAllTenants = settings?.currentTenant === 'AllTenants'
+    const isAllTenants = isMultiTenant(settings?.currentTenant)
     const hasTenantProperty = usedData.some(
       (row) => row && typeof row === 'object' && 'Tenant' in row
     )
@@ -1489,7 +1492,7 @@ export const CippDataTable = (props) => {
     (action, rowOriginal, closeMenu = () => {}) => {
       const scopeToRowTenant = () => {
         const tenant = getRowTenant(getActionRow(rowOriginal), settings.currentTenant)
-        if (settings.currentTenant === 'AllTenants' && tenant && tenant !== 'AllTenants') {
+        if (isMultiTenant(settings.currentTenant) && tenant && !isMultiTenant(tenant)) {
           settings.handleUpdate({
             currentTenant: tenant,
           })
@@ -1550,7 +1553,7 @@ export const CippDataTable = (props) => {
       const actionRow = getActionRow(rowOriginal)
       const tenant = getRowTenant(actionRow, settings.currentTenant)
       const rowTenant =
-        tenant && tenant !== 'AllTenants' ? tenant : undefined
+        tenant && !isMultiTenant(tenant) ? tenant : undefined
       const dispatchOptions = {
         fallbackTenant: rowTenant,
         currentTenant: settings.currentTenant,
@@ -1573,7 +1576,7 @@ export const CippDataTable = (props) => {
       const actionRow = getActionRow(rowOriginal)
       const tenant = getRowTenant(actionRow, settings.currentTenant)
       const rowTenant =
-        tenant && tenant !== 'AllTenants' ? tenant : undefined
+        tenant && !isMultiTenant(tenant) ? tenant : undefined
       return {
         actionRow,
         rowTenant,

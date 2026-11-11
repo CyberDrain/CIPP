@@ -12,7 +12,7 @@ Runs are never expired automatically. A run stays, with its results, until it is
 
 ### Start investigation
 
-Select **Start investigation** and pick the users to investigate in **Users to investigate**. The button is greyed out while **All Tenants** is selected, because an investigation runs against one tenant; select a single tenant first. The panel's **Start investigation** button is greyed out until at least one user is picked.
+Select **Start investigation** and pick the users to investigate in **Users to investigate**. The button is greyed out while **All Tenants** is selected, because an investigation runs against one tenant; select a single tenant first. **How far back to look** sets the number of days the run covers, up to 30, ending now; left on **Automatic**, a run covers seven days, or 30 for a user licensed for Entra ID P1 or P2. The panel's **Start investigation** button is greyed out until at least one user is picked.
 
 * **One user** opens that user's case page and starts the run there, so you can watch it progress.
 * **Several users** queues one run per user, tracked together under one entry on the Queue page, and closes the panel once they are queued. The runs appear in the table as they finish.

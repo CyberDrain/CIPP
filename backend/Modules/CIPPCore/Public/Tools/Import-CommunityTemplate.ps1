@@ -20,7 +20,8 @@ function Import-CommunityTemplate {
     try {
         if ($Template.RowKey) {
             Write-Host "This is going to be a direct write to table, it's a CIPP template. We're writing $($Template.RowKey)"
-            $Template = $Template | Select-Object * -ExcludeProperty Timestamp
+            # LinkedTemplates is the repo file's manifest of the templates it links, not a table column
+            $Template = $Template | Select-Object * -ExcludeProperty Timestamp, LinkedTemplates
 
             # Support both objects and json string in repo (support pretty printed json in repo)
             if (Test-Json $Template.JSON -ErrorAction SilentlyContinue) {
@@ -60,6 +61,14 @@ function Import-CommunityTemplate {
                     $excludedTenants = $ExistingJSON.excludedTenants
                     $NewJSON.tenantFilter = $tenantFilter
                     $NewJSON.excludedTenants = $excludedTenants
+                }
+            }
+
+            # A new standards template keeps the file's tenants, so a restricted caller may only import tenants they can access
+            if (-not $Existing -and $Template.PartitionKey -eq 'StandardsTemplateV2') {
+                $OutOfScope = @(Get-CIPPBaselineOutOfScopeAssignment -Assignments @($NewJSON.tenantFilter) | Select-Object -Unique)
+                if ($OutOfScope.Count -gt 0) {
+                    throw [System.UnauthorizedAccessException]::new("Your role can't import this template, because it is assigned to tenants outside your access: $($OutOfScope -join ', ').")
                 }
             }
 
@@ -343,6 +352,7 @@ function Import-CommunityTemplate {
             }
         }
     } catch {
+        if ($_.Exception -is [System.UnauthorizedAccessException]) { throw }
         $StatusMessage = "Community template import failed. Error: $($_.Exception.Message)"
         Write-Warning $StatusMessage
         Write-Information $_.InvocationInfo.PositionMessage

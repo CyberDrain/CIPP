@@ -65,6 +65,14 @@ function Invoke-ExecSAMCredentials {
                     $Probe = Test-CIPPSAMSecret -IncludeRefreshGrant
                     $SecretState = switch ($Probe.reason) { 'ready' { 'valid' } 'propagating' { 'propagating' } 'notConfigured' { 'notConfigured' } default { 'error' } }
                     $StoredSecret = @{ state = $SecretState; message = $Probe.message }
+                    # A deleted secret fails with the same AADSTS7000215 as one still activating; only its keyId being gone from the app tells them apart.
+                    if (-not $Probe.ready -and $State.OwnSecretKeyId -and -not $CredentialsError -and -not $OwnSecret) {
+                        $StoredSecret = if ($AuthMode -eq 'certificate') {
+                            @{ state = 'none'; message = 'The stored client secret has been deleted from the CIPP-SAM application. Certificate mode does not use it.' }
+                        } else {
+                            @{ state = 'removed'; message = 'The stored client secret has been deleted from the CIPP-SAM application, so CIPP cannot sign in with it. Rotate the secret to create a new one.' }
+                        }
+                    }
                 }
                 $StoredSecret.keyId = $State.OwnSecretKeyId
                 $StoredSecret.expires = $OwnSecret.endDateTime
@@ -123,7 +131,7 @@ function Invoke-ExecSAMCredentials {
                 $SecretExpiring = $AuthMode -eq 'secret' -and $OwnSecret -and ([datetime]$OwnSecret.endDateTime).ToUniversalTime() -lt $SoonCutoff
                 $CertExpiring = $Cert -and ([datetime]$Cert.NotAfter).ToUniversalTime() -lt $SoonCutoff
                 $TokenFailing = $PartnerToken.state -eq 'error' -or ($DirectTenants | Where-Object { $_.state -eq 'error' }) -or
-                ($AuthMode -eq 'secret' -and $StoredSecret.state -in @('error', 'none')) -or ($AuthMode -eq 'certificate' -and -not $Certificate.registeredOnApp)
+                ($AuthMode -eq 'secret' -and $StoredSecret.state -in @('error', 'none', 'removed')) -or ($AuthMode -eq 'certificate' -and -not $Certificate.registeredOnApp)
                 $Unreviewed = $Credentials | Where-Object { $_.owner -ne 'thisInstance' -and -not $_.known }
                 $Results.overall = if ($TokenFailing) { 'tokenFailing' } elseif ($SecretExpiring -or $CertExpiring) { 'secretExpiring' } elseif ($Unreviewed) { 'unreviewedCredentials' } else { 'healthy' }
 
@@ -185,7 +193,7 @@ function Invoke-ExecSAMCredentials {
                     $Remaining = @($State.KeyCredentials | Where-Object { $_.keyId -ne $KeyId })
                     New-GraphPOSTRequest -type PATCH -uri "https://graph.microsoft.com/v1.0/applications/$($State.AppObjectId)" -Body (ConvertTo-Json -Compress -Depth 10 -InputObject @{ keyCredentials = $Remaining }) -NoAuthCheck $true -AsApp $true -ErrorAction Stop
                 }
-                $Flag = Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'SAMCredential' and RowKey eq '$KeyId'"
+                $Flag = Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'SAMCredential' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $KeyId)'"
                 if ($Flag) { Remove-AzDataTableEntity @ConfigTable -Entity $Flag -Force }
                 $Identifier = if ($Credential.thumbprint) { "thumbprint $($Credential.thumbprint)" } else { "keyId $KeyId" }
                 $Actor = 'CIPP'
@@ -235,7 +243,7 @@ function Invoke-ExecSAMCredentials {
             }
             try {
                 # Provenance of CIPP-created credentials survives; only the admin label is cleared.
-                $Flag = Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'SAMCredential' and RowKey eq '$KeyId'"
+                $Flag = Get-CIPPAzDataTableEntity @ConfigTable -Filter "PartitionKey eq 'SAMCredential' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $KeyId)'"
                 if ($Flag.Source) {
                     $null = Add-CIPPAzDataTableEntity @ConfigTable -Entity @{ PartitionKey = 'SAMCredential'; RowKey = $KeyId; Source = [string]$Flag.Source; Actor = [string]$Flag.Actor; CreatedBy = [string]$Flag.CreatedBy; CreatedAt = [string]$Flag.CreatedAt } -Force
                 } elseif ($Flag) {

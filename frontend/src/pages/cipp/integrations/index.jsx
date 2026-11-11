@@ -54,7 +54,7 @@ const Page = () => {
       </Stack>
 
       <Grid container spacing={3}>
-        {extensions.map((extension) => {
+        {extensions.filter((extension) => !extension.hidden).map((extension) => {
           var logo = extension.logo
           if (preferredTheme === 'dark' && extension?.logoDark) {
             logo = extension.logoDark
@@ -209,6 +209,6 @@ const Page = () => {
   );
 }
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
+Page.getLayout = (page) => <DashboardLayout usesTenant={false}>{page}</DashboardLayout>
 
 export default Page

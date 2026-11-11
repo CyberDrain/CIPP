@@ -41,7 +41,7 @@ const Page = () => {
       tenantInTitle={false}
       apiUrl="/api/ListGeneratedReports"
       queryKey={`${currentTenant}-ListGeneratedReports`}
-      simpleColumns={['TemplateName', 'TenantFilter', 'GeneratedAt', 'Status', 'Sections']}
+      simpleColumns={['TemplateName', 'TenantFilter', 'GeneratedAt', 'Status']}
       actions={actions}
       offCanvas={offCanvas}
       rowOpen={{
@@ -53,7 +53,7 @@ const Page = () => {
 }
 
 Page.getLayout = (page) => (
-  <DashboardLayout>
+  <DashboardLayout tenantGroupSupport={true}>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
 )

@@ -191,7 +191,11 @@ function Get-CIPPBaseline {
                 [PSCustomObject]@{
                     name            = $StageDefinition.name
                     logic           = $StageDefinition.logic
-                    conditions      = @($StageDefinition.conditions)
+                    conditions      = @($StageDefinition.conditions | Where-Object { $_.type })
+                    conditionGroups = @(foreach ($Group in @($StageDefinition.conditionGroups)) {
+                            $GroupConditions = @($Group.conditions | Where-Object { $_.type })
+                            if ($GroupConditions.Count -gt 0) { [PSCustomObject]@{ logic = $Group.logic ?? 'and'; conditions = $GroupConditions } }
+                        })
                     # Enumerated explicitly: member access on an empty array yields a lone $null.
                     standards       = @($StageConfigs | ForEach-Object { $_.instance })
                     standardsConfig = @($StageConfigs)
@@ -206,7 +210,10 @@ function Get-CIPPBaseline {
                         $Domain = $TenantLookup["$($_.scopeId)"].defaultDomainName ?? $_.scopeId
                         [PSCustomObject]@{ scope = $_.scope; scopeId = $Domain; scopeName = $Domain }
                     } else {
-                        [PSCustomObject]@{ scope = $_.scope; scopeId = $_.scopeId; scopeName = ($_.scopeName ?? $_.scopeId) }
+                        # A group keeps its ID through a rename, so its current name wins over the one saved with the baseline
+                        $ScopeId = $_.scopeId
+                        $CurrentName = if ($_.scope -eq 'group') { $Groups.Where({ $_.Id -eq $ScopeId }, 'First')[0].Name }
+                        [PSCustomObject]@{ scope = $_.scope; scopeId = $ScopeId; scopeName = ($CurrentName ?? $_.scopeName ?? $ScopeId) }
                     }
                 } | Sort-Object -Property scope, scopeId -Unique)
             $AssignedTenants = @($AssignmentScopes | ForEach-Object {
@@ -224,6 +231,10 @@ function Get-CIPPBaseline {
                 if ($Tenant -and $Option.value -ne $Tenant.defaultDomainName) {
                     $Option.value = $Tenant.defaultDomainName
                     $Option.label = '{0} ({1})' -f $Tenant.displayName, $Tenant.defaultDomainName
+                }
+                if ($Option.type -eq 'Group') {
+                    $GroupName = $Groups.Where({ $_.Id -eq $Option.value }, 'First')[0].Name
+                    if ($GroupName) { $Option.label = $GroupName }
                 }
             }
             $Assignments = @($AssignmentScopes | ForEach-Object {
@@ -261,7 +272,26 @@ function Get-CIPPBaseline {
                     [int64]$EnteredStageAt
                 } else { $null }
                 $NextStageDef = if ($CurrentStage -lt $Stages.Count) { $Stages[$CurrentStage] } else { $null }
-                $TimeCondition = $NextStageDef.conditions | Where-Object { $_.type -eq 'time' } | Select-Object -First 1
+                # A tenant outside the group an AND condition set requires cannot be moved into the
+                # stage until it joins - unless another set (say a lone manual approval) is open to it.
+                $Sets = @(@([PSCustomObject]@{ logic = $NextStageDef.logic; conditions = @($NextStageDef.conditions) }) + @($NextStageDef.conditionGroups)).Where({ $_ -and @($_.conditions).Where({ $_ }).Count -gt 0 })
+                $GroupBlocked = $Sets.Count -gt 0
+                # A stage saved before conditions were required can only be reached by a manual move.
+                $ManualAdvance = $null -ne $NextStageDef -and $Sets.Count -eq 0
+                foreach ($Set in $Sets) {
+                    $SetBlocked = $false
+                    if ($Set.logic -ne 'or') {
+                        foreach ($Condition in @($Set.conditions).Where({ $_.type -eq 'group' })) {
+                            $GroupKey = "$($Condition.group.value ?? $Condition.group)"
+                            $Group = $Groups.Where({ $_.Id -eq $GroupKey -or $_.Name -eq $GroupKey }, 'First')[0]
+                            if (@($Group.Members.defaultDomainName) -notcontains $TenantDomain) { $SetBlocked = $true }
+                        }
+                    }
+                    if ($SetBlocked) { continue }
+                    $GroupBlocked = $false
+                    if (@($Set.conditions).Where({ $_.type -eq 'manual' }).Count -gt 0) { $ManualAdvance = $true }
+                }
+                $TimeCondition = @(foreach ($Set in $Sets) { @($Set.conditions) }).Where({ $_.type -eq 'time' }, 'First')[0]
                 $EstimatedAdvanceAt = if ($TimeCondition -and $EnteredStageAt) {
                     $Multiplier = if ($TimeCondition.unit -eq 'weeks') { 7 } else { 1 }
                     $EnteredStageAt + ([int64]$TimeCondition.days * $Multiplier * 86400)
@@ -277,7 +307,8 @@ function Get-CIPPBaseline {
                     nextStage          = $NextStageDef
                     nextStageName      = $NextStageDef.name
                     estimatedAdvanceAt = $EstimatedAdvanceAt
-                    manualAdvance      = [bool]($NextStageDef.conditions | Where-Object { $_.type -eq 'manual' })
+                    groupBlocked       = $GroupBlocked
+                    manualAdvance      = $ManualAdvance
                 }
             }
 

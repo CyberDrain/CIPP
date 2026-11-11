@@ -975,7 +975,7 @@ function GrantControlsSection({ formControl, disabled }) {
 // ---------------------------------------------------------------------------
 // Session Controls section
 // ---------------------------------------------------------------------------
-function SessionControlsSection({ formControl, disabled }) {
+function SessionControlsSection({ formControl, disabled, live }) {
   const casSchema = resolveRef("#/$defs/cloudAppSecuritySessionControl");
   const casTypeOpts = useMemo(
     () => enumToOptions(casSchema?.properties?.cloudAppSecurityType),
@@ -1132,6 +1132,64 @@ function SessionControlsSection({ formControl, disabled }) {
           disabled={disabled}
           options={persistModeOpts}
         />
+      </Grid>
+
+      {/* Global Secure Access security profile */}
+      <Grid size={{ xs: 12 }}>
+        <Divider sx={{ my: 1 }} />
+        <Typography variant="subtitle2">Global Secure Access Security Profile</Typography>
+        <Typography variant="caption" sx={{
+          color: "text.secondary"
+        }}>
+          {live
+            ? "Applies one of this tenant's web content filtering security profiles."
+            : "Pick a security profile template to deploy it with the policy, or type the name of a security profile each tenant already has."}{" "}
+          Needs a Microsoft Entra Internet Access licence.
+        </Typography>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <CippFormComponent
+          type="switch"
+          name="sessionControls.globalSecureAccessFilteringProfile.isEnabled"
+          label="Enable Security Profile"
+          formControl={formControl}
+          disabled={disabled}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 8 }}>
+        {live ? (
+          <CippFormComponent
+            type="autoComplete"
+            name="sessionControls.globalSecureAccessFilteringProfile.profileId"
+            label="Security profile"
+            formControl={formControl}
+            multiple={false}
+            creatable={false}
+            disabled={disabled}
+            api={{
+              url: "/api/ListGSASecurityProfiles",
+              labelField: "name",
+              valueField: "id",
+              queryKey: "ListGSASecurityProfiles-picker",
+            }}
+          />
+        ) : (
+          <CippFormComponent
+            type="autoComplete"
+            name="sessionControls.globalSecureAccessFilteringProfile._profileTemplate"
+            label="Security profile template or profile name"
+            formControl={formControl}
+            multiple={false}
+            creatable
+            disabled={disabled}
+            api={{
+              url: "/api/ListGSASecurityProfileTemplates",
+              labelField: "name",
+              valueField: "GUID",
+              queryKey: "ListGSASecurityProfileTemplates-picker",
+            }}
+          />
+        )}
       </Grid>
 
       {/* Resilience defaults */}
@@ -1495,6 +1553,21 @@ const CippCAPolicyBuilder = ({
             return;
           }
 
+          // Graph mirrors the security profile here; the editor manages globalSecureAccessFilteringProfile only
+          if (key === "networkAccessSecurity" && prefix === "sessionControls") return;
+          // Template mode keeps the reference under _profileTemplate so extractCAPolicyJSON can rebuild a template link
+          if (key === "globalSecureAccessFilteringProfile" && prefix === "sessionControls") {
+            formControl.setValue(`${path}.isEnabled`, value.isEnabled === true);
+            const ref = value.profileId;
+            if (ref) {
+              formControl.setValue(
+                directorySearch ? `${path}.profileId` : `${path}._profileTemplate`,
+                typeof ref === "object" ? ref : { label: ref, value: ref }
+              );
+            }
+            return;
+          }
+
           // Special handling for authenticationStrength — only extract the policy ID,
           // not the full expanded object (displayName, description, allowedCombinations, etc.)
           if (key === "authenticationStrength" && typeof value === "object" && !Array.isArray(value)) {
@@ -1537,7 +1610,7 @@ const CippCAPolicyBuilder = ({
       };
       populate(existingPolicy);
     }
-  }, [existingPolicy, formControl]);
+  }, [existingPolicy, formControl, directorySearch]);
 
   // Schema-level validation: extract options for top-level policy state
   const stateOpts = useMemo(
@@ -1646,7 +1719,7 @@ const CippCAPolicyBuilder = ({
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <SessionControlsSection formControl={formControl} disabled={disabled} />
+          <SessionControlsSection formControl={formControl} disabled={disabled} live={directorySearch} />
         </AccordionDetails>
       </Accordion>
 
@@ -1685,8 +1758,11 @@ export default CippCAPolicyBuilder;
  *
  * Absent keys are fine: the backend canonicalizer (Format-CIPPCAPolicy) restores every managed
  * key it needs as its cleared form at deploy/edit time, so this stays a plain payload cleanup.
+ *
+ * Pass the stored template as `original` when editing a template: the form only holds the
+ * authentication strength id, and deploy matches a custom strength by its displayName.
  */
-export function extractCAPolicyJSON(formValues) {
+export function extractCAPolicyJSON(formValues, original) {
   const clean = (obj) => {
     if (obj === null || obj === undefined) return undefined;
 
@@ -1788,12 +1864,22 @@ export function extractCAPolicyJSON(formValues) {
   // Post-process: strip session control sub-objects where isEnabled is false.
   // Graph validates fields like `mode` even when disabled — safest to omit entirely; the backend
   // canonicalizer turns the resulting absence into the null that clears it on the policy.
+  // A typed profile name comes back with label === value; a picked template keeps its {label, value} link
+  const profileTemplate = formValues?.sessionControls?.globalSecureAccessFilteringProfile?._profileTemplate;
+  if (profileTemplate?.value && cleaned.sessionControls?.globalSecureAccessFilteringProfile) {
+    cleaned.sessionControls.globalSecureAccessFilteringProfile.profileId =
+      profileTemplate.label === profileTemplate.value
+        ? profileTemplate.value
+        : { label: profileTemplate.label, value: profileTemplate.value };
+  }
   if (cleaned.sessionControls) {
+    delete cleaned.sessionControls.networkAccessSecurity;
     const sessionKeys = [
       "applicationEnforcedRestrictions",
       "cloudAppSecurity",
       "signInFrequency",
       "persistentBrowser",
+      "globalSecureAccessFilteringProfile",
     ];
     for (const key of sessionKeys) {
       if (cleaned.sessionControls[key]?.isEnabled === false) {
@@ -1846,6 +1932,11 @@ export function extractCAPolicyJSON(formValues) {
     if (graphLocations.length > 0) {
       cleaned.LocationInfo = graphLocations;
     }
+  }
+
+  const originalStrength = original?.grantControls?.authenticationStrength;
+  if (originalStrength?.id && originalStrength.id === cleaned.grantControls?.authenticationStrength?.id) {
+    cleaned.grantControls.authenticationStrength = originalStrength;
   }
 
   return cleaned;

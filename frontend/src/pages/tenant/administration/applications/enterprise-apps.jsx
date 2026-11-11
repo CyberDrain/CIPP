@@ -6,9 +6,16 @@ import { usePermissions } from '../../../../hooks/use-permissions.js'
 import { useSettings } from '../../../../hooks/use-settings'
 import tabOptions from './tabOptions'
 import { Button, Chip, Tooltip } from '@mui/material'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { getEnterpriseAppListActions } from '../../../../components/CippComponents/EnterpriseAppActions.jsx'
+import { ApiGetCall } from '../../../../api/ApiCall'
+import { getRowTenant } from '../../../../utils/resolve-row-templates'
+import {
+  useAppSignInActivity,
+  appSignInActivityColumns,
+  appSignInActivityFilters,
+} from '../../../../hooks/use-app-sign-in-activity'
 
 const Page = () => {
   const pageTitle = 'Enterprise Applications'
@@ -19,7 +26,26 @@ const Page = () => {
   const { checkPermissions } = usePermissions()
   const canWriteApplication = checkPermissions(['Tenant.Application.ReadWrite'])
 
-  const actions = getEnterpriseAppListActions(canWriteApplication)
+  const tenantList = ApiGetCall({ url: '/api/ListTenants', queryKey: 'ListTenants' })
+  const tenantIds = useMemo(() => {
+    const map = new Map()
+    for (const t of Array.isArray(tenantList.data) ? tenantList.data : []) {
+      if (!t?.customerId) continue
+      for (const key of [t.customerId, t.defaultDomainName, t.initialDomainName]) {
+        if (key) map.set(String(key).toLowerCase(), String(t.customerId).toLowerCase())
+      }
+    }
+    return map
+  }, [tenantList.data])
+
+  const isHomeTenantApp = (row) => {
+    const owner = String(row?.appOwnerOrganizationId ?? '').toLowerCase()
+    const rowTenant = String(getRowTenant(row, tenant) ?? '').toLowerCase()
+    return owner !== '' && tenantIds.get(rowTenant) === owner
+  }
+
+  const actions = getEnterpriseAppListActions(canWriteApplication, isHomeTenantApp)
+  const signInActivity = useAppSignInActivity(tenant)
 
   const offCanvas = {
     extendedInfoFields: [
@@ -46,6 +72,8 @@ const Page = () => {
     'homepage',
     'passwordCredentials',
     'keyCredentials',
+    // Sign-in activity is read per tenant from the CIPP DB, so it is not shown for All Tenants.
+    ...(signInActivity.enabled ? appSignInActivityColumns : []),
   ]
 
   const apiParams = {
@@ -68,6 +96,7 @@ const Page = () => {
       value: [{ id: 'tags', value: 'HideApp' }],
       type: 'column',
     },
+    ...(signInActivity.enabled ? appSignInActivityFilters : []),
   ]
 
   return (
@@ -108,6 +137,7 @@ const Page = () => {
       }
       actions={actions}
       offCanvas={offCanvas}
+      dataTransform={signInActivity.dataTransform}
       rowOpen={{
         link: '/tenant/administration/applications/enterprise-app?spId=[id]&tenantFilter=[Tenant]',
         condition: (row) => Boolean(row?.id),
@@ -130,7 +160,7 @@ const Page = () => {
 }
 
 Page.getLayout = (page) => (
-  <DashboardLayout>
+  <DashboardLayout tenantGroupSupport={true}>
     <TabbedLayout tabOptions={tabOptions}>{page}</TabbedLayout>
   </DashboardLayout>
 )

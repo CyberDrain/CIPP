@@ -7,6 +7,11 @@ BeforeAll {
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/ConvertTo-CIPPODataFilterValue.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPTextReplacement.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPBaselines/Public/PrepareHooks/Get-CIPPBaselineCATemplateState.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPBaselines/Public/Helpers/Get-CIPPBaselineCacheRows.ps1')
+    function Get-CIPPBaselineCommand { param($Name) }
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Format-CIPPNamedLocationRange.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPIntuneCompareExclusions.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Compare-CIPPIntuneObject.ps1')
 
     $script:UserId = '10000000-0000-0000-0000-000000000001'
     $script:SiteAId = '30000000-0000-0000-0000-00000000000a'
@@ -17,6 +22,7 @@ BeforeAll {
     function Get-CIPPTable { param($tablename) @{ TableName = $tablename } }
     function Get-CIPPAzDataTableEntity {
         param($TableName, $Filter)
+        if ($TableName -eq 'templates' -and $Filter -match 'GSASecurityProfileTemplate') { return $script:ProfileTemplateRows }
         if ($TableName -eq 'templates') { return [pscustomobject]@{ RowKey = 'tpl-1'; GUID = 'tpl-1'; JSON = $script:TemplateJSON } }
         if ($Filter -match "PartitionKey eq 'AllTenants'") { return $script:VariableRows }
         @()
@@ -25,10 +31,11 @@ BeforeAll {
     function New-CIPPDbRequest {
         param($TenantFilter, $Type, $Fields)
         switch ($Type) {
-            'NamedLocations' { [pscustomobject]@{ id = $script:SiteAId; displayName = 'Site A' } }
+            'NamedLocations' { $script:TenantLocations ?? [pscustomobject]@{ id = $script:SiteAId; displayName = 'Site A' } }
             'Users' { [pscustomobject]@{ id = $script:UserId; displayName = 'Break Glass' } }
             'Groups' { $script:CachedGroups }
             'ConditionalAccessPolicies' { $script:LivePolicy | ConvertTo-Json -Depth 20 | ConvertFrom-Json }
+            'NetworkAccessFiltering' { $script:FilteringRows }
         }
     }
 
@@ -77,10 +84,60 @@ Describe 'Get-CIPPBaselineCATemplateState' {
         @($State.Expected.conditions.locations.excludeLocations) | Should -Be @('Site A')
     }
 
+    It 'drops the tenantFilter a template imported from a tenant carries' {
+        $script:TemplateJSON = '{"displayName":"Variable test policy","state":"disabled","tenantFilter":"source.example.com","conditions":{"users":{"includeUsers":["All"]}}}'
+        $State = Get-CIPPBaselineCATemplateState -Item @{ Variables = @{ caTemplate = 'tpl-1'; state = 'donotchange' } } -TenantFilter 'customer.example.com'
+        $State.Expected.PSObject.Properties.Name | Should -Not -Contain 'tenantFilter'
+    }
+
     It 'resolves custom variables on the expected side' {
         $State = Get-State '"%breakglass%"' '"%sites%"'
         @($State.Expected.conditions.users.excludeUsers) | Should -Be @('Break Glass')
         @($State.Expected.conditions.locations.excludeLocations) | Should -Be @('Site A', 'Site B')
+    }
+
+    Context 'template user names the tenant does not have' {
+        BeforeAll { $script:SavedPolicy = $script:LivePolicy }
+        AfterAll {
+            $script:LivePolicy = $script:SavedPolicy
+            $script:LiveDirectory = @()
+        }
+
+        It 'grades without a user name deploy drops, so the deployed policy does not drift' {
+            $script:LivePolicy = [pscustomobject]@{
+                displayName = 'Variable test policy'
+                state       = 'disabled'
+                conditions  = [pscustomobject]@{ users = [pscustomobject]@{ includeUsers = @('All'); excludeUsers = @($script:UserId) } }
+            }
+            $script:TemplateJSON = '{"displayName":"Variable test policy","state":"disabled","conditions":{"users":{"includeUsers":["All"],"excludeUsers":["Break Glass","admin"]}}}'
+            $State = Get-CIPPBaselineCATemplateState -Item @{ Variables = @{ caTemplate = 'tpl-1'; state = 'donotchange' } } -TenantFilter 'customer.example.com'
+
+            @($State.Expected.conditions.users.excludeUsers) | Should -Be @('Break Glass')
+            @($State.Expected.conditions.users.includeUsers) | Should -Be @('All')
+            @(Compare-CIPPIntuneObject -ReferenceObject $State.Expected -DifferenceObject $State.Current | Where-Object { $_ }) | Should -BeNullOrEmpty
+        }
+
+        It 'keeps a user the Users cache does not hold yet but the live policy already excludes' {
+            $NewUserId = '10000000-0000-0000-0000-000000000002'
+            $script:LiveDirectory = @([pscustomobject]@{ id = $NewUserId; displayName = 'New Admin' })
+            $script:LivePolicy = [pscustomobject]@{
+                displayName = 'Variable test policy'
+                state       = 'disabled'
+                conditions  = [pscustomobject]@{ users = [pscustomobject]@{ includeUsers = @('All'); excludeUsers = @($NewUserId) } }
+            }
+            $script:TemplateJSON = '{"displayName":"Variable test policy","state":"disabled","conditions":{"users":{"includeUsers":["All"],"excludeUsers":["New Admin"]}}}'
+            $State = Get-CIPPBaselineCATemplateState -Item @{ Variables = @{ caTemplate = 'tpl-1'; state = 'donotchange' } } -TenantFilter 'customer.example.com'
+
+            @($State.Expected.conditions.users.excludeUsers) | Should -Be @('New Admin')
+        }
+
+        It 'keeps a raw GUID even when the tenant has no such user' {
+            $Unknown = '10000000-0000-0000-0000-0000000000ff'
+            $script:TemplateJSON = '{{"displayName":"Variable test policy","state":"disabled","conditions":{{"users":{{"includeUsers":["All"],"excludeUsers":["{0}"]}}}}}}' -f $Unknown
+            $State = Get-CIPPBaselineCATemplateState -Item @{ Variables = @{ caTemplate = 'tpl-1'; state = 'donotchange' } } -TenantFilter 'customer.example.com'
+
+            @($State.Expected.conditions.users.excludeUsers) | Should -Be @($Unknown)
+        }
     }
 
     Context 'excludeGroups the Groups cache does not hold yet' {
@@ -154,5 +211,179 @@ Describe 'Get-CIPPBaselineCATemplateState' {
             @($State.Expected.conditions.users.excludeGroups) | Should -Be @('Exclude A')
             @($State.Current.conditions.users.excludeGroups) | Should -Be @('Exclude A')
         }
+    }
+
+    Context 'named location contents' {
+        BeforeAll {
+            $script:SavedPolicy = $script:LivePolicy
+            $script:SavedVariables = $script:VariableRows
+            $script:TemplateJSON = @'
+{"displayName":"Location test policy","state":"disabled",
+ "conditions":{"users":{"includeUsers":["All"]},"locations":{"includeLocations":["All"],"excludeLocations":["Office IPs","Allowed Countries","%clientallowlocations%"]}},
+ "LocationInfo":[
+  {"@odata.type":"#microsoft.graph.ipNamedLocation","displayName":"Office IPs","isTrusted":false,"ipRanges":[{"@odata.type":"#microsoft.graph.iPv4CidrRange","cidrAddress":"%officeips%"}]},
+  {"@odata.type":"#microsoft.graph.countryNamedLocation","displayName":"Allowed Countries","countriesAndRegions":["%allowedcountries%"],"includeUnknownCountriesAndRegions":false},
+  {"@odata.type":"#microsoft.graph.ipNamedLocation","displayName":"Unused","isTrusted":true,"ipRanges":[{"@odata.type":"#microsoft.graph.iPv4CidrRange","cidrAddress":"192.0.2.1/32"}]}
+ ]}
+'@
+            function New-IpLocation($Id, $Name, [string[]]$Cidrs) {
+                [pscustomobject]@{ '@odata.type' = '#microsoft.graph.ipNamedLocation'; id = $Id; displayName = $Name; isTrusted = $false; ipRanges = @($Cidrs | ForEach-Object { [pscustomobject]@{ '@odata.type' = '#microsoft.graph.iPv4CidrRange'; cidrAddress = $_ } }) }
+            }
+            $script:Countries = [pscustomobject]@{ '@odata.type' = '#microsoft.graph.countryNamedLocation'; id = 'loc-countries'; displayName = 'Allowed Countries'; countriesAndRegions = @('BE', 'NL'); includeUnknownCountriesAndRegions = $false; countryLookupMethod = 'clientIpAddress' }
+            function Set-Variables($OfficeIps = '["203.0.113.0/24","198.51.100.10/32"]', $ClientAllow = '[]') {
+                $script:VariableRows = @(
+                    [pscustomobject]@{ RowKey = 'officeips'; Value = $OfficeIps; VariableType = 'list' }
+                    [pscustomobject]@{ RowKey = 'allowedcountries'; Value = '["NL","BE"]'; VariableType = 'list' }
+                    [pscustomobject]@{ RowKey = 'clientallowlocations'; Value = $ClientAllow; VariableType = 'list' }
+                )
+            }
+            function Get-LocationDrift([string[]]$BoundIds) {
+                $script:LivePolicy = [pscustomobject]@{
+                    displayName = 'Location test policy'
+                    state       = 'disabled'
+                    conditions  = [pscustomobject]@{ users = [pscustomobject]@{ includeUsers = @('All') }; locations = [pscustomobject]@{ includeLocations = @('All'); excludeLocations = $BoundIds } }
+                }
+                $State = Get-CIPPBaselineCATemplateState -Item @{ Variables = @{ caTemplate = 'tpl-1'; state = 'donotchange' } } -TenantFilter 'customer.example.com'
+                [pscustomobject]@{
+                    State       = $State
+                    Differences = @(Compare-CIPPIntuneObject -ReferenceObject $State.Expected -DifferenceObject $State.Current | Where-Object { $_ })
+                }
+            }
+        }
+        BeforeEach {
+            Set-Variables
+            $script:TenantLocations = @((New-IpLocation 'loc-office' 'Office IPs' '198.51.100.10/32', '203.0.113.0/24'), $script:Countries)
+        }
+        AfterAll {
+            $script:LivePolicy = $script:SavedPolicy
+            $script:VariableRows = $script:SavedVariables
+            $script:TenantLocations = $null
+        }
+
+        It 'grades list-variable ranges and countries as compliant regardless of order' {
+            $Result = Get-LocationDrift 'loc-office', 'loc-countries'
+            $Result.State.Expected.namedLocations.'Office IPs'.ipRanges | Should -Be '198.51.100.10/32, 203.0.113.0/24'
+            $Result.State.Expected.namedLocations.'Allowed Countries'.countriesAndRegions | Should -Be 'BE, NL'
+            $Result.Differences | Should -BeNullOrEmpty
+        }
+
+        It 'drifts when the variable gains a range the tenant location lacks' {
+            Set-Variables -OfficeIps '["203.0.113.0/24","198.51.100.10/32","192.0.2.0/24"]'
+            $Result = Get-LocationDrift 'loc-office', 'loc-countries'
+            @($Result.Differences.Property) | Should -Be @('namedLocations.Office IPs.ipRanges')
+        }
+
+        It 'grades the copy the policy is bound to when the tenant has duplicates' {
+            $script:TenantLocations = @((New-IpLocation 'loc-old' 'Office IPs' '10.0.0.0/8'), (New-IpLocation 'loc-office' 'Office IPs' '198.51.100.10/32', '203.0.113.0/24'), $script:Countries)
+            (Get-LocationDrift 'loc-office', 'loc-countries').Differences | Should -BeNullOrEmpty
+            (Get-LocationDrift 'loc-old', 'loc-countries').Differences | Should -Not -BeNullOrEmpty
+        }
+
+        It 'drifts when a defined location is missing from the tenant' {
+            $script:TenantLocations = @($script:Countries)
+            $Result = Get-LocationDrift 'loc-countries'
+            $Result.State.Current.namedLocations.'Office IPs' | Should -BeNullOrEmpty
+            $Result.Differences | Should -Not -BeNullOrEmpty
+        }
+
+        It 'never grades a tenant-managed location named through a list variable, nor an unreferenced one' {
+            Set-Variables -ClientAllow '["Client Allow"]'
+            $script:TenantLocations = @((New-IpLocation 'loc-office' 'Office IPs' '198.51.100.10/32', '203.0.113.0/24'), $script:Countries, (New-IpLocation 'loc-client' 'Client Allow' '100.64.0.0/10'))
+            $Result = Get-LocationDrift 'loc-office', 'loc-countries', 'loc-client'
+            @($Result.State.Expected.namedLocations.PSObject.Properties.Name) | Should -Be @('Office IPs', 'Allowed Countries')
+            $Result.Differences | Should -BeNullOrEmpty
+        }
+
+        It 'drops an empty list variable from the references' {
+            $Result = Get-LocationDrift 'loc-office', 'loc-countries'
+            @($Result.State.Expected.conditions.locations.excludeLocations) | Should -Be @('Office IPs', 'Allowed Countries')
+        }
+    }
+}
+
+Describe 'Get-CIPPBaselineCATemplateState license' {
+    It 'requires Entra ID P2 when the template uses risk conditions' {
+        $script:TemplateJSON = '{"displayName":"Variable test policy","state":"disabled","conditions":{"userRiskLevels":["high"],"users":{"includeUsers":["All"]}}}'
+        $State = Get-CIPPBaselineCATemplateState -Item @{ Variables = @{ caTemplate = 'tpl-1'; state = 'donotchange' } } -TenantFilter 'customer.example.com'
+        @($State.RequiredCapabilities).Count | Should -Be 1
+        @($State.RequiredCapabilities)[0] | Should -Be @('AAD_PREMIUM_P2')
+    }
+
+    It 'requires nothing extra without risk conditions' {
+        (Get-State '"Break Glass"' '"Site A"').RequiredCapabilities | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Get-CIPPBaselineCATemplateState Global Secure Access security profile' {
+    BeforeAll {
+        $script:SavedPolicy = $script:LivePolicy
+        $script:ProfileId = '50000000-0000-0000-0000-000000000005'
+        $script:FilteringRows = @([pscustomobject]@{ kind = 'profile'; id = $script:ProfileId; name = 'Staff' })
+        $script:ProfileTemplateRows = @([pscustomobject]@{ RowKey = 'gsa-tpl'; JSON = '{"name":"Staff","priority":1000}' })
+        function New-GraphGetRequest { param($uri, $tenantid, $AsApp) }
+        function Get-GsaState([string]$TemplateProfile, [string]$Conditions = '"users":{"includeUsers":["None"]}', [string]$Enabled = 'true') {
+            $script:LivePolicy = [pscustomobject]@{
+                id              = 'live-id'
+                displayName     = 'Variable test policy'
+                state           = 'disabled'
+                conditions      = [pscustomobject]@{ users = [pscustomobject]@{ includeUsers = @('None') } }
+                sessionControls = [pscustomobject]@{
+                    globalSecureAccessFilteringProfile = [pscustomobject]@{ profileId = $script:ProfileId; isEnabled = $true }
+                    networkAccessSecurity              = [pscustomobject]@{ policyId = $script:ProfileId; isEnabled = $true }
+                }
+            }
+            $script:TemplateJSON = '{{"displayName":"Variable test policy","state":"disabled","conditions":{{{1}}},"sessionControls":{{"globalSecureAccessFilteringProfile":{{"profileId":{0},"isEnabled":{2}}}}}}}' -f $TemplateProfile, $Conditions, $Enabled
+            Get-CIPPBaselineCATemplateState -Item @{ Variables = @{ caTemplate = 'tpl-1'; state = 'donotchange' } } -TenantFilter 'customer.example.com'
+        }
+    }
+    AfterAll { $script:LivePolicy = $script:SavedPolicy }
+
+    BeforeEach {
+        $script:FilteringRows = @([pscustomobject]@{ kind = 'profile'; id = $script:ProfileId; name = 'Staff' }, [pscustomobject]@{ kind = 'policy'; id = 'pol'; name = 'Block' })
+        Mock New-GraphGetRequest {}
+    }
+
+    It 'grades by name: the live profile id becomes the name the filtering cache holds for it' {
+        $State = Get-GsaState '"Staff"'
+        $State.Expected.sessionControls.globalSecureAccessFilteringProfile.profileId | Should -Be 'Staff'
+        $State.Current.sessionControls.globalSecureAccessFilteringProfile.profileId | Should -Be 'Staff'
+        Compare-CIPPIntuneObject -ReferenceObject $State.Expected -DifferenceObject $State.Current -CompareType 'ca' | Should -BeNullOrEmpty
+    }
+
+    It 'drops the networkAccessSecurity mirror on both sides' {
+        $State = Get-GsaState '"Staff"'
+        $State.Current.sessionControls.PSObject.Properties.Name | Should -Not -Contain 'networkAccessSecurity'
+        $State.Expected.sessionControls.PSObject.Properties.Name | Should -Not -Contain 'networkAccessSecurity'
+    }
+
+    It 'grades a security profile template link by the linked template''s current name' {
+        $State = Get-GsaState '{"label":"Old name","value":"gsa-tpl"}'
+        $State.Expected.sessionControls.globalSecureAccessFilteringProfile.profileId | Should -Be 'Staff'
+    }
+
+    It 'collects the filtering cache once when it was never collected, without a live read of its own' {
+        $script:FilteringRows = @()
+        function Set-CIPPDBCacheNetworkAccessFiltering { param($TenantFilter) $script:FilteringRows = @([pscustomobject]@{ kind = 'profile'; id = $script:ProfileId; name = 'Staff' }) }
+        Mock Get-CIPPBaselineCommand { 'Set-CIPPDBCacheNetworkAccessFiltering' } -ParameterFilter { $Name -eq 'Set-CIPPDBCacheNetworkAccessFiltering' }
+        $State = Get-GsaState '"Staff"'
+        $State.Current.sessionControls.globalSecureAccessFilteringProfile.profileId | Should -Be 'Staff'
+        Should -Invoke New-GraphGetRequest -Times 0
+    }
+
+    It 'keeps the id, and so drifts, when the filtering cache does not hold the live profile' {
+        $script:FilteringRows = @([pscustomobject]@{ kind = 'profile'; id = 'someone-else'; name = 'Guests' })
+        (Get-GsaState '"Staff"').Current.sessionControls.globalSecureAccessFilteringProfile.profileId | Should -Be $script:ProfileId
+    }
+
+    It 'requires Internet Access when the template enables a security profile, and P2 as well with risk conditions' {
+        @((Get-GsaState '"Staff"').RequiredCapabilities)[0] | Should -Be @('Entra_Premium_Internet_Access')
+        $Both = @((Get-GsaState '"Staff"' '"users":{"includeUsers":["None"]},"userRiskLevels":["high"]').RequiredCapabilities)
+        $Both.Count | Should -Be 2
+        $Both[0] | Should -Be @('AAD_PREMIUM_P2')
+        $Both[1] | Should -Be @('Entra_Premium_Internet_Access')
+    }
+
+    It 'requires nothing for a disabled security profile control' {
+        (Get-GsaState '"Staff"' -Enabled 'false').RequiredCapabilities | Should -BeNullOrEmpty
     }
 }

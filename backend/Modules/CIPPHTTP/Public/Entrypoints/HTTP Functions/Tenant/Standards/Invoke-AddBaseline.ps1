@@ -16,6 +16,14 @@ function Invoke-AddBaseline {
     param($Request, $TriggerMetadata)
 
     $APIName = $Request.Params.CIPPEndpoint
+    $Stages = @($Request.Body.stages)
+    $StagesWithoutConditions = @(for ($i = 1; $i -lt $Stages.Count; $i++) {
+            $Conditions = @(@($Stages[$i].conditions) + @($Stages[$i].conditionGroups.conditions)).Where({ $_.type })
+            if ($Conditions.Count -eq 0) { "Stage $($i + 1) ($($Stages[$i].name))" }
+        })
+    if ($StagesWithoutConditions.Count -gt 0) {
+        return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ Results = "Every stage after the first needs at least one graduation condition. Add one to $($StagesWithoutConditions -join ', ')." } })
+    }
     try {
         # Optional. Pushes the saved baseline to a GitHub template repository after the save: FullName is
         # the repository (owner/repo), Message is the commit message. Not stored on the baseline.
@@ -25,6 +33,13 @@ function Invoke-AddBaseline {
         }
 
         $User = ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Request.Headers.'x-ms-client-principal')) | ConvertFrom-Json).userDetails
+
+        $ExistingAssignments = if ($Request.Body.GUID) { (Get-CIPPBaseline -ID $Request.Body.GUID | Select-Object -First 1).assignments }
+        $OutOfScope = @(Get-CIPPBaselineOutOfScopeAssignment -Assignments @($Request.Body.assignedTenants; $ExistingAssignments) | Select-Object -Unique)
+        # Both the saved assignments and the new ones must be in scope, or an edit could pull tenants out of someone else's baseline.
+        if ($OutOfScope.Count -gt 0) {
+            return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::Forbidden; Body = @{ Results = "Your role can't save this baseline, because it is assigned to tenants outside your access: $($OutOfScope -join ', ')." } })
+        }
 
         # A synced baseline saved with no GitHub block is a local edit not yet in the repo -
         # flag it now. When a GitHub block is sent, leave the flag alone here; it is cleared

@@ -122,6 +122,17 @@ Describe 'Set-CIPPAssignedPolicy' {
         }
     }
 
+    Context 'an enrollment configuration' {
+        It 'sends the assignments under enrollmentConfigurationAssignments, the name its assign action takes' {
+            $null = Set-CIPPAssignedPolicy -GroupName 'Sales Users' -PolicyId 'acc_SinglePlatformRestriction' -Type 'deviceEnrollmentConfigurations' -TenantFilter $script:Tenant -AssignmentMode 'replace'
+
+            Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter {
+                $uri -like "*/deviceEnrollmentConfigurations('acc_SinglePlatformRestriction')/assign" -and
+                ($body | ConvertFrom-Json).enrollmentConfigurationAssignments.target.groupId -eq $script:SalesId
+            }
+        }
+    }
+
     Context 'broad targets on an App Protection policy' {
         # The MAM service rejects any assign carrying a target class other than group/exclusion, so
         # the whole assignment fails - which is how a remediated policy ended up with none at all.
@@ -245,6 +256,31 @@ Describe 'Set-CIPPAssignedPolicy' {
 
             $Result | Should -BeLike "*excluded group 'Real - Excluded'*"
             Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter { ($body | ConvertFrom-Json).assignments.target.groupId -contains $script:ExclId }
+        }
+    }
+
+    Context 'an assignment filter named in the request' {
+        BeforeEach {
+            Mock -CommandName New-GraphGetRequest -ParameterFilter { $uri -like '*/assignmentFilters' } -MockWith {
+                @([PSCustomObject]@{ id = 'filter-1'; displayName = 'CIPPTestWin' })
+            }
+        }
+
+        It 'throws and does not post when no filter matches the name' {
+            Mock -CommandName Get-CippException -MockWith { [PSCustomObject]@{ NormalizedError = $Exception.Exception.Message } }
+
+            { Set-CIPPAssignedPolicy -GroupName 'Sales Users' -AssignmentFilterName 'CIPPTestMissing' -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant } |
+                Should -Throw -ExpectedMessage '*CIPPTestMissing*'
+
+            Should -Invoke New-GraphPOSTRequest -Times 0 -Exactly
+        }
+
+        It 'sends the filter id when a filter matches the name' {
+            $null = Set-CIPPAssignedPolicy -GroupName 'Sales Users' -AssignmentFilterName 'CIPPTestWin' -PolicyId 'policy-1' -Type 'deviceConfigurations' -TenantFilter $script:Tenant
+
+            Should -Invoke New-GraphPOSTRequest -Times 1 -Exactly -ParameterFilter {
+                ($body | ConvertFrom-Json).assignments.target.deviceAndAppManagementAssignmentFilterId -eq 'filter-1'
+            }
         }
     }
 

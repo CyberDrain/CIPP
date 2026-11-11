@@ -7,6 +7,7 @@ import { getCippError } from '../../utils/get-cipp-error'
 import { CippInfoBar } from '../CippCards/CippInfoBar'
 import { ServiceHealthCard } from '../CippComponents/ServiceHealthCard'
 import { useAllTenantsDashboard } from './useAllTenantsDashboard'
+import { useMultiTenantScope } from '../../hooks/use-multi-tenant-scope'
 import {
   AllTenantsBandHeading,
   AllTenantsBarList,
@@ -48,6 +49,7 @@ const DashboardCard = ({ title, subheader, api, children, action }) => {
 }
 
 export const AllTenantsDashboard = () => {
+  const scope = useMultiTenantScope()
   const {
     tenantCount,
     tenants,
@@ -364,7 +366,7 @@ export const AllTenantsDashboard = () => {
               subheader="Tenants bucketed by combined alignment score"
               api={alignmentApi}
               action={
-                <Button component={Link} href="/tenant/standards/alignment" size="small">
+                <Button component={Link} href={alignment.path} size="small">
                   View
                 </Button>
               }
@@ -447,7 +449,7 @@ export const AllTenantsDashboard = () => {
         {/* Outages first: a Microsoft incident explains the errors and failed checks below it.
             AllTenants reads the nightly cache, each issue once with the tenants it reached. */}
         <Box sx={{ mb: 2 }}>
-          <ServiceHealthCard tenantFilter="AllTenants" />
+          <ServiceHealthCard tenantFilter={scope} />
         </Box>
 
         <Grid container spacing={2} sx={{ mb: 2 }}>
@@ -490,7 +492,7 @@ export const AllTenantsDashboard = () => {
               value={alignment.pendingDeviations}
               label="Standards deviations awaiting approval"
               meta={`${alignment.pendingTenantCount} tenants`}
-              link="/tenant/standards/alignment"
+              link={alignment.path}
             />
           </Grid>
         </Grid>

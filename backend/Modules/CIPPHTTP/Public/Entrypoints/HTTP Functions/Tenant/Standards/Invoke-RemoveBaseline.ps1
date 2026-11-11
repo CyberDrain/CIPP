@@ -14,13 +14,17 @@ function Invoke-RemoveBaseline {
     $APIName = $Request.Params.CIPPEndpoint
     $ID = $Request.Body.ID ?? $Request.Query.ID
     try {
-        if (-not $ID) { throw 'Provide the ID of the baseline to remove.' }
+        if (-not $ID) { throw [System.ArgumentException]::new('Provide the ID of the baseline to remove.') }
         $SafeID = ConvertTo-CIPPODataFilterValue -Value $ID
 
         $Table = Get-CippTable -tablename 'BaselineRollouts'
         $Entity = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'rollout' and RowKey eq '$SafeID'"
-        if (-not $Entity) { throw "No baseline found with ID $ID." }
+        if (-not $Entity) { throw [System.Management.Automation.ItemNotFoundException]::new("No baseline found with ID $ID.") }
         $BaselineName = $Entity.templateName ?? $ID
+        $OutOfScope = @(Get-CIPPBaselineOutOfScopeAssignment -Assignments (Get-CIPPBaseline -ID $ID | Select-Object -First 1).assignments)
+        if ($OutOfScope.Count -gt 0) {
+            return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::Forbidden; Body = @{ Results = "Your role can't remove $BaselineName, because it is assigned to tenants outside your access: $($OutOfScope -join ', ')." } })
+        }
         Remove-CIPPAzDataTableEntity -Force @Table -Entity $Entity
 
         # The exploded delta rows and rollout state for this baseline go with it.
@@ -46,7 +50,7 @@ function Invoke-RemoveBaseline {
     } catch {
         Write-LogMessage -headers $Request.Headers -API $APIName -message "Failed to remove baseline: $($_.Exception.Message)" -Sev 'Error'
         $Results = [pscustomobject]@{ Results = "Failed to remove baseline: $($_.Exception.Message)" }
-        $StatusCode = [HttpStatusCode]::InternalServerError
+        $StatusCode = Get-CippErrorStatusCode -ErrorRecord $_
     }
 
     return ([HttpResponseContext]@{

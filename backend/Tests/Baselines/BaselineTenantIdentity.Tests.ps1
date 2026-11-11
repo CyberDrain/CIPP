@@ -89,6 +89,29 @@ Describe 'Baseline tenant identity (#941)' {
         $Items[0].TemplateName | Should -Be 'Tenant Override'
     }
 
+    It 'names a renamed group by its current name, so the assignment still matches it' {
+        $Rollout = New-Rollout 'b-renamed'
+        $Rollout | Add-Member -NotePropertyName assignedTo -NotePropertyValue '[{"label":"Baselines (Onboarding)","value":"g1","type":"Group"}]'
+        $script:Rollouts = @($Rollout)
+        $Delta = New-Delta 'b-renamed' 'group' 'g1' $false
+        $Delta.scopeName = 'Baselines (Onboarding)'
+        $script:Deltas = @($Delta)
+
+        $Baseline = Get-CIPPBaseline -ID 'b-renamed'
+
+        $Baseline.assignedTenants | Should -Be @('Baselines')
+        @($Baseline.assignments)[0].label | Should -Be 'Baselines'
+    }
+
+    It 'keeps the saved name of a group that no longer exists' {
+        $script:Rollouts = @((New-Rollout 'b-gone'))
+        $Delta = New-Delta 'b-gone' 'group' 'deleted-group' $false
+        $Delta.scopeName = 'Old group'
+        $script:Deltas = @($Delta)
+
+        (Get-CIPPBaseline -ID 'b-gone').assignedTenants | Should -Be @('Old group')
+    }
+
     It 'reads one stage per tenant and prefers the customerId row over a legacy domain row' {
         $script:Rollouts = @((New-Rollout 'b-staged' -Stages '[{"name":"One"},{"name":"Two"},{"name":"Three"}]'))
         $script:Deltas = @((New-Delta 'b-staged' 'group' 'g1' $false))
@@ -103,6 +126,67 @@ Describe 'Baseline tenant identity (#941)' {
         $States[0].tenantFilter | Should -Be 'contoso.com'
         $States[0].currentStage | Should -Be 3
         $States[0].customerId | Should -Be $script:CustomerId
+    }
+
+    It 'keeps a stage gated on group <Group> visible but only lets members be moved into it (member: <Member>)' -ForEach @(
+        @{ Group = 'g1'; Member = $true }
+        @{ Group = 'other'; Member = $false }
+    ) {
+        $Stages = '[{"name":"One"},{"name":"Two","conditions":[{"type":"manual"},{"type":"group","group":{"value":"' + $Group + '"}}]}]'
+        $script:Rollouts = @((New-Rollout 'b-gated' -Stages $Stages))
+        $script:Deltas = @((New-Delta 'b-gated' 'group' 'g1' $false))
+
+        $State = @((Get-CIPPBaseline -ID 'b-gated').tenantStates)[0]
+
+        $State.totalStages | Should -Be 2
+        $State.nextStageName | Should -Be 'Two'
+        $State.groupBlocked | Should -Be (-not $Member)
+        $State.manualAdvance | Should -Be $Member
+    }
+
+    It 'never blocks an OR stage on its group condition' {
+        $Stages = '[{"name":"One"},{"name":"Two","logic":"or","conditions":[{"type":"manual"},{"type":"group","group":{"value":"other"}}]}]'
+        $script:Rollouts = @((New-Rollout 'b-or' -Stages $Stages))
+        $script:Deltas = @((New-Delta 'b-or' 'group' 'g1' $false))
+
+        $State = @((Get-CIPPBaseline -ID 'b-or').tenantStates)[0]
+
+        $State.groupBlocked | Should -BeFalse
+        $State.manualAdvance | Should -BeTrue
+    }
+
+    It 'opens a group-gated stage to manual approval through a condition group' {
+        $Stages = '[{"name":"One"},{"name":"Two","conditions":[{"type":"group","group":{"value":"other"}},{"type":"success"}],"conditionGroups":[{"logic":"and","conditions":[{"type":"manual"}]}]}]'
+        $script:Rollouts = @((New-Rollout 'b-alt' -Stages $Stages))
+        $script:Deltas = @((New-Delta 'b-alt' 'group' 'g1' $false))
+
+        $State = @((Get-CIPPBaseline -ID 'b-alt').tenantStates)[0]
+
+        $State.groupBlocked | Should -BeFalse
+        $State.manualAdvance | Should -BeTrue
+        $State.nextStage.conditionGroups.Count | Should -Be 1
+    }
+
+    It 'keeps manual approval closed when the manual condition sits in a group the tenant is blocked from' {
+        $Stages = '[{"name":"One"},{"name":"Two","conditions":[{"type":"time","days":30}],"conditionGroups":[{"conditions":[{"type":"group","group":{"value":"other"}},{"type":"manual"}]}]}]'
+        $script:Rollouts = @((New-Rollout 'b-closed' -Stages $Stages))
+        $script:Deltas = @((New-Delta 'b-closed' 'group' 'g1' $false))
+
+        $State = @((Get-CIPPBaseline -ID 'b-closed').tenantStates)[0]
+
+        $State.groupBlocked | Should -BeFalse
+        $State.manualAdvance | Should -BeFalse
+    }
+
+    It 'falls back to a manual move into a stage saved without conditions' {
+        $script:Rollouts = @((New-Rollout 'b-empty' -Stages '[{"name":"One"},{"name":"Two","conditions":[],"conditionGroups":[]}]'))
+        $script:Deltas = @((New-Delta 'b-empty' 'group' 'g1' $false))
+
+        $State = @((Get-CIPPBaseline -ID 'b-empty').tenantStates)[0]
+
+        $State.nextStageName | Should -Be 'Two'
+        $State.groupBlocked | Should -BeFalse
+        $State.manualAdvance | Should -BeTrue
     }
 
     It 'stores tenant assignments and exclusions by customerId' {
@@ -120,5 +204,19 @@ Describe 'Baseline tenant identity (#941)' {
         ($Deltas | Where-Object { $_.scope -eq 'tenant' }).scopeId | Should -Be $script:CustomerId
         ($Deltas | Where-Object { $_.scope -eq 'group' }).scopeId | Should -Be 'g1'
         ($script:Written | Where-Object { $_.PartitionKey -eq 'rollout' }).excludedTenants | Should -Be "[`"$script:CustomerId`"]"
+    }
+
+    It 'never turns the export placeholder into a group named after it' {
+        Mock Get-TenantGroups { @([pscustomobject]@{ Id = 'g-trap'; Name = 'Exported Template'; Members = @([pscustomobject]@{ defaultDomainName = 'contoso.com' }) }) }
+        $script:Rollouts = @()
+        $Baseline = [pscustomobject]@{
+            templateName    = 'Imported'
+            stages          = @([pscustomobject]@{ name = 'Stage 1'; standards = @([pscustomobject]@{ standard = 'TeamsGlobalMeetingPolicy'; variables = @{} }) })
+            assignedTenants = @([pscustomobject]@{ label = 'Exported Template'; value = 'Exported Template'; type = 'Tenant' })
+        }
+
+        $null = New-CIPPBaseline -Baseline $Baseline -User 'tester'
+
+        @($script:Written | Where-Object { $_.PartitionKey -eq 'standardItem' -and $_.scope -eq 'group' }).Count | Should -Be 0
     }
 }

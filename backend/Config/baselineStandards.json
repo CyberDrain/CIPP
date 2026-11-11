@@ -902,7 +902,7 @@
     "cat": "Entra (AAD) Standards",
     "tag": [],
     "helpText": "Manages the enabled state, group targeting and per-method settings of every authentication method the baseline configures. Methods left unconfigured are never touched.",
-    "docsDescription": "Grades each configured method: enabled state, include targeting (a named group or all users), and method-specific settings - Microsoft Authenticator feature states, Temporary Access Pass lifetimes, QR code settings, Email OTP external access and exclusions. The graded value is one list naming every drift. Remediation writes only the drifted methods through the shared authentication policy helper.",
+    "docsDescription": "Grades each configured method: enabled state, include targeting (a named group or all users), an optional exclude group, and method-specific settings - Microsoft Authenticator feature states, Temporary Access Pass lifetimes, QR code settings and Email OTP external access. The graded value is one list naming every drift. Remediation writes only the drifted methods through the shared authentication policy helper.",
     "executiveText": "Standardizes which sign-in methods are available and to whom - enabling phishing-resistant methods and retiring weak ones consistently across the fleet.",
     "label": "Configure Authentication Methods",
     "impact": "High Impact",
@@ -1183,8 +1183,62 @@
         "type": "textField"
       },
       {
+        "name": "standards.AuthenticationMethods.MicrosoftAuthenticatorExcludeGroup",
+        "label": "Microsoft Authenticator: exclude group",
+        "omitWhenBlank": true,
+        "type": "textField"
+      },
+      {
+        "name": "standards.AuthenticationMethods.FIDO2ExcludeGroup",
+        "label": "FIDO2 Security Keys: exclude group",
+        "omitWhenBlank": true,
+        "type": "textField"
+      },
+      {
+        "name": "standards.AuthenticationMethods.TAPExcludeGroup",
+        "label": "Temporary Access Pass: exclude group",
+        "omitWhenBlank": true,
+        "type": "textField"
+      },
+      {
+        "name": "standards.AuthenticationMethods.SoftwareOathExcludeGroup",
+        "label": "Software OATH Tokens: exclude group",
+        "omitWhenBlank": true,
+        "type": "textField"
+      },
+      {
+        "name": "standards.AuthenticationMethods.HardwareOathExcludeGroup",
+        "label": "Hardware OATH Tokens: exclude group",
+        "omitWhenBlank": true,
+        "type": "textField"
+      },
+      {
+        "name": "standards.AuthenticationMethods.SMSExcludeGroup",
+        "label": "SMS: exclude group",
+        "omitWhenBlank": true,
+        "type": "textField"
+      },
+      {
+        "name": "standards.AuthenticationMethods.VoiceExcludeGroup",
+        "label": "Voice Call: exclude group",
+        "omitWhenBlank": true,
+        "type": "textField"
+      },
+      {
         "name": "standards.AuthenticationMethods.EmailExcludeGroup",
         "label": "Email OTP: exclude group",
+        "omitWhenBlank": true,
+        "type": "textField"
+      },
+      {
+        "name": "standards.AuthenticationMethods.x509CertificateExcludeGroup",
+        "label": "Certificate-Based Authentication: exclude group",
+        "omitWhenBlank": true,
+        "type": "textField"
+      },
+      {
+        "name": "standards.AuthenticationMethods.QRCodePinExcludeGroup",
+        "label": "QR Code Pin: exclude group",
         "omitWhenBlank": true,
         "type": "textField"
       },
@@ -3225,7 +3279,7 @@
     "cat": "Defender Standards",
     "tag": [],
     "helpText": "Configures the Microsoft Defender for Endpoint connector with Intune, enabling compliance evaluation for mobile and desktop platforms and controlling partner-data blocking per platform.",
-    "docsDescription": "Reads the MDE mobile threat defense connector live (one small singleton, no cache) and grades every platform toggle. Three rules hold: connecting Windows forces the Windows partner-data block on, connecting macOS forces the macOS partner-data block on (Microsoft enforces both), and the MDE attach flag always grades true. Remediation enables the connector first, then writes the FULL settings object.",
+    "docsDescription": "Reads the MDE mobile threat defense connector live (one small singleton, no cache) and grades every platform toggle. Two rules hold: connecting Windows forces the Windows partner-data block on and connecting macOS forces the macOS partner-data block on (Microsoft enforces both). Remediation enables the connector first, then writes the FULL settings object.",
     "executiveText": "Establishes the link between Microsoft Defender for Endpoint and Intune so device risk data feeds compliance policies - a foundational Zero Trust control.",
     "label": "Defender for Endpoint - Intune Compliance Connector",
     "impact": "High Impact",
@@ -3357,7 +3411,7 @@
       {
         "name": "standards.DefenderCompliancePolicy.AllowMEMEnforceCompliance",
         "type": "switch",
-        "label": "Allow MEM enforcement of compliance",
+        "label": "Allow Microsoft Defender for Endpoint to enforce Endpoint Security Configurations",
         "omitWhenBlank": true,
         "default": false
       }
@@ -3889,7 +3943,7 @@
     "tag": [
       "HighImpact"
     ],
-    "helpText": "Flags every Conditional Access policy in the tenant that is not covered by a CA template from a baseline applying to it (matched by display name across ALL baselines). Each unmanaged policy is its own deviation: accept it to tolerate a tenant-specific policy, or deny it to queue it for deletion. Report-only - nothing is ever changed automatically.",
+    "helpText": "Flags every Conditional Access policy in the tenant that is not covered by a CA template from a baseline applying to it, nor deployed by another standard in those baselines such as the compliant network policy (matched by display name across ALL baselines). Each unmanaged policy is its own deviation: accept it to tolerate a tenant-specific policy, or deny it to queue it for deletion. Report-only - nothing is ever changed automatically.",
     "executiveText": "Watches for sign-in security policies created outside the agreed baseline - for example by a local admin - and raises each one for review, so unauthorized changes to account protection never go unnoticed.",
     "label": "Detect Conditional Access Drift",
     "impact": "Low Impact",
@@ -4458,6 +4512,48 @@
         "type": "switch",
         "label": "Disable accounts that have not yet signed in",
         "default": false
+      }
+    ]
+  },
+  {
+    "name": "standards.DisableInactiveApps",
+    "cat": "Entra (AAD) Standards",
+    "tag": [],
+    "helpText": "Finds enterprise apps with no sign-in for a set number of days (minimum 30), including apps never used since they were added. Microsoft apps and CIPP are skipped. Exclude external MFA (e.g. Cisco Duo) and GSA traffic forwarding apps. Use in Report mode only; auto-remediation is not recommended. Requires Entra ID P1.",
+    "docsDescription": "Reports enterprise apps with no sign-in for the configured number of days (minimum 30), from the Entra sign-in activity report (Entra ID P1); remediate mode disables them. Apps never signed in count once older than the same window. Microsoft-owned apps, managed identities, CIPP's own app and apps re-enabled in the last 7 days are skipped. Exclusions match display name, app ID or object ID and accept custom variables. Exclude external MFA apps (e.g. Cisco Duo) and GSA traffic forwarding apps (GSA-...), which can show no sign-ins while in use. Recommended in Report mode only, not auto-remediate.",
+    "executiveText": "Identifies third-party and custom apps that are no longer used, so dormant apps with broad permissions can be reviewed and removed before they are abused.",
+    "label": "Disable enterprise applications that have not signed in for a number of days",
+    "impact": "High Impact",
+    "impactColour": "danger",
+    "addedDate": "2026-10-28",
+    "powershellEquivalent": "Get-MgBetaReportServicePrincipalSignInActivity & Update-MgServicePrincipal -AccountEnabled:$false",
+    "recommendedBy": [],
+    "requiredCapabilities": [
+      "AAD_PREMIUM",
+      "AAD_PREMIUM_P2"
+    ],
+    "addedComponent": [
+      {
+        "name": "standards.DisableInactiveApps.days",
+        "type": "number",
+        "label": "Days without a sign-in (minimum 30)",
+        "helperText": "Also applies to apps that have never signed in, counted from when they were added.",
+        "required": true,
+        "default": 180,
+        "validators": {
+          "min": {
+            "value": 30,
+            "message": "Minimum value is 30"
+          }
+        }
+      },
+      {
+        "name": "standards.DisableInactiveApps.excludedApps",
+        "type": "autoComplete",
+        "multiple": true,
+        "creatable": true,
+        "omitWhenBlank": true,
+        "label": "Excluded apps (display name, app ID or %variable%)"
       }
     ]
   },
@@ -5801,6 +5897,43 @@
     ]
   },
   {
+    "name": "standards.EnrollmentRestrictionTemplate",
+    "cat": "Templates",
+    "tag": [],
+    "helpText": "Deploy enrollment (device type) restrictions for specific groups from CIPP templates, with their platform settings and group assignment. An existing restriction with the same name and platform is updated.",
+    "docsDescription": "Deploy an enrollment (device type) restriction from a CIPP template. Grades whether every object the platform needs exists (two for Android), the platform settings, and the assignment as all users or the set of groups matching the template's group names. Priority is applied when the restriction is created and is not graded afterwards. Remediation creates or patches the restriction through Set-CIPPEnrollmentRestriction.",
+    "executiveText": "Applies the same rules about which devices staff can enrol, such as allowing personal Android phones only through a work profile or blocking personal iPhones, to the right groups in every tenant.",
+    "label": "Enrollment Restriction Template",
+    "impact": "High Impact",
+    "impactColour": "danger",
+    "addedDate": "2026-10-29",
+    "powershellEquivalent": "Graph: POST or PATCH deviceManagement/deviceEnrollmentConfigurations, then setPriority and assign",
+    "recommendedBy": [],
+    "requiredCapabilities": [
+      "INTUNE_A",
+      "MDM_Services",
+      "EMS",
+      "SCCM",
+      "MICROSOFTINTUNEPLAN1"
+    ],
+    "multiple": true,
+    "addedComponent": [
+      {
+        "name": "standards.EnrollmentRestrictionTemplate.enrollmentRestrictionTemplate",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Select Enrollment Restriction Template",
+        "required": true,
+        "api": {
+          "url": "/api/ListEnrollmentRestrictionTemplates",
+          "labelField": "displayName",
+          "valueField": "GUID",
+          "queryKey": "ListEnrollmentRestrictionTemplates"
+        }
+      }
+    ]
+  },
+  {
     "name": "standards.EnrollmentWindowsHelloForBusinessConfiguration",
     "cat": "Intune Standards",
     "tag": [],
@@ -6819,7 +6952,7 @@
     "tag": [
       "HighImpact"
     ],
-    "helpText": "Makes stolen sign-in tokens useless off company devices using Entra ID P1: onboards the tenant to Global Secure Access, enables the Microsoft 365 traffic profile for all users, deploys the client through Intune (Windows and macOS) and creates a Conditional Access policy that blocks every sign-in not coming from the compliant network. The policy is created in report-only mode until 'Enforce the policy' is switched on. Admin roles, your break-glass accounts, Intune and Explicit Forward Proxy are excluded.",
+    "helpText": "Makes stolen sign-in tokens useless off company devices using Entra ID P1: onboards the tenant to Global Secure Access, enables the Microsoft 365 traffic profile for all users, deploys the client through Intune (Windows and macOS) and creates a Conditional Access policy that blocks every sign-in not coming from the compliant network. The policy is created in report-only mode until 'Enforce the policy' is switched on and its name can be changed to match your naming convention. Admin roles, your break-glass accounts, Intune and Explicit Forward Proxy are excluded.",
     "docsDescription": "Grades the tenant setup (onboarded, Microsoft 365 profile enabled and assigned to all users, signaling on, compliant network location present), the Intune objects for the selected platforms and the policy (present, state, excluded roles and accounts). The client objects carry a configuration fingerprint and are redeployed only when it changes, so the standard runs checkBeforeRun false. It never disables signaling and refuses to enable the policy when no break-glass exclusion resolves.",
     "executiveText": "Routes staff sign-ins through Microsoft's secure edge, installs Microsoft's network client on company Windows and Mac computers, and blocks every sign-in that does not come from one of those computers, so a stolen password or sign-in token cannot be used from an attacker's machine. Starts in a monitoring mode.",
     "label": "Require a compliant network (Global Secure Access)",
@@ -6913,6 +7046,12 @@
         "recommended": true
       },
       {
+        "name": "standards.GlobalSecureAccessCompliantNetwork.policyName",
+        "type": "textField",
+        "label": "Name of the Conditional Access policy (changing it after deployment creates a new policy; Detect Conditional Access Drift then lists the old one for removal)",
+        "default": "CIPP: Require compliant network (Global Secure Access)"
+      },
+      {
         "name": "standards.GlobalSecureAccessCompliantNetwork.excludeAdminRoles",
         "type": "AdminRolesMultiSelect",
         "multiple": true,
@@ -6945,6 +7084,239 @@
         "type": "switch",
         "label": "Also exclude the break-glass account CIPP detects from your existing policies",
         "default": true
+      }
+    ]
+  },
+  {
+    "name": "standards.GlobalSecureAccessInternetAccess",
+    "cat": "Global Secure Access",
+    "helpText": "Enables or disables the Global Secure Access Internet traffic forwarding profile, keeps its traffic policies enabled, sets who it is assigned to and optionally manages the custom block page. Uses Microsoft Entra Internet Access. The tenant must be onboarded, which the Set up Global Secure Access standard does.",
+    "docsDescription": "Grades the Internet traffic forwarding profile the same way the Microsoft 365 profile standard grades its profile: state, enabled traffic policies and assignment, where assigning to groups adds them to what is already assigned and Do not assign leaves the assignment alone. The custom block page is graded only for what is configured: its state when chosen and its message when not blank. The message is markdown and may contain links.",
+    "executiveText": "Routes internet traffic from managed devices through Microsoft's Security Service Edge so web content filtering and threat protection apply, and sets the message users see when a site is blocked.",
+    "label": "Manage Microsoft Entra Internet Access",
+    "impact": "Medium Impact",
+    "impactColour": "warning",
+    "addedDate": "2026-11-11",
+    "powershellEquivalent": "Update-MgBetaNetworkAccessForwardingProfile; Update-MgBetaNetworkAccessSettingCustomBlockPage",
+    "recommendedBy": [
+      "CIPP"
+    ],
+    "requiredCapabilities": [
+      [
+        "Entra_Premium_Internet_Access"
+      ]
+    ],
+    "addedComponent": [
+      {
+        "name": "standards.GlobalSecureAccessInternetAccess.profileState",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Profile state",
+        "options": [
+          {
+            "value": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "value": "disabled",
+            "label": "Disabled"
+          }
+        ],
+        "default": "enabled",
+        "recommended": "enabled"
+      },
+      {
+        "name": "standards.GlobalSecureAccessInternetAccess.assignTo",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Who should the profile be assigned to?",
+        "options": [
+          {
+            "value": "DoNotAssign",
+            "label": "Do not assign"
+          },
+          {
+            "value": "AllDevicesAndUsers",
+            "label": "Assign to all users and devices"
+          },
+          {
+            "value": "customGroup",
+            "label": "Assign to Custom Group"
+          }
+        ],
+        "default": "AllDevicesAndUsers"
+      },
+      {
+        "name": "standards.GlobalSecureAccessInternetAccess.customGroup",
+        "type": "textField",
+        "label": "Custom group names, comma separated (when assigning to a custom group; wildcards allowed)",
+        "omitWhenBlank": true
+      },
+      {
+        "name": "standards.GlobalSecureAccessInternetAccess.blockPageState",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Custom block page (leave empty to not manage it)",
+        "options": [
+          {
+            "value": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "value": "disabled",
+            "label": "Disabled"
+          }
+        ],
+        "omitWhenBlank": true
+      },
+      {
+        "name": "standards.GlobalSecureAccessInternetAccess.blockMessage",
+        "type": "textField",
+        "label": "Block page message (markdown, links like [Help](https://example.com) allowed; leave empty to keep the current message)",
+        "omitWhenBlank": true
+      }
+    ]
+  },
+  {
+    "name": "standards.GlobalSecureAccessM365Profile",
+    "cat": "Global Secure Access",
+    "helpText": "Enables or disables the Global Secure Access Microsoft 365 traffic forwarding profile, keeps its traffic policies enabled and sets who it is assigned to. Uses Entra ID P1. The tenant must be onboarded, which the Set up Global Secure Access standard does.",
+    "docsDescription": "Grades the Microsoft 365 traffic forwarding profile's state and, when it should be enabled, that every traffic policy in it is enabled and who it is assigned to. Assigning to groups adds them to whatever is already assigned; assignments made by hand are kept, and choosing Do not assign never removes them, which is done in the portal. Group names may use wildcards and resolve from the Groups cache. Assignment is managed only on tenants with a Global Secure Access licence (Microsoft Entra Internet Access or Private Access), because Graph does not return a profile's assignment without one; elsewhere only the state and traffic policies are graded.",
+    "executiveText": "Routes Microsoft 365 traffic from managed devices through Microsoft's Security Service Edge, the base for compliant network checks and for seeing users' real source IP addresses in sign-in logs.",
+    "label": "Manage the Microsoft 365 traffic forwarding profile",
+    "impact": "Medium Impact",
+    "impactColour": "warning",
+    "addedDate": "2026-11-11",
+    "powershellEquivalent": "Update-MgBetaNetworkAccessForwardingProfile",
+    "recommendedBy": [
+      "CIPP"
+    ],
+    "requiredCapabilities": [
+      [
+        "AAD_PREMIUM",
+        "AAD_PREMIUM_P2"
+      ]
+    ],
+    "addedComponent": [
+      {
+        "name": "standards.GlobalSecureAccessM365Profile.profileState",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Profile state",
+        "options": [
+          {
+            "value": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "value": "disabled",
+            "label": "Disabled"
+          }
+        ],
+        "default": "enabled",
+        "recommended": "enabled"
+      },
+      {
+        "name": "standards.GlobalSecureAccessM365Profile.assignTo",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Who should the profile be assigned to?",
+        "options": [
+          {
+            "value": "DoNotAssign",
+            "label": "Do not assign"
+          },
+          {
+            "value": "AllDevicesAndUsers",
+            "label": "Assign to all users and devices"
+          },
+          {
+            "value": "customGroup",
+            "label": "Assign to Custom Group"
+          }
+        ],
+        "default": "AllDevicesAndUsers"
+      },
+      {
+        "name": "standards.GlobalSecureAccessM365Profile.customGroup",
+        "type": "textField",
+        "label": "Custom group names, comma separated (when assigning to a custom group; wildcards allowed)",
+        "omitWhenBlank": true
+      }
+    ]
+  },
+  {
+    "name": "standards.GlobalSecureAccessProfileTemplate",
+    "cat": "Global Secure Access",
+    "helpText": "Deploys a Global Secure Access security profile template, with the web content filtering policy templates it links, and keeps the tenant matching it. Uses Microsoft Entra Internet Access. Apply the profile to users with a Conditional Access template that links it.",
+    "docsDescription": "Compares the tenant's security profile, filtering policies and links with the selected security profile template and deploys any difference: missing policies and the profile are created, drifted rules and links are corrected, and links the template does not have are removed. A conflict, such as another profile holding the template's priority, is reported and never overwritten. The tenant must be onboarded to Global Secure Access.",
+    "executiveText": "Applies the same web content filtering rules, such as blocking risky site categories, to every tenant from one centrally managed template.",
+    "label": "Global Secure Access Security Profile Template",
+    "impact": "Medium Impact",
+    "impactColour": "warning",
+    "addedDate": "2026-11-11",
+    "powershellEquivalent": "New-MgBetaNetworkAccessFilteringPolicy; New-MgBetaNetworkAccessFilteringProfile",
+    "recommendedBy": [],
+    "requiredCapabilities": [
+      [
+        "Entra_Premium_Internet_Access"
+      ]
+    ],
+    "multiple": true,
+    "addedComponent": [
+      {
+        "name": "standards.GlobalSecureAccessProfileTemplate.profileTemplate",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Select Security Profile Template",
+        "required": true,
+        "api": {
+          "url": "/api/ListGSASecurityProfileTemplates",
+          "labelField": "name",
+          "valueField": "GUID",
+          "queryKey": "ListGSASecurityProfileTemplates"
+        }
+      }
+    ]
+  },
+  {
+    "name": "standards.GlobalSecureAccessSetup",
+    "cat": "Global Secure Access",
+    "helpText": "Onboards the tenant to Global Secure Access and sets the Conditional Access signalling that restores users' source IP addresses and enables compliant network checks. Uses Entra ID P1. Onboarding cannot be undone.",
+    "docsDescription": "Starts Global Secure Access onboarding when the tenant is not onboarded (a running onboarding counts as compliant, so it is never started twice) and sets the signalingStatus of the Global Secure Access Conditional Access settings. Signalling is needed for compliant network conditions and for Conditional Access and sign-in logs to show users' original source IP addresses. Onboarding is one way: there is no offboarding through this standard.",
+    "executiveText": "Turns on Microsoft's Security Service Edge for the tenant so its network security features can be used, and lets Conditional Access see where sign-ins really come from when traffic flows through Global Secure Access.",
+    "label": "Set up Global Secure Access",
+    "impact": "Low Impact",
+    "impactColour": "info",
+    "addedDate": "2026-11-11",
+    "powershellEquivalent": "Invoke-MgBetaOnboardNetworkAccess; Update-MgBetaNetworkAccessSettingConditionalAccess",
+    "recommendedBy": [
+      "CIPP"
+    ],
+    "requiredCapabilities": [
+      [
+        "AAD_PREMIUM",
+        "AAD_PREMIUM_P2"
+      ]
+    ],
+    "addedComponent": [
+      {
+        "name": "standards.GlobalSecureAccessSetup.signalingStatus",
+        "type": "autoComplete",
+        "creatable": false,
+        "label": "Conditional Access signalling",
+        "options": [
+          {
+            "value": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "value": "disabled",
+            "label": "Disabled"
+          }
+        ],
+        "default": "enabled",
+        "recommended": "enabled"
       }
     ]
   },
@@ -7821,7 +8193,7 @@
     "name": "standards.MessageEncryption",
     "cat": "Exchange Standards",
     "tag": [],
-    "helpText": "Enables Microsoft Purview Message Encryption by turning on Azure RMS licensing for Exchange Online, and turns on simplified client access so the Encrypt button appears in Outlook on the web and the new Outlook. The optional settings default to \"Do not change\", which leaves the tenant's current value alone and out of the drift check. Branding is configured in the Set Encrypted Message Branding (OME) standard.",
+    "helpText": "Requires Azure Rights Management (Business Premium, E3/E5, A1-A5, G3/G5 or an Azure Information Protection P1 add-on); tenants without it are skipped as unlicensed. Enables Microsoft Purview Message Encryption by turning on Azure RMS licensing for Exchange Online, and turns on simplified client access so the Encrypt button appears in Outlook on the web and the new Outlook. The optional settings default to \"Do not change\", which leaves the tenant's current value alone and out of the drift check. Branding is configured in the Set Encrypted Message Branding (OME) standard.",
     "docsDescription": "Grades AzureRMSLicensingEnabled and SimplifiedClientAccessEnabled as true, plus EnablePdfEncryption, DecryptAttachmentForEncryptOnly, SimplifiedClientAccessDoNotForwardDisabled, SimplifiedClientAccessEncryptOnlyDisabled and TransportDecryptionSetting when the baseline picks a value. Remediation sends the graded values in one Set-IRMConfiguration call.",
     "executiveText": "Turns on the built-in encryption that lets staff send protected email to anyone, including recipients outside the organization. Uses licensing the organization already owns, removing the need for a separate secure-email product.",
     "label": "Enable Purview Message Encryption",
@@ -7831,11 +8203,17 @@
     "powershellEquivalent": "Set-IRMConfiguration -AzureRMSLicensingEnabled $true -SimplifiedClientAccessEnabled $true",
     "recommendedBy": [],
     "requiredCapabilities": [
-      "EXCHANGE_S_STANDARD",
-      "EXCHANGE_S_ENTERPRISE",
-      "EXCHANGE_S_STANDARD_GOV",
-      "EXCHANGE_S_ENTERPRISE_GOV",
-      "EXCHANGE_LITE"
+      [
+        "EXCHANGE_S_STANDARD",
+        "EXCHANGE_S_ENTERPRISE",
+        "EXCHANGE_S_STANDARD_GOV",
+        "EXCHANGE_S_ENTERPRISE_GOV",
+        "EXCHANGE_LITE"
+      ],
+      [
+        "RMS_S_ENTERPRISE",
+        "RMS_S_ENTERPRISE_GOV"
+      ]
     ],
     "addedComponent": [
       {
@@ -9435,8 +9813,8 @@
     "name": "standards.SPGuestPeoplePicker",
     "cat": "SharePoint Standards",
     "tag": [],
-    "helpText": "Controls whether guest (external) users already in the tenant appear as suggestions in the SharePoint and OneDrive People Picker. Enforces the wanted state on BOTH the tenant default and every existing site collection - the two are set independently, so changing the tenant default does not update existing sites. Which sites differ is read from the daily SharePoint cache, and the write sweep runs at most once per 24h per tenant so it never re-runs against a stale cache.",
-    "docsDescription": "Enforces ShowPeoplePickerSuggestionsForGuestUsers at both levels it is set independently: the tenant default and each site collection. Which sites differ is read from the SPOSites reporting cache (populated by the daily SharePoint cache run); the tenant default is read from the cached SharePoint tenant configuration. It reports the tenant default and every differing site as offenders and remediates the tenant default (Set-SPOTenant) and each offending site (Set-SPOSite), sweeping the sites concurrently. The sweep is guarded to once per 24h per tenant (shared with the classic standard) so it is not repeated before the next daily cache run reflects the change and the standard re-evaluates. Guests are not shown by default even when they exist in the tenant, and changing the tenant default does not retroactively change existing sites - which is why both are covered here.",
+    "helpText": "Controls whether existing guest users appear as suggestions in the SharePoint and OneDrive People Picker. Applies to the tenant default and all existing sites, since changing the tenant setting alone does not update existing sites.",
+    "docsDescription": "Sets ShowPeoplePickerSuggestionsForGuestUsers on the tenant default and on each existing site collection. These are separate settings, so changing the tenant default does not change sites that already exist. Showing guests makes it easier to share with known external collaborators. Hiding them lowers the risk of sharing with the wrong person by accident. Site-level changes show up in reports after the next daily SharePoint data refresh.",
     "executiveText": "Makes existing external collaborators discoverable (or hidden) when sharing SharePoint and OneDrive content, consistently across the whole tenant - the default for new sites and every existing site. This keeps the sharing experience predictable and prevents individual sites from drifting away from the agreed collaboration posture.",
     "label": "Show guest users in the SharePoint People Picker",
     "impact": "Low Impact",
@@ -11210,7 +11588,8 @@
     "cat": "Teams Standards",
     "tag": [
       "CIS M365 7.0.0 (8.2.1)",
-      "CIS M365 7.0.0 (8.2.2)"
+      "CIS M365 7.0.0 (8.2.2)",
+      "CIS M365 7.0.0 (8.2.3)"
     ],
     "helpText": "Sets the properties of the Global external access policy.",
     "docsDescription": "Sets the properties of the Global external access policy. External access policies determine whether or not your users can: 1) communicate with users who have Session Initiation Protocol (SIP) accounts with a federated organization; 2) communicate with users who are using custom applications built with Azure Communication Services; 3) access Skype for Business Server over the Internet, without having to log on to your internal network; 4) communicate with users who have SIP accounts with a public instant messaging (IM) provider such as Skype; and, 5) communicate with people who are using Teams with an account that's not managed by an organization.",
@@ -11258,9 +11637,7 @@
   {
     "name": "standards.TeamsExternalChatWithAnyone",
     "cat": "Teams Standards",
-    "tag": [
-      "CIS M365 7.0.0 (8.2.3)"
-    ],
+    "tag": [],
     "helpText": "Controls whether users can start Teams chats with any email address, inviting external recipients as guests via email.",
     "docsDescription": "Manages the Teams messaging policy setting UseB2BInvitesToAddExternalUsers. When enabled, users can start chats with any email address and recipients receive an invitation to join the chat as guests. Disabling the setting prevents these external email chats from being created, keeping conversations limited to internal users and approved guests.",
     "executiveText": "Allows organizations to decide if employees can launch Microsoft Teams chats with anyone on the internet using just an email address. Disabling the feature keeps conversations inside trusted boundaries and helps prevent accidental data exposure through unexpected external invitations.",
@@ -11531,13 +11908,13 @@
       "meeting_externalrequestcontrol_v1",
       "meeting_pstnusersbypasslobby_v1"
     ],
-    "helpText": "Defines the CIS recommended global meeting policy for Teams. This includes AllowAnonymousUsersToJoinMeeting, AllowAnonymousUsersToStartMeeting, AutoAdmittedUsers, AllowPSTNUsersToBypassLobby, MeetingChatEnabledType, DesignatedPresenterRoleMode, AllowExternalParticipantGiveRequestControl, AllowParticipantGiveRequestControl, ExternalBotAccessMode",
+    "helpText": "Defines the CIS recommended global meeting policy for Teams. This includes AllowAnonymousUsersToJoinMeeting, AllowAnonymousUsersToStartMeeting, AutoAdmittedUsers, AllowPSTNUsersToBypassLobby, MeetingChatEnabledType, DesignatedPresenterRoleMode, AllowExternalParticipantGiveRequestControl, AllowParticipantGiveRequestControl, ExternalBotAccessMode, AllowTranscription",
     "executiveText": "Establishes security-focused default settings for Teams meetings, controlling who can join meetings, present content, and participate in chats. These policies balance collaboration needs with security requirements, ensuring meetings remain productive while protecting against unauthorized access and disruption.",
     "label": "Define Global Meeting Policy for Teams",
     "impact": "Low Impact",
     "impactColour": "info",
     "addedDate": "2024-11-12",
-    "powershellEquivalent": "Set-CsTeamsMeetingPolicy -AllowAnonymousUsersToJoinMeeting $false -AllowAnonymousUsersToStartMeeting $false -AutoAdmittedUsers $AutoAdmittedUsers -AllowPSTNUsersToBypassLobby $false -MeetingChatEnabledType EnabledExceptAnonymous -DesignatedPresenterRoleMode $DesignatedPresenterRoleMode -AllowExternalParticipantGiveRequestControl $false -AllowParticipantGiveRequestControl $false -ExternalBotAccessMode $ExternalBotAccessMode",
+    "powershellEquivalent": "Set-CsTeamsMeetingPolicy -AllowAnonymousUsersToJoinMeeting $false -AllowAnonymousUsersToStartMeeting $false -AutoAdmittedUsers $AutoAdmittedUsers -AllowPSTNUsersToBypassLobby $false -MeetingChatEnabledType EnabledExceptAnonymous -DesignatedPresenterRoleMode $DesignatedPresenterRoleMode -AllowExternalParticipantGiveRequestControl $false -AllowParticipantGiveRequestControl $false -ExternalBotAccessMode $ExternalBotAccessMode -AllowTranscription $AllowTranscription",
     "recommendedBy": [
       "CIS"
     ],
@@ -11707,6 +12084,28 @@
         ],
         "default": "",
         "recommended": false
+      },
+      {
+        "name": "standards.TeamsGlobalMeetingPolicy.AllowTranscription",
+        "type": "autoComplete",
+        "label": "Meeting transcription",
+        "helperText": "Leave blank to keep the tenant's current value.",
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Keep the tenant's current value",
+            "value": ""
+          },
+          {
+            "label": "On",
+            "value": true
+          },
+          {
+            "label": "Off",
+            "value": false
+          }
+        ],
+        "default": ""
       },
       {
         "name": "standards.TeamsGlobalMeetingPolicy.ExternalBotAccessMode",
@@ -13268,8 +13667,8 @@
       "CIS M365 7.0.0 (5.1.4.1)",
       "SMB1001 (2.8)"
     ],
-    "helpText": "Controls whether users can join devices to Entra. Tenants where Entra reports this setting as not admin-configurable are reported but not written to.",
-    "docsDescription": "Configures whether users can join devices to Entra. When disabled, users are unable to Entra-join devices, which prevents them from creating new Entra-joined (cloud-managed) device identities.",
+    "helpText": "Controls whether users can join devices to Entra: no users, all users, or only members of selected groups. Tenants where Entra reports this setting as not admin-configurable are reported but not written to.",
+    "docsDescription": "Configures whether users can join devices to Entra. With selected groups, only members of the listed groups (comma-separated names or IDs, custom variables including list variables allowed) can join, and the group list is graded against the tenant by ID. When disabled, users are unable to Entra-join devices, which prevents them from creating new Entra-joined (cloud-managed) device identities.",
     "executiveText": "Controls whether employees can join their devices to the corporate Entra directory. Disabling user device join prevents unauthorized or unmanaged devices from becoming corporate-managed identities, enhancing overall security posture.",
     "label": "Configure user restriction for Entra device join",
     "impact": "High Impact",
@@ -13293,10 +13692,27 @@
           {
             "label": "All users",
             "value": "#microsoft.graph.allDeviceRegistrationMembership"
+          },
+          {
+            "label": "Selected groups",
+            "value": "#microsoft.graph.enumeratedDeviceRegistrationMembership"
           }
         ],
         "default": "#microsoft.graph.noDeviceRegistrationMembership",
         "recommended": "#microsoft.graph.noDeviceRegistrationMembership"
+      },
+      {
+        "name": "standards.intuneRestrictUserDeviceJoin.allowedToJoinGroups",
+        "type": "textField",
+        "label": "Groups allowed to join devices",
+        "helperText": "Comma-separated group names or IDs. Custom variables work too, including list variables such as %DeviceJoinGroups%.",
+        "omitWhenBlank": true,
+        "default": "",
+        "condition": {
+          "field": "allowedToJoin",
+          "compareType": "contains",
+          "compareValue": "enumerated"
+        }
       }
     ]
   },

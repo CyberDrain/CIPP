@@ -126,7 +126,7 @@ const EditCATemplate = () => {
 
   // Build a data formatter that works for both editor modes
   const builderDataFormatter = (values) => {
-    const cleaned = extractCAPolicyJSON(values);
+    const cleaned = extractCAPolicyJSON(values, templateData);
     return { GUID, ...cleaned };
   };
 
@@ -178,6 +178,6 @@ const EditCATemplate = () => {
   );
 };
 
-EditCATemplate.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>;
+EditCATemplate.getLayout = (page) => <DashboardLayout usesTenant={false}>{page}</DashboardLayout>;
 
 export default EditCATemplate;

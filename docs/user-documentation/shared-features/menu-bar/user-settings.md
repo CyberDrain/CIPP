@@ -39,6 +39,7 @@ A label on the card indicates which defaults are currently in effect: **Using Te
 | Convert to Shared Mailbox                     | Converts the user's mailbox to a shared mailbox.                       |
 | Remove from all groups                        | Removes the user from every group they belong to.                      |
 | Remove group ownership                        | Removes the user as owner of every group they own. The replacement owner is chosen in the wizard itself. |
+| Remove all admin roles                        | Removes every Entra directory role the user holds, PIM assignments included. |
 | Hide from Global Address List                 | Hides the user's mailbox from the address list.                        |
 | Remove Licenses                               | Removes all licences assigned to the user.                             |
 | Cancel all calendar invites                   | Cancels the meetings the user has organised.                           |

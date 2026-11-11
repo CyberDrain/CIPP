@@ -18,8 +18,33 @@ BeforeAll {
 
 Describe 'Get-CippApiClient' {
     BeforeEach {
+        $script:CippApiClientMemo = $null
         Mock -CommandName Get-CIPPTable -MockWith { @{ TableName = 'ApiClients' } }
         Mock -CommandName Get-CIPPAzDataTableEntity -MockWith { $script:Rows }
+    }
+
+    Context 'one read per invocation' {
+        BeforeEach {
+            $script:Rows = @(
+                [pscustomobject]@{ PartitionKey = 'ApiClients'; RowKey = $script:AppId; AppName = 'Memo'; Role = 'readonly'; IPRange = ''; Enabled = $true; MCPAllowed = $false }
+            )
+        }
+
+        It 'reads the table once for repeated lookups of the same client, including an unknown one' {
+            $null = Get-CippApiClient -AppId $script:AppId
+            (Get-CippApiClient -AppId $script:AppId).AppName | Should -Be 'Memo'
+            $script:Rows = @()
+            $null = Get-CippApiClient -AppId 'unknown'
+            Get-CippApiClient -AppId 'unknown' | Should -BeNullOrEmpty
+            Should -Invoke Get-CIPPAzDataTableEntity -Times 2 -Exactly
+        }
+
+        It 'never serves a listing of every client from the memo' {
+            $null = Get-CippApiClient -AppId $script:AppId
+            $null = Get-CippApiClient
+            $null = Get-CippApiClient
+            Should -Invoke Get-CIPPAzDataTableEntity -Times 3 -Exactly
+        }
     }
 
     Context 'IPRange stored as an empty array' {
@@ -97,6 +122,22 @@ Describe 'Get-CippApiClient' {
             $Result = @(Get-CippApiClient)
             $Result.Count | Should -Be 2
             $Result.ClientId | Should -Be @('aaaaaaaa-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000002')
+        }
+    }
+
+    Context 'Enabled stored as a legacy string' {
+        BeforeEach {
+            $script:Rows = @(
+                [pscustomobject]@{ PartitionKey = 'ApiClients'; RowKey = 'aaaaaaaa-0000-0000-0000-000000000001'; AppName = 'On'; Role = 'readonly'; IPRange = ''; Enabled = 'True'; MCPAllowed = $false }
+                [pscustomobject]@{ PartitionKey = 'ApiClients'; RowKey = 'aaaaaaaa-0000-0000-0000-000000000002'; AppName = 'Off'; Role = 'readonly'; IPRange = ''; Enabled = 'False'; MCPAllowed = $false }
+                [pscustomobject]@{ PartitionKey = 'ApiClients'; RowKey = 'aaaaaaaa-0000-0000-0000-000000000003'; AppName = 'Bool'; Role = 'readonly'; IPRange = ''; Enabled = $true; MCPAllowed = $false }
+            )
+        }
+
+        It 'returns Enabled as a bool' {
+            $Result = @(Get-CippApiClient)
+            $Result.Enabled | Should -Be @($true, $false, $true)
+            $Result.Enabled | ForEach-Object { $_ | Should -BeOfType [bool] }
         }
     }
 }

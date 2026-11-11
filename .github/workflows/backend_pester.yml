@@ -20,11 +20,16 @@ concurrency:
 jobs:
   pester:
     if: github.repository_owner == 'CyberDrain'
-    name: Pester
+    name: Pester (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
     # Checkout and artifact upload only; nothing is written back to the repo.
     permissions:
       contents: read
+    strategy:
+      # Each shard covers different test files, so a red one must not cancel the rest.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,9 +47,10 @@ jobs:
       # The tests dot-source the function under test and stub its dependencies, so nothing
       # has to be built or hosted first - no ModuleBuilder, no Azurite, no Craft.
       # -CI adds the NUnit result file; the exit code is the failed-test count regardless.
-      - name: Run the Pester suite
+      # -Shard splits by test file, so the denominator must match the matrix above.
+      - name: Run the Pester suite (shard ${{ matrix.shard }}/4)
         shell: pwsh
-        run: ./backend/Tests/Invoke-CippTests.ps1 -CI
+        run: ./backend/Tests/Invoke-CippTests.ps1 -CI -Shard ${{ matrix.shard }}/4
       # Renders the NUnit file into the run's summary page so a failure is readable
       # without opening the log. Runs on failure too - that is the case it exists for.
       - name: Publish results to the job summary
@@ -54,7 +60,7 @@ jobs:
           $Path = 'backend/Tests/TestResults.xml'
           $Out = $env:GITHUB_STEP_SUMMARY
           if (-not (Test-Path $Path)) {
-              "## Backend Pester`n`n> No result file was produced - the suite failed before Pester could report." |
+              "## Backend Pester (shard ${{ matrix.shard }}/4)`n`n> No result file was produced - the suite failed before Pester could report." |
                   Out-File -FilePath $Out -Append -Encoding utf8
               exit 0
           }
@@ -79,7 +85,7 @@ jobs:
           $Headline = if ($Failed -gt 0) { "**$Failed of $Total tests failed**" } else { "**All $Total tests passed**" }
 
           $Lines = @(
-              '## :test_tube: Backend Pester'
+              '## :test_tube: Backend Pester (shard ${{ matrix.shard }}/4)'
               ''
               "$Icon $Headline"
               ''
@@ -116,6 +122,22 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pester-results
+          name: pester-results-${{ matrix.shard }}
           path: backend/Tests/TestResults.xml
           if-no-files-found: warn
+
+  # Single stable check name for branch protection: the matrixed jobs report as
+  # "Pester (1/4)" etc., which would otherwise have to be listed one by one.
+  summary:
+    if: github.repository_owner == 'CyberDrain' && always()
+    name: Pester
+    needs: [pester]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Check shard results
+        run: |
+          if [ "${{ needs.pester.result }}" != "success" ]; then
+            echo "pester: ${{ needs.pester.result }}"
+            exit 1
+          fi

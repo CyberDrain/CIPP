@@ -17,7 +17,7 @@ BeforeAll {
     function Add-CIPPAzDataTableEntity { param($TableName, $Context, $Entity, [switch]$Force, $OperationType) }
     function Get-Tenants { param([switch]$IncludeErrors, [switch]$IncludeAll) }
     function New-CIPPAlertTemplate { param($format, $data, $ActionResults, $CIPPURL, $AlertComment, $CustomSubject, $Tenant, $AuditLogLink, $AlertConfigLink) }
-    function Send-CIPPAlert { param($Type, $Title, $HTMLContent, $JSONContent, $TenantFilter, $APIName, $SchemaSource, $InvokingCommand, $AffectedUser) }
+    function Send-CIPPAlert { param($Type, $Title, $HTMLContent, $JSONContent, $TenantFilter, $APIName, $SchemaSource, $InvokingCommand, $AffectedUser, $AffectedDevice) }
     function Write-LogMessage { param($API, $tenant, $message, $sev, $LogData) }
     function ConvertTo-CIPPODataFilterValue { param([string]$Value, $Type) $Value -replace "'", "''" }
 

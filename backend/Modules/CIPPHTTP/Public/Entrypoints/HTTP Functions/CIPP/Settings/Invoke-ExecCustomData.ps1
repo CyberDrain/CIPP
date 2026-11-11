@@ -381,7 +381,7 @@ function Invoke-ExecCustomData {
                 $null = New-GraphPOSTRequest -Type DELETE -Uri $Uri -AsApp $true -NoAuthCheck $true -tenantid $env:TenantID
                 try {
                     $CustomDataTable = Get-CippTable -TableName 'CustomData'
-                    $ExtensionEntity = Get-CIPPAzDataTableEntity @CustomDataTable -Filter "PartitionKey eq 'DirectoryExtension' and RowKey eq '$ExtensionName'"
+                    $ExtensionEntity = Get-CIPPAzDataTableEntity @CustomDataTable -Filter "PartitionKey eq 'DirectoryExtension' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $ExtensionName)'"
                     # Remove the extension from the custom data table
                     if ($ExtensionEntity) {
                         Remove-CIPPAzDataTableEntity @CustomDataTable -Entity $ExtensionEntity
@@ -512,7 +512,7 @@ function Invoke-ExecCustomData {
                 }
 
                 # Retrieve the mapping entity
-                $MappingEntity = Get-CIPPAzDataTableEntity @CustomDataMappingsTable -Filter "PartitionKey eq 'Mapping' and RowKey eq '$MappingId'"
+                $MappingEntity = Get-CIPPAzDataTableEntity @CustomDataMappingsTable -Filter "PartitionKey eq 'Mapping' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $MappingId)'"
                 if (!$MappingEntity) {
                     $StatusCode = [HttpStatusCode]::NotFound
                     throw "Mapping with ID '$MappingId' not found."
@@ -552,13 +552,19 @@ function Invoke-ExecCustomData {
                 }
 
                 # Retrieve the mapping entity
-                $MappingEntity = Get-CIPPAzDataTableEntity @CustomDataMappingsTable -Filter "PartitionKey eq 'Mapping' and RowKey eq '$MappingId'"
+                $MappingEntity = Get-CIPPAzDataTableEntity @CustomDataMappingsTable -Filter "PartitionKey eq 'Mapping' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $MappingId)'"
                 if (!$MappingEntity) {
                     $StatusCode = [HttpStatusCode]::NotFound
                     throw "Mapping with ID '$MappingId' not found."
                 }
 
                 $Mapping = $MappingEntity.JSON | ConvertFrom-Json
+                try {
+                    Assert-CippTenantAccess -Request $Request -TenantFilter $Mapping.tenantFilter
+                } catch {
+                    $StatusCode = [HttpStatusCode]::Forbidden
+                    throw
+                }
                 $Body = @{
                     Results = $Mapping
                 }

@@ -5,9 +5,10 @@ function Invoke-ExecBaselineStage {
     .ROLE
         Tenant.Baselines.ReadWrite
     .DESCRIPTION
-        Advances a tenant to the next stage of a baseline (manual stage approval), or with
-        action 'evaluate' re-checks the next stage's conditions now instead of waiting for the
-        scheduled run. The tenant receives all standards from the new stage on the next engine run.
+        Advances a tenant to the next stage of a baseline (manual stage approval), with action
+        'previous' moves it back one stage, or with action 'evaluate' re-checks the next stage's
+        conditions now instead of waiting for the scheduled run. The tenant receives the standards
+        of every stage up to its new one on the next engine run.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -17,11 +18,11 @@ function Invoke-ExecBaselineStage {
         $TenantFilter = $Request.Body.tenantFilter
         $TemplateId = $Request.Body.templateId
         if (-not ($TenantFilter -and $TemplateId)) {
-            throw 'Provide tenantFilter and templateId.'
+            throw [System.ArgumentException]::new('Provide tenantFilter and templateId.')
         }
 
         $Baseline = Get-CIPPBaseline -ID $TemplateId
-        if (-not $Baseline) { throw "No baseline found with ID $TemplateId." }
+        if (-not $Baseline) { throw [System.Management.Automation.ItemNotFoundException]::new("No baseline found with ID $TemplateId.") }
         $TotalStages = @($Baseline.stages).Count
 
         $StateTable = Get-CippTable -tablename 'BaselineRolloutState'
@@ -32,8 +33,16 @@ function Invoke-ExecBaselineStage {
         $TenantKeys = @($TenantId, $Tenant.defaultDomainName, $Tenant.initialDomainName, $TenantFilter) | Where-Object { $_ }
         $State = @(Get-CIPPAzDataTableEntity @StateTable -Filter "PartitionKey eq '$SafeTemplate'" | Where-Object { $_.RowKey -in $TenantKeys } | Sort-Object -Property { $_.RowKey -ne $TenantId })[0]
         $CurrentStage = if ($State) { [int]$State.currentStage } else { 1 }
-        if ($CurrentStage -ge $TotalStages) {
-            throw "$TenantFilter is already in the final stage of $($Baseline.templateName)."
+        $MovingBack = $Request.Body.action -eq 'previous'
+        if ($MovingBack -and $CurrentStage -le 1) {
+            throw [System.ArgumentException]::new("$TenantFilter is already in the first stage of $($Baseline.templateName).")
+        }
+        if (-not $MovingBack -and $CurrentStage -ge $TotalStages) {
+            throw [System.ArgumentException]::new("$TenantFilter is already in the final stage of $($Baseline.templateName).")
+        }
+        $TenantState = @($Baseline.tenantStates).Where({ $_.tenantFilter -eq $Tenant.defaultDomainName }, 'First')[0]
+        if (-not $MovingBack -and $Request.Body.action -ne 'evaluate' -and $TenantState.groupBlocked) {
+            throw [System.ArgumentException]::new("Stage $($CurrentStage + 1) of $($Baseline.templateName) requires a tenant group $TenantFilter is not a member of.")
         }
 
         $User = ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Request.Headers.'x-ms-client-principal')) | ConvertFrom-Json).userDetails
@@ -55,7 +64,9 @@ function Invoke-ExecBaselineStage {
                 })
         }
 
-        $NewStage = $CurrentStage + 1
+        # A stage number past the end (left by an older stage removal) steps back to the final stage.
+        $NewStage = if ($MovingBack) { [Math]::Min($CurrentStage - 1, $TotalStages) } else { $CurrentStage + 1 }
+        $Moved = if ($MovingBack) { 'Moved back' } else { 'Moved' }
         $Now = [int64]([datetimeoffset]::UtcNow.ToUnixTimeSeconds())
         $StateTable.Force = $true
         Add-CIPPAzDataTableEntity @StateTable -Entity @{
@@ -66,15 +77,24 @@ function Invoke-ExecBaselineStage {
             firstDeployedAt = $State.firstDeployedAt ?? $State.enteredStageAt ?? $Now
         }
 
+        if ($MovingBack) {
+            # Standards only the later stages rolled out would otherwise keep showing under those stages.
+            $Kept = @(Get-CIPPBaselineStageStandards -Baseline $Baseline -Definitions @(Get-CIPPBaselineDefinition) | Select-Object -First $NewStage | ForEach-Object { $_ })
+            $ResolvedTable = Get-CippTable -tablename 'BaselineAlignment'
+            $SafeTenant = ConvertTo-CIPPODataFilterValue -Value ($Tenant.defaultDomainName ?? $TenantFilter)
+            $Stale = @(Get-CIPPAzDataTableEntity @ResolvedTable -Filter "PartitionKey eq '$SafeTenant' and TemplateId eq '$SafeTemplate'").Where({ $Kept -notcontains $_.StandardName })
+            if ($Stale.Count -gt 0) { Remove-CIPPAzDataTableEntity -Force @ResolvedTable -Entity $Stale }
+        }
+
         $StageName = $Baseline.stages[$NewStage - 1].name
-        $null = Add-CIPPBaselineHistoryEvent -TenantFilter $TenantFilter -Standard $Baseline.templateName -Mode 'stage' -TriggeredBy $User -Outcome 'Stage Advanced' -Detail "Moved to stage $NewStage ($StageName) - the stage's standards apply on the next run"
-        Write-LogMessage -headers $Request.Headers -API $APIName -message "Moved $TenantFilter to stage $NewStage ($StageName) of baseline $($Baseline.templateName)." -Sev 'Info'
-        $Results = [pscustomobject]@{ Results = "Moved $TenantFilter to stage $NewStage ($StageName) of $($Baseline.templateName). The stage's standards apply on the next run." }
+        $null = Add-CIPPBaselineHistoryEvent -TenantFilter $TenantFilter -Standard $Baseline.templateName -Mode 'stage' -TriggeredBy $User -Outcome $(if ($MovingBack) { 'Stage Moved Back' } else { 'Stage Advanced' }) -Detail "$Moved to stage $NewStage ($StageName) - the stage's standards apply on the next run"
+        Write-LogMessage -headers $Request.Headers -API $APIName -message "$Moved $TenantFilter to stage $NewStage ($StageName) of baseline $($Baseline.templateName)." -Sev 'Info'
+        $Results = [pscustomobject]@{ Results = "$Moved $TenantFilter to stage $NewStage ($StageName) of $($Baseline.templateName). The stage's standards apply on the next run." }
         $StatusCode = [HttpStatusCode]::OK
     } catch {
-        Write-LogMessage -headers $Request.Headers -API $APIName -message "Failed to advance stage: $($_.Exception.Message)" -Sev 'Error'
-        $Results = [pscustomobject]@{ Results = "Failed to advance stage: $($_.Exception.Message)" }
-        $StatusCode = [HttpStatusCode]::InternalServerError
+        Write-LogMessage -headers $Request.Headers -API $APIName -message "Failed to change stage: $($_.Exception.Message)" -Sev 'Error'
+        $Results = [pscustomobject]@{ Results = "Failed to change stage: $($_.Exception.Message)" }
+        $StatusCode = Get-CippErrorStatusCode -ErrorRecord $_
     }
 
     return ([HttpResponseContext]@{

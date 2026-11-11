@@ -8,7 +8,7 @@ function Get-CIPPBaselineCATemplateState {
         engine's verdict is the only verdict. Both sides normalize to one canonical
         vocabulary; every rule below closes a documented false-drift source from the old
         standards engine:
-        - id/GUID/*time*/templateId/@odata/LocationInfo/AuthContextInfo stripped everywhere
+        - id/GUID/*time*/templateId/tenantFilter/@odata/LocationInfo/AuthContextInfo stripped everywhere
           (GUID and AuthContextInfo were NOT excluded by the shared compare and drifted
           forever; AuthContextInfo carries source-tenant descriptions)
         - null-valued properties stripped on BOTH sides, sessionControls scrubbed on BOTH
@@ -18,9 +18,13 @@ function Get-CIPPBaselineCATemplateState {
           one side to strings and reported type-mismatch drift)
         - locations translate GUID->displayName via the template's LocationInfo plus the
           tenant NamedLocations cache; All/AllTrusted pass through
+        - named locations the template defines and the policy references also grade by
+          content (namedLocations), against the location the live policy is bound to
         - users/groups translate GUID->displayName via the Users/Groups caches, then one live
           directoryObjects/getByIds for ids those caches do not hold yet; still-unresolved
           GUIDs stay GUIDs so raw-GUID templates still match
+        - template user names that match no user in the tenant are dropped from Expected
+          (New-CIPPCAPolicy drops them on deploy, so they could never converge)
         - 'Vacation Exclusion*' groups are removed from excludeGroups on both sides
           (New-CIPPCAPolicy re-adds them on every deploy - deliberate, not drift)
         - grantControls.authenticationStrength collapses to @{ displayName } on both sides
@@ -60,21 +64,29 @@ function Get-CIPPBaselineCATemplateState {
     }
     if (-not $TemplateRow) { throw "Conditional Access template '$TemplateRef' was not found in the template store." }
     $Template = Get-CIPPTextReplacement -TenantFilter $TenantFilter -Text $TemplateRow.JSON -EscapeForJson | ConvertFrom-Json -Depth 100
+    # Risk conditions are an Entra ID P2 feature; Graph rejects the policy without it (1039).
+    # One capability group per feature, all required: risk conditions need P2 (Graph rejects them with 1039), a security profile needs Internet Access.
+    $RequiredCapabilities = [System.Collections.Generic.List[object]]::new()
+    if ((@($Template.conditions.signInRiskLevels) + @($Template.conditions.userRiskLevels)).Where({ $_ })) { $RequiredCapabilities.Add(@('AAD_PREMIUM_P2')) }
+    if ($Template.sessionControls.globalSecureAccessFilteringProfile.isEnabled -eq $true -and $Template.sessionControls.globalSecureAccessFilteringProfile.profileId) { $RequiredCapabilities.Add(@('Entra_Premium_Internet_Access')) }
 
     # --- lookup maps, cache-only
     $NameById = @{}
     foreach ($Location in @($Template.LocationInfo)) {
         if ($Location.id -and $Location.displayName) { $NameById["$($Location.id)"] = "$($Location.displayName)" }
     }
-    foreach ($Location in @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'NamedLocations' | Where-Object { $_ })) {
+    $TenantLocations = @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'NamedLocations' | Where-Object { $_ })
+    foreach ($Location in $TenantLocations) {
         if ($Location.id -and $Location.displayName -and -not $NameById.ContainsKey("$($Location.id)")) { $NameById["$($Location.id)"] = "$($Location.displayName)" }
     }
     $StrengthNameById = @{}
     foreach ($Strength in @(New-CIPPDbRequest -TenantFilter $TenantFilter -Type 'AuthenticationStrengths' | Where-Object { $_ })) {
         if ($Strength.id -and $Strength.displayName) { $StrengthNameById["$($Strength.id)"] = "$($Strength.displayName)" }
     }
+    $UserNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($Directory in @('Users', 'Groups')) {
         foreach ($Entry in @($(try { New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Directory } catch { $null }) | Where-Object { $_ })) {
+            if ($Directory -eq 'Users' -and $Entry.displayName) { $null = $UserNames.Add("$($Entry.displayName)") }
             if ($Entry.id -and $Entry.displayName -and -not $NameById.ContainsKey("$($Entry.id)")) { $NameById["$($Entry.id)"] = "$($Entry.displayName)" }
         }
     }
@@ -92,7 +104,7 @@ function Get-CIPPBaselineCATemplateState {
         param($Node)
         if ($Node -isnot [System.Management.Automation.PSCustomObject]) { return }
         foreach ($Property in @($Node.PSObject.Properties)) {
-            if ($Property.Name -in @('id', 'GUID', 'templateId', 'LocationInfo', 'AuthContextInfo') -or
+            if ($Property.Name -in @('id', 'GUID', 'templateId', 'tenantFilter', 'LocationInfo', 'AuthContextInfo') -or
                 $Property.Name -like '*time*' -or $Property.Name -like '*@odata*' -or $null -eq $Property.Value) {
                 $Node.PSObject.Properties.Remove($Property.Name)
                 continue
@@ -142,6 +154,12 @@ function Get-CIPPBaselineCATemplateState {
         # sessionControls scrub AFTER the null strip, applied to BOTH sides: drop
         # disableResilienceDefaults unless explicitly true, drop the object when empty.
         if ($Policy.sessionControls) {
+            $Policy.sessionControls.PSObject.Properties.Remove('networkAccessSecurity')
+            $ProfileControl = $Policy.sessionControls.globalSecureAccessFilteringProfile
+            if ($ProfileControl.profileId) {
+                $ProfileRef = "$($ProfileControl.profileId.value ?? $ProfileControl.profileId)"
+                $ProfileControl.profileId = $ProfileNameByRef[$ProfileRef] ?? $ProfileRef
+            }
             if ($Policy.sessionControls.disableResilienceDefaults -ne $true) { $Policy.sessionControls.PSObject.Properties.Remove('disableResilienceDefaults') }
             if (@($Policy.sessionControls.PSObject.Properties).Count -eq 0) { $Policy.PSObject.Properties.Remove('sessionControls') }
         }
@@ -178,6 +196,31 @@ function Get-CIPPBaselineCATemplateState {
         }
     }
 
+    foreach ($Value in @($Live.conditions.users.includeUsers) + @($Live.conditions.users.excludeUsers)) {
+        if ($NameById.ContainsKey("$Value")) { $null = $UserNames.Add($NameById["$Value"]) }
+    }
+    if ($UserNames.Count -gt 0 -and $Template.conditions.users) {
+        $Guid = [guid]::Empty
+        foreach ($Side in @('includeUsers', 'excludeUsers')) {
+            if ($null -eq $Template.conditions.users.$Side) { continue }
+            $Template.conditions.users.$Side = @($Template.conditions.users.$Side | Where-Object { "$_" -in 'All', 'None', 'GuestsOrExternalUsers' -or [guid]::TryParse("$_", [ref]$Guid) -or $UserNames.Contains("$_") })
+        }
+    }
+
+    # Security profiles grade by name: a template holds a name or a profile template link, the live policy an id
+    $ProfileNameByRef = @{}
+    $TemplateProfileRef = $Template.sessionControls.globalSecureAccessFilteringProfile.profileId
+    if ($TemplateProfileRef.value) {
+        $ProfileRow = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'GSASecurityProfileTemplate' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value "$($TemplateProfileRef.value)")'" | Select-Object -First 1
+        $ProfileNameByRef["$($TemplateProfileRef.value)"] = $(try { ($ProfileRow.JSON | ConvertFrom-Json).name } catch { $null }) ?? "$($TemplateProfileRef.label)"
+    }
+    # The CA collector refreshes this cache whenever one of the tenant's policies applies a security profile
+    if ($Live.sessionControls.globalSecureAccessFilteringProfile.profileId -or $TemplateProfileRef -is [string]) {
+        foreach ($Row in @(Get-CIPPBaselineCacheRows -TenantFilter $TenantFilter -Type 'NetworkAccessFiltering').Where({ $_.kind -eq 'profile' })) {
+            $ProfileNameByRef["$($Row.id)"] = "$($Row.name)"
+        }
+    }
+
     $Expected = & $Normalize $Template
 
     if ($Policies.Count -eq 0) {
@@ -189,16 +232,17 @@ function Get-CIPPBaselineCATemplateState {
         if ($null -ne $CacheMeta) {
             # EmptyFamily: see the engine's cross-check - a tenant whose CA policies all
             # vanished at once is more likely a failed collection than a mass deletion.
-            return @{ Expected = $Expected; Current = [PSCustomObject]@{ policyStatus = 'Policy is missing from this tenant' }; EmptyFamily = $true }
+            return @{ Expected = $Expected; Current = [PSCustomObject]@{ policyStatus = 'Policy is missing from this tenant' }; EmptyFamily = $true; RequiredCapabilities = $RequiredCapabilities }
         }
-        return @{ Expected = $Expected; Current = $null }
+        return @{ Expected = $Expected; Current = $null; RequiredCapabilities = $RequiredCapabilities }
     }
 
     if (-not $Live) {
         if ($ConfiguredState -and $ConfiguredState -ne 'donotchange') { $Expected.state = $ConfiguredState }
         return @{
-            Expected = $Expected
-            Current  = [PSCustomObject]@{ policyStatus = 'Policy is missing from this tenant' }
+            Expected             = $Expected
+            Current              = [PSCustomObject]@{ policyStatus = 'Policy is missing from this tenant' }
+            RequiredCapabilities = $RequiredCapabilities
         }
     }
 
@@ -206,5 +250,36 @@ function Get-CIPPBaselineCATemplateState {
     # State: the configured state is the expectation; 'donotchange' adopts the live state.
     $Expected.state = if (-not $ConfiguredState -or $ConfiguredState -eq 'donotchange') { $Current.state } else { $ConfiguredState }
 
-    return @{ Expected = $Expected; Current = $Current }
+    # A deploy rewrites every location the template defines, so those the policy references grade by
+    # content, on the copy the live policy is bound to (else the first of that name). Locations the
+    # template only names (a list variable such as %clientallowlocations%) are tenant-managed.
+    $Referenced = @($Template.conditions.locations.includeLocations) + @($Template.conditions.locations.excludeLocations)
+    $BoundIds = @($Live.conditions.locations.includeLocations) + @($Live.conditions.locations.excludeLocations)
+    $Shape = {
+        param($Location)
+        $Shaped = [ordered]@{}
+        foreach ($Key in $Keys) {
+            $Value = if ($Key -eq 'ipRanges') { $Location.ipRanges.cidrAddress } else { $Location.$Key }
+            # One sorted string, so order never drifts and a difference reads as one line.
+            $Shaped[$Key] = $Value -is [array] ? (@($Value | Sort-Object) -join ', ') : $Value
+        }
+        [PSCustomObject]$Shaped
+    }
+    $ExpectedLocations = [ordered]@{}
+    $CurrentLocations = [ordered]@{}
+    foreach ($Location in @($Template.LocationInfo)) {
+        if (-not $Location.displayName -or ($Location.id -notin $Referenced -and $Location.displayName -notin $Referenced)) { continue }
+        Format-CIPPNamedLocationRange -Location $Location
+        $Keys = @('ipRanges', 'isTrusted', 'countriesAndRegions', 'includeUnknownCountriesAndRegions', 'countryLookupMethod').Where({ $null -ne $Location.$_ })
+        $Named = @($TenantLocations.Where({ $_.displayName -eq $Location.displayName }))
+        $Bound = @($Named.Where({ $_.id -in $BoundIds }))[0] ?? $Named[0]
+        $ExpectedLocations[$Location.displayName] = & $Shape $Location
+        $CurrentLocations[$Location.displayName] = if ($Bound) { & $Shape $Bound }
+    }
+    if ($ExpectedLocations.Count -gt 0) {
+        $Expected | Add-Member -NotePropertyName 'namedLocations' -NotePropertyValue ([PSCustomObject]$ExpectedLocations)
+        $Current | Add-Member -NotePropertyName 'namedLocations' -NotePropertyValue ([PSCustomObject]$CurrentLocations)
+    }
+
+    return @{ Expected = $Expected; Current = $Current; RequiredCapabilities = $RequiredCapabilities }
 }

@@ -20,8 +20,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { useDispatch } from 'react-redux'
 import { useSettings } from '../../../../hooks/use-settings'
 import { Stack } from '@mui/system'
+import { CippIntuneDeploymentStatus } from '../../../../components/CippComponents/CippIntuneDeploymentStatus.jsx'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCippReportDB } from '../../../../components/CippComponents/CippReportDBControls'
+import { isMultiTenant, tenantScope } from '../../../../utils/tenant-selection'
 
 const assignmentModeOptions = [
   { label: 'Replace existing assignments', value: 'replace' },
@@ -53,6 +55,14 @@ const getScriptContentFields = (script) => {
 
 const decodeScript = (value) => (value ? Buffer.from(value, 'base64').toString('utf8') : '')
 const encodeScript = (value) => Buffer.from(value ?? '', 'utf8').toString('base64')
+
+// Graph collection each script type lives in (Linux scripts are settings catalog policies)
+const SCRIPT_STATUS_TYPES = {
+  Windows: 'deviceManagementScripts',
+  MacOS: 'deviceShellScripts',
+  Remediation: 'deviceHealthScripts',
+  Linux: 'configurationPolicies',
+}
 
 const Page = () => {
   const pageTitle = 'Scripts'
@@ -98,7 +108,7 @@ const Page = () => {
     queryKey: ['script', { scriptId, scriptTenant }],
     queryFn: async () => {
       const response = await fetch(
-        `/api/EditIntuneScript?TenantFilter=${scriptTenant || tenantFilter}&ScriptId=${scriptId}`
+        `/api/EditIntuneScript?${new URLSearchParams(tenantScope(scriptTenant || tenantFilter))}&ScriptId=${scriptId}`
       )
       return response.json()
     },
@@ -201,7 +211,7 @@ const Page = () => {
             }
 
       const patchData = {
-        TenantFilter: scriptTenant || tenantFilter,
+        ...tenantScope(scriptTenant || tenantFilter),
         ScriptId: id,
         ScriptType: scriptType,
         IntuneScript: JSON.stringify(intuneScript),
@@ -255,6 +265,22 @@ const Page = () => {
     return mapping[scriptType] || 'deviceManagementScripts'
   }
 
+  // Builds a customDataformatter that handles both single-row and bulk (array) inputs.
+  const makeAssignFormatter = (getRowData) => (row, action, formData) => {
+    const formatRow = (singleRow) => {
+      const tenantFilterValue =
+        isMultiTenant(tenantFilter) && singleRow?.Tenant ? singleRow.Tenant : tenantFilter
+      return {
+        tenantFilter: tenantFilterValue,
+        ID: singleRow?.id,
+        Type: getScriptEndpoint(singleRow?.scriptType),
+        assignmentMode: formData?.assignmentMode || 'append',
+        ...getRowData(singleRow, formData),
+      }
+    }
+    return Array.isArray(row) ? row.map(formatRow) : formatRow(row)
+  }
+
   // Group picker (by ID) reused for both include and exclude selection
   const getGroupPickerField = (name, label, required) => ({
     type: 'autoComplete',
@@ -304,13 +330,7 @@ const Page = () => {
         },
       ],
       confirmText: 'Are you sure you want to assign "[displayName]" to all users?',
-      customDataformatter: (row, action, formData) => ({
-        tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
-        ID: row?.id,
-        Type: getScriptEndpoint(row?.scriptType),
-        AssignTo: 'allLicensedUsers',
-        assignmentMode: formData?.assignmentMode || 'append',
-      }),
+      customDataformatter: makeAssignFormatter(() => ({ AssignTo: 'allLicensedUsers' })),
     },
     {
       label: 'Assign to All Devices',
@@ -331,13 +351,7 @@ const Page = () => {
         },
       ],
       confirmText: 'Are you sure you want to assign "[displayName]" to all devices?',
-      customDataformatter: (row, action, formData) => ({
-        tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
-        ID: row?.id,
-        Type: getScriptEndpoint(row?.scriptType),
-        AssignTo: 'AllDevices',
-        assignmentMode: formData?.assignmentMode || 'append',
-      }),
+      customDataformatter: makeAssignFormatter(() => ({ AssignTo: 'AllDevices' })),
     },
     {
       label: 'Assign Globally (All Users / All Devices)',
@@ -358,13 +372,7 @@ const Page = () => {
         },
       ],
       confirmText: 'Are you sure you want to assign "[displayName]" to all users and devices?',
-      customDataformatter: (row, action, formData) => ({
-        tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
-        ID: row?.id,
-        Type: getScriptEndpoint(row?.scriptType),
-        AssignTo: 'AllDevicesAndUsers',
-        assignmentMode: formData?.assignmentMode || 'append',
-      }),
+      customDataformatter: makeAssignFormatter(() => ({ AssignTo: 'AllDevicesAndUsers' })),
     },
     {
       label: 'Assign to Custom Group',
@@ -419,23 +427,19 @@ const Page = () => {
             'Replace + Include: these groups become the only assignments, and All Users/All Devices are removed. Exclusions stay. Replace + Exclude: these groups become the only exclusions. Assignments stay. Append: adds these groups and removes nothing.',
         },
       ],
-      customDataformatter: (row, action, formData) => {
+      customDataformatter: makeAssignFormatter((singleRow, formData) => {
         const selectedGroups = Array.isArray(formData?.groupTargets) ? formData.groupTargets : []
         const isExclude = formData?.assignmentDirection === 'exclude'
         const ids = selectedGroups.map((group) => group.value).filter(Boolean)
         const names = selectedGroups.map((group) => group.label).filter(Boolean)
         return {
-          tenantFilter: tenantFilter === 'AllTenants' && row?.Tenant ? row.Tenant : tenantFilter,
-          ID: row?.id,
-          Type: getScriptEndpoint(row?.scriptType),
           GroupIds: isExclude ? [] : ids,
           GroupNames: isExclude ? [] : names,
           ExcludeGroupIds: isExclude ? ids : [],
           ExcludeGroupNames: isExclude ? names : [],
           assignmentDirection: formData?.assignmentDirection || 'include',
-          assignmentMode: formData?.assignmentMode || 'append',
         }
-      },
+      }),
     },
     {
       label: 'Edit Script',
@@ -474,6 +478,14 @@ const Page = () => {
       'enforceSignatureCheck',
     ],
     actions: actions,
+    children: (row) => (
+      <CippIntuneDeploymentStatus
+        row={row}
+        tenant={tenantFilter}
+        type={SCRIPT_STATUS_TYPES[row?.scriptType]}
+      />
+    ),
+    size: 'lg',
   }
 
   const simpleColumns = [
@@ -593,5 +605,5 @@ const Page = () => {
   )
 }
 
-Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>
+Page.getLayout = (page) => <DashboardLayout tenantGroupSupport={true}>{page}</DashboardLayout>
 export default Page

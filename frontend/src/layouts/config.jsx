@@ -185,9 +185,14 @@ export const nativeMenuItems = [
             permissions: ['Tenant.Application.*'],
           },
           {
+            title: 'NHI Compromise',
+            path: '/tenant/administration/nhi',
+            permissions: ['Tenant.Application.*'],
+          },
+          {
             title: 'Authentication Methods',
             path: '/tenant/administration/authentication-methods',
-            permissions: ['Tenant.Config.*'],
+            permissions: ['Tenant.Administration.*'],
           },
           {
             title: 'Partner Relationships',
@@ -259,6 +264,22 @@ export const nativeMenuItems = [
             title: 'Named Locations',
             path: '/tenant/conditional/list-named-locations',
             permissions: ['Tenant.ConditionalAccess.*'],
+          },
+        ],
+      },
+      {
+        title: 'Global Secure Access',
+        permissions: ['Tenant.GlobalSecureAccess.*'],
+        items: [
+          {
+            title: 'Filtering Policies',
+            path: '/tenant/gsa/filtering-policies',
+            permissions: ['Tenant.GlobalSecureAccess.*'],
+          },
+          {
+            title: 'Security Profiles',
+            path: '/tenant/gsa/security-profiles',
+            permissions: ['Tenant.GlobalSecureAccess.*'],
           },
         ],
       },
@@ -583,6 +604,17 @@ export const nativeMenuItems = [
             permissions: ['Endpoint.Autopilot.*'],
           },
           {
+            title: 'Enrollment Restrictions',
+            path: '/endpoint/autopilot/enrollment-restrictions',
+            permissions: ['Endpoint.Autopilot.*'],
+          },
+          {
+            title: 'Enrollment Restriction Templates',
+            path: '/endpoint/autopilot/enrollment-restriction-templates',
+            permissions: ['Endpoint.Autopilot.*'],
+            scope: 'global',
+          },
+          {
             title: 'Status Pages',
             path: '/endpoint/autopilot/list-status-pages',
             permissions: ['Endpoint.Autopilot.*'],
@@ -600,6 +632,11 @@ export const nativeMenuItems = [
             permissions: ['Endpoint.Device.*'],
           },
           {
+            title: 'Non-Compliant Devices',
+            path: '/endpoint/MEM/non-compliant-devices',
+            permissions: ['Endpoint.MEM.*'],
+          },
+          {
             title: 'BitLocker Key Search',
             path: '/endpoint/MEM/bitlocker-search',
             docsPath: 'endpoint/mem/bitlocker-search',
@@ -615,6 +652,12 @@ export const nativeMenuItems = [
             title: 'Compliance Policies',
             path: '/endpoint/MEM/list-compliance-policies',
             docsPath: 'endpoint/mem/list-compliance-policies',
+            permissions: ['Endpoint.MEM.*'],
+          },
+          {
+            title: 'Policy Failures',
+            path: '/endpoint/MEM/policy-failures',
+            docsPath: 'endpoint/mem/policy-failures',
             permissions: ['Endpoint.MEM.*'],
           },
           {
@@ -870,6 +913,11 @@ export const nativeMenuItems = [
             path: '/email/administration/exchange-retention/policies',
             permissions: ['Exchange.RetentionPolicies.*'],
           },
+          {
+            title: 'App Mailbox Access',
+            path: '/email/administration/app-mailbox-access/roles',
+            permissions: ['Tenant.Application.*'],
+          },
         ],
       },
       {
@@ -1086,6 +1134,13 @@ export const nativeMenuItems = [
             path: '/tenant/tools/geoiplookup',
             docsPath: 'tools/tenant-tools/geoiplookup',
             permissions: ['CIPP.IPDatabase.*'],
+            scope: 'global',
+          },
+          {
+            title: 'Compare CA Policies',
+            path: '/tenant/tools/compare-ca-policies',
+            docsPath: 'tools/tenant-tools/compare-ca-policies',
+            permissions: ['Tenant.ConditionalAccess.*'],
             scope: 'global',
           },
         ],

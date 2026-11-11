@@ -12,7 +12,7 @@ BeforeAll {
     function New-GraphGetRequest { param($uri, $tenantid, $AsApp) }
     function New-GraphPostRequest { param($uri, $tenantid, $type, $body, $AsApp, $ContentType, $scope) }
     function Set-CIPPRegistrationCampaign { param($Tenant, $State, $TargetedAuthenticationMethod, $SnoozeDurationInDays, $EnforceRegistrationAfterAllowedSnoozes, $IncludeTargets, $ExcludeTargets, $APIName) }
-    function Set-CIPPAuthenticationPolicy { param($Tenant, $APIName, $AuthenticationMethodId, [bool]$Enabled, $GroupIds, $MicrosoftAuthenticatorSoftwareOathEnabled, $MicrosoftAuthenticatorDisplayAppInfo, $MicrosoftAuthenticatorDisplayLocation, $MicrosoftAuthenticatorCompanionApp, $TAPisUsableOnce, $TAPDefaultLifeTime, $TAPMinimumLifetime, $TAPMaximumLifetime, $TAPDefaultLength, $QRCodeLifetimeInDays, $QRCodePinLength, $EmailAllowExternalIdToUseEmailOtp, $EmailExcludeGroupIds) }
+    function Set-CIPPAuthenticationPolicy { param($Tenant, $APIName, $AuthenticationMethodId, [bool]$Enabled, $GroupIds, $MicrosoftAuthenticatorSoftwareOathEnabled, $MicrosoftAuthenticatorDisplayAppInfo, $MicrosoftAuthenticatorDisplayLocation, $MicrosoftAuthenticatorCompanionApp, $TAPisUsableOnce, $TAPDefaultLifeTime, $TAPMinimumLifetime, $TAPMaximumLifetime, $TAPDefaultLength, $QRCodeLifetimeInDays, $QRCodePinLength, $EmailAllowExternalIdToUseEmailOtp, $ExcludeGroupIds) }
 
     . (Join-Path $script:RepoRoot 'Modules/CIPPCore/Public/Get-CIPPIntuneCompareExclusions.ps1')
     . (Join-Path $script:RepoRoot 'Modules/CIPPCore/Public/Compare-CIPPIntuneObject.ps1')
@@ -130,6 +130,44 @@ Describe 'Get-CIPPBaselineAuthenticationMethodsState' {
         $Prepared.Current.remediationSets[0].Params.Enabled | Should -BeFalse
     }
 
+    It 'grades and remediates the exclude group on methods other than Email' {
+        Mock New-CIPPDbRequest {
+            if ($Type -eq 'AuthenticationMethodsPolicy') { @($script:AuthPolicy | ConvertTo-Cached) } else { @(@{ id = 'g-admins'; displayName = 'Admins' } | ConvertTo-Cached) }
+        }
+        $Item = [PSCustomObject]@{ Variables = [PSCustomObject]@{ SMSEnabled = $true; SMSExcludeGroup = 'Admins' } }
+        $Prepared = Get-CIPPBaselineAuthenticationMethodsState -Item $Item -TenantFilter $script:Tenant
+        $Prepared.Current.methodsOutOfPolicy | Should -Match 'SMS: excludeTargets'
+        $Prepared.Current.remediationSets[0].Params.ExcludeGroupIds | Should -Be @('g-admins')
+    }
+
+    It 'leaves the include targets alone when the target group does not resolve' {
+        $PilotPolicy = @{ authenticationMethodConfigurations = @(
+                @{ id = 'Sms'; state = 'disabled'; includeTargets = @(@{ id = 'g-pilot'; targetType = 'group' }) }
+            ) }
+        Mock New-CIPPDbRequest {
+            if ($Type -eq 'AuthenticationMethodsPolicy') { @($PilotPolicy | ConvertTo-Cached) } else { @(@{ id = 'g-pilot'; displayName = 'CIPPTestPilot' } | ConvertTo-Cached) }
+        }
+        $Item = [PSCustomObject]@{ Variables = [PSCustomObject]@{ SMSEnabled = $true; SMSGroup = 'CIPPTestMissing' } }
+        $Prepared = Get-CIPPBaselineAuthenticationMethodsState -Item $Item -TenantFilter $script:Tenant
+        $Prepared.Current.remediationSets[0].Params.Enabled | Should -BeTrue
+        $Prepared.Current.remediationSets[0].Params.Keys | Should -Not -Contain 'GroupIds'
+    }
+
+    It 'targets the resolved group, or all users when no group is set' {
+        $PilotPolicy = @{ authenticationMethodConfigurations = @(
+                @{ id = 'Sms'; state = 'disabled'; includeTargets = @(@{ id = 'all_users'; targetType = 'group' }) }
+                @{ id = 'Voice'; state = 'disabled'; includeTargets = @(@{ id = 'g-pilot'; targetType = 'group' }) }
+            ) }
+        Mock New-CIPPDbRequest {
+            if ($Type -eq 'AuthenticationMethodsPolicy') { @($PilotPolicy | ConvertTo-Cached) } else { @(@{ id = 'g-pilot'; displayName = 'CIPPTestPilot' } | ConvertTo-Cached) }
+        }
+        $Item = [PSCustomObject]@{ Variables = [PSCustomObject]@{ SMSEnabled = $true; SMSGroup = 'CIPPTestPilot'; VoiceEnabled = $true } }
+        $Prepared = Get-CIPPBaselineAuthenticationMethodsState -Item $Item -TenantFilter $script:Tenant
+        $Sets = $Prepared.Current.remediationSets
+        $Sets.Where({ $_.Label -eq 'SMS' })[0].Params.GroupIds | Should -Be @('g-pilot')
+        $Sets.Where({ $_.Label -eq 'Voice Call' })[0].Params.GroupIds | Should -Be @('all_users')
+    }
+
     It 'writes each drifted method through the shared policy helper, compliant ones untouched' {
         Mock Set-CIPPAuthenticationPolicy { }
         $Current = [PSCustomObject]@{ remediationSets = @([PSCustomObject]@{ Label = 'SMS'; Params = @{ AuthenticationMethodId = 'SMS'; Enabled = $false } }) }
@@ -184,12 +222,30 @@ Describe 'Get-CIPPBaselineFIDO2PasskeyProfilesState' {
 
     It 'grades the DEFAULT profile only - operator profiles are never graded' {
         # The operator profile (p-other) differs on every field; only the default profile
-        # participates. Note enforcementType grades even while restrictions are off - the
-        # classic graded the dormant field, and Graph defaults it to 'block'.
+        # participates.
         Mock New-CIPPDbRequest { @($script:Fido2 | ConvertTo-Cached) }
         $Item = [PSCustomObject]@{ Variables = [PSCustomObject]@{ PasskeyTypes = 'deviceBound'; AttestationEnforcement = 'registrationOnly'; EnforceKeyRestrictions = $false; EnforcementType = 'block' } }
         $Prepared = Get-CIPPBaselineFIDO2PasskeyProfilesState -Item $Item -TenantFilter $script:Tenant
         (Get-Verdict -Expected $Prepared.Expected -Current $Prepared.Current).Count | Should -Be 0
+    }
+
+    It 'does not grade the hidden restriction type while restrictions are off (#1166)' {
+        Mock New-CIPPDbRequest { @($script:Fido2 | ConvertTo-Cached) }
+        $Item = [PSCustomObject]@{ Variables = [PSCustomObject]@{ PasskeyTypes = 'deviceBound'; AttestationEnforcement = 'registrationOnly'; EnforceKeyRestrictions = $false } }
+        $Prepared = Get-CIPPBaselineFIDO2PasskeyProfilesState -Item $Item -TenantFilter $script:Tenant
+        (Get-Verdict -Expected $Prepared.Expected -Current $Prepared.Current).Count | Should -Be 0
+    }
+
+    It 'keeps the tenant restriction type when writing with restrictions off' {
+        Mock New-GraphPostRequest { $script:capturedBody = $body }
+        $Current = [PSCustomObject]@{
+            defaultProfileId = 'p-default'
+            enforcementType  = 'block'
+            allProfiles      = @($script:Fido2.passkeyProfiles | ConvertTo-Cached)
+        }
+        Invoke-CIPPBaselineFIDO2PasskeyProfiles -Remediate ([PSCustomObject]@{ passkeyTypes = 'synced'; attestationEnforcement = 'disabled'; enforceKeyRestrictions = $false; enforcementType = '' }) -TenantFilter $script:Tenant -Current $Current
+        $Default = @(($script:capturedBody | ConvertFrom-Json).passkeyProfiles) | Where-Object { $_.id -eq 'p-default' }
+        $Default.keyRestrictions.enforcementType | Should -Be 'block'
     }
 
     It 'refuses key restrictions with no AAGUIDs once Microsoft passkeys are opted out - allow mode would lock every authenticator out' {

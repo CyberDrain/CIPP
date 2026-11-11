@@ -26,21 +26,7 @@ function Push-DomainAnalyserTenant {
                 return
             }
 
-            # Remove domains that are not wanted, and used for cloud signature services. Same exclusions also found in Invoke-CIPPStandardAddDKIM
-            $ExclusionDomains = @(
-                '*.microsoftonline.com'
-                '*.mail.onmicrosoft.com'
-                '*.exclaimer.cloud'
-                '*.excl.cloud'
-                '*.codetwo.online'
-                '*.call2teams.com'
-                '*.signature365.net'
-                '*.myteamsconnect.io'
-                '*.teams.dstny.com'
-                '*.msteams.8x8.com'
-                '*.ucconnect.co.uk'
-                '*.teams-sbc.dk'
-            )
+            $ExclusionDomains = Get-CIPPDomainExclusionList
             $Domains = $Domains | Where-Object { $_.isVerified -eq $true } | ForEach-Object {
                 $Domain = $_
                 foreach ($ExclusionDomain in $ExclusionDomains) {
@@ -119,6 +105,12 @@ function Push-DomainAnalyserTenant {
                     # Batch insert tenant domains
                     try {
                         Add-CIPPAzDataTableEntity @DomainTable -Entity $TenantDomainObjects -Force
+                        $CurrentDomains = [System.Collections.Generic.HashSet[string]]::new([string[]]@($TenantDomains.Domain), [System.StringComparer]::OrdinalIgnoreCase)
+                        $StaleRows = @(Get-CIPPAzDataTableEntity @DomainTable -Filter ("PartitionKey eq 'TenantDomains' and TenantGUID eq '{0}'" -f $Tenant.customerId) -Property PartitionKey, RowKey).Where({ -not $CurrentDomains.Contains($_.RowKey) })
+                        if ($StaleRows.Count -gt 0) {
+                            Remove-CIPPAzDataTableEntity -Force @DomainTable -Entity $StaleRows
+                            Write-LogMessage -Tenant $Tenant.defaultDomainName -TenantId $Tenant.customerId -API 'DomainAnalyser' -message "Removed $($StaleRows.Count) domain(s) no longer in the tenant: $($StaleRows.RowKey -join ', ')" -sev Info
+                        }
                         $InputObject = [PSCustomObject]@{
                             QueueFunction    = @{
                                 FunctionName = 'GetTenantDomains'

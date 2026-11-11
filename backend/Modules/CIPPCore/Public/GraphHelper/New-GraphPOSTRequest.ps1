@@ -20,7 +20,11 @@ function New-GraphPOSTRequest {
         $maxRetries = 3,
         $ScheduleRetry = $false,
         [switch]$UseCertificate,
-        $headers
+        $headers,
+        # Intune multi-admin approval: the reason shown to the approver, and Set-CIPPAssignedPolicy
+        # parameters to apply once the write completes. Only used when Intune demands approval.
+        $ApprovalJustification,
+        $ApprovalAssignParams
     )
 
     if ($NoAuthCheck -or (Get-AuthorisedRequest -Uri $uri -TenantID $tenantid)) {
@@ -66,11 +70,13 @@ function New-GraphPOSTRequest {
                     $_.Exception.message
                 }
 
+                # A network failure has no response to read Retry-After from, and the header may be a date, not seconds
+                $RetryAfter = if ($_.Exception.Response) { $_.Exception.Response.Headers['Retry-After'] -as [int] }
+
                 # Check for 429 Too Many Requests
                 if ($_.Exception.Response.StatusCode -eq 429) {
-                    $RetryAfterHeader = $_.Exception.Response.Headers['Retry-After']
-                    if ($RetryAfterHeader) {
-                        $WaitTime = [int]$RetryAfterHeader
+                    if ($RetryAfter) {
+                        $WaitTime = $RetryAfter
                         $RetryReason = 'Rate limited (429).'
                     } else {
                         $WaitTime = Get-Random -Minimum 1.1 -Maximum 4.1
@@ -81,7 +87,7 @@ function New-GraphPOSTRequest {
                 # 503 (SharePoint's internal busy signal) and "Resource temporarily unavailable" / SharePoint CSOM throttling
                 # ("Server busy, please retry" is transient and safe to retry, e.g. ListSiteProperties).
                 elseif ($_.Exception.Response.StatusCode -eq 503 -or $Message -like '*Resource temporarily unavailable*' -or $Message -like '*Too many requests*' -or $Message -like '*Server busy*') {
-                    $WaitTime = $_.Exception.Response.Headers['Retry-After'] ? [int]$_.Exception.Response.Headers['Retry-After'] : (Get-Random -Minimum 1.1 -Maximum 3.1)
+                    $WaitTime = $RetryAfter ? $RetryAfter : (Get-Random -Minimum 1.1 -Maximum 3.1)
                     $RetryReason = 'Resource temporarily unavailable.'
                     $ShouldRetry = $true
                 }
@@ -143,6 +149,13 @@ function New-GraphPOSTRequest {
             } catch {
                 Write-Warning "Failed to schedule retry task: $($_.Exception.Message)"
             }
+        }
+
+        # Intune multi-admin approval refuses a protected write that carries no justification, and raises
+        # nothing. Raise the request app-only - one raised with the GDAP token has no requestor and can
+        # never be completed. Tenants without approval never see this error.
+        if (-not $RequestSuccessful -and "$Message $RawErrorBody" -match 'x-msft-approval-justification\S{0,6} is required' -and -not $AddedHeaders.'x-msft-approval-justification') {
+            return New-CIPPIntuneApprovalRequest -TenantFilter $tenantid -Uri $uri -Type $type -Body $body -Justification $ApprovalJustification -AssignParams $ApprovalAssignParams
         }
 
         if ($RequestSuccessful -eq $false) {

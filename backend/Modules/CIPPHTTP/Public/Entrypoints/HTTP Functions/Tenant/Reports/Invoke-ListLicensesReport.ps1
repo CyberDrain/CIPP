@@ -1,7 +1,7 @@
 function Invoke-ListLicensesReport {
     <#
     .FUNCTIONALITY
-        Entrypoint
+        Entrypoint,TenantGroup
     .ROLE
         Tenant.Directory.Read
     .DESCRIPTION
@@ -19,8 +19,8 @@ function Invoke-ListLicensesReport {
         $Table = Get-CIPPTable -TableName cachelicenses
 
         if ($QueueId) {
-            $Filter = "QueueId eq '{0}'" -f $QueueId
-            $Rows = Get-CIPPAzDataTableEntity @Table -Filter $Filter
+            $Filter = "QueueId eq '{0}'" -f (ConvertTo-CIPPODataFilterValue -Value $QueueId)
+            $Rows = Get-CIPPAzDataTableEntity @Table -Filter $Filter | Select-CippAllowedTenantData -TenantProperty RowKey
         } else {
             $Timestamp = (Get-Date).AddHours(-1).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffK')
             $Filter = "Timestamp ge datetime'{0}'" -f $Timestamp

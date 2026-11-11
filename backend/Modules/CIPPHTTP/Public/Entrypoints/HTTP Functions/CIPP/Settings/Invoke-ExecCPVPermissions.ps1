@@ -22,26 +22,57 @@ function Invoke-ExecCPVPermissions {
             $CPVConsentParams.ResetSP = $true
         }
 
+        # Any configured partner tenant gets partner treatment, not just the primary
+        $IsPartnerTenant = $TenantFilter -in @('PartnerTenant', $env:TenantID) -or $Tenant.isPartnerTenantRow -eq $true
+
+        $CpvKey = "$($Tenant.customerId)"
+        $CpvTable = Get-CIPPTable -TableName cpvtenants
+        $ExistingCpvRow = $null
+        $PermissionResults = @()
+        $FailureMessage = $null
         $GraphRequest = try {
-            if ($TenantFilter -notin @('PartnerTenant', $env:TenantID)) {
+            $ExistingCpvRow = Get-CIPPAzDataTableEntity @CpvTable -Filter "PartitionKey eq 'Tenant' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $CpvKey)'"
+            if (-not $IsPartnerTenant) {
                 Set-CIPPCPVConsent @CPVConsentParams
-            } else {
+            } elseif ($TenantFilter -eq 'PartnerTenant') {
                 $TenantFilter = $env:TenantID
                 $Tenant = [PSCustomObject]@{
                     displayName       = '*Partner Tenant'
                     defaultDomainName = $env:TenantID
                 }
             }
-            Add-CIPPApplicationPermission -RequiredResourceAccess 'CIPPDefaults' -ApplicationId $env:ApplicationID -tenantfilter $TenantFilter
-            Add-CIPPDelegatedPermission -RequiredResourceAccess 'CIPPDefaults' -ApplicationId $env:ApplicationID -tenantfilter $TenantFilter
-            if ($TenantFilter -notin @('PartnerTenant', $env:TenantID)) {
+            $PermissionResults = @(Add-CIPPApplicationPermission -RequiredResourceAccess 'CIPPDefaults' -ApplicationId $env:ApplicationID -tenantfilter $TenantFilter) +
+            @(Add-CIPPDelegatedPermission -RequiredResourceAccess 'CIPPDefaults' -ApplicationId $env:ApplicationID -tenantfilter $TenantFilter)
+            $PermissionResults
+            if (-not $IsPartnerTenant) {
                 Set-CIPPSAMAdminRoles -TenantFilter $TenantFilter
             }
-            $Success = $true
         } catch {
+            $FailureMessage = $_.Exception.Message
             "Failed to update permissions for $($Tenant.displayName): $($_.Exception.Message)"
-            $Success = $false
-            $StatusCode = [HttpStatusCode]::InternalServerError
+        }
+
+        # Same failure rule as the nightly permission update, which reads this row's status.
+        $PermissionFailures = @($PermissionResults | Where-Object { $_ -like '*Failed*' -and $_ -notlike '*Failed to create service principal*' })
+        $StatusCode = if ($FailureMessage) { [HttpStatusCode]::InternalServerError } else { Get-CippBulkStatusCode -Total $PermissionResults.Count -Failed $PermissionFailures.Count }
+        $Success = $StatusCode -eq [HttpStatusCode]::OK
+        if (-not $FailureMessage -and $PermissionFailures.Count -gt 0) { $FailureMessage = $PermissionFailures -join '; ' }
+
+        try {
+            $CpvRow = @{
+                PartitionKey  = 'Tenant'
+                RowKey        = $CpvKey
+                Tenant        = $CpvKey
+                applicationId = "$($env:ApplicationID)"
+                LastApply     = "$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())"
+                LastStatus    = $Success ? 'Success' : 'Failed'
+            }
+            if ($FailureMessage) { $CpvRow.LastError = "$FailureMessage" }
+            if ($Success) { $CpvRow.ConsentAttempts = '0' } elseif ($ExistingCpvRow.ConsentAttempts) { $CpvRow.ConsentAttempts = "$($ExistingCpvRow.ConsentAttempts)" }
+            if ($CPVConsentParams.ResetSP) { $CpvRow.LastResetUtc = [datetime]::UtcNow.ToString('o') } elseif ($ExistingCpvRow.LastResetUtc) { $CpvRow.LastResetUtc = "$($ExistingCpvRow.LastResetUtc)" }
+            Add-CIPPAzDataTableEntity @CpvTable -Entity $CpvRow -Force
+        } catch {
+            Write-Information "Failed to persist cpvtenants row for $($Tenant.displayName): $($_.Exception.Message)"
         }
 
         $Tenant = Get-Tenants -IncludeAll | Where-Object -Property customerId -EQ $TenantFilter | Select-Object -First 1

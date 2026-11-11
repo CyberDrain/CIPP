@@ -75,6 +75,8 @@ Tenants are never moved forward by an edit to the baseline. Where a stage is rem
 
 Produces a client-ready report previewing what the configured standards would change for the tenant, including the stages still to come. The preview opens in a dialog and can be downloaded as a PDF.
 
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/fwmcj82sbxcl" linkValue="fwmcj82sbxcl" %}
+
 | Option                        | Description                                                                                                            |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Branding                      | The branding preset the report is styled with. Presets are managed in Settings, under Branding.                        |

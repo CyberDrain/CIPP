@@ -51,3 +51,7 @@
 ### Building a Staged Baseline
 
 {% @storylane/embed subdomain="app" url="https://app.storylane.io/share/av1rymxqugob" linkValue="av1rymxqugob" %}
+
+### Previewing Baseline Changes with the What-If Report
+
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/fwmcj82sbxcl" linkValue="fwmcj82sbxcl" %}

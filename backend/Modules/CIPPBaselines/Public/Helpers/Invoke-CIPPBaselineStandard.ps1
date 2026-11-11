@@ -183,7 +183,7 @@ function Invoke-CIPPBaselineStandard {
                 AlertEvent          = $null
                 CacheType           = $null
             }
-            Set-CIPPBaselineResult -Result $Skipped -Prior $null -RunId $RunId
+            if (-not $GradeOnly) { Set-CIPPBaselineResult -Result $Skipped -Prior $null -RunId $RunId }
             $Skipped
         }
 

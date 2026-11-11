@@ -712,7 +712,7 @@
         "tags": [
           "Tenant > Standards"
         ],
-        "description": "Creates or updates a baseline. There is no baseline blob: the Baselines\ndelta rows (design doc §4.1) are the editable source of truth for every standard's\nconfiguration, and the BaselineRollouts row (§12.2) holds the baseline-level data -\nname, description, exclusions, alert destinations, and the ordered stage definitions.\nBaselines are reconstructed from those rows on read. The actual write lives in\nNew-CIPPBaseline, shared with the community-repo import.",
+        "description": "Creates or updates a baseline. There is no baseline blob: the Baselines\ndelta rows (design doc §4.1) are the editable source of truth for every standard's\nconfiguration, and the BaselineRollouts row (§12.2) holds the baseline-level data -\nname, description, exclusions, alert destinations, and the ordered stage definitions.\nBaselines are reconstructed from those rows on read. The actual write lives in\nNew-CIPPBaseline, shared with the community-repo import. With managedRequestId the\nsave creates the baseline CyberDrain delivered for that custom request.",
         "requestBody": {
           "required": false,
           "content": {
@@ -759,6 +759,13 @@
                     "description": "Optional. Pushes the saved baseline to a GitHub template repository after the save: FullName is the repository (owner/repo), Message is the commit message. Not stored on the baseline."
                   },
                   "GUID": {
+                    "type": "string"
+                  },
+                  "managedRequestId": {
+                    "type": "string",
+                    "description": "Optional. Saving the baseline CyberDrain delivered for a custom managed baseline request: the request it came from and the version the editor loaded. Not stored on the baseline."
+                  },
+                  "managedVersion": {
                     "type": "string"
                   },
                   "stages": {
@@ -852,6 +859,18 @@
                     },
                     "LocalChanges": {
                       "type": "boolean",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ManagedId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ManagedKind": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ManagedRequestId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ManagedVersion": {
                       "x-cipp-field-source": "storage"
                     },
                     "Metadata": {
@@ -24096,7 +24115,7 @@
         "tags": [
           "CIPP > Extensions"
         ],
-        "description": "Tests the stored credentials for a configured third-party integration and reports whether CIPP can connect. extensionName selects which one: HaloPSA, Syncro, Gradient, NinjaOne, PWPush, Hudu, Sherweb, HIBP or GitHub.",
+        "description": "Tests the stored credentials for a configured third-party integration and reports whether CIPP can connect. extensionName selects which one: HaloPSA, Syncro, Gradient, NinjaOne, PWPush, Hudu, Sherweb, HIBP, GitHub or CyberDrainManagedBaselines.",
         "parameters": [
           {
             "name": "extensionName",
@@ -24106,6 +24125,7 @@
               "type": "string",
               "enum": [
                 "CIPP-API",
+                "CyberDrainManagedBaselines",
                 "GitHub",
                 "Gradient",
                 "HaloPSA",
@@ -29491,6 +29511,281 @@
           }
         ],
         "x-cipp-role": "Tenant.Application.ReadWrite"
+      }
+    },
+    "/api/ExecManagedBaseline": {
+      "post": {
+        "summary": "ExecManagedBaseline",
+        "operationId": "ExecManagedBaseline",
+        "tags": [
+          "Tenant > Standards"
+        ],
+        "description": "Adds a baseline CyberDrain publishes through the Managed Baselines integration, or brings a managed baseline up to CyberDrain's current version. Action is Import (with the published baseline's id), Align or Merge (with the baseline's GUID). Align replaces every standard and the stage layout with CyberDrain's. Merge overwrites the standards both sides have, keeps the others, and adds the CyberDrain-only standards whose keys are listed in Add. Preview returns what Align or Merge would change without writing anything.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Action": {
+                    "type": "string"
+                  },
+                  "Add": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/LabelValue"
+                    }
+                  },
+                  "GUID": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "Preview": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                  "properties": {
+                    "action": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "added": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "alertEmails": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "alertWebhookUrl": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "assignedTo": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "available": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "baselineName": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "currentVersion": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "description": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "disableAlerts": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "disableScheduledRuns": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ETag": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "excludedTenants": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "excludedTo": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "kept": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "LocalChanges": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ManagedId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ManagedKind": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ManagedRequestId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ManagedVersion": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Metadata": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "newVersion": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "overwritten": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "PartitionKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "removed": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "Results": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "RowKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "SHA": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Source": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "SourcePath": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Stages": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage,backend"
+                    },
+                    "templateName": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "templates": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "Timestamp": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "unchanged": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "updatedAt": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "updatedBy": {
+                      "x-cipp-field-source": "storage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Baselines.ReadWrite"
+      }
+    },
+    "/api/ExecManagedBaselineRequest": {
+      "post": {
+        "summary": "ExecManagedBaselineRequest",
+        "operationId": "ExecManagedBaselineRequest",
+        "tags": [
+          "Tenant > Standards"
+        ],
+        "description": "Requests a custom baseline from CyberDrain through the Managed Baselines integration and manages that request. Action is Create (tenantFilter, industry, clientSize and wants, optionally exceptions, frameworks and comments), or Refresh, Retry or Cancel (requestId). Create compares the tenant against every available standard in the background and sends the results with what was typed. Text that names the tenant, or holds an email address, an IP address or an ID, is refused.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Action": {
+                    "type": "string"
+                  },
+                  "clientSize": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "comments": {
+                    "type": "string"
+                  },
+                  "exceptions": {
+                    "type": "string"
+                  },
+                  "frameworks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/LabelValue"
+                    }
+                  },
+                  "industry": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "requestId": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "wants": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
+                  "properties": {
+                    "Metadata": {
+                      "x-cipp-field-source": "backend"
+                    },
+                    "Results": {
+                      "x-cipp-field-source": "backend"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Baselines.ReadWrite"
       }
     },
     "/api/ExecManageRetentionPolicies": {
@@ -41852,6 +42147,76 @@
         ],
         "x-cipp-role": "CIPP.AlertSnooze.ReadWrite",
         "x-cipp-any-tenant": true
+      }
+    },
+    "/api/ExecSPOGuestAccess": {
+      "post": {
+        "summary": "ExecSPOGuestAccess",
+        "operationId": "ExecSPOGuestAccess",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Manages a guest's access on a single SharePoint site via the site-level guest\nexpiration feature (SP.User.Expiration):\n  Extend - sets Expiration to now + Days (1-90, default 90)\n  Expire - expires the guest's access on this site immediately\nThe Entra guest account and other site memberships are not touched. Graph has no\nequivalent, so this uses SharePoint REST with the SAM certificate (app-only).\n\nBody:\n  tenantFilter - tenant\n  SiteUrl      - full site URL\n  SiteUserId   - SharePoint site user ID (SiteAccess[].SiteUserId from ListSharePointExternalUsers)\n  Action       - 'Extend' or 'Expire'\n  Days         - Extend only; days from now, 1-90, default 90\n  DisplayName  - optional, for logging",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Action": {
+                    "type": "string"
+                  },
+                  "Days": {
+                    "type": "integer"
+                  },
+                  "DisplayName": {
+                    "type": "string"
+                  },
+                  "SiteUrl": {
+                    "type": "string"
+                  },
+                  "SiteUserId": {
+                    "type": "integer"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.ReadWrite"
       }
     },
     "/api/ExecSPOVersionCleanup": {
@@ -58830,11 +59195,8 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record, and the columns the CIPP UI renders. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                    "description": "Derived from the fields the endpoint selects onto each record, and the columns the CIPP UI renders. The response may carry more; these are the ones known to exist.",
                     "properties": {
-                      "ContentHash": {
-                        "x-cipp-field-source": "storage"
-                      },
                       "corrupt": {
                         "x-cipp-field-source": "backend"
                       },
@@ -58844,63 +59206,29 @@
                       "displayName": {
                         "x-cipp-field-source": "backend,frontend"
                       },
-                      "ETag": {
-                        "type": "string",
-                        "x-cipp-field-source": "storage"
-                      },
                       "guid": {
-                        "x-cipp-field-source": "storage,backend"
+                        "x-cipp-field-source": "backend"
                       },
                       "isSynced": {
                         "x-cipp-field-source": "backend,frontend"
-                      },
-                      "JSON": {
-                        "x-cipp-field-source": "storage"
                       },
                       "label": {
                         "x-cipp-field-source": "backend"
                       },
                       "package": {
-                        "x-cipp-field-source": "storage,backend,frontend"
+                        "x-cipp-field-source": "backend,frontend"
                       },
-                      "PartitionKey": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "Permissions": {
-                        "type": "string",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "RowKey": {
-                        "x-cipp-field-source": "storage"
-                      },
-                      "SHA": {
-                        "type": "string",
-                        "x-cipp-field-source": "storage"
-                      },
-                      "Source": {
-                        "x-cipp-field-source": "storage,backend,frontend"
-                      },
-                      "SourcePath": {
-                        "x-cipp-field-source": "storage"
+                      "source": {
+                        "x-cipp-field-source": "backend,frontend"
                       },
                       "templateCount": {
                         "x-cipp-field-source": "backend"
                       },
-                      "TemplateName": {
-                        "x-cipp-field-source": "storage"
-                      },
                       "templates": {
                         "x-cipp-field-source": "backend"
                       },
-                      "Timestamp": {
-                        "type": "string",
-                        "x-cipp-field-source": "storage"
-                      },
                       "Type": {
                         "x-cipp-field-source": "backend,frontend"
-                      },
-                      "UpdatedBy": {
-                        "x-cipp-field-source": "storage"
                       },
                       "usage": {
                         "x-cipp-field-source": "frontend"
@@ -61703,6 +62031,319 @@
           }
         ],
         "x-cipp-role": "Exchange.SpamFilter.Read"
+      }
+    },
+    "/api/ListManagedBaselineRequests": {
+      "get": {
+        "summary": "ListManagedBaselineRequests",
+        "operationId": "ListManagedBaselineRequests",
+        "tags": [
+          "Tenant > Standards"
+        ],
+        "description": "Lists the custom baselines requested from CyberDrain through the Managed Baselines integration, with their status. With requestId it returns exactly what was sent to CyberDrain for that request. With requestId and includeBaseline it returns the baseline CyberDrain delivered, in the shape the baseline editor loads.",
+        "parameters": [
+          {
+            "name": "includeBaseline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
+                    "properties": {
+                      "alertEmails": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "alertWebhookUrl": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "assignedTenants": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "assignments": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "baselineGuid": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "baselineName": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "clientSize": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "collected": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "comments": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "description": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "disableAlerts": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "disableScheduledRuns": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "engineerNotes": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "error": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "exceptions": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "excludedTenants": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "exclusions": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "frameworks": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "GUID": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "industry": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "lastCheckedDateTime": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "managedRequestId": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "managedVersion": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "ready": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "requestedBy": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "requestedDateTime": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "requestId": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "sentDateTime": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "stages": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "status": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "templateName": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "tenantFilter": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "total": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "wants": {
+                        "x-cipp-field-source": "backend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Baselines.Read",
+        "x-cipp-any-tenant": true
+      }
+    },
+    "/api/ListManagedBaselineTemplates": {
+      "get": {
+        "summary": "ListManagedBaselineTemplates",
+        "operationId": "ListManagedBaselineTemplates",
+        "tags": [
+          "Tenant > Standards"
+        ],
+        "description": "Lists the baselines CyberDrain publishes through the Managed Baselines integration, marking the ones already added to this instance and the ones CyberDrain has updated since.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                    "properties": {
+                      "alertEmails": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "alertWebhookUrl": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "assignedTo": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "baselineGuid": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "description": {
+                        "x-cipp-field-source": "storage,backend"
+                      },
+                      "disableAlerts": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "disableScheduledRuns": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ETag": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "excludedTenants": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "excludedTo": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "id": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "imported": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "importedVersion": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "LocalChanges": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ManagedId": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ManagedKind": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ManagedRequestId": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ManagedVersion": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "name": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "PartitionKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "RowKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "SHA": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Source": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "SourcePath": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Stages": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage,backend"
+                      },
+                      "standards": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "standardsCount": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "status": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "tags": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "templateName": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Timestamp": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "updatedAt": {
+                        "x-cipp-field-source": "storage,backend"
+                      },
+                      "updatedBy": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "version": {
+                        "x-cipp-field-source": "backend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Baselines.Read",
+        "x-cipp-any-tenant": true
       }
     },
     "/api/ListMDEOnboarding": {
@@ -66779,7 +67420,7 @@
         "tags": [
           "Teams-Sharepoint"
         ],
-        "description": "Lists external/guest users known to SharePoint from two sources: the tenant external\nusers store (populated when a guest first redeems a share) and a sweep of every site's\nuser list (which also catches guests who were granted membership but never signed in).\nEvery entry is classified against Entra: 'Entra B2B' (live Entra guest), 'Orphaned B2B'\n(the Entra guest was deleted but SharePoint still references them) or 'SharePoint-only'\n(legacy email-authenticated guest that never had an Entra object).",
+        "description": "Lists external/guest users known to SharePoint from two sources: the tenant external\nusers store (populated when a guest first redeems a share) and a sweep of every site's\nuser list (which also catches guests who were granted membership but never signed in).\nEvery entry is classified against Entra: 'Entra B2B' (live Entra guest), 'Orphaned B2B'\n(the Entra guest was deleted but SharePoint still references them) or 'SharePoint-only'\n(legacy email-authenticated guest that never had an Entra object).\n\nEach row also carries SiteAccess: one entry per site with the site user ID and the\nsite-level guest expiration (UserExpiration from the site's User Information List),\nfor use with ExecSPOGuestAccess (Extend / Expire on a single site).",
         "parameters": [
           {
             "$ref": "#/components/parameters/tenantFilter"

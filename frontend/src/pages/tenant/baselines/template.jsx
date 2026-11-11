@@ -38,6 +38,7 @@ import CippBaselineStandardItem from '../../../components/CippBaselines/CippBase
 import CippBaselineStandardDialog from '../../../components/CippBaselines/CippBaselineStandardDialog'
 import { PermissionButton } from '../../../utils/permissions'
 import { ApiGetCall, ApiPostCall } from '../../../api/ApiCall'
+import { getCippError } from '../../../utils/get-cipp-error'
 import { parseCippDate } from '../../../utils/parse-cipp-date'
 import { CippApiResults } from '../../../components/CippComponents/CippApiResults'
 
@@ -754,6 +755,15 @@ const Page = () => {
     url: '/api/ListBaselines',
     queryKey: 'ListBaselines',
   })
+  // The baseline CyberDrain delivered for a custom managed baseline request loads like a
+  // clone: its content, with no save target, so the first save creates it.
+  const managedRequestId = router.query.managedRequest
+  const deliveredApi = ApiGetCall({
+    url: '/api/ListManagedBaselineRequests',
+    data: { requestId: managedRequestId, includeBaseline: true },
+    queryKey: `ManagedBaselineDelivery-${managedRequestId}`,
+    waiting: !!managedRequestId,
+  })
   // Saving a baseline invalidates every baseline-related query: the baselines list (direct
   // and table), all alignment views for every tenant, and the standards catalog.
   // The save runs inside a confirm dialog so its result (including the GitHub push
@@ -812,9 +822,16 @@ const Page = () => {
   const catalogByName = Object.fromEntries(
     catalog.map((standard) => [standard.name, standard])
   )
-  const template = (baselinesApi.data ?? []).find(
-    (entry) => entry.GUID === router.query.id
-  )
+  // Once the delivery is saved the editor follows the saved baseline, even before the
+  // address has caught up with its id.
+  const template =
+    managedRequestId && !saveTargetId
+      ? deliveredApi.data?.Results
+      : (baselinesApi.data ?? []).find(
+          (entry) =>
+            entry.GUID === (managedRequestId ? saveTargetId : router.query.id)
+        )
+  const isDelivery = !!template && template === deliveredApi.data?.Results
   // A clone isn't pushed to the source repo yet, so it drops the synced badge/option.
   const templateSource = !router.query.clone && template?.source ? template.source : null
   const templateSourceUrl = !router.query.clone ? template?.sourceUrl : null
@@ -846,7 +863,7 @@ const Page = () => {
   // Render-phase reset (not an effect) so the switch happens before anything paints.
   if (template && template.GUID !== loadedTemplateId) {
     setLoadedTemplateId(template.GUID)
-    setSaveTargetId(router.query.clone ? null : template.GUID)
+    setSaveTargetId(router.query.clone || isDelivery ? null : template.GUID)
     setEditorGeneration((generation) => generation + 1)
     setStages(buildEditorStages(template))
     setActiveStage(0)
@@ -1130,16 +1147,30 @@ const Page = () => {
         ...(dialogValues.saveToGitHub && templateSource
           ? { GitHub: { FullName: templateSource, Message: dialogValues.GitHubMessage } }
           : {}),
+        // The first save of a delivery says which request it came from and which version was reviewed.
+        ...(isDelivery
+          ? {
+              managedRequestId: template.managedRequestId,
+              managedVersion: template.managedVersion,
+            }
+          : {}),
     }
   }
   const handleSave = () => saveDialog.handleOpen()
 
-  const pageTitle = template ? 'Edit Baseline' : 'Add Baseline'
+  const pageTitle = isDelivery
+    ? 'Review Managed Baseline'
+    : template
+      ? 'Edit Baseline'
+      : 'Add Baseline'
 
   return (
     <Box sx={{ flexGrow: 1, px: 3, maxWidth: '1900px' }}>
       <CippHead title={pageTitle} />
       <Stack spacing={2}>
+        {managedRequestId && deliveredApi.isError && (
+          <Alert severity="error">{getCippError(deliveredApi.error)}</Alert>
+        )}
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={{ xs: 2, sm: 4 }}

@@ -34,7 +34,8 @@ function Push-AuditLogFeedFanOutV3 {
         $Due = @($Rows.Where({ [int]$_.Attempts -lt 5 -and -not ($_.LastQueuedUtc -and ([datetimeoffset]$_.LastQueuedUtc).UtcDateTime -ge $CycleStart) }) | Sort-Object PartitionKey, RowKey)
         $Take = $Due.Count
         if ($Take -eq 0) {
-            Push-AuditLogFeedCursorV3 -Item @{ Parameters = @{ CycleId = $CycleId } }
+            # After a blob run the cursor post-exec that called us has just moved them, unless rows were dropped since.
+            if ($Run -eq 0 -or $Poisoned.Count -gt 0) { Push-AuditLogFeedCursorV3 -Item @{ Parameters = @{ CycleId = $CycleId } } }
             return
         }
         $Taken = $Due[0..($Take - 1)]

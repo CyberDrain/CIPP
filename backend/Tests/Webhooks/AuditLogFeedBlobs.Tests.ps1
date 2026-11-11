@@ -182,6 +182,21 @@ Describe 'Push-AuditLogFeedFanOutV3' {
         Should -Invoke Write-LogMessage -Times 1 -Exactly -ParameterFilter { $sev -eq 'Error' -and $tenant -eq 'a.com' }
         Should -Invoke Push-AuditLogFeedCursorV3 -Times 1 -Exactly -ParameterFilter { -not $Item.Parameters.Run }
     }
+
+    It 'leaves the cursors to the blob run post-exec that called it when a later run has nothing to queue' {
+        $script:Params.Run = 1
+        $script:Rows = @(New-Row -Tenant 'a.com' -Created ([datetime]'2026-10-24T08:00:00Z') -Id 'queued' -Attempts 1 -Queued ([datetime]::UtcNow))
+        Push-AuditLogFeedFanOutV3 -Item @{ Parameters = $script:Params }
+        $script:Started | Should -HaveCount 0
+        Should -Invoke Push-AuditLogFeedCursorV3 -Times 0 -Exactly
+    }
+
+    It 'moves the cursors again after a later run drops a row' {
+        $script:Params.Run = 1
+        $script:Rows = @(New-Row -Tenant 'a.com' -Created ([datetime]'2026-10-24T08:00:00Z') -Id 'bad' -Attempts 5)
+        Push-AuditLogFeedFanOutV3 -Item @{ Parameters = $script:Params }
+        Should -Invoke Push-AuditLogFeedCursorV3 -Times 1 -Exactly
+    }
 }
 
 Describe 'Push-AuditLogFeedBlobsV3' {

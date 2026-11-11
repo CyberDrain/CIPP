@@ -34,6 +34,30 @@ Describe 'Report tree builders' {
         Test-Report $r 'Data Sharing Review'
     }
 
+    It 'Storage: sums version history, flags libraries with no time limit and renders' {
+        $G = 1GB
+        $r = Build-CippStorageReportTree -Data @{
+            TenantName = 'Contoso'
+            sites      = @([pscustomobject]@{ displayName = 'Finance'; webUrl = 'https://c.sharepoint.com/sites/fin'; storageUsedInBytes = 100 * $G; storageAllocatedInBytes = 1024 * $G; lastActivityDate = '2020-01-01' })
+            oneDrive   = @([pscustomobject]@{ ownerPrincipalName = 'a@c.com'; storageUsedInBytes = 10 * $G; lastActivityDate = $null })
+            scan       = @(
+                [pscustomobject]@{ rowType = 'Site'; siteUrl = 'https://c.sharepoint.com/sites/fin'; recycleTotalBytes = 2 * $G; recycleItemCount = 5 }
+                [pscustomobject]@{ rowType = 'Library'; siteUrl = 'https://c.sharepoint.com/sites/fin'; libraryDisplayName = 'Docs'; storageUsedInBytes = 80 * $G; versionEstimateBytes = 60 * $G; versionPolicy = '500 versions, never expire'; versionTrimMode = 0 }
+                [pscustomobject]@{ rowType = 'Library'; siteUrl = 'https://c.sharepoint.com/sites/fin'; libraryDisplayName = 'Auto'; storageUsedInBytes = 20 * $G; versionEstimateBytes = 0; versionPolicy = 'Automatic'; versionTrimMode = 2 }
+            )
+        }
+        $r.Variables.covermeta | Should -Be ("100.00 GB SharePoint {0} 10.00 GB OneDrive {0} 1 sites" -f [char]0x00B7)
+        $r.Variables.covermetanote | Should -Be 'Version history: ~60.00 GB (60% of library storage)'
+        @($r.Blocks.Where({ $_.type -eq 'alertbox' -and $_.title -like '1 library with no time limit*' })).Count | Should -Be 1
+        Test-Report $r 'Storage Review'
+    }
+
+    It 'Storage: renders without a cleanup scan or any usage data' {
+        $r = Build-CippStorageReportTree -Data @{ TenantName = 'Contoso' }
+        $r.Variables.covermetanote | Should -Be 'Version history: not scanned'
+        Test-Report $r 'Storage Review'
+    }
+
     It 'Permissions: a lone detached library is Low exposure and renders' {
         $r = Build-CippPermissionsReportTree -Data @{
             TenantName  = 'Contoso'

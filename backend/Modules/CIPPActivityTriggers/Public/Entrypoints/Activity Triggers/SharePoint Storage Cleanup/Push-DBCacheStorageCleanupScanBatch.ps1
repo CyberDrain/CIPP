@@ -157,11 +157,18 @@ function Push-DBCacheStorageCleanupScanBatch {
 
                 foreach ($List in $Libraries) {
                     # A failed read fails the site, so the store keeps its prior values instead of blanks.
-                    $Metrics = New-GraphGetRequest -uri "$BaseUri/web/lists(guid'$($List.id)')/RootFolder?`$select=StorageMetrics&`$expand=StorageMetrics" -tenantid $TenantFilter -scope $SpoScope -extraHeaders $JsonAccept -UseCertificate -AsApp $true
+                    $ListInfo = New-GraphGetRequest -uri "$BaseUri/web/lists(guid'$($List.id)')?`$select=EnableVersioning,MajorVersionLimit,VersionPolicies,RootFolder/StorageMetrics&`$expand=RootFolder/StorageMetrics,VersionPolicies" -tenantid $TenantFilter -scope $SpoScope -extraHeaders $JsonAccept -UseCertificate -AsApp $true
+                    $Metrics = $ListInfo.RootFolder
                     $TotalSize = ConvertTo-SPOAdminListInt64 -Raw $Metrics.StorageMetrics.TotalSize
                     $FileStreamSize = ConvertTo-SPOAdminListInt64 -Raw $Metrics.StorageMetrics.TotalFileStreamSize
                     $MetadataSize = ConvertTo-SPOAdminListInt64 -Raw $Metrics.StorageMetrics.MetadataSize
                     $FileCount = ConvertTo-SPOAdminListInt64 -Raw $Metrics.StorageMetrics.TotalFileCount
+                    # VersionPolicyTrimMode: 0 NoExpiration, 1 ExpireAfter, 2 AutoExpiration.
+                    $TrimMode = $ListInfo.VersionPolicies.DefaultTrimMode -as [int]
+                    $VersionPolicy = if ($ListInfo.EnableVersioning -ne $true) { 'Versioning off' }
+                    elseif ($TrimMode -eq 2) { 'Automatic' }
+                    elseif ($TrimMode -eq 1) { "$($ListInfo.MajorVersionLimit) versions, expire after $($ListInfo.VersionPolicies.DefaultExpireAfterDays) days" }
+                    else { "$($ListInfo.MajorVersionLimit) versions, never expire" }
                     $StorageUsed = $TotalSize
                     $VersionEstimate = $null
                     if ($null -ne $TotalSize) {
@@ -183,6 +190,9 @@ function Push-DBCacheStorageCleanupScanBatch {
                             fileStreamSizeInBytes = $FileStreamSize
                             metadataSizeInBytes   = $MetadataSize
                             fileCount             = $FileCount
+                            versionPolicy         = $VersionPolicy
+                            versionTrimMode       = $TrimMode
+                            majorVersionLimit     = $ListInfo.MajorVersionLimit
                             template              = $List.list.template
                             webUrl                = $List.webUrl
                             collectedAt           = $CollectedAt

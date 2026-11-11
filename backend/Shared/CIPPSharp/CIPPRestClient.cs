@@ -1268,6 +1268,9 @@ namespace CIPP
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> _keyLocks =
             new(StringComparer.OrdinalIgnoreCase);
 
+        private const int MaxEntries = 10000;
+        private const int SweepEvery = 256;
+
         private static long _hits;
         private static long _misses;
         private static long _sets;
@@ -1337,7 +1340,21 @@ namespace CIPP
                 CachedAtUnix     = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             };
 
-            Interlocked.Increment(ref _sets);
+            if (Interlocked.Increment(ref _sets) % SweepEvery == 0)
+                Sweep();
+        }
+
+        // Domain and GUID forms of a tenant, per-site SharePoint scopes and "|failed" markers are often never
+        // looked up again, so expiry on lookup alone never frees them.
+        private static void Sweep()
+        {
+            CompactExpired(0, int.MaxValue);
+            var excess = _entries.Count - (MaxEntries - SweepEvery);
+            if (excess <= 0)
+                return;
+            foreach (var kvp in _entries.ToArray().OrderBy(e => e.Value.ExpiresOnUnix).Take(excess))
+                if (_entries.TryRemove(kvp.Key, out _))
+                    Interlocked.Increment(ref _expiredRemovals);
         }
 
         public static void Remove(string key)

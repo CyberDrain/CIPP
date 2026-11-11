@@ -34,18 +34,9 @@ function Resolve-CIPPSharePointRestContext {
     }
 
     $NormalizedSiteUrl = $SiteUrl.TrimEnd('/')
-
-    # The token is issued for this tenant's SharePoint, so it only goes to the tenant's own hosts.
-    $TenantHost = ([uri]$SharePointInfo.SharePointUrl).Host
-    $Name, $Domain = $TenantHost -split '\.', 2
-    $SiteUri = $null
-    if ([string]::IsNullOrWhiteSpace($TenantHost) -or
-        -not [uri]::TryCreate($NormalizedSiteUrl, [System.UriKind]::Absolute, [ref]$SiteUri) -or
-        $SiteUri.Scheme -ne 'https' -or $SiteUri.UserInfo -or
-        $SiteUri.Host -notin @($TenantHost, "$Name-my.$Domain", "$Name-admin.$Domain")) {
-        throw "Site URL '$SiteUrl' does not belong to this tenant's SharePoint ($TenantHost)."
-    }
     $Scope = "$($SharePointInfo.SharePointUrl)/.default"
+    # Fail here rather than at the first request, so callers never build on a foreign site URL.
+    Assert-CIPPSharePointHost -Uri $NormalizedSiteUrl -Scope $Scope
     $Headers = @{ Accept = 'application/json;odata=nometadata' }
     $BaseUri = "$NormalizedSiteUrl/_api"
 

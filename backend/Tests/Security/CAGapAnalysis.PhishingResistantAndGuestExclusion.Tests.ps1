@@ -115,6 +115,13 @@ Describe 'Test-CIPPCAGapGuestExclusion roll-up' {
         (Get-RollUp (Test-CIPPCAGapGuestExclusion -Context (New-Context -Policies @($Policy)))).Count | Should -Be 1
     }
 
+    It 'stays quiet when every guest type is exempt but only for enumerated external organizations' {
+        $Enumerated = [pscustomobject]@{ guestOrExternalUserTypes = (@($script:Reference.guestTypeOrder) -join ','); externalTenants = [pscustomobject]@{ membershipKind = 'enumerated'; members = @('11111111-1111-1111-1111-111111111111') } }
+        $Policy = New-MfaPolicy -Name 'MFA for all users' -ExcludeGuests $Enumerated
+
+        (Get-RollUp (Test-CIPPCAGapGuestExclusion -Context (New-Context -Policies @($Policy)))).Count | Should -Be 0
+    }
+
     It 'stays quiet when another All-users MFA policy does not exempt guests' {
         $Policies = @(
             (New-MfaPolicy -Name 'Block legacy auth' -ExcludeUsers @('GuestsOrExternalUsers') -Controls @('block')),

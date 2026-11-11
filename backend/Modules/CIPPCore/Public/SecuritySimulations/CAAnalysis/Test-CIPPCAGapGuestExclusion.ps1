@@ -52,7 +52,8 @@ function Test-CIPPCAGapGuestExclusion {
         }
 
         $ExcludesAllTypes = $ExcludesGuestsSimple -or (@($AllKnownTypes | Where-Object { $ExcludedGuestTypes -notcontains $_ }).Count -eq 0)
-        if ($ExcludesAllTypes) { $FullGuestExclusionIds.Add("$($Policy.id)") }
+        # An exemption limited to enumerated external organizations leaves every other guest covered
+        if ($ExcludesAllTypes -and "$($ExcludeObject.externalTenants.membershipKind)" -ne 'enumerated') { $FullGuestExclusionIds.Add("$($Policy.id)") }
 
         $Controls = @($Policy.grantControls.builtInControls)
         $RequiresMfa = ($Controls -contains 'mfa') -or ($null -ne $Policy.grantControls.authenticationStrength)

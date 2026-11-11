@@ -34,7 +34,9 @@ function Push-SchedulerCIPPNotifications {
     $sevOr = ($severity | ForEach-Object { "Severity eq '$($_ -replace "'", "''")'" }) -join ' or '
 
     $Currentlog = @(foreach ($PartitionKey in $LogPartitions) {
-            Get-CIPPAzDataTableEntity @LogTable -Filter "PartitionKey eq '$PartitionKey' and sentAsAlert eq false and ($sevOr)" | Where-Object { $_.API -in $Settings }
+            foreach ($Row in Get-CIPPAzDataTableEntity @LogTable -Filter "PartitionKey eq '$PartitionKey' and sentAsAlert eq false and ($sevOr)") {
+                if ($Row.API -in $Settings) { $Row }
+            }
         })
     $CurrentStandardsLogs = @(foreach ($PartitionKey in $StandardsPartitions) {
             Get-CIPPAzDataTableEntity @StandardsTable -Filter "PartitionKey eq '$PartitionKey' and sentAsAlert eq false"

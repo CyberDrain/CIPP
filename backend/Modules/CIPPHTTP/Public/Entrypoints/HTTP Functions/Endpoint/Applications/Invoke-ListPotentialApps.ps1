@@ -23,7 +23,7 @@ Function Invoke-ListPotentialApps {
             } | ConvertTo-Json -Depth 5 -Compress
             $Search
         }
-        $Responses = [CIPP.CIPPRestClient]::SendConcurrent([CIPP.CIPPConcurrentRequest[]]@($Searches), 5, 2)
+        $Responses = [CIPP.CIPPRestClient]::SendConcurrent([CIPP.CIPPConcurrentRequest[]]@($Searches), 5, 2, ($PSCmdlet.PipelineStopToken ?? $global:CraftPipelineStopToken))
         if (-not $Responses.Where({ $_.IsSuccess })) {
             return [HttpResponseContext]@{
                 StatusCode = [HttpStatusCode]::InternalServerError

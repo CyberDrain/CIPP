@@ -82,7 +82,7 @@ function New-GraphBulkRequest {
                     $ConcRequests.Add($ConcRequest)
                 }
                 # SendConcurrent retries a throttled or failed batch itself; one that still fails throws, as the sequential path does
-                foreach ($ConcResult in [CIPP.CIPPRestClient]::SendConcurrent($ConcRequests, $MaxConcurrency, 3)) {
+                foreach ($ConcResult in [CIPP.CIPPRestClient]::SendConcurrent($ConcRequests, $MaxConcurrency, 3, ($PSCmdlet.PipelineStopToken ?? $global:CraftPipelineStopToken))) {
                     if (-not $ConcResult.IsSuccess) {
                         $Detail = if ($ConcResult.Error) { $ConcResult.Error } elseif ($ConcResult.Result.HasContent) { $ConcResult.Result.Content }
                         throw "Graph batch request failed (HTTP $($ConcResult.StatusCode)): $Detail"

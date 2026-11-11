@@ -23,7 +23,7 @@ The template's configuration is displayed below the picker so it can be checked 
 Group pickers are only offered for a single tenant because a group belongs to one tenant. Picking groups also removes the failure mode of the name field, where a mistyped or renamed exclude group silently matched nothing and the policy was assigned without the exclusion. Changing the tenant selection clears any picked groups.
 
 {% hint style="info" %}
-Where the template contains variables written as `%name%`, the drawer asks for a value for each one, per tenant, before it will deploy. `%tenantid%` and `%tenantdomain%` are filled in automatically for each selected tenant.
+Where the template contains variables written as `%name%`, the drawer asks for a value for each one, per tenant, before it will deploy. `%tenantid%` and `%defaultdomain%` are filled in automatically for each selected tenant.
 {% endhint %}
 
 {% hint style="warning" %}

@@ -770,7 +770,7 @@ const Page = () => {
                       relatedQueryKeys={refreshKeys}
                       label="Usage sync"
                     />
-                    <Tooltip title="Refresh SharePoint site usage and OneDrive sizes for charts, tables, and near-quota / inactive views.">
+                    <Tooltip title={canSync ? 'Refresh SharePoint site usage and OneDrive sizes for charts, tables, and near-quota / inactive views.' : 'Requires the Sharepoint.Reports.ReadWrite permission'}>
                       <span>
                         <Button
                           size="small"
@@ -795,7 +795,7 @@ const Page = () => {
                       relatedQueryKeys={cleanupRefreshKeys}
                       label="Cleanup scan"
                     />
-                    <Tooltip title="Queue library version estimates and recycle totals for reclaim columns. Does not refresh usage sizes.">
+                    <Tooltip title={canSync ? 'Queue library version estimates and recycle totals for reclaim columns. Does not refresh usage sizes.' : 'Requires the Sharepoint.Reports.ReadWrite permission'}>
                       <span>
                         <Button
                           size="small"

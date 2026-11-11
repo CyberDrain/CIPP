@@ -26866,6 +26866,81 @@
         "x-cipp-role": "Sharepoint.Site.Read"
       }
     },
+    "/api/ExecGetStorageReportPdf": {
+      "post": {
+        "summary": "ExecGetStorageReportPdf",
+        "operationId": "ExecGetStorageReportPdf",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Server-renders the SharePoint & OneDrive Storage report as application/pdf bytes: site and OneDrive\nusage, per-library version history estimates and version policies, recycle bins and inactive sites.\nReads the CIPP reporting cache only (usage sync and cleanup scan); nothing is read live.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "brandingPresetId": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "brandingPresetId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.Read"
+      }
+    },
     "/api/ExecGitHubAction": {
       "post": {
         "summary": "Invoke GitHub Action",
@@ -34342,7 +34417,7 @@
                   },
                   "reportType": {
                     "type": "string",
-                    "description": "Which report to preview: executive, reportBuilder, shadowAI, bec, becSummary, sharing, permissions, mailFlow, licensing, baseline or domain."
+                    "description": "Which report to preview: executive, reportBuilder, shadowAI, bec, becSummary, sharing, permissions, mailFlow, storage, licensing, baseline or domain."
                   },
                   "tenantFilter": {
                     "type": "string",

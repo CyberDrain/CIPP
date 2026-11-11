@@ -5,7 +5,7 @@ BeforeAll {
 }
 
 Describe 'CIPPTokenCache bounds' {
-    BeforeEach { $null = [CIPP.CIPPTokenCache]::Clear() }
+    BeforeEach { $null = [CIPP.CIPPTokenCache]::Clear(); [CIPP.CIPPTokenCache]::ResetDiagnostics() }
 
     It 'drops expired entries that are never looked up again' {
         $Expired = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - 10
@@ -25,5 +25,25 @@ Describe 'CIPPTokenCache bounds' {
         [CIPP.CIPPTokenCache]::Store('live|scope|app||client_credentials', '{"access_token":"x"}', $Now + 3600)
         foreach ($i in 1..600) { [CIPP.CIPPTokenCache]::Store("dead$i", 'x', $Now - 10) }
         [CIPP.CIPPTokenCache]::Lookup('live|scope|app||client_credentials', 120).TokenPayloadJson | Should -Be '{"access_token":"x"}'
+    }
+
+    It 'drops the per-key lock of a key with no cached entry once it is released' {
+        foreach ($i in 1..1000) {
+            $null = [CIPP.CIPPTokenCache]::AcquireLock("lock$i", 0)
+            [CIPP.CIPPTokenCache]::ReleaseLock("lock$i")
+        }
+        $Expired = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - 10
+        foreach ($i in 1..256) { [CIPP.CIPPTokenCache]::Store("sweep$i", 'x', $Expired) }
+        (Get-TokenCacheDiagnostics).ActiveLocks | Should -BeLessOrEqual 1
+    }
+
+    It 'keeps a lock that is held through a sweep' {
+        [CIPP.CIPPTokenCache]::AcquireLock('held', 0) | Should -BeTrue
+        $Expired = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - 10
+        foreach ($i in 1..256) { [CIPP.CIPPTokenCache]::Store("sweep$i", 'x', $Expired) }
+        [CIPP.CIPPTokenCache]::AcquireLock('held', 0) | Should -BeFalse
+        [CIPP.CIPPTokenCache]::ReleaseLock('held')
+        [CIPP.CIPPTokenCache]::AcquireLock('held', 0) | Should -BeTrue
+        [CIPP.CIPPTokenCache]::ReleaseLock('held')
     }
 }

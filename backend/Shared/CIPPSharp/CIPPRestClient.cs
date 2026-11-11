@@ -1349,6 +1349,14 @@ namespace CIPP
         private static void Sweep()
         {
             CompactExpired(0, int.MaxValue);
+            // Taking the lock first means no caller holds it; AcquireLock retries if it waited on a removed one.
+            foreach (var kvp in _keyLocks)
+            {
+                if (_entries.ContainsKey(kvp.Key) || !kvp.Value.Wait(0))
+                    continue;
+                _keyLocks.TryRemove(kvp);
+                kvp.Value.Release();
+            }
             var excess = _entries.Count - (MaxEntries - SweepEvery);
             if (excess <= 0)
                 return;
@@ -1448,9 +1456,17 @@ namespace CIPP
             if (string.IsNullOrWhiteSpace(key))
                 return false;
 
-            var sem = _keyLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
             Interlocked.Increment(ref _lockWaits);
-            return sem.Wait(timeoutMs);
+            var deadline = Environment.TickCount64 + timeoutMs;
+            while (true)
+            {
+                var sem = _keyLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+                if (!sem.Wait(timeoutMs < 0 ? Timeout.Infinite : (int)Math.Max(0, deadline - Environment.TickCount64)))
+                    return false;
+                if (_keyLocks.TryGetValue(key, out var current) && ReferenceEquals(current, sem))
+                    return true;
+                sem.Release();
+            }
         }
 
         /// <summary>

@@ -4,6 +4,7 @@
 # the assertion audience to be the v1 token endpoint, not the default v2 one - pinned here.
 
 BeforeAll {
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
 
     function Get-CIPPSAMCertificate { param([switch]$SkipCache) }

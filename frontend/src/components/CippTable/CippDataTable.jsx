@@ -42,6 +42,8 @@ import { CippApiDialog } from '../CippComponents/CippApiDialog'
 import { getCippError } from '../../utils/get-cipp-error'
 import { Box, Stack } from '@mui/system'
 import { useSettings } from '../../hooks/use-settings'
+import { useTenantCloudEnvironment } from '../../hooks/use-tenant-cloud'
+import { filterCloudSupportedActions } from '../../utils/cloud-feature-support'
 import { parseCippDate } from '../../utils/parse-cipp-date'
 import { isEqual } from 'lodash' // Import lodash for deep comparison
 import { useLicenseBackfill } from '../../hooks/use-license-backfill'
@@ -718,7 +720,7 @@ export const CippDataTable = (props) => {
     dataMap,
     // Whole-array transform applied after dataFilter/dataMap (e.g. grouping All Tenants rows).
     dataTransform,
-    actions,
+    actions: tableActions,
     title = 'Report',
     simple = false,
     cardButton,
@@ -823,6 +825,7 @@ export const CippDataTable = (props) => {
   const searchFocusRef = useRef(null)
 
   const settings = useSettings()
+  const actions = filterCloudSupportedActions(tableActions, useTenantCloudEnvironment())
   const routerPageName = router.pathname.split('/').slice(1).join('/')
   const pageName = persistenceKey ?? (isInDialog ? '' : routerPageName)
   // The user's saved column selection for this page. Always layered over a full default

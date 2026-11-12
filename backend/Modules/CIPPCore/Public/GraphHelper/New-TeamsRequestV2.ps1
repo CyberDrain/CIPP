@@ -119,6 +119,10 @@ function New-TeamsRequestV2 {
     $ConfigType = if ($IsPathRequest) { '' } else { $Type -replace '^(Get|Set|New|Remove|Grant|Revoke)-Cs', '' }
     if ($ConfigType -and $TypeAliases.ContainsKey($ConfigType)) { $ConfigType = $TypeAliases[$ConfigType] }
 
+    # Throws for gov tenants: the Teams ConfigAPI has no documented government host.
+    $RequestCloud = Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter
+    if ($RequestCloud -cne 'Commercial') { $null = ConvertTo-CIPPCloudUri -Uri 'https://api.interfaces.records.teams.microsoft.com/' -CloudEnvironment $RequestCloud }
+
     # ---- token ----
     $TokenSplat = @{ tenantid = $TenantFilter; scope = '48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default' }
     if ($AsApp) { $TokenSplat['AsApp'] = $true }

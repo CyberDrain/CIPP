@@ -115,6 +115,12 @@ function Get-HuduMagicDashViewModel {
                 AdminUrl     = "https://admin.microsoft.com/Partner/BeginClientSession.aspx?CTID=$($Tenant.customerId)&CSDEST=o365admincenter/Adminportal/Home#/users/:/UserDetails/$($U.id)"
             }
         })
+    if ($Tenant.cloudEnvironment -and $Tenant.cloudEnvironment -cne 'Commercial') {
+        foreach ($Person in $People) {
+            $Person.EntraUrl = ConvertTo-CIPPCloudPortalUrl -Url $Person.EntraUrl -CloudEnvironment $Tenant.cloudEnvironment
+            $Person.AdminUrl = ConvertTo-CIPPCloudPortalUrl -Url $Person.AdminUrl -CloudEnvironment $Tenant.cloudEnvironment
+        }
+    }
     $Resource = @($AllUsers | Where-Object { & $IsResource $_ } | Sort-Object displayName | ForEach-Object { [string]$_.displayName })
 
     $VerifiedDomains = @($Domains | Where-Object { $_.isVerified } | ForEach-Object { [string]$_.id } | Sort-Object)

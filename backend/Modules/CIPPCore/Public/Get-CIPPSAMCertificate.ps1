@@ -42,6 +42,9 @@ function Get-CIPPSAMCertificate {
     if (-not $SkipCache -and $Name -eq 'SAMCertificate' -and $env:SAMCertificate) {
         # Preloaded by Get-CIPPAuthentication at startup (and refreshed by Set-CIPPSAMCertificate)
         $PfxBase64 = $env:SAMCertificate
+    } elseif (-not $SkipCache -and $Name -eq 'GovSAMCertificate' -and $env:GovSAMCertificate) {
+        # Loaded with the other Azure Government app credentials by Get-CIPPGovAppCredential
+        $PfxBase64 = $env:GovSAMCertificate
     } elseif ($env:AzureWebJobsStorage -eq 'UseDevelopmentStorage=true' -or $env:NonLocalHostAzurite -eq 'true') {
         $Table = Get-CIPPTable -tablename 'DevSecrets'
         $Secret = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'Secret' and RowKey eq 'Secret'"

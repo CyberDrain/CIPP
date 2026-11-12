@@ -19,6 +19,12 @@ function Remove-CIPPDirectTenantToken {
         [string]$TenantId
     )
 
+    # GUID only: a name like 'RefreshToken' would hit CIPP's own secrets.
+    if ($TenantId -notmatch '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\z' -or $TenantId -eq $env:TenantID) {
+        Write-Warning 'Not removing a direct tenant refresh token: the tenant id is not a direct tenant GUID.'
+        return
+    }
+
     if (-not $PSCmdlet.ShouldProcess($TenantId, 'Remove direct tenant refresh token')) {
         return
     }
@@ -39,6 +45,7 @@ function Remove-CIPPDirectTenantToken {
         }
 
         Remove-Item -Path "env:\$TenantId" -ErrorAction SilentlyContinue
+        $null = Clear-CippTokenCache -TenantFilter $TenantId
         Write-Information "Removed stored direct tenant refresh token for $TenantId"
     } catch {
         Write-Warning "Failed to remove the stored direct tenant refresh token for $TenantId - $($_.Exception.Message)"

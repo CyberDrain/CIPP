@@ -3,6 +3,10 @@ function Get-ClassicAPIToken($tenantID, $Resource) {
     .FUNCTIONALITY
     Internal
     #>
+    # No government equivalent: refuse before any token request.
+    if ((Get-CIPPTenantRequestCloud -TenantFilter $TenantID) -cne 'Commercial') {
+        throw 'The classic admin APIs are not supported for government tenants (GCC High, DoD).'
+    }
     $TokenKey = '{0}-{1}' -f $TenantID, $Resource
     if ($script:classictoken.$TokenKey -and [int](Get-Date -UFormat %s -Millisecond 0) -lt $script:classictoken.$TokenKey.expires_on) {
         #Write-Host 'Classic: cached token'

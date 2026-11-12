@@ -10,6 +10,15 @@ function Invoke-ExecServicePrincipals {
     $APIName = $Request.Params.CIPPEndpoint
     $Headers = $Request.Headers
     $TenantFilter = $env:TenantID
+    # Gov tenants' permission ids differ from the partner cloud's; honoured for reads only.
+    if ($Request.Query.GovernmentTenantFilter -and $Request.Query.GovernmentTenantFilter -ne 'AllTenants' -and $Request.Query.Action -ne 'Create') {
+        $RequestedTenant = [string]$Request.Query.GovernmentTenantFilter
+        $RequestedCloud = try { Get-CIPPTenantRequestCloud -TenantFilter $RequestedTenant } catch { $null }
+        if ($RequestedCloud -and $RequestedCloud -cne 'Commercial') {
+            $AllowedTenants = Test-CIPPAccess -Request $Request -TenantList
+            if ($AllowedTenants -contains 'AllTenants' -or (Get-Tenants -TenantFilter $RequestedTenant)) { $TenantFilter = $RequestedTenant }
+        }
+    }
 
     $Success = $true
     $StatusCode = [HttpStatusCode]::OK

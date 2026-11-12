@@ -2,6 +2,7 @@ import { Layout as DashboardLayout } from "../../../../layouts/index";
 import { CippIcons } from "../../../../utils/icon-registry"
 import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
 import { useSettings } from "../../../../hooks/use-settings";
+import { useCloudPortalUrl } from "../../../../hooks/use-tenant-cloud";
 import {
   Card,
   CardContent,
@@ -45,6 +46,7 @@ const statusLabels = {
 };
 
 const SingleTenantView = ({ tenant }) => {
+  const toCloudPortal = useCloudPortalUrl(tenant);
   const syncDialog = useDialog();
   const [syncQueueId, setSyncQueueId] = useState(null);
 
@@ -259,7 +261,7 @@ const SingleTenantView = ({ tenant }) => {
                     <Button
                       variant="contained"
                       startIcon={<CippIcons.Launch />}
-                      href={`https://security.microsoft.com/securitysettings/endpoints/onboarding?tid=${tenantId}`}
+                      href={toCloudPortal(`https://security.microsoft.com/securitysettings/endpoints/onboarding?tid=${tenantId}`)}
                       target="_blank"
                       rel="noopener noreferrer"
                       sx={{ alignSelf: "flex-start" }}

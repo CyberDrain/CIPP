@@ -13,6 +13,7 @@ BeforeAll {
     function Set-CIPPUserJITAdmin { param($TenantFilter, $User, $Roles, $Groups, $Action, $Expiration, $StartDate, $Reason, $Headers, $APIName) }
     function Set-CIPPUserJITAdminProperties { param($TenantFilter, $UserId, $Expiration, $StartDate, $Reason, $CreatedBy) }
     function Get-CIPPJITAdminApprovalRequirement { param($Roles, $TenantFilter) }
+    function Get-CIPPJITAdminCloudError { param($TenantFilter, $CloudEnvironment) }
     function Add-CIPPAzDataTableEntity { param($TableName, $Entity, [switch]$Force) }
     function Update-AzDataTableEntity { param($TableName, $Entity) }
     function Send-CIPPJITAdminApprovalNotification { param($ApprovalRequest, $Status, $Note, $Results) }

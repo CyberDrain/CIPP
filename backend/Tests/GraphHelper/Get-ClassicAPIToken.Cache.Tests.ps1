@@ -2,6 +2,7 @@ BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
 
     function Invoke-CIPPRestMethod { param($Uri, $Body, $ContentType, $Method) }
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
 
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/Get-ClassicAPIToken.ps1')
 }

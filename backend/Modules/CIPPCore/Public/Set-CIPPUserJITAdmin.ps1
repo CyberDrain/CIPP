@@ -59,6 +59,12 @@ function Set-CIPPUserJITAdmin {
         throw "Blocked JIT Admin $Action for $($User.UserPrincipalName): '$($InvalidIds -join "', '")' is not a valid id"
     }
 
+    # Only these actions need the cippUser extension; removal and clean-up skip it.
+    if ($Action -in @('Create', 'AddRoles', 'AddGroups', 'AddRolesAndGroups')) {
+        $CloudError = Get-CIPPJITAdminCloudError -TenantFilter $TenantFilter
+        if ($CloudError) { throw $CloudError }
+    }
+
     if ($Action -in @('AddRoles', 'AddGroups', 'AddRolesAndGroups') -and (Get-CIPPJITAdminApprovalRequirement -Roles $Roles -TenantFilter $TenantFilter)) {
         $ApprovalTable = Get-CIPPTable -TableName 'JITAdminRequests'
         $ParsedId = [guid]::Empty

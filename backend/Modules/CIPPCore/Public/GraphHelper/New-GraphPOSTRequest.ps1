@@ -31,6 +31,7 @@ function New-GraphPOSTRequest {
     if ($scope -like '*.sharepoint*') { Assert-CIPPSharePointHost -Uri $uri -Scope $scope }
 
     if ($NoAuthCheck -or (Get-AuthorisedRequest -Uri $uri -TenantID $tenantid)) {
+        $CallerHeaders = [bool]$Headers
         if ($Headers) {
             $Headers = $Headers
         } else {
@@ -41,6 +42,20 @@ function New-GraphPOSTRequest {
         if ($AddedHeaders) {
             foreach ($header in $AddedHeaders.GetEnumerator()) {
                 $headers.Add($header.Key, $header.Value)
+            }
+        }
+
+        # Kept for the Intune approval hand-off, which re-enters this helper and routes again.
+        $CallerUri = $uri
+        $RequestCloud = Get-CIPPTenantRequestCloud -TenantFilter $tenantid
+        if ($RequestCloud -cne 'Commercial') { $uri = ConvertTo-CIPPCloudUri -Uri $uri -CloudEnvironment $RequestCloud }
+        # Refetch for this cloud: a cached token may predate a cloud change in another worker.
+        if ($RequestCloud -cne 'Commercial' -and -not $CallerHeaders) {
+            $Headers = Get-GraphToken -tenantid $tenantid -scope $scope -AsApp $asapp -SkipCache $skipTokenCache -UseCertificate:$UseCertificate -RequireCloud $RequestCloud
+            if ($AddedHeaders) {
+                foreach ($header in $AddedHeaders.GetEnumerator()) {
+                    $headers.Add($header.Key, $header.Value)
+                }
             }
         }
 
@@ -158,7 +173,7 @@ function New-GraphPOSTRequest {
         # nothing. Raise the request app-only - one raised with the GDAP token has no requestor and can
         # never be completed. Tenants without approval never see this error.
         if (-not $RequestSuccessful -and "$Message $RawErrorBody" -match 'x-msft-approval-justification\S{0,6} is required' -and -not $AddedHeaders.'x-msft-approval-justification') {
-            return New-CIPPIntuneApprovalRequest -TenantFilter $tenantid -Uri $uri -Type $type -Body $body -Justification $ApprovalJustification -AssignParams $ApprovalAssignParams
+            return New-CIPPIntuneApprovalRequest -TenantFilter $tenantid -Uri $CallerUri -Type $type -Body $body -Justification $ApprovalJustification -AssignParams $ApprovalAssignParams
         }
 
         if ($RequestSuccessful -eq $false) {

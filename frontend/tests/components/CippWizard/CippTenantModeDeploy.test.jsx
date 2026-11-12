@@ -45,8 +45,12 @@ api.post = mocks.postResult
 api.paginated = paginatedResult([], { isSuccess: false, data: undefined })
 
 // oauth button pulls the CippApiDialog tree, stub keeps the render light
+const oauthProps = {}
 vi.mock('../../../src/components/CippComponents/CIPPM365OAuthButton', () => ({
-  CIPPM365OAuthButton: ({ buttonText }) => <button type="button">{buttonText}</button>,
+  CIPPM365OAuthButton: (props) => {
+    oauthProps[props.buttonText] = props
+    return <button type="button">{props.buttonText}</button>
+  },
 }))
 
 vi.mock('../../../src/components/CippComponents/CippApiResults', () => ({
@@ -142,5 +146,53 @@ describe('CippTenantModeDeploy', () => {
     expect(
       screen.getByText('Please connect to your partner tenant first before adding separate tenants.'),
     ).toBeInTheDocument()
+  })
+})
+
+describe('CippTenantModeDeploy tenant cloud', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    for (const key of Object.keys(oauthProps)) delete oauthProps[key]
+    ApiGetCall.mockReturnValue(mocks.loadedQuery)
+  })
+
+  it('keeps the partner sign-in and the default direct sign-in commercial', () => {
+    renderWithTheme(<Harness />)
+    const partner = oauthProps['Change Partner Tenant']
+    expect(partner.cloudEnvironment).toBeUndefined()
+    expect(partner.directTenant).toBeUndefined()
+    const direct = oauthProps['Connect to Separate Tenants']
+    expect(direct.cloudEnvironment).toBe('Commercial')
+    expect(direct.directTenant).toBe(true)
+    expect(direct.scope).toBe(
+      'https://graph.microsoft.com/DelegatedPermissionGrant.ReadWrite.All https://graph.microsoft.com/Directory.ReadWrite.All https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All offline_access profile openid'
+    )
+  })
+
+  it.each([
+    ['GCC High', 'USGovHigh', 'https://graph.microsoft.us/'],
+    ['DoD', 'USGovDoD', 'https://dod-graph.microsoft.us/'],
+  ])('signs the separate tenant in to %s and sends the cloud to ExecAddTenant', async (label, value, prefix) => {
+    const user = userEvent.setup()
+    renderWithTheme(<Harness />)
+    await user.click(screen.getByRole('button', { name: label }))
+
+    const direct = oauthProps['Connect to Separate Tenants']
+    expect(direct.cloudEnvironment).toBe(value)
+    expect(direct.scope).toContain(`${prefix}Directory.ReadWrite.All`)
+    expect(direct.scope).not.toContain('graph.microsoft.com')
+    expect(oauthProps['Change Partner Tenant'].cloudEnvironment).toBeUndefined()
+
+    direct.onAuthSuccess({ accessToken: 'a', cloudEnvironment: value })
+    expect(mocks.postResult.mutate).toHaveBeenCalledWith({
+      url: '/api/ExecAddTenant',
+      data: expect.objectContaining({ cloudEnvironment: value, tenantMode: 'perTenant' }),
+    })
+  })
+
+  it('disables the cloud choice until the partner tenant is connected', () => {
+    ApiGetCall.mockReturnValue(mocks.noOrgQuery)
+    renderWithTheme(<Harness />)
+    expect(screen.getByRole('button', { name: 'GCC High' })).toBeDisabled()
   })
 })

@@ -351,6 +351,12 @@ const outcomeTimeline = {
     icon: <CippIcons.InfoOutlined />,
     label: 'Skipped - No License',
   },
+  'Skipped-Cloud': {
+    color: 'grey',
+    chipColor: 'default',
+    icon: <CippIcons.InfoOutlined />,
+    label: 'Skipped - Not Supported In This Cloud',
+  },
   // Operator/system audit events (triage verdicts, overrides, stage changes,
   // deletions carried out for denied deviations).
   Accepted: { color: 'info', chipColor: 'info', icon: <CippIcons.TaskAlt /> },

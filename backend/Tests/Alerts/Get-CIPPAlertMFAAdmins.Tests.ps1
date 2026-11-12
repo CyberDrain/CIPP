@@ -7,6 +7,7 @@ BeforeAll {
     function New-GraphGetRequest { param($uri, $tenantid, $AsApp, [switch]$ComplexFilter) }
     function Get-CIPPMFAStateReport { param($TenantFilter) }
     function Get-CIPPSchemaExtensions { }
+    function Get-CIPPJITAdminCloudError { param($TenantFilter) }
     function Write-LogMessage { param($message, $API, $tenant, $sev, $LogData) }
     function Write-AlertTrace { param($cmdletName, $tenantFilter, $data) }
 

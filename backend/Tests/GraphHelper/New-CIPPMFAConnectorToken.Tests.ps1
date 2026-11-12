@@ -3,6 +3,7 @@
 # that a cached secret is reused without provisioning, and that a cache miss provisions and stores one.
 
 BeforeAll {
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
 
     function New-GraphGetRequest { param($uri, $tenantid, $AsApp) }

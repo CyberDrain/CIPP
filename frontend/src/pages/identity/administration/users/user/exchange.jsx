@@ -1,6 +1,7 @@
 import { Layout as DashboardLayout } from '../../../../../layouts/index'
 import { CippIcons } from '../../../../../utils/icon-registry'
 import { useSettings } from '../../../../../hooks/use-settings'
+import { useCloudPortalUrl } from '../../../../../hooks/use-tenant-cloud'
 import { useRouter } from 'next/router'
 import { ApiGetCall } from '../../../../../api/ApiCall'
 import CippFormSkeleton from '../../../../../components/CippFormPages/CippFormSkeleton'
@@ -45,6 +46,7 @@ const sortPermissionOptions = (options) =>
 
 const Page = () => {
   const userSettingsDefaults = useSettings()
+  const toCloudPortal = useCloudPortalUrl()
   const [waiting, setWaiting] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [actionData, setActionData] = useState({ ready: false })
@@ -539,7 +541,7 @@ const Page = () => {
               color="muted"
               style={{ paddingLeft: 0 }}
               size="small"
-              href={`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/${userId}`}
+              href={toCloudPortal(`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/${userId}`)}
               target="_blank"
               rel="noopener noreferrer"
             >

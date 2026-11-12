@@ -39,6 +39,7 @@ function New-GraphGetRequest {
     }
 
     if ($NoAuthCheck -eq $true -or $IsAuthorised) {
+        $CallerHeaders = [bool]$headers
         if ($headers) {
             $headers = $Headers
         } else {
@@ -46,6 +47,11 @@ function New-GraphGetRequest {
             # -UseCertificate authenticates the app with the SAM certificate instead of the
             # client secret: delegated (refresh token) by default, app-only with -AsApp $true
             $headers = Get-GraphToken -tenantid $tenantid -scope $TokenScope -AsApp $asapp -SkipCache $skipTokenCache -UseCertificate:$UseCertificate
+        }
+        $RequestCloud = Get-CIPPTenantRequestCloud -TenantFilter $tenantid
+        # Refetch for this cloud: a cached token may predate a cloud change in another worker.
+        if ($RequestCloud -cne 'Commercial' -and -not $CallerHeaders) {
+            $headers = Get-GraphToken -tenantid $tenantid -scope $TokenScope -AsApp $asapp -SkipCache $skipTokenCache -UseCertificate:$UseCertificate -RequireCloud $RequestCloud
         }
         if ($ComplexFilter) {
             $headers['ConsistencyLevel'] = 'eventual'
@@ -72,6 +78,8 @@ function New-GraphGetRequest {
         # pipeline (-Stream). Same loop body either way — see the dispatch below.
         $Pager = {
             do {
+            # Also checks the nextLink stays on the tenant's cloud.
+            if ($RequestCloud -cne 'Commercial') { $nextURL = ConvertTo-CIPPCloudUri -Uri $nextURL -CloudEnvironment $RequestCloud }
             $RetryCount = 0
             $MaxRetries = 3
             $RequestSuccessful = $false

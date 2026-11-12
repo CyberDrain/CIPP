@@ -12,8 +12,16 @@ function Invoke-ListJITAdmin {
     param($Request, $TriggerMetadata)
 
 
-    $Schema = Get-CIPPSchemaExtensions | Where-Object { $_.id -match '_cippUser' } | Select-Object -First 1
     $TenantFilter = $Request.Query.TenantFilter
+    # A government tenant of a commercial partner has no cippUser extension (redanthrax/CIPP#4)
+    $CloudError = Get-CIPPJITAdminCloudError -TenantFilter $TenantFilter
+    if ($CloudError) {
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = @{ Results = @($CloudError) }
+            })
+    }
+    $Schema = Get-CIPPSchemaExtensions | Where-Object { $_.id -match '_cippUser' } | Select-Object -First 1
 
     # Resolve which directory roles the caller may see. When restricted, a JIT admin is only shown if
     # every directory role it currently holds is within the caller's allow-list (strict subset). JIT

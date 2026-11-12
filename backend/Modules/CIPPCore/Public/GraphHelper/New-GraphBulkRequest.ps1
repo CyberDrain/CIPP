@@ -19,6 +19,7 @@ function New-GraphBulkRequest {
     )
 
     if ($NoAuthCheck -or (Get-AuthorisedRequest -Uri $uri -TenantID $tenantid)) {
+        $CallerHeaders = [bool]$Headers
         if ($Headers) {
             $Headers = $Headers
         } else {
@@ -33,6 +34,20 @@ function New-GraphBulkRequest {
         $UserAgent = $headers['User-Agent']
 
         $URL = "https://graph.microsoft.com/$Version/`$batch"
+        # A government tenant's batches go to its cloud's Graph host (redanthrax/CIPP#3). Sub-request
+        # urls are relative to the batch host, so they need no change.
+        $RequestCloud = Get-CIPPTenantRequestCloud -TenantFilter $tenantid
+        if ($RequestCloud -cne 'Commercial') { $URL = ConvertTo-CIPPCloudUri -Uri $URL -CloudEnvironment $RequestCloud }
+        # A government tenant's token is fetched again for exactly the cloud chosen above: the first call can
+        # return a commercial token cached before the tenant's cloud changed in another worker (redanthrax/CIPP#3).
+        # The retries below fetch it for that cloud too.
+        if ($RequestCloud -cne 'Commercial' -and -not $CallerHeaders) {
+            $Headers = Get-GraphToken -tenantid $tenantid -scope $scope -AsApp $asapp -RequireCloud $RequestCloud
+            if ($script:XMsThrottlePriority) {
+                $headers['x-ms-throttle-priority'] = $script:XMsThrottlePriority
+            }
+            $headers['User-Agent'] = $UserAgent
+        }
         # a $batch lands its sub-requests at once, so the rate limiter can only space whole batches: no batch holds more
         # sub-requests of one measured budget (CIPPRateLimiter) than its burst
         $HasBudgets = $null -ne ('CIPP.CIPPRateLimiter' -as [type])
@@ -97,7 +112,7 @@ function New-GraphBulkRequest {
                     $Return = Invoke-CIPPRestMethod -Uri $URL -Method POST -Headers $headers -ContentType 'application/json; charset=utf-8' -Body $ReqBody
                     if ($Return.headers.'retry-after') {
                         #Revist this when we are pushing this data into our custom schema instead.
-                        $headers = Get-GraphToken -tenantid $tenantid -scope $scope -AsApp $asapp
+                        $headers = if ($RequestCloud -cne 'Commercial') { Get-GraphToken -tenantid $tenantid -scope $scope -AsApp $asapp -RequireCloud $RequestCloud } else { Get-GraphToken -tenantid $tenantid -scope $scope -AsApp $asapp }
                         $headers['User-Agent'] = $UserAgent
                         Invoke-CIPPRestMethod -Uri $URL -Method POST -Headers $headers -ContentType 'application/json; charset=utf-8' -Body $ReqBody
                     }
@@ -139,7 +154,7 @@ function New-GraphBulkRequest {
                 Write-Host $MoreData.body.'@odata.nextLink'
                 # Re-batch nextLink pagination instead of sequential calls
                 $NextLinkQueue = [System.Collections.Generic.Queue[PSCustomObject]]::new()
-                $InitialNextUrl = $MoreData.body.'@odata.nextLink' -replace 'https://graph.microsoft.com/(v1\.0|beta)', ''
+                $InitialNextUrl = $MoreData.body.'@odata.nextLink' -replace 'https://(graph\.microsoft\.com|graph\.microsoft\.us|dod-graph\.microsoft\.us)/(v1\.0|beta)', ''
                 $NextLinkQueue.Enqueue([PSCustomObject]@{
                         id  = $MoreData.id
                         url = $InitialNextUrl
@@ -161,7 +176,7 @@ function New-GraphBulkRequest {
                     $NextReqBody = ConvertTo-Json -InputObject @{ requests = @($NextBatchRequests) } -Compress -Depth 100
                     $NextReturn = Invoke-CIPPRestMethod -Uri $URL -Method POST -Headers $headers -ContentType 'application/json; charset=utf-8' -Body $NextReqBody
                     if ($NextReturn.headers.'retry-after') {
-                        $headers = Get-GraphToken -tenantid $tenantid -scope $scope -AsApp $asapp
+                        $headers = if ($RequestCloud -cne 'Commercial') { Get-GraphToken -tenantid $tenantid -scope $scope -AsApp $asapp -RequireCloud $RequestCloud } else { Get-GraphToken -tenantid $tenantid -scope $scope -AsApp $asapp }
                         $headers['User-Agent'] = $UserAgent
                         $NextReturn = Invoke-CIPPRestMethod -Uri $URL -Method POST -Headers $headers -ContentType 'application/json; charset=utf-8' -Body $NextReqBody
                     }
@@ -202,7 +217,7 @@ function New-GraphBulkRequest {
                             $MoreData.body.value = $NewValues
                         }
                         if ($NextResponse.body.'@odata.nextLink' -and $NoPaginateIds -notcontains $NextResponse.id) {
-                            $ContinueUrl = $NextResponse.body.'@odata.nextLink' -replace 'https://graph.microsoft.com/(v1\.0|beta)', ''
+                            $ContinueUrl = $NextResponse.body.'@odata.nextLink' -replace 'https://(graph\.microsoft\.com|graph\.microsoft\.us|dod-graph\.microsoft\.us)/(v1\.0|beta)', ''
                             $NextLinkQueue.Enqueue([PSCustomObject]@{
                                     id  = $NextResponse.id
                                     url = $ContinueUrl

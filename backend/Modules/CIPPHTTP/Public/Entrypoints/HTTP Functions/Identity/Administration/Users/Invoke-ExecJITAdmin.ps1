@@ -16,6 +16,8 @@ function Invoke-ExecJITAdmin {
 
     # Set by ExecJITAdminRequestDecision once a request has its approvals
     $ApprovalRequestId = $Request.Body.ApprovalRequestId
+    $CloudChecked = $null
+    $CloudError = $null
     if ($ApprovalRequestId) {
         $ApprovalTable = Get-CIPPTable -TableName 'JITAdminRequests'
         $ParsedId = [guid]::Empty
@@ -25,6 +27,16 @@ function Invoke-ExecJITAdmin {
         $CallingUser = ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Headers.'x-ms-client-principal')) | ConvertFrom-Json).userDetails
         $Claimed = $false
         if ($ApprovalRow.State -eq 'Approved' -and $ApprovalRow.RequestedBy -eq $CallingUser) {
+            # Refuse a government tenant before claiming, so the approved request is not used up (redanthrax/CIPP#4)
+            $CloudError = Get-CIPPJITAdminCloudError -TenantFilter $ApprovalRow.Tenant
+            $CloudChecked = [string]$ApprovalRow.Tenant
+            if ($CloudError) {
+                Write-LogMessage -headers $Headers -API $APIName -tenant $ApprovalRow.Tenant -message $CloudError -Sev 'Error'
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::BadRequest
+                        Body       = @{ 'Results' = @($CloudError) }
+                    })
+            }
             try {
                 $null = Update-AzDataTableEntity @ApprovalTable -Entity @{ PartitionKey = $ApprovalRow.PartitionKey; RowKey = $ApprovalRow.RowKey; State = 'Completed'; ETag = $ApprovalRow.ETag }
                 $Claimed = $true
@@ -46,6 +58,16 @@ function Invoke-ExecJITAdmin {
 
     $TenantFilter = $Request.Body.tenantFilter.value ? $Request.Body.tenantFilter.value : $Request.Body.tenantFilter
 
+    # A government tenant of a commercial partner has no cippUser extension (redanthrax/CIPP#4).
+    # An approved request was already checked, for the same tenant, before it was claimed.
+    if ($CloudChecked -cne [string]$TenantFilter) { $CloudError = Get-CIPPJITAdminCloudError -TenantFilter $TenantFilter }
+    if ($CloudError) {
+        Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $CloudError -Sev 'Error'
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = @{ 'Results' = @($CloudError) }
+            })
+    }
 
     $Start = ([System.DateTimeOffset]::FromUnixTimeSeconds($Request.Body.StartDate)).DateTime.ToLocalTime()
     $Expiration = ([System.DateTimeOffset]::FromUnixTimeSeconds($Request.Body.EndDate)).DateTime.ToLocalTime()

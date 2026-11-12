@@ -1,6 +1,7 @@
 import { Layout as DashboardLayout } from "../../../../../layouts/index";
 import { CippIcons } from "../../../../../utils/icon-registry"
 import { useSettings } from "../../../../../hooks/use-settings";
+import { useCloudPortalUrl } from "../../../../../hooks/use-tenant-cloud";
 import { useRouter } from "next/router";
 import { ApiGetCall, ApiPostCall } from "../../../../../api/ApiCall";
 import CippFormSkeleton from "../../../../../components/CippFormPages/CippFormSkeleton";
@@ -23,6 +24,7 @@ import { Button } from "@mui/material";
 
 const Page = () => {
   const userSettingsDefaults = useSettings();
+  const toCloudPortal = useCloudPortalUrl();
   const router = useRouter();
   const { groupId } = router.query;
   const [waiting, setWaiting] = useState(false);
@@ -143,7 +145,7 @@ const Page = () => {
               color="muted"
               style={{ paddingLeft: 0 }}
               size="small"
-              href={`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_IAM/GroupDetailsMenuBlade/~/Overview/groupId/${groupId}`}
+              href={toCloudPortal(`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_IAM/GroupDetailsMenuBlade/~/Overview/groupId/${groupId}`)}
               target="_blank"
               rel="noopener noreferrer"
             >

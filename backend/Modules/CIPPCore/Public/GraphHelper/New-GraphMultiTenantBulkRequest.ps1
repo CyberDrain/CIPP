@@ -36,6 +36,12 @@ function New-GraphMultiTenantBulkRequest {
         if ($SubRequests.Count -eq 0) { continue }
         try {
             $Authorization = (Get-GraphToken -tenantid $Item.TenantFilter -scope $Scope -AsApp $AsApp).Authorization
+            # Each tenant's batch goes to its own cloud's Graph host (redanthrax/CIPP#3).
+            $TenantCloud = Get-CIPPTenantRequestCloud -TenantFilter $Item.TenantFilter
+            $TenantUrl = if ($TenantCloud -ceq 'Commercial') { $Url } else { ConvertTo-CIPPCloudUri -Uri $Url -CloudEnvironment $TenantCloud }
+            # A government tenant's token is fetched again for exactly the cloud chosen above: the first call can
+            # return a commercial token cached before the tenant's cloud changed in another worker (redanthrax/CIPP#3).
+            if ($TenantCloud -cne 'Commercial') { $Authorization = (Get-GraphToken -tenantid $Item.TenantFilter -scope $Scope -AsApp $AsApp -RequireCloud $TenantCloud).Authorization }
         } catch {
             $Result.Error = $_.Exception.Message
             continue
@@ -43,7 +49,7 @@ function New-GraphMultiTenantBulkRequest {
         for ($i = 0; $i -lt $SubRequests.Count; $i += 20) {
             $Body = @{ requests = @($SubRequests[$i..([Math]::Min($i + 19, $SubRequests.Count - 1))]) }
             $Request = [CIPP.CIPPConcurrentRequest]::new()
-            $Request.Uri = $Url
+            $Request.Uri = $TenantUrl
             $Request.Method = 'POST'
             $Request.Body = [CIPP.CippJson]::ToJson($Body, 100) ?? (ConvertTo-Json -InputObject $Body -Compress -Depth 100)
             $Request.ContentType = 'application/json; charset=utf-8'

@@ -19,6 +19,14 @@ function Remove-CIPPDirectTenantToken {
         [string]$TenantId
     )
 
+    # The secret is named after the tenant id, so a caller-supplied value such as 'RefreshToken' or
+    # 'ApplicationSecret' would name one of CIPP's own credentials. Direct tenant tokens are only
+    # stored under a tenant GUID (Invoke-ExecUpdateRefreshToken), and never for the partner tenant.
+    if ($TenantId -notmatch '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\z' -or $TenantId -eq $env:TenantID) {
+        Write-Warning 'Not removing a direct tenant refresh token: the tenant id is not a direct tenant GUID.'
+        return
+    }
+
     if (-not $PSCmdlet.ShouldProcess($TenantId, 'Remove direct tenant refresh token')) {
         return
     }
@@ -39,6 +47,10 @@ function Remove-CIPPDirectTenantToken {
         }
 
         Remove-Item -Path "env:\$TenantId" -ErrorAction SilentlyContinue
+        # Access tokens minted from the removed refresh token (in either cloud - redanthrax/CIPP#2) and the
+        # tenant's cloud marker go with it. Storage is the same for every cloud: there is no
+        # authority-side revocation, the refresh token simply stops being used.
+        $null = Clear-CippTokenCache -TenantFilter $TenantId
         Write-Information "Removed stored direct tenant refresh token for $TenantId"
     } catch {
         Write-Warning "Failed to remove the stored direct tenant refresh token for $TenantId - $($_.Exception.Message)"

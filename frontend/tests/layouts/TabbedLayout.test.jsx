@@ -39,7 +39,15 @@ vi.mock("../../src/api/ApiCall", () => ({
   ApiGetCallWithPagination: () => ({ ...idle, fetchNextPage: () => {} }),
 }));
 
+// The selected tenant's cloud (redanthrax/CIPP#4); undefined = AllTenants / not loaded
+const cloudState = vi.hoisted(() => ({ cloud: undefined }));
+vi.mock("../../src/hooks/use-tenant-cloud", async (importOriginal) => ({
+  ...(await importOriginal()),
+  useTenantCloudEnvironment: () => cloudState.cloud,
+}));
+
 import { TabbedLayout } from "../../src/layouts/TabbedLayout";
+import jitTabOptions from "../../src/pages/identity/administration/jit-admin/tabOptions.json";
 import { CippPageActionsFab } from "../../src/components/CippComponents/CippPageActionsFab";
 import { CippDataTable } from "../../src/components/CippTable/CippDataTable";
 
@@ -68,6 +76,35 @@ describe("TabbedLayout", () => {
     layoutState.viewMode = "table";
     routerState.push = vi.fn();
     routerState.pathname = "/dashboardv2";
+    cloudState.cloud = undefined;
+  });
+
+  describe("tenant cloud (redanthrax/CIPP#4)", () => {
+    const tabLabels = () => screen.getAllByRole("tab").map((tab) => tab.textContent);
+    const renderJit = () =>
+      renderWithProviders(
+        <TabbedLayout tabOptions={jitTabOptions}>
+          <div>page content</div>
+        </TabbedLayout>
+      );
+
+    it("shows every JIT tab for a Commercial tenant and for AllTenants", () => {
+      for (const cloud of ["Commercial", undefined]) {
+        cloudState.cloud = cloud;
+        const { unmount } = renderJit();
+        expect(tabLabels()).toEqual(jitTabOptions.map((tab) => tab.label));
+        unmount();
+      }
+    });
+
+    it("leaves out the JIT Admins tab, and only that tab, for a government tenant", () => {
+      for (const cloud of ["USGovHigh", "USGovDoD"]) {
+        cloudState.cloud = cloud;
+        const { unmount } = renderJit();
+        expect(tabLabels()).toEqual(["Requests", "JIT Admin Templates", "JIT Role Templates"]);
+        unmount();
+      }
+    });
   });
 
   it("renders a tab bar on desktop and no picker", () => {

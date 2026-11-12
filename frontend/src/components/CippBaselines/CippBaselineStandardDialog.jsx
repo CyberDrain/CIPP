@@ -25,6 +25,7 @@ import {
 } from '@mui/material'
 import { Grid } from '@mui/system'
 import { CippAutoComplete } from '../CippComponents/CippAutocomplete'
+import { CippCloudSupportChip } from '../CippComponents/CippCloudSupportChip'
 
 const impactColors = {
   'Low Impact': 'info',
@@ -577,6 +578,7 @@ export const CippBaselineStandardDialog = ({
                               label="New"
                             />
                           )}
+                          <CippCloudSupportChip type="baselineStandards" name={standard.name} />
                         </Stack>
                         <Typography
                           variant="body2"
@@ -658,6 +660,7 @@ export const CippBaselineStandardDialog = ({
                             size="small"
                             color={impactColors[standard.impact] ?? 'default'}
                           />
+                          <CippCloudSupportChip type="baselineStandards" name={standard.name} />
                         </Box>
                       }
                       secondary={

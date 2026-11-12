@@ -34,6 +34,25 @@ function Invoke-ExecTokenExchange {
             })
     }
 
+    # Direct government tenants (redanthrax/CIPP#2) consent against their cloud's authority with the
+    # Azure Government app. Absent or 'Commercial' keeps the commercial exchange exactly as before;
+    # anything else must be an exact cloud name, and the token endpoint then comes from the fixed map.
+    $RequestedCloud = $Request.Body.cloudEnvironment
+    $CloudEndpoint = $null
+    if ($null -ne $RequestedCloud -and -not ($RequestedCloud -is [string] -and $RequestedCloud -ceq 'Commercial')) {
+        try {
+            if ($RequestedCloud -isnot [string]) { throw 'not a string' }
+            $CloudEndpoint = Get-CIPPCloudEndpoint -CloudEnvironment $RequestedCloud
+        } catch {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = @{ error = 'invalid_request'; error_description = 'Invalid cloudEnvironment. Allowed values: Commercial, USGovHigh, USGovDoD.' }
+                    Headers    = @{'Content-Type' = 'application/json' }
+                })
+        }
+    }
+    $AllowedTokenHost = if ($CloudEndpoint) { $CloudEndpoint.LoginHost } else { 'login.microsoftonline.com' }
+
     # This endpoint exists only for the SAM setup wizard's authorization-code exchange, which always
     # posts to the /organizations token endpoint. Pin the full URL so a caller cannot redirect the
     # SAM credential to an arbitrary tenant realm.
@@ -41,14 +60,18 @@ function Invoke-ExecTokenExchange {
     $IsValidTokenUri = [System.Uri]::TryCreate($TokenUrl, [System.UriKind]::Absolute, [ref]$ParsedTokenUri)
     if (-not $IsValidTokenUri -or
         -not $ParsedTokenUri.Scheme.Equals('https', [System.StringComparison]::OrdinalIgnoreCase) -or
-        -not $ParsedTokenUri.Host.Equals('login.microsoftonline.com', [System.StringComparison]::OrdinalIgnoreCase) -or
+        -not $ParsedTokenUri.Host.Equals($AllowedTokenHost, [System.StringComparison]::OrdinalIgnoreCase) -or
         -not $ParsedTokenUri.AbsolutePath.Equals('/organizations/oauth2/v2.0/token', [System.StringComparison]::OrdinalIgnoreCase)) {
         Write-LogMessage -API $APIName -message "Blocked token request to disallowed token endpoint: $TokenUrl" -Sev 'Warning'
         return ([HttpResponseContext]@{
                 StatusCode = [HttpStatusCode]::BadRequest
-                Body       = @{ error = 'invalid_request'; error_description = 'Invalid tokenUrl. Only https://login.microsoftonline.com/organizations/oauth2/v2.0/token is allowed.' }
+                Body       = @{ error = 'invalid_request'; error_description = "Invalid tokenUrl. Only https://$AllowedTokenHost/organizations/oauth2/v2.0/token is allowed." }
                 Headers    = @{'Content-Type' = 'application/json' }
             })
+    }
+    if ($CloudEndpoint) {
+        # Post to the literal URL from the map, not the caller's string.
+        $TokenUrl = "$($CloudEndpoint.Authority)/organizations/oauth2/v2.0/token"
     }
 
     # Only the authorization-code grant is permitted. Any other grant (notably client_credentials)
@@ -86,10 +109,24 @@ function Invoke-ExecTokenExchange {
             $FormData['client_id'] = $env:ApplicationID
         }
 
+        # A government cloud other than the partner cloud is the Azure Government app's: bind its
+        # client id and use only its credentials. Not configured throws - never the SAM app's.
+        $GovRoute = $null
+        if ($CloudEndpoint) {
+            $CloudRoute = Get-CIPPCloudTokenRoute -CloudEnvironment $CloudEndpoint.CloudEnvironment -Scope 'openid'
+            if ($CloudRoute.UsesGovApp) {
+                $GovRoute = $CloudRoute
+                $GovCredential = Get-CIPPGovAppCredential
+                $FormData['client_id'] = $GovRoute.ClientId
+            }
+        }
+
         # Resolve the client secret, tolerating its absence. A secret-less certificate-only setup
         # never has one, and certificate mode does not use it even when it exists.
         $ClientSecret = $null
-        if ($auth -and $env:ApplicationSecret -and $env:ApplicationSecret -ne 'AppSecret') {
+        if ($GovRoute) {
+            $ClientSecret = $GovCredential.ApplicationSecret
+        } elseif ($auth -and $env:ApplicationSecret -and $env:ApplicationSecret -ne 'AppSecret') {
             $ClientSecret = $env:ApplicationSecret
         } elseif ($env:AzureWebJobsStorage -eq 'UseDevelopmentStorage=true' -or $env:NonLocalHostAzurite -eq 'true') {
             $DevSecretsTable = Get-CIPPTable -tablename 'DevSecrets'
@@ -106,7 +143,7 @@ function Invoke-ExecTokenExchange {
 
         # Use a signed certificate assertion instead of the client secret when certificate mode is
         # on, or when there is no usable secret at all (a secret-less setup - the only way to auth).
-        $UseCertAssertion = [bool]$env:CertificateAuthMode -or -not $SecretUsable
+        $UseCertAssertion = if ($GovRoute) { $GovRoute.UseCertificate } else { [bool]$env:CertificateAuthMode -or -not $SecretUsable }
 
         if ($UseCertAssertion) {
             $AppId = $FormData['client_id']
@@ -117,7 +154,7 @@ function Invoke-ExecTokenExchange {
                         Headers    = @{'Content-Type' = 'application/json' }
                     })
             }
-            $SAMCert = Get-CIPPSAMCertificate -SkipCache
+            $SAMCert = if ($GovRoute) { Get-CIPPSAMCertificate -Name 'GovSAMCertificate' -SkipCache } else { Get-CIPPSAMCertificate -SkipCache }
             if (-not $SAMCert) {
                 throw 'Certificate authentication is required but no SAM certificate is available. Complete the application step first, then retry.'
             }

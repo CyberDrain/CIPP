@@ -16,6 +16,9 @@ import { CippDataTable } from '../CippTable/CippDataTable'
 import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
 import { useSettings } from '../../hooks/use-settings'
 import { isMultiTenant } from '../../utils/tenant-selection'
+import { useTenantList } from '../../hooks/use-tenant-cloud'
+import { findTenantCloud } from '../../utils/cloud-feature-support'
+import { getCloudPortalUrl } from '../../utils/cloud-portal-links'
 
 const traceDetailColumns = [
   'Received',
@@ -68,6 +71,7 @@ const pageTitles = {
 export const CippQuarantineTable = ({ entityType = 'Email' }) => {
   const tenantFilter = useSettings().currentTenant
   const isEmail = entityType === 'Email'
+  const tenantList = useTenantList()
   const queryKey = `MailQuarantine-${entityType}-${tenantFilter}`
 
   // In the AllTenants view each row belongs to a different tenant (row.Tenant); per-message
@@ -207,7 +211,8 @@ export const CippQuarantineTable = ({ entityType = 'Email' }) => {
     if (row.CustomerId) {
       url += `&tid=${row.CustomerId}`
     }
-    window.open(url, '_blank')
+    // The row's tenant may be a government one: its cloud's Defender portal (redanthrax/CIPP#4).
+    window.open(getCloudPortalUrl(url, findTenantCloud(tenantList, resolveTenant(row))), '_blank')
   }
 
   useEffect(() => {

@@ -42,6 +42,13 @@ function Push-ExecCIPPDBCache {
 
         Write-Information "Collecting $Name for tenant $TenantFilter"
 
+        # Not collected for a cloud that does not support it (redanthrax/CIPP#4).
+        $TenantCloud = try { Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter } catch { $null }
+        if ($TenantCloud -and $TenantCloud -cne 'Commercial' -and -not (Test-CIPPCloudFeatureSupport -Type 'cacheTypes' -Name $Name -CloudEnvironment $TenantCloud)) {
+            Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message "Skipped $Name - not supported for $TenantCloud tenants" -sev Info
+            return "Skipped $Name for tenant $TenantFilter - not supported for $TenantCloud tenants"
+        }
+
         $License = foreach ($Entry in (Get-CIPPDBCacheSchedule).GetEnumerator()) {
             if ($Entry.Key -eq $Name -or $Entry.Value.Types -contains $Name) { $Entry.Value.License; break }
         }

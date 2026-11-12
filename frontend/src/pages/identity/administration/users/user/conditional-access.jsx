@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CippIcons } from "../../../../../utils/icon-registry"
 import { Layout as DashboardLayout } from "../../../../../layouts/index";
 import { useSettings } from "../../../../../hooks/use-settings";
+import { useCloudPortalUrl } from "../../../../../hooks/use-tenant-cloud";
 import { useRouter } from "next/router";
 import CippFormSkeleton from "../../../../../components/CippFormPages/CippFormSkeleton";
 import { HeaderedTabbedLayout } from "../../../../../layouts/HeaderedTabbedLayout";
@@ -21,6 +22,7 @@ import { CippApiResults } from "../../../../../components/CippComponents/CippApi
 
 const Page = () => {
   const userSettingsDefaults = useSettings();
+  const toCloudPortal = useCloudPortalUrl();
   const router = useRouter();
   const { userId } = router.query;
 
@@ -60,7 +62,7 @@ const Page = () => {
               color="muted"
               style={{ paddingLeft: 0 }}
               size="small"
-              href={`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/${userId}`}
+              href={toCloudPortal(`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/${userId}`)}
               target="_blank"
               rel="noopener noreferrer"
             >

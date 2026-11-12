@@ -26,7 +26,7 @@ BeforeAll {
     function Get-CIPPTable { param($tablename) }
     function Get-CIPPAzDataTableEntity { param($Context, $Filter) }
     function Get-CippKeyVaultSecret { param($VaultName, $Name, [switch]$AsPlainText) }
-    function Get-CIPPSAMCertificate { param([switch]$SkipCache) }
+    function Get-CIPPSAMCertificate { param($Name, [switch]$SkipCache) }
     function New-CIPPCertificateAssertion { param($TenantId, $AppId, $Certificate, $Audience) }
     function Invoke-RestMethod {
         param($Uri, $Method, $Body, $ContentType, [switch]$SkipHttpErrorCheck)
@@ -103,5 +103,106 @@ Describe 'Invoke-ExecTokenExchange certificate assertion audience' {
             $Body['client_assertion_type'] -eq 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer' -and
             -not $Body.ContainsKey('client_secret')
         }
+    }
+}
+
+# redanthrax/CIPP#2: a direct government tenant consents against its cloud's authority with the Azure
+# Government app. The commercial exchange is unchanged when no cloud (or Commercial) is sent.
+Describe 'Invoke-ExecTokenExchange government cloud' {
+    BeforeAll {
+        function Get-CIPPGovAppCredential { param([switch]$Force) }
+        . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/Get-CIPPCloudEndpoint.ps1')
+        . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/ConvertTo-CIPPCloudScope.ps1')
+        . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/ConvertTo-CIPPCloudUri.ps1')
+        . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/Resolve-CIPPCloudHost.ps1')
+        . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/Get-CIPPPartnerCloudEnvironment.ps1')
+        . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/Get-CIPPCloudTokenRoute.ps1')
+        $script:GovAppId = '9a9a9a9a-0000-0000-0000-000000000000'
+
+        function New-GovRequest {
+            param($Cloud = 'USGovHigh', $TokenUrl = 'https://login.microsoftonline.us/organizations/oauth2/v2.0/token')
+            $Req = New-TokenExchangeRequest -TokenUrl $TokenUrl -AppId 'whatever-the-browser-sent'
+            $Req.Body | Add-Member -NotePropertyName cloudEnvironment -NotePropertyValue $Cloud
+            $Req
+        }
+    }
+
+    BeforeEach {
+        $script:SavedEnv = @{}
+        foreach ($Name in 'CertificateAuthMode', 'ApplicationID', 'ApplicationSecret', 'TenantID', 'AzureWebJobsStorage', 'NonLocalHostAzurite', 'CIPP_PARTNER_CLOUD') {
+            $script:SavedEnv[$Name] = [Environment]::GetEnvironmentVariable($Name)
+            Remove-Item "env:$Name" -ErrorAction SilentlyContinue
+        }
+        $env:ApplicationID = 'sam-app-id'
+        $env:ApplicationSecret = 'sam-secret'
+        $script:GovCred = [pscustomobject]@{ ApplicationId = $script:GovAppId; ApplicationSecret = 'gov-secret'; PfxBase64 = $null; HasSecret = $true; HasCertificate = $false; Configured = $true }
+
+        Mock Write-LogMessage {}
+        Mock Get-CIPPAuthentication { $true }
+        Mock Get-CIPPGovAppCredential { $script:GovCred }
+        Mock Get-CIPPSAMCertificate { [pscustomobject]@{ Certificate = 'GOV-CERT'; Thumbprint = 'GOV' } }
+        Mock New-CIPPCertificateAssertion { 'signed.jwt.assertion' }
+        Mock Invoke-RestMethod { @{ access_token = 'token'; refresh_token = 'refresh'; expires_in = 3600 } }
+        Mock Start-Sleep {}
+    }
+
+    AfterEach {
+        foreach ($Name in $script:SavedEnv.Keys) {
+            if ($null -eq $script:SavedEnv[$Name]) { Remove-Item "env:$Name" -ErrorAction SilentlyContinue } else { Set-Item "env:$Name" -Value $script:SavedEnv[$Name] }
+        }
+    }
+
+    It 'exchanges a <Cloud> code at the government authority with the Azure Government app and secret' -TestCases @(@{ Cloud = 'USGovHigh' }, @{ Cloud = 'USGovDoD' }) {
+        param($Cloud)
+        $Response = Invoke-ExecTokenExchange -Request (New-GovRequest -Cloud $Cloud) -TriggerMetadata $null
+        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
+        Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter {
+            $Uri -eq 'https://login.microsoftonline.us/organizations/oauth2/v2.0/token' -and
+            $Body['client_id'] -eq $script:GovAppId -and $Body['client_secret'] -eq 'gov-secret'
+        }
+        Should -Invoke Invoke-RestMethod -Times 0 -ParameterFilter { $Body['client_secret'] -eq 'sam-secret' -or $Body['client_id'] -eq 'sam-app-id' }
+    }
+
+    It 'signs with the government certificate for the government audience when there is no secret' {
+        $script:GovCred = [pscustomobject]@{ ApplicationId = $script:GovAppId; ApplicationSecret = $null; PfxBase64 = 'pfx'; HasSecret = $false; HasCertificate = $true; Configured = $true }
+        $Response = Invoke-ExecTokenExchange -Request (New-GovRequest) -TriggerMetadata $null
+        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
+        Should -Invoke Get-CIPPSAMCertificate -ParameterFilter { $Name -eq 'GovSAMCertificate' }
+        Should -Invoke New-CIPPCertificateAssertion -ParameterFilter { $AppId -eq $script:GovAppId -and $Audience -eq 'https://login.microsoftonline.us/organizations/oauth2/v2.0/token' }
+        Should -Invoke Invoke-RestMethod -ParameterFilter { -not $Body.ContainsKey('client_secret') -and $Body['client_assertion'] }
+    }
+
+    It 'fails without any token request when the Azure Government app is not configured' {
+        $script:GovCred = [pscustomobject]@{ ApplicationId = $null; ApplicationSecret = $null; PfxBase64 = $null; HasSecret = $false; HasCertificate = $false; Configured = $false }
+        $Response = Invoke-ExecTokenExchange -Request (New-GovRequest) -TriggerMetadata $null
+        $Response.StatusCode | Should -Not -Be ([System.Net.HttpStatusCode]::OK)
+        $Response.Body.error_description | Should -BeLike '*Azure Government app not configured*'
+        Should -Invoke Invoke-RestMethod -Times 0
+    }
+
+    It 'rejects the commercial token endpoint for a government exchange' {
+        $Response = Invoke-ExecTokenExchange -Request (New-GovRequest -TokenUrl 'https://login.microsoftonline.com/organizations/oauth2/v2.0/token') -TriggerMetadata $null
+        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::BadRequest)
+        Should -Invoke Invoke-RestMethod -Times 0
+    }
+
+    It 'rejects the government token endpoint for a commercial exchange' {
+        $Response = Invoke-ExecTokenExchange -Request (New-TokenExchangeRequest -TokenUrl 'https://login.microsoftonline.us/organizations/oauth2/v2.0/token') -TriggerMetadata $null
+        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::BadRequest)
+        Should -Invoke Invoke-RestMethod -Times 0
+    }
+
+    It 'rejects a cloudEnvironment of <Value>' -TestCases @(@{ Value = 'usgovhigh' }, @{ Value = '' }, @{ Value = 'login.microsoftonline.us' }) {
+        param($Value)
+        $Response = Invoke-ExecTokenExchange -Request (New-GovRequest -Cloud $Value) -TriggerMetadata $null
+        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::BadRequest)
+        Should -Invoke Invoke-RestMethod -Times 0
+    }
+
+    It 'keeps the commercial exchange on the SAM app when Commercial is sent' {
+        $Response = Invoke-ExecTokenExchange -Request (New-GovRequest -Cloud 'Commercial' -TokenUrl 'https://login.microsoftonline.com/organizations/oauth2/v2.0/token') -TriggerMetadata $null
+        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
+        Should -Invoke Invoke-RestMethod -Times 1 -ParameterFilter { $Uri -eq 'https://login.microsoftonline.com/organizations/oauth2/v2.0/token' -and $Body['client_id'] -eq 'sam-app-id' -and $Body['client_secret'] -eq 'sam-secret' }
+        Should -Invoke Get-CIPPGovAppCredential -Times 0
     }
 }

@@ -35,6 +35,7 @@ import { useState, useCallback, useMemo, memo, useEffect } from "react";
 import { debounce } from "lodash";
 import { Virtuoso } from "react-virtuoso";
 import ReactMarkdown from "react-markdown";
+import { CippCloudSupportChip } from "../CippComponents/CippCloudSupportChip";
 
 // Memoized Standard Card component to prevent unnecessary re-renders
 const StandardCard = memo(
@@ -193,6 +194,11 @@ const StandardCard = memo(
                 Category:
               </Typography>
               <Chip label={category} size="small" color="primary" sx={{ mt: 1, mb: 2 }} />
+              <CippCloudSupportChip
+                type="standards"
+                name={standard.name?.replace(/^standards\./, "")}
+                sx={{ mt: 1, mb: 2, ml: 1 }}
+              />
               {expanded &&
                 standard.tag?.filter((tag) => !tag.toLowerCase().includes("impact")).length > 0 && (
                   <>
@@ -456,6 +462,10 @@ const CompactStandardList = memo(
                       />
                     )}
                     <Chip label={category} size="small" color="primary" />
+                    <CippCloudSupportChip
+                      type="standards"
+                      name={standard.name?.replace(/^standards\./, "")}
+                    />
                     <Chip
                       label={standard.impact}
                       size="small"

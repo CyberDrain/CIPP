@@ -165,6 +165,16 @@ function Invoke-CIPPTestCollection {
         Clear = $Exported["Clear-CippTestSuite$SuiteName"]
     }
     $TestFunctions = $SuiteCommands.Tests
+    # Tests that only read cache types the tenant's cloud does not support (redanthrax/CIPP#4) are not
+    # run; one log line per suite run. Commercial tenants keep every test.
+    $TenantCloud = try { Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter } catch { $null }
+    if ($TenantCloud -and $TenantCloud -cne 'Commercial') {
+        $CloudSkipped = @($TestFunctions | Where-Object { -not (Test-CIPPCloudFeatureSupport -Type 'tests' -Name ($_.Name -replace '^Invoke-CippTest', '') -CloudEnvironment $TenantCloud) })
+        if ($CloudSkipped.Count -gt 0) {
+            $TestFunctions = @($TestFunctions | Where-Object { $_ -notin $CloudSkipped })
+            Write-LogMessage -API 'Tests' -tenant $TenantFilter -message "Skipped $($CloudSkipped.Count) $SuiteName test(s) not supported for $TenantCloud tenants: $(($CloudSkipped.Name -replace '^Invoke-CippTest', '') -join ', ')" -sev Info
+        }
+    }
     if ($TestFunctions.Count -eq 0) {
         Write-Information "No test functions found for suite $SuiteName (pattern: $Pattern) — skipping"
         return @{

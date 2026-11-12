@@ -2,6 +2,8 @@
 # matches recognise. It is retryable, so the status code itself has to trigger the retry.
 
 BeforeAll {
+    # Cloud routing (redanthrax/CIPP#3): these tests are about commercial behaviour.
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     Add-Type -Path (Join-Path $RepoRoot 'Shared/CIPPSharp/bin/CIPPSharp.dll')
 

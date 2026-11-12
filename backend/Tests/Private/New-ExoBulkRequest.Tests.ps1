@@ -2,6 +2,8 @@
 # unless the POST is routed to the mailbox's own server, and a $batch routes as a whole.
 
 BeforeAll {
+    # Cloud routing (redanthrax/CIPP#3): these tests are about commercial behaviour.
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     Add-Type -Path (Join-Path $RepoRoot 'Shared/CIPPSharp/bin/CIPPSharp.dll')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/New-ExoBulkRequest.ps1')

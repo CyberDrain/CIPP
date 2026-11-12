@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { ApiGetCall } from "../../api/ApiCall";
+import { useTenantCloudEnvironment } from "../../hooks/use-tenant-cloud";
 import riskyPermissionsJson from "../../data/RiskyPermissions.json";
 
 const normalizeApiLabel = (s) => (s || "").replace(/\s+/g, " ").trim().toLowerCase();
@@ -105,12 +106,17 @@ const ResourcePermissionsAccordion = ({
   permissionKind,
   servicePrincipalObjectId,
   apiDisplayHint,
+  governmentTenant,
 }) => {
   const theme = useTheme();
   const { data, isFetching, isLoading } = ApiGetCall({
     url: "/api/ExecServicePrincipals",
-    data: { Id: servicePrincipalObjectId },
-    queryKey: `execSP-appreg-perms-${servicePrincipalObjectId}-${resourceAppId}`,
+    data: governmentTenant
+      ? { Id: servicePrincipalObjectId, GovernmentTenantFilter: governmentTenant }
+      : { Id: servicePrincipalObjectId },
+    queryKey: governmentTenant
+      ? `execSP-appreg-perms-${servicePrincipalObjectId}-${resourceAppId}-${governmentTenant}`
+      : `execSP-appreg-perms-${servicePrincipalObjectId}-${resourceAppId}`,
     waiting: !!servicePrincipalObjectId,
   });
 
@@ -285,7 +291,14 @@ const buildResourcesByType = (requiredResourceAccess, type) =>
     }))
     .filter((r) => r.resourceAccess.length > 0);
 
-const CippAppRegistrationPermissions = ({ requiredResourceAccess }) => {
+const CippAppRegistrationPermissions = ({ requiredResourceAccess, tenantFilter }) => {
+  // Permission ids are resolved against the partner tenant's service principals, which only works for
+  // the partner's cloud: 29 Graph permission ids differ in GCC High. For an app in a government tenant
+  // the service principals are read from that tenant instead (redanthrax/CIPP#4); everything else is
+  // unchanged, so the request and its cache key stay exactly as before for other tenants.
+  const tenantCloud = useTenantCloudEnvironment(tenantFilter);
+  const governmentTenant =
+    tenantFilter && tenantCloud && tenantCloud !== "Commercial" ? tenantFilter : undefined;
   const {
     data: spListData,
     isSuccess: spListSuccess,
@@ -293,8 +306,12 @@ const CippAppRegistrationPermissions = ({ requiredResourceAccess }) => {
     isFetching: spListFetching,
   } = ApiGetCall({
     url: "/api/ExecServicePrincipals",
-    data: { Select: "appId,displayName,id" },
-    queryKey: "execServicePrincipalList-app-registration-permissions",
+    data: governmentTenant
+      ? { Select: "appId,displayName,id", GovernmentTenantFilter: governmentTenant }
+      : { Select: "appId,displayName,id" },
+    queryKey: governmentTenant
+      ? `execServicePrincipalList-app-registration-permissions-${governmentTenant}`
+      : "execServicePrincipalList-app-registration-permissions",
     waiting: true,
   });
 
@@ -383,6 +400,7 @@ const CippAppRegistrationPermissions = ({ requiredResourceAccess }) => {
               permissionKind="application"
               servicePrincipalObjectId={spByAppId[r.resourceAppId]}
               apiDisplayHint={displayNameByResourceAppId[r.resourceAppId]}
+              governmentTenant={governmentTenant}
             />
           ))}
       </Box>
@@ -412,6 +430,7 @@ const CippAppRegistrationPermissions = ({ requiredResourceAccess }) => {
               permissionKind="delegated"
               servicePrincipalObjectId={spByAppId[r.resourceAppId]}
               apiDisplayHint={displayNameByResourceAppId[r.resourceAppId]}
+              governmentTenant={governmentTenant}
             />
           ))}
       </Box>

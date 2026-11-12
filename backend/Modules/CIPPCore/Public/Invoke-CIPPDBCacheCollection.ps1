@@ -48,6 +48,17 @@ function Invoke-CIPPDBCacheCollection {
         throw "Unknown or empty collection type: $CollectionType"
     }
 
+    # Cache types the tenant's cloud does not support (redanthrax/CIPP#4) are not collected; one log
+    # line per collection run. Commercial tenants keep the full list.
+    $TenantCloud = try { Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter } catch { $null }
+    if ($TenantCloud -and $TenantCloud -cne 'Commercial') {
+        $CloudSkipped = @($CacheTypes | Where-Object { -not (Test-CIPPCloudFeatureSupport -Type 'cacheTypes' -Name $_ -CloudEnvironment $TenantCloud) })
+        if ($CloudSkipped.Count -gt 0) {
+            $CacheTypes = @($CacheTypes | Where-Object { $_ -notin $CloudSkipped })
+            Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message "Skipped $($CloudSkipped.Count) $CollectionType cache type(s) not supported for $TenantCloud tenants: $($CloudSkipped -join ', ')" -sev Info
+        }
+    }
+
     Write-Information "Starting $CollectionType collection for $TenantFilter ($($CacheTypes.Count) cache types)"
 
     $CollectionStopwatch = [System.Diagnostics.Stopwatch]::StartNew()

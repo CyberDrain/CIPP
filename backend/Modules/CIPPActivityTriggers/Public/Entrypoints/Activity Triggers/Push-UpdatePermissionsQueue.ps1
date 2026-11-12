@@ -26,6 +26,18 @@ function Push-UpdatePermissionsQueue {
 
         $Tenant = Get-Tenants -TenantFilter $Item.customerId -IncludeErrors
 
+        # Government tenants (redanthrax/CIPP#2): the steps below grant permissions to the SAM app
+        # ($env:ApplicationID) through commercial Graph and Partner Center hosts. A direct government
+        # tenant is managed by the Azure Government app instead, whose permissions come from the admin
+        # consent given at sign-in, and government hosts are not routed yet (#3). Skip rather than fail.
+        $TenantCloud = @($Tenant)[0].cloudEnvironment
+        if ($TenantCloud -and $TenantCloud -cne 'Commercial') {
+            $Status = 'Skipped'
+            $SkipMessage = "Permission push is not supported for $TenantCloud tenants yet; the Azure Government app uses the permissions consented at sign-in."
+            Write-LogMessage -tenant $Item.defaultDomainName -tenantId $Item.customerId -message "Skipped the permission update for $($Item.displayName): $SkipMessage" -Sev 'Info' -API 'UpdatePermissionsQueue'
+            return
+        }
+
         $ConsentRow = $CPVRows | Where-Object { $_.applicationId -eq $env:ApplicationID } | Select-Object -First 1
 
         # The finally block writes a row even on failure, so existence alone does not prove

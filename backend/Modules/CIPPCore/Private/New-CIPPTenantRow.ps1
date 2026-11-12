@@ -9,7 +9,7 @@ function New-CIPPTenantRow {
     .PARAMETER Item
     The pending-tenant object built from the grouped GDAP relationships (customerId,
     partnerTenantId, assignmentMode, knownPartners, displayName, relationshipEnd,
-    relationshipCount, hasAutoExtend).
+    relationshipCount, hasAutoExtend, cloudEnvironment).
     .PARAMETER DefaultDomainName
     Resolved default domain.
     .PARAMETER InitialDomainName
@@ -34,6 +34,8 @@ function New-CIPPTenantRow {
         relationshipCount        = $Item.relationshipCount
         defaultDomainName        = $DefaultDomainName
         initialDomainName        = if ($InitialDomainName) { $InitialDomainName } else { $DefaultDomainName }
+        # Carried over from the existing row by Get-Tenants (redanthrax/CIPP#1).
+        cloudEnvironment         = $Item.cloudEnvironment
         hasAutoExtend            = $Item.hasAutoExtend
         delegatedPrivilegeStatus = 'granularDelegatedAdminPrivileges'
         partnerTenantId          = $Item.partnerTenantId

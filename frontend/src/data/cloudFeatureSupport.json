@@ -1,0 +1,1146 @@
+{
+  "$comment": "Features a tenant's Microsoft cloud does not support (redanthrax/CIPP#4). Edit frontend/src/data/cloudFeatureSupport.json and copy it to backend/Config/cloudFeatureSupport.json; backend/Tests/Static/CloudFeatureSupportSync.Tests.ps1 checks both copies and the derived lists. Commercial is never listed: an entry only ever applies to the clouds in its unsupportedClouds.",
+  "sources": {
+    "teams-configapi": {
+      "reason": "Uses the Teams admin ConfigAPI (New-TeamsRequestV2), which has no documented government host and is refused for government tenants.",
+      "evidence": "redanthrax/CIPP#3 refusal, docs/dev-documentation/cipp-dev-guide/gcchigh-endpoint-audit.md"
+    },
+    "security-compliance": {
+      "reason": "Uses Security & Compliance PowerShell (New-ExoRequest -Compliance), which is refused for government tenants because its redirect discovery builds commercial host names.",
+      "evidence": "redanthrax/CIPP#3 refusal, docs/dev-documentation/cipp-dev-guide/gcchigh-endpoint-audit.md"
+    },
+    "m365-licensing": {
+      "reason": "Uses admin.microsoft.com / licensing.m365.microsoft.com, which have no documented government host and are refused for government tenants.",
+      "evidence": "redanthrax/CIPP#3 refusal, docs/dev-documentation/cipp-dev-guide/gcchigh-endpoint-audit.md"
+    },
+    "mde-connector": {
+      "reason": "Turns on the Defender for Endpoint connector through the commercial MDE portal API (Enable-CIPPMDEConnector), which is refused for government tenants.",
+      "evidence": "redanthrax/CIPP#3 refusal, docs/dev-documentation/cipp-dev-guide/gcchigh-endpoint-audit.md"
+    },
+    "mfa-connector": {
+      "reason": "Sends the push through the MFA connector (New-CIPPMFAConnectorToken), which is refused for government tenants.",
+      "evidence": "redanthrax/CIPP#3 refusal, docs/dev-documentation/cipp-dev-guide/gcchigh-endpoint-audit.md"
+    },
+    "reports-office": {
+      "reason": "Reads reports.office.com, which has no documented government host and is refused for government tenants.",
+      "evidence": "redanthrax/CIPP#3 refusal, docs/dev-documentation/cipp-dev-guide/gcchigh-endpoint-audit.md"
+    },
+    "copilot-usage-reports": {
+      "reason": "Microsoft 365 Copilot usage reports are available in the global service only.",
+      "evidence": "https://learn.microsoft.com/graph/api/reportroot-getmicrosoft365copilotusageuserdetail?view=graph-rest-beta (national cloud table: global only)"
+    },
+    "managed-tenants": {
+      "reason": "Reads the partner's Microsoft 365 Lighthouse data (tenantRelationships/managedTenants), which is available in the global service only and never lists a government tenant.",
+      "evidence": "https://learn.microsoft.com/graph/api/managedtenants-managedtenant-list-tenants?view=graph-rest-beta (global only); live test 2026-11-11: 400 Resource not found for the segment"
+    },
+    "audit-log-query": {
+      "reason": "Creates Purview audit log searches (security/auditLog/queries), which are available in the global service only.",
+      "evidence": "https://learn.microsoft.com/graph/api/security-auditcoreroot-list-auditlogqueries?view=graph-rest-beta (global only)"
+    },
+    "copilot-admin": {
+      "reason": "Uses the Microsoft 365 Copilot admin API (copilot/admin/settings, copilot/admin/policySettings, copilot/admin/catalog), which Microsoft Graph in GCC High does not have.",
+      "evidence": "Live test 2026-11-11 on graph.microsoft.us: beta/copilot/admin/settings and beta/copilot/admin/catalog/packages returned 400 Resource not found for the segment 'admin'. DoD is listed because Microsoft 365 Copilot is not offered there either."
+    },
+    "cipp-schema-extension": {
+      "reason": "JIT Admin stores its state in CIPP's cippUser schema extension, which CIPP registers in the partner tenant with CIPP-SAM in the commercial cloud. That extension does not exist in Azure Government, so government tenants cannot read or write it.",
+      "evidence": "Live test 2026-11-11 on graph.microsoft.us: ListJITAdmin returned 500 Resource 'ext..._cippUser' does not exist. Get-CIPPSchemaExtensions only reads and creates extensions in the partner tenant's cloud."
+    },
+    "global-secure-access": {
+      "reason": "Uses Microsoft Entra Global Secure Access (Graph networkAccess: traffic forwarding profiles, filtering policies, security profiles), which is not supported in GCC High or DoD.",
+      "evidence": "https://learn.microsoft.com/entra/global-secure-access/reference-current-known-limitations (Global Secure Access In Government Cloud limitations: available in GCC, \"isn't yet supported in the US Government Community Cloud High (GCC-H), Department of Defense cloud\")"
+    }
+  },
+  "pages": [
+    {
+      "path": "/security/compliance/dlp",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "path": "/security/compliance/retention",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "path": "/security/compliance/labels",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "path": "/security/compliance/sit",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "path": "/teams-share/teams/business-voice",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "path": "/tenant/reports/graph-office-reports",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "reports-office"
+    },
+    {
+      "path": "/copilot/reports/copilot-adoption",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-usage-reports"
+    },
+    {
+      "path": "/copilot/reports/copilot-trend",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-usage-reports"
+    },
+    {
+      "path": "/copilot/reports/copilot-usage",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-usage-reports"
+    },
+    {
+      "path": "/copilot/settings",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-admin"
+    },
+    {
+      "path": "/copilot/agent365/packages",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-admin"
+    },
+    {
+      "path": "/identity/administration/jit-admin",
+      "exact": true,
+      "navFallback": "/identity/administration/jit-admin/requests",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "cipp-schema-extension"
+    },
+    {
+      "path": "/tenant/gsa/filtering-policies",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    },
+    {
+      "path": "/tenant/gsa/security-profiles",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    },
+    {
+      "path": "/tenant/gsa/traffic-forwarding",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    }
+  ],
+  "actions": [
+    {
+      "url": "/api/ExecSendPush",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "mfa-connector"
+    }
+  ],
+  "standards": [
+    {
+      "name": "TeamsChatProtection",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsDisableResourceAccounts",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsEmailIntegration",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsEnrollUser",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsExternalAccessPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsExternalChatWithAnyone",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsExternalFileSharing",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsFederationConfiguration",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsFilesPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsGlobalMeetingPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsGuestAccess",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsMeetingRecordingExpiration",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsMeetingVerification",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsMessagingPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "DlpCompliancePolicyTemplate",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "QuarantineRequestAlert",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "RetentionCompliancePolicyTemplate",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "SensitiveInfoTypeTemplate",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "SensitivityLabelTemplate",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "SharePointMassDeletionAlert",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "DefenderCompliancePolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "mde-connector"
+    },
+    {
+      "name": "DisableSelfServiceLicenses",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "m365-licensing"
+    },
+    {
+      "name": "CopilotSettings",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-admin"
+    },
+    {
+      "name": "CopilotLimitedMode",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-admin"
+    }
+  ],
+  "baselineStandards": [
+    {
+      "name": "CopilotLimitedMode",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-admin"
+    },
+    {
+      "name": "CopilotSettings",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-admin"
+    },
+    {
+      "name": "DefenderCompliancePolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "mde-connector"
+    },
+    {
+      "name": "DisableSelfServiceLicenses",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "m365-licensing"
+    },
+    {
+      "name": "DlpCompliancePolicyTemplate",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "QuarantineRequestAlert",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "RetentionCompliancePolicyTemplate",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "SensitiveInfoTypeTemplate",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "SensitivityLabelTemplate",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "SharePointMassDeletionAlert",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "TeamsAppPermissionPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsBlockTrialTenants",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsChatProtection",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsDisableResourceAccounts",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsEmailIntegration",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsEnrollUser",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsExternalAccessPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsExternalChatWithAnyone",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsExternalFileSharing",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsFederationConfiguration",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsFilesPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsGlobalMeetingPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsGuestAccess",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsMeetingRecordingExpiration",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsMeetingVerification",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsMessagingPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "GlobalSecureAccessCompliantNetwork",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    },
+    {
+      "name": "GlobalSecureAccessInternetAccess",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    },
+    {
+      "name": "GlobalSecureAccessM365Profile",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    },
+    {
+      "name": "GlobalSecureAccessProfileTemplate",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    },
+    {
+      "name": "GlobalSecureAccessSetup",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    }
+  ],
+  "alerts": [
+    {
+      "name": "DefenderStatus",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "managed-tenants"
+    },
+    {
+      "name": "DefenderMalware",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "managed-tenants"
+    },
+    {
+      "name": "LicenseRequests",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "m365-licensing"
+    }
+  ],
+  "tests": [
+    {
+      "name": "CIS_3_2_1",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "CIS_3_2_2",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "CIS_3_2_3",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "CIS_8_1_1",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_1_2",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_2_1",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_2_2",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_2_3",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_2_4",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_4_1",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_5_1",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_5_2",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_5_3",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_5_4",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_5_5",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_5_6",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_5_7",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_5_8",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CIS_8_5_9",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CopilotReady014",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "CopilotReady015",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-usage-reports"
+    },
+    {
+      "name": "CopilotReady016",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-usage-reports"
+    },
+    {
+      "name": "CopilotReady017",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-usage-reports"
+    },
+    {
+      "name": "ORCA242",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "ZTNA35003",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "ZTNA35030",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "ZTNA35033",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    }
+  ],
+  "cacheTypes": [
+    {
+      "name": "CsTeamsMeetingPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CsTeamsClientConfiguration",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CsExternalAccessPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CsTenantFederationConfiguration",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CsTeamsMessagingPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CsTeamsFilesPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CsTeamsMessagingConfiguration",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "CsTeamsAppPermissionPolicy",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsVoice",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "TeamsResourceAccounts",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "teams-configapi"
+    },
+    {
+      "name": "ComplianceRetentionPolicies",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "ComplianceRetentionRules",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "DlpCompliancePolicies",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "ExoDlpSensitiveInfoTypes",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "ExoLabels",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "ExoProtectionAlert",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "security-compliance"
+    },
+    {
+      "name": "SelfServicePurchaseProducts",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "m365-licensing"
+    },
+    {
+      "name": "CopilotReadinessActivity",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "reports-office"
+    },
+    {
+      "name": "CopilotUsageUserDetail",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-usage-reports"
+    },
+    {
+      "name": "CopilotUserCountSummary",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-usage-reports"
+    },
+    {
+      "name": "CopilotUserCountTrend",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-usage-reports"
+    },
+    {
+      "name": "CopilotAdminSettings",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-admin"
+    },
+    {
+      "name": "CopilotPolicySettings",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "copilot-admin"
+    },
+    {
+      "name": "NetworkAccess",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    },
+    {
+      "name": "NetworkAccessFiltering",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "global-secure-access"
+    }
+  ],
+  "timers": [
+    {
+      "name": "AuditLogSearch",
+      "unsupportedClouds": [
+        "USGovHigh",
+        "USGovDoD"
+      ],
+      "source": "audit-log-query"
+    }
+  ],
+  "unverified": [
+    {
+      "feature": "Defender for Endpoint deployment form (AddDefenderDeployment)",
+      "affects": "Page /security/defender/deployment",
+      "note": "The form deploys to the tenants picked in it, so it is not hidden by the selected tenant. Its MDE connector step is refused for government tenants (#3) and returns that error per tenant."
+    },
+    {
+      "feature": "Audit log search creation from the UI (ExecAuditLogSearch)",
+      "affects": "Search tab on /tenant/administration/audit-logs",
+      "note": "security/auditLog/queries is global only, so creating a search fails for a government tenant; the rest of the page (webhook-based audit logs) is not affected, so the page stays visible."
+    },
+    {
+      "feature": "License overview trial licences (admin.microsoft.com)",
+      "affects": "Get-CIPPLicenseOverview, license alerts",
+      "note": "The admin.microsoft.com call is refused (#3) but caught; the rest of the licence data comes from Graph. Not gated."
+    },
+    {
+      "feature": "Exchange, Intune, Defender, SharePoint and Teams Graph data in general",
+      "affects": "Most pages",
+      "note": "The GCC High test tenant has no licences, so only core Entra Graph has been proven live."
+    }
+  ],
+  "portalHosts": {
+    "$comment": "Microsoft admin portal hosts for a government tenant's links (redanthrax/CIPP#4): a commercial portal host maps to the cloud's portal host, or to null when Microsoft documents no government admin URL for it (the link is not shown). Only the host is replaced. Sources (learn.microsoft.com): portal.azure.us - /azure/azure-government/compare-azure-government-global-azure and /graph/deployments; intune.microsoft.us - /intune/fundamentals/endpoints-us-government ('Microsoft Intune admin center: https://intune.microsoft.us/'); entra.microsoft.us - /entra/fundamentals/faq (Entra admin center URLs: *.entra.microsoft.us); security.microsoft.us (GCC High) and security.apps.mil (DoD) - /defender-endpoint/gov ('Portal URLs'); high.admin.powerplatform.microsoft.us (GCC High) and admin.appsplatform.us (DoD) - /power-platform/admin/powerapps-us-government; purview.microsoft.us (GCC High) and purview.apps.mil (DoD) - /purview/sit-get-started-exact-data-match-based-sits-overview ('Portal links for your subscription': Microsoft Purview portal). No documented government admin URL was found for the Microsoft 365 admin center partner links (delegatedOrg, BeginClientSession), the Exchange admin center (its page names only admin.cloud.microsoft/exchange), the Teams admin center, the retired compliance portal (compliance.microsoft.com; the endpoint lists name compliance.microsoft.us and compliance.apps.mil as network endpoints only, not as a portal) or the Power BI admin portal.",
+    "USGovHigh": {
+      "portal.azure.com": "portal.azure.us",
+      "aad.portal.azure.com": "portal.azure.us",
+      "entra.microsoft.com": "entra.microsoft.us",
+      "intune.microsoft.com": "intune.microsoft.us",
+      "endpoint.microsoft.com": "intune.microsoft.us",
+      "security.microsoft.com": "security.microsoft.us",
+      "admin.powerplatform.microsoft.com": "high.admin.powerplatform.microsoft.us",
+      "admin.cloud.microsoft": null,
+      "admin.microsoft.com": null,
+      "portal.office.com": null,
+      "admin.exchange.microsoft.com": null,
+      "admin.teams.microsoft.com": null,
+      "purview.microsoft.com": "purview.microsoft.us",
+      "compliance.microsoft.com": null,
+      "app.powerbi.com": null
+    },
+    "USGovDoD": {
+      "portal.azure.com": "portal.azure.us",
+      "aad.portal.azure.com": "portal.azure.us",
+      "entra.microsoft.com": "entra.microsoft.us",
+      "intune.microsoft.com": "intune.microsoft.us",
+      "endpoint.microsoft.com": "intune.microsoft.us",
+      "security.microsoft.com": "security.apps.mil",
+      "admin.powerplatform.microsoft.com": "admin.appsplatform.us",
+      "admin.cloud.microsoft": null,
+      "admin.microsoft.com": null,
+      "portal.office.com": null,
+      "admin.exchange.microsoft.com": null,
+      "admin.teams.microsoft.com": null,
+      "purview.microsoft.com": "purview.apps.mil",
+      "compliance.microsoft.com": null,
+      "app.powerbi.com": null
+    }
+  }
+}

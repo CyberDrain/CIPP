@@ -228,6 +228,13 @@ function Invoke-ListTenants {
                 },
                 @{Name = 'portal_platform'; Expression = { "https://admin.powerplatform.microsoft.com/account/login/$($_.customerId)" } },
                 @{Name = 'portal_bi'; Expression = { "https://app.powerbi.com/admin-portal?ctid=$($_.customerId)" } }
+                # A government tenant's portal links go to its cloud's portals, or are left empty when it has
+                # none (redanthrax/CIPP#4). Commercial rows are not touched.
+                foreach ($GovRow in @($Body | Where-Object { $_.cloudEnvironment -and $_.cloudEnvironment -cne 'Commercial' })) {
+                    foreach ($PortalProperty in @($GovRow.PSObject.Properties | Where-Object { $_.Name -like 'portal_*' })) {
+                        $PortalProperty.Value = ConvertTo-CIPPCloudPortalUrl -Url $PortalProperty.Value -CloudEnvironment $GovRow.cloudEnvironment
+                    }
+                }
             }
 
         } else {

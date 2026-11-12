@@ -93,6 +93,16 @@ function Start-AuditLogSearchCreationV2 {
             if ($Match) { $Tenant }
         }
         $InScope = @($InScope)
+        # Audit log searches (security/auditLog/queries) are global-only (redanthrax/CIPP#4): government
+        # tenants are left out of the fan-out. This runs every 15 minutes, so it logs once a day per worker.
+        $CloudSkipped = @($InScope | Where-Object { $_.cloudEnvironment -and $_.cloudEnvironment -cne 'Commercial' -and -not (Test-CIPPCloudFeatureSupport -Type 'timers' -Name 'AuditLogSearch' -CloudEnvironment $_.cloudEnvironment) })
+        if ($CloudSkipped.Count -gt 0) {
+            $InScope = @($InScope | Where-Object { $_ -notin $CloudSkipped })
+            if ($script:CIPPAuditLogCloudSkipLogged -ne [datetime]::UtcNow.Date) {
+                $script:CIPPAuditLogCloudSkipLogged = [datetime]::UtcNow.Date
+                Write-LogMessage -API 'AuditLogV2' -message "Audit log searches are not supported for government cloud tenants; skipping $($CloudSkipped.Count) tenant(s): $($CloudSkipped.defaultDomainName -join ', ')" -sev Info
+            }
+        }
         if ($InScope.Count -eq 0) {
             Write-Information 'AuditLogV2: no in-scope tenants'
             return

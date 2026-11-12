@@ -167,6 +167,26 @@ function Invoke-CIPPBaselineStandard {
         }
         $Item.Variables = & $NormalizeVariables $Item.Variables
 
+        # A standard the tenant's cloud does not support (redanthrax/CIPP#4) is skipped like a disabled
+        # one: never compared or written, one log line, the reason on the row. The log line is written
+        # here, for the tenants this check has already found to be government ones, so the orchestrator
+        # does no tenant lookup of its own. Commercial tenants pass straight through.
+        $TenantCloud = try { Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter } catch { $null }
+        if ($TenantCloud -and $TenantCloud -cne 'Commercial' -and -not (Test-CIPPCloudFeatureSupport -Type 'baselineStandards' -Name $Item.BaseName -CloudEnvironment $TenantCloud)) {
+            if ($GradeOnly) { return $null }
+            Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message "`"$Label`" is not supported for $TenantCloud tenants - skipped without comparing or changing anything. - Run $RunId" -Sev 'Info'
+            $CloudSkipped = [PSCustomObject]@{
+                Item = $Item; Mode = $Mode; TriggeredBy = $TriggeredBy
+                ExpectedValue = $null; CurrentValue = $null; Compliant = $false
+                PendingVerification = $false; LicenseAvailable = $true
+                Status = 'No Data'; Remediated = $false; Outcome = 'Skipped-Cloud'
+                Diff = $null; RowDiff = @(); Manual = $null; Inheritance = @($Item.Tiers)
+                AlertEvent = $null; CacheType = $null
+            }
+            Set-CIPPBaselineResult -Result $CloudSkipped -Prior $null -RunId $RunId -Detail "Not supported for $TenantCloud tenants - skipped."
+            return $CloudSkipped
+        }
+
         $SkipUnlicensed = {
             $Skipped = [PSCustomObject]@{
                 Item                = $Item

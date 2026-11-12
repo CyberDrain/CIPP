@@ -43,8 +43,9 @@ function Get-CIPPAlertMFAAdmins {
                 $_.CoveredByCA -notlike 'Enforced*'
             }
 
-            # Filter out JIT admins
-            if ($Users -or $UnenforcedAdmins) {
+            # Filter out JIT admins. A government tenant of a commercial partner has no cippUser extension and so
+            # no CIPP JIT admins; filtering on the extension there fails the whole alert (redanthrax/CIPP#4).
+            if (($Users -or $UnenforcedAdmins) -and -not (Get-CIPPJITAdminCloudError -TenantFilter $TenantFilter)) {
                 $Schema = Get-CIPPSchemaExtensions | Where-Object { $_.id -match '_cippUser' } | Select-Object -First 1
                 $JITAdmins = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/users?`$select=id,$($Schema.id)&`$filter=$($Schema.id)/jitAdminEnabled eq true" -tenantid $TenantFilter -ComplexFilter
                 $JITAdminIds = $JITAdmins.id

@@ -51,7 +51,7 @@ Use **Add a condition** to build the rule. Each condition is a property, an oper
 | Field           | Description                                                                                                                                                                                  |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Select property | The audit log property to test. The list is driven by the chosen log source. You can also type a property that is not in the list to create a custom one, which is treated as a text value.  |
-| is              | The comparison to apply: `Equals to`, `Not Equals to`, `Like`, `Not like`, `Does not match`, `Greater than`, `Less than`, `In`, or `Not In`.                                                 |
+| is              | The comparison to apply: `Equals to`, `Not Equals to`, `Like`, `Not like`, `Does not match`, `Greater than`, `Less than`, `In`, or `Not In`. `Like` and `Not like` accept wildcards: `*` matches any run of characters and `?` matches a single character, so `UserId` `Not like` `*@contoso.com` leaves out every user in that domain. Without a wildcard they only match the exact value. `Does not match` takes a regular expression. |
 | Input           | The value to compare against. This is a free-text box for most properties, a picker when the property has a known set of values, and a multi-value picker when the operator is In or Not In. |
 
 #### Alerting on failed sign-ins

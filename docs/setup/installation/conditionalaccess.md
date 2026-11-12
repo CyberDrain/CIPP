@@ -54,7 +54,7 @@ For each policy listed. Add an exclusion to "Users and Groups" with the followin
 {% endstepper %}
 
 {% hint style="warning" %}
-Optional: If you are running in Direct Tenant mode, exclude the CIPP service account for this tenant instead of the tenant exclusion.
+Optional: If you are running in Direct Tenant mode, exclude the CIPP service account for this tenant instead of the tenant exclusion. A direct tenant that uses Security Defaults has nothing to exclude: see [#direct-tenants-with-security-defaults](gdap-invite-wizard.md#direct-tenants-with-security-defaults "mention").
 
 Optional: If you have already onboarded the tenant and see access issues, you can use the action "Add service provider exception to policy" on [list-policies](../../user-documentation/tenant/conditional/list-policies/ "mention").
 {% endhint %}

@@ -486,6 +486,7 @@ const CippAddEditUser = (props) => {
     applyField('country', template.country)
     applyField('companyName', template.companyName)
     applyField('department', template.department)
+    applyField('setManager', template.setManager, null)
     applyField('mobilePhone', template.mobilePhone)
     applyField('MustChangePass', template.MustChangePass === true, false)
     applyField('perUserMfa', template.perUserMfa === true, false)

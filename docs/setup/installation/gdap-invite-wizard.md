@@ -90,6 +90,14 @@ The final page is a confirmation that shows you what you've completed.
 Do not attempt to add your partner tenant as a direct tenant. This will result in a permission error. To add your partner tenant, please see [tenant-mode.md](../../user-documentation/cipp/advanced/super-admin/tenant-mode.md "mention") and select "Multi Tenant - Add Partner Tenant" or "Single Tenant - Own Tenant Mode".
 {% endhint %}
 
+### Direct Tenants with Security Defaults
+
+CIPP works with a direct tenant that uses Security Defaults instead of Conditional Access, and the tenant needs no changes. Security Defaults has no exclusions, so the steps in [conditionalaccess.md](conditionalaccess.md "mention") do not apply to it.
+
+Security Defaults blocks device code sign-in, and a browser session that started with a device code sign-in stays marked as one. If the token setup reuses such a session, for example the one from the device code step of CIPP's first setup, the direct tenant blocks CIPP's connection.
+
+To fix it, redo the token setup from a fresh browser session, such as a private window. Use **Re-authenticate Connection** on the [tenants.md](../../user-documentation/cipp/settings/tenants.md "mention") page, or run **Add Direct Tenant** again, and sign in with the tenant's service account.
+
 ### Limitations of Direct Tenants
 
 There are limitations to what CIPP can do with directly added tenants due to some features relying on Lighthouse, Partner Center APIs or authentication via GDAP;

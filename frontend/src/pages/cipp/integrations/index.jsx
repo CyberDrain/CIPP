@@ -7,7 +7,6 @@ import {
   CardActionArea,
   CardActions,
   CardContent,
-  Chip,
   Container,
   Skeleton,
   Stack,
@@ -96,7 +95,7 @@ const Page = () => {
                 ...(extension.comingSoon && { opacity: 0.75 }),
               }}
             >
-              {extension.comingSoon && (
+              {(extension.comingSoon || extension.beta) && (
                 <Box
                   sx={{
                     position: 'absolute',
@@ -112,9 +111,15 @@ const Page = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                     boxShadow: 1,
+                    // "Beta" is shorter than "Coming Soon"; hold the band at the same length so it still spans the corner.
+                    ...(!extension.comingSoon && {
+                      boxSizing: 'border-box',
+                      minWidth: 184,
+                      textAlign: 'center',
+                    }),
                   }}
                 >
-                  Coming Soon
+                  {extension.comingSoon ? 'Coming Soon' : 'Beta'}
                 </Box>
               )}
               <CardContent>
@@ -190,9 +195,6 @@ const Page = () => {
                         {integrations.isSuccess ? status : 'Loading'}
                       </Typography>
                     </>
-                  )}
-                  {extension.beta && (
-                    <Chip label="Beta" size="small" color="info" variant="outlined" />
                   )}
                 </Stack>
               </CardActions>

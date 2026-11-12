@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Skeleton,
   Stack,
   Tab,
@@ -176,9 +175,6 @@ const Page = () => {
                 alt={extension.name}
                 sx={{ maxWidth: "50%", mx: "auto", maxHeight: "125px" }}
               />
-            )}
-            {extension?.beta && (
-              <Chip label="Beta" size="small" color="info" variant="outlined" sx={{ mt: 2 }} />
             )}
             <Typography variant="body2" style={{ marginTop: "1em" }} sx={{
               marginBottom: "16px"

@@ -499,7 +499,10 @@ function Get-GraphRequestList {
                         if ($ManualPagination.IsPresent -and $nextLink -match '^https://.+') {
                             try {
                                 $ParsedNextLink = [System.Uri]$nextLink
-                                if ($ParsedNextLink.Host -ne 'graph.microsoft.com') {
+                                # A government tenant's nextLink is on its own cloud's Graph host (redanthrax/CIPP#3);
+                                # for a commercial tenant this is graph.microsoft.com, as before.
+                                $NextLinkGraphHost = (Get-CIPPCloudEndpoint -CloudEnvironment (Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter)).GraphHost
+                                if ($ParsedNextLink.Host -ne $NextLinkGraphHost) {
                                     throw "Invalid nextLink host: $($ParsedNextLink.Host)"
                                 }
                             } catch {

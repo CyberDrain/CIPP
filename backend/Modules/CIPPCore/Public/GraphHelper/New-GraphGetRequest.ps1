@@ -38,6 +38,7 @@ function New-GraphGetRequest {
     }
 
     if ($NoAuthCheck -eq $true -or $IsAuthorised) {
+        $CallerHeaders = [bool]$headers
         if ($headers) {
             $headers = $Headers
         } else {
@@ -45,6 +46,14 @@ function New-GraphGetRequest {
             # -UseCertificate authenticates the app with the SAM certificate instead of the
             # client secret: delegated (refresh token) by default, app-only with -AsApp $true
             $headers = Get-GraphToken -tenantid $tenantid -scope $TokenScope -AsApp $asapp -SkipCache $skipTokenCache -UseCertificate:$UseCertificate
+        }
+        # A government tenant's requests go to its cloud's hosts (redanthrax/CIPP#3); for a commercial
+        # tenant this is one in-memory lookup and every URI below is used exactly as before.
+        $RequestCloud = Get-CIPPTenantRequestCloud -TenantFilter $tenantid
+        # A government tenant's token is fetched again for exactly the cloud chosen above: the first call can
+        # return a commercial token cached before the tenant's cloud changed in another worker (redanthrax/CIPP#3).
+        if ($RequestCloud -cne 'Commercial' -and -not $CallerHeaders) {
+            $headers = Get-GraphToken -tenantid $tenantid -scope $TokenScope -AsApp $asapp -SkipCache $skipTokenCache -UseCertificate:$UseCertificate -RequireCloud $RequestCloud
         }
         if ($ComplexFilter) {
             $headers['ConsistencyLevel'] = 'eventual'
@@ -71,6 +80,8 @@ function New-GraphGetRequest {
         # pipeline (-Stream). Same loop body either way — see the dispatch below.
         $Pager = {
             do {
+            # Also checks each nextLink: it must stay on the tenant's own cloud.
+            if ($RequestCloud -cne 'Commercial') { $nextURL = ConvertTo-CIPPCloudUri -Uri $nextURL -CloudEnvironment $RequestCloud }
             $RetryCount = 0
             $MaxRetries = 3
             $RequestSuccessful = $false

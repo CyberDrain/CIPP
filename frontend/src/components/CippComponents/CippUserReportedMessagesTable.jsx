@@ -22,6 +22,7 @@ import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
 import { getCippError } from '../../utils/get-cipp-error'
 import { useSettings } from '../../hooks/use-settings'
 import { isMultiTenant } from '../../utils/tenant-selection'
+import { useCloudPortalUrl } from '../../hooks/use-tenant-cloud'
 
 const traceDetailColumns = [
   'Received',
@@ -62,6 +63,7 @@ const sourceTips = {
 
 export const CippUserReportedMessagesTable = () => {
   const tenantFilter = useSettings().currentTenant
+  const toCloudPortal = useCloudPortalUrl()
   // AuditLog: every Outlook report from the unified audit log. Submissions: the Defender Submissions list via Graph
   const [source, setSource] = useState('AuditLog')
   const queryKey = `UserReportedMessages-${tenantFilter}-${source}`
@@ -392,7 +394,7 @@ export const CippUserReportedMessagesTable = () => {
               <>
                 {' '}
                 <Link
-                  href={`https://security.microsoft.com/reportsubmission?viewid=user&tid=${tenantId}`}
+                  href={toCloudPortal(`https://security.microsoft.com/reportsubmission?viewid=user&tid=${tenantId}`)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

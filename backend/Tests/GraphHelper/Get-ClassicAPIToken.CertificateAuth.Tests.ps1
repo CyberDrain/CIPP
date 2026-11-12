@@ -4,6 +4,8 @@
 # the assertion audience to be the v1 token endpoint, not the default v2 one - pinned here.
 
 BeforeAll {
+    # Cloud routing (redanthrax/CIPP#3): these tests are about commercial behaviour.
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
 
     function Get-CIPPSAMCertificate { param([switch]$SkipCache) }

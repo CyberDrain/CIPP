@@ -9,6 +9,13 @@ function Push-ExecJITAdminListAllTenants {
     $DomainName = $Tenant.defaultDomainName
     $Table = Get-CIPPTable -TableName CacheJITAdmin
 
+    # A government tenant of a commercial partner has no cippUser extension, so it has no JIT admins (redanthrax/CIPP#4)
+    $CloudError = Get-CIPPJITAdminCloudError -TenantFilter $DomainName
+    if ($CloudError) {
+        Write-Information "Skipping JIT Admin list for $($DomainName): $CloudError"
+        return
+    }
+
     try {
         # Get schema extensions
         $Schema = Get-CIPPSchemaExtensions | Where-Object { $_.id -match '_cippUser' } | Select-Object -First 1

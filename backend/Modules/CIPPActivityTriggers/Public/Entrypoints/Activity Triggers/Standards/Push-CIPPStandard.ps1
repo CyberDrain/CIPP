@@ -34,6 +34,14 @@ function Push-CIPPStandard {
 
     $FunctionName = 'Invoke-CIPPStandard{0}' -f $Standard
 
+    # Push-CIPPStandardsList already skips (and logs) standards the tenant's cloud does not support
+    # (redanthrax/CIPP#4); this catches items queued another way without logging again.
+    $TenantCloud = try { Get-CIPPTenantRequestCloud -TenantFilter $Tenant } catch { $null }
+    if ($TenantCloud -and $TenantCloud -cne 'Commercial' -and -not (Test-CIPPCloudFeatureSupport -Type 'standards' -Name $Standard -CloudEnvironment $TenantCloud)) {
+        Write-Information "Standard $Standard is not supported for the cloud of tenant $Tenant. Skipping."
+        return
+    }
+
     Write-Information "We'll be running $FunctionName"
 
     if ($Standard -in @('IntuneTemplate', 'ConditionalAccessTemplate')) {

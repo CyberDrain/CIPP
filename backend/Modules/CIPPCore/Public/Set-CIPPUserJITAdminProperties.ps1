@@ -10,6 +10,12 @@ function Set-CIPPUserJITAdminProperties {
         [string]$Reason,
         [string]$CreatedBy
     )
+    # A government tenant of a commercial partner has no cippUser extension to write (redanthrax/CIPP#4)
+    $CloudError = Get-CIPPJITAdminCloudError -TenantFilter $TenantFilter
+    if ($CloudError) {
+        Write-Information "Skipping JIT Admin properties for $($UserId): $CloudError"
+        return
+    }
     try {
         $Schema = Get-CIPPSchemaExtensions | Where-Object { $_.id -match '_cippUser' } | Select-Object -First 1
         if ($Clear.IsPresent) {

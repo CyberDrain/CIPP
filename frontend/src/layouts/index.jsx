@@ -28,6 +28,8 @@ import { LegacyInfrastructureDialog } from '../components/CippComponents/LegacyI
 import { CippMaintenanceBanner } from '../components/CippComponents/CippMaintenanceBanner'
 import { CippImpersonationBanner } from '../components/CippComponents/CippImpersonationBanner'
 import { filterMenuItems, getHiddenPages } from '../utils/filter-menu-items'
+import { useTenantCloudEnvironment } from '../hooks/use-tenant-cloud'
+import { cloudLabel, getUnsupportedPage } from '../utils/cloud-feature-support'
 
 import {
   CHROME_TOP_OFFSET,
@@ -161,6 +163,14 @@ export const Layout = (props) => {
       !groupList.isError &&
       currentTenant !== toTenantGroup(urlGroup))
   const [hideSidebar, setHideSidebar] = useState(false)
+  // The selected tenant's cloud (redanthrax/CIPP#4). Commercial, AllTenants, an unknown tenant and a
+  // tenant list that has not loaded yet gate nothing.
+  const pathname = usePathname()
+  const cloudEnvironment = useTenantCloudEnvironment()
+  const cloudBlockedPage = getUnsupportedPage(pathname, cloudEnvironment)
+  // Only a government cloud filters the menu, so Commercial and AllTenants (undefined) are the same
+  // value here and the menu is not rebuilt when the tenant list loads or the user switches between them.
+  const menuCloudEnvironment = cloudEnvironment === 'Commercial' ? undefined : cloudEnvironment
 
   const swaStatus = ApiGetCall({
     url: '/.auth/me',
@@ -197,6 +207,7 @@ export const Layout = (props) => {
       const filteredMenu = filterMenuItems(nativeMenuItems, {
         permissions: userPermissions,
         hiddenPages,
+        cloudEnvironment: menuCloudEnvironment,
       })
       setMenuItems(filteredMenu)
     } else if (
@@ -216,6 +227,7 @@ export const Layout = (props) => {
     currentRole.isFetching,
     featureFlags.isSuccess,
     featureFlags.data,
+    menuCloudEnvironment,
   ])
 
   const handleNavPin = useCallback(() => {
@@ -418,7 +430,16 @@ export const Layout = (props) => {
                 actionHref="/"
               />
             </Stack>
-          ) : urlTenantPending ? null : (
+          ) : urlTenantPending ? null : cloudBlockedPage ? (
+            <Stack>
+              {showBreadcrumb && <CippBreadcrumbNav withRail />}
+              <CippErrorState
+                title={`Not available for ${cloudLabel(cloudEnvironment)} tenants`}
+                description={`${cloudBlockedPage.reason} Select a different tenant using the tenant selector.`}
+                imageUrl="/cippy-404.png"
+              />
+            </Stack>
+          ) : (
             <Stack>
               {/* The nav carries its own rail chrome (gutter + divider) so that when it
                   renders nothing — a single crumb on a phone — no hairline is left behind. */}

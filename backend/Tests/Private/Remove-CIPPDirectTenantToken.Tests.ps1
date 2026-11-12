@@ -13,6 +13,7 @@ BeforeAll {
     function Add-CIPPAzDataTableEntity { param($Context, $Entity, [switch]$Force) }
     function Get-CippKeyVaultName { }
     function Remove-CippKeyVaultSecret { param($VaultName, $Name) }
+    function Clear-CippTokenCache { param($TenantFilter) }
 
     . $FunctionPath
 }
@@ -29,6 +30,7 @@ Describe 'Remove-CIPPDirectTenantToken' {
         Mock -CommandName Remove-CippKeyVaultSecret -MockWith { }
         Mock -CommandName Get-CIPPTable -MockWith { @{ Context = 'stub-table' } }
         Mock -CommandName Add-CIPPAzDataTableEntity -MockWith { }
+        Mock -CommandName Clear-CippTokenCache -MockWith { 0 }
     }
 
     AfterEach {
@@ -98,6 +100,44 @@ Describe 'Remove-CIPPDirectTenantToken' {
             }
             Remove-CIPPDirectTenantToken -TenantId $script:TenantId
             Should -Invoke -CommandName Add-CIPPAzDataTableEntity -Times 0 -Exactly
+        }
+    }
+
+    It 'drops the tenant''s cached tokens (redanthrax/CIPP#2)' {
+        $env:AzureWebJobsStorage = 'DefaultEndpointsProtocol=https'
+        $env:NonLocalHostAzurite = $null
+        Remove-CIPPDirectTenantToken -TenantId $script:TenantId
+        Should -Invoke Clear-CippTokenCache -Times 1 -Exactly -ParameterFilter { $TenantFilter -eq $script:TenantId }
+    }
+
+    # Invoke-ExecAddTenant passes the request body's tenantId straight through on every rejection
+    # (redanthrax/CIPP#2 made those reachable with any unparseable token). The secret is named after
+    # that value, so it must never be allowed to name CIPP's own credentials.
+    Context 'tenant id that is not a direct tenant GUID' {
+        BeforeEach {
+            $script:OriginalPartner = $env:TenantID
+            $env:TenantID = '99999999-9999-9999-9999-999999999999'
+            Mock -CommandName Get-CIPPAzDataTableEntity -MockWith {
+                [pscustomobject]@{ PartitionKey = 'Secret'; RowKey = 'Secret'; RefreshToken = 'partner-rt'; ApplicationSecret = 'sam-secret' }
+            }
+        }
+        AfterEach { $env:TenantID = $script:OriginalPartner }
+
+        It 'never deletes or clears <Value> (<Storage>)' -ForEach @(
+            @{ Value = 'RefreshToken'; Storage = 'DefaultEndpointsProtocol=https' }
+            @{ Value = 'ApplicationSecret'; Storage = 'DefaultEndpointsProtocol=https' }
+            @{ Value = 'RefreshToken'; Storage = 'UseDevelopmentStorage=true' }
+            @{ Value = 'ApplicationSecret'; Storage = 'UseDevelopmentStorage=true' }
+            @{ Value = '99999999-9999-9999-9999-999999999999'; Storage = 'DefaultEndpointsProtocol=https' }
+            @{ Value = '99999999-9999-9999-9999-999999999999'; Storage = 'UseDevelopmentStorage=true' }
+            @{ Value = '11111111-1111-1111-1111-111111111111/x'; Storage = 'DefaultEndpointsProtocol=https' }
+        ) {
+            $env:AzureWebJobsStorage = $Storage
+            $env:NonLocalHostAzurite = $null
+            { Remove-CIPPDirectTenantToken -TenantId $Value -WarningAction SilentlyContinue } | Should -Not -Throw
+            Should -Invoke Remove-CippKeyVaultSecret -Times 0 -Exactly
+            Should -Invoke Add-CIPPAzDataTableEntity -Times 0 -Exactly
+            Should -Invoke Clear-CippTokenCache -Times 0 -Exactly
         }
     }
 }

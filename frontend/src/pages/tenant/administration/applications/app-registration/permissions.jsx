@@ -1,6 +1,7 @@
 import { Layout as DashboardLayout } from '../../../../../layouts/index'
 import { CippIcons } from '../../../../../utils/icon-registry'
 import { useSettings } from '../../../../../hooks/use-settings'
+import { useCloudPortalUrl } from '../../../../../hooks/use-tenant-cloud'
 import { useRouter } from 'next/router'
 import { ApiGetCall } from '../../../../../api/ApiCall'
 import CippFormSkeleton from '../../../../../components/CippFormPages/CippFormSkeleton'
@@ -19,6 +20,7 @@ import { getAppRegistrationDetailHeaderActions } from '../../../../../components
 
 const Page = () => {
   const userSettingsDefaults = useSettings()
+  const toCloudPortal = useCloudPortalUrl()
   const { checkPermissions } = usePermissions()
   const canWriteApplication = checkPermissions(['Tenant.Application.ReadWrite'])
   const router = useRouter()
@@ -89,7 +91,7 @@ const Page = () => {
                 color="muted"
                 style={{ paddingLeft: 0 }}
                 size="small"
-                href={`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/${appData?.appId}/isMSAApp/`}
+                href={toCloudPortal(`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/${appData?.appId}/isMSAApp/`)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -148,7 +150,10 @@ const Page = () => {
       {appRequest.isSuccess && appData && (
         <Box sx={{ flexGrow: 1, py: 4 }}>
           <CippHead title={`${title} — API permissions`} />
-          <CippAppRegistrationPermissions requiredResourceAccess={appData.requiredResourceAccess} />
+          <CippAppRegistrationPermissions
+            requiredResourceAccess={appData.requiredResourceAccess}
+            tenantFilter={router.query.tenantFilter ?? userSettingsDefaults.currentTenant}
+          />
         </Box>
       )}
     </HeaderedTabbedLayout>

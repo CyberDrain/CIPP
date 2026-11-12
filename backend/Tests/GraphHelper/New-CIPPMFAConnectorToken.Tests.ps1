@@ -3,6 +3,8 @@
 # that a cached secret is reused without provisioning, and that a cache miss provisions and stores one.
 
 BeforeAll {
+    # Cloud routing (redanthrax/CIPP#3): these tests are about commercial behaviour.
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
 
     function New-GraphGetRequest { param($uri, $tenantid, $AsApp) }

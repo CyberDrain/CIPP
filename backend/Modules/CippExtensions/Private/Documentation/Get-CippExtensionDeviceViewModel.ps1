@@ -68,6 +68,10 @@ function Get-CippExtensionDeviceViewModel {
         Microsoft = @([ordered]@{ Label = 'Intune'; Tip = 'Open this device in Intune'; Url = "https://intune.microsoft.com/$($Tenant.defaultDomainName)/#blade/Microsoft_Intune_Devices/DeviceSettingsBlade/overview/mdmDeviceId/$($D.id)" })
         Rmm       = @($RmmLinks | Where-Object { $_ } | ForEach-Object { [ordered]@{ Label = [string]$_.Label; Tip = [string]$_.Tip; Url = [string]$_.Url } })
     }
+    # A government tenant's Intune link goes to its cloud's portal (redanthrax/CIPP#4).
+    if ($Tenant.cloudEnvironment -and $Tenant.cloudEnvironment -cne 'Commercial') {
+        foreach ($MsLink in $Links.Microsoft) { $MsLink.Url = ConvertTo-CIPPCloudPortalUrl -Url $MsLink.Url -CloudEnvironment $Tenant.cloudEnvironment }
+    }
 
     $Details = [ordered]@{
         Owner           = (Get-CippExtensionUiHumanized $(if ($D.ownerType) { $D.ownerType } else { $D.managedDeviceOwnerType }))

@@ -22,6 +22,8 @@ import { CippPageActionsFab } from "../components/CippComponents/CippPageActions
 import { CippTabPicker } from "../components/CippComponents/CippTabPicker";
 import { ApiGetCall } from "../api/ApiCall";
 import { getHiddenPages } from "../utils/filter-menu-items";
+import { useTenantCloudEnvironment } from "../hooks/use-tenant-cloud";
+import { filterCloudSupportedActions } from "../utils/cloud-feature-support";
 
 export const HeaderedTabbedLayout = (props) => {
   const {
@@ -29,7 +31,7 @@ export const HeaderedTabbedLayout = (props) => {
     tabOptions,
     title,
     subtitle,
-    actions,
+    actions: layoutActions,
     actionsData,
     // Without this the dispatch falls back to CippApiDialog's hardcoded title, so a header
     // action mutates successfully and never invalidates the page query.
@@ -39,6 +41,8 @@ export const HeaderedTabbedLayout = (props) => {
     // Optional replacement for the title Typography — same slot, same truncation duties.
     titleControl,
   } = props;
+  // Header actions whose API the selected tenant's cloud does not support are left out (redanthrax/CIPP#4).
+  const actions = filterCloudSupportedActions(layoutActions, useTenantCloudEnvironment());
 
   // The shared hook rather than an inline useMediaQuery: same threshold, but only this one is
   // mockable, and jsdom has no width-based matchMedia to drive the mobile branch with.

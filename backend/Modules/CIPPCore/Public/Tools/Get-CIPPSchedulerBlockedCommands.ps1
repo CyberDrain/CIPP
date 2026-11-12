@@ -64,6 +64,8 @@ function Get-CIPPSchedulerBlockedCommands {
         'Update-CIPPSAMCertificate'
         'ConvertTo-CIPPSAMCertificateInfo'
         'Update-CIPPSAMSecret'
+        'Get-CIPPGovAppCredential'
+        'Set-CIPPGovAppCredential'
         'Set-CIPPSAMCredentialRecord'
         'Get-ExtensionAPIKey'
         'Set-ExtensionAPIKey'

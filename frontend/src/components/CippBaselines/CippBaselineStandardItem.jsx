@@ -18,6 +18,7 @@ import { useWatch } from 'react-hook-form'
 import CippFormComponent from '../CippComponents/CippFormComponent'
 import CippBaselineStandardSettings from './CippBaselineStandardSettings'
 import { useM365Licenses } from '../../utils/m365-licenses-data'
+import { CippCloudSupportChip } from '../CippComponents/CippCloudSupportChip'
 import { getServicePlanFriendlyName } from '../../utils/get-cipp-service-plan-name'
 
 const impactColors = {
@@ -244,6 +245,7 @@ export const CippBaselineStandardItem = ({
                 />
               </Tooltip>
             )}
+            <CippCloudSupportChip type="baselineStandards" name={standard.name} />
             <Chip
               variant="outlined"
               size="small"

@@ -141,6 +141,10 @@ function Get-CIPPAuthentication {
             Write-Information "Could not resolve certificate auth mode: $($_.Exception.Message)"
         }
 
+        # The Azure Government app credentials are loaded lazily by Get-CIPPGovAppCredential, only when a
+        # government tenant needs a token. Drop the cached copy so they are re-read with everything else.
+        Remove-Item -Path env:CIPPGovAppLoaded -ErrorAction SilentlyContinue
+
         Write-LogMessage -message 'Reloaded authentication data from KeyVault' -Sev 'debug' -API 'CIPP Authentication'
 
         return $true

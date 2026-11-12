@@ -330,3 +330,46 @@ Describe 'Push-UpdatePermissionsQueue CPV consent gate' {
         }
     }
 }
+
+# redanthrax/CIPP#2: the permission push grants permissions to the SAM app over commercial hosts, so it
+# is skipped for government tenants instead of failing against them.
+Describe 'Push-UpdatePermissionsQueue government tenants' {
+    BeforeEach {
+        $script:WrittenRow = $null
+        Mock -CommandName Get-CIPPAzDataTableEntity -MockWith { @() }
+        Mock -CommandName Add-CIPPAzDataTableEntity -MockWith { $script:WrittenRow = $Entity }
+        Mock -CommandName Set-CIPPCPVConsent -MockWith { }
+        Mock -CommandName Add-CIPPApplicationPermission -MockWith { @('Succeeded') }
+        Mock -CommandName Add-CIPPDelegatedPermission -MockWith { @('Succeeded') }
+        Mock -CommandName Set-CIPPSAMAdminRoles -MockWith { }
+        Mock -CommandName Write-LogMessage -MockWith { }
+        Mock -CommandName Get-CIPPTable -MockWith { @{ Context = 'stub' } }
+    }
+
+    It 'skips every grant for a <Cloud> <Status> tenant and logs why' -TestCases @(
+        @{ Cloud = 'USGovHigh'; Status = 'directTenant' }
+        @{ Cloud = 'USGovDoD'; Status = 'directTenant' }
+        @{ Cloud = 'USGovHigh'; Status = 'granularDelegatedAdminPrivileges' }
+    ) {
+        param($Cloud, $Status)
+        $script:Cloud = $Cloud; $script:Status = $Status
+        Mock -CommandName Get-Tenants -MockWith { [pscustomobject]@{ customerId = $script:Item.customerId; delegatedPrivilegeStatus = $script:Status; cloudEnvironment = $script:Cloud } }
+
+        Push-UpdatePermissionsQueue -Item $script:Item
+
+        Should -Invoke Set-CIPPCPVConsent -Times 0
+        Should -Invoke Add-CIPPApplicationPermission -Times 0
+        Should -Invoke Add-CIPPDelegatedPermission -Times 0
+        Should -Invoke Set-CIPPSAMAdminRoles -Times 0
+        Should -Invoke Write-LogMessage -ParameterFilter { $message -like '*Skipped the permission update*' -and $Sev -eq 'Info' }
+        $script:WrittenRow.LastStatus | Should -Be 'Skipped'
+        $script:WrittenRow.ContainsKey('LastError') | Should -BeFalse
+    }
+
+    It 'still pushes permissions for a Commercial tenant' {
+        Mock -CommandName Get-Tenants -MockWith { [pscustomobject]@{ customerId = $script:Item.customerId; delegatedPrivilegeStatus = 'directTenant'; cloudEnvironment = 'Commercial' } }
+        Push-UpdatePermissionsQueue -Item $script:Item
+        Should -Invoke Add-CIPPApplicationPermission -Times 1
+        $script:WrittenRow.LastStatus | Should -Be 'Success'
+    }
+}

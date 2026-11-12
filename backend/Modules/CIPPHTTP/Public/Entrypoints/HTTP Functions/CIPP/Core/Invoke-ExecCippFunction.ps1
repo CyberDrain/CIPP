@@ -27,6 +27,8 @@ function Invoke-ExecCippFunction {
         'Update-CIPPSAMCertificate'
         'ConvertTo-CIPPSAMCertificateInfo'
         'Update-CIPPSAMSecret'
+        'Get-CIPPGovAppCredential'
+        'Set-CIPPGovAppCredential'
         'Set-CIPPSAMCredentialRecord'
         'Get-CippKeyVaultSecret'
         'Set-CippKeyVaultSecret'

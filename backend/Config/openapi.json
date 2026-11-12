@@ -12169,6 +12169,139 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/EditTenantCloudEnvironment": {
+      "post": {
+        "summary": "EditTenantCloudEnvironment",
+        "operationId": "EditTenantCloudEnvironment",
+        "tags": [
+          "Tenant > Administration > Tenant"
+        ],
+        "description": "Manually sets the Microsoft cloud a tenant lives in (Commercial, USGovHigh or USGovDoD), overriding the value detected when the tenant was added. Use this for DoD tenants, which detection may report as USGovHigh. Requires unrestricted tenant access, the same as adding a tenant.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cloudEnvironment": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/LabelValue"
+                      }
+                    ],
+                    "description": "The cloud to set: Commercial, USGovHigh or USGovDoD - a plain string or the { label, value } object an autocomplete field sends."
+                  },
+                  "customerId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customerId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                  "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "customerId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "defaultDomainName": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "delegatedPrivilegeStatus": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "directTenantAuthDate": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "directTenantUserPrincipalName": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "displayName": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "domains": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ETag": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Excluded": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ExcludeDate": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ExcludeUser": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "initialDomainName": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "LastGraphError": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "LastGraphTokenError": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "LastRefresh": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "PartitionKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "RequiresRefresh": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "RowKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Timestamp": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.AppSettings.ReadWrite",
+        "x-cipp-any-tenant": true
+      }
+    },
     "/api/EditTenantOffboardingDefaults": {
       "post": {
         "summary": "EditTenantOffboardingDefaults",
@@ -13640,7 +13773,11 @@
                 "properties": {
                   "accessToken": {
                     "type": "string",
-                    "description": "Get tenant information from Microsoft Graph using bulk request"
+                    "description": "Which cloud the sign-in was for (redanthrax/CIPP#2). The consent flow sends the cloud the user picked; absent means Commercial, as before. The token itself has to agree with it."
+                  },
+                  "cloudEnvironment": {
+                    "type": "string",
+                    "description": "Which cloud the sign-in was for (redanthrax/CIPP#2). The consent flow sends the cloud the user picked; absent means Commercial, as before. The token itself has to agree with it."
                   },
                   "defaultDomainName": {
                     "type": "string"
@@ -13667,6 +13804,9 @@
                   "type": "object",
                   "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                   "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "customerId": {
                       "x-cipp-field-source": "storage"
                     },
@@ -24216,6 +24356,9 @@
                   "type": "object",
                   "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record, and the columns the CIPP UI renders. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                   "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "customerId": {
                       "x-cipp-field-source": "storage"
                     },
@@ -27266,6 +27409,79 @@
           }
         ],
         "x-cipp-role": "CIPP.Extension.ReadWrite",
+        "x-cipp-any-tenant": true
+      }
+    },
+    "/api/ExecGovAppCredentials": {
+      "post": {
+        "summary": "Status and configuration of the Azure Government app registration used for direct GCC High and DoD tenants.",
+        "operationId": "ExecGovAppCredentials",
+        "tags": [
+          "CIPP > Setup"
+        ],
+        "description": "Actions: Status (default) reports what is configured without returning any secret; Save stores the application id and, when given, a new client secret; GenerateCertificate creates a certificate for the app, stores its private key next to the SAM certificate and returns only the public certificate to upload to the app registration.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Action": {
+                    "type": "string"
+                  },
+                  "applicationId": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "applicationSecret": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.AppSettings.ReadWrite",
         "x-cipp-any-tenant": true
       }
     },
@@ -35759,6 +35975,9 @@
                   "type": "object",
                   "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                   "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "customerId": {
                       "x-cipp-field-source": "storage"
                     },
@@ -36316,6 +36535,9 @@
                   "type": "object",
                   "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                   "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "customerId": {
                       "x-cipp-field-source": "storage"
                     },
@@ -39432,6 +39654,7 @@
           {
             "name": "Action",
             "in": "query",
+            "description": "Reads normally use the partner tenant. A government tenant's permission ids differ from the partner cloud's (29 Graph ids in GCC High), so the app registration permissions view asks for that tenant's service principals instead (redanthrax/CIPP#4), in its own GovernmentTenantFilter parameter: callers that send the usual tenantFilter (e.g. tenant-scoped autocompletes) are not looked up at all and get the partner tenant exactly as before. Honoured only for reads, only for a tenant in a non-Commercial cloud and only when the caller may access it; anything else is the partner tenant, as before.",
             "required": false,
             "schema": {
               "type": "string",
@@ -39444,6 +39667,15 @@
             "name": "AppId",
             "in": "query",
             "description": "These values are placed in the Graph URL, so only a GUID or a plain field list is accepted.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "GovernmentTenantFilter",
+            "in": "query",
+            "description": "Reads normally use the partner tenant. A government tenant's permission ids differ from the partner cloud's (29 Graph ids in GCC High), so the app registration permissions view asks for that tenant's service principals instead (redanthrax/CIPP#4), in its own GovernmentTenantFilter parameter: callers that send the usual tenantFilter (e.g. tenant-scoped autocompletes) are not looked up at all and get the partner tenant exactly as before. Honoured only for reads, only for a tenant in a non-Commercial cloud and only when the caller may access it; anything else is the partner tenant, as before.",
             "required": false,
             "schema": {
               "type": "string"
@@ -44000,6 +44232,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "cloudEnvironment": {
+                    "type": "string",
+                    "description": "Direct government tenants (redanthrax/CIPP#2) consent against their cloud's authority with the Azure Government app. Absent or 'Commercial' keeps the commercial exchange exactly as before; anything else must be an exact cloud name, and the token endpoint then comes from the fixed map."
+                  },
                   "tenantId": {
                     "type": "string"
                   },
@@ -44622,8 +44858,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "accessToken": {
+                    "type": "string"
+                  },
                   "addPartner": {
                     "type": "boolean"
+                  },
+                  "cloudEnvironment": {
+                    "type": "string"
+                  },
+                  "directTenant": {
+                    "type": "boolean",
+                    "description": "A direct-tenant sign-in must never replace the partner tenant's refresh token, which backs every GDAP tenant. The direct-tenant buttons send directTenant = true; a partner account used there is refused here, before anything is written (ExecAddTenant would refuse it later, too late)."
                   },
                   "orgName": {
                     "type": "string"
@@ -60444,6 +60690,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"

@@ -342,6 +342,11 @@ function Invoke-HuduExtensionSync {
                     Icon  = 'fas fa-arrow-up-right-from-square'
                 })
         }
+        # A government tenant's portal links go to its cloud's portals; links without one are left out (redanthrax/CIPP#4).
+        if ($Tenant.cloudEnvironment -and $Tenant.cloudEnvironment -cne 'Commercial') {
+            foreach ($Link in $Links) { $Link.URL = ConvertTo-CIPPCloudPortalUrl -Url $Link.URL -CloudEnvironment $Tenant.cloudEnvironment }
+            [System.Collections.Generic.List[object]]$Links = @($Links | Where-Object { $_.URL })
+        }
 
         $Users = $ExtensionCache.Users
         $licensedUsers = $Users | Where-Object { $null -ne $_.assignedLicenses.skuId } | Sort-Object userPrincipalName

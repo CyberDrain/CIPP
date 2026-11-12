@@ -15,6 +15,7 @@
   * [Executing the Setup Wizard](setup/installation/executing-the-setup-wizard.md)
   * [Tenant Onboarding](setup/installation/gdap-invite-wizard.md)
   * [I Want to Manage My Own Tenant](setup/installation/owntenant.md)
+  * [GCC High and DoD Direct Tenants](setup/installation/government-direct-tenants.md)
 * [Maintaining CIPP](setup/maintaining-cipp/README.md)
   * [Updating Versions](setup/maintaining-cipp/updating.md)
   * [Recommended Roles](setup/maintaining-cipp/recommended-roles.md)
@@ -510,6 +511,8 @@
   * [Setting Up for Local Development](dev-documentation/cipp-dev-guide/setting-up-for-local-development.md)
   * [Project Structure](dev-documentation/cipp-dev-guide/project-structure.md)
   * [Frontend Testing](dev-documentation/cipp-dev-guide/frontend-testing.md)
+  * [GCC High / DoD Endpoint Routing](dev-documentation/cipp-dev-guide/gcchigh-endpoint-audit.md)
+  * [GCC High / DoD Feature Support](dev-documentation/cipp-dev-guide/gcchigh-feature-support.md)
 * [Contributing to the Code](dev-documentation/contributing-to-the-code.md)
 * [Contributing to the Documentation](dev-documentation/contributing-to-the-documentation.md)
 

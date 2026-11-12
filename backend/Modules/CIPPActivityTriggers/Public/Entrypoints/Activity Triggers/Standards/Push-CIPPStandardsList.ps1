@@ -33,6 +33,29 @@ function Push-CIPPStandardsList {
             $ComputedStandards[$Key] = $Standard
         }
 
+        # Standards the tenant's cloud does not support (redanthrax/CIPP#4): one log line per run, nothing
+        # queued. Commercial tenants stop at the cloud check. The compare field carries the existing
+        # 'License Missing:' marker so alignment scoring and the UI leave the row out of the score exactly as
+        # they do for a missing licence, instead of grading it Non-Compliant.
+        $TenantCloud = try { Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter } catch { $null }
+        if ($TenantCloud -and $TenantCloud -cne 'Commercial') {
+            $CloudSkipped = @($ComputedStandards.Keys | Where-Object { -not (Test-CIPPCloudFeatureSupport -Type 'standards' -Name ($_ -split '\|', 2)[0] -CloudEnvironment $TenantCloud) })
+            if ($CloudSkipped.Count -gt 0) {
+                $SkippedNames = @($CloudSkipped | ForEach-Object { ($_ -split '\|', 2)[0] } | Sort-Object -Unique)
+                foreach ($Key in $CloudSkipped) { [void]$ComputedStandards.Remove($Key) }
+                $CloudFields = [System.Collections.Generic.List[object]]::new()
+                foreach ($Name in $SkippedNames) {
+                    $CloudFields.Add([PSCustomObject]@{
+                            FieldName        = "standards.$Name"
+                            FieldValue       = "License Missing: Not supported for $TenantCloud tenants."
+                            LicenseAvailable = $false
+                        })
+                }
+                Set-CIPPStandardsCompareField -TenantFilter $TenantFilter -BulkFields $CloudFields
+                Write-LogMessage -API 'Standards' -tenant $TenantFilter -message "Skipped $($SkippedNames.Count) standard(s) not supported for $TenantCloud tenants: $($SkippedNames -join ', ')" -sev Info
+            }
+        }
+
         # Check if IntuneTemplate standards are present
         $IntuneTemplateFound = ($ComputedStandards.Keys.Where({ $_ -like '*IntuneTemplate*' }, 'First').Count -gt 0)
 

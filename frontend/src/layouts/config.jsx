@@ -1,7 +1,9 @@
 import { SvgIcon } from '@mui/material'
 import { CippIcons } from '../utils/icon-registry'
+import { withCloudSupport } from '../utils/cloud-feature-support'
 
-export const nativeMenuItems = [
+// withCloudSupport adds `unsupportedClouds` to the pages the cloud support matrix lists (redanthrax/CIPP#4).
+export const nativeMenuItems = withCloudSupport([
   {
     title: 'Dashboard',
     path: '/',
@@ -1360,4 +1362,4 @@ export const nativeMenuItems = [
       },
     ],
   },
-]
+])

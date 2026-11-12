@@ -67,6 +67,10 @@ function Get-CippExtensionUserViewModel {
         [ordered]@{ Label = 'Intune (User)'; Tip = 'Open Intune user profile in a new tab'; Url = "https://intune.microsoft.com/$Domain/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/Profile/userId/$Uid" }
         [ordered]@{ Label = 'Intune (Devices)'; Tip = "Open the user's Intune devices in a new tab"; Url = "https://intune.microsoft.com/$Domain/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/Devices/userId/$Uid" }
     )
+    # A government tenant's portal links go to its cloud's portals; links without one are left out (redanthrax/CIPP#4).
+    if ($Tenant.cloudEnvironment -and $Tenant.cloudEnvironment -cne 'Commercial') {
+        $MsLinks = @(foreach ($MsLink in $MsLinks) { $MsLink.Url = ConvertTo-CIPPCloudPortalUrl -Url $MsLink.Url -CloudEnvironment $Tenant.cloudEnvironment; if ($MsLink.Url) { $MsLink } })
+    }
     $CippLinks = @()
     if ($EnableCIPP) {
         $CippLinks = @(
@@ -254,6 +258,9 @@ function Get-CippExtensionUserViewModel {
                 StaleTip       = "No sync in over $StaleAfterDays days"
             }
         })
+    if ($Tenant.cloudEnvironment -and $Tenant.cloudEnvironment -cne 'Commercial') {
+        foreach ($DevItem in $DevItems) { $DevItem.Url = ConvertTo-CIPPCloudPortalUrl -Url $DevItem.Url -CloudEnvironment $Tenant.cloudEnvironment }
+    }
     $Dev = [ordered]@{
         Items          = $DevItems
         StaleAfterDays = $StaleAfterDays

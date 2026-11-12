@@ -393,7 +393,7 @@ function Invoke-NinjaOneTenantSync {
                 Category             = $Score.controlCategory
                 'Recommended Action' = $MatchedProfile.title
                 'Score Impact'       = [System.Math]::Round((((($MatchedProfile.maxScore) - ($Score.score)) / $MaxSecureScore) * 100), 2)
-                Link                 = "https://security.microsoft.com/securescore?actionId=$($Score.controlName)&viewid=actions&tid=$($Customer.customerId)"
+                Link                 = (ConvertTo-CIPPCloudPortalUrl -Url "https://security.microsoft.com/securescore?actionId=$($Score.controlName)&viewid=actions&tid=$($Customer.customerId)" -CloudEnvironment $Customer.cloudEnvironment)
                 name                 = $Score.controlName
                 score                = $Score.score
                 IsApplicable         = $Score.IsApplicable
@@ -840,12 +840,12 @@ function Invoke-NinjaOneTenantSync {
                     $DeviceLinksData = @(
                         @{
                             Name = 'Entra ID'
-                            Link = "https://entra.microsoft.com/$($Customer.defaultDomainName)/#view/Microsoft_AAD_Devices/DeviceDetailsMenuBlade/~/Properties/deviceId/$($Device.azureADDeviceId)"
+                            Link = (ConvertTo-CIPPCloudPortalUrl -Url "https://entra.microsoft.com/$($Customer.defaultDomainName)/#view/Microsoft_AAD_Devices/DeviceDetailsMenuBlade/~/Properties/deviceId/$($Device.azureADDeviceId)" -CloudEnvironment $Customer.cloudEnvironment)
                             Icon = 'fab fa-microsoft'
                         },
                         @{
                             Name = 'Intune (Devices)'
-                            Link = "https://intune.microsoft.com/$($Customer.defaultDomainName)/#view/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/~/overview/mdmDeviceId/$($Device.id)"
+                            Link = (ConvertTo-CIPPCloudPortalUrl -Url "https://intune.microsoft.com/$($Customer.defaultDomainName)/#view/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/~/overview/mdmDeviceId/$($Device.id)" -CloudEnvironment $Customer.cloudEnvironment)
                             Icon = 'fas fa-laptop'
                         },
                         @{
@@ -871,7 +871,7 @@ function Invoke-NinjaOneTenantSync {
                     $DeviceModel = Get-CippExtensionDeviceViewModel -Device $Device -Tenant $Customer -Policies $DevicePolicyRows -Groups @($DeviceGroups | ForEach-Object { $_.Name }) -RmmLinks @() -Culture $Culture -TimeZone $TimeZone
                     $DeviceModel.Links.Microsoft = @(
                         $DeviceModel.Links.Microsoft
-                        [ordered]@{ Label = 'Entra ID'; Tip = 'Open this device in Entra ID'; Url = "https://entra.microsoft.com/$($Customer.defaultDomainName)/#view/Microsoft_AAD_Devices/DeviceDetailsMenuBlade/~/Properties/deviceId/$($Device.azureADDeviceId)" }
+                        [ordered]@{ Label = 'Entra ID'; Tip = 'Open this device in Entra ID'; Url = (ConvertTo-CIPPCloudPortalUrl -Url "https://entra.microsoft.com/$($Customer.defaultDomainName)/#view/Microsoft_AAD_Devices/DeviceDetailsMenuBlade/~/Properties/deviceId/$($Device.azureADDeviceId)" -CloudEnvironment $Customer.cloudEnvironment) }
                         [ordered]@{ Label = 'View in CIPP'; Tip = 'View this device in CIPP'; Url = "https://$($CIPPURL)/endpoint/MEM/devices/device?deviceId=$($Device.id)&tenantFilter=$($Customer.defaultDomainName)" }
                     )
                     # The hash takes the body without the synced stamp; the stamped body replaces it once hashed
@@ -1335,7 +1335,7 @@ function Invoke-NinjaOneTenantSync {
                 # Actions
                 $ActionsHTML = @"
                                 <a href="https://$($CIPPUrl)/identity/administration/users/user?userId=$($User.id)&tenantFilter=$($Customer.defaultDomainName)" title="View in CIPP" class="btn secondary"><i class="fas fa-shield-halved" style="color: #337ab7;"></i></a>&nbsp;
-                                <a href="https://entra.microsoft.com/$($Customer.DefaultDomainName)/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/$($User.id)/hidePreviewBanner~/true" title="View in Entra ID" class="btn secondary"><i class="fab fa-microsoft" style="color: #337ab7;"></i></a>&nbsp;
+                                <a href="$(ConvertTo-CIPPCloudPortalUrl -Url "https://entra.microsoft.com/$($Customer.DefaultDomainName)/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/$($User.id)/hidePreviewBanner~/true" -CloudEnvironment $Customer.cloudEnvironment)" title="View in Entra ID" class="btn secondary"><i class="fab fa-microsoft" style="color: #337ab7;"></i></a>&nbsp;
 "@
 
 
@@ -1822,6 +1822,10 @@ function Invoke-NinjaOneTenantSync {
 
             )
 
+            # A government tenant's portal links go to its cloud's portals, or are dropped below (redanthrax/CIPP#4).
+            if ($Customer.cloudEnvironment -and $Customer.cloudEnvironment -cne 'Commercial') {
+                foreach ($ManagementLink in $ManagementLinksData) { $ManagementLink.Link = ConvertTo-CIPPCloudPortalUrl -Url $ManagementLink.Link -CloudEnvironment $Customer.cloudEnvironment }
+            }
             # Drop any portal we could not build a URL for rather than publishing a dead link.
             $ManagementLinksData = @($ManagementLinksData | Where-Object { $_.Link })
 
@@ -2045,17 +2049,17 @@ function Invoke-NinjaOneTenantSync {
             }
 
             # Unified Audit Log
-            $WidgetData.add((& $NewPostureWidget -Description 'Unified Audit Log' -Link "https://security.microsoft.com/auditlogsearch?viewid=Async%20Search&tid=$($Customer.customerId)" -HasData $HasAuditConfig -State $UnifiedAuditLogEnabled))
+            $WidgetData.add((& $NewPostureWidget -Description 'Unified Audit Log' -Link (ConvertTo-CIPPCloudPortalUrl -Url "https://security.microsoft.com/auditlogsearch?viewid=Async%20Search&tid=$($Customer.customerId)" -CloudEnvironment $Customer.cloudEnvironment) -HasData $HasAuditConfig -State $UnifiedAuditLogEnabled))
 
             # Password Never Expires
             $WidgetData.add((& $NewPostureWidget -Description 'Password Never Expires' -Link "https://$CIPPUrl/tenant/administration/domains?tenantFilter=$($Customer.defaultDomainName)" -HasData $HasDomainData -State $PasswordNeverExpires))
 
             # OAuth App Consent
-            $WidgetData.add((& $NewPostureWidget -Description 'OAuth App Consent' -Link "https://entra.microsoft.com/$($Customer.defaultDomainName)/#view/Microsoft_AAD_IAM/ConsentPoliciesMenuBlade/~/UserSettings" -HasData $HasAuthPolicy -State $OAuthConsentRestricted))
+            $WidgetData.add((& $NewPostureWidget -Description 'OAuth App Consent' -Link (ConvertTo-CIPPCloudPortalUrl -Url "https://entra.microsoft.com/$($Customer.defaultDomainName)/#view/Microsoft_AAD_IAM/ConsentPoliciesMenuBlade/~/UserSettings" -CloudEnvironment $Customer.cloudEnvironment) -HasData $HasAuthPolicy -State $OAuthConsentRestricted))
 
             # Blocked Senders
             $BlockedSenderCount = ($BlockedSenders | Measure-Object).count
-            $WidgetData.add([PSCustomObject]@{ Label = 'Blocked Senders'; Value = $BlockedSenderCount; Tone = $(if ($BlockedSenderCount -eq 0) { 'ok' } else { 'err' }); Url = "https://security.microsoft.com/restrictedentities?tid=$($Customer.customerId)" })
+            $WidgetData.add([PSCustomObject]@{ Label = 'Blocked Senders'; Value = $BlockedSenderCount; Tone = $(if ($BlockedSenderCount -eq 0) { 'ok' } else { 'err' }); Url = (ConvertTo-CIPPCloudPortalUrl -Url "https://security.microsoft.com/restrictedentities?tid=$($Customer.customerId)" -CloudEnvironment $Customer.cloudEnvironment) })
 
             # Licensed Users, Devices, Groups and Roles
             $WidgetData.add([PSCustomObject]@{ Label = 'Licensed Users'; Value = $LicensedUsersCount; Tone = 'neutral'; Url = "https://$CIPPUrl/identity/administration/users?tenantFilter=$($Customer.defaultDomainName)" })
@@ -2064,9 +2068,9 @@ function Invoke-NinjaOneTenantSync {
             $WidgetData.add([PSCustomObject]@{ Label = 'Roles'; Value = ($AllRoles | Measure-Object).count; Tone = 'neutral'; Url = "https://$CIPPUrl/identity/administration/roles?tenantFilter=$($Customer.defaultDomainName)" })
 
             # AAD Premium, Windows Defender and AD Connect
-            $WidgetData.add((& $NewPresenceWidget -Description 'AAD Premium' -Link "https://entra.microsoft.com/$($Customer.customerId)/#view/Microsoft_AAD_IAM/TenantOverview.ReactView" -State ('AADPremiumService' -in $TenantDetails.assignedPlans.service)))
-            $WidgetData.add((& $NewPresenceWidget -Description 'Windows Defender' -Link "https://security.microsoft.com/machines?category=endpoints&tid=$($Customer.DefaultDomainName)#" -State ('WindowsDefenderATP' -in $TenantDetails.assignedPlans.service)))
-            $WidgetData.add((& $NewPresenceWidget -Description 'AD Connect' -Link "https://entra.microsoft.com/$($Customer.customerId)/#view/Microsoft_AAD_IAM/DirectoriesADConnectBlade" -State ($TenantDetails.onPremisesSyncEnabled -eq $true)))
+            $WidgetData.add((& $NewPresenceWidget -Description 'AAD Premium' -Link (ConvertTo-CIPPCloudPortalUrl -Url "https://entra.microsoft.com/$($Customer.customerId)/#view/Microsoft_AAD_IAM/TenantOverview.ReactView" -CloudEnvironment $Customer.cloudEnvironment) -State ('AADPremiumService' -in $TenantDetails.assignedPlans.service)))
+            $WidgetData.add((& $NewPresenceWidget -Description 'Windows Defender' -Link (ConvertTo-CIPPCloudPortalUrl -Url "https://security.microsoft.com/machines?category=endpoints&tid=$($Customer.DefaultDomainName)#" -CloudEnvironment $Customer.cloudEnvironment) -State ('WindowsDefenderATP' -in $TenantDetails.assignedPlans.service)))
+            $WidgetData.add((& $NewPresenceWidget -Description 'AD Connect' -Link (ConvertTo-CIPPCloudPortalUrl -Url "https://entra.microsoft.com/$($Customer.customerId)/#view/Microsoft_AAD_IAM/DirectoriesADConnectBlade" -CloudEnvironment $Customer.cloudEnvironment) -State ($TenantDetails.onPremisesSyncEnabled -eq $true)))
 
             # Create the Tenant Summary Field
             Write-Information 'Complete Tenant Summary'
@@ -2092,7 +2096,7 @@ function Invoke-NinjaOneTenantSync {
                 }
                 Standards   = @{ Url = "https://$CIPPUrl/tenant/standards/list-standards"; Items = $StandardsItems; Error = $StandardsError }
                 SecureScore = @{
-                    Url     = "https://security.microsoft.com/securescore?viewid=overview&tid=$($Customer.customerId)"
+                    Url     = (ConvertTo-CIPPCloudPortalUrl -Url "https://security.microsoft.com/securescore?viewid=overview&tid=$($Customer.customerId)" -CloudEnvironment $Customer.cloudEnvironment)
                     Current = $CurrentSecureScore.currentScore
                     Max     = $MaxSecureScore
                     Actions = @(foreach ($Action in $Top5Actions) { @{ Action = $Action.'Recommended Action'; Impact = $Action.'Score Impact'; Category = $Action.Category; Url = $Action.Link } })
@@ -2133,7 +2137,7 @@ function Invoke-NinjaOneTenantSync {
                                 }
                             })
                         CippUrl  = "https://$CIPPUrl/identity/administration/users/user?userId=$($ParsedUser.RowKey)&tenantFilter=$($Customer.defaultDomainName)"
-                        EntraUrl = "https://entra.microsoft.com/$($Customer.DefaultDomainName)/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/$($ParsedUser.RowKey)/hidePreviewBanner~/true"
+                        EntraUrl = (ConvertTo-CIPPCloudPortalUrl -Url "https://entra.microsoft.com/$($Customer.DefaultDomainName)/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/$($ParsedUser.RowKey)/hidePreviewBanner~/true" -CloudEnvironment $Customer.cloudEnvironment)
                     }
                 })
 

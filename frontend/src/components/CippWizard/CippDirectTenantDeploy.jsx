@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Stack, Box, Typography, Link } from "@mui/material";
 import { CIPPM365OAuthButton } from "../CippComponents/CIPPM365OAuthButton";
 import { CippApiResults } from "../CippComponents/CippApiResults";
 import { ApiPostCall } from "../../api/ApiCall";
 import { CippWizardStepButtons } from "./CippWizardStepButtons";
+import { CippCloudEnvironmentSelect } from "../CippComponents/CippCloudEnvironmentSelect";
+import { getDirectTenantScope } from "../../utils/cloud-environments";
 
 export const CippDirectTenantDeploy = (props) => {
   const { formControl, currentStep, onPreviousStep, onNextStep } = props;
@@ -13,6 +15,8 @@ export const CippDirectTenantDeploy = (props) => {
   });
 
   const addTenant = ApiPostCall({ urlfromdata: true, relatedQueryKeys: ["tenants-table"] });
+  // GCC High / DoD tenants sign in at the Azure Government authority with the Azure Government app.
+  const [cloudEnvironment, setCloudEnvironment] = useState("Commercial");
 
   useEffect(() => {
     if (addTenant.isSuccess) {
@@ -44,6 +48,8 @@ export const CippDirectTenantDeploy = (props) => {
           .
         </Typography>
 
+        <CippCloudEnvironmentSelect value={cloudEnvironment} onChange={setCloudEnvironment} />
+
         <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 2, mb: 2 }}>
           <Stack direction="row" spacing={2} sx={{
             alignItems: "center"
@@ -61,7 +67,9 @@ export const CippDirectTenantDeploy = (props) => {
               }}
               buttonText="Connect to Tenant"
               showSuccessAlert={false}
-              scope="https://graph.microsoft.com/DelegatedPermissionGrant.ReadWrite.All https://graph.microsoft.com/Directory.ReadWrite.All https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All offline_access profile openid"
+              cloudEnvironment={cloudEnvironment}
+              directTenant
+              scope={getDirectTenantScope(cloudEnvironment)}
             />
           </Stack>
         </Box>

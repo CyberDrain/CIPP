@@ -9,8 +9,18 @@ function Get-GraphTokenFromCert {
         [string]$Scope = 'https://graph.microsoft.com/.default',
         [Parameter(Mandatory = $true)]
         [System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate,
-        [switch]$SkipCache
+        [switch]$SkipCache,
+        # The tenant's cloud (redanthrax/CIPP#2). Omitted means Commercial, exactly as before. Any other
+        # value takes the authority from Get-CIPPCloudEndpoint and puts the cloud in the cache key.
+        [string]$CloudEnvironment
     )
+
+    $TokenAuthority = 'https://login.microsoftonline.com'
+    $CacheGrantType = 'client_credentials_certificate'
+    if ($PSBoundParameters.ContainsKey('CloudEnvironment') -and $CloudEnvironment -cne 'Commercial') {
+        $TokenAuthority = (Get-CIPPCloudEndpoint -CloudEnvironment $CloudEnvironment).Authority
+        $CacheGrantType = "client_credentials_certificate@$CloudEnvironment"
+    }
     #########################################################
     # Create Bearer Token From Certificate for HBU Graph
     #########################################################
@@ -19,7 +29,7 @@ function Get-GraphTokenFromCert {
     # loaded (cross-runspace), otherwise a script-scope fallback (local dev).
     $UseSharedTokenCache = ($SkipCache -ne $true) -and ($null -ne ('CIPP.CIPPTokenCache' -as [type]))
     if ($UseSharedTokenCache) {
-        $TokenCacheKey = [CIPP.CIPPTokenCache]::BuildKey([string]$TenantId, [string]$Scope, $true, [string]$AppId, 'client_credentials_certificate')
+        $TokenCacheKey = [CIPP.CIPPTokenCache]::BuildKey([string]$TenantId, [string]$Scope, $true, [string]$AppId, $CacheGrantType)
         $CacheEntry = [CIPP.CIPPTokenCache]::Lookup($TokenCacheKey, 120)
         if ($CacheEntry.Found -and -not [string]::IsNullOrWhiteSpace($CacheEntry.TokenPayloadJson)) {
             try {
@@ -29,7 +39,7 @@ function Get-GraphTokenFromCert {
             }
         }
     } elseif ($SkipCache -ne $true) {
-        $ScriptCacheKey = "$TenantId|$AppId|$Scope"
+        $ScriptCacheKey = "$TenantId|$AppId|$Scope|$CacheGrantType"
         $Cached = $script:CertTokenCache.$ScriptCacheKey
         if ($Cached.expires_on -and [int](Get-Date -UFormat %s -Millisecond 0) -lt ($Cached.expires_on - 120)) {
             return $Cached
@@ -37,7 +47,12 @@ function Get-GraphTokenFromCert {
     }
 
     # Build the signed client assertion (shared with Get-GraphToken -UseCertificate)
-    $JWT = New-CIPPCertificateAssertion -TenantId $TenantId -AppId $AppId -Certificate $Certificate
+    $Url = "$TokenAuthority/$TenantId/oauth2/v2.0/token"
+    $JWT = if ($TokenAuthority -eq 'https://login.microsoftonline.com') {
+        New-CIPPCertificateAssertion -TenantId $TenantId -AppId $AppId -Certificate $Certificate
+    } else {
+        New-CIPPCertificateAssertion -TenantId $TenantId -AppId $AppId -Certificate $Certificate -Audience $Url
+    }
 
     # Create a hash with body parameters
     $Body = @{
@@ -48,7 +63,6 @@ function Get-GraphTokenFromCert {
         grant_type            = 'client_credentials'
     }
 
-    $Url = "https://login.microsoftonline.com/$TenantId/oauth2/v2.0/token"
 
     # Use the self-generated JWT as Authorization
     $Header = @{

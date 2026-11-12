@@ -10,6 +10,8 @@ BeforeAll {
     function Get-CippUserAgent { param([switch]$SharePoint) 'CIPP/test' }
     function Get-NormalizedError { param($Message) $Message }
     function Invoke-CIPPRestMethod { }
+    # Commercial tenants keep every URI as is (redanthrax/CIPP#3).
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
 
     . (Join-Path $Helpers 'Assert-CIPPSharePointHost.ps1')
     . (Join-Path $Helpers 'New-GraphGetRequest.ps1')

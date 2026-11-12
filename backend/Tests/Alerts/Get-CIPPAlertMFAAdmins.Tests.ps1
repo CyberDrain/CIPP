@@ -7,6 +7,8 @@ BeforeAll {
     function New-GraphGetRequest { param($uri, $tenantid, $AsApp, [switch]$ComplexFilter) }
     function Get-CIPPMFAStateReport { param($TenantFilter) }
     function Get-CIPPSchemaExtensions { }
+    # Commercial tenants have the cippUser extension, so JIT admins are filtered as before (redanthrax/CIPP#4).
+    function Get-CIPPJITAdminCloudError { param($TenantFilter) }
     function Write-LogMessage { param($message, $API, $tenant, $sev, $LogData) }
     function Write-AlertTrace { param($cmdletName, $tenantFilter, $data) }
 

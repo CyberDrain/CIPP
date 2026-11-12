@@ -96,6 +96,12 @@ Selecting these severities will send any [logs](../logs/ "mention") entry that m
 "Alert" is selected by default. Without this selected any alerts you set up via [alert-configuration](../../tenant/administration/alert-configuration/ "mention") will not be sent.
 {% endhint %}
 
+## When Notifications Are Sent
+
+CIPP checks once an hour for entries that have not been sent. Each check covers the entries logged today and the day before, and sends them to every method you have configured: email, webhook, and integrations.
+
+An entry that is still unsent when the day changes, for example because it was logged after the last check of the day, goes out with the next check. Entries from before the day before are not sent.
+
 ## Notification Setting Options
 
 | Setting                                         | Description                                                                                                                                                         |

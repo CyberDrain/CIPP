@@ -318,6 +318,32 @@ const Page = () => {
         name: `defaultAttributes.${attribute.label}.Value`,
         type: 'textField',
       })) || []),
+    ...(userSettings?.userAttributes?.some((attribute) => attribute.value === 'sponsor')
+      ? [
+          {
+            label: 'Set Sponsor',
+            name: 'setSponsor',
+            type: 'autoComplete',
+            api: {
+              url: '/api/ListGraphRequest',
+              dataKey: 'Results',
+              data: {
+                Endpoint: 'users',
+                manualPagination: true,
+                $select: 'id,userPrincipalName,displayName',
+                $count: true,
+                $orderby: 'displayName',
+                $top: 999,
+              },
+              labelField: (option) => `${option.displayName} (${option.userPrincipalName})`,
+              valueField: 'userPrincipalName',
+              queryKey: `ListUsers-${userSettings.currentTenant}-default`,
+            },
+            multiple: false,
+            creatable: false,
+          },
+        ]
+      : []),
   ]
 
   // The Add User form caches this list under its own per-tenant key, and AllTenants templates
@@ -381,6 +407,9 @@ const Page = () => {
       ...(userSettings?.userAttributes
         ?.filter((attribute) => attribute.value !== 'sponsor')
         .map((attribute) => `defaultAttributes.${attribute.label}.Value`) || []),
+      ...(userSettings?.userAttributes?.some((attribute) => attribute.value === 'sponsor')
+        ? ['setSponsor']
+        : []),
     ],
     actions: actions,
   }

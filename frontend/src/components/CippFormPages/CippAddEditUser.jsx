@@ -565,6 +565,14 @@ const CippAddEditUser = (props) => {
       null
     )
 
+    if (
+      userSettingsDefaults?.userAttributes?.some(
+        (attribute) => attribute.value === 'sponsor'
+      )
+    ) {
+      applyField('setSponsor', template.setSponsor, null)
+    }
+
     // Custom user attributes. On a switch, clear every known attribute field
     // first so attributes the new template doesn't define don't linger, then
     // apply the template's values.

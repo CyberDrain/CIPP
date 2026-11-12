@@ -40,6 +40,7 @@ The same fields are used when creating a template and when editing an existing o
 | Enforce Per-User MFA                                         | Sets the per-user MFA state to Enforced for users created from this template. This is for tenants without Conditional Access; do not combine with CA-based MFA policies.                                                                                                  |
 | Mobile #                                                     | The user's mobile number.                                                                                                                                                                                                                                                   |
 | Business #                                                   | The user's business number.                                                                                                                                                                                                                                                 |
+| Set Sponsor                                                  | The user set as the new user's sponsor. Users are listed from the tenant selected in CIPP. Only available when `sponsor` is added to **Added Attributes when creating a new user** in [user-settings.md](../../shared-features/menu-bar/user-settings.md "mention").        |
 
 Any custom user attributes configured in CIPP appear at the end of the form and can be given default values in the same way.
 

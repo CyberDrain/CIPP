@@ -7,6 +7,7 @@ import {
   CardActionArea,
   CardActions,
   CardContent,
+  Chip,
   Container,
   Skeleton,
   Stack,
@@ -29,6 +30,14 @@ const Page = () => {
     refetchOnMount: false,
     refetchOnReconnect: false,
   })
+  const featureFlags = ApiGetCall({
+    url: '/api/ListFeatureFlags',
+    queryKey: 'featureFlags',
+  })
+  // An integration tied to a feature flag stays hidden until that flag is known to be on.
+  const flagOn = (id) =>
+    Array.isArray(featureFlags.data) &&
+    featureFlags.data.some((flag) => flag.Id === id && flag.Enabled)
 
   return (
     <Container maxWidth={'xl'}>
@@ -54,7 +63,13 @@ const Page = () => {
       </Stack>
 
       <Grid container spacing={3}>
-        {extensions.filter((extension) => !extension.hidden).map((extension) => {
+        {extensions
+          .filter(
+            (extension) =>
+              !extension.hidden &&
+              (!extension.featureFlag || flagOn(extension.featureFlag))
+          )
+          .map((extension) => {
           var logo = extension.logo
           if (preferredTheme === 'dark' && extension?.logoDark) {
             logo = extension.logoDark
@@ -175,6 +190,9 @@ const Page = () => {
                         {integrations.isSuccess ? status : 'Loading'}
                       </Typography>
                     </>
+                  )}
+                  {extension.beta && (
+                    <Chip label="Beta" size="small" color="info" variant="outlined" />
                   )}
                 </Stack>
               </CardActions>

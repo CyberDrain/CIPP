@@ -1,6 +1,6 @@
 # Sherweb
 
-The Sherweb integration connects CIPP to your Sherweb CSP account so that Microsoft 365 licences and subscriptions can be managed from within CIPP. Once configured and mapped, you can purchase licences while creating users, adjust subscription quantities from the CSP Licenses report, schedule decreases to land at renewal, and optionally automate migrations from a legacy CSP.
+The Sherweb integration connects CIPP to your Sherweb CSP account so that Microsoft 365 licences and subscriptions can be managed from within CIPP. Once configured and mapped, you can purchase licences while creating users, adjust subscription quantities from the CSP License Management page, schedule decreases to land at renewal, and optionally automate migrations from a legacy CSP.
 
 {% hint style="info" %}
 Not a Sherweb partner yet? See [Sherweb Cloud Services for MSPs](https://www.sherweb.com/partners/).
@@ -117,7 +117,7 @@ When adding or editing a user, selecting a licence with no available seats revea
 
 The Add Subscription page purchases a new subscription outright, and requires you to confirm that the purchase is made under your terms with Sherweb.
 
-The CSP Licenses report carries row actions for existing subscriptions.
+The CSP License Management page carries row actions for existing subscriptions.
 
 | Action                                 | Description                                                                                                                    |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |

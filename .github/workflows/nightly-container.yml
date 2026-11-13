@@ -15,12 +15,15 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: dev
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Check for recent commits
         id: check
@@ -54,7 +57,7 @@ jobs:
 
       - name: Log in to GHCR
         if: steps.check.outputs.has_commits == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/login-action@v3
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -63,7 +66,7 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         if: steps.check.outputs.has_commits == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       # Persist the Next.js compile cache and yarn cache across runs (BuildKit
       # cache mounts are not exported by type=gha). Shared key prefix and gha
@@ -79,7 +82,7 @@ jobs:
       - name: Restore frontend build caches
         id: build-cache
         if: steps.check.outputs.has_commits == 'true' || github.event_name == 'workflow_dispatch'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             yarn-cache
@@ -91,7 +94,7 @@ jobs:
 
       - name: Inject build caches into BuildKit
         if: steps.check.outputs.has_commits == 'true' || github.event_name == 'workflow_dispatch'
-        uses: reproducible-containers/buildkit-cache-dance@v3.4.0
+        uses: reproducible-containers/buildkit-cache-dance@5422eac04292c961a382e0f584ea0f03ad9da723 # v3.4.0
         with:
           builder: ${{ steps.buildx.outputs.name }}
           cache-map: |
@@ -102,8 +105,9 @@ jobs:
           skip-extraction: ${{ steps.build-cache.outputs.cache-hit }}
 
       - name: Build and push
+        id: build
         if: steps.check.outputs.has_commits == 'true' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: build/Dockerfile
@@ -123,3 +127,13 @@ jobs:
             org.opencontainers.image.revision=${{ steps.version.outputs.full_sha }}
             org.opencontainers.image.version=${{ steps.version.outputs.app_version }}
             org.opencontainers.image.created=${{ steps.version.outputs.build_date }}
+
+      # Signs a provenance attestation linking the pushed digest to this workflow run and commit,
+      # so consumers can verify an image came from CI rather than a direct registry push.
+      - name: Attest build provenance
+        if: steps.check.outputs.has_commits == 'true' || github.event_name == 'workflow_dispatch'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true

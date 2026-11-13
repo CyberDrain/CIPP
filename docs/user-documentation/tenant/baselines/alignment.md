@@ -34,6 +34,24 @@ Every row in the Tenant and Standard views carries a state.
 
 The view opens on the tenant currently selected, and is laid out as a score bar, the baselines assigned to that tenant, and the table of applicable standards.
 
+### All Tenants
+
+With **All Tenants** selected, the view lists every tenant covered by a baseline in a **Tenant Alignment** table instead, so you can see which tenants need attention before opening one.
+
+| Column                             | Description                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------- |
+| Display Name                       | The tenant's name.                                                                  |
+| Compliant with accepted deviations | The share of the tenant's standards counting as aligned, including acceptances.     |
+| Compliant with baseline            | The share of the tenant's standards genuinely in their expected state.              |
+| Open Drift                         | How many standards are deviating and awaiting a decision.                           |
+| Accepted                           | How many deviations have been accepted.                                             |
+| Denied                             | How many deviations were denied and are queued for correction.                      |
+| Conflicts                          | How many standards are in **Conflict** between two baselines.                       |
+| License Missing                    | How many standards are excluded from scoring because the tenant is not licensed.    |
+| Tenant                             | The tenant's default domain.                                                        |
+
+**View Tenant Alignment** in the row's actions selects that tenant and opens its own Tenant View.
+
 ### Score Bar
 
 | Tile                               | Description                                                                                                                                         |
@@ -49,9 +67,15 @@ One card per baseline assigned to the tenant, showing how closely the tenant mat
 
 Where the next stage is reached automatically, the card instead carries **Re-evaluate stage conditions**, which checks the tenant against that stage's conditions straight away rather than waiting for the next scheduled check. If the conditions are met, the tenant moves into the stage and receives its standards on the following run; if not, the result lists the conditions still unmet.
 
+From Stage 2 onwards the card also carries **Move back a stage**, which returns the tenant to the previous stage. The standards of the stage it leaves stop applying on the next run, but settings already applied stay in place. If the tenant still meets the conditions of the stage it left, the next scheduled run moves it forward again.
+
+Tenants are never moved forward by an edit to the baseline. Where a stage is removed, reordered or inserted, a tenant keeps only the leading stages it had already reached, and is moved back if the stage it sat in has changed. Each such move is recorded in the [Historic View](#historic-view) as **Stage Moved Back**.
+
 ### What-If Report
 
 Produces a client-ready report previewing what the configured standards would change for the tenant, including the stages still to come. The preview opens in a dialog and can be downloaded as a PDF.
+
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/fwmcj82sbxcl" linkValue="fwmcj82sbxcl" %}
 
 | Option                        | Description                                                                                                            |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -94,10 +118,14 @@ Below that, the expected and current configurations are compared property by pro
 
 ### Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Compare Now</td><td>Re-checks the standard against the tenant without changing anything. Greyed out for rows in <strong>Conflict</strong>.</td><td>true</td></tr><tr><td>Remediate Now</td><td>Applies the expected configuration to the tenant immediately, once, whatever the standard's own remediation setting says. Greyed out for rows in <strong>Conflict</strong>, and not offered for manual tasks.</td><td>true</td></tr><tr><td>Accept Deviation</td><td>Records the deviation as accepted, so the tenant counts as aligned and alerts stop until the acceptance expires. You give a reason, optionally an expiry date, and whether the setting should be corrected automatically when the acceptance lapses. Greyed out unless the row is in <strong>Drift</strong> or <strong>Partially Accepted</strong>, and not offered for manual tasks.</td><td>true</td></tr><tr><td>Deny &#38; Fix Deviation</td><td>Rejects the deviation, so it is corrected back to the baseline on the next run regardless of the configured remediation setting. The fix happens once, so if the setting drifts again it shows as a new deviation. Greyed out unless the row is in <strong>Drift</strong> or <strong>Partially Accepted</strong>, and not offered for manual tasks.</td><td>true</td></tr><tr><td>Undo Accept/Deny</td><td>Clears the accept or deny decision along with any accepted properties, so the deviation surfaces again on the next run. Greyed out where no decision has been recorded, and not offered for manual tasks.</td><td>true</td></tr><tr><td>Mark Task Complete</td><td>Marks a manual task as done for this tenant. It is raised again on the recurrence the task defines. Only offered for manual tasks, and greyed out unless the task is in <strong>Drift</strong>.</td><td>true</td></tr><tr><td>Create Tenant Override</td><td>Configures the standard for this one tenant, replacing whatever the baseline applies. The settings are pre-filled with what is currently in force. Greyed out where an override already exists or the standard has no configurable settings, and not offered for manual tasks.</td><td>false</td></tr><tr><td>Remove Tenant Override</td><td>Deletes the tenant override, so the tenant falls back to the baseline's configuration on the next run. Greyed out where no override is set, and not offered for manual tasks.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Compare Now</td><td>Re-checks the standard against the data CIPP last collected from the tenant, without changing anything. Greyed out for rows in <strong>Conflict</strong>.</td><td>true</td></tr><tr><td>Remediate Now</td><td>Applies the expected configuration to the tenant immediately, once, whatever the standard's own remediation setting says. Greyed out for rows in <strong>Conflict</strong>, and not offered for manual tasks.</td><td>true</td></tr><tr><td>Accept Deviation</td><td>Records the deviation as accepted, so the tenant counts as aligned and alerts stop until the acceptance expires. You give a reason, optionally an expiry date, and whether the setting should be corrected automatically when the acceptance lapses. Greyed out unless the row is in <strong>Drift</strong> or <strong>Partially Accepted</strong>, and not offered for manual tasks.</td><td>true</td></tr><tr><td>Deny &#38; Fix Deviation</td><td>Rejects the deviation, so it is corrected back to the baseline on the next run regardless of the configured remediation setting. The fix happens once, so if the setting drifts again it shows as a new deviation. Greyed out unless the row is in <strong>Drift</strong> or <strong>Partially Accepted</strong>, and not offered for manual tasks.</td><td>true</td></tr><tr><td>Undo Accept/Deny</td><td>Clears the accept or deny decision along with any accepted properties, so the deviation surfaces again on the next run. Greyed out where no decision has been recorded, and not offered for manual tasks.</td><td>true</td></tr><tr><td>Mark Task Complete</td><td>Marks a manual task as done for this tenant. It is raised again on the recurrence the task defines. Only offered for manual tasks, and greyed out unless the task is in <strong>Drift</strong>.</td><td>true</td></tr><tr><td>Create Tenant Override</td><td>Configures the standard for this one tenant, replacing whatever the baseline applies. The settings are pre-filled with what is currently in force. Greyed out where an override already exists or the standard has no configurable settings, and not offered for manual tasks.</td><td>false</td></tr><tr><td>Remove Tenant Override</td><td>Deletes the tenant override, so the tenant falls back to the baseline's configuration on the next run. Greyed out where no override is set, and not offered for manual tasks.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% hint style="info" %}
 Unlike **Remediate** in classic Standards, neither Remediate Now nor Deny & Fix Deviation keeps a setting fixed. To correct a standard every time it drifts, turn on **Automatically fix this when the setting drifts** in the [baseline editor](template.md).
+{% endhint %}
+
+{% hint style="warning" %}
+Most standards are compared against the data CIPP last collected from the tenant, not against the tenant's live settings. A change made in the tenant since that collection is not picked up, so the standard can still show as **Compliant** after you change the setting, or as **Drift** straight after **Remediate Now** has fixed it. To compare against current settings, first run **Refresh CIPPDB Cache** for the tenant from [tenants.md](../../cipp/settings/tenants.md "mention"), choosing the cache type that holds the setting, then compare.
 {% endhint %}
 
 ## Standard View
@@ -128,11 +156,13 @@ The **Baseline** and **Stage** selectors above the table narrow the view to one 
 | License Missing                    | How many tenants are excluded from scoring for want of a licence.        |
 | Tenants                            | How many tenants the standard applies to in total.                       |
 
-Selecting a row opens the **Standard Tenant Summary** flyout, which adds the Secure Score points the standard is worth, a compliance trend once there is more than one day of data, and a card per tenant giving its state. Deviating tenants can be accepted or given a tenant override directly from those cards.
+Selecting a row opens the **Standard Tenant Summary** flyout, which adds the Secure Score points the standard is worth, a compliance trend covering the last 30 days once there is more than one day of data, and a list of every tenant the standard applies to with its state.
+
+The tenant list puts tenants still awaiting a decision first. The chips above it filter the list to one state, each showing how many tenants are in it. Every tenant carries its own actions menu, with **View Deviation** and the same actions as the [Tenant View](#table-actions), and selecting a tenant opens its **Standard Details**. Tick tenants, or use the checkbox above the list to select every one shown, then use **Bulk actions** to apply an action to all of them at once. A bulk action is greyed out unless it applies to every selected tenant, and tenant overrides can only be created or removed one tenant at a time.
 
 ### Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Deploy To All Tenants</td><td>Applies the standard's configured expected value to every applicable tenant. Accepted and suppressed deviations are left alone. Not offered for manual tasks.</td><td>true</td></tr><tr><td>Mark Task Complete (All Tenants)</td><td>Marks a manual task as done for every applicable tenant. Each raises it again on the recurrence the task defines. Only offered for manual tasks.</td><td>true</td></tr><tr><td>Compare All Tenants</td><td>Re-checks the standard on every tenant without changing anything.</td><td>true</td></tr><tr><td>Edit Baseline</td><td>Opens the baseline that configures the standard in the editor.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Deploy To All Tenants</td><td>Applies the standard's configured expected value to every applicable tenant. Accepted and suppressed deviations are left alone. Not offered for manual tasks.</td><td>true</td></tr><tr><td>Mark Task Complete (All Tenants)</td><td>Marks a manual task as done for every applicable tenant. Each raises it again on the recurrence the task defines. Only offered for manual tasks.</td><td>true</td></tr><tr><td>Compare All Tenants</td><td>Re-checks the standard on every tenant against the data CIPP last collected, without changing anything.</td><td>true</td></tr><tr><td>Edit Baseline</td><td>Opens the baseline that configures the standard in the editor.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 ## Baseline View
 
@@ -149,17 +179,25 @@ One row per baseline, with the tenants it covers and how far the rollout has pro
 | Remediation      | Whether the baseline reports on deviations only, or corrects them automatically. |
 | Updated At       | When the baseline was last saved.                                                |
 
-Selecting a row opens the **Baseline Rollout** flyout, which gives a card per tenant showing the stage it is in, when it entered that stage, what has to happen before it advances, and an estimate of when that will be. Tenants waiting on manual approval carry a **Move to Next Stage** button. Tenants whose next stage is reached automatically carry **Re-evaluate Stage** instead, which checks that stage's conditions for the tenant straight away, in the same way as **Re-evaluate stage conditions** on the tenant's own card.
+Selecting a row opens the **Baseline Rollout** flyout, which gives a card per tenant showing the stage it is in, when it entered that stage, what has to happen before it advances, and an estimate of when that will be. Tenants waiting on manual approval carry a **Move to Next Stage** button. Tenants whose next stage is reached automatically carry **Re-evaluate Stage** instead, which checks that stage's conditions for the tenant straight away, in the same way as **Re-evaluate stage conditions** on the tenant's own card. Tenants past Stage 1 also carry **Move Back**, which works like **Move back a stage** on the tenant's own card.
 
 ### Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Edit Baseline</td><td>Opens the baseline in the editor.</td><td>false</td></tr><tr><td>Run Baseline Now</td><td>Runs the baseline immediately against a single covered tenant, or against every tenant it is assigned to. Standards sitting in report-only stages are compared without anything being changed.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Edit Baseline</td><td>Opens the baseline in the editor.</td><td>false</td></tr><tr><td>Run Baseline Now</td><td>Runs the baseline immediately against a single covered tenant, or against every tenant it is assigned to. Standards sitting in report-only stages are compared without anything being changed. The baseline's own configuration is applied as it stands: settings from other assigned baselines, even more specific ones, and tenant overrides are ignored for this run.</td><td>true</td></tr><tr><td>Move Tenants to Next Stage</td><td>Moves several tenants into their next stage at once. Pick them from the tenants waiting on manual approval; each receives the standards of its new stage on the next run.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 ## Historic View
 
-A timeline of everything recorded for the selected tenant: scheduled and manual runs, and the decisions operators have made. Runs are collapsed into a single entry carrying a count per outcome, which expands to the individual standards. Entries where an alert was sent are marked, and each run can be opened to show its logs.
+A timeline of everything recorded for the selected tenant: scheduled and manual runs, the decisions operators have made, stage changes, and deletions. Runs are collapsed into a single entry carrying a count per outcome, which expands to the individual standards. Entries where an alert was sent are marked, and each run can be opened to show its logs. **View Logs** above the timeline opens every baseline log entry for the tenant.
 
-The timeline can be narrowed by standard, outcome, and run type, or searched, and loads in blocks of fifty entries.
+The timeline loads 500 entries at a time. **Load more** at the bottom fetches the next block.
+
+| Filter        | Description                                                                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Search Events | Narrows the entries already loaded by standard, outcome, detail, or operator. Load more entries to search further back.                      |
+| Standard      | Shows only the standards you pick.                                                                                                           |
+| Outcome       | Shows only the outcomes you pick, from the list below.                                                                                       |
+| Event Type    | Shows only the event types you pick: **Full run**, **Compare**, **One-off remediation**, **Operator action**, **Stage change**, or **Deletion**. |
+| Time Range    | Limits the timeline to **Last 24 hours**, **Last 7 days**, or **Last 30 days**. **All history** removes the limit.                          |
 
 | Outcome                      | Meaning                                                          |
 | ---------------------------- | ---------------------------------------------------------------- |
@@ -180,6 +218,7 @@ The timeline can be narrowed by standard, outcome, and run type, or searched, an
 | Override Created             | A tenant-specific override of the standard was created.          |
 | Override Removed             | A tenant-specific override was deleted.                          |
 | Stage Advanced               | The tenant moved into the next stage of a baseline.              |
+| Stage Moved Back             | The tenant was moved back a stage, by an operator or because the baseline's stages changed. |
 | Deleted                      | A policy was removed after its deviation was denied.             |
 | Delete Failed                | The removal did not complete. The run logs explain why.          |
 

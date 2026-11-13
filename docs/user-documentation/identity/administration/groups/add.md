@@ -1,6 +1,6 @@
 # Add Group
 
-The **Add Group** button on the [Groups](README.md) list opens a drawer that creates a new group in the selected tenant. Complete the shared details, choose a group type, then fill in any additional settings that appear for that type. Selecting **Create Group** creates the group immediately, with no confirmation step. The drawer stays open afterwards, so **Create Another Group** starts a fresh form for the next group.
+The **Add Group** button on the [Groups](README.md) list opens a drawer that creates a new group in the selected tenant. Complete the shared details, choose a group type, then fill in any additional settings that appear for that type. Selecting **Create Group** creates the group immediately, with no confirmation step. The drawer stays open afterwards, so **Create Another Group** starts a fresh form for the next group. Clicking outside the drawer or pressing Escape does not close it, so nothing typed is lost by accident: use **Close** or the close icon instead.
 
 {% hint style="info" %}
 Groups are created in one tenant at a time. With **All Tenants** selected in the tenant selector, the drawer shows a warning and **Create Group** stays disabled until a specific tenant is chosen.

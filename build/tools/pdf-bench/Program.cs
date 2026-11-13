@@ -86,7 +86,7 @@ sealed record Fixture(string Name, string Blocks, string Variables, string Brand
             .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? "?";
 
     public static string Sha(byte[] b) => Convert.ToHexString(SHA256.HashData(b));
-    public static int Pages(byte[] b) => OfficeIMO.Pdf.PdfReadDocument.Open(b).Pages.Count;
+    public static int Pages(byte[] b) => OfficeIMO.Pdf.PdfDocument.Load(new MemoryStream(b)).Pages.Count;
 }
 
 sealed class Options

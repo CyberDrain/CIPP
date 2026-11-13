@@ -1,21 +1,26 @@
 # Table View
 
-The Table Overview presents Secure Score as a single sortable, searchable table, which is the faster way to scan a long list or export it. With a single tenant selected it lists that tenant's recommendations; with All Tenants selected it lists every tenant's latest score instead. The card view is on [.](./ "mention").
+The Table Overview presents Secure Score as a single sortable, searchable table, which is the faster way to scan a long list or export it. With a single tenant selected it lists that tenant's recommendations; with All Tenants selected it lists every recommendation for every tenant. The card view is on [.](./ "mention"), and the per-tenant score table for All Tenants sits there too.
 
 ## All Tenants View
 
-Selecting All Tenants replaces the recommendation list with one row per tenant, drawn from CIPP's nightly score cache rather than live calls to Microsoft. Rows are sorted lowest score first, putting the tenants that need attention at the top.
+Selecting All Tenants replaces the recommendation list with one row per tenant per recommendation, drawn from CIPP's nightly score cache rather than live calls to Microsoft. Rows are sorted lowest score first. Only recommendations a tenant actually reports appear; the Controls tab counts the tenants that do not.
 
-| Column           | Description                                                                      |
-| ---------------- | -------------------------------------------------------------------------------- |
-| Tenant Name      | The tenant's display name, falling back to its domain where no name is recorded. |
-| Tenant           | The tenant's default domain.                                                     |
-| Percentage Score | The tenant's latest score as a percentage of the maximum available to it.        |
-| Current Score    | The latest score in points.                                                      |
-| Max Score        | The maximum score available to that tenant.                                      |
-| Captured At      | When the score CIPP is showing was recorded.                                     |
+| Column        | Description                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------------- |
+| Tenant Name   | The tenant's display name.                                                                                    |
+| Control Name  | Microsoft's identifier for the recommendation.                                                                |
+| Title         | The name of the recommendation.                                                                               |
+| Score Percent | How complete the recommendation is for that tenant, coloured green at 100%, amber when partial, red at 0%.    |
+| Points        | The points earned out of the maximum available for the recommendation.                                        |
+| Tier          | Core, Defense in Depth, or Advanced.                                                                          |
+| State         | How the recommendation has been handled: Default, Ignored, ThirdParty and so on.                              |
 
-**View tenant secure score** opens the selected tenant's own Secure Score page and switches the tenant selector to it.
+User impact, implementation cost, category, threats, tenant groups, and who changed the state, when and why are available from the column picker.
+
+The filter presets narrow the list by completion (**Not complete**, **Complete**, **Partial**, **Not started**, **No data**), by tier and by state. The **Tenant groups** picker limits it to tenants in any of the ticked CIPP tenant groups. Arriving from the Controls tab shows only the chosen recommendation, under a **Control:** preset.
+
+Selecting a row opens its details: the score, tier, impact, cost, state history and threats, followed by Microsoft's description, remediation guidance and remediation impact. **Open tenant secure score** switches to that tenant's own Secure Score page, and **Open in admin portal** opens the recommendation in the Microsoft portal. The view is read-only; change a recommendation's status from the tenant's own Secure Score page.
 
 {% hint style="info" %}
 Scores appear only after the nightly cache job has run. Until then the page says so rather than showing an empty table, and a newly added tenant will not appear until the next refresh.

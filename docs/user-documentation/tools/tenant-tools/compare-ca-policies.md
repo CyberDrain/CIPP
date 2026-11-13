@@ -53,3 +53,5 @@ Below the table, the full configuration of each side is shown as expandable JSON
 {% hint style="info" %}
 Authentication strengths are compared by name only. A template stores just the strength's ID, while a live policy returns the strength fully expanded, so the extra detail on the live side is not reported as a difference.
 {% endhint %}
+
+{% include "../../../../.gitbook/includes/feature-request.md" %}

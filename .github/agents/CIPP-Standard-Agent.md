@@ -134,7 +134,8 @@ function Invoke-CIPPBaseline<Name> {
 - Match the source-of-truth's **auth mode exactly** (`-AsApp $true` where required — read
   any classic implementation's write block to the end before porting).
 - Standards sharing one settings object must **live-read before create-vs-patch
-  decisions** — concurrent one-off remediations race each other's cache refreshes.
+  decisions** — every remediation in a run reads the same pre-write cache, which is refreshed only
+  after the run finishes.
 - Directory-settings (`beta/settings`) PATCHes require the **full values array**; partial
   arrays are rejected.
 - A write the executor must gate itself (fingerprint checks, always-run semantics) pairs
@@ -148,9 +149,11 @@ A standard that deploys one object per operator-chosen name or per stored templa
 bundle the template. One instance grades ONE object; an unresolvable template grades **No
 Data, never Compliant**.
 
-A standard that deploys an Intune policy outside IntuneTemplate lists the policy names it owns
-in `"driftManagedNames"` (literal names, or `"%Variable%"` for an instance's name) so Detect
-Intune Drift does not report its own policy as unmanaged.
+A standard that deploys an Intune policy outside IntuneTemplate, or a Conditional Access policy
+outside ConditionalAccessTemplate, lists the policy names it owns in `"driftManagedNames"`
+(literal names, or `"%Variable%"` for an operator-chosen or instance name; a blank variable falls
+back to its `default`) so Detect Intune Drift and Detect Conditional Access Drift do not report
+its own policy as unmanaged.
 
 ## Non-negotiables
 

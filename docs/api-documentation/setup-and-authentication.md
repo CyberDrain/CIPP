@@ -160,6 +160,7 @@ When a budget is in force and the instance has served its allowance for the day,
   ```json
   { "error": "egress_quota_exceeded", "retryAfterSeconds": 54058, "resetUtc": "2026-01-01T00:00:00Z" }
   ```
+* If the refused request didn't send `Accept-Encoding: br` or `gzip`, the body also carries a `compressionHint` field saying so.
 
 Two habits keep you comfortably inside a budget, and they're the same ones that keep you under the rate limit:
 

@@ -20,7 +20,7 @@ Within CIPP, there are two types of alerts. Choose one of the two cards at the t
 ## Alert Timing
 
 * **Audit Log Alerts** - Processed in near real-time, but a small delay of up to 15 minutes is normal.
-* **Scripted CIPP Alerts** - Each alert comes with a default recurrence suggested by the CIPP team, which you can adjust as needed. The available recurrences are every 30 minutes, hour, 4 hours, day, 7 days, 14 days, 21 days, 30 days or 365 days.
+* **Scripted CIPP Alerts** - Each alert comes with a default recurrence suggested by the CIPP team, which you can adjust as needed. The available recurrences are every 30 minutes, hour, 4 hours, 6 hours, day, 7 days, 14 days, 21 days, 30 days or 365 days. Alerts whose data only refreshes on a schedule, such as daily, set a minimum run interval, and only recurrences at or above that minimum are offered for them.
 
 ## Tenant Selector
 
@@ -51,7 +51,7 @@ Use **Add a condition** to build the rule. Each condition is a property, an oper
 | Field           | Description                                                                                                                                                                                  |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Select property | The audit log property to test. The list is driven by the chosen log source. You can also type a property that is not in the list to create a custom one, which is treated as a text value.  |
-| is              | The comparison to apply: `Equals to`, `Not Equals to`, `Like`, `Not like`, `Does not match`, `Greater than`, `Less than`, `In`, or `Not In`.                                                 |
+| is              | The comparison to apply: `Equals to`, `Not Equals to`, `Like`, `Not like`, `Does not match`, `Greater than`, `Less than`, `In`, or `Not In`. `Like` and `Not like` accept wildcards: `*` matches any run of characters and `?` matches a single character, so `UserId` `Not like` `*@contoso.com` leaves out every user in that domain. Without a wildcard they only match the exact value. `Does not match` takes a regular expression. |
 | Input           | The value to compare against. This is a free-text box for most properties, a picker when the property has a known set of values, and a multi-value picker when the operator is In or Not In. |
 
 #### Alerting on failed sign-ins
@@ -72,8 +72,12 @@ For what each code means, see Microsoft's [AADSTS error code reference](https://
 | Field                            | Description                                                                                                            |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | What alerting script should run  | The CIPP alert check to run. See [#available-alerts](alert.md#available-alerts "mention") for the full list. Required. |
-| When should the alert run        | How often the check repeats. Required.                                                                                 |
+| When should the alert run        | How often the check repeats. Required. Recurrences shorter than the alert's minimum run interval are not offered.      |
 | When should the first alert run? | The date and time of the first run, with the recurrence counted from there.                                            |
+
+{% hint style="info" %}
+Opening an existing alert that was saved with a recurrence shorter than its minimum run interval raises the recurrence to the minimum, and saving the alert keeps the new value. Until it is saved, the alert keeps its old schedule, but runs that fall inside the minimum interval since the last completed run for that tenant are skipped. Skipped runs are listed on [run-history.md](run-history.md "mention").
+{% endhint %}
 
 Some alert scripts need extra information, such as a threshold value or a list of items to watch. Any additional fields appear beneath the recurrence options once you have selected the script and are labelled by the script itself.
 
@@ -133,7 +137,7 @@ Overrides the default notification subject with your own text. The value is pref
 
 ### Alert Comment
 
-Free-text information to carry with the alert, such as documentation links, FAQ references or instructions for whoever picks it up. Variable replacement is supported, including `%tenantfilter%`, `%tenantname%`, `%resultcount%` for the number of results that triggered the alert, and any custom variables you have defined.
+Free-text information to carry with the alert, such as documentation links, FAQ references or instructions for whoever picks it up. The comment is shown in the alert notification for both alert types, with web addresses turned into clickable links and line breaks kept. Variable replacement is supported, including `%tenantfilter%`, `%tenantname%`, `%resultcount%` for the number of results that triggered the alert, and any custom variables you have defined.
 
 Once the criteria and notification settings are complete, **Save Alert** on the Notification Settings card writes the alert. The button stays disabled until every required field is valid.
 
@@ -159,6 +163,10 @@ The **Alert on presence of specific app ids** alert reports any service principa
 
 {% hint style="warning" %}
 The **Alert on OneDrive accounts with over-long paths** alert reads from a cache that CIPP does not refresh on a schedule, unlike most alert data. Run **Refresh CIPPDB Cache** for the **OneDrive Long Paths** cache type on the tenant from [tenants.md](../../../cipp/settings/tenants.md "mention") before relying on this alert, and again whenever you want it to reflect current data. It stores each affected user's UPN and a count of long paths only, never file or folder names.
+{% endhint %}
+
+{% hint style="info" %}
+The **Alert on pending license requests from users** alert reports requests that users send with the **Ask for a license** button in Microsoft 365 apps, which Microsoft otherwise shows only under **Billing > License requests** in the admin center. Each request alerts once and resolves when it is approved or denied. A tenant that has a license request policy with its own instructions (**Billing > License requests > License request policies**) shows users those instructions instead and keeps no pending requests, so the alert finds nothing there.
 {% endhint %}
 
 {% @cipp-external-webpage-block/cyberdrain url="https://resources.cipp.app/?tab=alerts" fullWidth="true" %}

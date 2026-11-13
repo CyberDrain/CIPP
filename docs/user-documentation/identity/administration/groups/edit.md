@@ -3,7 +3,7 @@
 The Edit Group page changes the properties, membership, and settings of an existing group. Membership is managed by adding and removing users, groups, contacts, and devices rather than by editing a list, so each save applies the additions and removals you have specified. Which fields appear depends on the group's type, since not every setting applies to every kind of group.
 
 {% hint style="danger" %}
-A group synchronised from on-premises Active Directory shows a warning at the top of the page. Changes to those groups belong in the on-premises environment, as edits made here are overwritten by the next synchronisation.
+A group synchronised from on-premises Active Directory shows a warning at the top of the page. Changes to those groups belong in the on-premises environment, as edits made here are overwritten by the next synchronisation. Licences are the exception: they exist only in the cloud, so licences assigned here stay in place.
 {% endhint %}
 
 ## Viewing current membership
@@ -50,6 +50,21 @@ Anything selected here is removed from the group when you save. The lists show o
 | Remove Owners                    | Removes the selected users as owners.                                                                                                   |
 | Remove Contacts                  | Removes the selected mail contacts.                                                                                                     |
 
+## Send Permissions
+
+Controls who can send mail as the group, or on its behalf. This section is shown for Distribution List, Mail-Enabled Security and Microsoft 365 groups.
+
+| Setting               | Description                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add Send As           | Lets the selected users send mail that appears to come from the group itself. Users who already have Send As are left out of the list.       |
+| Remove Send As        | Takes Send As away from the selected users. The list shows only the users who currently have it.                                             |
+| Add Send on Behalf    | Lets the selected users send mail on behalf of the group, so recipients see both the sender and the group. Users who already have it are left out of the list. |
+| Remove Send on Behalf | Takes Send on Behalf away from the selected users. The list shows only the users who currently have it.                                      |
+
+{% hint style="info" %}
+Send on Behalf can only be given to users who have a mailbox. Additions and removals of Send on Behalf are saved together, so if any selected user has no mailbox, none of the Send on Behalf changes are made and the result names that user. Your other changes still apply.
+{% endhint %}
+
 ## Group Settings
 
 These settings apply to mail-enabled groups, and which of them appear depends on the group's type.
@@ -64,7 +79,7 @@ These settings apply to mail-enabled groups, and which of them appear depends on
 
 ## Licenses
 
-Licences assigned to a group are applied automatically to everyone in it, which is how group-based licensing is managed. Changes can take a few minutes to take effect. This section is shown for Security groups that are not synchronised from on-premises Active Directory, and the licences the group currently holds are listed above the fields.
+Licences assigned to a group are applied automatically to everyone in it, which is how group-based licensing is managed. Changes can take a few minutes to take effect. This section is shown for every security-enabled group: Security groups, Mail-Enabled Security groups, and Microsoft 365 groups with **Security Enabled** turned on, including groups synchronised from on-premises Active Directory, since licence assignments are cloud-only and not touched by synchronisation. Distribution Lists and Microsoft 365 groups without security enabled cannot hold licences, so the section is hidden for them. The licences the group currently holds are listed above the fields.
 
 | Setting         | Description                                                                                                                     |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------- |

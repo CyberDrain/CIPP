@@ -24,7 +24,7 @@ The **Select a query** dropdown lists every query available to you, grouped into
 
 **Run** executes the currently loaded query against the selected tenant. The button stays disabled until you have either chosen a query from the dropdown or applied one from the **Edit Query** flyout. Selecting a different query from the dropdown discards any unapplied edits, so **Run** always uses the preset as saved.
 
-**View JSON** replaces the results table with a read-only JSON editor showing the raw Graph response, useful for inspecting nested properties that the table flattens. The button becomes **View Table** to switch back. The query bar stays available in both views.
+**View JSON** replaces the results table with a read-only JSON editor showing the raw Graph response, useful for inspecting nested properties that the table flattens. The button becomes **View Table** to switch back. The query bar stays available in both views. With **All Tenants** selected, results arrive in pages and the JSON view keeps loading them until the full set is shown.
 
 <details>
 

@@ -47,3 +47,11 @@
 ### Deploy and Update an Enterprise App Across Tenants
 
 {% @storylane/embed subdomain="app" linkValue="k93aklwjzfux" url="https://app.storylane.io/share/k93aklwjzfux" %}
+
+### Building a Staged Baseline
+
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/av1rymxqugob" linkValue="av1rymxqugob" %}
+
+### Previewing Baseline Changes with the What-If Report
+
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/fwmcj82sbxcl" linkValue="fwmcj82sbxcl" %}

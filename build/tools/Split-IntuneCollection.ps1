@@ -25,6 +25,7 @@
     authoring picker loads, since a hash-addressed bundle cannot answer "which settings exist".
     Settings that only ever appear beneath a parent carry parentId, because Intune
     rejects them on their own: the picker adds them through their top-level setting.
+    Settings Intune offers only inside a policy template carry templateOnly.
 
 .PARAMETER CollectionPath
     Source catalog, with the construction fields Update-IntuneCollection.ps1 collects.
@@ -134,7 +135,8 @@ try {
 
         # visibility, not accessTypes: accessTypes reads 'none' for most configurable settings.
         $Visibility = Get-JsonString $Element 'visibility'
-        if ($Visibility -and $Visibility -notmatch 'settingsCatalog') { continue }
+        $TemplateOnly = $Visibility -and $Visibility -notmatch 'settingsCatalog'
+        if ($TemplateOnly -and $Visibility -notmatch 'template') { continue }
         # Only the definition types frontend/src/utils/intune-setting-builder.js can build.
         if ((Get-JsonString $Element '@odata.type') -notmatch 'deviceManagementConfiguration(Choice|Simple)Setting(Collection)?Definition$|deviceManagementConfigurationSettingGroup(Collection)?Definition$') { continue }
 
@@ -151,6 +153,8 @@ try {
             categoryId   = Get-JsonString $Element 'categoryId'
             technologies = Get-JsonString $Applicability 'technologies'
         }
+        # Only offered in a policy built from a configuration policy template.
+        if ($TemplateOnly) { $Entry | Add-Member -NotePropertyName templateOnly -NotePropertyValue $true }
         $Platform = Get-JsonString $Applicability 'platform'
         foreach ($P in ($Platform ? ($Platform -split ',').Trim() : @('unknown'))) {
             if (-not $IndexByPlatform.ContainsKey($P)) { $IndexByPlatform[$P] = [System.Collections.Generic.List[object]]::new() }

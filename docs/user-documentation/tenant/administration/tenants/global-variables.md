@@ -68,6 +68,8 @@ Graph rejects the malformed value, so the standard fails for that tenant and the
 
 Conditional Access policies are checked before anything is written: a policy whose users, groups, locations or applications still hold an unresolved variable stops with an error naming the variable and the tenant, instead of reaching Graph.
 
+A user template's **Manager** and **Sponsor** are also checked before anything is sent: when the variable has no value for the tenant the user is created in, the user is still created, and the results report that the manager or sponsor could not be set, naming the variable and the tenant.
+
 {% hint style="warning" %}
 Always give a variable a global value when it is used in a template deployed through Standards, even if you intend every tenant to override it. The global value acts as a fallback, so a tenant that has not been given its own value still deploys a valid value instead of failing. Choose a global default that is safe to apply to any tenant, because it is used wherever a tenant-specific value is missing.
 {% endhint %}

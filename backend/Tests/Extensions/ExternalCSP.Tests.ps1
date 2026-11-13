@@ -89,6 +89,44 @@ Describe 'Invoke-ExternalCSPRequest' {
             Should -Throw '*Seat limit reached for this customer*'
     }
 
+    It 'treats a 2xx success:false body as a refusal on a <Action> call' -ForEach @(
+        @{ Action = 'Order'; Body = @{ sku = 'A'; quantity = 1 } }
+        @{ Action = 'Catalog'; Body = @{} }
+    ) {
+        Mock Invoke-RestMethod { [pscustomobject]@{ success = $false; message = 'Orders over 100 licences need distributor approval.' } }
+
+        { Invoke-ExternalCSPRequest -Action $Action -TenantFilter 'contoso.com' -Body $Body } |
+            Should -Throw "*rejected the $Action request: Orders over 100 licences need distributor approval.*"
+    }
+
+    It 'still refuses a 2xx success:false body that gives no message' {
+        Mock Invoke-RestMethod { [pscustomobject]@{ success = $false } }
+
+        { Invoke-ExternalCSPRequest -Action Order -TenantFilter 'contoso.com' -Body @{ sku = 'A'; quantity = 1 } } |
+            Should -Throw '*no reason was given*'
+    }
+
+    It 'accepts a 2xx body whose success flag is true or absent' {
+        Mock Invoke-RestMethod { [pscustomobject]@{ success = $true; status = 'accepted' } }
+        (Invoke-ExternalCSPRequest -Action Order -TenantFilter 'contoso.com' -Body @{ sku = 'A'; quantity = 1 }).status | Should -Be 'accepted'
+
+        Mock Invoke-RestMethod { [pscustomobject]@{ status = 'accepted' } }
+        (Invoke-ExternalCSPRequest -Action Order -TenantFilter 'contoso.com' -Body @{ sku = 'A'; quantity = 1 }).status | Should -Be 'accepted'
+    }
+
+    It 'says the provider gave no reason when a 5xx carries no message' {
+        Mock Invoke-RestMethod {
+            $Response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::BadGateway)
+            $Exception = [Microsoft.PowerShell.Commands.HttpResponseException]::new('Response status code does not indicate success: 502 (Bad Gateway).', $Response)
+            $Record = [System.Management.Automation.ErrorRecord]::new($Exception, 'Http', 'NotSpecified', $null)
+            $Record.ErrorDetails = [System.Management.Automation.ErrorDetails]::new('error code: 502')
+            throw $Record
+        }
+
+        { Invoke-ExternalCSPRequest -Action Quantity -TenantFilter 'contoso.com' -Body @{ subscriptionId = 's'; quantity = 1 } } |
+            Should -Throw '*could not process the Quantity request (HTTP 502) and gave no reason*'
+    }
+
     It 'makes no call to the provider while the feature flag is off' {
         Mock Get-CIPPFeatureFlag { [pscustomobject]@{ Id = 'ExternalCSP'; Enabled = $false } }
 

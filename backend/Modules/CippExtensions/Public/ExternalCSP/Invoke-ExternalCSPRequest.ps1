@@ -118,7 +118,18 @@ function Invoke-ExternalCSPRequest {
     } catch {
         # The contract lets the vendor explain a refusal as { "message": "..." }.
         $VendorMessage = try { ($_.ErrorDetails.Message | ConvertFrom-Json -ErrorAction Stop).message } catch { $null }
-        $Reason = if ($VendorMessage) { $VendorMessage } else { $_.Exception.Message }
+        if ($VendorMessage) {
+            throw "The CSP provider rejected the $Action request: $VendorMessage"
+        }
+        $Status = try { [int]$_.Exception.Response.StatusCode } catch { 0 }
+        if ($Status -ge 500) {
+            throw "The CSP provider could not process the $Action request (HTTP $Status) and gave no reason. Check the request in the provider's own portal or logs."
+        }
+        throw "The CSP provider rejected the $Action request: $($_.Exception.Message)"
+    }
+    # Platforms that cannot set an HTTP status (low-code workflow tools) refuse with a 2xx { "success": false, "message": "..." }.
+    if ($Response -is [System.Management.Automation.PSCustomObject] -and $Response.PSObject.Properties.Name -contains 'success' -and "$($Response.success)" -eq 'False') {
+        $Reason = if ($Response.message) { $Response.message } else { 'no reason was given' }
         throw "The CSP provider rejected the $Action request: $Reason"
     }
     return $Response

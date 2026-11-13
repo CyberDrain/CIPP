@@ -119,7 +119,7 @@ An integration built from this specification is unsupported by default. CSP prov
 * The partner is identified by the credential. One credential must only be able to act on that partner's customers.
 * Requests and responses are JSON (`Content-Type: application/json`).
 * List responses are a bare JSON array, not wrapped in an object. Return `[]` when there is nothing to list.
-* Any `2xx` status means success. CIPP ignores the body of a successful `POST`.
+* Any `2xx` status means success, unless the body is a refusal (see [Errors](external-csp.md#errors)). Otherwise CIPP ignores the body of a successful `POST`.
 * Calls are synchronous. CIPP does not poll for order status and does not retry a failed call.
 
 ### Authentication
@@ -137,13 +137,23 @@ Credentials are static. CIPP does not perform an OAuth token exchange, so a bear
 
 ### Errors
 
-Return a non-`2xx` status to refuse a request, with a JSON body containing a `message`:
+Refuse a request in either of two ways. CIPP shows `message` to the technician as the reason for the failure, so write it for a person.
+
+**Preferred: a non-`2xx` status** with a JSON body containing a `message`:
 
 ```json
 { "message": "This subscription is in its commitment term and cannot be decreased until 1 December." }
 ```
 
-CIPP shows `message` to the technician as the reason for the failure, so write it for a person. Without a `message`, the technician only sees the HTTP status.
+**Alternative: a `2xx` status** with `"success": false` and a `message`:
+
+```json
+{ "success": false, "message": "This subscription is in its commitment term and cannot be decreased until 1 December." }
+```
+
+Use the alternative only when your platform cannot choose the HTTP status of a response, as with many low-code workflow tools. CIPP treats it exactly like a non-`2xx` refusal, on every endpoint. A `2xx` body with `"success": true`, or with no `success` field, is a normal success.
+
+Without a `message`, the technician only sees the HTTP status or that no reason was given. A `5xx` without a `message` is reported as the provider failing to process the request, so reserve `5xx` for genuine faults and refuse with `4xx` or the alternative form.
 
 ### Test
 
@@ -164,7 +174,7 @@ Validate the credential the same way your other endpoints do, so that a passing 
 CIPP may call you for tenants that are not your customers. A partner may manage tenants in CIPP that buy through another distributor or directly from Microsoft, and may manage its own tenant there too.
 
 * **Catalog and subscriptions** return `200` with `[]`. A catalog that ignores `tenantId` returns the full catalog as usual. An empty list shows the technician an empty report rather than an error.
-* **New order, quantity change and cancel** are refused with a non-`2xx` status and a `message` that says the tenant is not a customer and what to do about it, for example `"This tenant has no reseller relationship with Contoso Distribution. Create the customer in the partner portal first."`
+* **New order, quantity change and cancel** are refused, in either form described under [Errors](external-csp.md#errors), with a `message` that says the tenant is not a customer and what to do about it, for example `"This tenant has no reseller relationship with Contoso Distribution. Create the customer in the partner portal first."`
 
 Use `401` or `403` only for a credential that is invalid or not permitted, so a refusal about the tenant is not mistaken for a credential problem.
 
@@ -324,7 +334,7 @@ When a technician buys a licence while creating or editing a user, CIPP places t
 * `sku` values match between the catalog and subscriptions responses.
 * Subscriptions carry `microsoftSkuId` wherever the product is a Microsoft 365 licence.
 * At most one active subscription is returned per `sku` per customer.
-* Refusals return a non-`2xx` status with a `message`.
+* Refusals return a non-`2xx` status, or a `2xx` with `"success": false`, together with a `message`.
 * A credential can only read and change its own partner's customers.
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

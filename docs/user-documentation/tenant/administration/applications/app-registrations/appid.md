@@ -40,7 +40,7 @@ This card identifies the registration. The top of the card shows the display nam
 
 Two collapsible entries summarise the credentials on the registration, one for client secrets and one for certificates. Each shows how many credentials are configured and the next expiry date, taken from the earliest expiry across all credentials of that type. Expanding an entry lists each credential by name and expiry date along with its key ID.
 
-**Add secret** creates a new client secret directly from the secrets entry, taking a description and an expiry of 3, 6, 12 or 24 months or a custom date. Each credential also carries its own menu:
+**Add secret** creates a new client secret directly from the secrets entry, taking a description and an expiry of 3, 6, 12 or 24 months or a custom date. The expiry defaults to 12 months. Each credential also carries its own menu:
 
 | Action | Description                                                                                                                            |
 | ------ | -------------------------------------------------------------------------------------------------------------------------------------- |

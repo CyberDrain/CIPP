@@ -61,6 +61,10 @@ Prevented, Alerted, and Not prevented rows also show how many gaps were found. T
 
 Re-runs every scenario for the selected tenant, one at a time. The button counts through them as it goes. If any scenario fails to run, a warning says how many could not be checked once the run finishes.
 
+### Export CSV
+
+Downloads the results of every scenario that has been checked as a CSV file. Scenarios not checked yet are left out. Greyed out until at least one scenario has a result.
+
 ## Scenario Detail
 
 Click a scenario to open it. The top of the detail shows the account the sign-in step was evaluated as, when the scenario was last checked, and a verdict:

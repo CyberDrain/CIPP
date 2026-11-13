@@ -21,3 +21,5 @@ A template needs at least one rule. Use **Add rule** for more, and the bin icon 
 | URLs           | Type a URL and choose **Add option**, for example `www.contoso.com/downloads/*`.                  |
 
 Rule names must be unique within the template. If a deploy finds a web category the tenant does not offer, it stops before changing anything and names the category.
+
+{% include "../../../../../.gitbook/includes/feature-request.md" %}

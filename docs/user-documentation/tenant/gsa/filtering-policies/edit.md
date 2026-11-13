@@ -15,3 +15,5 @@ Creates or edits a filtering policy in the selected tenant. Open it with **Add P
 The rules work as they do in a [filtering policy template](template.md). A policy needs at least one rule. When you save, rules that did not change are left alone, removed rules are deleted and new or changed rules are added.
 
 If this policy was deployed from a template, the next deploy of that template puts the template's settings back.
+
+{% include "../../../../../.gitbook/includes/feature-request.md" %}

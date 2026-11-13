@@ -1,6 +1,6 @@
 # Storage Report
 
-The Storage Report shows where a single tenant's storage capacity is being used, across SharePoint sites, Teams-connected sites and OneDrive accounts, and highlights sites that are near quota, inactive, or holding storage that could be reclaimed. Teams storage is not a separate pool: a Teams-connected site is SharePoint capacity on a group or channel site, tracked alongside the rest of SharePoint. File-level M365 Archive usage is added to the report once SharePoint admin access is available and the data has been synced. The report requires a single tenant to be selected; under **AllTenants** the page shows a placeholder asking you to pick a tenant instead.
+The Storage Report shows where a single tenant's storage capacity is being used, across SharePoint sites, Teams-connected sites and OneDrive accounts, and highlights sites that are near quota, inactive, or holding storage that could be reclaimed. Teams storage is not a separate pool: a Teams-connected site is SharePoint capacity on a group or channel site, tracked alongside the rest of SharePoint. File-level M365 Archive usage is added to the report once SharePoint admin access is available and the data has been synced. The report requires a single tenant to be selected; under **AllTenants** the page shows a placeholder asking you to pick a tenant instead. The report can be exported as a PDF.
 
 ## Syncing Storage Data
 
@@ -8,9 +8,10 @@ The report reads from cached usage data rather than querying SharePoint and OneD
 
 | Control      | Description                                                                                                                                                                     |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sync usage   | Queues a refresh of SharePoint site usage (including file-level archive metrics, where SharePoint admin access is available) and OneDrive usage for this tenant. This is what feeds the charts, the tables, and the near-quota and inactive views. Progress is shown next to it as **Usage sync**, and the report refreshes itself once the sync finishes. Greyed out unless you have SharePoint report write access. |
-| Scan cleanup | Queues the cleanup scan described under [#finding-cleanup-opportunities](storage-report.md#finding-cleanup-opportunities "mention"). It fills the reclaim columns only, and does not refresh usage sizes. Unavailable until usage data has been synced, and reads **Rescan cleanup** once a scan has run. Greyed out unless you have SharePoint report write access. |
+| Sync usage   | Queues a refresh of SharePoint site usage (including file-level archive metrics, where SharePoint admin access is available) and OneDrive usage for this tenant. This is what feeds the charts, the tables, and the near-quota and inactive views. Progress is shown next to it as **Usage sync**, and the report refreshes itself once the sync finishes. Greyed out unless you have SharePoint report write access; hovering over it shows the permission you need. |
+| Scan cleanup | Queues the cleanup scan described under [#finding-cleanup-opportunities](storage-report.md#finding-cleanup-opportunities "mention"). It fills the reclaim columns only, and does not refresh usage sizes. Unavailable until usage data has been synced, and reads **Rescan cleanup** once a scan has run. Greyed out unless you have SharePoint report write access; hovering over it shows the permission you need. |
 | Refresh      | Reloads the report from the cached data without running a new sync.                                                                                                                                                                                                    |
+| Export Report | Opens a preview of the report as a PDF, covering SharePoint and OneDrive storage use, version history and version policies per library, recycle bins, and inactive sites. You can then download it. The PDF is built from the last usage sync and cleanup scan. Greyed out until usage data has been synced.
 
 A **Last data refresh** line shows when the usage data and the cleanup scan were last refreshed, so you can tell how current the figures are before relying on them.
 
@@ -72,7 +73,7 @@ Buttons above the SharePoint Sites table apply common filters in one click:
 
 ## Finding Cleanup Opportunities
 
-**Scan cleanup**, at the top of the page beside **Sync usage**, queues a scan of every SharePoint site in the tenant, aside from OneDrive personal sites and a handful of system sites such as the search centre, content type hub and app catalogue. Each site is checked for a large amount of old file versions, a full recycle bin, or a document library that has grown out of proportion to the rest of the site. The scan fills the reclaim columns only, so it is not a substitute for **Sync usage** and refreshes no storage sizes. Progress is shown next to **Cleanup scan**, the page switches to the SharePoint Sites tab, and the table refreshes itself once the scan finishes.
+**Scan cleanup**, at the top of the page beside **Sync usage**, queues a scan of every SharePoint site in the tenant, aside from OneDrive personal sites and a handful of system sites such as the search centre, content type hub and app catalogue. Each document library's version policy is recorded, and each site is checked for a large amount of old file versions, a full recycle bin, or a document library that has grown out of proportion to the rest of the site. The scan fills the reclaim columns only, so it is not a substitute for **Sync usage** and refreshes no storage sizes. Progress is shown next to **Cleanup scan**, the page switches to the SharePoint Sites tab, and the table refreshes itself once the scan finishes.
 
 {% hint style="info" %}
 If no cleanup scan has been cached yet, a banner invites you to use **Scan cleanup**.
@@ -100,7 +101,7 @@ The **Recycle** tab needs SharePoint site recycle bin read access to view, and r
 
 ## Table Details
 
-The report is split into two tabs, **SharePoint Sites** and **OneDrive**, each counted in its own tab label.
+The report is split into three tabs, **SharePoint Sites**, **OneDrive** and **Libraries**, each counted in its own tab label.
 
 ### SharePoint Sites
 
@@ -134,7 +135,7 @@ The **Libraries** column opens a dialog listing the site's top-level document li
 | Display Name       | The library's name.                                                                                 |
 | Site Type          | The kind of library, for example Document Library or Site Pages.                                    |
 | File Count         | The number of files stored in the library.                                                          |
-| Storage Used In Bytes | How much storage the library is using.                                                           |
+| Storage Used       | How much storage the library is using.                                                           |
 | Version size (est.) | An estimate of the storage taken up by old file versions in the library.                          |
 | % of Site          | The library's storage as a percentage of the site's total storage used.                             |
 | Web Url            | The address of the library.                                                                         |
@@ -153,6 +154,22 @@ The **Libraries** column opens a dialog listing the site's top-level document li
 | Last Activity Date                | The last date any activity was recorded on the account. Treated as inactive when blank. |
 | Web Url                           | The address of the OneDrive account.                                     |
 | Report Refresh Date               | When the usage figures on this row were last synced.                     |
+
+### Libraries
+
+The **Libraries** tab lists every document library found by the cleanup scan, across all scanned sites, sorted by estimated version storage so the libraries holding the most old versions come first. It stays empty until you run **Scan cleanup**.
+
+| Column             | Description                                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Site               | The site the library belongs to.                                                                                                        |
+| Display Name       | The library's name.                                                                                                                     |
+| Storage Used       | How much storage the library is using in total.                                                                                      |
+| Current Files      | The storage taken up by the current version of each file, without version history.                                                     |
+| Version size (est.) | An estimate of the storage taken up by old file versions in the library.                                                               |
+| Versions %         | Estimated version storage as a percentage of the library's total storage.                                                              |
+| Version Policy     | The library's version history policy: **Versioning off**, **Automatic**, a version limit with versions that never expire, or a version limit with versions that expire after a set number of days. |
+| File Count         | The number of files stored in the library.                                                                                              |
+| Web Url            | The address of the library.                                                                                                             |
 
 ## Table Actions
 

@@ -1,6 +1,6 @@
 # New Endpoint Manager Template
 
-Builds a new Intune Settings Catalog template from scratch, by searching the Intune Settings Catalog for the settings you want and giving each one a value. Use it when there is no existing policy to capture or import. The template is stored in CIPP and appears on [README.md](README.md "mention"), ready to deploy to tenants.
+Builds a new Intune Settings Catalog template from scratch, by searching the Intune Settings Catalog for the settings you want and giving each one a value. The template can also be built on an endpoint security profile, for settings that only exist there. Use it when there is no existing policy to capture or import. The template is stored in CIPP and appears on [README.md](README.md "mention"), ready to deploy to tenants.
 
 {% hint style="info" %}
 A template that would not deploy is not saved, and the result lists what is wrong. Use **Validate template** while you build to find problems before you submit.
@@ -8,14 +8,19 @@ A template that would not deploy is not saved, and the result lists what is wron
 
 ## Template details
 
-| Field         | Description                                                                                                                                                                                          |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Template Name | The name of the template. Required. This is also the name the deployed policy takes, and the name CIPP matches on when deciding whether to overwrite an existing policy.                              |
-| Description   | The description recorded against the template.                                                                                                                                                       |
-| Platform      | The platform the policy is for: **Windows 10 and later**, **macOS**, **iOS/iPadOS**, **Android Enterprise**, **Android (AOSP)** or **Linux**. It decides which settings can be searched for. Defaults to **Windows 10 and later**. |
-| Technology    | How the policy is managed: **MDM**, **MDM + Security settings management**, **Configuration Manager**, **Apple Remote Management** or **Linux MDM**. Narrows the settings you can find. Defaults to **MDM**. |
+| Field         | Description                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Template Name | The name of the template. Required. This is also the name the deployed policy takes, and the name CIPP matches on when deciding whether to overwrite an existing policy.                                                                                                                                                                                                                                         |
+| Description   | The description recorded against the template.                                                                                                                                                                                                                                                                                                                                                                   |
+| Platform      | The platform the policy is for: **Windows 10 and later**, **macOS**, **iOS/iPadOS**, **Android Enterprise**, **Android (AOSP)** or **Linux**. It decides which settings can be searched for. Defaults to **Windows 10 and later**.                                                                                                                                                                               |
+| Technology    | How the policy is managed: **MDM**, **MDM + Security settings management**, **Configuration Manager**, **Apple Remote Management** or **Linux MDM**. Narrows the settings you can find. Defaults to **MDM**.                                                                                                                                                                                                     |
+| Start from    | What the template is built on. **Settings catalog**, the default, builds a plain Settings Catalog policy. Choosing an **Endpoint security:** profile builds the template on that endpoint security profile instead, which offers settings the Settings Catalog does not, such as per-rule exclusions for attack surface reduction rules. Only the endpoint security profiles for the chosen platform are listed. |
 
-Platform and Technology are locked once the template has a setting in it. Remove the settings first if you need to change either.
+Choosing an endpoint security profile sets Technology to match the profile, and locks both Platform and Technology. Once the template has a setting in it, Platform, Technology and Start from are all locked. Remove the settings first if you need to change any of them.
+
+{% hint style="info" %}
+A template built on an endpoint security profile only offers the settings that profile defines when you add a setting, because Intune drops any other setting when the policy is deployed.
+{% endhint %}
 
 ### Validate template
 
@@ -38,11 +43,11 @@ If a setting cannot be built from the Settings Catalog, for example because it n
 
 ### Setting rows
 
-| Control      | Description                                                                                                  |
-| ------------ | ------------------------------------------------------------------------------------------------------------ |
-| Remove       | Removes the setting from the template.                                                                       |
+| Control      | Description                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Remove       | Removes the setting from the template.                                                                                               |
 | Add row      | Appends another row to a setting that holds a list of grouped entries. Greyed out when the setting is at its maximum number of rows. |
-| Remove row N | Removes that row from a grouped setting. Greyed out when the setting is at its minimum number of rows.       |
+| Remove row N | Removes that row from a grouped setting. Greyed out when the setting is at its minimum number of rows.                               |
 
 ## Setting values
 

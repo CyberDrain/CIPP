@@ -133,7 +133,7 @@ The buttons on the card change depending on the current status. The available ac
 | Recreate              | Clears the current SSO record and provisions a brand-new app registration. The previous app is left in your Entra tenant for you to delete manually.  |
 | Refresh Sign-in URLs  | Adds a redirect URI for every hostname currently bound to this instance. Use it after adding a custom domain. Additive, so it never removes a URI.       |
 | Rotate Secret         | Generates a new client secret for the existing SSO app and stores it. The instance keeps signing users in with the previous secret until it restarts, so restart it when convenient; the previous secret stays valid until it expires. |
-| Save Changes          | Applies changes to the SSO settings, such as toggling multi-tenant mode. This restarts CIPP, and the change can take up to 60 seconds to take effect. |
+| Save Changes          | Applies changes to the SSO settings, such as toggling multi-tenant mode or changing the tenants allowed to sign in. This restarts CIPP, and the change can take up to 60 seconds to take effect. |
 
 {% hint style="info" %}
 The SSO client secret is rotated automatically by the weekly token update when it is within 30 days of expiry. The new secret is picked up at the next restart, and the logbook records a **Restart required** warning until then. A rotation, automatic or manual, is also logged at Alert severity with the user who performed it.
@@ -145,7 +145,7 @@ By default, CIPP sign-on is single-tenant: it trusts sign-ins only from your par
 
 Multi-tenant mode allows users from more than one Entra ID tenant to sign in. Use it for split-tenant deployments where your MSP's staff sign in from a tenant other than the partner tenant. Multi-tenant mode is currently the supported way to handle that scenario.
 
-One important caveat: multi-tenant mode currently accepts sign-ins from any Entra ID tenant. Whether a user can actually reach CIPP is still governed by the [cipp-users.md](cipp-users.md "mention") list and the roles assigned there, so only the intended users should be added.
+By default, multi-tenant mode accepts sign-ins from any Entra ID tenant. You can restrict it to a list of tenants, described below. Either way, whether a user can actually reach CIPP is still governed by the [cipp-users.md](cipp-users.md "mention") list and the roles assigned there, so only the intended users should be added.
 
 ## Configuring Multi-Tenant Mode
 
@@ -153,10 +153,22 @@ To enable multi-tenant login:
 
 1. Turn on the **Multi-tenant mode (allow users from multiple Entra ID tenants)** switch on the SSO App Registration card. You can also set it while creating the app, or from the Manual Configuration section.
 2. Select **Save Changes** to apply it. CIPP restarts, and the change can take up to 60 seconds.
-3. On the [cipp-users.md](cipp-users.md "mention") page, add the users who should have access and assign them appropriate roles.
+3. Optionally, restrict sign-in to the tenants your staff use, as described below.
+4. On the [cipp-users.md](cipp-users.md "mention") page, add the users who should have access and assign them appropriate roles.
 
-{% hint style="warning" %}
-**Restricting to specific tenants:** multi-tenant mode is currently all-or-nothing and cannot yet be limited to a chosen list of tenant IDs from this page. The ability to restrict multi-tenant sign-in to specific tenant IDs is a planned addition to the SSO settings; until it is available, scope who can actually sign in through the CIPP Users list. This section will be updated with the configuration steps once the feature ships.
+### Restricting Sign-In to Specific Tenants
+
+Once the SSO app exists and **Multi-tenant mode** is on, the card shows a **Restrict sign-in to these tenants (Entra tenant IDs)** field. Type each tenant ID and press Enter, then select **Save Changes**.
+
+* With tenants listed, only your own tenant and the listed tenants can sign in. Your own tenant is always allowed, so you do not need to add it.
+* With the field empty, users from any Entra ID tenant can sign in.
+
+Each entry must be a tenant ID. A name or domain is rejected and nothing is saved. Once saved, the confirmation message says how many other tenants sign-in is restricted to.
+
+Turning multi-tenant mode off returns the instance to single-tenant sign-in and clears the list, so enter it again if you turn multi-tenant mode back on later.
+
+{% hint style="info" %}
+Users can also receive a CIPP role from an app role assigned in their own tenant. The tenants that can grant each role are set under **App Role Tenants** on the role. See [add.md](cipp-roles/add.md "mention").
 {% endhint %}
 
 {% hint style="info" %}

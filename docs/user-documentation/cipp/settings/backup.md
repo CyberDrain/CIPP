@@ -83,8 +83,8 @@ The following configuration is captured.
 
 | Area                    | Contents                                                                                                                                 |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Access and permissions  | App permissions, access role groups, API clients, custom roles                                                                           |
-| Tenants                 | Tenant properties, tenant groups and their members, and the exclusion state of any excluded tenants                                      |
+| Access and permissions  | App permissions, access role groups, API clients, custom roles, role IP ranges, role app role tenants, and the CIPP Users list            |
+| Tenants                 | Tenant properties, tenant groups and their members, the exclusion state of any excluded tenants, and direct tenants                      |
 | Standards and templates | Standards, and all template types including Conditional Access, Intune, group, contact, Exchange connector and the rest                  |
 | Automation              | Scheduled tasks, scheduler configuration, webhook rules, custom PowerShell and test scripts                                              |
 | Reference data          | Domains, excluded licences, Graph Explorer presets, GDAP roles and role templates, community repositories, custom data, custom variables |
@@ -94,7 +94,9 @@ The following configuration is captured.
 Extension settings are backed up, but the credentials behind them are not. After a restore you will need to re-enter the API keys and secrets for every integration before they will work again.
 {% endhint %}
 
-A few areas are captured selectively rather than in full. Scheduled tasks exclude anything already completed, so a restore does not resurrect finished jobs. Tenants capture only the rows for tenants you have excluded, rather than the whole tenant list, which CIPP rebuilds itself.
+A few areas are captured selectively rather than in full. Scheduled tasks exclude anything already completed, so a restore does not resurrect finished jobs. Tenants capture only the rows for tenants you have excluded and for direct tenants, rather than the whole tenant list, which CIPP rebuilds itself from your GDAP relationships. A restored direct tenant is marked as needing a refresh, because its authorisation is not part of the backup.
+
+Restoring access role groups, API clients, custom roles, role IP ranges, role app role tenants or the CIPP Users list requires the superadmin role. For anyone else, those categories are skipped and the rest of the restore goes ahead.
 
 ## Backup Replication
 

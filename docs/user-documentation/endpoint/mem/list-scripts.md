@@ -43,6 +43,12 @@ Selecting **Edit Script** fetches the script's contents and opens them in a synt
 
 Remediation scripts carry two payloads, so the dialogue shows Detection Script and Remediation Script on separate tabs, each edited and saved independently of the other.
 
+Below the editor, **Replace CIPP variables on save** swaps variables such as `%tenantid%`, `%defaultdomain%` and your own custom variables for the tenant's values when you save. It is off each time the dialogue opens, so a script that uses `%NAME%` environment variables of its own is not changed by accident.
+
+{% hint style="warning" %}
+Intune stores the script with the values already substituted, so the variables are gone the next time you open the script.
+{% endhint %}
+
 {% hint style="warning" %}
 Built-in Microsoft remediation scripts are read-only. The editor opens and the script can be read, but the save control is not offered, because Intune rejects changes to them.
 {% endhint %}
@@ -50,5 +56,33 @@ Built-in Microsoft remediation scripts are read-only. The editor opens and the s
 {% hint style="info" %}
 Some script types hold no editable content, in which case the dialogue says so rather than opening an editor.
 {% endhint %}
+
+## Deployment Status
+
+The **More Info** flyout begins with a **Deployment Status** section, showing how the script has deployed in the same way as the Device status and User status pages in the Microsoft Intune admin center. The section has a **Devices** tab and a **Users** tab, each labelled with its number of rows, and above the table a chip for each status counts how many rows are in it.
+
+**Devices**
+
+| Column              | Description                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Device Name         | The name of the device.                                                                                            |
+| User Principal Name | The user associated with the device's status.                                                                      |
+| Status              | The result of running the script on the device. For a remediation script, the result of the detection script.      |
+| Status Detail       | The error Intune reported where the script failed. For a remediation script, the result of the remediation script. |
+| Platform            | The device's operating system.                                                                                     |
+| Last Reported       | When the device last reported its status.                                                                          |
+
+**Users**
+
+| Column              | Description                                                                                                    |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| User Principal Name | The user's sign-in name.                                                                                       |
+| User Name           | The user's display name.                                                                                       |
+| Status              | Error if the script failed on any of the user's devices, otherwise Success.                                    |
+| Status Detail       | How many of the user's devices the script succeeded and failed on. Not used for remediation and Linux scripts. |
+| Device Count        | The number of the user's devices the script ran on.                                                            |
+| Last Reported       | When the user's status was last reported. Empty where Intune does not report it.                               |
+
+Remediation and Linux scripts have no per-user report in Intune, so their **Users** tab is built from the device rows: one row per user, carrying the worst status across that user's devices. Devices with no user are grouped into a single row named **No user**.
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

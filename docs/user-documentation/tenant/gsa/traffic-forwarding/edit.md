@@ -30,3 +30,5 @@ Destinations are FQDNs (`*.contoso.com` allowed), IPv4 addresses, subnets (`10.0
 If a section's existing rules use different ports for different destinations, its ports field starts blank. Changing that section applies one port list to all its destinations.
 
 If part of the profile could not be read, its fields are hidden and that part is left unchanged.
+
+{% include "../../../../../.gitbook/includes/feature-request.md" %}

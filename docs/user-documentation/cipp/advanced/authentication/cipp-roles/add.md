@@ -25,6 +25,24 @@ Select a [JIT Role Template](../../../../identity/administration/jit-admin/role-
 ### (Optional) Allowed Tenants
 
 Select the tenants that you want this role to have access to. If you select `AllTenants` you will be given the option to select any blocked tenants if a restrictive list is easier to manage.
+
+{% hint style="info" %}
+Templates are shared across every tenant, so a role limited to particular tenants, through a list of allowed tenants or any blocked tenants, can create new templates but cannot change or remove existing ones. Only a role that reaches every tenant can.
+{% endhint %}
+{% endstep %}
+
+{% step %}
+### (Optional) Block the All Tenants view
+
+Switch on **Block the All Tenants view** to stop members of this role selecting **\*All Tenants** in the tenant selector or running cross-tenant views. A user who also holds a role without this setting, or a built-in admin role, still gets the All Tenants view.
+{% endstep %}
+
+{% step %}
+### (Optional) Block tenant groups in the tenant selector
+
+Switch on **Block tenant groups in the tenant selector** to stop members of this role picking a tenant group in the tenant selector to view pages. They can still assign standards, alerts and other settings to tenant groups, and a user who also holds a role without this setting still gets tenant groups in the selector.
+
+The switch is unavailable until **Tenant Groups in Tenant Selector** is turned on under [features.md](../../../settings/features.md "mention"). See [tenant-select.md](../../../../shared-features/menu-bar/tenant-select.md "mention").
 {% endstep %}
 
 {% step %}
@@ -37,6 +55,16 @@ You can get more granular with your permissions to block specific CIPP API endpo
 ### (Optional) Allowed IP Range
 
 Enter the IP addresses, as single hosts or in CIDR notation, that members of this role can use CIPP from. Leave it empty to allow all IP addresses.
+{% endstep %}
+
+{% step %}
+### (Optional) App Role Tenants
+
+Enter the Entra tenant IDs whose users can be given this role through an app role on the CIPP SSO enterprise app, pressing Enter after each one. A user from a listed tenant who is assigned the role's app role on that enterprise app receives this CIPP role when they sign in. Include your own tenant ID to grant the role this way in your own tenant. Anything that is not a tenant ID is ignored when you save.
+
+When you save, CIPP adds an app role named after this role to the CIPP-SSO app registration if one is not there yet. If it cannot, the result message asks you to add an app role with the role's name as its value yourself.
+
+Users from any tenant other than your own can only sign in when the SSO app is in multi-tenant mode and an administrator in their tenant has consented to it. If sign-in is restricted to a list of tenants, the result message names any listed tenant that is missing from it. See [#single-tenant-vs-multi-tenant-login](../sso.md#single-tenant-vs-multi-tenant-login "mention").
 {% endstep %}
 
 {% step %}

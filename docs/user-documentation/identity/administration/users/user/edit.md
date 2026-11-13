@@ -45,14 +45,14 @@ When the [sherweb.md](../../../../cipp/integrations/sherweb.md "mention") integr
 
 ## Contact and organisation
 
-| Field                                              | Description                                                                                                                      |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Job Title, Department, Company Name                | Organisational details written to the directory and shown in the address list.                                                   |
-| Street, City, State/Province, Postal Code, Country | The user's postal address.                                                                                                       |
-| Mobile #, Business #                               | Contact numbers.                                                                                                                 |
-| Alternate Email Addresses                          | Secondary addresses, separated by commas.                                                                                        |
-| Set Manager                                        | The user recorded as this account's manager.                                                                                     |
-| Set Sponsor                                        | The user recorded as this account's sponsor. Only shown when `sponsor` has been added to the attribute list in your preferences. |
+| Field                                              | Description                                                                                                                                                                                     |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Job Title, Department, Company Name                | Organisational details written to the directory and shown in the address list.                                                                                                                  |
+| Street, City, State/Province, Postal Code, Country | The user's postal address.                                                                                                                                                                      |
+| Mobile #, Business #                               | Contact numbers.                                                                                                                                                                                |
+| Alternate Email Addresses                          | Secondary addresses, separated by commas.                                                                                                                                                       |
+| Set Manager                                        | The user recorded as this account's manager.                                                                                                                                                    |
+| Set Sponsor                                        | A user to add as this account's sponsor. Any sponsor the account already has is kept alongside the new one. Only shown when `sponsor` has been added to the attribute list in your preferences. |
 
 {% hint style="info" %}
 Emptying one of these boxes clears the property in Entra ID, rather than leaving it as it was. This applies only to fields you actually edit during this visit: a field that was already empty when the page loaded is left alone, so the form does not wipe properties it was never asked about. The fields that behave this way are First Name, Last Name, Job Title, Department, Company Name, Mobile #, Business #, Street, City, State/Province, Postal Code, Country and Alternate Email Addresses. Display Name cannot be cleared this way.

@@ -27,6 +27,7 @@ The page opens on whichever scope currently applies to you: your own settings if
 | Show Popover Bookmarks | Shows your bookmarked pages in a popover opened from the menu bar.    |
 | Bookmark Reorder Mode  | How bookmarks are reordered: with Arrow Buttons, or by Drag and Drop. |
 | Compact Navigation     | Reduces the size of the navigation menu so more of it fits on screen. |
+| Show Recent Tenants in Tenant Selector | Shows the **Recent** group in the tenant selector. Switched on by default; switch it off to list only favourites and the full tenant list. See [tenant-select.md](tenant-select.md "mention"). |
 
 ## Offboarding Default Settings
 

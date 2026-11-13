@@ -39,7 +39,7 @@ The underlying properties are those of the Graph resource type `operationApprova
 The table deliberately offers nothing else. Approving and rejecting are refused by Intune for the reasons above, and deleting a request is not offered because the request is the tenant's record of a pending decision: removing it would neither apply nor cancel the change behind it.
 
 {% hint style="info" %}
-Once a request is approved, a change CIPP raised is reapplied automatically. There is nothing to resubmit from this page.
+When a change made from CIPP needs approval, CIPP raises the request itself and the change reports that an approval request has been raised. Once the request is approved, CIPP completes the change automatically, checking for a decision about once an hour, so it can take up to an hour after approval for the change to land. There is nothing to resubmit from this page. If the request is rejected, cancelled or expires, CIPP stops waiting and the change is not made; repeat it in CIPP to raise a fresh request.
 {% endhint %}
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

@@ -12,7 +12,7 @@ The strip across the top of the page summarises the state of the running contain
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Release Channel | The channel the running container was built from. Hover to see the running image tag. A branch build shows its own tag here, in red, rather than a channel name. |
 | App Version     | The version of CIPP currently running, followed by the short commit it was built from. Select the tile to open **Build Details**.                                |
-| Update Status   | **Never checked**, **Update available**, or **Up to date**. Select the tile to open **Latest on this channel**.                                                  |
+| Update Status   | **Never checked**, **Update available**, **Up to date**, **Update unverified**, **Up to date, unverified**, or **Running image unverified**. The unverified states are explained under [#provenance](status.md#provenance "mention"). Select the tile to open **Latest on this channel**. |
 | Last Checked    | How long ago the last update check ran, such as `3h ago`. Hover for the exact date and time, in your local time zone.                                            |
 
 Selecting the App Version tile opens a **Build Details** panel:
@@ -24,17 +24,20 @@ Selecting the App Version tile opens a **Build Details** panel:
 | Image Built (UTC) | The date and time the running image was built.                     |
 | Container Image   | The full reference of the running container image, when known.     |
 | App Service       | The name of the App Service hosting the container, when available. |
+| Pinned Digest     | The image digest the instance is pinned to, when it is pinned. Hover to see the full digest. |
+| Provenance        | Whether the image the instance is running passed provenance verification. |
 
-Selecting the Update Status tile opens a **Latest on this channel** panel, showing the version, build date and image digest of the newest image found on your channel by the last check.
+Selecting the Update Status tile opens a **Latest on this channel** panel, showing the version, build date, image digest and provenance result of the newest image found on your channel by the last check.
 
 Build details are baked into the image when it is built, and some of them are simply absent from locally built and development images. Any field the running build does not report is left out of these panels rather than shown as unknown, so a development image may show only two or three rows.
 
 ## Notices
 
-Two notices can appear directly below the status strip, and only when there is something to act on.
+Notices can appear directly below the status strip, and only when there is something to act on.
 
 * A **channel change is pending**: the running and configured channels differ, and the container needs to be restarted to apply the change. Both channels are named in the notice.
 * A **container update is available**: a newer image has been published on your channel, and restarting will pull it.
+* The **latest image on your channel did not pass provenance verification**: shown in place of the update notice. It says whether a restart keeps the pinned image or pulls the unverified image anyway.
 
 ## Actions
 
@@ -56,7 +59,12 @@ With auto-restart off, a check only records what it found. Nothing is pulled and
 
 ### Restart Container
 
-Restarting causes a brief period of downtime while the container comes back up. The newest image on the current channel is pulled as it comes back, so a restart always updates to the latest image on the channel, whatever the reason for the restart, including a channel change or a pending update.
+Restarting causes a brief period of downtime while the container comes back up. What it comes back on depends on whether the instance is pinned to an image digest:
+
+* **Pinned**: it comes back on the pinned image, moved to the newest image on the channel only if that image passed provenance verification.
+* **Not pinned**: the newest image on the current channel is pulled as it comes back, so a restart updates to the latest image on the channel whatever the reason for the restart, including a channel change or a pending update.
+
+The confirmation dialog says which applies, and warns you when an unpinned restart would pull an image that failed verification.
 
 ## Release Channel
 
@@ -115,7 +123,9 @@ Verified says who built the image, not who reviewed it. On the **dev** and **nig
 
 See [verifying-container-images.md](../../../../security/cipp-security-and-compliance/verifying-container-images.md "mention") for how to verify an image yourself and what to do when building from a fork.
 
-Note that if the container restarts for any reason, the latest image for the current release channel is pulled regardless of these settings.
+When an update passes verification and is applied, the instance is pinned to that image's digest, so a later restart cannot pick up a different image under the same tag. With auto-restart on, an instance that is not yet pinned is pinned to its verified channel image once, which restarts it onto the same image. An image that fails or cannot be verified never moves the pin. Until an instance is pinned, a restart for any reason pulls the latest image for the current release channel regardless of these settings.
+
+The **Provenance** row under **Build Details** checks the image the instance is actually running. If the running image fails that check, the Update Status tile shows **Running image unverified**.
 
 ## Update History
 

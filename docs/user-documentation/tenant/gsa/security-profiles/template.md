@@ -21,3 +21,5 @@ A template needs at least one filtering policy. Use **Add filtering policy** for
 | Priority                  | From 100 to 65000, unique within the template. Lower numbers are processed first.              |
 | Enabled                   | Whether this policy is active in the profile.                                                   |
 | Logging                   | Whether traffic matched by this policy is logged.                                               |
+
+{% include "../../../../../.gitbook/includes/feature-request.md" %}

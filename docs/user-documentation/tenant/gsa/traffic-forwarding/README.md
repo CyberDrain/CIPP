@@ -27,3 +27,5 @@ If part of a profile could not be read, the rest is still shown, and the full ro
 <table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Edit Profile</td><td>Opens the profile in the <a href="edit.md">editor</a>.</td><td>false</td></tr><tr><td>Enable Profile</td><td>Enables the profile. Shown for a disabled profile.</td><td>false</td></tr><tr><td>Disable Profile</td><td>Disables the profile, so its traffic no longer goes through Global Secure Access. Shown for an enabled profile.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full profile.</td><td>false</td></tr></tbody></table>
 
 Changes take about 10 seconds to show when the page is refreshed.
+
+{% include "../../../../../.gitbook/includes/feature-request.md" %}

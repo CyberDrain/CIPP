@@ -32,7 +32,7 @@ Adding a tenant requires a role with unrestricted tenant access, meaning **Allow
 
 For Microsoft CSP partners. This walks you through creating a GDAP relationship, selecting the admin roles to request, and generating an invite link to send to the customer.
 
-Once the customer accepts the invite, a further **GDAP Tenant Onboarding** step becomes available in the same wizard. That step maps the requested GDAP roles to security groups and validates that CIPP can reach the tenant, and it offers the option to exclude the newly onboarded tenant from All Tenant standards. It can also add the tenant to static tenant groups, which happens once its CPV permissions have been refreshed. Onboarding progress can also be reviewed later on onboarding.md.
+Once the customer accepts the invite, a further **GDAP Tenant Onboarding** step becomes available in the same wizard. That step maps the requested GDAP roles to security groups and validates that CIPP can reach the tenant, and it offers the option to exclude the newly onboarded tenant from All Tenant standards and from baselines assigned to All Tenants. It can also add the tenant to static tenant groups, which happens once its CPV permissions have been refreshed. Onboarding progress can also be reviewed later on onboarding.md.
 
 ### Add Direct Tenant
 

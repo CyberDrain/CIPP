@@ -1,12 +1,12 @@
 # View Enterprise Application
 
-This page shows a single enterprise application in detail: its identifiers and publisher, how exposed the tenant is through it, the credentials it holds, who owns it, and the permissions and directory roles that have actually been granted to it in the tenant.
+This page shows a single enterprise application in detail: its identifiers and publisher, how exposed the tenant is through it, the credentials it holds, who owns it and who can sign in to it, the permissions and directory roles that have actually been granted to it in the tenant, and the mailbox access Exchange gives it.
 
 The header carries the application's display name, an **Enabled** or **Disabled** chip showing whether the application can sign in and obtain tokens in this tenant, chips for the Application (client) ID and Object ID that copy to the clipboard when selected, how long ago the service principal was created, and a **View in Entra** link that opens the same application in the Microsoft Entra admin center.
 
 ## Page Actions
 
-The actions menu offers the same actions as the [#table-actions](./#table-actions "mention") table, with the exception of the one that opens this page. All of them act on the application currently in view.
+The actions menu offers the same actions as the [#table-actions](./#table-actions "mention") table, with the exception of the one that opens this page. All of them act on the application currently in view. **Investigate compromise** opens [case.md](../../nhi/case.md "mention") for this application and starts a new compromise investigation of it.
 
 For an application that uses SAML single sign-on, three further actions manage its token signing certificates. They are greyed out for any other application.
 
@@ -89,6 +89,12 @@ Rotation deletes the original secret as soon as the replacement is created, so a
 Client secrets and certificate credentials cannot be added from this page, only rotated or removed. A certificate removed here has to be uploaded again in Entra. Token signing certificates are the exception, and can be added with **Add Token Signing Certificate**.
 {% endhint %}
 
+### Users and groups
+
+Shows the users and groups assigned to the application and whether assignment is required. With assignment required, only the assigned users and groups can sign in. Without it, everyone in the tenant can. Expanding the entry lists each assignment with the user or group name, whether it is a user or a group, the application role it was given, and when it was assigned. **View User** opens the selected user in CIPP, and is greyed out for groups.
+
+Applications holding permissions on this application are not listed here. Assignments are changed with **Manage Assignments** in the actions menu.
+
 ### Owners
 
 Lists the directory objects that own the service principal, with their display name, user principal name, mail address and object type. **View User** opens the selected owner in CIPP, and is offered only for owners that are users rather than groups or other service principals.
@@ -127,20 +133,58 @@ The risky-permissions set is a deliberately short list of the permissions most u
 
 ## Roles Tab
 
-This tab lists the Microsoft Entra directory roles assigned to the application. A role lets the application act as that administrator through any application permission it uses, so a role here can grant far more than the Permissions tab suggests.
+This tab lists the Microsoft Entra directory roles the application holds, whether assigned to it directly or held through membership of a role-assignable group. A role lets the application act as that administrator through any application permission it uses, so a role here can grant far more than the Permissions tab suggests.
 
-Each role shows its name and description, a chip for where it applies (**Directory** for tenant-wide, otherwise the scope it is limited to), and a **Custom** chip for a custom role. Roles in CIPP's risky set carry an **Impact** chip, and hovering it gives the reason the role is considered risky. Where the application holds no roles, the tab says so.
+Each role shows its name and description, a chip for where it applies (**Directory** for tenant-wide, otherwise the scope it is limited to), and a **Custom** chip for a custom role. A role held through a group carries a **Via group** chip naming the group. Roles in CIPP's risky set carry an **Impact** chip, and hovering it gives the reason the role is considered risky. Where the application holds no roles, the tab says so.
 
 With the `Identity.Role.ReadWrite` permission, you can change the application's roles here. Each change applies as soon as you confirm it.
 
 | Control           | Description                                                                                                                                                                                                                   |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Add role          | Choose one or more directory roles to assign. Roles are assigned tenant-wide. Roles in CIPP's risky set show their impact in the list, and roles the application already holds tenant-wide are not offered.                     |
-| Remove (bin icon) | Shown on each role. Removes that role from the application, including a role limited to an administrative unit.                                                                                                            |
-| Remove all        | Removes every directory role the application holds. Greyed out when it holds none.                                                                                                                                           |
+| Add role          | Choose one or more directory roles to assign. Roles are assigned tenant-wide. Roles in CIPP's risky set show their impact in the list, and roles already assigned directly to the application tenant-wide are not offered.                    |
+| Remove (bin icon) | Shown on each directly assigned role. Removes that role from the application, including a role limited to an administrative unit.                                                                                          |
+| Remove all        | Removes every directory role assigned directly to the application. Greyed out when it holds none directly.                                                                                                                  |
+
+{% hint style="info" %}
+A role held through a group cannot be removed here. Remove the application from the group, or remove the role from the group, to take it away.
+{% endhint %}
 
 {% hint style="warning" %}
 Privileged roles such as Global Administrator give the application full control of the tenant. CIPP refuses to change the roles of its own CIPP-SAM application.
 {% endhint %}
+
+## Exchange Tab
+
+This tab shows the mailbox access Exchange Online gives the application, which is separate from anything granted in Entra. The same access across the whole tenant is listed under [App Mailbox Access](../../../../email/administration/app-mailbox-access/roles.md).
+
+With the `Tenant.Application.ReadWrite` permission, you can change the application's Exchange access here. CIPP refuses to change the Exchange access of its own CIPP-SAM application.
+
+### Exchange application roles
+
+Lists the Exchange application roles the application holds. These roles do not show as permissions in Entra and add to whatever the application holds there. Each role shows the mailboxes it applies to and a chip for its scope: **Organization**, the management scope or the administrative unit. Roles in CIPP's risky set carry an **Impact** chip, and hovering it gives the suspicion and impact ratings and the reason the role is considered risky. A disabled assignment carries a **Disabled** chip.
+
+Where the application is not registered in Exchange the tab says so, because it cannot hold any roles until it is. Adding a role registers it.
+
+| Control                | Description                                                                                                                                                                                                                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New management scope   | Creates a management scope from a **Name** and a **Recipient filter** on mailbox properties, for example `Department -eq 'Sales'`. The scope is created for the whole tenant and can then be used for any role assignment.                                                                    |
+| Remove all             | Removes every Exchange application role the application holds. Greyed out when it holds none.                                                                                                                                                                                                |
+| Add role               | Choose one or more **Application roles**, then the **Mailboxes the role applies to**: every mailbox in the organisation, a management scope, or an administrative unit. Roles in CIPP's risky set show their impact in the list. A role the application already holds with the same scope is reported as already held. |
+| Change scope (tune icon) | Shown on each role. Assigns the role with the new scope you choose, then removes the current assignment, so the application keeps access throughout.                                                                                                                                       |
+| Remove (bin icon)      | Shown on each role. Removes that role from the application.                                                                                                                                                                                                                                  |
+
+Exclusive management scopes do not restrict an application, so they are not offered when choosing a scope.
+
+{% hint style="info" %}
+Role changes can take up to two hours to reach an application that is already in use. After a role is removed, the application can keep that mailbox access for up to two hours.
+{% endhint %}
+
+### Application access policies
+
+Lists the application access policies that apply to the application. A policy limits which mailboxes the mailbox permissions the application holds in Entra can reach. **RestrictAccess** allows only the members of the named group, and **DenyAccess** every mailbox except theirs. Policies do not limit Exchange application roles. A policy that applies to every application carries an **Every app** chip, and one that Exchange marks invalid, for example because its group was deleted, carries an **Invalid** chip.
+
+Where no policy applies, the application's Entra mailbox permissions reach every mailbox. With the `Tenant.Application.ReadWrite` permission, **Remove policy** (bin icon) removes a policy that names only this application. A policy that applies to every application, or that also names other applications, has to be removed from [Access Policies](../../../../email/administration/app-mailbox-access/policies.md) instead.
+
+Microsoft is replacing application access policies with Exchange application roles scoped to a management scope or administrative unit, so new policies cannot be created in CIPP.
 
 {% include "../../../../../../.gitbook/includes/feature-request.md" %}

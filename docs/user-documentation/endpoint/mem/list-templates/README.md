@@ -8,7 +8,7 @@ Lists the Intune policy templates saved in CIPP, which are the templates the **D
 
 <summary>Create New Template</summary>
 
-Opens [add.md](add.md "mention"), where you build a Settings Catalog template from scratch by searching for the settings you want.
+Opens [add.md](add.md "mention"), where you build a Settings Catalog template from scratch by searching for the settings you want, optionally starting from an endpoint security profile.
 
 </details>
 
@@ -35,18 +35,18 @@ Opens a drawer for adding templates to CIPP, with two sources to choose between.
 
 ## Table Details
 
-| Column       | Description                                                                                                                                                                     |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Display Name | The name of the template.                                                                                                                                                       |
-| Is Synced    | Whether the template came from a community repository and is still linked to it. A template that has been edited or cloned is no longer linked and shows as not synced.         |
-| Synced From  | The repository the template was imported from, shown as owner and repository name. Empty for templates created or cloned in CIPP.                                                 |
-| Package      | The package the template has been tagged with, where one has been assigned. Packages let a standards template pull in a set of templates by tag rather than by naming each one. |
-| Description  | The description recorded against the template.                                                                                                                                  |
-| Type         | The template type, for example Catalog, Device, Admin, AppProtection or deviceCompliancePolicies. This determines how the policy is written when deployed.                      |
-| Usage        | The standards templates that use this template, and whether each one references it directly or picks it up through its package tag.                                             |
+| Column       | Description                                                                                                                                                                                                                                                                                               |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Display Name | The name of the template.                                                                                                                                                                                                                                                                                 |
+| Is Synced    | Whether the template came from a community repository and is still linked to it. A template that has been edited or cloned is no longer linked and shows as not synced.                                                                                                                                   |
+| Synced From  | The repository the template was imported from, shown as owner and repository name. Empty for templates created or cloned in CIPP.                                                                                                                                                                         |
+| Package      | The package the template has been tagged with, where one has been assigned. Packages let a standards template pull in a set of templates by tag rather than by naming each one.                                                                                                                           |
+| Description  | The description recorded against the template.                                                                                                                                                                                                                                                            |
+| Type         | The template type, for example Catalog, Device, Admin, AppProtection or deviceCompliancePolicies. This determines how the policy is written when deployed.                                                                                                                                                |
+| Usage        | The baselines and standards templates that use this template, one chip each. A chip names the baseline or standards template, the baseline stage where there is one, whether it remediates or only reports, and the package where the template is picked up through its package tag rather than directly. |
 
 {% hint style="info" %}
-Selecting a row opens a flyout listing the standards templates the template is used in, each linking through to that template, followed by the template's own configuration. This is worth checking before deleting a template, since a template in use by a standard will stop that standard applying.
+The **More Info** flyout opens with a **Used in Baselines and Standards Templates** table listing everything that uses the template, followed by the template's own configuration. Each row links through to the baseline or standards template, and shows its **Type**, the baseline **Stage**, whether it is set to **Remediate** or **Report only**, and whether it includes the template directly or through a package. This is worth checking before deleting a template, since a template in use by a baseline or standard will stop it applying.
 {% endhint %}
 
 {% hint style="info" %}

@@ -27,3 +27,5 @@ Results are listed for each change. Turning logging on or off for a policy unlin
 Editing the baseline profile's filtering policies applies them to all Internet Access traffic, without a Conditional Access policy.
 
 If this profile was deployed from a template, the next deploy of that template puts the template's settings back.
+
+{% include "../../../../../.gitbook/includes/feature-request.md" %}

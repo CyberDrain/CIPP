@@ -12,3 +12,5 @@ Lists the Global Secure Access remote networks (branch sites) in the selected te
 | Device Links | The site's devices: name, public IP address, vendor, bandwidth and BGP ASN. Empty if they could not be read. |
 
 The VPN pre-shared key of a device link is never shown or stored by CIPP.
+
+{% include "../../../../../.gitbook/includes/feature-request.md" %}

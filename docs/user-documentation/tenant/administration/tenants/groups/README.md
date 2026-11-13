@@ -14,6 +14,8 @@ Creating, editing and deleting a group, and re-running a dynamic group's rules, 
 
 Opens a flyout to create a new tenant group. Set the group name, description, and group type, then either pick the initial member tenants for a static group or build the membership rules for a dynamic group. Dynamic groups also offer the option to exclude the partner tenant from the group even when the membership rules would otherwise include it. The fields are the same as those on the edit page, so see edit.md for the full detail on configuring a group.
 
+The names `AllTenants`, `Exported Template`, `Template Tenant` and `Excluded onboarded tenants` are reserved, and a group cannot be saved under any of them.
+
 </details>
 
 <details>
@@ -68,6 +70,6 @@ Check the Usage column before deleting a group. A group that is still referenced
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Edit Group</td><td>Opens the edit.md page for the selected group, where you can change its name, description, and membership or rules.</td><td>false</td></tr><tr><td>Run Dynamic Rules</td><td>Forces an immediate re-evaluation of the group's membership rules rather than waiting for the next scheduled run. Only offered on groups with a dynamic group type. You are asked to confirm before the rules are run.</td><td>true</td></tr><tr><td>Delete Group</td><td>Permanently removes the selected group. You are asked to confirm before the group is deleted.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Edit Group</td><td>Opens the edit.md page for the selected group, where you can change its name, description, and membership or rules. Greyed out for the <strong>Excluded onboarded tenants</strong> group, which tenant onboarding manages.</td><td>false</td></tr><tr><td>Run Dynamic Rules</td><td>Forces an immediate re-evaluation of the group's membership rules rather than waiting for the next scheduled run. Greyed out unless the group type is dynamic. You are asked to confirm before the rules are run.</td><td>true</td></tr><tr><td>Delete Group</td><td>Permanently removes the selected group. You are asked to confirm before the group is deleted. Greyed out for the <strong>Excluded onboarded tenants</strong> group, which tenant onboarding manages.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% include "../../../../../../.gitbook/includes/feature-request.md" %}

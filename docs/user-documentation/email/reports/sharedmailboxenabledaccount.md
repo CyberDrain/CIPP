@@ -10,13 +10,14 @@ The table opens with a filter on **Account Enabled** set to `Yes`. This matches 
 
 The report pairs each of the tenant's shared mailboxes with its user account and returns only those where the account can still sign in.
 
-| Column                   | Description                                                                                       |
-| ------------------------ | --------------------------------------------------------------------------------------------------- |
-| User Principal Name      | The sign-in address of the account behind the shared mailbox.                                     |
-| Display Name             | The friendly name of the shared mailbox.                                                          |
-| Account Enabled          | Whether the account can sign in. Always `Yes` in this report.                                     |
-| Assigned Licenses        | Any licences assigned to the account. A shared mailbox under 50GB should not need one.            |
-| On Premises Sync Enabled | Whether the account is synchronised from on-premises Active Directory.                            |
+| Column                            | Description                                                                                                                                                                                                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| User Principal Name               | The sign-in address of the account behind the shared mailbox.                                                                                                                                                                                                   |
+| Display Name                      | The friendly name of the shared mailbox.                                                                                                                                                                                                                        |
+| Account Enabled                   | Whether the account can sign in. Always `Yes` in this report.                                                                                                                                                                                                   |
+| Last Successful Sign In Date Time | The most recent sign-in to the account that succeeded. A recent date means the account is being signed into directly, so check before blocking it. Empty for an account that has never signed in, and for every row when the tenant has no Entra ID P1 licence. |
+| Assigned Licenses                 | Any licences assigned to the account. A shared mailbox under 50GB should not need one.                                                                                                                                                                          |
+| On Premises Sync Enabled          | Whether the account is synchronised from on-premises Active Directory.                                                                                                                                                                                          |
 
 ## Table Actions
 

@@ -6,11 +6,11 @@ Tenant groups let you organise your tenants into named collections that can be t
 
 These settings apply to every group, regardless of type.
 
-| Setting           | Description                                                                                                                                  |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Group Name        | The name for the group. Required, and must be at least two characters long.                                                                  |
-| Group Description | An optional description recording the purpose of the group.                                                                                  |
-| Group Type        | Choose Static to pick member tenants by hand, or Dynamic to build membership from rules. This choice determines which settings appear below. |
+| Setting           | Description                                                                                                                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Group Name        | The name for the group. Required, and must be at least two characters long. `AllTenants`, `Exported Template`, `Template Tenant` and `Excluded onboarded tenants` are reserved and refused. |
+| Group Description | An optional description recording the purpose of the group.                                                                                                                                 |
+| Group Type        | Choose Static to pick member tenants by hand, or Dynamic to build membership from rules. This choice determines which settings appear below.                                                |
 
 ## Static Group Members
 

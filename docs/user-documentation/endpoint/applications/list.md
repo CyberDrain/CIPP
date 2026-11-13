@@ -212,4 +212,30 @@ Every assignment action offers an assignment mode. **Append** keeps the existing
 Choosing the Uninstall intent creates an uninstall assignment, which will remove the application from the targeted devices rather than simply unassigning it.
 {% endhint %}
 
+## Deployment Status
+
+The **More Info** flyout begins with a **Deployment Status** section, showing how the application has deployed in the same way as the Device status and User status pages in the Microsoft Intune admin center. The section has a **Devices** tab and a **Users** tab, each labelled with its number of rows, and above the table a chip for each status counts how many rows are in it.
+
+**Devices**
+
+| Column              | Description                                                                                               |
+| ------------------- | --------------------------------------------------------------------------------------------------------- |
+| Device Name         | The name of the device.                                                                                   |
+| User Principal Name | The user associated with the device's status.                                                             |
+| Status              | The installation state of the application on the device, for example installed, failed or not installed.  |
+| Status Detail       | Intune's explanation of the installation state, followed by the error code where the installation failed. |
+| Platform            | The device's platform.                                                                                    |
+| Last Reported       | When the device last reported its status.                                                                 |
+
+**Users**
+
+| Column              | Description                                                                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| User Principal Name | The user's sign-in name.                                                                                                                                |
+| User Name           | The user's display name.                                                                                                                                |
+| Status              | The user's overall result: Failed if any of their devices failed, otherwise Install pending, Not installed, Installed or Not applicable, in that order. |
+| Status Detail       | How many of the user's devices are installed, failed, pending, not installed and not applicable.                                                        |
+| Device Count        | The number of the user's devices the application applies to.                                                                                            |
+| Last Reported       | When the user's status was last reported. Empty where Intune does not report it.                                                                        |
+
 {% include "../../../../.gitbook/includes/feature-request.md" %}

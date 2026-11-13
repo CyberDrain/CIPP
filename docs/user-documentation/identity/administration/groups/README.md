@@ -8,14 +8,10 @@ The Groups page lists every group in the tenant and is where group membership, m
 
 ## Action Buttons
 
-**Add Group** opens a drawer that creates a group in the selected tenant, and **Deploy Group Template** applies a saved template to one or more tenants.
+**Add Group** opens a drawer that creates a group in the selected tenant, and **Deploy Group Template** applies a saved template to one or more tenants. The deploy drawer is described on the [README.md](../group-templates/README.md "mention") page.
 
 {% content-ref url="add.md" %}
 [add.md](add.md)
-{% endcontent-ref %}
-
-{% content-ref url="../group-templates/deploy.md" %}
-[deploy.md](../group-templates/deploy.md)
 {% endcontent-ref %}
 
 {% content-ref url="edit.md" %}

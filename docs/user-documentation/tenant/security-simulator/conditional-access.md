@@ -20,7 +20,7 @@ Do not aim for 10 out of 10. Use the findings to decide which gaps are worth clo
 
 ## Coverage by persona
 
-A grid of the kinds of identity the policies target against the controls they should be subject to. The header counts the tenant's policies by state: enforced, report-only, and disabled. Hover a cell to see the policies behind it.
+A grid of the kinds of identity the policies target against the controls they should be subject to. The header counts the tenant's policies by state: enforced, report-only, and disabled. Hover a cell to see the policies behind it. **Export CSV** downloads the grid as a CSV file, one row for each persona and control.
 
 Personas come from how each policy targets identities, not from its name. A policy that targets all users counts towards Admins unless it excludes a privileged role. Excluding a role that is not privileged, such as the directory synchronisation role, does not take admins out of it.
 
@@ -43,7 +43,7 @@ Each cell shows one of these states:
 
 ## Policy findings
 
-Every issue found, most severe first. Only critical, high, and medium findings are listed. Each finding shows:
+Every issue found, most severe first. Only critical, high, and medium findings are listed. **Export CSV** downloads the findings as a CSV file. Each finding shows:
 
 | Field                   | Description                                                                         |
 | ----------------------- | ----------------------------------------------------------------------------------- |
@@ -54,5 +54,9 @@ Every issue found, most severe first. Only critical, high, and medium findings a
 | Microsoft Documentation | Opens Microsoft's guidance for the control. Shown where the finding maps to it.     |
 
 Findings are grouped into categories such as Multifactor coverage, Administrator coverage, Guest coverage, Emergency access, Older sign-in methods, Risk-based access, Application coverage, Locations, Platform coverage, and Persona coverage. A Persona coverage finding is raised for every No policy cell in the grid, except for workload identities.
+
+## Using the Gap Analysis in Reports
+
+The gap analysis is also offered as a data source in the [Report Builder](../../tools/report-builder/builder.md), so a custom report can chart or list it. Three collections are available: **CAGapFindings** for the policy findings, **CAPersonaCoverage** for the persona grid, and **CAPosture** for the score and policy counts.
 
 {% include "../../../../.gitbook/includes/feature-request.md" %}

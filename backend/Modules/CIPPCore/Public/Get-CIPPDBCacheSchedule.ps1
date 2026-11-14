@@ -133,6 +133,8 @@ function Get-CIPPDBCacheSchedule {
                 'AppCredentialChanges'
                 'ServicePrincipalRoleChanges'
                 'DelegatedGrantChanges'
+                'NetworkAccess'
+                'NetworkAccessFiltering'
             )
         }
         ServicePrincipalSignInActivities = @{ License = 'Entra' }
@@ -152,9 +154,10 @@ function Get-CIPPDBCacheSchedule {
                 'RoleEligibilitySchedules'
                 'RoleAssignmentScheduleInstances'
                 'RoleManagementPolicies'
+                'PIMGroupEligibilitySchedules'
             )
         }
-        Intune                           = @{
+        Intune                          = @{
             License = 'Intune'
             Types   = @(
                 'ManagedDevices'

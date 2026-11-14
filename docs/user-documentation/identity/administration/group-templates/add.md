@@ -1,6 +1,6 @@
 # Add Group Template
 
-This page creates a group template, which records the settings for a group so the same group can be created again later, in one tenant or across many. Complete the shared details, choose a group type, then fill in any additional settings that appear for that type. Templates are applied from the deploy.md page.
+This page creates a group template, which records the settings for a group so the same group can be created again later, in one tenant or across many. Complete the shared details, choose a group type, then fill in any additional settings that appear for that type. Templates are applied from the **Deploy Group Template** drawer, described on the [README.md](README.md "mention") page.
 
 ## Template Details
 

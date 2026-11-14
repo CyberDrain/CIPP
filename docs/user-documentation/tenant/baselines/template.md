@@ -8,6 +8,10 @@ The editor is where a baseline is given its name, its tenants, and the standards
 
 Leaving the page with unsaved work prompts you to confirm first.
 
+## Overview
+
+{% @storylane/embed subdomain="app" linkValue="av1rymxqugob" url="https://app.storylane.io/share/av1rymxqugob" %}
+
 ## Page Actions
 
 | Button            | Description                                                                                                                                                                                                                                                                                                                     |
@@ -40,6 +44,8 @@ Importing the baseline again from its repository, for example to take an upstrea
 | Assigned Tenants       | The tenants and tenant groups the baseline applies to. Required before the baseline can be saved.                                                     |
 | Excluded Tenants       | Tenants and tenant groups that are left out even though a group or All Tenants assignment would otherwise include them. An excluded group leaves out every tenant in it. |
 | Disable Scheduled Runs | Stops the baseline running on its schedule. It then runs only when you run it yourself, and deviations are neither detected nor corrected in between. |
+
+When a tenant is onboarded with the option to exclude it from All Tenants standards, it is placed in the **Excluded onboarded tenants** tenant group, and that group is added to **Excluded Tenants** on every baseline assigned to All Tenants. The group is managed by onboarding, so it cannot be edited or deleted from the tenant groups page.
 
 ## Alerting
 

@@ -34,8 +34,10 @@ Sets which preset each type of report reaches for when nothing else specifies on
 | Sharing Report           |
 | Permissions Report       |
 | Mail Flow Report         |
+| Storage Report           |
 | Licensing Report         |
 | Security Baseline Report |
+| Domain Security Report   |
 | Report Builder           |
 
 Precedence runs in three steps. A report template with its own preset assigned wins over the default set here, and the default set here wins over the default branding.

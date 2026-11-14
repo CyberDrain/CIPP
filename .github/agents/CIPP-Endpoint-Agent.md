@@ -113,7 +113,8 @@ A helper must let its caller tell an input problem apart from an upstream failur
 - Throw `[System.ArgumentException]::new('<message>')` for invalid input or a refused request.
 - Throw `[System.Management.Automation.ItemNotFoundException]::new('<message>')` for a named resource that does not exist.
 - Let upstream failures throw as they are.
-- In the endpoint catch, `Get-CippErrorStatusCode -ErrorRecord $_` maps these to 400 / 404 / 500. It also looks inside
+- In the endpoint catch, `Get-CippErrorStatusCode -ErrorRecord $_` maps these to 400 / 404 / 500, and an Azure Storage
+  5xx or unreachable error (`Azure.RequestFailedException`) to 503 so the frontend retries it. It also looks inside
   wrapped exceptions, because a script block run through a .NET method surfaces as
   `MethodInvocationException -> RuntimeException -> ArgumentException`.
 - A layer between the helper and the endpoint must not catch a typed exception and rethrow it as a string

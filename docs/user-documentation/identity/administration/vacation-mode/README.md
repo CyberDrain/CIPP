@@ -46,10 +46,10 @@ Opens the add-vacation-schedule.md wizard, where the users, the changes to apply
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>View Task Details</td><td>Opens the <a data-mention href="../../../tools/scheduler/task.md">task.md</a> page for the selected task, showing its full parameters and results.</td><td>false</td></tr><tr><td>Cancel Vacation Mode</td><td>Removes the selected scheduled task so it never runs.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>View Task Details</td><td>Opens the <a data-mention href="../../../tools/scheduler/task.md">task.md</a> page for the selected task, showing its full parameters and results.</td><td>false</td></tr><tr><td>End Vacation Now</td><td>Runs the selected reversal task straight away instead of waiting for the end date, undoing that change now. Use it when the user is back early. Greyed out unless the task is a planned reversal (its name starts with <code>Remove</code>) and the matching task that applies the change has already run.</td><td>true</td></tr><tr><td>Cancel Vacation Mode</td><td>Removes the selected scheduled task so it never runs.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 {% hint style="danger" %}
-Cancelling is per task, not per vacation. Cancelling the task that reverses a change leaves that change in place permanently: an excluded user stays excluded, a delegate keeps their access, forwarding keeps forwarding. To call off a vacation that has already started, cancel the reversal only if you intend the change to be permanent, and otherwise let it run or undo the change by hand.
+Cancelling is per task, not per vacation. Cancelling the task that reverses a change leaves that change in place permanently: an excluded user stays excluded, a delegate keeps their access, forwarding keeps forwarding. To end a vacation that has already started, use **End Vacation Now** on each reversal task instead. Cancel a reversal only if you intend the change to be permanent.
 {% endhint %}
 
 {% hint style="info" %}

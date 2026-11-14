@@ -185,7 +185,7 @@ Chart, Flow (Sankey), Table, Score Cards and Progress Bars blocks each start wit
 | Manual             | The values are typed in as a small table. Add a row for each data point, giving it a label and a value, with an optional colour on chart data points and score cards.                                                                                           |
 | Reporting database | The values are read from data CIPP has collected for the tenant each time the report is generated. Pick a **Collection**, then choose what to **Show** (a count of rows or a field's value) and what to show it **Per**. **Only rows where** narrows the rows counted. |
 
-The collections on offer include the tenant's test results alongside its collected data, so a chart or table can summarise test outcomes too.
+The collections on offer include the tenant's test results alongside its collected data, so a chart or table can summarise test outcomes too. The Security Simulations Conditional Access gap analysis is offered as well: **CAGapFindings** lists its policy findings, **CAPersonaCoverage** its persona coverage grid, and **CAPosture** its score and policy counts. These stay empty for a tenant without an Entra ID P1 or P2 licence.
 
 Score card colours and captions, and each progress bar's own target, are only set in **Manual**. Using a data source, each bar is filled by its share of the total.
 

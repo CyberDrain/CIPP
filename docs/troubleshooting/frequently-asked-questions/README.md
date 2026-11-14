@@ -415,11 +415,14 @@ GDAP delegated access is also bounded by the roles in each relationship. If a ro
 
 **Q: How long does it typically take for new standards to be applied to a tenant?**
 
-**A:** It usually takes between 0 to 3 hours for new standards to be applied to a tenant. This timeframe depends on the scheduling of a cron job that automatically initiates the application of standards.
+**A:** Up to 12 hours. Baselines and classic Standards each run on a schedule twice a day, so a new or changed standard is applied on the next scheduled run.
 
-**Q: Can I apply standards immediately instead of waiting for the cron job?**
+**Q: Can I apply standards immediately instead of waiting for the next scheduled run?**
 
-**A:** Yes, you can apply standards immediately by clicking the "Run Now" buttons located in the top right corner of the interface. This action bypasses the scheduled cron job and applies the standards right away.
+**A:** Yes. Where you go depends on whether the **Baselines** flag is on in [features.md](../../user-documentation/cipp/settings/features.md "mention").
+
+* **Baselines on:** use **Run Baseline Now** on [templates.md](../../user-documentation/tenant/baselines/templates.md "mention") to run a baseline against one covered tenant or every tenant it is assigned to. To push only some standards, for example a handful of Conditional Access templates, select their rows on [alignment.md](../../user-documentation/tenant/baselines/alignment.md "mention") and use **Remediate Now**.
+* **Baselines off:** use **Run Template Now** on the [templates](../../user-documentation/tenant/standards/alignment/templates/ "mention") page.
 
 </details>
 

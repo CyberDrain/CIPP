@@ -55,11 +55,22 @@ const Page = () => {
         : 'applications',
       tenantFilter: router.query.tenantFilter ?? userSettingsDefaults.currentTenant,
       // Always fetch live data on this management page so credential/URI/audience edits reflect immediately.
+      // SkipCache only skips the report cache; the response cache would replay the pre-edit answer.
       SkipCache: true,
+      InvalidateCIPPCache: true,
     },
     queryKey: `Application-appId-${applicationClientId}`,
     waiting: waiting,
   })
+
+  // Graph can take a few seconds to show a credential change, so read again after the first refresh.
+  const refreshTimers = useRef([])
+  const refreshApp = () => {
+    appRequest.refetch()
+    refreshTimers.current.forEach(clearTimeout)
+    refreshTimers.current = [4000, 12000].map((ms) => setTimeout(() => appRequest.refetch(), ms))
+  }
+  useEffect(() => () => refreshTimers.current.forEach(clearTimeout), [])
 
   let appData = null
   if (appRequest.isSuccess && appRequest.data) {
@@ -282,9 +293,9 @@ const Page = () => {
           graphObjectId={data?.id}
           tenantFilter={tenantForApi}
           canRemove={canWriteApplication}
-          onRemoved={() => appRequest.refetch()}
+          onRemoved={refreshApp}
           canAdd={canWriteApplication}
-          onAdded={() => appRequest.refetch()}
+          onAdded={refreshApp}
         />
       ),
     },
@@ -315,7 +326,7 @@ const Page = () => {
           graphObjectId={data?.id}
           tenantFilter={tenantForApi}
           canRemove={canWriteApplication}
-          onRemoved={() => appRequest.refetch()}
+          onRemoved={refreshApp}
         />
       ),
     },

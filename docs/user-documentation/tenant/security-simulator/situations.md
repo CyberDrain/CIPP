@@ -12,7 +12,7 @@ The tenant needs an Entra ID P1 or P2 licence. Without one there are no Conditio
 
 ## Sign in as
 
-Every situation is evaluated as a real account from the tenant. CIPP picks one account for each group when the tab loads, and this card lets you change them. Changing any field re-evaluates straight away, and the fields reset to CIPP's own picks when you switch tenants.
+Every situation is evaluated as a real account from the tenant. CIPP picks one account for each group when the tab loads, and this card lets you change them. Changing any field re-evaluates straight away, and the fields reset to CIPP's own picks when you switch tenants. **Export CSV** on the card downloads the evaluated situations and their results as a CSV file.
 
 | Field                 | Description                                                                                                                                                                                                                             |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

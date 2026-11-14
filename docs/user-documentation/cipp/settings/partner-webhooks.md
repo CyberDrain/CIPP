@@ -56,7 +56,7 @@ You do not need to select any event types for this to work. Simply saving will a
 {% step %}
 #### Decide how new tenants are treated
 
-If you would rather newly onboarded tenants were not picked up by your All Tenants standards straight away, turn on **Exclude onboarded tenants from top-level standards**.
+If you would rather newly onboarded tenants were not picked up by your All Tenants standards straight away, turn on **Exclude onboarded tenants from top-level standards**. The tenant is placed in the **Excluded onboarded tenants** tenant group, which is also excluded from every baseline assigned to All Tenants.
 {% endstep %}
 
 {% step %}

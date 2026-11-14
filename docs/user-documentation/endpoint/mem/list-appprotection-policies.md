@@ -22,4 +22,34 @@ A Policy Source column is also available from the column chooser, and appears in
 
 {% include "../../../../.gitbook/includes/intune-actions.md" %}
 
+## Deployment Status
+
+The **More Info** flyout begins with a **Deployment Status** section, showing who the policy has reached in the same way as the User status page in the Microsoft Intune admin center. Above the table a chip for each status counts how many rows are in it.
+
+App protection policies, Windows Information Protection policies and App Configuration (MAM) policies have no per-device status, so they show a **Users** tab only, with one row for each app registration the policy applies to. The other app configuration policies show both a **Devices** tab and a **Users** tab.
+
+**Users**
+
+| Column              | Description                                                                                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| User Principal Name | The user's sign-in name.                                                                                                                                                       |
+| User Name           | The user's display name.                                                                                                                                                       |
+| Status              | For a policy with a **Users** tab only, Checked in, or the reason Intune has flagged the registration, for example Rooted device. Otherwise, the policy's status for the user. |
+| Status Detail       | For a policy with a **Users** tab only, the app and the device it is registered on, with the device type. Otherwise not used.                                                  |
+| Device Count        | The number of the user's devices the status covers. Not used for a policy with a **Users** tab only.                                                                           |
+| Last Reported       | When the user's status was last reported. Empty where Intune does not report it.                                                                                               |
+
+**Devices**
+
+Shown for app configuration policies other than App Configuration (MAM).
+
+| Column              | Description                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| Device Name         | The name of the device.                                                                   |
+| User Principal Name | The user associated with the device's status.                                             |
+| Status              | The result of applying the policy on the device, for example succeeded, error or pending. |
+| Status Detail       | Not used for app configuration policies.                                                  |
+| Platform            | The device's model.                                                                       |
+| Last Reported       | When the device last reported its status.                                                 |
+
 {% include "../../../../.gitbook/includes/feature-request.md" %}

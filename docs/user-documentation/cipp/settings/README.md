@@ -4,7 +4,7 @@ description: View and amend the settings for your CIPP instance.
 
 # Application Settings
 
-The General tab of the application settings brings together the instance-wide controls for your CIPP deployment: version information, password generation, DNS resolution, caching, backups, retention periods, JIT admin limits and approval, and the default BEC containment actions. Each card operates independently and saves on its own, so there is no single submit action for the page.
+The General tab of the application settings brings together the instance-wide controls for your CIPP deployment: version information, password generation, DNS resolution, domain analyser exclusions, caching, backups, retention periods, JIT admin limits and approval, the default BEC containment actions, and baseline expiry limits. Each card operates independently and saves on its own, so there is no single submit action for the page.
 
 ## Version
 
@@ -52,6 +52,20 @@ Selects which public resolver CIPP uses, with Google and Cloudflare available. T
 
 {% hint style="info" %}
 This resolver is used by the [domains-analyser](../../tenant/standards/domains-analyser/ "mention") and the [individual-domains.md](../../tools/tenant-tools/individual-domains.md "mention") only. It has no effect on any other DNS resolution CIPP performs, so changing it will not alter behaviour elsewhere in the application.
+{% endhint %}
+
+## Domain Analyser Exclusions
+
+Lists domains that the [domains-analyser](../../tenant/standards/domains-analyser/ "mention") and the DKIM baseline leave out for every tenant, such as domains used for Teams telephony or session border controllers. Enter one pattern per line, using `*` as a wildcard, for example `*.voice.example.com`, then select **Save**. Matching domains are removed from the analyser at its next run.
+
+Each pattern must look like a domain, with optional wildcards. A pattern that does not is rejected and named in the error, and nothing is saved.
+
+{% hint style="info" %}
+A set of common service domains, such as those used by email signature services and Teams SBC providers, is always excluded and does not need adding here.
+{% endhint %}
+
+{% hint style="warning" %}
+The list applies to every tenant, so only users whose role reaches every tenant can change it.
 {% endhint %}
 
 ## Cache
@@ -143,6 +157,21 @@ If the technicians who request JIT Admin access also hold an approver role, they
 Shows how many of the business email compromise containment actions are switched on by default, for example **6 of 21 actions on by default**. The defaults decide which actions start selected when a compromised user is contained, and which run when a user is contained automatically.
 
 Selecting **Configure** opens the [bec-remediation.md](bec-remediation.md "mention") page, where each action is switched on or off.
+
+## Baseline Deviation & Override Expiry
+
+Sets instance-wide expiry rules for accepted deviations and tenant overrides in [Baselines](../../tenant/baselines/README.md).
+
+| Field        | Description                                                                                                                                                                         |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Default days | How many days ahead the expiry date is pre-filled when you accept a deviation or create an override. `0` leaves the date empty.                                                    |
+| Maximum days | The furthest ahead an expiry can be set. With a maximum set, an acceptance or override saved without an expiry is given the default, or the maximum where there is no default. `0` means no maximum. |
+
+Enter the values and select **Save**. Both accept 0 to 3650 days, and the default cannot be longer than the maximum.
+
+{% hint style="info" %}
+With a maximum set, the expiry field on the Baselines pages shows the limit in its label, and an expiry further away than the maximum is refused.
+{% endhint %}
 
 ## Other Settings Tabs
 

@@ -15,6 +15,8 @@ BeforeAll {
     function New-GraphGetRequest { param($Uri, $tenantid, $AsApp) }
     function New-GraphPOSTRequest { param($Uri, $Type, $Body, $tenantid, $AsApp, $AddedHeaders) }
     function New-GraphBulkRequest { param($Requests, $tenantid, $AsApp) }
+    function Get-CippProtectedAppId { }
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Test-IsGuid.ps1')
 
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CippBulkStatusCode.ps1')
     $EndpointPath = Join-Path $RepoRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Tenant/Administration/Application Approval/Invoke-ExecApplication.ps1'

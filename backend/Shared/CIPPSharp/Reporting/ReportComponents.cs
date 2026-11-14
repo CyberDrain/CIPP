@@ -172,22 +172,28 @@ namespace CIPP.Reporting
             catch { return null; }
         });
 
+        // Read once, so the cache below only ever holds files that ship.
+        private static readonly Lazy<HashSet<string>> ReportImageNames = new(() =>
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var dir = ReportImageDir.Value;
+            if (dir is null) return set;
+            try { foreach (var f in Directory.EnumerateFiles(dir)) set.Add(Path.GetFileName(f)); }
+            catch { }
+            return set;
+        });
+
         private static readonly ConcurrentDictionary<string, byte[]?> ReportImageCache = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>Load a bundled stock report image by file name (no path segments), or null if it is not shipped.</summary>
         public static byte[]? ReportImage(string? fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName)) return null;
-            var key = Path.GetFileName(fileName); // defence in depth: strip any path
-            return ReportImageCache.GetOrAdd(key, k =>
+            // defence in depth: strip any path
+            if (!ReportImageNames.Value.TryGetValue(Path.GetFileName(fileName), out var name)) return null;
+            return ReportImageCache.GetOrAdd(name, k =>
             {
-                var dir = ReportImageDir.Value;
-                if (dir is null) return null;
-                try
-                {
-                    var path = Path.Combine(dir, k);
-                    return File.Exists(path) ? File.ReadAllBytes(path) : null;
-                }
+                try { return File.ReadAllBytes(Path.Combine(ReportImageDir.Value!, k)); }
                 catch { return null; }
             });
         }

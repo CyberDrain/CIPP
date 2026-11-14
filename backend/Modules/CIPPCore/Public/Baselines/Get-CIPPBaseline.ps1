@@ -276,7 +276,8 @@ function Get-CIPPBaseline {
                 # stage until it joins - unless another set (say a lone manual approval) is open to it.
                 $Sets = @(@([PSCustomObject]@{ logic = $NextStageDef.logic; conditions = @($NextStageDef.conditions) }) + @($NextStageDef.conditionGroups)).Where({ $_ -and @($_.conditions).Where({ $_ }).Count -gt 0 })
                 $GroupBlocked = $Sets.Count -gt 0
-                $ManualAdvance = $false
+                # A stage saved before conditions were required can only be reached by a manual move.
+                $ManualAdvance = $null -ne $NextStageDef -and $Sets.Count -eq 0
                 foreach ($Set in $Sets) {
                     $SetBlocked = $false
                     if ($Set.logic -ne 'or') {
@@ -317,15 +318,7 @@ function Get-CIPPBaseline {
             # tenant: no state, no work items, no resolved rows.
             $StateRows = Get-CIPPAzDataTableEntity @StateTable -Filter "PartitionKey eq '$SafeGuid'"
             $TenantStates = [System.Collections.Generic.List[object]]::new()
-            # customerId-keyed rows first: they win over a row an older save keyed by domain.
-            foreach ($State in @($StateRows | Sort-Object -Property { $TenantLookup["$($_.RowKey)"].customerId -ne "$($_.RowKey)" })) {
-                if ("$($State.RowKey)" -eq 'Exported Template') { continue }
-                $Domain = $TenantLookup["$($State.RowKey)"].defaultDomainName ?? "$($State.RowKey)"
-                if ($TenantStates.tenantFilter -contains $Domain) { continue }
-                $TenantStates.Add((& $NewState $Domain ([int]($State.currentStage ?? 1)) $State.enteredStageAt))
-            }
 
-            # Every assigned tenant without a state row defaults to stage 1 since assignment.
             # Groups expand by ID so renames never detach members.
             $AssignedDomains = foreach ($Assignment in $AssignmentScopes) {
                 if ($Assignment.scope -eq 'allTenants') {
@@ -337,6 +330,17 @@ function Get-CIPPBaseline {
                 }
             }
             $AssignedDomains = @($AssignedDomains | Where-Object { $_ -and $_ -ne 'Exported Template' -and $ExpandedExcludedTenants -notcontains $_ } | Select-Object -Unique)
+
+            # customerId-keyed rows first: they win over a row an older save keyed by domain.
+            foreach ($State in @($StateRows | Sort-Object -Property { $TenantLookup["$($_.RowKey)"].customerId -ne "$($_.RowKey)" })) {
+                $Domain = $TenantLookup["$($State.RowKey)"].defaultDomainName ?? "$($State.RowKey)"
+                # A state row outlives its assignment: it only counts while the tenant is still assigned.
+                if ($AssignedDomains -notcontains $Domain) { continue }
+                if ($TenantStates.tenantFilter -contains $Domain) { continue }
+                $TenantStates.Add((& $NewState $Domain ([int]($State.currentStage ?? 1)) $State.enteredStageAt))
+            }
+
+            # Every assigned tenant without a state row defaults to stage 1 since assignment.
             foreach ($Domain in $AssignedDomains) {
                 if ($TenantStates.tenantFilter -notcontains $Domain) {
                     $TenantStates.Add((& $NewState $Domain 1 $RolloutRow.updatedAt))

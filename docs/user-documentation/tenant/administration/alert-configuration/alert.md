@@ -51,7 +51,7 @@ Use **Add a condition** to build the rule. Each condition is a property, an oper
 | Field           | Description                                                                                                                                                                                  |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Select property | The audit log property to test. The list is driven by the chosen log source. You can also type a property that is not in the list to create a custom one, which is treated as a text value.  |
-| is              | The comparison to apply: `Equals to`, `Not Equals to`, `Like`, `Not like`, `Does not match`, `Greater than`, `Less than`, `In`, or `Not In`.                                                 |
+| is              | The comparison to apply: `Equals to`, `Not Equals to`, `Like`, `Not like`, `Does not match`, `Greater than`, `Less than`, `In`, or `Not In`. `Like` and `Not like` accept wildcards: `*` matches any run of characters and `?` matches a single character, so `UserId` `Not like` `*@contoso.com` leaves out every user in that domain. Without a wildcard they only match the exact value. `Does not match` takes a regular expression. |
 | Input           | The value to compare against. This is a free-text box for most properties, a picker when the property has a known set of values, and a multi-value picker when the operator is In or Not In. |
 
 #### Alerting on failed sign-ins
@@ -163,6 +163,10 @@ The **Alert on presence of specific app ids** alert reports any service principa
 
 {% hint style="warning" %}
 The **Alert on OneDrive accounts with over-long paths** alert reads from a cache that CIPP does not refresh on a schedule, unlike most alert data. Run **Refresh CIPPDB Cache** for the **OneDrive Long Paths** cache type on the tenant from [tenants.md](../../../cipp/settings/tenants.md "mention") before relying on this alert, and again whenever you want it to reflect current data. It stores each affected user's UPN and a count of long paths only, never file or folder names.
+{% endhint %}
+
+{% hint style="info" %}
+The **Alert on pending license requests from users** alert reports requests that users send with the **Ask for a license** button in Microsoft 365 apps, which Microsoft otherwise shows only under **Billing > License requests** in the admin center. Each request alerts once and resolves when it is approved or denied. A tenant that has a license request policy with its own instructions (**Billing > License requests > License request policies**) shows users those instructions instead and keeps no pending requests, so the alert finds nothing there.
 {% endhint %}
 
 {% @cipp-external-webpage-block/cyberdrain url="https://resources.cipp.app/?tab=alerts" fullWidth="true" %}

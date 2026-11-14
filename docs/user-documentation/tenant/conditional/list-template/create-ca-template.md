@@ -138,6 +138,10 @@ Collapsed by default, since most policies do not use these.
 | Enable Persistent Browser        | Controls whether the browser session persists across restarts.                                                                 |
 | Persistence Mode                 | Whether sessions are always persistent or never persistent.                                                                    |
 | Disable Resilience Defaults      | Stops Entra extending existing sessions during an outage. Leaving resilience defaults on is the safer choice for most tenants. |
+| Enable Security Profile          | Applies a Global Secure Access web content filtering security profile. Needs a Microsoft Entra Internet Access licence in each tenant. |
+| Security profile template or profile name | Pick a [security profile template](../../gsa/security-profiles/templates.md) to deploy the profile, and its filtering policies, with the policy. Or type the name of a security profile each tenant already has, choosing **Add option**, and deployment uses the profile of that name. |
+
+In a baseline, a template that applies a security profile is graded by the profile name, and tenants without a Microsoft Entra Internet Access licence are reported as **Skipped - No License** instead of drifting.
 
 ## Named Locations
 

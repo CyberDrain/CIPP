@@ -60,24 +60,26 @@ function Invoke-CIPPBaselineStandard {
     $TenantFilter = $Item.TenantFilter
     $Now = [int64]([datetimeoffset]::UtcNow.ToUnixTimeSeconds())
 
-    # Splices variable values into the serialized template. A key whose value is exactly the
-    # "%var%" token keeps its JSON type; omitWhenBlank drops such a key entirely so expected
+    # Substitutes variable values into the template's string values. A key whose value is exactly
+    # the "%var%" token keeps its JSON type; omitWhenBlank drops such a key entirely so expected
     # and remediate specs stay consistent. Tenant tokens resolve last.
     $Render = {
         param($Template, $Variables)
         if ($null -eq $Template) { return $null }
         if ($Variables -is [System.Collections.IDictionary]) { $Variables = [PSCustomObject]$Variables }
-        $Json = ConvertTo-Json -Compress -Depth 100 -InputObject $Template
-        foreach ($Declared in (($Definition.variables ?? [PSCustomObject]@{}).PSObject.Properties)) {
+        $DeclaredVariables = $Definition.variables ?? [PSCustomObject]@{}
+        $Omit = [System.Collections.Generic.List[string]]::new()
+        foreach ($Declared in $DeclaredVariables.PSObject.Properties) {
             if ($Declared.Value.omitWhenBlank -ne $true) { continue }
             if (-not [string]::IsNullOrEmpty("$(($Variables ?? [PSCustomObject]@{}).($Declared.Name))")) { continue }
-            $Escaped = [regex]::Escape(('%{0}%' -f $Declared.Name))
-            $Json = [regex]::Replace($Json, ('"[^"]*":"{0}",' -f $Escaped), '')
-            $Json = [regex]::Replace($Json, (',"[^"]*":"{0}"' -f $Escaped), '')
-            $Json = [regex]::Replace($Json, ('"[^"]*":"{0}"' -f $Escaped), '')
+            $Omit.Add(('%{0}%' -f $Declared.Name))
         }
+        $Values = [PSCustomObject]@{}
+        # An undeclared name may only fill an exact "%name%" value: embedded tokens such as
+        # users/%id% belong to the executor's read record.
+        $WholeOnly = [System.Collections.Generic.List[string]]::new()
         foreach ($Variable in (($Variables ?? [PSCustomObject]@{}).PSObject.Properties)) {
-            $Token = '%{0}%' -f $Variable.Name
+            if (-not $DeclaredVariables.PSObject.Properties[$Variable.Name]) { $WholeOnly.Add($Variable.Name) }
             $Value = $Variable.Value
             # The UI's pickers save option WRAPPERS ({label, value}), single or as array
             # elements. Splicing a wrapper into a write sends the object (or its
@@ -96,10 +98,10 @@ function Invoke-CIPPBaselineStandard {
                 $Value -is [string] -and "$Value" -match '^-?\d+(\.\d+)?$') {
                 $Value = if ("$Value" -match '^-?\d+$') { [int64]"$Value" } else { [double]"$Value" }
             }
-            $EncodedValue = ConvertTo-Json -Compress -Depth 100 -InputObject $Value
-            $Json = $Json.Replace(('"{0}"' -f $Token), $EncodedValue)
-            $Json = $Json.Replace($Token, "$Value")
+            $Values.PSObject.Properties.Add([psnoteproperty]::new($Variable.Name, $Value))
         }
+        $Expanded = Expand-CIPPBaselineToken -Template $Template -Values $Values -WholeOnly $WholeOnly -Omit $Omit
+        $Json = ConvertTo-Json -Compress -Depth 100 -InputObject $Expanded
         $Json = Get-CIPPTextReplacement -TenantFilter $TenantFilter -Text $Json -EscapeForJson
         $Json | ConvertFrom-Json
     }
@@ -187,12 +189,11 @@ function Invoke-CIPPBaselineStandard {
             $Skipped
         }
 
-        # A flat requiredCapabilities list is any-of; a nested array is a group that must
-        # also match (AND of any-of groups).
+        # A flat capability list is any-of; a nested array is a group that must also match
+        # (AND of any-of groups). Used for the definition and for what a prepare hook returns.
         $Capabilities = $null
-        $Required = @($Definition.requiredCapabilities)
-        if ($Required.Count -gt 0 -and $Mode -ne 'oneoff') {
-            $Capabilities = $(try { Get-CIPPTenantCapabilities -TenantFilter $TenantFilter } catch { $null })
+        $IsLicensed = {
+            param($Required)
             # Built as a List: an if-expression's pipeline output unwraps one array level,
             # which silently turned every capability into its own AND-group.
             $Groups = [System.Collections.Generic.List[object]]::new()
@@ -201,14 +202,15 @@ function Invoke-CIPPBaselineStandard {
             } else {
                 $Groups.Add(@($Required))
             }
-            $Licensed = $true
             foreach ($Group in $Groups) {
-                if (@(@($Group) | Where-Object { $Capabilities.$_ -eq $true }).Count -eq 0) {
-                    $Licensed = $false
-                    break
-                }
+                if (@(@($Group) | Where-Object { $Capabilities.$_ -eq $true }).Count -eq 0) { return $false }
             }
-            if (-not $Licensed) { return (& $SkipUnlicensed) }
+            $true
+        }
+        $Required = @($Definition.requiredCapabilities)
+        if ($Required.Count -gt 0 -and $Mode -ne 'oneoff') {
+            $Capabilities = $(try { Get-CIPPTenantCapabilities -TenantFilter $TenantFilter } catch { $null })
+            if (-not (& $IsLicensed $Required)) { return (& $SkipUnlicensed) }
         }
 
         if (-not $GradeOnly) {
@@ -473,7 +475,7 @@ function Invoke-CIPPBaselineStandard {
             # Capabilities only the selected item needs (any-of), e.g. a CA template with risk conditions needs P2.
             if ($Prepared.RequiredCapabilities -and $Mode -ne 'oneoff') {
                 $Capabilities ??= $(try { Get-CIPPTenantCapabilities -TenantFilter $TenantFilter } catch { $null })
-                if (-not @($Prepared.RequiredCapabilities).Where({ $Capabilities.$_ -eq $true })) { return (& $SkipUnlicensed) }
+                if (-not (& $IsLicensed @($Prepared.RequiredCapabilities))) { return (& $SkipUnlicensed) }
             }
             # ConfigError: the hook cannot grade because of the baseline's own settings, so fresh data
             # would not help and re-collecting (a full per-object read for some caches) is skipped.

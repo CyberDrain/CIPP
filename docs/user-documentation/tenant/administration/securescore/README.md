@@ -93,7 +93,7 @@ Each card covers one recommendation and carries the following, where Microsoft s
 
 ### Resolution types
 
-**Change Status** offers three resolutions, along with a reason that is stored as the comment against the control and is visible in the Microsoft portal as well as in CIPP.
+**Change Status** asks for one of three resolution types and a reason, and both are required. The reason is stored as the comment against the control and is visible in the Microsoft portal as well as in CIPP.
 
 | Resolution type         | Description                                                                                                                                                |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |

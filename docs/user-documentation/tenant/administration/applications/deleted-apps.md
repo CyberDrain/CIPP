@@ -6,6 +6,13 @@ Deleting an app registration also deletes its enterprise application in the same
 
 Other deleted directory objects, such as users and groups, are on [deleted-items.md](../../../identity/administration/deleted-items.md "mention").
 
+## Filters
+
+| Filter            | Shows                                   |
+| ----------------- | --------------------------------------- |
+| App registrations | Deleted app registrations only.         |
+| Enterprise apps   | Deleted enterprise applications only.   |
+
 ## Table Details
 
 | Column          | Description                                                                                                        |
@@ -20,7 +27,7 @@ Other deleted directory objects, such as users and groups, are on [deleted-items
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Restore</td><td>Restores the application. The result says when the matching app registration or enterprise application is still deleted and needs restoring too.</td><td>false</td></tr><tr><td>Permanently Delete</td><td>Removes the application from the deleted items for good, after a confirmation prompt. It can no longer be restored.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Restore</td><td>Restores the application. The result says when the matching app registration or enterprise application is still deleted and needs restoring too.</td><td>true</td></tr><tr><td>Permanently Delete</td><td>Removes the application from the deleted items for good, after a confirmation prompt. It can no longer be restored.</td><td>true</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
 
 Restoring and permanently deleting need the Tenant.Application.ReadWrite permission. Viewing the list needs Tenant.Application.Read.
 

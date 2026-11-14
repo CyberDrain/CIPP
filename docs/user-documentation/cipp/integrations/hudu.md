@@ -25,6 +25,8 @@ User and device information is written to a rich text field named **Microsoft 36
 | Import domains from M365                                                        | Creates a Hudu website record for each domain in the tenant that does not already exist.                                                                                                          |
 | Monitor domains in Hudu                                                         | Enables DNS, SSL and WHOIS monitoring on the website records created by the previous setting. Without it, records are created paused with monitoring disabled.                                    |
 | Hide Empty Roles in Magic Dash                                                  | Omits directory roles with no active or eligible members from the Magic Dash roles list, which keeps it considerably shorter.                                                                                       |
+| Hide fully assigned license warning in Magic Dash                               | Leaves licences with every seat assigned out of the Magic Dash **Needs attention** strip.                                                                                                                         |
+| Hide nearly full (90% or more) license warning in Magic Dash                    | Leaves licences that are at least 90% but not fully assigned out of the Magic Dash **Needs attention** strip.                                                                                                     |
 | Date and number format                                                          | The locale used for dates and numbers in the Magic Dash and the **Microsoft 365** field. Defaults to English (United Kingdom). Dates and times are shown in the CIPP time zone.                                   |
 | Include link to Partner Center Service management page (partner.microsoft.com)  | Adds a Partner Center link to the tenant's portal links.                                                                                                                                          |
 | Include link to Defender Portal (security.microsoft.com)                        | Adds a Defender portal link to the tenant's portal links.                                                                                                                                         |
@@ -175,7 +177,7 @@ Once a tenant is mapped, CIPP schedules a daily synchronisation for it. User and
 
 The card is titled **Microsoft 365 -&#x20;**_**tenant name**_. Its tile shows the licensed user count and, when something needs attention, how many items need it, and turns red. Opening it shows:
 
-* the tenant name, default domain, tenant ID and portal links, followed by a **Needs attention** strip for licenses that are fully or at least 90% assigned and for five or more Global Administrators
+* the tenant name, default domain, tenant ID and portal links, followed by a **Needs attention** strip for licenses that are fully or at least 90% assigned and for five or more Global Administrators. Either licence warning can be switched off in the integration settings, and the Global Administrator warning always shows
 * tiles for licensed users, license SKUs, Global Administrators and verified domains
 * basic tenant information and the role holders, listed by number of directory roles with Global Administrators first and service principals marked with a robot icon
 * license usage, with purchased but unassigned licenses grouped below

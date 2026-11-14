@@ -574,7 +574,9 @@ function Get-EnclosingStatementLine {
 function Initialize-SchemaNode {
     return [pscustomobject]@{
         Children    = [ordered]@{}
-        Schemas     = [System.Collections.Generic.List[hashtable]]::new()
+        # IDictionary, not hashtable: a List[hashtable] converts an [ordered] cast schema
+        # into a plain hashtable on Add and its type/format key order becomes random.
+        Schemas     = [System.Collections.Generic.List[System.Collections.IDictionary]]::new()
         Observed    = [System.Collections.Generic.List[string]]::new()
         Enum        = $null
         IsArray     = $false

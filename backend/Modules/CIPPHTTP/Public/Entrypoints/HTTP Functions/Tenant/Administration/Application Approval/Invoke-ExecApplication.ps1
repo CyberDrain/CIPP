@@ -14,6 +14,7 @@ function Invoke-ExecApplication {
 
     $Id = $Request.Query.Id ?? $Request.Body.Id
     $Type = $Request.Query.Type ?? $Request.Body.Type
+    $TenantFilter = $Request.Query.tenantFilter ?? $Request.Body.tenantFilter
     if (-not $Id) {
         $AppId = $Request.Query.AppId ?? $Request.Body.AppId
         if (-not $AppId) {
@@ -23,16 +24,33 @@ function Invoke-ExecApplication {
                 })
             return
         }
-        $IdPath = "(appId='$AppId')"
-    } else {
-        $IdPath = "/$Id"
     }
-    if ($Type -and $ValidTypes -notcontains $Type) {
+    # Both ids go into the Graph URL and the protected-app check, so each must be a GUID and is used in its plain form.
+    if (-not (Test-IsGuid -String "$(if ($Id) { $Id } else { $AppId })")) {
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = "Parameter 'Id' or 'AppId' must be a GUID"
+            })
+    }
+    if ($Id) {
+        $Id = ([guid]$Id).ToString()
+        $IdPath = "/$Id"
+    } else {
+        $AppId = ([guid]$AppId).ToString()
+        $IdPath = "(appId='$AppId')"
+    }
+    if ($ValidTypes -notcontains $Type) {
         return ([HttpResponseContext]@{
                 StatusCode = [HttpStatusCode]::BadRequest
                 Body       = "Invalid Type specified. Valid types are: $($ValidTypes -join ', ')"
             })
         return
+    }
+    if (-not $TenantFilter) {
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = "Required parameter 'tenantFilter' is missing"
+            })
     }
 
     $Uri = "https://graph.microsoft.com/beta/$($Type)$($IdPath)"
@@ -124,14 +142,34 @@ function Invoke-ExecApplication {
         }
     }
 
+    if ($Action -eq 'Update' -or $Action -eq 'Upsert') {
+        # Credentials are only removed here (RemoveKey, RemovePassword, signing certificate actions), never added.
+        $Payload = $Request.Body.Payload
+        $PayloadKeys = if ($Payload -is [System.Collections.IDictionary]) { $Payload.Keys } else { $Payload.PSObject.Properties.Name }
+        if ($PayloadKeys -contains 'keyCredentials' -or $PayloadKeys -contains 'passwordCredentials') {
+            return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = "$Action can't set keyCredentials or passwordCredentials"
+                })
+        }
+    }
+
     if ($Request.Body) {
         # Depth 10 so nested payloads (e.g. web/spa/publicClient redirectUris and implicitGrantSettings) aren't truncated.
         $PostParams.Body = $Request.Body.Payload | ConvertTo-Json -Depth 10 -Compress
     }
 
-    $TenantFilter = $Request.Query.tenantFilter ?? $Request.Body.tenantFilter
-
     try {
+        # CIPP's own apps (SAM, SSO) are never changed through here.
+        if ($Action -ne 'ListSigningCertificates') {
+            $TargetAppId = if ($AppId) { $AppId } else { (New-GraphGetRequest -Uri "$Uri`?`$select=appId" -tenantid $TenantFilter -AsApp $true).appId }
+            if ($TargetAppId -and $TargetAppId -in @(Get-CippProtectedAppId)) {
+                return ([HttpResponseContext]@{
+                        StatusCode = [HttpStatusCode]::Forbidden
+                        Body       = @{ Results = @(@{ resultText = "$Action is not allowed on an application CIPP itself signs in with."; state = 'error' }) }
+                    })
+            }
+        }
         if ($Action -eq 'RemoveKey' -or $Action -eq 'RemovePassword') {
             # Handle credential removal
             $KeyIds = $Request.Body.KeyIds.value ?? $Request.Body.KeyIds
@@ -160,38 +198,35 @@ function Invoke-ExecApplication {
                 }
                 Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $Results.resultText -Sev 'Info'
             } else {
-                # For password credentials, use bulk removePassword requests
-                $BulkRequests = foreach ($KeyId in $KeyIds) {
-                    $RemoveBody = @{
-                        keyId = $KeyId
-                    }
-
-                    @{
-                        id      = $KeyId
-                        method  = 'POST'
-                        url     = "$($Type)$($IdPath)/removePassword"
-                        body    = $RemoveBody
-                        headers = @{
-                            'Content-Type' = 'application/json'
+                # One at a time: Graph refuses concurrent removePassword calls on one object (Directory_ConcurrencyViolation)
+                $Failed = 0
+                $PasswordResults = foreach ($Item in @($Request.Body.KeyIds)) {
+                    $KeyId = [string]($Item.value ?? $Item)
+                    $Label = $Item.label ?? $KeyId
+                    for ($Attempt = 1; $Attempt -le 4; $Attempt++) {
+                        try {
+                            $null = New-GraphPOSTRequest -Uri "$Uri/removePassword" -Type 'POST' -Body (@{ keyId = $KeyId } | ConvertTo-Json -Compress) -tenantid $TenantFilter -AsApp $true
+                            $Message = "Removed password credential $Label from $Type"
+                            Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $Message -Sev 'Info'
+                            @{ resultText = $Message; state = 'success' }
+                            break
+                        } catch {
+                            if ($_.Exception.Message -match 'concurrent requests' -and $Attempt -lt 4) {
+                                Start-Sleep -Seconds $Attempt
+                                continue
+                            }
+                            $Failed++
+                            $Message = "Failed to remove password credential $Label from $Type`: $(Get-NormalizedError -message $_.Exception.Message)"
+                            Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $Message -Sev 'Error'
+                            @{ resultText = $Message; state = 'error' }
+                            break
                         }
                     }
                 }
-
-                $BulkResults = New-GraphBulkRequest -Requests @($BulkRequests) -tenantid $TenantFilter -AsApp $true
-
-                $SuccessCount = ($BulkResults | Where-Object { $_.status -eq 204 }).Count
-                $FailureCount = ($BulkResults | Where-Object { $_.status -ne 204 }).Count
-
-                $Results = @{
-                    resultText = "Bulk RemovePassword completed. Success: $SuccessCount, Failures: $FailureCount"
-                    state      = if ($FailureCount -eq 0) { 'success' } else { 'error' }
-                    details    = @($BulkResults)
-                }
-                if ($FailureCount -eq 0) {
-                    Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $Results.resultText -Sev 'Info'
-                } else {
-                    Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $Results.resultText -Sev 'Error'
-                }
+                return ([HttpResponseContext]@{
+                        StatusCode = Get-CippBulkStatusCode -Total @($PasswordResults).Count -Failed $Failed
+                        Body       = @{ Results = @($PasswordResults) }
+                    })
             }
         } elseif ($Action -in @('ListSigningCertificates', 'AddSigningCertificate', 'SetPreferredSigningKey', 'RemoveSigningCertificate')) {
             # SAML token-signing certificates. Graph identifies the active one by SHA-1 thumbprint

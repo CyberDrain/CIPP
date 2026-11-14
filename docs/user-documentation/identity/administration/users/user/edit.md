@@ -36,7 +36,7 @@ Aliases entered here are added to the account. This form does not remove aliases
 | Remove all licenses                   | Strips every licence from the account and ignores whatever is selected in the licence box.                                                                                |
 
 {% hint style="info" %}
-Emptying the **Licenses** box on its own does nothing, because an edit with no licences selected and this switch off is treated as no licence change at all. Use **Remove all licenses** to take the last licence off an account.
+Emptying the **Licenses** box on an account that has licences turns **Remove all licenses** on, and a warning confirms that every licence will be removed on submit. Turning the switch back off leaves the licences as they are, because an edit with no licences selected and this switch off is treated as no licence change at all. Adding a licence back to the box turns the switch off again.
 {% endhint %}
 
 {% hint style="info" %}
@@ -45,14 +45,14 @@ When the [sherweb.md](../../../../cipp/integrations/sherweb.md "mention") integr
 
 ## Contact and organisation
 
-| Field                                              | Description                                                                                                                      |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Job Title, Department, Company Name                | Organisational details written to the directory and shown in the address list.                                                   |
-| Street, City, State/Province, Postal Code, Country | The user's postal address.                                                                                                       |
-| Mobile #, Business #                               | Contact numbers.                                                                                                                 |
-| Alternate Email Addresses                          | Secondary addresses, separated by commas.                                                                                        |
-| Set Manager                                        | The user recorded as this account's manager.                                                                                     |
-| Set Sponsor                                        | The user recorded as this account's sponsor. Only shown when `sponsor` has been added to the attribute list in your preferences. |
+| Field                                              | Description                                                                                                                                                                                     |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Job Title, Department, Company Name                | Organisational details written to the directory and shown in the address list.                                                                                                                  |
+| Street, City, State/Province, Postal Code, Country | The user's postal address.                                                                                                                                                                      |
+| Mobile #, Business #                               | Contact numbers.                                                                                                                                                                                |
+| Alternate Email Addresses                          | Secondary addresses, separated by commas.                                                                                                                                                       |
+| Set Manager                                        | The user recorded as this account's manager.                                                                                                                                                    |
+| Set Sponsor                                        | A user to add as this account's sponsor. Any sponsor the account already has is kept alongside the new one. Only shown when `sponsor` has been added to the attribute list in your preferences. |
 
 {% hint style="info" %}
 Emptying one of these boxes clears the property in Entra ID, rather than leaving it as it was. This applies only to fields you actually edit during this visit: a field that was already empty when the page loaded is left alone, so the form does not wipe properties it was never asked about. The fields that behave this way are First Name, Last Name, Job Title, Department, Company Name, Mobile #, Business #, Street, City, State/Province, Postal Code, Country and Alternate Email Addresses. Display Name cannot be cleared this way.

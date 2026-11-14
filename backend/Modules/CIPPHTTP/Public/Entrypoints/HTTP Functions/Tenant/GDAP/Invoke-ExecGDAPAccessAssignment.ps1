@@ -12,6 +12,10 @@ function Invoke-ExecGDAPAccessAssignment {
 
     $Action = $Request.Body.Action ?? $Request.Query.Action
     $Id = $Request.Body.Id ?? $Request.Query.Id
+    # The id is placed in a Graph URL, so it must be a relationship id and nothing else.
+    if (-not (Test-CIPPGDAPRelationshipId -Id "$Id")) {
+        return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ Results = 'Invalid relationship id' } })
+    }
 
     # Multi-partner: act as the relationship's source partner (defaults to the primary)
     $PartnerTenantId = $Request.Body.partnerTenantId.value ?? $Request.Body.partnerTenantId ?? $Request.Query.partnerTenantId
@@ -51,6 +55,14 @@ function Invoke-ExecGDAPAccessAssignment {
                 $Relationship = ($RelationshipResults | Where-Object id -EQ 'getRelationship').body
                 $AccessAssignments = ($RelationshipResults | Where-Object id -EQ 'getAccessAssignments').body.value
 
+                # The router cannot see the relationship's customer; an unknown customer needs an unlimited role.
+                if (-not (Test-CippTenantInScope -Tenant ($Relationship.customer.tenantId ?? 'AllTenants'))) {
+                    return ([HttpResponseContext]@{
+                            StatusCode = [HttpStatusCode]::Forbidden
+                            Body       = @{ Results = @(@{ state = 'error'; resultText = "Your roles don't include this relationship's customer tenant." }) }
+                        })
+                }
+
                 $Groups = New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/groups?`$top=999&`$select=id,displayName&`$filter=securityEnabled eq true" -asApp $true -NoAuthCheck $true -tenantid $PartnerTenantId
 
                 # Validate/correct the template's group mappings against the partner tenant before creating any
@@ -65,7 +77,7 @@ function Invoke-ExecGDAPAccessAssignment {
                 foreach ($GroupResult in $GroupCheck.Results) {
                     if ($GroupResult.Status -eq 'Stale') {
                         $MappingResults.Add(@{ resultText = $GroupResult.Message; state = 'success' })
-                    } elseif ($GroupResult.Status -eq 'Missing') {
+                    } elseif ($GroupResult.Status -in @('Missing', 'Reserved')) {
                         $MappingResults.Add(@{ resultText = $GroupResult.Message; state = 'error' })
                     }
                 }

@@ -42,6 +42,8 @@ The **API Usage** tab on the CIPP-API page holds the **API Egress** card, which 
 
 A gauge shows today's API client egress against the instance's daily cap. It turns amber at 80% and red once the cap is reached, at which point further API client requests are turned away with a 429 response and the card shows how many were refused today. Where no cap is set, the card shows today's total on its own. Below the gauge, a separate line gives today's traffic from signed-in users, which is shown for information only and never counts towards the cap.
 
+If an API client has received 50 MB or more today with 80% or more of its requests uncompressed, a warning above the gauge names it. Uncompressed responses use the cap 5 to 10 times faster; see [Response Compression](../../../api-documentation/setup-and-authentication.md#response-compression) for how to have the client ask for compressed responses.
+
 **Trend**
 
 A stacked chart shows each API client's egress over the selected window. Hover over a point to see the endpoints that served the most data in that interval.

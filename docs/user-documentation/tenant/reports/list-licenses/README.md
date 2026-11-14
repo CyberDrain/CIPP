@@ -8,16 +8,17 @@ The report supports the All Tenants view. Because gathering licence data from ev
 
 ## Table Details
 
-| Column          | Description                                                                                            |
-| --------------- | ------------------------------------------------------------------------------------------------------ |
-| Tenant          | The tenant the licences belong to. Most useful in the All Tenants view.                                |
-| License         | The friendly name of the SKU, resolved from Microsoft's published product names.                       |
-| Count Used      | The number of licences currently assigned.                                                             |
-| Count Available | The number of licences owned but not yet assigned.                                                     |
-| Total Licenses  | The total number of licences owned.                                                                    |
-| Assigned Users  | The users holding this licence, including whether each assignment is direct or inherited from a group. |
-| Assigned Groups | The groups this licence is assigned to, for group-based licensing.                                     |
-| Term Info       | Subscription detail for the SKU. See below.                                                            |
+| Column          | Description                                                                                                                  |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Tenant          | The tenant the licences belong to. Most useful in the All Tenants view.                                                      |
+| Tenant Name     | The tenant's name, or its alias where one has been set in CIPP, so tenants are easier to tell apart in the All Tenants view. |
+| License         | The friendly name of the SKU, resolved from Microsoft's published product names.                                             |
+| Count Used      | The number of licences currently assigned.                                                                                   |
+| Count Available | The number of licences owned but not yet assigned.                                                                           |
+| Total Licenses  | The total number of licences owned.                                                                                          |
+| Assigned Users  | The users holding this licence, including whether each assignment is direct or inherited from a group.                       |
+| Assigned Groups | The groups this licence is assigned to, for group-based licensing.                                                           |
+| Term Info       | Subscription detail for the SKU. See below.                                                                                  |
 
 {% hint style="info" %}
 SKUs configured as excluded in CIPP's licence settings are omitted from the report.

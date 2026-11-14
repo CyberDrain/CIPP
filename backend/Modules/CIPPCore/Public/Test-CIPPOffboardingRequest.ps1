@@ -71,7 +71,7 @@ function Test-CIPPOffboardingRequest {
         'ClearImmutableId', 'ResetPass', 'RemoveMFADevices', 'RemoveTeamsPhoneDID', 'DeleteUser',
         'DisableOneDriveSharing', 'disableForwarding'
     )
-    $CollectionActions = @('AccessNoAutomap', 'AccessAutomap', 'AccessSendAs', 'AccessSendOnBehalf', 'OnedriveAccess')
+    $CollectionActions = @('AccessNoAutomap', 'AccessAutomap', 'AccessSendAs', 'AccessSendOnBehalf', 'OnedriveAccess', 'OneDriveCopyTo')
 
     $HasAction = $false
     foreach ($Key in $BooleanActions) {
@@ -90,6 +90,11 @@ function Test-CIPPOffboardingRequest {
     }
     if (-not $HasAction) {
         $Errors.Add('No offboarding actions were selected. Enable at least one action (e.g. RemoveLicenses, DisableSignIn, RevokeSessions) before submitting.')
+    }
+
+    # The OneDrive copy only starts for a blocked account, so it needs Disable sign in in the same run.
+    if (@($Body.OneDriveCopyTo | Where-Object { $null -ne $_ }).Count -gt 0 -and $Body.DisableSignIn -ne $true) {
+        $Errors.Add("'OneDriveCopyTo' needs 'DisableSignIn': the OneDrive is only copied once the user is blocked from signing in.")
     }
 
     return [PSCustomObject]@{

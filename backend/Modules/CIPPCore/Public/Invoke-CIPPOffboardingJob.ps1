@@ -32,6 +32,14 @@ function Invoke-CIPPOffboardingJob {
             $OooMessage = Get-CIPPTextReplacement -TenantFilter $TenantFilter -Text $Options.OOO
         }
 
+        # Copy OneDrive to recipients. When licences are also being removed, the licence step waits for
+        # the copy (Remove-CIPPLicenseAfterOneDriveCopy) instead of removing them straight away; with the
+        # option off, both steps are exactly as before.
+        # The copy's operation id is chosen here and handed to both steps, so the licence step waits for
+        # exactly the copy this run starts, never another copy of the same user.
+        $OneDriveCopySelected = @($Options.OneDriveCopyTo | Where-Object { $_ }).Count -gt 0
+        $OneDriveCopyOperationId = (New-Guid).Guid
+
         # Build dynamic batch of offboarding tasks based on selected options
         $Batch = [System.Collections.Generic.List[object]]::new()
 
@@ -245,6 +253,19 @@ function Invoke-CIPPOffboardingJob {
                 }
             }
             @{
+                Title      = 'Copy OneDrive to user(s)'
+                Condition  = { $OneDriveCopySelected }
+                Cmdlet     = 'Invoke-CIPPOffboardingOneDriveCopy'
+                Parameters = @{
+                    TenantFilter = $TenantFilter
+                    Username     = $Username
+                    Recipients   = $Options.OneDriveCopyTo
+                    OperationId  = $OneDriveCopyOperationId
+                    APIName      = $APIName
+                    Headers      = $Headers
+                }
+            }
+            @{
                 Title      = 'Grant full access (no automap)'
                 Condition  = { $Options.AccessNoAutomap.Count -gt 0 }
                 Cmdlet     = 'Set-CIPPMailboxAccess'
@@ -360,7 +381,7 @@ function Invoke-CIPPOffboardingJob {
             }
             @{
                 Title      = 'Remove licenses'
-                Condition  = { $Options.RemoveLicenses -eq $true }
+                Condition  = { $Options.RemoveLicenses -eq $true -and -not $OneDriveCopySelected }
                 Cmdlet     = 'Remove-CIPPLicense'
                 Parameters = @{
                     userid       = $UserID
@@ -369,6 +390,19 @@ function Invoke-CIPPOffboardingJob {
                     APIName      = $APIName
                     Schedule     = $true
                     Headers      = $Headers
+                }
+            }
+            @{
+                Title      = 'Remove licenses (after the OneDrive copy completes)'
+                Condition  = { $Options.RemoveLicenses -eq $true -and $OneDriveCopySelected }
+                Cmdlet     = 'Remove-CIPPLicenseAfterOneDriveCopy'
+                Parameters = @{
+                    userid           = $UserID
+                    username         = $Username
+                    tenantFilter     = $TenantFilter
+                    CopyOperationId  = $OneDriveCopyOperationId
+                    APIName          = $APIName
+                    Headers          = $Headers
                 }
             }
             @{

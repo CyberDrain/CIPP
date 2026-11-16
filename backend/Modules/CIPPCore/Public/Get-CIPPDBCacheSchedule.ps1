@@ -122,6 +122,7 @@ function Get-CIPPDBCacheSchedule {
                 'MailTrafficSummary'
                 'OfficeActivations'
                 'HVEAccounts'
+                'MobileDevices'
             )
         }
         Mailboxes                        = @{ License = 'Exchange' }

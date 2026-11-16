@@ -321,6 +321,11 @@
     "description": "High Volume Email accounts"
   },
   {
+    "type": "MobileDevices",
+    "friendlyName": "Mobile Devices",
+    "description": "Exchange ActiveSync and Outlook mobile devices with their access state"
+  },
+  {
     "type": "CASMailboxes",
     "friendlyName": "CAS Mailboxes",
     "description": "Client Access Server mailbox settings"

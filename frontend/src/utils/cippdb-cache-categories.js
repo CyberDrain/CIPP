@@ -94,6 +94,7 @@ const CACHE_TYPE_COLLECTIONS = {
     "MailboxUsage",
     "OfficeActivations",
     "HVEAccounts",
+    "MobileDevices",
     "Mailboxes",
   ],
   ConditionalAccess: [

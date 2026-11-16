@@ -2,6 +2,7 @@ import { IconButton, Tooltip } from '@mui/material'
 import { CippIcons } from '../utils/icon-registry'
 import { useQueryClient } from '@tanstack/react-query'
 import { getCippFormatting } from '../utils/get-cipp-formatting'
+import { isTenantColumn } from '../utils/tenant-display-names'
 import { SKIP_RECURSION_KEYS } from '../utils/skip-recursion-keys'
 import { fetchBrandingSettings } from './CippPdf/useBrandingSettings'
 import { applyFooterText, createReportTheme } from './CippPdf/reportTheme'
@@ -157,10 +158,14 @@ export const exportRowsToPdf = async ({
     .map((c) => ({ header: c.header, dataKey: c.id }))
 
   // Use the existing formatting helper so PDF output mirrors table formatting.
-  const formattedData = tableData.map((row) => {
+  const formattedData = tableData.map((row, index) => {
     const formattedRow = {}
     exportColumns.forEach((col) => {
       const key = col.dataKey
+      if (isTenantColumn(key) && typeof rows[index].getValue === 'function') {
+        formattedRow[key] = rows[index].getValue(key)
+        return
+      }
       formattedRow[key] = getCippFormatting(
         key in row ? row[key] : null,
         key,

@@ -285,6 +285,7 @@ export const exportRowsToPdf = async ({
       left: MARGIN,
     },
     tableWidth: 'auto',
+    rowPageBreak: 'avoid',
     styles: {
       overflow: 'linebreak',
       cellWidth: 'wrap',

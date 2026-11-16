@@ -34,7 +34,7 @@ function Start-TableCleanup {
                 RawDelete      = $true
                 DataTableProps = @{
                     Filter   = "Timestamp lt datetime'$GraphCacheCutoff'"
-                    First    = 500
+                    First    = 1000
                     Property = @('PartitionKey', 'RowKey', 'ETag')
                 }
             }

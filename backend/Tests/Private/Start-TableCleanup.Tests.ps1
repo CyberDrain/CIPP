@@ -17,14 +17,14 @@ Describe 'Start-TableCleanup Graph request cache tables' {
         Mock Start-CIPPOrchestrator {}
     }
 
-    It 'adds a 24 hour, keys-only, 500-row rule for each Graph cache table and none for fixed cache tables' {
+    It 'adds a 24 hour, keys-only, 1000-row rule for each Graph cache table and none for fixed cache tables' {
         Start-TableCleanup
         Should -Invoke Start-CIPPOrchestrator -Times 1 -Exactly -ParameterFilter {
             $Rules = @($InputObject.Batch | Where-Object { $_.RawDelete })
             $Cutoff = (Get-Date).AddHours(-24).ToUniversalTime().ToString('yyyy-MM-ddTHH')
             $Rules.Count -eq 2 -and
             ($Rules.TableName -join ',') -eq 'cacheusers,cacheauditLogssignInsfilteripAddresseq1' -and
-            @($Rules | Where-Object { $_.DataTableProps.First -eq 500 -and $_.DataTableProps.Filter -like "Timestamp lt datetime'$Cutoff*" -and -not ($_.DataTableProps.Property -contains 'Data') }).Count -eq 2 -and
+            @($Rules | Where-Object { $_.DataTableProps.First -eq 1000 -and $_.DataTableProps.Filter -like "Timestamp lt datetime'$Cutoff*" -and -not ($_.DataTableProps.Property -contains 'Data') }).Count -eq 2 -and
             @($InputObject.Batch | Where-Object { $_.TableName -eq 'cacheQuarantineMessages' }).Count -eq 1
         }
     }

@@ -7,7 +7,7 @@ function Invoke-CIPPStandardAuthenticationMethods {
     .SYNOPSIS
         (Label) Configure Authentication Methods
     .DESCRIPTION
-        (Helptext) Configures all authentication methods for the tenant including Microsoft Authenticator, FIDO2, SMS, Voice, Email OTP, Temporary Access Pass, Software OATH, Hardware OATH, Certificate-based, and QR Code Pin. Set each method to Enabled, Disabled or Not Configured and optionally target specific groups. Methods set to Not Configured (or left blank) keep the tenant's current setting.
+        (Helptext) Configures all authentication methods for the tenant including Microsoft Authenticator, FIDO2, SMS, Voice, Email OTP, Temporary Access Pass, Software OATH, Hardware OATH, Certificate-based, and QR Code Pin. Set each method to Enabled, Disabled or Not Configured and optionally target specific groups. Methods set to Not Configured (or left blank) keep the tenant's current setting. Also offers the Password method's preview setting for changing a password after a secure sign-in.
         (DocsDescription) Unified standard to configure all authentication method policies in a single place. Each method can be independently set to Enabled, Disabled or Not Configured (leaving the tenant's current configuration untouched), targeted to all users or specific groups using group name wildcards, and configured with method-specific settings such as TAP lifetime, QR code pin length, Authenticator software OTP, and Email OTP external user access with exclude group targeting.
     .NOTES
         CAT
@@ -49,6 +49,7 @@ function Invoke-CIPPStandardAuthenticationMethods {
             {"type":"textField","name":"standards.AuthenticationMethods.QRCodePinGroup","label":"Target Group Name (wildcard supported, blank = All Users)","required":false,"condition":{"field":"standards.AuthenticationMethods.QRCodePinEnabled","compareType":"valueEq","compareValue":true}}
             {"type":"number","name":"standards.AuthenticationMethods.QRCodeLifetimeInDays","label":"QR Code Lifetime (days, 1-395)","defaultValue":365,"condition":{"field":"standards.AuthenticationMethods.QRCodePinEnabled","compareType":"valueEq","compareValue":true}}
             {"type":"number","name":"standards.AuthenticationMethods.QRCodePinLength","label":"QR Code PIN Length (8-20)","defaultValue":8,"condition":{"field":"standards.AuthenticationMethods.QRCodePinEnabled","compareType":"valueEq","compareValue":true}}
+            {"type":"autoComplete","multiple":false,"creatable":false,"required":false,"name":"standards.AuthenticationMethods.PasswordChangeAfterSecureSignIn","label":"Password: change after secure sign-in (Preview)","helperText":"Blank leaves the tenant's current setting untouched. The Password method itself is never enabled, disabled or retargeted.","options":[{"label":"Enabled","value":"true"},{"label":"Disabled","value":"false"}]}
         IMPACT
             High Impact
         ADDEDDATE
@@ -108,7 +109,13 @@ function Invoke-CIPPStandardAuthenticationMethods {
         }
     }
 
-    if (-not $ConfiguredMethods -or $ConfiguredMethods.Count -eq 0) {
+    # Password is not a method this standard enables, disables or targets. Its one setting is
+    # managed only when the field holds a value; blank or absent (every template saved before
+    # the field existed) leaves it out of the grade, the remediation and the report entirely.
+    $PasswordChangeValue = "$($Settings.PasswordChangeAfterSecureSignIn.value ?? $Settings.PasswordChangeAfterSecureSignIn)"
+    $ManagePasswordChange = $PasswordChangeValue -in @('true', 'false')
+
+    if ((-not $ConfiguredMethods -or $ConfiguredMethods.Count -eq 0) -and -not $ManagePasswordChange) {
         Write-LogMessage -API 'Standards' -tenant $Tenant -message 'AuthenticationMethods: No authentication methods configured, skipping.' -sev Info
         return
     }
@@ -337,6 +344,29 @@ function Invoke-CIPPStandardAuthenticationMethods {
         }
     }
 
+    if ($ManagePasswordChange) {
+        $PasswordConfig = $CurrentConfigs['Password']
+        if (-not $PasswordConfig) {
+            Write-LogMessage -API 'Standards' -tenant $Tenant -message "AuthenticationMethods: Method 'Password' not found in policy response." -sev Warning
+        } else {
+            $DesiredPasswordChange = [System.Convert]::ToBoolean($PasswordChangeValue)
+            # Absent (feature not rolled out to the tenant yet) reads as the Microsoft default, false.
+            $CurrentPasswordChange = [bool]$PasswordConfig.allowPasswordChangeAfterSecureSignIn
+            $PasswordDrifts = [System.Collections.Generic.List[string]]::new()
+            if ($CurrentPasswordChange -ne $DesiredPasswordChange) {
+                $PasswordDrifts.Add("allowPasswordChangeAfterSecureSignIn: '$CurrentPasswordChange' -> '$DesiredPasswordChange'")
+            }
+            $ComplianceResults = @($ComplianceResults | Where-Object { $_ }) + [PSCustomObject]@{
+                Method         = [PSCustomObject]@{ Id = 'Password'; RemediationId = 'Password'; Key = 'Password'; Label = 'Password'; Enabled = $true; GroupName = $null; ExcludeGroupName = $null }
+                CurrentConfig  = [PSCustomObject]@{ allowPasswordChangeAfterSecureSignIn = $CurrentPasswordChange }
+                ExpectedConfig = [PSCustomObject]@{ allowPasswordChangeAfterSecureSignIn = $DesiredPasswordChange }
+                DesiredState   = "$($PasswordConfig.state)"
+                Drifts         = $PasswordDrifts
+                IsCompliant    = $PasswordDrifts.Count -eq 0
+            }
+        }
+    }
+
     if ($Settings.remediate -eq $true) {
         foreach ($Result in $ComplianceResults) {
             if ($Result.IsCompliant) {
@@ -404,6 +434,11 @@ function Invoke-CIPPStandardAuthenticationMethods {
                                 }
                             }
                         }
+                    }
+                    'Password' {
+                        # Only the one setting is sent; the helper never writes Password's state or targets.
+                        $Params.Remove('GroupIds')
+                        $Params['PasswordAllowChangeAfterSecureSignIn'] = $Result.ExpectedConfig.allowPasswordChangeAfterSecureSignIn
                     }
                 }
 

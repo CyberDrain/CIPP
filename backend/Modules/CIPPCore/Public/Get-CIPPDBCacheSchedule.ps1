@@ -81,6 +81,7 @@ function Get-CIPPDBCacheSchedule {
                 'ExoTransportRules'
                 'ExoDkimSigningConfig'
                 'ExoOrganizationConfig'
+                'ExoActiveSyncOrganizationSettings'
                 'ExoAcceptedDomains'
                 'ExoHostedContentFilterPolicy'
                 'ExoHostedOutboundSpamFilterPolicy'

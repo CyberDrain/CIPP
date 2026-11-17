@@ -33,6 +33,7 @@ The following variables will be automatically replaced by CIPP:
 * `%deviceadminsid%`
 * `%globaladminsid%`
 * `%initialdomain%`
+* `%initialdomainprefix%` (the initial domain without `.onmicrosoft.com`)
 * `%tenantfilter%`
 * `%tenantid%`
 * `%tenantname%`

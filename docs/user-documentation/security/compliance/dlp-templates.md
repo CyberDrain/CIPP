@@ -1,6 +1,6 @@
 # DLP Policy Templates
 
-DLP policy templates are saved DLP configurations held in CIPP rather than in a tenant, so a policy you have settled on can be deployed to any number of customers without rebuilding it each time. Templates get here in three ways: capture one from a live policy with **Create template based on policy** on the DLP Policies page, author one from JSON in the deploy drawer, or import one from a community repository.
+DLP policy templates are saved DLP configurations held in CIPP rather than in a tenant, so a policy you have settled on can be deployed to any number of customers without rebuilding it each time. The exception is a policy whose rules use sensitivity labels as conditions, which needs editing for each tenant (see [Sensitivity label conditions](#sensitivity-label-conditions)). Templates get here in three ways: capture one from a live policy with **Create template based on policy** on the DLP Policies page, author one from JSON in the deploy drawer, or import one from a community repository.
 
 ## Action Buttons
 
@@ -42,6 +42,18 @@ Be sure to check out [community-repos](../../tools/community-repos/ "mention") f
 {% endhint %}
 
 </details>
+
+## Sensitivity Label Conditions
+
+DLP rules refer to sensitivity labels by GUID, and each tenant's labels have their own GUIDs, even where the label names match. CIPP saves and deploys a template's rule conditions exactly as they were captured, so a rule that uses a sensitivity label as a condition still points at the label in the tenant the template came from. The same applies when the template is deployed through the DLP Compliance Policy Template standard.
+
+To deploy a template like this to another tenant:
+
+1. Open **Deploy DLP Policy**, select one destination tenant, and pick the template.
+2. On [labels.md](labels.md "mention"), select that tenant and open **More Info** on each label the rule uses. The **Guid** field holds the label's GUID in that tenant.
+3. In **Parameters (JSON)**, replace each source-tenant label GUID with the matching GUID from step 2, then deploy.
+
+Repeat for each tenant, because the GUIDs differ every time. For the same reason, a template with label conditions is not suited to deploying across several tenants in one go or through a standard.
 
 ## Table Details
 

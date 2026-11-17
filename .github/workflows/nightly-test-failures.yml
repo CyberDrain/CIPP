@@ -1,0 +1,115 @@
+name: Nightly Test Failures
+
+# Keeps one issue per test workflow in step with its scheduled nightly run against dev: a failed
+# run opens the issue (or refreshes the open one) with the list of failed tests, and the next
+# passing run closes it. PR and manual runs are ignored. workflow_run only fires from the copy of
+# this file on the default branch.
+
+on:
+  workflow_run:
+    workflows: ['Frontend Vitest', 'Backend Pester']
+    types: [completed]
+
+permissions:
+  actions: read
+  issues: write
+
+concurrency:
+  group: nightly-test-failures-${{ github.event.workflow_run.name }}
+  cancel-in-progress: false
+
+jobs:
+  report:
+    if: >-
+      github.repository == 'CyberDrain/CIPP' &&
+      github.event.workflow_run.event == 'schedule' &&
+      (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure')
+    name: Open or close the failure issue
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+      CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Update the issue
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          $Title = "Nightly $env:WORKFLOW_NAME run is failing"
+          $Existing = @(gh issue list --state open --limit 200 --json number,title,body | ConvertFrom-Json).Where({ $_.title -eq $Title }, 'First')[0]
+
+          if ($env:CONCLUSION -eq 'success') {
+            if ($Existing) {
+              gh issue close $Existing.number --comment "Passing again in [run $env:RUN_ID]($env:RUN_URL)."
+            } else {
+              Write-Host 'Passing and no open issue - nothing to do.'
+            }
+            exit 0
+          }
+
+          # Each log line is "<job>`t<step>`t<timestamp> <text>". Vitest names a failed test on a
+          # " FAIL " line, Pester on a "[-]" line; the error and (for Pester) the file:line follow.
+          $Lines = @(gh run view $env:RUN_ID --log-failed | ForEach-Object {
+              # Colour codes arrive as a raw ESC or, in stored logs, as the literal text '^['.
+              ($_ -replace '(?:\x1b|\^\[)\[[0-9;]*m', '') -replace '^[^\t]*\t[^\t]*\t\S+\s?', ''
+            })
+          $Failures = [System.Collections.Generic.List[object]]::new()
+          $Seen = [System.Collections.Generic.HashSet[string]]::new()
+          for ($i = 0; $i -lt $Lines.Count; $i++) {
+            $Name = if ($Lines[$i] -match '^\s*FAIL\s+(?:\|?[\w-]+\|?\s+)?(\S.*?)\s*$') {
+              $Matches[1]
+            } elseif ($Lines[$i] -match '\[-\]\s+(.+?)(?:\s+\d+(?:\.\d+)?m?s\b.*)?$') {
+              $Matches[1]
+            }
+            if (-not $Name -or -not $Seen.Add($Name)) { continue }
+            $Detail = $null
+            $Location = $null
+            foreach ($Next in $Lines[($i + 1)..([Math]::Min($i + 8, $Lines.Count - 1))]) {
+              if (-not $Detail -and $Next -match '^\s*((?:\w*Error|Expected)\b.*?)\s*$') { $Detail = $Matches[1] }
+              if (-not $Location -and $Next -match '(backend/\S+\.Tests\.ps1:\d+)') { $Location = $Matches[1] }
+            }
+            $Failures.Add([pscustomobject]@{ Name = $Name; Detail = $Detail; Location = $Location })
+          }
+
+          $Fingerprint = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::UTF8.GetBytes((@($Failures.Name | Sort-Object) -join "`n")))).Substring(0, 16)
+          $Body = @(
+            "The scheduled **$env:WORKFLOW_NAME** run against ``dev`` failed: [run $env:RUN_ID]($env:RUN_URL) at $($env:HEAD_SHA.Substring(0, 9))."
+            ''
+          )
+          if ($Failures.Count -eq 0) {
+            $Body += 'No failed test could be read from the log, so the run failed outside the tests (install, setup or a crash). Open the run for details.'
+          } else {
+            $Body += "### Failed tests ($($Failures.Count))"
+            $Body += ''
+            foreach ($Failure in ($Failures | Select-Object -First 50)) {
+              $Body += '- `{0}`' -f $Failure.Name
+              if ($Failure.Location) { $Body += '  - `{0}`' -f $Failure.Location }
+              if ($Failure.Detail) { $Body += '  - {0}' -f $Failure.Detail }
+            }
+            if ($Failures.Count -gt 50) { $Body += '- ...and {0} more, see the run.' -f ($Failures.Count - 50) }
+          }
+          $Body += @(
+            ''
+            '---'
+            ''
+            "_Maintained by the [Nightly Test Failures]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/workflows/nightly-test-failures.yml) workflow: it is refreshed after each failing nightly run and closed by the next passing one._"
+            "<!-- failures:$Fingerprint -->"
+          )
+          $BodyFile = "$env:RUNNER_TEMP/issue-body.md"
+          $Body -join "`n" | Set-Content -Path $BodyFile -Encoding utf8
+
+          if (-not $Existing) {
+            gh issue create --title $Title --body-file $BodyFile
+          } else {
+            gh issue edit $Existing.number --body-file $BodyFile
+            # Only notify watchers when the set of failing tests changed, not on every repeat.
+            if ($Existing.body -notmatch "<!-- failures:$Fingerprint -->") {
+              gh issue comment $Existing.number --body "The failing tests changed in [run $env:RUN_ID]($env:RUN_URL); the list above is current."
+            }
+          }

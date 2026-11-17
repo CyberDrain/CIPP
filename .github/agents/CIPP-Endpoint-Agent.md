@@ -65,6 +65,15 @@ function Invoke-ExecThing {
 }
 ```
 
+`.ROLE` can list several permissions separated by commas, and holding any one of them grants the endpoint. The
+first one is the endpoint's main permission: it is the one error messages and the OpenAPI spec name. Use a list to:
+
+- **Move an endpoint to a new permission** without breaking custom roles: list `New.Permission,Old.Permission`, and
+  remove the old one in a later release once roles have been updated.
+- **Add a permission that the endpoint checks itself** (for example `Identity.PrivilegedUser.ReadWrite`, which
+  `Assert-CippPrivilegedUserAccess` reads) so custom roles can grant it. It must imply the main permission, because
+  holding it alone also opens the endpoint.
+
 Response bodies:
 
 - **Action endpoints** (`Add`/`Edit`/`Remove`/`Exec`): `Body = @{ Results = ... }`, where `Results` is a string or

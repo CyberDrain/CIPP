@@ -33,10 +33,15 @@ function Add-CIPPScheduledTask {
 
         $Table = Get-CIPPTable -TableName 'ScheduledTasks'
 
+        # Runs of a task queued by a caller without the permission re-check their users at execution.
+        $AllowedPermissions = Get-CippRequestAllowedPermissions
+        $PrivilegedUserRestricted = $null -ne $AllowedPermissions -and $AllowedPermissions -notcontains 'Identity.PrivilegedUser.ReadWrite'
+
         if ($RunNow.IsPresent -and $RowKey) {
             try {
-                $Filter = "PartitionKey eq 'ScheduledTask' and RowKey eq '$($RowKey)'"
+                $Filter = "PartitionKey eq 'ScheduledTask' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $RowKey)'"
                 $ExistingTask = (Get-CIPPAzDataTableEntity @Table -Filter $Filter)
+                if ($PrivilegedUserRestricted) { $ExistingTask | Add-Member -NotePropertyName PrivilegedUserRestricted -NotePropertyValue $true -Force }
                 $Now = [int64](([datetime]::UtcNow) - (Get-Date '1/1/1970')).TotalSeconds
                 $DueSlot = Get-CIPPScheduledTaskNextRun -Recurrence $ExistingTask.Recurrence -ScheduledTime $ExistingTask.ScheduledTime -Due
                 $ExistingTask.ScheduledTime = [string]($DueSlot -gt 0 ? $DueSlot : $Now)
@@ -96,7 +101,7 @@ function Add-CIPPScheduledTask {
             if ($PostExecution -match '(^|,)Push(,|$)' -and $Headers.'x-ms-client-principal') {
                 $PushUser = ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Headers.'x-ms-client-principal')) | ConvertFrom-Json).userDetails
                 $PushTable = Get-CIPPTable -TableName 'PushSubscriptions'
-                if (-not (Get-CIPPAzDataTableEntity @PushTable -Filter "PartitionKey eq '$PushUser'" -First 1)) {
+                if (-not (Get-CIPPAzDataTableEntity @PushTable -Filter "PartitionKey eq '$(ConvertTo-CIPPODataFilterValue -Value $PushUser)'" -First 1)) {
                     return 'Error - Push (notify me) was selected but you have no push notification devices registered. Enable notifications under Preferences > Push Notifications first, or remove Push from the post execution actions.'
                 }
             }
@@ -230,6 +235,15 @@ function Add-CIPPScheduledTask {
                 $Parameters.Remove($TenantParamName)
             }
 
+            if ($PrivilegedUserRestricted -and $tenantFilter -ne 'AllTenants' -and $originalTenantFilter.type -ne 'Group') {
+                try {
+                    $Targets = @(Get-CIPPPrivilegedUserTaskTarget -Command $RequestedCommand -Parameters $Parameters -TenantFilter $tenantFilter)
+                    if ($Targets.Count -gt 0) { Assert-CippPrivilegedUserAccess -TenantFilter $tenantFilter -UserId $Targets -Enforce }
+                } catch {
+                    return "Error - $($_.Exception.Message)"
+                }
+            }
+
             $Parameters = ($Parameters | ConvertTo-Json -Depth 10 -Compress)
             if ($Parameters -eq 'null') { $Parameters = '' }
 
@@ -261,6 +275,10 @@ function Add-CIPPScheduledTask {
 
             if ($task.Tag) {
                 $entity['Tag'] = [string]$task.Tag
+            }
+
+            if ($PrivilegedUserRestricted) {
+                $entity['PrivilegedUserRestricted'] = $true
             }
 
             if ($Task.RowKey) {

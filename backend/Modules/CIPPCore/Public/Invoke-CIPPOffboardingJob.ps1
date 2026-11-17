@@ -11,7 +11,9 @@ function Invoke-CIPPOffboardingJob {
         # Live-progress job created by the caller; when set, the user's status row is kept up to date
         [string]$DeploymentId,
         # Zero-based indices of the steps to run again (a step re-run); empty runs every selected task
-        [int[]]$StepIndexes = @()
+        [int[]]$StepIndexes = @(),
+        # ScheduledTasks RowKey of the offboarding run a step re-run belongs to (its own task is TaskInfo)
+        [string]$OffboardingTaskId
     )
 
     try {
@@ -31,6 +33,9 @@ function Invoke-CIPPOffboardingJob {
         if (-not (Test-CIPPHtmlIsEmpty -Html ([string]$Options.OOO))) {
             $OooMessage = Get-CIPPTextReplacement -TenantFilter $TenantFilter -Text $Options.OOO
         }
+
+        # With a OneDrive copy, the licence step waits for it (Remove-CIPPLicenseAfterOneDriveCopy).
+        $OneDriveCopySelected = @($Options.OneDriveCopyTo | Where-Object { $_ }).Count -gt 0
 
         # Build dynamic batch of offboarding tasks based on selected options
         $Batch = [System.Collections.Generic.List[object]]::new()
@@ -245,6 +250,19 @@ function Invoke-CIPPOffboardingJob {
                 }
             }
             @{
+                Title      = 'Copy OneDrive to user(s)'
+                Condition  = { $OneDriveCopySelected }
+                Cmdlet     = 'Invoke-CIPPOffboardingOneDriveCopy'
+                Parameters = @{
+                    TenantFilter = $TenantFilter
+                    Username     = $Username
+                    Recipients   = $Options.OneDriveCopyTo
+                    OperationId  = $null
+                    APIName      = $APIName
+                    Headers      = $Headers
+                }
+            }
+            @{
                 Title      = 'Grant full access (no automap)'
                 Condition  = { $Options.AccessNoAutomap.Count -gt 0 }
                 Cmdlet     = 'Set-CIPPMailboxAccess'
@@ -360,7 +378,7 @@ function Invoke-CIPPOffboardingJob {
             }
             @{
                 Title      = 'Remove licenses'
-                Condition  = { $Options.RemoveLicenses -eq $true }
+                Condition  = { $Options.RemoveLicenses -eq $true -and -not $OneDriveCopySelected }
                 Cmdlet     = 'Remove-CIPPLicense'
                 Parameters = @{
                     userid       = $UserID
@@ -369,6 +387,19 @@ function Invoke-CIPPOffboardingJob {
                     APIName      = $APIName
                     Schedule     = $true
                     Headers      = $Headers
+                }
+            }
+            @{
+                Title      = 'Remove licenses (after the OneDrive copy completes)'
+                Condition  = { $Options.RemoveLicenses -eq $true -and $OneDriveCopySelected }
+                Cmdlet     = 'Remove-CIPPLicenseAfterOneDriveCopy'
+                Parameters = @{
+                    userid           = $UserID
+                    username         = $Username
+                    tenantFilter     = $TenantFilter
+                    CopyOperationId  = $null
+                    APIName          = $APIName
+                    Headers          = $Headers
                 }
             }
             @{
@@ -431,6 +462,45 @@ function Invoke-CIPPOffboardingJob {
 
         Write-Information "Built batch of $($Batch.Count) offboarding tasks for $Username"
 
+        # The copy's id is saved on the offboarding task so a licence-step-only re-run waits for this offboarding's copy, never another.
+        $CopyStepIndex = -1
+        $GateStepIndex = -1
+        for ($i = 0; $i -lt $Batch.Count; $i++) {
+            if ($Batch[$i].Cmdlet -eq 'Invoke-CIPPOffboardingOneDriveCopy') { $CopyStepIndex = $i }
+            if ($Batch[$i].Cmdlet -eq 'Remove-CIPPLicenseAfterOneDriveCopy') { $GateStepIndex = $i }
+        }
+        if ($CopyStepIndex -ge 0 -or $GateStepIndex -ge 0) {
+            $RunsCopyStep = $CopyStepIndex -ge 0 -and ($StepIndexes.Count -eq 0 -or $StepIndexes -contains $CopyStepIndex)
+            $RunsGateStep = $GateStepIndex -ge 0 -and ($StepIndexes.Count -eq 0 -or $StepIndexes -contains $GateStepIndex)
+            $OwnerTaskId = if ($OffboardingTaskId) { $OffboardingTaskId } elseif ($StepIndexes.Count -eq 0) { [string]$TaskInfo.RowKey }
+            $OneDriveCopyOperationId = $null
+            if ($RunsCopyStep) {
+                $OneDriveCopyOperationId = (New-Guid).Guid
+                if ($OwnerTaskId) {
+                    try {
+                        $TaskTable = Get-CippTable -tablename 'ScheduledTasks'
+                        $null = Update-AzDataTableEntity -Force @TaskTable -Entity @{ PartitionKey = 'ScheduledTask'; RowKey = [string]$OwnerTaskId; OneDriveCopyOperationId = $OneDriveCopyOperationId }
+                    } catch {
+                        Write-LogMessage -API $APIName -tenant $TenantFilter -message "Could not record OneDrive copy $OneDriveCopyOperationId on the offboarding task for $Username; re-running only the licence step will not find it: $($_.Exception.Message)" -sev Warning
+                    }
+                }
+            } elseif ($RunsGateStep -and $OwnerTaskId) {
+                $TaskTable = Get-CippTable -tablename 'ScheduledTasks'
+                $SafeOwnerTaskId = ([string]$OwnerTaskId) -replace "'", "''"
+                $OwnerTask = @(Get-CIPPAzDataTableEntity @TaskTable -Filter "PartitionKey eq 'ScheduledTask' and RowKey eq '$SafeOwnerTaskId'")[0]
+                $OwnerUsername = try { ([string]$OwnerTask.Parameters | ConvertFrom-Json).Username } catch { $null }
+                # Only an id this offboarding (same task, tenant and user) recorded.
+                if ($OwnerTask -and $OwnerTask.Command -eq 'Invoke-CIPPOffboardingJob' -and [string]$OwnerTask.Tenant -eq $TenantFilter -and [string]$OwnerUsername -eq $Username -and
+                    [string]$OwnerTask.OneDriveCopyOperationId -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') {
+                    $OneDriveCopyOperationId = [string]$OwnerTask.OneDriveCopyOperationId
+                } else {
+                    Write-LogMessage -API $APIName -tenant $TenantFilter -message "No OneDrive copy is recorded for this offboarding of $Username, so the licence step will keep the licences." -sev Warning
+                }
+            }
+            if ($CopyStepIndex -ge 0) { $Batch[$CopyStepIndex].Parameters.OperationId = $OneDriveCopyOperationId }
+            if ($GateStepIndex -ge 0) { $Batch[$GateStepIndex].Parameters.CopyOperationId = $OneDriveCopyOperationId }
+        }
+
         # Live progress: the wizard pre-created a queued row per user under this job id. Replace it with
         # the real step list and stamp every task with its step, so the workers (which run in parallel)
         # each report to their own step.
@@ -480,6 +550,7 @@ function Invoke-CIPPOffboardingJob {
         # order. Start-CIPPOrchestrator probes the Craft bridge arity, so on a Craft too old to know
         # Sequential it logs a warning and falls back to fan-out rather than failing — safe here because the
         # grant steps are already idempotent (they read the ACE back), so the ordering is belt-and-suspenders.
+        # On fan-out the OneDrive copy and its licence step can run out of order; both fail closed and keep the licences.
         $InputObject = [PSCustomObject]@{
             OrchestratorName = "OffboardingUser_$($Username)_$TenantFilter"
             Batch            = @($Batch)

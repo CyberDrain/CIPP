@@ -157,8 +157,27 @@ function Invoke-ExecCippReplacemap {
                 }
                 $Body = @{ Results = @($Variables) }
             }
+            'Preview' {
+                # Text containing %variables% to resolve for this tenant
+                $Text = [string]$Request.Body.Text
+                if ($customerId -eq 'AllTenants' -or [string]::IsNullOrWhiteSpace($Text)) {
+                    $StatusCode = [HttpStatusCode]::BadRequest
+                    $Body = @{ Results = 'Provide a tenant and some text to preview.' }
+                } else {
+                    # JSON is resolved the way templates are, with values escaped for JSON.
+                    $IsJson = Test-Json -Json $Text -ErrorAction SilentlyContinue
+                    $Body = @{ Results = Get-CIPPTextReplacement -TenantFilter $customerId -Text $Text -EscapeForJson:$IsJson }
+                }
+            }
             'AddEdit' {
-                $VariableName = $Request.Body.RowKey
+                $VariableName = [string]$Request.Body.RowKey
+                # Same rule as the variables page: an empty name would make %% a token and rewrite every %% in a script.
+                if ([string]::IsNullOrWhiteSpace($VariableName) -or $VariableName -match '[\s~`!#$%^&*+=\[\]\\'';,/{}|":<>?-]') {
+                    return ([HttpResponseContext]@{
+                            StatusCode = [HttpStatusCode]::BadRequest
+                            Body       = @{ Results = "'$VariableName' is not a valid variable name. Use letters, numbers, underscores or dots, with no spaces." }
+                        })
+                }
                 $VariableValue = $Request.Body.Value
                 $VariableDescription = $Request.Body.Description
 
@@ -245,7 +264,7 @@ function Invoke-ExecCippReplacemap {
             'Delete' {
                 $VariableName = $Request.Body.RowKey
 
-                $VariableEntity = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '$customerId' and RowKey eq '$VariableName'" -ErrorAction Stop
+                $VariableEntity = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '$customerId' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $VariableName -Type String)'" -ErrorAction Stop
                 if ($VariableEntity) {
                     Remove-CIPPAzDataTableEntity @Table -Entity $VariableEntity -Force
                     $Result = "Variable '$VariableName' deleted successfully"

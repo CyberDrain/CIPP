@@ -44,6 +44,7 @@ BeforeAll {
     . (Join-Path (Split-Path -Parent $FunctionPath) 'Invoke-ExecCippGlobalReplacemap.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Authentication/Select-CippAllowedTenantData.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CippErrorStatusCode.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/ConvertTo-CIPPODataFilterValue.ps1')
 
     function New-SaveRequest {
         param(
@@ -236,6 +237,26 @@ Describe 'Invoke-ExecCippReplacemap - variable types' {
         }
     }
 
+    Context 'variable names' {
+        It 'rejects <Name>' -ForEach @(
+            @{ Name = 'an empty name'; RowKey = '' }
+            @{ Name = 'a blank name'; RowKey = '  ' }
+            @{ Name = 'a space'; RowKey = 'has space' }
+            @{ Name = 'a percent sign'; RowKey = 'pct%x' }
+            @{ Name = 'a quote'; RowKey = "quo'te" }
+            @{ Name = 'brackets'; RowKey = 'brk[0]' }
+        ) {
+            $Response = Invoke-ExecCippReplacemap -Request (New-SaveRequest -Name $RowKey)
+
+            $Response.StatusCode | Should -Be 400
+            $script:SavedEntity | Should -BeNullOrEmpty
+        }
+
+        It 'accepts <RowKey>' -ForEach @(@{ RowKey = 'site_code' }, @{ RowKey = 'dot.0' }, @{ RowKey = 'paren(x)' }) {
+            (Invoke-ExecCippReplacemap -Request (New-SaveRequest -Name $RowKey)).StatusCode | Should -Be 200
+            $script:SavedEntity.RowKey | Should -Be $RowKey
+        }
+    }
     Context 'values at the edges of each type' {
         It 'accepts zero and negative integers' {
             foreach ($Value in @('0', '-5')) {
@@ -302,6 +323,24 @@ Describe 'Invoke-ExecCippReplacemap - variable types' {
 
             $Response.StatusCode | Should -Be 200
             $script:RemovedEntity.RowKey | Should -Be 'wallpaperpath'
+        }
+        It 'cannot widen the delete filter to another partition through the name' {
+            $script:RowsByFilter = @{}
+            $script:ExistingEntity = $null
+            $Name = "x' or PartitionKey eq 'other-tenant' and RowKey eq 'secret"
+            $Request = [pscustomobject]@{
+                Params  = @{ CIPPEndpoint = 'ExecCippReplacemap' }
+                Headers = @{}
+                Query   = @{}
+                Body    = [pscustomobject]@{ Action = 'Delete'; tenantId = 'contoso.onmicrosoft.com'; RowKey = $Name }
+            }
+            Mock -CommandName Get-CIPPAzDataTableEntity -MockWith { param($Filter) $script:LastFilter = $Filter }
+
+            $Response = Invoke-ExecCippReplacemap -Request $Request
+
+            $script:LastFilter | Should -BeExactly "PartitionKey eq '11111111-1111-1111-1111-111111111111' and RowKey eq 'x'' or PartitionKey eq ''other-tenant'' and RowKey eq ''secret'"
+            $Response.StatusCode | Should -Be 404
+            $script:RemovedEntity | Should -BeNullOrEmpty
         }
     }
 }
@@ -541,5 +580,48 @@ Describe 'Invoke-ExecCippReplacemap - a failed read' {
 
         $Response.StatusCode | Should -Be 500
         $Response.Body.Results | Should -BeLike '*server is busy*'
+    }
+}
+
+Describe 'Invoke-ExecCippReplacemap - Preview' {
+    BeforeAll {
+        function Get-CIPPTextReplacement { param($TenantFilter, $Text, [switch]$EscapeForJson) }
+        function New-PreviewRequest {
+            param([string]$TenantId = 'contoso.onmicrosoft.com', $Text)
+            [pscustomobject]@{
+                Params  = @{ CIPPEndpoint = 'ExecCippReplacemap' }
+                Headers = @{}
+                Query   = @{}
+                Body    = [pscustomobject]@{ Action = 'Preview'; tenantId = $TenantId; Text = $Text }
+            }
+        }
+    }
+
+    BeforeEach {
+        Mock -CommandName Get-Tenants -MockWith { [pscustomobject]@{ customerId = 'contoso-id' } }
+        Mock -CommandName Get-CIPPTextReplacement -MockWith { "resolved:${TenantFilter}:${Text}:$($EscapeForJson.IsPresent)" }
+    }
+
+    It 'resolves the text for the tenant' {
+        $Response = Invoke-ExecCippReplacemap -Request (New-PreviewRequest -Text 'mail+%initialdomainprefix%@example.com')
+
+        $Response.StatusCode | Should -Be 200
+        $Response.Body.Results | Should -Be 'resolved:contoso-id:mail+%initialdomainprefix%@example.com:False'
+    }
+
+    It 'escapes values for JSON when the text is JSON' {
+        $Response = Invoke-ExecCippReplacemap -Request (New-PreviewRequest -Text '{"name":"%tenantname%"}')
+
+        $Response.Body.Results | Should -BeLike '*:True'
+    }
+
+    It 'rejects <Name>' -ForEach @(
+        @{ Name = 'global scope'; TenantId = 'AllTenants'; Text = '%tenantname%' }
+        @{ Name = 'empty text'; TenantId = 'contoso.onmicrosoft.com'; Text = ' ' }
+    ) {
+        $Response = Invoke-ExecCippReplacemap -Request (New-PreviewRequest -TenantId $TenantId -Text $Text)
+
+        $Response.StatusCode | Should -Be 400
+        Should -Invoke Get-CIPPTextReplacement -Times 0
     }
 }

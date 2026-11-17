@@ -1091,7 +1091,7 @@ function Get-EndpointContract {
 
     return [pscustomobject]@{
         Name         = $Name
-        Role         = (($Help.Role ?? '') + '').Trim()
+        Role         = (("$($Help.Role)" -split ',')[0]).Trim()
         Synopsis     = (($Help.Synopsis ?? '') + '').Trim()
         Description  = (($Help.Description ?? '') + '').Trim()
         AnyTenant    = $AnyTenant

@@ -746,6 +746,9 @@ export const CippDataTable = (props) => {
     cellRenderers,
     persistenceKey,
     parentRow,
+    // The page's main table: it follows ?search= and ?open=<row id> in the URL. Tables in
+    // drawers and dialogs leave it off so a link does not leak into them.
+    deepLink = false,
   } = props
 
   // Create a map of column IDs to their filterType for quick lookup.
@@ -806,13 +809,20 @@ export const CippDataTable = (props) => {
   const [columnFilterFns, setColumnFilterFns] = useState({})
   const waitingBool = api?.url ? true : false
 
+  const router = useRouter()
+  const linkedSearch =
+    deepLink && typeof router.query?.search === 'string'
+      ? router.query.search
+      : ''
+  const linkedRowId =
+    deepLink && typeof router.query?.open === 'string' ? router.query.open : ''
+  const linkedRowOpened = useRef(false)
   const [activeFilters, setActiveFilters] = useState({ graph: null, table: null })
-  const [searchValue, setSearchValue] = useState('')
+  const [searchValue, setSearchValue] = useState(linkedSearch)
   const restoredFiltersRef = useRef(new Set())
   const searchFocusRef = useRef(null)
 
   const settings = useSettings()
-  const router = useRouter()
   const routerPageName = router.pathname.split('/').slice(1).join('/')
   const pageName = persistenceKey ?? (isInDialog ? '' : routerPageName)
   // The user's saved column selection for this page. Always layered over a full default
@@ -1587,6 +1597,23 @@ export const CippDataTable = (props) => {
     setOffcanvasVisible(false)
     setContextRow(null)
   }, [])
+
+  // ?open=<row id> opens that row's drawer once the row has loaded, once per visit.
+  useEffect(() => {
+    if (
+      !linkedRowId ||
+      linkedRowOpened.current ||
+      !offCanvas ||
+      !Array.isArray(memoizedData)
+    ) {
+      return
+    }
+    const match = memoizedData.find((row) => String(row?.id) === linkedRowId)
+    if (match) {
+      linkedRowOpened.current = true
+      openRowOffCanvas(match)
+    }
+  }, [linkedRowId, memoizedData, offCanvas, openRowOffCanvas])
 
   const handleRowOpenNewTab = useCallback(
     (rowOriginal) => {

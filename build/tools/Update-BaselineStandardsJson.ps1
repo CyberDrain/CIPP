@@ -27,7 +27,8 @@ $ErrorActionPreference = 'Stop'
 
 $DisplayFields = @(
     'cat', 'tag', 'helpText', 'docsDescription', 'executiveText', 'label', 'impact', 'impactColour',
-    'addedDate', 'powershellEquivalent', 'recommendedBy', 'requiredCapabilities', 'multiple'
+    'addedDate', 'powershellEquivalent', 'recommendedBy', 'requiredCapabilities', 'multiple',
+    'appliesToTest', 'secureScoreImpact', 'expected', 'manual', 'disabledFeatures'
 )
 
 $Definitions = [System.Collections.Generic.SortedDictionary[string, object]]::new([StringComparer]::Ordinal)

@@ -73,7 +73,11 @@ namespace CIPP
             {
                 var b = body[i];
                 if (b == 0x20 || (b >= 0x09 && b <= 0x0D) || (b >= 0x1C && b <= 0x1F)) continue;
-                return b < 0x80 ? (char)b : text().TrimStart().FirstOrDefault();
+                if (b < 0x80) return (char)b;
+                // Decode a small window, not the whole body: binary payloads (blob reads) would otherwise
+                // be decoded in full just to read one character.
+                var window = Encoding.UTF8.GetString(body, i, Math.Min(body.Length - i, 4096)).TrimStart();
+                return window.Length > 0 ? window[0] : text().TrimStart().FirstOrDefault();
             }
             return '\0';
         }
@@ -100,6 +104,8 @@ namespace CIPP
         public string                      Uri                { get; set; } = string.Empty;
         public string                      Method             { get; set; } = "GET";
         public string?                     Body               { get; set; }
+        /// <summary>Raw body (e.g. a blob block); used instead of Body when set.</summary>
+        public byte[]?                     BodyBytes          { get; set; }
         public Dictionary<string, string>? Headers            { get; set; }
         public string?                     ContentType        { get; set; }
         public int                         TimeoutSec         { get; set; } = 100;
@@ -762,7 +768,8 @@ namespace CIPP
             bool                        skipErrorCheck     = false,
             int                         timeoutSec         = 100,
             int                         maximumRedirection = -1,
-            CancellationToken           cancellationToken  = default)
+            CancellationToken           cancellationToken  = default,
+            byte[]?                     bodyBytes          = null)
         {
             await EnsureClientsAsync().ConfigureAwait(false);
 
@@ -822,7 +829,14 @@ namespace CIPP
             // from any charset parameter, then re-applies the full value so
             // that 'application/json; charset=utf-8' round-trips correctly.
             // ----------------------------------------------------------
-            if (body is not null)
+            if (bodyBytes is not null)
+            {
+                // No default Content-Type: signed requests (Azure Storage SharedKey) sign exactly what the caller set.
+                request.Content = new ByteArrayContent(bodyBytes);
+                if (!string.IsNullOrWhiteSpace(contentType))
+                    request.Content.Headers.TryAddWithoutValidation("Content-Type", contentType);
+            }
+            else if (body is not null)
             {
                 var effectiveCt   = string.IsNullOrWhiteSpace(contentType)
                     ? "application/json; charset=utf-8"
@@ -1065,7 +1079,8 @@ namespace CIPP
                                               req.ContentType, skipErrorCheck: true,
                                               timeoutSec: req.TimeoutSec,
                                               maximumRedirection: req.MaximumRedirection,
-                                              cancellationToken: cancellationToken).ConfigureAwait(false);
+                                              cancellationToken: cancellationToken,
+                                              bodyBytes: req.BodyBytes).ConfigureAwait(false);
 
                     var retryable = res.StatusCode == 429 || (res.StatusCode >= 500 && res.StatusCode <= 599);
                     if (retryable && attempt <= maxRetries)

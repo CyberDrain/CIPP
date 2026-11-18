@@ -1,10 +1,10 @@
 # Global Variables
 
-Global variables are key-value pairs that can be used to store additional information for All Tenants. These are applied to templates in standards using the format %variablename%. If a tenant has a custom variable with the same name, the tenant's variable will take precedence.
+Global variables are key-value pairs that can be used to store additional information for All Tenants. These are applied to templates in standards using the format %variablename%. If a tenant group the tenant belongs to, or the tenant itself, has a variable with the same name, that value takes precedence: tenant first, then tenant group, then global.
 
 These variables can be used in any type of template and will be replaced automatically.
 
-Tenant custom variables can be set in the [#custom-variables](../../manage/edit.md#custom-variables "mention") box, shown while editing a Tenant.
+Tenant custom variables can be set in the [#custom-variables](../../manage/edit.md#custom-variables "mention") box, shown while editing a Tenant. Tenant group variables are set on the group's edit page, see [#group-variables](groups/edit.md#group-variables "mention").
 
 {% hint style="danger" %}
 Given the differences in how various systems treat the variable name, we recommend using all lowercase when naming variables, for example variablename.
@@ -63,7 +63,7 @@ The following variables are reserved and will not be used:
 
 ## Unresolved Variables
 
-CIPP replaces only the variables that exist for the tenant being processed, which is the global set combined with that tenant's own variables. A variable that has neither a global value nor a tenant value is not resolved, and nothing blocks or validates the template beforehand. The token is left in place as the literal text `%variablename%` and is sent to Microsoft Graph exactly as written.
+CIPP replaces only the variables that exist for the tenant being processed, which is the global set combined with the variables of the tenant's groups and the tenant's own variables. A variable that has neither a global value nor a tenant value is not resolved, and nothing blocks or validates the template beforehand. The token is left in place as the literal text `%variablename%` and is sent to Microsoft Graph exactly as written.
 
 Graph rejects the malformed value, so the standard fails for that tenant and the failure is recorded in the Standards logs for that tenant only. Tenants that do have a value for the variable continue to deploy normally, which is why this typically shows up as a template that works everywhere except for a handful of tenants. When you see an unexpected Graph error on a Standards deployment, check that every tenant in scope has a value for each variable the template uses.
 

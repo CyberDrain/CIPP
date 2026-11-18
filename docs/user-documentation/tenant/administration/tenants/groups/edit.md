@@ -53,4 +53,14 @@ CIPP re-evaluates dynamic groups on a schedule and updates their membership auto
 
 Select Save to write your changes. For a static group this stores the member list you selected; for a dynamic group it stores the rule set and logic, and membership is resolved automatically from that point forward.
 
+## Group Variables
+
+Shown below the group settings once the group has been saved. Group variables are custom variables that apply to every tenant in the group, used in templates as `%variablename%` exactly like [global-variables.md](../global-variables.md "mention"). They let you change one setting for a set of tenants without copying a template: give the template a variable with a safe global value, then set a different value on a group for the tenants that need it.
+
+A tenant takes the most specific value available: its own variable first, then a group variable, then the global variable.
+
+If a tenant is in more than one group that sets the same variable to different values, CIPP cannot tell which one should win, so it uses the global value for that tenant and logs a warning naming the groups. The tenant's Custom Variables list shows these as Conflict. Set the variable on the tenant itself to choose a value, or keep the groups from overlapping. When you add a variable that another group already sets, the Add Variable dialog warns you.
+
+Group variables are part of the group, so anyone who can edit the group can change them: the same **Tenant.Groups.ReadWrite** permission and unrestricted tenant access described on [README.md](README.md "mention"). Deleting a group deletes its variables. Group variables cannot be used in dynamic group rules: a Custom Variable rule only reads global and tenant variables.
+
 {% include "../../../../../../.gitbook/includes/feature-request.md" %}

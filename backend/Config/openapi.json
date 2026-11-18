@@ -19179,6 +19179,85 @@
         "x-cipp-role": "Tenant.GlobalVariables.ReadWrite"
       }
     },
+    "/api/ExecCippGroupReplacemap": {
+      "post": {
+        "summary": "Lists, adds, edits or deletes a tenant group's custom variables.",
+        "operationId": "ExecCippGroupReplacemap",
+        "tags": [
+          "CIPP > Settings"
+        ],
+        "description": "Group variables apply to every tenant in the group, between global and per-tenant values. They are part\nof the group, so they are managed with the tenant group permission rather than the per-tenant one.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Action": {
+                    "type": "string",
+                    "description": "List, AddEdit or Delete."
+                  },
+                  "tenantId": {
+                    "type": "string",
+                    "description": "The group, as group:<groupId>."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Action",
+            "in": "query",
+            "description": "List, AddEdit or Delete.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "description": "The group, as group:<groupId>.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Groups.ReadWrite",
+        "x-cipp-any-tenant": true
+      }
+    },
     "/api/ExecCippLogsSas": {
       "post": {
         "summary": "Generate a read-only SAS token for the CippLogs table",

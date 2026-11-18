@@ -6,6 +6,7 @@ BeforeAll {
 
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/ConvertTo-CIPPODataFilterValue.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPTextReplacement.ps1')
+    function Get-CIPPTenantGroupVariables { param($CustomerId) @{} }
     . (Join-Path $RepoRoot 'Modules/CIPPBaselines/Public/PrepareHooks/Get-CIPPBaselineCATemplateState.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPBaselines/Public/Helpers/Get-CIPPBaselineCacheRows.ps1')
     function Get-CIPPBaselineCommand { param($Name) }
@@ -258,6 +259,7 @@ Describe 'Get-CIPPBaselineCATemplateState' {
             }
             $script:Countries = [pscustomobject]@{ '@odata.type' = '#microsoft.graph.countryNamedLocation'; id = 'loc-countries'; displayName = 'Allowed Countries'; countriesAndRegions = @('BE', 'NL'); includeUnknownCountriesAndRegions = $false; countryLookupMethod = 'clientIpAddress' }
             function Set-Variables($OfficeIps = '["203.0.113.0/24","198.51.100.10/32"]', $ClientAllow = '[]') {
+                $script:CIPPVariableMemo = $null
                 $script:VariableRows = @(
                     [pscustomobject]@{ RowKey = 'officeips'; Value = $OfficeIps; VariableType = 'list' }
                     [pscustomobject]@{ RowKey = 'allowedcountries'; Value = '["NL","BE"]'; VariableType = 'list' }

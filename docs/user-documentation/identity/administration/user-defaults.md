@@ -40,8 +40,18 @@ The same fields are used when creating a template and when editing an existing o
 | Enforce Per-User MFA                                         | Sets the per-user MFA state to Enforced for users created from this template. This is for tenants without Conditional Access; do not combine with CA-based MFA policies.                                                                                                  |
 | Mobile #                                                     | The user's mobile number.                                                                                                                                                                                                                                                   |
 | Business #                                                   | The user's business number.                                                                                                                                                                                                                                                 |
+| Manager                                                      | The new user's manager, as a user principal name or a custom variable such as `%salesmanager%`. See [#manager-and-sponsor](#manager-and-sponsor "mention").                                                                                                                 |
+| Sponsor                                                      | The new user's sponsor, entered the same way as **Manager**. Only shown when `sponsor` is added to **Added Attributes when creating a new user** in [user-settings.md](../../shared-features/menu-bar/user-settings.md "mention").                                          |
 
 Any custom user attributes configured in CIPP appear at the end of the form and can be given default values in the same way.
+
+### Manager and Sponsor
+
+A manager or sponsor is a person in one tenant, so a user principal name only works for users created in that tenant. For an **All Tenants** template, enter a custom variable instead, for example `%salesmanager%`, and give it a value on [global-variables.md](../../tenant/administration/tenants/global-variables.md "mention"), used by every tenant without its own value, or in each tenant's [#custom-variables](../../tenant/manage/edit.md#custom-variables "mention"). Typing `%` in the field lists the variable names CIPP knows. A template saved with **All Tenants** selected only accepts a value that contains a variable.
+
+The variable is resolved when the user is created, for the tenant the user is created in, and a tenant's own value takes precedence over the global one. Until then the **Add User** form shows the variable itself in **Set Manager** and **Set Sponsor**, and picking a person there replaces it. If the variable has no value for that tenant, the user is still created without a manager or sponsor, and the results report that it could not be set.
+
+A global value is the same for every tenant, so a global value holding one person's user principal name still only works in that person's tenant. Give each tenant its own value, or build the name from a variable that already differs per tenant, for example `salesmanager@%tenantfilter%` where every tenant has an account with that name. Each field takes one person.
 
 ### Shared Mailboxes, Calendars and Sites
 

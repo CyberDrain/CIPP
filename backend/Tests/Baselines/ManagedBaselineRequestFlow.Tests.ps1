@@ -69,7 +69,7 @@ Describe 'Push-CIPPManagedBaselineSubmit' {
         Mock Write-LogMessage {}
         Mock Add-CIPPAzDataTableEntity { $script:Changes = $Entity }
         Mock Get-CIPPAzDataTableEntity { if ($Context -eq 'ManagedBaselineCollection') { $script:Collected } else { New-Row } }
-        Mock Invoke-ManagedBaselinesRequest { [pscustomobject]@{ requestId = 'request-9'; status = 'submitted'; mock = $true } }
+        Mock Invoke-ManagedBaselinesRequest { [pscustomobject]@{ requestId = 'request-9'; status = 'submitted' } }
     }
 
     It 'sends the snapshot and moves the request to Waiting on CyberDrain' {
@@ -78,7 +78,6 @@ Describe 'Push-CIPPManagedBaselineSubmit' {
         Should -Invoke Invoke-ManagedBaselinesRequest -Times 1 -Exactly -ParameterFilter { $Path -eq 'requests' -and $Method -eq 'POST' -and $Body.standards.Count -eq 2 }
         $script:Changes.Status | Should -Be 'Waiting on CyberDrain'
         $script:Changes.SubmittedAt | Should -BeGreaterThan 0
-        $script:Changes.Mock | Should -BeTrue
     }
 
     It 'leaves the request failed with the reason when sending fails' {

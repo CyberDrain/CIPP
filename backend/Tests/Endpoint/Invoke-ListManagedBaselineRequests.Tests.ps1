@@ -73,7 +73,7 @@ Describe 'Invoke-ListManagedBaselineRequests' {
     Context 'the list' {
         It 'lists requests newest first, with what was typed and how far collection is' {
             $script:Requests = @(
-                New-Row 'older' 'Waiting on CyberDrain' 100 @{ Mock = $true }
+                New-Row 'older' 'Waiting on CyberDrain' 100
                 New-Row 'newer' 'Waiting on data collection' 200
             )
 
@@ -88,7 +88,6 @@ Describe 'Invoke-ListManagedBaselineRequests' {
             $Newer.tenantFilter | Should -Be 'contoso.com'
             $Newer.frameworks | Should -Be @('CIS')
             $Response.Body.Results[1].collected | Should -BeNullOrEmpty
-            $Response.Body.Metadata.mock | Should -BeTrue
         }
 
         It 'shows the baseline a request became, and when CyberDrain has a newer version of it' {

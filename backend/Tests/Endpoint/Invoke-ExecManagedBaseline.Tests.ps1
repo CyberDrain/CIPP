@@ -19,7 +19,7 @@ BeforeAll {
     . (Join-Path $BackendRoot 'Modules/CIPPCore/Public/Baselines/Merge-CIPPManagedBaseline.ps1')
     . (Join-Path $BackendRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Tenant/Standards/Invoke-ExecManagedBaseline.ps1')
 
-    $script:Package = Get-Content (Join-Path $BackendRoot 'Config/ManagedBaselineSamples/template-sample-identity-essentials.json') -Raw | ConvertFrom-Json -Depth 100
+    $script:Package = Get-Content (Join-Path $BackendRoot 'Tests/Fixtures/ManagedBaselines/template-sample-identity-essentials.json') -Raw | ConvertFrom-Json -Depth 100
     $Principal = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes('{"userDetails":"admin@partner.example"}'))
     $script:NewRequest = {
         param($Body)

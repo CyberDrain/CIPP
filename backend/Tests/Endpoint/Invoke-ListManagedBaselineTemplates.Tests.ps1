@@ -14,7 +14,7 @@ BeforeAll {
     . (Join-Path $BackendRoot 'Modules/CIPPCore/Public/Get-CippErrorStatusCode.ps1')
     . (Join-Path $BackendRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Tenant/Standards/Invoke-ListManagedBaselineTemplates.ps1')
 
-    $script:Catalog = @(Get-Content (Join-Path $BackendRoot 'Config/ManagedBaselineSamples/catalog.json') -Raw | ConvertFrom-Json -Depth 100)
+    $script:Catalog = @(Get-Content (Join-Path $BackendRoot 'Tests/Fixtures/ManagedBaselines/catalog.json') -Raw | ConvertFrom-Json -Depth 100)
     $script:Request = [pscustomobject]@{ Params = @{ CIPPEndpoint = 'ListManagedBaselineTemplates' }; Headers = @{}; Query = [pscustomobject]@{} }
 }
 
@@ -57,16 +57,6 @@ Describe 'Invoke-ListManagedBaselineTemplates' {
         $Row.stages[0].standards | Should -Contain 'Configure Smart Lockout'
         $Row.stages[0].standards | Should -Contain 'PasswordExpireDisabled'
         $Row.tags | Should -Be @('Identity', 'All sizes')
-    }
-
-    It 'says when the catalog is sample data' {
-        (Invoke-ListManagedBaselineTemplates -Request $script:Request).Body.Metadata.mock | Should -BeTrue
-    }
-
-    It 'does not call sample data what came from the service' {
-        Mock Invoke-ManagedBaselinesRequest { [pscustomobject]@{ id = 'real-1'; name = 'Real'; version = 1; stages = @() } }
-
-        (Invoke-ListManagedBaselineTemplates -Request $script:Request).Body.Metadata.mock | Should -BeFalse
     }
 
     It 'answers <Status> when the service function refuses with <Type>' -ForEach @(

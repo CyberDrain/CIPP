@@ -143,8 +143,7 @@ function Invoke-ListManagedBaselineRequests {
                 }
             }
             $Body = @{
-                Results  = @($Results)
-                Metadata = @{ mock = ($Rows.Where({ $_.Mock -eq $true }, 'First').Count -gt 0) }
+                Results = @($Results)
             }
         }
         $StatusCode = [HttpStatusCode]::OK

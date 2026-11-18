@@ -26,6 +26,8 @@ import { CippCodeBlock } from '../../../../components/CippComponents/CippCodeBlo
 import { CippDataTable } from '../../../../components/CippTable/CippDataTable'
 import { CippManagedBaselinesUpgrade } from '../../../../components/CippBaselines/CippManagedBaselinesUpgrade'
 import { CippManagedBaselineRequestDrawer } from '../../../../components/CippBaselines/CippManagedBaselineRequestDrawer'
+import { CippManagedBaselineGuideTabs } from '../../../../components/CippBaselines/CippManagedBaselineGuide'
+import { CippManagedBaselineRecommendations } from '../../../../components/CippBaselines/CippManagedBaselineRecommendations'
 import { CippIcons } from '../../../../utils/icon-registry'
 import { getCippError } from '../../../../utils/get-cipp-error'
 import { parseCippDate } from '../../../../utils/parse-cipp-date'
@@ -52,6 +54,13 @@ const viewOptions = [
     label: 'Custom Managed Baseline',
     description: 'Have CyberDrain build a custom baseline for your MSP.',
     icon: <CippIcons.Tune />,
+  },
+  {
+    value: 'recommendations',
+    label: 'Recommendations',
+    description:
+      'Scan a tenant against our recommendations and build a baseline from them.',
+    icon: <CippIcons.ManageSearch />,
   },
 ]
 
@@ -300,9 +309,14 @@ const Page = () => {
   const pageTitle = 'Managed Baselines'
   const router = useRouter()
   const [view, setView] = useState('templates')
-  // Deep link: ?view=custom opens the custom requests (query is empty until the router is ready).
+  // Deep link: ?view=custom or ?view=recommendations (query is empty until the router is ready).
   useEffect(() => {
-    if (router.isReady && router.query.view === 'custom') setView('custom')
+    if (
+      router.isReady &&
+      ['custom', 'recommendations'].includes(router.query.view)
+    ) {
+      setView(router.query.view)
+    }
   }, [router.isReady, router.query.view])
 
   const integrations = ApiGetCall({
@@ -348,21 +362,14 @@ const Page = () => {
     )
   }
 
-  const current = view === 'templates' ? templates : requests
-  const sampleData =
-    templates.data?.Metadata?.mock === true ||
-    requests.data?.Metadata?.mock === true
+  const current =
+    view === 'templates' ? templates : view === 'custom' ? requests : {}
 
   return (
     <>
       <CippHead title={pageTitle} />
       <Container maxWidth={false}>
         <Stack spacing={2}>
-          {sampleData && (
-            <Alert severity="info">
-              Sample data. Mock mode is on, so nothing is sent to CyberDrain.
-            </Alert>
-          )}
           {current.isError && (
             <Alert
               severity="error"
@@ -384,7 +391,7 @@ const Page = () => {
             {viewOptions.map((option) => {
               const isSelected = view === option.value
               return (
-                <Grid key={option.value} size={{ xs: 12, md: 6 }}>
+                <Grid key={option.value} size={{ xs: 12, md: 4 }}>
                   <Card
                     onClick={() => setView(option.value)}
                     variant="outlined"
@@ -430,7 +437,9 @@ const Page = () => {
               )
             })}
           </Grid>
-          {view === 'templates' ? (
+          {view === 'recommendations' ? (
+            <CippManagedBaselineRecommendations />
+          ) : view === 'templates' ? (
             <CippDataTable
               queryKey="ListManagedBaselineTemplates-table"
               title="Managed Baseline Templates"
@@ -442,7 +451,11 @@ const Page = () => {
                 size: 'md',
                 title: 'Managed Baseline Details',
                 contentPadding: 0,
-                children: (row) => <TemplateDetails row={row} />,
+                children: (row) => (
+                  <CippManagedBaselineGuideTabs key={row.id} id={row.id}>
+                    <TemplateDetails row={row} />
+                  </CippManagedBaselineGuideTabs>
+                ),
               }}
               offCanvasOnRowClick={true}
               simpleColumns={[
@@ -467,7 +480,19 @@ const Page = () => {
                 size: 'md',
                 title: 'Custom Baseline Request',
                 contentPadding: 0,
-                children: (row) => <RequestDetails row={row} />,
+                // The guide arrives with the baseline, so there is none before delivery.
+                children: (row) =>
+                  row.ready === true ||
+                  asArray(row.status).includes('Implemented') ? (
+                    <CippManagedBaselineGuideTabs
+                      key={row.requestId}
+                      requestId={row.requestId}
+                    >
+                      <RequestDetails row={row} />
+                    </CippManagedBaselineGuideTabs>
+                  ) : (
+                    <RequestDetails row={row} />
+                  ),
               }}
               offCanvasOnRowClick={true}
               cardButton={<CippManagedBaselineRequestDrawer />}

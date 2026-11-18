@@ -40,6 +40,7 @@ export const CippTranslations = {
   managedKind: 'Managed Type',
   managedRequestId: 'CyberDrain Request ID',
   requestedDateTime: 'Requested',
+  firstSeenDateTime: 'First Seen',
   sentDateTime: 'Sent to CyberDrain',
   lastCheckedDateTime: 'Last Checked',
   engineerNotes: 'Notes from CyberDrain',

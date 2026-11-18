@@ -18,56 +18,17 @@ function Push-CIPPManagedBaselineCollect {
     $Current = $null
     $DiffersOn = [System.Collections.Generic.List[string]]::new()
     try {
-        $Definition = Get-CIPPBaselineDefinition -Name $Item.Standard | Select-Object -First 1
-        if (-not $Definition) { throw "No definition found for standard $($Item.Standard)." }
-
-        # The engine's own rule for a setting it cannot fill in: no default, and either required
-        # or still present in the expected value.
-        $ExpectedJson = ''
-        if ($null -ne $Definition.expected) { $ExpectedJson = ConvertTo-Json -Compress -Depth 100 -InputObject $Definition.expected }
-        $NeedsChoice = [bool]$Definition.instanceIdentity
-        foreach ($Variable in (($Definition.variables ?? [PSCustomObject]@{}).PSObject.Properties)) {
-            if ($null -ne ($Variable.Value.default ?? $Variable.Value.recommended)) { continue }
-            if ($Variable.Value.required -eq $true -or ($Variable.Value.omitWhenBlank -ne $true -and $ExpectedJson.Contains(('%{0}%' -f $Variable.Name)))) {
-                $NeedsChoice = $true
-                break
+        $Grade = Get-CIPPBaselineStandardGrade -TenantFilter "$($Item.TenantFilter)" -Standard "$($Item.Standard)"
+        $Definition = $Grade.Definition
+        if ($Grade.Status -eq 'Drift' -or $Grade.Status -eq 'Compliant') {
+            $Current = Protect-CIPPManagedBaselineSnapshot -Value $Grade.CurrentValue -TenantIdentifiers @($Item.TenantIdentifiers) -Definition $Definition
+            foreach ($Difference in @($Grade.Diff)) {
+                if (-not $Difference.Property) { continue }
+                $Property = "$(Protect-CIPPManagedBaselineSnapshot -Value "$($Difference.Property)" -TenantIdentifiers @($Item.TenantIdentifiers) -Definition $Definition)"
+                if (-not $DiffersOn.Contains($Property)) { $DiffersOn.Add($Property) }
             }
         }
-
-        if ($NeedsChoice) {
-            $Status = 'Needs a choice'
-        } else {
-            $WorkItem = @{
-                TenantFilter     = "$($Item.TenantFilter)"
-                TenantName       = "$($Item.TenantFilter)"
-                Standard         = "$($Item.Standard)"
-                BaseName         = "$($Item.Standard)"
-                Variables        = $null
-                Tiers            = @()
-                Stage            = 1
-                StageName        = ''
-                TemplateId       = ''
-                SourceScope      = 'managed'
-                SourceTemplate   = 'Managed baseline snapshot'
-                RemediateEnabled = $false
-                AlertEnabled     = $false
-            }
-            $Graded = Invoke-CIPPBaselineStandard -Item $WorkItem -Mode 'compare' -GradeOnly
-            if ($null -eq $Graded) {
-                $Status = 'No Data'
-            } elseif ($Graded.PSObject.Properties['Outcome']) {
-                # A full result means the engine stopped before grading and says why.
-                if ("$($Graded.Status)" -eq 'Skipped - No License') { $Status = 'No licence' }
-            } elseif ($null -ne $Graded.CurrentValue) {
-                $Status = $Graded.Compliant ? 'Compliant' : 'Drift'
-                $Current = Protect-CIPPManagedBaselineSnapshot -Value $Graded.CurrentValue -TenantIdentifiers @($Item.TenantIdentifiers) -Definition $Definition
-                foreach ($Difference in @($Graded.Diff)) {
-                    if (-not $Difference.Property) { continue }
-                    $Property = "$(Protect-CIPPManagedBaselineSnapshot -Value "$($Difference.Property)" -TenantIdentifiers @($Item.TenantIdentifiers) -Definition $Definition)"
-                    if (-not $DiffersOn.Contains($Property)) { $DiffersOn.Add($Property) }
-                }
-            }
-        }
+        $Status = $Grade.Status
     } catch {
         $Status = 'No Data'
         Write-Information "Managed baseline snapshot: $($Item.Standard) on $($Item.TenantFilter) could not be compared: $($_.Exception.Message)"

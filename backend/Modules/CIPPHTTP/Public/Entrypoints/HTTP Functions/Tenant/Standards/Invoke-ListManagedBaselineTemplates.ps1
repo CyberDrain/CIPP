@@ -52,8 +52,7 @@ function Invoke-ListManagedBaselineTemplates {
             }
         }
         $Body = @{
-            Results  = @($Rows)
-            Metadata = @{ mock = (@($Catalog).Where({ $_.mock -eq $true }, 'First').Count -gt 0) }
+            Results = @($Rows)
         }
         $StatusCode = [HttpStatusCode]::OK
     } catch {

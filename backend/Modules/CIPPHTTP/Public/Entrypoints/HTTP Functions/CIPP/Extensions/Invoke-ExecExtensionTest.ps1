@@ -151,11 +151,7 @@ Function Invoke-ExecExtensionTest {
                     $Results = [pscustomobject]@{ 'Results' = "Failed to connect to CyberDrain Managed Baselines: $($_.Exception.Message)" }
                     break
                 }
-                if ($Account.mock) {
-                    $Results = [pscustomobject]@{ 'Results' = 'Connected to the built-in sample service. Mock mode is on, so nothing is sent to CyberDrain.' }
-                } else {
-                    $Results = [pscustomobject]@{ 'Results' = "Successfully connected to CyberDrain Managed Baselines as $($Account.partnerName)." }
-                }
+                $Results = [pscustomobject]@{ 'Results' = "Successfully connected to CyberDrain Managed Baselines as $($Account.partnerName)." }
             }
         }
     } catch {

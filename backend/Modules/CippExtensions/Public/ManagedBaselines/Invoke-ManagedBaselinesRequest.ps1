@@ -6,9 +6,6 @@ function Invoke-ManagedBaselinesRequest {
         The only function that talks to the service, so an instance that has not enabled the
         integration never calls it. Sends the extension's API key as x-api-key and turns a
         refusal into a message an operator can act on.
-        With CIPP_MANAGED_BASELINES_MOCK set to 'true' nothing leaves the instance: answers come
-        from Config/ManagedBaselineSamples, and a request reports ready two minutes after its
-        snapshot was sent.
     .FUNCTIONALITY
         Internal
     #>
@@ -28,56 +25,6 @@ function Invoke-ManagedBaselinesRequest {
     $Config = $(try { (Get-CIPPAzDataTableEntity @ConfigTable).config | ConvertFrom-Json -ErrorAction Stop } catch { $null })
     if ($Config.CyberDrainManagedBaselines.Enabled -ne $true) {
         throw [System.ArgumentException]::new('The CyberDrain Managed Baselines integration is not enabled. Enable it under Integrations.')
-    }
-
-    if ($env:CIPP_MANAGED_BASELINES_MOCK -eq 'true') {
-        $Samples = Join-Path $env:CIPPRootPath 'Config/ManagedBaselineSamples'
-        switch -Regex ("$Method $Path") {
-            '^GET account$' {
-                return [PSCustomObject]@{ partnerName = 'Sample Partner'; plan = 'Sample'; mock = $true }
-            }
-            '^GET templates$' {
-                return [System.IO.File]::ReadAllText((Join-Path $Samples 'catalog.json')) | ConvertFrom-Json -Depth 100
-            }
-            '^GET templates/([\w-]+)$' {
-                $File = Join-Path $Samples "template-$($Matches[1]).json"
-                if (-not (Test-Path -LiteralPath $File)) {
-                    throw [System.Management.Automation.ItemNotFoundException]::new("CyberDrain has no published baseline with the id '$($Matches[1])'.")
-                }
-                return [System.IO.File]::ReadAllText($File) | ConvertFrom-Json -Depth 100
-            }
-            '^POST requests$' {
-                return [PSCustomObject]@{ requestId = "$($Body.requestId)"; status = 'submitted'; mock = $true }
-            }
-            '^GET requests/([\w-]+)$' {
-                $RequestId = $Matches[1]
-                $Table = Get-CippTable -tablename 'ManagedBaselineRequests'
-                $Row = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'request' and RowKey eq '$RequestId'" | Select-Object -First 1
-                $SubmittedAt = [int64]($Row.SubmittedAt ?? 0)
-                $Status = 'submitted'
-                if ("$($Row.Status)" -eq 'Implemented') {
-                    $Status = 'implemented'
-                } elseif ($SubmittedAt -gt 0 -and ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $SubmittedAt) -ge 120) {
-                    $Status = 'ready'
-                }
-                $Answer = [PSCustomObject]@{ requestId = $RequestId; status = $Status; engineerNotes = ''; version = $null; package = $null; mock = $true }
-                if ($Status -ne 'submitted') {
-                    $Answer.package = [System.IO.File]::ReadAllText((Join-Path $Samples 'custom-package.json')) | ConvertFrom-Json -Depth 100
-                    $Answer.version = $Answer.package.version
-                    $Answer.engineerNotes = 'Sample delivery from mock mode.'
-                }
-                return $Answer
-            }
-            '^POST requests/[\w-]+/confirm$' {
-                return [PSCustomObject]@{ status = 'implemented'; mock = $true }
-            }
-            '^DELETE requests/[\w-]+$' {
-                return
-            }
-            default {
-                throw [System.ArgumentException]::new("The sample service has no answer for $Method $Path.")
-            }
-        }
     }
 
     $APIKey = Get-ExtensionAPIKey -Extension 'CyberDrainManagedBaselines'

@@ -31,6 +31,7 @@ import { parseCippDate } from '../../../../utils/parse-cipp-date'
 import { ApiGetCall, ApiPostCall } from '../../../../api/ApiCall'
 import { CippApiResults } from '../../../../components/CippComponents/CippApiResults'
 import { CippManagedBaselineSyncPreview } from '../../../../components/CippBaselines/CippManagedBaselineSyncPreview'
+import { CippManagedBaselineGuideTabs } from '../../../../components/CippBaselines/CippManagedBaselineGuide'
 
 // The API serializes single-element arrays as a bare object; the selector needs a real array.
 const asOptionArray = (value) =>
@@ -235,7 +236,7 @@ const Page = () => {
         (acc, stage) => acc + stage.tenants.length,
         0
       )
-      return (
+      const details = (
         <Stack spacing={0}>
           <Stack
             spacing={0}
@@ -409,6 +410,13 @@ const Page = () => {
           </Stack>
         </Stack>
       );
+      return row.isManaged && managedEnabled ? (
+        <CippManagedBaselineGuideTabs key={row.GUID} guid={row.GUID}>
+          {details}
+        </CippManagedBaselineGuideTabs>
+      ) : (
+        details
+      )
     },
   }
 

@@ -12,6 +12,7 @@ BeforeAll {
     function Invoke-CIPPBaselineStandard { param($Item, $Mode, [switch]$GradeOnly) }
     . (Join-Path $BackendRoot 'Modules/CIPPCore/Public/Baselines/Test-CIPPManagedBaselineIdentifier.ps1')
     . (Join-Path $BackendRoot 'Modules/CIPPCore/Public/Baselines/Protect-CIPPManagedBaselineSnapshot.ps1')
+    . (Join-Path $BackendRoot 'Modules/CIPPBaselines/Public/Helpers/Get-CIPPBaselineStandardGrade.ps1')
     . (Join-Path $BackendRoot 'Modules/CIPPActivityTriggers/Public/Entrypoints/Activity Triggers/Baselines/Push-CIPPManagedBaselineCollect.ps1')
 
     $script:Item = @{

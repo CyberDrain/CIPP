@@ -22,6 +22,12 @@ vi.mock('../../src/components/CippTable/CippDataTable', () => ({
     )
   },
 }))
+vi.mock(
+  '../../src/components/CippBaselines/CippManagedBaselineRecommendations',
+  () => ({
+    CippManagedBaselineRecommendations: () => <div>recommendations view</div>,
+  })
+)
 import { api, getResult } from '../mocks/api-call'
 import { ApiGetCall } from '../../src/api/ApiCall'
 
@@ -42,13 +48,11 @@ const templatesResult = getResult({
         status: ['Imported', 'Update available'],
       },
     ],
-    Metadata: { mock: false },
   },
 })
 const requestsResult = getResult({
   data: {
     Results: [{ requestId: 'request-9', tenantFilter: 'contoso.com' }],
-    Metadata: { mock: true },
   },
 })
 const failedResult = getResult({
@@ -148,15 +152,6 @@ describe('Managed Baselines tab - tables', () => {
     expect(table.title).toBe('Custom Managed Baselines')
   })
 
-  it('says when what it shows is sample data', async () => {
-    router.query = { view: 'custom' }
-    renderWithProviders(<Page />)
-
-    expect(
-      screen.getByText(/Sample data\. Mock mode is on/)
-    ).toBeInTheDocument()
-  })
-
   it('shows why a list failed, with a way to the integration', () => {
     api.get = route({ templates: failedResult })
     renderWithProviders(<Page />)
@@ -170,5 +165,15 @@ describe('Managed Baselines tab - tables', () => {
       'href',
       '/cipp/integrations/configure?id=CyberDrainManagedBaselines'
     )
+  })
+
+  it('shows the recommendations from the third card, without asking for the other lists', async () => {
+    renderWithProviders(<Page />)
+
+    await userEvent.click(screen.getByText('Recommendations'))
+
+    expect(screen.getByText('recommendations view')).toBeInTheDocument()
+    expect(lastCall('/api/ListManagedBaselineTemplates').waiting).toBe(false)
+    expect(lastCall('/api/ListManagedBaselineRequests').waiting).toBe(false)
   })
 })

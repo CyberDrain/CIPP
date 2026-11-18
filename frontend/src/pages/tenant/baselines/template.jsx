@@ -774,6 +774,16 @@ const Page = () => {
     queryKey: `ManagedBaselineDelivery-${managedRequestId}`,
     waiting: !!managedRequestId,
   })
+  // The baseline Generate prepared from a tenant's recommendations loads the same way.
+  const recommendationTenant = router.query.recommendation
+  const recommendationApi = ApiGetCall({
+    url: '/api/ListManagedBaselineRecommendations',
+    data: { tenantFilter: recommendationTenant, draft: true },
+    queryKey: `ManagedBaselineRecommendationDraft-${recommendationTenant}`,
+    waiting: !!recommendationTenant,
+  })
+  const draftKey = managedRequestId ?? recommendationTenant
+  const draftApi = managedRequestId ? deliveredApi : recommendationApi
   // Saving a baseline invalidates every baseline-related query: the baselines list (direct
   // and table), all alignment views for every tenant, and the standards catalog.
   // The save runs inside a confirm dialog so its result (including the GitHub push
@@ -796,7 +806,11 @@ const Page = () => {
     setHasUnsavedChanges(false)
     // Re-baseline the form so isDirty clears after the save.
     formControl.reset(formControl.getValues())
-    if (router.query.id !== savedId || router.query.clone) {
+    if (
+      router.query.id !== savedId ||
+      router.query.clone ||
+      router.query.recommendation
+    ) {
       router.replace(
         { pathname: router.pathname, query: { id: savedId } },
         undefined,
@@ -835,13 +849,12 @@ const Page = () => {
   // Once the delivery is saved the editor follows the saved baseline, even before the
   // address has caught up with its id.
   const template =
-    managedRequestId && !saveTargetId
-      ? deliveredApi.data?.Results
+    draftKey && !saveTargetId
+      ? draftApi.data?.Results
       : (baselinesApi.data ?? []).find(
-          (entry) =>
-            entry.GUID === (managedRequestId ? saveTargetId : router.query.id)
+          (entry) => entry.GUID === (draftKey ? saveTargetId : router.query.id)
         )
-  const isDelivery = !!template && template === deliveredApi.data?.Results
+  const isDelivery = !!template && template === draftApi.data?.Results
   // A clone isn't pushed to the source repo yet, so it drops the synced badge/option.
   const templateSource = !router.query.clone && template?.source ? template.source : null
   const templateSourceUrl = !router.query.clone ? template?.sourceUrl : null
@@ -1182,7 +1195,9 @@ const Page = () => {
   const handleSave = () => saveDialog.handleOpen()
 
   const pageTitle = isDelivery
-    ? 'Review Managed Baseline'
+    ? managedRequestId
+      ? 'Review Managed Baseline'
+      : 'Review Recommended Baseline'
     : template
       ? 'Edit Baseline'
       : 'Add Baseline'
@@ -1191,8 +1206,8 @@ const Page = () => {
     <Box sx={{ flexGrow: 1, px: 3, maxWidth: '1900px' }}>
       <CippHead title={pageTitle} />
       <Stack spacing={2}>
-        {managedRequestId && deliveredApi.isError && (
-          <Alert severity="error">{getCippError(deliveredApi.error)}</Alert>
+        {draftKey && draftApi.isError && (
+          <Alert severity="error">{getCippError(draftApi.error)}</Alert>
         )}
         <Stack
           direction={{ xs: 'column', sm: 'row' }}

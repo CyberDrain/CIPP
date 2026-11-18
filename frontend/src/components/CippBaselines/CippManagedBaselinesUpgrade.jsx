@@ -36,6 +36,11 @@ const benefits = [
     text: 'Want a baseline that fits the way your MSP works? Tell us what you expect and which exceptions you need. CIPP takes a snapshot of one of your tenants as a starting point, and one of our engineers builds a custom baseline you can use across your clients. It is delivered to your CIPP for you to review.',
   },
   {
+    icon: <CippIcons.ManageSearch />,
+    title: 'Recommendations for every tenant',
+    text: 'Scan a tenant and see where it differs from what we recommend. Pick what you want and CIPP builds a baseline from it.',
+  },
+  {
     icon: <CippIcons.VerifiedUser />,
     title: 'Nothing changes without you',
     text: "A managed baseline does nothing until you have reviewed it and chosen the tenants. Domains, email addresses, IDs and the tenant's name are removed from the snapshot before it leaves your CIPP, and you can read exactly what was sent.",
@@ -124,7 +129,7 @@ export const CippManagedBaselinesUpgrade = () => {
 
       <Grid container spacing={3}>
         {benefits.map((benefit, index) => (
-          <Grid key={benefit.title} size={{ xs: 12, md: 4 }}>
+          <Grid key={benefit.title} size={{ xs: 12, md: 6 }}>
             <Grow
               in
               appear={!reduceMotion}

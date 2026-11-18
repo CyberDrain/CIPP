@@ -35,7 +35,6 @@ function Update-CIPPManagedBaselineRequest {
     $Changes.RemoteStatus = "$($Answer.status)"
     $Changes.RemoteVersion = "$($Answer.version)"
     $Changes.EngineerNotes = "$($Answer.engineerNotes)"
-    $Changes.Mock = ($Answer.mock -eq $true)
 
     $Status = "$($Row.Status)"
     if ($Status -eq 'Waiting on CyberDrain') {

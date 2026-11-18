@@ -29,7 +29,6 @@ function Push-CIPPManagedBaselineSubmit {
         $Changes.Status = 'Waiting on CyberDrain'
         $Changes.RemoteStatus = "$($Answer.status)"
         $Changes.SubmittedAt = $Now
-        $Changes.Mock = ($Answer.mock -eq $true)
         $Changes.Error = ''
         Write-LogMessage -API 'ManagedBaselines' -tenant $Row.TenantFilter -message "Sent the custom managed baseline request for $($Row.TenantFilter) to CyberDrain: $(@($Body.standards).Count) standards compared." -Sev 'Info'
     } catch {

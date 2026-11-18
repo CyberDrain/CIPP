@@ -25,15 +25,6 @@ Describe 'Invoke-ExecExtensionTest for CyberDrain Managed Baselines' {
         Should -Invoke Invoke-ManagedBaselinesRequest -Times 1 -Exactly -ParameterFilter { $Path -eq 'account' }
     }
 
-    It 'says so when it is talking to the built-in sample service' {
-        Mock Invoke-ManagedBaselinesRequest { [pscustomobject]@{ partnerName = 'Sample Partner'; mock = $true } }
-
-        $Response = Invoke-ExecExtensionTest -Request $script:Request
-
-        $Response.StatusCode | Should -Be 200
-        $Response.Body.Results | Should -BeLike '*sample service*'
-    }
-
     It 'answers with an error status and the reason when CyberDrain refuses the key' {
         Mock Invoke-ManagedBaselinesRequest { throw [System.UnauthorizedAccessException]::new('CyberDrain rejected the API key. Check the key under Integrations.') }
 

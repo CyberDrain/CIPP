@@ -313,6 +313,16 @@ Describe 'Push-NHIRun' {
         $script:StateRows.Count | Should -Be 0
     }
 
+    It 'fails the case and clears the run state when the Score phase cannot read the run state' {
+        Mock Get-CIPPBecRunState { throw 'BEC run state 11-WorkloadActivity is incomplete: expected 4 part row(s), found 3' }
+
+        Push-NHIRun -Item ($script:Item + @{ Step = 'Score' })
+
+        $script:Saved.Properties.Status | Should -BeExactly 'Error'
+        @($script:StepCalls | Where-Object { $_.Status -eq 'failed' }) | Should -HaveCount 1
+        $script:StateRows.Count | Should -Be 0
+    }
+
     It 'records a failed middle phase as an incomplete check and still completes the case' {
         Mock Search-CIPPBecAuditLog { throw 'Unified audit log search failed' }
 

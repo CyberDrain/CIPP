@@ -28,6 +28,9 @@ function Push-BECRun {
     $Key = $RunSteps[$StepIndex].Key
     $IsFirst = $StepIndex -eq 0
     $IsLast = $StepIndex -eq $RunSteps.Count - 1
+    # The queued UPN names the progress row; the first phase may have resolved it from the object id.
+    $ProgressName = [string]$Item.userName
+    $ReadError = $null
 
     if ($IsFirst) {
         $UserName = [string]$Item.userName
@@ -80,6 +83,7 @@ function Push-BECRun {
         Set-CIPPBecRunState -CaseId $CaseId -Clear
         Set-CIPPBecRunState -CaseId $CaseId -Section '00-Run' -Values @{ UserName = $UserName; StartDate = $startDate.ToString('o'); EndDate = $endDate.ToString('o'); WindowDays = $WindowDays }
         $State = @{ Completeness = [ordered]@{} }
+        $ProgressName = $UserName
     } else {
         # Only what this phase reads is built (Score reads everything); Push-BECRun.Tests checks the lists against each phase
         $StateNames = @('UserName', 'WindowDays', 'StartDate', 'EndDate'; switch ($Key) {
@@ -90,18 +94,37 @@ function Push-BECRun {
                 { $_ -in @('IPAnalysis', 'IPPeers') } { 'SuspectUserSignIns', 'NonInteractiveSignIns', 'RuleChangesLog', 'PermissionsLog', 'SafelistChanges', 'SharingChanges', 'TransportRuleChanges', 'DirectoryAudits', 'SentMessages', 'SentMessageAnalysis', 'MailActivity', 'RulesLog', 'UsageLocation', 'TravelWindows', 'IPBaseline' }
                 'AttackerActivity' { 'IPVerdicts', 'IPPeers', 'ReceivedSubjects', 'SentSubjects', 'SuspectUserSignIns', 'NonInteractiveSignIns', 'MailRecords', 'SharingChanges', 'SuspectUserDetail', 'PermissionsLog', 'MailActivity' }
             })
-        $State = if ($Key -eq 'Score') { Get-CIPPBecRunState -CaseId $CaseId } else { Get-CIPPBecRunState -CaseId $CaseId -Name $StateNames }
-        # the first phase never started the run (no resolvable UPN), so there is nothing to add to
-        if ([string]::IsNullOrWhiteSpace([string]$State.UserName)) {
-            Write-Information "BEC: case $CaseId has no run state; skipping phase $Key"
-            return
+        # A hand-off whose part rows are missing must fail the phase through the same handler as a collector
+        # error. Defer the throw to the phase try so the step, the case and the run state are all finalized.
+        try {
+            $State = if ($Key -eq 'Score') { Get-CIPPBecRunState -CaseId $CaseId } else { Get-CIPPBecRunState -CaseId $CaseId -Name $StateNames }
+        } catch {
+            $ReadError = Get-NormalizedError -message $_.Exception.Message
+            $State = @{}
         }
-        $UserName = [string]$State.UserName
-        $Heuristics = Get-CIPPBecHeuristics
-        $WindowDays = [int]$State.WindowDays
-        $startDate = ([datetime]$State.StartDate).ToUniversalTime()
-        $endDate = ([datetime]$State.EndDate).ToUniversalTime()
+        if (-not $ReadError) {
+            # the first phase never started the run (no resolvable UPN), so there is nothing to add to
+            if ([string]::IsNullOrWhiteSpace([string]$State.UserName)) {
+                Write-Information "BEC: case $CaseId has no run state; skipping phase $Key"
+                return
+            }
+            $UserName = [string]$State.UserName
+            $ProgressName = $UserName
+            $Heuristics = Get-CIPPBecHeuristics
+            $WindowDays = [int]$State.WindowDays
+            $startDate = ([datetime]$State.StartDate).ToUniversalTime()
+            $endDate = ([datetime]$State.EndDate).ToUniversalTime()
+        } else {
+            $Heuristics = Get-CIPPBecHeuristics
+        }
     }
+
+    # A queued item without a UPN still has a job row named by the first phase; use it for progress.
+    if ([string]::IsNullOrWhiteSpace($ProgressName)) {
+        $ProgressJob = try { @(Get-CIPPAsyncDeployment -JobId $CaseId) | Select-Object -First 1 } catch { $null }
+        $ProgressName = [string]($ProgressJob.Name ?? $CaseId)
+    }
+    if ([string]::IsNullOrWhiteSpace($UserName)) { $UserName = $ProgressName }
 
     Set-CippBecCaseContext -CaseId $CaseId
     Write-Information "Working on $UserName (case $CaseId, phase $Key)"
@@ -109,7 +132,7 @@ function Push-BECRun {
     # Progress writes are best-effort - a failure to report never fails the phase.
     $Step = {
         param($Index, $Status, $Message)
-        try { Set-CIPPAsyncDeploymentStep -JobId $CaseId -Name $UserName -StepIndex $Index -StepStatus $Status -Message ([string]$Message) } catch { Write-Information "BEC: progress update failed for $CaseId`: $($_.Exception.Message)" }
+        try { Set-CIPPAsyncDeploymentStep -JobId $CaseId -Name $ProgressName -StepIndex $Index -StepStatus $Status -Message ([string]$Message) } catch { Write-Information "BEC: progress update failed for $CaseId`: $($_.Exception.Message)" }
     }
     # Every array read from the state goes through here: a phase that failed left the value unset, and @($null) is one row.
     # The leading comma keeps a one-row array an array when it leaves the scriptblock.
@@ -178,6 +201,7 @@ function Push-BECRun {
 
     & $Step $StepIndex 'running' $RunSteps[$StepIndex].Running
     try {
+        if ($ReadError) { throw $ReadError }
         # Licence preflight: a check the tenant cannot support is skipped with its reason instead of run
         # only to fail. Get-CIPPTenantCapabilities is CIPP's shared (cached) service-plan read and the plan
         # names are the ones Test-CIPPStandardLicense's presets use. If the read itself fails every check
@@ -1234,13 +1258,17 @@ function Push-BECRun {
         }
         & $Step $StepIndex 'succeeded' $StepMessage
         if ($IsLast) {
-            Set-CIPPAsyncDeploymentStatus -JobId $CaseId -Name $UserName -Status 'succeeded' -Logs "Completed run $CaseId with $StepMessage"
+            Set-CIPPAsyncDeploymentStatus -JobId $CaseId -Name $ProgressName -Status 'succeeded' -Logs "Completed run $CaseId with $StepMessage"
             try { Set-CIPPBecRunState -CaseId $CaseId -Clear } catch { Write-Information "BEC: could not clear the run state of $CaseId`: $($_.Exception.Message)" }
         }
     } catch {
         $errMessage = Get-NormalizedError -message $_.Exception.Message
         $CippError = Get-CippException -Exception $_
-        Write-LogMessage -API 'BECRun' -message "BEC phase $Key failed for $($UserName): $errMessage [case $CaseId]" -tenant $TenantFilter -sev 'Error' -LogData $CippError
+        try {
+            Write-LogMessage -API 'BECRun' -message "BEC phase $Key failed for $($UserName): $errMessage [case $CaseId]" -tenant $TenantFilter -sev 'Error' -LogData $CippError
+        } catch {
+            Write-Information "BEC: could not log the failed phase $Key of $CaseId`: $($_.Exception.Message)"
+        }
         & $Step $StepIndex 'failed' $errMessage
         if ($IsLast) {
             # without the score and report there is no case: the run failed. The report is written first,
@@ -1257,7 +1285,7 @@ function Push-BECRun {
             } catch {
                 Write-Information "BEC: could not record the failed run $CaseId`: $($_.Exception.Message)"
             }
-            Set-CIPPAsyncDeploymentStatus -JobId $CaseId -Name $UserName -Status 'failed' -Logs $errMessage
+            Set-CIPPAsyncDeploymentStatus -JobId $CaseId -Name $ProgressName -Status 'failed' -Logs $errMessage
         } else {
             # the later phases still run; this phase's checks show as failed on the case
             try {

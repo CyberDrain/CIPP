@@ -415,6 +415,22 @@ Describe 'Push-BECRun' {
         Should -Invoke Set-CIPPBecReport -Times 0
     }
 
+    It 'records a failed step when the run state cannot be read' {
+        Mock Get-CIPPBecRunState { throw 'BEC run state 11-Activity is incomplete: expected 4 part row(s), found 3' }
+        Push-BECRun -Item ($script:Item + @{ Step = 'IPAnalysis' })
+        $Failed = @($script:StepCalls | Where-Object { $_.Status -eq 'failed' })
+        $Failed | Should -HaveCount 1
+        $Failed[0].Message | Should -Match 'incomplete'
+    }
+
+    It 'fails the case and clears the run state when the Score phase cannot read the run state' {
+        Mock Get-CIPPBecRunState { throw 'BEC run state 11-Activity is incomplete: expected 4 part row(s), found 3' }
+        Push-BECRun -Item ($script:Item + @{ Step = 'Score' })
+        $script:Saved.Properties.Status | Should -Be 'Error'
+        @($script:StatusCalls | Where-Object { $_.Status -eq 'failed' }) | Should -HaveCount 1
+        $script:StateRows.Count | Should -Be 0
+    }
+
     It 'stamps partner (GDAP) and CIPP actors on audited rows so the case can list them separately' {
         Mock Search-CIPPBecAuditLog {
             if ($Operations -contains 'New-InboxRule') {

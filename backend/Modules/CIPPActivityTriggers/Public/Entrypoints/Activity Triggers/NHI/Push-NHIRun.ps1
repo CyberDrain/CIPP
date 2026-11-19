@@ -32,6 +32,7 @@ function Push-NHIRun {
     $Key = $RunSteps[$StepIndex].Key
     $IsFirst = $StepIndex -eq 0
     $IsLast = $StepIndex -eq $RunSteps.Count - 1
+    $ReadError = $null
     $Heuristics = [System.IO.File]::ReadAllText((Join-Path $env:CIPPRootPath 'Config/NhiHeuristics.json')) | ConvertFrom-Json
 
     if ($IsFirst) {
@@ -48,17 +49,26 @@ function Push-NHIRun {
     } else {
         # Only what this phase reads is built (Score reads everything); Push-NHIRun.Tests checks the lists against each phase
         $StateNames = @('SubjectName', 'WindowDays', 'BaselineDays', 'StartDate', 'EndDate', 'BaselineStart', 'Subject', 'AppNames')
-        $State = if ($Key -eq 'Score') { Get-CIPPBecRunState -CaseId $CaseId } else { Get-CIPPBecRunState -CaseId $CaseId -Name $StateNames }
-        if ([string]::IsNullOrWhiteSpace([string]$State.SubjectName)) {
-            Write-Information "NHI: case $CaseId has no run state; skipping phase $Key"
-            return
+        # A hand-off whose part rows are missing must fail the phase through the same handler as a collector
+        # error. Defer the throw to the phase try so the step, the case and the run state are all finalized.
+        try {
+            $State = if ($Key -eq 'Score') { Get-CIPPBecRunState -CaseId $CaseId } else { Get-CIPPBecRunState -CaseId $CaseId -Name $StateNames }
+        } catch {
+            $ReadError = Get-NormalizedError -message $_.Exception.Message
+            $State = @{}
         }
-        $Name = [string]$State.SubjectName
-        $WindowDays = [int]$State.WindowDays
-        $BaselineDays = [int]$State.BaselineDays
-        $startDate = ([datetime]$State.StartDate).ToUniversalTime()
-        $endDate = ([datetime]$State.EndDate).ToUniversalTime()
-        $baselineStart = ([datetime]$State.BaselineStart).ToUniversalTime()
+        if (-not $ReadError) {
+            if ([string]::IsNullOrWhiteSpace([string]$State.SubjectName)) {
+                Write-Information "NHI: case $CaseId has no run state; skipping phase $Key"
+                return
+            }
+            $Name = [string]$State.SubjectName
+            $WindowDays = [int]$State.WindowDays
+            $BaselineDays = [int]$State.BaselineDays
+            $startDate = ([datetime]$State.StartDate).ToUniversalTime()
+            $endDate = ([datetime]$State.EndDate).ToUniversalTime()
+            $baselineStart = ([datetime]$State.BaselineStart).ToUniversalTime()
+        }
     }
     $Subject = $State.Subject
 
@@ -257,6 +267,7 @@ function Push-NHIRun {
 
     & $Step $StepIndex 'running' $RunSteps[$StepIndex].Running
     try {
+        if ($ReadError) { throw $ReadError }
         $StepMessage = 'Done'
         switch ($Key) {
             'Subject' {
@@ -938,7 +949,11 @@ function Push-NHIRun {
     } catch {
         $errMessage = Get-NormalizedError -message $_.Exception.Message
         $CippError = Get-CippException -Exception $_
-        Write-LogMessage -API 'NHIRun' -message "NHI phase $Key failed for $($Name): $errMessage [case $CaseId]" -tenant $TenantFilter -sev 'Error' -LogData $CippError
+        try {
+            Write-LogMessage -API 'NHIRun' -message "NHI phase $Key failed for $($Name): $errMessage [case $CaseId]" -tenant $TenantFilter -sev 'Error' -LogData $CippError
+        } catch {
+            Write-Information "NHI: could not log the failed phase $Key of $CaseId`: $($_.Exception.Message)"
+        }
         & $Step $StepIndex 'failed' $errMessage
         if ($IsLast -or $IsFirst) {
             # without the app (first phase) or the score (last) there is no case: the run failed

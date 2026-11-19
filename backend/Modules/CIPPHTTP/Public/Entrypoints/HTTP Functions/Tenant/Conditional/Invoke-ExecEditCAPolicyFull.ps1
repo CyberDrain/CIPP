@@ -44,6 +44,10 @@ function Invoke-ExecEditCAPolicyFull {
         # assignment) and a condition block Graph would reject half-populated becomes null instead.
         $PolicyObject = ConvertTo-Json -InputObject $CleanBody -Depth 20 | ConvertFrom-Json
         Format-CIPPCAPolicy -Policy $PolicyObject
+        # Graph only takes object IDs here; a display name (typed in the editor or sent by an API
+        # caller) fails with e.g. "1040: NamedLocation with id <name> does not exist". Resolve names
+        # against the tenant the way template deploys do, and stop with the unresolved value named.
+        Resolve-CIPPCAPolicyNames -Policy $PolicyObject -TenantFilter $TenantFilter -PolicyName ($PolicyBody.displayName ?? $PolicyId) -Headers $Headers -APIName $APIName
         $RawJSON = ConvertTo-Json -InputObject $PolicyObject -Depth 20 -Compress
 
         $null = New-GraphPOSTRequest `
@@ -60,7 +64,7 @@ function Invoke-ExecEditCAPolicyFull {
         $ErrorMessage = Get-CippException -Exception $_
         $Result = "Failed to update CA policy $PolicyId for ${TenantFilter}: $($ErrorMessage.NormalizedError)"
         Write-LogMessage -API $APIName -tenant $TenantFilter -headers $Headers -message $Result -sev Error -LogData $ErrorMessage
-        $StatusCode = [HttpStatusCode]::InternalServerError
+        $StatusCode = Get-CippErrorStatusCode -ErrorRecord $_
     }
 
     return [HttpResponseContext]@{

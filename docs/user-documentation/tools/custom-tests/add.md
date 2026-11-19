@@ -26,7 +26,7 @@ Reference material for writing the script, worth reading before your first test.
 Scripts run in PowerShell **ConstrainedLanguage** mode, so only approved cmdlets are available. `New-Object`, `[pscustomobject]@{}` casts, and .NET and reflection calls are all blocked. Build rows with `Select-Object @{Name;Expression}` and return a plain `@{}` hashtable instead. If you build your own intermediate list of `@{}` hashtables, pipe it through `Select-Object -ExpandProperty` at your own risk: that specific parameter throws a hashtable-to-object conversion error under ConstrainedLanguage, even though `$_.property` on the same hashtable works. Data read back from `Get-CIPPTestData` does not hit this, since Graph-sourced records are objects rather than hashtables.
 {% endhint %}
 
-Data is read through `Get-CIPPTestData` with a `-Type` parameter, written as a quoted literal such as `-Type 'Users'`. A call without `-Type`, or with the type passed positionally or from a variable, stops the test with an error. Each type returns the same fields the built-in tests read, so a field outside that set reads as empty. The tenant is locked automatically, so do not pass `-TenantFilter`. **View Cached Types**, which shows how many types are available, opens the **Cached Types** dialog. It lists each data type held for the selected tenant, with its row count, a description where one exists, and its fields as chips (hover over a field to see its data type). The eye icon beside a type loads a live sample record from that tenant, which is the quickest way to see the shape of what you will be working with. If no tenant is selected, or nothing has been collected for the tenant yet, the dialog lists every available type without counts or fields.
+Data is read through `Get-CIPPTestData` with a `-Type` parameter, written as a quoted literal such as `-Type 'Users'`. A call without `-Type`, or with the type passed positionally or from a variable, stops the test with an error. By default each type returns the same fields the built-in tests read, so a field outside that set reads as empty. To read other fields, list exactly the ones you need with `-Fields`, also as quoted literals, for example `Get-CIPPTestData -Type 'Groups' -Fields 'id', 'displayName', 'members'`. Only the listed fields are returned, so include every field the script reads, such as `id`. The fields shown in the **Cached Types** dialog are the ones you can ask for. The tenant is locked automatically, so do not pass `-TenantFilter`. **View Cached Types**, which shows how many types are available, opens the **Cached Types** dialog. It lists each data type held for the selected tenant, with its row count, a description where one exists, and its fields as chips (hover over a field to see its data type). The eye icon beside a type loads a live sample record from that tenant, which is the quickest way to see the shape of what you will be working with. If no tenant is selected, or nothing has been collected for the tenant yet, the dialog lists every available type without counts or fields.
 
 Type `%` anywhere in the script to insert a replacement variable, such as `%tenantid%` or `%defaultdomain%`, alongside any custom variables you have defined.
 
@@ -37,7 +37,7 @@ Paste the block below into an AI assistant along with a description of your use 
 ```
 Create a custom test for CIPP(https://docs.cipp.app/user-documentation/tools/custom-tests/add).
 
-Custom tests are read-only via Get-CIPPTestData with -Type. Tenant is auto-locked, so do not pass -TenantFilter. Use %variable% syntax for replacement variables.
+Custom tests are read-only via Get-CIPPTestData with -Type. Each type returns a default set of fields; to read any other field, pass every field the script reads with -Fields (for example: Get-CIPPTestData -Type 'Groups' -Fields 'id', 'members'). -Type and -Fields must be quoted literals. Tenant is auto-locked, so do not pass -TenantFilter. Use %variable% syntax for replacement variables.
 
 This script is CyberDrains example for Conditional access: 
 # Summarize Conditional Access policies by state
@@ -82,7 +82,7 @@ $md = $summaryTable + "
 This is their script for Users with licences:
 # List all users and their licences with friendly SKU names
 $Users = Get-CIPPTestData -Type 'Users'
-$Licenses = Get-CIPPTestData -Type 'LicenseOverview'
+$Licenses = Get-CIPPTestData -Type 'LicenseOverview' -Fields 'skuId', 'License'
 
 # Build a SKU ID -> display name lookup hashtable
 $SkuLookup = @{}
@@ -129,12 +129,12 @@ Six starting points, from a straightforward filter to a multi-section markdown r
 
 <summary>Licensed Users with Resolved SKU Names</summary>
 
-Lists every licensed user and resolves their assigned SKU IDs to friendly names using the licence cache, returning a markdown table with an explicit `Passed` status. Demonstrates `CIPPStatus`, `CIPPResults` and `CIPPResultMarkdown` together.
+Lists every licensed user and resolves their assigned SKU IDs to friendly names using the licence cache, returning a markdown table with an explicit `Passed` status. Demonstrates `-Fields`, `CIPPStatus`, `CIPPResults` and `CIPPResultMarkdown` together.
 
 ```powershell
 # List all users and their licences with friendly SKU names
 $Users = Get-CIPPTestData -Type 'Users'
-$Licenses = Get-CIPPTestData -Type 'LicenseOverview'
+$Licenses = Get-CIPPTestData -Type 'LicenseOverview' -Fields 'skuId', 'License'
 
 # Build a SKU ID -> display name lookup hashtable
 $SkuLookup = @{}
@@ -202,7 +202,7 @@ Checks user registration details for accounts that have not registered any MFA m
 
 ```powershell
 # Find users without any MFA method registered
-$RegDetails = Get-CIPPTestData -Type 'UserRegistrationDetails'
+$RegDetails = Get-CIPPTestData -Type 'UserRegistrationDetails' -Fields 'userPrincipalName', 'userDisplayName', 'userType', 'isAdmin', 'methodsRegistered'
 
 $noMfa = $RegDetails | Where-Object {
     $_.methodsRegistered.Count -eq 0 -and
@@ -321,8 +321,8 @@ Cross-references every enabled Conditional Access policy's included and excluded
 ```powershell
 # Cross-reference Conditional Access policy scope (users + groups) against Entra ID P1/P2 licensing
 $Policies = Get-CIPPTestData -Type 'ConditionalAccessPolicies'
-$Groups   = Get-CIPPTestData -Type 'Groups'
-$Users    = Get-CIPPTestData -Type 'Users'
+$Groups   = Get-CIPPTestData -Type 'Groups' -Fields 'id', 'members'
+$Users    = Get-CIPPTestData -Type 'Users' -Fields 'id', 'userPrincipalName', 'accountEnabled', 'assignedPlans'
 
 # Microsoft Entra ID P1 / P2 service plan IDs: stable across every SKU that bundles them
 $P1PlanId = '41781fb2-bc02-4b7c-bd55-b576c07bb09d'

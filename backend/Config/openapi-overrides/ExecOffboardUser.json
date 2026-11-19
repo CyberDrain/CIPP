@@ -1,0 +1,136 @@
+{
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "properties": {
+            "ConvertToShared": {
+              "type": "boolean",
+              "description": "Convert to Shared Mailbox"
+            },
+            "HideFromGAL": {
+              "type": "boolean",
+              "description": "Hide from Global Address List"
+            },
+            "removeCalendarInvites": {
+              "type": "boolean",
+              "description": "Cancel all calendar invites"
+            },
+            "removePermissions": {
+              "type": "boolean",
+              "description": "Remove user's mailbox permissions"
+            },
+            "removeCalendarPermissions": {
+              "type": "boolean",
+              "description": "Remove user's calendar permissions"
+            },
+            "RemoveRules": {
+              "type": "boolean",
+              "description": "Remove all Rules"
+            },
+            "WipeMobile": {
+              "type": "boolean",
+              "description": "Wipe Mobile Devices (account data only)"
+            },
+            "RemoveMobile": {
+              "type": "boolean",
+              "description": "Remove all Mobile Devices"
+            },
+            "RemoveGroups": {
+              "type": "boolean",
+              "description": "Remove from all groups"
+            },
+            "RemoveGroupOwnership": {
+              "type": "boolean",
+              "description": "Remove group ownership"
+            },
+            "RemoveRoles": {
+              "type": "boolean",
+              "description": "Remove all admin roles"
+            },
+            "RemoveLicenses": {
+              "type": "boolean",
+              "description": "Remove Licenses"
+            },
+            "RevokeSessions": {
+              "type": "boolean",
+              "description": "Revoke all sessions"
+            },
+            "ClearImmutableId": {
+              "type": "boolean",
+              "description": "Clear Immutable ID"
+            },
+            "ResetPass": {
+              "type": "boolean",
+              "description": "Reset Password"
+            },
+            "RemoveMFADevices": {
+              "type": "boolean",
+              "description": "Remove all MFA Devices"
+            },
+            "RemoveTeamsPhoneDID": {
+              "type": "boolean",
+              "description": "Remove Teams Phone DID"
+            },
+            "DisableOneDriveSharing": {
+              "type": "boolean",
+              "description": "Disable OneDrive Sharing Links"
+            },
+            "disableForwarding": {
+              "type": "boolean",
+              "description": "Disable Email Forwarding"
+            },
+            "KeepCopy": {
+              "type": "boolean",
+              "description": "Keep a copy of forwarded mail"
+            },
+            "NewGroupOwner": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/LabelValue"
+                }
+              ],
+              "description": "New group owner"
+            },
+            "AccessNoAutomap": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/LabelValue"
+              },
+              "description": "Grant Full Access (no automap)"
+            },
+            "AccessAutomap": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/LabelValue"
+              },
+              "description": "Grant Full Access (automap)"
+            },
+            "AccessSendAs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/LabelValue"
+              },
+              "description": "Grant Send As Access"
+            },
+            "AccessSendOnBehalf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/LabelValue"
+              },
+              "description": "Grant Send on Behalf Access"
+            },
+            "OnedriveAccess": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/LabelValue"
+              },
+              "description": "Grant OneDrive Full Access"
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-cipp-override-reason": "The offboarding options are passed on whole (Select-Object * -ExcludeProperty user, tenantFilter, Scheduled) as the options of Invoke-CIPPOffboardingJob, which the generator cannot follow."
+}

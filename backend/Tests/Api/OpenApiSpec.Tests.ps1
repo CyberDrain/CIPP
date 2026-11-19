@@ -126,6 +126,21 @@ Describe 'request schema fidelity' {
         $script:Spec.components.schemas.LabelValue.required | Should -Contain 'value'
     }
 
+    It 'documents every option the offboarding job reads' {
+        $BackendRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
+        $JobText = [System.IO.File]::ReadAllText((Join-Path $BackendRoot 'Modules/CIPPCore/Public/Invoke-CIPPOffboardingJob.ps1'))
+        $Options = @([regex]::Matches($JobText, '\$Options\.([A-Za-z0-9_]+)') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
+        $Properties = (Get-BodySchema -Operation (Get-SoleOperation -Endpoint 'ExecOffboardUser').Operation).properties.Keys
+
+        $Missing = [System.Collections.Generic.List[string]]::new()
+        foreach ($Option in $Options) {
+            if ($Properties -notcontains $Option) { $Missing.Add($Option) }
+        }
+
+        $Options.Count | Should -BeGreaterThan 0
+        $Missing | Should -BeNullOrEmpty
+    }
+
     It 'requires tenantFilter wherever the endpoint is tenant-scoped' {
         $Offenders = [System.Collections.Generic.List[string]]::new()
         foreach ($Entry in $script:Spec.paths.GetEnumerator()) {

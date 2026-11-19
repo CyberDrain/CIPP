@@ -82,10 +82,18 @@ describe('getHelpLinks documentation link', () => {
   })
 
   it.each([
-    ['/tenant/administration/applications/enterprise-app/exchange', 'enterprise-apps/spid'],
-    ['/tenant/administration/applications/app-registration/permissions', 'app-registrations/appid'],
+    [
+      '/tenant/administration/applications/enterprise-app/exchange',
+      'enterprise-apps/spid',
+    ],
+    [
+      '/tenant/administration/applications/app-registration/permissions',
+      'app-registrations/appid',
+    ],
   ])('points the %s detail page at its docs page', (pathname, target) => {
-    const docs = getHelpLinks(pathname).find((link) => link.id === 'documentation')
+    const docs = getHelpLinks(pathname).find(
+      (link) => link.id === 'documentation'
+    )
     expect(docs.href).toBe(
       `https://docs.cipp.app/user-documentation/tenant/administration/applications/${target}`
     )

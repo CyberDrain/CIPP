@@ -131,7 +131,8 @@ function New-CippCoreRequest {
         # Set script scope variables for Graph API to indicate HTTP request/high priority
         $script:XMsThrottlePriority = 'high'
 
-        if ($ExecutionContext.InvokeCommand.GetCommand($FunctionName, 'Function') -or $FunctionName -eq 'Invoke-Me') {
+        # Invoke-Me is not a function: looking it up misses and searches every module on disk
+        if ($FunctionName -eq 'Invoke-Me' -or $ExecutionContext.InvokeCommand.GetCommand($FunctionName, 'Function')) {
             try {
                 $swAccess = [System.Diagnostics.Stopwatch]::StartNew()
                 $Access = Test-CIPPAccess -Request $Request

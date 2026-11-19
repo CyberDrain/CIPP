@@ -390,7 +390,10 @@ function Get-RequestAliasMap {
             param($n) $n -is [System.Management.Automation.Language.ForEachStatementAst]
         }, $true)
 
-    for ($Pass = 0; $Pass -lt 5; $Pass++) {
+    # Looking through `$x = $Request.Body | Select-Object ...` only fills names left unbound once
+    # the direct bindings settle, so a variable assigned both ways keeps its direct binding.
+    $ThroughPipelines = $false
+    for ($Pass = 0; $Pass -lt 10; $Pass++) {
         $Changed = $false
 
         foreach ($Assignment in $Assignments) {
@@ -398,7 +401,7 @@ function Get-RequestAliasMap {
             $Name = $Assignment.Left.VariablePath.UserPath
             if ($Aliases.ContainsKey($Name)) { continue }
 
-            $Right = Get-UnwrappedAst -Ast $Assignment.Right
+            $Right = if ($ThroughPipelines) { Get-PipelineSourceAst -Ast $Assignment.Right } else { Get-UnwrappedAst -Ast $Assignment.Right }
             # `$x = $Request.Body.a ?? $Request.Body.b` binds to the first operand;
             # both operands are still recorded as accesses in their own right.
             if ($Right -is [System.Management.Automation.Language.BinaryExpressionAst] -and
@@ -435,7 +438,10 @@ function Get-RequestAliasMap {
             $Changed = $true
         }
 
-        if (-not $Changed) { break }
+        if (-not $Changed) {
+            if ($ThroughPipelines) { break }
+            $ThroughPipelines = $true
+        }
     }
 
     return $Aliases
@@ -890,7 +896,7 @@ function Add-DownstreamAccess {
 
     if ($Depth -le 0) { return }
 
-    foreach ($Command in $FunctionAst.FindAll({
+    $Calls = foreach ($Command in $FunctionAst.FindAll({
                 param($n) $n -is [System.Management.Automation.Language.CommandAst]
             }, $true)) {
 
@@ -908,49 +914,84 @@ function Add-DownstreamAccess {
                 if ($Next -isnot [System.Management.Automation.Language.CommandParameterAst]) { $Argument = $Next }
             }
             if ($null -eq $Argument) { continue }
-
-            $Access = Resolve-AccessPath -Node (Get-PipelineSourceAst -Ast $Argument) -Aliases $Aliases
-            if ($null -eq $Access) { continue }
-
-            $Helper = Get-HelperDefinition -Name $CommandName -Index $Index
-            if ($null -eq $Helper) { continue }
-
-            $ParameterName = Get-BoundParameterName -Written $Element.ParameterName -CalleeAst $Helper.Definition
-            if (-not $ParameterName) { continue }
-
-            # Nearly every endpoint hands a request value to Write-LogMessage and the
-            # Graph helpers, and none of them read fields off it. Whether a helper reads
-            # anything off a given parameter does not depend on the caller, so it is
-            # answered once and reused instead of re-walking those ASTs 640 times.
-            if (-not (Test-HelperReadsParameter -Helper $Helper -ParameterName $ParameterName -Name $CommandName)) { continue }
-
-            $VisitKey = "$CommandName|$ParameterName|$($Access.Section)|$($Access.Segments -join '.')"
-            if ($Visited.ContainsKey($VisitKey)) { continue }
-            $Visited[$VisitKey] = $true
-
-            # inside the callee the parameter stands in for the request path it was
-            # given, so the ordinary extraction runs against it unchanged
-            $Seed = @{
-                $ParameterName = [pscustomobject]@{
-                    Section   = $Access.Section
-                    Segments  = $Access.Segments
-                    ArrayAt   = $Access.ArrayAt
-                    IsElement = $false
-                }
-            }
-            $CalleeAliases = Get-RequestAliasMap -FunctionAst $Helper.Definition -Seed $Seed
-
-            # every endpoint hands request values to Write-LogMessage and the Graph
-            # helpers; only the calls that actually taught us a field are worth naming
-            $Before = $Script:DiscoveredFieldCount
-            Add-MemberAccess -FunctionAst $Helper.Definition -Aliases $CalleeAliases -Trees $Trees `
-                -Comments $Helper.Comments -Touched $null
-            Add-DownstreamAccess -FunctionAst $Helper.Definition -Aliases $CalleeAliases -Trees $Trees `
-                -Index $Index -Depth ($Depth - 1) -Visited $Visited -Followed $Followed
-            $After = $Script:DiscoveredFieldCount
-
-            if ($After -gt $Before -and -not $Followed.Contains($CommandName)) { $Followed.Add($CommandName) }
+            [pscustomobject]@{ CommandName = $CommandName; Written = $Element.ParameterName; Argument = $Argument }
         }
+    }
+
+    # A scheduled task (`Command = @{ value = 'X' }; Parameters = @{ p = $v }`) or a step list
+    # entry (`Cmdlet = 'X'; Parameters = ...`) is a deferred `X -p $v`: Parameters is splatted onto it.
+    $TaskCalls = foreach ($Task in $FunctionAst.FindAll({
+                param($n) $n -is [System.Management.Automation.Language.HashtableAst]
+            }, $true)) {
+
+        $Entries = @{}
+        foreach ($Pair in $Task.KeyValuePairs) {
+            if ($Pair.Item1 -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
+                $Entries[$Pair.Item1.Value] = Get-UnwrappedAst -Ast $Pair.Item2
+            }
+        }
+        $CommandNode = $Entries['Command'] ?? $Entries['Cmdlet']
+        $ParameterNode = $Entries['Parameters']
+        if ($ParameterNode -is [System.Management.Automation.Language.ConvertExpressionAst]) { $ParameterNode = $ParameterNode.Child }
+        if ($ParameterNode -isnot [System.Management.Automation.Language.HashtableAst]) { continue }
+
+        if ($CommandNode -is [System.Management.Automation.Language.HashtableAst]) {
+            $CommandNode = Get-UnwrappedAst -Ast @($CommandNode.KeyValuePairs.Where({ $_.Item1.Value -eq 'value' }, 'First'))[0].Item2
+        }
+        if ($CommandNode -isnot [System.Management.Automation.Language.StringConstantExpressionAst]) { continue }
+        $CommandName = $CommandNode.Value
+        if (-not $Index.ContainsKey($CommandName)) { continue }
+
+        foreach ($Pair in $ParameterNode.KeyValuePairs) {
+            if ($Pair.Item1 -isnot [System.Management.Automation.Language.StringConstantExpressionAst]) { continue }
+            [pscustomobject]@{ CommandName = $CommandName; Written = $Pair.Item1.Value; Argument = $Pair.Item2 }
+        }
+    }
+
+    foreach ($Call in @(@($Calls) + @($TaskCalls))) {
+        if ($null -eq $Call) { continue }
+        $CommandName = $Call.CommandName
+        $Access = Resolve-AccessPath -Node (Get-PipelineSourceAst -Ast $Call.Argument) -Aliases $Aliases
+        if ($null -eq $Access) { continue }
+
+        $Helper = Get-HelperDefinition -Name $CommandName -Index $Index
+        if ($null -eq $Helper) { continue }
+
+        $ParameterName = Get-BoundParameterName -Written $Call.Written -CalleeAst $Helper.Definition
+        if (-not $ParameterName) { continue }
+
+        # Nearly every endpoint hands a request value to Write-LogMessage and the
+        # Graph helpers, and none of them read fields off it. Whether a helper reads
+        # anything off a given parameter does not depend on the caller, so it is
+        # answered once and reused instead of re-walking those ASTs 640 times.
+        if (-not (Test-HelperReadsParameter -Helper $Helper -ParameterName $ParameterName -Name $CommandName)) { continue }
+
+        $VisitKey = "$CommandName|$ParameterName|$($Access.Section)|$($Access.Segments -join '.')"
+        if ($Visited.ContainsKey($VisitKey)) { continue }
+        $Visited[$VisitKey] = $true
+
+        # inside the callee the parameter stands in for the request path it was
+        # given, so the ordinary extraction runs against it unchanged
+        $Seed = @{
+            $ParameterName = [pscustomobject]@{
+                Section   = $Access.Section
+                Segments  = $Access.Segments
+                ArrayAt   = $Access.ArrayAt
+                IsElement = $false
+            }
+        }
+        $CalleeAliases = Get-RequestAliasMap -FunctionAst $Helper.Definition -Seed $Seed
+
+        # every endpoint hands request values to Write-LogMessage and the Graph
+        # helpers; only the calls that actually taught us a field are worth naming
+        $Before = $Script:DiscoveredFieldCount
+        Add-MemberAccess -FunctionAst $Helper.Definition -Aliases $CalleeAliases -Trees $Trees `
+            -Comments $Helper.Comments -Touched $null
+        Add-DownstreamAccess -FunctionAst $Helper.Definition -Aliases $CalleeAliases -Trees $Trees `
+            -Index $Index -Depth ($Depth - 1) -Visited $Visited -Followed $Followed
+        $After = $Script:DiscoveredFieldCount
+
+        if ($After -gt $Before -and -not $Followed.Contains($CommandName)) { $Followed.Add($CommandName) }
     }
 }
 

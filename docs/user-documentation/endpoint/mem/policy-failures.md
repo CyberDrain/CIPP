@@ -38,7 +38,7 @@ One row for each device on which the policy is in error or conflict.
 | Device Name                   | The name of the device.                                      |
 | UPN                           | The user the policy was evaluated for on the device.         |
 | Report Status                 | Whether the policy is in error or in conflict on the device. |
-| Pspdpu Last Modified Time Utc | When the device last reported its state for the policy.      |
+| Last Reported                 | When the device last reported its state for the policy.      |
 
 Each device row offers **View Device**, which opens the device's [View Device](devices/device/README.md) page in CIPP, and **View in Intune**, which opens the device in the Microsoft Intune admin center in a new tab.
 

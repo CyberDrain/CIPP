@@ -731,7 +731,7 @@ function New-CIPPAzStorageRequest {
                         $xml = Convert-XmlStringToDocument -XmlText $respText
                         if ($Service -eq 'blob') {
                             $containers = @()
-                            foreach ($node in $xml.SelectNodes('//Container')) {
+                            foreach ($node in $xml.SelectNodes('//Container|//Blob')) {
                                 $nameNode = $node.SelectSingleNode('Name')
                                 $propsNode = $node.SelectSingleNode('Properties')
                                 $props = $null
@@ -807,7 +807,7 @@ function New-CIPPAzStorageRequest {
                         $xml.LoadXml(($Response | Out-String))
                     }
 
-                    $containerNodes = $xml.SelectNodes('//Container')
+                    $containerNodes = $xml.SelectNodes('//Container|//Blob')
                     $containers = foreach ($node in $containerNodes) {
                         $nameNode = $node.SelectSingleNode('Name')
                         $propsNode = $node.SelectSingleNode('Properties')
@@ -833,7 +833,7 @@ function New-CIPPAzStorageRequest {
                 }
                 if ($isXml -and $null -ne $xmlDoc) {
                     if ($Service -eq 'blob') {
-                        $containers = foreach ($node in $xmlDoc.SelectNodes('//Container')) {
+                        $containers = foreach ($node in $xmlDoc.SelectNodes('//Container|//Blob')) {
                             $nameNode = $node.SelectSingleNode('Name')
                             $propsNode = $node.SelectSingleNode('Properties')
                             $props = $null

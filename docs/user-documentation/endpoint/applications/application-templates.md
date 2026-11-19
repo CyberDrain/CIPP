@@ -22,6 +22,7 @@ There are some differences from the deployment drawer worth knowing:
 * The assignment is saved into the template itself, and can be overridden per deployment later.
 * A Win32 App takes an `.exe` or `.msi` installer, or a package already made with the Microsoft Win32 Content Prep Tool (`.intunewin`), up to 4 GB. CIPP prepares an `.exe` or `.msi` for Intune after it uploads. Fill in the rest of the application while that runs: **Add App to Template** becomes available once the installer is ready. For an `.msi`, the publisher, version, install and uninstall commands and the detection rule are filled in from the installer.
 * A macOS Package takes a `.pkg` or `.dmg` file, up to 4 GB.
+* Uploaded files that no template uses, such as those from a template that was never saved, are deleted after a day.
 
 After saving, the drawer stays open so a variation can be adjusted and saved as a second template.
 

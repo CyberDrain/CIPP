@@ -162,6 +162,10 @@ Packages a pair of PowerShell scripts as a Win32 application, for anything that 
 | Enforce signature check                             | Requires the scripts to be digitally signed before Intune will run them.                                                                                                                                                                    |
 | Mark for Uninstallation                             | Deploys the application with an uninstall intent, so it is removed from targeted devices instead of installed.                                                                                                                              |
 
+**Win32 App and macOS Package (from an application template)**
+
+Installers and packages are uploaded in [application-templates.md](application-templates.md "mention"), so these types deploy an application saved in a template rather than asking for a file. **Application from a template** lists every Win32 App or macOS Package in your templates, named with the template it belongs to. Leaving the assignment below unset keeps the one saved in the template; choosing one replaces it for this deployment only.
+
 **Assignment Options**
 
 Every application type offers the same assignment choices at the bottom of the form.

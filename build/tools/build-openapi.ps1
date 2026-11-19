@@ -1054,6 +1054,19 @@ function Get-EndpointContract {
         foreach ($Clause in $Switch.Clauses) {
             if ($Clause.Item1 -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
                 $Values.Add($Clause.Item1.Value)
+                continue
+            }
+            # { $_ -in @('a', 'b') } is one clause accepting exactly the listed values.
+            $Statements = if ($Clause.Item1 -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) { $Clause.Item1.ScriptBlock.EndBlock.Statements }
+            $In = if (@($Statements).Count -eq 1) {
+                $Statements[0].Find({ param($n) $n -is [System.Management.Automation.Language.BinaryExpressionAst] }, $true)
+            }
+            $Listed = if ($In -and "$($In.Operator)" -in @('In', 'Iin') -and "$($In.Left)" -eq '$_' -and $In.Extent.Text -eq $Statements[0].Extent.Text -and
+                -not $In.Right.Find({ param($n) $n -is [System.Management.Automation.Language.VariableExpressionAst] }, $true)) {
+                @($In.Right.FindAll({ param($n) $n -is [System.Management.Automation.Language.StringConstantExpressionAst] }, $true))
+            }
+            if ($Listed) {
+                foreach ($Item in $Listed) { $Values.Add($Item.Value) }
             } else { $AllLiteral = $false }
         }
         if ($AllLiteral -and $Values.Count -gt 0) { $Node.Enum = @($Values | Sort-Object -CaseSensitive -Unique) }

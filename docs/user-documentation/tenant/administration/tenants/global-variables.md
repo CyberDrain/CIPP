@@ -21,8 +21,11 @@ The type decides how a value is written into a template.
 | Boolean | Written as `true` or `false`.                                                                                                                                                                                                              |
 | JSON    | Written as the JSON value it holds, where the variable fills a whole field.                                                                                                                                                                |
 | List    | Several values, entered one per line. Used as an entry in a list, such as a Conditional Access policy's excluded users, groups or locations, it expands into one entry per value. An empty list, entered as `[]`, removes the entry. Inside other text the values are joined with commas. |
+| Collection | A List that also repeats the list entry holding it, once per value. Use it in Intune list settings, such as the OneDrive allowed tenant IDs or excluded file types: add a single entry containing `%variable%` and each tenant gets one entry per value. An empty collection removes the entry. |
 
 A List lets one variable carry a different number of values per tenant, for example `%breakglassaccounts%` holding two accounts for one client and three for another, without a variable per entry.
+
+While you add or edit a variable, the dialog previews the value as it will be written in a field, a list entry, an Intune list entry and inside text, so you can see which type fits before saving. A value that does not match its type shows the error saving would give. On a tenant the preview fills in tenant variables such as `%tenantid%`; on global and tenant group variables they are left as typed, because they differ per tenant.
 
 A List can also be empty, which makes an entry optional. Set the global value to `[]` and override it only on the tenants that need something there: everywhere else the entry is removed rather than left unresolved. The Value box cannot be left blank, so type `[]` to save an empty list. See the optional exclusions example under Custom Variables on [create-ca-template.md](../../conditional/list-template/create-ca-template.md "mention").
 

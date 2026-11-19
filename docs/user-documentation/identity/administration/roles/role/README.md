@@ -39,9 +39,9 @@ Every principal holding the role, one row per principal and scope.
 
 | Column            | Description                                                                                                              |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Principal         | The user, group or service principal holding the role.                                                                   |
+| Principal         | The user, group or service principal holding the role. For a holder in another tenant, the name of that tenant, or the group and tenant when the group is in your own partner tenant. |
 | UPN               | The principal's user principal name, where it has one.                                                                   |
-| Principal Type    | Whether the holder is a user, a group or a service principal.                                                             |
+| Principal Type    | Whether the holder is a user, a group or a service principal. A holder in another tenant shows as Partner (GDAP) when it belongs to your own partner tenant, otherwise as Foreign (likely GDAP): typically another partner's GDAP group. Unknown means the holder no longer exists. |
 | Assignment Type   | Permanent, Eligible, Active, or ActivatedFromEligible where an eligible administrator has activated the role.             |
 | Member Type       | Whether the role is held directly or inherited through a role-assignable group.                                           |
 | Scope             | The whole directory, or a single administrative unit.                                                                     |

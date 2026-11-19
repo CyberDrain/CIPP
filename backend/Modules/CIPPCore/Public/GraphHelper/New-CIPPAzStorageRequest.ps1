@@ -741,6 +741,14 @@ function New-CIPPAzStorageRequest {
                                 }
                                 $containers += ([PSCustomObject]@{ Name = $nameNode.InnerText; Properties = $props })
                             }
+                            # A listing is returned in pages; NextMarker continues it.
+                            $NextMarker = $xml.SelectSingleNode('//NextMarker').InnerText
+                            if ($NextMarker) {
+                                $NextPage = @{} + $PSBoundParameters
+                                $NextPage.QueryParams = if ($QueryParams) { $QueryParams.Clone() } else { @{} }
+                                $NextPage.QueryParams.marker = $NextMarker
+                                return @($containers) + @(New-CIPPAzStorageRequest @NextPage)
+                            }
                             if ($containers.Count -gt 0) { return $containers }
                         } elseif ($Service -eq 'queue') {
                             $queues = @()
@@ -817,6 +825,13 @@ function New-CIPPAzStorageRequest {
                             foreach ($p in $propsNode.ChildNodes) { $props[$p.Name] = $p.InnerText }
                         }
                         [PSCustomObject]@{ Name = $nameNode.InnerText; Properties = $props }
+                    }
+                    $NextMarker = $xml.SelectSingleNode('//NextMarker').InnerText
+                    if ($NextMarker) {
+                        $NextPage = @{} + $PSBoundParameters
+                        $NextPage.QueryParams = if ($QueryParams) { $QueryParams.Clone() } else { @{} }
+                        $NextPage.QueryParams.marker = $NextMarker
+                        return @($containers) + @(New-CIPPAzStorageRequest @NextPage)
                     }
                     return $containers
                 } catch { return $Response }

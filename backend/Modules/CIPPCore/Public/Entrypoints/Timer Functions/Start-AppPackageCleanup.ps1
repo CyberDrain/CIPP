@@ -10,7 +10,6 @@ function Start-AppPackageCleanup {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param()
 
-    # ponytail: one listing page (5000 blobs, over 1000 packages); add NextMarker paging if an instance ever holds more.
     $Blobs = @(New-CIPPAzStorageRequest -Service blob -Resource 'app-packages' -QueryParams @{ restype = 'container'; comp = 'list' } -ErrorAction SilentlyContinue)
     $Cutoff = [DateTime]::UtcNow.AddDays(-1)
     $PackageIds = @($Blobs.Where({ $_.Name -match '^[0-9a-fA-F-]{36}/' -and [DateTime]::Parse($_.Properties['Last-Modified']).ToUniversalTime() -lt $Cutoff }).ForEach({ ($_.Name -split '/')[0] }) | Select-Object -Unique)

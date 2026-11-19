@@ -61305,6 +61305,110 @@
         "x-cipp-tenant-group": true
       }
     },
+    "/api/ListIntuneSettingDevices": {
+      "get": {
+        "summary": "ListIntuneSettingDevices",
+        "operationId": "ListIntuneSettingDevices",
+        "tags": [
+          "Endpoint > MEM"
+        ],
+        "description": "Lists the devices that have any of the given Intune policies, with each device's deployment status for that policy, for one tenant. Device configuration and compliance policies are read from the reporting database cache when it holds their device statuses, settings catalog policies when it holds their device report, other policies (or policies with nothing cached) are read live. Each row says which in Source (Cache or Live). A device name Intune leaves blank is filled from the managed device (reporting cache first, then Graph). Policy types Intune has no per-device status for (update profiles, hardware configurations, app protection) return no rows. A policy that fails to load does not fail the request: its message is in Metadata.Warnings. At most 50 policies can be requested at once; split larger sets across requests.",
+        "parameters": [
+          {
+            "name": "Policies",
+            "in": "query",
+            "description": "Comma-separated <URLName>:<PolicyId> pairs, e.g. deviceConfigurations:<guid>,configurationPolicies:<guid>",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Endpoint.MEM.Read"
+      }
+    },
+    "/api/ListIntuneSettingSearch": {
+      "get": {
+        "summary": "ListIntuneSettingSearch",
+        "operationId": "ListIntuneSettingSearch",
+        "tags": [
+          "Endpoint > MEM"
+        ],
+        "description": "Searches cached Intune policies (settings catalog, custom OMA-URI and property-based policies) for settings whose name or id contains the search text, case-insensitively. Returns one row per setting with the policies that configure it, sorted by setting name. PolicyTypes on each setting is the distinct policy types of its policies, sorted and comma separated. Reads the reporting database only. Works for a single tenant only: AllTenants and tenant groups (a 'group:' tenantFilter) return 400. A search shorter than 3 characters returns no rows. At most 500 settings are returned; Metadata.Truncated is true when more matched. When truncated, the rows are the first 500 matching settings found in the cache, sorted by setting name, not the alphabetically first 500 of all matches. DeviceCount on each setting and on each of its Policies is the number of distinct devices in the cached device statuses or settings catalog device reports, and null when none of the policies has cached device data, such as policy types without a device report or policies not synced yet.",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Endpoint.MEM.Read"
+      }
+    },
     "/api/ListIntuneTemplates": {
       "get": {
         "summary": "ListIntuneTemplates",

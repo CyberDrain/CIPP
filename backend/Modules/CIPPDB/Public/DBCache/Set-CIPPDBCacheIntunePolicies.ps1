@@ -226,6 +226,24 @@ function Set-CIPPDBCacheIntunePolicies {
                         }
                     }
                 }
+
+                if ($PolicyType.Type -eq 'ConfigurationPolicies' -and $Policies.Count -gt 0) {
+                    $ReportTypeFilter = Get-CIPPIntunePolicyReportTypeFilter
+                    foreach ($Policy in $Policies) {
+                        try {
+                            $ReportRows = Get-CIPPIntuneReportRows -TenantFilter $TenantFilter -Uri 'https://graph.microsoft.com/beta/deviceManagement/reports/getConfigurationPolicyDevicesReport' -Filter "($ReportTypeFilter) and (PolicyId eq '$($Policy.id)')" -OrderBy @()
+                            # Add-CIPPIntuneSettingDeviceCount parses "<device id>|<device name>|<user>" from the row key
+                            $DeviceRows = @(foreach ($Row in @($ReportRows)) {
+                                    $DeviceId = @($Row.IntuneDeviceId, $Row.DeviceId) | Where-Object { $_ } | Select-Object -First 1
+                                    $UserKey = @($Row.UserId, $Row.UPN) | Where-Object { $_ } | Select-Object -First 1
+                                    $Row | Add-Member -NotePropertyName id -NotePropertyValue "$DeviceId|$($Row.DeviceName)|$UserKey" -Force -PassThru
+                                })
+                            Add-CIPPDbItem -TenantFilter $TenantFilter -Type "IntuneConfigurationPolicyDevices_$($Policy.id)" -Data $DeviceRows -AddCount -ClearOnEmpty
+                        } catch {
+                            & $AddWarning "Failed to fetch the device report for $($PolicyType.Type) policy $($Policy.id): $($_.Exception.Message)"
+                        }
+                    }
+                }
             } catch {
                 & $AddWarning "Failed to process $($PolicyType.Type): $($_.Exception.Message); preserving any rows not replaced by this run"
             }

@@ -127,6 +127,11 @@ function Invoke-ExecGraphRequestProfile {
     $headers = Get-GraphToken -tenantid $TenantFilter -scope $scope
     $sw.Stop()
     Add-Timing 'GetGraphToken' "HasAuth=$([bool]$headers.Authorization)" $sw.Elapsed.TotalMilliseconds
+    # These direct calls bypass the Graph helpers, so route to the tenant's cloud here.
+    $RequestCloud = Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter
+    if ($RequestCloud -cne 'Commercial') { $GraphUrl = ConvertTo-CIPPCloudUri -Uri $GraphUrl -CloudEnvironment $RequestCloud }
+    # Refetch for this cloud: a cached token may predate a cloud change in another worker.
+    if ($RequestCloud -cne 'Commercial') { $headers = Get-GraphToken -tenantid $TenantFilter -scope $scope -RequireCloud $RequestCloud }
 
     # ── 7. Raw Invoke-RestMethod (baseline — no wrapper overhead) ──────
     $sw.Restart()

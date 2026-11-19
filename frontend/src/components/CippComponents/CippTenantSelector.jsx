@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CippIcons, getIconByName } from "../../utils/icon-registry"
 import { useLoginHint } from "../../hooks/use-login-hint";
 import { isMultiTenant, isTenantGroup, tenantGroupId, toTenantGroup } from "../../utils/tenant-selection";
+import { useCloudPortalUrl } from "../../hooks/use-tenant-cloud";
 
 export const CippTenantSelector = React.forwardRef((props, ref) => {
   const { width, allTenants = false, multiple = false, refreshButton, tenantButton } = props;
@@ -143,6 +144,7 @@ export const CippTenantSelector = React.forwardRef((props, ref) => {
   );
 
   const withLoginHint = useLoginHint();
+  const toCloudPortal = useCloudPortalUrl(currentTenant?.value);
 
   // Filter portal actions based on user preferences
   const filteredPortalActions = useMemo(() => {
@@ -246,7 +248,7 @@ export const CippTenantSelector = React.forwardRef((props, ref) => {
 
     const filteredActions = allPortalActions.filter((action) => {
       const isEnabled = portalLinks[action.key] === true;
-      return isEnabled;
+      return isEnabled && toCloudPortal(action.link) !== undefined;
     });
 
     // insert a Manage Tenant link at the start
@@ -257,8 +259,11 @@ export const CippTenantSelector = React.forwardRef((props, ref) => {
       icon: "Business",
     });
 
-    return filteredActions.map((action) => ({ ...action, link: withLoginHint(action.link) }));
-  }, [currentTenant, settings, withLoginHint]);
+    return filteredActions.map((action) => ({
+      ...action,
+      link: withLoginHint(toCloudPortal(action.link)),
+    }));
+  }, [currentTenant, settings, withLoginHint, toCloudPortal]);
 
   // This effect handles updates when the tenant is changed via dropdown selection
   useEffect(() => {

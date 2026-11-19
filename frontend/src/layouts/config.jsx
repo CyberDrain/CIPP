@@ -1,7 +1,8 @@
 import { SvgIcon } from '@mui/material'
 import { CippIcons } from '../utils/icon-registry'
+import { withCloudSupport } from '../utils/cloud-feature-support'
 
-export const nativeMenuItems = [
+export const nativeMenuItems = withCloudSupport([
   {
     title: 'Dashboard',
     path: '/',
@@ -1372,4 +1373,4 @@ export const nativeMenuItems = [
       },
     ],
   },
-]
+])

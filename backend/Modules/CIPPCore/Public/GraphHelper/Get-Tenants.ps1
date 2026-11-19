@@ -18,6 +18,21 @@ function Get-Tenants {
     )
 
     $TenantsTable = Get-CippTable -tablename 'Tenants'
+
+    # An invalid CIPP_PARTNER_CLOUD leaves the value empty, which token requests refuse, not Commercial.
+    $PartnerCloud = 'Commercial'
+    if (-not [string]::IsNullOrEmpty($env:CIPP_PARTNER_CLOUD)) {
+        try {
+            $PartnerCloud = Get-CIPPPartnerCloudEnvironment
+        } catch {
+            $PartnerCloud = ''
+            # Get-Tenants runs on nearly every request: log a given bad value once per process, not each call.
+            if ($script:CIPPInvalidPartnerCloudLogged -cne $env:CIPP_PARTNER_CLOUD) {
+                $script:CIPPInvalidPartnerCloudLogged = $env:CIPP_PARTNER_CLOUD
+                try { Write-LogMessage -API 'Get-Tenants' -message $_.Exception.Message -Sev 'Critical' } catch {}
+            }
+        }
+    }
     $ExcludedFilter = "PartitionKey eq 'Tenants' and Excluded eq true"
 
     if ($SkipList) {
@@ -225,6 +240,8 @@ function Get-Tenants {
                         hasAutoExtend      = $AutoExtend
                         existingInitial    = $ExistingTenantInfo.initialDomainName
                         existingDefault    = $ExistingTenantInfo.defaultDomainName
+                        # The row is rewritten whole; carry over the cloud.
+                        cloudEnvironment   = if ($ExistingTenantInfo.cloudEnvironment) { $ExistingTenantInfo.cloudEnvironment } else { $PartnerCloud }
                     })
             }
         }
@@ -305,12 +322,15 @@ function Get-Tenants {
                 $OrgName = $PartnerOrg.displayName ?? $Partner.displayName
                 $PartnerDisplayName = if ($Partners.Count -gt 1 -and $OrgName) { "*Partner Tenant ($OrgName)" } else { '*Partner Tenant' }
                 $PartnerDefaultDomain = ($PartnerOrg.verifiedDomains | Where-Object { $_.isDefault -eq $true }).name
+                # The row is rewritten whole; carry over the cloud.
+                $ExistingPartner = $ExistingByCustomerId["$($Partner.RowKey)"]
                 $PartnerTenant = [PSCustomObject]@{
                     RowKey             = $Partner.RowKey
                     PartitionKey       = 'Tenants'
                     customerId         = $Partner.RowKey
                     defaultDomainName  = $PartnerDefaultDomain
                     initialDomainName  = ($PartnerOrg.verifiedDomains | Where-Object { $_.isInitial -eq $true }).name
+                    cloudEnvironment   = if ($ExistingPartner.cloudEnvironment) { @($ExistingPartner)[0].cloudEnvironment } else { $PartnerCloud }
                     displayName        = $PartnerDisplayName
                     domains            = 'PartnerTenant'
                     partnerTenantId    = "$($Partner.RowKey)"
@@ -344,6 +364,8 @@ function Get-Tenants {
     }
     if ($PartnerTenantState.state -eq 'owntenant' -and $IncludedTenantsCache.RowKey.count -eq 0) {
         $Domains = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/domains' -tenantid $env:TenantID -NoAuthCheck:$true
+        # The cache read may be narrowed by -TenantFilter; read the row so its cloud survives the rewrite.
+        $ExistingPartner = Get-CIPPAzDataTableEntity @TenantsTable -Filter "PartitionKey eq 'Tenants' and RowKey eq '$(ConvertTo-CIPPODataFilterValue -Value $env:TenantID)'"
 
         $IncludedTenantsCache = @([PSCustomObject]@{
                 RowKey            = $env:TenantID
@@ -351,6 +373,7 @@ function Get-Tenants {
                 customerId        = $env:TenantID
                 defaultDomainName = ($Domains | Where-Object { $_.isInitial -eq $true }).id
                 initialDomainName = ($Domains | Where-Object { $_.isInitial -eq $true }).id
+                cloudEnvironment  = if ($ExistingPartner.cloudEnvironment) { @($ExistingPartner)[0].cloudEnvironment } else { $PartnerCloud }
                 displayName       = ($Domains | Where-Object { $_.isInitial -eq $true }).id
                 domains           = 'PartnerTenant'
                 Excluded          = $false
@@ -381,7 +404,17 @@ function Get-Tenants {
     $Scoped = $script:CippAllowedTenantsStorage -and $null -ne $script:CippAllowedTenantsStorage.Value
     $Tenants = foreach ($Tenant in $IncludedTenantsCache) {
         if ($Scoped -and $script:CippAllowedTenantsStorage.Value -notcontains $Tenant.customerId) { continue }
-        if ($null -ne $Tenant.defaultDomainName -and ($Tenant.defaultDomainName -notmatch 'Domain Error' -or $IncludeAll.IsPresent)) { $Tenant }
+        if ($null -ne $Tenant.defaultDomainName -and ($Tenant.defaultDomainName -notmatch 'Domain Error' -or $IncludeAll.IsPresent)) {
+            # Rows predating cloudEnvironment were onboarded in the partner cloud.
+            if ([string]::IsNullOrEmpty($Tenant.cloudEnvironment) -and $PartnerCloud) {
+                if ($Tenant -is [System.Collections.IDictionary]) {
+                    $Tenant['cloudEnvironment'] = $PartnerCloud
+                } else {
+                    $Tenant | Add-Member -NotePropertyName 'cloudEnvironment' -NotePropertyValue $PartnerCloud -Force
+                }
+            }
+            $Tenant
+        }
     }
     if ($TenantFilter) { $Tenants = @($Tenants).Where($IncludedTenantFilter) }
     if (@($Tenants).Count -le 1) { return $Tenants }

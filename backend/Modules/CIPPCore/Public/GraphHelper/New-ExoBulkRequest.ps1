@@ -31,6 +31,13 @@ function New-ExoBulkRequest {
             $Resource = 'https://outlook.office365.com'
         }
         $Token = Get-GraphToken -Tenantid $tenantid -scope "$Resource/.default" -AsApp:$AsApp.IsPresent
+        $TokenResource = $Resource
+        $RequestCloud = Get-CIPPTenantRequestCloud -TenantFilter $tenantid
+        if ($RequestCloud -cne 'Commercial') { $Resource = ConvertTo-CIPPCloudUri -Uri $Resource -CloudEnvironment $RequestCloud }
+        # Refetch for this cloud: a cached token may predate a cloud change in another worker.
+        if ($RequestCloud -cne 'Commercial') {
+            $Token = Get-GraphToken -Tenantid $tenantid -scope "$TokenResource/.default" -AsApp:$AsApp.IsPresent -RequireCloud $RequestCloud
+        }
 
         $Tenant = Get-Tenants -IncludeErrors -TenantFilter $tenantid
         $Headers = @{

@@ -23,6 +23,11 @@ function New-CIPPMFAConnectorToken {
         [switch]$ForceProvision
     )
 
+    # adnotifications.windowsazure.com has no government equivalent.
+    if ((Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter) -cne 'Commercial') {
+        throw 'Sending MFA push notifications is not supported for government tenants (GCC High, DoD).'
+    }
+
     $MFAAppID = '981f26a1-7f43-403b-a875-f8b09b8cd720'
     $ConnectorResource = 'https://adnotifications.windowsazure.com/StrongAuthenticationService.svc/Connector'
     $TokenUri = "https://login.microsoftonline.com/$TenantFilter/oauth2/token"
@@ -65,6 +70,10 @@ function New-CIPPMFAConnectorToken {
     # Keep retrying the token exchange while Microsoft finishes provisioning a freshly added secret.
     function Get-ConnectorToken {
         param($Secret, [int]$MaxAttempts = 1)
+        # Recheck before every send: the cached marker read above may have been stale.
+        if ((Get-CIPPTenantRequestCloud -TenantFilter $TenantFilter) -cne 'Commercial') {
+            throw 'Sending MFA push notifications is not supported for government tenants (GCC High, DoD).'
+        }
         $ClientBody = @{
             resource      = $ConnectorResource
             client_id     = $MFAAppID

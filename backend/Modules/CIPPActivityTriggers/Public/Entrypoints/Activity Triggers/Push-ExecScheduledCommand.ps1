@@ -213,6 +213,25 @@ function Push-ExecScheduledCommand {
         }
     }
 
+    $TenantCloud = if ($IsAlert) { try { Get-CIPPTenantRequestCloud -TenantFilter $Tenant } catch { $null } }
+    if ($TenantCloud -and $TenantCloud -cne 'Commercial' -and -not (Test-CIPPCloudFeatureSupport -Type 'alerts' -Name ($Item.Command -replace '^Get-CIPPAlert', '') -CloudEnvironment $TenantCloud)) {
+        $Summary = "Skipped: the $($Item.Command -replace '^Get-CIPPAlert', '') alert is not supported for $TenantCloud tenants."
+        Write-LogMessage -API 'Scheduler_UserTasks' -tenant $Tenant -tenantid $TenantInfo.customerId -message $Summary -sev Info
+        Add-CIPPAlertRunHistory -Task $task -Tenant $Tenant -TenantId $TenantInfo.customerId -Outcome 'Skipped' -Summary $Summary -StartedUtc $RunStart -ScheduledTime $RunSlot
+        if (!$IsMultiTenantExecution) {
+            $nextRunUnixTime = Get-CIPPScheduledTaskNextRun -Recurrence $task.Recurrence -ScheduledTime $task.ScheduledTime
+            if ($nextRunUnixTime -eq 0) { $nextRunUnixTime = $task.ScheduledTime }
+            $null = Update-AzDataTableEntity -Force @Table -Entity @{
+                PartitionKey  = $task.PartitionKey
+                RowKey        = $task.RowKey
+                TaskState     = 'Planned'
+                ScheduledTime = "$nextRunUnixTime"
+            }
+        }
+        Remove-Variable -Name ScheduledTaskId -Scope Script -ErrorAction SilentlyContinue
+        return "Task Skipped: $Summary"
+    }
+
     # Only update parent task state if this is NOT a multi-tenant execution
     # Multi-tenant executions have their parent state managed by PostExecution
     if (!$IsMultiTenantExecution) {

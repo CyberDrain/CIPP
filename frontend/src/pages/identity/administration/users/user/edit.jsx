@@ -3,6 +3,7 @@ import { CippIcons } from '../../../../../utils/icon-registry'
 import { Layout as DashboardLayout } from '../../../../../layouts/index'
 import { useForm, useFormState } from 'react-hook-form'
 import { useSettings } from '../../../../../hooks/use-settings'
+import { useCloudPortalUrl } from '../../../../../hooks/use-tenant-cloud'
 import CippAddEditUser from '../../../../../components/CippFormPages/CippAddEditUser'
 import { useRouter } from 'next/router'
 import { ApiGetCall } from '../../../../../api/ApiCall'
@@ -18,6 +19,7 @@ import { Button, Alert } from '@mui/material'
 import { Box } from '@mui/system'
 const Page = () => {
   const userSettingsDefaults = useSettings()
+  const toCloudPortal = useCloudPortalUrl()
   const router = useRouter()
   const { userId } = router.query
   const [waiting, setWaiting] = useState(false)
@@ -149,7 +151,7 @@ const Page = () => {
               color="muted"
               style={{ paddingLeft: 0 }}
               size="small"
-              href={`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/${userId}`}
+              href={toCloudPortal(`https://entra.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/${userId}`)}
               target="_blank"
               rel="noopener noreferrer"
             >

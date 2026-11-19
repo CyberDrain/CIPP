@@ -5,6 +5,7 @@ import { Layout as DashboardLayout } from "../../../../layouts/index";
 import tabOptions from "./tabOptions";
 import { CippSSOSettings } from "../../../../components/CippSettings/CippSSOSettings";
 import { CippSAMCredentials } from "../../../../components/CippSettings/CippSAMCredentials";
+import { CippGovAppCredentials } from "../../../../components/CippSettings/CippGovAppCredentials";
 
 const Page = () => {
   return (
@@ -15,6 +16,9 @@ const Page = () => {
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
           <CippSSOSettings />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <CippGovAppCredentials />
         </Grid>
       </Grid>
     </Container>

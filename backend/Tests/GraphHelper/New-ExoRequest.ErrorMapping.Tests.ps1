@@ -6,6 +6,7 @@
 # only "Response status code does not indicate success: 500".
 
 BeforeAll {
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     $FunctionPath = Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/New-ExoRequest.ps1'
 

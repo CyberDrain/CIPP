@@ -12376,6 +12376,134 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/EditTenantCloudEnvironment": {
+      "post": {
+        "summary": "EditTenantCloudEnvironment",
+        "operationId": "EditTenantCloudEnvironment",
+        "tags": [
+          "Tenant > Administration > Tenant"
+        ],
+        "description": "Manually sets a tenant's Microsoft cloud (Commercial, USGovHigh or USGovDoD), e.g. for a DoD tenant detected as USGovHigh.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cloudEnvironment": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "customerId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customerId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                  "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "customerId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "defaultDomainName": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "delegatedPrivilegeStatus": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "directTenantAuthDate": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "directTenantUserPrincipalName": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "displayName": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "domains": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ETag": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Excluded": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ExcludeDate": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "ExcludeUser": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "initialDomainName": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "LastGraphError": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "LastGraphTokenError": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "LastRefresh": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "PartitionKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "RequiresRefresh": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "storage"
+                    },
+                    "RowKey": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "Timestamp": {
+                      "type": "string",
+                      "x-cipp-field-source": "storage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.AppSettings.ReadWrite",
+        "x-cipp-any-tenant": true
+      }
+    },
     "/api/EditTenantOffboardingDefaults": {
       "post": {
         "summary": "EditTenantOffboardingDefaults",
@@ -13846,6 +13974,9 @@
                     "type": "string",
                     "description": "Get tenant information from Microsoft Graph using bulk request"
                   },
+                  "cloudEnvironment": {
+                    "type": "string"
+                  },
                   "defaultDomainName": {
                     "type": "string"
                   },
@@ -13871,6 +14002,9 @@
                   "type": "object",
                   "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                   "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "customerId": {
                       "x-cipp-field-source": "storage"
                     },
@@ -24576,6 +24710,9 @@
                   "type": "object",
                   "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record, and the columns the CIPP UI renders. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                   "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "customerId": {
                       "x-cipp-field-source": "storage"
                     },
@@ -27631,6 +27768,79 @@
           }
         ],
         "x-cipp-role": "CIPP.Extension.ReadWrite",
+        "x-cipp-any-tenant": true
+      }
+    },
+    "/api/ExecGovAppCredentials": {
+      "post": {
+        "summary": "Status and configuration of the Azure Government app registration used for direct GCC High and DoD tenants.",
+        "operationId": "ExecGovAppCredentials",
+        "tags": [
+          "CIPP > Setup"
+        ],
+        "description": "Actions: Status (default), Save, GenerateCertificate. Never returns a secret.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Action": {
+                    "type": "string"
+                  },
+                  "applicationId": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "applicationSecret": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.AppSettings.ReadWrite",
         "x-cipp-any-tenant": true
       }
     },
@@ -36242,6 +36452,9 @@
                   "type": "object",
                   "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                   "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "customerId": {
                       "x-cipp-field-source": "storage"
                     },
@@ -36799,6 +37012,9 @@
                   "type": "object",
                   "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                   "properties": {
+                    "cloudEnvironment": {
+                      "x-cipp-field-source": "storage"
+                    },
                     "customerId": {
                       "x-cipp-field-source": "storage"
                     },
@@ -39900,6 +40116,7 @@
           {
             "name": "Action",
             "in": "query",
+            "description": "Gov tenants' permission ids differ from the partner cloud's; honoured for reads only.",
             "required": false,
             "schema": {
               "type": "string",
@@ -39912,6 +40129,15 @@
             "name": "AppId",
             "in": "query",
             "description": "These values are placed in the Graph URL, so only a GUID or a plain field list is accepted.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "GovernmentTenantFilter",
+            "in": "query",
+            "description": "Gov tenants' permission ids differ from the partner cloud's; honoured for reads only.",
             "required": false,
             "schema": {
               "type": "string"
@@ -44462,6 +44688,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "cloudEnvironment": {
+                    "type": "string"
+                  },
                   "tenantId": {
                     "type": "string"
                   },
@@ -45084,8 +45313,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "accessToken": {
+                    "type": "string"
+                  },
                   "addPartner": {
                     "type": "boolean"
+                  },
+                  "cloudEnvironment": {
+                    "type": "string"
+                  },
+                  "directTenant": {
+                    "type": "boolean",
+                    "description": "A direct-tenant sign-in must never replace the partner token that backs every GDAP tenant."
                   },
                   "orgName": {
                     "type": "string"
@@ -61485,6 +61724,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"

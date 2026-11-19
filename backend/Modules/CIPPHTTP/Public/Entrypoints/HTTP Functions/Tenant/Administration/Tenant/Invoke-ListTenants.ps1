@@ -228,6 +228,11 @@ function Invoke-ListTenants {
                 },
                 @{Name = 'portal_platform'; Expression = { "https://admin.powerplatform.microsoft.com/account/login/$($_.customerId)" } },
                 @{Name = 'portal_bi'; Expression = { "https://app.powerbi.com/admin-portal?ctid=$($_.customerId)" } }
+                foreach ($GovRow in @($Body | Where-Object { $_.cloudEnvironment -and $_.cloudEnvironment -cne 'Commercial' })) {
+                    foreach ($PortalProperty in @($GovRow.PSObject.Properties | Where-Object { $_.Name -like 'portal_*' })) {
+                        $PortalProperty.Value = ConvertTo-CIPPCloudPortalUrl -Url $PortalProperty.Value -CloudEnvironment $GovRow.cloudEnvironment
+                    }
+                }
             }
 
         } else {

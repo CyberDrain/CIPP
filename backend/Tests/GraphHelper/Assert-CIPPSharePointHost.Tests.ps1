@@ -10,9 +10,11 @@ BeforeAll {
     function Get-CippUserAgent { param([switch]$SharePoint) 'CIPP/test' }
     function Get-NormalizedError { param($Message) $Message }
     function Invoke-CIPPRestMethod { }
+    function Get-CIPPTenantRequestCloud { param($TenantFilter) 'Commercial' }
 
     . (Join-Path $Helpers 'Assert-CIPPSharePointHost.ps1')
     . (Join-Path $Helpers 'Assert-CIPPMicrosoftHost.ps1')
+    . (Join-Path $Helpers 'Get-CIPPCloudEndpoint.ps1')
     . (Join-Path $Helpers 'New-GraphGetRequest.ps1')
     . (Join-Path $Helpers 'New-GraphPOSTRequest.ps1')
 }
@@ -83,6 +85,16 @@ Describe 'Assert-CIPPMicrosoftHost' {
         @{ Uri = 'https://management.azure.com/subscriptions' }
         @{ Uri = 'https://mde-rsp-apiportal-prd-weu.securitycenter.windows.com/api/cloud/portal/onboarding/intune/provision' }
         @{ Uri = 'https://intuneautopatchbeta-bwhtaqgefgcyaaa8.westeurope-01.azurewebsites.net/api/autoPatch' }
+        @{ Uri = 'https://graph.microsoft.us/beta/users' }
+        @{ Uri = 'https://dod-graph.microsoft.us/beta/users' }
+        @{ Uri = 'https://login.microsoftonline.us/x/oauth2/v2.0/token' }
+        @{ Uri = 'https://outlook.office365.us/adminapi/beta/x/InvokeCommand' }
+        @{ Uri = 'https://webmail.apps.mil/adminapi/beta/x/InvokeCommand' }
+        @{ Uri = 'https://manage.office365.us/api/v1.0/x/activity/feed/subscriptions/list' }
+        @{ Uri = 'https://manage.protection.apps.mil/api/v1.0/x/activity/feed/subscriptions/list' }
+        @{ Uri = 'https://api-gov.securitycenter.microsoft.us/api/machines' }
+        @{ Uri = 'https://contoso-admin.sharepoint.us/_api/web' }
+        @{ Uri = 'https://contoso-admin.sharepoint-mil.us/_api/web' }
     ) {
         { Assert-CIPPMicrosoftHost -Uri $Uri } | Should -Not -Throw
     }
@@ -97,6 +109,10 @@ Describe 'Assert-CIPPMicrosoftHost' {
         @{ Uri = 'http://graph.microsoft.com/v1.0/users' }
         @{ Uri = 'https://user:pw@graph.microsoft.com/v1.0/users' }
         @{ Uri = 'users' }
+        @{ Uri = 'https://graph.microsoft.us.evil.example/beta/users' }
+        @{ Uri = 'https://attacker.apps.mil/' }
+        @{ Uri = 'https://evilsharepoint.us/' }
+        @{ Uri = 'http://graph.microsoft.us/beta/users' }
     ) {
         { Assert-CIPPMicrosoftHost -Uri $Uri } | Should -Throw
     }

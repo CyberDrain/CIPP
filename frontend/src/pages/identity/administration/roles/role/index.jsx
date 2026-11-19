@@ -1,6 +1,7 @@
 import { Layout as DashboardLayout } from '../../../../../layouts/index'
 import { CippIcons } from '../../../../../utils/icon-registry'
 import { useSettings } from '../../../../../hooks/use-settings'
+import { useCloudPortalUrl } from '../../../../../hooks/use-tenant-cloud'
 import { useRouter } from 'next/router'
 import { ApiGetCall } from '../../../../../api/ApiCall'
 import CippFormSkeleton from '../../../../../components/CippFormPages/CippFormSkeleton'
@@ -41,6 +42,7 @@ const Page = () => {
   const { roleTemplateId } = router.query
   const tenantFilter =
     router.query.tenantFilter ?? userSettingsDefaults.currentTenant
+  const toCloudPortal = useCloudPortalUrl(tenantFilter)
   const needsTenant = !tenantFilter || isMultiTenant(tenantFilter)
 
   const roleRequest = ApiGetCall({
@@ -116,7 +118,7 @@ const Page = () => {
               color="muted"
               style={{ paddingLeft: 0 }}
               size="small"
-              href={`https://entra.microsoft.com/${tenantFilter}/#view/Microsoft_AAD_IAM/RoleManagementMenuBlade/~/AllRoles`}
+              href={toCloudPortal(`https://entra.microsoft.com/${tenantFilter}/#view/Microsoft_AAD_IAM/RoleManagementMenuBlade/~/AllRoles`)}
               target="_blank"
               rel="noopener noreferrer"
             >

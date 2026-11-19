@@ -46,6 +46,13 @@ function New-ExoRequest {
         # -UseCertificate authenticates the app with the SAM certificate instead of the
         # client secret: delegated (refresh token) by default, app-only with -AsApp
         $token = Get-GraphToken -Tenantid $tenantid -scope "$Resource/.default" -AsApp:$AsApp.IsPresent -UseCertificate:$UseCertificate
+        $TokenResource = $Resource
+        $RequestCloud = Get-CIPPTenantRequestCloud -TenantFilter $tenantid
+        if ($RequestCloud -cne 'Commercial') { $Resource = ConvertTo-CIPPCloudUri -Uri $Resource -CloudEnvironment $RequestCloud }
+        # Refetch for this cloud: a cached token may predate a cloud change in another worker.
+        if ($RequestCloud -cne 'Commercial') {
+            $token = Get-GraphToken -Tenantid $tenantid -scope "$TokenResource/.default" -AsApp:$AsApp.IsPresent -UseCertificate:$UseCertificate -RequireCloud $RequestCloud
+        }
 
         if ($cmdParams) {
             #if cmdParams is a pscustomobject, convert to hashtable, otherwise leave as is
@@ -140,6 +147,7 @@ function New-ExoRequest {
                     do {
                         $Return = Invoke-CIPPRestMethod -Uri $URL -Method POST -Body $ExoBody -Headers $Headers -ContentType 'application/json; charset=utf-8'
                         $URL = $Return.'@odata.nextLink'
+                        if ($URL -and $RequestCloud -cne 'Commercial') { $URL = ConvertTo-CIPPCloudUri -Uri $URL -CloudEnvironment $RequestCloud }
                         [PSCustomObject]@{ Value = $Return.value }
                     } until ($null -eq $URL)
                     return
@@ -155,6 +163,7 @@ function New-ExoRequest {
 
                     $Return = Invoke-CIPPRestMethod @ExoRequestParams -ResponseHeadersVariable ResponseHeaders
                     $URL = $Return.'@odata.nextLink'
+                    if ($URL -and $RequestCloud -cne 'Commercial') { $URL = ConvertTo-CIPPCloudUri -Uri $URL -CloudEnvironment $RequestCloud }
                     $Return
                 } until ($null -eq $URL)
 

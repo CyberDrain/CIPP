@@ -141,6 +141,9 @@ function Get-CIPPAuthentication {
             Write-Information "Could not resolve certificate auth mode: $($_.Exception.Message)"
         }
 
+        # Gov app credentials are lazy-loaded by Get-CIPPGovAppCredential; drop the cached copy.
+        Remove-Item -Path env:CIPPGovAppLoaded -ErrorAction SilentlyContinue
+
         Write-LogMessage -message 'Reloaded authentication data from KeyVault' -Sev 'debug' -API 'CIPP Authentication'
 
         return $true

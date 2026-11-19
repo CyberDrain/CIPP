@@ -7,6 +7,8 @@ import { getIconByName } from '../utils/icon-registry'
 import { getHiddenPages } from '../utils/filter-menu-items'
 import { useSettings } from '../hooks/use-settings'
 import { useIsMobileLayout } from '../hooks/use-breakpoint'
+import { useTenantCloudEnvironment } from '../hooks/use-tenant-cloud'
+import { filterCloudSupportedTabs } from '../utils/cloud-feature-support'
 import { TabNavigationContext, useTabNavigationValue } from './tab-navigation-context'
 import { CippTabPicker } from '../components/CippComponents/CippTabPicker'
 import { isMultiTenant } from '../utils/tenant-selection'
@@ -27,7 +29,9 @@ export const TabbedLayout = (props) => {
     staleTime: 600000,
   })
 
-  const visibleTabs = useMemo(() => {
+  const cloudEnvironment = useTenantCloudEnvironment()
+
+  const flagVisibleTabs = useMemo(() => {
     // Per-user gate: tabs marked { advanced: true } are hidden unless the user enabled Advanced
     // Views in preferences (Developer Options). Keeps diagnostic pages out of day-to-day use.
     let tabs = showAdvanced ? tabOptions : tabOptions.filter((option) => !option.advanced)
@@ -46,6 +50,11 @@ export const TabbedLayout = (props) => {
 
     return tabs.filter((option) => !hiddenPages.includes(option.path))
   }, [tabOptions, featureFlags.isSuccess, featureFlags.data, showAdvanced, settings?.currentTenant])
+
+  const visibleTabs = useMemo(
+    () => filterCloudSupportedTabs(flagVisibleTabs, cloudEnvironment),
+    [flagVisibleTabs, cloudEnvironment]
+  )
 
   const navigateToTab = useCallback(
     (value) => {

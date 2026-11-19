@@ -46,6 +46,9 @@ function Invoke-NinjaOneUserDocWrite {
                 @{ Name = 'Intune (User)'; Link = "https://endpoint.microsoft.com/$Domain/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/Profile/userId/$UserId"; Icon = 'fas fa-laptop' },
                 @{ Name = 'Intune (Devices)'; Link = "https://endpoint.microsoft.com/$Domain/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/Devices/userId/$UserId"; Icon = 'fas fa-laptop' }
             )
+            if ($Customer.cloudEnvironment -and $Customer.cloudEnvironment -cne 'Commercial') {
+                $Links = @(foreach ($PortalLink in $Links) { $PortalLink.Link = ConvertTo-CIPPCloudPortalUrl -Url $PortalLink.Link -CloudEnvironment $Customer.cloudEnvironment; if ($PortalLink.Link) { $PortalLink } })
+            }
             $CIPPLinks = @(
                 @{ Name = 'View User'; Link = "https://$CIPPUrl/identity/administration/users/user?userId=$UserId&tenantFilter=$Domain"; Icon = 'far fa-eye' },
                 @{ Name = 'Edit User'; Link = "https://$CIPPUrl/identity/administration/users/user/edit?userId=$UserId&tenantFilter=$Domain"; Icon = 'fas fa-users-cog' },

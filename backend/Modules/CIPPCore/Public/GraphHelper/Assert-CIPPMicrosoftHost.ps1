@@ -26,5 +26,10 @@ function Assert-CIPPMicrosoftHost {
     foreach ($Domain in @('microsoft.com', 'microsoftonline.com', 'office.com', 'office365.com', 'outlook.com', 'sharepoint.com', 'cloud.microsoft', 'securitycenter.windows.com')) {
         if ($HostName -eq $Domain -or $HostName.EndsWith(".$Domain")) { return }
     }
+    foreach ($Cloud in @('USGovHigh', 'USGovDoD')) {
+        $Endpoint = Get-CIPPCloudEndpoint -CloudEnvironment $Cloud
+        if ($HostName -in (@($Endpoint.LoginHost) + @($Endpoint.ServiceHosts.Values))) { return }
+        if ($HostName.EndsWith(".$($Endpoint.SharePointSuffix)")) { return }
+    }
     throw "URL host '$HostName' is not a Microsoft service host; the request was not sent."
 }

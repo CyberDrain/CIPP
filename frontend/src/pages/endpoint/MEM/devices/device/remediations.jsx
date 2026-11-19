@@ -1,6 +1,7 @@
 import { Layout as DashboardLayout } from '../../../../../layouts/index'
 import { CippIcons } from '../../../../../utils/icon-registry'
 import { useSettings } from '../../../../../hooks/use-settings'
+import { useCloudPortalUrl } from '../../../../../hooks/use-tenant-cloud'
 import { useRouter } from 'next/router'
 import { ApiGetCall } from '../../../../../api/ApiCall'
 import CippFormSkeleton from '../../../../../components/CippFormPages/CippFormSkeleton'
@@ -18,6 +19,7 @@ import { useEffect, useState } from 'react'
 
 const Page = () => {
   const userSettingsDefaults = useSettings()
+  const toCloudPortal = useCloudPortalUrl()
   const router = useRouter()
   const { deviceId } = router.query
   const tenantFilter = router.query.tenantFilter ?? userSettingsDefaults.currentTenant
@@ -70,7 +72,7 @@ const Page = () => {
               color="muted"
               style={{ paddingLeft: 0 }}
               size="small"
-              href={`https://intune.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/~/overview/mdmDeviceId/${deviceId}`}
+              href={toCloudPortal(`https://intune.microsoft.com/${userSettingsDefaults.currentTenant}/#view/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/~/overview/mdmDeviceId/${deviceId}`)}
               target="_blank"
               rel="noopener noreferrer"
             >

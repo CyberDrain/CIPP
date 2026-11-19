@@ -10,6 +10,7 @@ import { getBecIntuneDeviceActions } from './CippIntuneDeviceActions.jsx'
 import { CippBecPhishingSpreadDialog } from './CippBecPhishingSpreadDialog'
 import { CippApiDialog } from './CippApiDialog'
 import { useDialog } from '../../hooks/use-dialog'
+import { useCloudPortalUrl } from '../../hooks/use-tenant-cloud'
 import {
   BEC_GROUPS,
   becGroupFlagged,
@@ -40,6 +41,7 @@ export const CippBecObjectiveGroups = ({
   const [spreadOpen, setSpreadOpen] = useState(false)
   const [spread, setSpread] = useState({ sender: '', subject: '' })
   const dismissRiskDialog = useDialog()
+  const toCloudPortal = useCloudPortalUrl(tenantFilter)
   const rowActions = useMemo(
     () => ({
       intune: getBecIntuneDeviceActions({ tenantFilter }),
@@ -379,7 +381,7 @@ export const CippBecObjectiveGroups = ({
               <Fragment key={link.label}>
                 {' '}
                 <Link
-                  href={link.href(tenantFilter)}
+                  href={toCloudPortal(link.href(tenantFilter))}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

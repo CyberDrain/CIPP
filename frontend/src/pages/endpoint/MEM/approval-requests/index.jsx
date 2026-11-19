@@ -11,11 +11,13 @@ import {
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
 import { useSettings } from '../../../../hooks/use-settings'
+import { useCloudPortalUrl } from '../../../../hooks/use-tenant-cloud'
 import { useDialog } from '../../../../hooks/use-dialog'
 
 const Page = () => {
   const pageTitle = 'MAA Requests'
   const tenantFilter = useSettings().currentTenant
+  const toCloudPortal = useCloudPortalUrl()
   const handoffDialog = useDialog()
 
   // This page deliberately has no row actions. Intune answers approve and reject with "Valid user
@@ -115,7 +117,7 @@ const Page = () => {
           <Button onClick={handoffDialog.handleClose}>Cancel</Button>
           <Button
             component="a"
-            href={`https://intune.microsoft.com/${tenantFilter}`}
+            href={toCloudPortal(`https://intune.microsoft.com/${tenantFilter}`)}
             target="_blank"
             rel="noreferrer"
             variant="contained"

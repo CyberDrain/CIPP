@@ -111,7 +111,10 @@ function Invoke-ExecListAppId {
         Write-LogMessage -message 'Failed to retrieve organization info and authenticated user' -LogData (Get-CippException -Exception $_) -sev 'Warning'
     }
 
+    $GovApplicationId = Get-CIPPGovAppId
+
     $Results = @{
+        govApplicationId               = $GovApplicationId
         applicationId                  = $env:ApplicationID
         tenantId                       = $env:TenantID
         orgName                        = $OrgInfo.displayName

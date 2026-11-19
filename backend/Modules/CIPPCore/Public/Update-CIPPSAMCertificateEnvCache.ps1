@@ -24,6 +24,9 @@ function Update-CIPPSAMCertificateEnvCache {
     if ($Name -eq 'SAMCertificate') {
         $env:SAMCertificate = $PfxBase64
     }
+    if ($Name -eq 'GovSAMCertificate') {
+        $env:GovSAMCertificate = $PfxBase64
+    }
     if ($script:SAMCertificateCache) {
         $script:SAMCertificateCache.Remove($Name)
     }

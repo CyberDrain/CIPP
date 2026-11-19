@@ -3,6 +3,7 @@ BeforeAll {
     function Get-CIPPTable { param($TableName) @{ TableName = $TableName } }
     function Get-CIPPAzDataTableEntity { param($TableName, $Filter) }
     function Get-CIPPJITAdminApprovalRequirement { param($Roles, $TenantFilter) }
+    function Get-CIPPJITAdminCloudError { param($TenantFilter, $CloudEnvironment) }
     function Write-LogMessage { param($headers, $API, $tenant, $message, $Sev, $LogData) }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Test-IsGuid.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Set-CIPPUserJITAdmin.ps1')

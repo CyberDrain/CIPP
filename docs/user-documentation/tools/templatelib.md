@@ -7,7 +7,7 @@ Tenant-based libraries sync every 4 hours. Community repository libraries sync e
 This page needs the `CIPP.TemplateLibrary` permission together with the Scheduler permission that runs the sync.
 
 {% hint style="warning" %}
-Enabling this feature will overwrite templates with the same name.
+Enabling this feature will overwrite templates with the same name. Intune and Conditional Access templates you imported yourself from the Template Catalog are the exception: a community repository library leaves them alone.
 {% endhint %}
 
 ## Choosing a Source

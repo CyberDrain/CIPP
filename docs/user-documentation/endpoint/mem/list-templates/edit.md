@@ -3,7 +3,7 @@
 Opens a saved Intune policy template so its name, description and settings can be changed. Edits are stored against the template in CIPP, so they take effect the next time the template is deployed rather than changing any policy already in a tenant.
 
 {% hint style="warning" %}
-Only templates that are not synced to a community repository can be edited. A synced template must be cloned first, which breaks its link to the repository and makes the copy editable.
+Only templates that are not synced to a community repository can be edited. A synced template must be cloned first, which breaks its link to the repository and makes the copy editable. A template imported once from the Template Catalog is not synced, so it can be edited directly and keeps its link to the catalog.
 {% endhint %}
 
 ## Template details

@@ -6,6 +6,7 @@
   "caps": {
     "auditLogPages": 10,
     "mailActivityPages": 10,
+    "attackerMailSeconds": 400,
     "peerLookups": 20
   },
   "score": {

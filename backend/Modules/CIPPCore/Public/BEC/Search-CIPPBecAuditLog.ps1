@@ -46,6 +46,9 @@ function Search-CIPPBecAuditLog {
         Recursion ceiling for the bisection, a safety stop against pathological density.
     .PARAMETER SliceDepth
         Internal: current bisection depth. Callers leave it at 0.
+    .PARAMETER Deadline
+        Optional wall-clock budget. Once it passes, no further page is requested and the search returns
+        what it has as incomplete; with a deadline, a bisected window searches its newer half first.
     .FUNCTIONALITY
         Internal
     #>
@@ -65,7 +68,8 @@ function Search-CIPPBecAuditLog {
         [ValidateRange(1, 200)][int]$MaxPages = 10,
         [ValidateRange(1, 10080)][int]$MinSliceMinutes = 60,
         [ValidateRange(1, 16)][int]$MaxSliceDepth = 8,
-        [ValidateRange(0, 16)][int]$SliceDepth = 0
+        [ValidateRange(0, 16)][int]$SliceDepth = 0,
+        [datetime]$Deadline = [datetime]::MinValue
     )
 
     $SearchParam = @{
@@ -94,7 +98,10 @@ function Search-CIPPBecAuditLog {
     $Done = $false
     $Stalled = $false
     $PageError = $null
+    $HasDeadline = $Deadline -ne [datetime]::MinValue
+    $OutOfTime = $false
     do {
+        if ($HasDeadline -and [datetime]::UtcNow -ge $Deadline.ToUniversalTime()) { $OutOfTime = $true; break }
         $Pages++
         # A search with no hits returns nothing at all rather than an empty page. A transient failure on
         # a later page must not discard the pages already collected: stop here and report what we have as
@@ -133,7 +140,9 @@ function Search-CIPPBecAuditLog {
     # the two halves re-cover the whole window between them.
     $WindowMinutes = ($EndDate - $StartDate).TotalMinutes
     # A page error is not density, so it does not bisect - it just returns the partial set below.
-    $CappedByPages = (-not $Done) -and (-not $Stalled) -and (-not $PageError)
+    # Out of time: return the partial set. Bisecting would lose it.
+    if (-not $Done -and $HasDeadline -and [datetime]::UtcNow -ge $Deadline.ToUniversalTime()) { $OutOfTime = $true }
+    $CappedByPages = (-not $Done) -and (-not $Stalled) -and (-not $PageError) -and (-not $OutOfTime)
     if ($CappedByPages -and $SliceDepth -lt $MaxSliceDepth -and $WindowMinutes -gt $MinSliceMinutes) {
         $Records = $null; $Seen = $null; $Batch = $null
         $Mid = $StartDate.AddTicks([long](($EndDate - $StartDate).Ticks / 2))
@@ -144,6 +153,7 @@ function Search-CIPPBecAuditLog {
             MinSliceMinutes = $MinSliceMinutes
             MaxSliceDepth   = $MaxSliceDepth
             SliceDepth      = $SliceDepth + 1
+            Deadline        = $Deadline
         }
         if ($Operations) { $Common.Operations = $Operations }
         if ($UserIds) { $Common.UserIds = $UserIds }
@@ -153,8 +163,14 @@ function Search-CIPPBecAuditLog {
         if ($FreeText) { $Common.FreeText = $FreeText }
         if ($Anchor) { $Common.Anchor = $Anchor }
 
-        $Left = Search-CIPPBecAuditLog @Common -StartDate $StartDate -EndDate $Mid
-        $Right = Search-CIPPBecAuditLog @Common -StartDate $Mid -EndDate $EndDate
+        # With a deadline, search the newer half first so a spent budget drops the oldest activity.
+        if ($HasDeadline) {
+            $Right = Search-CIPPBecAuditLog @Common -StartDate $Mid -EndDate $EndDate
+            $Left = Search-CIPPBecAuditLog @Common -StartDate $StartDate -EndDate $Mid
+        } else {
+            $Left = Search-CIPPBecAuditLog @Common -StartDate $StartDate -EndDate $Mid
+            $Right = Search-CIPPBecAuditLog @Common -StartDate $Mid -EndDate $EndDate
+        }
 
         $Merged = [System.Collections.Generic.List[object]]::new()
         $MergedSeen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
@@ -174,6 +190,6 @@ function Search-CIPPBecAuditLog {
         Records  = $Records.ToArray()
         Complete = [bool]$Done
         Pages    = $Pages
-        Cap      = if ($Done) { $null } elseif ($PageError) { "stopped after $($Records.Count) record(s) on a page error: $PageError" } elseif ($Stalled) { 'paging stalled (duplicate page returned)' } else { "$MaxPages pages of $PageSize records in a $([int]$WindowMinutes)-minute slice" }
+        Cap      = if ($Done) { $null } elseif ($PageError) { "stopped after $($Records.Count) record(s) on a page error: $PageError" } elseif ($OutOfTime) { "time budget reached after $($Records.Count) record(s)" } elseif ($Stalled) { 'paging stalled (duplicate page returned)' } else { "$MaxPages pages of $PageSize records in a $([int]$WindowMinutes)-minute slice" }
     }
 }

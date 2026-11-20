@@ -2,7 +2,7 @@ BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     $script:OriginalRoot = $env:CIPPRootPath
     $env:CIPPRootPath = $RepoRoot
-    function Search-CIPPBecAuditLog { param($TenantFilter, $StartDate, $EndDate, $Operations, $UserIds, $RecordType, $ObjectIds, $Anchor, $PageSize, $MaxPages) }
+    function Search-CIPPBecAuditLog { param($TenantFilter, $StartDate, $EndDate, $Operations, $UserIds, $RecordType, $ObjectIds, $Anchor, $PageSize, $MaxPages, $Deadline) }
     function Get-NormalizedError { param($message) $message }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/Get-CIPPBecHeuristics.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/BEC/New-CIPPBecCollectorResult.ps1')
@@ -218,5 +218,15 @@ Describe 'Get-CIPPBecMailActivity' {
         $Result.Data[0].MailAccessType | Should -Be 'Sync'
         @($Result.Data[0].SessionIds | Sort-Object) | Should -Be @('S1', 'S2')
         $Result.Records.Count | Should -Be 3 -Because 'the attacker-activity pass reads item detail from the same search'
+    }
+
+    It 'passes the detail deadline to both searches and lists each failed search' {
+        $script:ExpectedDeadline = [datetime]::UtcNow.AddMinutes(1)
+        Mock Search-CIPPBecAuditLog -ParameterFilter { $null -eq $UserIds } { throw 'send-as down' }
+        $Result = Get-CIPPBecMailActivity -TenantFilter 'contoso.com' -UserPrincipalName $script:Upn -StartDate $script:Start -EndDate $script:End -Heuristics $script:Heuristics -Deadline $script:ExpectedDeadline
+        Should -Invoke Search-CIPPBecAuditLog -Times 1 -ParameterFilter { $null -ne $UserIds -and $Deadline -eq $script:ExpectedDeadline }
+        Should -Invoke Search-CIPPBecAuditLog -Times 1 -ParameterFilter { $null -eq $UserIds -and $Deadline -eq $script:ExpectedDeadline }
+        $Result.Errors | Should -Be @('send-as search: send-as down')
+        $Result.Complete | Should -BeFalse
     }
 }

@@ -15,7 +15,7 @@ function Get-CIPPBecAttackerActivity {
         front end (Service) never counts as the actor. Only among the addresses of one session does
         the worst verdict win: a session also carries the user's own addresses, so it must not
         outrank where the request itself came from.
-        - Mail: from the mailbox records the MailActivity search already read (no second search):
+        - Mail: from the mailbox records the caller read for this pass:
           one row per message opened (internet message id + folder, named from the message trace),
           per folder synced by a desktop client (the whole folder counts as taken), per item deleted,
           moved or sent, per attachment read, plus folder-permission, calendar-delegation, mailbox
@@ -137,7 +137,7 @@ function Get-CIPPBecAttackerActivity {
     }
     $Props = { param($AD) @(@($AD.OperationProperties) + @($AD.Parameters) | Where-Object { $_ -and $_.Name } | ForEach-Object { "$($_.Name)=$($_.Value)" }) -join '; ' }
 
-    # --- mail: item-level rows from the records already read ---
+    # --- mail: item-level rows from the records read for this phase ---
     $MailRows = [System.Collections.Generic.List[object]]::new()
     $Unattributed = 0
     foreach ($Record in @($MailRecords | Where-Object { $_ -and $_.AuditData })) {

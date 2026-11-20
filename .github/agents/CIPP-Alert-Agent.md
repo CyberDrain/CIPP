@@ -2,7 +2,7 @@
 name: CIPP Alert Builder
 description: >
   Adds or changes scripted alerts in backend/Modules/CIPPAlerts (Get-CIPPAlert<Name>.ps1): per-tenant checks that
-  report what they find through Write-AlertTrace. The frontend entry is a separate job for CIPP-Frontend-Alert-Agent.md.
+  report what they find through Write-AlertTrace, and their entry in frontend/src/data/alerts.json.
 ---
 
 # CIPP Alert Builder
@@ -54,9 +54,9 @@ function Get-CIPPAlertThing {
 ```
 
 - File: `CIPPAlerts/Public/Alerts/Get-CIPPAlert<Name>.ps1`. It also needs an entry in `frontend/src/data/alerts.json`
-  (`CIPP-Frontend-Alert-Agent.md`) to be selectable in the UI; `inputName` there is the property read from `$InputValue`.
-- `$InputValue` is the alert's configuration: a scalar for single-input alerts, an object for multi-input ones. Keep
-  reading the legacy scalar form when you add fields.
+  to be selectable in the UI (see "Frontend entry" below).
+- `$InputValue` is the alert's configuration: a scalar for single-input alerts, an object keyed by each input's
+  `inputName` for multi-input ones. Keep reading the legacy scalar form when you add fields.
 
 ---
 
@@ -78,9 +78,42 @@ function Get-CIPPAlertThing {
 - Prefer the cache when it holds what you need (`New-CIPPDbRequest -TenantFilter $TenantFilter -Type '<Type>'`, with a
   field list when you read a few fields); call Graph or Exchange live only for data that must be current.
 - `$select` only the fields you read, and filter server-side when Graph supports it.
-- Follow the hot-path rules in `.github/copilot-instructions.md`. For alerts that means above all: no
+- Follow the hot-path rules in `AGENTS.md`. For alerts that means above all: no
   `New-GraphGetRequest ... | Where-Object` over a whole user or mailbox list (a `foreach` with `if`/`continue`), and no
   scan of one list inside a loop over another (build a hashtable keyed on the join field first).
+
+---
+
+## Frontend entry (`frontend/src/data/alerts.json`)
+
+One object per alert, appended to the array. Change no other file for it.
+
+```json
+{
+  "name": "InactiveLicensedUsers",
+  "label": "Alert on licensed users that have not logged in for X days",
+  "description": "Optional longer explanation shown under the label.",
+  "recommendedRunInterval": "1d",
+  "minimumRunInterval": "1d",
+  "requiresInput": true,
+  "multipleInput": true,
+  "inputs": [
+    { "inputType": "number", "inputLabel": "Days since last login (default: 90)", "inputName": "DaysSinceLastLogin" },
+    { "inputType": "switch", "inputLabel": "Exclude disabled users?", "inputName": "ExcludeDisabled" }
+  ]
+}
+```
+
+- `name` is the function name without `Get-CIPPAlert` (`Get-CIPPAlertInactiveLicensedUsers` → `InactiveLicensedUsers`).
+- `recommendedRunInterval`: `30m`, `1h`, `4h`, `1d`, `7d` or `30d`. Set `minimumRunInterval` when a shorter interval
+  would hammer Graph or re-alert; the UI then offers nothing below it.
+- A single input sits on the entry itself (`requiresInput`, `inputType`, `inputLabel`, `inputName`) and arrives as a
+  scalar `$InputValue`. Several inputs go in `inputs[]` with `multipleInput: true` and arrive as one object.
+- `inputType`: `textField`, `number`, `switch` or `autoComplete` (with `options: [{ label, value }]`, and `multiple` /
+  `creatable` as needed). Optional `validators` (e.g. `{ "min": { "value": 0, "message": "..." } }`) and
+  `defaultValue`.
+- Say the default in `inputLabel` when the backend applies one, and validate the file with `ConvertFrom-Json` /
+  `JSON.parse` after editing.
 
 ---
 

@@ -44,13 +44,15 @@ Source code lives under `backend/Modules/`, split into purpose-specific modules:
 | ---------------------- | ------------------------------------------------------------------- |
 | `CIPPCore`             | Shared helpers, Graph/Exchange wrappers, auth, and the HTTP router. |
 | `CIPPHTTP`             | Every `Invoke-*` HTTP endpoint handler, organised by area.          |
-| `CIPPStandards`        | Tenant standards (`Invoke-CIPPStandard*.ps1`).                      |
+| `CIPPStandards`        | Classic tenant standards (`Invoke-CIPPStandard*.ps1`), bugfixes only. |
+| `CIPPBaselines`        | Baselines engine, prepare hooks and executors. New standards go here. |
+| `CIPPTests`            | In-app compliance tests (`Invoke-CippTest*.ps1`).                   |
 | `CIPPAlerts`           | Alert definitions (`Get-CIPPAlert*.ps1`).                           |
 | `CIPPDB`               | Reporting database cache refresh jobs (`Set-CIPPDBCache*.ps1`).     |
 | `CIPPActivityTriggers` | Durable activity, queue, and timer entrypoints.                     |
 | `CippExtensions`       | Third-party integrations (Hudu, NinjaOne, and others).              |
 
-Tests live under `backend/Tests/`, organised by area (Alerts, Endpoint, Standards, Private, Security, Build).
+Tests live under `backend/Tests/`, organised by area (Alerts, Baselines, CippTests, Endpoint, Standards, Static, Private, Security, Build and others).
 
 ## Build
 

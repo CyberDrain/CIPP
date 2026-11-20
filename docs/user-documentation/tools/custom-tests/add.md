@@ -30,96 +30,68 @@ Data is read through `Get-CIPPTestData` with a `-Type` parameter, written as a q
 
 Type `%` anywhere in the script to insert a replacement variable, such as `%tenantid%` or `%defaultdomain%`, alongside any custom variables you have defined.
 
+### Limits and Performance
+
+{% hint style="warning" %}
+A script has **60 seconds** to finish. A script that runs longer is stopped, and the test result shows the timeout error instead of your output. Test against your largest tenant before enabling a test for all of them.
+{% endhint %}
+
+Only these commands exist inside a test: `ForEach-Object`, `Where-Object`, `Select-Object`, `Sort-Object`, `Group-Object`, `Measure-Object`, `Compare-Object`, `Get-Unique`, `Get-Member`, `Select-String`, `ConvertTo-Json`, `ConvertFrom-Json`, `Get-Date`, `Get-Random`, `New-TimeSpan`, `New-Guid`, `Write-Output` and `Get-CIPPTestData`, plus their usual aliases such as `where` and `%`. Language features such as `foreach`, `if`, `switch`, hashtables and the `.Where({ })` and `.ForEach({ })` methods all work.
+
+A single pass over a type is fast, even on large tenants. What makes a test slow is searching one list once for every item of another, which grows with the square of the tenant. Measured inside the test sandbox on a 20,000-user tenant:
+
+| Task                                    | Slow                                       | Fast                                            |
+| --------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
+| Check whether a user is in a list       | `-in` / `-notin` against a 2,000-item array: 3.5 s | a hashtable lookup, `$Set[$Upn]`: 0.04 s |
+| Find the groups of 2,000 users across 500 groups | search every group's members per user: 10.5 s | build a user → groups hashtable once: 0.06 s |
+| Build a markdown table                  | add to a string with `+=`: 3.1 s            | collect the rows, then `-join`: 0.06 s          |
+| Filter a list                           | `\| Where-Object { }`: 0.38 s              | `.Where({ })` 0.1 s, or `foreach` with `if`: 0.08 s |
+
+- **Build a lookup once.** Before a loop, put what you will look up into a hashtable keyed on the value you match on (`$UpnById[$User.id] = $User.userPrincipalName`), then read it inside the loop. Never call `Where-Object` or `-in` on a large list inside a loop.
+- **Use a hashtable as a set.** `$Excluded[$Upn] = $true` to add, `if ($Excluded[$Upn])` to check.
+- **Don't grow arrays or strings with `+=`.** Assign the output of a loop instead (`$Rows = foreach ($U in $Users) { ... }`) and join strings at the end with ``-join "`n"``.
+- **Read one field from every row** with `$Users.userPrincipalName` instead of `Select-Object -ExpandProperty`.
+- **Ask only for what you read.** `-Fields` keeps less data in memory and makes every pass faster.
+
 ### AI Prompt Template
 
 Paste the block below into an AI assistant along with a description of your use case, and it has the context needed to write a compliant script.
 
 ```
-Create a custom test for CIPP(https://docs.cipp.app/user-documentation/tools/custom-tests/add).
+Create a custom test for CIPP (https://docs.cipp.app/user-documentation/tools/custom-tests/add).
 
-Custom tests are read-only via Get-CIPPTestData with -Type. Each type returns a default set of fields; to read any other field, pass every field the script reads with -Fields (for example: Get-CIPPTestData -Type 'Groups' -Fields 'id', 'members'). -Type and -Fields must be quoted literals. Tenant is auto-locked, so do not pass -TenantFilter. Use %variable% syntax for replacement variables.
+Rules the script must follow:
+- Data is read-only via Get-CIPPTestData with -Type. Each type returns a default set of fields; to read any other field, pass every field the script reads with -Fields (for example: Get-CIPPTestData -Type 'Groups' -Fields 'id', 'members'). -Type and -Fields must be quoted literals. The tenant is locked automatically, so do not pass -TenantFilter. Use %variable% syntax for replacement variables such as %tenantname%.
+- The script runs in PowerShell ConstrainedLanguage mode. Only these commands exist: ForEach-Object, Where-Object, Select-Object, Sort-Object, Group-Object, Measure-Object, Compare-Object, Get-Unique, Get-Member, Select-String, ConvertTo-Json, ConvertFrom-Json, Get-Date, Get-Random, New-TimeSpan, New-Guid, Write-Output, Get-CIPPTestData. New-Object, [pscustomobject]@{} casts, [System.Collections.Generic.List[...]] and other .NET types and methods are blocked. Build output rows with Select-Object @{Name=...; Expression={...}}.
+- The script must finish within 60 seconds on a tenant with 50,000 users. Build hashtable lookups once before any loop and never search a list inside a loop (no Where-Object or -in/-notin over a large list per item). Use foreach and .Where({ }), never grow arrays or strings with +=, and join markdown rows with -join "`n".
+- Pass: return nothing, $false, an empty string or @(). Fail: return the offending rows. For an explicit status, return @{ CIPPStatus = 'Passed'|'Failed'|'Info'|'Investigate'; CIPPResults = <rows>; CIPPResultMarkdown = <markdown string> }.
 
-This script is CyberDrains example for Conditional access: 
-# Summarize Conditional Access policies by state
-$Policies = Get-CIPPTestData -Type 'ConditionalAccessPolicies'
-$grouped = $Policies | Group-Object -Property state
+Example, listing licensed users with friendly licence names:
 
-$counts = $grouped | Select-Object @{Name='State'; Expression={ $_.Name }},
-    @{Name='Count'; Expression={ $_.Count }}
-
-# Build markdown summary (%tenantname% is replaced at runtime)
-$header = "### %tenantname% CA Policies ($(@($Policies).Count) total)
-
-| State | Count |
-|---|---|"
-$countRows = $counts | ForEach-Object {
-    "| $($_.State) | $($_.Count) |"
-}
-$summaryTable = @($header) + @($countRows) -join "
-"
-
-# List each policy
-$policyHeader = "| Policy | State | Created |
-|---|---|---|"
-$policyRows = $Policies | Sort-Object -Property state, displayName | ForEach-Object {
-    "| $($_.displayName) | $($_.state) | $($_.createdDateTime) |"
-}
-$policyTable = @($policyHeader) + @($policyRows) -join "
-"
-
-$md = $summaryTable + "
-
----
-
-" + $policyTable
-
-@{
-    CIPPStatus         = 'Passed'
-    CIPPResults        = $counts
-    CIPPResultMarkdown = $md
-}
-
-This is their script for Users with licences:
-# List all users and their licences with friendly SKU names
 $Users = Get-CIPPTestData -Type 'Users'
 $Licenses = Get-CIPPTestData -Type 'LicenseOverview' -Fields 'skuId', 'License'
 
-# Build a SKU ID -> display name lookup hashtable
+# Build the SKU ID -> name lookup once
 $SkuLookup = @{}
-$Licenses | ForEach-Object {
-    $SkuLookup[$_.skuId] = $_.License
-}
+foreach ($License in $Licenses) { $SkuLookup[$License.skuId] = $License.License }
 
-# Build results - users with their resolved licence names
-$results = $Users | Where-Object {
-    $_.assignedLicenses.Count -gt 0
-} | Select-Object @{Name='UserPrincipalName'; Expression={ $_.userPrincipalName }},
-    @{Name='DisplayName'; Expression={ $_.displayName }},
-    @{Name='AccountEnabled'; Expression={ $_.accountEnabled }},
-    @{Name='LicenseCount'; Expression={ @($_.assignedLicenses).Count }},
-    @{Name='Licenses'; Expression={ (@($_.assignedLicenses | ForEach-Object { $n = $SkuLookup[$_.skuId]; if ($n) { $n } else { $_.skuId } }) -join ', ') }}
+$Results = $Users.Where({ $_.assignedLicenses.Count -gt 0 }) |
+    Select-Object @{Name='UserPrincipalName'; Expression={ $_.userPrincipalName }},
+        @{Name='DisplayName'; Expression={ $_.displayName }},
+        @{Name='Licenses'; Expression={ @(foreach ($L in $_.assignedLicenses) { if ($SkuLookup[$L.skuId]) { $SkuLookup[$L.skuId] } else { $L.skuId } }) -join ', ' }}
 
-# Build markdown table
-$header = "### Licensed Users: $($results.Count)\n\n| User | Display Name | Enabled | Licenses |\n|---|---|---|---|"
-$rows = $results | ForEach-Object {
-    "| $($_.UserPrincipalName) | $($_.DisplayName) | $($_.AccountEnabled) | $($_.Licenses) |"
-}
-$md = @($header) + @($rows) -join "\n"
+$Header = "### Licensed Users: $(@($Results).Count)`n`n| User | Display Name | Licenses |`n|---|---|---|"
+$Rows = foreach ($R in $Results) { "| $($R.UserPrincipalName) | $($R.DisplayName) | $($R.Licenses) |" }
 
-# Return with explicit pass + markdown
 @{
     CIPPStatus         = 'Passed'
-    CIPPResults        = $results
-    CIPPResultMarkdown = $md
+    CIPPResults        = $Results
+    CIPPResultMarkdown = @($Header) + @($Rows) -join "`n"
 }
 
-
-I want you to build a script that cross references all CA policies, included groups, and show me which user is missing a licence for P1 functionality(conditional acccess) or P2 functionality(Risk settings in CA).
+What I want the test to check:
+<describe your use case here>
 ```
-
-{% hint style="info" %}
-This covers data access, but not the ConstrainedLanguage restrictions in **Scripting Constraints**, above. If an AI-written script comes back using `New-Object` or a `[pscustomobject]@{}` cast, that is why: add the ConstrainedLanguage sentence from **Scripting Constraints** to the prompt, or fix the flagged lines by hand.
-{% endhint %}
 
 ### Example Scripts
 
@@ -316,7 +288,7 @@ $md = $summaryTable + "
 
 <summary>Conditional Access Licence Coverage (P1/P2)</summary>
 
-Cross-references every enabled Conditional Access policy's included and excluded users and groups against each user's assigned Microsoft Entra ID licence, and lists anyone in scope for a policy without the licence that policy needs: Microsoft Entra ID P1 as a baseline, or P2 where the policy also evaluates sign-in or user risk. Group membership checked is direct membership only; nested and dynamic-membership groups are not expanded, and role-scoped policy assignments are not evaluated.
+Cross-references every enabled Conditional Access policy's included and excluded users and groups against each user's assigned Microsoft Entra ID licence, and lists anyone in scope for a policy without the licence that policy needs: Microsoft Entra ID P1 as a baseline, or P2 where the policy also evaluates sign-in or user risk. Group membership checked is direct membership only; nested and dynamic-membership groups are not expanded, and role-scoped policy assignments are not evaluated. It builds every lookup once before looping over the policies, so it stays well inside the time limit on large tenants.
 
 ```powershell
 # Cross-reference Conditional Access policy scope (users + groups) against Entra ID P1/P2 licensing
@@ -328,14 +300,14 @@ $Users    = Get-CIPPTestData -Type 'Users' -Fields 'id', 'userPrincipalName', 'a
 $P1PlanId = '41781fb2-bc02-4b7c-bd55-b576c07bb09d'
 $P2PlanId = 'eec0eb4f-6444-4f95-aba0-50c24d67f998'
 
-# id -> UPN, UPN -> enabled state, UPN -> highest licensed Entra ID tier
+# Build every lookup once: id -> UPN, UPN -> enabled, UPN -> highest licensed Entra ID tier
 $UpnById     = @{}
 $UserEnabled = @{}
 $UserTier    = @{}
 foreach ($User in $Users) {
     $UpnById[$User.id] = $User.userPrincipalName
     $UserEnabled[$User.userPrincipalName] = [bool]$User.accountEnabled
-    $EnabledPlans = @($User.assignedPlans | Where-Object { $_.capabilityStatus -eq 'Enabled' } | Select-Object -ExpandProperty servicePlanId)
+    $EnabledPlans = $User.assignedPlans.Where({ $_.capabilityStatus -eq 'Enabled' }).servicePlanId
     $UserTier[$User.userPrincipalName] = if ($EnabledPlans -contains $P2PlanId) { 'P2' }
         elseif ($EnabledPlans -contains $P1PlanId) { 'P1' }
         else { 'None' }
@@ -344,53 +316,49 @@ foreach ($User in $Users) {
 # Group id -> direct member UPNs
 $GroupMembers = @{}
 foreach ($Group in $Groups) {
-    $GroupMembers[$Group.id] = @($Group.members | Where-Object { $_.userPrincipalName } | Select-Object -ExpandProperty userPrincipalName)
+    $GroupMembers[$Group.id] = $Group.members.Where({ $_.userPrincipalName }).userPrincipalName
 }
 
-$Gaps = foreach ($Policy in ($Policies | Where-Object { $_.state -in @('enabled', 'enabledForReportingButNotEnforced') })) {
+$EnabledPolicies = $Policies.Where({ $_.state -in 'enabled', 'enabledForReportingButNotEnforced' }) | Sort-Object -Property displayName
+$Gaps = foreach ($Policy in $EnabledPolicies) {
     # A policy that evaluates sign-in or user risk needs P2; every other enabled policy needs P1
     $RequiredTier = if (@($Policy.conditions.signInRiskLevels).Count -gt 0 -or @($Policy.conditions.userRiskLevels).Count -gt 0) { 'P2' } else { 'P1' }
+    $Scope = $Policy.conditions.users
 
-    $IncludeUsers  = @($Policy.conditions.users.includeUsers)
-    $IncludeGroups = @($Policy.conditions.users.includeGroups)
-    $ExcludeUsers  = @($Policy.conditions.users.excludeUsers)
-    $ExcludeGroups = @($Policy.conditions.users.excludeGroups)
+    # Sets as hashtables: one lookup per user instead of searching a list
+    $Excluded = @{}
+    foreach ($Id in $Scope.excludeUsers) { if ($UpnById[$Id]) { $Excluded[$UpnById[$Id]] = $true } }
+    foreach ($Id in $Scope.excludeGroups) { foreach ($Upn in $GroupMembers[$Id]) { $Excluded[$Upn] = $true } }
 
-    $ScopedUpns = if ($IncludeUsers -contains 'All') {
-        @($Users | Select-Object -ExpandProperty userPrincipalName)
-    } else {
-        $FromUsers  = @($IncludeUsers  | ForEach-Object { $UpnById[$_] })
-        $FromGroups = @($IncludeGroups | ForEach-Object { $GroupMembers[$_] })
-        @($FromUsers + $FromGroups | Where-Object { $_ } | Sort-Object -Unique)
+    $Scoped = if (@($Scope.includeUsers) -contains 'All') { $Users.userPrincipalName } else {
+        $Included = @{}
+        foreach ($Id in $Scope.includeUsers) { if ($UpnById[$Id]) { $Included[$UpnById[$Id]] = $true } }
+        foreach ($Id in $Scope.includeGroups) { foreach ($Upn in $GroupMembers[$Id]) { $Included[$Upn] = $true } }
+        $Included.Keys
     }
 
-    $ExcludedUpns  = @($ExcludeUsers  | ForEach-Object { $UpnById[$_] })
-    $ExcludedUpns += @($ExcludeGroups | ForEach-Object { $GroupMembers[$_] })
-
-    $ScopedUpns | Where-Object {
-        $_ -and $_ -notin $ExcludedUpns -and $UserEnabled[$_] -and
-        -not (($RequiredTier -eq 'P1' -and $UserTier[$_] -in @('P1', 'P2')) -or ($RequiredTier -eq 'P2' -and $UserTier[$_] -eq 'P2'))
-    } | Select-Object @{Name='Policy'; Expression={ $Policy.displayName }},
+    $Missing = foreach ($Upn in $Scoped) {
+        if (-not $Upn -or $Excluded[$Upn] -or -not $UserEnabled[$Upn]) { continue }
+        if ($UserTier[$Upn] -eq 'P2' -or ($RequiredTier -eq 'P1' -and $UserTier[$Upn] -eq 'P1')) { continue }
+        $Upn
+    }
+    $Missing | Sort-Object | Select-Object @{Name='Policy'; Expression={ $Policy.displayName }},
         @{Name='RequiredTier'; Expression={ $RequiredTier }},
         @{Name='User'; Expression={ $_ }},
         @{Name='CurrentTier'; Expression={ $UserTier[$_] }}
 }
-$Gaps = @($Gaps | Sort-Object -Property Policy, User)
+$Gaps = @($Gaps)
 
 # Build markdown (%tenantname% is replaced at runtime)
-$header = "### %tenantname%: Conditional Access Licence Gaps
+$md = if ($Gaps.Count -gt 0) {
+    $header = "### %tenantname%: Conditional Access Licence Gaps
 
-Policies evaluated: $(@($Policies).Count) | Users with a licensing gap: $(@($Gaps | Select-Object -ExpandProperty User -Unique).Count)
+Policies evaluated: $(@($Policies).Count) | Users with a licensing gap: $(@($Gaps.User | Sort-Object -Unique).Count)
 
 | Policy | Required | User | Current |
 |---|---|---|---|"
-$rows = $Gaps | ForEach-Object {
-    "| $($_.Policy) | $($_.RequiredTier) | $($_.User) | $($_.CurrentTier) |"
-}
-
-$md = if (@($Gaps).Count -gt 0) {
-    @($header) + @($rows) -join "
-"
+    $rows = foreach ($Gap in $Gaps) { "| $($Gap.Policy) | $($Gap.RequiredTier) | $($Gap.User) | $($Gap.CurrentTier) |" }
+    @($header) + @($rows) -join "`n"
 } else {
     "### %tenantname%: Conditional Access Licence Gaps
 
@@ -398,7 +366,7 @@ All enabled users in scope for Conditional Access hold the required Entra ID lic
 }
 
 @{
-    CIPPStatus         = if (@($Gaps).Count -gt 0) { 'Failed' } else { 'Passed' }
+    CIPPStatus         = if ($Gaps.Count -gt 0) { 'Failed' } else { 'Passed' }
     CIPPResults        = $Gaps
     CIPPResultMarkdown = $md
 }

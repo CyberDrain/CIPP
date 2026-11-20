@@ -9,6 +9,7 @@ Before writing any code, set up a local development environment by following the
 - **File an issue.** If you are fixing a bug, file a complete bug report [on GitHub](https://github.com/CyberDrain/CIPP/issues) and assign it to yourself. If you are adding a feature, create an issue with "Feature Request" in the title and assign it to yourself.
 - **Understand the repo layout.** Read the [project-structure.md](cipp-dev-guide/project-structure.md "mention") page so you know where frontend pages, backend modules, and tests live.
 - **Speed and security** are fundamental pillars of CIPP. If it is not fast, it is not good, and if it is not secure, it is not getting merged.
+- **Read [`AGENTS.md`](https://github.com/CyberDrain/CIPP/blob/dev/AGENTS.md)** at the repository root. It is the guide for both people and AI coding assistants: architecture, conventions and the PowerShell performance rules every change is reviewed against. Task-specific guides for endpoints, baselines, alerts and tests are in [`.github/agents/`](https://github.com/CyberDrain/CIPP/tree/dev/.github/agents).
 - **Use native APIs over PowerShell modules.** PowerShell modules slow the entire runtime. The backend currently loads only `Az.Keyvault` and `Az.Accounts` and we prefer to keep it that way.
 
 {% hint style="info" %}
@@ -66,6 +67,10 @@ Return a status code that matches what happened. The frontend decides whether to
 - Helper functions throw `[System.ArgumentException]` for invalid input and `[System.Management.Automation.ItemNotFoundException]` for missing resources, so the endpoint can tell those apart from upstream failures.
 
 The full guide, including response body shapes, is in [`.github/agents/CIPP-Endpoint-Agent.md`](https://github.com/CyberDrain/CIPP/blob/dev/.github/agents/CIPP-Endpoint-Agent.md).
+
+### Performance
+
+Backend code that runs per row or per tenant (cache collectors, alerts, tests, baselines, reports) runs for every managed tenant, and tenants with 50,000 users are normal. Filter with `foreach` or `.Where({ })` instead of `| Where-Object`, build a hashtable once instead of searching a list inside a loop, and never grow an array with `+=`. The full list, with measurements, is the performance section of [`AGENTS.md`](https://github.com/CyberDrain/CIPP/blob/dev/AGENTS.md).
 
 ## Frontend Guidelines
 

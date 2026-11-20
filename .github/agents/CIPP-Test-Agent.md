@@ -109,12 +109,29 @@ That form flattens an item that is itself a collection, so use it only for recor
 
 ## Other hot-path rules
 
-The repo-wide list is in `.github/copilot-instructions.md` (PowerShell hot paths). The ones tests hit most:
+The repo-wide list is in `AGENTS.md` (PowerShell hot paths). The ones tests hit most:
 
 - Never `+=`. Build with `@(...)`, a `foreach` assignment or `[System.Collections.Generic.List[object]]`.
 - Never `Select/Sort/Group-Object` over hashtables.
 - `[CIPP.CippJson]::ToJson($x, $depth)` (fall back to `ConvertTo-Json` on `$null`) for result data JSON.
 - No `ConvertTo-Json` inside log or markdown strings that are built whether or not they are used.
+
+---
+
+## Custom tests (user-written scripts)
+
+Tools > Custom Tests run operator-written PowerShell, not functions in this module. The runtime is
+`New-CippCustomScriptExecution`:
+
+- `Get-CippSandboxData` reads the script's AST, pre-fetches every `Get-CIPPTestData -Type '<literal>'` (and literal
+  `-Fields`) for the one tenant, and `Invoke-CippSandboxScript` runs the script in a fresh ConstrainedLanguage runspace
+  with a 60 s wall-clock limit. The sandbox has no storage, network or other tenant access.
+- The cmdlet allowlist has one source, `Get-CippCustomScriptAllowedCommand`, used by both the static pre-check
+  (`Test-CustomScriptSecurity`) and the runspace. Change it there, and update the list in
+  `docs/user-documentation/tools/custom-tests/add.md`.
+- The user guidance (examples, AI prompt, limits) is in that docs page and in the editor
+  (`frontend/src/pages/tools/custom-tests/add.jsx`). Keep the two in step, and run any new example in the sandbox
+  against a large tenant: an example that only works on a small one teaches users to write tests that time out.
 
 ---
 

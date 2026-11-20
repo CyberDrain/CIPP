@@ -36,8 +36,7 @@ localfiles/
 graphify-out/
 graphify/
 .claude/
-CLAUDE.md
-AGENTS.md
+CLAUDE.local.md
 
 # Static copy of the generated OpenAPI spec, written by build-openapi.ps1 so the
 # in-app Swagger UI can read it without going through the API. Generated, not authored.

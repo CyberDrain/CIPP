@@ -145,7 +145,7 @@ $TenantId = $Tenant.customerId ?? $TenantFilter
 ```
 
 Reads match any of the tenant's identifiers, because older rows may hold a domain. Rules and the lookup helper:
-"Storing tenant references" in `.github/copilot-instructions.md`.
+"Storing tenant references" in `AGENTS.md`.
 
 ---
 

@@ -66,6 +66,10 @@ function Invoke-CippTestEIDSCAAP01 {
   Use `ListDBCache` to confirm a field's real name and casing.
 - **Do not pass `-Fields` from a test.** Field lists belong to the type; per-call lists fragment the cache (the same rows
   parsed once per list).
+- The exception is a field too large to cache (Groups `members`, Users `assignedPlans`). For a few known records, read
+  them by id: `Get-CIPPTestData -Type 'Groups' -Fields 'id', 'members' -Id $GroupIds` (point reads, not cached). Never
+  stream the whole type per test; when several tests in a suite need the same pass, share it through the suite's
+  `Initialize-CippTestSuite<Suite>` hook (see `Get-CippCopilotReadinessUsers`).
 - Records are `PSCustomObject` and stay that way: `$x[0]`, `$x.Count` and `.PSObject.Properties` rely on it.
 - A missing type returns nothing: emit `Skipped` with a reason, never `Passed`.
 

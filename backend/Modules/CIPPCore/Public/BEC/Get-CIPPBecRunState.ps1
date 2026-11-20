@@ -7,7 +7,7 @@ function Get-CIPPBecRunState {
         phase order so a later phase's value (rows re-saved with their IP verdicts, for one) wins.
         Each phase's Completeness markers are merged into one ordered Completeness dictionary.
         -Name reads only those values: the others are never built, so a phase does not pay for the
-        large rows (sign-ins, mail records) it does not use.
+        large rows (sign-ins) it does not use.
     .FUNCTIONALITY
         Internal
     #>

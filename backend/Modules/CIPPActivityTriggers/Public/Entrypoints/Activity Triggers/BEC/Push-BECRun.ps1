@@ -88,7 +88,7 @@ function Push-BECRun {
                 'ReceivedMail' { 'AcceptedDomains' }
                 'Directory' { 'UsageLocation' }
                 { $_ -in @('IPAnalysis', 'IPPeers') } { 'SuspectUserSignIns', 'NonInteractiveSignIns', 'RuleChangesLog', 'PermissionsLog', 'SafelistChanges', 'SharingChanges', 'TransportRuleChanges', 'DirectoryAudits', 'SentMessages', 'SentMessageAnalysis', 'MailActivity', 'RulesLog', 'UsageLocation', 'TravelWindows', 'IPBaseline' }
-                'AttackerActivity' { 'IPVerdicts', 'IPPeers', 'ReceivedSubjects', 'SentSubjects', 'SuspectUserSignIns', 'NonInteractiveSignIns', 'MailRecords', 'SharingChanges', 'SuspectUserDetail', 'PermissionsLog', 'MailActivity' }
+                'AttackerActivity' { 'IPVerdicts', 'IPPeers', 'ReceivedSubjects', 'SentSubjects', 'SuspectUserSignIns', 'NonInteractiveSignIns', 'AuditLogEnabled', 'SharingChanges', 'SuspectUserDetail', 'PermissionsLog', 'MailActivity', 'Completeness' }
             })
         $State = if ($Key -eq 'Score') { Get-CIPPBecRunState -CaseId $CaseId } else { Get-CIPPBecRunState -CaseId $CaseId -Name $StateNames }
         # the first phase never started the run (no resolvable UPN), so there is nothing to add to
@@ -886,8 +886,8 @@ function Push-BECRun {
                 Write-Information 'Full scope: risk state'
                 $Risk = if ($HasEntraP2) { & $Collect 'RiskState' { Get-CIPPBecRiskState -TenantFilter $TenantFilter -UserId $SuspectUser -StartDate $startDate } } else { & $Skip 'requires Entra ID P2 (Identity Protection)' }
                 & $Mark 'RiskState' $Risk
-                # MailRecords: the raw records, for the attacker-activity pass (not part of the case)
-                & $Save @{ MailActivity = @($Activity.Data); MailActivitySummary = $Activity.Summary; MailRecords = @($Activity.Records | Where-Object { $_ }); RiskState = $Risk.Data }
+                # Raw mailbox records stay out of the run state (#1336). AttackerActivity re-reads them.
+                & $Save @{ MailActivity = @($Activity.Data); MailActivitySummary = $Activity.Summary; RiskState = $Risk.Data }
             }
 
             { $_ -in @('IPAnalysis', 'IPPeers') } {
@@ -996,13 +996,70 @@ function Push-BECRun {
                 # files touched, sharing links used, Forms built - and the other mailboxes the account reaches.
                 Write-Information 'Full scope: attacker activity'
                 $IPVerdicts = & $Rows 'IPVerdicts'
+                $MailActivity = & $Rows 'MailActivity'
                 $KnownSubjects = @{}
                 foreach ($Index in @($State.ReceivedSubjects, $State.SentSubjects | Where-Object { $_ })) {
                     foreach ($Pair in $Index.PSObject.Properties) { $KnownSubjects[$Pair.Name] = [string]$Pair.Value }
                 }
-                $Attacker = & $Collect 'AttackerActivity' { Get-CIPPBecAttackerActivity -TenantFilter $TenantFilter -UserPrincipalName $UserName -StartDate $startDate -EndDate $endDate -Heuristics $Heuristics -Verdicts $IPVerdicts -SignIns (& $Rows 'SuspectUserSignIns') -NonInteractiveSignIns (& $Rows 'NonInteractiveSignIns') -MailRecords (& $Rows 'MailRecords') -SharingChanges (& $Rows 'SharingChanges') -KnownSubjects $KnownSubjects -Anchor $UserName }
+                # Re-read the raw records, as the IP review does, unless the attacker pass would find nothing.
+                # A record keeps its own address's verdict unless that address is blank or Service; then it takes
+                # its token or session address, so it matters only if some address is attacker-side or unverdicted.
+                $AttackerSide = @('Compromised', 'LikelyAttacker', 'Suspicious', 'Unknown')
+                $VerdictByIP = @{}
+                foreach ($Verdict in $IPVerdicts) {
+                    $VerdictIP = ConvertTo-CIPPBecHostAddress -Address $Verdict.IP
+                    if ($VerdictIP) { $VerdictByIP[$VerdictIP] = [string]$Verdict.Verdict }
+                }
+                $SignIns = & $Rows 'SuspectUserSignIns'
+                $NonInteractiveSignIns = & $Rows 'NonInteractiveSignIns'
+                $ReadMail = -not ($State.Completeness.IPVerdicts.Complete -eq $true -and $State.Completeness.MailActivity.Complete -eq $true)
+                $Indirect = $false
+                foreach ($Row in $MailActivity) {
+                    $MailIP = ConvertTo-CIPPBecHostAddress -Address $Row.ClientIP
+                    $MailVerdict = if ($MailIP) { $VerdictByIP[$MailIP] } else { $null }
+                    if (($MailIP -and -not $MailVerdict) -or $MailVerdict -in $AttackerSide) { $ReadMail = $true; break }
+                    if (-not $MailIP -or $MailVerdict -eq 'Service') { $Indirect = $true }
+                }
+                if ($Indirect -and -not $ReadMail) {
+                    foreach ($Verdict in $VerdictByIP.Values) { if ($Verdict -in $AttackerSide) { $ReadMail = $true; break } }
+                    foreach ($SignIn in @($SignIns) + @($NonInteractiveSignIns)) {
+                        if ($ReadMail) { break }
+                        $SignInIP = ConvertTo-CIPPBecHostAddress -Address $SignIn.IPAddress
+                        if ($SignInIP -and -not $VerdictByIP.ContainsKey($SignInIP)) { $ReadMail = $true }
+                    }
+                }
+                $MailSearch = $null
+                if ($ReadMail -and $State.AuditLogEnabled -ne $false) {
+                    $Deadline = [datetime]::UtcNow.AddSeconds([int]($Heuristics.caps.attackerMailSeconds ?? 400))
+                    $MailSearch = & $Collect 'AttackerMailRecords' { Get-CIPPBecMailActivity -TenantFilter $TenantFilter -UserPrincipalName $UserName -StartDate $startDate -EndDate $endDate -Heuristics $Heuristics -Anchor $UserName -Deadline $Deadline }
+                }
+                $Attacker = & $Collect 'AttackerActivity' { Get-CIPPBecAttackerActivity -TenantFilter $TenantFilter -UserPrincipalName $UserName -StartDate $startDate -EndDate $endDate -Heuristics $Heuristics -Verdicts $IPVerdicts -SignIns $SignIns -NonInteractiveSignIns $NonInteractiveSignIns -MailRecords @(@($MailSearch.Records).Where({ $_ })) -SharingChanges (& $Rows 'SharingChanges') -KnownSubjects $KnownSubjects -Anchor $UserName }
+
+                # Classify each error separately. $Mark classifies the joined text, so a no-mailbox match could hide a real failure.
+                $MailPass = if ($Attacker.PSObject.Properties['Mail']) { $Attacker.Mail } else { $Attacker }
+                $SearchErrors = if (-not $MailSearch) { @() } elseif ($MailSearch.PSObject.Properties['Errors']) { $MailSearch.Errors } else { @($MailSearch.Error) }
+                $Failures = [System.Collections.Generic.List[string]]::new()
+                $Skips = [System.Collections.Generic.List[string]]::new()
+                if ($State.AuditLogEnabled -eq $false) { $Failures.Add('Unified audit log ingestion is disabled for this tenant') }
+                foreach ($Text in @(@($SearchErrors) + @($MailPass.Error))) {
+                    if ([string]::IsNullOrWhiteSpace([string]$Text)) { continue }
+                    $Info = Get-CIPPBecErrorInfo -Message ([string]$Text)
+                    if ($Info.Skipped) {
+                        $Requirement = [string]($Info.Requirement ?? $Info.Message)
+                        if (-not $Skips.Contains($Requirement)) { $Skips.Add($Requirement) }
+                    } elseif (-not $Failures.Contains([string]$Info.Message)) { $Failures.Add([string]$Info.Message) }
+                }
+                $Caps = [System.Collections.Generic.List[string]]::new()
+                foreach ($Cap in @($MailSearch.Cap, $MailPass.Cap)) { if ($Cap -and -not $Caps.Contains([string]$Cap)) { $Caps.Add([string]$Cap) } }
+                $Completeness['AttackerMailActivity'] = [pscustomobject]@{
+                    Complete    = [bool]$MailPass.Complete -and $Failures.Count -eq 0 -and $Skips.Count -eq 0 -and $Caps.Count -eq 0
+                    Cap         = if ($Caps.Count -gt 0) { $Caps -join '; ' } else { $null }
+                    Error       = if ($Failures.Count -gt 0) { (@($Failures) + @($Skips)) -join '; ' } else { $null }
+                    Skipped     = $Failures.Count -eq 0 -and ($Skips.Count -gt 0 -or [bool]$MailPass.Skipped)
+                    Requirement = if ($Failures.Count -gt 0) { $null } elseif ($Skips.Count -gt 0) { $Skips -join '; ' } else { $MailPass.Requirement }
+                    Count       = [int]$MailPass.Count
+                }
                 if ($Attacker.PSObject.Properties['Mail']) {
-                    & $Mark 'AttackerMailActivity' $Attacker.Mail
                     & $Mark 'AttackerFileActivity' $Attacker.Files
                     & $Mark 'LinkUsage' $Attacker.LinkUsage
                     & $Mark 'FormsActivity' $Attacker.Forms
@@ -1011,7 +1068,7 @@ function Push-BECRun {
                     $LinkUsage = @($Attacker.LinkUsage.Data)
                     $FormsActivity = @($Attacker.Forms.Data); $FormsSummary = $Attacker.Forms.Summary
                 } else {
-                    foreach ($Name in @('AttackerMailActivity', 'AttackerFileActivity', 'LinkUsage', 'FormsActivity')) { & $Mark $Name $Attacker }
+                    foreach ($Name in @('AttackerFileActivity', 'LinkUsage', 'FormsActivity')) { & $Mark $Name $Attacker }
                     $AttackerMailActivity = @(); $AttackerMailSummary = $null; $AttackerFileActivity = @(); $AttackerFileSummary = $null; $LinkUsage = @(); $FormsActivity = @(); $FormsSummary = $null
                 }
                 $Delegated = & $Collect 'DelegatedAccess' { Get-CIPPBecDelegatedAccess -TenantFilter $TenantFilter -UserPrincipalName $UserName -UserDisplayName ([string]$State.SuspectUserDetail.displayName) -PermissionChanges (& $Rows 'PermissionsLog') -MailActivity (& $Rows 'MailActivity') -AttackerMail $AttackerMailActivity }

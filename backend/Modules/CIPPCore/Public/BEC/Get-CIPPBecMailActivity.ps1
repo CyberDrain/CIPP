@@ -11,8 +11,8 @@ function Get-CIPPBecMailActivity {
         folders or item ids are kept in the counts. MailItemsAccessed is part of Audit (Standard) for
         E3/E5 licences; when the log does not carry it the other operations still count. Each row also
         lists the mailbox SessionIds it saw (one session moving between addresses is one actor), and
-        the raw records ride along on the result (Records, not stored) so the attacker-activity pass
-        can take item-level detail for the attacker's addresses without searching again.
+        the raw records ride along on the result (Records, never stored) so the attacker-activity pass
+        can take item-level detail for the attacker's addresses. Errors lists each failed search.
     .PARAMETER TenantFilter
         Tenant default domain name.
     .PARAMETER UserPrincipalName
@@ -25,6 +25,8 @@ function Get-CIPPBecMailActivity {
         The BEC heuristics object (mailActivity section, caps).
     .PARAMETER Anchor
         Anchor mailbox for the EXO requests.
+    .PARAMETER Deadline
+        Optional UTC wall-clock budget, passed to both searches. The counts pass leaves it unset.
     .FUNCTIONALITY
         Internal
     #>
@@ -35,7 +37,8 @@ function Get-CIPPBecMailActivity {
         [Parameter(Mandatory = $true)][datetime]$StartDate,
         [Parameter(Mandatory = $true)][datetime]$EndDate,
         [Parameter(Mandatory = $true)]$Heuristics,
-        [string]$Anchor
+        [string]$Anchor,
+        [datetime]$Deadline = [datetime]::MinValue
     )
 
     $UserOps = @($Heuristics.mailActivity.userOperations)
@@ -95,7 +98,7 @@ function Get-CIPPBecMailActivity {
 
     if ($UserOps.Count -gt 0) {
         try {
-            $Search = Search-CIPPBecAuditLog -TenantFilter $TenantFilter -StartDate $StartDate -EndDate $EndDate -Operations $UserOps -UserIds @($UserPrincipalName) -Anchor $Anchor -MaxPages $MaxPages
+            $Search = Search-CIPPBecAuditLog -TenantFilter $TenantFilter -StartDate $StartDate -EndDate $EndDate -Operations $UserOps -UserIds @($UserPrincipalName) -Anchor $Anchor -MaxPages $MaxPages -Deadline $Deadline
             $Search.Records | & $Accumulate
             $RecordCount = $RecordCount + @($Search.Records).Count
             if (-not $Search.Complete) { $Complete = $false; $Cap = $Search.Cap }
@@ -105,7 +108,7 @@ function Get-CIPPBecMailActivity {
     }
     if ($OwnerOps.Count -gt 0) {
         try {
-            $Search = Search-CIPPBecAuditLog -TenantFilter $TenantFilter -StartDate $StartDate -EndDate $EndDate -Operations $OwnerOps -Anchor $Anchor -MaxPages $MaxPages
+            $Search = Search-CIPPBecAuditLog -TenantFilter $TenantFilter -StartDate $StartDate -EndDate $EndDate -Operations $OwnerOps -Anchor $Anchor -MaxPages $MaxPages -Deadline $Deadline
             $Owned = @($Search.Records).Where({ $_.AuditData -and ($_.AuditData.MailboxOwnerUPN -eq $UserPrincipalName -or $_.AuditData.UserId -eq $UserPrincipalName) })
             $Owned | & $Accumulate
             $RecordCount = $RecordCount + $Owned.Count
@@ -140,5 +143,6 @@ function Get-CIPPBecMailActivity {
     $Result = New-CIPPBecCollectorResult -Data $Rows -Complete ($Complete -and $Errors.Count -eq 0) -Cap $Cap -Error ($(if ($Errors.Count -gt 0) { $Errors -join '; ' } else { $null })) -Count $Rows.Count
     $Result | Add-Member -NotePropertyName 'Summary' -NotePropertyValue $Summary -Force
     $Result | Add-Member -NotePropertyName 'Records' -NotePropertyValue $AllRecords.ToArray() -Force
+    $Result | Add-Member -NotePropertyName 'Errors' -NotePropertyValue $Errors.ToArray() -Force
     return $Result
 }

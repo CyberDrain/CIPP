@@ -40,6 +40,41 @@ Describe 'Search-CIPPBecAuditLog' {
         $Result.Records[0].Operation | Should -Be 'New-InboxRule'
     }
 
+    It 'stops before the first page when the detail deadline has already passed' {
+        Mock New-ExoRequest { throw 'Exchange must not be called after the deadline' }
+        $Result = Search-CIPPBecAuditLog -TenantFilter 'contoso.com' -StartDate $script:Start -EndDate $script:End -Deadline (Get-Date).AddSeconds(-1)
+        $Result.Complete | Should -BeFalse
+        $Result.Cap | Should -Match 'time budget'
+        $Result.Records.Count | Should -Be 0
+        Should -Invoke New-ExoRequest -Times 0
+    }
+
+    It 'returns the partial set instead of bisecting when the budget runs out on the last page' {
+        # Each full page takes 1.2s against a 1.8s budget: the second (last) page starts in time and ends
+        # after it. Bisecting now would discard these records and both halves would return nothing.
+        Mock New-ExoRequest { $script:Calls.Add($cmdParams); Start-Sleep -Milliseconds 1200; New-Page -From ($script:Calls.Count * 4) -Count 4 -Total 100 }
+        $Result = Search-CIPPBecAuditLog -TenantFilter 'contoso.com' -StartDate $script:End.AddMinutes(-120) -EndDate $script:End -PageSize 4 -MaxPages 2 -MinSliceMinutes 60 -Deadline ([datetime]::UtcNow.AddMilliseconds(1800))
+        $script:Calls.Count | Should -Be 2
+        $Result.Records.Count | Should -Be 8
+        $Result.Complete | Should -BeFalse
+        $Result.Cap | Should -Be 'time budget reached after 8 record(s)'
+    }
+
+    It 'searches the newer half of a bisected window first only when a deadline is set' {
+        Mock New-ExoRequest {
+            $script:Calls.Add($cmdParams)
+            $Minutes = [int](New-TimeSpan -Start $cmdParams.StartDate -End $cmdParams.EndDate).TotalMinutes
+            if ($Minutes -gt 61) { New-Page -From ($script:Calls.Count * 4) -Count 4 -Total 100 }
+            else { New-Page -From (5000 + 10 * $script:Calls.Count) -Count 2 -Total 2 }
+        }
+        $FirstHalfEnd = { @($script:Calls).Where({ [int](New-TimeSpan -Start $_.StartDate -End $_.EndDate).TotalMinutes -le 61 }, 'First')[0].EndDate }
+        $null = Search-CIPPBecAuditLog -TenantFilter 'contoso.com' -StartDate $script:End.AddMinutes(-120) -EndDate $script:End -PageSize 4 -MaxPages 2 -MinSliceMinutes 60 -Deadline ([datetime]::UtcNow.AddMinutes(5))
+        ([datetime](& $FirstHalfEnd)) | Should -Be $script:End -Because 'a budget that runs out loses the oldest activity'
+        $script:Calls.Clear()
+        $null = Search-CIPPBecAuditLog -TenantFilter 'contoso.com' -StartDate $script:End.AddMinutes(-120) -EndDate $script:End -PageSize 4 -MaxPages 2 -MinSliceMinutes 60
+        ([datetime](& $FirstHalfEnd)) | Should -BeLessThan $script:End -Because 'without a deadline the order is unchanged'
+    }
+
     It 'sends ReturnLargeSet, ResultSize and an array UserIds with a stable session id' {
         Mock New-ExoRequest { $script:Calls.Add($cmdParams); New-Page -From 1 -Count 1 -Total 1 }
         $null = Search-CIPPBecAuditLog -TenantFilter 'contoso.com' -StartDate $script:Start -EndDate $script:End -Operations @('A') -UserIds 'user@contoso.com' -PageSize 100

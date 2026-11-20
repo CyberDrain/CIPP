@@ -72,8 +72,10 @@ jobs:
       # guarantees a build image can never collide with latest/dev/nightly or a bare semver.
       - name: Derive slug and version
         id: version
+        env:
+          REF_NAME: ${{ github.event.inputs.ref || github.ref_name }}
+          BUILD_CONFIG: ${{ github.event.inputs.config }}
         run: |
-          REF_NAME="${{ github.event.inputs.ref || github.ref_name }}"
           RAW=$(echo "$REF_NAME" | tr '[:upper:]' '[:lower:]')
           RAW="${RAW#refs/heads/}"
 
@@ -117,7 +119,7 @@ jobs:
 
           # build/Dockerfile ships the Development appsettings (what the dev channel uses and
           # what runs on real instances today); Dockerfile.release ships Production.
-          if [ "${{ github.event.inputs.config }}" = "production" ]; then
+          if [ "$BUILD_CONFIG" = "production" ]; then
             echo "dockerfile=build/Dockerfile.release" >> $GITHUB_OUTPUT
           else
             echo "dockerfile=build/Dockerfile" >> $GITHUB_OUTPUT

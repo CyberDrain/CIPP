@@ -35,6 +35,8 @@ jobs:
     steps:
       - name: Checkout base (trusted validator script)
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Checkout PR head (untrusted, data only)
         if: github.event_name == 'pull_request_target'

@@ -157,6 +157,12 @@ its own policy as unmanaged.
 
 ## Non-negotiables
 
+- **Cache first.** Design the cache type and its `Set-CIPPDBCache<Type>` collector before the definition, then
+  express as much as possible declaratively. A hook that reads per user or per mailbox live runs that read in every
+  baseline run: the first ports did, and one compare took 18 minutes (121 sequential Exchange batches) where a cache
+  read takes seconds. Justify every remaining hook or named executor.
+- **Batch writes and live reads.** Graph through `New-GraphBulkRequest`; Exchange through
+  `New-ExoBulkRequest -MaxConcurrency`, sized to average no more than 45 requests per second per tenant.
 - **One function per file.** Hook and executor are separate files. Never build arrays with
   `+=` — use `[System.Collections.Generic.List[object]]`.
 - Hooks and executors run for every tenant in every baseline run: follow the PowerShell hot-path rules in

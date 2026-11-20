@@ -78,6 +78,9 @@ function Get-CIPPAlertThing {
 - Prefer the cache when it holds what you need (`New-CIPPDbRequest -TenantFilter $TenantFilter -Type '<Type>'`, with a
   field list when you read a few fields); call Graph or Exchange live only for data that must be current.
 - `$select` only the fields you read, and filter server-side when Graph supports it.
+- Stream large sources instead of collecting them: fold an export page by page with
+  `| & { process { ... } }` rather than `| ForEach-Object` or a full array (`Get-CIPPAlertVulnerabilities.ps1` cut the
+  vulnerability alert's memory on large tenants this way).
 - Follow the hot-path rules in `AGENTS.md`. For alerts that means above all: no
   `New-GraphGetRequest ... | Where-Object` over a whole user or mailbox list (a `foreach` with `if`/`continue`), and no
   scan of one list inside a loop over another (build a hashtable keyed on the join field first).

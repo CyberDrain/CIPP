@@ -70,12 +70,61 @@ The full guide, including response body shapes, is in [`.github/agents/CIPP-Endp
 
 ### Performance
 
-Backend code that runs per row or per tenant (cache collectors, alerts, tests, baselines, reports) runs for every managed tenant, and tenants with 50,000 users are normal. Filter with `foreach` or `.Where({ })` instead of `| Where-Object`, build a hashtable once instead of searching a list inside a loop, and never grow an array with `+=`. The full list, with measurements, is the performance section of [`AGENTS.md`](https://github.com/CyberDrain/CIPP/blob/dev/AGENTS.md).
+Backend code that runs per row or per tenant (cache collectors, alerts, tests, baselines, reports) runs for every managed tenant, and tenants with 50,000 users are normal. Pull requests are reviewed against these requirements:
+
+1. No `| Where-Object`, `| Select-Object -First`, `| ForEach-Object` or `& $ScriptBlock` per row. Use `foreach` with `if`, or `.Where({ })`.
+2. No search of one list inside a loop over another. Build a hashtable (or `[CIPP.CippIndex]`) once, keyed on an id, GUID or UPN.
+3. No `+=`. Assign the output of a `foreach`, or use `[System.Collections.Generic.List[object]]`.
+4. No per-row `Add-Member`. Use `$Row.PSObject.Properties.Add([psnoteproperty]::new('Name', $Value))`.
+5. JSON through `[CIPP.CippJson]::ToJson` / `ConvertFromJson`, not `ConvertTo-Json` / `ConvertFrom-Json`.
+6. Large reads stream into the cache (`New-GraphGetRequest -Stream`, `New-ExoRequest -StreamPages`) instead of holding a whole tenant in memory.
+7. Table reads filter on `PartitionKey` (and `RowKey` for one row), and a `-Property` list always includes `PartitionKey` and `RowKey`.
+8. Graph and Exchange calls are batched (`New-GraphBulkRequest`, `New-ExoBulkRequest`) and `$select` only the fields the code reads.
+9. A performance change states its before and after numbers from a realistic tenant, and produces identical output.
+
+For example, finding each user's groups:
+
+```powershell
+# Before: searches every group once per user, and += copies the array each time
+$Result = @()
+foreach ($User in $Users) {
+    $Groups = $AllGroups | Where-Object { $_.members.id -contains $User.id }
+    $Result += [PSCustomObject]@{ UPN = $User.userPrincipalName; Groups = $Groups.displayName -join ', ' }
+}
+
+# After: one pass to build a user -> groups lookup, one pass to emit rows
+$GroupsByUser = @{}
+foreach ($Group in $AllGroups) {
+    foreach ($Member in $Group.members) {
+        if (-not $GroupsByUser[$Member.id]) { $GroupsByUser[$Member.id] = [System.Collections.Generic.List[string]]::new() }
+        $GroupsByUser[$Member.id].Add($Group.displayName)
+    }
+}
+$Result = foreach ($User in $Users) {
+    [PSCustomObject]@{ UPN = $User.userPrincipalName; Groups = @($GroupsByUser[$User.id]) -join ', ' }
+}
+```
+
+With 2,000 users and 200 groups the first version takes about 5.5 seconds and the second about 0.15 seconds, with identical output. The full list, with measurements and the traps that make a faster rewrite return different results, is the performance section of [`AGENTS.md`](https://github.com/CyberDrain/CIPP/blob/dev/AGENTS.md).
+
+### Design Requirements
+
+- **Read the cache first.** Reports, cached list pages, tests and baselines read the CIPP reporting cache rather than calling Microsoft 365 live for every item. If a report needs data the cache lacks, extend the collector that fills it.
+- **New standards are Baselines.** Classic standards in `CIPPStandards` accept bug fixes only.
+- **Write PowerShell.** Contributors must be able to read and fix the code, so purpose-built C# is not accepted; the existing generic helpers in `backend/Shared/CIPPSharp` are fine.
+- **Keep one code path.** No fallback branches that detect a problem and quietly degrade.
+- **Store tenants by `customerId`**, never by domain name, because a tenant's default domain can change.
+- **Keep it working on Azure Functions.** The new CIPP infrastructure runs .NET 10 and PowerShell 7.6, but self-hosted Function App installs still run this backend on PowerShell 7.4 (.NET 8). Code must work on both, which is why `CIPPSharp` targets .NET 8.
+- **Write functions only when they are reused.** Logic with one caller stays inline.
 
 ## Frontend Guidelines
 
 - See [frontend-testing.md](cipp-dev-guide/frontend-testing.md "mention") for test conventions and how to run the test suites.
 - Remember to lint your code with prettier, as to not cause another war of formatters.
+- On a page that uses the selected tenant, put the tenant in every query key, so switching tenants never shows the previous tenant's data.
+- Run API actions through `CippApiDialog` (confirm, then show the results inline), not toast pop-ups.
+- Import icons only from `src/utils/icon-registry.jsx`.
+- Write labels, statuses and errors for MSP technicians in plain English, and say what to do about each error.
 
 ## Documentation
 

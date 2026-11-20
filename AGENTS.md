@@ -31,6 +31,9 @@ browser ──▶ Craft (ASP.NET, port 8080 → host 5196)
                                  └── CIPPCore helpers → Graph / Exchange / Azure Table
 ```
 
+Craft runs on **.NET 10 / PowerShell 7.6**. Self-hosted Azure Function App installs still run the same backend on
+**PowerShell 7.4 (.NET 8)**, so backend code and `backend/Shared/CIPPSharp` (built for net8.0) must work on both.
+
 Storage is **Azure Table/Blob/Queue** (Azurite locally). There is no SQL database.
 `$env:AzureWebJobsStorage` is the connection string; `Get-CIPPTable -TableName X` is the accessor.
 
@@ -309,6 +312,21 @@ Always via `src/api/ApiCall.jsx`, never raw `axios`/`fetch`:
 New pages **must** be added to `src/layouts/config.js` (`nativeMenuItems`) to appear in the sidebar.
 Each entry carries a `permissions: ['Identity.User.*']` array that hides it from unauthorized users.
 
+### Frontend design rules
+- **Every query on a tenant-scoped page carries the tenant in its key**: `` queryKey={`ListThings-${tenant}`} `` with
+  `const tenant = useSettings().currentTenant`. `CippTablePage` adds the tenant only when you pass no `queryKey`; a
+  bare explicit key shows the previous tenant's rows after a tenant switch. Never share one key between a plain
+  `ApiGetCall` and a paginated or autocomplete query (different shapes crash the page); suffix them (`-picker`, `-edit`)
+  under one prefix so `'Prefix*'` invalidation still covers both.
+- **User-triggered API actions go through `CippApiDialog`** (confirm + `CippApiResults` inline, via `useDialog()`), not
+  `ApiPostCall` + a toast.
+- **Icons come only from `utils/icon-registry.jsx`** (`<CippIcons.Delete />`). Add a missing icon there; never import
+  from `@mui/icons-material` or `@heroicons/react` directly.
+- **Write for MSP technicians, not developers**: plain-English labels, statuses and headings; say what an error means
+  and what to do about it; keep internal terms (blob, cursor, task, threshold) out of visible text. A single record's
+  fields go in `CippPropertyListCard`, not a Field/Value table. The Craft platform is "the new CIPP infrastructure" in
+  user-facing text, never "CIPP-NG".
+
 ---
 
 ## 5. Development
@@ -372,6 +390,23 @@ cd frontend && npx vitest run --project unit tests/components/<Area>/<Name>.test
 load: re-run that file alone before calling it a regression. Conventions:
 `docs/dev-documentation/cipp-dev-guide/frontend-testing.md`.
 
+### Verifying a change
+- **Run the path you changed, the way the frontend calls it**, including the no-parameters default case. A green unit
+  suite plus a probe of the new branch is not verification if the default path was never hit.
+- **A bug with a recognisable class gets a test that scans the whole tree**, not one fixture:
+  `backend/Tests/Api/EntrypointBooleanFlags.Tests.ps1` fails on any `$Request.Query.flag -eq 'true'` and caught a
+  second instance inspection missed. Request flags compare with `-eq $true`.
+- **CI runs Pester 6.** If a command has only filtered mocks and a call matches none, Pester 6 throws instead of
+  calling through. Run a CI-only failure under Pester 6 before suspecting test order.
+- **Don't write pass-through mocks** (`Mock ConvertFrom-Json { Microsoft.PowerShell.Utility\ConvertFrom-Json ... }`):
+  pipeline-bound parameters don't rebind inside the mock body. Return a static value and count calls
+  (`backend/Tests/Endpoint/Invoke-ExecAddCippCveException.Tests.ps1`).
+- **Code that reads automatic variables (`$Error`) must be tested inside a module.** A dot-sourced function shares the
+  test's scope and sees the real `$Error`; inside CIPPCore it is the module's own empty list (read `$global:Error`).
+  Load the code with `New-Module`, as `backend/Tests/CIPP/New-CippCoreRequest.OutOfMemory.Tests.ps1` does.
+- **Projected table reads need a real store test.** Pester mocks return whole rows, so a `-Property` list that omits
+  `RowKey` passes in tests and collapses every partition to one row against Azure or Azurite.
+
 ---
 
 ## 6. Conventions
@@ -410,6 +445,44 @@ refactor(standards)!: rename remediation parameter
   external call, `Write-LogMessage` for anything the user should see.
 - **Dependencies**: use native APIs over PowerShell modules. Every module slows every worker; the backend loads only
   `Az.Keyvault` and `Az.Accounts`.
+- **User docs** (`docs/user-documentation`) describe what a technician configures and sees. Don't add sections on how
+  CIPP works internally (run cadence, partition windows); one plain sentence at most.
+
+### Design rules
+These are the decisions behind most review feedback. Each has a real example in the tree.
+
+- **Read the cache first.** Reports, cached list endpoints, tests and baselines read the CIPPDB reporting cache, never
+  live Graph or Exchange per item. When a report needs data the cache lacks, extend the collector that already runs,
+  and return 404 "run X first" when nothing is stored. Cache types are registered in `backend/Config/CIPPDBCacheTypes.json`;
+  one bulk collector may deliberately write several types (a derived type names its producer in `collectedBy`), so
+  don't split it into more round-trips.
+- **A report-backed list endpoint reads its cache inline** with `Get-CIPPDbItem` (`-ByTenant` for AllTenants) and
+  `[CIPP.CippJson]::ConvertFromJson($Row.Data, $null)`. Add a shared `Get-CIPP<X>Report` only when a second caller
+  needs it. Example and snippet: "Cached list reads" in `.github/agents/CIPP-Endpoint-Agent.md`.
+- **Batch, don't hand-roll concurrency.** Many Graph calls go through `New-GraphBulkRequest` (`-MaxConcurrency` for
+  several `$batch` requests at once), Exchange through `New-ExoBulkRequest`. Don't call `[CIPP.CIPPRestClient]`
+  directly or hold .NET Tasks. Exchange Online averages no more than **45 requests per second per tenant**; Graph and
+  SharePoint can go faster within 429 / Retry-After handling.
+- **No hand-written time limits in call loops.** `CIPPRateLimiter` paces Graph and SharePoint per tenant and holds on
+  429s; a deadline silently drops work. If a loop is slow, measure the real call rate and `$select` fewer properties.
+- **PowerShell first.** Contributors must be able to read and fix the code. Generic CIPPSharp helpers (`CippJson`,
+  `CippIndex`, `CIPPRestClient` inside the existing wrappers) are fine; purpose-built C# is not. Remove the PowerShell
+  traps in §7 and measure before proposing C#, and ask first.
+- **One code path per fix.** No auto-detect-and-degrade fallback branches. Measure what a problem costs and what the
+  fix buys, and drop fixes that don't pay.
+- **Every in-memory holder is bounded**: static collections, shared caches, `$script:` / `$global:` memos. Each is
+  time-bound, count-bound, or cleared on every exit path, including failed and cancelled runs.
+- **It must run on Azure Functions too.** Craft is .NET 10 / pwsh 7.6, but Function App + Static Web App installs still
+  run this backend on pwsh 7.4 (.NET 8) with several worker processes:
+  no Craft globals (`$global:Craft*`), no reliance on the Craft response cache. A memo that
+  must be shared by every worker in a process lives in a process environment variable (`Get-CIPPFeatureFlag`).
+  CIPPSharp targets net8.0 so it loads on both runtimes: don't use .NET 9/10-only APIs there or in PowerShell.
+- **Know a memo's lifetime.** `$script:` state lasts one task in background workers and persists across requests in
+  HTTP workers. Register per-request memos in `Initialize-CippRequestContext` (`$script:CIPPVariableMemo = $null`),
+  which resets them at the start of every request. State that must outlive an invocation needs static .NET storage
+  (`[CIPP.TestDataCache]`) or an environment variable.
+- **Blocking .NET or HTTP calls take `$PSCmdlet.PipelineStopToken`** so a stopped pipeline unblocks instead of
+  hanging the worker. Keep the C# parameter nullable: the token is `$null` on pwsh 7.4.
 
 ### Helper functions
 Every function is one more place a contributor has to look, so a new one has to earn its place.
@@ -451,6 +524,39 @@ in-app tests, baseline hooks) runs for every tenant, and tenants with 50k users 
 to pwsh 7.6 / .NET 10 changed allocation by about 1%; the patterns below cut the same mailbox-permissions path by 24%.
 **If it is not fast, it is not good.**
 
+**Requirements** (reviewers check every per-row or per-tenant change against these):
+
+1. No `| Where-Object`, `| Select-Object -First`, `| ForEach-Object` or `& $ScriptBlock` per row.
+2. No scan of one list inside a loop over another: build a hashtable or `[CIPP.CippIndex]` once.
+3. No `+=`, and no `Select/Sort/Group-Object` over hashtables.
+4. No per-row `Add-Member` or `.PSObject.Properties` enumeration; `[PSCustomObject]` only for output rows.
+5. JSON through `[CIPP.CippJson]`.
+6. Large reads stream (`New-GraphGetRequest -Stream`, `New-ExoRequest -StreamPages`, a steppable `Add-CIPPDbItem`) instead of holding a tenant in memory.
+7. Table reads use the partition index and project only the columns read (always with `PartitionKey` and `RowKey`).
+8. Graph and Exchange calls are batched, with `$select` trimmed to the fields read.
+9. Before/after numbers from a real tenant shape, with identical output.
+
+```powershell
+# Before: a scan per user (minutes on a 50k-user tenant), += growth, a pipeline per row
+$Result = @()
+foreach ($User in $Users) {
+    $Groups = $AllGroups | Where-Object { $_.members.id -contains $User.id }
+    $Result += [PSCustomObject]@{ UPN = $User.userPrincipalName; Groups = $Groups.displayName -join ', ' }
+}
+
+# After: one pass to index, one pass to emit
+$GroupsByUser = @{}
+foreach ($Group in $AllGroups) {
+    foreach ($Member in $Group.members) {
+        if (-not $GroupsByUser[$Member.id]) { $GroupsByUser[$Member.id] = [System.Collections.Generic.List[string]]::new() }
+        $GroupsByUser[$Member.id].Add($Group.displayName)
+    }
+}
+$Result = foreach ($User in $Users) {
+    [PSCustomObject]@{ UPN = $User.userPrincipalName; Groups = @($GroupsByUser[$User.id]) -join ', ' }
+}
+```
+
 **Loops and lookups**
 - Filter with `foreach` + `if` or `.Where({ })`, never `| Where-Object`. Per 100k rows: `foreach` 51 ms / 2.6 MB,
   `.Where()` 201 ms / 101 MB, `Where-Object` 1,024 ms / 401 MB. The pipeline is the cost, whatever the row type.
@@ -465,10 +571,14 @@ to pwsh 7.6 / .NET 10 changed allocation by about 1%; the patterns below cut the
 - Clamp range slices: `$X[$i..([Math]::Min($i + 19, $X.Count - 1))]`. Each index past the end throws and is caught
   internally, so `$X[$i..($i + 19)]` over 3 items costs 17 exceptions.
 - Never invoke a script block per row or per field (`& $Helper $Value`, ~60 µs / 9 KB each): each call builds a
-  command processor and binds parameters. Inline the loop, or move the logic into CIPPSharp when it is per field.
-  A PowerShell function call costs ~20 µs too, so keep per-record work out of helpers that wrap one .NET call.
+  command processor and binds parameters. Inline the loop. A PowerShell function call costs ~20 µs too, so keep
+  per-record work out of helpers that wrap one .NET call.
+- When you must consume a large stream, use `| & { process { ... } }` instead of `| ForEach-Object { ... }`: same
+  streaming, no per-item cmdlet binding (`Get-CIPPAlertVulnerabilities.ps1`).
 - `foreach ($X in @(Big-Call))` keeps the whole result alive until the function returns. Fine for small sets; pipe
   large ones (mailboxes, sign-ins, audit records) instead.
+- Resolve a function by name with `$ExecutionContext.InvokeCommand.GetCommand($Name, 'Function')`, not `Get-Command`,
+  on anything that runs per request or per task (the dispatcher, scheduler, standards and cache runners all do).
 
 **Collections**
 - Never `+=`, to grow an array or anywhere else (`$Hash['k'] = $Hash['k'] + $Item` counts). Build in one `@(...)`
@@ -499,6 +609,28 @@ to pwsh 7.6 / .NET 10 changed allocation by about 1%; the patterns below cut the
 - No `ConvertTo-Json` inside log, `Write-Information` or markdown strings that are built whether or not they are read.
 - Give string transforms an early exit: `Get-CIPPTextReplacement` used to do table reads and ~10 regex passes on
   every body, although almost none held a `%` token.
+- Never pass a large string (a cached row's `Data`, an export body) as an argument to a .NET method from PowerShell:
+  each call allocates about three copies of it on the large object heap. Call methods **on** the string with small
+  arguments (`$Json.Substring($i, $n)`, `.StartsWith('{')`), use cmdlets (`ConvertFrom-Json`, `Select-String`), and test
+  with `-not $Json` rather than `[string]::IsNullOrEmpty($Json)`.
+- Build debug output only when it is read: wrap the work in `if ($DebugPreference -ne 'SilentlyContinue') { ... }`, and
+  don't log at Info level per item.
+
+**Streaming large data**
+- Write a cache straight from the source: `New-GraphGetRequest -Stream | Add-CIPPDbItem ...`, or one steppable
+  `Add-CIPPDbItem` pipeline fed page by page (`New-ExoRequest -StreamPages`). Holding a tenant's raw pages and then
+  a projected copy doubled peak memory on 21,900-mailbox tenants (`Set-CIPPDBCacheMailboxes.ps1`,
+  `Set-CIPPDBCacheGroups.ps1`).
+- Fetch only the columns you keep, build the lookups you need from a slim projection first, and build output rows
+  directly rather than through `Select-Object` with calculated properties (~250 KB per row there).
+
+**Tables** (Azure Table Storage; Azurite locally)
+- Query with the partition index: `PartitionKey eq 'X' and RowKey eq 'Y'` is a point read. OR-ed `RowKey` conditions
+  scan the whole partition (`Get-CIPPLicenseSkuName.ps1` moved to point reads), and a `RowKey`-only filter scans the
+  whole table (`Get-CIPPDbItem` reads AllTenants one tenant partition at a time).
+- Project with `-Property` and always include `PartitionKey` and `RowKey`: split rows are reassembled by those keys,
+  so leaving `RowKey` out silently collapses a partition to one row.
+- Write and delete in one call per batch, not one call per entity (`Set-CIPPBaselineTrendPoint.ps1`).
 
 **Per-call helpers** (every request, standard or test hits them: tenant lookups, capabilities, tokens)
 - Count table queries per call, not just PowerShell cost. Defer reads to the branch that uses them and filter
@@ -507,10 +639,28 @@ to pwsh 7.6 / .NET 10 changed allocation by about 1%; the patterns below cut the
   (see `Get-CIPPTenantCapabilities`).
 - Read an environment variable that may be unset with `[System.Environment]::GetEnvironmentVariable('Name')`: `$env:Name`
   throws and catches an exception internally every time the variable is missing.
+- Parse static config once per process, not per call (feature flags, `ConversionTable.csv`), and see "Know a memo's
+  lifetime" in §6 for where to keep it.
+
+**Correctness traps in performance rewrites** (each one shipped a silent wrong result once)
+- **Key hashtables on ids, GUIDs and UPNs only.** Microsoft display names can carry invisible characters: some EXO alert
+  policy names end in U+200B, which `-eq` ignores and a hashtable key does not, so a name-keyed rewrite of ORCA242
+  dropped 5 of 12 alerts. Keep `-eq` for display names, or normalise both sides and prove it.
+- **`@()` and `$null` are different, and PowerShell erases the difference.** A function returning `@()` unwraps to
+  `$null`, and so does an `if` expression emitting one. Where an empty list means "nothing allowed" (tenant scoping),
+  wrap the call in `@(...)` and test with `$null -ne`, never truthiness: otherwise deny-all becomes allow-all.
+- **`.Where()` is not the pipeline** for `$null -eq`, `+`, serialisation, string indexing or `.Prop` on one match: the
+  rules are in `.github/agents/CIPP-Test-Agent.md`.
+- **A rewrite must produce identical output.** Diff old against new on the same data (canonicalised JSON, rows,
+  verdicts) before quoting any speed-up.
 
 **Proving a change**
-- Measure real shapes (a 50k-user tenant, not 10 rows), time **and** allocation, before and after.
-- Measure in the Linux containers (`mcr.microsoft.com/dotnet/sdk` images), not Windows pwsh: Windows adds ~10–20 µs
+- Measure real shapes, time **and** allocation, before and after. Size fixtures from real counts
+  (`Get-CIPPDbItem -TenantFilter allTenants -CountsOnly`), and match both sides of a join: a loop's cost is the product
+  of its two collections. A synthetic fixture with 3,000 privileged role assignments once reported 26 s → 1.3 s for a
+  test that real tenants run in 199 ms. Say which numbers are synthetic.
+- Measure in the Linux containers (`mcr.microsoft.com/dotnet/sdk:10.0` = pwsh 7.6 as Craft runs it; `sdk:8.0` = pwsh 7.4
+  for Function App installs), not Windows pwsh: Windows adds ~10–20 µs
   and ~1 KB of AMSI logging to every .NET method call, which hides or invents wins.
 - PowerShell hashtable key order differs per process: canonicalise JSON (sorted keys) before diffing two runs.
 

@@ -85,6 +85,10 @@ exceptions every time it stops the pipeline. Do not write `| Where-Object` or `|
 | `$X \| Select-Object -First 50` used by a `foreach` | `$X.Where({ $true }, 'First', 50)` |
 | a scan inside a per-user loop | a hashtable / `HashSet` / `[CIPP.CippIndex]` built once before the loop |
 
+Key a lookup on ids, GUIDs or UPNs only. Microsoft display names can end in invisible characters (some EXO alert policy
+names carry U+200B) that `-eq` ignores and a hashtable key does not: a name-keyed rewrite of ORCA242 dropped 5 of 12
+enabled alerts, which is why `Invoke-CippTestORCA242.ps1` still matches names with `.Where({ $_.Name -eq $AlertName }, 'First')`.
+
 Call `.Where` straight on a variable or member chain (`$Cfg.authenticationMethodConfigurations.Where(...)`); wrap
 anything else in parentheses (`(Get-Thing).Where(...)`).
 
@@ -144,7 +148,10 @@ Tools > Custom Tests run operator-written PowerShell, not functions in this modu
 2. Take the baseline against the same cached data as the change. A cache collection between the two runs changes data
    and shows up as verdict differences that are not yours.
 3. Use more than one tenant when a rule depends on exactly one matching record.
-4. Run an end-to-end tests run in Craft as well when the change touches anything that writes rows (cache helpers,
+4. Quote timings only from real shapes: size fixtures from `Get-CIPPDbItem -TenantFilter allTenants -CountsOnly`. A
+   test's cost is the product of the collections it joins, so a fixture with an unrealistic ratio (3,000 privileged
+   role assignments) reports a 20× win that real tenants never see.
+5. Run an end-to-end tests run in Craft as well when the change touches anything that writes rows (cache helpers,
    `Add-CIPPDbItem`, CippJson): the in-process verdict diff never writes, so it cannot see a row that fails to read back.
 
 ---

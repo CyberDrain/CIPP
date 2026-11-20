@@ -173,6 +173,26 @@ if ($TenantFilter -eq 'AllTenants' -or $UseReportDB) {
   every read uses the report and the endpoint does not read `UseReportDB` at all.
 - The report helper throws `ItemNotFoundException` when a tenant has no cached rows, so the caller gets 404
   "Sync the report data first".
+- A new endpoint over a single cache type reads it inline instead of adding a `Get-CIPP<X>Report` helper nobody else
+  calls. Stamp extra fields with `$Row.PSObject.Properties.Add(...)`, never chained `Add-Member`:
+
+```powershell
+# -ByTenant returns an ordered domain -> rows dictionary for the caller's tenants, read one partition at a time
+$ByTenant = Get-CIPPDbItem -TenantFilter $TenantFilter -Type 'SharePointUsageReport' -ByTenant
+$Body = @(foreach ($Tenant in $ByTenant.Keys) {
+        foreach ($Row in $ByTenant[$Tenant]) {
+            $Parsed = try { [CIPP.CippJson]::ConvertFromJson($Row.Data, $null) } catch { continue }
+            $Parsed.PSObject.Properties.Add([psnoteproperty]::new('Tenant', $Tenant))
+            $Parsed
+        }
+    })
+```
+
+  A single-tenant read without `-ByTenant` also returns the `<Type>-Count` marker row: skip it. Real examples:
+  `Invoke-ListSharepointQuota.ps1`, `Invoke-ListServiceHealthIssues.ps1` (which also collapses the same issue across
+  tenants through a dictionary).
+- Request flags compare with `-eq $true` (`$Request.Query.manualPagination -eq $true`), never `-eq 'true'`;
+  `backend/Tests/Api/EntrypointBooleanFlags.Tests.ps1` fails the build on the string form.
 
 **Graph request cache**, for a Graph endpoint without a CIPPDB type:
 `Get-GraphRequestList -TenantFilter 'AllTenants' -Endpoint '<path>' [-Parameters @{ '$filter' = ... }] [-AsApp $true] -CacheStatus $CacheStatus`.
@@ -246,3 +266,6 @@ selector's `ListTenantGroups?TenantSelector=true` lists no groups and the dispat
 - Pin a helper's new contract with `Should -Throw -ExceptionType ([System.ArgumentException])`, or by asserting its
   per-item `state` results.
 - Always run `Invoke-Pester -Path backend/Tests/Static` (it includes the catch-block guard).
+- Then call the endpoint over HTTP the way the frontend does (`http://127.0.0.1:5196/api/<Name>`), including the
+  no-parameters default case and AllTenants. A passing unit test of the new branch is not proof the default path works.
+- A page that reads the endpoint keys its query on the selected tenant (AGENTS.md §4, "Frontend design rules").

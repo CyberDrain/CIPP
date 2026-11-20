@@ -67,6 +67,8 @@ Downloads the results of every scenario that has been checked as a CSV file. Sce
 
 ## Scenario Detail
 
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/gn6rkf2efxh2" linkValue="gn6rkf2efxh2" %}
+
 Click a scenario to open it. The top of the detail shows the account the sign-in step was evaluated as, when the scenario was last checked, and a verdict:
 
 | Verdict                                      | Meaning                                                          |

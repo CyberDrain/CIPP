@@ -12,7 +12,7 @@
 //   write      writes each report's PDF to out/ to look at
 //   alloc      what the renders allocate, by type, split small/large object heap (sampled GC allocation ticks)
 //   loop       renders for --seconds (default 30) so a profiler can attach, e.g.
-//              dotnet-trace collect --format speedscope -- dotnet bin/Release/net8.0/PdfBench.dll loop --seconds 30
+//              dotnet-trace collect --format speedscope -- dotnet bin/Release/net10.0/PdfBench.dll loop --seconds 30
 //   concurrent --parallel N renders at once for --seconds, like several API workers in one process:
 //              throughput, latency, peak heap and working set (--gcinfo prints the GC configuration in effect)
 //   cverify    --parallel N threads render in shuffled orders and check every output against the baseline hashes;
@@ -23,9 +23,9 @@
 // hold up when the machine is busy; wall-clock times do not. -p:KitDir=<a copy of Reporting\> benches a report-kit
 // change without touching the tree.
 //
-// Production runs the kit on .NET 8 with workstation GC (the Craft image: DOTNET_gcServer=0, GCConserveMemory=7,
-// a heap hard limit), so this targets net8.0. Keep it there: .NET 9+ compresses with zlib-ng, which changes the
-// bytes of every Flate stream and so every hash in baseline.sha256.json.
+// Production runs the kit on .NET 10 with workstation GC (the Craft image: DOTNET_gcServer=0, GCConserveMemory=7,
+// a heap hard limit), so this targets net10.0. The runtime's zlib build sets the bytes of every Flate stream, so
+// changing the target framework changes every hash in baseline.sha256.json: re-run verify --update.
 
 using System.Collections.Concurrent;
 using System.Diagnostics;

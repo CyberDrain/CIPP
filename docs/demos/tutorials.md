@@ -55,3 +55,7 @@
 ### Previewing Baseline Changes with the What-If Report
 
 {% @storylane/embed subdomain="app" url="https://app.storylane.io/share/fwmcj82sbxcl" linkValue="fwmcj82sbxcl" %}
+
+### Checking a Security Simulations scenario and closing its gaps
+
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/gn6rkf2efxh2" linkValue="gn6rkf2efxh2" %}

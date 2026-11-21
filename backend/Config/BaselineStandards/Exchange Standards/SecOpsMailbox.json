@@ -48,7 +48,6 @@
   },
   "prepare": "Get-CIPPBaselineSecOpsMailboxState",
   "remediate": {
-    "executor": "SecOpsMailbox",
-    "sentTo": "%SentTo%"
+    "executor": "SecOpsMailbox"
   }
 }

@@ -11,7 +11,6 @@ BeforeAll {
     function Write-LogMessage { param($API, $tenant, $message, $Sev, $LogData) }
     function Get-CIPPDbItem { param($TenantFilter, $Type, [switch]$CountsOnly) }
     function New-ExoRequest { param($tenantid, $cmdlet, $cmdParams, $useSystemMailbox) }
-    function Get-CIPPTextReplacement { param($TenantFilter, $Text) $Text -replace '%defaultdomain%', 'contoso.com' }
     function Get-CIPPTable { param($tablename) @{ Name = $tablename } }
     function Get-CIPPAzDataTableEntity { param($Name, $Filter, $Property) }
     . (Join-Path $script:RepoRoot 'Modules/CIPPCore/Public/Get-CIPPIntuneCompareExclusions.ps1')
@@ -31,7 +30,7 @@ BeforeAll {
         @(Compare-CIPPIntuneObject -ReferenceObject $Expected -DifferenceObject $Projected | Where-Object { $_ })
     }
     function New-SecOpsItem {
-        param($SentTo = @('report@%defaultdomain%'), $RemoveExtra = $false)
+        param($SentTo = @('report@contoso.com'), $RemoveExtra = $false)
         [PSCustomObject]@{ Variables = [PSCustomObject]@{ SentTo = $SentTo; RemoveExtraMailboxes = $RemoveExtra } }
     }
     function Set-SecOpsCache {
@@ -57,9 +56,9 @@ Describe 'Get-CIPPBaselineSecOpsMailboxState' {
         (Get-Verdict -Expected $Prepared.Expected -Current $Prepared.Current).Count | Should -Be 0
     }
 
-    It 'resolves %defaultdomain% and compares addresses case-insensitively' {
+    It 'compares addresses case-insensitively' {
         Set-SecOpsCache -Policies @(@{ Name = 'SecOpsOverridePolicy'; ExternalIdentity = 'ext-policy-1'; Enabled = $true; SentTo = @('Report@Contoso.com') }) -Rules @($script:GoodRule)
-        $Prepared = Get-CIPPBaselineSecOpsMailboxState -Item (New-SecOpsItem -SentTo @('REPORT@%defaultdomain%')) -TenantFilter $script:Tenant
+        $Prepared = Get-CIPPBaselineSecOpsMailboxState -Item (New-SecOpsItem -SentTo @('REPORT@Contoso.com')) -TenantFilter $script:Tenant
         @($Prepared.Current.missingMailboxes).Count | Should -Be 0
         $Prepared.Current.wantedMailboxes | Should -BeExactly @('report@contoso.com')
     }
@@ -143,7 +142,7 @@ Describe 'Invoke-CIPPBaselineSecOpsMailbox' {
 
     It 'creates the policy with the configured mailboxes, then the rule, when neither exists' {
         $Current = [PSCustomObject]@{ policyExists = $false; policyEnabled = $false; missingMailboxes = @('report@contoso.com'); validRule = $false; invalidRules = @(); wantedMailboxes = @('report@contoso.com') }
-        Invoke-CIPPBaselineSecOpsMailbox -Remediate ([PSCustomObject]@{ sentTo = @('report@contoso.com') }) -TenantFilter $script:Tenant -Current $Current
+        Invoke-CIPPBaselineSecOpsMailbox -Remediate ([PSCustomObject]@{}) -TenantFilter $script:Tenant -Current $Current
         $script:Calls | Should -Be @('New-SecOpsOverridePolicy', 'New-ExoSecOpsOverrideRule')
         Should -Invoke New-ExoRequest -Times 1 -Exactly -ParameterFilter { $cmdlet -eq 'New-SecOpsOverridePolicy' -and @($cmdParams.SentTo) -contains 'report@contoso.com' }
         Should -Invoke New-ExoRequest -Times 1 -Exactly -ParameterFilter { $cmdlet -eq 'New-ExoSecOpsOverrideRule' -and $cmdParams.Policy -eq 'SecOpsOverridePolicy' }

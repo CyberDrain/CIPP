@@ -19,9 +19,6 @@ function Invoke-CIPPBaselineSecOpsMailbox {
     )
 
     $Wanted = @(@($Current.wantedMailboxes).Where({ $_ }))
-    if ($Wanted.Count -eq 0) {
-        $Wanted = @(@($Remediate.sentTo).ForEach({ "$($_.value ?? $_)".Trim().ToLowerInvariant() }).Where({ $_ }))
-    }
 
     if ($Current.policyExists -ne $true) {
         $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'New-SecOpsOverridePolicy' -cmdParams @{ Name = 'SecOpsOverridePolicy'; SentTo = @($Wanted) }

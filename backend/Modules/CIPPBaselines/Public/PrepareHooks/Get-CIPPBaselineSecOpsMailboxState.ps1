@@ -34,7 +34,6 @@ function Get-CIPPBaselineSecOpsMailboxState {
     foreach ($Entry in @($Item.Variables.SentTo)) {
         $Address = "$($Entry.value ?? $Entry)".Trim()
         if ([string]::IsNullOrWhiteSpace($Address)) { continue }
-        if ($Address -match '%') { $Address = Get-CIPPTextReplacement -TenantFilter $TenantFilter -Text $Address }
         $Address = $Address.ToLowerInvariant()
         if ($Address -notmatch '@') { return @{ Current = $null; ConfigError = $true } }
         if (-not $Wanted.Contains($Address)) { $Wanted.Add($Address) }
@@ -43,7 +42,7 @@ function Get-CIPPBaselineSecOpsMailboxState {
     $RemoveExtra = [bool]($Item.Variables.RemoveExtraMailboxes -eq $true)
 
     # Microsoft names the policy SecOpsOverridePolicy whatever name it is created with.
-    $Policy = $Policies.Where({ "$($_.Name)" -eq 'SecOpsOverridePolicy' }, 'First') | Select-Object -First 1
+    $Policy = $Policies.Where({ "$($_.Name)" -eq 'SecOpsOverridePolicy' }, 'First')[0]
     if (-not $Policy -and $Policies.Count -gt 0) { $Policy = $Policies[0] }
     $PolicyKeys = @("$($Policy.ExternalIdentity)", "$($Policy.Identity)", "$($Policy.Name)").Where({ $_ })
 

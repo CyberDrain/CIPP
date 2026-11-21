@@ -38,8 +38,14 @@ function Invoke-CIPPBaselineSecOpsMailbox {
         }
     }
 
+    # The cache can be older than the tenant: a rule pending deletion may be gone by now. A failed
+    # removal must not stop the missing valid rule from being created.
     foreach ($Identity in @(@($Current.invalidRules).Where({ $_ }))) {
-        $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Remove-ExoSecOpsOverrideRule' -cmdParams @{ Identity = "$Identity"; Confirm = $false }
+        try {
+            $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Remove-ExoSecOpsOverrideRule' -cmdParams @{ Identity = "$Identity"; Confirm = $false }
+        } catch {
+            Write-LogMessage -API 'Baselines' -tenant $TenantFilter -message "Could not remove SecOps override rule $Identity, continuing: $($_.Exception.Message)" -Sev 'Warning'
+        }
     }
     if ($Current.validRule -ne $true) {
         $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'New-ExoSecOpsOverrideRule' -cmdParams @{ Name = 'SecOpsOverrideRule'; Policy = 'SecOpsOverridePolicy' }

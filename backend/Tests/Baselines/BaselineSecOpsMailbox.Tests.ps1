@@ -176,4 +176,11 @@ Describe 'Invoke-CIPPBaselineSecOpsMailbox' {
         Invoke-CIPPBaselineSecOpsMailbox -Remediate ([PSCustomObject]@{}) -TenantFilter $script:Tenant -Current $Current
         $script:Calls | Should -Be @('Remove-ExoSecOpsOverrideRule')
     }
+
+    It 'still creates the valid rule when removing a stale invalid rule fails (already deleted since the cache read)' {
+        Mock New-ExoRequest { $script:Calls.Add($cmdlet); if ($cmdlet -eq 'Remove-ExoSecOpsOverrideRule') { throw "Couldn't find object $($cmdParams.Identity)" } }
+        $Current = [PSCustomObject]@{ policyExists = $true; policyEnabled = $true; missingMailboxes = @(); validRule = $false; invalidRules = @('_Exe:SecOpsOverrid:gone'); wantedMailboxes = @('report@contoso.com') }
+        { Invoke-CIPPBaselineSecOpsMailbox -Remediate ([PSCustomObject]@{}) -TenantFilter $script:Tenant -Current $Current } | Should -Not -Throw
+        $script:Calls | Should -Be @('Remove-ExoSecOpsOverrideRule', 'New-ExoSecOpsOverrideRule')
+    }
 }

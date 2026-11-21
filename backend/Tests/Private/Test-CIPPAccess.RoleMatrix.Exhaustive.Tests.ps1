@@ -77,7 +77,7 @@ BeforeAll {
 
     $script:CIPPBaseRoles = [pscustomobject]@{
         readonly   = [pscustomobject]@{ include = @('*.Read'); exclude = @('CIPP.SuperAdmin.*', 'CIPP.Admin.*', 'CIPP.AppSettings.*') }
-        editor     = [pscustomobject]@{ include = @('*.Read', '*.ReadWrite'); exclude = @('CIPP.SuperAdmin.*', 'CIPP.Admin.*', 'CIPP.AppSettings.*', 'Tenant.Standards.ReadWrite') }
+        editor     = [pscustomobject]@{ include = @('*.Read', '*.ReadWrite'); exclude = @('CIPP.SuperAdmin.*', 'CIPP.Admin.*', 'CIPP.AppSettings.*', 'Tenant.Standards.ReadWrite', 'CIPP.CloudBackupRestore.*') }
         admin      = [pscustomobject]@{ include = @('*'); exclude = @('CIPP.SuperAdmin.*') }
         superadmin = [pscustomobject]@{ include = @('*'); exclude = @() }
     }

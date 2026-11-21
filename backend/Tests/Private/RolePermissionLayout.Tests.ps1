@@ -34,6 +34,7 @@ BeforeAll {
     $script:Universe = @(
         'CIPP.Core.Read', 'CIPP.Core.ReadWrite'
         'CIPP.AppSettings.Read', 'CIPP.AppSettings.ReadWrite'
+        'CIPP.CloudBackup.Read', 'CIPP.CloudBackupRestore.ReadWrite'
         'CIPP.Admin.Read', 'CIPP.Admin.ReadWrite'
         'CIPP.SuperAdmin.Read', 'CIPP.SuperAdmin.ReadWrite'
         'Identity.User.Read', 'Identity.User.ReadWrite'
@@ -60,6 +61,7 @@ BeforeAll {
         'identity-rw'   = @{ Permissions = @('CIPP.Core.Read', 'Identity.User.Read', 'Identity.User.ReadWrite') }
         'exchange-read' = @{ Permissions = @('CIPP.Core.Read', 'Exchange.Mailbox.Read') }
         'standards-rw'  = @{ Permissions = @('Tenant.Standards.Read', 'Tenant.Standards.ReadWrite') }
+        'restore-rw'    = @{ Permissions = @('CIPP.CloudBackup.Read', 'CIPP.CloudBackupRestore.ReadWrite') }
         't1-blocks'     = @{ Permissions = @('Identity.User.Read'); AllowedTenants = @('tenant-1'); BlockedEndpoints = @('Probe_Identity_User_Read') }
         't2-allows'     = @{ Permissions = @('Identity.User.Read'); AllowedTenants = @('tenant-2') }
     }
@@ -110,16 +112,18 @@ AfterAll {
 
 Describe 'Role permission layout' {
     It 'lists <Name>' -ForEach @(
-        @{ Name = 'readonly'; Roles = @('readonly'); Expected = @('CIPP.Core.Read', 'Endpoint.Device.Read', 'Exchange.Mailbox.Read', 'Identity.User.Read', 'Tenant.Standards.Read') }
-        @{ Name = 'editor'; Roles = @('editor'); Expected = @('CIPP.Core.Read', 'CIPP.Core.ReadWrite', 'Endpoint.Device.Read', 'Exchange.Mailbox.Read', 'Exchange.Mailbox.ReadWrite', 'Identity.User.Read', 'Identity.User.ReadWrite', 'Tenant.Standards.Read') }
-        @{ Name = 'admin'; Roles = @('admin'); Expected = @('CIPP.Admin.Read', 'CIPP.Admin.ReadWrite', 'CIPP.AppSettings.Read', 'CIPP.AppSettings.ReadWrite', 'CIPP.Core.Read', 'CIPP.Core.ReadWrite', 'Endpoint.Device.Read', 'Exchange.Mailbox.Read', 'Exchange.Mailbox.ReadWrite', 'Identity.User.Read', 'Identity.User.ReadWrite', 'Tenant.Standards.Read', 'Tenant.Standards.ReadWrite') }
+        @{ Name = 'readonly'; Roles = @('readonly'); Expected = @('CIPP.CloudBackup.Read', 'CIPP.Core.Read', 'Endpoint.Device.Read', 'Exchange.Mailbox.Read', 'Identity.User.Read', 'Tenant.Standards.Read') }
+        @{ Name = 'editor'; Roles = @('editor'); Expected = @('CIPP.CloudBackup.Read', 'CIPP.Core.Read', 'CIPP.Core.ReadWrite', 'Endpoint.Device.Read', 'Exchange.Mailbox.Read', 'Exchange.Mailbox.ReadWrite', 'Identity.User.Read', 'Identity.User.ReadWrite', 'Tenant.Standards.Read') }
+        @{ Name = 'admin'; Roles = @('admin'); Expected = @('CIPP.Admin.Read', 'CIPP.Admin.ReadWrite', 'CIPP.AppSettings.Read', 'CIPP.AppSettings.ReadWrite', 'CIPP.CloudBackup.Read', 'CIPP.CloudBackupRestore.ReadWrite', 'CIPP.Core.Read', 'CIPP.Core.ReadWrite', 'Endpoint.Device.Read', 'Exchange.Mailbox.Read', 'Exchange.Mailbox.ReadWrite', 'Identity.User.Read', 'Identity.User.ReadWrite', 'Tenant.Standards.Read', 'Tenant.Standards.ReadWrite') }
         @{ Name = 'superadmin'; Roles = @('superadmin'); Expected = 'everything' }
         @{ Name = 'one custom role'; Roles = @('identity-rw'); Expected = @('CIPP.Core.Read', 'Identity.User.Read', 'Identity.User.ReadWrite') }
         @{ Name = 'two custom roles as their union'; Roles = @('identity-rw', 'exchange-read'); Expected = @('CIPP.Core.Read', 'Exchange.Mailbox.Read', 'Identity.User.Read', 'Identity.User.ReadWrite') }
         @{ Name = 'readonly narrowed by a custom role, which cannot lift it to ReadWrite'; Roles = @('readonly', 'identity-rw'); Expected = @('CIPP.Core.Read', 'Identity.User.Read') }
         @{ Name = 'editor narrowed by a custom role'; Roles = @('editor', 'identity-rw'); Expected = @('CIPP.Core.Read', 'Identity.User.Read', 'Identity.User.ReadWrite') }
         @{ Name = 'editor narrowed by a custom role, keeping the editor exclusion'; Roles = @('editor', 'standards-rw'); Expected = @('Tenant.Standards.Read') }
-        @{ Name = 'admin, which a custom role does not narrow'; Roles = @('admin', 'exchange-read'); Expected = @('CIPP.Admin.Read', 'CIPP.Admin.ReadWrite', 'CIPP.AppSettings.Read', 'CIPP.AppSettings.ReadWrite', 'CIPP.Core.Read', 'CIPP.Core.ReadWrite', 'Endpoint.Device.Read', 'Exchange.Mailbox.Read', 'Exchange.Mailbox.ReadWrite', 'Identity.User.Read', 'Identity.User.ReadWrite', 'Tenant.Standards.Read', 'Tenant.Standards.ReadWrite') }
+        @{ Name = 'editor narrowed by a custom role, keeping the cloud backup restore exclusion'; Roles = @('editor', 'restore-rw'); Expected = @('CIPP.CloudBackup.Read') }
+        @{ Name = 'a custom role granting cloud backup restore'; Roles = @('restore-rw'); Expected = @('CIPP.CloudBackup.Read', 'CIPP.CloudBackupRestore.ReadWrite') }
+        @{ Name = 'admin, which a custom role does not narrow'; Roles = @('admin', 'exchange-read'); Expected = @('CIPP.Admin.Read', 'CIPP.Admin.ReadWrite', 'CIPP.AppSettings.Read', 'CIPP.AppSettings.ReadWrite', 'CIPP.CloudBackup.Read', 'CIPP.CloudBackupRestore.ReadWrite', 'CIPP.Core.Read', 'CIPP.Core.ReadWrite', 'Endpoint.Device.Read', 'Exchange.Mailbox.Read', 'Exchange.Mailbox.ReadWrite', 'Identity.User.Read', 'Identity.User.ReadWrite', 'Tenant.Standards.Read', 'Tenant.Standards.ReadWrite') }
     ) {
         $Want = if ($Expected -eq 'everything') { $script:Universe } else { $Expected }
         @(Get-CippAllowedPermissions -UserRoles $Roles -InformationAction SilentlyContinue) | Should -Be @($Want | Sort-Object)
@@ -137,6 +141,7 @@ Describe 'Listed permissions match what a request is allowed to do' {
         @{ Label = 'readonly + custom'; Roles = @('readonly', 'identity-rw') }
         @{ Label = 'editor + custom'; Roles = @('editor', 'identity-rw') }
         @{ Label = 'editor + custom touching an editor exclusion'; Roles = @('editor', 'standards-rw') }
+        @{ Label = 'editor + custom granting cloud backup restore'; Roles = @('editor', 'restore-rw') }
         @{ Label = 'admin + custom'; Roles = @('admin', 'exchange-read') }
     ) {
         $Listed = @(Get-CippAllowedPermissions -UserRoles $Roles -InformationAction SilentlyContinue)

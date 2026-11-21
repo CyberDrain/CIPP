@@ -330,5 +330,14 @@
     "Priority": 0,
     "RunOnProcessor": true,
     "IsSystem": true
+  },
+  {
+    "Id": "b6d2f0a4-3c8e-4e71-9a5d-7f1c2e8b4d63",
+    "Command": "Start-CloudBackupOrchestrator",
+    "Description": "Queue cloud backup runs for policies that are due",
+    "Cron": "0 */15 * * * *",
+    "JitterMinutes": 2,
+    "Priority": 12,
+    "RunOnProcessor": true
   }
 ]

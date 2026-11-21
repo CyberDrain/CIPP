@@ -38,6 +38,7 @@ import { CollapsibleChipList } from '../components/CippComponents/CollapsibleChi
 import countryList from '../data/countryList.json'
 import { getStandards } from './standards-data'
 import { parseCippDate } from './parse-cipp-date'
+import { formatBytes } from './instance-diagnostics'
 
 // Helper function to convert country codes to country names
 const getCountryNameFromCode = (countryCode) => {
@@ -98,6 +99,12 @@ const absoluteDateArray = [
   'ResolvedAt', // Alert lifecycle
   'ExtractedAt', // BEC run: when the investigation snapshot was taken
   'RequestedAt', // BEC run: when the run was requested
+  'CloudBackupStartedAt',
+  'CloudBackupCompletedAt',
+  'CloudBackupModified',
+  'CloudBackupVersionAt',
+  'CloudBackupCreatedAt',
+  'CloudBackupExpiresAt',
 ]
 
 const timeAgoArray = [
@@ -142,6 +149,10 @@ const timeAgoArray = [
   'RecordedAt', // Container update history
   'directTenantAuthDate', // Direct tenant service account
   'ServiceAccountLastAuth', // Direct tenant service account
+  'CloudBackupLastTested',
+  'CloudBackupLastRun',
+  'CloudBackupNextRun',
+  'CloudBackupGrantedAt',
 ]
 
 const matchDateTime =
@@ -393,6 +404,13 @@ export const getCippFormatting = (
     }
     const gb = bytes / 1024 / 1024 / 1024
     return formatCellText(`${gb.toFixed(2)} GB`, isText)
+  }
+
+  if (cellName === 'CloudBackupSize') {
+    if (data === null || data === undefined || data === '') {
+      return formatCellText('—', isText)
+    }
+    return formatCellText(formatBytes(data), isText)
   }
 
   if (cellName === 'cleanupSignals') {
@@ -1440,6 +1458,50 @@ export const getCippFormatting = (
       />
     )
   }
+  if (
+    (cellName === 'CloudBackupStatus' ||
+      cellName === 'CloudBackupLastResult' ||
+      cellName === 'CloudBackupLastTest' ||
+      cellName === 'CloudBackupPermission') &&
+    typeof data === 'string'
+  ) {
+    const colors = {
+      succeeded: 'success',
+      granted: 'success',
+      pending: 'info',
+      passed: 'success',
+      partialsuccess: 'warning',
+      skipped: 'warning',
+      running: 'info',
+      failed: 'error',
+    }
+    const status = data.toLowerCase()
+    const label = status === 'partialsuccess' ? 'Partial success' : data
+    return isText ? (
+      label
+    ) : (
+      <Chip label={label} size="small" color={colors[status] ?? 'default'} />
+    )
+  }
+
+  if (cellName === 'CloudBackupStepStatus' && typeof data === 'string') {
+    const colors = {
+      completed: 'success',
+      running: 'info',
+      skipped: 'warning',
+      failed: 'error',
+    }
+    return isText ? (
+      data
+    ) : (
+      <Chip
+        label={data}
+        size="small"
+        color={colors[data.toLowerCase()] ?? 'default'}
+      />
+    )
+  }
+
   if (
     cellName === 'Status' ||
     cellName === 'Risk' ||

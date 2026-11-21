@@ -48,7 +48,7 @@ BeforeAll {
     # Base roles shaped like Config/cipp-roles.json (include/exclude wildcard arrays).
     $script:SeedBaseRoles = [pscustomobject]@{
         readonly   = [pscustomobject]@{ include = @('*.Read'); exclude = @('CIPP.SuperAdmin.*', 'CIPP.Admin.*', 'CIPP.AppSettings.*') }
-        editor     = [pscustomobject]@{ include = @('*.Read', '*.ReadWrite'); exclude = @('CIPP.SuperAdmin.*', 'CIPP.Admin.*', 'CIPP.AppSettings.*', 'Tenant.Standards.ReadWrite') }
+        editor     = [pscustomobject]@{ include = @('*.Read', '*.ReadWrite'); exclude = @('CIPP.SuperAdmin.*', 'CIPP.Admin.*', 'CIPP.AppSettings.*', 'Tenant.Standards.ReadWrite', 'CIPP.CloudBackupRestore.*') }
         admin      = [pscustomobject]@{ include = @('*'); exclude = @('CIPP.SuperAdmin.*') }
         superadmin = [pscustomobject]@{ include = @('*'); exclude = @() }
     }

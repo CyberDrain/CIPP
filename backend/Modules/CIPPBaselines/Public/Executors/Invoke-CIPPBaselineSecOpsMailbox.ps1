@@ -18,6 +18,8 @@ function Invoke-CIPPBaselineSecOpsMailbox {
         $Current
     )
 
+    if (-not $Current) { throw 'SecOpsMailbox: the prepare hook produced no state to write from.' }
+
     $Wanted = @(@($Current.wantedMailboxes).Where({ $_ }))
 
     if ($Current.policyExists -ne $true) {

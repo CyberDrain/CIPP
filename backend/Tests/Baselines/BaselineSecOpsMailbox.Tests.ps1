@@ -132,12 +132,25 @@ Describe 'Get-CIPPBaselineSecOpsMailboxState' {
         $Prepared = Get-CIPPBaselineSecOpsMailboxState -Item (New-SecOpsItem -SentTo @()) -TenantFilter $script:Tenant
         $Prepared.ConfigError | Should -BeTrue
     }
+
+    It 'names the invalid address as the reason, so the engine never runs the executor' {
+        Set-SecOpsCache -Policies @($script:Policy) -Rules @($script:GoodRule)
+        $Prepared = Get-CIPPBaselineSecOpsMailboxState -Item (New-SecOpsItem -SentTo @('not-an-address')) -TenantFilter $script:Tenant
+        $Prepared.Current | Should -BeNullOrEmpty
+        $Prepared.ConfigError | Should -BeTrue
+        $Prepared.NoDataReason | Should -BeLike "*'not-an-address' is not a valid email address"
+    }
 }
 
 Describe 'Invoke-CIPPBaselineSecOpsMailbox' {
     BeforeEach {
         $script:Calls = [System.Collections.Generic.List[string]]::new()
         Mock New-ExoRequest { $script:Calls.Add($cmdlet) }
+    }
+
+    It 'throws and writes nothing when the prepare hook produced no state' {
+        { Invoke-CIPPBaselineSecOpsMailbox -Remediate ([PSCustomObject]@{}) -TenantFilter $script:Tenant -Current $null } | Should -Throw '*no state to write from*'
+        $script:Calls.Count | Should -Be 0
     }
 
     It 'creates the policy with the configured mailboxes, then the rule, when neither exists' {

@@ -35,7 +35,7 @@ function Get-CIPPBaselineSecOpsMailboxState {
         $Address = "$($Entry.value ?? $Entry)".Trim()
         if ([string]::IsNullOrWhiteSpace($Address)) { continue }
         $Address = $Address.ToLowerInvariant()
-        if ($Address -notmatch '@') { return @{ Current = $null; ConfigError = $true } }
+        if ($Address -notmatch '@') { return @{ Current = $null; NoDataReason = "the configured address '$Address' is not a valid email address"; ConfigError = $true } }
         if (-not $Wanted.Contains($Address)) { $Wanted.Add($Address) }
     }
     if ($Wanted.Count -eq 0) { return @{ Current = $null; ConfigError = $true } }

@@ -64,7 +64,7 @@
     "allowedToJoinUsers": {
       "type": "textField",
       "label": "Users allowed to join devices",
-      "helperText": "Comma-separated user principal names or IDs, such as itadmin@%domainname%. Custom variables work too, including list variables.",
+      "helperText": "Comma-separated user principal names or IDs, such as itadmin@%defaultdomain%. Custom variables work too, including list variables.",
       "omitWhenBlank": true,
       "default": "",
       "condition": {

@@ -314,6 +314,9 @@ function Build-CippBaselineWhatIfReportTree {
                 if (-not $display) { $display = 'configured' }
             }
             $valueText = jsStr $value
+            # valueLabels names the values of keys no variable option covers, such as a fixed or tenant-side value
+            $valueLabel = pv (pv (pv $definition 'valueLabels') $key) $valueText
+            if ($null -ne $valueLabel) { $display = $valueLabel }
             foreach ($option in (arr (pv $variable 'options'))) {
                 if ((jsStr (pv $option 'value')) -ceq $valueText) { $display = pv $option 'label'; break }
             }

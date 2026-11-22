@@ -66,6 +66,9 @@ Anatomy (see `Defender Standards/AtpPolicyForO365.json` for a real example):
     "someProperty": true,
     "otherProperty": "%MySwitch%"
   },
+  "valueLabels": {                      // optional: plain-language names for coded values in the What-If
+    "someCode": { "0": "None", "1": "View", "2": "Edit" }   // report, for values no variable option names
+  },
   "read": { "cacheType": "ExoOrganizationConfig" },   // CIPPDb cache the engine reads
   "remediate": {                        // a GENERIC executor + its rendered spec
     "executor": "ExoRequest",

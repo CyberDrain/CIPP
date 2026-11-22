@@ -319,6 +319,7 @@
     * [Discovered Apps](user-documentation/endpoint/reports/detected-apps.md)
 * [Teams & SharePoint](user-documentation/teams-share/README.md)
   * [OneDrive](user-documentation/teams-share/onedrive.md)
+  * [OneDrive Copies](user-documentation/teams-share/onedrive-copies.md)
   * [SharePoint](user-documentation/teams-share/sharepoint/README.md)
     * [Add Site](user-documentation/teams-share/sharepoint/add-site.md)
     * [Bulk Add Sites](user-documentation/teams-share/sharepoint/bulk-add-site.md)

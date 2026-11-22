@@ -14,32 +14,82 @@ import { ApiGetCall } from '../../api/ApiCall'
 import { CippIcons } from '../../utils/icon-registry'
 import 'swagger-ui-dist/swagger-ui.css'
 
-// Swagger's own filter matches tag names only, case-sensitively. This matches every word
-// against the tag, path, summary, description and role, and opens matching tags.
-const searchPlugin = (system) => ({
+export const SEARCH_GROUPS = [
+  'Matching endpoint names',
+  'Matching descriptions',
+  'Matching groups and roles',
+]
+
+// Every word must match. An endpoint lands in the first group whose fields (cumulatively:
+// name, then description, then group and role) contain all of them; within a group an exact
+// name beats a name that starts with the search, then shorter (closer) names come first.
+export const rankOperations = (entries, phrase) => {
+  const query = phrase.toLowerCase().trim()
+  const words = query.split(/\s+/).filter(Boolean)
+  const groups = SEARCH_GROUPS.map(() => [])
+  for (const entry of entries) {
+    const name = entry.name.toLowerCase()
+    const fields = [
+      name,
+      entry.description.toLowerCase(),
+      entry.other.toLowerCase(),
+    ]
+    const group = fields.findIndex((_, i) => {
+      const text = fields.slice(0, i + 1).join(' ')
+      return words.every((word) => text.includes(word))
+    })
+    if (group === -1) {
+      continue
+    }
+    const rank = name === query ? 0 : name.startsWith(query) ? 1 : 2
+    groups[group].push({ entry, name, rank })
+  }
+  return groups.map((group) =>
+    group
+      .sort(
+        (a, b) =>
+          a.rank - b.rank ||
+          a.name.length - b.name.length ||
+          a.name.localeCompare(b.name)
+      )
+      .map(({ entry }) => entry)
+  )
+}
+
+// Swagger's own filter matches tag names only, case-sensitively. This replaces its tags with
+// the ranked groups above while searching, and opens them.
+const searchPlugin = () => ({
   fn: {
     opsFilter: (taggedOps, phrase) => {
-      const words = phrase.toLowerCase().split(/\s+/).filter(Boolean)
-      return taggedOps
-        .map((tag, name) =>
-          tag.set(
-            'operations',
-            tag.get('operations').filter((op) => {
-              const o = op.get('operation')
-              const text = [
-                name,
-                op.get('path'),
-                o.get('summary'),
-                o.get('description'),
-                o.get('x-cipp-role'),
-              ]
-                .join(' ')
-                .toLowerCase()
-              return words.every((word) => text.includes(word))
-            })
+      const template = taggedOps.first()
+      if (!template) {
+        return taggedOps
+      }
+      const entries = []
+      taggedOps.forEach((tag, tagName) =>
+        tag.get('operations').forEach((op) => {
+          const o = op.get('operation')
+          entries.push({
+            op,
+            name: op.get('path').replace(/^\/api\//, ''),
+            description: `${o.get('summary') ?? ''} ${o.get('description') ?? ''}`,
+            other: `${tagName} ${o.get('x-cipp-role') ?? ''}`,
+          })
+        })
+      )
+      const emptyOps = template.get('operations').clear()
+      let result = taggedOps.clear()
+      rankOperations(entries, phrase).forEach((group, i) => {
+        if (group.length) {
+          result = result.set(
+            `${SEARCH_GROUPS[i]} (${group.length})`,
+            template
+              .delete('tagDetails')
+              .set('operations', emptyOps.push(...group.map((e) => e.op)))
           )
-        )
-        .filter((tag) => tag.get('operations').size > 0)
+        }
+      })
+      return result
     },
   },
   statePlugins: {

@@ -502,7 +502,7 @@ Anything that persists a tenant (table keys and columns, saved settings, JSON st
   initial domain to the tenant, so values saved as a domain before this rule still resolve. Use the tenant's current
   `defaultDomainName` for Graph calls, logs and display.
 - Match stored values on the tenant, never on the raw string: existing rows may still hold a domain.
-- Don't call `Get-Tenants -TenantFilter` once per stored value. An unknown value sends it down its refresh path.
+- Don't call `Get-Tenants -TenantFilter` once per stored value: each call is a table query. A filtered miss returns nothing and never rebuilds; new tenants are found with `-TriggerRefresh`.
 - Results rebuilt on every run (report caches, baseline alignment rows) can stay keyed by the current default domain.
 
 ### Cached list reads

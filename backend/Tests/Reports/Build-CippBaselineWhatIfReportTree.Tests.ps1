@@ -127,6 +127,24 @@ Describe 'Build-CippBaselineWhatIfReportTree' {
         $Change.change | Should -Be "Default Sharing Link Type: Direct - Only the people the user specifies`nDefault Link Permission: View"
     }
 
+    It 'names each setting by its own key when one variable feeds several of them' {
+        $Sample = $script:SampleJson | ConvertFrom-Json -AsHashtable
+        $Definition = @{
+            name = 'SPAnonymousLinkExpiration'; label = 'Anyone link expiry'; impact = 'Low Impact'
+            expected = @{ FileAnonymousLinkType = '%linkPermission%'; FolderAnonymousLinkType = '%linkPermission%' }
+            variables = @{ linkPermission = @{ label = 'Anyone link permission for files and folders'; options = @(@{ label = 'View only'; value = 1 }, @{ label = 'View and edit'; value = 2 }) } }
+        }
+        $Row = @{
+            standardName = 'SPAnonymousLinkExpiration'; standardLabel = 'Anyone link expiry'; status = 'Drift'; templateId = 'tpl-core'
+            expectedValue = [ordered]@{ FileAnonymousLinkType = 1; FolderAnonymousLinkType = 1 }
+            currentValue = [ordered]@{ FileAnonymousLinkType = 2; FolderAnonymousLinkType = 1 }
+        }
+        $r = Build-CippBaselineWhatIfReportTree -Data (ConvertTo-ReportData $Sample @{ simulatedTemplates = @(); catalog = @(@($Sample.catalog) + $Definition); tenant = @{ rows = @($Row) } })
+        $Change = (Get-After $r 'Settings We Will Change' 'richtable').rows[0]
+        $Change.today | Should -Be "File Anonymous Link Type: View and edit`nFolder Anonymous Link Type: View only"
+        $Change.change | Should -Be "File Anonymous Link Type: View only`nFolder Anonymous Link Type: View only"
+    }
+
     It 'says a single deployment state once, under the table' {
         $Sample = $script:SampleJson | ConvertFrom-Json -AsHashtable
         $r = Build-CippBaselineWhatIfReportTree -Data (ConvertTo-ReportData $Sample @{ simulatedTemplates = @(); tenant = @{ rows = @($Sample.tenant.rows | Where-Object { $_.standardName -eq 'ConditionalAccessTemplate#abc123' }) } })

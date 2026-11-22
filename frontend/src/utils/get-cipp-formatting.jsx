@@ -38,6 +38,7 @@ import { CollapsibleChipList } from '../components/CippComponents/CollapsibleChi
 import countryList from '../data/countryList.json'
 import { getStandards } from './standards-data'
 import { parseCippDate } from './parse-cipp-date'
+import { archiveStatusLabel } from './sharepoint-archive'
 
 // Helper function to convert country codes to country names
 const getCountryNameFromCode = (countryCode) => {
@@ -395,6 +396,20 @@ export const getCippFormatting = (
     return formatCellText(`${gb.toFixed(2)} GB`, isText)
   }
 
+  if (cellName === 'sizeInBytes') {
+    const bytes = Number(data)
+    if (data === null || data === undefined || data === '' || !Number.isFinite(bytes)) {
+      return isText ? '' : ''
+    }
+    const units = ['B', 'KB', 'MB', 'GB', 'TB']
+    const unit = bytes > 0 ? Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), 4) : 0
+    return formatCellText(`${(bytes / 1024 ** unit).toFixed(unit ? 2 : 0)} ${units[unit]}`, isText)
+  }
+
+  if (cellName === 'archiveStatus' && archiveStatusLabel(data) !== data) {
+    return formatCellText(archiveStatusLabel(data), isText)
+  }
+
   if (cellName === 'cleanupSignals') {
     const labels = Array.isArray(data)
       ? data.filter(Boolean)
@@ -512,6 +527,7 @@ export const getCippFormatting = (
   if (
     cellName === 'percentOfTenant' ||
     cellName === 'percentOfSite' ||
+    cellName === 'percentOfLibrary' ||
     cellName === 'versionPercent' ||
     cellName === 'percentUsed'
   ) {

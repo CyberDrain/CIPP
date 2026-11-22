@@ -63,6 +63,104 @@ Describe 'Report tree builders' {
         $r.Variables.covermetanote | Should -Be '0 OneDrive accounts'
         @($r.Blocks.Where({ $_.type -eq 'page' -and $_.title -eq 'Version History' })).Count | Should -Be 0
         @($r.Blocks.Where({ $_.title -like '*recycle*' })).Count | Should -Be 0
+        @($r.Blocks.Where({ $_.type -eq 'page' -and $_.title -eq 'Archive Opportunities' })).Count | Should -Be 0
+        Test-Report $r 'Storage Review'
+    }
+
+    It 'Storage: keeps the original five recommendations when there is no large file scan' {
+        $r = Build-CippStorageReportTree -Data @{ TenantName = 'Contoso' }
+        $Items = @($r.Blocks.Where({ $_.type -eq 'richbullets' }))[0].items
+        @($Items.marker) | Should -Be @('1.', '2.', '3.', '4.', '5.')
+        @($Items.label) | Should -Be @('Turn on automatic version trimming.', 'Clean up existing version history.', 'Review inactive sites.', 'Empty large recycle bins.', 'Re-run this report regularly.')
+        $Items[3].text | Should -Be 'Where deleted content is not needed, emptying the second-stage recycle bin frees the space straight away.'
+    }
+
+    It 'Storage: lists large files, prices archiving the dormant ones and warns about the wait to get them back' {
+        $G = 1GB
+        $Old = (Get-Date).AddMonths(-30).ToString('o')
+        $File = { param($Name, $Size, $Status, $Changed, $Library = 'Documents', $Folder = '/Video Archive', $Url) [pscustomobject]@{ rowType = 'File'; name = $Name; siteName = 'Projects'; siteUrl = 'https://c.sharepoint.com/sites/proj'; libraryName = $Library; folderPath = $Folder; sizeInBytes = $Size * $G; archiveStatus = $Status; lastModifiedDateTime = $Changed; webUrl = $Url; searchComplete = $true } }
+        $r = Build-CippStorageReportTree -Data @{
+            TenantName = 'Contoso'
+            sites      = @([pscustomobject]@{ displayName = 'Projects'; webUrl = 'https://c.sharepoint.com/sites/proj'; storageUsedInBytes = 900 * $G; rootWebTemplate = 'Team site'; lastActivityDate = (Get-Date).ToString('o') })
+            archive    = [pscustomobject]@{ EnableSiteArchive = $false; ArchivedFileStorageUsageMB = 2048 }
+            largeFiles = @(
+                & $File 'Keynote master.mov' 100 'active' $Old
+                & $File 'Current edit.mov' 50 'active' (Get-Date).ToString('o') -Folder '/'
+                & $File 'Already cold.mov' 20 'archived' $Old
+                & $File 'Coming back.mov' 9 'reactivating' $Old
+                # Microsoft 365 Archive cannot archive these, so they are neither candidates nor part of the saving.
+                & $File 'Board minutes.one' 8 'active' $Old
+                & $File 'Home.aspx' 7 'active' $Old -Library 'Site Pages' -Folder '/'
+                & $File 'banner.psd' 6 'active' $Old -Library 'Site Assets' -Folder '/'
+                & $File 'logo.psd' 5 'active' $Old -Library 'Ressources du site' -Folder '/' -Url 'https://c.sharepoint.com/sites/proj/SiteAssets/logo.psd'
+            )
+        }
+
+        @($r.Blocks.Where({ $_.type -eq 'page' -and $_.title -eq 'Archive Opportunities' })).Count | Should -Be 1
+        $Stats = @($r.Blocks.Where({ $_.type -eq 'scorecard' }))[-1].stats
+        @($Stats.label) | Should -Be @('Total Currently Archived', 'In The Largest Files', 'Not Changed In 12 Months')
+        @($Stats.value) | Should -Be @('2.00 GB', '205.00 GB', '100.00 GB')
+
+        $Wait = @($r.Blocks.Where({ $_.type -eq 'alertbox' -and $_.title -eq 'Archived files are not available straight away' }))
+        $Wait.Count | Should -Be 1
+        $Wait[0].content | Should -BeLike '*up to 24 hours*'
+        @($r.Blocks.Where({ $_.title -eq 'Some folders were not read' })).Count | Should -Be 0
+
+        $Tables = @($r.Blocks.Where({ $_.title -in 'Largest files', 'Large files not changed in 12 months' }))
+        @($Tables[0].rows.file)[0..3] | Should -Be @('Keynote master.mov', 'Current edit.mov', 'Already cold.mov', 'Coming back.mov')
+        $Tables[0].rows[0].where | Should -Be 'Projects / Documents/Video Archive'
+        $Tables[0].rows[1].where | Should -Be 'Projects / Documents'
+        @($Tables[0].rows.status)[0..3] | Should -Be @('Active', 'Active', 'Archived', 'Reactivating')
+        @($Tables[1].rows.file) | Should -Be @('Keynote master.mov')
+
+        $Cost = @($r.Blocks.Where({ $_.title -eq 'What archiving would cost' }))[0]
+        $Cost.content | Should -BeLike '*1 large file not changed in 12 months would free 100.00 GB*'
+        $Cost.content | Should -BeLike "*At Microsoft's US list price, Archive storage is `$0.05 per GB*at most `$5.00 a month*"
+        $Cost.content | Should -BeLike "*about `$20.00 a month at Microsoft's US list price of `$0.20 per GB*"
+        @($r.Blocks.Where({ $_.title -eq 'Microsoft 365 Archive is not turned on yet' })).Count | Should -Be 1
+
+        $Items = @($r.Blocks.Where({ $_.type -eq 'richbullets' }))[0].items
+        @($Items.marker) | Should -Be @('1.', '2.', '3.', '4.', '5.', '6.')
+        $Items[3].label | Should -Be 'Archive large files nobody changes.'
+        Test-Report $r 'Storage Review'
+    }
+
+    It 'Storage: counts <Kind> as an archive candidate: <Candidate>' -ForEach @(
+        @{ Kind = 'a file in the Site Assets library'; Library = 'Site Assets'; Folder = '/'; Url = 'https://c.sharepoint.com/sites/proj/SiteAssets/banner.psd'; Candidate = $false }
+        @{ Kind = 'a file in a folder named SiteAssets inside Documents'; Library = 'Documents'; Folder = '/SiteAssets'; Url = 'https://c.sharepoint.com/sites/proj/Shared%20Documents/SiteAssets/banner.psd'; Candidate = $true }
+        @{ Kind = 'a file in a library titled site assets in lower case'; Library = 'site assets'; Folder = '/'; Url = 'https://c.sharepoint.com/sites/proj/site%20assets/banner.psd'; Candidate = $false }
+        @{ Kind = 'a file in a library whose title only looks like Site Assets'; Library = "Site Assets$([char]0x200B)"; Folder = '/'; Url = 'https://c.sharepoint.com/sites/proj/Lookalike/banner.psd'; Candidate = $true }
+        @{ Kind = 'a file in a renamed Site Assets library'; Library = 'Ressources du site'; Folder = '/'; Url = 'https://c.sharepoint.com/sites/proj/siteassets/banner.psd'; Candidate = $false }
+        @{ Kind = 'a OneNote section with an upper-case extension'; Library = 'Documents'; Folder = '/'; Url = 'https://c.sharepoint.com/sites/proj/Shared%20Documents/Notes.ONE'; Candidate = $false }
+    ) {
+        $Name = [System.Uri]::UnescapeDataString(($Url -split '/')[-1])
+        $r = Build-CippStorageReportTree -Data @{
+            TenantName = 'Contoso'
+            largeFiles = @([pscustomobject]@{ rowType = 'File'; name = $Name; siteName = 'Projects'; siteUrl = 'https://c.sharepoint.com/sites/proj/'; libraryName = $Library; folderPath = $Folder; sizeInBytes = 40GB; archiveStatus = 'active'; lastModifiedDateTime = (Get-Date).AddMonths(-30).ToString('o'); webUrl = $Url; searchComplete = $true })
+        }
+
+        @($r.Blocks.Where({ $_.title -eq 'Large files not changed in 12 months' })).Count | Should -Be ([int]$Candidate)
+        @($r.Blocks.Where({ $_.title -eq 'What archiving would cost' })).Count | Should -Be ([int]$Candidate)
+    }
+
+    It 'Storage: with large files but no archive candidates, says so instead of an empty table or recommendation' {
+        $Old = (Get-Date).AddMonths(-30).ToString('o')
+        $r = Build-CippStorageReportTree -Data @{
+            TenantName = 'Contoso'
+            largeFiles = @(
+                [pscustomobject]@{ rowType = 'File'; name = 'Already cold.mov'; siteUrl = 'https://c.sharepoint.com/sites/proj'; libraryName = 'Documents'; folderPath = '/'; sizeInBytes = 20GB; archiveStatus = 'archived'; lastModifiedDateTime = $Old; searchComplete = $false }
+                [pscustomobject]@{ rowType = 'File'; name = 'Current edit.mov'; siteUrl = 'https://c.sharepoint.com/sites/proj'; libraryName = 'Documents'; folderPath = '/'; sizeInBytes = 10GB; archiveStatus = 'active'; lastModifiedDateTime = (Get-Date).ToString('o'); searchComplete = $false }
+            )
+        }
+
+        @($r.Blocks.Where({ $_.title -eq 'Large files not changed in 12 months' })).Count | Should -Be 0
+        @($r.Blocks.Where({ $_.title -eq 'What archiving would cost' })).Count | Should -Be 0
+        @($r.Blocks.Where({ $_.content -eq '<p>No eligible active files last changed more than 12 months ago were found among the largest files.</p>' })).Count | Should -Be 1
+        @($r.Blocks.Where({ $_.content -like '*Every large file found has been changed*' })).Count | Should -Be 0
+        $Partial = @($r.Blocks.Where({ $_.title -eq 'Some folders were not read' }))
+        $Partial.Count | Should -Be 1
+        $Partial[0].content | Should -BeLike '*largest files the scan found*'
+        @(@($r.Blocks.Where({ $_.type -eq 'richbullets' }))[0].items.label) | Should -Not -Contain 'Archive large files nobody changes.'
         Test-Report $r 'Storage Review'
     }
 

@@ -50,6 +50,7 @@ function Invoke-ListStorageCleanupScan {
                 id                    = $Lib.libraryId
                 name                  = $Lib.libraryName
                 displayName           = $Lib.libraryDisplayName
+                template              = $Lib.template
                 siteUrl               = $Key
                 webUrl                = $Lib.webUrl
                 storageUsedInBytes    = $Lib.storageUsedInBytes

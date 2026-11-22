@@ -64,6 +64,27 @@ Describe 'Invoke-ExecSetSiteProperties' {
         $R.Body.Results | Should -Match 'Skipped \(not supported on group-connected sites\): Title'
     }
 
+    It 'sets file archiving on a group-connected site' {
+        $script:Site.GroupId = '/Guid(338e9db4-1ee3-45e6-be66-4a71ca70b247)/'
+        $R = Invoke-SetSite @{ AllowFileArchive = $false }
+        $R.StatusCode | Should -Be 200
+        $script:Sent | Should -Be @('AllowFileArchive')
+        $R.Body.Results | Should -Match 'AllowFileArchive=False'
+        Should -Invoke Set-CIPPSPOSite -Times 1 -Exactly -ParameterFilter { $Properties['AllowFileArchive'] -is [bool] -and $Properties['AllowFileArchive'] -eq $false }
+    }
+
+    It 'reads AllowFileArchive <Value> as <Expected>' -ForEach @(
+        @{ Value = 'false'; Expected = $false }
+        @{ Value = 'False'; Expected = $false }
+        @{ Value = $false; Expected = $false }
+        @{ Value = 'true'; Expected = $true }
+        @{ Value = $true; Expected = $true }
+    ) {
+        $R = Invoke-SetSite @{ AllowFileArchive = $Value }
+        $R.StatusCode | Should -Be 200
+        Should -Invoke Set-CIPPSPOSite -Times 1 -Exactly -ParameterFilter { $Properties['AllowFileArchive'] -is [bool] -and $Properties['AllowFileArchive'] -eq $Expected }
+    }
+
     It 'unlocks a locked site before applying the other properties' {
         $script:Site.LockState = 'ReadOnly'
         $R = Invoke-SetSite @{ Title = 'Team'; SharingCapability = 'Disabled'; LockState = 'Unlock' }

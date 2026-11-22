@@ -40,6 +40,13 @@ function Invoke-ExecReactivateSite {
     if (-not [System.Uri]::TryCreate([string]$SiteUrl, [System.UriKind]::Absolute, [ref]$ParsedSiteUrl) -or [string]::IsNullOrWhiteSpace($ParsedSiteUrl.Host)) {
         return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ 'Results' = "SiteUrl '$SiteUrl' is not a valid URL." } })
     }
+    # OneDrive hosts on every SharePoint suffix: sharepoint.com, .us, .de, .cn and sharepoint-mil.us.
+    $IsOneDrive = $ParsedSiteUrl.Host -match '-my\.sharepoint(-[a-z]+)?\.[a-z]{2,}$'
+
+    # The Graph write helper returns nothing for a tenant CIPP cannot reach, which would read as a successful reactivation.
+    if (-not (Get-Tenants -TenantFilter $TenantFilter)) {
+        return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::NotFound; Body = @{ 'Results' = "CIPP does not manage the tenant '$TenantFilter', or it is excluded. Select a managed tenant and try again." } })
+    }
 
     try {
         $SiteHost = $ParsedSiteUrl.Host
@@ -56,7 +63,7 @@ function Invoke-ExecReactivateSite {
         }
 
         if ([string]::IsNullOrWhiteSpace($GraphSiteId)) {
-            throw "Could not determine the site id for $SiteUrl."
+            throw [System.Management.Automation.ItemNotFoundException]::new("Could not determine the site id for $SiteUrl.")
         }
 
         # site: unarchive is beta-only. App-only auth is used deliberately: the SAM app holds the
@@ -65,7 +72,11 @@ function Invoke-ExecReactivateSite {
         # returns $null) is the success signal - no exception means reactivation was accepted.
         $null = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/sites/$GraphSiteId/unarchive" -tenantid $TenantFilter -AsApp $true -type POST -body ''
 
-        $Results = "Reactivation started for $SiteUrl. It can take up to 24 hours to complete. If the account was fully archived, this may incur Microsoft 365 Archive charges and requires Unlicensed OneDrive billing to be enabled on the tenant."
+        $Results = if ($IsOneDrive) {
+            "Reactivation started for $SiteUrl. It can take up to 24 hours to complete. If the account was fully archived, this may incur Microsoft 365 Archive charges and requires Unlicensed OneDrive billing to be enabled on the tenant."
+        } else {
+            "Reactivation started for $SiteUrl. It can take up to 24 hours before the site can be opened again."
+        }
         Write-LogMessage -Headers $Headers -API $APIName -tenant $TenantFilter -message $Results -sev Info
         $StatusCode = [HttpStatusCode]::OK
     } catch {
@@ -75,10 +86,14 @@ function Invoke-ExecReactivateSite {
         # for archived sites, and a billing failure means Unlicensed OneDrive billing is off. In
         # both cases the reliable fallback is the SharePoint admin center.
         if ($ErrorMessage.NormalizedError -match '423|[Ll]ocked|blocked|billing') {
-            $Results += ' Reactivation may need Unlicensed OneDrive billing enabled on the tenant, or the site cannot be reactivated via the API right now - reactivate it from the SharePoint admin center.'
+            $Results = if ($IsOneDrive) {
+                "$Results Reactivation may need Unlicensed OneDrive billing enabled on the tenant, or the site cannot be reactivated via the API right now - reactivate it from the SharePoint admin center."
+            } else {
+                "$Results The site cannot be reactivated through CIPP right now. Reactivate it from the SharePoint admin center."
+            }
         }
         Write-LogMessage -Headers $Headers -API $APIName -tenant $TenantFilter -message $Results -sev Error -LogData $ErrorMessage
-        $StatusCode = [HttpStatusCode]::InternalServerError
+        $StatusCode = Get-CippErrorStatusCode -ErrorRecord $_
     }
 
     return ([HttpResponseContext]@{

@@ -1,0 +1,52 @@
+{
+  "name": "SPFileArchive",
+  "label": "Set SharePoint file archiving (Microsoft 365 Archive)",
+  "cat": "SharePoint Standards",
+  "tag": [],
+  "impact": "Low Impact",
+  "helpText": "Sets whether users can archive individual files with Microsoft 365 Archive, and whether new sites allow it. Archived files stay listed in their library but cannot be opened until they are reactivated, which can take up to 24 hours. Turning file archiving off only removes the Archive action for users: files that are already archived stay archived and can still be reactivated. Microsoft 365 Archive itself, and its pay-as-you-go billing, are turned on in the Microsoft 365 admin center.",
+  "executiveText": "Controls whether staff can move rarely used files into Microsoft 365 Archive, a lower-cost storage tier. This reduces SharePoint storage costs without deleting anything, at the cost of a wait of up to 24 hours when an archived file is needed again.",
+  "docsDescription": "Microsoft 365 Archive file-level archiving lets users with edit permissions archive individual files in SharePoint document libraries. This standard sets the tenant-wide switch for manual file archiving and the default applied to newly created sites. Site archiving and admin-defined archive policies are not affected.",
+  "impactColour": "info",
+  "addedDate": "2026-11-22",
+  "powershellEquivalent": "Set-SPOTenant -AllowFileArchive $true -AllowFileArchiveOnNewSitesByDefault $true",
+  "recommendedBy": [],
+  "requiredCapabilities": [
+    "SHAREPOINTWAC",
+    "SHAREPOINTSTANDARD",
+    "SHAREPOINTENTERPRISE",
+    "SHAREPOINTENTERPRISE_EDU",
+    "SHAREPOINTENTERPRISE_GOV",
+    "ONEDRIVE_BASIC",
+    "ONEDRIVE_ENTERPRISE"
+  ],
+  "secureScoreImpact": 0,
+  "compare": "subset",
+  "variables": {
+    "state": {
+      "type": "switch",
+      "label": "Allow users to archive files",
+      "default": true
+    },
+    "newSites": {
+      "type": "switch",
+      "label": "Allow file archiving on new sites",
+      "default": true
+    }
+  },
+  "expected": {
+    "AllowFileArchive": "%state%",
+    "AllowFileArchiveOnNewSitesByDefault": "%newSites%"
+  },
+  "read": {
+    "cacheType": "SPOTenant"
+  },
+  "writeTarget": "spoTenant",
+  "remediate": {
+    "executor": "SPOTenant",
+    "properties": {
+      "AllowFileArchive": "%state%",
+      "AllowFileArchiveOnNewSitesByDefault": "%newSites%"
+    }
+  }
+}

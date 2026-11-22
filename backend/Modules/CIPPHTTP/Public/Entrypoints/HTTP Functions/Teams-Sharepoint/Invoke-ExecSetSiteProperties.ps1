@@ -6,7 +6,7 @@ function Invoke-ExecSetSiteProperties {
         Sharepoint.Site.ReadWrite
     .DESCRIPTION
         Sets admin-level properties on a single SharePoint site (sharing, lifecycle, version
-        policy) through Set-CIPPSPOSite. Only whitelisted properties are accepted; enum values
+        policy, file archiving) through Set-CIPPSPOSite. Only whitelisted properties are accepted; enum values
         arrive as friendly names (matching Invoke-ListSiteProperties output) and are converted
         to their numeric CSOM values here.
     #>
@@ -26,7 +26,7 @@ function Invoke-ExecSetSiteProperties {
         SharingDomainRestrictionMode = @{ 'None' = 0; 'AllowList' = 1; 'BlockList' = 2 }
     }
     $StringProperties = @('Title', 'SharingAllowedDomainList', 'SharingBlockedDomainList')
-    $BoolProperties = @('OverrideTenantAnonymousLinkExpirationPolicy', 'InheritVersionPolicyFromTenant', 'EnableAutoExpirationVersionTrim', 'ApplyToNewDocumentLibraries', 'ApplyToExistingDocumentLibraries')
+    $BoolProperties = @('OverrideTenantAnonymousLinkExpirationPolicy', 'InheritVersionPolicyFromTenant', 'EnableAutoExpirationVersionTrim', 'ApplyToNewDocumentLibraries', 'ApplyToExistingDocumentLibraries', 'AllowFileArchive')
     $IntProperties = @('AnonymousLinkExpirationInDays', 'MajorVersionLimit', 'ExpireVersionsAfterDays')
     $Int64Properties = @('StorageMaximumLevel', 'StorageWarningLevel')
     $ValidLockStates = @('Unlock', 'ReadOnly', 'NoAccess')
@@ -69,7 +69,8 @@ function Invoke-ExecSetSiteProperties {
         foreach ($Key in $BoolProperties) {
             $Value = $Request.Body.$Key
             if ($null -ne $Value) {
-                $Properties[$Key] = [bool]$Value
+                # [bool]'false' is $true; -eq $true reads both false and 'false' as false.
+                $Properties[$Key] = $Value -eq $true
                 $Changes.Add("$Key=$Value")
             }
         }
@@ -100,7 +101,7 @@ function Invoke-ExecSetSiteProperties {
         $IsGroupSite = $Site.GroupId -and $Site.GroupId -notmatch '0{8}-0{4}-0{4}-0{4}-0{12}'
         $Skipped = [System.Collections.Generic.List[string]]::new()
         if ($IsGroupSite) {
-            $GroupSiteAllowed = @('SharingCapability', 'DefaultSharingLinkType', 'DefaultLinkPermission', 'LockState', 'StorageMaximumLevel', 'StorageWarningLevel')
+            $GroupSiteAllowed = @('SharingCapability', 'DefaultSharingLinkType', 'DefaultLinkPermission', 'LockState', 'StorageMaximumLevel', 'StorageWarningLevel', 'AllowFileArchive')
             foreach ($Key in @($Properties.Keys)) {
                 if ($Key -notin $GroupSiteAllowed) {
                     $Properties.Remove($Key)

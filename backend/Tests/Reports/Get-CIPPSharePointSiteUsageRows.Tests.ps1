@@ -1,9 +1,11 @@
-# Pester tests for Get-CIPPSharePointSiteUsageRows: the requests it sends and the document library lookup.
+# Pester tests for Get-CIPPSharePointSiteUsageRows: the requests it sends, the document library lookup and the site archive state.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPSharePointSiteUsageRows.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/ConvertTo-SPOUsageRootWebTemplate.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/ConvertTo-CIPPSharePointSiteUsagePayload.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/New-CIPPSPOAdminListViewXml.ps1')
 
     $script:SiteIds = @(0..2 | ForEach-Object { '00000000-0000-0000-0000-{0:d12}' -f $_ })
 
@@ -15,7 +17,9 @@ BeforeAll {
         param($TenantFilter, $AdminUrl, $Type, $RowLimit, $ViewFields)
         $script:AdminCall = @{ RowLimit = $RowLimit; ViewFields = $ViewFields }
         foreach ($Id in $script:SiteIds) {
-            [pscustomobject]@{ SiteId = "{$Id}"; SiteUrl = "https://contoso.sharepoint.com/sites/$Id"; Title = $Id; TemplateName = 'GROUP#0'; StorageUsed = 1 }
+            $Row = [pscustomobject]@{ SiteId = "{$Id}"; SiteUrl = "https://contoso.sharepoint.com/sites/$Id"; Title = $Id; TemplateName = 'GROUP#0'; StorageUsed = 1 }
+            if ($null -ne $script:ArchiveStatus) { $Row | Add-Member -NotePropertyName 'ArchiveStatus' -NotePropertyValue $script:ArchiveStatus }
+            $Row
         }
     }
     function New-GraphBulkRequest {
@@ -41,7 +45,10 @@ BeforeAll {
 }
 
 Describe 'Get-CIPPSharePointSiteUsageRows' {
-    BeforeEach { $script:BulkUrls = [System.Collections.Generic.List[string]]::new() }
+    BeforeEach {
+        $script:BulkUrls = [System.Collections.Generic.List[string]]::new()
+        $script:ArchiveStatus = $null
+    }
 
     It 'requests only the fields it reads' {
         $null = Get-CIPPSharePointSiteUsageRows -TenantFilter 'contoso.onmicrosoft.com'
@@ -61,5 +68,49 @@ Describe 'Get-CIPPSharePointSiteUsageRows' {
 
         $BySite[$script:SiteIds[0]].AutoMapUrl | Should -Be ''
         $BySite[$script:SiteIds[2]].AutoMapUrl | Should -Be "tenantId=tenant-guid&webId={web-$($script:SiteIds[2])}&siteid={$($script:SiteIds[2])}&webUrl=https://contoso.sharepoint.com/sites/$($script:SiteIds[2])&listId={list-$($script:SiteIds[2])}"
+    }
+
+    It 'asks SharePoint admin for the site archive state with fields it accepts' {
+        $null = Get-CIPPSharePointSiteUsageRows -TenantFilter 'contoso.onmicrosoft.com'
+
+        $script:AdminCall.ViewFields | Should -Contain 'ArchiveStatus'
+        { New-CIPPSPOAdminListViewXml -ViewFields $script:AdminCall.ViewFields } | Should -Not -Throw
+    }
+
+    It 'gives a site whose archive state is <Raw> the state <Expected>' -ForEach @(
+        @{ Raw = 'NotArchived'; Expected = 'active' }
+        @{ Raw = ''; Expected = 'active' }
+        @{ Raw = 'RecentlyArchived'; Expected = 'archived' }
+        @{ Raw = 'FullyArchived'; Expected = 'archived' }
+        @{ Raw = 'fullyArchived'; Expected = 'archived' }
+        @{ Raw = 'Reactivating'; Expected = 'reactivating' }
+        @{ Raw = 'Pending'; Expected = 'unknown' }
+    ) {
+        $script:ArchiveStatus = $Raw
+        $Built = Get-CIPPSharePointSiteUsageRows -TenantFilter 'contoso.onmicrosoft.com'
+
+        @($Built.SiteListing)[0].archiveStatus | Should -BeExactly $Expected
+    }
+
+    It 'treats a site with no archive state as active' {
+        $Built = Get-CIPPSharePointSiteUsageRows -TenantFilter 'contoso.onmicrosoft.com'
+
+        @($Built.SiteListing)[0].archiveStatus | Should -BeExactly 'active'
+    }
+}
+
+Describe 'ConvertTo-CIPPSharePointSiteUsagePayload' {
+    It 'passes the site archive state through to the row' {
+        $Site = [pscustomobject]@{ sharepointIds = [pscustomobject]@{ siteId = 'site-1' }; webUrl = 'https://c/s1'; archiveStatus = 'archived' }
+
+        (ConvertTo-CIPPSharePointSiteUsagePayload -Site $Site).archiveStatus | Should -BeExactly 'archived'
+    }
+
+    It 'leaves the archive state empty for a site cached before it was collected' {
+        $Site = [pscustomobject]@{ sharepointIds = [pscustomobject]@{ siteId = 'site-1' }; webUrl = 'https://c/s1' }
+        $Row = ConvertTo-CIPPSharePointSiteUsagePayload -Site $Site
+
+        $Row.PSObject.Properties['archiveStatus'] | Should -Not -BeNullOrEmpty
+        $Row.archiveStatus | Should -BeNullOrEmpty
     }
 }

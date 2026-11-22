@@ -80,6 +80,7 @@ export const CippMultiQueueTracker = ({
   relatedQueryKeys = [],
   label = 'Sync',
   details = null,
+  onFinished,
 }) => {
   const queryClient = useQueryClient()
   const [canvasVisible, setCanvasVisible] = useState(false)
@@ -126,7 +127,8 @@ export const CippMultiQueueTracker = ({
       queryClient.invalidateQueries({ queryKey: [key] })
     })
     setHasInvalidated(true)
-  }, [finished, hasInvalidated, ids.length, relatedQueryKeys, queryClient])
+    onFinished?.(summary?.Status, idKey)
+  }, [finished, hasInvalidated, ids.length, relatedQueryKeys, queryClient, onFinished, summary?.Status, idKey])
 
   // A new set of queues means a new run: allow the refresh to fire again.
   useEffect(() => {

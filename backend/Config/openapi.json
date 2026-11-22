@@ -15504,6 +15504,77 @@
         "x-cipp-role": "Endpoint.Application.ReadWrite"
       }
     },
+    "/api/ExecArchiveSite": {
+      "post": {
+        "summary": "Archive a whole SharePoint site with Microsoft 365 Archive.",
+        "operationId": "ExecArchiveSite",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Moves a SharePoint site into Microsoft 365 Archive. Nobody can open the site or its files until it is\nreactivated, which is instant for the first 7 days and can take up to 24 hours after that. The site stops\ncounting towards SharePoint storage. Hub sites must be unregistered first, and private or shared channel\nsites of a team are not archived with it.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "SiteId": {
+                    "type": "string",
+                    "description": "Site collection id (the row's siteId). With WebId it saves a lookup of the site."
+                  },
+                  "SiteUrl": {
+                    "type": "string",
+                    "description": "Full web address of the site (the row's webUrl)."
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  },
+                  "WebId": {
+                    "type": "string",
+                    "description": "Web id (the row's webId)."
+                  }
+                },
+                "required": [
+                  "SiteUrl",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.ReadWrite"
+      }
+    },
     "/api/ExecAssignAPDevice": {
       "post": {
         "summary": "ExecAssignAPDevice",
@@ -27486,7 +27557,7 @@
         "tags": [
           "Teams-Sharepoint"
         ],
-        "description": "Server-renders the SharePoint & OneDrive Storage report as application/pdf bytes: site and OneDrive\nusage, per-library version history estimates and version policies, recycle bins and inactive sites.\nReads the CIPP reporting cache only (usage sync and cleanup scan); nothing is read live.",
+        "description": "Server-renders the SharePoint & OneDrive Storage report as application/pdf bytes: site and OneDrive\nusage, per-library version history estimates and version policies, recycle bins, inactive sites, and the\nlargest files with what archiving them would save. Reads the CIPP reporting cache only (usage sync,\ncleanup scan and large file scan); nothing is read live.",
         "requestBody": {
           "required": true,
           "content": {
@@ -35599,8 +35670,8 @@
           "403": {
             "description": "Forbidden - caller lacks the required RBAC role"
           },
-          "500": {
-            "description": "Internal server error"
+          "404": {
+            "description": "Not found"
           }
         },
         "security": [
@@ -42162,7 +42233,7 @@
         "tags": [
           "Teams-Sharepoint"
         ],
-        "description": "Sets admin-level properties on a single SharePoint site (sharing, lifecycle, version\npolicy) through Set-CIPPSPOSite. Only whitelisted properties are accepted; enum values\narrive as friendly names (matching Invoke-ListSiteProperties output) and are converted\nto their numeric CSOM values here.",
+        "description": "Sets admin-level properties on a single SharePoint site (sharing, lifecycle, version\npolicy, file archiving) through Set-CIPPSPOSite. Only whitelisted properties are accepted; enum values\narrive as friendly names (matching Invoke-ListSiteProperties output) and are converted\nto their numeric CSOM values here.",
         "requestBody": {
           "required": true,
           "content": {
@@ -42378,6 +42449,94 @@
           }
         ],
         "x-cipp-role": "Tenant.AI.ReadWrite"
+      }
+    },
+    "/api/ExecSharePointFileArchive": {
+      "post": {
+        "summary": "Archive or reactivate a SharePoint file or folder with Microsoft 365 Archive.",
+        "operationId": "ExecSharePointFileArchive",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Moves a file, or the eligible files in a folder, in a SharePoint document library to Microsoft 365 Archive\nstorage, or reactivates it. Archived files stay listed in the library but cannot be opened until they are\nreactivated. A folder is processed in the background by Microsoft 365.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Action": {
+                    "type": "string",
+                    "enum": [
+                      "Archive",
+                      "Reactivate"
+                    ],
+                    "description": "Archive moves the item to Microsoft 365 Archive, Reactivate brings it back."
+                  },
+                  "DriveId": {
+                    "type": "string",
+                    "description": "Id of the drive (document library) that holds the item."
+                  },
+                  "IsFolder": {
+                    "type": "boolean",
+                    "description": "Set when the item is a folder."
+                  },
+                  "ItemId": {
+                    "type": "string",
+                    "description": "Id of the file or folder."
+                  },
+                  "ItemName": {
+                    "type": "string",
+                    "description": "Name of the file or folder, used in the result and the log."
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "Action",
+                  "DriveId",
+                  "ItemId",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted - work was queued and runs asynchronously"
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.ReadWrite"
       }
     },
     "/api/ExecSharePointPermissionsSync": {
@@ -42622,7 +42781,8 @@
               "enum": [
                 "OneDriveUsage",
                 "SharePointSiteUsage",
-                "StorageCleanupScan"
+                "StorageCleanupScan",
+                "StorageLargeFiles"
               ]
             }
           },
@@ -69353,6 +69513,75 @@
         "x-cipp-role": "CIPP.Core.Read"
       }
     },
+    "/api/ListSharePointArchiveSettings": {
+      "get": {
+        "summary": "List a tenant's Microsoft 365 Archive settings and usage.",
+        "operationId": "ListSharePointArchiveSettings",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Returns whether Microsoft 365 Archive is turned on for the tenant, whether users may archive files, whether new\nsites allow it, how much storage is archived at file level, and the tenant storage quota. Read from the cached\nSharePoint tenant configuration, so it is as current as the last tenant data collection.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
+                    "properties": {
+                      "allowFileArchive": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "allowFileArchiveOnNewSites": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "archivedFileStorageInBytes": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "archiveEnabled": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "lastRefresh": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "storageQuotaInBytes": {
+                        "x-cipp-field-source": "backend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Admin.Read"
+      }
+    },
     "/api/ListSharePointExternalUsers": {
       "get": {
         "summary": "ListSharePointExternalUsers",
@@ -70556,6 +70785,97 @@
           },
           "500": {
             "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.Read"
+      }
+    },
+    "/api/ListSiteLibraryContents": {
+      "get": {
+        "summary": "List the folders and files in a SharePoint document library with their sizes.",
+        "operationId": "ListSiteLibraryContents",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Lists one folder of a SharePoint document library with the size, last change and Microsoft 365 Archive status\nof every folder and file in it, so the items using the most storage can be found by opening the largest folder\nat each level. With LargestFiles it returns the largest files anywhere below that folder instead, along with\nany large folders that were too deep to search, so the search can be repeated inside them.",
+        "parameters": [
+          {
+            "name": "FolderId",
+            "in": "query",
+            "description": "Id of the folder to list. The top of the library is listed when this is left out.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LargestFiles",
+            "in": "query",
+            "description": "Return the largest files anywhere below the folder instead of the folder's own contents.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "ListId",
+            "in": "query",
+            "description": "Id of the document library (its list id).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SiteId",
+            "in": "query",
+            "description": "Graph id of the site that holds the library. Send this or SiteUrl.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SiteUrl",
+            "in": "query",
+            "description": "Web address of the site that holds the library. Send this or SiteId.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
           }
         },
         "security": [
@@ -72009,6 +72329,55 @@
           },
           "403": {
             "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.Read"
+      }
+    },
+    "/api/ListStorageLargeFiles": {
+      "get": {
+        "summary": "List the largest files found by the SharePoint large file scan.",
+        "operationId": "ListStorageLargeFiles",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Returns the largest files in each SharePoint site of a tenant, with their size, location, last change and\nMicrosoft 365 Archive status, from the last large file scan. Nothing is read live: start a scan with\nExecSharePointStorageSync Name=StorageLargeFiles.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "404": {
+            "description": "Not found"
           }
         },
         "security": [

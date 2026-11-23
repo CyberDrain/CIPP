@@ -298,6 +298,7 @@
     * [BitLocker Key Search](user-documentation/endpoint/mem/bitlocker-search.md)
     * [Configuration Policies](user-documentation/endpoint/mem/list-policies.md)
     * [Compliance Policies](user-documentation/endpoint/mem/list-compliance-policies.md)
+    * [Setting Search](user-documentation/endpoint/mem/setting-search.md)
     * [Policy Failures](user-documentation/endpoint/mem/policy-failures.md)
     * [App Policies](user-documentation/endpoint/mem/list-appprotection-policies.md)
     * [Policy Templates](user-documentation/endpoint/mem/list-templates/README.md)

@@ -2971,7 +2971,12 @@ function Test-HttpsCertificate {
 
             # Grab certificate data
             $Validation = Get-ServerCertificateValidation -Url $Url
-            $Certificate = $Validation.Certificate | Select-Object FriendlyName, IssuerName, NotBefore, NotAfter, SerialNumber, SignatureAlgorithm, SubjectName, Thumbprint, Issuer, Subject, DnsNameList
+            # DnsNameList is Windows-only type data, so read the names from the SAN extension
+            $DnsNames = foreach ($Extension in $Validation.Certificate.Extensions) {
+                if ($Extension -is [System.Security.Cryptography.X509Certificates.X509SubjectAlternativeNameExtension]) { $Extension.EnumerateDnsNames() }
+            }
+            $DnsNameList = foreach ($DnsName in $DnsNames) { [PSCustomObject]@{ Punycode = $DnsName; Unicode = $DnsName } }
+            $Certificate = $Validation.Certificate | Select-Object FriendlyName, IssuerName, NotBefore, NotAfter, SerialNumber, SignatureAlgorithm, SubjectName, Thumbprint, Issuer, Subject, @{ Name = 'DnsNameList'; Expression = { @($DnsNameList) } }
             $HttpResponse = $Validation.HttpResponse
             $Chain = $Validation.Chain
 
@@ -2979,7 +2984,7 @@ function Test-HttpsCertificate {
             $TimeSpan = New-TimeSpan -Start $CurrentDate -End $Certificate.NotAfter
 
             # Check to see if certificate is contained in the DNS name list
-            if ($Certificate.DnsNameList -contains $Hostname -or $Certificate.DnsNameList -eq "*.$Domain") {
+            if ($DnsNames -contains $Hostname -or $DnsNames -contains "*.$Domain") {
                 $ValidationPasses.Add(('{0} - Certificate DNS name list contains hostname.' -f $Hostname)) | Out-Null
             }
 
@@ -3060,7 +3065,7 @@ function Test-HttpsCertificate {
     # Return tests
     $CertificateTests
 }
-#EndRegion './Public/Tests/Test-HttpsCertificate.ps1' 160
+#EndRegion './Public/Tests/Test-HttpsCertificate.ps1' 165
 #Region './Public/Tests/Test-MtaSts.ps1' -1
 
 function Test-MtaSts {

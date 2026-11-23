@@ -227,7 +227,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
-namespace CyberDrain.CIPP {
+namespace DNSHealth {
 
     public class CertValidation {
         public HttpResponseMessage HttpResponse;
@@ -250,7 +250,7 @@ namespace CyberDrain.CIPP {
                     ch.ChainPolicy.RevocationMode = X509RevocationMode.Online;
                     ch.ChainPolicy.VerificationFlags = X509VerificationFlags.AllFlags;
                     //ch.ChainPolicy.DisableCertificateDownloads = true;
-                    certvalidation.Certificate = new X509Certificate2(cert.GetRawCertData());
+                    certvalidation.Certificate = new X509Certificate2(cert);
                     ch.Build(cert);
                     certvalidation.Chain = ch;
                     certvalidation.SslErrors = sslErrors;
@@ -267,14 +267,14 @@ namespace CyberDrain.CIPP {
 }
 '@
     try {
-        if (!('CyberDrain.CIPP.CertificateCheck' -as [type])) {
+        if (!('DNSHealth.CertificateCheck' -as [type])) {
             Add-Type -TypeDefinition $source -Language CSharp
         }
     }
 
     catch { Write-Verbose $_.Exception.Message }
 
-    [CyberDrain.CIPP.CertificateCheck]::GetServerCertificate($Url, $FollowRedirect)
+    [DNSHealth.CertificateCheck]::GetServerCertificate($Url, $FollowRedirect)
 }
 #EndRegion './Private/Get-ServerCertificateValidation.ps1' 81
 #Region './Private/Initialize-MailProviders.ps1' -1
@@ -1666,6 +1666,8 @@ function Read-NSRecord {
         ValidationWarns  = [System.Collections.Generic.List[string]]::new()
         ValidationFails  = [System.Collections.Generic.List[string]]::new()
         NameProvider     = ''
+        IsSubdomain      = $false
+        ParentDomain     = ''
     }
     $ValidationPasses = [System.Collections.Generic.List[string]]::new()
     $ValidationFails = [System.Collections.Generic.List[string]]::new()
@@ -1683,6 +1685,20 @@ function Read-NSRecord {
 
     catch { $Result = $null }
 
+    # A name inside a parent zone has no NS records of its own; the authority section names that zone,
+    # whose nameservers serve it.
+    $Zone = "$(@($Result.Authority | Where-Object { $_.type -eq 6 })[0].name)".TrimEnd('.')
+    if ($Result.Status -eq 0 -and -not $Result.Answer -and $Zone -and $Zone -ne $Domain.TrimEnd('.')) {
+        try {
+            $ZoneResult = Resolve-DnsHttpsQuery -RecordType 'ns' -Domain $Zone -ErrorAction Stop
+            if ($ZoneResult.Status -eq 0 -and $ZoneResult.Answer) {
+                $Result = $ZoneResult
+                $NSResults.IsSubdomain = $true
+                $NSResults.ParentDomain = $Zone
+            }
+        } catch {}
+    }
+
     if ($Result.Status -eq 2 -and $Result.AD -eq $false) {
         $ValidationFails.Add('DNSSEC Validation failed.') | Out-Null
     }
@@ -1694,14 +1710,18 @@ function Read-NSRecord {
 
     else {
         $NSRecords = $Result.Answer.data
-        $ValidationPasses.Add('Nameserver record is present.') | Out-Null
+        if ($NSResults.IsSubdomain) {
+            $ValidationPasses.Add("This is a subdomain of $($NSResults.ParentDomain) and is served by its nameservers.") | Out-Null
+        } else {
+            $ValidationPasses.Add('Nameserver record is present.') | Out-Null
+        }
         $NSResults.Records = @($NSRecords)
     }
     $NSResults.ValidationPasses = $ValidationPasses
     $NSResults.ValidationFails = $ValidationFails
     $NSResults
 }
-#EndRegion './Public/Records/Read-NSRecord.ps1' 63
+#EndRegion './Public/Records/Read-NSRecord.ps1' 83
 #Region './Public/Records/Read-SPFRecord.ps1' -1
 
 function Read-SpfRecord {

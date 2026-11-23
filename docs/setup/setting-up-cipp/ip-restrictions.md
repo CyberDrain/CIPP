@@ -9,12 +9,12 @@ CyberDrain-hosted clients can limit their CIPP instance to a list of trusted IP 
 IP restrictions are available for instances on the new CIPP infrastructure. If your instance has not been migrated yet, the page shows **Not available for this instance**. See [migrating-to-the-latest-version-of-cipp.md](../maintaining-cipp/migrating-to-the-latest-version-of-cipp.md "mention").
 
 {% hint style="warning" %}
-The list applies to everyone. Staff working from home or travelling, and CyberDrain support, are blocked unless their address is listed. Anything that calls your instance's API, such as a PSA or automation platform using the [CIPP API](../../user-documentation/cipp/integrations/cipp-api.md), also needs its outbound addresses on the list.
+The list applies to everyone. Staff working from home or travelling, and CyberDrain support, are blocked unless their address is listed. The restriction also covers the [CIPP API and MCP server](../../user-documentation/cipp/integrations/cipp-api.md): a PSA, automation platform, or AI client that connects to either needs its outbound addresses on the list.
 {% endhint %}
 
 ## Before You Start
 
-* Collect the public IPv4 addresses your team connects from: office connections, VPN exit points, and any integration that calls the CIPP API.
+* Collect the public IPv4 addresses your team connects from: office connections, VPN exit points, and any integration or AI client that connects to the CIPP API or MCP server.
 * Only IPv4 is supported. Enter a single address (`203.0.113.10`) or a range in CIDR notation (`198.51.100.0/28`).
 * The list holds up to 100 entries. A `/0` range is refused, because it would allow every address.
 
@@ -65,6 +65,6 @@ To open your instance to every address again, select **Remove all restrictions**
 | Symptom | Cause | What to do |
 | --- | --- | --- |
 | You or a colleague get a 403 error opening CIPP | The address you are connecting from is not on the list. | Sign in to the management portal, select **Add my IP** or enter the address, and save. |
-| An integration that calls the CIPP API has stopped working | The integration's outbound addresses are not on the list. | Ask the integration's vendor for its outbound IP addresses and add them. |
+| An integration or AI client using the CIPP API or MCP server has stopped working | Its outbound addresses are not on the list. | Ask the vendor for its outbound IP addresses and add them. |
 | A save fails with **Invalid IP entry** | An entry is not a valid IPv4 address or range, or uses a `/0` range. | Correct the entry named in the message and save again. |
 | **Add my IP** is unavailable | You are connecting over IPv6, which the list does not support. | Connect over IPv4, or enter your network's public IPv4 address by hand. |

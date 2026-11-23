@@ -158,6 +158,7 @@
       * [NHI Case](user-documentation/tenant/administration/nhi/case.md)
     * [Authentication Methods](user-documentation/tenant/administration/authentication-methods/README.md)
       * [Registration Campaign](user-documentation/tenant/administration/authentication-methods/registration-campaign.md)
+    * [Cross-Tenant Access](user-documentation/tenant/administration/cross-tenant-access.md)
     * [Partner Relationships](user-documentation/tenant/administration/partner-relationships.md)
     * [Domains](user-documentation/tenant/administration/domains.md)
     * [CSP License Management](user-documentation/tenant/administration/csp-license-management/README.md)

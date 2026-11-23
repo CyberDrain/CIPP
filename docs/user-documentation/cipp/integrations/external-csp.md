@@ -182,7 +182,7 @@ Use `401` or `403` only for a credential that is invalid or not permitted, so a 
 
 `GET <Catalog URL>?tenantId=<tenant GUID>`
 
-Returns the products that can be bought. If your URL already contains a query string, `tenantId` is appended to it.
+Returns the products that can be bought. If your URL already contains a query string, `tenantId` is appended to it. A large catalog can be split into pages; see [Paging](external-csp.md#paging).
 
 CIPP always sends `tenantId`. Use it if your catalog varies by customer, for example education, nonprofit or government eligibility, or per-customer price lists. Otherwise ignore it and return your full catalog.
 
@@ -245,6 +245,21 @@ Returns the customer's current subscriptions. As with the catalog, return only M
 | `commitmentTerm` | No       | Shown in the report.                                                                     |
 
 CIPP calls this endpoint before every purchase or quantity change and looks for a subscription whose `sku` matches. Return at most one active subscription per `sku` for a customer; if several match, CIPP acts on the first.
+
+### Paging
+
+A large catalog or subscription list can be split into pages. Instead of an array, return an object with the page's items in `value` and the full URL of the next page in `nextLink`. Leave out `nextLink`, or set it to `null`, on the last page.
+
+```json
+{
+  "value": [
+    { "sku": "BP-ANNUAL-MONTHLY", "name": "Microsoft 365 Business Premium" }
+  ],
+  "nextLink": "https://csp.example.com/cipp/catalog?tenantId=11111111-2222-4333-8444-555555555555&page=2"
+}
+```
+
+CIPP calls `nextLink` exactly as given, with the same authentication, and does not add `tenantId` to it, so include anything you need to serve the next page. The link must use `https://` and the same host as the URL configured in CIPP. CIPP stops with an error after 100 pages. A plain array is still a single, complete response.
 
 ### Matching Microsoft Licences
 
@@ -332,6 +347,7 @@ When a technician buys a licence while creating or editing a user, CIPP places t
 * `401` and `403` are used only for credential problems.
 * The catalog and subscriptions responses contain only Microsoft 365 licence products where possible.
 * `sku` values match between the catalog and subscriptions responses.
+* Paged responses give a `nextLink` on the same host over `https://`, and none on the last page.
 * Subscriptions carry `microsoftSkuId` wherever the product is a Microsoft 365 licence.
 * At most one active subscription is returned per `sku` per customer.
 * Refusals return a non-`2xx` status, or a `2xx` with `"success": false`, together with a `message`.

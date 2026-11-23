@@ -61,10 +61,15 @@ function Invoke-CIPPStandardDisableBasicAuthSMTP {
         if ($CurrentInfo.SmtpClientAuthenticationDisabled -and $SMTPusers.Count -eq 0) {
             Write-LogMessage -API 'Standards' -tenant $tenant -message 'SMTP Basic Authentication for tenant and all users is already disabled' -sev Info
         } else {
+            $TransportChanged = $false
+            $FixedMailboxes = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+
             # Disable SMTP Basic Authentication for the tenant
             try {
                 New-ExoRequest -tenantid $Tenant -cmdlet 'Set-TransportConfig' -cmdParams @{ SmtpClientAuthenticationDisabled = $true }
                 Write-LogMessage -API 'Standards' -tenant $tenant -message 'Disabled SMTP Basic Authentication' -sev Info
+                $TransportChanged = -not $CurrentInfo.SmtpClientAuthenticationDisabled
+                $CurrentInfo = [PSCustomObject]@{ SmtpClientAuthenticationDisabled = $true }
             } catch {
                 $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
                 Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to disable SMTP Basic Authentication. Error: $ErrorMessage" -sev Error
@@ -74,7 +79,9 @@ function Invoke-CIPPStandardDisableBasicAuthSMTP {
             if ($SMTPusers.Count -gt 0) {
                 $BulkRequest = foreach ($User in $SMTPusers) {
                     @{
-                        CmdletInput = @{
+                        # A successful Set-CASMailbox returns nothing; the guid makes New-ExoBulkRequest answer per mailbox
+                        OperationGuid = "$($User.Guid)"
+                        CmdletInput   = @{
                             CmdletName = 'Set-CASMailbox'
                             Parameters = @{ Identity = $User.Guid; SmtpClientAuthenticationDisabled = $null }
                         }
@@ -85,11 +92,30 @@ function Invoke-CIPPStandardDisableBasicAuthSMTP {
                     if ($Result.error) {
                         $ErrorMessage = Get-NormalizedError -Message $Result.error
                         Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to disable SMTP Basic Authentication for $($Result.target). Error: $ErrorMessage" -sev Error
+                    } elseif ($Result.OperationGuid) {
+                        $null = $FixedMailboxes.Add("$($Result.OperationGuid)")
                     }
                 }
-                $SuccessCount = ($BatchResults | Where-Object { -not $_.error }).Count
-                if ($SuccessCount -gt 0) {
-                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Disabled SMTP Basic Authentication for $SuccessCount users" -sev Info
+                if ($FixedMailboxes.Count -gt 0) {
+                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Disabled SMTP Basic Authentication for $($FixedMailboxes.Count) users" -sev Info
+                    # Report what is left after remediation, not what was found.
+                    $SMTPusers = @(foreach ($User in $SMTPusers) { if (-not $FixedMailboxes.Contains("$($User.Guid)")) { $User } })
+                }
+            }
+
+            # Refresh only the cache types this run changed, so the next run does not act on the old values
+            if ($TransportChanged) {
+                try {
+                    $null = Set-CIPPDBCacheExoTransportConfig -TenantFilter $Tenant
+                } catch {
+                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to refresh transport config cache after remediation: $($_.Exception.Message)" -sev Warning
+                }
+            }
+            if ($FixedMailboxes.Count -gt 0) {
+                try {
+                    $null = Set-CIPPDBCacheCASMailboxes -TenantFilter $Tenant
+                } catch {
+                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to refresh CAS mailbox cache after remediation: $($_.Exception.Message)" -sev Warning
                 }
             }
         }

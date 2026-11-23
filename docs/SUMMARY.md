@@ -89,6 +89,7 @@
       * [Edit Group Template](user-documentation/identity/administration/group-templates/edit.md)
     * [Administrative Units](user-documentation/identity/administration/administrative-units.md)
     * [Devices](user-documentation/identity/administration/devices.md)
+      * [View Device](user-documentation/identity/administration/devices/device.md)
     * [Deleted Items](user-documentation/identity/administration/deleted-items.md)
     * [Roles & PIM](user-documentation/identity/administration/roles/README.md)
       * [View Individual Role](user-documentation/identity/administration/roles/role/README.md)

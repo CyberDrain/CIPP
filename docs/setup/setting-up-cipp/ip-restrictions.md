@@ -9,7 +9,7 @@ CyberDrain-hosted clients can limit their CIPP instance to a list of trusted IP 
 IP restrictions are available for instances on the new CIPP infrastructure. If your instance has not been migrated yet, the page shows **Not available for this instance**. See [migrating-to-the-latest-version-of-cipp.md](../maintaining-cipp/migrating-to-the-latest-version-of-cipp.md "mention").
 
 {% hint style="warning" %}
-The list applies to everyone. Staff working from home or travelling, and CyberDrain support, are blocked unless their address is listed. The restriction also covers the [CIPP API and MCP server](../../user-documentation/cipp/integrations/cipp-api.md): a PSA, automation platform, or AI client that connects to either needs its outbound addresses on the list.
+Your own staff are blocked when they connect from an address that is not listed, for example while working from home or travelling. The restriction also covers the [CIPP API and MCP server](../../user-documentation/cipp/integrations/cipp-api.md): a PSA, automation platform, or AI client that connects to either needs its outbound addresses on the list.
 {% endhint %}
 
 ## Before You Start

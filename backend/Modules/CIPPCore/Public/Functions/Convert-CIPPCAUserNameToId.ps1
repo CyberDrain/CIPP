@@ -1,11 +1,7 @@
 function Convert-CIPPCAUserNameToId {
     <#
     .SYNOPSIS
-        Replaces user display names in a CA policy assignment with user object IDs.
-    .DESCRIPTION
-        GUIDs and the Graph keywords All, None and GuestsOrExternalUsers pass through. A name is
-        matched by exact displayName against -Users. An unmatched name throws an
-        ItemNotFoundException with -Strict, otherwise it is dropped with a warning.
+        Replaces user display names in a CA policy assignment with user object IDs; keywords and GUIDs pass through.
     .FUNCTIONALITY
         Internal
     #>

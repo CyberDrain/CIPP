@@ -60,8 +60,7 @@ const hasLookupIds = (policy, { block, fields }) =>
     (policy?.conditions?.[block]?.[field] ?? []).some((id) => GUID_PATTERN.test(id))
   );
 
-// Swap each ID the lookup knows for a { label, value } option; the value stays the ID. An ID it
-// does not know (deleted since, or the lookup failed) stays as it is and shows as the ID.
+// An ID the lookup does not know (deleted, or the lookup failed) stays bare and shows as the ID.
 const labelLookupIds = (policy, { block, fields }, names) => {
   const conditionBlock = policy?.conditions?.[block];
   if (!conditionBlock) return policy;
@@ -85,12 +84,12 @@ const lookupNames = (query, { dataKey, labelField, valueField }) => {
   return names;
 };
 
-// Same URL, parameters and query key as the policy builder's pickers, so each list is fetched once.
+// Own key suffix: the builder's pickers cache the same list in a paginated shape under the bare key.
 const useTenantLookup = (lookup, tenantFilter, needed) =>
   ApiGetCall({
     url: lookup.url,
     data: { tenantFilter, ...lookup.data },
-    queryKey: `${lookup.queryKey}-${tenantFilter}`,
+    queryKey: `${lookup.queryKey}-${tenantFilter}-labels`,
     waiting: !!tenantFilter && needed,
     retry: 1,
   });
@@ -176,8 +175,7 @@ const EditCAPolicy = () => {
     (key) => !needed[key] || lookups[key].isSuccess || lookups[key].isError
   );
 
-  // Labelled once per loaded policy: the builder re-populates the form whenever existingPolicy
-  // changes, so a background refetch of a lookup must not produce a new one over the user's edits.
+  // Labelled once per policy: a new existingPolicy re-populates the form over the user's edits.
   const [labelledPolicy, setLabelledPolicy] = useState({ source: null, policy: null });
   if (policyData && directoryNames && lookupsSettled && labelledPolicy.source !== policyData) {
     let labelled = labelDirectoryIds(policyData, directoryNames);

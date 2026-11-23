@@ -123,12 +123,7 @@ function directorySearchApi(kind) {
   };
 }
 
-/**
- * The selected tenant's named locations, applications and directory roles, behind the location,
- * application and role pickers when editing a tenant's policy. Each option's value is the ID Graph
- * stores in the policy. Exported so the edit page can label a policy's stored IDs from the same
- * cached lists: an autocomplete only labels a stored value from options it has when it mounts.
- */
+/** Tenant lists behind the location, application and role pickers on a live policy; values are IDs. */
 export const CA_TENANT_LOOKUPS = {
   namedLocations: {
     url: "/api/ListNamedLocations",
@@ -157,11 +152,6 @@ export const CA_TENANT_LOOKUPS = {
     valueField: "templateId",
   },
 };
-
-/** Picker options from a CA_TENANT_LOOKUPS list, next to the field's static keyword options. */
-function tenantLookupApi(lookup) {
-  return { ...lookup, mergeOptions: true };
-}
 
 // ---------------------------------------------------------------------------
 // Sub-section renderers
@@ -471,7 +461,7 @@ function UsersSection({
 function ApplicationsSection({ formControl, disabled, prefix = "conditions.applications", live }) {
   const schemaDef = resolveRef("#/$defs/conditionalAccessApplications");
   const appApi = useMemo(
-    () => (live ? tenantLookupApi(CA_TENANT_LOOKUPS.servicePrincipals) : undefined),
+    () => (live ? { ...CA_TENANT_LOOKUPS.servicePrincipals, mergeOptions: true } : undefined),
     [live]
   );
   const includeAppOpts = useMemo(
@@ -636,7 +626,7 @@ function ConditionsSection({ formControl, disabled, live }) {
     [locationSchema]
   );
   const locationApi = useMemo(
-    () => (live ? tenantLookupApi(CA_TENANT_LOOKUPS.namedLocations) : undefined),
+    () => (live ? { ...CA_TENANT_LOOKUPS.namedLocations, mergeOptions: true } : undefined),
     [live]
   );
 

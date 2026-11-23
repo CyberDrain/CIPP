@@ -1,9 +1,4 @@
-# Pester tests for Resolve-CIPPCAPolicyNames
-# Graph only takes object IDs in a CA policy's location, user and group conditions; a display name
-# fails the whole write (e.g. "1040: NamedLocation with id <name> does not exist in the directory").
-# These pin that names resolve to the tenant's IDs, that keywords and GUIDs pass through untouched,
-# that a name matching nothing stops with the value named, and that the tenant is only queried
-# when there is a name to resolve.
+# Pester tests for Resolve-CIPPCAPolicyNames: names resolve to tenant IDs, keywords and GUIDs pass through, misses throw.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
@@ -23,13 +18,20 @@ BeforeAll {
         $script:GraphGets.Add($uri)
         @([pscustomobject]@{ id = $script:LocationId; displayName = 'CT-CA-Anthropic' })
     }
+    # Answers each per-name $filter request from a small directory, the way Graph would.
+    $script:Directory = @{
+        users  = @([pscustomobject]@{ id = $script:UserId; displayName = 'Break Glass' }, [pscustomobject]@{ id = $script:OtherId; displayName = "Pat O'Brien" })
+        groups = @([pscustomobject]@{ id = $script:GroupId; displayName = 'CA-Exclude' })
+    }
     function New-GraphBulkRequest {
         [CmdletBinding()] param($Requests, $tenantid, $asapp)
-        $script:BulkRequests.Add(@($Requests.id))
-        @(
-            [pscustomobject]@{ id = 'users'; body = [pscustomobject]@{ value = @([pscustomobject]@{ id = $script:UserId; displayName = 'Break Glass' }) } }
-            [pscustomobject]@{ id = 'groups'; body = [pscustomobject]@{ value = @([pscustomobject]@{ id = $script:GroupId; displayName = 'CA-Exclude' }) } }
-        )
+        $script:BulkRequests.Add(@($Requests.url))
+        foreach ($Request in $Requests) {
+            $Kind, $Query = $Request.url -split '\?', 2
+            $Filter = [System.Uri]::UnescapeDataString(($Query -split '&')[0] -replace '^\$filter=')
+            $Name = ($Filter -replace "^displayName eq '(.*)'$", '$1') -replace "''", "'"
+            [pscustomobject]@{ id = $Request.id; status = 200; body = [pscustomobject]@{ value = @($script:Directory[$Kind].Where({ $_.displayName -eq $Name })) } }
+        }
     }
     function Write-LogMessage { [CmdletBinding()] param($API, $tenant, $Headers, $message, $sev, $LogData) }
     function Get-CippException { [CmdletBinding()] param($Exception) [pscustomobject]@{ NormalizedError = "$Exception" } }
@@ -114,11 +116,25 @@ Describe 'Resolve-CIPPCAPolicyNames' {
             @($Policy.conditions.users.excludeUsers) | Should -Be @('GuestsOrExternalUsers', $script:UserId)
         }
 
-        It 'fetches only the directory objects it has names for' {
+        It 'looks up each typed name with a displayName filter instead of listing the directory' {
             $Policy = New-Policy -Users @{ includeUsers = @('All'); excludeGroups = @('CA-Exclude') }
             Resolve-CIPPCAPolicyNames -Policy $Policy -TenantFilter 'contoso.com'
             $script:BulkRequests.Count | Should -Be 1
-            $script:BulkRequests[0] | Should -Be @('groups')
+            @($script:BulkRequests[0]) | Should -Be @("groups?`$filter=$([System.Uri]::EscapeDataString("displayName eq 'CA-Exclude'"))&`$select=id,displayName")
+        }
+
+        It 'doubles a single quote in a name and asks for a repeated name once' {
+            $Policy = New-Policy -Users @{ includeUsers = @("Pat O'Brien"); excludeUsers = @("Pat O'Brien") }
+            Resolve-CIPPCAPolicyNames -Policy $Policy -TenantFilter 'contoso.com'
+            @($script:BulkRequests[0]).Count | Should -Be 1
+            $script:BulkRequests[0][0] | Should -BeLike "*$([System.Uri]::EscapeDataString("'Pat O''Brien'"))*"
+            @($Policy.conditions.users.includeUsers) | Should -Be @($script:OtherId)
+        }
+
+        It 'stops with the Graph error when a lookup fails' {
+            function New-GraphBulkRequest { [CmdletBinding()] param($Requests, $tenantid, $asapp) @([pscustomobject]@{ id = 'groups-0'; status = 403; body = [pscustomobject]@{ error = [pscustomobject]@{ message = 'Insufficient privileges' } } }) }
+            $Policy = New-Policy -Users @{ excludeGroups = @('CA-Exclude') }
+            { Resolve-CIPPCAPolicyNames -Policy $Policy -TenantFilter 'contoso.com' } | Should -Throw '*Insufficient privileges*'
         }
 
         It 'does not query the directory when every assignment is an id or keyword' {

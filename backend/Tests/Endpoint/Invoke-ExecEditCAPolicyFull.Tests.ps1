@@ -37,7 +37,15 @@ BeforeAll {
     function New-GraphBulkRequest {
         [CmdletBinding()] param($Requests, $tenantid, $asapp)
         $script:TenantLookups++
-        @([pscustomobject]@{ id = 'groups'; body = [pscustomobject]@{ value = @([pscustomobject]@{ id = $script:GroupId; displayName = 'CA-Exclude' }) } })
+        foreach ($Request in $Requests) {
+            $Found = if ($Request.url -like "groups?*$([System.Uri]::EscapeDataString("'CA-Exclude'"))*") { @([pscustomobject]@{ id = $script:GroupId; displayName = 'CA-Exclude' }) } else { @() }
+            [pscustomobject]@{ id = $Request.id; status = 200; body = [pscustomobject]@{ value = $Found } }
+        }
+    }
+    # The tenant's custom variables, substituted the way Get-CIPPTextReplacement does.
+    function Get-CIPPTextReplacement {
+        [CmdletBinding()] param($TenantFilter, $Text, [switch]$EscapeForJson)
+        $Text -replace '%OfficeLocation%', 'CT-CA-Anthropic' -replace '%ExcludeGroup%', 'CA-Exclude'
     }
 
     function New-GraphPOSTRequest {
@@ -223,6 +231,21 @@ Describe 'Invoke-ExecEditCAPolicyFull' {
             $Result.Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::NotFound)
             $Result.Response.Body.Results | Should -BeLike "*Group 'No Such Group' not found*"
             $script:LastPatch | Should -BeNullOrEmpty
+        }
+    }
+
+    Context '%variables% in the body' {
+        It 'fills in a variable location and group before resolving them to ids' {
+            $Result = Invoke-Edit @{
+                displayName = 'CA201'
+                conditions  = @{
+                    users     = @{ includeUsers = @('All'); excludeGroups = @('%ExcludeGroup%') }
+                    locations = @{ includeLocations = @('All'); excludeLocations = @('%OfficeLocation%') }
+                }
+            }
+            $Result.Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
+            @($Result.Sent.conditions.locations.excludeLocations) | Should -Be @($script:LocationId)
+            @($Result.Sent.conditions.users.excludeGroups) | Should -Be @($script:GroupId)
         }
     }
 

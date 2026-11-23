@@ -42,11 +42,10 @@ function Invoke-ExecEditCAPolicyFull {
         # body deserialised into, then apply the same rules the template deploy path uses: managed
         # keys the body omits are restored as their cleared form (that is how a PATCH clears an
         # assignment) and a condition block Graph would reject half-populated becomes null instead.
-        $PolicyObject = ConvertTo-Json -InputObject $CleanBody -Depth 20 | ConvertFrom-Json
+        # Variables are filled in first so a %variable% location or group resolves to the name it stands for
+        $PolicyJson = Get-CIPPTextReplacement -TenantFilter $TenantFilter -Text (ConvertTo-Json -InputObject $CleanBody -Depth 20) -EscapeForJson
+        $PolicyObject = $PolicyJson | ConvertFrom-Json
         Format-CIPPCAPolicy -Policy $PolicyObject
-        # Graph only takes object IDs here; a display name (typed in the editor or sent by an API
-        # caller) fails with e.g. "1040: NamedLocation with id <name> does not exist". Resolve names
-        # against the tenant the way template deploys do, and stop with the unresolved value named.
         Resolve-CIPPCAPolicyNames -Policy $PolicyObject -TenantFilter $TenantFilter -PolicyName ($PolicyBody.displayName ?? $PolicyId) -Headers $Headers -APIName $APIName
         $RawJSON = ConvertTo-Json -InputObject $PolicyObject -Depth 20 -Compress
 

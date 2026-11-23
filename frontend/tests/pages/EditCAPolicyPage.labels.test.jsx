@@ -120,7 +120,7 @@ describe('Edit CA policy page', () => {
       .map(([opts]) => opts)
       .find((opts) => opts.url === '/api/ListNamedLocations' && opts.waiting)
     expect(locationCall.data.tenantFilter).toBe(TENANT)
-    expect(locationCall.queryKey).toBe(`CANamedLocations-${TENANT}`)
+    expect(locationCall.queryKey).toBe(`CANamedLocations-${TENANT}-labels`)
   })
 
   it('does not fetch a list the policy has no IDs for', async () => {

@@ -1,25 +1,10 @@
 function Resolve-CIPPCAPolicyNames {
     <#
     .SYNOPSIS
-        Replaces display names in a CA policy's location, user and group conditions with object IDs.
+        Replaces display names in a CA policy's location, user and group conditions with object IDs, in place.
     .DESCRIPTION
-        Graph only accepts object IDs in conditions.locations and conditions.users, and rejects a
-        display name with errors such as "1040: NamedLocation with id <name> does not exist in the
-        directory". This resolves names against what the tenant already has, in place on -Policy:
-
-        - include/excludeLocations: All, AllTrusted and GUIDs pass through; a name is matched by exact
-          displayName against the tenant's named locations.
-        - include/excludeUsers and include/excludeGroups: All, None, GuestsOrExternalUsers and GUIDs
-          pass through; a name is matched by exact displayName. Nothing is created.
-
-        A name that matches nothing throws an ItemNotFoundException naming the value, so a raw name
-        is never sent to Graph. Tenant lookups run only when a name is present; -NamedLocations,
-        -Users and -Groups take already-fetched lists instead.
-    .PARAMETER LocationsOnly
-        Resolve only the location conditions. The template deploy path resolves users and groups
-        itself, because it can create missing groups.
-    .PARAMETER LocationNotFoundHint
-        Sentence appended to the error for a named location that does not exist.
+        Keywords (All, AllTrusted, None, GuestsOrExternalUsers) and GUIDs pass through. A name is matched by exact
+        displayName; one that matches nothing throws an ItemNotFoundException naming it. Nothing is created.
     .FUNCTIONALITY
         Internal
     #>
@@ -30,8 +15,6 @@ function Resolve-CIPPCAPolicyNames {
         [Parameter(Mandatory = $true)]
         $TenantFilter,
         $NamedLocations = $null,
-        $Users = $null,
-        $Groups = $null,
         $PolicyName = $Policy.displayName,
         $LocationNotFoundHint = 'Create it in the tenant first or select an existing named location.',
         [switch]$LocationsOnly,
@@ -39,7 +22,6 @@ function Resolve-CIPPCAPolicyNames {
         $APIName = 'Create CA Policy'
     )
 
-    # A name not defined in LocationInfo refers to a location the tenant already has.
     $LocationSides = @('includeLocations', 'excludeLocations').Where({ @($Policy.conditions.locations.$_).Where({ $_ -and $_ -notin 'All', 'AllTrusted' -and -not (Test-IsGuid -String $_) }).Count -gt 0 })
     if ($LocationSides.Count -gt 0) {
         if ($null -eq $NamedLocations) {
@@ -71,19 +53,31 @@ function Resolve-CIPPCAPolicyNames {
     $GroupSides = @('includeGroups', 'excludeGroups').Where({ @($Policy.conditions.users.$_).Where({ -not [string]::IsNullOrWhiteSpace($_) -and -not (Test-IsGuid -String $_) }).Count -gt 0 })
     if ($UserSides.Count -eq 0 -and $GroupSides.Count -eq 0) { return }
 
-    $Requests = @(
-        if ($UserSides.Count -gt 0 -and $null -eq $Users) { @{ url = 'users?$select=id,displayName&$top=999'; method = 'GET'; id = 'users' } }
-        if ($GroupSides.Count -gt 0 -and $null -eq $Groups) { @{ url = 'groups?$select=id,displayName&$top=999'; method = 'GET'; id = 'groups' } }
+    $Lookups = @(
+        foreach ($Side in $UserSides) { foreach ($Name in $Policy.conditions.users.$Side) { if ($Name -notin 'All', 'None', 'GuestsOrExternalUsers' -and -not (Test-IsGuid -String $Name)) { @{ Kind = 'users'; Name = $Name } } } }
+        foreach ($Side in $GroupSides) { foreach ($Name in $Policy.conditions.users.$Side) { if (-not [string]::IsNullOrWhiteSpace($Name) -and -not (Test-IsGuid -String $Name)) { @{ Kind = 'groups'; Name = $Name } } } }
     )
-    if ($Requests.Count -gt 0) {
-        try {
-            $BulkResults = New-GraphBulkRequest -Requests $Requests -tenantid $TenantFilter -asapp $true
-        } catch {
-            $ErrorMessage = Get-CippException -Exception $_
-            throw "Failed to fetch users and groups: $($ErrorMessage.NormalizedError)"
+    $Requests = [System.Collections.Generic.List[hashtable]]::new()
+    $Seen = [System.Collections.Generic.HashSet[string]]::new()
+    foreach ($Lookup in $Lookups) {
+        if (-not $Seen.Add("$($Lookup.Kind)|$($Lookup.Name)")) { continue }
+        $Filter = [System.Uri]::EscapeDataString("displayName eq '$($Lookup.Name -replace "'", "''")'")
+        $Requests.Add(@{ id = "$($Lookup.Kind)-$($Requests.Count)"; method = 'GET'; url = "$($Lookup.Kind)?`$filter=$Filter&`$select=id,displayName" })
+    }
+    try {
+        $BulkResults = New-GraphBulkRequest -Requests @($Requests) -tenantid $TenantFilter -asapp $true
+    } catch {
+        $ErrorMessage = Get-CippException -Exception $_
+        throw "Failed to look up users and groups: $($ErrorMessage.NormalizedError)"
+    }
+    $Users = [System.Collections.Generic.List[object]]::new()
+    $Groups = [System.Collections.Generic.List[object]]::new()
+    foreach ($Result in @($BulkResults)) {
+        if ($Result.status -ge 400) { throw "Failed to look up users and groups: $($Result.body.error.message ?? "Graph returned status $($Result.status)")" }
+        foreach ($Item in @($Result.body.value)) {
+            if (-not $Item) { continue }
+            if ($Result.id -like 'users-*') { $Users.Add($Item) } else { $Groups.Add($Item) }
         }
-        if ($null -eq $Users) { $Users = @(($BulkResults | Where-Object { $_.id -eq 'users' }).body.value) }
-        if ($null -eq $Groups) { $Groups = @(($BulkResults | Where-Object { $_.id -eq 'groups' }).body.value) }
     }
 
     foreach ($Side in $UserSides) {

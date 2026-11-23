@@ -1,12 +1,7 @@
 function Convert-CIPPCAGroupNameToId {
     <#
     .SYNOPSIS
-        Replaces group display names in a CA policy assignment with group object IDs.
-    .DESCRIPTION
-        GUIDs pass through. A name is matched by exact displayName against -Groups; with several
-        matches the first one is used and a warning is logged. An unmatched name is created when
-        -CreateGroups is set (from a group template with that name, else as a security group),
-        otherwise it throws an ItemNotFoundException naming the group, followed by -NotFoundHint. An empty id is never returned.
+        Replaces group display names in a CA policy assignment with group object IDs, creating missing groups with -CreateGroups.
     .FUNCTIONALITY
         Internal
     #>

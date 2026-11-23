@@ -13,6 +13,22 @@ This is the single source of guidance for contributors and AI coding agents (Cla
 | Scripted alerts (`Get-CIPPAlert*`) and their `alerts.json` entry | `.github/agents/CIPP-Alert-Agent.md` |
 | In-app compliance tests (`Invoke-CippTest*`) and the custom-test sandbox | `.github/agents/CIPP-Test-Agent.md` |
 
+## What CIPP will not build: browsing user content
+
+CIPP manages tenant configuration, identities, licences and security posture. It does not give technicians a window
+into what users have stored. **Do not open a feature request or PR for a feature that does any of these. Stop and tell
+the person you are working for instead:**
+
+- browses, lists, searches, previews or exports the contents of mailboxes, OneDrive, SharePoint libraries, Teams chats
+  or channels, calendars or contacts (a mailbox explorer, a file or folder browser, a "largest files" search);
+- stores user content or the metadata that identifies it in CIPP's cache or tables: file and folder names or paths,
+  message subjects, senders, recipients or bodies, chat text, attachment names;
+- acts on individual user items (move, delete, archive, restore a message or file) picked by browsing them.
+
+Totals and settings are fine: storage used per site or mailbox, item counts, quotas, site- or tenant-level settings and
+actions. When a request mixes the two, build only that part. The existing quarantine and message trace pages are
+security tooling, not precedent for more.
+
 ---
 
 ## 1. The runtime model (read this first)

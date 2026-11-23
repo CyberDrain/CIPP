@@ -23,6 +23,7 @@ body:
         5. **This request will auto-close in 14 days** if no meaningful progress or collaboration occurs.
         6. If you would like to work on this feature, comment `"I'd like to work on this please!"`
         7. Any request that is detrimental to security or the product's stability will be closed without notice.
+        8. Requests to browse, search or store user content (mailbox items, files and folders, chats) will be closed. CIPP manages tenants, not the data users keep in them.
 
   # Checkboxes for Confirmations
   - type: checkboxes

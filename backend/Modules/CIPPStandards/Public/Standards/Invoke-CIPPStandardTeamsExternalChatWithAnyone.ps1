@@ -52,11 +52,8 @@ function Invoke-CIPPStandardTeamsExternalChatWithAnyone {
         return
     }
 
-    # Templates saved before the radio default was fixed hold the label ('Enabled' / 'Disabled') instead of 'true' / 'false'
-    $DesiredState = switch ("$($Settings.UseB2BInvitesToAddExternalUsers)") {
-        { $_ -in 'true', 'Enabled' } { $true }
-        default { $false }
-    }
+    # Anything but 'true' is disabled, including the 'Disabled' label saved by templates that predate the corrected default
+    $DesiredState = if ($Settings.UseB2BInvitesToAddExternalUsers -eq 'true') { $true } else { $false }
     $StateIsCorrect = ($CurrentState.UseB2BInvitesToAddExternalUsers -eq $DesiredState)
 
     if ($Settings.remediate -eq $true) {

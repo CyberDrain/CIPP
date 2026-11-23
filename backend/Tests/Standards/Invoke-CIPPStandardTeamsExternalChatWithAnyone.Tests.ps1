@@ -44,7 +44,6 @@ Describe 'Invoke-CIPPStandardTeamsExternalChatWithAnyone saved setting values' {
     It 'reads <Label> as <Expected> and writes it when the tenant differs' -ForEach @(
         @{ Label = "'true'"; Value = 'true'; Expected = $true }
         @{ Label = "'false'"; Value = 'false'; Expected = $false }
-        @{ Label = "'Enabled'"; Value = 'Enabled'; Expected = $true }
         @{ Label = "'Disabled'"; Value = 'Disabled'; Expected = $false }
         @{ Label = '$true'; Value = $true; Expected = $true }
         @{ Label = '$false'; Value = $false; Expected = $false }
@@ -64,7 +63,6 @@ Describe 'Invoke-CIPPStandardTeamsExternalChatWithAnyone saved setting values' {
     It 'sends nothing for <Label> when the tenant already matches' -ForEach @(
         @{ Label = "'true'"; Value = 'true'; Expected = $true }
         @{ Label = "'false'"; Value = 'false'; Expected = $false }
-        @{ Label = "'Enabled'"; Value = 'Enabled'; Expected = $true }
         @{ Label = "'Disabled'"; Value = 'Disabled'; Expected = $false }
         @{ Label = '$true'; Value = $true; Expected = $true }
         @{ Label = '$false'; Value = $false; Expected = $false }

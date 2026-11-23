@@ -422,7 +422,7 @@ function New-CIPPCAPolicy {
     }
 
     # A name not defined in LocationInfo refers to a location the tenant already has.
-    Resolve-CIPPCAPolicyNames -Policy $JSONobj -TenantFilter $TenantFilter -NamedLocations $(if ($null -ne $AllNamedLocations) { $AllNamedLocations } elseif ($PreloadedLocations) { $PreloadedLocations }) -PolicyName $displayName -LocationNotFoundHint "Add it to the template's named locations or create it in the tenant first." -LocationsOnly -Headers $Headers -APIName $APIName
+    Resolve-CIPPCAPolicyNames -Policy $JSONobj -TenantFilter $TenantFilter -NamedLocations ($AllNamedLocations ?? $PreloadedLocations) -PolicyName $displayName -LocationNotFoundHint "Add it to the template's named locations or create it in the tenant first." -LocationsOnly -Headers $Headers -APIName $APIName
 
     $ResolveNames = $false
     switch ($ReplacePattern) {

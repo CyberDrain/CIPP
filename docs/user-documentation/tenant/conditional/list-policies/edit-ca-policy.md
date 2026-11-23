@@ -75,7 +75,7 @@ Targets applications by attribute rather than by name, which keeps the policy cu
 | Exclude Locations | Named locations exempt from the policy, picked by name from the tenant's named locations, or `AllTrusted`.     |
 
 {% hint style="info" %}
-Entra stores applications, directory roles and named locations as IDs; the editor shows them by name when it opens. A named location, user or group typed by name instead of picked from the list is matched to the tenant by its exact display name when you save. If nothing in the tenant has that name, the save stops with an error naming the value and the policy is left unchanged.
+Entra stores applications, directory roles and named locations as IDs; the editor shows them by name when it opens. A named location, user or group typed by name instead of picked from the list is matched to the tenant by its exact display name when you save. If nothing in the tenant has that name, or more than one object shares it, the save stops with an error naming the value and the policy is left unchanged; pick the right one from the list instead.
 {% endhint %}
 
 ### Device Filter

@@ -38,7 +38,9 @@ BeforeAll {
         [CmdletBinding()] param($Requests, $tenantid, $asapp)
         $script:TenantLookups++
         foreach ($Request in $Requests) {
-            $Found = if ($Request.url -like "groups?*$([System.Uri]::EscapeDataString("'CA-Exclude'"))*") { @([pscustomobject]@{ id = $script:GroupId; displayName = 'CA-Exclude' }) } else { @() }
+            $Found = if ($Request.url -like "groups?*$([System.Uri]::EscapeDataString("'CA-Exclude'"))*") { @([pscustomobject]@{ id = $script:GroupId; displayName = 'CA-Exclude' }) }
+            elseif ($Request.url -like "groups?*$([System.Uri]::EscapeDataString("'Shared'"))*") { @([pscustomobject]@{ id = $script:GroupId; displayName = 'Shared' }, [pscustomobject]@{ id = '99999999-9999-9999-9999-999999999999'; displayName = 'Shared' }) }
+            else { @() }
             [pscustomobject]@{ id = $Request.id; status = 200; body = [pscustomobject]@{ value = $Found } }
         }
     }
@@ -230,6 +232,16 @@ Describe 'Invoke-ExecEditCAPolicyFull' {
             }
             $Result.Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::NotFound)
             $Result.Response.Body.Results | Should -BeLike "*Group 'No Such Group' not found*"
+            $script:LastPatch | Should -BeNullOrEmpty
+        }
+
+        It 'returns 400 for a group name two groups share, and does not PATCH' {
+            $Result = Invoke-Edit @{
+                displayName = 'CA201'
+                conditions  = @{ users = @{ includeUsers = @('All'); excludeGroups = @('Shared') } }
+            }
+            $Result.Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::BadRequest)
+            $Result.Response.Body.Results | Should -BeLike "*Group 'Shared' matches 2 groups*"
             $script:LastPatch | Should -BeNullOrEmpty
         }
     }

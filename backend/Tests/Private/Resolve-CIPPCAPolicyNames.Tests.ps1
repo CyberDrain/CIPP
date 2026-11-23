@@ -20,8 +20,10 @@ BeforeAll {
     }
     # Answers each per-name $filter request from a small directory, the way Graph would.
     $script:Directory = @{
-        users  = @([pscustomobject]@{ id = $script:UserId; displayName = 'Break Glass' }, [pscustomobject]@{ id = $script:OtherId; displayName = "Pat O'Brien" })
-        groups = @([pscustomobject]@{ id = $script:GroupId; displayName = 'CA-Exclude' })
+        users  = @([pscustomobject]@{ id = $script:UserId; displayName = 'Break Glass' }, [pscustomobject]@{ id = $script:OtherId; displayName = "Pat O'Brien" },
+            [pscustomobject]@{ id = '55555555-5555-5555-5555-555555555555'; displayName = 'Admin' }, [pscustomobject]@{ id = '66666666-6666-6666-6666-666666666666'; displayName = 'Admin' })
+        groups = @([pscustomobject]@{ id = $script:GroupId; displayName = 'CA-Exclude' },
+            [pscustomobject]@{ id = '77777777-7777-7777-7777-777777777777'; displayName = 'Shared' }, [pscustomobject]@{ id = '88888888-8888-8888-8888-888888888888'; displayName = 'Shared' })
     }
     function New-GraphBulkRequest {
         [CmdletBinding()] param($Requests, $tenantid, $asapp)
@@ -93,6 +95,21 @@ Describe 'Resolve-CIPPCAPolicyNames' {
                 Should -Throw -ExceptionType ([System.Management.Automation.ItemNotFoundException]) -ExpectedMessage "Named location 'Nowhere' used by policy 'CA100' was not found in contoso.com*"
         }
 
+        It 'refuses a name two named locations share, and changes nothing' {
+            $Shared = @([pscustomobject]@{ id = $script:LocationId; displayName = 'Office' }, [pscustomobject]@{ id = $script:OtherId; displayName = 'Office' })
+            $Policy = New-Policy -Locations @{ excludeLocations = @('Office') }
+            { Resolve-CIPPCAPolicyNames -Policy $Policy -TenantFilter 'contoso.com' -NamedLocations $Shared } |
+                Should -Throw -ExceptionType ([System.ArgumentException]) -ExpectedMessage "Named location 'Office' matches 2 named locations in contoso.com*"
+            @($Policy.conditions.locations.excludeLocations) | Should -Be @('Office')
+        }
+
+        It 'keeps the first match for a shared location name with -LocationsOnly, as template deploys always have' {
+            $Shared = @([pscustomobject]@{ id = $script:LocationId; displayName = 'Office' }, [pscustomobject]@{ id = $script:OtherId; displayName = 'Office' })
+            $Policy = New-Policy -Locations @{ excludeLocations = @('Office') }
+            Resolve-CIPPCAPolicyNames -Policy $Policy -TenantFilter 'contoso.com' -NamedLocations $Shared -LocationsOnly
+            @($Policy.conditions.locations.excludeLocations) | Should -Be @($script:LocationId)
+        }
+
         It 'leaves users and groups alone with -LocationsOnly' {
             $Policy = New-Policy -Locations @{ excludeLocations = @('CT-CA-Anthropic') } -Users @{ excludeGroups = @('CA-Exclude') }
             Resolve-CIPPCAPolicyNames -Policy $Policy -TenantFilter 'contoso.com' -LocationsOnly
@@ -129,6 +146,19 @@ Describe 'Resolve-CIPPCAPolicyNames' {
             @($script:BulkRequests[0]).Count | Should -Be 1
             $script:BulkRequests[0][0] | Should -BeLike "*$([System.Uri]::EscapeDataString("'Pat O''Brien'"))*"
             @($Policy.conditions.users.includeUsers) | Should -Be @($script:OtherId)
+        }
+
+        It 'refuses a user name two users share, and changes nothing' {
+            $Policy = New-Policy -Users @{ includeUsers = @('All'); excludeUsers = @('Admin') }
+            { Resolve-CIPPCAPolicyNames -Policy $Policy -TenantFilter 'contoso.com' } |
+                Should -Throw -ExceptionType ([System.ArgumentException]) -ExpectedMessage "User 'Admin' matches 2 users in contoso.com*"
+            @($Policy.conditions.users.excludeUsers) | Should -Be @('Admin')
+        }
+
+        It 'refuses a group name two groups share' {
+            $Policy = New-Policy -Users @{ excludeGroups = @('Shared') }
+            { Resolve-CIPPCAPolicyNames -Policy $Policy -TenantFilter 'contoso.com' } |
+                Should -Throw -ExceptionType ([System.ArgumentException]) -ExpectedMessage "Group 'Shared' matches 2 groups in contoso.com*"
         }
 
         It 'stops with the Graph error when a lookup fails' {

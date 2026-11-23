@@ -65,6 +65,29 @@ Controls who can send mail as the group, or on its behalf. This section is shown
 Send on Behalf can only be given to users who have a mailbox. Additions and removals of Send on Behalf are saved together, so if any selected user has no mailbox, none of the Send on Behalf changes are made and the result names that user. Your other changes still apply.
 {% endhint %}
 
+## Email Addresses
+
+A table of the group's email addresses, as Exchange reports them, with the primary address listed first. This section is shown for Distribution List, Mail-Enabled Security and Microsoft 365 groups.
+
+| Column  | Description                                                |
+| ------- | ---------------------------------------------------------- |
+| Address | The email address.                                         |
+| Type    | Whether the address is the group's Primary address or an Alias. |
+
+| Action       | Description                                                                                                                                         |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add Alias    | Opens a dialog where you enter the part before the @, choose one of the tenant's verified domains, and select **Add**. Several aliases can be queued before confirming. |
+| Make Primary | Makes the selected alias the group's primary address. Offered on aliases only.                                                                      |
+| Remove Alias | Removes the selected alias from the group. Offered on aliases only, so the primary address cannot be removed.                                       |
+
+{% hint style="info" %}
+These actions take effect as soon as you confirm them. They are not part of **Submit**, and they leave any unsaved changes elsewhere on the page untouched.
+{% endhint %}
+
+{% hint style="info" %}
+Making an alias the primary address does not remove the old one: the previous primary address stays on the group as an alias, so mail sent to it is still delivered. Remove it afterwards if it should stop working. To use a brand-new address as the primary, add it as an alias first and then select **Make Primary** on it.
+{% endhint %}
+
 ## Group Settings
 
 These settings apply to mail-enabled groups, and which of them appear depends on the group's type.

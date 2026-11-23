@@ -20,6 +20,8 @@ In the **By User** grouping:
 | ----------------- | ---------------------------------------------------------------------------------------------------------------- |
 | User              | The person who has been granted access to one or more calendars.                                               |
 | User Mailbox Type | The kind of mailbox that person has of their own, or `Unknown` where they have none.                           |
+| Access Scope      | `Internal`, `External` or `External (published link)`. See the note below.                                     |
+| External Address  | For an external grantee, the address the calendar was shared with.                                              |
 | Permissions       | The calendars this person can reach. See the note below.                                                       |
 
 In the **By Calendar** grouping:
@@ -29,9 +31,16 @@ In the **By Calendar** grouping:
 | Calendar UPN          | The address of the mailbox whose calendar the row describes.                       |
 | Calendar Display Name | The friendly name of that mailbox.                                                 |
 | Calendar Type         | The kind of mailbox, for example `UserMailbox` or `SharedMailbox`.                 |
+| Shared Externally     | Whether anyone outside the organisation has access to this calendar.               |
 | Permissions           | The users who can reach this calendar. See the note below.                         |
 
-**Permissions** is a button labelled with the number of entries behind it. Clicking it opens the detail: in the **By User** grouping that is the calendar, its address, the access rights, and the calendar folder name, and in the **By Calendar** grouping it is the user, the access rights, and the folder name.
+**Permissions** is a button labelled with the number of entries behind it. Clicking it opens the detail: in the **By User** grouping that is the calendar, its address, the access rights, and the calendar folder name, and in the **By Calendar** grouping it is the user, whether they are internal or external, the external address, the access rights, and the folder name.
+
+**Access Scope** tells you who a grant reaches. `Internal` is someone in your organisation. `External` is an address in another organisation, which the calendar owner shared with from Outlook. `External (published link)` means the calendar was shared with an address outside Microsoft 365, such as a Gmail account, which receives a link to the calendar instead. Exchange lists these as `ExchangePublishedUser.` followed by the address, and the report shows the address on its own. The **External users** and **Shared externally** quick filters narrow the table to these grants.
+
+{% hint style="info" %}
+Sharing a calendar with a shared mailbox by its email address can create an external share even when the mailbox is in your own tenant. A mailbox you expected to be internal that shows as `External` is how Exchange recorded that grant, not a fault in the report.
+{% endhint %}
 
 The `Default` and `Anonymous` entries that every calendar carries are left out, so a calendar with no explicit delegate does not appear at all. The folder name is worth reading where a mailbox was created in another language, because the calendar folder is named in that language rather than being called Calendar.
 

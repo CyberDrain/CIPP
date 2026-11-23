@@ -8,6 +8,7 @@
   * [Prerequisites](setup/setting-up-cipp/index.md)
   * [Installation](setup/setting-up-cipp/install.md)
   * [Adding a Custom Domain Name](setup/setting-up-cipp/customdomain.md)
+  * [Restricting Access by IP Address](setup/setting-up-cipp/ip-restrictions.md)
   * [Setting Up SSO and Getting Access to CIPP](setup/setting-up-cipp/roles.md)
 * [Configuring CIPP](setup/installation/README.md)
   * [Creating the CIPP Service Account](setup/installation/creating-the-cipp-service-account-gdap-ready.md)

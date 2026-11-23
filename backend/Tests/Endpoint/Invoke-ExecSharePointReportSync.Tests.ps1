@@ -44,7 +44,6 @@ Describe 'SharePoint report sync endpoints' {
         @{ Endpoint = 'Invoke-ExecSharePointSharingSync'; Name = 'OneDriveUsage' }
         @{ Endpoint = 'Invoke-ExecSharePointStorageSync'; Name = 'SharePointSiteUsage' }
         @{ Endpoint = 'Invoke-ExecSharePointStorageSync'; Name = 'StorageCleanupScan' }
-        @{ Endpoint = 'Invoke-ExecSharePointStorageSync'; Name = 'StorageLargeFiles' }
     ) {
         $Response = & $Endpoint -Request (New-SyncRequest -Name $Name)
 

@@ -29,7 +29,7 @@ export const StorageReportButton = ({ tenantName, disabled = false }) => {
 
   return (
     <>
-      <Tooltip title="Generate a client-ready PDF of storage use, version history, cleanup opportunities and, after a large file scan, the largest files and what archiving them would save">
+      <Tooltip title="Generate a client-ready PDF of storage use, version history and cleanup opportunities">
         <span>
           <Button
             size="small"

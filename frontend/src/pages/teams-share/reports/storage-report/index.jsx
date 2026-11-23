@@ -9,9 +9,7 @@ import { CippSharePointQuotaCard } from '../../../../components/CippCards/CippSh
 import { CippDataTable } from '../../../../components/CippTable/CippDataTable'
 import { CippApiDialog } from '../../../../components/CippComponents/CippApiDialog'
 import { CippStorageCleanupDrawer } from '../../../../components/CippComponents/CippStorageCleanupDrawer'
-import { CippSharePointLibraryContents } from '../../../../components/CippComponents/CippSharePointLibraryContents'
 import { CippSharePointArchiveReadiness } from '../../../../components/CippComponents/CippSharePointArchiveReadiness'
-import { CippSharePointLargeFiles } from '../../../../components/CippComponents/CippSharePointLargeFiles'
 import { StorageReportButton } from '../../../../components/CippPdf/StorageReportButton'
 import { useDialog } from '../../../../hooks/use-dialog'
 import { ApiGetCall } from '../../../../api/ApiCall'
@@ -61,10 +59,6 @@ import {
   rollupCleanupBySite,
   summarizeCleanupSites,
 } from '../../../../utils/storage-cleanup-opportunities'
-import {
-  ARCHIVE_RATE_DEFAULT,
-  EXTRA_STORAGE_RATE_DEFAULT,
-} from '../../../../utils/sharepoint-archive'
 
 const EMPTY_ROWS = []
 const EMPTY_SCANS = {}
@@ -74,7 +68,6 @@ const TOP_SITES_CHART = 10
 
 const syncRows = [{ Name: 'SharePointSiteUsage' }, { Name: 'OneDriveUsage' }]
 const cleanupScanRows = [{ Name: 'StorageCleanupScan' }]
-const largeFilesScanRows = [{ Name: 'StorageLargeFiles' }]
 
 const ARCHIVE_SITE_CONFIRM =
   'Archive the whole site [displayName]? Nobody will be able to open the site or any file in it until it is reactivated, which is instant for the first 7 days and can take up to 24 hours after that. The site stops counting towards SharePoint storage and is held in Microsoft 365 Archive instead. A hub site must be unregistered first, and the private and shared channel sites of a team are not archived with it.'
@@ -202,13 +195,8 @@ const siteUsedBytes = (row) => {
 /** Enrich ListSiteBrowser library rows with % of parent site used (storman-style). */
 const mapLibraryPercentOfSite = (library, { parentRow } = {}) => ({
   ...library,
-  siteUrl: library?.siteUrl ?? parentRow?.webUrl,
-  contents: libraryContentsLabel(library),
   percentOfSite: percentOf(library?.storageUsedInBytes, siteUsedBytes(parentRow)),
 })
-
-const libraryContentsLabel = (library) =>
-  library?.template === 'documentLibrary' ? 'View contents' : null
 
 const nearQuotaRows = (rows) =>
   rows.filter((row) => Number.isFinite(row.percentUsed) && row.percentUsed >= NEAR_QUOTA_PCT)
@@ -316,15 +304,6 @@ const Page = () => {
   const cleanupScanDialog = useDialog()
   const [syncQueueIds, setSyncQueueIds] = useState([])
   const [cleanupQueueIds, setCleanupQueueIds] = useState([])
-  const largeFilesScanDialog = useDialog()
-  // Large file scans asked for from this page, by tenant: { listedAt, queueId, endState, endedAt }.
-  // listedAt is the newest collection time on the list when the scan was asked for.
-  // A null queueId means one was already running, so there is nothing to track.
-  const [largeFilesScans, setLargeFilesScans] = useState({})
-  const [archivePrices, setArchivePrices] = useState({
-    archiveRate: ARCHIVE_RATE_DEFAULT,
-    storageRate: EXTRA_STORAGE_RATE_DEFAULT,
-  })
   const newSyncRunRef = useRef(false)
   const newCleanupRunRef = useRef(false)
   const [inventoryTab, setInventoryTab] = useState(0)
@@ -334,31 +313,7 @@ const Page = () => {
   const spQueryKey = `StorageReport-SharePointSiteUsage-${currentTenant}`
   const odQueryKey = `StorageReport-OneDriveUsageAccount-${currentTenant}`
   const cleanupQueryKey = `ListStorageCleanupScan-${currentTenant}`
-  const largeFilesQueryKey = `ListStorageLargeFiles-${currentTenant}`
   const archiveSettingsQueryKey = `ListSharePointArchiveSettings-${currentTenant}`
-  const quotaQueryKey = `${currentTenant}-ListSharepointQuota`
-  const tenantLargeFilesScan = largeFilesScans[currentTenant] ?? null
-  const largeFilesQueueIds = tenantLargeFilesScan?.queueId ? [tenantLargeFilesScan.queueId] : []
-  // The tracker reports the end again when its queue ids come back, so only the first counts.
-  const handleLargeFilesScanFinished = (status, queueId) =>
-    setLargeFilesScans((previous) => {
-      const tenant = Object.keys(previous).find((key) => previous[key].queueId === queueId)
-      if (!tenant || previous[tenant].endState) return previous
-      return { ...previous, [tenant]: { ...previous[tenant], endState: status, endedAt: Date.now() } }
-    })
-  const handleLargeFilesScanStarted = (result) => {
-    const queueId = result?.Metadata?.QueueId ?? null
-    const listed = Array.isArray(largeFiles.data) ? largeFiles.data : []
-    const listedAt = listed.reduce(
-      (max, row) => Math.max(max, Date.parse(row.collectedAt) || 0),
-      0
-    )
-    setLargeFilesScans((previous) => {
-      const current = previous[currentTenant]
-      if (!queueId && current?.queueId && !current.endState) return previous
-      return { ...previous, [currentTenant]: { listedAt, queueId } }
-    })
-  }
 
   const spUsage = ApiGetCall({
     url: '/api/ListSites?type=SharePointSiteUsage&UseReportDB=true',
@@ -377,7 +332,7 @@ const Page = () => {
   const quota = ApiGetCall({
     url: '/api/ListSharepointQuota',
     data: { ...tenantScope(currentTenant) },
-    queryKey: quotaQueryKey,
+    queryKey: `${currentTenant}-ListSharepointQuota`,
     waiting: waiting && canReadQuota,
   })
 
@@ -386,18 +341,6 @@ const Page = () => {
     data: { ...tenantScope(currentTenant) },
     queryKey: cleanupQueryKey,
     waiting,
-  })
-
-  // After a scan queued from this page the list skips the server cache, so the new scan shows.
-  const largeFiles = ApiGetCall({
-    url: '/api/ListStorageLargeFiles',
-    data: {
-      ...tenantScope(currentTenant),
-      ...(tenantLargeFilesScan ? { InvalidateCIPPCache: true } : {}),
-    },
-    queryKey: largeFilesQueryKey,
-    waiting,
-    retry: false,
   })
 
   const archiveSettingsQuery = ApiGetCall({
@@ -436,11 +379,6 @@ const Page = () => {
   const teamsFiles = useMemo(() => sumFiles(teamsRows), [teamsRows])
   const sharePointFiles = useMemo(() => sumFiles(classicSpRows), [classicSpRows])
   const odFiles = useMemo(() => sumFiles(odRowsBase), [odRowsBase])
-
-  const poolUsedMb = Number(quota.data?.GeoUsedStorageMB)
-  // The stored quota figure is the tenant-wide SharePoint pool; the report sums also count OneDrive.
-  const poolUsedBytes =
-    Number.isFinite(poolUsedMb) && poolUsedMb > 0 ? poolUsedMb * 1024 ** 2 : undefined
 
   // Prefer live SPO pool used; fall back to report sums so % of tenant still works without Admin.
   const tenantUsedGb = useMemo(() => {
@@ -494,42 +432,11 @@ const Page = () => {
     () => spRows.filter((row) => row.allowFileArchive === false && !isSystemSite(row)).length,
     [spRows]
   )
-  const largeFileCount = Array.isArray(largeFiles.data) ? largeFiles.data.length : 0
 
   const [selectedSites, setSelectedSites] = useState([])
   const [cleanupOpen, setCleanupOpen] = useState(false)
   const [cleanupFocus, setCleanupFocus] = useState(null)
-  const [contentsLibrary, setContentsLibrary] = useState(null)
 
-  const libraryContentsProps = useMemo(
-    () => ({
-      cellRenderers: {
-        contents: (row) =>
-          row?.contents ? (
-            <Button
-              size="small"
-              variant="contained"
-              data-no-row-click="true"
-              onClick={(event) => {
-                event.stopPropagation()
-                setContentsLibrary(row)
-              }}
-            >
-              {row.contents}
-            </Button>
-          ) : null,
-      },
-    }),
-    []
-  )
-  const libraryContentsAction = {
-    label: 'View folders and files',
-    icon: <CippIcons.FolderOpen fontSize="small" />,
-    noConfirm: true,
-    hideBulk: true,
-    customFunction: (row) => setContentsLibrary(row),
-    condition: (row) => Boolean(row?.contents),
-  }
 
   const canWriteSite = checkPermissions(['Sharepoint.Site.ReadWrite'])
   const canSync = checkPermissions(['Sharepoint.Reports.ReadWrite'])
@@ -552,7 +459,6 @@ const Page = () => {
         const versions = Number(lib.versionEstimateBytes)
         rows.set(`${lib.siteUrl}|${lib.id}`, {
           ...lib,
-          contents: libraryContentsLabel(lib),
           siteName: siteNames.get(lib.siteUrl) ?? lib.siteUrl,
           versionPercent: percentOf(versions, total),
         })
@@ -879,9 +785,7 @@ const Page = () => {
         },
         dataMap: mapLibraryPercentOfSite,
         defaultSorting: [{ id: 'storageUsedInBytes', desc: true }],
-        ...libraryContentsProps,
         simpleColumns: [
-          'contents',
           'displayName',
           'siteType',
           'fileCount',
@@ -891,7 +795,6 @@ const Page = () => {
           'webUrl',
         ],
         actions: [
-          libraryContentsAction,
           {
             label: 'Open library',
             link: '[webUrl]',
@@ -950,19 +853,9 @@ const Page = () => {
                   </Stack>
                   <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
                     <CippQueryRefreshButton
-                      queryKeys={[
-                        ...refreshKeys,
-                        ...cleanupRefreshKeys,
-                        largeFilesQueryKey,
-                        archiveSettingsQueryKey,
-                        quotaQueryKey,
-                      ]}
+                      queryKeys={[...refreshKeys, ...cleanupRefreshKeys, archiveSettingsQueryKey]}
                       isFetching={
-                        isFetching ||
-                        cleanupScan.isFetching ||
-                        largeFiles.isFetching ||
-                        archiveSettingsQuery.isFetching ||
-                        quota.isFetching
+                        isFetching || cleanupScan.isFetching || archiveSettingsQuery.isFetching
                       }
                     />
                     <StorageReportButton
@@ -1013,28 +906,6 @@ const Page = () => {
                           startIcon={<CleaningServices fontSize="small" />}
                         >
                           {hasScanned ? 'Rescan cleanup' : 'Scan cleanup'}
-                        </Button>
-                      </span>
-                    </Tooltip>
-                    <CippMultiQueueTracker
-                      queueIds={largeFilesQueueIds}
-                      relatedQueryKeys={[largeFilesQueryKey]}
-                      label="Large file scan"
-                      onFinished={handleLargeFilesScanFinished}
-                    />
-                    <Tooltip title={canSync ? 'Find the largest files in every site holding 1 GB or more, for the Large files tab and the exported report. The file names are stored with the scan.' : 'Requires the Sharepoint.Reports.ReadWrite permission'}>
-                      <span>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          disabled={!canSync || spRows.length === 0}
-                          onClick={() => {
-                            setInventoryTab(3)
-                            largeFilesScanDialog.handleOpen()
-                          }}
-                          startIcon={<CippIcons.ManageSearch />}
-                        >
-                          Scan large files
                         </Button>
                       </span>
                     </Tooltip>
@@ -1251,7 +1122,6 @@ const Page = () => {
                   <Tab label={`SharePoint Sites (${spRows.length})`} />
                   <Tab label={`OneDrive (${odRows.length})`} />
                   <Tab label={`Libraries (${libraryRows.length})`} />
-                  <Tab label={`Large files (${largeFileCount})`} />
                 </Tabs>
               </Grid>
 
@@ -1290,18 +1160,6 @@ const Page = () => {
                     subTables={librarySubTables}
                   />
                 </Grid>
-              ) : inventoryTab === 3 ? (
-                <Grid size={{ md: 12, xs: 12 }}>
-                  <CippSharePointLargeFiles
-                    files={largeFiles}
-                    queryKey={largeFilesQueryKey}
-                    archiveSettings={archiveSettings}
-                    activeBytes={poolUsedBytes}
-                    prices={archivePrices}
-                    onPricesChange={setArchivePrices}
-                    scan={tenantLargeFilesScan}
-                  />
-                </Grid>
               ) : inventoryTab === 2 ? (
                 <Grid size={{ md: 12, xs: 12 }}>
                   {!hasScanned && (
@@ -1317,10 +1175,7 @@ const Page = () => {
                     isFetching={cleanupScan.isFetching}
                     refreshFunction={cleanupScan}
                     defaultSorting={[{ id: 'versionEstimateBytes', desc: true }]}
-                    actions={[libraryContentsAction]}
-                    {...libraryContentsProps}
                     simpleColumns={[
-                      'contents',
                       'siteName',
                       'displayName',
                       'storageUsedInBytes',
@@ -1411,21 +1266,6 @@ const Page = () => {
                 row={cleanupScanRows}
               />
 
-              <CippApiDialog
-                createDialog={largeFilesScanDialog}
-                title="Scan large files"
-                api={{
-                  type: 'GET',
-                  url: '/api/ExecSharePointStorageSync',
-                  data: { Name: 'Name' },
-                  confirmText:
-                    'Queue a large file scan for this tenant? It keeps up to 25 of the largest files found in each site holding 1 GB or more and stores their names, locations and sizes for the Large files tab and the exported report. It needs the usage sync to have run. Progress shows next to Scan large files.',
-                  relatedQueryKeys: [largeFilesQueryKey],
-                  onSuccess: handleLargeFilesScanStarted,
-                }}
-                row={largeFilesScanRows}
-              />
-
               <CippStorageCleanupDrawer
                 open={cleanupOpen}
                 onClose={() => {
@@ -1437,16 +1277,6 @@ const Page = () => {
                 focusItem={cleanupFocus}
                 initialAction={cleanupFocus?.recommendedAction}
               />
-
-              {contentsLibrary && (
-                <CippSharePointLibraryContents
-                  key={`${contentsLibrary.siteId ?? contentsLibrary.siteUrl}|${contentsLibrary.id}`}
-                  open={true}
-                  onClose={() => setContentsLibrary(null)}
-                  library={contentsLibrary}
-                  tenantFilter={currentTenant}
-                />
-              )}
             </>
           )}
         </Grid>

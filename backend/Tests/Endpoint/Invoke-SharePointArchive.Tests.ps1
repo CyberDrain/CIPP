@@ -1,5 +1,5 @@
 # Pester tests for the Microsoft 365 Archive endpoints: Invoke-ListSharePointArchiveSettings,
-# Invoke-ExecArchiveSite and Invoke-ListStorageLargeFiles.
+# and Invoke-ExecArchiveSite.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
@@ -25,7 +25,6 @@ BeforeAll {
 
     . (Join-Path $Endpoints 'Invoke-ListSharePointArchiveSettings.ps1')
     . (Join-Path $Endpoints 'Invoke-ExecArchiveSite.ps1')
-    . (Join-Path $Endpoints 'Invoke-ListStorageLargeFiles.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CippErrorStatusCode.ps1')
 
     function New-GetRequest {
@@ -164,58 +163,3 @@ Describe 'Invoke-ExecArchiveSite' {
     }
 }
 
-Describe 'Invoke-ListStorageLargeFiles' {
-    It 'returns BadRequest without a tenantFilter' {
-        $Response = Invoke-ListStorageLargeFiles -Request (New-GetRequest 'ListStorageLargeFiles')
-        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::BadRequest)
-    }
-
-    It 'returns BadRequest for AllTenants' {
-        Mock Get-CIPPDbItem { }
-
-        $Response = Invoke-ListStorageLargeFiles -Request (New-GetRequest 'ListStorageLargeFiles' @{ tenantFilter = 'AllTenants' })
-
-        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::BadRequest)
-        Should -Invoke Get-CIPPDbItem -Times 0 -Exactly
-    }
-
-    It 'returns NotFound when no scan has run' {
-        Mock Get-CIPPDbItem { }
-
-        $Response = Invoke-ListStorageLargeFiles -Request (New-GetRequest 'ListStorageLargeFiles' @{ tenantFilter = 'contoso.com' })
-
-        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::NotFound)
-    }
-
-    It 'returns the scanned files from the report-private table with whether each site was fully searched' {
-        Mock Get-CIPPDbItem {
-            [pscustomobject]@{ RowKey = 'StorageLargeFiles-Count'; DataCount = 2 }
-            [pscustomobject]@{ RowKey = 'StorageLargeFiles-1'; Data = '{"rowType":"File","name":"a.mp4","sizeInBytes":10,"archiveStatus":"active","searchComplete":true}' }
-            [pscustomobject]@{ RowKey = 'StorageLargeFiles-2'; Data = '{"rowType":"File","name":"b.mp4","sizeInBytes":5,"archiveStatus":"archived","searchComplete":false}' }
-        }
-
-        $Response = Invoke-ListStorageLargeFiles -Request (New-GetRequest 'ListStorageLargeFiles' @{ tenantFilter = 'contoso.com' })
-
-        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
-        @($Response.Body).name | Should -Be @('a.mp4', 'b.mp4')
-        @($Response.Body).searchComplete | Should -Be @($true, $false)
-        Should -Invoke Get-CIPPDbItem -Times 1 -Exactly -ParameterFilter { $TableName -eq 'CippStorageLargeFiles' -and $Type -eq 'StorageLargeFiles' -and -not $CountsOnly }
-    }
-
-    It 'returns an empty list when the scan found nothing' {
-        Mock Get-CIPPDbItem { [pscustomobject]@{ RowKey = 'StorageLargeFiles-Count'; DataCount = 0 } }
-
-        $Response = Invoke-ListStorageLargeFiles -Request (New-GetRequest 'ListStorageLargeFiles' @{ tenantFilter = 'contoso.com' })
-
-        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::OK)
-        @($Response.Body).Count | Should -Be 0
-    }
-
-    It 'returns InternalServerError when the cache cannot be read' {
-        Mock Get-CIPPDbItem { throw 'table unavailable' }
-
-        $Response = Invoke-ListStorageLargeFiles -Request (New-GetRequest 'ListStorageLargeFiles' @{ tenantFilter = 'contoso.com' })
-
-        $Response.StatusCode | Should -Be ([System.Net.HttpStatusCode]::InternalServerError)
-    }
-}

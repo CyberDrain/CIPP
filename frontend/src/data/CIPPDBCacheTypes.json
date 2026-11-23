@@ -413,11 +413,6 @@
     "description": "Per-site library version estimates and recycle totals for the storage report cleanup signals. Report-private; not used by other CIPP features."
   },
   {
-    "type": "StorageLargeFiles",
-    "friendlyName": "Storage Large Files",
-    "description": "The largest files in each SharePoint site, with their location, last change and Microsoft 365 Archive status, for the storage report. Report-private and run on demand; not used by other CIPP features."
-  },
-  {
     "type": "ConditionalAccessPolicies",
     "friendlyName": "Conditional Access Policies",
     "description": "Azure AD Conditional Access policies"

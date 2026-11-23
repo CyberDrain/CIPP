@@ -6,10 +6,8 @@ function Build-CippStorageReportTree {
         Pure composition from already-gathered storage data. Returns @{ Blocks; Variables }: the
         component nodes for ConvertTo-CippReportPdf and the cover/footer report variables.
     .PARAMETER Data
-        TenantName, sites[] (SharePoint usage rows), oneDrive[] (OneDrive usage rows), scan[]
-        (StorageCleanupScan cache rows, rowType Site or Library; empty when no cleanup scan has run),
-        largeFiles[] (StorageLargeFiles cache rows; empty when no large file scan has run) and archive
-        (the cached SharePoint tenant configuration, or $null).
+        TenantName, sites[] (SharePoint usage rows), oneDrive[] (OneDrive usage rows) and scan[]
+        (StorageCleanupScan cache rows, rowType Site or Library; empty when no cleanup scan has run).
     #>
     [CmdletBinding()]
     param([Parameter(Mandatory)][hashtable]$Data)
@@ -19,8 +17,6 @@ function Build-CippStorageReportTree {
     $Scan = @($Data.scan ?? @())
     $Libraries = @($Scan.Where({ $_.rowType -eq 'Library' }))
     $ScanSites = @($Scan.Where({ $_.rowType -eq 'Site' }))
-    $LargeFiles = @(@($Data.largeFiles ?? @()).Where({ $_.rowType -eq 'File' }))
-    $Archive = $Data.archive
     $Tenant = [System.Net.WebUtility]::HtmlEncode([string]$Data.TenantName)
 
     $Size = {
@@ -115,63 +111,15 @@ function Build-CippStorageReportTree {
     $Blocks.Add((New-CippReportTable -Title 'Sites with no activity in 90 days' -Limit 10 -EmptyText 'Every site with stored data has been active in the last 90 days.' -Columns @(@{ header = 'Site'; key = 'site'; width = 2.6 }, @{ header = 'Used'; key = 'used'; width = 1 }, @{ header = 'Last activity'; key = 'activity'; width = 1.1 }) -Rows @(
                 $Inactive | Sort-Object { [double]($_.storageUsedInBytes ?? 0) } -Descending | Select-Object -First 10 | ForEach-Object { @{ site = $_.displayName; used = (& $Size $_.storageUsedInBytes); activity = (& $Activity $_) } })))
 
-    # -- Archive --
-    $Dormant = @()
-    if ($LargeFiles.Count -gt 0) {
-        $ArchivedBytes = [double]($Archive.ArchivedFileStorageUsageMB ?? 0) * 1MB
-        if ($ArchivedBytes -le 0) { $ArchivedBytes = & $Total $Sites 'archivedFileDiskUsedBytes' }
-        $ArchiveCutoff = (Get-Date).AddMonths(-12)
-        # Microsoft 365 Archive cannot archive OneNote files, SharePoint pages or anything in Site Assets.
-        $Dormant = @($LargeFiles.Where({
-                    $Changed = $_.lastModifiedDateTime -as [datetime]
-                    $_.archiveStatus -eq 'active' -and $Changed -and $Changed -lt $ArchiveCutoff -and
-                    [System.IO.Path]::GetExtension([string]$_.name) -notin '.one', '.onetoc2', '.aspx' -and
-                    -not [string]::Equals([string]$_.libraryName, 'Site Assets', [System.StringComparison]::OrdinalIgnoreCase) -and -not ([string]$_.webUrl).StartsWith("$(([string]$_.siteUrl).TrimEnd('/'))/SiteAssets/", [System.StringComparison]::OrdinalIgnoreCase)
-                }))
-        $DormantBytes = & $Total $Dormant 'sizeInBytes'
-        $FileRows = { param($Set) foreach ($F in @($Set | Sort-Object -Property sizeInBytes -Descending -Top 15)) { @{ file = $F.name; where = ("{0} / {1}{2}" -f $(if ($F.siteName) { $F.siteName } else { & $SiteName $F.siteUrl }), $F.libraryName, $(if ($F.folderPath -and $F.folderPath -ne '/') { $F.folderPath } else { '' })); size = (& $Size $F.sizeInBytes); changed = $(if ($F.lastModifiedDateTime -as [datetime]) { ($F.lastModifiedDateTime -as [datetime]).ToString('yyyy-MM-dd') } else { '-' }); status = $(switch ([string]$F.archiveStatus) { 'active' { 'Active' } 'archived' { 'Archived' } 'reactivating' { 'Reactivating' } default { 'Unknown' } }) } } }
-        $FileColumns = @(@{ header = 'File'; key = 'file'; width = 2 }, @{ header = 'Where'; key = 'where'; width = 2.6 }, @{ header = 'Size'; key = 'size'; width = 0.9 }, @{ header = 'Last changed'; key = 'changed'; width = 1 }, @{ header = 'Status'; key = 'status'; width = 0.8 })
-
-        $Blocks.Add((New-CippReportPage -Title 'Archive Opportunities' -Subtitle 'Large files that are rarely changed, and what archiving them would save'))
-        $Blocks.Add((New-CippReportParagraph -Text 'Microsoft 365 Archive moves files that must be kept but are rarely opened into lower-cost storage. Archived files stay listed in their library and nothing is deleted, but they no longer count towards SharePoint storage. OneNote files, SharePoint pages and the contents of Site Assets libraries cannot be archived, so they are not counted as archive candidates.'))
-        if (@($LargeFiles.Where({ $_.searchComplete -eq $false }, 'First')).Count -gt 0) {
-            $Blocks.Add((New-CippReportInfoBox -Title 'Some folders were not read' -Content 'These are the largest files the scan found. In some sites it stopped before reading every folder, so a larger file may exist that is not listed here.'))
-        }
-        $Blocks.Add((New-CippReportStatRow -Stats @(
-                    @{ value = (& $Size $ArchivedBytes); label = 'Total Currently Archived' }
-                    @{ value = (& $Size (& $Total $LargeFiles 'sizeInBytes')); label = 'In The Largest Files' }
-                    @{ value = (& $Size $DormantBytes); label = 'Not Changed In 12 Months' }
-                )))
-        $Blocks.Add((New-CippReportAlertBox -Title 'Archived files are not available straight away' -Colour $Warn -Content 'An archived file can be brought back at any time at no charge. For the first 7 days it comes back immediately. After that, reactivating it can take up to 24 hours, and the file cannot be opened until that finishes. A reactivated file cannot be archived again for 120 days. Only archive content the business does not need at short notice.'))
-        if ($DormantBytes -gt 0) {
-            $DormantGb = $DormantBytes / 1GB
-            $Blocks.Add((New-CippReportInfoBox -Title 'What archiving would cost' -Content ('Archiving the {0} not changed in 12 months would free {1} of SharePoint storage. At Microsoft''s US list price, Archive storage is $0.05 per GB a month and is only charged for the amount by which active and archived storage together exceed the storage included with the tenant, so these files would cost at most ${2:N2} a month. Buying the same amount of extra SharePoint storage costs about ${3:N2} a month at Microsoft''s US list price of $0.20 per GB.' -f $(if ($Dormant.Count -eq 1) { '1 large file' } else { "$($Dormant.Count) large files" }), (& $Size $DormantBytes), ($DormantGb * 0.05), ($DormantGb * 0.2))))
-        }
-        if ($Archive -and $Archive.EnableSiteArchive -ne $true) {
-            $Blocks.Add((New-CippReportInfoBox -Title 'Microsoft 365 Archive is not turned on yet' -Content 'Before anything can be archived, Microsoft 365 Archive has to be turned on for the tenant in the Microsoft 365 admin center, with pay-as-you-go billing set up.'))
-        }
-        $Blocks.Add((New-CippReportTable -Title 'Largest files' -Limit 15 -Columns $FileColumns -Rows @(
-                    & $FileRows $LargeFiles)))
-        if ($Dormant.Count -gt 0) {
-            $Blocks.Add((New-CippReportTable -Title 'Large files not changed in 12 months' -Limit 15 -Columns $FileColumns -Rows @(
-                        & $FileRows $Dormant)))
-        } else {
-            $Blocks.Add((New-CippReportParagraph -Text 'No eligible active files last changed more than 12 months ago were found among the largest files.'))
-        }
-    }
-
     # -- Recommendations --
-    $Recommendations = @(
-        @{ label = 'Turn on automatic version trimming.'; text = 'Set it as the tenant default and apply it to existing libraries. It keeps recent versions and removes old ones as they age, which stops version history growing without limit.' }
-        @{ label = 'Clean up existing version history.'; text = 'A version cleanup job on the largest libraries frees space now. Changing the policy alone only affects versions created from then on.' }
-        @{ label = 'Review inactive sites.'; text = 'Archive or delete sites nobody uses. Microsoft 365 Archive moves them to cheaper storage while keeping them recoverable.' }
-        if ($Dormant.Count -gt 0) { @{ label = 'Archive large files nobody changes.'; text = 'Microsoft 365 Archive frees SharePoint storage without deleting anything. Allow up to 24 hours to get an archived file back, so keep anything needed at short notice out of it.' } }
-        @{ label = 'Empty large recycle bins.'; text = 'Where deleted content is not needed, emptying the second-stage recycle bin frees the space straight away.' }
-        @{ label = 'Re-run this report regularly.'; text = 'Storage grows steadily. Comparing reports over time shows whether the policies are working.' }
-    )
-    for ($i = 0; $i -lt $Recommendations.Count; $i++) { $Recommendations[$i]['marker'] = "$($i + 1)." }
     $Blocks.Add((New-CippReportPage -Title 'Recommendations' -Subtitle 'What to do about the findings'))
-    $Blocks.Add((New-CippReportBullets -Items $Recommendations))
+    $Blocks.Add((New-CippReportBullets -Items @(
+                @{ marker = '1.'; label = 'Turn on automatic version trimming.'; text = 'Set it as the tenant default and apply it to existing libraries. It keeps recent versions and removes old ones as they age, which stops version history growing without limit.' }
+                @{ marker = '2.'; label = 'Clean up existing version history.'; text = 'A version cleanup job on the largest libraries frees space now. Changing the policy alone only affects versions created from then on.' }
+                @{ marker = '3.'; label = 'Review inactive sites.'; text = 'Archive or delete sites nobody uses. Microsoft 365 Archive moves them to cheaper storage while keeping them recoverable.' }
+                @{ marker = '4.'; label = 'Empty large recycle bins.'; text = 'Where deleted content is not needed, emptying the second-stage recycle bin frees the space straight away.' }
+                @{ marker = '5.'; label = 'Re-run this report regularly.'; text = 'Storage grows steadily. Comparing reports over time shows whether the policies are working.' }
+            )))
 
     @{
         Blocks    = @($Blocks)

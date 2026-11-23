@@ -21,7 +21,6 @@ function Invoke-ExecSharePointStorageSync {
         'SharePointSiteUsage' {}
         'OneDriveUsage' {}
         'StorageCleanupScan' {}
-        'StorageLargeFiles' {}
         default {
             return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ Results = "'$($Request.Query.Name)' is not a storage report dataset" } })
         }

@@ -21,7 +21,6 @@ export const getCippColumnSize = (accessorKey, header) => {
     case 'ScorePercentage':
     case 'percentOfTenant':
     case 'percentOfSite':
-    case 'percentOfLibrary':
     case 'versionPercent':
     case 'percentUsed':
       return { size: 250, minSize: 250 }

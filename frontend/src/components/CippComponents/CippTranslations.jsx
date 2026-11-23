@@ -162,8 +162,6 @@ export const CippTranslations = {
   fileStreamSizeInBytes: 'Current Files',
   percentOfTenant: '% of Tenant',
   percentOfSite: '% of Site',
-  percentOfLibrary: '% of Library',
-  sizeInBytes: 'Size',
   versionPercent: 'Versions %',
   versionPolicy: 'Version Policy',
   percentUsed: '% of Quota',

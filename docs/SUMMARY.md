@@ -270,6 +270,7 @@
 * [Intune](user-documentation/endpoint/README.md)
   * [Applications](user-documentation/endpoint/applications/README.md)
     * [Applications](user-documentation/endpoint/applications/list.md)
+      * [View Application](user-documentation/endpoint/applications/app.md)
     * [Application Queue](user-documentation/endpoint/applications/queue.md)
     * [Application Templates](user-documentation/endpoint/applications/application-templates.md)
   * [Autopilot & Enrollment](user-documentation/endpoint/autopilot/README.md)

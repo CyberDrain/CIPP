@@ -84,7 +84,7 @@ This card is built from the cached mailbox permission report rather than a live 
 
 ## Calendar Permissions
 
-Who has access to this mailbox's calendar folders, listed by user or group, access rights, folder name and principal type. **Add Permissions** opens a dialog offering the full set of Exchange folder levels: Owner, Publishing Editor, Editor, Publishing Author, Author, Non Editing Author, Reviewer, Contributor, Limited Details, Availability Only and None. A **Delegate with Private item access** switch is available with Editor, which turns the grant into delegate access and lets the delegate see items marked private. The row action removes a permission.
+Who has access to this mailbox's calendar folders, listed by user or group, access rights, folder name and principal type. Grants to people outside the organisation show as `External`, or as `External (published link)` where the calendar was shared with an address outside Microsoft 365 such as Gmail, together with the address it was shared with. External shares are started by the user in Outlook and cannot be added here, but the row action removes them like any other grant. **Add Permissions** opens a dialog offering the full set of Exchange folder levels: Owner, Publishing Editor, Editor, Publishing Author, Author, Non Editing Author, Reviewer, Contributor, Limited Details, Availability Only and None. A **Delegate with Private item access** switch is available with Editor, which turns the grant into delegate access and lets the delegate see items marked private. The row action removes a permission.
 
 ## Contact Permissions
 

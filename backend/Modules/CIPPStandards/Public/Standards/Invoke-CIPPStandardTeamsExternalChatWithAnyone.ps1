@@ -16,7 +16,7 @@ function Invoke-CIPPStandardTeamsExternalChatWithAnyone {
         EXECUTIVETEXT
             Allows organizations to decide if employees can launch Microsoft Teams chats with anyone on the internet using just an email address. Disabling the feature keeps conversations inside trusted boundaries and helps prevent accidental data exposure through unexpected external invitations.
         ADDEDCOMPONENT
-            {"type":"radio","name":"standards.TeamsExternalChatWithAnyone.UseB2BInvitesToAddExternalUsers","label":"Allow chatting with anyone via email","options":[{"label":"Enabled","value":"true"},{"label":"Disabled","value":"false"}],"defaultValue":"Disabled"}
+            {"type":"radio","name":"standards.TeamsExternalChatWithAnyone.UseB2BInvitesToAddExternalUsers","label":"Allow chatting with anyone via email","options":[{"label":"Enabled","value":"true"},{"label":"Disabled","value":"false"}],"defaultValue":"false"}
         IMPACT
             Low Impact
         ADDEDDATE
@@ -52,9 +52,11 @@ function Invoke-CIPPStandardTeamsExternalChatWithAnyone {
         return
     }
 
-    # Set default to Disabled if not specified. Should not be possible without some serious misconfiguration via the API
-    $Settings.UseB2BInvitesToAddExternalUsers ??= $false
-    $DesiredState = [System.Convert]::ToBoolean($Settings.UseB2BInvitesToAddExternalUsers)
+    # Templates saved before the radio default was fixed hold the label ('Enabled' / 'Disabled') instead of 'true' / 'false'
+    $DesiredState = switch ("$($Settings.UseB2BInvitesToAddExternalUsers)") {
+        { $_ -in 'true', 'Enabled' } { $true }
+        default { $false }
+    }
     $StateIsCorrect = ($CurrentState.UseB2BInvitesToAddExternalUsers -eq $DesiredState)
 
     if ($Settings.remediate -eq $true) {

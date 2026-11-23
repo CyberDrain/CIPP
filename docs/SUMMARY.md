@@ -84,6 +84,8 @@
       * [Add Group](user-documentation/identity/administration/groups/add.md)
       * [Edit Group](user-documentation/identity/administration/groups/edit.md)
       * [View Group](user-documentation/identity/administration/groups/group.md)
+        * [View Team](user-documentation/identity/administration/groups/team.md)
+          * [View Channel](user-documentation/identity/administration/groups/channel.md)
     * [Group Templates](user-documentation/identity/administration/group-templates/README.md)
       * [Add Group Template](user-documentation/identity/administration/group-templates/add.md)
       * [Edit Group Template](user-documentation/identity/administration/group-templates/edit.md)

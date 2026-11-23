@@ -107,6 +107,19 @@ Describe 'Invoke-CIPPStandardDisableBasicAuthSMTP' {
             Should -Invoke -CommandName Set-CIPPDBCacheCASMailboxes -Times 1 -Exactly
         }
 
+        # When a cmdlet returns data, New-ExoBulkRequest tags that data with the OperationGuid instead of emitting Success.
+        It 'counts a mailbox as changed when the write returns data instead of a success marker' {
+            Mock -CommandName New-ExoBulkRequest -MockWith {
+                param($tenantid, $cmdletArray)
+                foreach ($Item in $cmdletArray) { [pscustomobject]@{ Identity = $Item.OperationGuid; OperationGuid = $Item.OperationGuid } }
+            }
+
+            Invoke-CIPPStandardDisableBasicAuthSMTP -Tenant $script:Tenant -Settings $script:AllModes
+
+            @($script:compare[0].Current.UsersWithSmtpAuthEnabled) | Should -BeNullOrEmpty
+            Should -Invoke -CommandName Set-CIPPDBCacheCASMailboxes -Times 1 -Exactly
+        }
+
         It 'leaves the mailbox cache alone when every mailbox write fails' {
             $script:failGuids = @('guid-a', 'guid-b')
 

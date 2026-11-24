@@ -173,6 +173,18 @@ Enter the values and select **Save**. Both accept 0 to 3650 days, and the defaul
 With a maximum set, the expiry field on the Baselines pages shows the limit in its label, and an expiry further away than the maximum is refused.
 {% endhint %}
 
+## App Package Storage
+
+Shows where the installers and packages uploaded for [application templates](../../endpoint/applications/application-templates.md) are stored. Each package can be up to 4 GB. On a CyberDrain-hosted instance, CIPP storage holds up to 10 GB of packages; once that is used, new uploads are refused until you delete templates you no longer need.
+
+To store as many packages as you need, connect your own Azure storage account: copy a connection string from **Access keys** on the storage account in the Azure portal, paste it in, and select **Connect**. CIPP checks it can reach the account before saving it. **Disconnect** goes back to CIPP storage.
+
+New uploads go to the storage selected here. Packages already uploaded stay where they were uploaded and keep working, so templates can use packages in both CIPP storage and your storage account.
+
+{% hint style="warning" %}
+A storage account can't be disconnected, or replaced with a different one, while application templates use packages stored in it. Delete those templates, or remove their uploaded packages, first.
+{% endhint %}
+
 ## Other Settings Tabs
 
 The remaining application settings are grouped on their own tabs.

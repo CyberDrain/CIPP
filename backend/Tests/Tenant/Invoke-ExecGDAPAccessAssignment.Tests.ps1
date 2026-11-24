@@ -5,6 +5,8 @@ BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Test-IsGuid.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Test-CIPPGDAPRelationshipId.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/Get-GraphBulkResultByID.ps1')
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CippErrorStatusCode.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Tenant/GDAP/Invoke-ExecGDAPAccessAssignment.ps1')
 
     ([PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')).GetMethod('Add').Invoke(
@@ -30,6 +32,7 @@ BeforeAll {
     function Write-LogMessage { param($headers, $API, $tenant, $message, $Sev) }
     function New-GraphBulkRequest { param($Requests, $NoAuthCheck)
         if ($Requests[0].id -eq 'getRelationship') {
+            if ($script:RelationshipResponses) { return $script:RelationshipResponses }
             return @(
                 [pscustomobject]@{ id = 'getRelationship'; body = @{ customer = @{ tenantId = 'cust-1' }; accessDetails = @{ unifiedRoles = @(@{ roleDefinitionId = $script:GR }, @{ roleDefinitionId = $script:EXO }) } } }
                 [pscustomobject]@{ id = 'getAccessAssignments'; body = @{ value = $script:Assignments } }
@@ -52,6 +55,7 @@ Describe 'Invoke-ExecGDAPAccessAssignment ResetMappings' {
         $script:InScope = $true
         $script:ScopeAsked = $null
         $script:GroupResults = @()
+        $script:RelationshipResponses = $null
     }
 
     It 'does not recreate a group that already has a live assignment next to a deleted one' {
@@ -92,6 +96,29 @@ Describe 'Invoke-ExecGDAPAccessAssignment ResetMappings' {
         $Response = Invoke-Reset
         $Response.StatusCode | Should -Be 403
         $script:ScopeAsked | Should -Be 'cust-1'
+        $script:Sent | Should -HaveCount 0
+    }
+
+    It 'returns 404 instead of "already correct" when the relationship is not found' {
+        $script:RelationshipResponses = @(
+            [pscustomobject]@{ id = 'getRelationship'; status = 404; body = @{ error = @{ message = 'Relationship not found' } } }
+            [pscustomobject]@{ id = 'getAccessAssignments'; status = 404; body = @{ error = @{ message = 'Relationship not found' } } }
+        )
+        $Response = Invoke-Reset
+        $Response.StatusCode | Should -Be 404
+        @($Response.Body.Results)[0].state | Should -Be 'error'
+        @($Response.Body.Results)[0].resultText | Should -BeLike '*Relationship not found*'
+        $script:Sent | Should -HaveCount 0
+    }
+
+    It 'returns 500 when the access assignments cannot be read, rather than creating duplicates' {
+        $script:RelationshipResponses = @(
+            [pscustomobject]@{ id = 'getRelationship'; status = 200; body = @{ customer = @{ tenantId = 'cust-1' }; accessDetails = @{ unifiedRoles = @(@{ roleDefinitionId = $script:GR }) } } }
+            [pscustomobject]@{ id = 'getAccessAssignments'; status = 503; body = @{ error = @{ message = 'Service unavailable' } } }
+        )
+        $Response = Invoke-Reset
+        $Response.StatusCode | Should -Be 500
+        @($Response.Body.Results)[0].resultText | Should -BeLike '*Service unavailable*'
         $script:Sent | Should -HaveCount 0
     }
 

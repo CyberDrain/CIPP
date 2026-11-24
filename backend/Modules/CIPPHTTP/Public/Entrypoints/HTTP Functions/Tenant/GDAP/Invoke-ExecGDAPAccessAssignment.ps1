@@ -52,8 +52,16 @@ function Invoke-ExecGDAPAccessAssignment {
                 )
 
                 $RelationshipResults = New-GraphBulkRequest -Requests $RelationshipRequests -NoAuthCheck $true -tenantid $PartnerTenantId
-                $Relationship = ($RelationshipResults | Where-Object id -EQ 'getRelationship').body
-                $AccessAssignments = ($RelationshipResults | Where-Object id -EQ 'getAccessAssignments').body.value
+                # Read as empty, a failed lookup creates nothing and reports the assignments as already correct
+                try {
+                    $Relationship = Get-GraphBulkResultByID -Results $RelationshipResults -ID 'getRelationship' -ThrowOnError
+                    $AccessAssignments = Get-GraphBulkResultByID -Results $RelationshipResults -ID 'getAccessAssignments' -Value -ThrowOnError
+                } catch {
+                    return ([HttpResponseContext]@{
+                            StatusCode = Get-CippErrorStatusCode -ErrorRecord $_
+                            Body       = @{ Results = @(@{ state = 'error'; resultText = "Could not read relationship $($Id): $($_.Exception.Message)" }) }
+                        })
+                }
 
                 # The router cannot see the relationship's customer; an unknown customer needs an unlimited role.
                 if (-not (Test-CippTenantInScope -Tenant ($Relationship.customer.tenantId ?? 'AllTenants'))) {

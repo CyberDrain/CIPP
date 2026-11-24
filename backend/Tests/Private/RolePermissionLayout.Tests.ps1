@@ -21,6 +21,7 @@ BeforeAll {
 
     . (Join-Path $AuthDir 'Test-CIPPAccess.ps1')
     . (Join-Path $AuthDir 'Test-CippRoleTenantScope.ps1')
+    . (Join-Path $AuthDir 'Expand-CippScopeTenantItem.ps1')
     . (Join-Path $AuthDir 'Get-CippAllowedPermissions.ps1')
     . (Join-Path $PrivateAuthDir 'Get-CippRequestIPAddress.ps1')
     . (Join-Path $PrivateAuthDir 'Find-CippBaseRole.ps1')

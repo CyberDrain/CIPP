@@ -39,6 +39,7 @@ BeforeAll {
     $PrivateAuthDir = Join-Path $RepoRoot 'Modules/CIPPCore/Private/Authentication'
 
     . $ScopeHelperPath
+    . (Join-Path $AuthDir 'Expand-CippScopeTenantItem.ps1')
     . $FunctionPath
     . (Join-Path $AuthDir 'Test-CippAllTenantsBlocked.ps1')
     . (Join-Path $PrivateAuthDir 'New-CippMeResponse.ps1')
@@ -880,5 +881,29 @@ Describe 'Test-CIPPAccess tenant group requests' {
     It 'lets an unrestricted custom role read through any group' {
         Test-CIPPAccess -Request (New-UserRequest -CIPPEndpoint 'ListUsers' -UserRoles @('openrole') -Query @{ tenantFilter = 'AllTenants'; tenantGroup = 'g2' }) |
             Should -BeTrue
+    }
+}
+
+Describe 'Test-CIPPAccess blocked tenant group that cannot be expanded' {
+    BeforeAll {
+        $script:CIPPBaseRoles = $script:SeedBaseRoles
+        $script:CIPPFunctionPermissions = @{ 'Invoke-ExecResetPass' = @{ Role = 'Identity.User.ReadWrite'; Functionality = 'Entrypoint' } }
+    }
+    BeforeEach {
+        Mock -CommandName Get-Tenants -MockWith { @([pscustomobject]@{ customerId = 'tenant-1'; defaultDomainName = 't1.example.com' }, [pscustomobject]@{ customerId = 'tenant-2'; defaultDomainName = 't2.example.com' }) }
+        Mock -CommandName Get-CIPPRolePermissions -MockWith {
+            [pscustomobject]@{ Role = 'blockgroup'; Permissions = @('Identity.User.ReadWrite'); AllowedTenants = @('AllTenants'); BlockedTenants = @([pscustomobject]@{ type = 'Group'; value = 'g-blocked'; label = 'Blocked group' }); BlockedEndpoints = @() }
+        }
+    }
+
+    It 'denies the request instead of dropping the block (fail closed)' {
+        Mock -CommandName Expand-CIPPTenantGroups -MockWith { throw 'table unavailable' }
+        { Test-CIPPAccess -Request (New-UserRequest -UserRoles @('blockgroup') -Query @{ tenantFilter = 'tenant-2' }) } |
+            Should -Throw -ExpectedMessage "*Failed to expand blocked tenant group 'Blocked group'*"
+    }
+
+    It 'still allows tenants outside a blocked group that expands to nothing (deleted group)' {
+        Mock -CommandName Expand-CIPPTenantGroups -MockWith { @() }
+        Test-CIPPAccess -Request (New-UserRequest -UserRoles @('blockgroup') -Query @{ tenantFilter = 'tenant-2' }) | Should -BeTrue
     }
 }

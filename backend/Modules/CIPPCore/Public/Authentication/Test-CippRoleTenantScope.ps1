@@ -96,33 +96,9 @@ function Test-CippRoleTenantScope {
         return $true
     }
 
-    $ExpandedAllowedTenants = foreach ($AllowedItem in $Role.AllowedTenants) {
-        if ($AllowedItem -is [PSCustomObject] -and $AllowedItem.type -eq 'Group') {
-            try {
-                $GroupMembers = Expand-CIPPTenantGroups -TenantFilter @($AllowedItem)
-                $GroupMembers | ForEach-Object { $_.addedFields.customerId }
-            } catch {
-                Write-Warning "Failed to expand allowed tenant group '$($AllowedItem.label)': $($_.Exception.Message)"
-                @()
-            }
-        } else {
-            $AllowedItem
-        }
-    }
-
-    $ExpandedBlockedTenants = foreach ($BlockedItem in $Role.BlockedTenants) {
-        if ($BlockedItem -is [PSCustomObject] -and $BlockedItem.type -eq 'Group') {
-            try {
-                $GroupMembers = Expand-CIPPTenantGroups -TenantFilter @($BlockedItem)
-                $GroupMembers | ForEach-Object { $_.addedFields.customerId }
-            } catch {
-                Write-Warning "Failed to expand blocked tenant group '$($BlockedItem.label)': $($_.Exception.Message)"
-                @()
-            }
-        } else {
-            $BlockedItem
-        }
-    }
+    $ExpandedAllowedTenants = @(Expand-CippScopeTenantItem -Items $Role.AllowedTenants -Kind 'allowed')
+    # Throws when a blocked group cannot be expanded, so the request is denied rather than unblocked
+    $ExpandedBlockedTenants = @(Expand-CippScopeTenantItem -Items $Role.BlockedTenants -Kind 'blocked')
 
     if ($ExpandedAllowedTenants -contains 'AllTenants') {
         $AllowedTenants = $Tenants.customerId

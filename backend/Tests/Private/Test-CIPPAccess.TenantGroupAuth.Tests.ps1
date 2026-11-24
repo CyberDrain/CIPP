@@ -23,6 +23,7 @@ BeforeAll {
     function Expand-CIPPTenantGroups { param($TenantFilter) @() }
 
     . $ScopeHelperPath
+    . (Join-Path $AuthDir 'Expand-CippScopeTenantItem.ps1')
     . $FunctionPath
     $PrivateAuthDir = Join-Path $RepoRoot 'Modules/CIPPCore/Private/Authentication'
     . (Join-Path $PrivateAuthDir 'Get-CippRequestIPAddress.ps1')

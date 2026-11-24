@@ -38,7 +38,13 @@ function New-CIPPTaskDeltaQuery {
 
     $Parameters = @{}
     if ($Trigger.WatchedAttributes -and ($Trigger.WatchedAttributes | Measure-Object).Count -gt 0) {
-        $Parameters.'$select' = ($Trigger.WatchedAttributes | ForEach-Object { $_.value ?? $_ }) -join ','
+        $Select = @($Trigger.WatchedAttributes | ForEach-Object { $_.value ?? $_ })
+        # Test-DeltaQueryConditions tells created from updated by createdDateTime, so keep it selected on
+        # the resources that have it (beta user, group, application; the others reject it in $select)
+        if ($Resource -in @('users', 'groups', 'applications') -and $Select -notcontains 'createdDateTime') {
+            $Select += 'createdDateTime'
+        }
+        $Parameters.'$select' = $Select -join ','
     }
     if ($Trigger.ResourceFilter) {
         $ResourceFilterValues = $Trigger.ResourceFilter | ForEach-Object { $_.value ?? $_ }

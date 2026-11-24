@@ -75,7 +75,7 @@ Describe 'New-CIPPTaskDeltaQuery' {
             $null = New-CIPPTaskDeltaQuery -Trigger $Trigger -TenantFilter 'contoso.com' -PartitionKey 'pk'
 
             Should -Invoke New-GraphDeltaQuery -Times 1 -Exactly -ParameterFilter {
-                $Parameters.'$select' -eq 'displayName,mail'
+                $Parameters.'$select' -eq 'displayName,mail,createdDateTime'
             }
         }
 
@@ -85,8 +85,25 @@ Describe 'New-CIPPTaskDeltaQuery' {
             $null = New-CIPPTaskDeltaQuery -Trigger $Trigger -TenantFilter 'contoso.com' -PartitionKey 'pk'
 
             Should -Invoke New-GraphDeltaQuery -Times 1 -Exactly -ParameterFilter {
-                $Parameters.'$select' -eq 'displayName,mail'
+                $Parameters.'$select' -eq 'displayName,mail,createdDateTime'
             }
+        }
+
+        It 'adds createdDateTime so created objects are told apart from updated ones, only where the resource has it' -ForEach @(
+            @{ Resource = 'users'; Watched = @('displayName'); Select = 'displayName,createdDateTime' }
+            @{ Resource = 'groups'; Watched = @('displayName'); Select = 'displayName,createdDateTime' }
+            @{ Resource = 'applications'; Watched = @('displayName'); Select = 'displayName,createdDateTime' }
+            @{ Resource = 'users'; Watched = @('createdDateTime', 'mail'); Select = 'createdDateTime,mail' }
+            @{ Resource = 'devices'; Watched = @('displayName'); Select = 'displayName' }
+            @{ Resource = 'servicePrincipals'; Watched = @('displayName'); Select = 'displayName' }
+            @{ Resource = 'oAuth2PermissionGrant'; Watched = @('scope'); Select = 'scope' }
+            @{ Resource = 'directoryRole'; Watched = @('displayName'); Select = 'displayName' }
+        ) {
+            $Trigger = [pscustomobject]@{ DeltaResource = $Resource; WatchedAttributes = $Watched }
+
+            $null = New-CIPPTaskDeltaQuery -Trigger $Trigger -TenantFilter 'contoso.com' -PartitionKey 'pk'
+
+            Should -Invoke New-GraphDeltaQuery -Times 1 -Exactly -ParameterFilter { $Parameters.'$select' -eq $Select }
         }
 
         It 'omits $select when no attributes are watched' {

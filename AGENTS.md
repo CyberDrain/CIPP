@@ -699,5 +699,9 @@ $Result = foreach ($User in $Users) {
 - **List endpoints frequently have a cached path** (`UseReportDB=true` / `tenantFilter=AllTenants`)
   that returns data from `CIPPDB` cache tables instead of live Graph. If a list looks stale or has
   different columns than expected, check for the `Get-CIPP*Report` branch.
+- **Write helpers expand `%token%` in request bodies.** `New-GraphPOSTRequest`, `New-ExoRequest` and
+  `New-ExoBulkRequest` run `Get-CIPPTextReplacement` on the body, so a user-entered value containing `%tenantid%` or
+  a custom variable's name is rewritten before it is sent. When a value must reach Microsoft verbatim (a URL, a
+  free-text field), escape `%` in the serialised JSON body: `$Body.Replace('%', '%')`.
 - **`retry`/toast behaviour is centralized** in `ApiCall.jsx`; a 302 to `/.auth/login/aad` means the
   session expired and triggers re-auth, it is not a routing bug.

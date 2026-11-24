@@ -259,6 +259,70 @@ Describe 'DBCache collectors reworked for bounded memory' {
             $script:DbWrites[0].EndRan | Should -BeFalse
         }
 
+        It 'leaves out a group deleted between the list and the member read' {
+            Mock -CommandName New-GraphGetRequest -MockWith {
+                @(
+                    [pscustomobject]@{ id = 'g1'; displayName = 'One'; mail = 'one@contoso.com'; groupTypes = @(); mailEnabled = $false; securityEnabled = $true; resourceProvisioningOptions = @() }
+                    [pscustomobject]@{ id = 'g-gone'; displayName = 'Gone'; mail = $null; groupTypes = @(); mailEnabled = $false; securityEnabled = $true; resourceProvisioningOptions = @() }
+                )
+            }
+            Mock -CommandName New-GraphBulkRequest -MockWith {
+                @(
+                    [pscustomobject]@{ id = 'g1'; status = 200; body = [pscustomobject]@{ value = @([pscustomobject]@{ id = 'u1' }) } }
+                    [pscustomobject]@{ id = 'g-gone'; status = 404; body = [pscustomobject]@{ error = [pscustomobject]@{ message = 'Resource does not exist' } } }
+                )
+            }
+
+            Set-CIPPDBCacheGroups -TenantFilter 'contoso.com'
+
+            $script:DbWrites[0].Rows.id | Should -Be @('g1')
+            $script:DbWrites[0].EndRan | Should -BeTrue
+        }
+
+        It 'does not cache a group with an empty member list when its member read fails' {
+            Mock -CommandName New-GraphGetRequest -MockWith {
+                @([pscustomobject]@{ id = 'g1'; displayName = 'One'; mail = 'one@contoso.com'; groupTypes = @(); mailEnabled = $false; securityEnabled = $true; resourceProvisioningOptions = @() })
+            }
+            Mock -CommandName New-GraphBulkRequest -MockWith {
+                @([pscustomobject]@{ id = 'g1'; status = 503; body = [pscustomobject]@{ error = [pscustomobject]@{ message = 'Service unavailable' } } })
+            }
+
+            Set-CIPPDBCacheGroups -TenantFilter 'contoso.com'
+
+            $script:DbWrites[0].Rows.Count | Should -Be 0
+            # No End(): no count row and no orphan cleanup, so the previous rows stay
+            $script:DbWrites[0].EndRan | Should -BeFalse
+            Should -Invoke Write-LogMessage -ParameterFilter { $sev -eq 'Error' -and $message -like '*Service unavailable*' }
+        }
+
+        It 'keeps caching the tenant when one group answers 403' {
+            Mock -CommandName New-GraphGetRequest -MockWith {
+                @([pscustomobject]@{ id = 'g1'; displayName = 'One'; mail = 'one@contoso.com'; groupTypes = @(); mailEnabled = $false; securityEnabled = $true; resourceProvisioningOptions = @() })
+            }
+            Mock -CommandName New-GraphBulkRequest -MockWith {
+                @([pscustomobject]@{ id = 'g1'; status = 403; body = [pscustomobject]@{ error = [pscustomobject]@{ message = 'Insufficient privileges' } } })
+            }
+
+            Set-CIPPDBCacheGroups -TenantFilter 'contoso.com'
+
+            $script:DbWrites[0].Rows.id | Should -Be @('g1')
+            $script:DbWrites[0].EndRan | Should -BeTrue
+            Should -Invoke Write-LogMessage -ParameterFilter { $sev -eq 'Warning' -and $message -like '*Insufficient privileges*' }
+        }
+
+        It 'does not cache a truncated member list' {
+            Mock -CommandName New-GraphGetRequest -MockWith {
+                @([pscustomobject]@{ id = 'g1'; displayName = 'One'; mail = 'one@contoso.com'; groupTypes = @(); mailEnabled = $false; securityEnabled = $true; resourceProvisioningOptions = @() })
+            }
+            Mock -CommandName New-GraphBulkRequest -MockWith {
+                @([pscustomobject]@{ id = 'g1'; status = 200; PagingIncomplete = $true; PagingError = 'continuation page returned 429'; body = [pscustomobject]@{ value = @([pscustomobject]@{ id = 'u1' }) } })
+            }
+
+            Set-CIPPDBCacheGroups -TenantFilter 'contoso.com'
+
+            $script:DbWrites[0].EndRan | Should -BeFalse
+        }
+
         It 'skips member lookup for dynamic groups and omits the members property' {
             Mock -CommandName New-GraphGetRequest -MockWith {
                 @(

@@ -53,17 +53,32 @@ function Set-CIPPDBCacheGroups {
             }
 
             $MembersByGroupId = @{}
+            $GoneGroupIds = [System.Collections.Generic.HashSet[string]]::new()
             if ($MemberRequests) {
                 Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message "Fetching group members for batch of $($Batch.Count)" -sev Debug
                 # A batch of 50 groups is three $batch calls; sent together they take a third of the time
                 $MemberResults = New-GraphBulkRequest -Requests @($MemberRequests) -tenantid $TenantFilter -MaxConcurrency 3
                 foreach ($Result in $MemberResults) {
-                    if ($Result.id) { $MembersByGroupId[$Result.id] = $Result.body.value }
+                    if (-not $Result.id) { continue }
+                    $Status = $Result.status -as [int]
+                    # Deleted since the group list was read: leave it out instead of failing the tenant
+                    if ($Status -eq 404) { $null = $GoneGroupIds.Add([string]$Result.id); continue }
+                    # A 429 or 5xx that outlived the bulk retries, or a lost page, would be cached as an empty member
+                    # list: fail the run so the previous rows stay. A lasting 4xx (403 on one group) must not stop the
+                    # whole tenant's cache on every run, so it is logged and the group cached without members.
+                    if ($Status -eq 429 -or $Status -ge 500 -or $Result.PagingIncomplete) {
+                        throw "Member request for group $($Result.id) failed: $($Result.body.error.message ?? $Result.PagingError ?? $Status)"
+                    }
+                    if ($Status -ge 400) {
+                        Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message "Could not read members of group $($Result.id): $($Result.body.error.message ?? $Status)" -sev Warning
+                    }
+                    $MembersByGroupId[$Result.id] = $Result.body.value
                 }
                 $MemberResults = $null
             }
 
             foreach ($Group in $Batch) {
+                if ($GoneGroupIds.Contains([string]$Group.id)) { continue }
                 $groupType = if ($Group.groupTypes -contains 'Unified') { 'Microsoft 365' }
                 elseif ($Group.mailEnabled -and $Group.securityEnabled) { 'Mail-Enabled Security' }
                 elseif (-not $Group.mailEnabled -and $Group.securityEnabled) { 'Security' }

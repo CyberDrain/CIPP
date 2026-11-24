@@ -36,9 +36,18 @@ function Set-CIPPDBCacheRoles {
             Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message 'Fetching role members' -sev Debug
             $MemberResults = New-GraphBulkRequest -Requests @($MemberRequests) -tenantid $TenantFilter
 
+            # A failed or partial member read throws before anything is written, so the old cached rows stay
+            $MembersByRoleId = @{}
+            foreach ($Result in $MemberResults) {
+                if (($Result.status -as [int]) -ge 400 -or $Result.PagingIncomplete) {
+                    throw "Member request for role $($Result.id) failed: $($Result.body.error.message ?? $Result.PagingError ?? $Result.status)"
+                }
+                $MembersByRoleId[[string]$Result.id] = $Result.body.value
+            }
+
             # Add members to each role object
             $RolesWithMembers = foreach ($Role in $Roles) {
-                $Members = ($MemberResults | Where-Object { $_.id -eq $Role.id }).body.value
+                $Members = $MembersByRoleId[[string]$Role.id]
                 [PSCustomObject]@{
                     id             = $Role.id
                     displayName    = $Role.displayName

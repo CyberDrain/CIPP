@@ -20,6 +20,7 @@ BeforeAll {
     function Convert-AzureAdObjectIdToSid { param($ObjectID) }
     function Get-NormalizedError { param($Message) $Message }
     function New-ExoRequest { param($tenantid, $cmdlet, $cmdParams, $Select, $useSystemMailbox) }
+    function Resolve-CIPPDirectoryId { param($Identity, $TenantFilter) }
 
     $EndpointPath = Join-Path $RepoRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Identity/Administration/Groups/Invoke-ListGroups.ps1'
     # The response stub is declared inside the endpoint script so the type binds at parse time;
@@ -187,5 +188,50 @@ Describe 'Invoke-ListGroups send permissions for one group' {
 
         $response.StatusCode | Should -Be 200
         $response.Body.groupInfo.displayName | Should -Be 'All Office'
+    }
+}
+
+Describe 'Invoke-ListGroups owners of a distribution list' {
+    BeforeEach {
+        Mock -CommandName Convert-AzureAdObjectIdToSid -MockWith { 'S-1-12-1' }
+        Mock -CommandName New-GraphBulkRequest -MockWith {
+            @(
+                [pscustomobject]@{ id = 1; body = [pscustomobject]@{ id = 'group-guid'; displayName = 'All Office'; mail = 'all@contoso.com'; mailEnabled = $true; securityEnabled = $false; groupTypes = @() } }
+                if ($Requests | Where-Object { $_.id -eq 3 }) {
+                    [pscustomobject]@{ id = 3; body = [pscustomobject]@{ value = @([pscustomobject]@{ id = '11111111-1111-1111-1111-111111111111'; displayName = 'Alice' }) } }
+                }
+            )
+        }
+        Mock -CommandName Resolve-CIPPDirectoryId -MockWith {
+            [pscustomobject]@{ Input = 'bob'; Id = '22222222-2222-2222-2222-222222222222'; DisplayName = 'Bob'; UserPrincipalName = 'bob@contoso.com'; Label = 'Bob'; Resolved = $true }
+            [pscustomobject]@{ Input = 'Legacy Admin'; Id = $null; DisplayName = $null; Label = 'Legacy Admin'; Resolved = $false }
+        }
+    }
+
+    It 'sends only GUIDs to getByIds and still lists the other ManagedBy entries' {
+        Mock -CommandName New-ExoRequest -MockWith {
+            [pscustomobject]@{ ManagedBy = @('11111111-1111-1111-1111-111111111111', 'bob', 'Legacy Admin') }
+        }
+        $response = Invoke-ListGroups -Request (New-GroupsRequest -Query @{
+                tenantFilter = 'contoso.com'; groupID = 'group-guid'; groupType = 'Distribution List'; owners = 'true'
+            }) -TriggerMetadata $null
+
+        $response.StatusCode | Should -Be 200
+        @($response.Body.owners.displayName) | Should -Be @('Alice', 'Bob', 'Legacy Admin')
+        Should -Invoke New-GraphBulkRequest -Times 1 -Exactly -ParameterFilter {
+            $Ids = @(($Requests | Where-Object { $_.id -eq 3 }).body.ids)
+            $Ids.Count -eq 1 -and $Ids[0] -eq '11111111-1111-1111-1111-111111111111'
+        }
+        Should -Invoke Resolve-CIPPDirectoryId -Times 1 -Exactly -ParameterFilter { @($Identity).Count -eq 2 -and $Identity -contains 'bob' }
+    }
+
+    It 'skips getByIds when no ManagedBy value is a GUID' {
+        Mock -CommandName New-ExoRequest -MockWith { [pscustomobject]@{ ManagedBy = @('bob') } }
+        $response = Invoke-ListGroups -Request (New-GroupsRequest -Query @{
+                tenantFilter = 'contoso.com'; groupID = 'group-guid'; groupType = 'Distribution List'; owners = 'true'
+            }) -TriggerMetadata $null
+
+        $response.StatusCode | Should -Be 200
+        Should -Invoke New-GraphBulkRequest -Times 1 -Exactly -ParameterFilter { -not ($Requests | Where-Object { $_.id -eq 3 }) }
     }
 }

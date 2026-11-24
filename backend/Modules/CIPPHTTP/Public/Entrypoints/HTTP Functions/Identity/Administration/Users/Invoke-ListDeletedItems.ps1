@@ -22,6 +22,7 @@ function Invoke-ListDeletedItems {
 
     $BulkResults = New-GraphBulkRequest -Requests @($Requests) -tenantid $TenantFilter
 
+    $Failed = [System.Collections.Generic.List[string]]::new()
     $GraphRequest = foreach ($Type in $Types) {
         # pretty format the type name
         $FormattedType = (Get-Culture).TextInfo.ToTitleCase(($Type -creplace '([A-Z])', ' $1').Trim())
@@ -32,11 +33,20 @@ function Invoke-ListDeletedItems {
                 $_ | Add-Member -NotePropertyName 'TargetType' -NotePropertyValue $FormattedType
                 $_
             }
+        } else {
+            $Failed.Add("$($FormattedType): $($Result.body.error.message ?? $Result.status ?? 'no response')")
         }
     }
 
+    # Some types failing still returns the rest (207); all failing is an error, not an empty list
+    $StatusCode = Get-CippBulkStatusCode -Total $Types.Count -Failed $Failed.Count
+    if ($Failed.Count -gt 0) {
+        Write-LogMessage -API 'ListDeletedItems' -tenant $TenantFilter -message "Could not list deleted $($Failed -join '; ')" -sev Warning
+    }
+    if ($Failed.Count -eq $Types.Count) { $GraphRequest = "Could not list deleted items: $($Failed -join '; ')" }
+
     return ([HttpResponseContext]@{
-            StatusCode = [HttpStatusCode]::OK
+            StatusCode = $StatusCode
             Body       = @($GraphRequest)
         })
 }

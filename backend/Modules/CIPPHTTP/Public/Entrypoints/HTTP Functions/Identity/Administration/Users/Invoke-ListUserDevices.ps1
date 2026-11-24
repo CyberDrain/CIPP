@@ -42,12 +42,14 @@ Function Invoke-ListUserDevices {
         @{ Name = 'operatingSystemVersion'; Expression = { $_.'operatingSystemVersion' } },
         @{ Name = 'trustType'; Expression = { $_.'trustType' } },
         @{ Name = 'EPMID'; Expression = { $(Get-EPMID -deviceID $_.'deviceId' -EPMDevices $EPMDevices) } }
+        $StatusCode = [HttpStatusCode]::OK
     } catch {
-        $GraphRequest = @()
+        $GraphRequest = Get-NormalizedError -Message $_.Exception.Message
+        $StatusCode = Get-CippErrorStatusCode -ErrorRecord $_
     }
 
     return ([HttpResponseContext]@{
-            StatusCode = [HttpStatusCode]::OK
+            StatusCode = $StatusCode
             Body       = @($GraphRequest)
         })
 

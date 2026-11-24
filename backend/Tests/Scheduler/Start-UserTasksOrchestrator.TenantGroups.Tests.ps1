@@ -338,6 +338,47 @@ Describe 'Start-UserTasksOrchestrator tenant scope resolution' {
         Should -Invoke -CommandName Expand-CIPPTenantGroups -Times 0
     }
 
+    Context 'a stored tenant value that is not the current default domain' {
+        # Picker values are domains, and a tenant's default domain can change after the task is
+        # saved, so stored values match on customerId, default domain or initial domain.
+        BeforeEach {
+            Mock -CommandName Get-Tenants -MockWith {
+                @(
+                    [pscustomobject]@{ defaultDomainName = 'a.com'; initialDomainName = 'a.onmicrosoft.com'; customerId = 'cust-a' }
+                    [pscustomobject]@{ defaultDomainName = 'b.com'; initialDomainName = 'b.onmicrosoft.com'; customerId = 'cust-b' }
+                    [pscustomobject]@{ defaultDomainName = 'c.com'; initialDomainName = 'c.onmicrosoft.com'; customerId = 'cust-c' }
+                )
+            }
+        }
+
+        It 'still excludes a tenant stored as <Stored>' -ForEach @(
+            @{ Stored = 'b.onmicrosoft.com' }
+            @{ Stored = 'cust-b' }
+            @{ Stored = 'B.COM' }
+        ) {
+            Mock -CommandName Get-CIPPAzDataTableEntity -MockWith { New-TaskRow @{ excludedTenants = "a.com,$Stored" } }
+
+            Start-UserTasksOrchestrator
+
+            Get-ScopedTenants | Should -Be @('c.com')
+        }
+
+        It 'still selects a tenant stored by its initial domain' {
+            Mock -CommandName Get-CIPPAzDataTableEntity -MockWith {
+                New-TaskRow @{
+                    Tenants                = (ConvertTo-Json -Compress -Depth 5 -InputObject @(
+                            [pscustomobject]@{ value = 'b.onmicrosoft.com'; label = 'B'; type = 'Tenant' }
+                            [pscustomobject]@{ value = 'cust-c'; label = 'C'; type = 'Tenant' }))
+                    TenantSelectionVersion = 2
+                }
+            }
+
+            Start-UserTasksOrchestrator
+
+            Get-ScopedTenants | Should -Be @('b.com', 'c.com')
+        }
+    }
+
     It 'fans out to an AllTenants task that stored no selection' {
         Mock -CommandName Get-CIPPAzDataTableEntity -MockWith {
             New-TaskRow @{ excludedTenants = 'd.onmicrosoft.com' }

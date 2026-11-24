@@ -150,7 +150,9 @@ function Start-UserTasksOrchestrator {
                     $TargetTenants = if ($Expanded.value -contains 'AllTenants') {
                         $TenantList
                     } else {
-                        @($TenantList | Where-Object { $_.defaultDomainName -in $Expanded.value })
+                        # Stored values are picker domains (or ids), and a default domain can change: match all three
+                        $Selected = @($Expanded.value | Where-Object { $_ })
+                        @($TenantList | Where-Object { $_.customerId -in $Selected -or $_.defaultDomainName -in $Selected -or $_.initialDomainName -in $Selected })
                     }
                     $ResolvedScope = $true
                 } elseif ($task.Tenant -eq 'AllTenants') {
@@ -188,7 +190,8 @@ function Start-UserTasksOrchestrator {
 
                 if ($ResolvedScope) {
                     Write-Information "Task $($task.Name): $(@($TargetTenants).Count) tenants in scope, $($ExcludedTenants.Count) excluded"
-                    $FanOutCommands = foreach ($Tenant in $TargetTenants | Where-Object { $_.defaultDomainName -notin $ExcludedTenants }) {
+                    $InScope = $TargetTenants | Where-Object { $_.customerId -notin $ExcludedTenants -and $_.defaultDomainName -notin $ExcludedTenants -and $_.initialDomainName -notin $ExcludedTenants }
+                    $FanOutCommands = foreach ($Tenant in $InScope) {
                         $NewParams = $task.Parameters.Clone()
                         if ($HasTenantFilter) {
                             # TenantFilter always carries the execution tenant context; it is stripped

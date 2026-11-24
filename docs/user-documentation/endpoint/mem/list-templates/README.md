@@ -22,6 +22,8 @@ Opens a drawer for adding templates to CIPP, with two sources to choose between.
 
 **From a Tenant** captures an existing policy from one of your tenants as a template. Select a tenant, then search its policies by name or description and import the one you want.
 
+To refresh a template after the policy changed in the tenant, turn on **Replace the template with the same name**: the template is updated in place, keeping its package, instead of a second copy being added. Turn on **Keep the variables added to that template** as well to keep any `%variables%` you put in it: each setting that held a variable keeps it, and every other setting takes the tenant's current value. If a setting holding a variable is gone from the policy, the result lists that variable. When two templates have the same name, nothing is saved; rename one first. The same options appear on **Create template based on policy** on the policy lists.
+
 </details>
 
 {% @storylane/embed subdomain="app" url="https://app.storylane.io/share/939rpjvy23oy" linkValue="939rpjvy23oy" %}

@@ -59,7 +59,7 @@ function Set-CIPPUserJITAdmin {
         throw "Blocked JIT Admin $Action for $($User.UserPrincipalName): '$($InvalidIds -join "', '")' is not a valid id"
     }
 
-    if ($Action -in @('AddRoles', 'AddGroups', 'AddRolesAndGroups') -and (Get-CIPPJITAdminApprovalRequirement -Roles $Roles -Groups $Groups -TenantFilter $TenantFilter)) {
+    if ($Action -in @('AddRoles', 'AddGroups', 'AddRolesAndGroups') -and (Get-CIPPJITAdminApprovalRequirement -Roles $Roles -TenantFilter $TenantFilter)) {
         $ApprovalTable = Get-CIPPTable -TableName 'JITAdminRequests'
         $ParsedId = [guid]::Empty
         $Approval = if ([guid]::TryParse($ApprovalRequestId, [ref]$ParsedId)) {

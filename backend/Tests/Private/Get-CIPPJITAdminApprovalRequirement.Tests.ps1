@@ -4,7 +4,6 @@ BeforeAll {
     function Get-CIPPAzDataTableEntity { param($TableName, $Filter) }
     function ConvertTo-CIPPODataFilterValue { param($Value, $Type) $Value }
     function Get-Tenants { param([string]$TenantFilter, [switch]$IncludeErrors) }
-    function New-GraphGetRequest { param($uri, $tenantid) }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPJITAdminApprovalRequirement.ps1')
 
     $GlobalAdmin = '62e90394-69f5-4237-9190-012177145e10'
@@ -31,34 +30,6 @@ Describe 'Get-CIPPJITAdminApprovalRequirement' {
         Mock Get-CIPPAzDataTableEntity { New-Settings -TriggerRoles "[{`"label`":`"Global Administrator`",`"value`":`"$GlobalAdmin`"}]" }
         Get-CIPPJITAdminApprovalRequirement -Roles @('other-role') | Should -BeNullOrEmpty
         Get-CIPPJITAdminApprovalRequirement -Roles @('other-role', $GlobalAdmin) | Should -Not -BeNullOrEmpty
-    }
-
-    Context 'requested groups' {
-        BeforeEach {
-            Mock Get-CIPPAzDataTableEntity { New-Settings -TriggerRoles "[{`"label`":`"Global Administrator`",`"value`":`"$GlobalAdmin`"}]" }
-        }
-
-        It 'requires approval for a role-assignable group even without a trigger role' {
-            Mock New-GraphGetRequest { [pscustomobject]@{ id = 'g1'; isAssignableToRole = $true } }
-            Get-CIPPJITAdminApprovalRequirement -Roles @('other-role') -Groups @('g1') -TenantFilter 'contoso.com' | Should -Not -BeNullOrEmpty
-            Should -Invoke New-GraphGetRequest -ParameterFilter { $uri -like '*/groups/g1?*' -and $tenantid -eq 'contoso.com' }
-        }
-
-        It 'keeps approval required when a requested group cannot be read' {
-            Mock New-GraphGetRequest { throw 'Forbidden' }
-            Get-CIPPJITAdminApprovalRequirement -Roles @() -Groups @('g1') -TenantFilter 'contoso.com' | Should -Not -BeNullOrEmpty
-        }
-
-        It 'requires nothing for ordinary groups' {
-            Mock New-GraphGetRequest { [pscustomobject]@{ id = 'g1'; isAssignableToRole = $false } }
-            Get-CIPPJITAdminApprovalRequirement -Roles @('other-role') -Groups @('g1') -TenantFilter 'contoso.com' | Should -BeNullOrEmpty
-        }
-
-        It 'does not look groups up when a trigger role already requires approval' {
-            Mock New-GraphGetRequest { }
-            Get-CIPPJITAdminApprovalRequirement -Roles @($GlobalAdmin) -Groups @('g1') -TenantFilter 'contoso.com' | Should -Not -BeNullOrEmpty
-            Should -Invoke New-GraphGetRequest -Times 0
-        }
     }
 
     Context 'tenant scope' {

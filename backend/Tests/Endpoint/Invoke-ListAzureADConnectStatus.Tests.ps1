@@ -54,4 +54,17 @@ Describe 'Invoke-ListAzureADConnectStatus objects in error' {
         $Response.StatusCode | Should -Be 500
         $Response.Body | Should -BeLike '*contacts: Insufficient privileges*'
     }
+
+    It 'returns an error when a later page fails instead of a partial list' {
+        Mock New-GraphBulkRequest {
+            @(
+                New-Item200 'users' @()
+                New-Item200 'contacts' @()
+                New-Item200 'groups' @() | Add-Member -NotePropertyMembers @{ PagingIncomplete = $true; PagingError = 'continuation page returned 429' } -PassThru
+            )
+        }
+        $Response = Invoke-ListAzureADConnectStatus -Request (New-AdcRequest) -TriggerMetadata $null
+        $Response.StatusCode | Should -Be 500
+        $Response.Body | Should -BeLike '*groups: continuation page returned 429*'
+    }
 }

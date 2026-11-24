@@ -62,10 +62,12 @@ Function Invoke-ListAzureADConnectStatus {
         )
 
         $Results = New-GraphBulkRequest -Requests $GraphRequest -tenantid $TenantFilter -verbose
-        # A failed sub-request would otherwise drop that object type from the report without a word
+        # A failed sub-request or later page would otherwise drop objects from the report without a word
         $FailedTypes = @(foreach ($Result in $Results) {
                 if (($Result.status -as [int]) -lt 200 -or ($Result.status -as [int]) -gt 299) {
                     '{0}: {1}' -f $Result.id, ($Result.body.error.message ?? "HTTP $($Result.status)")
+                } elseif ($Result.PagingIncomplete) {
+                    '{0}: {1}' -f $Result.id, ($Result.PagingError ?? 'a continuation page failed')
                 }
             })
         if ($FailedTypes.Count -gt 0) {

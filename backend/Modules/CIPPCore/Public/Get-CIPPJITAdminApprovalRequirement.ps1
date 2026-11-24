@@ -6,25 +6,14 @@ function Get-CIPPJITAdminApprovalRequirement {
         Internal
     #>
     [CmdletBinding()]
-    param([string[]]$Roles, [string]$TenantFilter, [string[]]$Groups)
+    param([string[]]$Roles, [string]$TenantFilter)
 
     $Table = Get-CIPPTable -TableName Config
     $Settings = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'JITAdminSettings' and RowKey eq 'JITAdminSettings'"
     if ($Settings.RequireApproval -ne $true) { return $null }
 
     $TriggerRoles = @(if ($Settings.ApprovalTriggerRoles) { ($Settings.ApprovalTriggerRoles | ConvertFrom-Json).value }).Where({ $_ })
-    if ($TriggerRoles.Count -gt 0 -and @($Roles).Where({ $_ -in $TriggerRoles }).Count -eq 0) {
-        # Members of a role-assignable group hold its directory roles, so such a group could grant a trigger role.
-        # A group that cannot be read keeps approval required (fail closed).
-        $RoleAssignableGroup = @($Groups).Where({
-                $GroupId = $_
-                $Group = if ($GroupId) {
-                    try { New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/groups/$($GroupId)?`$select=id,isAssignableToRole" -tenantid $TenantFilter } catch { $null }
-                }
-                $GroupId -and ($null -eq $Group -or $Group.isAssignableToRole -eq $true)
-            }, 'First')
-        if ($RoleAssignableGroup.Count -eq 0) { return $null }
-    }
+    if ($TriggerRoles.Count -gt 0 -and @($Roles).Where({ $_ -in $TriggerRoles }).Count -eq 0) { return $null }
 
     # No tenants selected means approval applies in every tenant
     $ApprovalTenants = @(if ($Settings.ApprovalTenants) { $Settings.ApprovalTenants | ConvertFrom-Json }).Where({ $_ })

@@ -44,11 +44,12 @@ The **Add Contacts** field is offered for every group type, but Entra ID only al
 
 Anything selected here is removed from the group when you save. The lists show only the group's current members, owners, and contacts.
 
-| Setting                          | Description                                                                                                                             |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Remove Members (Users or Groups) | Removes the selected users or groups from the group. Users are listed with their sign-in name, and nested groups with their group type. |
-| Remove Owners                    | Removes the selected users as owners.                                                                                                   |
-| Remove Contacts                  | Removes the selected mail contacts.                                                                                                     |
+| Setting                          | Description                                                                                                                                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Remove Members (Users or Groups) | Removes the selected users or groups from the group. Users are listed with their sign-in name, and nested groups with their group type. Other members, such as service principals, are listed with what they are.   |
+| Remove Owners                    | Removes the selected users as owners.                                                                                                                                                                               |
+| Remove Contacts                  | Removes the selected mail contacts.                                                                                                                                                                                 |
+| Remove Devices                   | Removes the selected devices. Devices are listed by name, with the operating system shown alongside where it is known. Not offered for Distribution List or Mail-Enabled Security groups, which cannot contain devices. |
 
 ## Send Permissions
 

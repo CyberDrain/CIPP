@@ -19,6 +19,8 @@ While an imported report is being viewed, each affected check is marked with an 
 
 Checks the account and application CIPP signs in with, and the permissions granted to that application. Select **Refresh** to run the check again without using cached results, or **Details** to open the Permission Details flyout with the full breakdown. The time of the last run is shown beside the buttons.
 
+The top of the card shows the account CIPP signed in as, its IP address, and, next to **App Registration**, a link that opens the CIPP-SAM application in the Azure portal. The link is still shown when the check cannot connect.
+
 The card lists each result with a tick, a warning, or a cross. When everything passes, the card ends with "No service account issues have been found. CIPP is ready for use."
 
 | Result                         | What a failure means and how to fix it                                                                                                                                                                                                                                                                         |
@@ -36,7 +38,7 @@ If the check cannot connect at all, the card reports the error returned and, whe
 
 ### Permission Details
 
-The Details flyout shows the account CIPP signed in as, its IP address, and a link to the CIPP-SAM application in the Azure portal. Below that, it shows only the sections that apply to the current results:
+The Details flyout shows only the sections that apply to the current results:
 
 | Section                                | Description                                                                                       |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -75,7 +77,7 @@ CIPP grants these permissions itself during its nightly permission update, signe
 
 If you would rather not give the service account that role, a Global Administrator can grant the permissions manually:
 
-1. Select the CIPP-SAM link next to **App Registration** in the Details flyout. It opens the application in the Azure portal.
+1. On the Permissions check card, select the CIPP-SAM link next to **App Registration**. It opens the application in the Azure portal.
 2. Go to **API permissions**. Add any permission listed in the Details flyout that is not shown, choosing **Microsoft Graph** and then Application or Delegated permissions to match the Type column.
 3. Select **Grant admin consent** for your tenant and confirm each permission shows as granted.
 4. After a few minutes, select **Refresh** on the Permissions check. Newly granted permissions can take a short while to appear.

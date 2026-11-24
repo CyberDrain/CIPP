@@ -45,6 +45,8 @@ A template with neither badge has not been imported. Cards are also outlined in 
 
 To import in bulk, tick the templates you want, or use the select-all checkbox to take everything currently matching your filters, then select **Import Selected**. The checkbox label shows how many are selected.
 
+An Intune or Conditional Access template imported here is a one-off copy. It is not listed as synced, it can be edited in CIPP, and a template library on the same repository does not overwrite it. Importing an update from this page replaces your edits with the published version. A template that a template library already syncs stays synced when you update it here.
+
 {% hint style="info" %}
 **Force re-import** overwrites a template you already hold with the published version, discarding any local changes you have made to it. Leave it off to skip templates that are already imported and up to date.
 {% endhint %}

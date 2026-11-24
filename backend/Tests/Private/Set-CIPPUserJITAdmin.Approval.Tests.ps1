@@ -2,7 +2,7 @@ BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
     function Get-CIPPTable { param($TableName) @{ TableName = $TableName } }
     function Get-CIPPAzDataTableEntity { param($TableName, $Filter) }
-    function Get-CIPPJITAdminApprovalRequirement { param($Roles, $TenantFilter) }
+    function Get-CIPPJITAdminApprovalRequirement { param($Roles, $TenantFilter, $Groups) }
     function Write-LogMessage { param($headers, $API, $tenant, $message, $Sev, $LogData) }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Functions/Test-IsGuid.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Set-CIPPUserJITAdmin.ps1')

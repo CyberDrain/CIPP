@@ -12,7 +12,7 @@ BeforeAll {
     function Add-CIPPScheduledTask { param($Task, $hidden, [switch]$RunNow) }
     function Set-CIPPUserJITAdmin { param($TenantFilter, $User, $Roles, $Groups, $Action, $Expiration, $StartDate, $Reason, $Headers, $APIName) }
     function Set-CIPPUserJITAdminProperties { param($TenantFilter, $UserId, $Expiration, $StartDate, $Reason, $CreatedBy) }
-    function Get-CIPPJITAdminApprovalRequirement { param($Roles, $TenantFilter) }
+    function Get-CIPPJITAdminApprovalRequirement { param($Roles, $TenantFilter, $Groups) }
     function Add-CIPPAzDataTableEntity { param($TableName, $Entity, [switch]$Force) }
     function Update-AzDataTableEntity { param($TableName, $Entity) }
     function Send-CIPPJITAdminApprovalNotification { param($ApprovalRequest, $Status, $Note, $Results) }
@@ -112,6 +112,15 @@ Describe 'Invoke-ExecJITAdmin approval' {
         Should -Invoke Add-CIPPScheduledTask -Times 1 -ParameterFilter {
             $RunNow -and $Task.Parameters.ApprovalRequestId -eq '11111111-1111-1111-1111-111111111111' -and $Task.Parameters.Roles -contains '62e90394-69f5-4237-9190-012177145e10'
         }
+    }
+
+    It 'passes the requested groups to the approval check' {
+        Mock Get-CIPPJITAdminApprovalRequirement { [pscustomobject]@{ ApproverRoles = @('admin'); RequiredApprovals = 1 } }
+        $Request = New-Request -StartOffsetSeconds 0
+        $Request.Body | Add-Member -NotePropertyName GroupMemberships -NotePropertyValue @([pscustomobject]@{ value = 'aaaaaaaa-0000-0000-0000-000000000001' })
+        $Response = Invoke-ExecJITAdmin -Request $Request -TriggerMetadata $null
+        $Response.Body.Results[0] | Should -BeLike '*submitted for approval*'
+        Should -Invoke Get-CIPPJITAdminApprovalRequirement -Times 1 -ParameterFilter { $Groups -contains 'aaaaaaaa-0000-0000-0000-000000000001' }
     }
 
     It 'refuses a request id that is not approved' {

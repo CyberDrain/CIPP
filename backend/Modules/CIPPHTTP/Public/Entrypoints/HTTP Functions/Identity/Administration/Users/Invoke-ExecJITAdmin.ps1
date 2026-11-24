@@ -133,7 +133,7 @@ function Invoke-ExecJITAdmin {
     }
 
     if (-not $ApprovalRequestId) {
-        $ApprovalRequirement = Get-CIPPJITAdminApprovalRequirement -Roles $RequestedRoles -TenantFilter $TenantFilter
+        $ApprovalRequirement = Get-CIPPJITAdminApprovalRequirement -Roles $RequestedRoles -Groups $RequestedGroups -TenantFilter $TenantFilter
         if ($ApprovalRequirement) {
             $CallingUser = ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Headers.'x-ms-client-principal')) | ConvertFrom-Json).userDetails
             $ApprovalRow = @{

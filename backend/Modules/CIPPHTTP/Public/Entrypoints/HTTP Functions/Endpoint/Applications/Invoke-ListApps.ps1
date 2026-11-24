@@ -55,8 +55,10 @@ function Invoke-ListApps {
         $BulkResults = New-GraphBulkRequest -Requests $BulkRequests -tenantid $TenantFilter
 
         # Extract groups for resolving assignment names
-        $Groups = ($BulkResults | Where-Object { $_.id -eq 'Groups' }).body.value
-        $Apps = ($BulkResults | Where-Object { $_.id -eq 'Apps' }).body.value
+        # A failed Groups read only costs the names: assignments then show the group id
+        $GroupNames = @{}
+        foreach ($Group in (Get-GraphBulkResultByID -Results $BulkResults -ID 'Groups' -Value)) { $GroupNames[[string]$Group.id] = $Group.displayName }
+        $Apps = Get-GraphBulkResultByID -Results $BulkResults -ID 'Apps' -Value -ThrowOnError
 
         $GraphRequest = foreach ($App in $Apps) {
             # Process assignments
@@ -73,11 +75,11 @@ function Invoke-ListApps {
                         '#microsoft.graph.allDevicesAssignmentTarget' { $AppAssignment.Add("All Devices$intentSuffix") }
                         '#microsoft.graph.allLicensedUsersAssignmentTarget' { $AppAssignment.Add("All Licensed Users$intentSuffix") }
                         '#microsoft.graph.groupAssignmentTarget' {
-                            $groupName = ($Groups | Where-Object { $_.id -eq $target.groupId }).displayName
+                            $groupName = $GroupNames[[string]$target.groupId] ?? $target.groupId
                             if ($groupName) { $AppAssignment.Add("$groupName$intentSuffix") }
                         }
                         '#microsoft.graph.exclusionGroupAssignmentTarget' {
-                            $groupName = ($Groups | Where-Object { $_.id -eq $target.groupId }).displayName
+                            $groupName = $GroupNames[[string]$target.groupId] ?? $target.groupId
                             if ($groupName) { $AppExclude.Add("$groupName$intentSuffix") }
                         }
                     }

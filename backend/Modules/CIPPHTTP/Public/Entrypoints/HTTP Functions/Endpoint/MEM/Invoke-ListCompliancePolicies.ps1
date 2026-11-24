@@ -55,8 +55,10 @@ function Invoke-ListCompliancePolicies {
         $BulkResults = New-GraphBulkRequest -Requests $BulkRequests -tenantid $TenantFilter
 
         # Extract results
-        $Groups = ($BulkResults | Where-Object { $_.id -eq 'Groups' }).body.value
-        $Policies = ($BulkResults | Where-Object { $_.id -eq 'CompliancePolicies' }).body.value
+        # A failed Groups read only costs the names: assignments then show the group id
+        $GroupNames = @{}
+        foreach ($Group in (Get-GraphBulkResultByID -Results $BulkResults -ID 'Groups' -Value)) { $GroupNames[[string]$Group.id] = $Group.displayName }
+        $Policies = Get-GraphBulkResultByID -Results $BulkResults -ID 'CompliancePolicies' -Value -ThrowOnError
 
         $GraphRequest = [System.Collections.Generic.List[object]]::new()
 
@@ -86,11 +88,11 @@ function Invoke-ListCompliancePolicies {
                         '#microsoft.graph.allDevicesAssignmentTarget' { $PolicyAssignment.Add('All Devices') }
                         '#microsoft.graph.allLicensedUsersAssignmentTarget' { $PolicyAssignment.Add('All Licensed Users') }
                         '#microsoft.graph.groupAssignmentTarget' {
-                            $groupName = ($Groups | Where-Object { $_.id -eq $target.groupId }).displayName
+                            $groupName = $GroupNames[[string]$target.groupId] ?? $target.groupId
                             if ($groupName) { $PolicyAssignment.Add($groupName) }
                         }
                         '#microsoft.graph.exclusionGroupAssignmentTarget' {
-                            $groupName = ($Groups | Where-Object { $_.id -eq $target.groupId }).displayName
+                            $groupName = $GroupNames[[string]$target.groupId] ?? $target.groupId
                             if ($groupName) { $PolicyExclude.Add($groupName) }
                         }
                     }

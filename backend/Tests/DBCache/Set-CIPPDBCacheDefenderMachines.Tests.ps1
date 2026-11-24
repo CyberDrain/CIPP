@@ -91,7 +91,7 @@ Describe 'Set-CIPPDBCacheDefenderMachines' {
     }
 
     It 'caches the inventory for a Plan 1-only tenant without calling the antivirus API' {
-        Mock Get-CIPPTenantCapabilities { [pscustomobject]@{ DEFENDER_ENDPOINT_P1 = $true } }
+        Mock Get-CIPPTenantCapabilities { [pscustomobject]@{ MDE_LITE = $true } }
         $script:Pages[$script:AvUri] = 'Forbidden'
         Set-CIPPDBCacheDefenderMachines -TenantFilter 'contoso.com'
         $script:Calls | Should -Be @($script:MachinesUri)
@@ -100,7 +100,7 @@ Describe 'Set-CIPPDBCacheDefenderMachines' {
     }
 
     It 'joins antivirus health by machine id, keeps unmatched devices and drops the NIC list' {
-        Mock Get-CIPPTenantCapabilities { [pscustomobject]@{ DEFENDER_ENDPOINT_P1 = $true; WIN_DEF_ATP = $true } }
+        Mock Get-CIPPTenantCapabilities { [pscustomobject]@{ MDE_LITE = $true; WINDEFATP = $true } }
         Set-Page $script:MachinesUri @((New-Machine 'm1'), (New-Machine 'm2'))
         Set-Page $script:AvUri @((New-Av 'm1' -Signature 'False'))
         Set-CIPPDBCacheDefenderMachines -TenantFilter 'contoso.com'

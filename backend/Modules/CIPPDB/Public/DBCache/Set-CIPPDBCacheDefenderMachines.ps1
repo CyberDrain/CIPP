@@ -23,7 +23,7 @@ function Set-CIPPDBCacheDefenderMachines {
         $AvModes = @('Active', 'Passive', 'Disabled', 'Other', 'EDR Blocked', 'Passive Audit')
         $AvByMachine = @{}
         $Capabilities = Get-CIPPTenantCapabilities -TenantFilter $TenantFilter -ErrorAction Stop
-        $Plan1Only = $Capabilities.DEFENDER_ENDPOINT_P1 -and -not ($Capabilities.WIN_DEF_ATP -or $Capabilities.MDE_SMB)
+        $Plan1Only = $Capabilities.MDE_LITE -and -not ($Capabilities.WINDEFATP -or $Capabilities.MDE_SMB)
 
         if (-not $Plan1Only) {
             New-GraphGetRequest -uri 'https://api.securitycenter.microsoft.com/api/deviceavinfo?$top=10000' -tenantid $TenantFilter -scope $Scope -AsApp $true -Stream | & { process {

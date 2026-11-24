@@ -15,6 +15,9 @@ function Invoke-ListSharePointExternalUsers {
         Each row also carries SiteAccess: one entry per site with the site user ID and the
         site-level guest expiration (UserExpiration from the site's User Information List),
         for use with ExecSPOGuestAccess (Extend / Expire on a single site).
+
+        Sites that could not be enumerated or read are listed in Metadata.Warnings and the status is
+        207, since guests on them are missing from the list.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
@@ -29,6 +32,9 @@ function Invoke-ListSharePointExternalUsers {
         return $Value
     }
 
+    # Sources that could not be read; returned as Metadata.Warnings with a 207 so a partial list
+    # (and a full removal built from it) is not mistaken for a complete one.
+    $Warnings = [System.Collections.Generic.List[string]]::new()
     try {
         # --- Source 1: tenant external users store ---
         try {
@@ -51,19 +57,21 @@ function Invoke-ListSharePointExternalUsers {
             }
         } | ConvertTo-Json -Depth 5 -Compress
         $SiteGuests = @{}
+        $SkippedSites = [System.Collections.Generic.List[string]]::new()
         try {
             # NB: getAllSites returns an empty set when $select is combined with this $filter.
             $Sites = @((New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/sites/getAllSites?`$filter=isPersonalSite eq false&`$top=999" -tenantid $TenantFilter -AsApp $true).webUrl) | Where-Object { $_ }
         } catch {
             $Sites = @()
-            Write-Information "Site enumeration failed; external users report is store-only: $($_.Exception.Message)"
+            $Warnings.Add("Could not enumerate SharePoint sites, so site memberships are missing and guests who are only site members are not listed: $($_.Exception.Message)")
         }
 
         foreach ($SiteUrl in $Sites) {
             try {
                 $Users = New-GraphGetRequest -uri "$($SiteUrl.TrimEnd('/'))/_api/web/siteusers?`$select=Id,Title,Email,LoginName,IsShareByEmailGuestUser,IsEmailAuthenticationGuestUser" -tenantid $TenantFilter -scope $Scope -extraHeaders $JsonAccept -UseCertificate -AsApp $true
             } catch {
-                continue # sites the app cannot reach (locked etc.) are skipped
+                $SkippedSites.Add($SiteUrl) # sites the app cannot reach (locked etc.)
+                continue
             }
 
             $SiteGuestUsers = @($Users | Where-Object { [bool]$_.IsShareByEmailGuestUser -or [bool]$_.IsEmailAuthenticationGuestUser -or $_.LoginName -match '(?i)#ext#|urn%3aspo%3aguest' })
@@ -104,6 +112,10 @@ function Invoke-ListSharePointExternalUsers {
             }
         }
 
+        if ($SkippedSites.Count -gt 0) {
+            $Warnings.Add("Could not read the user list of $($SkippedSites.Count) site(s), so guests on them are not listed and a full removal does not touch them: $($SkippedSites -join ', ')")
+        }
+
         # --- Entra guest sweep for the join ---
         $EntraGuests = @()
         if ($StoreUsers.Count -gt 0 -or $SiteGuests.Count -gt 0) {
@@ -120,14 +132,32 @@ function Invoke-ListSharePointExternalUsers {
             if ($Guest.mail) { $GuestsByMail[$Guest.mail.ToLower()] = $Guest }
         }
 
+        # Guests converted to Member, and cross-tenant synced users, keep their #EXT# UPN but are
+        # userType Member, so the guest sweep misses them. Graph cannot filter on '#EXT#' inside the
+        # UPN, so members are swept once, and only when a guest lookup misses.
+        $ExtMemberSweep = @{ Done = $false }
+
         function Resolve-GuestClassification($LoginName, $AcceptedAs, $InvitedAs) {
             if ("$LoginName" -match '(?i)urn(%3a|:)spo(%3a|:)guest') {
                 return @('SharePoint-only (email authenticated)', $null)
             }
             $ClaimsUpn = ("$LoginName" -split '\|')[-1].ToLower()
-            $EntraUser = $GuestsByUpn[$ClaimsUpn]
-            if (-not $EntraUser -and $AcceptedAs) { $EntraUser = $GuestsByMail[([string]$AcceptedAs).ToLower()] }
-            if (-not $EntraUser -and $InvitedAs) { $EntraUser = $GuestsByMail[([string]$InvitedAs).ToLower()] }
+            foreach ($Pass in 1..2) {
+                $EntraUser = $GuestsByUpn[$ClaimsUpn]
+                if (-not $EntraUser -and $AcceptedAs) { $EntraUser = $GuestsByMail[([string]$AcceptedAs).ToLower()] }
+                if (-not $EntraUser -and $InvitedAs) { $EntraUser = $GuestsByMail[([string]$InvitedAs).ToLower()] }
+                if ($EntraUser -or $ExtMemberSweep.Done) { break }
+                $ExtMemberSweep.Done = $true
+                try {
+                    foreach ($Member in New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/users?`$filter=userType eq 'Member'&`$select=id,userPrincipalName,mail&`$top=999" -tenantid $TenantFilter -AsApp $true) {
+                        if ([string]$Member.userPrincipalName -notlike '*#EXT#*') { continue }
+                        $GuestsByUpn[$Member.userPrincipalName.ToLower()] = $Member
+                        if ($Member.mail) { $GuestsByMail[$Member.mail.ToLower()] = $Member }
+                    }
+                } catch {
+                    $Warnings.Add("Could not list Entra members with external (#EXT#) accounts, so converted or cross-tenant synced guests may show as Orphaned B2B: $($_.Exception.Message)")
+                }
+            }
             if ($EntraUser) { return @('Entra B2B', $EntraUser) }
             return @('Orphaned B2B (not in Entra)', $null)
         }
@@ -203,7 +233,7 @@ function Invoke-ListSharePointExternalUsers {
         }
 
         $Body = @($Rows)
-        $StatusCode = [HttpStatusCode]::OK
+        $StatusCode = if ($Warnings.Count -gt 0) { [HttpStatusCode]::MultiStatus } else { [HttpStatusCode]::OK }
     } catch {
         $ErrorMessage = Get-CippException -Exception $_
         $Body = "Failed to list SharePoint external users: $($ErrorMessage.NormalizedError)"
@@ -212,6 +242,6 @@ function Invoke-ListSharePointExternalUsers {
 
     return ([HttpResponseContext]@{
             StatusCode = $StatusCode
-            Body       = @{ 'Results' = $Body }
+            Body       = @{ 'Results' = $Body; 'Metadata' = @{ 'Warnings' = @($Warnings) } }
         })
 }

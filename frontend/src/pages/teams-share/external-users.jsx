@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useIsFetching, useQueryClient } from '@tanstack/react-query'
 import {
+  Alert,
   Box,
   Divider,
   IconButton,
@@ -177,6 +179,11 @@ const Page = () => {
   const canWriteSite = checkPermissions(['Sharepoint.Site.ReadWrite'])
   // Explicit, tenant-scoped key so the per-site dialogs can refresh this table after a change.
   const queryKey = `SharePoint External Users - ${tenantFilter}`
+  // Sources the endpoint could not read (sites it could not enumerate or open). Read off the
+  // table's own query; useIsFetching re-renders the page when that query settles.
+  const queryClient = useQueryClient()
+  useIsFetching({ queryKey: [queryKey] })
+  const warnings = queryClient.getQueryData([queryKey])?.pages?.[0]?.Metadata?.Warnings ?? []
 
   const actions = [
     {
@@ -254,6 +261,13 @@ const Page = () => {
       apiUrl="/api/ListSharePointExternalUsers"
       apiDataKey="Results"
       queryKey={queryKey}
+      tableFilter={
+        warnings.length > 0 && (
+          <Alert severity="warning">
+            The list may be incomplete. {warnings.join(' ')}
+          </Alert>
+        )
+      }
       actions={actions}
       offCanvas={offCanvas}
       filters={filters}

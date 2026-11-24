@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import { useIsFetching, useQueryClient } from '@tanstack/react-query'
 import {
-  Alert,
   Box,
   Divider,
   IconButton,
@@ -179,11 +177,6 @@ const Page = () => {
   const canWriteSite = checkPermissions(['Sharepoint.Site.ReadWrite'])
   // Explicit, tenant-scoped key so the per-site dialogs can refresh this table after a change.
   const queryKey = `SharePoint External Users - ${tenantFilter}`
-  // Sources the endpoint could not read (sites it could not enumerate or open). Read off the
-  // table's own query; useIsFetching re-renders the page when that query settles.
-  const queryClient = useQueryClient()
-  useIsFetching({ queryKey: [queryKey] })
-  const warnings = queryClient.getQueryData([queryKey])?.pages?.[0]?.Metadata?.Warnings ?? []
 
   const actions = [
     {
@@ -204,7 +197,7 @@ const Page = () => {
         return Array.isArray(row) ? row.map(formatRow) : formatRow(row)
       },
       confirmText:
-        "Fully remove guest access for [DisplayName]? This deletes their Entra guest account (if one exists) AND removes them from every site listed in the Sites column, so nothing is left orphaned. To remove them from a single site only, open the guest's details and use Remove on that site instead. Sharing links they hold can be revoked from the Sharing Report; the inert SharePoint store entry ages out on its own.",
+        "Fully remove guest access for [DisplayName]? This deletes their Entra guest account (if one exists) AND removes them from every site listed in the Sites column, so nothing is left orphaned. An external account set up as a member (cross-tenant sync, or a guest converted to member) is only removed from the sites: its Entra account is kept. To remove them from a single site only, open the guest's details and use Remove on that site instead. Sharing links they hold can be revoked from the Sharing Report; the inert SharePoint store entry ages out on its own.",
       color: 'error',
       condition: (row) =>
         canWriteSite && (row.InEntra || (row.Sites ?? []).length > 0),
@@ -261,13 +254,6 @@ const Page = () => {
       apiUrl="/api/ListSharePointExternalUsers"
       apiDataKey="Results"
       queryKey={queryKey}
-      tableFilter={
-        warnings.length > 0 && (
-          <Alert severity="warning">
-            The list may be incomplete. {warnings.join(' ')}
-          </Alert>
-        )
-      }
       actions={actions}
       offCanvas={offCanvas}
       filters={filters}

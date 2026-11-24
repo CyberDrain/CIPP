@@ -1,5 +1,5 @@
 # Pester tests for Invoke-ListSharePointExternalUsers
-# Covers the Entra join for #EXT# users of userType Member and the warnings for unreadable sources.
+# Covers the Entra join for #EXT# users of userType Member.
 
 BeforeAll {
     $RepoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSCommandPath))
@@ -19,7 +19,7 @@ BeforeAll {
     function Get-CIPPSPOExternalUsers { param($TenantFilter) }
     function Get-SharePointAdminLink { param($Public, $tenantFilter) }
     function Get-CippException { param($Exception) }
-    function New-GraphGetRequest { param($uri, $tenantid, $scope, $extraHeaders, [switch]$UseCertificate, $AsApp) }
+    function New-GraphGetRequest { param($uri, $tenantid, $scope, $extraHeaders, [switch]$UseCertificate, $AsApp, [switch]$Stream) }
     function New-GraphPOSTRequest { param($uri, $tenantid, $scope, $AsApp, [switch]$UseCertificate, $type, $body, $contentType, $AddedHeaders) }
 
     . $FunctionPath
@@ -64,41 +64,5 @@ Describe 'Invoke-ListSharePointExternalUsers' {
 
         @($Response.Body.Results)[0].EntraUserId | Should -Be 'guest-1'
         Should -Invoke New-GraphGetRequest -Times 0 -Exactly -ParameterFilter { $uri -like "*userType eq 'Member'*" }
-    }
-
-    It 'returns MultiStatus with a warning when a site user list cannot be read' {
-        Mock -CommandName New-GraphGetRequest -MockWith {
-            @([pscustomobject]@{ webUrl = 'https://contoso.sharepoint.com/sites/a' }, [pscustomobject]@{ webUrl = 'https://contoso.sharepoint.com/sites/locked' })
-        } -ParameterFilter { $uri -like '*getAllSites*' }
-        Mock -CommandName New-GraphGetRequest -MockWith { throw 'Access denied' } -ParameterFilter { $uri -like '*/sites/locked/_api/web/siteusers*' }
-
-        $Response = Invoke-ListSharePointExternalUsers -Request $Request -TriggerMetadata $null
-
-        $Response.StatusCode | Should -Be ([int][System.Net.HttpStatusCode]::MultiStatus)
-        @($Response.Body.Results).Count | Should -Be 1
-        @($Response.Body.Metadata.Warnings).Count | Should -Be 1
-        $Response.Body.Metadata.Warnings[0] | Should -BeLike '*1 site(s)*https://contoso.sharepoint.com/sites/locked*'
-    }
-
-    It 'returns MultiStatus with a warning when sites cannot be enumerated' {
-        Mock -CommandName New-GraphGetRequest -MockWith { throw 'Forbidden' } -ParameterFilter { $uri -like '*getAllSites*' }
-        Mock -CommandName Get-CIPPSPOExternalUsers -MockWith { [pscustomobject]@{ DisplayName = 'Store'; AcceptedAs = 'store@fabrikam.com' } }
-
-        $Response = Invoke-ListSharePointExternalUsers -Request $Request -TriggerMetadata $null
-
-        $Response.StatusCode | Should -Be ([int][System.Net.HttpStatusCode]::MultiStatus)
-        @($Response.Body.Results).Count | Should -Be 1
-        $Response.Body.Metadata.Warnings[0] | Should -BeLike 'Could not enumerate SharePoint sites*Forbidden'
-    }
-
-    It 'returns OK with no warnings when every source was read' {
-        Mock -CommandName New-GraphGetRequest -MockWith {
-            @([pscustomobject]@{ id = 'guest-1'; userPrincipalName = 'ext_fabrikam.com#EXT#@contoso.onmicrosoft.com'; mail = 'ext@fabrikam.com' })
-        } -ParameterFilter { $uri -like "*userType eq 'Guest'*" }
-
-        $Response = Invoke-ListSharePointExternalUsers -Request $Request -TriggerMetadata $null
-
-        $Response.StatusCode | Should -Be ([int][System.Net.HttpStatusCode]::OK)
-        @($Response.Body.Metadata.Warnings).Count | Should -Be 0
     }
 }

@@ -42,6 +42,12 @@ function Invoke-ExecRemoveSPOExternalUser {
             }
         }
 
+        # A Member-type external account (cross-tenant sync, converted guest) is never deleted.
+        $IsMember = $EntraUser -and $EntraUser.userType -ne 'Guest'
+        if ($IsMember -and $SiteUrls.Count -eq 0) {
+            return ([HttpResponseContext]@{ StatusCode = [HttpStatusCode]::BadRequest; Body = @{ 'Results' = "Nothing to remove for $($DisplayName): this is a member account (cross-tenant sync or a converted guest), which is not deleted, and it has no known site memberships. Manage the account in Entra ID." } })
+        }
+
         # 1. Strip the SharePoint footprint first (needs the login; falls back to the Entra UPN).
         if ($SiteUrls.Count -gt 0) {
             $RemovalLogin = $LoginName ?? $EntraUser.userPrincipalName
@@ -56,12 +62,8 @@ function Invoke-ExecRemoveSPOExternalUser {
             }
         }
 
-        # 2. Delete the Entra guest account so the user cannot sign in anywhere. A Member-type external
-        # account is a deliberate setup (cross-tenant sync, converted guest) and is left alone.
-        $IsMember = $EntraUser -and $EntraUser.userType -ne 'Guest'
-        if ($IsMember) {
-            $Messages.Add('Not deleted in Entra: this is a member account (cross-tenant sync or a converted guest); manage it in Entra ID if it should go.')
-        } elseif ($EntraUser) {
+        # 2. Delete the Entra guest account so the user cannot sign in anywhere.
+        if ($EntraUser -and -not $IsMember) {
             try {
                 $null = New-GraphPostRequest -uri "https://graph.microsoft.com/v1.0/users/$EntraUserId" -tenantid $TenantFilter -type DELETE -body '' -asapp $true
                 $Messages.Add('Deleted the Entra guest account, blocking their sign-in.')
@@ -73,13 +75,10 @@ function Invoke-ExecRemoveSPOExternalUser {
         if ($Messages.Count -eq 0) {
             throw ($Errors -join ' ')
         }
-        if ($EntraUser -and -not $IsMember) {
-            $Results = "Removed guest access for $($DisplayName): $($Messages -join ' ')"
-        } elseif ($EntraUserId) {
-            $Results = "Removed site access for $($DisplayName): $($Messages -join ' ')"
+        if ($IsMember) {
+            $Results = "Removed site access for $($DisplayName): $($Messages -join ' ') The Entra account was not deleted: it is a member account (cross-tenant sync or a converted guest); manage it in Entra ID if it should go."
         } else {
-            # No Entra account was matched, so nothing was deleted there: say so rather than claim a full removal.
-            $Results = "Removed site access for $($DisplayName): $($Messages -join ' ') No Entra account is linked to this entry, so none was deleted; if one exists, delete it in Entra ID."
+            $Results = "Removed guest access for $($DisplayName): $($Messages -join ' ')"
         }
         if ($Errors.Count -gt 0) {
             $Results += " Issues: $($Errors -join '; ')"

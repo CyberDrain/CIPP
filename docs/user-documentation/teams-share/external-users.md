@@ -5,7 +5,7 @@ This page lists the external and guest users that SharePoint knows about in the 
 For every site a guest belongs to, the page also shows when their access to that site expires under SharePoint's guest expiration policy, and lets you extend or remove their access one site at a time without touching their Entra account or their other sites.
 
 {% hint style="info" %}
-The **Guest Type** column tells you what each entry really is. **Entra B2B** is a normal guest with a live Entra account. **Orphaned B2B (not in Entra)** means the Entra guest account has been deleted but SharePoint still holds a reference to them. **SharePoint-only (email authenticated)** is a legacy email-authenticated guest that never had an Entra account at all.
+The **Guest Type** column tells you what each entry really is. **Entra B2B** is an external user with a live Entra account: usually a guest, but also external accounts set up as members (cross-tenant sync, or guests converted to members). **Orphaned B2B (not in Entra)** means the Entra guest account has been deleted but SharePoint still holds a reference to them. **SharePoint-only (email authenticated)** is a legacy email-authenticated guest that never had an Entra account at all.
 {% endhint %}
 
 ## Filters
@@ -14,7 +14,7 @@ The **Guest Type** column tells you what each entry really is. **Entra B2B** is 
 | --------------- | ------------------------------------------------------------------------ |
 | SharePoint-only | Only legacy email-authenticated guests that never had an Entra account.  |
 | Orphaned B2B    | Only guests whose Entra account has been deleted.                        |
-| Entra B2B       | Only guests backed by a live Entra guest account.                        |
+| Entra B2B       | Only external users backed by a live Entra account.                      |
 
 ## Table Details
 
@@ -23,7 +23,7 @@ The **Guest Type** column tells you what each entry really is. **Entra B2B** is 
 | Display Name    | The name SharePoint holds for the guest.                                                                                                                          |
 | Accepted As     | The email address the guest actually accepted the invitation with, which is not always the address they were invited on.                                           |
 | Guest Type      | How the guest is classified against Entra: Entra B2B, Orphaned B2B (not in Entra), or SharePoint-only (email authenticated).                                       |
-| In Entra        | Whether a live Entra guest account was found for this person.                                                                                                      |
+| In Entra        | Whether a live Entra account (guest, or external member) was found for this person.                                                                                |
 | Source          | Where the entry was found: the tenant's external users store, or membership of a site.                                                                             |
 | Sites           | The sites the guest holds membership of. Blank when they have redeemed a share but hold no site membership.                                                        |
 | Next Expiration | The soonest date on which the guest's access to any of their sites expires. Sort by this column to find guests about to lose access. Blank when none of their sites has an expiry set. |
@@ -32,7 +32,7 @@ The **Guest Type** column tells you what each entry really is. **Entra B2B** is 
 
 ## Table Actions
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Remove Guest Access (All Sites + Entra)</td><td>Fully removes external access for the selected guest. Deletes their Entra guest account, if one exists, and removes them from every site listed in the <strong>Sites</strong> column, so nothing is left orphaned. You are asked to confirm first. To remove a guest from a single site only, use <strong>Remove from this site</strong> under <a href="#site-access">Site Access</a> instead. Any sharing links they hold are revoked separately from <a data-mention href="reports/sharing-report.md">sharing-report.md</a>, and the leftover SharePoint store entry ages out on its own. Greyed out unless you have SharePoint site write access and the guest either has an Entra account or holds membership of at least one site.</td><td>true</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Remove Guest Access (All Sites + Entra)</td><td>Fully removes external access for the selected guest. Deletes their Entra guest account, if one exists, and removes them from every site listed in the <strong>Sites</strong> column, so nothing is left orphaned. An external account set up as a member (cross-tenant sync, or a guest converted to member) is only removed from the sites: its Entra account is kept, and the action is refused when such an account has no site memberships. You are asked to confirm first. To remove a guest from a single site only, use <strong>Remove from this site</strong> under <a href="#site-access">Site Access</a> instead. Any sharing links they hold are revoked separately from <a data-mention href="reports/sharing-report.md">sharing-report.md</a>, and the leftover SharePoint store entry ages out on its own. Greyed out unless you have SharePoint site write access and the guest either has an Entra account or holds membership of at least one site.</td><td>true</td></tr></tbody></table>
 
 ## Site Access
 

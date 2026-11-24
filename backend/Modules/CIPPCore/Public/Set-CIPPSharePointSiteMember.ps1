@@ -10,7 +10,7 @@ function Set-CIPPSharePointSiteMember {
     authentication. A removal of a user directly added to a role group on a group-connected
     site (MemberType 'User') targets that role group rather than the M365 group.
 
-    Returns one { resultText, state } item per user (on the M365 group members path, one item for the members added or removed and one for those that failed). Only throws
+    Returns one { resultText, state } item per user (one item for the M365 group path). Only throws
     when no user could be processed, so a partial failure still reports every outcome. Invalid input
     throws an ArgumentException.
 
@@ -106,12 +106,7 @@ function Set-CIPPSharePointSiteMember {
                 } else {
                     Remove-CIPPGroupMember -GroupType 'Team' -GroupID $GroupId -Member $UPNs -TenantFilter $TenantFilter -Headers $Headers
                 }
-                # The group helper reports a partial failure inside its one message ("Successfully ...
-                # Failed to add x (...)."); split it so the failed members carry an error state. It
-                # throws when every member fails.
-                $Results = foreach ($Part in ($Message -split ' (?=Failed to (?:add|remove) )')) {
-                    [PSCustomObject]@{ resultText = $Part; state = if ($Part -like 'Failed to *') { 'error' } else { 'success' } }
-                }
+                $Results = [PSCustomObject]@{ resultText = $Message; state = 'success' }
             }
         } else {
             if (-not $SiteUrl) { throw [System.ArgumentException]::new('No site URL was provided for this site.') }

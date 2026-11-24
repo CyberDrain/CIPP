@@ -394,6 +394,11 @@ export const nativeMenuItems = [
             permissions: ['Security.Defender.*'],
           },
           {
+            title: 'Defender Indicators',
+            path: '/security/defender/indicators',
+            permissions: ['Security.Defender.*'],
+          },
+          {
             title: 'Defender Deployment',
             path: '/security/defender/deployment',
             permissions: ['Security.Alert.*'],

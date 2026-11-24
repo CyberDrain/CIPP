@@ -211,4 +211,11 @@ export const CippTranslations = {
   avIsEngineUpToDate: 'Engine Up To Date',
   avIsPlatformUpToDate: 'Platform Up To Date',
   avSignatureUpdateTime: 'Signatures Updated',
+  indicatorValue: 'Indicator',
+  indicatorType: 'Indicator Type',
+  createdByDisplayName: 'Created By',
+  creationTimeDateTimeUtc: 'Created',
+  rbacGroupNames: 'Device Groups',
+  rbacGroupIds: 'Device Group IDs',
+  expirationTime: 'Expires',
 }

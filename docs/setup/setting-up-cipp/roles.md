@@ -196,6 +196,10 @@ If AllTenants is selected, you can block a subset of tenants or tenant groups us
 {% endhint %}
 
 {% hint style="warning" %}
+To use a tenant group, a role without unrestricted tenant access must name that group in **Allowed Tenants**. This covers picking the group in the tenant selector and assigning standards, alerts or scheduled tasks to it. Selecting `AllTenants`, or adding each of the group's tenants one by one, does not count. A named group is still refused if any of its tenants is in **Blocked Tenants**. See [#tenant-groups-in-a-custom-role](../resources/how-cipp-evaluates-roles.md#tenant-groups-in-a-custom-role "mention").
+{% endhint %}
+
+{% hint style="warning" %}
 A handful of estate-wide operations are refused outright to a role that does not have unrestricted tenant access, meaning **Allowed Tenants** left as `AllTenants` with nothing in **Blocked Tenants**. These are adding a tenant through the Setup Wizard, creating, editing and deleting custom data mappings, saving an integration's tenant or field mapping, and creating, editing, deleting or re-running the rules of a tenant group. A restricted role can still open these pages, but is refused at the point it tries to save.
 {% endhint %}
 {% endstep %}

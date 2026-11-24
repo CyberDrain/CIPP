@@ -2,7 +2,7 @@ name: Update OpenAPI Spec
 
 # Regenerates backend/Config/openapi.json (and the public frontend/public/openapi.json
 # copy) from the HTTP entrypoint AST with build/tools/build-openapi.ps1, and opens a PR
-# against dev when the committed spec has drifted. openapi_spec.yml already fails a PR
+# against dev when the committed spec has drifted. openapi_spec.yml already fails the release PR to main
 # when the spec drifts; this is the counterpart that produces the fix instead of only
 # reporting it. Requires "Allow GitHub Actions to create and approve pull requests" in
 # the repository's Actions settings.

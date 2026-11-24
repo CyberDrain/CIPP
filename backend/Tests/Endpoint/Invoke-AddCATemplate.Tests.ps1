@@ -7,10 +7,10 @@ BeforeAll {
 
     function New-CIPPCATemplate { param($TenantFilter, $JSON) }
     function Get-CippTable { param($tablename) @{ Context = 'templates' } }
-    function Add-CIPPAzDataTableEntity { param($Context, $Entity, $Force) }
+    function Add-CIPPAzDataTableEntity { [CmdletBinding()] param($Context, $Entity, [switch]$Force) }
     function Write-LogMessage { param($headers, $API, $tenant, $message, $Sev, $LogData) }
     function Get-CippException { param($Exception) [pscustomobject]@{ NormalizedError = "$Exception" } }
-    function Get-CIPPAzDataTableEntity { param($Context, $Filter) $script:Stored }
+    function Get-CIPPAzDataTableEntity { [CmdletBinding()] param($Context, $Filter) $script:Stored }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CippErrorStatusCode.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Merge-CIPPTemplateVariable.ps1')
     . (Join-Path $RepoRoot 'Modules/CIPPHTTP/Public/Entrypoints/HTTP Functions/Tenant/Conditional/Invoke-AddCATemplate.ps1')

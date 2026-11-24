@@ -62,7 +62,6 @@ function Invoke-AddIntuneTemplate {
             $templateJson = if ($reusableResult.RawJSON) { $reusableResult.RawJSON } else { $Template.TemplateJson }
 
             $Table = Get-CippTable -tablename 'templates'
-            $Table.Force = $true
             # Replace the template with this policy's name instead of adding another one.
             $Replaced = $null
             $Dropped = [System.Collections.Generic.HashSet[string]]::new()
@@ -104,7 +103,7 @@ function Invoke-AddIntuneTemplate {
                 PartitionKey = 'IntuneTemplate'
             }
             if ($Replaced.Row.Package) { $Entity.Package = $Replaced.Row.Package }
-            Add-CIPPAzDataTableEntity @Table -Entity $Entity
+            Add-CIPPAzDataTableEntity @Table -Entity $Entity -Force
             Write-LogMessage -headers $Headers -API $APIName -tenant 'Global' -message "$(if ($Replaced) { 'Updated' } else { 'Created' }) intune policy template $($Template.DisplayName) with GUID $GUID using an original policy from a tenant" -Sev 'Info'
 
             $Result = if ($Replaced) { "Updated template '$($Template.DisplayName)'" } else { 'Successfully added template' }

@@ -14,12 +14,11 @@ Function Invoke-AddCATemplate {
 
     # Interact with query parameters or the body of the request.
     $TenantFilter = $Request.Body.tenantFilter
-    $Name = $Request.Body.name
+    $Name = $Request.Body.name ?? $Request.Body.displayName
     try {
         $GUID = (New-Guid).GUID
         $JSON = New-CIPPCATemplate -TenantFilter $TenantFilter -JSON ([pscustomobject]$Request.Body | Select-Object * -ExcludeProperty ReplaceExisting, KeepVariables)
         $Table = Get-CippTable -tablename 'templates'
-        $Table.Force = $true
         # Replace the template with this policy's name instead of adding another one.
         $Replaced = $null
         $Dropped = [System.Collections.Generic.HashSet[string]]::new()
@@ -48,7 +47,7 @@ Function Invoke-AddCATemplate {
             GUID         = "$GUID"
         }
         if ($Replaced.Row.Package) { $Entity.Package = $Replaced.Row.Package }
-        Add-CIPPAzDataTableEntity @Table -Entity $Entity
+        Add-CIPPAzDataTableEntity @Table -Entity $Entity -Force
         $Result = if ($Replaced) { "Updated CA Template $($Name) with GUID $GUID" } else { "Created CA Template $($Name) with GUID $GUID" }
         $ProfileRef = ($JSON | ConvertFrom-Json).sessionControls.globalSecureAccessFilteringProfile.profileId
         $Warnings = @(

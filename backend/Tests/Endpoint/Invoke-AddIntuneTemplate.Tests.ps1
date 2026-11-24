@@ -11,8 +11,8 @@ BeforeAll {
     function Get-CIPPReusableSettingsFromPolicy { param($PolicyJson, $Tenant, $Headers, $APIName) @{ ReusableSettings = @() } }
     function Test-CIPPIntuneTemplate { param($RawJSON, $TemplateType, $DisplayName) @{ IsValid = $true } }
     function Get-CippTable { param($tablename) @{ Context = 'templates' } }
-    function Get-CIPPAzDataTableEntity { param($Context, $Filter) $script:Stored }
-    function Add-CIPPAzDataTableEntity { param($Context, $Entity, $Force) }
+    function Get-CIPPAzDataTableEntity { [CmdletBinding()] param($Context, $Filter) $script:Stored }
+    function Add-CIPPAzDataTableEntity { [CmdletBinding()] param($Context, $Entity, [switch]$Force) }
     function Write-LogMessage { param($headers, $API, $tenant, $message, $Sev, $LogData) }
     function Get-CippException { param($Exception) [pscustomobject]@{ NormalizedError = "$Exception" } }
     . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CippErrorStatusCode.ps1')

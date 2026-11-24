@@ -20,6 +20,7 @@ BeforeAll {
     function Invoke-CIPPOffboardingJob { param($TenantFilter, $Username) }
 
     . $FunctionPath
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPTenantLookup.ps1')
 
     function New-TaskRow {
         param([string]$State, [int]$MinutesAgo = 5)

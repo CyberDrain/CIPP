@@ -317,7 +317,7 @@ function Add-CIPPScheduledTask {
             }
 
             if ($task.Trigger) {
-                $entity.Trigger = [string]($task.Trigger | ConvertTo-Json -Compress)
+                $entity.Trigger = [string]($task.Trigger | ConvertTo-Json -Compress -Depth 10)
                 $TriggerType = $task.Trigger.Type.value ?? $task.Trigger.Type
                 if ($TriggerType -eq 'DeltaQuery') {
                     $Resource = $task.Trigger.DeltaResource.value ?? $task.Trigger.DeltaResource

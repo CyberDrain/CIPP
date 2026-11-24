@@ -110,24 +110,18 @@ function Test-DeltaQueryConditions {
         }
     }
 
-    if ($Trigger.UseConditions -eq $true -and ($Trigger.Conditions -or $Trigger.DeltaConditions)) {
+    if ($Trigger.UseConditions -eq $true -and $Trigger.DeltaConditions) {
         try {
-            $conditions = if ($Trigger.DeltaConditions) {
-                # The scheduler form saves {Property, Operator: {label, value}, Value}; map it to the
-                # {Property.label, Operator.value, Input.value} shape Test-CIPPConditionFilter reads
-                $DeltaConditions = $Trigger.DeltaConditions -is [string] ? ($Trigger.DeltaConditions | ConvertFrom-Json) : $Trigger.DeltaConditions
-                foreach ($DeltaCondition in @($DeltaConditions)) {
-                    [PSCustomObject]@{
-                        Property = [PSCustomObject]@{ label = $DeltaCondition.Property.label ?? $DeltaCondition.Property }
-                        Operator = [PSCustomObject]@{ label = $DeltaCondition.Operator.label ?? $DeltaCondition.Operator; value = $DeltaCondition.Operator.value ?? $DeltaCondition.Operator }
-                        Input    = [PSCustomObject]@{ value = $DeltaCondition.Value.value ?? $DeltaCondition.Value }
-                    }
+            # The scheduler form saves {Property, Operator: {label, value}, Value}; map it to the
+            # {Property.label, Operator.value, Input.value} shape Test-CIPPConditionFilter reads
+            $conditions = foreach ($DeltaCondition in @($Trigger.DeltaConditions)) {
+                if ($null -eq $DeltaCondition.Value -or $DeltaCondition.Value -eq '') { continue }
+                [PSCustomObject]@{
+                    Property = [PSCustomObject]@{ label = $DeltaCondition.Property }
+                    Operator = $DeltaCondition.Operator
+                    Input    = [PSCustomObject]@{ value = $DeltaCondition.Value }
                 }
-            } else {
-                # Parse conditions from JSON (similar to audit log processing)
-                $Trigger.Conditions | ConvertFrom-Json
             }
-            $conditions = $conditions | Where-Object { $_.Input.value -ne '' -and $null -ne $_.Input.value }
 
             if ($conditions) {
                 # Build human-readable clause for logging

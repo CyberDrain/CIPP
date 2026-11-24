@@ -40,6 +40,7 @@ function Start-UserTasksOrchestrator {
 
     $Batch = [System.Collections.Generic.List[object]]::new()
     $TenantList = Get-Tenants -IncludeErrors
+    $TenantLookup = Get-CIPPTenantLookup -Tenants $TenantList
     foreach ($task in $tasks) {
         $tenant = $task.Tenant
 
@@ -150,9 +151,8 @@ function Start-UserTasksOrchestrator {
                     $TargetTenants = if ($Expanded.value -contains 'AllTenants') {
                         $TenantList
                     } else {
-                        # Stored values are picker domains (or ids), and a default domain can change: match all three
-                        $Selected = @($Expanded.value | Where-Object { $_ })
-                        @($TenantList | Where-Object { $_.customerId -in $Selected -or $_.defaultDomainName -in $Selected -or $_.initialDomainName -in $Selected })
+                        $SelectedIds = @(foreach ($Value in $Expanded.value) { $TenantLookup["$Value"].customerId })
+                        @($TenantList | Where-Object { $_.customerId -in $SelectedIds })
                     }
                     $ResolvedScope = $true
                 } elseif ($task.Tenant -eq 'AllTenants') {
@@ -190,8 +190,8 @@ function Start-UserTasksOrchestrator {
 
                 if ($ResolvedScope) {
                     Write-Information "Task $($task.Name): $(@($TargetTenants).Count) tenants in scope, $($ExcludedTenants.Count) excluded"
-                    $InScope = $TargetTenants | Where-Object { $_.customerId -notin $ExcludedTenants -and $_.defaultDomainName -notin $ExcludedTenants -and $_.initialDomainName -notin $ExcludedTenants }
-                    $FanOutCommands = foreach ($Tenant in $InScope) {
+                    $ExcludedIds = @(foreach ($Value in $ExcludedTenants) { $TenantLookup["$Value"].customerId })
+                    $FanOutCommands = foreach ($Tenant in $TargetTenants | Where-Object { $_.customerId -notin $ExcludedIds }) {
                         $NewParams = $task.Parameters.Clone()
                         if ($HasTenantFilter) {
                             # TenantFilter always carries the execution tenant context; it is stripped

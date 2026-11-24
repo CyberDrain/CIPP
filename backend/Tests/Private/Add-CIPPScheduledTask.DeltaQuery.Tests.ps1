@@ -85,6 +85,19 @@ Describe 'Add-CIPPScheduledTask DeltaQuery trigger' {
         }
     }
 
+    Context 'A trigger with conditions' {
+        It 'reads back the operator it saved' {
+            $Task = New-DeltaTaskRequest
+            $Task.Trigger = '{"Type":"DeltaQuery","DeltaResource":"users","EventType":"updated","UseConditions":true,"DeltaConditions":[{"Property":"department","Operator":{"label":"Equals to","value":"eq"},"Value":"Sales"}]}' | ConvertFrom-Json
+
+            $null = Add-CIPPScheduledTask -Task $Task -hidden $true
+
+            $Saved = ($script:Persisted[0].Trigger | ConvertFrom-Json).DeltaConditions[0]
+            $Saved.Operator.value | Should -Be 'eq'
+            $Saved.Value | Should -Be 'Sales'
+        }
+    }
+
     Context 'The delta query cannot be created' {
         BeforeEach {
             Mock -CommandName New-CIPPTaskDeltaQuery -MockWith { throw 'Delta Query failed for tenant.' }

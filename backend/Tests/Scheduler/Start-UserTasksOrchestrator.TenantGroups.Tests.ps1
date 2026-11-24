@@ -30,6 +30,7 @@ BeforeAll {
     function Get-CIPPAlertFixture { param($TenantFilter, $Threshold) }
 
     . $FunctionPath
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/Get-CIPPTenantLookup.ps1')
 
     # Four managed tenants; group-1 holds a + b, group-2 holds c, group-excluded holds c.
     function New-TenantList {

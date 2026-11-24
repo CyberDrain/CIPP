@@ -1,6 +1,6 @@
 # Pester tests for Test-DeltaQueryConditions
 # The scheduler form saves conditions as Trigger.DeltaConditions ({Property, Operator: {label, value}, Value}),
-# but only the older Trigger.Conditions JSON shape was read, so every saved condition was ignored and any
+# but only Trigger.Conditions, which nothing writes, was read, so every saved condition was ignored and any
 # change fired the task. Also pins the Deleted event: Graph marks a soft delete @removed.reason 'changed'
 # and a permanent delete 'deleted', and only 'changed' was accepted.
 
@@ -75,18 +75,6 @@ Describe 'Test-DeltaQueryConditions' {
             }
 
             (Invoke-Test -Trigger $Trigger).MatchedItems | Should -Be 2
-        }
-    }
-
-    Context 'Legacy Conditions JSON' {
-        It 'still applies them' {
-            $Trigger = [pscustomobject]@{
-                EventType     = 'updated'
-                UseConditions = $true
-                Conditions    = '[{"Property":{"label":"displayName"},"Operator":{"label":"Equals to","value":"eq"},"Input":{"value":"Bob"}}]'
-            }
-
-            @((Invoke-Test -Trigger $Trigger).MatchedData).id | Should -Be @('u2')
         }
     }
 

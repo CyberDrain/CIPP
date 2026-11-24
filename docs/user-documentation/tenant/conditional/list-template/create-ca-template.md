@@ -191,6 +191,8 @@ A template deployed to a tenant is not linked to it afterwards. Editing the temp
 
 Any field in this editor accepts a variable, written as `%variablename%`, which is replaced with the target tenant's value each time the template is deployed. That is what lets one template cover an estate where the details differ per client, such as a site name or an office IP range.
 
+{% @storylane/embed subdomain="app" url="https://app.storylane.io/share/d2vn3jbbe0ny" linkValue="d2vn3jbbe0ny" %}
+
 Substitution happens before CIPP matches names in the target tenant, so a named location, authentication strength, or authentication context whose name is built from a variable is matched to the existing object of that name rather than created again on every deployment. Because the whole template is substituted at once, a variable used in a **Named Locations** display name resolves to the same value where it is referenced under **Include Locations** or **Exclude Locations**, so write the reference with the same variable text rather than a resolved value.
 
 Values are set for every tenant in [global-variables.md](../../administration/tenants/global-variables.md "mention"), or for one tenant in the Custom Variables box on [edit.md](../../manage/edit.md "mention"), where the tenant's own value wins.

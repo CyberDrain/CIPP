@@ -33,39 +33,49 @@ function Test-DeltaQueryConditions {
     switch ($EventType) {
         'deleted' {
             Write-Information "data to process for deleted: $($Data | ConvertTo-Json -Depth 5)"
-            # Removed instances are represented by their id and an @removed object
+            # Removed instances are represented by their id and an @removed object. Graph sets reason 'changed'
+            # for a soft delete (restorable, still in directory/deletedItems) and 'deleted' for a permanent one.
+            # Resources with a recycle bin report the soft delete first, so their later purge ('deleted') would fire
+            # the trigger twice. A 'deleted' group row carries only its id, so a security group's permanent delete
+            # can't be told apart from an M365 group's purge and stays unmatched.
+            $Resource = $Trigger.DeltaResource.value ?? $Trigger.DeltaResource
+            $SoftDeletable = @('users', 'groups', 'applications', 'servicePrincipals', 'administrativeUnits', 'directoryObjects')
+            $AcceptedReasons = $Resource -in $SoftDeletable ? @('changed') : @('changed', 'deleted')
             $Data = $Data | Where-Object {
-                $_.PSObject.Properties.Name -contains '@removed' -and $_.'@removed'.reason -eq 'changed'
+                $_.PSObject.Properties.Name -contains '@removed' -and $_.'@removed'.reason -in $AcceptedReasons
             }
 
-            # For directory objects, fetch full details of deleted items
+            # For soft-deleted directory objects, fetch full details from deletedItems
             Write-Information 'Fetching full details for deleted directory objects.'
 
             $Requests = foreach ($item in $Data) {
+                if ($item.'@removed'.reason -ne 'changed') { continue }
                 [PSCustomObject]@{
                     'id'     = $item.id
                     'url'    = "directory/deletedItems/$($item.id)"
                     'method' = 'GET'
                 }
             }
-            try {
-                $DeletedItems = New-GraphBulkRequest -Requests @($Requests) -tenantid $TenantFilter
-                if ($DeletedItems.status -eq 200) {
-                    Write-Information 'Retrieved full details for deleted items.'
-                    Write-Information "Deleted items response: $($DeletedItems | ConvertTo-Json -Depth 5)"
-                    $EnrichedData = [System.Collections.Generic.List[object]]::new()
-                    foreach ($Row in $Data) {
-                        $fullItem = ($DeletedItems | Where-Object { $_.id -eq $Row.id -and $_.status -eq 200 }).body
-                        if ($fullItem) {
-                            $EnrichedData.Add($fullItem)
-                        } else {
-                            $EnrichedData.Add($Row)
+            if ($Requests) {
+                try {
+                    $DeletedItems = New-GraphBulkRequest -Requests @($Requests) -tenantid $TenantFilter
+                    if ($DeletedItems.status -eq 200) {
+                        Write-Information 'Retrieved full details for deleted items.'
+                        Write-Information "Deleted items response: $($DeletedItems | ConvertTo-Json -Depth 5)"
+                        $EnrichedData = [System.Collections.Generic.List[object]]::new()
+                        foreach ($Row in $Data) {
+                            $fullItem = ($DeletedItems | Where-Object { $_.id -eq $Row.id -and $_.status -eq 200 }).body
+                            if ($fullItem) {
+                                $EnrichedData.Add($fullItem)
+                            } else {
+                                $EnrichedData.Add($Row)
+                            }
                         }
+                        $Data = $EnrichedData
                     }
-                    $Data = $EnrichedData
+                } catch {
+                    Write-Warning "Failed to retrieve full details for deleted items: $($_.Exception.Message)"
                 }
-            } catch {
-                Write-Warning "Failed to retrieve full details for deleted items: $($_.Exception.Message)"
             }
 
             Write-Information "Found $($Data.Count) deleted items."
@@ -100,10 +110,24 @@ function Test-DeltaQueryConditions {
         }
     }
 
-    if ($Trigger.UseConditions -eq $true -and $Trigger.Conditions) {
+    if ($Trigger.UseConditions -eq $true -and ($Trigger.Conditions -or $Trigger.DeltaConditions)) {
         try {
-            # Parse conditions from JSON (similar to audit log processing)
-            $conditions = $Trigger.Conditions | ConvertFrom-Json | Where-Object { $_.Input.value -ne '' -and $null -ne $_.Input.value }
+            $conditions = if ($Trigger.DeltaConditions) {
+                # The scheduler form saves {Property, Operator: {label, value}, Value}; map it to the
+                # {Property.label, Operator.value, Input.value} shape Test-CIPPConditionFilter reads
+                $DeltaConditions = $Trigger.DeltaConditions -is [string] ? ($Trigger.DeltaConditions | ConvertFrom-Json) : $Trigger.DeltaConditions
+                foreach ($DeltaCondition in @($DeltaConditions)) {
+                    [PSCustomObject]@{
+                        Property = [PSCustomObject]@{ label = $DeltaCondition.Property.label ?? $DeltaCondition.Property }
+                        Operator = [PSCustomObject]@{ label = $DeltaCondition.Operator.label ?? $DeltaCondition.Operator; value = $DeltaCondition.Operator.value ?? $DeltaCondition.Operator }
+                        Input    = [PSCustomObject]@{ value = $DeltaCondition.Value.value ?? $DeltaCondition.Value }
+                    }
+                }
+            } else {
+                # Parse conditions from JSON (similar to audit log processing)
+                $Trigger.Conditions | ConvertFrom-Json
+            }
+            $conditions = $conditions | Where-Object { $_.Input.value -ne '' -and $null -ne $_.Input.value }
 
             if ($conditions) {
                 # Build human-readable clause for logging

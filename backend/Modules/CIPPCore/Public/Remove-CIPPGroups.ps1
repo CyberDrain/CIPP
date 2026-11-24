@@ -34,12 +34,12 @@ function Remove-CIPPGroups {
 
         $BulkGetResults = New-GraphBulkRequest -tenantid $TenantFilter -Requests @($BulkInfoRequests)
 
-        $UserInfo = ($BulkGetResults | Where-Object { $_.id -eq 'getUserID' }).body
-        if ($UserInfo) {
-            $UserID = $UserInfo.id
+        # A failed lookup throws to the catch below: read as empty, it reported "not a member of any groups"
+        if (-not $UserID) {
+            $UserID = (Get-GraphBulkResultByID -Results $BulkGetResults -ID 'getUserID' -ThrowOnError).id
         }
-        $AllGroups = ($BulkGetResults | Where-Object { $_.id -eq 'getAllGroups' }).body.value
-        $UserGroups = ($BulkGetResults | Where-Object { $_.id -eq 'getUserGroups' }).body.value
+        $AllGroups = Get-GraphBulkResultByID -Results $BulkGetResults -ID 'getAllGroups' -Value -ThrowOnError
+        $UserGroups = Get-GraphBulkResultByID -Results $BulkGetResults -ID 'getUserGroups' -Value -ThrowOnError
 
         #users/$($User.id)/memberOf/microsoft.graph.directoryRole
         if (-not $UserGroups) {
@@ -139,7 +139,8 @@ function Remove-CIPPGroups {
             }
         } catch {
             $ErrorMessage = Get-CippException -Exception $_
-            Write-Information "Error executing bulk Graph requests: $($ErrorMessage | ConvertTo-Json -Depth 5)"
+            Write-LogMessage -headers $Headers -API $APIName -message "Error executing Graph bulk requests: $($ErrorMessage.NormalizedError)" -Sev 'Error' -tenant $TenantFilter -LogData $ErrorMessage
+            $Results.Add("Error executing bulk Graph requests: $($ErrorMessage.NormalizedError)")
         }
     }
 

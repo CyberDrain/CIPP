@@ -34,6 +34,8 @@ BeforeAll {
     . $ErrorTextPath
 
     . $FunctionPath
+    # Real helper: its -ThrowOnError check is what turns a failed lookup into an error line.
+    . (Join-Path $RepoRoot 'Modules/CIPPCore/Public/GraphHelper/Get-GraphBulkResultByID.ps1')
 
     function New-Group {
         param(
@@ -270,6 +272,50 @@ Describe 'Remove-CIPPGroups' {
             $Result = Remove-CIPPGroups -Username 'sseck@contoso.com' -TenantFilter 'contoso.com'
 
             $Result | Should -BeLike 'Error preparing bulk group removal requests:*Graph unavailable*'
+        }
+    }
+
+    Context 'Failed lookups' {
+        It 'reports an error, not "not a member of any groups", when the membership read fails' {
+            Mock -CommandName New-GraphBulkRequest -MockWith {
+                @(
+                    [pscustomobject]@{ id = 'getUserID'; status = 200; body = [pscustomobject]@{ id = 'user-guid' } }
+                    [pscustomobject]@{ id = 'getAllGroups'; status = 200; body = [pscustomobject]@{ value = @() } }
+                    [pscustomobject]@{ id = 'getUserGroups'; status = 403; body = [pscustomobject]@{ error = [pscustomobject]@{ message = 'Insufficient privileges' } } }
+                )
+            } -ParameterFilter { $Requests.id -contains 'getAllGroups' }
+
+            $Result = Remove-CIPPGroups -Username 'sseck@contoso.com' -TenantFilter 'contoso.com'
+
+            $Result | Should -BeLike 'Error preparing bulk group removal requests:*Insufficient privileges*'
+            $Result | Should -Not -BeLike '*not a member of any groups*'
+        }
+
+        It 'does not route removals on an unread group list' {
+            Set-Groups -Groups @(New-Group -Id 'group-lic' -DisplayName 'SG-LIC-M365' -AssignedLicenses @([pscustomobject]@{ skuId = 'sku-1' }))
+            Mock -CommandName New-GraphBulkRequest -MockWith {
+                @(
+                    [pscustomobject]@{ id = 'getUserID'; status = 200; body = [pscustomobject]@{ id = 'user-guid' } }
+                    [pscustomobject]@{ id = 'getAllGroups'; status = 500; body = [pscustomobject]@{ error = [pscustomobject]@{ message = 'Internal error' } } }
+                    [pscustomobject]@{ id = 'getUserGroups'; status = 200; body = [pscustomobject]@{ value = @([pscustomobject]@{ id = 'group-lic' }) } }
+                )
+            } -ParameterFilter { $Requests.id -contains 'getAllGroups' }
+
+            $Result = Remove-CIPPGroups -Username 'sseck@contoso.com' -TenantFilter 'contoso.com'
+
+            # Without the group details the licence check reads false and the licence group would be removed.
+            Should -Invoke New-GraphBulkRequest -Times 0 -Exactly -ParameterFilter { $Requests.id -notcontains 'getAllGroups' }
+            $Result | Should -BeLike 'Error preparing*Internal error*'
+        }
+
+        It 'reports a failed Graph removal batch in the results' {
+            Set-Groups -Groups @(New-Group -Id 'group-sec' -DisplayName 'All-Users')
+            Mock -CommandName New-GraphBulkRequest -MockWith { throw 'Batch rejected' } -ParameterFilter { $Requests.id -notcontains 'getAllGroups' }
+
+            $Result = Remove-CIPPGroups -Username 'sseck@contoso.com' -TenantFilter 'contoso.com'
+
+            $Result | Should -Contain 'Error executing bulk Graph requests: Batch rejected'
+            Should -Invoke Write-LogMessage -ParameterFilter { $Sev -eq 'Error' -and $message -like '*Batch rejected*' }
         }
     }
 

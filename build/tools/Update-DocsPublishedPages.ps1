@@ -60,8 +60,8 @@ $Slugs = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::O
 foreach ($Line in ($Response.Content -split '\r?\n')) {
     if ($Line -match 'https://docs\.cipp\.app/([^\s)]+)') {
         $Slug = $Matches[1] -replace '\.md$', ''
-        # llms.txt also advertises the site's AI-ask URL template, which is not a page.
-        if ($Slug -match '[?#]') { continue }
+        # llms.txt also advertises the AI-ask URL template and GitBook's own ~gitbook pages, which are not docs.
+        if ($Slug -match '[?#]' -or $Slug.StartsWith('~')) { continue }
         $Slugs.Add($Slug) | Out-Null
     }
 }

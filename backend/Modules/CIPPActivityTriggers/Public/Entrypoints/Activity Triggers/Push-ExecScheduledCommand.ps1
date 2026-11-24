@@ -143,16 +143,19 @@ function Push-ExecScheduledCommand {
 
             if (-not $DeltaResults.ConditionsMet) {
                 Write-Information "Delta query conditions not met for tenant $Tenant. Skipping execution."
-                # update interval
-                $nextRunUnixTime = Get-CIPPScheduledTaskNextRun -Recurrence $task.Recurrence -ScheduledTime $task.ScheduledTime
-                $null = Update-AzDataTableEntity -Force @Table -Entity @{
-                    PartitionKey  = $task.PartitionKey
-                    RowKey        = $task.RowKey
-                    TaskState     = 'Planned'
-                    ScheduledTime = [string]$nextRunUnixTime
+                # Multi-tenant executions have their parent state and schedule managed by PostExecution
+                if (!$IsMultiTenantExecution) {
+                    $nextRunUnixTime = Get-CIPPScheduledTaskNextRun -Recurrence $task.Recurrence -ScheduledTime $task.ScheduledTime
+                    $null = Update-AzDataTableEntity -Force @Table -Entity @{
+                        PartitionKey  = $task.PartitionKey
+                        RowKey        = $task.RowKey
+                        TaskState     = 'Planned'
+                        ScheduledTime = [string]$nextRunUnixTime
+                    }
                 }
                 Remove-Variable -Name ScheduledTaskId -Scope Script -ErrorAction SilentlyContinue
-                return
+                # Push-ScheduledTaskPostExecution counts an empty result as a failed tenant.
+                return 'Task Skipped: delta query conditions not met.'
             }
         }
     } else {

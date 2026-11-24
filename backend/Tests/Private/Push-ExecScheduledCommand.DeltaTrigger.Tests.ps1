@@ -185,6 +185,29 @@ Describe 'Push-ExecScheduledCommand delta trigger' {
         }
     }
 
+    Context 'The trigger does not fire for one tenant of a multi-tenant task' {
+        # PostExecution owns the parent row and counts an empty result as a failed tenant, so a
+        # per-tenant "nothing changed" must not write the parent or return nothing.
+        It 'leaves the parent row to PostExecution and reports a skip, not a failure' {
+            $Task = New-DeltaTask
+            $Task.Tenant = 'AllTenants'
+            $script:Writes = [System.Collections.Generic.List[object]]::new()
+
+            $Result = Push-ExecScheduledCommand -Item ([pscustomobject]@{
+                    Command      = $Task.Command
+                    Parameters   = [pscustomobject]@{ TenantFilter = 'contoso.com'; UserID = 'user-1' }
+                    TaskInfo     = $Task
+                    FunctionName = 'ExecScheduledCommand'
+                })
+
+            $script:Writes | Should -HaveCount 0
+            $Result | Should -Not -BeNullOrEmpty
+            $Result | Should -Not -BeLike '*Failed*'
+            $Result | Should -Not -BeLike '*Error*'
+            Should -Invoke Clear-CIPPImmutableID -Times 0 -Exactly
+        }
+    }
+
     Context 'The trigger fires' {
         It 'completes an ExecutionMode once task so it never runs again' {
             Mock -CommandName Test-DeltaQueryConditions -MockWith { @{ ConditionsMet = $true; MatchedData = @() } }

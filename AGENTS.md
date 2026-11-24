@@ -167,7 +167,7 @@ four built-in roles lives in `backend/Config/cipp-roles.json`. Permission string
 entrypoint with the **PowerShell AST** and derives the request schema from what the code reads.
 It is committed, and it is **not documentation-only**: `Get-CippMcpSpec` loads it at runtime and
 `Get-CippMcpToolCatalog` projects every `.Read` operation in it into an MCP tool. A stale spec ships a
-stale tool contract. CI (`.github/workflows/openapi_spec.yml`) fails the PR if it drifts.
+stale tool contract. CI (`.github/workflows/openapi_spec.yml`) fails the dev → main release PR if it drifts.
 
 `tools/list` does not return all ~260 of them. `Get-CippMcpToolList` advertises a fixed five-tool gateway
 (`ListTenants`, `ListGraphRequest`, `SearchTools`, `GetToolInfo`, `ExecTool`) and the model reaches the rest by

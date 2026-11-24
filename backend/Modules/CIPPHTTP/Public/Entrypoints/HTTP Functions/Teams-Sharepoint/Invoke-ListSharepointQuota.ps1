@@ -74,7 +74,14 @@ Function Invoke-ListSharepointQuota {
         }
     } else {
         try {
-            $SharePointQuota = (Get-CIPPDbItem -tenantFilter $TenantFilter -Type SharePointUsageReport | Where-Object { $_.RowKey -notlike '*-Count' }).Data | ConvertFrom-Json
+            $CachedRows = @(Get-CIPPDbItem -tenantFilter $TenantFilter -Type SharePointUsageReport | Where-Object { $_.RowKey -notlike '*-Count' })
+            if ($CachedRows.Count -eq 0) {
+                return ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::NotFound
+                    Body       = @{ Results = "No SharePoint usage data cached for $TenantFilter. Sync the report data first." }
+                })
+            }
+            $SharePointQuota = $CachedRows.Data | ConvertFrom-Json
             $SharePointQuotaDetails = [PSCustomObject]@{
                 GeoUsedStorageMB = $SharePointQuota.GeoUsedStorageMB
                 GeoLocations     = @($SharePointQuota.GeoLocations)

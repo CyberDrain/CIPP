@@ -15,14 +15,20 @@ Function Invoke-AddCATemplate {
     # Interact with query parameters or the body of the request.
     $TenantFilter = $Request.Body.tenantFilter
     $Name = $Request.Body.name ?? $Request.Body.displayName
+    # Replace the template with this policy's name instead of adding another one.
+    $ReplaceExisting = $Request.Body.ReplaceExisting -eq $true
+    # Keep the %variables% added to the stored template where the policy still has those settings.
+    $KeepVariables = $Request.Body.KeepVariables -eq $true
+    # Options, not policy properties, so they stay out of the stored template
+    $null = $Request.Body.PSObject.Properties.Remove('ReplaceExisting')
+    $null = $Request.Body.PSObject.Properties.Remove('KeepVariables')
     try {
         $GUID = (New-Guid).GUID
-        $JSON = New-CIPPCATemplate -TenantFilter $TenantFilter -JSON ([pscustomobject]$Request.Body | Select-Object * -ExcludeProperty ReplaceExisting, KeepVariables)
+        $JSON = New-CIPPCATemplate -TenantFilter $TenantFilter -JSON $Request.Body
         $Table = Get-CippTable -tablename 'templates'
-        # Replace the template with this policy's name instead of adding another one.
         $Replaced = $null
         $Dropped = [System.Collections.Generic.HashSet[string]]::new()
-        if ($Request.Body.ReplaceExisting -eq $true) {
+        if ($ReplaceExisting) {
             $Captured = $JSON | ConvertFrom-Json -Depth 100
             $SameName = @(foreach ($Row in (Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'CATemplate'")) {
                     $Data = $(try { $Row.JSON | ConvertFrom-Json -Depth 100 } catch { $null })
@@ -34,8 +40,7 @@ Function Invoke-AddCATemplate {
             foreach ($Candidate in $SameName) { $Replaced = $Candidate }
             if ($Replaced) {
                 $GUID = $Replaced.Row.RowKey
-                # Keep the %variables% added to the stored template where the policy still has those settings.
-                if ($Request.Body.KeepVariables -eq $true) {
+                if ($KeepVariables) {
                     $JSON = ConvertTo-Json -InputObject (Merge-CIPPTemplateVariable -Existing $Replaced.Data -Captured $Captured -Dropped $Dropped) -Depth 100 -Compress
                 }
             }

@@ -62,9 +62,9 @@ function Invoke-AddIntuneTemplate {
             $templateJson = if ($reusableResult.RawJSON) { $reusableResult.RawJSON } else { $Template.TemplateJson }
 
             $Table = Get-CippTable -tablename 'templates'
-            # Replace the template with this policy's name instead of adding another one.
             $Replaced = $null
             $Dropped = [System.Collections.Generic.HashSet[string]]::new()
+            # Replace the template with this policy's name instead of adding another one.
             if ($Request.Body.ReplaceExisting -eq $true) {
                 $SameName = @(foreach ($Row in (Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'IntuneTemplate'")) {
                         $Data = $(try { $Row.JSON | ConvertFrom-Json -Depth 100 } catch { $null })

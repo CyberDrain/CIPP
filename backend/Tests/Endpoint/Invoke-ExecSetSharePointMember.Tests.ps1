@@ -127,6 +127,24 @@ Describe 'Invoke-ExecSetSharePointMember' {
         }
     }
 
+    It 'reports the failed members of a group-connected site as errors and returns MultiStatus' {
+        Mock -CommandName Add-CIPPGroupMember -MockWith { 'Successfully added a@contoso.com to group Site. Failed to add b@contoso.com (directory object not found).' }
+        $Request = New-TestRequest @{
+            tenantFilter = 'contoso.onmicrosoft.com'; Add = $true; Role = 'Members'; SharePointType = 'Group'
+            GroupID = '11111111-2222-3333-4444-555555555555'
+            user = @((New-UserOption 'a@contoso.com'), (New-UserOption 'b@contoso.com'))
+        }
+
+        $Response = Invoke-ExecSetSharePointMember -Request $Request -TriggerMetadata $null
+
+        $Response.StatusCode | Should -Be ([int][System.Net.HttpStatusCode]::MultiStatus)
+        @($Response.Body.Results).Count | Should -Be 2
+        $Response.Body.Results[0].resultText | Should -Be 'Successfully added a@contoso.com to group Site.'
+        $Response.Body.Results[0].state | Should -Be 'success'
+        $Response.Body.Results[1].resultText | Should -Be 'Failed to add b@contoso.com (directory object not found).'
+        $Response.Body.Results[1].state | Should -Be 'error'
+    }
+
     It 'asks the site for its backing group when no group is supplied' {
         Mock -CommandName New-GraphGetRequest -MockWith { [pscustomobject]@{ GroupId = '11111111-2222-3333-4444-555555555555' } } -ParameterFilter { $uri -like '*/_api/site?*' }
         $Request = New-TestRequest @{

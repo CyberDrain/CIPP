@@ -34,7 +34,7 @@ function Test-CIPPStandardLicense {
         [string[]]$RequiredCapabilities,
 
         [Parameter(Mandatory = $false)]
-        [ValidateSet('Exchange', 'SharePoint', 'Intune', 'Entra', 'EntraP2', 'PIM', 'Teams', 'Compliance', 'DefenderForOffice365', 'DefenderForEndpoint')]
+        [ValidateSet('Exchange', 'SharePoint', 'Intune', 'Entra', 'EntraP2', 'PIM', 'Teams', 'Compliance', 'DefenderForOffice365', 'DefenderForEndpoint', 'DefenderVulnerabilityManagement')]
         [string[]]$Preset,
 
         [Parameter(Mandatory = $false)]
@@ -60,6 +60,7 @@ function Test-CIPPStandardLicense {
             'ATP_ENTERPRISE', 'ATP_ENTERPRISE_GOV',
             'THREAT_INTELLIGENCE', 'THREAT_INTELLIGENCE_GOV'
         )
+        DefenderVulnerabilityManagement = @('WINDEFATP', 'MDE_SMB', 'TVM_PREMIUM_1')
     }
 
     if ((!$Preset -or $Preset.Count -eq 0) -and (!$RequiredCapabilities -or $RequiredCapabilities.Count -eq 0)) {

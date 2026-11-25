@@ -69,6 +69,17 @@ Describe 'Test-CIPPStandardLicense' {
         Test-CIPPStandardLicense -StandardName 'X' -TenantFilter 'contoso.com' -Preset EntraP2 -SkipLog | Should -BeFalse
     }
 
+    It 'gives <Plan> vulnerability management: <Expected>' -TestCases @(
+        @{ Plan = 'WINDEFATP'; Expected = $true }
+        @{ Plan = 'MDE_SMB'; Expected = $true }
+        @{ Plan = 'TVM_PREMIUM_1'; Expected = $true }
+        @{ Plan = 'MDE_LITE'; Expected = $false }
+    ) {
+        param($Plan, $Expected)
+        Set-TenantPlans @{ $Plan = 'Success' }
+        Test-CIPPStandardLicense -StandardName 'X' -TenantFilter 'contoso.com' -Preset DefenderVulnerabilityManagement -SkipLog | Should -Be $Expected
+    }
+
     It 'accepts a capability from either the preset or the explicit list' {
         Set-TenantPlans @{ CUSTOM_PLAN = 'Success' }
         Test-CIPPStandardLicense -StandardName 'X' -TenantFilter 'contoso.com' -Preset Entra -RequiredCapabilities 'CUSTOM_PLAN' | Should -BeTrue

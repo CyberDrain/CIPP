@@ -69,6 +69,28 @@ If a user holds more than one custom role, their granted permissions are **combi
 Tenant scope is evaluated **per custom role**, not pooled across them. For any single action, one custom role must grant **both** the required permission **and** access to the target tenant. A user cannot borrow the permission from one custom role and the tenant access from another.
 {% endhint %}
 
+### Tenant groups in a custom role
+
+A custom role without unrestricted tenant access, meaning anything other than **Allowed Tenants** set to `AllTenants` with nothing in **Blocked Tenants**, reaches a tenant group only when that group is named in its **Allowed Tenants**. This applies to picking the group in the tenant selector and to assigning standards, alerts or scheduled tasks to it. Editing a standards template that already targets a group the user's roles do not name is refused in the same way.
+
+* `AllTenants` alongside a list of blocked tenants does not cover any tenant group. Name each group the role needs.
+* Adding every tenant in a group to **Allowed Tenants** does not cover the group either. The group itself has to be listed.
+* A named group is refused if any of its tenants is in **Blocked Tenants** on the same role. Remove the overlap from one list or the other.
+* The tenant selector only lists the groups a user's roles name.
+
+As with single tenants, one custom role has to grant both the permission an action needs and the group.
+
+When a group is refused, the message says why:
+
+| Message | What to change |
+| ------- | -------------- |
+| Your roles don't include the tenant group '_name_'. Ask an admin to add it to one of your roles. | Add the group to **Allowed Tenants** on a custom role that also grants the permission. |
+| Your role '_role_' excludes a tenant in the tenant group '_name_'. | The role names the group, but one of the group's tenants is in its **Blocked Tenants**. |
+| You can view the tenant group '_name_' but not change it. | A role names the group, but only grants read access for this area. |
+| Your roles include the tenant group '_name_', but not the permission this action needs there. | The role that names the group does not grant this area at all. |
+| Your roles don't allow viewing a tenant group. Pick a tenant instead, or ask an admin to change your roles. | **Block tenant groups in the tenant selector** is switched on for the user's role. |
+| This view doesn't support tenant groups. Pick a tenant or All Tenants. | The page cannot show a tenant group. Pick a single tenant or All Tenants instead. No role change helps. |
+
 ### A tenant scope that resolves to no tenants
 
 A custom role's tenant scope can end up covering nothing at all. The usual causes are a role whose Allowed Tenants are all named again under Blocked Tenants, because a blocked tenant always wins over an allowed one, and a role scoped to a tenant group that currently resolves to no tenants. A user whose only custom roles have since been deleted ends up in the same position.

@@ -418,6 +418,7 @@
     * [Individual Domain Check](user-documentation/tools/tenant-tools/individual-domains.md)
     * [IP Database](user-documentation/tools/tenant-tools/geoiplookup.md)
     * [Compare CA Policies](user-documentation/tools/tenant-tools/compare-ca-policies.md)
+    * [Domain Migration](user-documentation/tools/tenant-tools/domain-migration.md)
   * [Email Tools](user-documentation/tools/email-tools/README.md)
     * [Message Trace](user-documentation/tools/email-tools/message-trace.md)
     * [Historical Search](user-documentation/tools/email-tools/historical-search.md)

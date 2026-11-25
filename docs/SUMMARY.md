@@ -112,6 +112,7 @@
         * [Edit JIT Role Template](user-documentation/identity/administration/jit-admin/role-templates/edit.md)
     * [Vacation Mode](user-documentation/identity/administration/vacation-mode/README.md)
       * [Add Vacation Schedule](user-documentation/identity/administration/vacation-mode/add-vacation-schedule.md)
+    * [Onboarding Wizard](user-documentation/identity/administration/onboarding-wizard.md)
     * [Offboarding Wizard](user-documentation/identity/administration/offboarding-wizard.md)
     * [Business Email Compromise](user-documentation/identity/administration/bec/README.md)
       * [Compromise Remediation](user-documentation/identity/administration/bec/case.md)

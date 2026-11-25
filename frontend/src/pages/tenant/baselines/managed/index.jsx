@@ -15,7 +15,7 @@ import {
 } from '@mui/material'
 import { Grid } from '@mui/system'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { Layout as DashboardLayout } from '../../../../layouts/index'
 import { TabbedLayout } from '../../../../layouts/TabbedLayout'
@@ -308,16 +308,13 @@ const requestActions = [
 const Page = () => {
   const pageTitle = 'Managed Baselines'
   const router = useRouter()
-  const [view, setView] = useState('templates')
+  const [chosenView, setView] = useState(null)
   // Deep link: ?view=custom or ?view=recommendations (query is empty until the router is ready).
-  useEffect(() => {
-    if (
-      router.isReady &&
-      ['custom', 'recommendations'].includes(router.query.view)
-    ) {
-      setView(router.query.view)
-    }
-  }, [router.isReady, router.query.view])
+  const linkedView =
+    router.isReady && ['custom', 'recommendations'].includes(router.query.view)
+      ? router.query.view
+      : 'templates'
+  const view = chosenView ?? linkedView
 
   const integrations = ApiGetCall({
     url: '/api/ListExtensionsConfig',

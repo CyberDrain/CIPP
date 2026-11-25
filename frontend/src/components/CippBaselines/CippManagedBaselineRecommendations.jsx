@@ -1,12 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Chip, Stack, Typography } from '@mui/material'
 import { useRouter } from 'next/router'
 import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
 import { CippApiResults } from '../CippComponents/CippApiResults'
@@ -33,11 +26,13 @@ const showValue = (value) =>
       ? JSON.stringify(value, null, 2)
       : String(value)
 
-const statusFilters = ['Recommended', 'Covered by a baseline'].map((status) => ({
-  filterName: status,
-  value: [{ id: 'status', value: status }],
-  type: 'column',
-}))
+const statusFilters = ['Recommended', 'Covered by a baseline'].map(
+  (status) => ({
+    filterName: status,
+    value: [{ id: 'status', value: status }],
+    type: 'column',
+  })
+)
 
 const boxSx = {
   p: 1.5,
@@ -142,6 +137,8 @@ export const CippManagedBaselineRecommendations = () => {
 
   const scan = list.data?.Metadata?.scan
   const running = scan?.status === 'Running'
+  const finished = formatDate(scan?.finishedDateTime)
+  const listError = list.isError ? getCippError(list.error) : null
   // The table re-syncs whenever its data or actions are new objects, so both keep their identity.
   const results = list.data?.Results
   const rows = useMemo(() => asArray(results), [results])
@@ -182,21 +179,19 @@ export const CippManagedBaselineRecommendations = () => {
         </Alert>
       )}
       {tenant && (
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-            <Button
-              variant="contained"
-              startIcon={<CippIcons.Search />}
-              disabled={!tenant || running || scanCall.isPending}
-              onClick={() => post(scanCall, { Action: 'Scan' })}
-            >
-              {running ? `Scanning ${tenant}...` : `Scan ${tenant}`}
-            </Button>
-          </Stack>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+          <Button
+            variant="contained"
+            startIcon={<CippIcons.Search />}
+            disabled={!tenant || running || scanCall.isPending}
+            onClick={() => post(scanCall, { Action: 'Scan' })}
+          >
+            {running ? `Scanning ${tenant}...` : `Scan ${tenant}`}
+          </Button>
+        </Stack>
       )}
       <CippApiResults apiObject={scanCall} />
-      {list.isError && (
-        <Alert severity="error">{getCippError(list.error)}</Alert>
-      )}
+      {listError && <Alert severity="error">{listError}</Alert>}
       {tenant && list.isSuccess && !scan && (
         <Alert severity="info">This tenant has not been scanned yet.</Alert>
       )}
@@ -210,9 +205,8 @@ export const CippManagedBaselineRecommendations = () => {
       )}
       {scan?.status === 'Finished' && (
         <Alert severity="info">
-          Last scan {formatDate(scan.finishedDateTime)}.{' '}
-          {scan.newFindings ?? 0} new and {scan.resolvedFindings ?? 0} resolved
-          since the scan before.
+          Last scan {finished}. {scan.newFindings ?? 0} new and{' '}
+          {scan.resolvedFindings ?? 0} resolved since the scan before.
         </Alert>
       )}
       {scan && (

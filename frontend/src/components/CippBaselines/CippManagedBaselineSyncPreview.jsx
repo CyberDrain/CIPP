@@ -96,13 +96,16 @@ const StandardList = ({ title, items, color, ticked, onToggle }) => {
 // What Align or Merge would change for one managed baseline, asked from the same endpoint
 // in preview mode. Merge posts the ticked CyberDrain-only standards with the action as Add.
 export const CippManagedBaselineSyncPreview = ({ formHook, row, action }) => {
-  const [ticked, setTicked] = useState([])
+  // The ticks belong to one baseline and action; another one starts empty.
+  const previewOf = `${row?.GUID}|${action}`
+  const [tickedFor, setTickedFor] = useState({ previewOf, keys: [] })
+  const ticked = tickedFor.previewOf === previewOf ? tickedFor.keys : []
+  const setTicked = (keys) => setTickedFor({ previewOf, keys })
   const preview = ApiPostCall({})
   const guid = row?.GUID
 
   useEffect(() => {
     if (!guid) return
-    setTicked([])
     formHook.setValue('Add', [])
     preview.mutate({
       url: '/api/ExecManagedBaseline',

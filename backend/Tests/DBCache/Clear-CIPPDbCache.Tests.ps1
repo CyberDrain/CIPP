@@ -28,11 +28,16 @@ BeforeAll {
         }
         if ($Filter -match "RowKey ge '([^']*)'") {
             $Ge = $Matches[1]
-            $Result = @($Result | Where-Object { $_.RowKey -ge $Ge })
+            # Table storage compares keys ordinally; -ge is culture-aware and sorts '|' below '0'
+            $Result = @($Result | Where-Object { [string]::CompareOrdinal($_.RowKey, $Ge) -ge 0 })
         }
         if ($Filter -match "RowKey lt '([^']*)'") {
             $Lt = $Matches[1]
-            $Result = @($Result | Where-Object { $_.RowKey -lt $Lt })
+            $Result = @($Result | Where-Object { [string]::CompareOrdinal($_.RowKey, $Lt) -lt 0 })
+        }
+        if ($Filter -match "PartitionKey ne '([^']*)'") {
+            $NotPk = $Matches[1]
+            $Result = @($Result | Where-Object { $_.PartitionKey -ne $NotPk })
         }
         if ($Filter -match 'DataCount ge 0') {
             $Result = @($Result | Where-Object { $null -ne $_.DataCount })
@@ -144,6 +149,9 @@ Describe 'Remove-CIPPDbItem' {
         $Remaining = @($script:FakeTables['CippReportingDB'])
         ($Remaining | Where-Object { $_.RowKey -eq 'Users-user-1' }).Count | Should -Be 0
         ($Remaining | Where-Object { $_.RowKey -eq 'Users-Count' }).DataCount | Should -Be 1
+        $Copy = $Remaining | Where-Object { $_.PartitionKey -eq 'CippCounts' -and $_.RowKey -eq 'Users|contoso.com' }
+        $Copy.DataCount | Should -Be 1
+        $Copy.Tenant | Should -Be 'contoso.com'
     }
 
     It 'removes by ItemId and decrements DataCount' {
@@ -198,6 +206,14 @@ Describe 'Clear-CIPPDbCache' {
         ($Remaining | Where-Object { $_.RowKey -like 'Users-user*' }).Count | Should -Be 0
         ($Remaining | Where-Object { $_.RowKey -eq 'Users-Count' -and $_.DataCount -eq 0 }).Count | Should -Be 2
         ($Remaining | Where-Object { $_.RowKey -eq 'Groups-g1' }).Count | Should -Be 1
+        @($Remaining | Where-Object { $_.PartitionKey -eq 'CippCounts' -and $_.DataCount -eq 0 }).RowKey | Sort-Object | Should -Be @('Users|contoso.com', 'Users|fabrikam.com')
+    }
+
+    It 'keeps CippCounts out of an AllTenants countsOnly scan' {
+        Clear-CIPPDbCache -TenantFilter 'AllTenants' -Type 'Users' | Out-Null
+        $Rows = @(Get-CIPPDbItem -TenantFilter 'allTenants' -CountsOnly)
+        @($Rows | Where-Object { $_.PartitionKey -eq 'CippCounts' }).Count | Should -Be 0
+        $Rows.Count | Should -Be 3
     }
 
     It 'returns RemovedCount 0 when nothing matches' {

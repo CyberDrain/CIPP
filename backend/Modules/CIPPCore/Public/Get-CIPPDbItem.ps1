@@ -81,7 +81,8 @@ function Get-CIPPDbItem {
         $SafeType = ConvertTo-CIPPODataFilterValue -Value $Type -Type String
         if ($CountsOnly) {
             # Exact match for the count row when a type is given, otherwise every count row
-            $RowFilter = if ($Type) { "RowKey eq '{0}-Count'" -f $SafeType } else { 'DataCount ge 0' }
+            # CippCounts holds a copy of every count row, so a whole-table scan must skip it
+            $RowFilter = if ($Type) { "RowKey eq '{0}-Count'" -f $SafeType } else { "PartitionKey ne 'CippCounts' and DataCount ge 0" }
             $Query.Property = @('PartitionKey', 'RowKey', 'DataCount', 'Timestamp'; if ($IncludeShape) { 'Shape' })
         } else {
             if (-not $Type) {

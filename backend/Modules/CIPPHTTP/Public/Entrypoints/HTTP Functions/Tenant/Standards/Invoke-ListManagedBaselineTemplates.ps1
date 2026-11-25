@@ -12,7 +12,9 @@ function Invoke-ListManagedBaselineTemplates {
 
     $APIName = $Request.Params.CIPPEndpoint
     try {
-        $Catalog = @(Invoke-ManagedBaselinesRequest -Path 'templates')
+        # Invoke-RestMethod hands a JSON array over as one object; assigning it first unwraps it.
+        $Reply = Invoke-ManagedBaselinesRequest -Path 'templates'
+        $Catalog = @($Reply)
 
         $Added = @{}
         $RolloutTable = Get-CippTable -tablename 'BaselineRollouts'

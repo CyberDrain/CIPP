@@ -50,6 +50,15 @@ Describe 'Invoke-ListManagedBaselineTemplates' {
         $Rows['sample-collaboration-guardrails'].imported | Should -BeFalse
     }
 
+    It 'lists one row per baseline when the reply arrives as a single array object' {
+        Mock Invoke-ManagedBaselinesRequest { Write-Output -NoEnumerate @($script:Catalog) }
+
+        $Response = Invoke-ListManagedBaselineTemplates -Request $script:Request
+
+        @($Response.Body.Results).Count | Should -Be @($script:Catalog).Count
+        @($Response.Body.Results)[0].id | Should -BeOfType [string]
+    }
+
     It 'shows each stage with the friendly name of its standards' {
         $Row = (Invoke-ListManagedBaselineTemplates -Request $script:Request).Body.Results | Where-Object { $_.id -eq 'sample-identity-essentials' }
 

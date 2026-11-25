@@ -55,8 +55,14 @@
     },
     "Domains": {
       "type": "textField",
-      "label": "Domains, comma separated (list modes only)",
-      "omitWhenBlank": true
+      "label": "Domains, comma separated",
+      "required": true,
+      "omitWhenBlank": true,
+      "condition": {
+        "field": "Mode",
+        "compareType": "contains",
+        "compareValue": "List"
+      }
     }
   },
   "read": {

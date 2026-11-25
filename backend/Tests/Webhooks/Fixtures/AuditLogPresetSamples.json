@@ -6275,13 +6275,13 @@
     {
       "preset": "Add service principal.",
       "trigger": [
-        "app-add-service-principal",
         "app-add-service-principal-vendor"
       ],
       "noTrigger": [
         "app-add-application",
         "app-remove-service-principal",
-        "app-add-service-principal-microsoft"
+        "app-add-service-principal-microsoft",
+        "app-add-service-principal"
       ]
     },
     {

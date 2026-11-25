@@ -1,6 +1,6 @@
 # View Group
 
-This page brings together everything CIPP knows about a single group: its properties, who is in it, who owns it, and what it belongs to. The header shows the group's display name along with its email address, object ID and creation date, each of which can be copied, and a **View in Entra** button that opens the same group in the Microsoft Entra admin center.
+This page brings together everything CIPP knows about a single group: its properties, who is in it, who owns it, and what it belongs to. The header shows the group's display name along with its email address, object ID and creation date, each of which can be copied, and a **View in Entra** button that opens the same group in the Microsoft Entra admin center. When the group has a team, the **Team** and **Channels** tabs manage it: see [View Team](team.md).
 
 {% hint style="info" %}
 Opening a group in Entra uses your own account rather than the CIPP service account, so you need rights in that tenant to see it: direct assignment in the partner tenant, or a GDAP relationship for a client tenant.

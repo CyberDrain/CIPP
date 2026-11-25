@@ -1,5 +1,6 @@
 
 import { CippIcons } from '../../utils/icon-registry'
+import { useSettings } from '../../hooks/use-settings'
 import { CippIntuneSyncDrawer } from './CippIntuneSyncDrawer'
 import { tenantScope } from '../../utils/tenant-selection'
 
@@ -151,7 +152,15 @@ export const getIntuneDeviceActions = ({ tenantFilter } = {}) => [
   },
   {
     label: 'Sync Device',
+    // The row menu opens the sync status drawer; the bulk Actions menu posts this
+    type: 'POST',
     icon: <CippIcons.Sync />,
+    url: '/api/ExecDeviceAction',
+    data: {
+      GUID: 'id',
+      Action: 'syncDevice',
+    },
+    confirmText: 'Are you sure you want to sync [deviceName]?',
     multiPost: false,
     customComponent: (row, { drawerVisible, setDrawerVisible }) => (
       <CippIntuneSyncDrawer
@@ -555,3 +564,9 @@ export const getBecIntuneDeviceActions = ({ tenantFilter } = {}) => [
       'Are you sure you want to factory-wipe [deviceName]? This removes all data and Intune enrollment. This cannot be undone.',
   },
 ]
+
+export const actionSearch = {
+  page: '/endpoint/MEM/devices/device',
+  idParam: 'deviceId',
+  useActions: () => getIntuneDeviceActions({ tenantFilter: useSettings().currentTenant }),
+}

@@ -85,6 +85,11 @@
     "description": "Cross-tenant access policy configuration"
   },
   {
+    "type": "CrossTenantPartners",
+    "friendlyName": "Cross-Tenant Partner Organisations",
+    "description": "Cross-tenant access settings for each partner organisation"
+  },
+  {
     "type": "DefaultAppManagementPolicy",
     "friendlyName": "Default App Management Policy",
     "description": "Default application management policy"
@@ -378,7 +383,7 @@
   {
     "type": "MailboxMessageConfiguration",
     "friendlyName": "Mailbox Message Configuration",
-    "description": "Default compose font name, size and colour of every user and shared mailbox (collected on demand)"
+    "description": "Outlook on the web compose settings (font, undo send, From/Bcc, read receipts) of every user and shared mailbox (collected on demand)"
   },
   {
     "type": "MailboxUsage",

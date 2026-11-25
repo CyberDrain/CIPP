@@ -21,7 +21,7 @@ Defines who the policy applies to. Entra stores the assigned users and groups as
 | Exclude Users           | Users exempt from the policy. `GuestsOrExternalUsers` is offered as a fixed option.                                                                                    |
 | Include Groups          | The groups the policy targets, shown by display name.                                                                                                                    |
 | Exclude Groups          | Groups exempt from the policy.                                                                                                                                           |
-| Include Directory Roles | Directory roles the policy targets, for scoping to administrators.                                                                                                       |
+| Include Directory Roles | Directory roles the policy targets, for scoping to administrators. Lists the tenant's role definitions by name, custom roles included.                                  |
 | Exclude Directory Roles | Directory roles exempt from the policy.                                                                                                                                  |
 
 {% hint style="info" %}
@@ -50,8 +50,8 @@ Entra ID rejects an include block that is combined with `All`, `None` or `Guests
 
 | Field                                | Description                                                                                |
 | ------------------------------------ | ------------------------------------------------------------------------------------------ |
-| Include Applications                 | The applications the policy targets.                                                       |
-| Exclude Applications                 | Applications exempt from the policy.                                                       |
+| Include Applications                 | The applications the policy targets, picked by name from the tenant's enterprise applications, or the fixed options such as `All` and `Office365`. |
+| Exclude Applications                 | Applications exempt from the policy, picked by name from the tenant's enterprise applications. |
 | User Actions (instead of cloud apps) | Targets a user action, such as registering security information, in place of applications. |
 | Authentication Context               | Authentication context references the policy protects, used in place of cloud apps.        |
 
@@ -71,8 +71,12 @@ Targets applications by attribute rather than by name, which keeps the policy cu
 | Client App Types  | The client app types the policy applies to, for example browser or mobile apps. At least one is required. |
 | Include Platforms | Device platforms the policy targets.                                                                      |
 | Exclude Platforms | Device platforms exempt from the policy.                                                                  |
-| Include Locations | Named locations the policy targets.                                                                       |
-| Exclude Locations | Named locations exempt from the policy.                                                                   |
+| Include Locations | Named locations the policy targets, picked by name from the tenant's named locations, or `All` / `AllTrusted`. |
+| Exclude Locations | Named locations exempt from the policy, picked by name from the tenant's named locations, or `AllTrusted`.     |
+
+{% hint style="info" %}
+Entra stores applications, directory roles and named locations as IDs; the editor shows them by name when it opens. A named location, user or group typed by name instead of picked from the list is matched to the tenant by its exact display name when you save. If nothing in the tenant has that name, or more than one object shares it, the save stops with an error naming the value and the policy is left unchanged; pick the right one from the list instead.
+{% endhint %}
 
 ### Device Filter
 

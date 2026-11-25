@@ -179,12 +179,11 @@ const Page = () => {
   }));
 
   // Process existing backup configuration
-  const currentConfig = Array.isArray(existingBackupConfig.data)
-    ? existingBackupConfig.data.find(
-        (tenant) =>
-          tenant.Tenant.value === settings.currentTenant || tenant.Tenant.value === "AllTenants",
-      )
-    : null;
+  const backupTasks = Array.isArray(existingBackupConfig.data) ? existingBackupConfig.data : [];
+  const currentConfig =
+    backupTasks.find((task) => task.Tenant?.value === settings.currentTenant) ??
+    backupTasks.find((task) => task.Tenant?.value === "AllTenants") ??
+    null;
   const hasExistingConfig = currentConfig && currentConfig.Parameters?.ScheduledBackupValues;
 
   // Create property items for current configuration

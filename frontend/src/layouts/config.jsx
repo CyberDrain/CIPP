@@ -83,6 +83,11 @@ export const nativeMenuItems = [
             permissions: ['Identity.User.*'],
           },
           {
+            title: 'Onboarding Wizard',
+            path: '/identity/administration/onboarding-wizard',
+            permissions: ['Identity.User.*'],
+          },
+          {
             title: 'Offboarding Wizard',
             path: '/identity/administration/offboarding-wizard',
             permissions: ['Identity.User.*'],
@@ -198,6 +203,11 @@ export const nativeMenuItems = [
           {
             title: 'Authentication Methods',
             path: '/tenant/administration/authentication-methods',
+            permissions: ['Tenant.Administration.*'],
+          },
+          {
+            title: 'Cross-Tenant Access',
+            path: '/tenant/administration/cross-tenant-access',
             permissions: ['Tenant.Administration.*'],
           },
           {
@@ -662,6 +672,12 @@ export const nativeMenuItems = [
             title: 'Compliance Policies',
             path: '/endpoint/MEM/list-compliance-policies',
             docsPath: 'endpoint/mem/list-compliance-policies',
+            permissions: ['Endpoint.MEM.*'],
+          },
+          {
+            title: 'Setting Search',
+            path: '/endpoint/MEM/setting-search',
+            docsPath: 'endpoint/mem/setting-search',
             permissions: ['Endpoint.MEM.*'],
           },
           {

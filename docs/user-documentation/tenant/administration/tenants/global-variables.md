@@ -29,6 +29,8 @@ While you add or edit a variable, the dialog previews the value as it will be wr
 
 A List can also be empty, which makes an entry optional. Set the global value to `[]` and override it only on the tenants that need something there: everywhere else the entry is removed rather than left unresolved. The Value box cannot be left blank, so type `[]` to save an empty list. See the optional exclusions example under Custom Variables on [create-ca-template.md](../../conditional/list-template/create-ca-template.md "mention").
 
+A List or Collection set on a tenant group or a tenant replaces the inherited value by default. Turn on **Add to the inherited list instead of replacing it** to keep the inherited values and add these to them, for example a global list of trusted IP ranges plus one extra range for a single tenant. Values already in the inherited list are not repeated. Tenant groups that all add to the same list are combined rather than treated as a conflict.
+
 ## Automatically Replaced Variables
 
 The following variables will be automatically replaced by CIPP:

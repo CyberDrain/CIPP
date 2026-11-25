@@ -1247,6 +1247,13 @@ export const useCippUserActions = () => {
       },
       condition: () => canWriteUser,
     },
+    {
+      label: 'Re-onboard user',
+      link: '/identity/administration/onboarding-wizard?users=[userPrincipalName]',
+      icon: <CippIcons.PersonAdd />,
+      multiPost: false,
+      condition: () => canWriteUser,
+    },
   ]
 }
 
@@ -1258,3 +1265,9 @@ export const CippUserActions = () => {
 }
 
 export default CippUserActions
+
+export const actionSearch = {
+  page: '/identity/administration/users/user',
+  idParam: 'userId',
+  useActions: useCippUserActions,
+}

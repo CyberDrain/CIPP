@@ -167,7 +167,7 @@ four built-in roles lives in `backend/Config/cipp-roles.json`. Permission string
 entrypoint with the **PowerShell AST** and derives the request schema from what the code reads.
 It is committed, and it is **not documentation-only**: `Get-CippMcpSpec` loads it at runtime and
 `Get-CippMcpToolCatalog` projects every `.Read` operation in it into an MCP tool. A stale spec ships a
-stale tool contract. CI (`.github/workflows/openapi_spec.yml`) fails the PR if it drifts.
+stale tool contract. CI (`.github/workflows/openapi_spec.yml`) fails the dev → main release PR if it drifts.
 
 `tools/list` does not return all ~260 of them. `Get-CippMcpToolList` advertises a fixed five-tool gateway
 (`ListTenants`, `ListGraphRequest`, `SearchTools`, `GetToolInfo`, `ExecTool`) and the model reaches the rest by
@@ -699,5 +699,9 @@ $Result = foreach ($User in $Users) {
 - **List endpoints frequently have a cached path** (`UseReportDB=true` / `tenantFilter=AllTenants`)
   that returns data from `CIPPDB` cache tables instead of live Graph. If a list looks stale or has
   different columns than expected, check for the `Get-CIPP*Report` branch.
+- **Write helpers expand `%token%` in request bodies.** `New-GraphPOSTRequest`, `New-ExoRequest` and
+  `New-ExoBulkRequest` run `Get-CIPPTextReplacement` on the body, so a user-entered value containing `%tenantid%` or
+  a custom variable's name is rewritten before it is sent. When a value must reach Microsoft verbatim (a URL, a
+  free-text field), escape `%` in the serialised JSON body: `$Body.Replace('%', '%')`.
 - **`retry`/toast behaviour is centralized** in `ApiCall.jsx`; a 302 to `/.auth/login/aad` means the
   session expired and triggers re-auth, it is not a routing bug.

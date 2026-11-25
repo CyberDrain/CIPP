@@ -67,6 +67,10 @@ Both properties offer a picker of the error codes and names Microsoft publishes,
 
 For what each code means, see Microsoft's [AADSTS error code reference](https://learn.microsoft.com/en-us/entra/identity-platform/reference-error-codes). The full list of sign-in record properties is in Microsoft's [Azure Active Directory STS logon schema](https://learn.microsoft.com/en-us/office/office-365-management-api/office-365-management-activity-api-schema#azure-active-directory-secure-token-service-sts-logon-schema).
 
+#### Leaving out Microsoft apps
+
+When a service principal is created, the record says which tenant owns the app. CIPP sets `CIPPMicrosoftApp` to `true` when that owner is Microsoft, so `CIPPMicrosoftApp` `Not Equals to` `true` leaves out the Microsoft apps that tenants add on their own as services are enabled. The **A service principal has been created** preset includes this condition, and `ResultStatus` `Not Equals to` `Failure` so attempts that failed and created nothing are left out too. Alerts created from the preset before these were added need the conditions added by hand.
+
 ### Scripted CIPP Alert
 
 | Field                            | Description                                                                                                            |

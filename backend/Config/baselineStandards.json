@@ -19,6 +19,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -127,6 +128,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -268,6 +270,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -544,6 +547,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -713,6 +717,7 @@
     "powershellEquivalent": "Graph API - deviceManagement/appleUserInitiatedEnrollmentProfiles",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -808,6 +813,7 @@
     "powershellEquivalent": "Graph: POST or PATCH deviceManagement/assignmentFilters",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -867,6 +873,7 @@
       [
         "SHAREPOINTWAC",
         "SHAREPOINTSTANDARD",
+        "SHAREPOINTDESKLESS",
         "SHAREPOINTENTERPRISE",
         "SHAREPOINTENTERPRISE_EDU",
         "SHAREPOINTENTERPRISE_GOV",
@@ -928,6 +935,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -1611,6 +1619,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -1637,6 +1646,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -1680,6 +1690,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -1713,6 +1724,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -1736,6 +1748,7 @@
     "powershellEquivalent": "Graph API - deviceManagement/windowsAutopilotDeploymentProfiles",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -1894,6 +1907,7 @@
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -2009,6 +2023,7 @@
     "powershellEquivalent": "Graph: POST or PUT deviceManagement/configurationPolicies",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -3214,6 +3229,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -3478,6 +3494,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -3545,6 +3562,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -4028,6 +4046,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -4050,6 +4069,205 @@
         "type": "textField",
         "label": "Display name",
         "required": true
+      }
+    ]
+  },
+  {
+    "name": "standards.CrossTenantPartner",
+    "cat": "Entra (AAD) Standards",
+    "tag": [],
+    "helpText": "Adds a partner organisation to cross-tenant access and sets its B2B collaboration, B2B direct connect, inbound trust and automatic redemption settings. Add one instance per partner. Use %partnertenantid% for your own tenant, for example to trust MFA your technicians complete at home. Settings left blank are not checked.",
+    "docsDescription": "One instance per partner tenant ID. Grades that the partner organisation exists in cross-tenant access, then each configured setting. B2B collaboration and B2B direct connect accept Allow all, Block all or Use the default settings; a partner whose setting targets specific users, groups or applications reads as custom and drifts. Trust settings grade the partner's own trust, so a partner that inherits the default trust drifts until it has its own. Remediation adds the partner if it is missing, then updates only the configured settings, keeping the trust flags it was not asked to change.",
+    "executiveText": "Defines how the organisation collaborates with specific partner organisations: who can be invited in either direction, whether Teams shared channels work across the two tenants, and whether the partner's MFA and device compliance are trusted instead of being asked for again.",
+    "label": "Cross-Tenant Access Partner Organisation",
+    "impact": "Medium Impact",
+    "impactColour": "warning",
+    "addedDate": "2026-11-24",
+    "powershellEquivalent": "Graph: POST/PATCH policies/crossTenantAccessPolicy/partners",
+    "recommendedBy": [],
+    "requiredCapabilities": [],
+    "multiple": true,
+    "secureScoreImpact": 0,
+    "disabledFeatures": {
+      "report": false,
+      "warn": false,
+      "remediate": false
+    },
+    "addedComponent": [
+      {
+        "name": "standards.CrossTenantPartner.partnerTenantId",
+        "type": "textField",
+        "label": "Partner tenant ID (or %partnertenantid% for your own tenant)",
+        "required": true
+      },
+      {
+        "name": "standards.CrossTenantPartner.b2bCollaborationInbound",
+        "type": "autoComplete",
+        "label": "B2B collaboration: their users invited here",
+        "creatable": false,
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Allow all",
+            "value": "allowed"
+          },
+          {
+            "label": "Block all",
+            "value": "blocked"
+          },
+          {
+            "label": "Use the default settings",
+            "value": "inherit"
+          }
+        ]
+      },
+      {
+        "name": "standards.CrossTenantPartner.b2bCollaborationOutbound",
+        "type": "autoComplete",
+        "label": "B2B collaboration: our users invited there",
+        "creatable": false,
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Allow all",
+            "value": "allowed"
+          },
+          {
+            "label": "Block all",
+            "value": "blocked"
+          },
+          {
+            "label": "Use the default settings",
+            "value": "inherit"
+          }
+        ]
+      },
+      {
+        "name": "standards.CrossTenantPartner.b2bDirectConnectInbound",
+        "type": "autoComplete",
+        "label": "B2B direct connect (Teams shared channels): inbound",
+        "creatable": false,
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Allow all",
+            "value": "allowed"
+          },
+          {
+            "label": "Block all",
+            "value": "blocked"
+          },
+          {
+            "label": "Use the default settings",
+            "value": "inherit"
+          }
+        ]
+      },
+      {
+        "name": "standards.CrossTenantPartner.b2bDirectConnectOutbound",
+        "type": "autoComplete",
+        "label": "B2B direct connect (Teams shared channels): outbound",
+        "creatable": false,
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Allow all",
+            "value": "allowed"
+          },
+          {
+            "label": "Block all",
+            "value": "blocked"
+          },
+          {
+            "label": "Use the default settings",
+            "value": "inherit"
+          }
+        ]
+      },
+      {
+        "name": "standards.CrossTenantPartner.isMfaAccepted",
+        "type": "autoComplete",
+        "label": "Trust MFA from this partner",
+        "creatable": false,
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Trust",
+            "value": "true"
+          },
+          {
+            "label": "Don't trust",
+            "value": "false"
+          }
+        ]
+      },
+      {
+        "name": "standards.CrossTenantPartner.isCompliantDeviceAccepted",
+        "type": "autoComplete",
+        "label": "Trust compliant devices from this partner",
+        "creatable": false,
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Trust",
+            "value": "true"
+          },
+          {
+            "label": "Don't trust",
+            "value": "false"
+          }
+        ]
+      },
+      {
+        "name": "standards.CrossTenantPartner.isHybridAzureADJoinedDeviceAccepted",
+        "type": "autoComplete",
+        "label": "Trust hybrid-joined devices from this partner",
+        "creatable": false,
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Trust",
+            "value": "true"
+          },
+          {
+            "label": "Don't trust",
+            "value": "false"
+          }
+        ]
+      },
+      {
+        "name": "standards.CrossTenantPartner.inboundAllowed",
+        "type": "autoComplete",
+        "label": "Automatically redeem invitations: inbound",
+        "creatable": false,
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "On",
+            "value": "true"
+          },
+          {
+            "label": "Off",
+            "value": "false"
+          }
+        ]
+      },
+      {
+        "name": "standards.CrossTenantPartner.outboundAllowed",
+        "type": "autoComplete",
+        "label": "Automatically redeem invitations: outbound",
+        "creatable": false,
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "On",
+            "value": "true"
+          },
+          {
+            "label": "Off",
+            "value": "false"
+          }
+        ]
       }
     ]
   },
@@ -4107,6 +4325,7 @@
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -4315,6 +4534,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -5366,6 +5586,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -5401,6 +5622,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -5487,6 +5709,7 @@
     "powershellEquivalent": "Add-CIPPW32ScriptApplication",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -5589,6 +5812,14 @@
         "label": "Enable domain squatting detection",
         "omitWhenBlank": true,
         "default": true
+      },
+      {
+        "name": "standards.DeployCheckChromeExtension.protectedDomains",
+        "type": "autoComplete",
+        "multiple": true,
+        "creatable": true,
+        "label": "Domain squatting protected domains (empty = URL allowlist domains)",
+        "omitWhenBlank": true
       },
       {
         "name": "standards.DeployCheckChromeExtension.companyName",
@@ -5698,6 +5929,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -5743,6 +5975,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -5826,6 +6059,7 @@
       "CIPP"
     ],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -5849,6 +6083,7 @@
     "powershellEquivalent": "Graph API - deviceManagement/configurationPolicies",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -5999,6 +6234,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -6042,6 +6278,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -6177,6 +6414,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -6221,6 +6459,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -6317,6 +6556,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -6350,6 +6590,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -6659,6 +6900,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -6708,6 +6950,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -6788,6 +7031,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "SHAREPOINTENTERPRISE_GOV",
@@ -6830,6 +7074,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -7001,6 +7246,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "SHAREPOINTENTERPRISE_GOV",
@@ -7081,6 +7327,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -7168,6 +7415,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -7352,6 +7600,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -7385,6 +7634,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -7529,6 +7779,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -7591,6 +7842,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -7702,6 +7954,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -7832,6 +8085,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV"
     ],
     "secureScoreImpact": 0,
@@ -7968,6 +8222,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -8011,6 +8266,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -8074,6 +8330,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -8139,6 +8396,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -8192,6 +8450,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "SHAREPOINTENTERPRISE_GOV",
@@ -8234,6 +8493,7 @@
     "powershellEquivalent": "Graph: POST or PATCH deviceManagement/deviceEnrollmentConfigurations, then setPriority and assign",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -8281,6 +8541,7 @@
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -8493,6 +8754,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -8535,6 +8797,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -9184,6 +9447,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -9250,6 +9514,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -9300,6 +9565,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -9371,6 +9637,7 @@
         "AAD_PREMIUM_P2"
       ],
       [
+        "INTUNE_EDU",
         "INTUNE_A",
         "MDM_Services",
         "EMS",
@@ -9924,6 +10191,7 @@
     "powershellEquivalent": "Graph API - /deviceAppManagement/mobileApps",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -9973,6 +10241,7 @@
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -10027,6 +10296,7 @@
     "powershellEquivalent": "Graph: PATCH deviceManagement/deviceCompliancePolicies and deviceAppManagement/*ManagedAppProtections",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -10152,6 +10422,7 @@
       "CIPP"
     ],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -10314,6 +10585,7 @@
       "CIPP"
     ],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -10426,6 +10698,7 @@
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -10532,6 +10805,7 @@
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -10565,6 +10839,7 @@
     "powershellEquivalent": "Graph: PATCH policies/mobileDeviceManagementPolicies",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -10684,6 +10959,217 @@
     ]
   },
   {
+    "name": "standards.MailboxComposeSettings",
+    "cat": "Exchange Standards",
+    "tag": [],
+    "helpText": "Sets Outlook on the web and new Outlook compose settings on every user and shared mailbox: the undo send delay, whether the From and Bcc fields always show, the forgotten attachment reminder, Reply all as the default, the message format, read receipt handling and link previews. Leave a setting on Do not change to leave it alone. Classic Outlook for Windows and Mac keeps its own settings and is not affected. With remediation on, a user who changes one of these settings has it set back on the next run.",
+    "docsDescription": "Loops through all UserMailbox and SharedMailbox recipients and applies the configured compose settings with `Set-MailboxMessageConfiguration`. Current values are read from the MailboxMessageConfiguration cache, refreshed when older than 3 hours, and only mailboxes that differ from a configured setting are changed, so new mailboxes are picked up on the next run and steady-state runs make no writes. Settings left on Do not change are neither checked nor written. Mailboxes whose settings cannot be read are reported as drift. The undo send delay is 0 to 10 seconds, the range Outlook on the web offers; 0 turns undo send off. These settings apply to Outlook on the web and the new Outlook client only. See [Microsoft's documentation.](https://learn.microsoft.com/powershell/module/exchangepowershell/set-mailboxmessageconfiguration)",
+    "executiveText": "Gives every mailbox the same safe sending defaults, such as a short delay that lets people take back an email sent by mistake and a reminder when an attachment is mentioned but missing. This affects the web and new Outlook clients.",
+    "label": "Set Outlook compose settings for all mailboxes (undo send, From/Bcc, read receipts)",
+    "impact": "Low Impact",
+    "impactColour": "info",
+    "addedDate": "2026-11-25",
+    "powershellEquivalent": "Set-MailboxMessageConfiguration -MailSendUndoInterval -AlwaysShowFrom -AlwaysShowBcc -CheckForForgottenAttachments -IsReplyAllTheDefaultResponse -DefaultFormat -ReadReceiptResponse -LinkPreviewEnabled",
+    "recommendedBy": [],
+    "requiredCapabilities": [
+      "EXCHANGE_S_STANDARD",
+      "EXCHANGE_S_ENTERPRISE",
+      "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
+      "EXCHANGE_S_ENTERPRISE_GOV",
+      "EXCHANGE_LITE"
+    ],
+    "secureScoreImpact": 0,
+    "expected": {
+      "offenders": [],
+      "unreadable": []
+    },
+    "addedComponent": [
+      {
+        "name": "standards.MailboxComposeSettings.MailSendUndoInterval",
+        "type": "number",
+        "label": "Undo send delay in seconds (0-10)",
+        "helperText": "How long Outlook waits before sending, so the user can take the message back. 0 turns undo send off. Leave blank to not change it.",
+        "omitWhenBlank": true,
+        "validators": {
+          "min": {
+            "value": 0,
+            "message": "Minimum value is 0"
+          },
+          "max": {
+            "value": 10,
+            "message": "Maximum value is 10"
+          }
+        }
+      },
+      {
+        "name": "standards.MailboxComposeSettings.AlwaysShowFrom",
+        "type": "autoComplete",
+        "multiple": false,
+        "creatable": false,
+        "label": "Always show the From field",
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Do not change",
+            "value": ""
+          },
+          {
+            "label": "Show",
+            "value": true
+          },
+          {
+            "label": "Hide",
+            "value": false
+          }
+        ],
+        "default": ""
+      },
+      {
+        "name": "standards.MailboxComposeSettings.AlwaysShowBcc",
+        "type": "autoComplete",
+        "multiple": false,
+        "creatable": false,
+        "label": "Always show the Bcc field",
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Do not change",
+            "value": ""
+          },
+          {
+            "label": "Show",
+            "value": true
+          },
+          {
+            "label": "Hide",
+            "value": false
+          }
+        ],
+        "default": ""
+      },
+      {
+        "name": "standards.MailboxComposeSettings.CheckForForgottenAttachments",
+        "type": "autoComplete",
+        "multiple": false,
+        "creatable": false,
+        "label": "Remind users about forgotten attachments",
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Do not change",
+            "value": ""
+          },
+          {
+            "label": "On",
+            "value": true
+          },
+          {
+            "label": "Off",
+            "value": false
+          }
+        ],
+        "default": ""
+      },
+      {
+        "name": "standards.MailboxComposeSettings.IsReplyAllTheDefaultResponse",
+        "type": "autoComplete",
+        "multiple": false,
+        "creatable": false,
+        "label": "Default reply action",
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Do not change",
+            "value": ""
+          },
+          {
+            "label": "Reply all",
+            "value": true
+          },
+          {
+            "label": "Reply",
+            "value": false
+          }
+        ],
+        "default": ""
+      },
+      {
+        "name": "standards.MailboxComposeSettings.DefaultFormat",
+        "type": "autoComplete",
+        "multiple": false,
+        "creatable": false,
+        "label": "Message format",
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Do not change",
+            "value": ""
+          },
+          {
+            "label": "HTML",
+            "value": "Html"
+          },
+          {
+            "label": "Plain text",
+            "value": "PlainText"
+          }
+        ],
+        "default": ""
+      },
+      {
+        "name": "standards.MailboxComposeSettings.ReadReceiptResponse",
+        "type": "autoComplete",
+        "multiple": false,
+        "creatable": false,
+        "label": "Read receipt requests",
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Do not change",
+            "value": ""
+          },
+          {
+            "label": "Ask the user each time",
+            "value": "DoNotAutomaticallySend"
+          },
+          {
+            "label": "Always send a receipt",
+            "value": "AlwaysSend"
+          },
+          {
+            "label": "Never send a receipt",
+            "value": "NeverSend"
+          }
+        ],
+        "default": ""
+      },
+      {
+        "name": "standards.MailboxComposeSettings.LinkPreviewEnabled",
+        "type": "autoComplete",
+        "multiple": false,
+        "creatable": false,
+        "label": "Link previews in messages",
+        "omitWhenBlank": true,
+        "options": [
+          {
+            "label": "Do not change",
+            "value": ""
+          },
+          {
+            "label": "On",
+            "value": true
+          },
+          {
+            "label": "Off",
+            "value": false
+          }
+        ],
+        "default": ""
+      }
+    ]
+  },
+  {
     "name": "standards.MailboxDefaultAuditSet",
     "cat": "Exchange Standards",
     "tag": [
@@ -10704,6 +11190,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -10732,6 +11219,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -10790,6 +11278,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -10974,6 +11463,7 @@
         "EXCHANGE_S_STANDARD",
         "EXCHANGE_S_ENTERPRISE",
         "EXCHANGE_S_STANDARD_GOV",
+        "EXCHANGE_S_DESKLESS",
         "EXCHANGE_S_ENTERPRISE_GOV",
         "EXCHANGE_LITE"
       ],
@@ -11139,6 +11629,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -11178,6 +11669,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "SHAREPOINTENTERPRISE_GOV",
@@ -11293,6 +11785,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -11450,6 +11943,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -11557,6 +12051,7 @@
     "powershellEquivalent": "Set-SPOSite -Identity https://tenant-my.sharepoint.com/personal/user -StorageQuota 5242880",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "SHAREPOINTENTERPRISE_GOV",
@@ -11599,6 +12094,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -11664,6 +12160,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -11994,6 +12491,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -12037,6 +12535,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -12135,6 +12634,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -12181,6 +12681,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -12247,6 +12748,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -12366,6 +12868,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "SHAREPOINTENTERPRISE_GOV",
@@ -12434,6 +12937,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -12466,6 +12970,7 @@
     "powershellEquivalent": "Graph: POST or PUT deviceManagement/reusablePolicySettings",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -12522,6 +13027,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -12560,6 +13066,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -12631,6 +13138,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -12665,6 +13173,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -12699,6 +13208,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -12728,6 +13238,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -12762,6 +13273,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -12798,6 +13310,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -12833,6 +13346,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -12879,6 +13393,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -12929,6 +13444,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "SHAREPOINTENTERPRISE_GOV",
@@ -12986,6 +13502,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -13020,6 +13537,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -13073,6 +13591,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -13122,6 +13641,7 @@
         "EXCHANGE_S_STANDARD",
         "EXCHANGE_S_ENTERPRISE",
         "EXCHANGE_S_STANDARD_GOV",
+        "EXCHANGE_S_DESKLESS",
         "EXCHANGE_S_ENTERPRISE_GOV",
         "EXCHANGE_LITE"
       ],
@@ -13238,6 +13758,7 @@
         "EXCHANGE_S_STANDARD",
         "EXCHANGE_S_ENTERPRISE",
         "EXCHANGE_S_STANDARD_GOV",
+        "EXCHANGE_S_DESKLESS",
         "EXCHANGE_S_ENTERPRISE_GOV",
         "EXCHANGE_LITE"
       ],
@@ -13312,6 +13833,7 @@
         "EXCHANGE_S_STANDARD",
         "EXCHANGE_S_ENTERPRISE",
         "EXCHANGE_S_STANDARD_GOV",
+        "EXCHANGE_S_DESKLESS",
         "EXCHANGE_S_ENTERPRISE_GOV",
         "EXCHANGE_LITE"
       ],
@@ -13367,6 +13889,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -13393,6 +13916,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -13547,6 +14071,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -13581,6 +14106,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -13703,6 +14229,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -13865,6 +14392,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -14046,6 +14574,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -14467,6 +14996,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -15755,6 +16285,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -15929,6 +16460,7 @@
         "EXCHANGE_S_STANDARD",
         "EXCHANGE_S_ENTERPRISE",
         "EXCHANGE_S_STANDARD_GOV",
+        "EXCHANGE_S_DESKLESS",
         "EXCHANGE_S_ENTERPRISE_GOV",
         "EXCHANGE_LITE"
       ],
@@ -15969,6 +16501,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -16011,6 +16544,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -16492,6 +17026,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -16541,6 +17076,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -16678,6 +17214,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -16745,6 +17282,7 @@
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -16869,6 +17407,7 @@
       "EXCHANGE_S_STANDARD",
       "EXCHANGE_S_ENTERPRISE",
       "EXCHANGE_S_STANDARD_GOV",
+      "EXCHANGE_S_DESKLESS",
       "EXCHANGE_S_ENTERPRISE_GOV",
       "EXCHANGE_LITE"
     ],
@@ -16947,6 +17486,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -16972,6 +17512,7 @@
     "powershellEquivalent": "Graph API",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -17157,6 +17698,7 @@
     "powershellEquivalent": "Update-MgBetaPolicyDeviceRegistrationPolicy",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -17255,6 +17797,7 @@
     "powershellEquivalent": "Graph: POST or PATCH deviceManagement/managedDeviceCleanupRules",
     "recommendedBy": [],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",
@@ -17524,6 +18067,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -17586,6 +18130,7 @@
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
       "SHAREPOINTENTERPRISE",
       "SHAREPOINTENTERPRISE_EDU",
       "ONEDRIVE_BASIC",
@@ -17651,6 +18196,7 @@
       "CIS"
     ],
     "requiredCapabilities": [
+      "INTUNE_EDU",
       "INTUNE_A",
       "MDM_Services",
       "EMS",

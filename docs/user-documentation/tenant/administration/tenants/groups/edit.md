@@ -59,7 +59,7 @@ Shown below the group settings once the group has been saved. Group variables ar
 
 A tenant takes the most specific value available: its own variable first, then a group variable, then the global variable.
 
-If a tenant is in more than one group that sets the same variable to different values, CIPP cannot tell which one should win, so it uses the global value for that tenant and logs a warning naming the groups. The tenant's Custom Variables list shows these as Conflict. Set the variable on the tenant itself to choose a value, or keep the groups from overlapping. When you add a variable that another group already sets, the Add Variable dialog warns you.
+If a tenant is in more than one group that sets the same variable to different values, CIPP cannot tell which one should win, so it uses the global value for that tenant and logs a warning naming the groups. The tenant's Custom Variables list shows these as Conflict. Set the variable on the tenant itself to choose a value, or keep the groups from overlapping. When you add a variable that another group already sets, the Add Variable dialog warns you. Lists that every one of those groups adds to the inherited list, rather than replacing it, are combined instead.
 
 Group variables are part of the group, so anyone who can edit the group can change them: the same **Tenant.Groups.ReadWrite** permission and unrestricted tenant access described on [README.md](README.md "mention"). Deleting a group deletes its variables. Group variables cannot be used in dynamic group rules: a Custom Variable rule only reads global and tenant variables.
 

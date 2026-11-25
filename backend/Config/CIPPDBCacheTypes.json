@@ -422,6 +422,11 @@
     "description": "SharePoint library shortcuts still in each enabled member's OneDrive root (summary row of users and shortcuts to move); collected on demand by the MigrateOneDriveShortcuts baseline"
   },
   {
+    "type": "OneDriveLibraryShortcuts",
+    "friendlyName": "OneDrive Library Shortcuts",
+    "description": "For each enabled member with a OneDrive, the drive ids of the SharePoint libraries their shortcuts point into (no shortcut or file names); collected on demand by the SPLibraryOneDriveShortcuts baseline"
+  },
+  {
     "type": "SharePointSiteListing",
     "collectedBy": "SharePointSiteUsage",
     "friendlyName": "SharePoint Site Listing",

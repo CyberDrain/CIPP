@@ -35,13 +35,16 @@ function Get-CIPPBaselineCacheRows {
         [string]$CollectorType,
         [hashtable]$CollectorArgs = @{},
         # Top-level fields to keep on each row; the caller lists every field it reads
-        [string[]]$Fields
+        [string[]]$Fields,
+        # For cache types stored outside CippReportingDB, such as SharePointPermissions
+        [string]$TableName
     )
+    $Table = if ($TableName) { @{ TableName = $TableName } } else { @{} }
 
-    $Rows = @(@(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type -Fields $Fields).Where({ $_ }))
+    $Rows = @(@(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type -Fields $Fields @Table).Where({ $_ }))
     if ($Rows.Count -gt 0) { return $Rows }
     # A zero count row means the type was collected and is genuinely empty (e.g. no SMTP AUTH overrides).
-    if (@(Get-CIPPDbItem -TenantFilter $TenantFilter -Type $Type -CountsOnly | Where-Object { [int]$_.DataCount -eq 0 }).Count -gt 0) { return @() }
+    if (@(Get-CIPPDbItem -TenantFilter $TenantFilter -Type $Type -CountsOnly @Table | Where-Object { [int]$_.DataCount -eq 0 }).Count -gt 0) { return @() }
 
     $CollectorFor = if ([string]::IsNullOrWhiteSpace($CollectorType)) { $Type } else { $CollectorType }
     $Collector = Get-CIPPBaselineCommand -Name "Set-CIPPDBCache$CollectorFor"
@@ -59,5 +62,5 @@ function Get-CIPPBaselineCacheRows {
         return @()
     }
 
-    @(@(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type -Fields $Fields).Where({ $_ }))
+    @(@(New-CIPPDbRequest -TenantFilter $TenantFilter -Type $Type -Fields $Fields @Table).Where({ $_ }))
 }

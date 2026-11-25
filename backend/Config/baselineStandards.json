@@ -13566,6 +13566,82 @@
     ]
   },
   {
+    "name": "standards.SPLibraryOneDriveShortcuts",
+    "cat": "SharePoint Standards",
+    "tag": [],
+    "helpText": "For one SharePoint site, adds a shortcut to every document library a user can open into that user's OneDrive (Shortcuts folder or OneDrive root). Access comes from the site's and libraries' permissions, including users reached through Entra groups and SharePoint groups. Users who already have a shortcut to the library, including a shortcut to a folder inside it, are left alone.",
+    "docsDescription": "Add one instance per site. Library permissions come from the SharePoint permissions cache: a library with its own permissions uses its library grants, and a library that inherits uses the site's grants. Entra security and Microsoft 365 groups are expanded to their transitive user members (owners only for a Microsoft 365 group's owner claim), and SharePoint groups are expanded with one read per group. Limited Access grants are ignored. Grants to Everyone or Everyone except external users are ignored unless you turn on the tenant-wide option. Only enabled member accounts are considered. Each user's existing shortcuts come from the OneDrive library shortcuts cache, refreshed when older than 3 hours. A user who already has any shortcut into a library (to the whole library or to one of its folders) is compliant for that library, because OneDrive rejects a second shortcut to the same library. New shortcuts are named \"<site name> - <library name>\". Users without a provisioned OneDrive are skipped. Removing someone's access does not remove the shortcut; OneDrive shows it as unavailable.",
+    "executiveText": "After a file server moves to SharePoint, staff find their libraries in OneDrive and File Explorer the same way they found their mapped drives, without each person adding shortcuts by hand. Shortcuts follow the permissions IT already set, so people only see the libraries they can open.",
+    "label": "Add SharePoint library shortcuts to OneDrive for everyone with access",
+    "impact": "Medium Impact",
+    "impactColour": "warning",
+    "addedDate": "2026-11-25",
+    "powershellEquivalent": "POST users/{id}/drive/special/shortcuts/children with remoteItem.sharepointIds (Add shortcut to OneDrive)",
+    "recommendedBy": [],
+    "requiredCapabilities": [
+      "SHAREPOINTWAC",
+      "SHAREPOINTSTANDARD",
+      "SHAREPOINTDESKLESS",
+      "SHAREPOINTENTERPRISE",
+      "SHAREPOINTENTERPRISE_EDU",
+      "SHAREPOINTENTERPRISE_GOV",
+      "ONEDRIVEENTERPRISE"
+    ],
+    "multiple": true,
+    "secureScoreImpact": 0,
+    "expected": {
+      "offenders": []
+    },
+    "addedComponent": [
+      {
+        "name": "standards.SPLibraryOneDriveShortcuts.siteUrl",
+        "type": "textField",
+        "label": "Site URL or path (e.g. /sites/Files or https://contoso.sharepoint.com/sites/Files)",
+        "required": true
+      },
+      {
+        "name": "standards.SPLibraryOneDriveShortcuts.destination",
+        "type": "select",
+        "multiple": false,
+        "label": "Where to add the shortcuts",
+        "required": true,
+        "options": [
+          {
+            "label": "Shortcuts folder",
+            "value": "shortcuts"
+          },
+          {
+            "label": "OneDrive root",
+            "value": "root"
+          }
+        ],
+        "default": "shortcuts"
+      },
+      {
+        "name": "standards.SPLibraryOneDriveShortcuts.excludeLibraries",
+        "type": "autoComplete",
+        "multiple": true,
+        "creatable": true,
+        "omitWhenBlank": true,
+        "label": "Skip these libraries (library names)"
+      },
+      {
+        "name": "standards.SPLibraryOneDriveShortcuts.excludeUsers",
+        "type": "autoComplete",
+        "multiple": true,
+        "creatable": true,
+        "omitWhenBlank": true,
+        "label": "Skip these users (user principal names)"
+      },
+      {
+        "name": "standards.SPLibraryOneDriveShortcuts.includeTenantWide",
+        "type": "switch",
+        "label": "Also add shortcuts where access comes only from Everyone or Everyone except external users",
+        "default": false
+      }
+    ]
+  },
+  {
     "name": "standards.SPOVersionControl",
     "cat": "SharePoint Standards",
     "tag": [],

@@ -5,7 +5,7 @@ description: Baselines maintained by CyberDrain, published for everyone or built
 # Managed Baselines
 
 {% hint style="warning" %}
-**Coming soon.** Managed Baselines is not open for subscriptions yet. The **Managed** tab and the integration already appear in CIPP, but you cannot get an API key or use the service until it launches.
+**Closed beta.** Managed Baselines is in closed beta. The **Managed** tab and the integration already appear in CIPP, but only MSPs in the beta can use the service until it opens to everyone.
 {% endhint %}
 
 Managed Baselines is a paid CyberDrain service. CyberDrain's engineers publish baselines you can add to your own, and on request build one custom baseline for your MSP. Either way the result is an ordinary baseline: you review it, choose its tenants, and decide when to take CyberDrain's later changes.

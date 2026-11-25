@@ -37,6 +37,31 @@ Selecting a row shows every stored field, including the antivirus engine and pla
 
 Devices appear for as long as Defender keeps them, which is limited by the retention period configured in the tenant.
 
+## Table Actions
+
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Isolate device</td><td>Cuts the device off the network through Microsoft Defender for Endpoint. <strong>Full</strong> blocks all network traffic except the device's connection to Defender. <strong>Selective</strong> allows the limited connections Microsoft permits during selective isolation; check Microsoft's documentation for the apps and operating systems it supports. Use Release from isolation to reconnect the device when it is safe. Shown for onboarded devices only.</td><td>false</td></tr><tr><td>Release from isolation</td><td>Restores the device's network access. Shown for every device, so a device whose onboarding status is out of date can still be released.</td><td>false</td></tr><tr><td>Run antivirus scan</td><td>Starts a <strong>Quick</strong> or <strong>Full</strong> Microsoft Defender Antivirus scan on the device. Defender may refuse a new scan while another is still running. Shown for onboarded devices only.</td><td>false</td></tr><tr><td>Action history</td><td>Opens the device's isolation, release and antivirus scan history. See <a href="#action-history">Action history</a>.</td><td>false</td></tr></tbody></table>
+
+Each action asks for confirmation, names the device and its tenant, and accepts an optional comment such as a ticket number. Actions are sent one device at a time. With All Tenants or a tenant group selected, the action goes to the tenant the device belongs to.
+
+The device must reach Defender to apply an isolation or a remote release. A full-tunnel VPN or a web proxy can prevent an isolated device from reaching Defender. If a remote release fails, see Microsoft's [isolation and recovery guidance](https://learn.microsoft.com/en-us/defender-endpoint/respond-machine-alerts#isolate-devices-from-the-network), including the force-release option for supported Windows devices.
+
+Defender records these actions against the CIPP application, so the Microsoft Defender portal shows the CIPP application as the requestor. CIPP puts your name at the start of the action comment, for example `you@example.com via CIPP: Ticket 4411`, and the CIPP logbook records who sent the action, the tenant, the device and Defender's action ID.
+
+## Action History
+
+Shows up to 50 of the device's most recent isolation, release and antivirus scan actions, newest first. For an antivirus scan, Succeeded means the device has started the scan; the scan itself can take several minutes, or much longer for a Full scan, and a scan sent while another is still running fails. CIPP reads the history from Defender each time the window opens; select **Refresh** to see the latest request status.
+
+| Column | Description |
+| ------------ | ------------------------------------------------------------------------------------------------ |
+| Action | Isolate, Release from isolation or Antivirus scan, with the isolation or scan type where Defender reports it. |
+| Status | Defender's status for the action, for example Pending, InProgress, Succeeded or Failed, with Defender's error code when it failed. |
+| Requested | When the action was sent. |
+| Last updated | When Defender last updated the action's status. |
+| Requested by | The application or account Defender recorded as the requestor. Actions sent from CIPP show the CIPP application. |
+| Comment | The action comment, which starts with the name of the technician who sent it from CIPP. |
+
+While an action of the same kind is still in progress on a device, Defender refuses a new one or returns the action already in progress, so the action ID CIPP shows can belong to the earlier action. If sending an action returns an error, or you are not sure whether Defender received it, check the action history, or the Action center in the Microsoft Defender portal, before sending it again.
+
 ## Filters
 
 | Filter | Shows |
@@ -48,7 +73,9 @@ Devices appear for as long as Defender keeps them, which is limited by the reten
 
 ## Data and permissions
 
-CIPP reads this data with the application permission Read all machine profiles on the Windows Defender ATP API. The permission is added to the CIPP application when the tenant's permissions are updated, so a tenant may need its permissions refreshed before the first sync succeeds.
+CIPP reads this data and the action history with the application permission Read all machine profiles on the Windows Defender ATP API. Isolating and releasing a device use the application permission Isolate machine, and antivirus scans use Scan machine. These permissions are added to the CIPP application when the tenant's permissions are updated, so a tenant may need its permissions refreshed before the first sync or action succeeds.
+
+Sending an action needs the `Security.Defender.ReadWrite` CIPP permission, and viewing the action history needs `Security.Defender.Read`. The built-in editor, admin and superadmin roles include `Security.Defender.ReadWrite`, so their users can isolate, release and scan devices in every tenant they have access to. A custom role needs `Security.Defender.ReadWrite` added before its users can send actions.
 
 Antivirus health reporting requires Defender for Business or Defender for Endpoint Plan 2. Antivirus columns stay empty until Defender reports health data for the device, which can take some time after onboarding. Check Cache Timestamp to see when CIPP last stored the device data.
 

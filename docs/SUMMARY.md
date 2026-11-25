@@ -484,6 +484,7 @@
   * [Advanced](user-documentation/cipp/advanced/README.md)
     * [Super Admin](user-documentation/cipp/advanced/super-admin/README.md)
       * [Tenant Mode](user-documentation/cipp/advanced/super-admin/tenant-mode.md)
+      * [Partner Tenants](user-documentation/cipp/advanced/super-admin/partner-tenants.md)
       * [Function Offloading](user-documentation/cipp/advanced/super-admin/function-offloading.md)
       * [Time Settings](user-documentation/cipp/advanced/super-admin/time-settings.md)
     * [Container Management](user-documentation/cipp/advanced/container-management/README.md)

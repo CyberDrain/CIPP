@@ -1,5 +1,9 @@
 # CyberDrain Managed Baselines
 
+{% hint style="warning" %}
+**Coming soon.** Managed Baselines is not open for subscriptions yet. The **Managed** tab and the integration already appear in CIPP, but you cannot get an API key or use the service until it launches.
+{% endhint %}
+
 The CyberDrain Managed Baselines integration connects CIPP to CyberDrain's managed baseline service. With it enabled, the [Managed](../../tenant/baselines/managed.md) tab under Baselines lists the baselines CyberDrain publishes and lets you request a custom baseline built for your MSP.
 
 {% hint style="info" %}

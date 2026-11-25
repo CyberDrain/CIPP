@@ -31,6 +31,7 @@ Sets which preset each type of report reaches for when nothing else specifies on
 | Shadow AI Report         |
 | BEC Full Report          |
 | BEC C-Suite Summary      |
+| NHI Compromise Report    |
 | Sharing Report           |
 | Permissions Report       |
 | Mail Flow Report         |

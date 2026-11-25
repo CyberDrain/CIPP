@@ -240,6 +240,7 @@
     * [Check Alerts](user-documentation/security/incidents/list-check-alerts.md)
   * [Defender](user-documentation/security/defender/README.md)
     * [Defender Status](user-documentation/security/defender/list-defender.md)
+    * [Defender Devices](user-documentation/security/defender/devices.md)
     * [Defender Deployment](user-documentation/security/defender/deployment.md)
     * [Vulnerabilities](user-documentation/security/defender/list-defender-tvm.md)
     * [CVE Management](user-documentation/security/defender/defender-cve-exceptions.md)

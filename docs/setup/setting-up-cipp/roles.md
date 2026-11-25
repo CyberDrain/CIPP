@@ -6,7 +6,7 @@ description: How to grant users access to the CIPP App
 
 ## First Time SSO and First User Setup
 
-When you first set up CIPP, you'll need to setup your instance to create your first user, and allow yourself access via SSO.
+When you first set up CIPP, you'll need to setup the ability to log into your instance; the SSO setup allows you to select who is able to access your **CIPP instance**. This does not control what tenants are added. It only controls what tenants and users can log into CIPP for you.
 
 {% stepper %}
 {% step %}

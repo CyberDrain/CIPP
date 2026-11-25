@@ -41,6 +41,7 @@ code** — a standard can be hook + generic executor, or declarative read + name
 | Situation | Format |
 | --- | --- |
 | Read one cached object, compare fields, one PATCH / one cmdlet | Definition JSON only |
+| Same fields on every row of a per-object cache (each mailbox), fix the rows that differ | Definition JSON only: `read.rows` + `ExoBulkSweep` |
 | Current state needs computation (parse settingInstance trees, derive effective state, join caches, normalize values) | Add `prepare` hook |
 | Write needs logic (create-or-update, delete-and-recreate, full-array rewrites with live values, multi-endpoint sequences, per-item continue-past-failure) | Add named executor |
 | One deployed object per operator-chosen name or template | Instance model (`multiple` + `instanceIdentity`) plus hook + executor |
@@ -82,7 +83,13 @@ Generic executors available to declarative definitions: `GraphRequest` (ordered
 `ExoRequest` (`cmdlets[]`), `TeamsRequest`, `ExoPolicyRule`, `ExoBulkSweep`,
 `GraphBulkSweep`. `expected` supports `$anyOf` sets for properties with several acceptable
 values. `read` supports `filter`, `array`, `object` and `defaults` for descending into
-cached rows.
+cached rows, and `rows` for per-object sweeps: `"rows": { "match": { "Prop": "%Var%" }, "key": "id" }`
+grades every cached row (after `filter`) and yields `offenders`, `unreadable` and `targets` for
+`ExoBulkSweep`/`GraphBulkSweep`, exactly as a sweep prepare hook would. Match values compare as
+case-insensitive strings, blank `omitWhenBlank` variables drop out, a row with `error` or a missing
+matched field is unreadable, and all-unreadable is No Data. Pair it with
+`"expected": { "offenders": [], "unreadable": [] }` (see `Exchange Standards/MailboxComposeSettings.json`).
+Write a hook only when a row needs a join, a licence predicate or a computed value.
 
 Variable rules that bite:
 

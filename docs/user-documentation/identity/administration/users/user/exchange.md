@@ -64,6 +64,24 @@ The card on the left summarises the mailbox. Its header carries a refresh button
 The SMTP entry spells out its state rather than relying on the chip colour, because the underlying property records whether SMTP client authentication is _disabled_. A green **SMTP Disabled** chip is the secure outcome, **SMTP Enabled** is the one worth acting on, and **SMTP Unknown** means Exchange did not report the setting.
 {% endhint %}
 
+## Outlook Compose Settings
+
+The card below **Exchange Information** shows how Outlook on the web and the new Outlook compose mail for this mailbox. Classic Outlook for Windows and Mac keeps its own settings and is not affected.
+
+| Field                         | Description                                                                                     |
+| ----------------------------- | ----------------------------------------------------------------------------------------------- |
+| Undo send                     | How many seconds Outlook waits before sending, so the user can take a message back, or **Off**. |
+| Always show From              | Whether the From field shows on every new message.                                              |
+| Always show Bcc               | Whether the Bcc field shows on every new message.                                               |
+| Forgotten attachment reminder | Whether Outlook warns when a message mentions an attachment but has none.                       |
+| Default reply action          | Whether replying defaults to **Reply** or **Reply all**.                                        |
+| Message format                | Whether new messages are HTML or plain text.                                                    |
+| Read receipt requests         | Whether read receipts are sent automatically, never sent, or the user is asked each time.       |
+| Link previews                 | Whether links in messages show a preview.                                                       |
+| Default font                  | The font, size and colour new messages start with.                                              |
+
+**Edit compose settings** opens a dialog with the current values filled in, including the default font, size and colour. Change what you need and confirm; the undo send delay goes up to 10 seconds, and 0 turns it off. The action is greyed out until the current settings have loaded. To set these for every mailbox in a tenant, use the **Set Outlook compose settings for all mailboxes** baseline standard.
+
 ## Proxy Addresses
 
 Every address on the mailbox, listed with its type and whether it comes from Entra ID, Exchange or both. **Add Alias** opens a dialog where an address is built from a prefix and one of the tenant's domains, and several can be queued before submitting. Row actions promote an address to primary, or remove it.

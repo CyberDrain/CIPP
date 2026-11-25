@@ -17,6 +17,7 @@
   * [Tenant Onboarding](setup/installation/gdap-invite-wizard.md)
   * [I Want to Manage My Own Tenant](setup/installation/owntenant.md)
 * [Maintaining CIPP](setup/maintaining-cipp/README.md)
+  * [Recovering Superadmin Access](setup/maintaining-cipp/recovering-superadmin-access.md)
   * [Updating Versions](setup/maintaining-cipp/updating.md)
   * [Recommended Roles](setup/maintaining-cipp/recommended-roles.md)
   * [Emergency Access Revocation](setup/maintaining-cipp/emergency-access-revocation.md)

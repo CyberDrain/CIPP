@@ -265,6 +265,20 @@ Describe 'Invoke-ListLicenseChanges' {
         Should -Invoke Get-CIPPDbItem -Times 0
     }
 
+    It 'marks only the newest change of a licence on a user as the latest' {
+        Mock Get-CIPPDbItem {
+            $script:CountRow
+            [pscustomobject]@{ RowKey = 'LicenseChanges-1'; Timestamp = [datetime]'2026-11-20T02:00:00Z'; Data = '{"id":"old","activityDateTime":"2026-11-10T10:00:00Z","userId":"u1","skuId":"sku-1"}' }
+            [pscustomobject]@{ RowKey = 'LicenseChanges-2'; Timestamp = [datetime]'2026-11-20T02:00:00Z'; Data = '{"id":"new","activityDateTime":"2026-11-12T10:00:00Z","userId":"u1","skuId":"sku-1"}' }
+            [pscustomobject]@{ RowKey = 'LicenseChanges-3'; Timestamp = [datetime]'2026-11-20T02:00:00Z'; Data = '{"id":"other","activityDateTime":"2026-11-11T10:00:00Z","userId":"u2","skuId":"sku-1"}' }
+        }
+
+        $Body = (script:Get-Changes -UseReportDB $true).Body
+
+        $Body.id | Should -Be @('new', 'other', 'old')
+        $Body.latestChange | Should -Be @($true, $true, $false)
+    }
+
     It 'serves the cache with its timestamp when asked to' {
         Mock Get-CIPPDbItem { $script:CountRow; $script:DataRow }
 

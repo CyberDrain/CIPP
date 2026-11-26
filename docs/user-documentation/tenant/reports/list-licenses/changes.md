@@ -33,4 +33,12 @@ Changes made by your own technicians through partner access show the technician'
 
 Changing which service plans are switched on inside a licence a user already holds is not listed, since no licence was added or removed.
 
+## Table Actions
+
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>View User</td><td>Opens the user's page in CIPP.</td><td>false</td></tr><tr><td>Undo Change</td><td>Reverses the change on the row, after you confirm. On an <strong>Added</strong> row it removes the licence; a user who also gets the licence from a group keeps it. On a <strong>Removed</strong> row it assigns the licence again, which needs a free licence in the tenant and switches on every service in the licence, whatever was switched off before. Only offered on the newest change of that licence for the user, and not on changes made by group-based licensing.</td><td>false</td></tr><tr><td>More Info</td><td>Opens the Extended Info flyout with the full details for the selected row.</td><td>false</td></tr></tbody></table>
+
+{% hint style="info" %}
+An undo is a licence change of its own, so it is listed as a new row once Microsoft has logged it, which takes a few minutes. Cached data and the All Tenants view show it after the next sync. A licence that comes from a group is undone by changing the group's licences or its members.
+{% endhint %}
+
 {% include "../../../../../.gitbook/includes/feature-request.md" %}

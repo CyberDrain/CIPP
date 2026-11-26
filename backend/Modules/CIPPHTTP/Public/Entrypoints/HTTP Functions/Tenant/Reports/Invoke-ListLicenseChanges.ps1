@@ -47,6 +47,9 @@ function Invoke-ListLicenseChanges {
             $Body = @(New-GraphGetRequest -uri $Uri -tenantid $TenantFilter -AsApp $true -Stream | ConvertFrom-CIPPLicenseAuditEvent -TenantFilter $TenantFilter)
         }
         $Body = @($Body | Sort-Object -Property activityDateTime -Descending)
+        # Only the newest change of a licence on a user can be undone: an older one has been superseded
+        $Seen = [System.Collections.Generic.HashSet[string]]::new()
+        foreach ($Row in $Body) { $Row.PSObject.Properties.Add([psnoteproperty]::new('latestChange', $Seen.Add("$($Row.Tenant)|$($Row.userId)|$($Row.skuId)"))) }
         $StatusCode = [HttpStatusCode]::OK
     } catch {
         $ErrorMessage = Get-CippException -Exception $_

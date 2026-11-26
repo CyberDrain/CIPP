@@ -72,7 +72,7 @@ CIPP replaces only the variables that exist for the tenant being processed, whic
 
 Graph rejects the malformed value, so the standard fails for that tenant and the failure is recorded in the Standards logs for that tenant only. Tenants that do have a value for the variable continue to deploy normally, which is why this typically shows up as a template that works everywhere except for a handful of tenants. When you see an unexpected Graph error on a Standards deployment, check that every tenant in scope has a value for each variable the template uses.
 
-Conditional Access policies are checked before anything is written: a policy whose users, groups, locations or applications still hold an unresolved variable stops with an error naming the variable and the tenant, instead of reaching Graph.
+Conditional Access policies are checked before anything is written: a policy whose users, groups, locations or applications, or whose named locations' names, IP ranges or countries, still hold an unresolved variable stops with an error naming the variable and the tenant, instead of reaching Graph.
 
 A user template's **Manager** and **Sponsor** are also checked before anything is sent: when the variable has no value for the tenant the user is created in, the user is still created, and the results report that the manager or sponsor could not be set, naming the variable and the tenant.
 

@@ -52,7 +52,7 @@ When the app's access could not be rated, its impact counts as Medium, never as 
 | Contain app           | Opens the containment drawer described under [#containment](case.md#containment "mention"). Greyed out without the `Tenant.Application.ReadWrite` permission.                                     |
 | Run new investigation | Starts a new run. The earlier case stays in the **Case** switcher. The page shows the run's progress while it completes.                                                                          |
 | Download evidence     | Builds the evidence package for the case on screen and downloads it. If an export fails, the reason is shown below the buttons. See [#evidence-export](case.md#evidence-export "mention").         |
-| PDF report            | Opens a preview of the PDF report for the case. **Download PDF** saves it. What the report contains is covered under [#pdf-report](case.md#pdf-report "mention").                                 |
+| PDF report            | Opens a preview of the PDF report for the case, with a toggle between **C-suite summary** and **Full report**. **Download PDF** saves whichever is showing. What the report contains is covered under [#pdf-report](case.md#pdf-report "mention"). |
 
 ### Checks Not Run
 
@@ -122,11 +122,16 @@ Removed credentials, owners, permissions, consents and roles are not restored. T
 
 ## Evidence Export
 
-**Download evidence** builds a ZIP of the case: the full results, one CSV per set of findings, the score, the containment history, every logbook entry stamped with the case ID, and the PDF report as `report.pdf`. The package is built fresh for every export and nothing is kept on the server afterwards. **Download evidence (ZIP)** on the [NHI Compromise](README.md) page produces the same package. Only a completed case can be exported, and the list of the app in your other tenants is left out.
+**Download evidence** builds a ZIP of the case: the full results, one CSV per set of findings, the score, the containment history, every logbook entry stamped with the case ID, and both versions of the PDF report as `report-full.pdf` and `report-summary.pdf`. The package is built fresh for every export and nothing is kept on the server afterwards. **Download evidence (ZIP, with PDFs)** on the [NHI Compromise](README.md) page produces the same package. Only a completed case can be exported, and the list of the app in your other tenants is left out.
 
 ## PDF Report
 
 The report is built from the case on screen, so it never starts a fresh run and always reflects the stored result the page is showing. Its cover names the app rather than the tenant, and the logo, cover image, colours, footer and watermark come from your branding, described in [branding.md](../../../cipp/settings/branding.md "mention"). It is written to be readable by managers as well as technicians. The app in your other tenants is never included, so the report can be passed to the customer.
+
+The preview offers two versions of the same report:
+
+* **Full report** holds every page below.
+* **C-suite summary** holds the cover and the **Executive Summary** only, without **Remediation Taken** and **Data Source Information**, for a reader who needs the outcome rather than the evidence.
 
 | Page                | What it contains                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

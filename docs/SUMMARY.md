@@ -227,6 +227,7 @@
     * [Consented Applications](user-documentation/tenant/reports/application-consent.md)
     * [Graph / Office Reports](user-documentation/tenant/reports/graph-office-reports.md)
     * [Custom Test Report](user-documentation/tenant/reports/custom-test-report.md)
+    * [Cyber Insurance Report](user-documentation/tenant/reports/cyber-insurance.md)
     * [App Permission Exposure](user-documentation/tenant/reports/app-permission-exposure.md)
   * [Manage Tenant](user-documentation/tenant/manage/README.md)
     * [Edit Tenant](user-documentation/tenant/manage/edit.md)

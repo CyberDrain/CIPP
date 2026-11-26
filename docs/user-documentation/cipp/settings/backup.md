@@ -61,9 +61,9 @@ A backup that fails validation cannot be taken any further, and the errors are l
 {% step %}
 ### Select Categories
 
-Choose which parts of the backup to restore. Categories are listed with the number of items each contains, and each can be expanded to preview the individual items before deciding.
+Choose which parts of the backup to restore. Categories are listed with the number of items each contains. Expand a category to tick or untick individual items: a category with only some items ticked restores just those.
 
-This is what makes a partial restore possible, for example recovering only your standards or only your scheduled tasks without disturbing anything else.
+This is what makes a partial restore possible, for example recovering only your standards, or a single Conditional Access template, without disturbing anything else.
 {% endstep %}
 
 {% step %}

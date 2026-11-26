@@ -147,6 +147,10 @@ For each standard, set the automatic remediation toggle if you want the change r
 {% hint style="info" %}
 On the Conditional Access Template standard, **What state should we deploy this template in?** takes precedence over the state saved in the template itself, the same as it does in a standards template. Choose **Do not change state** to deploy whatever state the template defines.
 {% endhint %}
+
+{% hint style="info" %}
+**Only create missing named locations** on the Conditional Access Template standards creates any named location the template needs that the tenant does not have, and links the policy to it. An existing named location of the same name is linked as it is and never changed, so IP ranges or countries edited in the tenant are kept and are not reported as drift.
+{% endhint %}
 {% endstep %}
 
 {% step %}

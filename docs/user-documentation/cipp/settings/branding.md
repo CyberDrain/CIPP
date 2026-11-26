@@ -32,6 +32,7 @@ Sets which preset each type of report reaches for when nothing else specifies on
 | BEC Full Report          |
 | BEC C-Suite Summary      |
 | NHI Compromise Report    |
+| NHI C-Suite Summary      |
 | Sharing Report           |
 | Permissions Report       |
 | Mail Flow Report         |

@@ -223,6 +223,7 @@
   * [Reports](user-documentation/tenant/reports/README.md)
     * [Licence Report](user-documentation/tenant/reports/list-licenses/README.md)
       * [Optimization](user-documentation/tenant/reports/list-licenses/optimization.md)
+      * [Changes](user-documentation/tenant/reports/list-licenses/changes.md)
       * [Pricing](user-documentation/tenant/reports/list-licenses/pricing.md)
     * [Consented Applications](user-documentation/tenant/reports/application-consent.md)
     * [Graph / Office Reports](user-documentation/tenant/reports/graph-office-reports.md)

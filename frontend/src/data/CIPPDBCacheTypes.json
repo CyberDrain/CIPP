@@ -191,6 +191,11 @@
     "description": "Delegated permission grants added in the last 30 days and who added them, a user or an app (Entra ID P1)"
   },
   {
+    "type": "LicenseChanges",
+    "friendlyName": "Licence Changes",
+    "description": "Licences added to and removed from users in the last 30 days and who made the change, a user or an app (Entra ID P1)"
+  },
+  {
     "type": "OAuth2PermissionGrants",
     "friendlyName": "OAuth2 Permission Grants",
     "description": "OAuth2 permission grants"

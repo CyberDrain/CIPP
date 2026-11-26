@@ -64567,6 +64567,133 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/ListLicenseChanges": {
+      "get": {
+        "summary": "List licences added to and removed from users in the last 30 days",
+        "operationId": "ListLicenseChanges",
+        "tags": [
+          "Tenant > Reports"
+        ],
+        "description": "Lists one row per licence added to or removed from a user in the last 30 days, with who made the change (a user or an app such as group-based licensing), read from the Entra directory audit log. The audit log needs Entra ID P1. Supports UseReportDB=true to serve cached data from the reporting database; AllTenants always uses the cache.",
+        "parameters": [
+          {
+            "name": "tenantFilter",
+            "in": "query",
+            "description": "Target tenant: the tenant's default domain, its tenant ID, or 'AllTenants'. Required unless tenantGroup is sent instead; never send both.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantGroup"
+          },
+          {
+            "name": "UseReportDB",
+            "in": "query",
+            "description": "Serve from the reporting database cache instead of the live audit log. AllTenants always uses the cache.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the Microsoft Graph entity it queries, and the columns the CIPP UI renders. This endpoint returns the Graph response as-is without selecting fields, so these are the properties the entity CAN carry (x-cipp-field-source: graph-entity) rather than a proven projection - Graph returns a default subset unless asked otherwise.",
+                    "properties": {
+                      "activityDateTime": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity,frontend"
+                      },
+                      "activityDisplayName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "additionalDetails": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "category": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "change": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "correlationId": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "id": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "initiatedBy": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity,frontend"
+                      },
+                      "initiatedByType": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "license": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "loggedByService": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "operationType": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "result": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "resultReason": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "targetResources": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "Tenant": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "userPrincipalName": {
+                        "x-cipp-field-source": "frontend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.Directory.Read",
+        "x-cipp-tenant-group": true
+      }
+    },
     "/api/ListLicenseOptimization": {
       "get": {
         "summary": "ListLicenseOptimization",

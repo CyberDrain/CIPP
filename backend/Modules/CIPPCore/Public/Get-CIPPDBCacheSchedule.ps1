@@ -138,6 +138,7 @@ function Get-CIPPDBCacheSchedule {
                 'AppCredentialChanges'
                 'ServicePrincipalRoleChanges'
                 'DelegatedGrantChanges'
+                'LicenseChanges'
                 'NetworkAccess'
                 'NetworkAccessFiltering'
             )

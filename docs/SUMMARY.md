@@ -349,6 +349,7 @@
     * [Sharing Report](user-documentation/teams-share/reports/sharing-report.md)
     * [Storage Report](user-documentation/teams-share/reports/storage-report.md)
     * [Permissions Report](user-documentation/teams-share/reports/permissions-report.md)
+    * [Access Reports](user-documentation/teams-share/reports/access-reports.md)
     * [Teams Activity](user-documentation/teams-share/reports/teams-activity.md)
 * [Email & Exchange](user-documentation/email/README.md)
   * [Administration](user-documentation/email/administration/README.md)

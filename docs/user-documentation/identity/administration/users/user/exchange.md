@@ -118,6 +118,18 @@ The inbox rules on the mailbox, listed with whether each is enabled, its name, d
 This card is worth a look during a compromise investigation, since rules that move or forward mail are a common way for an intruder to hide their activity. The bec.md tab gathers this alongside the other indicators.
 {% endhint %}
 
+## Mobile Devices
+
+Lists the phones and tablets that connect to this mailbox through Exchange ActiveSync or Outlook for iOS and Android, with each device's model, operating system, access state and the last time it synced. Open a device to see its full details, including when a wipe was requested and when the device confirmed it.
+
+| Action            | Description                                                                                                                                                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Allow Device      | Adds the device to the mailbox's allowed list, so it may sync even when the tenant quarantines or blocks new devices.                                                                                                                    |
+| Block Device      | Adds the device to the mailbox's blocked list.                                                                                                                                                                                           |
+| Account-only Wipe | Removes this account's email, calendar and contacts from the device and leaves everything else on it alone. The wipe runs the next time the device connects. Exchange refuses it for older mail apps that do not support account-only wipe. |
+| Cancel Wipe       | Withdraws a wipe the device has not yet carried out. Available only while a wipe is pending.                                                                                                                                                 |
+| Delete Device     | Removes the device partnership from the mailbox. The device can register again the next time it connects, unless it is blocked.                                                                                                          |
+
 ## Trusted and Blocked Senders/Domains
 
 The user's own safe and blocked sender lists, listed by type and value. **Remove Entry** takes an entry off its list. Select several entries to remove them all at once, and the list refreshes when the removal finishes.

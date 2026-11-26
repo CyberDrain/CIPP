@@ -23,13 +23,13 @@ import { useSettings } from '../hooks/use-settings'
 import { ApiGetCall } from '../api/ApiCall'
 import { ServerPdfPane, useServerPdf } from './CippPdf/useServerPdf'
 import { DEFAULT_BRANDING_OPTION } from './ReportBuilder/reportSettings'
-import { useBrandingSettings } from './CippPdf/useBrandingSettings'
+import { useBrandingQuery } from './CippPdf/useBrandingSettings'
 
 export const ExecutiveReportButton = (props) => {
   const { variant: buttonVariant, onClick: onClickProp, ...other } = props
   const settings = useSettings()
   const tenantFilter = settings.currentTenant
-  const defaultBranding = useBrandingSettings()
+  const { branding: defaultBranding, ready: brandingReady } = useBrandingQuery()
 
   // Preview state
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -85,7 +85,7 @@ export const ExecutiveReportButton = (props) => {
   const pdf = useServerPdf({
     url: '/api/ExecGetExecutiveReportPdf',
     body: { tenantFilter, sectionConfig, brandingPresetId },
-    enabled: previewOpen,
+    enabled: previewOpen && brandingReady,
   })
 
   // At least one section must stay enabled; otherwise a plain toggle.
@@ -399,6 +399,7 @@ export const ExecutiveReportButton = (props) => {
           <Box sx={{ flex: 1, height: '100%', minWidth: 0 }}>
             <ServerPdfPane
               {...pdf}
+              loading={pdf.loading || !brandingReady}
               title={`Executive Report - ${tenantName}`}
               errorText="The report could not be generated. Ensure this tenant has data and try again."
             />

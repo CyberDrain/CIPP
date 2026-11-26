@@ -189,6 +189,7 @@
     * [Manage Baselines](user-documentation/tenant/baselines/templates.md)
     * [Add or Edit Baseline](user-documentation/tenant/baselines/template.md)
     * [Managed Baselines](user-documentation/tenant/baselines/managed.md)
+    * [Migrating from Standards](user-documentation/tenant/baselines/migrating-from-standards.md)
   * [Security Simulations](user-documentation/tenant/security-simulator/README.md)
     * [Sign-in Situations](user-documentation/tenant/security-simulator/situations.md)
     * [CA Gap Analysis](user-documentation/tenant/security-simulator/conditional-access.md)

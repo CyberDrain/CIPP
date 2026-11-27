@@ -1016,6 +1016,17 @@
       },
       {
         "type": "switch",
+        "name": "Hudu.CreateMissingLicenses",
+        "label": "Create missing licenses in Hudu",
+        "condition": {
+          "field": "Hudu.Enabled",
+          "compareType": "is",
+          "compareValue": true,
+          "action": "disable"
+        }
+      },
+      {
+        "type": "switch",
         "name": "Hudu.IncludeLAPS",
         "label": "Sync Windows LAPS passwords to Hudu",
         "helperText": "Individual tenants can be excluded from password data on the Tenant Mapping tab.",

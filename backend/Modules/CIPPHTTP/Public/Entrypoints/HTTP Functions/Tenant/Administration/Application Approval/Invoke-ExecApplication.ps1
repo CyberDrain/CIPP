@@ -10,7 +10,7 @@ function Invoke-ExecApplication {
     $APIName = $Request.Params.CIPPEndpoint
     $Headers = $Request.Headers
     $ValidTypes = @('applications', 'servicePrincipals')
-    $ValidActions = @('Update', 'Upsert', 'Delete', 'RemoveKey', 'RemovePassword', 'Hide', 'Show', 'ListSigningCertificates', 'AddSigningCertificate', 'SetPreferredSigningKey', 'RemoveSigningCertificate', 'UpdateOwners', 'UpdateAssignments')
+    $ValidActions = @('Update', 'Upsert', 'Delete', 'RemoveKey', 'RemovePassword', 'Hide', 'Show', 'ShowInEnterpriseApps', 'HideFromEnterpriseApps', 'ListSigningCertificates', 'AddSigningCertificate', 'SetPreferredSigningKey', 'RemoveSigningCertificate', 'UpdateOwners', 'UpdateAssignments')
 
     $Id = $Request.Query.Id ?? $Request.Body.Id
     $Type = $Request.Query.Type ?? $Request.Body.Type
@@ -62,6 +62,13 @@ function Invoke-ExecApplication {
                 Body       = "Invalid Action specified. Valid actions are: $($ValidActions -join ', ')"
             })
         return
+    }
+
+    if ($Action -in @('ShowInEnterpriseApps', 'HideFromEnterpriseApps') -and $Type -ne 'servicePrincipals') {
+        return ([HttpResponseContext]@{
+                StatusCode = [HttpStatusCode]::BadRequest
+                Body       = @{ Results = @(@{ resultText = "$Action applies only to enterprise applications (Type servicePrincipals)."; state = 'error' }) }
+            })
     }
 
     if ($Action -eq 'UpdateOwners') {
@@ -480,32 +487,42 @@ function Invoke-ExecApplication {
                     StatusCode = Get-CippBulkStatusCode -Total $Total -Failed $Failed
                     Body       = @{ Results = @($AssignmentResults) }
                 })
-        } elseif ($Action -eq 'Hide' -or $Action -eq 'Show') {
-            # MyApps portal visibility is stored as the 'HideApp' string in the service
-            # principal 'tags' collection. tags is a replace-collection on PATCH, so read the
-            # current tags and add/remove only HideApp to avoid clobbering the other tags
-            # (e.g. WindowsAzureActiveDirectoryIntegratedApp, which marks the app as SSO-integrated).
-            $Hidden = $Action -eq 'Hide'
+        } elseif ($Action -in @('Hide', 'Show', 'ShowInEnterpriseApps', 'HideFromEnterpriseApps')) {
+            # Both visibilities are a string in the service principal's tags: HideApp hides the app
+            # from the MyApps portal, WindowsAzureActiveDirectoryIntegratedApp lists it under
+            # Enterprise applications in Entra. tags is replaced whole on PATCH, so only the one
+            # tag is added or removed and the rest are sent back unchanged.
+            $Tag = if ($Action -in @('Hide', 'Show')) { 'HideApp' } else { 'WindowsAzureActiveDirectoryIntegratedApp' }
+            $AddTag = $Action -in @('Hide', 'ShowInEnterpriseApps')
             $CurrentObject = New-GraphGetRequest -Uri $Uri -tenantid $TenantFilter -AsApp $true
-            # Rebuild the collection in a single @() subexpression (no in-place array growth):
-            # keep every tag except HideApp, then append HideApp only when hiding.
+            if (-not $AddTag -and $Type -eq 'servicePrincipals') {
+                # Entra copies an app registration's tags onto its service principal and puts them
+                # back after a removal, so removing one here would report a change that never holds.
+                # The filter returns nothing for an app registered in another tenant.
+                $AppRegistration = New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/applications?`$filter=appId eq '$($CurrentObject.appId)'&`$select=id,tags" -tenantid $TenantFilter -AsApp $true
+                if (@($AppRegistration.tags) -contains $Tag) {
+                    return ([HttpResponseContext]@{
+                            StatusCode = [HttpStatusCode]::BadRequest
+                            Body       = @{ Results = @(@{ resultText = "'$($CurrentObject.displayName)' gets this setting from its app registration, so Entra would put it back. Remove the '$Tag' tag from the app registration's manifest in Entra, then try again."; state = 'error' }) }
+                        })
+                }
+            }
             $Tags = @(
-                $CurrentObject.tags | Where-Object { $_ -ne 'HideApp' }
-                if ($Hidden) { 'HideApp' }
+                $CurrentObject.tags | Where-Object { $_ -ne $Tag }
+                if ($AddTag) { $Tag }
             )
-            # Encode each tag individually and wrap in brackets so tags is always a JSON array:
-            # a whole-collection ConvertTo-Json collapses a single-element array to a scalar (Graph
-            # rejects it) and emits nothing for an empty array. This handles 0, 1 and many tags.
+            # Each tag is encoded on its own so tags stays a JSON array at 0, 1 or many entries.
             $TagsJson = '[' + (($Tags | ForEach-Object { ConvertTo-Json -InputObject $_ -Compress }) -join ',') + ']'
             $PatchBody = '{{"tags":{0}}}' -f $TagsJson
             $null = New-GraphPOSTRequest -Uri $Uri -Type 'PATCH' -Body $PatchBody -tenantid $TenantFilter -AsApp $true
 
             $Results = @{
-                resultText = if ($Hidden) {
-                    "Hid '$($CurrentObject.displayName)' from the MyApps portal"
-                } else {
-                    "Made '$($CurrentObject.displayName)' visible in the MyApps portal"
-                }
+                resultText = @{
+                    Hide                   = "Hid '$($CurrentObject.displayName)' from the MyApps portal"
+                    Show                   = "Made '$($CurrentObject.displayName)' visible in the MyApps portal"
+                    ShowInEnterpriseApps   = "Listed '$($CurrentObject.displayName)' under Enterprise applications in Entra"
+                    HideFromEnterpriseApps = "Removed '$($CurrentObject.displayName)' from the Enterprise applications list in Entra"
+                }[$Action]
                 state      = 'success'
             }
             Write-LogMessage -headers $Headers -API $APIName -tenant $TenantFilter -message $Results.resultText -Sev 'Info'

@@ -28,6 +28,8 @@ The card lists each result with a tick, a warning, or a cross. When everything p
 | Service account                | CIPP does not appear to be signed in as a dedicated service account. Use a dedicated account for CIPP and refresh your tokens in the [SAM Setup Wizard](../sam-setup-wizard.md). The Details flyout links to the guide for creating one.                                                                        |
 | MFA claim                      | The sign-in CIPP is using did not complete multi-factor authentication. Refresh your tokens in the [SAM Setup Wizard](../sam-setup-wizard.md), completing MFA as the service account.                                                                                                                          |
 | Device code login              | The token CIPP holds was first obtained through a device code sign-in, which Conditional Access blocks in some customer tenants. Refresh your token in the [SAM Setup Wizard](../sam-setup-wizard.md). Where CIPP cannot read your sign-in logs to check this, the card says so instead of reporting a failure. |
+| Permissions to manage itself   | CIPP's sign-in does not carry the permissions it needs to grant itself everything else, so most other checks fail too. See [CIPP cannot manage its own permissions](#cipp-cannot-manage-its-own-permissions).                                                                                           |
+| Service account role           | The account CIPP signs in as is not a Global Administrator or Privileged Role Administrator, so CIPP cannot grant its own permissions. See [Permissions not granted in your tenant](#permissions-not-granted-in-your-tenant).                                                                                     |
 | Refresh token                  | The token CIPP is currently using does not match the one that is stored. This happens shortly after a token refresh and resolves itself within thirty minutes.                                                                                                                                                 |
 | Application secret             | The secret CIPP authenticates with as its own application has expired, or is close to expiry. See [Application secret](#application-secret).                                                                                                                                                                   |
 | New permissions to apply       | A CIPP update needs permissions that have not been applied yet. Fixed from the page with **Repair Permissions**. See [New permissions to apply](#new-permissions-to-apply).                                                                                                                                      |
@@ -81,6 +83,16 @@ If you would rather not give the service account that role, a Global Administrat
 2. Go to **API permissions**. Add any permission listed in the Details flyout that is not shown, choosing **Microsoft Graph** and then Application or Delegated permissions to match the Type column.
 3. Select **Grant admin consent** for your tenant and confirm each permission shows as granted.
 4. After a few minutes, select **Refresh** on the Permissions check. Newly granted permissions can take a short while to appear.
+
+### CIPP cannot manage its own permissions
+
+CIPP grants its own permissions, in your tenant and in your clients' tenants, signed in as the CIPP service account. To do that, its sign-in needs three Microsoft Graph delegated permissions: DelegatedPermissionGrant.ReadWrite.All, AppRoleAssignment.ReadWrite.All and Directory.ReadWrite.All. If those are missing, for example because the CIPP-SAM application's permissions were removed in Entra, CIPP cannot put them back by itself, and refreshing the token alone does not help. The card names the ones that are missing. To fix it:
+
+1. On the Permissions check card, select the CIPP-SAM link next to **App Registration**. It opens the application in the Azure portal.
+2. Go to **API permissions** and select **Add a permission**, then **Microsoft Graph** and **Delegated permissions**. Add each permission the card lists.
+3. Select **Grant admin consent** for your tenant, signed in as a Global Administrator.
+4. Refresh your token in the [SAM Setup Wizard](../sam-setup-wizard.md). For an additional partner tenant, reconnect it on the Partner Tenants page instead.
+5. Run **Refresh CPV Permissions** on the \*Partner Tenant row under CIPP > Application Settings > [Tenants](tenants.md) to restore the rest of CIPP's permissions in your tenant, then select **Refresh** on the Permissions check.
 
 ### Application secret
 

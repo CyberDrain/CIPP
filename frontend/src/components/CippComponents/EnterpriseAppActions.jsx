@@ -200,6 +200,50 @@ const viewInEntraAction = {
   external: true,
 }
 
+// One Show/Hide action per visibility tag on the service principal. The radio is named Action so
+// its value is the backend action; a single row opens on the opposite of its current state.
+const getVisibilityAction = (
+  canWriteApplication,
+  { icon, label, tag, taggedMeansShown, showAction, hideAction, confirmText }
+) => ({
+  icon,
+  label,
+  type: 'POST',
+  color: 'info',
+  multiPost: false,
+  url: '/api/ExecApplication',
+  data: {
+    Id: 'id',
+    Type: 'servicePrincipals',
+  },
+  fields: [
+    {
+      type: 'radio',
+      name: 'Action',
+      label: 'Visibility',
+      options: [
+        { label: 'Show', value: showAction },
+        { label: 'Hide', value: hideAction },
+      ],
+      validators: { required: 'Choose Show or Hide' },
+    },
+  ],
+  // The toolbar passes one checked row as a one-element array.
+  defaultvalues: (row) => {
+    const rows = [row].flat()
+    return rows.length === 1 && rows[0]
+      ? {
+          Action:
+            (rows[0].tags ?? []).includes(tag) === taggedMeansShown ? hideAction : showAction,
+        }
+      : {}
+  },
+  // The detail page reads tags from this query, so the next open preselects the new opposite.
+  relatedQueryKeys: ['EnterpriseApp-spId-*'],
+  confirmText,
+  condition: () => canWriteApplication,
+})
+
 export const getEnterpriseAppPostActions = (canWriteApplication, onChanged) => [
   {
     icon: <CippIcons.ContentCopy />,
@@ -321,39 +365,26 @@ export const getEnterpriseAppPostActions = (canWriteApplication, onChanged) => [
     confirmText: 'Are you sure you want to enable this service principal?',
     condition: (row) => canWriteApplication && row?.accountEnabled === false,
   },
-  {
-    icon: <CippIcons.VisibilityOff />,
-    label: 'Hide from MyApps portal',
-    type: 'POST',
-    color: 'warning',
-    multiPost: false,
-    url: '/api/ExecApplication',
-    data: {
-      Id: 'id',
-      Type: 'servicePrincipals',
-      Action: 'Hide',
-    },
-    confirmText:
-      "Hide '[displayName]' from the MyApps portal? Users will no longer see it at myapps.microsoft.com.",
-    condition: (row) =>
-      canWriteApplication && !(row?.tags ?? []).includes('HideApp'),
-  },
-  {
+  getVisibilityAction(canWriteApplication, {
     icon: <CippIcons.EyeIcon />,
-    label: 'Show in MyApps portal',
-    type: 'POST',
-    color: 'success',
-    multiPost: false,
-    url: '/api/ExecApplication',
-    data: {
-      Id: 'id',
-      Type: 'servicePrincipals',
-      Action: 'Show',
-    },
-    confirmText: "Make '[displayName]' visible to users in the MyApps portal?",
-    condition: (row) =>
-      canWriteApplication && (row?.tags ?? []).includes('HideApp'),
-  },
+    label: 'MyApps portal visibility',
+    tag: 'HideApp',
+    taggedMeansShown: false,
+    showAction: 'Show',
+    hideAction: 'Hide',
+    confirmText:
+      "Show or hide '[displayName]' for users in the MyApps portal at myapps.microsoft.com.",
+  }),
+  getVisibilityAction(canWriteApplication, {
+    icon: <CippIcons.Visibility />,
+    label: 'Entra Enterprise applications visibility',
+    tag: 'WindowsAzureActiveDirectoryIntegratedApp',
+    taggedMeansShown: true,
+    showAction: 'ShowInEnterpriseApps',
+    hideAction: 'HideFromEnterpriseApps',
+    confirmText:
+      "Show or hide '[displayName]' under Enterprise applications in the Entra admin center. Sign-in and permissions are not affected.",
+  }),
   getAppOwnerAction(canWriteApplication, 'servicePrincipals', onChanged),
   {
     icon: <CippIcons.Group />,

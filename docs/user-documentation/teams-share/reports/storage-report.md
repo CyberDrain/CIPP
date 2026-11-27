@@ -10,7 +10,7 @@ The report reads from cached usage data rather than querying SharePoint and OneD
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Sync usage   | Queues a refresh of SharePoint site usage (including file-level archive metrics, where SharePoint admin access is available) and OneDrive usage for this tenant. This is what feeds the charts, the tables, and the near-quota and inactive views. Progress is shown next to it as **Usage sync**, and the report refreshes itself once the sync finishes. Greyed out unless you have SharePoint report write access; hovering over it shows the permission you need. |
 | Scan cleanup | Queues the cleanup scan described under [#finding-cleanup-opportunities](storage-report.md#finding-cleanup-opportunities "mention"). It fills the reclaim columns only, and does not refresh usage sizes. Unavailable until usage data has been synced, and reads **Rescan cleanup** once a scan has run. Greyed out unless you have SharePoint report write access; hovering over it shows the permission you need. |
-| Refresh      | Reloads the report from the cached data without running a new sync.                                                                                                                                                                                                    |
+| Refresh      | Reloads the report from the cached data, including the Microsoft 365 Archive banner, without running a new sync.                                                                                                                                                       |
 | Export Report | Opens a preview of the report as a PDF, covering SharePoint and OneDrive storage use, version history and version policies per library, recycle bins, and inactive sites. You can then download it. The PDF is built from the last usage sync and cleanup scan. Greyed out until usage data has been synced.
 
 A **Last data refresh** line shows when the usage data and the cleanup scan were last refreshed, so you can tell how current the figures are before relying on them.
@@ -99,6 +99,28 @@ Emptying a recycle bin is permanent and cannot be undone. You choose whether to 
 
 The **Recycle** tab needs SharePoint site recycle bin read access to view, and recycle bin write access to empty it.
 
+## Microsoft 365 Archive
+
+Where SharePoint admin access is available, a banner above the report says whether the tenant is ready to archive content.
+
+| Banner                                                | Meaning                                                                                                                                                                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Microsoft 365 Archive is turned on**                    | Files and sites can be archived. The banner gives the total storage currently archived at file level. It adds how many sites do not allow file archiving only when at least one site (other than system sites) has it switched off, and adds that new sites do not allow file archiving by default only when that is the tenant's default. |
+| **File archiving is switched off for this tenant**        | Whole sites can still be archived, but users cannot archive individual files. The **Set SharePoint file archiving (Microsoft 365 Archive)** baseline turns it back on.                                  |
+| **Microsoft 365 Archive does not appear to be turned on** | Nothing can be archived until Microsoft 365 Archive is turned on for the tenant in the Microsoft 365 admin center, which needs pay-as-you-go billing through an Azure subscription.                      |
+| **This tenant's SharePoint settings have not been collected yet** | CIPP has not stored the tenant's SharePoint settings yet, so it cannot say whether Microsoft 365 Archive is turned on. They are collected with the nightly tenant data, and the banner says what to do. |
+| **This tenant's SharePoint settings could not be read**   | CIPP could not read the stored SharePoint settings. The banner gives the reason; reload the page to try again.                                                                                          |
+
+The banner reflects the tenant's SharePoint configuration as of CIPP's last collection of the tenant's data, so a change made in the Microsoft 365 admin center shows up after the next collection.
+
+{% hint style="warning" %}
+Archived content is not available straight away. Bringing archived content back is instant for the first 7 days after it was archived. After that it can take up to 24 hours, and nobody can open it until that finishes. Agree this with the customer before archiving anything they might need at short notice.
+{% endhint %}
+
+{% hint style="info" %}
+Microsoft only charges for archived storage once the tenant's active and archived storage together exceed its SharePoint storage quota, so archiving content in a tenant that is at its limit frees space without a charge. See Microsoft's [pricing model for Microsoft 365 Archive](https://learn.microsoft.com/en-us/microsoft-365/archive/archive-pricing).
+{% endhint %}
+
 ## Table Details
 
 The report is split into three tabs, **SharePoint Sites**, **OneDrive** and **Libraries**, each counted in its own tab label.
@@ -110,6 +132,7 @@ The report is split into three tabs, **SharePoint Sites**, **OneDrive** and **Li
 | Libraries                        | The site's top-level document libraries, reached through a **View libraries** button. See [#libraries](storage-report.md#libraries "mention"). |
 | Display Name                     | The name of the site.                                                                                                   |
 | Workload                         | Whether the site is counted as Teams or SharePoint.                                                                     |
+| Archive Status                   | Whether the whole site is **Active**, **Archived** or **Reactivating** in Microsoft 365 Archive, or **Unknown** where Microsoft gave a status CIPP does not recognise. Only shown after a **Sync usage** that collected it. |
 | Cleanup                          | The cleanup signals found for the site, such as old versions or a large recycle bin. Only shown after a cleanup scan.   |
 | Reclaim (est.)                   | The estimated storage a cleanup would reclaim for the site. Only shown after a cleanup scan.                            |
 | Archived File Disk Used Gigabytes | The site's file-level M365 Archive usage. Only shown once archive metrics have been synced.                             |
@@ -175,7 +198,7 @@ The **Libraries** tab lists every document library found by the cleanup scan, ac
 
 ### SharePoint Sites
 
-<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Cleanup…</td><td>Opens the storage cleanup drawer for the site (see Finding Cleanup Opportunities above). Greyed out for system sites and unless you have SharePoint site write access.</td><td>true</td></tr><tr><td>Set quota…</td><td>Sets the site's storage limit and warning level, in MB, prefilled from the site's current allocation where CIPP has a figure for it. Only takes effect when the tenant uses manual site storage limits. Greyed out for system sites and unless you have SharePoint site write access.</td><td>true</td></tr><tr><td>Open in SharePoint</td><td>Opens the site in a new browser tab.</td><td>false</td></tr><tr><td>Open Storage Metrics</td><td>Opens the site's classic Storage Metrics page in SharePoint admin, in a new browser tab.</td><td>false</td></tr><tr><td>Open in site browser</td><td>Opens the site in CIPP's site browser.</td><td>false</td></tr></tbody></table>
+<table><thead><tr><th>Action</th><th>Description</th><th data-type="checkbox">Bulk Action Available</th></tr></thead><tbody><tr><td>Cleanup…</td><td>Opens the storage cleanup drawer for the site (see Finding Cleanup Opportunities above). Greyed out for system sites and unless you have SharePoint site write access.</td><td>true</td></tr><tr><td>Set quota…</td><td>Sets the site's storage limit and warning level, in MB, prefilled from the site's current allocation where CIPP has a figure for it. Only takes effect when the tenant uses manual site storage limits. Greyed out for system sites and unless you have SharePoint site write access.</td><td>true</td></tr><tr><td><strong>File archiving…</strong></td><td>Sets whether users can archive files on the site with Microsoft 365 Archive. Turning it off only stops new files being archived: files that are already archived stay archived and can still be reactivated. The change applies straight away, but the switch, the <strong>Allow File Archive</strong> column and the banner show the old setting until the next <strong>Sync usage</strong>. Greyed out for system sites and unless you have SharePoint site write access.</td><td>true</td></tr><tr><td><strong>Archive site…</strong></td><td>Archives the whole site with Microsoft 365 Archive. Nobody can open the site or any file in it until it is reactivated, and it stops counting towards SharePoint storage. A hub site must be unregistered first, and the private and shared channel sites of a team are not archived with it. Runs on one site at a time, so each site is confirmed on its own. Greyed out for system sites, for sites that are <strong>Archived</strong> or <strong>Reactivating</strong> at the last <strong>Sync usage</strong>, and unless you have SharePoint site write access.</td><td>false</td></tr><tr><td><strong>Reactivate site…</strong></td><td>Brings an archived site back. A site archived in the last 7 days comes back straight away, and an older one can take up to 24 hours. Greyed out for system sites, for sites that are <strong>Active</strong> or <strong>Reactivating</strong> at the last <strong>Sync usage</strong>, and unless you have SharePoint site write access.</td><td>true</td></tr><tr><td>Open in SharePoint</td><td>Opens the site in a new browser tab.</td><td>false</td></tr><tr><td>Open Storage Metrics</td><td>Opens the site's classic Storage Metrics page in SharePoint admin, in a new browser tab.</td><td>false</td></tr><tr><td>Open in site browser</td><td>Opens the site in CIPP's site browser.</td><td>false</td></tr></tbody></table>
 
 ### OneDrive
 

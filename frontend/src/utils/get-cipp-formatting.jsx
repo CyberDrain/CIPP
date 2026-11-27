@@ -38,6 +38,7 @@ import { CollapsibleChipList } from '../components/CippComponents/CollapsibleChi
 import countryList from '../data/countryList.json'
 import { getStandards } from './standards-data'
 import { parseCippDate } from './parse-cipp-date'
+import { archiveStatusLabel } from './sharepoint-archive'
 
 // Helper function to convert country codes to country names
 const getCountryNameFromCode = (countryCode) => {
@@ -400,6 +401,10 @@ export const getCippFormatting = (
     }
     const gb = bytes / 1024 / 1024 / 1024
     return formatCellText(`${gb.toFixed(2)} GB`, isText)
+  }
+
+  if (cellName === 'archiveStatus' && archiveStatusLabel(data) !== data) {
+    return formatCellText(archiveStatusLabel(data), isText)
   }
 
   if (cellName === 'cleanupSignals') {

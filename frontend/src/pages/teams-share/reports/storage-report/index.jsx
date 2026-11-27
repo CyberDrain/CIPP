@@ -9,6 +9,7 @@ import { CippSharePointQuotaCard } from '../../../../components/CippCards/CippSh
 import { CippDataTable } from '../../../../components/CippTable/CippDataTable'
 import { CippApiDialog } from '../../../../components/CippComponents/CippApiDialog'
 import { CippStorageCleanupDrawer } from '../../../../components/CippComponents/CippStorageCleanupDrawer'
+import { CippSharePointArchiveReadiness } from '../../../../components/CippComponents/CippSharePointArchiveReadiness'
 import { StorageReportButton } from '../../../../components/CippPdf/StorageReportButton'
 import { useDialog } from '../../../../hooks/use-dialog'
 import { ApiGetCall } from '../../../../api/ApiCall'
@@ -50,6 +51,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import { CippHead } from '../../../../components/CippComponents/CippHead'
+import { CippIcons } from '../../../../utils/icon-registry'
 import { isMultiTenant, tenantScope } from '../../../../utils/tenant-selection'
 import {
   buildCleanupOpportunities,
@@ -66,6 +68,11 @@ const TOP_SITES_CHART = 10
 
 const syncRows = [{ Name: 'SharePointSiteUsage' }, { Name: 'OneDriveUsage' }]
 const cleanupScanRows = [{ Name: 'StorageCleanupScan' }]
+
+const ARCHIVE_SITE_CONFIRM =
+  'Archive the whole site [displayName]? Nobody will be able to open the site or any file in it until it is reactivated, which is instant for the first 7 days and can take up to 24 hours after that. The site stops counting towards SharePoint storage and is held in Microsoft 365 Archive instead. A hub site must be unregistered first, and the private and shared channel sites of a team are not archived with it.'
+const REACTIVATE_SITE_CONFIRM =
+  'Reactivate the archived site [displayName]? A site archived in the last 7 days comes back straight away; an older one can take up to 24 hours. Once it is back it counts towards SharePoint storage again.'
 
 /** Teams-connected SPO sites — same heuristic as Sharing Report (Group) plus channel sites. */
 const isTeamsConnectedSite = (row) => {
@@ -306,6 +313,7 @@ const Page = () => {
   const spQueryKey = `StorageReport-SharePointSiteUsage-${currentTenant}`
   const odQueryKey = `StorageReport-OneDriveUsageAccount-${currentTenant}`
   const cleanupQueryKey = `ListStorageCleanupScan-${currentTenant}`
+  const archiveSettingsQueryKey = `ListSharePointArchiveSettings-${currentTenant}`
 
   const spUsage = ApiGetCall({
     url: '/api/ListSites?type=SharePointSiteUsage&UseReportDB=true',
@@ -334,6 +342,17 @@ const Page = () => {
     queryKey: cleanupQueryKey,
     waiting,
   })
+
+  const archiveSettingsQuery = ApiGetCall({
+    url: '/api/ListSharePointArchiveSettings',
+    data: { ...tenantScope(currentTenant) },
+    queryKey: archiveSettingsQueryKey,
+    waiting: canReadQuota ? waiting : false,
+    retry: false,
+  })
+  const archiveSettings = Array.isArray(archiveSettingsQuery.data)
+    ? archiveSettingsQuery.data[0]
+    : null
 
   const rawSpRows = useMemo(
     () => enrichUsageRows(Array.isArray(spUsage.data) ? spUsage.data : EMPTY_ROWS),
@@ -409,10 +428,15 @@ const Page = () => {
     [spRows]
   )
   const archiveMetricsAvailable = useMemo(() => hasArchiveMetrics(rawSpRows), [rawSpRows])
+  const sitesBlockingFileArchive = useMemo(
+    () => spRows.filter((row) => row.allowFileArchive === false && !isSystemSite(row)).length,
+    [spRows]
+  )
 
   const [selectedSites, setSelectedSites] = useState([])
   const [cleanupOpen, setCleanupOpen] = useState(false)
   const [cleanupFocus, setCleanupFocus] = useState(null)
+
 
   const canWriteSite = checkPermissions(['Sharepoint.Site.ReadWrite'])
   const canSync = checkPermissions(['Sharepoint.Reports.ReadWrite'])
@@ -558,6 +582,25 @@ const Page = () => {
     },
   ]
 
+  const canManageSite = (row) => {
+    const site = Array.isArray(row) ? row[0] : row
+    return Boolean(site?.webUrl) && !isSystemSite(site) && canWriteSite
+  }
+
+  // Rows cached before the site archive state was collected have none, so both actions stay offered.
+  const siteArchiveStatus = (row) => (Array.isArray(row) ? row[0] : row)?.archiveStatus
+  const siteArchiveStatusAvailable = rawSpRows.some((row) => row.archiveStatus)
+
+  const siteIdentityPayload = (row) => {
+    const formatRow = (siteRow) => ({
+      ...tenantScope(siteRow.Tenant ?? currentTenant),
+      SiteUrl: siteRow.webUrl,
+      SiteId: siteRow.siteId,
+      WebId: siteRow.webId,
+    })
+    return Array.isArray(row) ? row.map(formatRow) : formatRow(row)
+  }
+
   const siteActions = [
     {
       label: 'Cleanup…',
@@ -606,6 +649,58 @@ const Page = () => {
         formatSetQuotaPayload(row, formData, currentTenant),
       multiPost: false,
       allowResubmit: true,
+    },
+    {
+      label: 'File archiving…',
+      type: 'POST',
+      icon: <CippIcons.Archive fontSize="small" />,
+      url: '/api/ExecSetSiteProperties',
+      confirmText:
+        'Choose whether users can archive files on [displayName] with Microsoft 365 Archive. Turning it off only stops new files being archived: files that are already archived stay archived and can still be reactivated. The change applies straight away, but this switch and the banner above keep showing the old setting until the next Sync usage.',
+      condition: canManageSite,
+      defaultvalues: (row) => ({
+        AllowFileArchive: (Array.isArray(row) ? row[0] : row)?.allowFileArchive !== false,
+      }),
+      fields: [
+        {
+          type: 'switch',
+          name: 'AllowFileArchive',
+          label: 'Allow users to archive files on this site',
+        },
+      ],
+      customDataformatter: (row, _action, formData) => {
+        const formatRow = (siteRow) => ({
+          ...tenantScope(siteRow.Tenant ?? currentTenant),
+          SiteUrl: siteRow.webUrl,
+          AllowFileArchive: Boolean(formData.AllowFileArchive),
+        })
+        return Array.isArray(row) ? row.map(formatRow) : formatRow(row)
+      },
+      multiPost: false,
+      allowResubmit: true,
+    },
+    {
+      label: 'Archive site…',
+      type: 'POST',
+      icon: <CippIcons.Archive fontSize="small" />,
+      url: '/api/ExecArchiveSite',
+      customDataformatter: siteIdentityPayload,
+      confirmText: ARCHIVE_SITE_CONFIRM,
+      condition: (row) =>
+        canManageSite(row) && !['archived', 'reactivating'].includes(siteArchiveStatus(row)),
+      multiPost: false,
+      hideBulk: true,
+    },
+    {
+      label: 'Reactivate site…',
+      type: 'POST',
+      icon: <CippIcons.Unarchive />,
+      url: '/api/ExecReactivateSite',
+      customDataformatter: siteIdentityPayload,
+      confirmText: REACTIVATE_SITE_CONFIRM,
+      condition: (row) =>
+        canManageSite(row) && !['active', 'reactivating'].includes(siteArchiveStatus(row)),
+      multiPost: false,
     },
     {
       label: 'Open in SharePoint',
@@ -758,8 +853,10 @@ const Page = () => {
                   </Stack>
                   <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
                     <CippQueryRefreshButton
-                      queryKeys={[...refreshKeys, ...cleanupRefreshKeys]}
-                      isFetching={isFetching || cleanupScan.isFetching}
+                      queryKeys={[...refreshKeys, ...cleanupRefreshKeys, archiveSettingsQueryKey]}
+                      isFetching={
+                        isFetching || cleanupScan.isFetching || archiveSettingsQuery.isFetching
+                      }
                     />
                     <StorageReportButton
                       tenantName={currentTenant}
@@ -827,6 +924,12 @@ const Page = () => {
                     finishes.
                   </Alert>
                 )}
+                <CippSharePointArchiveReadiness
+                  settings={archiveSettings}
+                  error={archiveSettingsQuery.isError ? archiveSettingsQuery.error : null}
+                  sitesBlocked={sitesBlockingFileArchive}
+                  hasArchiveUsage={fileArchiveBytes > 0}
+                />
                 <CippAnonymizedReportAlert show={anonymized} />
                 {!anonymized && noUsageData ? (
                   <Alert severity="warning" sx={{ mb: 1 }}>
@@ -1038,6 +1141,7 @@ const Page = () => {
                       'libraries',
                       'displayName',
                       'workload',
+                      ...(siteArchiveStatusAvailable ? ['archiveStatus'] : []),
                       ...(hasScanned ? ['cleanupSignals', 'cleanupReclaimBytes'] : []),
                       ...(archiveMetricsAvailable
                         ? ['archivedFileDiskUsedGigabytes', 'fileArchivePercentOfSite', 'allowFileArchive']

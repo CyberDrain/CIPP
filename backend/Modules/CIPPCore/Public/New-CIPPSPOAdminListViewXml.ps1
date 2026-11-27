@@ -89,7 +89,7 @@ function New-CIPPSPOAdminListViewXml {
             'Title', 'SiteUrl', 'SiteId', 'StorageUsed', 'StorageQuota', 'NumOfFiles',
             'TemplateName', 'TimeCreated', 'GroupId', 'SiteOwnerName', 'SiteOwnerEmail',
             'ExternalSharing', 'LastActivityOn', 'SiteFlags', 'CreatedBy', 'HubSiteId',
-            'IsHubSite', 'SensitivityLabel', 'State', 'TimeDeleted', 'RelatedGroupId'
+            'IsHubSite', 'SensitivityLabel', 'State', 'TimeDeleted', 'RelatedGroupId', 'ArchiveStatus'
         )) {
         [void]$AllowedFields.Add($Name)
     }

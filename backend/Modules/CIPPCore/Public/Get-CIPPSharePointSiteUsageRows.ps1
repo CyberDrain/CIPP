@@ -34,7 +34,7 @@ function Get-CIPPSharePointSiteUsageRows {
 
     $SharePointInfo = Get-SharePointAdminLink -Public $false -tenantFilter $TenantFilter
     $AdminRows = @(Get-CIPPSPOAdminListData -TenantFilter $TenantFilter -AdminUrl $SharePointInfo.AdminUrl -Type SharePoint -RowLimit 5000 -ViewFields @(
-            'Title', 'SiteUrl', 'SiteId', 'StorageUsed', 'StorageQuota', 'NumOfFiles', 'TemplateName', 'TimeCreated', 'SiteOwnerName', 'SiteOwnerEmail', 'LastActivityOn'
+            'Title', 'SiteUrl', 'SiteId', 'StorageUsed', 'StorageQuota', 'NumOfFiles', 'TemplateName', 'TimeCreated', 'SiteOwnerName', 'SiteOwnerEmail', 'LastActivityOn', 'ArchiveStatus'
         ))
 
     $GraphBulk = New-GraphBulkRequest -tenantid $TenantFilter -Requests @(
@@ -140,6 +140,14 @@ function Get-CIPPSharePointSiteUsageRows {
             displayName     = $(if ($RowTitle) { $RowTitle } elseif ($GraphSite) { $GraphSite.displayName } else { $SiteGuid })
             webUrl          = $(if ($RowUrl) { $RowUrl } elseif ($GraphSite) { $GraphSite.webUrl } else { $null })
             isPersonalSite  = $false
+            archiveStatus   = switch ([string]$Row.ArchiveStatus) {
+                '' { 'active' }
+                'NotArchived' { 'active' }
+                'RecentlyArchived' { 'archived' }
+                'FullyArchived' { 'archived' }
+                'Reactivating' { 'reactivating' }
+                default { 'unknown' }
+            }
             AutoMapUrl      = ''
         }
 

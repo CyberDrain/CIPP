@@ -1,13 +1,13 @@
 # Hudu
 
-The Hudu integration writes Microsoft 365 tenant, user, device and domain information from CIPP into Hudu. Tenant-level information is published as a Magic Dash card on the Hudu company, while user and device detail is written into a rich text field on the asset layouts you nominate. You control which parts are populated, so it is reasonable to sync only what you need.
+The Hudu integration writes Microsoft 365 tenant, user, device, licence and domain information from CIPP into Hudu. Tenant-level information is published as a Magic Dash card on the Hudu company, while user, device and licence detail is written into a rich text field on the asset layouts you nominate. You control which parts are populated, so it is reasonable to sync only what you need.
 
 {% hint style="danger" %}
 If Hudu sits behind a Cloudflare Zero Trust tunnel, set up the [cloudflare.md](cloudflare.md "mention") integration as well and enable **Connect to HUDU through CloudFlare Tunnel with the Service Account credentials.** That toggle only appears on this page once the Cloudflare integration is enabled.
 {% endhint %}
 
 {% hint style="info" %}
-User and device information is written to a rich text field named **Microsoft 365**. CIPP adds this field to the asset layouts you map, so it appears after the first synchronisation rather than needing to be created by hand. The layout mapped for users also gains an **Email Address** text field, positioned first and shown in list views.
+User, device and licence information is written to a rich text field named **Microsoft 365**. CIPP adds this field to the asset layouts you map, so it appears after the first synchronisation rather than needing to be created by hand. The layout mapped for users also gains an **Email Address** text field, positioned first and shown in list views. The layout mapped for licences gains a **SKU ID** text field, and **Seats Purchased**, **Seats Used** and **Renewal Date** fields where it has no fields with those names already.
 {% endhint %}
 
 ## Settings
@@ -19,6 +19,7 @@ User and device information is written to a rich text field named **Microsoft 36
 | Hudu API Key                                                                    | The API key generated in Hudu. Stored securely and masked once saved. Enable **Password Access** on the key when synchronising LAPS passwords or BitLocker recovery keys.                         |
 | Create missing users in Hudu                                                    | Creates an asset for any Microsoft 365 user without a matching record in the mapped user layout. Without this, CIPP only updates users that already exist in Hudu.                                |
 | Create missing devices in Hudu                                                  | Creates an asset for any Intune device without a matching record in the mapped device layout.                                                                                                     |
+| Create missing licenses in Hudu                                                 | Creates an asset for any licence without a matching record in the mapped licence layout. Without this, CIPP only updates licence assets that already exist in Hudu.                               |
 | Sync Windows LAPS passwords to Hudu                                             | Adds the LAPS account, password and backup date to matching Windows device assets in the mapped device layout. Individual tenants can be excluded on the **Tenant Mapping** tab.                                                                                    |
 | Sync BitLocker recovery keys to Hudu                                             | Adds paired key ID and recovery-key fields for each BitLocker OS, fixed data, removable data or unknown drive to matching Windows device assets. Individual tenants can be excluded on the **Tenant Mapping** tab.                                                  |
 | Exclude device serials (comma separated)                                        | Additional serial numbers to skip when matching and creating devices. A set of common placeholder serials is always excluded regardless of this setting.                                          |
@@ -96,7 +97,7 @@ Enter your Hudu URL and the **Hudu API Key** you created.
 {% step %}
 ### Choose what to synchronise
 
-Work through the remaining toggles to decide whether missing users and devices are created, whether domains are imported and monitored, and which portal links appear. Add any device serials you want ignored.
+Work through the remaining toggles to decide whether missing users, devices and licences are created, whether domains are imported and monitored, and which portal links appear. Add any device serials you want ignored.
 {% endstep %}
 
 {% step %}
@@ -157,22 +158,23 @@ Archived Hudu companies are skipped during synchronisation, and this is recorded
 
 ## Field Mapping
 
-The **Field Mapping** tab nominates which Hudu asset layouts receive Microsoft 365 user and device data.
+The **Field Mapping** tab nominates which Hudu asset layouts receive Microsoft 365 user, device and licence data.
 
-| Field                         | Description                                                                                                                                                  |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Asset Layout for M365 Users   | The layout used for user assets. The built-in People layout is recommended, as using a layout with an unexpected structure tends to cause matching problems. |
-| Asset Layout for M365 Devices | The layout used for device assets.                                                                                                                           |
+| Field                          | Description                                                                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Asset Layout for M365 Users    | The layout used for user assets. The built-in People layout is recommended, as using a layout with an unexpected structure tends to cause matching problems. |
+| Asset Layout for M365 Devices  | The layout used for device assets.                                                                                                                           |
+| Asset Layout for M365 Licenses | The layout used for licence assets, one per licence in the tenant.                                                                                           |
 
-Leave either set to `--- Do not synchronize ---` to skip that data type entirely. Select **Submit** to save, and use the refresh button after creating new layouts in Hudu.
+Leave any of them set to `--- Do not synchronize ---` to skip that data type entirely. Select **Submit** to save, and use the refresh button after creating new layouts in Hudu.
 
 {% hint style="info" %}
-CIPP adds the fields it needs to whichever layouts you map, so no preparation is required in Hudu beyond having the layouts exist. Leaving a layout unmapped disables creation of that asset type as well, regardless of the **Create missing users** and **Create missing devices** settings.
+CIPP adds the fields it needs to whichever layouts you map, so no preparation is required in Hudu beyond having the layouts exist. Leaving a layout unmapped disables creation of that asset type as well, regardless of the **Create missing users**, **Create missing devices** and **Create missing licenses** settings.
 {% endhint %}
 
 ## What Gets Synchronised
 
-Once a tenant is mapped, CIPP schedules a daily synchronisation for it. User and device assets are created or updated in the mapped layouts, domains are imported as website records where enabled, and a Magic Dash card is published on the Hudu company.
+Once a tenant is mapped, CIPP schedules a daily synchronisation for it. User, device and licence assets are created or updated in the mapped layouts, domains are imported as website records where enabled, and a Magic Dash card is published on the Hudu company.
 
 ### Magic Dash
 
@@ -194,6 +196,16 @@ The **Microsoft 365** field on each user asset opens with a header showing the u
 ### Device assets
 
 The **Microsoft 365** field on each device asset opens with a header showing the device name, compliance state, operating system and version, primary user and links to Intune and, where the Hudu asset has Datto RMM or ConnectWise cards, to Datto RMM, Datto RMM Remote, CW Automate and CW Control. A **Needs attention** strip follows when the device is non-compliant, has not synced in over 30 days, or its storage is at least 90% full. Below it are cards for device details, hardware with a storage usage bar, enrollment and security (including Device Guard, virtualization-based security and Credential Guard), compliance policies and groups. As with users, the asset is only rewritten when this content changes.
+
+### Licence assets
+
+With **Asset Layout for M365 Licenses** mapped and **Create missing licenses in Hudu** on, CIPP creates one asset for each licence in the tenant, named after the licence. A licence with no purchased seats and no assigned users is skipped, as is any licence on CIPP's excluded licence list. Assets are matched on their **SKU ID** field, so an asset can be renamed in Hudu. An existing asset with no SKU ID is matched by name instead, and an archived asset is never updated or recreated.
+
+**Seats Purchased**, **Seats Used** and **Renewal Date** are filled in alongside the **Microsoft 365** field. The renewal date is the earliest upcoming term end among the licence's enabled subscriptions, and is left blank when there is none.
+
+The **Microsoft 365** field opens with a header showing the licence name, its status and links to the Microsoft 365 admin center and the CIPP licence report. A **Needs attention** strip follows when more seats are assigned than purchased, the licence has no active seats, or one of its subscriptions is not enabled. Fully assigned and nearly full licences are added when the matching Magic Dash warning settings are on. Below it are cards for seat usage, the subscriptions behind the licence with their term, status, seats and end date, and the assigned users, each linked to their Hudu asset where one was matched.
+
+When a licence leaves the tenant its asset is kept, with its seats set to zero and its status shown as **Not reported**.
 
 Each tenant's synchronisation first checks that CIPP can reach Hudu with the saved API key. If it cannot, that tenant's run stops straight away and the Hudu error is recorded in the logbook. Select **Test** to confirm the connection.
 

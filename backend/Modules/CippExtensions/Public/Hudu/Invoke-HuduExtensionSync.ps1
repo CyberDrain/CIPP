@@ -17,11 +17,12 @@ function Invoke-HuduExtensionSync {
         $TimeZone = try { [TimeZoneInfo]::FindSystemTimeZoneById([string]$env:CIPP_TIMEZONE) } catch { [TimeZoneInfo]::Utc }
         $Tenant = Get-Tenants -TenantFilter $TenantFilter -IncludeErrors
         $CompanyResult = [PSCustomObject]@{
-            Name    = $Tenant.displayName
-            Users   = 0
-            Devices = 0
-            Errors  = [System.Collections.Generic.List[string]]@()
-            Logs    = [System.Collections.Generic.List[string]]@()
+            Name     = $Tenant.displayName
+            Users    = 0
+            Devices  = 0
+            Licenses = 0
+            Errors   = [System.Collections.Generic.List[string]]@()
+            Logs     = [System.Collections.Generic.List[string]]@()
         }
 
         # Get-HuduAppInfo swallows failures (no result, or version 0.0.0.0), so check it before any sync work.
@@ -76,11 +77,12 @@ function Invoke-HuduExtensionSync {
         if ($HuduCompany.archived -eq $true) {
             Write-Information "Company $($HuduCompany.name) is archived. Skipping sync."
             $ReturnObject = [PSCustomObject]@{
-                Name    = $Tenant.displayName
-                Users   = 0
-                Devices = 0
-                Errors  = [System.Collections.Generic.List[string]]@("Company $($HuduCompany.name) is archived. Skipping sync.")
-                Logs    = [System.Collections.Generic.List[string]]@("Company $($HuduCompany.name) is archived. Skipping sync.")
+                Name     = $Tenant.displayName
+                Users    = 0
+                Devices  = 0
+                Licenses = 0
+                Errors   = [System.Collections.Generic.List[string]]@("Company $($HuduCompany.name) is archived. Skipping sync.")
+                Logs     = [System.Collections.Generic.List[string]]@("Company $($HuduCompany.name) is archived. Skipping sync.")
             }
             return $ReturnObject
         }
@@ -93,6 +95,7 @@ function Invoke-HuduExtensionSync {
         # Get Hudu Layout mappings
         $PeopleLayoutId = $Mappings | Where-Object { $_.RowKey -eq 'Users' } | Select-Object -ExpandProperty IntegrationId
         $DeviceLayoutId = $Mappings | Where-Object { $_.RowKey -eq 'Devices' } | Select-Object -ExpandProperty IntegrationId
+        $LicenseLayoutId = $Mappings | Where-Object { $_.RowKey -eq 'Licenses' } | Select-Object -ExpandProperty IntegrationId
 
         # Company assets with archived ones included, so an archived copy blocks re-creation.
         # HuduAPI reports a failed page as a non-terminating error and returns nothing; Stop makes a partial list throw.
@@ -1253,6 +1256,195 @@ function Invoke-HuduExtensionSync {
         } else {
             $CompanyResult.Logs.Add('Skipping Device Processing - No Device Layout ID')
             Write-LogMessage -tenant $Tenant.defaultDomainName -tenantid $Tenant.customerId -API 'Hudu Sync' -message 'Skipping Device Processing - No Device Layout ID' -sev 'Warning'
+        }
+
+        if (![string]::IsNullOrEmpty($LicenseLayoutId)) {
+            $CompanyResult.Logs.Add('Starting License Processing')
+            try {
+                $LicenseLayout = Get-HuduAssetLayouts -Id $LicenseLayoutId
+                if (-not $LicenseLayout.id) { throw "Asset layout $LicenseLayoutId was not found in Hudu" }
+                # The seat and renewal fields are only added when missing, so an existing layout keeps its own field types
+                foreach ($RequiredField in @(
+                        @{ Label = 'Microsoft 365'; FieldType = 'RichText'; Position = 0; EnforceType = $true }
+                        @{ Label = 'SKU ID'; FieldType = 'Text'; Position = 1; EnforceType = $true }
+                        @{ Label = 'Seats Purchased'; FieldType = 'Text'; Position = 9999; ShowInList = $true }
+                        @{ Label = 'Seats Used'; FieldType = 'Text'; Position = 9999; ShowInList = $true }
+                        @{ Label = 'Renewal Date'; FieldType = 'Date'; Position = 9999; ShowInList = $true }
+                    )) {
+                    $CurrentField = $null
+                    foreach ($LayoutField in $LicenseLayout.fields) { if ($LayoutField.label -eq $RequiredField.Label) { $CurrentField = $LayoutField; break } }
+                    if (-not $CurrentField -or ($RequiredField.EnforceType -and [string]$CurrentField.field_type -ne $RequiredField.FieldType)) {
+                        $null = Add-HuduAssetLayoutField -AssetLayoutId $LicenseLayoutId -Label $RequiredField.Label -FieldType $RequiredField.FieldType -Position $RequiredField.Position -ShowInList ([bool]$RequiredField.ShowInList) -AssetLayout $LicenseLayout
+                        $LicenseLayout = Get-HuduAssetLayouts -Id $LicenseLayoutId
+                    }
+                }
+
+                # Assets match on their SKU ID field; one without a SKU ID matches by name, so an asset created by hand is adopted
+                $HuduLicensesBySku = [CIPP.CippIndex]::Build(@(), @())
+                $HuduLicensesByName = [CIPP.CippIndex]::Build(@(), @())
+                $SeenLicenseAssetIds = [System.Collections.Generic.HashSet[string]]::new()
+                foreach ($HuduLicense in @(
+                        Get-HuduAssets -CompanyId $company_id -AssetLayoutId $LicenseLayout.id -ErrorAction Stop
+                        Get-HuduAssets -CompanyId $company_id -AssetLayoutId $LicenseLayout.id -Archived -ErrorAction Stop
+                    )) {
+                    if (-not $HuduLicense -or -not $SeenLicenseAssetIds.Add([string]$HuduLicense.id)) { continue }
+                    $AssetSkuId = ''
+                    foreach ($AssetField in $HuduLicense.fields) { if ($AssetField.label -eq 'SKU ID') { $AssetSkuId = ([string]$AssetField.value).Trim(); break } }
+                    if ($AssetSkuId) { $HuduLicensesBySku.AddItem($AssetSkuId, $HuduLicense) } else { $HuduLicensesByName.AddItem(([string]$HuduLicense.name).Trim(), $HuduLicense) }
+                }
+
+                $LicenseHashes = @{}
+                foreach ($CachedLicense in Get-CIPPAzDataTableEntity @HuduAssetCache -Filter "PartitionKey eq 'HuduLicense' and CompanyId eq '$company_id'" -Property PartitionKey, RowKey, Hash) { $LicenseHashes[[string]$CachedLicense.RowKey] = $CachedLicense.Hash }
+
+                $LicenseBySku = [CIPP.CippIndex]::Build($Licenses, @(foreach ($License in $Licenses) { , ($($License.skuId) ?? $null) }))
+                $UsersBySku = [CIPP.CippIndex]::Build($licensedUsers, @(foreach ($LicensedUser in $licensedUsers) { , ($($LicensedUser.assignedLicenses.skuId) ?? $null) }))
+                $OutputUserById = [CIPP.CippIndex]::Build($OutputUsers, @(foreach ($OutputUser in $OutputUsers) { , ($($OutputUser.id) ?? $null) }))
+
+                $LicenseWork = [System.Collections.Generic.List[object]]::new()
+                foreach ($License in $Licenses) {
+                    if (-not $License.skuId) { continue }
+                    $Candidates = @($HuduLicensesBySku.Find($License.skuId))
+                    if (-not $Candidates.Count -and $License.skuPartNumber) { $Candidates = @($HuduLicensesByName.Find(([string]$License.skuPartNumber).Trim())) }
+                    $LicenseWork.Add(@{ License = $License; Candidates = $Candidates; Removed = $false })
+                }
+                # A SKU that has left the tenant keeps its asset, rewritten with zero seats. An empty license cache marks nothing.
+                if (@($Licenses).Count) {
+                    foreach ($AssetSkuId in @($HuduLicensesBySku.PSBase.Keys)) {
+                        if ($LicenseBySku.Has($AssetSkuId)) { continue }
+                        foreach ($OrphanedLicense in $HuduLicensesBySku.Find($AssetSkuId)) {
+                            if ($OrphanedLicense.archived) { continue }
+                            $LicenseWork.Add(@{ License = @{ skuId = $AssetSkuId; skuPartNumber = $OrphanedLicense.name }; Candidates = @($OrphanedLicense); Removed = $true })
+                        }
+                    }
+                }
+
+                $InvariantCulture = [cultureinfo]::InvariantCulture
+                $DatePattern = Get-CippExtensionUiDatePattern $Culture
+                $SyncStartedUtc = [datetime]::UtcNow
+                $LicenseWarnPercent = 90
+                foreach ($Work in $LicenseWork) {
+                    $License = $Work.License
+                    $LicenseName = if ($License.skuPartNumber) { [string]$License.skuPartNumber } else { [string]$License.skuId }
+                    try {
+                        $ActiveLicenses = @($Work.Candidates).Where({ -not $_.archived })
+                        if ($Work.Candidates.Count -and -not $ActiveLicenses.Count) {
+                            $CompanyResult.Logs.Add("Skipping $LicenseName, it matches an archived asset in Hudu")
+                            continue
+                        }
+                        if ($ActiveLicenses.Count -gt 1) {
+                            $CompanyResult.Errors.add("License $($LicenseName): Multiple assets matched in Hudu ($($ActiveLicenses.name -join ', ') - $($ActiveLicenses.id -join ', '))")
+                            continue
+                        }
+                        $HuduLicense = if ($ActiveLicenses.Count) { $ActiveLicenses[0] }
+
+                        $SeatsPurchased = if ($Work.Removed) { 0.0 } else { [math]::Max(0.0, [double]$License.prepaidUnits.enabled) }
+                        $SeatsUsed = if ($Work.Removed) { 0.0 } else { [math]::Max(0.0, [double]$License.consumedUnits) }
+                        if (-not $HuduLicense -and ($Configuration.CreateMissingLicenses -ne $true -or ($SeatsPurchased -le 0 -and $SeatsUsed -le 0))) { continue }
+
+                        $PercentAssigned = if ($SeatsPurchased -gt 0) { [math]::Round($SeatsUsed / $SeatsPurchased * 100, 2) } else { 0.0 }
+                        $IsOverAssigned = $SeatsUsed -gt $SeatsPurchased
+                        $IsFullyAssigned = $SeatsPurchased -gt 0 -and $SeatsUsed -eq $SeatsPurchased
+                        $IsNearlyFull = $SeatsPurchased -gt 0 -and $SeatsUsed -lt $SeatsPurchased -and $PercentAssigned -ge $LicenseWarnPercent
+                        $SeatsPurchasedText = $SeatsPurchased.ToString('N0', $Culture)
+                        $SeatsUsedText = $SeatsUsed.ToString('N0', $Culture)
+                        $PercentAssignedText = $PercentAssigned.ToString('0.##', $Culture) + '%'
+
+                        $SubscriptionRows =[System.Collections.Generic.List[object]]::new()
+                        $SubscriptionProblems = [System.Collections.Generic.SortedSet[string]]::new()
+                        $RenewalUtc = $null
+                        $RenewalLocal = $null
+                        $HolderRows = [System.Collections.Generic.List[object]]::new()
+                        if (-not $Work.Removed) {
+                            foreach ($Term in $License.TermInfo) {
+                                if (-not $Term -or -not ($Term.Status -or $Term.NextLifecycle)) { continue }
+                                $TermStatus = [string]$Term.Status
+                                $TermEndUtc = ConvertTo-CippExtensionUiDate $Term.NextLifecycle
+                                $TermEndLocal = if ($TermEndUtc) { [TimeZoneInfo]::ConvertTimeFromUtc($TermEndUtc, $TimeZone) }
+                                $SubscriptionRows.Add([ordered]@{
+                                        Term       = [string]$Term.Term
+                                        Status     = (Get-CippExtensionUiHumanized $TermStatus)
+                                        StatusTone = $(if ($TermStatus -eq 'Enabled') { 'ok' } elseif ($TermStatus -eq 'Warning') { 'warn' } elseif ($TermStatus -in 'Suspended', 'LockedOut', 'Deleted') { 'err' } else { 'neutral' })
+                                        IsTrial    = ($Term.IsTrial -eq $true)
+                                        SeatsText  = $(if ("$($Term.TotalLicenses)" -ne '') { ([double]$Term.TotalLicenses).ToString('N0', $Culture) } else { '' })
+                                        TermEnds   = $(if ($TermEndLocal) { $TermEndLocal.ToString($DatePattern, $Culture) } else { '' })
+                                    })
+                                if ($TermStatus -and $TermStatus -ne 'Enabled') { $null = $SubscriptionProblems.Add((Get-CippExtensionUiHumanized $TermStatus).ToLower()) }
+                                if ($TermStatus -eq 'Enabled' -and $TermEndUtc -and $TermEndUtc -ge $SyncStartedUtc -and (-not $RenewalUtc -or $TermEndUtc -lt $RenewalUtc)) {
+                                    $RenewalUtc = $TermEndUtc
+                                    $RenewalLocal = $TermEndLocal
+                                }
+                            }
+                            foreach ($Holder in $UsersBySku.Find($License.skuId)) {
+                                $HolderRows.Add([ordered]@{ Name = [string]$Holder.displayName; Address = [string]$Holder.userPrincipalName; Url = [string]$OutputUserById.First($Holder.id).HuduUrl })
+                            }
+                        }
+
+                        $LicenseStatus = if ($Work.Removed) { 'Not reported', 'neutral' }
+                        elseif ($SeatsPurchased -le 0) { 'No active seats', 'warn' }
+                        elseif ($IsOverAssigned) { 'Over-assigned', 'err' }
+                        elseif ($IsFullyAssigned) { 'Fully assigned', 'neutral' }
+                        else { 'Active', 'ok' }
+
+                        $LicenseAttention = [System.Collections.Generic.List[string]]::new()
+                        if ($Work.Removed) { $LicenseAttention.Add('This license was **not reported** for the tenant at the last sync') }
+                        elseif ($SeatsPurchased -le 0) { $LicenseAttention.Add("License has **no active seats**$(if ($SeatsUsed -gt 0) { ", but $SeatsUsedText still assigned" })") }
+                        elseif ($IsOverAssigned) { $LicenseAttention.Add("**$SeatsUsedText of $SeatsPurchasedText** seats assigned, more than purchased") }
+                        elseif ($IsFullyAssigned -and $Configuration.ShowLicenseFullWarning) { $LicenseAttention.Add('**Every seat** is assigned') }
+                        elseif ($IsNearlyFull -and $Configuration.ShowLicenseNearFullWarning) { $LicenseAttention.Add("**$PercentAssignedText** of seats are assigned") }
+                        foreach ($SubscriptionProblem in $SubscriptionProblems) { $LicenseAttention.Add("A subscription is **$SubscriptionProblem**") }
+
+                        $LicenseModel = [ordered]@{
+                            Name            = $LicenseName
+                            SkuId           = [string]$License.skuId
+                            Status          = $LicenseStatus[0]
+                            StatusTone      = $LicenseStatus[1]
+                            AdminUrl        = "https://admin.microsoft.com/Partner/BeginClientSession.aspx?CTID=$($Tenant.customerId)&CSDEST=o365admincenter/Adminportal/Home#/licenses"
+                            CippUrl         = "$CIPPURL/tenant/reports/list-licenses?tenantFilter=$($Tenant.defaultDomainName)"
+                            PurchasedText   = $SeatsPurchasedText
+                            UsedText        = $SeatsUsedText
+                            FreeText        = ([math]::Max(0.0, $SeatsPurchased - $SeatsUsed)).ToString('N0', $Culture)
+                            UsedPercent     = ([math]::Min(100, $PercentAssigned)).ToString('0.##', $InvariantCulture)
+                            UsedPercentText = $PercentAssignedText
+                            UsageTone       = $(if ($IsOverAssigned) { 'err' } elseif ($IsFullyAssigned -or $IsNearlyFull) { 'warn' } else { 'ok' })
+                            RenewalDate     = $(if ($RenewalLocal) { $RenewalLocal.ToString($DatePattern, $Culture) } else { '' })
+                            Subscriptions   = $SubscriptionRows
+                            Users           = $HolderRows
+                            Attention       = $LicenseAttention
+                        }
+                        # Hash is calculated before the timestamp is added, otherwise every asset would be rewritten on every sync
+                        $NewHash = Get-StringHash -String (Get-HuduLicenseBody -Model $LicenseModel -Culture $Culture -TimeZone $TimeZone)
+                        $LicenseAssetFields = @{
+                            microsoft_365   = Get-HuduLicenseBody -Model $LicenseModel -SyncedAt (Get-Date) -Culture $Culture -TimeZone $TimeZone
+                            seats_purchased = $SeatsPurchased.ToString('0', $InvariantCulture)
+                            seats_used      = $SeatsUsed.ToString('0', $InvariantCulture)
+                            renewal_date    = $(if ($RenewalLocal) { $RenewalLocal.ToString('yyyy/MM/dd', $InvariantCulture) } else { '' })
+                        }
+                        if (-not $Work.Removed) { $LicenseAssetFields.sku_id = [string]$License.skuId }
+
+                        # A failed write throws, so no hash is cached and the next sync retries it
+                        if ($HuduLicense) {
+                            if ($LicenseHashes[[string]$HuduLicense.id] -ne $NewHash) {
+                                $CompanyResult.Logs.Add("Updating $($HuduLicense.name) in Hudu")
+                                $null = Set-HuduAsset -asset_id $HuduLicense.id -Name $HuduLicense.name -company_id $company_id -asset_layout_id $LicenseLayout.id -Fields $LicenseAssetFields -ExistingAsset $HuduLicense -ErrorAction Stop
+                                $PendingAssetCache["HuduLicense|$($HuduLicense.id)"] = @{ PartitionKey = 'HuduLicense'; RowKey = [string]$HuduLicense.id; CompanyId = [string]$company_id; Hash = [string]$NewHash }
+                            }
+                        } else {
+                            $CompanyResult.Logs.Add("Creating $LicenseName in Hudu")
+                            $CreatedLicense = (New-HuduAsset -Name $LicenseName -company_id $company_id -asset_layout_id $LicenseLayout.id -Fields $LicenseAssetFields -ErrorAction Stop).asset
+                            if (!$CreatedLicense) { throw 'Hudu did not return the new asset' }
+                            $PendingAssetCache["HuduLicense|$($CreatedLicense.id)"] = @{ PartitionKey = 'HuduLicense'; RowKey = [string]$CreatedLicense.id; CompanyId = [string]$company_id; Hash = [string]$NewHash }
+                        }
+                        if (-not $Work.Removed) { $CompanyResult.Licenses++ }
+                    } catch {
+                        $CompanyResult.Errors.add("License $($LicenseName): Unable to sync the license to Hudu: $_")
+                        Write-LogMessage -tenant $Tenant.defaultDomainName -tenantid $Tenant.customerId -API 'Hudu Sync' -message "License $($LicenseName): Unable to sync the license to Hudu: $_" -sev 'Error'
+                    }
+                }
+                & $FlushAssetCache
+            } catch {
+                $CompanyResult.Errors.add("Company: Unable to sync Licenses $_")
+                Write-LogMessage -tenant $Tenant.defaultDomainName -tenantid $Tenant.customerId -API 'Hudu Sync' -message "Company: Unable to sync Licenses: $_" -sev 'Error'
+            }
         }
 
 

@@ -251,6 +251,23 @@ Describe 'Invoke-CIPPOnboardingJob' {
         @($script:StepUpdates | Where-Object { $_.Status -eq 'failed' }).Count | Should -Be 1
     }
 
+    It 'reports a shortcut error the helper throws as Could not ... as a failed step' {
+        Mock New-CIPPOneDriveShortCut { throw 'Could not add OneDrive shortcut to maria@contoso.com : Could not find a SharePoint site matching URL' }
+        $Results = Invoke-Job -Fixes @(@{ Key = 'AddOneDriveShortcuts'; Params = @{ Items = @(@{ URL = 'https://contoso.sharepoint.com/sites/A' }) } })
+        @($Results)[-1] | Should -BeLike 'Failed to add the OneDrive shortcut to https://contoso.sharepoint.com/sites/A:*'
+        Should -Invoke Add-CIPPScheduledTask -Times 0 -Exactly
+        @($script:StepUpdates | Where-Object { $_.Status -eq 'failed' }).Count | Should -Be 1
+    }
+
+    It 'schedules a shortcut for later when the OneDrive is not ready yet' {
+        Mock New-CIPPOneDriveShortCut { throw "Could not add OneDrive shortcut to maria@contoso.com : User's mysite not found." }
+        $Results = Invoke-Job -Fixes @(@{ Key = 'AddOneDriveShortcuts'; Params = @{ Items = @(@{ URL = 'https://contoso.sharepoint.com/sites/Sales'; ShortcutName = 'Sales' }) } })
+
+        Should -Invoke Add-CIPPScheduledTask -Times 1 -Exactly -ParameterFilter { $Task.Command.value -eq 'New-CIPPOneDriveShortCut' -and $Task.Parameters.Username -eq 'maria@contoso.com' -and $Task.Parameters.UserId -eq 'user-id-1' -and $Task.Parameters.URL -eq 'https://contoso.sharepoint.com/sites/Sales' -and $Task.Parameters.ShortcutName -eq 'Sales' -and $Task.ScheduledTime -gt 0 }
+        @($Results)[-1] | Should -BeLike 'Scheduled adding the OneDrive shortcut to Sales in 30 minutes*'
+        @($script:StepUpdates | Where-Object { $_.Status -eq 'failed' }).Count | Should -Be 0
+    }
+
     It 'only removes the three delegate rights and only from the onboarded mailbox' {
         $null = Invoke-Job -Fixes @(@{ Key = 'RemoveMailboxPermissions'; Params = @{ Items = @(@{ User = 'tom@contoso.com'; AccessRights = @('ChangeOwner', 'SendAs') }) } })
         Should -Invoke Set-CIPPMailboxPermission -Times 1 -Exactly
@@ -261,6 +278,15 @@ Describe 'Invoke-CIPPOnboardingJob' {
     It 'never removes the owner from their own OneDrive' {
         $null = Invoke-Job -Fixes @(@{ Key = 'RemoveOneDriveSiteAdmins'; Params = @{ Items = @(@{ User = 'maria@contoso.com' }, @{ User = 'tom@contoso.com' }) } })
         Should -Invoke Set-CIPPSharePointPerms -Times 1 -Exactly -ParameterFilter { (@($OnedriveAccessUser) -join ',') -eq 'tom@contoso.com' -and $RemovePermission -eq $true -and $UserId -eq 'maria@contoso.com' }
+    }
+
+    It 'looks up <Upn> with the UPN encoded in the Graph path' -ForEach @(
+        @{ Upn = "sean.o'brien@contoso.com"; Encoded = 'sean.o%27brien%40contoso.com' }
+        @{ Upn = 'guest_fabrikam.com#EXT#@contoso.onmicrosoft.com'; Encoded = 'guest_fabrikam.com%23EXT%23%40contoso.onmicrosoft.com' }
+    ) {
+        $null = Invoke-CIPPOnboardingJob -TenantFilter 'contoso.com' -Username $Upn -Options @{ Fixes = @(@{ Key = 'EnableArchive' }) } -DeploymentId 'job-1' -TaskInfo ([pscustomobject]@{ RowKey = 'task-1' })
+        Should -Invoke New-GraphGetRequest -Times 1 -Exactly -ParameterFilter { $uri -eq "https://graph.microsoft.com/beta/users/$Encoded`?`$select=id,displayName,userPrincipalName" }
+        Should -Invoke Set-CIPPMailboxArchive -Times 1 -Exactly
     }
 
     It 'refuses a manager value carrying a replacement variable' {

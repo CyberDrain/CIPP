@@ -649,6 +649,17 @@ namespace CIPP.Reporting
         public static void RichTable(ReportContext ctx, PdfContentBuilder item, List<object?> columns, List<object?> rows, int limit, string? emptyText = null)
         {
             if (columns.Count == 0) return;
+            // OfficeIMO throws once the gutter leaves a column no text width, so columns past what fits are left out.
+            var inner = ctx.ContentWidth - 2 * (TableInset + TableBorder);
+            var fit = 0; var weightSum = 0.0; var minWeight = double.MaxValue;
+            foreach (var c in columns)
+            {
+                var w = ReportNode.RowNum(c, "width"); if (w <= 0) w = 1;
+                if (fit > 0 && Math.Min(minWeight, w) / (weightSum + w) * inner - TableGutter < MinColumnText) break;
+                weightSum += w; minWeight = Math.Min(minWeight, w); fit++;
+            }
+            var droppedColumns = columns.Count - fit;
+            if (droppedColumns > 0) columns = columns.Take(fit).ToList();
             var widths = new List<double>();
             var aligns = new List<OfficeAlignment>();
             var header = new List<PdfTableCell>();
@@ -711,7 +722,7 @@ namespace CIPP.Reporting
             }
 
             var style = BrandedTableStyle(ctx);
-            ApplyDataTableGeometry(ctx, style, widths, cells.Count, hidden > 0, emptyRow);
+            ApplyDataTableGeometry(ctx, style, widths, cells.Count, hidden > 0 || droppedColumns > 0, emptyRow);
             style.Alignments = aligns;
             // A status word stands in the client page's 14pt line rather than the 10.4pt cell line, so its
             // cell carries the difference as padding: the word sits 0.9pt lower and a one-line row is 27pt.
@@ -770,6 +781,8 @@ namespace CIPP.Reporting
             item.AddTable(cells, OfficeAlignment.Left, style);
             if (hidden > 0)
                 Note(ctx, item, $"... and {hidden} more. Export the table from the report page for the full list.");
+            if (droppedColumns > 0)
+                Note(ctx, item, $"... and {droppedColumns} more columns that do not fit the page width. Choose fewer columns, or switch the report to landscape.");
         }
 
         // The client DataTable's box (styles.table/tableHeader/tableRow + tableColumns): the row is inset 12pt
@@ -783,7 +796,7 @@ namespace CIPP.Reporting
         // 1pt panel line, which sits inside the row's box (so a row is 13pt of padding plus its 10.4pt lines),
         // and the header band is 28pt for one line of 7pt text on a 14pt pitch. The pads are split to put the
         // text where the client's sits. 16pt follows the table, 4pt when the truncation note does.
-        private const double TableInset = 12, TableGutter = 6, TableBorder = 1;
+        private const double TableInset = 12, TableGutter = 6, TableBorder = 1, MinColumnText = 24;
         private static void ApplyDataTableGeometry(ReportContext ctx, PdfTableStyle style, List<double> weights, int rowCount, bool noteFollows, bool emptyRow = false)
         {
             var cols = weights.Count;

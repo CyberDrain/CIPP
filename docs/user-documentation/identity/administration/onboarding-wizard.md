@@ -61,7 +61,7 @@ Findings are grouped into four cards. A finding marked **Report only** is for in
 | Delegated access | Other people who still hold Full Access, Send As or Send on Behalf on the mailbox, who have access to the calendar, or who are site admins on the OneDrive. Each person is listed separately.      |
 | Entitlements     | No licences or no group memberships (handled on the next step). Reported only: admin roles the user held before offboarding, and no devices.                                                       |
 
-Fixes that are usually wanted start ticked. Untick anything that should stay as it is, such as a delegate who still needs access. **Rescan** runs the checks again.
+Fixes that are usually wanted start ticked. Untick anything that should stay as it is, such as a delegate who still needs access. For a user synced from Active Directory, enabling sign-in and resetting the password start unticked: do those in Active Directory. **Rescan** runs the checks again.
 
 {% hint style="info" %}
 Turn on **Show deleted users** to pick an account from deleted users. A deleted account has to be restored before it can be scanned, so the only action offered is **Restore and rescan**.
@@ -82,7 +82,7 @@ If a check could not be completed, a warning names it. Its findings are missing 
 
 Groups that cannot be restored are listed with the reason: dynamic groups follow their membership rule, groups synced from Active Directory are managed on-premises, and deleted groups no longer exist.
 
-A group that grants admin roles to its members is only added when you have permission to manage privileged users. Without it, that group is skipped and reported on the job, and the rest are still added. The same permission is needed to enable sign-in, reset the password or issue a Temporary Access Pass for a user who holds an admin role.
+A group that grants admin roles to its members is only added when you have permission to manage privileged users. Without it, such a group from the snapshot is listed but cannot be ticked, and one chosen another way is skipped and reported on the job while the rest are still added. The same permission is needed to enable sign-in, reset the password or issue a Temporary Access Pass for a user who holds an admin role.
 
 {% hint style="info" %}
 The snapshot is saved when the Offboarding Wizard removes a user's groups, licences or admin roles. Users offboarded before this feature was available, or outside CIPP, have no snapshot. Snapshots are kept for one year.
@@ -95,7 +95,7 @@ Offered for new and existing users. Leave an option empty to skip it.
 | Option                                    | Description                                                                                                              |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Pre-provision OneDrive                    | Creates the user's OneDrive so it is ready before they first sign in.                                                    |
-| Add OneDrive shortcuts to SharePoint sites | Adds a shortcut in the user's OneDrive to each site chosen. A site or document library URL can also be typed in. Choosing a shortcut always pre-provisions the OneDrive first.         |
+| Add OneDrive shortcuts to SharePoint sites | Adds a shortcut in the user's OneDrive to each site chosen. A site or document library URL can also be typed in. Choosing a shortcut always pre-provisions the OneDrive first. A OneDrive that is not ready yet gets the shortcut 30 minutes later, as its own job.         |
 | Mailbox language                          | Sets the mailbox language and renames the default folders to match.                                                      |
 | Time zone                                 | Sets the mailbox time zone. Available once a mailbox language is chosen.                                                  |
 | Enable online archive                     | Turns on the archive mailbox.                                                                                            |

@@ -75,7 +75,7 @@ Restoring writes the selected components from a backup back into the tenant. The
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Backups for \<tenant>      | The backup to restore from. Opening the flyout from a backup card pre-selects that backup.                                                            |
 | Restore Settings           | The components to restore, matching the component list used when scheduling a backup. Switch off anything you do not want written back.               |
-| Choose Items               | Shown once a backup is selected. Every item in the backup is restored by default; open a component to search its contents and tick only the users, groups, policies or other items you want back. A component with nothing ticked is skipped. |
+| Choose Items               | Shown once a backup is selected. Every item in the backup is restored by default; select **Choose individual items** to load the backup, then open a component to search its contents and tick only the users, groups, policies or other items you want back. A component with nothing ticked is skipped. |
 | Overwrite existing entries | Replaces existing objects with the versions held in the backup. Leave this off to skip anything that already exists and restore only what is missing. |
 | Send Restore results to    | Where the outcome is reported once the restore has run: Webhook, E-mail, or PSA.                                                                      |
 

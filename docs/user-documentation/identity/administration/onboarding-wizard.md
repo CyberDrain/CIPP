@@ -82,7 +82,7 @@ If a check could not be completed, a warning names it. Its findings are missing 
 
 Groups that cannot be restored are listed with the reason: dynamic groups follow their membership rule, groups synced from Active Directory are managed on-premises, and deleted groups no longer exist.
 
-A group that grants admin roles to its members is only added when you have permission to manage privileged users. Without it, that group is skipped and reported on the job, and the rest are still added. The same permission is needed to enable sign-in, reset the password or issue a Temporary Access Pass for a user who holds an admin role.
+A group that grants admin roles to its members is only added when you have permission to manage privileged users. Without it, such a group from the snapshot is listed but cannot be ticked, and one chosen another way is skipped and reported on the job while the rest are still added. The same permission is needed to enable sign-in, reset the password or issue a Temporary Access Pass for a user who holds an admin role.
 
 {% hint style="info" %}
 The snapshot is saved when the Offboarding Wizard removes a user's groups, licences or admin roles. Users offboarded before this feature was available, or outside CIPP, have no snapshot. Snapshots are kept for one year.

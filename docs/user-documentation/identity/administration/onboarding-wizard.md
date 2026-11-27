@@ -95,7 +95,7 @@ Offered for new and existing users. Leave an option empty to skip it.
 | Option                                    | Description                                                                                                              |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Pre-provision OneDrive                    | Creates the user's OneDrive so it is ready before they first sign in.                                                    |
-| Add OneDrive shortcuts to SharePoint sites | Adds a shortcut in the user's OneDrive to each site chosen. A site or document library URL can also be typed in. Choosing a shortcut always pre-provisions the OneDrive first.         |
+| Add OneDrive shortcuts to SharePoint sites | Adds a shortcut in the user's OneDrive to each site chosen. A site or document library URL can also be typed in. Choosing a shortcut always pre-provisions the OneDrive first. A OneDrive that is not ready yet gets the shortcut 30 minutes later, as its own job.         |
 | Mailbox language                          | Sets the mailbox language and renames the default folders to match.                                                      |
 | Time zone                                 | Sets the mailbox time zone. Available once a mailbox language is chosen.                                                  |
 | Enable online archive                     | Turns on the archive mailbox.                                                                                            |

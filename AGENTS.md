@@ -493,10 +493,11 @@ These are the decisions behind most review feedback. Each has a real example in 
   no Craft globals (`$global:Craft*`), no reliance on the Craft response cache. A memo that
   must be shared by every worker in a process lives in a process environment variable (`Get-CIPPFeatureFlag`).
   CIPPSharp targets net8.0 so it loads on both runtimes: don't use .NET 9/10-only APIs there or in PowerShell.
-- **Know a memo's lifetime.** `$script:` state lasts one task in background workers and persists across requests in
-  HTTP workers. Register per-request memos in `Initialize-CippRequestContext` (`$script:CIPPVariableMemo = $null`),
-  which resets them at the start of every request. State that must outlive an invocation needs static .NET storage
-  (`[CIPP.TestDataCache]`) or an environment variable.
+- **Know a memo's lifetime.** `$script:` state persists across invocations on the same worker, HTTP and background
+  alike. Register per-request memos in `Initialize-CippRequestContext` (`$script:CIPPVariableMemo = $null`), which
+  resets them at the start of every HTTP request; nothing resets them between background tasks, so a memo a background
+  task reads also carries a short expiry (`Get-CIPPTextReplacement`). State that must be shared across workers needs
+  static .NET storage (`[CIPP.TestDataCache]`) or an environment variable.
 - **Blocking .NET or HTTP calls take `$PSCmdlet.PipelineStopToken`** so a stopped pipeline unblocks instead of
   hanging the worker. Keep the C# parameter nullable: the token is `$null` on pwsh 7.4.
 

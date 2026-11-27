@@ -61,7 +61,7 @@ Findings are grouped into four cards. A finding marked **Report only** is for in
 | Delegated access | Other people who still hold Full Access, Send As or Send on Behalf on the mailbox, who have access to the calendar, or who are site admins on the OneDrive. Each person is listed separately.      |
 | Entitlements     | No licences or no group memberships (handled on the next step). Reported only: admin roles the user held before offboarding, and no devices.                                                       |
 
-Fixes that are usually wanted start ticked. Untick anything that should stay as it is, such as a delegate who still needs access. **Rescan** runs the checks again.
+Fixes that are usually wanted start ticked. Untick anything that should stay as it is, such as a delegate who still needs access. For a user synced from Active Directory, enabling sign-in and resetting the password start unticked: do those in Active Directory. **Rescan** runs the checks again.
 
 {% hint style="info" %}
 Turn on **Show deleted users** to pick an account from deleted users. A deleted account has to be restored before it can be scanned, so the only action offered is **Restore and rescan**.

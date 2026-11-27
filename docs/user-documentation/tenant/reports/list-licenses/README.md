@@ -2,7 +2,7 @@
 
 This report lists every licence SKU present in the selected tenant, showing how many of each are owned, how many are in use, and who holds them. It is the quickest way to spot over-provisioning across a client base, or to find which users and groups are consuming a particular SKU.
 
-This page covers the **Licences** tab. The report also has an [optimization.md](optimization.md "mention") tab, which suggests licence removals, plan changes and term changes with their estimated savings and can produce a client-ready PDF, and a [pricing.md](pricing.md "mention") tab, which holds the monthly per-seat prices those figures are calculated from.
+This page covers the **Licences** tab. The report also has an [optimization.md](optimization.md "mention") tab, which suggests licence removals, plan changes and term changes with their estimated savings and can produce a client-ready PDF, a [changes.md](changes.md "mention") tab, which lists the licences added to and removed from users in the last 30 days and who made each change, and a [pricing.md](pricing.md "mention") tab, which holds the monthly per-seat prices those figures are calculated from.
 
 The report supports the All Tenants view. Because gathering licence data from every tenant takes time, the first request queues a background job and shows a message asking you to check back once it completes. Results are cached for an hour, so subsequent loads return immediately.
 

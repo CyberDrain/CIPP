@@ -10,6 +10,11 @@
     "icon": "BarChart"
   },
   {
+    "label": "Changes",
+    "path": "/tenant/reports/list-licenses/changes",
+    "icon": "History"
+  },
+  {
     "label": "Pricing",
     "path": "/tenant/reports/list-licenses/pricing",
     "icon": "Sell"
